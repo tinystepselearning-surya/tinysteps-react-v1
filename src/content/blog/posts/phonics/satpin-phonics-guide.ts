@@ -15,6 +15,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'Quick answer: SATPIN is a useful early phonics set, not a magic reading method' },
     { type: 'p', content: '**SATPIN** refers to the six letters **s, a, t, p, i and n** used as an early grapheme–phoneme set in some phonics sequences. The set is useful because these letters can be combined quickly into simple words such as **sat, pat, tap, sit, pin, tin, nap** and **nip**, allowing children to move from isolated letter–sound knowledge into real blending and spelling early.' },
     { type: 'p', content: 'The evidence does **not** show that every child must begin with SATPIN, that these six letters are scientifically superior to every other starter set, or that all six must be mastered before blending begins. The stronger evidence-based principle is to start with a **defined, useful set of sound–spelling correspondences**, teach them explicitly and cumulatively, and apply them to decoding and spelling as soon as the child knows enough of the set to build words.' },
+    { type: 'p', content: 'For the broader explanation of how systematic sound–spelling teaching, blending, spelling and matched reading fit together, use our [Phonics for Parents guide](/blog/phonics-for-parents-guide).' },
     { type: 'p', content: 'Tiny Steps therefore treats SATPIN as a practical **launch set**, not a finish line. Our parent progression chain is: **hear the sound → connect sound and print → retrieve it → blend a word → segment and spell → transfer to a fresh word or short text**. This is editorial teaching guidance, not a standardized assessment.' },
 
     { type: 'h2', content: 'What does SATPIN stand for?' },
@@ -83,7 +84,7 @@ const post: BlogPost = {
 
     { type: 'h3', content: '2. The child can say the SATPIN sounds but cannot read sat or pin' },
     { type: 'p', content: 'That is likely a **blending bottleneck**, not evidence that more letter sounds are automatically needed. Model how the phonemes join, reduce the gaps between sounds and check oral blending if necessary before returning to print.' },
-    { type: 'p', content: 'For the narrower diagnostic pathway once sound recall is secure, use [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words).' },
+    { type: 'p', content: 'For the narrower pathway once sound recall is secure, use our [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words).' },
 
     { type: 'h3', content: '3. The child reads familiar SATPIN cards but guesses a fresh word' },
     { type: 'p', content: 'Reduce picture and context clues, change the word order and ask the child to work through every grapheme. The aim is not to catch the child out; it is to make sure memorisation is not hiding the decoding step.' },

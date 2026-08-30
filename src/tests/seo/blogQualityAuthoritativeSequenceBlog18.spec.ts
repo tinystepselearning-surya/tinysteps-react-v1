@@ -4,6 +4,31 @@ import { getBlogEvidenceSummary } from '../../content/blog/shared/editorialTrust
 
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 
+const AFFIRMATIVE_ONE_FAMILY_PER_WEEK_CLAIMS = [
+  /\b(?:teach|practise|practice|study|cover|complete) one family per week\b/i,
+  /\b(?:must|should|need(?:s)? to|has to|required to)\b[^.!?\n]{0,80}\bone family per week\b/i,
+  /\bone family per week\b[^.!?\n]{0,60}\b(?:is|remains)\b[^.!?\n]{0,40}\b(?:required|mandatory|best|ideal|correct)\b/i,
+];
+
+function isExplicitlyRejectedWeeklyClaim(value: string, claimStart: number, claim: string) {
+  const prefix = value.slice(Math.max(0, claimStart - 120), claimStart);
+
+  return (
+    /\b(?:do|does|did) not\s+$/i.test(prefix) ||
+    /\b(?:no evidence|no research (?:rule|requirement))\b[^.!?\n]{0,100}$/i.test(prefix) ||
+    /\b(?:is|are) not\b/i.test(claim)
+  );
+}
+
+function containsAffirmativeOneFamilyPerWeekClaim(value: string) {
+  return AFFIRMATIVE_ONE_FAMILY_PER_WEEK_CLAIMS.some((pattern) => {
+    const matches = value.matchAll(new RegExp(pattern.source, `${pattern.flags}g`));
+    return Array.from(matches).some(
+      (match) => !isExplicitlyRejectedWeeklyClaim(value, match.index, match[0]),
+    );
+  });
+}
+
 describe('authoritative Blog #18 quality lock', () => {
   it('owns r-controlled vowel pattern groups, accent-aware confusions and practice order without imposing a universal sequence', () => {
     const post = bySlug.get('r-controlled-vowels-explained');
@@ -40,9 +65,30 @@ describe('authoritative Blog #18 quality lock', () => {
     expect(body).not.toMatch(/run a fixed loop/i);
     expect(body).not.toMatch(/must (?:always )?(?:start|begin) with ar/i);
     expect(body).not.toMatch(/can already read 30[–-]50 CVC words/i);
-    expect(body).not.toMatch(/one family per week/i);
+    expect(containsAffirmativeOneFamilyPerWeekClaim(body)).toBe(false);
     expect(body).not.toMatch(/all (?:English )?accents? (?:pronounce|say).*er.*ir.*ur.*same/i);
     expect(body).not.toMatch(/(?:must|should|need(?:s)? to|has to|require(?:s|d)?|reach|achieve)[^.\n]{0,80}\b(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
+  });
+
+  it('rejects affirmative one-family-per-week rules while allowing explicit evidence limitations', () => {
+    const unsupportedClaims = [
+      'Teach one family per week.',
+      'Every child should cover one family per week.',
+      'One family per week is the required sequence.',
+    ];
+    const evidenceLimitations = [
+      'Do not use a fixed rule such as “one family per week”.',
+      'Do not teach one family per week.',
+      'There is no research requirement to teach one family per week.',
+      'One family per week is not a mandatory timetable.',
+    ];
+
+    for (const claim of unsupportedClaims) {
+      expect(containsAffirmativeOneFamilyPerWeekClaim(claim), claim).toBe(true);
+    }
+    for (const limitation of evidenceLimitations) {
+      expect(containsAffirmativeOneFamilyPerWeekClaim(limitation), limitation).toBe(false);
+    }
   });
 
   it('adds evidence, accent and diagnosis safeguards, practice-owner boundaries and five extractable FAQs', () => {

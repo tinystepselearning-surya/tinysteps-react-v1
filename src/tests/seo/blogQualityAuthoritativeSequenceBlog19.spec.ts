@@ -1,8 +1,38 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import { getBlogEvidenceSummary } from '../../content/blog/shared/editorialTrust';
 
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
+const repoRoot = process.cwd();
+
+const UNSUPPORTED_SATPIN_CLAIMS = [
+  /\bSATPIN is (?:the )?(?:best|only) first (?:set|sequence|six sounds?)(?: for every child)?\b/i,
+  /\bSATPIN is scientifically superior to (?:every|all|any) other starter (?:set|sequence)\b/i,
+  /\bSATPIN is the only scientifically correct first sequence\b/i,
+  /\bEvery child should start with SATPIN\b/i,
+];
+
+function isExplicitlyRejectedClaim(value: string, claimStart: number, claimEnd: number) {
+  const prefix = value.slice(Math.max(0, claimStart - 120), claimStart);
+  const suffix = value.slice(claimEnd, Math.min(value.length, claimEnd + 120));
+
+  return (
+    /\b(?:no|not any) evidence (?:that |to support )?$/i.test(prefix) ||
+    /\b(?:does|do|did) not (?:show|establish|prove|support)\b[^.!?\n]{0,100}$/i.test(prefix) ||
+    /^[^.!?\n]{0,40}[”"']?\s+is not(?:[.!?]|\s+(?:a )?(?:defensible|supported|evidence-based) claim\b)/i.test(suffix)
+  );
+}
+
+function containsAffirmativeUnsupportedSatpinClaim(value: string) {
+  return UNSUPPORTED_SATPIN_CLAIMS.some((pattern) => {
+    const matches = value.matchAll(new RegExp(pattern.source, `${pattern.flags}g`));
+    return Array.from(matches).some(
+      (match) => !isExplicitlyRejectedClaim(value, match.index, match.index + match[0].length),
+    );
+  });
+}
 
 describe('authoritative Blog #19 quality lock', () => {
   it('owns the SATPIN starter-set explanation and progression decision without presenting SATPIN as a universal mandatory sequence', () => {
@@ -41,8 +71,29 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(body).not.toContain('Introduce SATPIN in small batches (1-2 sounds)');
     expect(body).not.toContain('Check weekly whether your child can decode');
     expect(body).not.toContain('across several sessions');
-    expect(body).not.toMatch(/SATPIN is (?:the )?(?:best|only|scientifically superior) first/i);
+    expect(containsAffirmativeUnsupportedSatpinClaim(body)).toBe(false);
     expect(body).not.toMatch(/(?:must|should|need(?:s)? to|has to|require(?:s|d)?|reach|achieve)[^.\n]{0,80}\b(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
+  });
+
+  it('rejects affirmative SATPIN overclaims while allowing explicit evidence limitations', () => {
+    const unsupportedClaims = [
+      'SATPIN is the best first set for every child.',
+      'SATPIN is the only scientifically correct first sequence.',
+      'SATPIN is scientifically superior to every other starter set.',
+      'Every child should start with SATPIN.',
+    ];
+    const evidenceLimitations = [
+      'SATPIN is not the best first set for every child.',
+      'There is no evidence that SATPIN is scientifically superior to every other starter set.',
+      '“SATPIN is the best first six sounds for every child” is not a defensible claim.',
+    ];
+
+    for (const claim of unsupportedClaims) {
+      expect(containsAffirmativeUnsupportedSatpinClaim(claim), claim).toBe(true);
+    }
+    for (const limitation of evidenceLimitations) {
+      expect(containsAffirmativeUnsupportedSatpinClaim(limitation), limitation).toBe(false);
+    }
   });
 
   it('adds evidence, non-diagnostic safeguards, practical-owner boundaries and five extractable FAQs', () => {
@@ -55,7 +106,12 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(6);
     expect(body).toContain('SATPIN at home: guide versus routine');
-    expect(body).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
+    expect(body).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/phonics-satpin-launch)');
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'src/content/blog/posts/phonics/satpin-phonics-guide.ts'),
+      'utf8',
+    );
+    expect(source).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
     expect(body).toContain('This article is the **SATPIN explanation and progression owner**');
     expect(body).toContain('The evidence below supports **systematic and explicit sound–spelling teaching');
     expect(body).toContain('does **not** establish SATPIN as the single mandatory first set');
