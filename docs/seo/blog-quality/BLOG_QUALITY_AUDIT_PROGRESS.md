@@ -60,11 +60,11 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 | 15 | Phonics Blending Activities That Help Children Read Words Confidently | 72 | **LOCKED IN BATCH** | **97** |
 | 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | 61 | **LOCKED IN BATCH** | **97** |
 | 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | 60 | **LOCKED IN BATCH** | **97** |
-| 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | — | QUEUED | — |
+| 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | 62 | **LOCKED IN BATCH** | **97** |
 | 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | — | QUEUED | — |
 | 20 | Phonics vs Sight Words: What Helps Children Read Better | — | QUEUED | — |
 
-Current completed movement: **455/700 → 678/700**, average **65.0 → 96.9**, total gain **+223**.
+Current completed movement: **517/800 → 775/800**, average **64.6 → 96.9**, total gain **+258**.
 
 ## Canonical intent map — completed Batch #2 articles
 
@@ -75,6 +75,7 @@ Current completed movement: **455/700 → 678/700**, average **65.0 → 96.9**, 
 15. `/blog/phonics-blending-activities` → practical blending activity selection by observed bottleneck. Developmental stages remain with Blog #5; simple daily blending routine remains with Blog #25.
 16. `/blog/phonics-games-for-letter-sounds` → practical letter-sound game routine: two-way phoneme–grapheme retrieval, blendable pronunciations, small taught-set review and early word transfer. Online-game evaluation remains with Blog #13; broad home routine with Blog #14; blending activities with Blog #15; SATPIN launch with Blog #19; broad sequence with Blog #17.
 17. `/blog/phonics-rules-for-beginners` → parent-facing principles for a systematic, incremental and cumulative beginner phonics sequence, including what broad knowledge comes next and how to decide whether to move ahead or review. SATPIN launch remains with Blog #19; CVC milestone with Blog #3; digraph/tricky distinction with Blog #4; long vowels with Blog #11; r-controlled vowels with Blog #18; school-wide scope and sequence with Blog #57.
+18. `/blog/r-controlled-vowels-explained` → parent explanation of vowel-r/r-controlled pattern groups, accent-sensitive pronunciation, reading-versus-spelling confusions and evidence-aligned practice order. Hands-on r-controlled games and practice remain with Blog #30 (`/blog/phonics-r-controlled`); broad sequence remains with Blog #17; long-vowel patterns with Blog #11; full encoding with Blog #9.
 
 ## Blog #17 — LOCKED
 
@@ -99,6 +100,34 @@ Current completed movement: **455/700 → 678/700**, average **65.0 → 96.9**, 
 ### Evidence boundary
 
 Evidence supports systematic, explicit, incremental and cumulative phonics; an early useful correspondence set; blending and segmenting; common sound–spelling patterns; spelling; common-exception words; and matched connected-text practice. It does **not** establish one universal commercial programme order, one rule family per week, a fixed mastery percentage or a fixed number of review sessions. The Tiny Steps six-part explanatory map and five-question move-ahead check are editorial syntheses.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Blog #18 — LOCKED
+
+**Canonical role:** answer the parent question: *What are r-controlled/vowel-r patterns, why do ar/or/er/ir/ur create different reading and spelling confusions, how does accent affect them, and what is a sensible order for practising them without imposing one universal timetable?*
+
+### Major quality decisions
+
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`, preserving the canonical publication date **2026-01-05** and adding a meaningful **2026-08-30** modified date.
+- Defines r-controlled/vowel-r patterns accurately as a vowel followed directly by `r`, while treating “bossy R” as an optional mnemonic rather than a literal linguistic explanation.
+- Adds a major accent safeguard: rhotic and non-rhotic English varieties can realise vowel-r patterns differently, so one pronunciation model is not universal.
+- Uses UFLI’s standard and Australian resources as direct evidence that accent-sensitive adaptation is legitimate.
+- Separates the five core spellings into `ar`, `or`, and the `er/ir/ur` spelling-choice problem without claiming that `er/ir/ur` sound identical in every accent or every word.
+- Adds the Tiny Steps six-part learning chain: **hear → notice/map → read → spell → contrast → transfer**.
+- Replaces fixed pattern-family sessions and implicit `ar/or first` universalism with a programme-aligned practice sequence based on prior decoding knowledge.
+- Uses UFLI’s `ar → or → er/ir/ur` progression as one concrete programme example while explicitly stating that it is not a universal research law.
+- Removes arbitrary prerequisites such as `30–50 CVC words`, fixed practice days, fixed word counts and percentage mastery rules.
+- Explains why r-controlled reading can be stronger than spelling: print reveals the grapheme during reading, while encoding may require choosing among `er`, `ir`, `ur` and later alternatives.
+- Adds five concrete confusion types: ordinary-vowel substitution, `ar/or` mixing, `er/ir/ur` spelling interchange, `wor` overgeneralisation and isolated-word-to-text transfer failure.
+- Adds a Tiny Steps five-signal move-ahead check: **notice → decode → encode → contrast → transfer/retain**.
+- Protects Blog #30 as the hands-on r-controlled practice/activity owner, Blog #17 as the broad sequence owner, Blog #11 as long-vowel owner and Blog #9 as full encoding owner.
+- Adds a non-diagnostic safeguard: normal accent differences and `er/ir/ur` spelling confusion are not, by themselves, evidence of a reading disorder.
+- Adds seven external evidence references, five focused FAQs and dedicated Blog #18 regression coverage.
+
+### Evidence boundary
+
+Evidence supports explicit/systematic sound–spelling instruction, vowel-r/r-controlled patterns, linked reading and spelling practice, cumulative progression and transfer into matched text. UFLI provides a defensible sequence example and accent-adapted materials. The evidence does **not** establish one universal first r-controlled family, one pronunciation for all English accents, a fixed word-count prerequisite, a fixed number of practice sessions or a universal mastery percentage. The Tiny Steps six-part learning chain and five-signal move-ahead check are editorial syntheses.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
