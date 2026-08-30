@@ -27,6 +27,7 @@ const indexableRenamedSlugs = new Set([
   'phonics-long-vowels',
   'phonics-multisyllabic',
   'phonics-blending-club',
+  'phonics-r-controlled',
   'phonics-summer-plan',
   'phonics-tricky-words',
 ]);
