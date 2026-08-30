@@ -61,10 +61,10 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 | 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | 61 | **LOCKED IN BATCH** | **97** |
 | 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | 60 | **LOCKED IN BATCH** | **97** |
 | 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | 62 | **LOCKED IN BATCH** | **97** |
-| 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | — | QUEUED | — |
+| 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | 66 | **LOCKED IN BATCH** | **97** |
 | 20 | Phonics vs Sight Words: What Helps Children Read Better | — | QUEUED | — |
 
-Current completed movement: **517/800 → 775/800**, average **64.6 → 96.9**, total gain **+258**.
+Current completed movement: **583/900 → 872/900**, average **64.8 → 96.9**, total gain **+289**.
 
 ## Canonical intent map — completed Batch #2 articles
 
@@ -76,6 +76,7 @@ Current completed movement: **517/800 → 775/800**, average **64.6 → 96.9**, 
 16. `/blog/phonics-games-for-letter-sounds` → practical letter-sound game routine: two-way phoneme–grapheme retrieval, blendable pronunciations, small taught-set review and early word transfer. Online-game evaluation remains with Blog #13; broad home routine with Blog #14; blending activities with Blog #15; SATPIN launch with Blog #19; broad sequence with Blog #17.
 17. `/blog/phonics-rules-for-beginners` → parent-facing principles for a systematic, incremental and cumulative beginner phonics sequence, including what broad knowledge comes next and how to decide whether to move ahead or review. SATPIN launch remains with Blog #19; CVC milestone with Blog #3; digraph/tricky distinction with Blog #4; long vowels with Blog #11; r-controlled vowels with Blog #18; school-wide scope and sequence with Blog #57.
 18. `/blog/r-controlled-vowels-explained` → parent explanation of vowel-r/r-controlled pattern groups, accent-sensitive pronunciation, reading-versus-spelling confusions and evidence-aligned practice order. Hands-on r-controlled games and practice remain with Blog #30 (`/blog/phonics-r-controlled`); broad sequence remains with Blog #17; long-vowel patterns with Blog #11; full encoding with Blog #9.
+19. `/blog/satpin-phonics-guide` → SATPIN starter-set explanation, why a useful defined early set helps, how early blending/encoding begins, what progress looks like and when to move beyond SATPIN. Session-by-session home practice remains with Blog #22; broad sequence remains with Blog #17; letter-sound games with Blog #16; full blending development with Blog #5.
 
 ## Blog #17 — LOCKED
 
@@ -128,6 +129,34 @@ Evidence supports systematic, explicit, incremental and cumulative phonics; an e
 ### Evidence boundary
 
 Evidence supports explicit/systematic sound–spelling instruction, vowel-r/r-controlled patterns, linked reading and spelling practice, cumulative progression and transfer into matched text. UFLI provides a defensible sequence example and accent-adapted materials. The evidence does **not** establish one universal first r-controlled family, one pronunciation for all English accents, a fixed word-count prerequisite, a fixed number of practice sessions or a universal mastery percentage. The Tiny Steps six-part learning chain and five-signal move-ahead check are editorial syntheses.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Blog #19 — LOCKED
+
+**Canonical role:** answer the parent question: *What is SATPIN, why can it be a useful early sound–spelling set, how should blending and spelling begin from it, what should parents expect to see, and when is the child ready to move beyond the set?*
+
+### Major quality decisions
+
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`, preserving the canonical publication date **2025-11-06** and adding a meaningful **2026-08-30** modified date.
+- Defines SATPIN accurately as the six-letter starter set `s, a, t, p, i, n` while noting that programmes can order those correspondences differently within an early sequence.
+- Replaces “SATPIN is first because it is best” logic with the evidence-supported principle that an early programme should begin with a **defined useful set** that permits children to read and spell words early.
+- Explicitly states that evidence does not establish SATPIN as the single mandatory or scientifically superior first set.
+- Adds the Tiny Steps SATPIN launch chain: **hear sound → connect sound and print → retrieve → blend → segment/spell → transfer**.
+- Corrects the old “pure sound mastery first, then blending” sequence: blending can begin as soon as enough taught correspondences can form a word.
+- Clarifies letter-name versus letter-sound roles without falsely telling parents to avoid letter names.
+- Reframes “pure sounds” as **blendable pronunciations**, including schwa avoidance for stop consonants where it interferes with blending.
+- Removes universal `1–2 sounds per batch`, weekly testing, fixed-session mastery and percentage thresholds.
+- Adds a five-signal progress interpretation: **retrieve → blend → decode fresh → encode → transfer/retain**.
+- Adds five concrete SATPIN bottlenecks: sound retrieval, sound-known-but-no-blend, familiar-card memorisation, reading stronger than spelling, and new-learning loss of earlier correspondences.
+- Protects Blog #22 as the session-by-session SATPIN home routine owner, Blog #17 as broad sequence owner, Blog #16 as letter-sound game owner, Blog #5 as blending-development owner and Blog #3 as the CVC milestone owner.
+- Describes Balloon Pop and Letter Tracing transparently as sound/letter practice rather than proof of word reading.
+- Adds a non-diagnostic safeguard and closer-teaching-review boundary.
+- Adds six external evidence references, five focused FAQs and dedicated Blog #19 regression coverage.
+
+### Evidence boundary
+
+Evidence supports explicit/systematic phonics, beginning with a defined useful set of sound–spelling correspondences, early blending and segmenting, linked spelling practice, cumulative review and matched connected-text application. It does **not** establish SATPIN as the only valid starter set, a fixed number of SATPIN sounds per session, a fixed SATPIN duration, a weekly testing requirement or a universal mastery percentage. The Tiny Steps SATPIN launch chain and progress signals are editorial syntheses.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
