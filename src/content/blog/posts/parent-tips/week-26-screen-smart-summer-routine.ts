@@ -2,147 +2,169 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'week-26-screen-smart-summer-routine',
-  title: 'Week 26: Screen-Smart Summer Routine for Kids (Ages 3-12)',
+  title: 'Screen-Smart Summer Learning Routine for Kids: Balance English Practice and Screen Time',
   category: 'Parent Tips',
   author: 'Priya',
   date: '2026-03-23',
-  readTime: '10 min',
-  excerpt: 'A practical screen-smart summer routine for ages 3-12: reduce passive screen time, keep learning active in 10-minute blocks, and build reading, grammar, and speaking confidence without daily battles.',
-  metaDescription: 'Screen-smart summer routine for kids ages 3-12: reduce passive screen time and use a 10-minute daily plan for phonics, reading, grammar, and speaking confidence.',
-  body: [{
-    type: 'h2',
-    content: 'Quick answer for busy parents'
-  }, {
-    type: 'p',
-    content: 'If you want to reduce screen time for kids without daily arguments, do not ban screens suddenly. Replace one passive block with one short, repeatable learning block. A 10-minute routine works better than a long weekend reset.'
-  }, {
-    type: 'h2',
-    content: 'Why screen time rises in summer'
-  }, {
-    type: 'p',
-    content: 'Summer schedules are loose, parents are juggling work, and children need fast entertainment. Screens fill the gap quickly. The problem is not every screen minute, but long passive stretches that replace conversation, reading, and movement.'
-  }, {
-    type: 'h2',
-    content: 'The screen-smart rule that actually works'
-  }, {
-    type: 'p',
-    content: 'Use this sequence: Connect first, then a short learning block, then screen choice. Children cooperate more when they know what comes next and when the task is short.'
-  }, {
-    type: 'li',
-    content: 'Predictable timing: same 10-minute learning slot each day.'
-  }, {
-    type: 'li',
-    content: 'Clear trade: one short offline task before passive screen time.'
-  }, {
-    type: 'li',
-    content: 'Low pressure: stop on success, not after a struggle.'
-  }, {
-    type: 'h2',
-    content: 'Age-wise screen-smart guidance (3-12 years)'
-  }, {
-    type: 'h3',
-    content: 'Ages 3-5'
-  }, {
-    type: 'li',
-    content: 'Focus on sound play, picture talk, and movement-based phonics for 5-10 minutes.'
-  }, {
-    type: 'li',
-    content: 'Use short, supervised screen sessions and avoid background autoplay.'
-  }, {
-    type: 'h3',
-    content: 'Ages 6-8'
-  }, {
-    type: 'li',
-    content: 'Add simple reading plus one grammar sentence task before leisure screen time.'
-  }, {
-    type: 'li',
-    content: 'Use timers and one clear stop rule to avoid repeated negotiation.'
-  }, {
-    type: 'h3',
-    content: 'Ages 9-12'
-  }, {
-    type: 'li',
-    content: 'Use a daily reading and speaking checkpoint before social/video content.'
-  }, {
-    type: 'li',
-    content: 'Let children choose from 2-3 offline learning activities to increase ownership.'
-  }, {
-    type: 'h2',
-    content: 'The 10-minute summer routine (daily)'
-  }, {
-    type: 'li',
-    content: 'Minute 1-2: Quick phonics or vocabulary warm-up (sound cards or word family drill).'
-  }, {
-    type: 'li',
-    content: 'Minute 3-6: Read one short passage aloud and ask one meaning question.'
-  }, {
-    type: 'li',
-    content: 'Minute 7-8: One grammar-in-use task (fix one sentence or combine two lines).'
-  }, {
-    type: 'li',
-    content: 'Minute 9-10: 30-second speaking recap: "What did I learn today?"'
-  }, {
-    type: 'p',
-    content: 'This routine supports offline learning activities for kids while keeping the load realistic for working families.'
-  }, {
-    type: 'h2',
-    content: 'Six practical replacements for passive screen time'
-  }, {
-    type: 'li',
-    content: 'Phonics sound hunt: find 5 objects starting with a target sound.'
-  }, {
-    type: 'li',
-    content: 'Reading relay: parent reads one line, child reads one line.'
-  }, {
-    type: 'li',
-    content: 'Grammar fix card: spot and fix one sentence error.'
-  }, {
-    type: 'li',
-    content: 'Picture speaking challenge: describe one image in 3 clear lines.'
-  }, {
-    type: 'li',
-    content: 'Word-building game: make new words by swapping one sound.'
-  }, {
-    type: 'li',
-    content: 'Family mini show: 45-second talk at dinner on one topic.'
-  }, {
-    type: 'h2',
-    content: 'Mistakes parents should avoid'
-  }, {
-    type: 'li',
-    content: 'Do not remove all screens overnight; sudden restriction usually creates resistance.'
-  }, {
-    type: 'li',
-    content: 'Do not run 45-minute study blocks in summer; short consistency beats long sessions.'
-  }, {
-    type: 'li',
-    content: 'Do not use learning only as punishment for screen use; present it as routine, not penalty.'
-  }, {
-    type: 'li',
-    content: 'Do not change rules daily; consistency lowers conflict and decision fatigue.'
-  }, {
-    type: 'h2',
-    content: 'When to seek extra support'
-  }, {
-    type: 'p',
-    content: 'If your child avoids reading, melts down during short tasks, or shows no progress after 3-4 weeks of consistent routine, get guided support. A targeted plan often fixes the bottleneck faster than trying random worksheets.'
-  }, {
-    type: 'h2',
-    content: 'Tiny Steps summer support (next best step)'
-  }, {
-    type: 'p',
-    content: 'If you want a structured summer routine for kids with mentor guidance, start with /summer-camps. For focused skill support, use /phonics, /grammar, and /speaking. For parent-friendly home plans, use /parents.'
-  }],
-  faq: [{
-    question: 'How much screen time is okay in summer for children aged 3-12?',
-    answer: 'The key is quality and structure. Keep passive screen blocks limited, supervise younger children closely, and protect at least one daily offline learning block.'
-  }, {
-    question: 'How can I reduce screen time for children without arguments?',
-    answer: 'Use a predictable sequence: short offline routine first, then screen choice. Keep the routine brief and consistent so children know what to expect.'
-  }, {
-    question: 'What is the minimum routine on busy weekdays?',
-    answer: 'Run a 10-minute flow: 2 minutes phonics or vocabulary, 4 minutes reading, 2 minutes grammar, 2 minutes speaking recap.'
-  }]
+  modifiedDate: '2026-08-30',
+  readTime: '18 min read',
+  metaDescription:
+    'Build a screen-smart summer routine for kids with purposeful English practice, active media use, offline transfer, movement, reading and family boundaries.',
+  excerpt:
+    'A screen-smart summer routine is not a universal minute limit or a ban on devices. This parent guide shows how to judge digital English activities by purpose, participation and transfer while protecting reading, conversation, movement, sleep and family routines.',
+  audience: 'Parent',
+  discoveryCategory: 'Parent Guides',
+  body: [
+    { type: 'h2', content: 'Quick answer: do not judge summer screens by minutes alone — judge what the child is doing and what the screen is replacing' },
+    { type: 'p', content: 'A useful summer routine does not need to divide the day into “good offline time” and “bad screen time.” A digital activity can be useful when it has a clear learning purpose, makes the child respond or create, and leads back to reading, speaking, writing or another real task. A long passive stream can be poor use even if it is labelled educational.' },
+    { type: 'p', content: 'The other half of the decision is **crowding out**. If media use repeatedly replaces sleep, movement, family conversation, independent reading, outdoor play or calm transitions, the routine needs adjustment even when some of the content is educational.' },
+    { type: 'p', content: 'Tiny Steps uses an editorial screen-smart check for learning decisions: **Purpose → Participate → Transfer → Protect → Review**. Name the skill, make sure the child actively participates, test the skill away from the screen, protect the non-screen parts of the day that matter, then review whether the digital activity earned a place in the routine. This is not a medical screen-time prescription.' },
+
+    { type: 'h2', content: 'What “screen-smart” means in 2026: quality, design and displacement matter as well as time' },
+    { type: 'p', content: 'The American Academy of Pediatrics’ 2026 digital-media policy deliberately moves beyond treating all screen exposure as one category. It describes a wider digital ecosystem in which content, design, child characteristics, family relationships and features that prolong engagement can all affect the experience. The AAP’s practical “5 Cs” framework asks families to consider Child, Content, Calm, Crowding Out and Communication.' },
+    { type: 'p', content: 'For a summer learning plan, this means parents do not need to pretend that a live reading lesson, a short phonics activity, an endless autoplay feed and a family video call are equivalent simply because all use a screen. The better question is: **what is this media use doing for this child, and what is it displacing?**' },
+
+    { type: 'h2', content: 'Blog 49 owns the screen-learning balance — not every English-learning problem' },
+    { type: 'p', content: 'Use this page when the main parent problem is **how to balance digital English practice and the rest of summer life**. It helps decide when screens support learning and when they are becoming passive, distracting or too dominant.' },
+    { type: 'p', content: 'If the real problem is that English practice itself causes resistance even without screens, use [How to Keep Kids Engaged in English Practice at Home](/blog/how-to-engage-kids-in-english-learning-at-home). If you are preparing specifically for school reopening, use the [School Reopening English Readiness Checklist](/blog/june-school-reopening-english-readiness-plan). If the main concern is classroom speaking after a break, use the [Back-to-School English Confidence Plan](/blog/back-to-school-english-confidence-plan).' },
+
+    { type: 'h2', content: 'The Tiny Steps screen-smart learning check: Purpose → Participate → Transfer → Protect → Review' },
+    { type: 'h3', content: 'Step 1 — Purpose: name the English skill before opening the app, video or game' },
+    { type: 'p', content: '“Educational” is too broad to be a learning goal. Decide whether the child is practising letter–sound knowledge, blending, connected reading, vocabulary, sentence construction, grammar transfer, listening comprehension or speaking. If you cannot name the target, it is difficult to tell whether the digital activity is helping.' },
+    { type: 'h3', content: 'Step 2 — Participate: the child should do more than watch or tap automatically' },
+    { type: 'p', content: 'Useful digital practice asks the child to retrieve, choose, explain, read, say, build, write or correct something. A bright animation can hold attention without requiring much thinking. Pause videos, ask the child to predict or explain, and choose games where the response reflects the target skill rather than random clicking.' },
+    { type: 'h3', content: 'Step 3 — Transfer: take one example off the screen' },
+    { type: 'p', content: 'After a digital phonics activity, read or build one fresh word. After a vocabulary video, use one new word in a sentence. After a grammar game, correct or create one new sentence without the interface. After a speaking prompt, answer a similar question to a person. The off-screen example is a simple parent check that the activity is supporting a skill rather than only familiarity with the app.' },
+    { type: 'h3', content: 'Step 4 — Protect: check what the screen is crowding out' },
+    { type: 'p', content: 'Protect ordinary developmental and family needs: sleep routines, physical activity, outdoor time when available, meals, conversation, reading with or near another person, independent play and device-free transitions. The goal is not perfection; it is to notice when digital media repeatedly pushes those activities aside.' },
+    { type: 'h3', content: 'Step 5 — Review: keep, change or remove the activity based on what you observe' },
+    { type: 'p', content: 'Keep a digital resource when the child can explain its purpose, participates meaningfully, transfers something away from the screen and can stop without the activity dominating the day. Change it when the level is wrong or prompts are doing too much. Remove it when it mainly prolongs viewing, causes repeated conflict or produces no useful learning response.' },
+
+    { type: 'h2', content: 'A screen-smart summer routine does not need one universal number of minutes' },
+    { type: 'p', content: 'There is no single screen-time number in this article for all children aged 3–12. Developmental stage, media content, family routines, school demands, sleep, physical activity and the reason for using the device all matter. Current AAP guidance explicitly encourages families to look beyond duration alone.' },
+    { type: 'p', content: 'There **is** age-specific health guidance for younger children. WHO guidance for children under five addresses sedentary screen time together with physical activity and sleep; for children aged 3–4 it recommends no more than one hour of sedentary screen time, with less being better. That recommendation should not be stretched into a universal rule for a 7-, 10- or 12-year-old.' },
+    { type: 'p', content: 'For school-aged children and adolescents, WHO physical-activity guidance emphasises regular moderate-to-vigorous activity and limiting sedentary behaviour. A screen-smart learning plan should therefore protect movement rather than simply swapping leisure video time for many more hours of seated “educational” screen work.' },
+
+    { type: 'h2', content: 'Age-wise screen-smart learning guidance for 3–12 years' },
+    { type: 'h3', content: 'Ages 3–5: interaction around the screen matters more than independent device practice' },
+    { type: 'li', content: 'Prefer short, adult-supported activities tied to talking, songs, sound play, stories, pictures and movement.' },
+    { type: 'li', content: 'Use the screen as a prompt for interaction: pause, name, point, imitate, predict, retell and move.' },
+    { type: 'li', content: 'Protect substantial non-screen play, physical activity, shared reading and regular sleep routines.' },
+    { type: 'li', content: 'Avoid making independent autoplay the default way to keep a young child occupied for long stretches.' },
+    { type: 'h3', content: 'Ages 6–8: make digital practice serve the reading and sentence goal' },
+    { type: 'li', content: 'Choose a small number of apps or games that match what the child is currently learning rather than rotating through many “educational” resources.' },
+    { type: 'li', content: 'Follow phonics or reading games with one fresh word, sentence or short passage away from the game.' },
+    { type: 'li', content: 'Use digital reading support to increase successful practice, not to replace explicit teaching when decoding is still weak.' },
+    { type: 'h3', content: 'Ages 9–12: add digital independence without giving algorithms the whole routine' },
+    { type: 'li', content: 'Let the child help choose when and why a device is used for learning, then agree on a clear stopping point.' },
+    { type: 'li', content: 'Use digital tools to research, draft, practise vocabulary or record a spoken response, but require some explanation, writing or discussion afterwards.' },
+    { type: 'li', content: 'Discuss autoplay, notifications, recommendations and endless feeds as design features that compete for attention, not as personal failures of willpower.' },
+
+    { type: 'h2', content: 'Four types of screen use parents should separate' },
+    { type: 'h3', content: '1. Live interactive learning' },
+    { type: 'p', content: 'A live online class can include direct teacher feedback, questions, reading aloud, sentence production and conversation. Judge it by how actively the child participates and what the teacher can observe—not merely by the fact that it happens through a screen.' },
+    { type: 'h3', content: '2. Purposeful practice tools' },
+    { type: 'p', content: 'A phonics, grammar or vocabulary game can provide useful retrieval and repetition when it matches current teaching. It becomes weaker when the child succeeds through memorising interface patterns, guessing or rapid tapping rather than using the target English skill.' },
+    { type: 'h3', content: '3. Creative or productive media use' },
+    { type: 'p', content: 'Recording a short speech, making a digital story, typing a paragraph, creating slides or using a camera for a sound hunt can make the child produce language rather than only consume content. The product still needs an English goal; creation alone does not guarantee learning.' },
+    { type: 'h3', content: '4. Passive or engagement-driven media' },
+    { type: 'p', content: 'Long autoplay sessions, endless short-video feeds and content selected mainly by recommendations can keep attention without building the intended skill. The AAP’s 2026 policy specifically raises concern about engagement-based designs that encourage prolonged use and crowd out healthy behaviours.' },
+
+    { type: 'h2', content: 'How to turn one digital English activity into real learning' },
+    { type: 'p', content: 'Use a simple **screen → talk → do → transfer** sequence. The exact length can change with age, attention and the task.' },
+    { type: 'li', content: '**Screen:** complete one clearly targeted digital activity.' },
+    { type: 'li', content: '**Talk:** ask the child to explain what they noticed or learned.' },
+    { type: 'li', content: '**Do:** read, say, build or write one example without the interface.' },
+    { type: 'li', content: '**Transfer:** try one fresh example in a book, conversation, notebook or real situation.' },
+    { type: 'p', content: 'If the child cannot do the off-screen example, that is useful information. The app may be too scaffolded, the target may not be secure, or the child may need direct teaching before more digital practice.' },
+
+    { type: 'h2', content: 'Screen-smart phonics practice: the game should not become the strategy' },
+    { type: 'p', content: 'For phonics, technology can increase opportunities to practise, but the transferable skill is still reading or spelling from sound–letter knowledge. If the child can pop the right letter or choose the right picture in a game but cannot blend a new printed word, the game performance is not yet evidence of independent decoding.' },
+    { type: 'p', content: 'Use the [letter-sounds-but-cannot-read diagnostic](/blog/why-child-knows-letter-sounds-but-cannot-read-words) when that gap appears. The broader [phonics pathway](/phonics) explains the structured teaching route.' },
+
+    { type: 'h2', content: 'Screen-smart grammar and writing: use the device to create language, not only select answers' },
+    { type: 'p', content: 'Multiple-choice grammar activities can be useful for recognition and retrieval, but sentence control needs production. After a digital task, ask for one spoken sentence and one fresh written sentence using the same target. If the rule is remembered in the game but disappears in free use, use the [grammar-transfer guide](/blog/child-knows-grammar-but-makes-mistakes).' },
+    { type: 'p', content: 'If the child struggles to build the sentence itself, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids) rather than adding more quiz screens.' },
+
+    { type: 'h2', content: 'Screen-smart speaking: the microphone is useful only if language leaves the device' },
+    { type: 'p', content: 'Recording, video prompts and interactive classes can create useful speaking opportunities. Transfer matters here too. After recording a response, ask the child to say the idea again to a person with fewer prompts. For children returning to classroom routines, use the [Back-to-School English Confidence Plan](/blog/back-to-school-english-confidence-plan).' },
+
+    { type: 'h2', content: 'Tiny Steps digital games: practice resources, not a substitute for teaching or proof of mastery' },
+    { type: 'p', content: 'Tiny Steps free games can be used as short practice resources when they match the child’s current target. They should not be treated as a complete English programme, a replacement for explicit instruction, or proof that a child has mastered a skill.' },
+    { type: 'p', content: 'Parents can explore the [free English games for kids](/free-english-games-for-kids), then use the same screen → talk → do → transfer check. For example, after a letter-sound game, ask for a fresh spoken or printed example away from the game.' },
+
+    { type: 'h2', content: 'What parents can protect instead of fighting about screens all day' },
+    { type: 'li', content: '**Sleep:** create device boundaries around the family’s sleep routine rather than letting media extend bedtime.' },
+    { type: 'li', content: '**Movement:** make physical activity and outdoor or active play a normal part of the day, not something a child must “earn” after study.' },
+    { type: 'li', content: '**Reading:** keep access to print books, shared reading and independent reading alongside digital content.' },
+    { type: 'li', content: '**Conversation:** protect meals, walks, travel or another regular period where family members can talk without competing media.' },
+    { type: 'li', content: '**Boredom and independent play:** not every unstructured minute needs to be filled by an app, video or lesson.' },
+    { type: 'li', content: '**Transitions:** agree on stopping cues before a highly engaging activity begins rather than negotiating only when it is time to switch off.' },
+
+    { type: 'h2', content: 'How to reduce conflict without turning English into the price of screen access' },
+    { type: 'p', content: 'Avoid making every English task a toll the child must pay before leisure media. That can make learning itself feel like punishment. Instead, build a predictable family routine in which learning, play, movement, meals and media each have a place.' },
+    { type: 'li', content: 'Agree on the next activity and stopping cue before the screen session starts.' },
+    { type: 'li', content: 'Offer a small choice between equivalent English activities when possible.' },
+    { type: 'li', content: 'Use device settings such as turning off autoplay or unnecessary notifications when those features make stopping harder.' },
+    { type: 'li', content: 'Model some of the same boundaries as an adult during shared family periods.' },
+    { type: 'li', content: 'If a transition repeatedly causes conflict, change the environment or timing before assuming the child simply needs more discipline.' },
+
+    { type: 'h2', content: 'A flexible summer learning menu instead of a fixed 10-minute formula' },
+    { type: 'p', content: 'Choose one or two useful blocks according to the child’s current need. A child does not need phonics, grammar, reading and speaking squeezed into every single day.' },
+    { type: 'li', content: '**Reading block:** short connected reading + one meaning discussion.' },
+    { type: 'li', content: '**Phonics block:** explicit sound/spelling or blending practice + one fresh word.' },
+    { type: 'li', content: '**Sentence block:** build, expand or combine one sentence orally and/or in writing.' },
+    { type: 'li', content: '**Speaking block:** answer, explain, retell or give an opinion to another person.' },
+    { type: 'li', content: '**Digital practice block:** targeted app/game/video + off-screen transfer.' },
+    { type: 'li', content: '**Movement/experience block:** walk, shop, cook, play or explore, then use English to describe or retell it.' },
+    { type: 'p', content: 'For broader engagement planning, use the [home English practice guide](/blog/how-to-engage-kids-in-english-learning-at-home). The best summer routine is the one that is clear enough to repeat and flexible enough to match the child’s actual learning need.' },
+
+    { type: 'h2', content: 'When screen use is not the real problem' },
+    { type: 'p', content: 'If the child resists only reading, only writing or only speaking—even when the task is offline—the first question should be whether that skill is too difficult, poorly matched or dependent on prompts. Reducing media alone will not fix a decoding, comprehension, sentence-formation or communication gap.' },
+    { type: 'p', content: 'Use specialist routes when needed: [reading fluency](/blog/how-to-improve-reading-fluency-in-children), [reading comprehension](/blog/why-child-reads-words-but-does-not-understand-story), [sentence formation](/blog/how-to-improve-sentence-formation-in-kids), or [speaking confidence diagnosis](/blog/child-understands-english-but-does-not-speak).' },
+
+    { type: 'h2', content: 'When families should ask for professional health guidance' },
+    { type: 'p', content: 'This article provides educational routine guidance, not paediatric or mental-health advice. If media use is persistently interfering with sleep, physical activity, school functioning, mood, safety, family relationships or daily routines despite reasonable changes, discuss the pattern with an appropriate qualified health professional. For age-specific health recommendations, use current paediatric or public-health guidance rather than a generic internet screen-time rule.' },
+
+    { type: 'h2', content: 'Research sources and what they support' },
+    { type: 'li', content: '[American Academy of Pediatrics — Digital Ecosystems, Children, and Adolescents: Policy Statement (2026)](https://publications.aap.org/pediatrics/article/157/2/e2025075320/206129/Digital-Ecosystems-Children-and-Adolescents-Policy) — supports looking beyond screen minutes to child characteristics, digital design, healthy relationships, safety and whether media crowds out sleep, movement and learning.' },
+    { type: 'li', content: '[American Academy of Pediatrics — The 5 Cs of Media Use](https://www.aap.org/5Cs) — provides the Child, Content, Calm, Crowding Out and Communication framework for family media conversations.' },
+    { type: 'li', content: '[AAP — Understanding the New Digital Media Guidelines](https://www.aap.org/en/patient-care/media-and-children/center-of-excellence-on-social-media-and-youth-mental-health/understanding-the-new-AAP-digital-media-guidelines/) — translates the 2026 policy into family actions including attention to design, relationships, sleep and offline alternatives.' },
+    { type: 'li', content: '[WHO — Guidelines on physical activity, sedentary behaviour and sleep for children under 5](https://www.who.int/publications/i/item/9789241550536) — provides age-specific movement, sleep and sedentary screen guidance for children under five.' },
+    { type: 'li', content: '[WHO — Guidelines on physical activity and sedentary behaviour](https://www.who.int/publications/i/item/9789240015128) — supports protecting physical activity and limiting sedentary behaviour for children and adolescents.' },
+    { type: 'li', content: '[EEF — Using Digital Technology to Improve Learning](https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/digital) — supports choosing technology for a specific teaching or learning purpose rather than assuming technology itself improves learning.' },
+    { type: 'li', content: '[EEF — Digital Technology Evidence Review](https://educationendowmentfoundation.org.uk/education-evidence/evidence-reviews/digital-technology-2019) — reviews conditions under which technology can support pedagogy, practice and assessment.' },
+    { type: 'li', content: '[EEF — Oral Language Interventions](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/oral-language-interventions) — supports purposeful speaking/listening interaction, modelling and scaffolding alongside literacy learning.' },
+    { type: 'li', content: '[EEF — Parental Engagement](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/parental-engagement) — supports practical, learning-linked family involvement rather than generic pressure to do more work at home.' },
+    { type: 'li', content: '[IES — Foundational Skills to Support Reading for Understanding](https://ies.ed.gov/ncee/wwc/PracticeGuide/21) — supports explicit foundational reading instruction and connected-text practice, useful for deciding what an early-reading app should transfer into.' },
+    { type: 'li', content: '[IES — Supporting Your Child’s Reading at Home](https://ies.ed.gov/use-work/resource-library/resource/other-resource/supporting-your-childs-reading-home) — provides family-facing reading activities that can complement, rather than be replaced by, digital practice.' },
+  ],
+  faq: [
+    {
+      question: 'How much screen time should children have during summer?',
+      answer: 'There is no single educational screen-time number that fits every child aged 3–12. Consider age-specific health guidance, the type and quality of media, what the child is doing, and whether screens are crowding out sleep, movement, reading, conversation or family routines. WHO provides specific sedentary-screen guidance for children under five; older children need an age-appropriate family plan rather than extending the preschool number automatically.',
+    },
+    {
+      question: 'Can screen time count as English learning?',
+      answer: 'Yes, when the activity has a clear English target and the child actively reads, speaks, writes, explains, chooses or creates. Add one off-screen transfer example to check whether the skill goes beyond the app or video.',
+    },
+    {
+      question: 'Are educational apps better than videos for children?',
+      answer: 'Not automatically. An app can be passive or overly scaffolded, and a well-used video can support discussion and learning. Judge the activity by purpose, participation, feedback and transfer rather than the format label alone.',
+    },
+    {
+      question: 'How can I reduce screen conflict without making English practice a punishment?',
+      answer: 'Use predictable family routines and agree on stopping cues before media starts. Give English practice its own learning purpose rather than making every worksheet the price a child must pay before leisure screen use.',
+    },
+    {
+      question: 'What should my child do after an English learning game?',
+      answer: 'Try one fresh off-screen example: read a new word, use vocabulary in a sentence, correct a new grammar example, retell something, or answer a similar speaking question to another person.',
+    },
+    {
+      question: 'When should parents worry that screen use is affecting daily life?',
+      answer: 'Seek appropriate professional guidance when media use persistently interferes with sleep, physical activity, school functioning, mood, safety, family relationships or ordinary daily routines despite reasonable family changes.',
+    },
+  ],
 };
 
 export default post;

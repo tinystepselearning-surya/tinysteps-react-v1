@@ -47,8 +47,9 @@ export function getBlogAudience(post: Pick<BlogPost, 'slug' | 'category'>): Blog
 }
 
 export function getBlogDiscoveryCategory(
-  post: Pick<BlogPost, 'slug' | 'category'>,
+  post: Pick<BlogPost, 'slug' | 'category' | 'discoveryCategory'>,
 ): BlogDiscoveryCategory {
+  if (post.discoveryCategory) return post.discoveryCategory;
   if (getBlogAudience(post) === 'Schools & Research') return 'Schools & Research';
   if (GRAMMAR_PARENT_DIAGNOSTIC_SLUGS.has(post.slug)) return 'Grammar';
   if (SPEAKING_PARENT_DIAGNOSTIC_SLUGS.has(post.slug)) return 'Speaking & Communication';

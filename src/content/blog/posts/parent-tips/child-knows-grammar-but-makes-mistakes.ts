@@ -4,293 +4,154 @@ const post: BlogPost = {
   slug: 'child-knows-grammar-but-makes-mistakes',
   title: 'My Child Knows Grammar Rules but Still Makes Mistakes — Why?',
   category: 'Parent Tips',
-  author: 'Tiny Steps Learning',
+  author: 'Priya',
   date: '2026-05-02',
-  readTime: '7 min read',
+  modifiedDate: '2026-08-30',
+  readTime: '17 min read',
   metaDescription:
-    'Child knows grammar but makes mistakes? A parent guide to sentence practice, speaking and writing transfer, and building confidence without pressure.',
+    'Child knows grammar rules but still makes mistakes? Learn why rule recall differs from real use, how to test transfer, correct effectively and build accuracy.',
   excerpt:
-    'Many children can explain grammar rules but still make errors in real speaking and writing. Repeated sentence use turns grammar knowledge into confident habits.',
+    'Knowing a grammar rule is not the same as using it automatically. This guide helps parents identify where transfer breaks between rule recall, guided sentences, spontaneous speech and fresh writing.',
+  audience: 'Parent',
+  discoveryCategory: 'Grammar',
   body: [
-    {
-      type: 'h2',
-      content: '1. Quick Answer for Parents',
-    },
-    {
-      type: 'p',
-      content:
-        'This is very common. A child may know grammar terms and rules, but still struggle to use them quickly in real speaking and writing.',
-    },
-    {
-      type: 'p',
-      content:
-        'The gap is usually between knowledge and use. Grammar becomes reliable only after repeated sentence practice in different contexts.',
-    },
-    {
-      type: 'h2',
-      content: '2. Why Knowing a Grammar Rule Is Not Enough',
-    },
-    {
-      type: 'p',
-      content:
-        'Children may correctly define noun, verb, tense, or adjective in class, yet still produce inaccurate sentences under time pressure.',
-    },
-    {
-      type: 'p',
-      content:
-        'Knowing a rule is like knowing traffic signs. Using it while moving in real time is a separate skill that needs practice.',
-    },
-    {
-      type: 'h2',
-      content: '3. The Difference Between Grammar Knowledge and Grammar Use',
-    },
-    {
-      type: 'li',
-      content: 'Knowledge: "I know the rule."',
-    },
-    {
-      type: 'li',
-      content: 'Use: "I can apply the rule while speaking or writing."',
-    },
-    {
-      type: 'p',
-      content:
-        'Grammar classes for kids are most effective when they move beyond rule recall into guided sentence formation for kids.',
-    },
-    {
-      type: 'h2',
-      content: '4. Why Children Make Mistakes While Speaking',
-    },
-    {
-      type: 'p',
-      content:
-        'Speaking needs quick sentence formation. Children must choose words, tense, and structure in seconds, so mistakes are expected during growth.',
-    },
-    {
-      type: 'li',
-      content: 'Subject-verb agreement: "He go to school" -> "He goes to school".',
-    },
-    {
-      type: 'li',
-      content: 'Tense switching: "Yesterday I eat" -> "Yesterday I ate".',
-    },
-    {
-      type: 'li',
-      content: 'Missing helping verbs: "She playing" -> "She is playing".',
-    },
-    {
-      type: 'li',
-      content: 'Overuse of short answers that avoid full sentence building.',
-    },
-    {
-      type: 'p',
-      content:
-        'Gentle correction after the sentence is completed usually works better than interrupting every word.',
-    },
-    {
-      type: 'h2',
-      content: '5. Why Children Make Mistakes While Writing',
-    },
-    {
-      type: 'p',
-      content:
-        'Writing is slower but demands planning and accuracy. Children must organize ideas, choose correct tense, and maintain word order across longer sentences.',
-    },
-    {
-      type: 'li',
-      content: 'Incomplete sentences that miss a subject or verb.',
-    },
-    {
-      type: 'li',
-      content: 'Word order issues in longer sentences.',
-    },
-    {
-      type: 'li',
-      content: 'Confusion between "She is playing" vs "She plays" based on context.',
-    },
-    {
-      type: 'p',
-      content:
-        'Strong writing skills for kids grow when short edits and rewrites are built into routine practice.',
-    },
-    {
-      type: 'h2',
-      content: '6. How Sentence Formation Builds Real Grammar Confidence',
-    },
-    {
-      type: 'p',
-      content:
-        'Sentence formation turns abstract rules into usable habits. When children repeatedly build, say, and write sentences, grammar becomes automatic.',
-    },
-    {
-      type: 'p',
-      content:
-        'This is a key bridge between English grammar for children and communication confidence in daily school and home situations.',
-    },
-    {
-      type: 'h2',
-      content: '7. What Parents Can Practise at Home',
-    },
-    {
-      type: 'li',
-      content: 'Ask for one full sentence instead of one-word replies.',
-    },
-    {
-      type: 'li',
-      content: 'Pick one focus per week (for example, present tense or helping verbs).',
-    },
-    {
-      type: 'li',
-      content: 'Give gentle, specific corrections ("Add s to goes"), not broad criticism.',
-    },
-    {
-      type: 'li',
-      content: 'Use read-speak-write cycles: read one line, say one sentence, write one sentence.',
-    },
-    {
-      type: 'li',
-      content: 'Praise effort and clarity, not only perfect grammar.',
-    },
-    {
-      type: 'h2',
-      content: '8. A Simple 10-Minute Grammar Practice Routine',
-    },
-    {
-      type: 'li',
-      content: 'Minute 1-2: Quick rule reminder with one example.',
-    },
-    {
-      type: 'li',
-      content: 'Minute 3-5: Speak 3 short sentences using the target rule.',
-    },
-    {
-      type: 'li',
-      content: 'Minute 6-8: Write 2 sentences and correct one error together.',
-    },
-    {
-      type: 'li',
-      content: 'Minute 9-10: Recap one success and one next-step focus.',
-    },
-    {
-      type: 'h2',
-      content: '9. When Structured Grammar Support Helps',
-    },
-    {
-      type: 'p',
-      content:
-        'If the same errors persist for weeks despite regular practice, structured grammar support can help identify whether the child needs more speaking transfer, writing transfer, or sequence-based revision.',
-    },
-    {
-      type: 'p',
-      content:
-        'Structured support is most useful when it isolates the first transfer step that breaks and gives practice there, rather than simply adding another rule list.',
-    },
-    {
-      type: 'h2',
-      content: '10. How Tiny Steps checks whether a grammar rule has transferred',
-    },
-    {
-      type: 'p',
-      content:
-        'Tiny Steps treats rule recall and real use as separate checkpoints. For one target pattern, we look at whether the child can recognise the rule, use it with a cue, use it while speaking about a fresh topic, and carry it into new writing. A correct worksheet answer is therefore useful evidence, but it is not the final transfer check.',
-    },
-    {
-      type: 'li',
-      content: 'Rule recall: can the child identify or correct the target when the rule is explicitly named?',
-    },
-    {
-      type: 'li',
-      content: 'Controlled use: can the child complete or build one sentence when the target pattern is cued?',
-    },
-    {
-      type: 'li',
-      content: 'Spontaneous speaking: can the child use the same pattern while answering a new question without being reminded of the rule?',
-    },
-    {
-      type: 'li',
-      content: 'Written transfer: can the child use the target in a fresh sentence or short paragraph without copying a model?',
-    },
-    {
-      type: 'p',
-      content:
-        'If rule recall is secure but controlled use breaks, practise a small number of guided examples. If speaking is accurate but writing breaks, move the same sentence into editing and writing tasks. If the pattern works immediately after revision but disappears later, revisit it cumulatively instead of treating the next new rule as the priority.',
-    },
-    {
-      type: 'li',
-      content: 'Explore grammar pathway: /grammar',
-    },
-    {
-      type: 'li',
-      content: 'Compare starting routes: /courses',
-    },
-    {
-      type: 'li',
-      content: 'See full learning roadmap: /curriculum',
-    },
-    {
-      type: 'h3',
-      content: 'Choose the support page that matches the transfer failure',
-    },
-    {
-      type: 'p',
-      content:
-        'Do not restart every grammar topic when one pattern is unstable. Use the broad roadmap to see the full sequence, then practise the smallest layer that is actually breaking in fresh work.',
-    },
-    {
-      type: 'li',
-      content: '[See the broad grammar roadmap from nouns to paragraphs](/blog/week-7-grammar-nouns-to-paragraphs).',
-    },
-    {
-      type: 'li',
-      content: '[Use tense practice when time words and verb forms break during fresh sentences](/blog/week-8-grammar-tenses).',
-    },
-    {
-      type: 'li',
-      content: '[Use subject-verb agreement practice when singular and plural subjects trigger repeated verb errors](/blog/week-10-grammar-subject-verb).',
-    },
-    {
-      type: 'li',
-      content: '[Use the grammar assessment guide when you need to identify one or two weak layers before choosing practice](/blog/week-17-grammar-assessment).',
-    },
-    {
-      type: 'li',
-      content: '[Use the editing guide when the child can produce ideas but needs a repeatable self-correction routine](/blog/week-20-grammar-editing-camp).',
-    },
-    {
-      type: 'li',
-      content: '[Use the sentence-formation guide instead when the main problem is building the sentence itself rather than applying a known rule](/blog/how-to-improve-sentence-formation-in-kids).',
-    },
-    {
-      type: 'h2',
-      content: '11. FAQ section with 5 parent questions',
-    },
+    { type: 'h2', content: 'Quick answer: knowing the rule and using the rule are different levels of learning' },
+    { type: 'p', content: 'A child can correctly explain past tense, subject–verb agreement or sentence structure and still say “Yesterday I go” or write “She play every day.” That does not automatically mean the child ignored the lesson. **Rule recall is easier than applying the same rule while also choosing ideas, vocabulary, sentence order, spelling and meaning.**' },
+    { type: 'p', content: 'The useful parent question is not simply “Does my child know this grammar rule?” It is: **At which point does the rule stop transferring into independent use?** If the child can explain the rule but cannot use it in a cued sentence, the next step is different from a child who speaks accurately but loses the same pattern while writing a paragraph.' },
+    { type: 'p', content: 'Tiny Steps protects a four-stage grammar-transfer checkpoint for this problem: **Rule recall → Controlled use → Spontaneous speaking → Written transfer**. The aim is to locate the first stage that is unstable and practise there, rather than reteaching every grammar topic from the beginning. This is an editorial teaching framework, not a standardized grammar assessment.' },
+
+    { type: 'h2', content: 'First separate Blog 38 from the nearby grammar problems' },
+    { type: 'p', content: 'This article owns one specific parent intent: **the child already knows or can explain a grammar pattern, but the pattern does not appear reliably in fresh speaking or writing**. If the child cannot build a complete sentence even when no particular grammar rule is being tested, start with [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). That page owns sentence construction itself.' },
+    { type: 'p', content: 'If the child mainly answers with labels or one-word responses and needs help expanding an idea, use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers). For the broader relationship between decoding, grammar and spoken communication, use [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together).' },
+
+    { type: 'h2', content: 'Why a worksheet can look perfect while real grammar is still unstable' },
+    { type: 'p', content: 'A worksheet often tells the child exactly which rule to retrieve. A heading such as “Choose has or have” narrows the problem before the child begins. In spontaneous speech or independent writing, the child must first generate an idea, choose words, organise the sentence, remember the relevant grammar pattern, monitor meaning and often manage spelling or handwriting at the same time.' },
+    { type: 'p', content: 'That difference matters. Success in a controlled exercise shows useful knowledge, but it does not by itself prove automatic transfer. The stronger test is whether the pattern survives when the rule is no longer named and the topic is new.' },
+
+    { type: 'h2', content: 'The Tiny Steps four-stage grammar-transfer check' },
+    { type: 'p', content: 'Use one target pattern at a time. Do not test five unrelated grammar rules in one conversation and then conclude that “grammar is weak.” Find the first stage where performance changes.' },
+    { type: 'h3', content: 'Stage 1 — Rule recall' },
+    { type: 'p', content: 'Can the child recognise, explain or correct the target when the rule is explicitly named? Example: “Yesterday tells us the action happened in the past. Which sentence is correct: Yesterday I play or Yesterday I played?” If this stage is weak, the child may need clearer teaching of the pattern before transfer practice begins.' },
+    { type: 'h3', content: 'Stage 2 — Controlled use' },
+    { type: 'p', content: 'Can the child build or complete a new sentence when the target is cued but the exact answer is not supplied? Example: “Tell me one sentence about yesterday using played.” If the child can explain the rule but cannot construct the sentence, bridge from explanation into guided production.' },
+    { type: 'h3', content: 'Stage 3 — Spontaneous speaking' },
+    { type: 'p', content: 'Can the child use the same pattern while answering a fresh question without being reminded that grammar is being checked? Example: “What did you do after school yesterday?” The target is more secure when the child selects the past-tense form while attention is mainly on meaning.' },
+    { type: 'h3', content: 'Stage 4 — Written transfer' },
+    { type: 'p', content: 'Can the child carry the pattern into a fresh sentence or short paragraph without copying a model? Writing adds planning, transcription and editing demands, so a pattern that is secure orally may still need practice in written composition.' },
+    { type: 'p', content: 'If a rule works immediately after revision but disappears a few days later, add cumulative review. The issue may be retention rather than initial understanding.' },
+
+    { type: 'h2', content: 'What current literacy evidence supports about grammar transfer' },
+    { type: 'p', content: 'The evidence base does not support treating grammar as a list of definitions to memorise in isolation. The Education Endowment Foundation’s Key Stage 2 literacy guidance recommends teaching writing composition through modelling and supported practice, developing transcription and sentence-construction skills through extensive practice, and accurately assessing pupil needs so support targets the actual bottleneck.' },
+    { type: 'p', content: 'The US Institute of Education Sciences elementary writing practice guide similarly recommends teaching sentence construction and giving students regular opportunities to write. Its instructional tips include sentence framing, sentence expanding and sentence combining, with teacher modelling followed by independent practice.' },
+    { type: 'p', content: 'EEF’s Grammar for Writing evaluation describes an approach designed to help pupils understand how linguistic structures convey meaning rather than teaching grammatical rules only in the abstract. The trial evidence is mixed rather than a universal endorsement of one programme, but the design principle is useful here: grammar should support meaning in authentic writing.' },
+    { type: 'p', content: 'EEF’s feedback guidance adds another important boundary: feedback can support progress when it addresses the gap between current and desired performance, but not all feedback is equally effective. For parents, that argues for specific, manageable correction tied to the current target rather than interrupting every sentence for every possible error.' },
+
+    { type: 'h2', content: 'Six reasons a known rule may disappear in real use' },
+    { type: 'h3', content: '1. The rule is remembered only when someone names it' },
+    { type: 'p', content: 'This is cue dependence. The child can answer “What is past tense?” but does not independently notice that yesterday should trigger a past-tense form. Practise the same rule through fresh meanings and contexts rather than repeatedly asking for the definition.' },
+    { type: 'h3', content: '2. Sentence construction is consuming most of the child’s attention' },
+    { type: 'p', content: 'If the child is still working hard to organise who did what, retrieve vocabulary or hold a longer sentence in mind, grammar monitoring may temporarily drop. In that case, simplify the sentence-building load while practising the target pattern.' },
+    { type: 'h3', content: '3. The child can use the pattern slowly but not yet automatically' },
+    { type: 'p', content: 'Controlled exercises allow time to think. Conversation moves quickly. A child may need many meaningful opportunities to use the same pattern before it becomes available without deliberate rule-searching.' },
+    { type: 'h3', content: '4. Too many grammar targets are being corrected at once' },
+    { type: 'p', content: 'If one sentence receives corrections for tense, article use, word order, pronunciation and vocabulary simultaneously, the learner may not know which change to retain. Choose the error that matches the current teaching target unless another error blocks meaning.' },
+    { type: 'h3', content: '5. Practice is too repetitive to prove transfer' },
+    { type: 'p', content: 'Ten nearly identical fill-in-the-blank items can improve performance on that item type without showing whether the child can use the structure in a new topic. Vary the subject, vocabulary and context while keeping the grammar target stable.' },
+    { type: 'h3', content: '6. The pattern was learned once but not revisited' },
+    { type: 'p', content: 'The IES learning-and-memory practice guide recommends spacing important learning over time and re-exposing learners to key content. A grammar pattern that was accurate on lesson day may need later retrieval and use before it becomes durable.' },
+
+    { type: 'h2', content: 'Speaking mistakes and writing mistakes can reveal different transfer gaps' },
+    { type: 'h3', content: 'If the error appears mainly while speaking' },
+    { type: 'p', content: 'The child may understand the rule but not retrieve it quickly enough while generating ideas and vocabulary. Use short spoken prompts with one target pattern, allow the child to finish the thought, then recast or briefly correct the target and invite another fresh sentence.' },
+    { type: 'h3', content: 'If the error appears mainly while writing' },
+    { type: 'p', content: 'Check whether the child can say the intended sentence correctly before writing it. If oral grammar is secure but written grammar breaks, move the same pattern into sentence construction, rereading and editing. The IES writing guide specifically treats sentence construction as a fluency skill that benefits from instruction and practice.' },
+    { type: 'h3', content: 'If the error appears in both speaking and writing' },
+    { type: 'p', content: 'Go back to controlled use and make the target smaller. The child may need clearer examples, contrastive practice and repeated production before expecting independent transfer across modes.' },
+
+    { type: 'h2', content: 'How to correct grammar without turning every conversation into a test' },
+    { type: 'p', content: 'Correction should serve learning and communication. If the child says “Yesterday I go park,” first decide whether the current target is past tense. If it is, one useful response is: “Yesterday I **went** to the park. What did you do there?” That models the correction while keeping the conversation moving.' },
+    { type: 'li', content: '**Meaning first:** respond to what the child is trying to communicate.' },
+    { type: 'li', content: '**One target:** correct the grammar pattern currently being practised instead of every imperfection.' },
+    { type: 'li', content: '**Specific cue:** “Yesterday—check the verb” is more actionable than “Your grammar is wrong.”' },
+    { type: 'li', content: '**Retry:** when useful, let the child produce another sentence rather than only hearing the adult’s correction.' },
+    { type: 'li', content: '**Fresh use:** later, ask a different question that requires the same pattern.' },
+    { type: 'p', content: 'Do not use one fixed correction style for every child and every situation. A confident learner doing focused grammar practice can tolerate more explicit correction than a hesitant child trying to tell an important story. The teaching goal and communication context both matter.' },
+
+    { type: 'h2', content: 'The one-rule, three-context routine for home practice' },
+    { type: 'p', content: 'Instead of a long weekly list, choose one pattern that is already understood but not transferring reliably. Practise it through three contexts so the child has to retrieve the rule rather than memorise one worksheet format.' },
+    { type: 'h3', content: 'Context 1 — controlled sentence' },
+    { type: 'p', content: 'Give a clear cue and ask for one new sentence. Example target: subject–verb agreement. Cue: “Tell me what your brother does every morning.”' },
+    { type: 'h3', content: 'Context 2 — fresh speaking' },
+    { type: 'p', content: 'Later, ask a natural question where the same grammar pattern is useful but do not announce the rule. “What does your friend usually do during lunch break?”' },
+    { type: 'h3', content: 'Context 3 — fresh writing' },
+    { type: 'p', content: 'Ask for two or three sentences on a different topic. After writing, have the child reread specifically for the target pattern. This links production with self-monitoring rather than relying on the parent to find every error.' },
+    { type: 'p', content: 'Repeat the pattern on another day with new vocabulary. Spacing and varied retrieval make the practice more informative than completing many identical items at once.' },
+
+    { type: 'h2', content: 'Use contrast pairs when the child confuses two forms' },
+    { type: 'p', content: 'Some grammar errors become clearer when the child compares two meaningful sentences rather than memorising a verbal rule. Keep the contrast small.' },
+    { type: 'li', content: '**Habit versus now:** “She plays every day.” / “She is playing now.”' },
+    { type: 'li', content: '**Present versus past:** “I walk to school.” / “I walked to school yesterday.”' },
+    { type: 'li', content: '**One versus more than one:** “He runs.” / “They run.”' },
+    { type: 'p', content: 'Ask what changed in meaning, then use the contrast in new sentences. The goal is not merely naming the tense or agreement rule; it is choosing the form because the message requires it.' },
+
+    { type: 'h2', content: 'How grammar, sentence formation and communication should work together' },
+    { type: 'p', content: 'Grammar is most useful when it helps a child express meaning more clearly. Sentence formation gives the idea a usable structure; grammar makes relationships such as time, number and connection clearer; communication practice makes those structures available under real-time conditions.' },
+    { type: 'p', content: 'That is why Tiny Steps keeps these diagnostic owners separate but connected. Use [Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids) when the sentence itself is hard to build. Use this page when the sentence can be built but a known rule does not transfer reliably. Use [One-Word Answers](/blog/child-gives-one-word-answers) when response expansion is the main issue.' },
+
+    { type: 'h2', content: 'What progress looks like — do not judge only by worksheet percentage' },
+    { type: 'li', content: 'The child needs fewer reminders before using the target pattern.' },
+    { type: 'li', content: 'The pattern appears correctly in a fresh sentence, not only the practised example.' },
+    { type: 'li', content: 'The child notices and repairs some errors without the adult supplying the answer.' },
+    { type: 'li', content: 'Accuracy begins to survive when vocabulary or topic changes.' },
+    { type: 'li', content: 'A pattern used accurately in speech begins to appear in independent writing.' },
+    { type: 'li', content: 'The child retains earlier grammar while learning a new target instead of losing the previous one completely.' },
+    { type: 'p', content: 'Progress can be uneven. A harder topic, longer sentence or faster conversation can temporarily increase errors. Look for a trend toward greater independence and transfer rather than expecting error-free English immediately.' },
+
+    { type: 'h2', content: 'What parents should avoid' },
+    { type: 'li', content: 'Do not make the child recite the rule again when rule recall is already secure.' },
+    { type: 'li', content: 'Do not correct every grammar feature in every sentence.' },
+    { type: 'li', content: 'Do not use only fill-in-the-blank worksheets and assume high scores prove spontaneous use.' },
+    { type: 'li', content: 'Do not jump to a new rule simply because the child completed the current worksheet.' },
+    { type: 'li', content: 'Do not treat an occasional error as proof that the child learned nothing.' },
+    { type: 'li', content: 'Do not compare a multilingual child’s developing English grammar with a sibling or classmate as if language exposure were identical.' },
+
+    { type: 'h2', content: 'A note for multilingual children' },
+    { type: 'p', content: 'Children who use more than one language may carry familiar patterns from one language into another while English develops. That can create systematic differences in word order, articles, tense marking or other forms. It should not be treated as laziness or corrected with embarrassment.' },
+    { type: 'p', content: 'If a child communicates richly in another language but particular English structures are still developing, focus on explicit English models and meaningful use. If concerns about language formulation appear broadly across the child’s languages and settings, discuss them with the child’s teacher and an appropriately qualified professional rather than diagnosing from an English grammar worksheet alone.' },
+
+    { type: 'h2', content: 'Choose the support page that matches the transfer failure' },
+    { type: 'p', content: 'The broad [Grammar roadmap from nouns to paragraphs](/blog/grammar-nouns-to-paragraphs) shows the wider progression. For a narrower difficulty, use the support page that matches the actual breakdown instead of restarting the whole curriculum.' },
+    { type: 'li', content: 'Time words and verb forms break in fresh sentences → [Tense practice](/blog/grammar-tenses).' },
+    { type: 'li', content: 'Singular/plural subjects repeatedly trigger the wrong verb form → [Subject–verb agreement practice](/blog/grammar-subject-verb).' },
+    { type: 'li', content: 'You are not sure which layer is weak → [Grammar assessment guide](/blog/grammar-assessment).' },
+    { type: 'li', content: 'The child produces ideas but does not notice errors when rereading → [Grammar editing and self-correction](/blog/grammar-editing-camp).' },
+    { type: 'li', content: 'The pattern works orally but not in writing → [Grammar speaking-to-writing bridge](/blog/grammar-speaking-bridge).' },
+
+    { type: 'h2', content: 'When structured support may be useful' },
+    { type: 'p', content: 'Consider a closer review when the same high-priority grammar pattern remains unstable despite clear teaching, repeated fresh practice and spaced review; when sentence formulation is also consistently difficult; or when the child cannot make progress because every task requires heavy adult prompting.' },
+    { type: 'p', content: 'Structured support should identify **which transfer stage breaks first** and practise there. It should not simply add more terminology or longer rule lists. Parents can review the Tiny Steps [Grammar programme](/grammar), [curriculum pathway](/curriculum), or use the [free 1:1 demo assessment route](/book-demo) when they want help identifying the starting point.' },
+
+    { type: 'h2', content: 'Evidence and references' },
+    { type: 'li', content: 'Education Endowment Foundation — Improving Literacy in Key Stage 2: modelling and supported practice for writing composition, extensive practice for sentence construction, and targeted support based on assessed need. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/literacy-ks2' },
+    { type: 'li', content: 'Education Endowment Foundation — summary of the updated Key Stage 2 literacy recommendations, including extensive sentence-construction practice and accurate assessment of pupil needs. https://educationendowmentfoundation.org.uk/news/eef-publishes-updated-key-stage-2-literacy-guidance' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Teaching Elementary School Students to Be Effective Writers: daily writing, writing-process instruction and sentence-construction fluency. https://ies.ed.gov/ncee/wwc/PracticeGuide/17' },
+    { type: 'li', content: 'Institute of Education Sciences — instructional tips for strong sentences: sentence framing, expanding and combining with modelling and independent practice. https://ies.ed.gov/ncee/WWC/Docs/PracticeGuide/wwc_ew_tips_120517.pdf' },
+    { type: 'li', content: 'Education Endowment Foundation — Grammar for Writing effectiveness trial: teaching how linguistic structures convey meaning rather than treating grammar only as abstract rules; results should be read with the evaluation’s stated limitations. https://educationendowmentfoundation.org.uk/projects-and-evaluation/projects/grammar-for-writing-effectiveness-trial' },
+    { type: 'li', content: 'Education Endowment Foundation — Teacher Feedback to Improve Pupil Learning: evidence-informed principles for feedback that addresses misunderstandings and moves learning forward. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/feedback' },
+    { type: 'li', content: 'Education Endowment Foundation — Oral language interventions: evidence on purposeful spoken language and verbal interaction, relevant when grammar needs to transfer into real communication. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/oral-language-interventions' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Organizing Instruction and Study to Improve Student Learning: spacing learning over time and re-exposing learners to important content. https://ies.ed.gov/ncee/wwc/PracticeGuide/1' },
+    { type: 'li', content: 'Institute of Education Sciences — Toolkit to Support Evidence-Based Writing Instruction in Grades 2–4: guided practice, regular writing and teacher observation of how students apply writing processes. https://ies.ed.gov/ncee/rel/writing-grades-2-4' },
+
+    { type: 'h2', content: 'Tiny Steps next-step pathway' },
+    { type: 'p', content: 'Use the smallest useful next step. If the child cannot explain the pattern, teach it clearly. If Rule recall is secure but Controlled use breaks, build a few guided fresh sentences. If Controlled use is secure but Spontaneous speaking breaks, move the same pattern into meaningful conversation. If speech is accurate but Written transfer breaks, practise sentence construction, rereading and editing. Review [Grammar classes for kids](/grammar), the [full curriculum roadmap](/curriculum), or [book a free 1:1 demo assessment class](/book-demo) when you want help locating that transfer point.' },
   ],
   faq: [
-    {
-      question: 'Why does my child know grammar rules but still make mistakes?',
-      answer:
-        'Because rule knowledge and real-time sentence use are different skills. Children need repeated speaking and writing practice to apply rules reliably.',
-    },
-    {
-      question: 'Should I correct every grammar error immediately?',
-      answer:
-        'Usually no. Frequent interruption can reduce confidence. Correct gently after the sentence and focus on one or two target patterns at a time.',
-    },
-    {
-      question: 'How can I improve sentence formation for kids at home?',
-      answer:
-        'Use short daily routines where your child speaks and writes a few full sentences using one grammar focus, then reviews one corrected example.',
-    },
-    {
-      question: 'Is speaking practice important for grammar accuracy?',
-      answer:
-        'Yes. Speaking helps children build fast sentence formation, while writing helps refine structure and accuracy. Both are needed for stable grammar use.',
-    },
-    {
-      question: 'When should I look for grammar classes for kids?',
-      answer:
-        'If similar mistakes persist for several weeks despite regular home practice, structured support can help identify and close the exact application gap.',
-    },
+    { question: 'Why does my child know grammar rules but still make mistakes?', answer: 'Because recalling a rule and applying it while speaking or writing are different demands. Find the first stage that is unstable: rule recall, controlled sentence use, spontaneous speaking or fresh written transfer.' },
+    { question: 'Why does my child get grammar worksheets right but speak incorrectly?', answer: 'Worksheets often name or strongly cue the rule, while speaking requires the child to generate meaning and retrieve the grammar pattern at the same time. Check the same rule in a fresh conversation without announcing it first.' },
+    { question: 'Should I correct every grammar mistake my child makes?', answer: 'Usually not. Respond to meaning, prioritise the current target, give a specific cue or model when useful, and allow a retry. Correcting many unrelated features at once can make it harder to know what the child should change.' },
+    { question: 'How can I help grammar transfer into speaking?', answer: 'Use one known rule across several fresh speaking contexts. Start with a cued sentence, then ask natural questions where the same pattern is useful without naming the rule. Track whether prompts reduce over time.' },
+    { question: 'How can I help grammar transfer into writing?', answer: 'First check whether the child can say the intended sentence accurately. Then use the same pattern in fresh written sentences, reread specifically for that target, and revisit it on another day rather than relying only on one worksheet.' },
+    { question: 'When should I get extra help for repeated grammar mistakes?', answer: 'Seek a closer review when an important pattern remains unstable despite clear teaching, varied practice and later review, when sentence formulation itself is consistently difficult, or when broader language concerns appear across settings.' },
   ],
 };
 

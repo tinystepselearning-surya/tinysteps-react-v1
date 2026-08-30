@@ -33,6 +33,8 @@ describe('blog indexing policy', () => {
       ['phonics-r-controlled', 'week-5-phonics-r-controlled'],
       ['phonics-summer-plan', 'week-16-phonics-summer-plan'],
       ['phonics-tricky-words', 'week-3-phonics-tricky-words'],
+      ['back-to-school-english-confidence-plan', 'week-25-back-to-school-plan'],
+      ['screen-smart-summer-routine-for-kids', 'week-26-screen-smart-summer-routine'],
     ]) {
       expect(shouldNoindexBlogSlug(cleanSlug)).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(cleanSlug)).toBe(true);
@@ -47,7 +49,6 @@ describe('blog indexing policy', () => {
     for (const slug of [
       'grammar-tenses',
       'speaking-visual-aids',
-      'screen-smart-summer-routine-for-kids',
     ]) {
       expect(shouldNoindexBlogSlug(slug)).toBe(true);
       expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(false);

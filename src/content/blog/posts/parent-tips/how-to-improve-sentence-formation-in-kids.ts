@@ -4,222 +4,149 @@ const post: BlogPost = {
   slug: 'how-to-improve-sentence-formation-in-kids',
   title: 'How to Improve Sentence Formation in Kids',
   category: 'Parent Tips',
-  author: 'Tiny Steps Learning',
+  author: 'Priya',
   date: '2026-05-15',
-  readTime: '8 min read',
+  modifiedDate: '2026-08-30',
+  readTime: '18 min read',
   metaDescription:
-    'How to improve sentence formation in kids: a parent guide to fix one-word answers, word-order mistakes, and grammar gaps using simple daily sentence-building activities.',
+    'Improve sentence formation in kids with oral sentence building, word-order practice, expansion, combining and writing transfer—without overcorrecting.',
   excerpt:
-    'If your child knows words but cannot make clear sentences, this guide explains why and gives practical sentence building activities for kids to improve grammar, writing, communication, and confidence.',
+    'If your child has ideas and vocabulary but struggles to build clear sentences, this guide shows how to strengthen core structure, expand meaning and transfer sentence control from speaking into writing.',
+  audience: 'Parent',
+  discoveryCategory: 'Grammar',
   body: [
-    {
-      type: 'h2',
-      content: '1. Parent Introduction: My Child Knows Words but Cannot Make Sentences',
-    },
-    {
-      type: 'p',
-      content:
-        'Many parents say, "My child knows many words, but cannot form complete sentences." This is common in both speaking and writing stages. Children may have ideas, but they still need structured sentence formation practice to express those ideas clearly.',
-    },
-    {
-      type: 'h2',
-      content: '2. Quick Answer for Parents',
-    },
-    {
-      type: 'p',
-      content:
-        'To improve sentence formation for kids, use short daily routines that combine vocabulary, grammar, speaking, and writing. Start with simple sentence patterns, practise orally, then move to writing. Consistent correction and repetition build confidence.',
-    },
-    {
-      type: 'h2',
-      content: '3. Why Children Struggle with Sentence Formation',
-    },
-    {
-      type: 'li',
-      content: 'Limited vocabulary makes sentence expression difficult.',
-    },
-    {
-      type: 'li',
-      content: 'Weak understanding of subject and verb relationships.',
-    },
-    {
-      type: 'li',
-      content: 'Missing articles and prepositions in everyday sentences.',
-    },
-    {
-      type: 'li',
-      content: 'One-word answers instead of complete responses.',
-    },
-    {
-      type: 'li',
-      content: 'Incorrect word order while speaking or writing.',
-    },
-    {
-      type: 'li',
-      content: 'Lack of daily sentence practice and correction.',
-    },
-    {
-      type: 'h2',
-      content: '4. Simple Home Activities to Improve Sentence Building',
-    },
-    {
-      type: 'h3',
-      content: 'Who + Doing What Activity',
-    },
-    {
-      type: 'p',
-      content:
-        'Give two prompts: who and doing what. Example: "The boy" + "is running." Ask your child to combine them into one complete sentence.',
-    },
-    {
-      type: 'h3',
-      content: 'Picture Sentence Game',
-    },
-    {
-      type: 'p',
-      content:
-        'Show one picture and ask for one full sentence. Then ask your child to write the same sentence with punctuation.',
-    },
-    {
-      type: 'h3',
-      content: 'Expand the Sentence Game',
-    },
-    {
-      type: 'p',
-      content:
-        'Start small: "The cat sleeps." Expand with where, when, or how: "The cat sleeps on the sofa every afternoon."',
-    },
-    {
-      type: 'h3',
-      content: 'Question-Answer Sentence Practice',
-    },
-    {
-      type: 'p',
-      content:
-        'Ask daily questions and require full-sentence answers. Example: "What did you eat?" -> "I ate rice and vegetables."',
-    },
-    {
-      type: 'h3',
-      content: 'Daily 5-Sentence Journal',
-    },
-    {
-      type: 'p',
-      content:
-        'Ask your child to write five short sentences each day about school, play, or family. Review one pattern at a time for correction.',
-    },
-    {
-      type: 'h2',
-      content: '5. How Tiny Steps checks sentence formation before adding more grammar',
-    },
-    {
-      type: 'p',
-      content:
-        'Tiny Steps separates sentence formation into observable steps instead of treating every weak sentence as the same grammar problem. We first check whether the child can say a complete simple sentence, then whether the same idea can be built from a clear subject-and-action pattern, expanded with one useful detail, and transferred into writing without losing the structure.',
-    },
-    {
-      type: 'li',
-      content: 'Oral sentence check: can the child describe a familiar picture or idea in one complete sentence without an adult finishing it?',
-    },
-    {
-      type: 'li',
-      content: 'Core structure check: can the child keep who + action + key detail in a sensible order?',
-    },
-    {
-      type: 'li',
-      content: 'Expansion check: can the child add where, when, how, or why without breaking the original sentence?',
-    },
-    {
-      type: 'li',
-      content: 'Writing transfer check: can the child write the same idea with the sentence structure still intact?',
-    },
-    {
-      type: 'p',
-      content:
-        'The first step that consistently breaks is the better practice target. If the oral sentence is incomplete, stay with guided speaking before adding writing. If speaking is clear but writing loses words or order, focus on oral-to-written transfer. If the simple sentence is secure but expansion causes errors, add only one detail at a time instead of introducing several new grammar rules together.',
-    },
-    {
-      type: 'p',
-      content:
-        'This matches the wider Tiny Steps curriculum approach of building grammar control through sentence formation and then carrying that control into clearer speaking and writing. Explore grammar support: /grammar. Build communication confidence: /speaking. Compare learning routes: /courses. Read connected-skill guide: /blog/how-phonics-grammar-and-communication-work-together. Try home routine ideas: /blog/how-to-engage-kids-in-english-learning-at-home.',
-    },
-    {
-      type: 'h3',
-      content: 'Use the wider grammar path without confusing the diagnosis',
-    },
-    {
-      type: 'p',
-      content:
-        'Sentence formation is one part of the wider grammar pathway. If the child needs a broader sequence from naming words through paragraphs, start with the grammar roadmap. If sentence structure is already secure, move only to the support page that matches the next observable gap.',
-    },
-    {
-      type: 'li',
-      content: '[See the broad grammar roadmap from nouns to paragraphs](/blog/week-7-grammar-nouns-to-paragraphs).',
-    },
-    {
-      type: 'li',
-      content: '[Practise conjunctions when the child can build short sentences but struggles to join ideas](/blog/week-9-grammar-conjunctions).',
-    },
-    {
-      type: 'li',
-      content: '[Use the oral-to-written bridge when the child can say the idea but loses sentence structure while writing](/blog/week-23-grammar-speaking-bridge).',
-    },
-    {
-      type: 'li',
-      content: '[Use the grammar-transfer guide instead when rules are already known but mistakes return in fresh speaking or writing](/blog/child-knows-grammar-but-makes-mistakes).',
-    },
-    {
-      type: 'h3',
-      content: 'Try Word Meaning Flashcards',
-    },
-    {
-      type: 'p',
-      content:
-        'Help your child learn useful words with simple meanings and example sentences. Stronger vocabulary often leads to clearer sentence formation in speaking and writing.',
-    },
-    {
-      type: 'li',
-      content: 'Play Free: /free-games/word-meaning-flashcards',
-    },
-    {
-      type: 'h2',
-      content: '6. Clear Next Step for Parents',
-    },
-    {
-      type: 'p',
-      content:
-        'Book a free grammar and sentence formation assessment class to understand your child\'s current level and get a clear improvement plan: /book-demo',
-    },
-    {
-      type: 'h2',
-      content: '7. FAQ section with 5 parent questions',
-    },
+    { type: 'h2', content: 'Quick answer: build the sentence before trying to make it longer or more grammatical' },
+    { type: 'p', content: 'If a child knows useful words but cannot turn them into a clear sentence, the first goal is not a longer answer or a bigger grammar worksheet. Start by helping the child express one complete idea in a stable order. Once the core sentence is secure, add one useful detail, connect related ideas, and then check whether the same structure survives in writing.' },
+    { type: 'p', content: 'Sentence formation sits between **having an idea** and **expressing that idea clearly**. A child may know the vocabulary, understand the question and still need help deciding who or what the sentence is about, what is happening, which words belong together, and what order makes the meaning clear.' },
+    { type: 'p', content: 'Tiny Steps protects a four-stage sentence-formation checkpoint for this problem: **Oral sentence → Core structure → Expansion → Writing transfer**. The first stage that repeatedly breaks becomes the practice target. This is an editorial teaching framework, not a standardized language or writing assessment.' },
+
+    { type: 'h2', content: 'First separate sentence formation from the nearby English problems' },
+    { type: 'p', content: 'This page owns **building and expanding the sentence itself**. If your child can build the sentence but known grammar rules disappear during fresh speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes). That article owns grammar transfer.' },
+    { type: 'p', content: 'If the child already answers independently but the response stays unnecessarily brief, use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers). If the child understands the question but cannot initiate an independent response in class, use [My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak). For the broader relationship between phonics, grammar and communication, use [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together).' },
+
+    { type: 'h2', content: 'What sentence formation actually requires' },
+    { type: 'p', content: 'A useful sentence is more than a row of known words. The child has to select an idea, choose the words that carry that idea, organise them into a meaningful structure and keep enough control to finish the sentence. In writing, spelling, handwriting, punctuation and planning add even more demand.' },
+    { type: 'p', content: 'The Department for Education’s 2025 Writing Framework describes writing as cognitively demanding and says sentence instruction is essential. It also makes an important distinction: grammar knowledge helps pupils control sentences and convey meaning, but grammar taught in isolation does not by itself create writing fluency.' },
+
+    { type: 'h2', content: 'Why children may know words but still struggle to form sentences' },
+    { type: 'h3', content: '1. The idea is not yet organised' },
+    { type: 'p', content: 'The child may know many relevant words but not yet have a clear plan for what the sentence is trying to say. A quick oral rehearsal can reduce this demand before grammar or writing is added.' },
+    { type: 'h3', content: '2. Core word order is unstable' },
+    { type: 'p', content: 'The child may omit the person or thing, lose the action, repeat words, or place important words in an order that makes the meaning difficult to follow. In this case, work on a short stable core before adding adjectives, conjunctions or several details.' },
+    { type: 'h3', content: '3. Vocabulary is understood but not easy to retrieve' },
+    { type: 'p', content: 'Recognising a word when hearing it is easier than selecting that word while constructing a sentence. A child may understand the topic but pause, substitute a vague word or abandon the sentence because the needed vocabulary is not accessible quickly enough.' },
+    { type: 'h3', content: '4. The child depends on sentence starters or adult completion' },
+    { type: 'p', content: 'Sentence frames can be useful scaffolds, but they should become smaller over time. If an adult supplies the first half of every response, the child may become good at filling gaps without learning to organise the whole sentence independently.' },
+    { type: 'h3', content: '5. Expansion overloads a sentence that was only just secure' },
+    { type: 'p', content: 'A child may say “The dog ran” accurately, then lose word order when asked to add where, when, how and why at the same time. Expansion should add one meaningful layer at a time.' },
+    { type: 'h3', content: '6. Spoken sentence control does not yet transfer into writing' },
+    { type: 'p', content: 'Some children can say a clear sentence but omit words, change word order or lose grammar when writing it. That does not mean the oral work failed; it shows that transcription and writing load are changing performance.' },
+
+    { type: 'h2', content: 'The protected Tiny Steps four-stage sentence-formation check' },
+    { type: 'p', content: 'Use a familiar picture, event or topic so difficult background knowledge is not the hidden problem. Check one stage at a time and avoid correcting several unrelated features during the same attempt.' },
+    { type: 'h3', content: 'Stage 1 — Oral sentence check' },
+    { type: 'p', content: 'Can the child describe one familiar picture, action or idea in a complete understandable sentence without an adult finishing it? The sentence does not have to be sophisticated. First establish whether the child can hold and express one complete thought.' },
+    { type: 'h3', content: 'Stage 2 — Core structure check' },
+    { type: 'p', content: 'Can the child keep the main parts of the idea in a sensible order—for example, **who or what + action/state + key information**? This is not a rule that every English sentence must follow one pattern; it is a simple scaffold for early sentence building.' },
+    { type: 'h3', content: 'Stage 3 — Expansion check' },
+    { type: 'p', content: 'Can the child add one useful detail such as where, when, how, which one or why without breaking the original sentence? Example: “The dog ran.” → “The dog ran across the garden.” → “The dog ran across the garden after lunch.” Stop adding details when they no longer improve the meaning.' },
+    { type: 'h3', content: 'Stage 4 — Writing transfer check' },
+    { type: 'p', content: 'Can the child write the same idea while keeping the important words and structure intact? If the oral sentence is clear but writing loses words or order, the next practice should focus on oral-to-written transfer rather than reteaching the whole sentence concept.' },
+    { type: 'p', content: 'The first unstable stage is the better practice target. If the oral sentence is incomplete, stay with guided speaking. If the core is secure but expansion breaks, add only one detail. If speaking is clear but writing breaks, reduce writing load and compare the spoken sentence with the written version.' },
+
+    { type: 'h2', content: 'A practical sentence-building progression for home or class' },
+    { type: 'h3', content: 'Step 1 — Say one complete idea' },
+    { type: 'p', content: 'Use a familiar picture or event. Ask for one sentence that tells the listener what is happening. Avoid demanding five sentences before one sentence is stable.' },
+    { type: 'h3', content: 'Step 2 — Make the core clearer' },
+    { type: 'p', content: 'If the sentence is incomplete, use a small cue: “Who?” “What happened?” or “Tell me the whole idea.” Give the child time to rebuild before supplying the answer.' },
+    { type: 'h3', content: 'Step 3 — Add one meaningful detail' },
+    { type: 'p', content: 'Choose one dimension—where, when, how, which one or why. The purpose is to make the meaning more precise, not to make the sentence long for its own sake.' },
+    { type: 'h3', content: 'Step 4 — Combine related ideas when ready' },
+    { type: 'p', content: 'When two simple sentences are secure, practise joining related ideas. Example: “Riya finished her homework. Riya went outside.” → “Riya finished her homework, and then she went outside.” Sentence combining should improve meaning and flow rather than reward complexity for its own sake.' },
+    { type: 'h3', content: 'Step 5 — Move from speech to writing' },
+    { type: 'p', content: 'Let the child say the sentence first, then write it. After writing, ask the child to read the sentence aloud and compare it with the intended idea. Oral rehearsal can reduce the planning demand while sentence writing is developing.' },
+    { type: 'h3', content: 'Step 6 — Transfer to a fresh topic' },
+    { type: 'p', content: 'Change the picture, event or prompt. A child who can use the same sentence-building strategy on a fresh topic with less support is showing stronger transfer than a child who can reproduce only the practised model.' },
+
+    { type: 'h2', content: 'Five sentence-building activities that teach a real structure' },
+    { type: 'h3', content: '1. Picture → sentence → detail' },
+    { type: 'p', content: 'Ask the child to describe one picture in a complete sentence, then add one detail. Keep the picture simple enough that the task tests sentence construction rather than background knowledge.' },
+    { type: 'h3', content: '2. Sentence expansion' },
+    { type: 'p', content: 'Start with a short complete sentence and add one useful detail at a time. IES instructional materials specifically include sentence expanding as a way to practise sentence construction.' },
+    { type: 'h3', content: '3. Sentence combining' },
+    { type: 'p', content: 'Give two or three related simple sentences and ask how they can become one clearer sentence. The IES elementary-writing practice guide cites evidence supporting explicit sentence-construction and sentence-combining instruction when it is connected to authentic writing.' },
+    { type: 'h3', content: '4. Oral rehearsal before writing' },
+    { type: 'p', content: 'Ask the child to say one or two possible sentences before choosing one to write. Both the DfE Writing Framework and IES materials support spoken/oral rehearsal as useful while children develop written composition.' },
+    { type: 'h3', content: '5. Repair one sentence' },
+    { type: 'p', content: 'Use one deliberately incomplete or confusing sentence. Ask what is missing or unclear, repair it together, then have the child build a fresh sentence using the same idea. The fresh sentence is important because spotting an error is easier than generating a new structure independently.' },
+
+    { type: 'h2', content: 'Sentence frames: useful scaffold, poor permanent destination' },
+    { type: 'p', content: 'Frames such as “I think ___ because ___” or “The ___ is ___” can reduce planning demand and help a child experience a successful structure. But the goal is not to keep the frame forever.' },
+    { type: 'li', content: '**Full frame:** “I think ___ because ___.”' },
+    { type: 'li', content: '**Partial cue:** “I think…”' },
+    { type: 'li', content: '**Open prompt:** “What do you think? Why?”' },
+    { type: 'li', content: '**Independent transfer:** a similar response on a fresh topic without the frame.' },
+    { type: 'p', content: 'Fade the scaffold only when the child can still keep the sentence organised. Removing all support too early can turn the activity back into guessing; keeping full frames too long can hide dependence.' },
+
+    { type: 'h2', content: 'How correction should work during sentence practice' },
+    { type: 'p', content: 'Do not correct every possible grammar, pronunciation, vocabulary and punctuation issue in one sentence. Choose the feature linked to the current target and preserve the child’s ability to finish the thought.' },
+    { type: 'li', content: '**Meaning first:** understand what the child is trying to say.' },
+    { type: 'li', content: '**One target:** choose the sentence feature that matters for today’s goal.' },
+    { type: 'li', content: '**Specific cue:** “Tell me who did it” is more useful than “That sentence is wrong.”' },
+    { type: 'li', content: '**Retry:** let the child rebuild or repeat the sentence after the cue.' },
+    { type: 'li', content: '**Fresh use:** ask for another sentence where the same structure is needed.' },
+    { type: 'p', content: 'EEF’s feedback guidance emphasises that feedback should respond to a learning gap and move learning forward. More correction is not automatically better correction.' },
+
+    { type: 'h2', content: 'Speaking and writing sentence formation are related but not identical' },
+    { type: 'p', content: 'Speaking happens in real time, so vocabulary retrieval, sentence planning and confidence can affect the output quickly. Writing gives more planning time but adds transcription demands such as spelling, handwriting, punctuation and rereading.' },
+    { type: 'p', content: 'The DfE Writing Framework notes that writing places significant demands on working memory. If a child can say a sentence clearly but loses structure while writing, keep the successful oral sentence available as a reference and reduce the number of new demands introduced at once.' },
+
+    { type: 'h2', content: 'What progress is worth tracking' },
+    { type: 'li', content: '**Completeness:** one idea is expressed without an adult finishing it.' },
+    { type: 'li', content: '**Core order:** the important words stay in a sensible structure.' },
+    { type: 'li', content: '**Expansion:** the child can add one relevant detail without breaking the sentence.' },
+    { type: 'li', content: '**Connection:** related ideas can be joined when that improves meaning.' },
+    { type: 'li', content: '**Independence:** fewer sentence starters or adult completions are needed.' },
+    { type: 'li', content: '**Writing transfer:** the oral structure survives when the child writes.' },
+    { type: 'li', content: '**Fresh transfer:** the same sentence-building skill appears with a new picture, topic or task.' },
+    { type: 'p', content: 'Longer is not automatically better. A short complete sentence that communicates the intended meaning independently can be stronger evidence than a long sentence assembled from adult prompts.' },
+
+    { type: 'h2', content: 'What parents should avoid' },
+    { type: 'li', content: 'Do not require a formal full sentence for every natural conversational response; short answers are sometimes completely appropriate.' },
+    { type: 'li', content: 'Do not add adjectives, conjunctions and several details before the core sentence is stable.' },
+    { type: 'li', content: 'Do not turn sentence formation into memorising grammar definitions.' },
+    { type: 'li', content: 'Do not finish every sentence for the child before giving time to organise the idea.' },
+    { type: 'li', content: 'Do not make a five-sentence journal the starting task for a child who cannot yet build one reliable sentence.' },
+    { type: 'li', content: 'Do not judge sentence skill from one copied model; check a fresh sentence.' },
+
+    { type: 'h2', content: 'For multilingual children, compare sentence ability across languages carefully' },
+    { type: 'p', content: 'A child may build sophisticated sentences in a home language while English sentence structure is still developing. That pattern should not be treated automatically as a general inability to form sentences. Compare what the child can express across the languages they use, and separate English-learning needs from broader communication concerns.' },
+    { type: 'p', content: 'If there are persistent concerns across languages or broader concerns about speech, language, hearing, development or learning, discuss them with the child’s school and an appropriately qualified professional. This article and a home sentence-building check are educational guidance, not diagnostic tools.' },
+
+    { type: 'h2', content: 'Use the right specialist path after the sentence check' },
+    { type: 'p', content: 'If basic sentence construction is the bottleneck, use the [grammar pathway](/grammar) and the [Grammar from Nouns to Paragraphs roadmap](/blog/grammar-nouns-to-paragraphs). If short sentences are secure but joining ideas is the next step, use [Grammar: Conjunctions](/blog/grammar-conjunctions). If the child can say the sentence but loses it in writing, use the [Grammar Speaking Bridge](/blog/grammar-speaking-bridge).' },
+    { type: 'p', content: 'If sentence structure itself is secure but known grammar rules do not transfer, move to [the grammar-transfer guide](/blog/child-knows-grammar-but-makes-mistakes). If the main need is longer spoken responses rather than sentence construction, use [the one-word-answer guide](/blog/child-gives-one-word-answers). For integrated home-practice ideas, use [How to Keep Kids Engaged in English Practice at Home](/blog/how-to-engage-kids-in-english-learning-at-home).' },
+    { type: 'p', content: 'The [curriculum roadmap](/curriculum) shows the wider learning sequence. Families who are unsure whether the main barrier is sentence formation, grammar transfer or communication can use the [free 1:1 demo assessment route](/book-demo) to discuss an appropriate starting point.' },
+
+    { type: 'h2', content: 'Evidence and references' },
+    { type: 'li', content: 'UK Department for Education — The Writing Framework: 2025 evidence-informed guidance on writing complexity, sentence instruction, transcription, composition, grammar and spoken language. https://www.gov.uk/government/publications/the-writing-framework' },
+    { type: 'li', content: 'UK Department for Education — Writing Framework summary: sentence instruction is essential; grammar supports sentence control but not writing fluency in isolation; spoken language supports writing. https://www.gov.uk/government/publications/the-writing-framework/writing-framework-summary' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Teaching Elementary School Students to Be Effective Writers: recommends developing fluency in sentence construction and explicitly teaching sentence structures. https://ies.ed.gov/ncee/wwc/PracticeGuide/17' },
+    { type: 'li', content: 'Institute of Education Sciences — Instructional Tips for Teaching Elementary School Students to Be Effective Writers: examples of sentence framing, sentence expanding, sentence combining, modelling and independent practice. https://ies.ed.gov/ncee/WWC/Docs/PracticeGuide/wwc_ew_tips_120517.pdf' },
+    { type: 'li', content: 'Institute of Education Sciences / REL — Toolkit to Support Evidence-Based Writing Instruction in Grades 2 Through 4: implementation resources aligned to the elementary writing practice guide. https://ies.ed.gov/ncee/rel/writing-grades-2-4' },
+    { type: 'li', content: 'Education Endowment Foundation — Improving Literacy in Key Stage 1: evidence-informed guidance spanning speaking/listening, language, sentence work, reading and writing. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/literacy-ks-1' },
+    { type: 'li', content: 'Education Endowment Foundation — Improving Literacy in Key Stage 2: guidance on high-quality literacy teaching, writing and extensive purposeful practice. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/literacy-ks2' },
+    { type: 'li', content: 'Education Endowment Foundation — Oral Language Interventions: current evidence on purposeful speaking/listening, modelling, scaffolding, vocabulary and dialogue. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/oral-language-interventions' },
+    { type: 'li', content: 'Education Endowment Foundation — From Talk to Text: guidance on oral rehearsal, vocabulary and sentence structures during writing. https://educationendowmentfoundation.org.uk/news/talk-to-text-integrating-oral-language' },
+    { type: 'li', content: 'Education Endowment Foundation — Teacher Feedback to Improve Pupil Learning: evidence-informed principles for feedback that targets learning gaps and supports improvement. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/feedback/' },
   ],
   faq: [
-    {
-      question: 'How can I improve sentence formation in kids at home?',
-      answer:
-        'Use short daily routines: full-sentence speaking, picture sentence tasks, and 5-sentence writing practice with gentle correction.',
-    },
-    {
-      question: 'Why does my child know words but cannot make sentences?',
-      answer:
-        'Children often need help with sentence structure, word order, and grammar links between words. Vocabulary alone is not enough.',
-    },
-    {
-      question: 'What are good sentence building activities for kids?',
-      answer:
-        'Who+doing what prompts, picture sentence games, expand-the-sentence tasks, question-answer practice, and short daily journals work well.',
-    },
-    {
-      question: 'Should we focus on grammar classes for kids if writing is weak?',
-      answer:
-        'Yes. Structured grammar and sentence formation support helps children write clearer, more complete sentences with better confidence.',
-    },
-    {
-      question: 'How long does sentence improvement usually take?',
-      answer:
-        'It depends on starting level and practice consistency. Track whether complete sentences become more independent, details can be added without losing structure, and the same sentence control transfers from speaking into writing.',
-    },
+    { question: 'How can I improve sentence formation in kids at home?', answer: 'Start with one complete spoken sentence about a familiar idea. Stabilise the core structure, add one useful detail, let the child say the sentence before writing it, and then check the same skill on a fresh topic.' },
+    { question: 'Why does my child know many words but cannot make sentences?', answer: 'Vocabulary knowledge and sentence construction are different demands. The child may need help organising the idea, retrieving words, keeping core word order stable or moving from a prompted structure to an independent sentence.' },
+    { question: 'What are good sentence-building activities for kids?', answer: 'Useful activities include picture-to-sentence practice, sentence expanding, sentence combining, oral rehearsal before writing and repairing one incomplete or confusing sentence before creating a fresh example.' },
+    { question: 'Should my child answer every question in a full sentence?', answer: 'No. Natural conversation includes appropriate short answers. Full-sentence practice is useful when the goal is sentence construction or response expansion, but it should not make ordinary conversation unnatural.' },
+    { question: 'What if my child can speak a sentence but cannot write it?', answer: 'Treat oral-to-written transfer as the next target. Let the child rehearse the sentence aloud, write a small amount, reread it and compare the written version with the original idea before adding more grammar demands.' },
+    { question: 'How do I know whether the problem is sentence formation or grammar?', answer: 'If the child cannot reliably build a complete sentence even without a specific grammar rule being tested, sentence formation is the earlier target. If the sentence structure is available but known rules disappear in fresh speaking or writing, use the grammar-transfer guide.' },
   ],
 };
 
