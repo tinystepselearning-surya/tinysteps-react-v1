@@ -39,6 +39,10 @@ describe('blog editorial cleanup', () => {
       .toBe('How this guide differs from the other Tiny Steps phonics guides');
     expect(cleanBlogText('Blog #10 asks whether the provider can show transfer.'))
       .toBe('This guide asks whether the provider can show transfer.');
+    expect(cleanBlogText('This Blog #2 owns the broader parent question.'))
+      .toBe('This guide covers the broader parent question.');
+    expect(cleanBlogText('This Blog #4 explains the conceptual difference.'))
+      .toBe('This guide explains the conceptual difference.');
   });
 
   it('turns multiple exposed internal routes into readable links instead of dropping destinations', () => {

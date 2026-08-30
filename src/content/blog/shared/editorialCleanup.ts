@@ -18,6 +18,8 @@ export function getWeekSeriesLabel(slug: string): string {
 
 function removeInternalBlogNumbering(content: string): string {
   return content
+    .replace(/\bThis\s+Blog\s+#\d+\s+owns\b/gi, 'This guide covers')
+    .replace(/\bThis\s+Blog\s+#\d+\b/gi, 'This guide')
     .replace(/\bHow\s+Blog\s+#\d+\s+differs\b/gi, 'How this guide differs')
     .replace(/\bUse\s+Blog\s+#\d+\s*,\s*/gi, 'Use ')
     .replace(INTERNAL_BLOG_REFERENCE_WITH_PUNCTUATION, '')
