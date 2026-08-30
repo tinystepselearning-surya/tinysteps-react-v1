@@ -115,7 +115,7 @@ const post: BlogPost = {
     content: 'This Blog #2 owns the broader parent question “my child knows ABC but cannot read.” It starts before decoding and checks the whole bridge from alphabet familiarity to usable word reading.'
   }, {
     type: 'p',
-    content: 'If your child already recalls taught letter sounds accurately but still cannot turn those sounds into words, do not keep repeating alphabet or sound cards. Move to [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words), which owns that narrower sounds-to-blending diagnostic.'
+    content: 'If your child already recalls taught letter sounds accurately but still cannot turn those sounds into words, do not keep repeating alphabet or sound cards. Move to the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words), which owns that narrower sounds-to-blending diagnostic. For the wider phonics framework around sounds, blending, decoding and parent support, use the [complete Phonics for Parents guide](/blog/phonics-for-parents-guide).'
   }, {
     type: 'h2',
     content: 'A simple home response for each bottleneck'
