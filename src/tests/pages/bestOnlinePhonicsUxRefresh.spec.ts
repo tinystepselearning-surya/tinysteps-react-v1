@@ -7,6 +7,8 @@ const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relat
 
 describe('Best online phonics buyer guide UX refresh', () => {
   const page = read('src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx');
+  const clusterNav = read('src/components/programs/ClusterSeoNav.tsx');
+  const premiumTheme = read('src/components/programs/phonicsBuyerPremium.css');
 
   it('keeps the buyer journey in decision-first scroll order', () => {
     const orderedSections = [
@@ -63,8 +65,26 @@ describe('Best online phonics buyer guide UX refresh', () => {
     expect(page).toContain('focus-within:-translate-y-1');
   });
 
+  it('finishes the page with a sunrise-orange premium discovery treatment', () => {
+    expect(clusterNav).toContain("const BUYER_GUIDE_PATH = '/best-online-phonics-classes-for-kids-in-india'");
+    expect(clusterNav).toContain('bg-[linear-gradient(135deg,#FFF3E6_0%,#FFFFFF_47%,#FFF8F2_100%)]');
+    expect(clusterNav).toContain('bg-[linear-gradient(135deg,#FF7A1A_0%,#FF5130_100%)]');
+    expect(clusterNav).toContain('bg-[linear-gradient(90deg,#FFAD42_0%,#FF6B00_48%,#FF5130_100%)]');
+    expect(premiumTheme).toContain('#ff6b00');
+    expect(premiumTheme).toContain('#ff9a3d');
+    expect(premiumTheme).toContain('#fff9f4');
+  });
+
+  it('retires the guide navigation for the final decision area and delays back-to-top', () => {
+    expect(clusterNav).toContain('finalDecisionSection.getBoundingClientRect().top <= 176');
+    expect(clusterNav).toContain("pageNavWrapper.style.transform = finalDecisionHasReachedGuide ? 'translateY(-110%)' : 'translateY(0)'");
+    expect(clusterNav).toContain('window.scrollY >= 1100');
+    expect(clusterNav).toContain("includes('back to top')");
+  });
+
   it('keeps motion restrained and offers reduced-motion-safe transitions', () => {
     expect(page).toContain('motion-safe:transition-all');
+    expect(clusterNav).toContain("window.matchMedia('(prefers-reduced-motion: reduce)').matches");
     expect(page).not.toContain('animate-bounce');
     expect(page).not.toContain('animate-pulse');
     expect(page).not.toContain('parallax');
