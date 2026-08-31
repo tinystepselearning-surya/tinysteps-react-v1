@@ -1,0 +1,91 @@
+:root {
+  --ts-sunrise-orange-deep: #d94a00;
+  --ts-sunrise-orange: #ff6a00;
+  --ts-sunrise-orange-bright: #ff8800;
+  --ts-sunrise-gold: #ffb347;
+  --ts-sunrise-soft: #fff7ef;
+  --ts-sunrise-soft-2: #fffaf6;
+}
+
+.ts-phonics-buyer-premium [class*="text-orange-"] {
+  color: var(--ts-sunrise-orange-deep) !important;
+}
+
+.ts-phonics-buyer-premium [class*="border-orange-"] {
+  border-color: #ff9a3d !important;
+}
+
+.ts-phonics-buyer-premium [class*="bg-orange-50"] {
+  background-color: var(--ts-sunrise-soft-2) !important;
+}
+
+.ts-phonics-buyer-premium [class*="bg-orange-100"] {
+  background-color: #ffe1c2 !important;
+}
+
+.ts-phonics-buyer-premium [class*="bg-orange-200"] {
+  background-color: #ffc27d !important;
+}
+
+.ts-phonics-buyer-premium [class*="bg-orange-400"] {
+  background-color: var(--ts-sunrise-orange) !important;
+}
+
+.ts-phonics-buyer-premium [class*="from-orange-50"] {
+  --tw-gradient-from: #fff8f1 var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(255 248 241 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.ts-phonics-buyer-premium [class*="via-orange-50"] {
+  --tw-gradient-via: #fff4e8 var(--tw-gradient-via-position) !important;
+}
+
+.ts-phonics-buyer-premium [class*="from-orange-400"] {
+  --tw-gradient-from: var(--ts-sunrise-orange) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(255 106 0 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.ts-phonics-buyer-premium [class*="to-amber-400"] {
+  --tw-gradient-to: var(--ts-sunrise-gold) var(--tw-gradient-to-position) !important;
+}
+
+.ts-phonics-buyer-premium [class*="border-orange-"][class*="bg-white"],
+.ts-phonics-buyer-premium [class*="border-orange-"][class*="via-white"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 12px 30px rgba(255, 106, 0, 0.10);
+}
+
+.ts-phonics-buyer-premium [class*="shadow-"][class*="orange"] {
+  --ts-orange-shadow: rgba(255, 106, 0, 0.16);
+}
+
+.ts-phonics-buyer-premium .ts-premium-page-nav {
+  will-change: opacity, transform;
+}
+
+.ts-phonics-buyer-premium .ts-premium-back-to-top {
+  will-change: opacity, transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ts-phonics-buyer-premium [class*="border-orange-"]:hover {
+    border-color: var(--ts-sunrise-orange-bright) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 20px 44px rgba(255, 106, 0, 0.17);
+  }
+
+  .ts-phonics-buyer-premium [class*="text-orange-"]:hover {
+    color: #c43f00 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-phonics-buyer-premium .ts-premium-page-nav,
+  .ts-phonics-buyer-premium .ts-premium-back-to-top {
+    transition: none !important;
+  }
+}

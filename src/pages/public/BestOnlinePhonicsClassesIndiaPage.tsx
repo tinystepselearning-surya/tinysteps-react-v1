@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import AboutAuthor from '../../components/AboutAuthor';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
@@ -98,6 +98,15 @@ const redFlags = [
   'No clear explanation of how sounds progress into blending, spelling, and connected reading.',
   'Unclear pricing, materials, scheduling, cancellation, or parent-feedback expectations.',
   'A “best” or “#1” claim without evidence parents can inspect for themselves.',
+];
+
+const pricingQuestions = [
+  'Is the class 1:1, group, or mainly self-practice?',
+  'Is assessment or placement included?',
+  'Are materials or home-practice resources included?',
+  'How often is parent progress shared?',
+  'What happens if the child needs slower or faster pacing?',
+  'Are rescheduling, cancellation, and package terms clear?',
 ];
 
 const tinyStepsEvidence = [
@@ -200,18 +209,91 @@ const faqItems = [
   },
 ];
 
-function Section({ children, tint = 'white', id }: { children: React.ReactNode; tint?: 'white' | 'blue' | 'warm' | 'lavender'; id?: string }) {
-  const backgrounds = {
+const pageNavItems = [
+  { id: 'comparison-framework', label: 'Choose' },
+  { id: 'programme-fit', label: 'Child fit' },
+  { id: 'format-comparison', label: 'Compare' },
+  { id: 'tiny-steps-evidence', label: 'Tiny Steps' },
+  { id: 'parent-reviews', label: 'Reviews' },
+  { id: 'pricing', label: 'Cost' },
+  { id: 'faq', label: 'FAQs' },
+];
+
+const premiumTones = [
+  {
+    card: 'border-orange-200/80 bg-gradient-to-br from-white via-orange-50/55 to-amber-50/75 hover:border-orange-300 hover:shadow-[0_18px_44px_rgba(249,115,22,0.14)]',
+    badge: 'bg-orange-100 text-orange-800 ring-orange-200',
+    glow: 'bg-orange-200/55',
+    accent: 'from-orange-400 to-amber-400',
+    soft: 'bg-orange-50/80',
+    row: 'bg-gradient-to-r from-orange-50/65 to-white hover:from-orange-100/70',
+  },
+  {
+    card: 'border-sky-200/80 bg-gradient-to-br from-white via-sky-50/55 to-cyan-50/75 hover:border-sky-300 hover:shadow-[0_18px_44px_rgba(14,165,233,0.13)]',
+    badge: 'bg-sky-100 text-sky-800 ring-sky-200',
+    glow: 'bg-sky-200/55',
+    accent: 'from-sky-400 to-cyan-400',
+    soft: 'bg-sky-50/80',
+    row: 'bg-gradient-to-r from-sky-50/65 to-white hover:from-sky-100/70',
+  },
+  {
+    card: 'border-violet-200/80 bg-gradient-to-br from-white via-violet-50/55 to-fuchsia-50/60 hover:border-violet-300 hover:shadow-[0_18px_44px_rgba(139,92,246,0.13)]',
+    badge: 'bg-violet-100 text-violet-800 ring-violet-200',
+    glow: 'bg-violet-200/55',
+    accent: 'from-violet-400 to-fuchsia-400',
+    soft: 'bg-violet-50/80',
+    row: 'bg-gradient-to-r from-violet-50/65 to-white hover:from-violet-100/70',
+  },
+  {
+    card: 'border-emerald-200/80 bg-gradient-to-br from-white via-emerald-50/55 to-teal-50/70 hover:border-emerald-300 hover:shadow-[0_18px_44px_rgba(16,185,129,0.13)]',
+    badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200',
+    glow: 'bg-emerald-200/55',
+    accent: 'from-emerald-400 to-teal-400',
+    soft: 'bg-emerald-50/80',
+    row: 'bg-gradient-to-r from-emerald-50/65 to-white hover:from-emerald-100/70',
+  },
+  {
+    card: 'border-rose-200/80 bg-gradient-to-br from-white via-rose-50/50 to-pink-50/65 hover:border-rose-300 hover:shadow-[0_18px_44px_rgba(244,63,94,0.12)]',
+    badge: 'bg-rose-100 text-rose-800 ring-rose-200',
+    glow: 'bg-rose-200/50',
+    accent: 'from-rose-400 to-pink-400',
+    soft: 'bg-rose-50/80',
+    row: 'bg-gradient-to-r from-rose-50/60 to-white hover:from-rose-100/65',
+  },
+  {
+    card: 'border-amber-200/80 bg-gradient-to-br from-white via-amber-50/55 to-yellow-50/65 hover:border-amber-300 hover:shadow-[0_18px_44px_rgba(245,158,11,0.12)]',
+    badge: 'bg-amber-100 text-amber-800 ring-amber-200',
+    glow: 'bg-amber-200/50',
+    accent: 'from-amber-400 to-yellow-400',
+    soft: 'bg-amber-50/80',
+    row: 'bg-gradient-to-r from-amber-50/60 to-white hover:from-amber-100/65',
+  },
+];
+
+type SectionTint = 'white' | 'blue' | 'warm' | 'lavender';
+
+function Section({ children, tint = 'white', id }: { children: ReactNode; tint?: SectionTint; id?: string }) {
+  const backgrounds: Record<SectionTint, string> = {
     white: 'bg-white',
-    blue: 'bg-[#F4FAFF]',
+    blue: 'bg-[#F3F9FF]',
     warm: 'bg-[#FFF9F1]',
     lavender: 'bg-[#FBF8FF]',
   };
 
   return (
-    <section id={id} className={`${backgrounds[tint]} px-4 py-10 sm:px-5 md:py-14 lg:px-6`}>
+    <section id={id} className={`${backgrounds[tint]} scroll-mt-[176px] px-4 py-12 sm:px-5 md:scroll-mt-[184px] md:py-16 lg:px-6`}>
       <div className="mx-auto max-w-6xl">{children}</div>
     </section>
+  );
+}
+
+function SectionHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
+  return (
+    <div className="max-w-4xl">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{eyebrow}</p>
+      <h2 className="mt-2 text-3xl font-bold tracking-[-0.025em] text-slate-950 sm:text-[34px]">{title}</h2>
+      {children ? <div className="mt-3 text-base leading-8 text-slate-700">{children}</div> : null}
+    </div>
   );
 }
 
@@ -223,6 +305,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
   const seoDescription =
     'Compare the best online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, teacher correction, transfer evidence, phonics class cost, fees, and progress visibility.';
   const starterPlan = ONE_TO_ONE_MONTHLY_PACKAGES.find((pkg) => pkg.id === 'starter');
+  const [activeSection, setActiveSection] = useState(pageNavItems[0].id);
 
   useEffect(() => {
     const breadcrumbSchema = {
@@ -292,17 +375,45 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+
+    const sections = pageNavItems
+      .map((item) => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      {
+        rootMargin: '-23% 0px -63% 0px',
+        threshold: [0.05, 0.2, 0.45],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="bg-white pb-14">
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8F2] via-white to-[#F1F8FF] px-4 py-10 sm:px-5 md:py-14 lg:px-8 lg:py-16">
-        <div className="pointer-events-none absolute -left-10 top-10 h-44 w-44 rounded-full bg-orange-100 blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-sky-100 blur-3xl" />
-        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+    <div className="bg-white pb-24 lg:pb-16">
+      <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-[#FFF5EA] via-white to-[#EAF6FF] px-4 py-10 sm:px-5 md:py-14 lg:px-8 lg:py-[72px]">
+        <div className="pointer-events-none absolute -left-16 top-8 h-52 w-52 rounded-full bg-orange-100/90 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -right-12 top-0 h-64 w-64 rounded-full bg-sky-100/95 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute bottom-0 left-[44%] h-40 w-40 rounded-full bg-violet-100/35 blur-3xl" aria-hidden="true" />
+        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-12">
           <div>
-            <p className="inline-flex rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 shadow-sm">
+            <p className="inline-flex rounded-full border border-orange-200 bg-white/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 shadow-sm">
               Parent comparison & decision guide
             </p>
-            <h1 className="mt-4 max-w-4xl text-4xl font-bold leading-tight tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[56px]">
+            <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[58px]">
               Best Online Phonics Classes for Kids in India
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 sm:text-lg">
@@ -310,252 +421,261 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             </p>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
               This page is the Tiny Steps buyer-comparison guide. For the full Tiny Steps phonics method, levels, and learning pathway, use the{' '}
-              <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-4">
+              <Link to="/phonics" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-700">
                 main phonics programme page
               </Link>
               .
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-950 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-slate-800">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                to="/book-demo"
+                className="inline-flex min-h-[50px] w-full items-center justify-center rounded-full bg-slate-950 px-6 py-3 font-semibold text-white shadow-[0_12px_28px_rgba(15,23,42,0.20)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-[0_16px_34px_rgba(15,23,42,0.24)] sm:w-auto"
+              >
                 Book Free 35-Minute Assessment
               </Link>
-              <a href="#comparison-framework" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-900 transition hover:bg-slate-50">
+              <a
+                href="#comparison-framework"
+                className="inline-flex min-h-[50px] w-full items-center justify-center rounded-full border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/60 hover:shadow-md sm:w-auto"
+              >
                 Compare Phonics Options
               </a>
             </div>
           </div>
 
-          <aside className="rounded-[30px] border border-slate-200 bg-white/95 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.10)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Tiny Steps quick facts</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
-                <p className="text-xs font-semibold text-slate-500">Age range</p>
-                <p className="mt-1 font-bold text-slate-900">{PUBLIC_SITE_FACTS.audience.label}</p>
-              </div>
-              <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
-                <p className="text-xs font-semibold text-slate-500">Main format</p>
-                <p className="mt-1 font-bold text-slate-900">Live 1:1 online</p>
-              </div>
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
-                <p className="text-xs font-semibold text-slate-500">Session length</p>
-                <p className="mt-1 font-bold text-slate-900">{PUBLIC_SITE_FACTS.liveSessions.label}</p>
-              </div>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                <p className="text-xs font-semibold text-slate-500">Current reference</p>
-                <p className="mt-1 font-bold text-slate-900">{formatINR(PER_CLASS_PRICE)} per 1:1 class</p>
-              </div>
+          <aside className="rounded-[30px] border border-white/90 bg-white/88 p-5 shadow-[0_24px_64px_rgba(15,23,42,0.12)] backdrop-blur sm:p-6">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Tiny Steps quick facts</p>
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_5px_rgba(16,185,129,0.12)]" aria-hidden="true" />
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-600">
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {[
+                { label: 'Age range', value: PUBLIC_SITE_FACTS.audience.label, tone: premiumTones[0] },
+                { label: 'Main format', value: 'Live 1:1 online', tone: premiumTones[1] },
+                { label: 'Session length', value: PUBLIC_SITE_FACTS.liveSessions.label, tone: premiumTones[2] },
+                { label: 'Current reference', value: `${formatINR(PER_CLASS_PRICE)} per 1:1 class`, tone: premiumTones[3] },
+              ].map((fact) => (
+                <div
+                  key={fact.label}
+                  className={`group relative overflow-hidden rounded-2xl border p-4 shadow-[0_4px_14px_rgba(15,23,42,0.03)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:shadow-md ${fact.tone.card}`}
+                >
+                  <div className={`pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full blur-2xl ${fact.tone.glow}`} aria-hidden="true" />
+                  <p className="relative text-xs font-semibold text-slate-500">{fact.label}</p>
+                  <p className="relative mt-1 font-bold leading-6 text-slate-900">{fact.value}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">
               The free assessment is the first step so the recommended starting point follows the child’s current reading behaviour rather than age alone.
             </p>
           </aside>
         </div>
       </section>
 
+      <div className="sticky top-[72px] z-30 border-y border-slate-200/75 bg-white/94 shadow-[0_8px_24px_rgba(15,23,42,0.055)] backdrop-blur-xl lg:top-[78px]">
+        <nav
+          aria-label="On this page"
+          className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-2 [scrollbar-width:none] sm:px-5 lg:px-6 [&::-webkit-scrollbar]:hidden"
+        >
+          {pageNavItems.map((item) => {
+            const isActive = activeSection === item.id;
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                aria-current={isActive ? 'location' : undefined}
+                className={`inline-flex min-h-[38px] shrink-0 items-center justify-center rounded-full px-4 text-sm font-semibold motion-safe:transition-all motion-safe:duration-200 ${
+                  isActive
+                    ? 'bg-gradient-to-r from-slate-950 to-slate-800 text-white shadow-[0_7px_16px_rgba(15,23,42,0.18)] ring-1 ring-slate-900/10'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950'
+                }`}
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </nav>
+      </div>
+
       <Section id="comparison-framework" tint="warm">
-        <div className="max-w-4xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Quick answer</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">How should parents choose the best phonics class?</h2>
-          <p className="mt-4 text-base leading-8 text-slate-700">
+        <SectionHeading eyebrow="Quick answer" title="How should parents choose the best phonics class?">
+          <p>
             Compare four things before you compare brands: <strong>child fit, teaching quality, proof of transfer, and practical clarity</strong>. The strongest programme for one child may not be the strongest fit for another, so this page avoids unsupported “#1” claims and gives you criteria you can verify.
           </p>
-        </div>
-        <div className="mt-7 grid gap-4 md:grid-cols-2">
-          {decisionGates.map((item) => (
-            <article key={item.title} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-700 sm:text-base">{item.answer}</p>
-            </article>
-          ))}
+        </SectionHeading>
+
+        <div className="relative mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {decisionGates.map((item, index) => {
+            const tone = premiumTones[index];
+            return (
+              <article
+                key={item.title}
+                className={`group relative overflow-hidden rounded-[28px] border p-5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-1 ${tone.card}`}
+              >
+                <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full blur-2xl motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-125 ${tone.glow}`} aria-hidden="true" />
+                <span className={`relative flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ring-1 ${tone.badge}`}>
+                  {index + 1}
+                </span>
+                <h3 className="relative mt-4 text-lg font-bold text-slate-900">{item.title.replace(/^\d+\.\s*/, '')}</h3>
+                <p className="relative mt-2 text-sm leading-7 text-slate-700">{item.answer}</p>
+                <div className={`absolute inset-x-5 bottom-0 h-1 origin-left scale-x-0 rounded-full bg-gradient-to-r motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-x-100 ${tone.accent}`} aria-hidden="true" />
+              </article>
+            );
+          })}
         </div>
       </Section>
 
-      <Section tint="blue">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <Section id="programme-fit">
+        <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Format comparison</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">1-to-1 vs group phonics classes vs app practice</h2>
-          </div>
-          <p className="max-w-2xl text-sm leading-7 text-slate-600">
-            Format matters, but teaching quality and child fit matter more than the label alone.
-          </p>
-        </div>
-        <div className="mt-7 overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-[820px] w-full border-collapse text-left text-sm sm:text-base">
-            <thead>
-              <tr>
-                <th className="bg-slate-950 px-5 py-4 font-semibold text-white">Format</th>
-                <th className="bg-slate-950 px-5 py-4 font-semibold text-white">Can be strong when</th>
-                <th className="bg-slate-950 px-5 py-4 font-semibold text-white">What parents should check</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonFormats.map((item, index) => (
-                <tr key={item.format} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td className="border-t border-slate-200 px-5 py-4 font-semibold text-slate-900">{item.format}</td>
-                  <td className="border-t border-slate-200 px-5 py-4 leading-7 text-slate-700">{item.strongWhen}</td>
-                  <td className="border-t border-slate-200 px-5 py-4 leading-7 text-slate-700">{item.parentCheck}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-
-      <Section id="provider-scorecard">
-        <div className="max-w-4xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Parent scorecard</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">12 checks before choosing a phonics programme</h2>
-          <p className="mt-3 text-base leading-8 text-slate-700">
-            Use these as comparison questions, not as a universal rating system. A provider does not need to use Tiny Steps terminology, but it should be able to answer the underlying questions clearly.
-          </p>
-        </div>
-        <div className="mt-7 grid gap-3 md:grid-cols-2">
-          {providerScorecard.map((item, index) => (
-            <article key={item} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-bold text-white">{index + 1}</span>
-              <p className="text-sm leading-7 text-slate-700 sm:text-base">{item}</p>
-            </article>
-          ))}
-        </div>
-      </Section>
-
-      <Section tint="lavender">
-        <div className="max-w-4xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Tiny Steps against the criteria</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">What can parents verify before choosing Tiny Steps?</h2>
-          <p className="mt-3 text-base leading-8 text-slate-700">
-            The useful question is not “Does Tiny Steps call itself the best?” It is “Can I inspect the programme, evidence, pricing, and teaching approach before I decide?”
-          </p>
-        </div>
-        <div className="mt-7 overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-[800px] w-full border-collapse text-left text-sm sm:text-base">
-            <thead>
-              <tr>
-                <th className="bg-slate-950 px-5 py-4 font-semibold text-white">Criterion</th>
-                <th className="bg-slate-950 px-5 py-4 font-semibold text-white">Tiny Steps evidence</th>
-                <th className="bg-slate-950 px-5 py-4 font-semibold text-white">Inspect it</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tinyStepsEvidence.map((item, index) => (
-                <tr key={item.criterion} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td className="border-t border-slate-200 px-5 py-4 font-semibold text-slate-900">{item.criterion}</td>
-                  <td className="border-t border-slate-200 px-5 py-4 leading-7 text-slate-700">{item.tinySteps}</td>
-                  <td className="border-t border-slate-200 px-5 py-4">
-                    <Link to={item.href} className="font-semibold text-slate-900 underline underline-offset-4">
-                      {item.label}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-
-      <Section>
-        <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Programme fit</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Who may benefit most from Tiny Steps phonics?</h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {fitCards.map((item) => (
-                <article key={item} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-sm leading-7 text-slate-700">{item}</p>
-                </article>
-              ))}
+            <SectionHeading eyebrow="Programme fit" title="Who may benefit most from Tiny Steps phonics?" />
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {fitCards.map((item, index) => {
+                const tone = premiumTones[index % premiumTones.length];
+                return (
+                  <article
+                    key={item}
+                    className={`group relative flex min-h-[92px] gap-3 overflow-hidden rounded-2xl border p-4 shadow-[0_5px_16px_rgba(15,23,42,0.035)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 ${tone.card}`}
+                  >
+                    <div className={`pointer-events-none absolute -bottom-8 -right-8 h-20 w-20 rounded-full blur-2xl ${tone.glow}`} aria-hidden="true" />
+                    <span className={`relative mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}>
+                      {index + 1}
+                    </span>
+                    <p className="relative text-sm leading-7 text-slate-700">{item}</p>
+                  </article>
+                );
+              })}
             </div>
           </div>
-          <aside className="rounded-3xl border border-orange-200 bg-orange-50/60 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">When phonics may not be the main need</p>
-            <h3 className="mt-2 text-2xl font-bold text-slate-950">Accurate decoding but slow or weak reading?</h3>
-            <p className="mt-3 text-sm leading-7 text-slate-700 sm:text-base">
-              If your child already decodes words accurately but reads very slowly, struggles with expression, or does not understand what they read, the main bottleneck may have moved beyond basic phonics.
-            </p>
-            <Link to="/reading-classes-for-kids" className="mt-5 inline-flex font-semibold text-slate-900 underline underline-offset-4">
-              Compare broader reading support
-            </Link>
+
+          <aside className="group relative overflow-hidden rounded-[30px] border border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50/80 p-6 shadow-[0_12px_36px_rgba(249,115,22,0.07)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-[0_18px_44px_rgba(249,115,22,0.12)] sm:p-7">
+            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange-100/80 blur-3xl motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-125" aria-hidden="true" />
+            <div className="absolute -bottom-12 left-10 h-28 w-28 rounded-full bg-amber-100/65 blur-3xl" aria-hidden="true" />
+            <div className="relative">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">When phonics may not be the main need</p>
+              <h3 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Accurate decoding but slow or weak reading?</h3>
+              <p className="mt-4 text-sm leading-7 text-slate-700 sm:text-base">
+                If your child already decodes words accurately but reads very slowly, struggles with expression, or does not understand what they read, the main bottleneck may have moved beyond basic phonics.
+              </p>
+              <Link
+                to="/reading-classes-for-kids"
+                className="mt-6 inline-flex min-h-[44px] items-center rounded-full border border-orange-200 bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md"
+              >
+                Compare broader reading support
+              </Link>
+            </div>
           </aside>
         </div>
       </Section>
 
-      <Section tint="warm">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Phonics classes fees</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">What does Tiny Steps phonics cost?</h2>
-            <p className="mt-4 text-base leading-8 text-slate-700">
-              The current standard reference is <strong>{formatINR(PER_CLASS_PRICE)} per 1:1 class</strong>
-              {starterPlan ? <> and <strong>{formatINR(starterPlan.monthlyFee)} for {starterPlan.classes} classes</strong></> : null}. Parents should compare total programme clarity—not price alone—because a lower cost is not automatically stronger teaching, and a higher cost is not proof of better teaching.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/pricing" className="inline-flex rounded-full border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-900 hover:bg-slate-50">
-                View Current Pricing
-              </Link>
-              <Link to="/book-demo" className="inline-flex rounded-full bg-slate-950 px-5 py-2.5 font-semibold text-white hover:bg-slate-800">
-                Book Free Assessment
-              </Link>
-            </div>
-          </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-950">When comparing phonics class cost, ask:</h3>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-700 sm:text-base">
-              <li>• Is the class 1:1, group, or mainly self-practice?</li>
-              <li>• Is assessment or placement included?</li>
-              <li>• Are materials or home-practice resources included?</li>
-              <li>• How often is parent progress shared?</li>
-              <li>• What happens if the child needs slower or faster pacing?</li>
-              <li>• Are rescheduling, cancellation, and package terms clear?</li>
-            </ul>
-          </div>
-        </div>
-      </Section>
-
-      <Section tint="blue">
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Use the trial well</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">8 questions to ask during a phonics demo or assessment</h2>
-            <ol className="mt-6 space-y-3">
-              {demoQuestions.map((item, index) => (
-                <li key={item} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-900">{index + 1}</span>
-                  <span className="text-sm leading-7 text-slate-700 sm:text-base">{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Comparison red flags</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">What should make a parent ask more questions?</h2>
-            <div className="mt-6 space-y-3">
-              {redFlags.map((item) => (
-                <article key={item} className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4 text-sm leading-7 text-slate-700 sm:text-base">
-                  {item}
-                </article>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      <Section>
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Go deeper</p>
-          <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Use the full parent comparison framework</h2>
-          <p className="mt-3 max-w-4xl text-base leading-8 text-slate-700">
-            For a deeper editorial checklist covering placement, teaching sequence, decodable reading, transfer evidence, teacher training, progress reporting, pricing clarity, and red flags, read our complete parent guide.
+      <Section id="format-comparison" tint="blue">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <SectionHeading eyebrow="Format comparison" title="1-to-1 vs group phonics classes vs app practice" />
+          <p className="max-w-xl text-sm leading-7 text-slate-600">
+            Format matters, but teaching quality and child fit matter more than the label alone.
           </p>
-          <Link to="/blog/how-to-choose-phonics-classes" className="mt-5 inline-flex rounded-full bg-slate-950 px-5 py-2.5 font-semibold text-white hover:bg-slate-800">
-            How to Choose a Phonics Class
-          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          {comparisonFormats.map((item, index) => {
+            const tone = premiumTones[index];
+            return (
+              <article
+                key={item.format}
+                className={`group relative overflow-hidden rounded-[28px] border p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-1 sm:p-6 ${tone.card}`}
+              >
+                <div className={`pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-125 ${tone.glow}`} aria-hidden="true" />
+                <div className="relative flex items-start justify-between gap-4">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-950">{item.format}</h3>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}>
+                    {index + 1}
+                  </span>
+                </div>
+                <div className="relative mt-5 border-t border-slate-200/70 pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Can be strong when</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{item.strongWhen}</p>
+                </div>
+                <div className={`relative mt-4 rounded-2xl border border-white/70 p-4 shadow-inner ${tone.soft}`}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">What parents should check</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{item.parentCheck}</p>
+                </div>
+                <div className={`absolute inset-x-6 bottom-0 h-1 scale-x-0 rounded-full bg-gradient-to-r motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-x-100 ${tone.accent}`} aria-hidden="true" />
+              </article>
+            );
+          })}
         </div>
       </Section>
 
-      <ContentTrustNote text="This comparison page is created by the Tiny Steps academic team and founder-reviewed to help parents compare phonics options using visible criteria, realistic expectations, and inspectable evidence rather than unsupported ranking claims." />
+      <Section id="provider-scorecard">
+        <SectionHeading eyebrow="Parent scorecard" title="12 checks before choosing a phonics programme">
+          <p>
+            Use these as comparison questions, not as a universal rating system. A provider does not need to use Tiny Steps terminology, but it should be able to answer the underlying questions clearly.
+          </p>
+        </SectionHeading>
+
+        <div className="mt-8 overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(15,23,42,0.055)]">
+          <div className="grid md:grid-cols-2">
+            {providerScorecard.map((item, index) => {
+              const tone = premiumTones[index % premiumTones.length];
+              return (
+                <article
+                  key={item}
+                  className={`group flex gap-4 border-slate-100 p-4 motion-safe:transition-all motion-safe:duration-200 sm:p-5 ${tone.row} ${
+                    index > 0 ? 'border-t' : ''
+                  } ${index === 1 ? 'md:border-t-0' : ''} ${index % 2 === 1 ? 'md:border-l' : ''}`}
+                >
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 motion-safe:transition-transform motion-safe:duration-200 group-hover:scale-105 ${tone.badge}`}>
+                    {index + 1}
+                  </span>
+                  <p className="text-sm leading-7 text-slate-700 sm:text-base">{item}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </Section>
+
+      <Section id="tiny-steps-evidence" tint="lavender">
+        <SectionHeading eyebrow="Tiny Steps against the criteria" title="What can parents verify before choosing Tiny Steps?">
+          <p>
+            The useful question is not “Does Tiny Steps call itself the best?” It is “Can I inspect the programme, evidence, pricing, and teaching approach before I decide?”
+          </p>
+        </SectionHeading>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {tinyStepsEvidence.map((item, index) => {
+            const tone = premiumTones[index % premiumTones.length];
+            return (
+              <article
+                key={item.criterion}
+                className={`group relative flex h-full flex-col overflow-hidden rounded-[26px] border p-5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-1 focus-within:-translate-y-1 ${tone.card}`}
+              >
+                <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full blur-3xl motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-125 ${tone.glow}`} aria-hidden="true" />
+                <div className="relative flex items-start justify-between gap-4">
+                  <h3 className="text-lg font-bold text-slate-950">{item.criterion}</h3>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}>
+                    {index + 1}
+                  </span>
+                </div>
+                <p className="relative mt-3 flex-1 text-sm leading-7 text-slate-700">{item.tinySteps}</p>
+                <Link
+                  to={item.href}
+                  className={`relative mt-5 inline-flex min-h-[42px] items-center justify-center rounded-full border border-white/80 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md ${tone.soft}`}
+                >
+                  {item.label}
+                  <span className="ml-2 text-slate-400 motion-safe:transition-transform motion-safe:duration-200 group-hover:translate-x-0.5" aria-hidden="true">→</span>
+                </Link>
+              </article>
+            );
+          })}
+        </div>
+      </Section>
+
+      <div className="bg-white py-2">
+        <ContentTrustNote text="This comparison page is created by the Tiny Steps academic team and founder-reviewed to help parents compare phonics options using visible criteria, realistic expectations, and inspectable evidence rather than unsupported ranking claims." />
+      </div>
 
       <AboutAuthor
+        className="!mt-8 mx-auto max-w-6xl px-4 sm:px-5 lg:px-6 [&>div]:!p-5 sm:[&>div]:!p-6 [&_figure]:!h-16 [&_figure]:!w-16 [&_dl]:!mt-4 [&_dl]:!pt-4 lg:[&_dl]:!grid-cols-3"
         title="About the Founder Review"
         intro="This buyer guide separates provider-comparison intent from the main Tiny Steps phonics programme page so parents can compare options without losing the detailed learning pathway."
         note="The comparison framework focuses on child fit, teaching quality, transfer evidence, and practical clarity before enrolment."
@@ -571,41 +691,179 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         ]}
       />
 
-      <TestimonialsSection
-        title="Parent feedback to consider alongside the comparison criteria"
-        subtitle="Reviews are one evidence source—not a universal guarantee. Use them together with class samples, curriculum, pricing, and the child’s assessment result."
-        courseTag="phonics"
-        limit={6}
-        compact
-        viewAllHref="/testimonials"
-        viewAllLabel="View all parent reviews"
-      />
+      <div id="parent-reviews" className="scroll-mt-[176px] md:scroll-mt-[184px]">
+        <TestimonialsSection
+          title="Parent feedback to consider alongside the comparison criteria"
+          subtitle="Reviews are one evidence source—not a universal guarantee. Use them together with class samples, curriculum, pricing, and the child’s assessment result."
+          courseTag="phonics"
+          limit={6}
+          compact
+          viewAllHref="/testimonials"
+          viewAllLabel="View all parent reviews"
+        />
+      </div>
 
-      <Section id="faq" tint="lavender">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-950">Frequently asked questions</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {faqItems.map((item) => (
-            <article key={item.question} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900">{item.question}</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-700 sm:text-base">{item.answer}</p>
-            </article>
-          ))}
+      <Section id="pricing" tint="warm">
+        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
+          <div>
+            <SectionHeading eyebrow="Phonics classes fees" title="What does Tiny Steps phonics cost?" />
+            <p className="mt-4 text-base leading-8 text-slate-700">
+              The current standard reference is <strong>{formatINR(PER_CLASS_PRICE)} per 1:1 class</strong>
+              {starterPlan ? (
+                <>
+                  {' '}and <strong>{formatINR(starterPlan.monthlyFee)} for {starterPlan.classes} classes</strong>
+                </>
+              ) : null}. Parents should compare total programme clarity—not price alone—because a lower cost is not automatically stronger teaching, and a higher cost is not proof of better teaching.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                to="/pricing"
+                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/60 hover:shadow-md sm:w-auto"
+              >
+                View Current Pricing
+              </Link>
+              <Link
+                to="/book-demo"
+                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] motion-safe:transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-[0_14px_30px_rgba(15,23,42,0.20)] sm:w-auto"
+              >
+                Book Free Assessment
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[30px] border border-slate-200 bg-white p-5 shadow-[0_12px_36px_rgba(15,23,42,0.065)] sm:p-6">
+            <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-orange-100/50 blur-3xl" aria-hidden="true" />
+            <h3 className="relative text-xl font-bold text-slate-950">When comparing phonics class cost, ask:</h3>
+            <ul className="relative mt-5 grid gap-3 text-sm leading-7 text-slate-700 sm:grid-cols-2 sm:text-base">
+              {pricingQuestions.map((item, index) => {
+                const tone = premiumTones[index % premiumTones.length];
+                return (
+                  <li
+                    key={item}
+                    className={`group flex gap-2.5 rounded-2xl border border-transparent p-3.5 motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 hover:border-white hover:shadow-md ${tone.soft}`}
+                  >
+                    <span className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ${tone.badge}`}>
+                      {index + 1}
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       </Section>
 
-      <section className="px-4 py-10 sm:px-5 md:py-14 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[32px] bg-slate-950 p-7 text-center text-white shadow-2xl sm:p-10">
-          <h2 className="text-3xl font-bold">Ready to compare Tiny Steps against your child’s actual needs?</h2>
-          <p className="mx-auto mt-3 max-w-3xl text-base leading-8 text-slate-300">
-            Start with the free 35-minute 1:1 assessment, then use the same comparison criteria on this page to judge fit, teaching approach, evidence, and cost before you enrol.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link to="/book-demo" className="inline-flex rounded-full bg-white px-6 py-3 font-semibold text-slate-950 hover:bg-slate-100">
-              Book Free Assessment
+      <Section tint="blue">
+        <div className="grid gap-10 lg:grid-cols-2">
+          <div>
+            <SectionHeading eyebrow="Use the trial well" title="8 questions to ask during a phonics demo or assessment" />
+            <ol className="mt-7 overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.045)]">
+              {demoQuestions.map((item, index) => {
+                const tone = premiumTones[index % premiumTones.length];
+                return (
+                  <li
+                    key={item}
+                    className={`group flex gap-3 px-4 py-3.5 motion-safe:transition-colors motion-safe:duration-200 sm:px-5 ${index > 0 ? 'border-t border-slate-100' : ''} ${tone.row}`}
+                  >
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}>
+                      {index + 1}
+                    </span>
+                    <span className="text-sm leading-7 text-slate-700 sm:text-base">{item}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+
+          <div>
+            <SectionHeading eyebrow="Comparison red flags" title="What should make a parent ask more questions?" />
+            <div className="mt-7 space-y-2.5">
+              {redFlags.map((item, index) => (
+                <article
+                  key={item}
+                  className="group flex gap-3 rounded-2xl border border-rose-200/80 bg-gradient-to-r from-rose-50/80 to-white px-4 py-3.5 text-sm leading-7 text-slate-700 shadow-[0_4px_14px_rgba(244,63,94,0.035)] motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-[0_9px_22px_rgba(244,63,94,0.08)] sm:text-base"
+                >
+                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-rose-200 bg-white text-xs font-bold text-rose-700 shadow-sm">
+                    {index + 1}
+                  </span>
+                  <span>{item}</span>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section>
+        <div className="group relative overflow-hidden rounded-[30px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-violet-50/45 p-6 shadow-[0_10px_30px_rgba(15,23,42,0.045)] motion-safe:transition-all motion-safe:duration-300 hover:border-violet-200 hover:shadow-[0_16px_40px_rgba(139,92,246,0.08)] sm:p-8">
+          <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-violet-100/65 blur-3xl" aria-hidden="true" />
+          <div className="relative">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Go deeper</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Use the full parent comparison framework</h2>
+            <p className="mt-3 max-w-4xl text-base leading-8 text-slate-700">
+              For a deeper editorial checklist covering placement, teaching sequence, decodable reading, transfer evidence, teacher training, progress reporting, pricing clarity, and red flags, read our complete parent guide.
+            </p>
+            <Link
+              to="/blog/how-to-choose-phonics-classes"
+              className="mt-5 inline-flex min-h-[46px] items-center rounded-full bg-slate-950 px-5 py-2.5 font-semibold text-white shadow-sm motion-safe:transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md"
+            >
+              How to Choose a Phonics Class
             </Link>
-            <Link to="/phonics" className="inline-flex rounded-full border border-slate-600 px-6 py-3 font-semibold text-white hover:bg-slate-900">
-              Explore Tiny Steps Phonics
-            </Link>
+          </div>
+        </div>
+      </Section>
+
+      <Section id="faq" tint="lavender">
+        <SectionHeading eyebrow="Parent questions" title="Frequently asked questions" />
+        <div className="mt-7 grid gap-3 lg:grid-cols-2 lg:items-start">
+          {faqItems.map((item, index) => {
+            const tone = premiumTones[index % premiumTones.length];
+            return (
+              <details
+                key={item.question}
+                className={`group relative overflow-hidden rounded-2xl border bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)] motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 open:translate-y-0 open:shadow-[0_12px_30px_rgba(15,23,42,0.075)] ${tone.card}`}
+              >
+                <div className={`pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full blur-3xl ${tone.glow}`} aria-hidden="true" />
+                <summary className="relative flex min-h-[62px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                  <h3 className="text-base font-bold leading-6 text-slate-900 sm:text-lg">{item.question}</h3>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xl font-medium leading-none ring-1 motion-safe:transition-transform motion-safe:duration-200 group-open:rotate-45 ${tone.badge}`} aria-hidden="true">
+                    +
+                  </span>
+                </summary>
+                <div className="relative border-t border-slate-200/70 bg-white/65 px-5 pb-5 pt-4 backdrop-blur-sm">
+                  <p className="text-sm leading-7 text-slate-700 sm:text-base">{item.answer}</p>
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </Section>
+
+      <section className="scroll-mt-[176px] px-4 py-12 sm:px-5 md:scroll-mt-[184px] md:py-16 lg:px-6">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-slate-800/80 bg-gradient-to-br from-slate-950 via-[#071124] to-indigo-950 p-7 text-center text-white shadow-[0_26px_64px_rgba(15,23,42,0.24)] sm:p-10">
+          <div className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-orange-500/16 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-16 -right-10 h-56 w-56 rounded-full bg-sky-400/14 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-white/45 to-transparent" aria-hidden="true" />
+          <div className="relative">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to compare Tiny Steps against your child’s actual needs?</h2>
+            <p className="mx-auto mt-3 max-w-3xl text-base leading-8 text-slate-300">
+              Start with the free 35-minute 1:1 assessment, then use the same comparison criteria on this page to judge fit, teaching approach, evidence, and cost before you enrol.
+            </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                to="/book-demo"
+                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-slate-950 shadow-[0_10px_24px_rgba(255,255,255,0.10)] motion-safe:transition-all hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-[0_14px_30px_rgba(255,255,255,0.16)] sm:w-auto"
+              >
+                Book Free Assessment
+              </Link>
+              <Link
+                to="/phonics"
+                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full border border-slate-600 bg-white/5 px-6 py-3 font-semibold text-white backdrop-blur motion-safe:transition-all hover:-translate-y-0.5 hover:border-sky-300/60 hover:bg-white/10 sm:w-auto"
+              >
+                Explore Tiny Steps Phonics
+              </Link>
+            </div>
           </div>
         </div>
       </section>
