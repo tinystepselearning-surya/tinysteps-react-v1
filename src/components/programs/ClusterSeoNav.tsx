@@ -83,7 +83,7 @@ export default function ClusterSeoNav({ cluster }: { cluster: 'phonics' | 'gramm
 
       if (backToTop) {
         const shouldShowBackToTop = window.scrollY >= 1100;
-        backToTop.style.opacity = shouldShowBackToTop ? '0.9' : '0';
+        backToTop.style.opacity = shouldShowBackToTop ? '0.88' : '0';
         backToTop.style.transform = shouldShowBackToTop ? 'translateY(0)' : 'translateY(10px)';
         backToTop.style.pointerEvents = shouldShowBackToTop ? '' : 'none';
       }
@@ -127,10 +127,10 @@ export default function ClusterSeoNav({ cluster }: { cluster: 'phonics' | 'gramm
   if (isPremiumPhonicsBuyer) {
     return (
       <section ref={sectionRef} className="mx-auto max-w-6xl px-4 pb-16 pt-6 text-center sm:px-5 lg:px-6">
-        <div className="group relative overflow-hidden rounded-[30px] border border-[#FF9A3D] bg-[linear-gradient(135deg,#FFF3E6_0%,#FFFFFF_47%,#FFF8F2_100%)] px-6 py-9 shadow-[0_18px_48px_rgba(255,107,0,0.10)] sm:px-9 sm:py-10">
-          <div className="pointer-events-none absolute -left-12 -top-16 h-44 w-44 rounded-full bg-[#FF7A1A]/20 blur-3xl" aria-hidden="true" />
-          <div className="pointer-events-none absolute -bottom-20 -right-10 h-52 w-52 rounded-full bg-[#FF5130]/15 blur-3xl" aria-hidden="true" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#FFAD42_0%,#FF6B00_48%,#FF5130_100%)]" aria-hidden="true" />
+        <div className="group relative overflow-hidden rounded-[30px] border border-[#FF9A3D] bg-[linear-gradient(135deg,#FFF8F1_0%,#FFFFFF_46%,#FFF4E8_100%)] px-6 py-9 shadow-[0_20px_52px_rgba(255,106,0,0.13)] sm:px-9 sm:py-10">
+          <div className="pointer-events-none absolute -left-12 -top-16 h-44 w-44 rounded-full bg-[#FF6A00]/24 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-20 -right-10 h-52 w-52 rounded-full bg-[#FFB347]/22 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#FFB347_0%,#FF8800_45%,#FF6A00_100%)]" aria-hidden="true" />
 
           <div className="relative">
             <h2 className="mb-2 text-2xl font-black tracking-tight text-slate-950 sm:text-[28px]">{data.hubTitle}</h2>
@@ -138,7 +138,7 @@ export default function ClusterSeoNav({ cluster }: { cluster: 'phonics' | 'gramm
             <div className="flex flex-wrap justify-center gap-3">
               <Link
                 to={data.hubHref}
-                className="inline-flex min-h-[44px] items-center rounded-full bg-[linear-gradient(135deg,#FF7A1A_0%,#FF5130_100%)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,107,0,0.22)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(255,81,48,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A1A] focus-visible:ring-offset-2"
+                className="inline-flex min-h-[44px] items-center rounded-full bg-[linear-gradient(135deg,#FF8800_0%,#FF6A00_100%)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,106,0,0.26)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_32px_rgba(255,106,0,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF8800] focus-visible:ring-offset-2"
               >
                 {data.hubTitle} Hub
               </Link>
@@ -146,7 +146,7 @@ export default function ClusterSeoNav({ cluster }: { cluster: 'phonics' | 'gramm
                 <Link
                   key={link.href}
                   to={link.href}
-                  className="inline-flex min-h-[44px] items-center rounded-full border border-[#FFC07A] bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_6px_18px_rgba(15,23,42,0.04)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-[#FF7A1A] hover:text-[#C2410C] hover:shadow-[0_10px_24px_rgba(255,107,0,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9A3D] focus-visible:ring-offset-2"
+                  className="inline-flex min-h-[44px] items-center rounded-full border border-[#FFC27D] bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_6px_18px_rgba(15,23,42,0.04)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-[#FF8800] hover:bg-[#FFF8F1] hover:text-[#D94A00] hover:shadow-[0_11px_26px_rgba(255,106,0,0.13)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9A3D] focus-visible:ring-offset-2"
                 >
                   {link.label}
                 </Link>
