@@ -38,6 +38,7 @@ describe('Best online phonics buyer guide UX refresh', () => {
     expect(page).toContain("{ id: 'tiny-steps-evidence', label: 'Tiny Steps' }");
     expect(page).toContain("{ id: 'pricing', label: 'Cost' }");
     expect(page).toContain("{ id: 'faq', label: 'FAQs' }");
+    expect(page).toContain('scroll-mt-[176px]');
     expect(page).toContain('to="/book-demo"');
     expect(page).toContain('to="/phonics"');
   });
@@ -45,9 +46,21 @@ describe('Best online phonics buyer guide UX refresh', () => {
   it('uses progressive disclosure for FAQ answers while preserving the FAQ source data and schema', () => {
     expect(page).toContain('<details');
     expect(page).toContain('<summary');
+    expect(page).not.toContain('open={index === 0}');
     expect(page).toContain('createFAQPageSchema(faqItems)');
     expect(page).toContain("'@id': `${canonicalUrl}#faq`");
     expect(page).toContain('Frequently asked questions');
+  });
+
+  it('uses a restrained premium color system and interactive tile treatment', () => {
+    expect(page).toContain('const premiumTones = [');
+    expect(page).toContain('from-orange-400 to-amber-400');
+    expect(page).toContain('from-sky-400 to-cyan-400');
+    expect(page).toContain('from-violet-400 to-fuchsia-400');
+    expect(page).toContain('from-emerald-400 to-teal-400');
+    expect(page).toContain('hover:-translate-y-1');
+    expect(page).toContain('group-hover:scale-125');
+    expect(page).toContain('focus-within:-translate-y-1');
   });
 
   it('keeps motion restrained and offers reduced-motion-safe transitions', () => {
