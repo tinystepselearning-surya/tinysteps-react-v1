@@ -41,7 +41,11 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
     expect(pricing).toContain("getRouteConfig('/pricing')");
     expect(pricing).toContain('Transparent Pricing for Premium 1:1 English Classes');
     expect(phonicsFees).toContain("canonicalPath: '/phonics-fees-india'");
-    expect(phonicsFees).toContain('Phonics Class Fees in India');
+    expect(phonicsFees).toContain('Phonics Classes Fees in India');
+    expect(phonicsFees).toContain('Live 1:1 Online Phonics Fees');
+    expect(phonicsFees).toContain('Live Group Online Phonics Fees');
+    expect(phonicsFees).toContain('Research methodology');
+    expect(phonicsFees).toContain('Phonics fees FAQs');
     expect(phonicsFees).toContain('to="/phonics"');
     expect(pricing).not.toContain("canonicalPath: '/phonics-fees-india'");
   });
