@@ -51,17 +51,6 @@
   --tw-gradient-to: var(--ts-sunrise-gold) var(--tw-gradient-to-position) !important;
 }
 
-.ts-phonics-buyer-premium [class*="bg-[#FFF9F1]"] {
-  background: linear-gradient(135deg, #fffaf6 0%, #ffffff 50%, #fff6ec 100%) !important;
-}
-
-.ts-phonics-buyer-premium [class*="from-[#FFF5EA]"] {
-  background-image:
-    radial-gradient(circle at 9% 18%, rgba(255, 106, 0, 0.14), transparent 28%),
-    radial-gradient(circle at 92% 18%, rgba(56, 189, 248, 0.14), transparent 28%),
-    linear-gradient(135deg, #fffaf6 0%, #ffffff 48%, #edf8ff 100%) !important;
-}
-
 .ts-phonics-buyer-premium [class*="border-orange-"][class*="bg-white"],
 .ts-phonics-buyer-premium [class*="border-orange-"][class*="via-white"] {
   box-shadow:
