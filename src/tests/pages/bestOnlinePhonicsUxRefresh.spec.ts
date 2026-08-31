@@ -67,12 +67,12 @@ describe('Best online phonics buyer guide UX refresh', () => {
 
   it('finishes the page with a sunrise-orange premium discovery treatment', () => {
     expect(clusterNav).toContain("const BUYER_GUIDE_PATH = '/best-online-phonics-classes-for-kids-in-india'");
-    expect(clusterNav).toContain('bg-[linear-gradient(135deg,#FFF3E6_0%,#FFFFFF_47%,#FFF8F2_100%)]');
-    expect(clusterNav).toContain('bg-[linear-gradient(135deg,#FF7A1A_0%,#FF5130_100%)]');
-    expect(clusterNav).toContain('bg-[linear-gradient(90deg,#FFAD42_0%,#FF6B00_48%,#FF5130_100%)]');
-    expect(premiumTheme).toContain('#ff6b00');
+    expect(clusterNav).toContain('bg-[linear-gradient(135deg,#FFF8F1_0%,#FFFFFF_46%,#FFF4E8_100%)]');
+    expect(clusterNav).toContain('bg-[linear-gradient(135deg,#FF8800_0%,#FF6A00_100%)]');
+    expect(clusterNav).toContain('bg-[linear-gradient(90deg,#FFB347_0%,#FF8800_45%,#FF6A00_100%)]');
+    expect(premiumTheme).toContain('#ff6a00');
     expect(premiumTheme).toContain('#ff9a3d');
-    expect(premiumTheme).toContain('#fff9f4');
+    expect(premiumTheme).toContain('#fffaf6');
   });
 
   it('retires the guide navigation for the final decision area and delays back-to-top', () => {
