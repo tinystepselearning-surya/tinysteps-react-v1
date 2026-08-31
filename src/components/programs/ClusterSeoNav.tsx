@@ -40,7 +40,12 @@ const CLUSTERS = {
 
 const BUYER_GUIDE_PATH = '/best-online-phonics-classes-for-kids-in-india';
 
-export default function ClusterSeoNav({ cluster }: { cluster: 'phonics' | 'grammar' | 'speaking' }) {
+type ClusterSeoNavProps = {
+  cluster: 'phonics' | 'grammar' | 'speaking';
+  compact?: boolean;
+};
+
+export default function ClusterSeoNav({ cluster, compact = false }: ClusterSeoNavProps) {
   const data = CLUSTERS[cluster];
   const location = useLocation();
   const sectionRef = useRef<HTMLElement>(null);
@@ -123,6 +128,27 @@ export default function ClusterSeoNav({ cluster }: { cluster: 'phonics' | 'gramm
   }, [isPremiumPhonicsBuyer]);
 
   if (!data) return null;
+
+  if (compact) {
+    return (
+      <section ref={sectionRef} className="mx-auto max-w-6xl px-4 py-5">
+        <nav
+          aria-label={`${data.hubTitle} resources`}
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-slate-200 pt-5 text-sm"
+        >
+          <span className="font-bold text-slate-950">{data.hubTitle}:</span>
+          <Link to={data.hubHref} className="font-semibold text-sky-700 hover:text-sky-900">
+            Hub
+          </Link>
+          {data.links.map((link) => (
+            <Link key={link.href} to={link.href} className="text-slate-600 hover:text-sky-800">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      </section>
+    );
+  }
 
   if (isPremiumPhonicsBuyer) {
     return (
