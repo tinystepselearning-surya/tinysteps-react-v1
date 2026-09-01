@@ -362,8 +362,12 @@ jobs:
           path: artifacts/live-deployment-verification.md
           if-no-files-found: warn
 
-      - name: Submit newly published blog URLs to IndexNow
+      - name: Verify live IndexNow ownership key
+        if: ${{ env.INDEXNOW_KEY != '' }}
+        run: npm run indexnow:verify
+
+      - name: Submit canonical public URLs to IndexNow
         if: ${{ env.INDEXNOW_KEY != '' }}
         env:
-          INDEXNOW_SITEMAP: dist/sitemap-blog.xml
+          INDEXNOW_SITEMAP: dist/sitemap.xml
         run: npm run indexnow:submit
