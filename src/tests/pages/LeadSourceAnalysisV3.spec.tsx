@@ -88,7 +88,7 @@ describe('LeadSourceAnalysisV3', () => {
     expect(screen.getByText(/AI \/ Answer Engines 1 \(25\.0%\)/)).toBeTruthy();
     expect(screen.getByText('Google Organic')).toBeTruthy();
     expect(screen.getByText('Other campaign')).toBeTruthy();
-    expect(screen.getByText(/cohort still maturing/i)).toBeTruthy();
+    expect(screen.getByText(/Outcomes measured as of/i)).toBeTruthy();
 
     const campaignRow = screen.getByText('Other campaign').closest('tr');
     expect(campaignRow).toBeTruthy();
