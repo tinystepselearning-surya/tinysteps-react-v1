@@ -45,6 +45,7 @@ describe('Blog #57 CBSE phonics scope and sequence quality refresh', () => {
     expect(body).toContain('keep oral language and comprehension alongside phonics throughout');
     expect(body).toContain('How the CBSE R1/R2 framework affects English phonics sequencing');
     expect(body).toContain('SATPIN is not mandated by CBSE or NCF');
+    expect(body).toContain('There is **no universal evidence-based 90%, 95% or 100% mastery rule**');
     expect(body).toContain('Tiny Steps does **not** claim that its internal lesson order is the official CBSE or NCERT phonics sequence');
 
     expect(body).toContain('/blog/does-cbse-include-phonics-ncf-foundational-literacy');
@@ -57,7 +58,7 @@ describe('Blog #57 CBSE phonics scope and sequence quality refresh', () => {
 
     expect(body).not.toMatch(/CBSE (?:requires|mandates) SATPIN/i);
     expect(body).not.toMatch(/official CBSE phonics sequence is/i);
-    expect(body).not.toMatch(/(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
+    expect(body).not.toMatch(/CBSE (?:requires|mandates) (?:90|95|100)%/i);
   });
 
   it('gives Blog #57 source-backed evidence, answer-engine FAQs and indexable school authority status', () => {
