@@ -37,7 +37,7 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
           FIREBASE_PROJECT_ID: tinysteps-react-v1
-          TARGET_NAME_SHA256: 42f69baffe8013aeac1b98fde4870c321a31d313496c708bea4fea5b909ad6f1
+          TARGET_NAME_HASHES: 42f69baffe8013aeac1b98fde4870c321a31d313496c708bea4fea5b909ad6f1,6bcf914516a085bfd101876014b1c077b930aa1a2e28ad12a14ce55b8d1b586d,eaad936d3edcccf5dd214e02bb4065e5511ca5ac7cb2c50cd0e997f1f3fc1f4f,ebfef19e3d59b49ba93ac84a68dfe45a51952e9aa47f2b4c9afc061c21d4b5f3,401893233a090ea9bb80ad76f45a0d4d3f19e80f305f236fb356567c8f954541
         shell: bash
         run: |
           set -euo pipefail
@@ -50,21 +50,28 @@ jobs:
           initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID });
           const db = getFirestore();
           const snap = await db.collectionGroup('students').limit(5000).get();
-          const targetHash = process.env.TARGET_NAME_SHA256;
+          const targetHashes = new Set(String(process.env.TARGET_NAME_HASHES || '').split(',').filter(Boolean));
           const candidates = [];
           for (const doc of snap.docs) {
             const data = doc.data() || {};
-            const values = [data.fullName, data.preferredName, data.name, data.studentName]
-              .map((v) => String(v || '').trim().toLowerCase())
-              .filter(Boolean);
-            const matched = values.some((value) => crypto.createHash('sha256').update(value).digest('hex') === targetHash);
+            const values = [
+              data.fullName,
+              data.preferredName,
+              data.name,
+              data.studentName,
+              data.firstName,
+              data.childName,
+              data.displayName,
+            ].map((v) => String(v || '').trim().toLowerCase()).filter(Boolean);
+            const matched = values.some((value) => targetHashes.has(crypto.createHash('sha256').update(value).digest('hex')));
             if (matched) candidates.push(doc.id);
           }
-          if (candidates.length !== 1) {
-            console.error(`Target child resolution expected exactly 1 match, found ${candidates.length}.`);
+          const uniqueCandidates = [...new Set(candidates)];
+          if (uniqueCandidates.length !== 1) {
+            console.error(`Target child resolution expected exactly 1 match, found ${uniqueCandidates.length}.`);
             process.exit(2);
           }
-          const kidId = candidates[0];
+          const kidId = uniqueCandidates[0];
           console.log(`::add-mask::${kidId}`);
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `kid_id=${kidId}\n`);
           console.log('Target child resolved uniquely.');
