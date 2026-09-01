@@ -31,17 +31,20 @@ import LeadFunnelTrendAnalysis from '../../pages/admin/LeadFunnelTrendAnalysis';
 
 const ts = (iso: string) => ({ toMillis: () => new Date(iso).getTime() });
 
-const demo = (overrides: Partial<DemoSession> & Pick<DemoSession, 'id'>): DemoSession => ({
-  id: overrides.id,
-  parentName: 'Parent',
-  childName: 'Child',
-  childGrade: '1',
-  courseInterested: 'Phonics',
-  preferredDateTimeText: 'Evening',
-  status: 'open',
-  createdBy: 'admin',
-  ...overrides,
-});
+const demo = (overrides: Partial<DemoSession> & Pick<DemoSession, 'id'>): DemoSession => {
+  const { id, ...rest } = overrides;
+  return {
+    id,
+    parentName: 'Parent',
+    childName: 'Child',
+    childGrade: '1',
+    courseInterested: 'Phonics',
+    preferredDateTimeText: 'Evening',
+    status: 'open',
+    createdBy: 'admin',
+    ...rest,
+  };
+};
 
 describe('LeadFunnelTrendAnalysis Growth & Admissions V3', () => {
   it('surfaces cohort gaps, previous-period comparison and live backlog aging', () => {
