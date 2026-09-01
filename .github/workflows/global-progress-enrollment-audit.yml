@@ -11,7 +11,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,8 +22,31 @@ jobs:
           node-version: 22.x
           cache: npm
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Build canonical progress projection helpers
+        run: npm --prefix functions run build
+
+      - name: Validate compiled V3 projection helper exports
+        run: |
+          node --input-type=module <<'NODE'
+          import { createRequire } from 'node:module';
+          const require = createRequire(import.meta.url);
+          const helper = require('./functions/lib/childCourseProgressProjectionV3.js');
+          for (const name of ['buildSummaryFromDocs', 'curriculumTopicsForCourse', 'docsForCourse']) {
+            if (typeof helper[name] !== 'function') {
+              throw new Error(`Missing compiled V3 projection helper: ${name}`);
+            }
+          }
+          console.log('Compiled V3 projection helper contract: OK');
+          NODE
+
+      - name: Run progress enrollment classifier tests
+        run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
 
       - name: Authenticate to Google Cloud
         id: gcp-auth
@@ -39,11 +62,42 @@ jobs:
           GLOBAL_PROGRESS_AUDIT_OUTPUT: global-progress-enrollment-audit.json
         run: node scripts/audit-global-progress-enrollment.mjs
 
-      - name: Upload aggregate audit report
+      - name: Build gated migration plan without writes
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: |
+          node scripts/migrate-global-progress-enrollments.mjs \
+            --project tinysteps-react-v1 \
+            --progress-limit 5000 \
+            --enrollment-limit 2000 \
+            | tee global-progress-migration-plan.json
+
+      - name: Verify migration plan safety invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const plan = JSON.parse(fs.readFileSync('global-progress-migration-plan.json', 'utf8'));
+          if (plan.mode !== 'READ_ONLY_DRY_RUN') throw new Error(`Unexpected mode: ${plan.mode}`);
+          if (plan.writeOperationsPerformed !== 0) throw new Error('Dry-run reported writes.');
+          if (plan.plan.ambiguousDocuments !== 0) throw new Error(`Ambiguous progress rows: ${plan.plan.ambiguousDocuments}`);
+          if (plan.plan.blockedUniqueDocuments !== 0) throw new Error(`Blocked deterministic rows: ${plan.plan.blockedUniqueDocuments}`);
+          if (plan.plan.safeBackfillDocuments <= 0) throw new Error('Expected recoverable legacy progress rows.');
+          console.log(JSON.stringify({
+            safeBackfillDocuments: plan.plan.safeBackfillDocuments,
+            affectedKidCoursePairs: plan.plan.affectedKidCoursePairs,
+            unmappedDocuments: plan.plan.unmappedDocuments,
+            alreadyCorrectDocuments: plan.plan.alreadyCorrectDocuments,
+            writeOperationsPerformed: plan.writeOperationsPerformed,
+          }, null, 2));
+          NODE
+
+      - name: Upload aggregate audit reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: global-progress-enrollment-audit
-          path: global-progress-enrollment-audit.json
+          path: |
+            global-progress-enrollment-audit.json
+            global-progress-migration-plan.json
           if-no-files-found: error
           retention-days: 7
