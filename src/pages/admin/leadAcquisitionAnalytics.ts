@@ -254,7 +254,7 @@ export const resolveAcquisitionAnalytics = (lead: AcquisitionAnalyticsLead): Acq
   const group = groupForChannel(channel);
   const source = normalize(classified.source || rawSource) || channel;
   let label = classified.label || acquisitionChannelLabel(channel);
-  let key = channel;
+  let key: string = channel;
 
   if (channel === 'referral' && source && source !== 'referral') {
     const domain = normalizeDomain(source);
