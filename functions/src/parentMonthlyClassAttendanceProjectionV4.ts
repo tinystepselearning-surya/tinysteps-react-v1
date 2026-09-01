@@ -510,7 +510,7 @@ const guardedReason = (result: ParentClassAttendanceGuardedExecutionResult): str
   if (result.mode === 'applied') return 'incremental_applied';
   if (result.mode === 'covered') return 'authoritative_covered';
   if (result.mode === 'replay') return `exact_replay_${result.previousOutcome}`;
-  return result.mode;
+  return 'guarded_result_unclassified';
 };
 
 const authoritativeShadowTargets = (
