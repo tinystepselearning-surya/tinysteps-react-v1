@@ -201,12 +201,13 @@ describe('LeadSourceAnalysis request ordering', () => {
     expect(screen.queryByText('Instagram (legacy)')).toBeNull();
   });
 
-  it('uses the canonical Demo Created and Enrolled terminology for acquisition metrics', async () => {
+  it('uses canonical Demo Created, Demo Completed and Enrolled terminology for acquisition metrics', async () => {
     const enrolledLead = doc('enrolled', {
       receivedAt: new Date('2026-09-01T03:00:00.000Z'),
       source: 'website',
       status: 'admitted_confirmed',
       demoSessionId: 'demo-1',
+      demoCompletedAt: new Date('2026-09-01T04:00:00.000Z'),
       landingPage: '/phonics',
     });
     getDocsLoggedMock.mockResolvedValue({ docs: [enrolledLead] });
@@ -221,6 +222,7 @@ describe('LeadSourceAnalysis request ordering', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText('Demo Created').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Demo Completed').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Enrolled').length).toBeGreaterThan(0);
     });
 
