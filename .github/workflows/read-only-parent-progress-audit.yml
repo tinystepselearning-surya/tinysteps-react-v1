@@ -1,0 +1,83 @@
+name: Read-only parent progress audit
+
+on:
+  push:
+    branches:
+      - audit/parent-progress-readonly
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Resolve target child id without logging PII
+        id: resolve-child
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          FIREBASE_PROJECT_ID: tinysteps-react-v1
+          TARGET_NAME_SHA256: 42f69baffe8013aeac1b98fde4870c321a31d313496c708bea4fea5b909ad6f1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import crypto from 'node:crypto';
+          import fs from 'node:fs';
+          import { applicationDefault, initializeApp } from 'firebase-admin/app';
+          import { getFirestore } from 'firebase-admin/firestore';
+
+          initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID });
+          const db = getFirestore();
+          const snap = await db.collectionGroup('students').limit(5000).get();
+          const targetHash = process.env.TARGET_NAME_SHA256;
+          const candidates = [];
+          for (const doc of snap.docs) {
+            const data = doc.data() || {};
+            const values = [data.fullName, data.preferredName, data.name, data.studentName]
+              .map((v) => String(v || '').trim().toLowerCase())
+              .filter(Boolean);
+            const matched = values.some((value) => crypto.createHash('sha256').update(value).digest('hex') === targetHash);
+            if (matched) candidates.push(doc.id);
+          }
+          if (candidates.length !== 1) {
+            console.error(`Target child resolution expected exactly 1 match, found ${candidates.length}.`);
+            process.exit(2);
+          }
+          const kidId = candidates[0];
+          console.log(`::add-mask::${kidId}`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `kid_id=${kidId}\n`);
+          console.log('Target child resolved uniquely.');
+          NODE
+
+      - name: Run existing progress-enrollment audit in read-only mode
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          KID_ID: ${{ steps.resolve-child.outputs.kid_id }}
+        run: >-
+          node scripts/audit-teacher-progress-enrollments.mjs
+          --project tinysteps-react-v1
+          --kid-id "$KID_ID"
+          --progress-limit 5000
+          --enrollment-limit 2000
+          --summary-only
