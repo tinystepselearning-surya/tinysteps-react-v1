@@ -12,7 +12,7 @@ const post: BlogPost = {
   metaDescription:
     'Does CBSE include phonics? Current CBSE and NCF guidance includes phonemic awareness, decoding, blending and English sound–spelling instruction.',
   excerpt:
-    'Yes—CBSE and NCF foundational-literacy guidance includes phonemic awareness, decoding, blending and explicit sound–print work. This guide separates the official evidence from common claims about “CBSE phonics.”',
+    'Yes—CBSE and NCF guidance includes phonemic awareness, decoding, blending and explicit sound–print work. This guide separates official evidence from common “CBSE phonics” claims.',
   audience: 'Schools & Research',
   discoveryCategory: 'Schools & Research',
   body: [
