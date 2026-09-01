@@ -10,12 +10,12 @@ if (!key) {
   process.exit(0);
 }
 
-if (!/^[A-Za-z0-9-]{8,}$/.test(key)) {
-  console.error('INDEXNOW_KEY format is invalid.');
+if (!/^[A-Za-z0-9-]{8,128}$/.test(key)) {
+  console.error('INDEXNOW_KEY format is invalid; expected 8-128 letters, numbers, or dashes.');
   process.exit(1);
 }
 
 await fs.mkdir(DIST_DIR, { recursive: true });
 const keyFilePath = path.join(DIST_DIR, `${key}.txt`);
 await fs.writeFile(keyFilePath, `${key}\n`, 'utf8');
-console.log(`Wrote IndexNow key file: ${path.basename(keyFilePath)}`);
+console.log('Wrote IndexNow ownership key file to the production bundle.');
