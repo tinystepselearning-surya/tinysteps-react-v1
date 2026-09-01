@@ -22,6 +22,11 @@ import {
   type FunnelRangePreset,
   type LeadFunnelLead,
 } from './leadFunnelAnalytics';
+import {
+  ANALYTICS_GRAIN_LABELS,
+  ANALYTICS_METRIC_LABELS,
+  analyticsCohortDescription,
+} from './analyticsMeasurementContract';
 
 interface LeadFunnelTrendAnalysisProps {
   leads: LeadFunnelLead[];
@@ -32,10 +37,10 @@ interface LeadFunnelTrendAnalysisProps {
 }
 
 const metricCards = [
-  { key: 'received', label: 'Leads Received' },
-  { key: 'demoCreated', label: 'Demo Created' },
-  { key: 'completed', label: 'Demo Completed' },
-  { key: 'enrolled', label: 'Enrolled' },
+  { key: 'received', label: ANALYTICS_METRIC_LABELS.leadsReceived },
+  { key: 'demoCreated', label: ANALYTICS_METRIC_LABELS.demoCreated },
+  { key: 'completed', label: ANALYTICS_METRIC_LABELS.demoCompleted },
+  { key: 'enrolled', label: ANALYTICS_METRIC_LABELS.enrolled },
 ] as const;
 
 const dateInput = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -117,32 +122,32 @@ export default function LeadFunnelTrendAnalysis({
           <div>
             <h3 id="executive-funnel-heading" className="text-base font-semibold text-slate-950">Growth &amp; Admissions</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Lead-level progression for {bounds.startKey || '—'} to {bounds.endKey || '—'} · Asia/Kolkata
+              {analyticsCohortDescription(bounds.startKey, bounds.endKey)}
             </p>
           </div>
           <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            Lead → enrollment {pct(leadToEnroll)}
+            Lead → Enrolled {pct(leadToEnroll)}
           </div>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] xl:items-center">
-          <FunnelStage label="Leads Received" value={cohortTotals.received} />
-          <FunnelConnector label="Lead to demo" rate={leadToDemo} />
-          <FunnelStage label="Demo Created" value={cohortTotals.demoCreated} />
-          <FunnelConnector label="Demo to completed" rate={demoToComplete} />
-          <FunnelStage label="Demo Completed" value={cohortTotals.completed} />
-          <FunnelConnector label="Completed to enrolled" rate={completedToEnroll} />
-          <FunnelStage label="Enrolled" value={cohortTotals.enrolled} />
+          <FunnelStage label={ANALYTICS_METRIC_LABELS.leadsReceived} value={cohortTotals.received} />
+          <FunnelConnector label="Lead to Demo Created" rate={leadToDemo} />
+          <FunnelStage label={ANALYTICS_METRIC_LABELS.demoCreated} value={cohortTotals.demoCreated} />
+          <FunnelConnector label="Demo Created to Demo Completed" rate={demoToComplete} />
+          <FunnelStage label={ANALYTICS_METRIC_LABELS.demoCompleted} value={cohortTotals.completed} />
+          <FunnelConnector label="Demo Completed to Enrolled" rate={completedToEnroll} />
+          <FunnelStage label={ANALYTICS_METRIC_LABELS.enrolled} value={cohortTotals.enrolled} />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 text-xs">
-          <span className="font-medium text-slate-500">Live demo workload:</span>
+          <span className="font-medium text-slate-500">{ANALYTICS_GRAIN_LABELS.liveDemoRecords}:</span>
           <span className="rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-800">{operational.open} awaiting assignment</span>
           <span className="rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-800">{operational.assigned} assigned</span>
           <span className="rounded-full bg-violet-50 px-2.5 py-1 font-medium text-violet-800">{operational.completedAwaitingAdmin} decisions pending</span>
         </div>
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-          Funnel stages count leads. Live workload counts demo records, so retries, reschedules, or replacements can make the totals differ legitimately.
+          Funnel stages count leads in the selected cohort. Live demo records are a separate operational grain, so retries, reschedules, or replacements can make those totals differ legitimately.
         </p>
       </Card>
     );
@@ -153,13 +158,13 @@ export default function LeadFunnelTrendAnalysis({
       <Card className="border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-950">Lead → Admission Funnel</h3>
+            <h3 className="text-lg font-semibold text-slate-950">Lead → Enrollment Funnel</h3>
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
               Lead-level conversion from first enquiry through demo creation, demo completion, and successful enrollment.
               Received is measured from the original lead timestamp, not a later demo-creation date.
             </p>
             <p className="mt-2 text-xs font-medium text-slate-500">
-              Cohort: {bounds.startKey || '—'} to {bounds.endKey || '—'} · Business timezone: Asia/Kolkata
+              {analyticsCohortDescription(bounds.startKey, bounds.endKey)}
             </p>
           </div>
           {!controlledRange ? (
@@ -193,6 +198,21 @@ export default function LeadFunnelTrendAnalysis({
           </div>
         ) : null}
 
+        <div className="mt-4 grid gap-2 md:grid-cols-3" aria-label="Analytics measurement guide">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2">
+            <div className="text-xs font-semibold text-slate-800">{ANALYTICS_GRAIN_LABELS.leadCohort}</div>
+            <div className="mt-0.5 text-[11px] leading-4 text-slate-500">Cards and source conversion count each lead once, anchored to when the lead was first received.</div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2">
+            <div className="text-xs font-semibold text-slate-800">{ANALYTICS_GRAIN_LABELS.eventActivity}</div>
+            <div className="mt-0.5 text-[11px] leading-4 text-slate-500">The daily chart counts events on the day they happened, including demos belonging to earlier lead cohorts.</div>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2">
+            <div className="text-xs font-semibold text-slate-800">{ANALYTICS_GRAIN_LABELS.liveDemoRecords}</div>
+            <div className="mt-0.5 text-[11px] leading-4 text-slate-500">The workload snapshot counts demo records now, independent of the selected historical cohort.</div>
+          </div>
+        </div>
+
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {metricCards.map((card) => (
             <div key={card.key} className="rounded-xl border border-slate-200 bg-slate-50/55 p-3">
@@ -204,19 +224,19 @@ export default function LeadFunnelTrendAnalysis({
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border bg-white p-3">
-            <div className="text-xs text-muted-foreground">Lead → Demo</div>
+            <div className="text-xs text-muted-foreground">Lead → Demo Created</div>
             <div className="mt-1 text-xl font-semibold tabular-nums">{pct(leadToDemo)}</div>
           </div>
           <div className="rounded-xl border bg-white p-3">
-            <div className="text-xs text-muted-foreground">Demo → Completed</div>
+            <div className="text-xs text-muted-foreground">Demo Created → Completed</div>
             <div className="mt-1 text-xl font-semibold tabular-nums">{pct(demoToComplete)}</div>
           </div>
           <div className="rounded-xl border bg-white p-3">
-            <div className="text-xs text-muted-foreground">Completed → Enrolled</div>
+            <div className="text-xs text-muted-foreground">Demo Completed → Enrolled</div>
             <div className="mt-1 text-xl font-semibold tabular-nums">{pct(completedToEnroll)}</div>
           </div>
           <div className="rounded-xl border bg-white p-3">
-            <div className="text-xs text-muted-foreground">Lead → Enrollment</div>
+            <div className="text-xs text-muted-foreground">Lead → Enrolled</div>
             <div className="mt-1 text-xl font-semibold tabular-nums">{pct(leadToEnroll)}</div>
           </div>
         </div>
@@ -224,9 +244,9 @@ export default function LeadFunnelTrendAnalysis({
         <div className="mt-5 rounded-xl border bg-white p-3">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-sm font-semibold text-slate-900">Daily funnel activity</div>
+              <div className="text-sm font-semibold text-slate-900">{ANALYTICS_GRAIN_LABELS.eventActivity}</div>
               <div className="text-xs text-muted-foreground">
-                Event-date trend: Received counts leads; demo series count demo records. Cohort cards above count lead-level milestones for leads first received in the selected period.
+                Events are plotted on the date they occurred. Demo Created and Demo Completed can therefore include demos for leads first received before the selected period; the cohort cards above do not.
               </div>
             </div>
           </div>
@@ -243,9 +263,9 @@ export default function LeadFunnelTrendAnalysis({
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="received" name="Received" stroke="#2563eb" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="demoCreated" name="Demo Created" stroke="#4f46e5" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="completed" name="Demo Completed" stroke="#16a34a" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="enrolled" name="Enrolled" stroke="#db2777" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="demoCreated" name={ANALYTICS_METRIC_LABELS.demoCreated} stroke="#4f46e5" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="completed" name={ANALYTICS_METRIC_LABELS.demoCompleted} stroke="#16a34a" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="enrolled" name={ANALYTICS_METRIC_LABELS.enrolled} stroke="#db2777" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -256,7 +276,7 @@ export default function LeadFunnelTrendAnalysis({
         <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
           <div className="border-b bg-slate-50/70 px-4 py-3">
             <div className="text-sm font-semibold text-slate-900">Funnel performance by intake source</div>
-            <div className="text-xs text-muted-foreground">Conversion of leads first received during the selected period.</div>
+            <div className="text-xs text-muted-foreground">Lead-cohort conversion for leads first received during the selected period.</div>
           </div>
           {analytics.sourcePerformance.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No leads received in this period.</div>
@@ -267,11 +287,11 @@ export default function LeadFunnelTrendAnalysis({
                   <tr>
                     <th className="px-4 py-2">Source</th>
                     <th className="px-3 py-2 text-right">Leads</th>
-                    <th className="px-3 py-2 text-right">Demos</th>
-                    <th className="px-3 py-2 text-right">Completed</th>
-                    <th className="px-3 py-2 text-right">Enrolled</th>
+                    <th className="px-3 py-2 text-right">{ANALYTICS_METRIC_LABELS.demoCreated}</th>
+                    <th className="px-3 py-2 text-right">{ANALYTICS_METRIC_LABELS.demoCompleted}</th>
+                    <th className="px-3 py-2 text-right">{ANALYTICS_METRIC_LABELS.enrolled}</th>
                     <th className="px-3 py-2 text-right">Demo completion</th>
-                    <th className="px-4 py-2 text-right">Lead → enrollment</th>
+                    <th className="px-4 py-2 text-right">Lead → Enrolled</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -293,8 +313,13 @@ export default function LeadFunnelTrendAnalysis({
         </Card>
 
         <Card className="border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-sm font-semibold text-slate-900">Demo operations snapshot</div>
-          <p className="mt-1 text-xs text-muted-foreground">Live workload across active demo records, independent of the cohort range above.</p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">{ANALYTICS_GRAIN_LABELS.liveDemoRecords}</div>
+              <p className="mt-1 text-xs text-muted-foreground">Current workload across demo records, independent of the selected lead cohort.</p>
+            </div>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">Demo-record grain</span>
+          </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-lg border p-3">
               <div className="text-xs text-muted-foreground">Awaiting assignment</div>
@@ -314,7 +339,7 @@ export default function LeadFunnelTrendAnalysis({
             </div>
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-            Funnel metrics are lead-level milestones. This snapshot counts demo records, so one lead can contribute more than one demo record after a retry, reschedule, or replacement.
+            Funnel metrics are lead-level milestones. This snapshot counts demo records, so one lead can contribute more than one record after a retry, reschedule, or replacement.
           </p>
         </Card>
       </div>
