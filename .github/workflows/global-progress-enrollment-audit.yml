@@ -91,6 +91,82 @@ jobs:
           }, null, 2));
           NODE
 
+      - name: Execute approved production migration
+        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: |
+          node scripts/migrate-global-progress-enrollments.mjs \
+            --project tinysteps-react-v1 \
+            --progress-limit 5000 \
+            --enrollment-limit 2000 \
+            --apply \
+            --confirm APPLY_GLOBAL_PROGRESS_ENROLLMENT_MIGRATION \
+            | tee global-progress-migration-apply.json
+
+      - name: Verify approved migration result
+        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('global-progress-migration-apply.json', 'utf8'));
+          if (result.mode !== 'APPLY_SAFE_GLOBAL_BACKFILL') throw new Error(`Unexpected apply mode: ${result.mode}`);
+          if (!result.apply) throw new Error('Migration apply result is missing.');
+          if (result.apply.updated + result.apply.skippedAfterRecheck !== result.apply.candidates) {
+            throw new Error('Apply candidate accounting mismatch.');
+          }
+          const verification = result.apply.verification || {};
+          if (verification.enrollmentBackfillsVerified !== verification.enrollmentBackfillsExpected) {
+            throw new Error('Enrollment backfill verification mismatch.');
+          }
+          if (verification.projectionsVerified !== verification.projectionsExpected) {
+            throw new Error('Projection verification mismatch.');
+          }
+          console.log(JSON.stringify({
+            candidates: result.apply.candidates,
+            updated: result.apply.updated,
+            skippedAfterRecheck: result.apply.skippedAfterRecheck,
+            projectionsRebuilt: result.apply.projectionsRebuilt,
+            verification,
+            writeOperationsPerformed: result.writeOperationsPerformed,
+          }, null, 2));
+          NODE
+
+      - name: Run post-migration production audit
+        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          FIREBASE_PROJECT_ID: tinysteps-react-v1
+          GLOBAL_PROGRESS_AUDIT_OUTPUT: global-progress-enrollment-post-migration-audit.json
+        run: node scripts/audit-global-progress-enrollment.mjs
+
+      - name: Verify post-migration invariants
+        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const audit = JSON.parse(fs.readFileSync('global-progress-enrollment-post-migration-audit.json', 'utf8'));
+          if (audit.mode !== 'READ_ONLY_DRY_RUN') throw new Error(`Unexpected post-audit mode: ${audit.mode}`);
+          if (audit.writeOperationsPerformed !== 0) throw new Error('Post-audit reported writes.');
+          if (audit.enrollmentAudit.uniqueMapping !== 0) throw new Error(`Recoverable legacy rows remain: ${audit.enrollmentAudit.uniqueMapping}`);
+          if (audit.enrollmentAudit.ambiguous !== 0) throw new Error(`Ambiguous rows remain: ${audit.enrollmentAudit.ambiguous}`);
+          if (audit.enrollmentAudit.conflicting !== 0) throw new Error(`Conflicting rows remain: ${audit.enrollmentAudit.conflicting}`);
+          if (audit.migrationReadiness.metadataOnlySafe !== 0) throw new Error(`Safe backfills remain: ${audit.migrationReadiness.metadataOnlySafe}`);
+          if (audit.enrollmentAudit.missingEnrollmentId !== audit.enrollmentAudit.unmapped) {
+            throw new Error(`Unexpected missing enrollment rows remain: missing=${audit.enrollmentAudit.missingEnrollmentId}, unmapped=${audit.enrollmentAudit.unmapped}`);
+          }
+          console.log(JSON.stringify({
+            totalExamined: audit.enrollmentAudit.totalExamined,
+            withEnrollmentId: audit.enrollmentAudit.withEnrollmentId,
+            missingEnrollmentId: audit.enrollmentAudit.missingEnrollmentId,
+            uniqueMapping: audit.enrollmentAudit.uniqueMapping,
+            unmapped: audit.enrollmentAudit.unmapped,
+            ambiguous: audit.enrollmentAudit.ambiguous,
+            conflicting: audit.enrollmentAudit.conflicting,
+            metadataOnlySafe: audit.migrationReadiness.metadataOnlySafe,
+          }, null, 2));
+          NODE
+
       - name: Upload aggregate audit reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -99,5 +175,7 @@ jobs:
           path: |
             global-progress-enrollment-audit.json
             global-progress-migration-plan.json
-          if-no-files-found: error
+            global-progress-migration-apply.json
+            global-progress-enrollment-post-migration-audit.json
+          if-no-files-found: warn
           retention-days: 7
