@@ -2,7 +2,7 @@
 
 import { createRequire } from 'node:module';
 import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import {
   buildProgressEnrollmentAudit,
@@ -243,6 +243,10 @@ async function forceRebuildTouchedProjections(db, inputs, updatedCandidates) {
       relevantDocs,
       inputs.curriculumData,
     );
+    // The compiled helper lives under functions/ and may resolve its own firebase-admin
+    // package. Replace its server-timestamp sentinel with the same root SDK instance used
+    // by this migration client before writing the summary.
+    summary.updatedAt = FieldValue.serverTimestamp();
     await db.collection('students').doc(pair.kidId)
       .collection('courseProgress').doc(pair.courseId)
       .set(summary, { merge: false });
