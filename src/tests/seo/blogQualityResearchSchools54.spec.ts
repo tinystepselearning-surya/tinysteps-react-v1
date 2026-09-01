@@ -37,6 +37,7 @@ describe('Blog #54 decoding instead of word memorisation quality refresh', () =>
     expect(body).toContain('How to prevent the assessment itself from becoming memorised');
     expect(body).toContain('baseline → teach → fresh transfer → reteach → recheck');
     expect(body).toContain('Assessment fairness: multilingual children, accent and unfamiliar vocabulary');
+    expect(body).toContain('There is no evidence-based rule in the sources reviewed here that every Indian school must use one fixed number of words, one universal mastery percentage or one universal number of weeks between checkpoints.');
     expect(body).toContain('do **not** apply automatically to CBSE schools');
 
     expect(body).toContain('/blog/does-cbse-include-phonics-ncf-foundational-literacy');
@@ -50,7 +51,6 @@ describe('Blog #54 decoding instead of word memorisation quality refresh', () =>
     expect(body).not.toMatch(/CBSE (?:requires|mandates) pseudo-words/i);
     expect(body).not.toMatch(/(?:32|40)\s*(?:is|=)\s*(?:the )?(?:CBSE|Indian) phonics/i);
     expect(body).not.toMatch(/(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
-    expect(body).not.toContain('one universal mastery percentage');
   });
 
   it('gives Blog #54 source-backed evidence, answer-engine FAQs and indexable school authority status', () => {
