@@ -6,6 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import {
   buildProgressEnrollmentAudit,
   normalizeId,
+  normalizeIdList,
   resolveStudentProgressPath,
 } from './lib/teacher-progress-enrollment-audit.mjs';
 
@@ -46,6 +47,13 @@ const normalizeCourseId = (value) => {
   };
   return aliases[raw] || raw;
 };
+
+const enrollmentAliases = (data) => Array.from(new Set([
+  normalizeId(data?.kidId),
+  normalizeId(data?.studentId),
+  normalizeId(data?.childId),
+  ...normalizeIdList(data?.kidIds),
+].filter(Boolean)));
 
 const curriculumTopicSets = (data) => {
   const sets = new Map();
@@ -109,6 +117,10 @@ const counters = {
   legacyMissingSource: 0,
   operationalLikeUniqueTargets: 0,
   historicalLikeUniqueTargets: 0,
+  unmappedCanonicalKidNormalizedCourseUnique: 0,
+  unmappedAnyAliasNormalizedCourseUnique: 0,
+  unmappedAnyAliasNormalizedCourseAmbiguous: 0,
+  unmappedNoAliasNormalizedCourseMatch: 0,
 };
 
 const affectedKids = new Set();
@@ -118,12 +130,45 @@ const affectedTeachers = new Set();
 const teacherStats = new Map();
 const courseStats = new Map();
 const exceptionFingerprints = [];
+const exceptionKidStats = new Map();
 
 const bump = (record, key, amount = 1) => {
   record[key] = (record[key] || 0) + amount;
 };
 
 const progressByPath = new Map(progressDocs.map((entry) => [entry.path, entry]));
+
+const classifyUnmappedHint = (row, normalizedCourse) => {
+  if (row.kind !== 'unmapped') return null;
+  const canonicalKidNormalizedCourse = enrollments.filter((entry) => (
+    normalizeId(entry.data?.kidId) === row.kidId
+    && normalizeCourseId(entry.data?.courseId) === normalizedCourse
+  ));
+  if (canonicalKidNormalizedCourse.length === 1) {
+    return {
+      kind: 'canonical_kid_normalized_course_unique',
+      candidateEnrollmentIds: canonicalKidNormalizedCourse.map((entry) => entry.id),
+    };
+  }
+
+  const anyAliasNormalizedCourse = enrollments.filter((entry) => (
+    enrollmentAliases(entry.data).includes(row.kidId)
+    && normalizeCourseId(entry.data?.courseId) === normalizedCourse
+  ));
+  if (anyAliasNormalizedCourse.length === 1) {
+    return {
+      kind: 'any_alias_normalized_course_unique',
+      candidateEnrollmentIds: anyAliasNormalizedCourse.map((entry) => entry.id),
+    };
+  }
+  if (anyAliasNormalizedCourse.length > 1) {
+    return {
+      kind: 'any_alias_normalized_course_ambiguous',
+      candidateEnrollmentIds: anyAliasNormalizedCourse.map((entry) => entry.id),
+    };
+  }
+  return { kind: 'no_alias_normalized_course_match', candidateEnrollmentIds: [] };
+};
 
 for (const row of audit.rows) {
   if (row.kind === 'ignored_non_student_progress') continue;
@@ -169,6 +214,19 @@ for (const row of audit.rows) {
   const curriculumSet = topicSets.get(normalizedCourse);
   const docTopicId = row.topicId;
   const canonicalDocId = Boolean(curriculumSet?.has(docTopicId));
+  const unmappedHint = classifyUnmappedHint(row, normalizedCourse);
+
+  if (unmappedHint) {
+    if (unmappedHint.kind === 'canonical_kid_normalized_course_unique') {
+      counters.unmappedCanonicalKidNormalizedCourseUnique += 1;
+    } else if (unmappedHint.kind === 'any_alias_normalized_course_unique') {
+      counters.unmappedAnyAliasNormalizedCourseUnique += 1;
+    } else if (unmappedHint.kind === 'any_alias_normalized_course_ambiguous') {
+      counters.unmappedAnyAliasNormalizedCourseAmbiguous += 1;
+    } else {
+      counters.unmappedNoAliasNormalizedCourseMatch += 1;
+    }
+  }
 
   if (row.kind === 'migratable_unique') {
     if (targetEnrollment) {
@@ -204,8 +262,11 @@ for (const row of audit.rows) {
     }
   } else {
     exceptionKids.add(row.kidId);
+    const candidateIds = (row.candidateEnrollmentIds || []).length > 0
+      ? row.candidateEnrollmentIds
+      : (unmappedHint?.candidateEnrollmentIds || []);
     const candidateTeachers = new Set(
-      (row.candidateEnrollmentIds || [])
+      candidateIds
         .map((id) => normalizeId(enrollmentById.get(id)?.data?.teacherId))
         .filter(Boolean),
     );
@@ -231,18 +292,48 @@ for (const row of audit.rows) {
     || row.kind.startsWith('conflicting_')
     || (row.kind === 'migratable_unique' && (!targetTeacherId || !curriculumSet || !canonicalDocId))
   ) {
+    const kidFingerprint = hashId(row.kidId);
+    const kidRecord = exceptionKidStats.get(kidFingerprint) || {
+      documents: 0,
+      courses: {},
+      kinds: {},
+      recoveryHints: {},
+    };
+    kidRecord.documents += 1;
+    bump(kidRecord.courses, normalizedCourse || 'missing-course');
+    bump(kidRecord.kinds, row.kind);
+    if (unmappedHint) bump(kidRecord.recoveryHints, unmappedHint.kind);
+    exceptionKidStats.set(kidFingerprint, kidRecord);
+
     if (exceptionFingerprints.length < 250) {
       exceptionFingerprints.push({
         fingerprint: hashId(row.path),
+        kidFingerprint,
         kind: row.kind,
+        recoveryHint: unmappedHint?.kind || null,
         courseId: normalizedCourse || null,
         candidateCount: row.candidateEnrollmentIds?.length || 0,
+        recoveryCandidateCount: unmappedHint?.candidateEnrollmentIds?.length || 0,
         canonicalDocumentId: canonicalDocId,
         hasTargetTeacher: Boolean(targetTeacherId),
         curriculumDefinitionPresent: Boolean(curriculumSet?.size),
       });
     }
   }
+}
+
+const exceptionKidRefs = Array.from(exceptionKids)
+  .flatMap((kidId) => [db.collection('students').doc(kidId), db.collection('kids').doc(kidId)]);
+const exceptionParentDocs = exceptionKidRefs.length > 0 ? await db.getAll(...exceptionKidRefs) : [];
+for (let index = 0; index < exceptionParentDocs.length; index += 2) {
+  const studentDoc = exceptionParentDocs[index];
+  const kidDoc = exceptionParentDocs[index + 1];
+  const kidId = studentDoc?.id || kidDoc?.id || '';
+  const kidFingerprint = hashId(kidId);
+  const record = exceptionKidStats.get(kidFingerprint);
+  if (!record) continue;
+  record.studentDocumentExists = Boolean(studentDoc?.exists);
+  record.kidDocumentExists = Boolean(kidDoc?.exists);
 }
 
 const teacherBreakdown = Array.from(teacherStats.entries())
@@ -280,6 +371,10 @@ const result = {
   },
   courseBreakdown,
   teacherBreakdown,
+  exceptionStudents: Array.from(exceptionKidStats.entries()).map(([kidFingerprint, stats]) => ({
+    kidFingerprint,
+    ...stats,
+  })),
   exceptionSample: exceptionFingerprints,
   writeOperationsPerformed: 0,
 };
