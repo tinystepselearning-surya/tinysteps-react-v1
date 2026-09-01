@@ -562,6 +562,7 @@ export const processParentClassAttendanceV4Write = async (input: {
   );
   const shadowEnabled = isParentClassAttendanceIncrementalCutoverEnabled(input.shadowEnabled);
   const dependencies: V4Dependencies = { ...DEFAULT_DEPENDENCIES, ...input.dependencies };
+  const nowMs = input.nowMs ?? Date.now();
 
   if (!shouldRefreshParentMonthClassAttendance(input.before, input.after)) {
     return {
@@ -602,14 +603,14 @@ export const processParentClassAttendanceV4Write = async (input: {
       eventUpdateTime: input.eventUpdateTime,
       before: input.before,
       after: input.after,
-      nowMs: input.nowMs,
+      nowMs,
       authoritativeRecompute: dependencies.authoritativeRecompute,
     });
     if (guarded.mode === 'delegate_v3') {
       await recomputeTargetsV3({
         db: input.db,
         targets,
-        nowMs: input.nowMs,
+        nowMs,
         v3RecomputeTarget: dependencies.v3RecomputeTarget,
       });
     }
@@ -641,13 +642,13 @@ export const processParentClassAttendanceV4Write = async (input: {
       before: input.before,
       after: input.after,
       targets,
-      nowMs: input.nowMs,
+      nowMs,
     });
     const authoritative = await dependencies.authoritativeRecompute({
       db: input.db,
       targets,
       authoritativeEventId: eventId,
-      generatedAtMs: input.nowMs,
+      generatedAtMs: nowMs,
     });
 
     if (authoritative.mode === 'certified') {
@@ -661,7 +662,7 @@ export const processParentClassAttendanceV4Write = async (input: {
             after: input.after,
             baselines: preview.baselines,
             authoritative: authoritativeShadowTargets(authoritative),
-            nowMs: input.nowMs,
+            nowMs,
           }),
         );
       } else if (preview.mode === 'covered') {
@@ -694,7 +695,7 @@ export const processParentClassAttendanceV4Write = async (input: {
     await recomputeTargetsV3({
       db: input.db,
       targets,
-      nowMs: input.nowMs,
+      nowMs,
       v3RecomputeTarget: dependencies.v3RecomputeTarget,
     });
     const result: ParentClassAttendanceV4ProcessingResult = {
@@ -719,7 +720,7 @@ export const processParentClassAttendanceV4Write = async (input: {
   await recomputeTargetsV3({
     db: input.db,
     targets,
-    nowMs: input.nowMs,
+    nowMs,
     v3RecomputeTarget: dependencies.v3RecomputeTarget,
   });
   const compatibility = targets.some((target) => target.requiresCompatibility);
