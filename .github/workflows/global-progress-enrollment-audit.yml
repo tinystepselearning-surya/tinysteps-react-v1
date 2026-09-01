@@ -1,0 +1,49 @@
+name: Global progress enrollment audit
+
+on:
+  push:
+    branches:
+      - fix/global-progress-enrollment-migration
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run school-wide progress audit in read-only mode
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          FIREBASE_PROJECT_ID: tinysteps-react-v1
+          GLOBAL_PROGRESS_AUDIT_OUTPUT: global-progress-enrollment-audit.json
+        run: node scripts/audit-global-progress-enrollment.mjs
+
+      - name: Upload aggregate audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-progress-enrollment-audit
+          path: global-progress-enrollment-audit.json
+          if-no-files-found: error
+          retention-days: 7
