@@ -21,12 +21,35 @@ const DEMO_CREATED_LEAD_STATUSES = new Set([
   'admitted_confirmed',
 ]);
 
+const DEMO_COMPLETED_LEAD_STATUSES = new Set([
+  'demo_completed',
+  'admission_follow_up',
+  'admitted_confirmed',
+]);
+
 export type LeadMilestoneRecord = {
   demoSessionId?: string | null;
+  demoCompletedAt?: unknown;
   status?: string | null;
 };
 
 const normalize = (value: unknown): string => String(value || '').trim().toLowerCase();
+
+const hasTimestampLikeValue = (value: unknown): boolean => {
+  if (!value) return false;
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0;
+  if (typeof value === 'string') return Boolean(value.trim());
+  if (typeof value === 'object') {
+    const candidate = value as { toMillis?: () => number; seconds?: number };
+    if (typeof candidate.toMillis === 'function') {
+      const millis = candidate.toMillis();
+      return Number.isFinite(millis) && millis > 0;
+    }
+    return typeof candidate.seconds === 'number' && candidate.seconds > 0;
+  }
+  return false;
+};
 
 /**
  * Lead-level projection of the canonical Demo Created milestone.
@@ -37,6 +60,14 @@ const normalize = (value: unknown): string => String(value || '').trim().toLower
  */
 export const hasLeadDemoCreatedMilestone = (lead: LeadMilestoneRecord): boolean =>
   Boolean(String(lead.demoSessionId || '').trim()) || DEMO_CREATED_LEAD_STATUSES.has(normalize(lead.status));
+
+/**
+ * Lead-side projection of Demo Completed.
+ * Canonical demoCompletedAt is strongest evidence. Only lifecycle states that
+ * necessarily occur after demo completion are accepted as compatibility fallbacks.
+ */
+export const hasLeadDemoCompletedMilestone = (lead: LeadMilestoneRecord): boolean =>
+  hasTimestampLikeValue(lead.demoCompletedAt) || DEMO_COMPLETED_LEAD_STATUSES.has(normalize(lead.status));
 
 /** Lead-side projection of the canonical Enrolled milestone. */
 export const hasLeadEnrolledMilestone = (lead: LeadMilestoneRecord): boolean =>
