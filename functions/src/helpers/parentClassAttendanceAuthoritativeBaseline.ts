@@ -15,6 +15,7 @@ import {
 } from './parentClassAttendanceIncrementalProtocol';
 
 const MONTH_RE = /^(\d{4})-(\d{2})$/;
+const MAX_AUTHORITATIVE_BASELINE_TARGETS_PER_EVENT = 2;
 
 export const PARENT_CLASS_ATTENDANCE_BASELINE_SOURCE =
   'class_sessions_parent_date_transaction_v1';
@@ -49,6 +50,19 @@ export type ParentClassAttendanceBaselineTransactionResult =
       revisionAfter: number;
       baselineEpochAfter: number;
       sourceDocumentsRead: number;
+    }
+  | { mode: 'fallback'; reason: string };
+
+export type ParentClassAttendanceBaselineBatchTransactionResult =
+  | {
+      mode: 'certified';
+      baselines: Array<{
+        target: ParentClassAttendanceBaselineTarget;
+        projection: ParentMonthClassAttendanceProjection;
+        revisionAfter: number;
+        baselineEpochAfter: number;
+        sourceDocumentsRead: number;
+      }>;
     }
   | { mode: 'fallback'; reason: string };
 
@@ -116,6 +130,31 @@ const monthDateRange = (
     startYmd: `${match[1]}-${match[2]}-01`,
     endYmd: `${match[1]}-${match[2]}-${String(lastDay).padStart(2, '0')}`,
   };
+};
+
+const targetKey = (target: ParentClassAttendanceBaselineTarget): string =>
+  `${target.parentId}__${target.monthKey}`;
+
+const validateBatchTargets = (
+  targets: ParentClassAttendanceBaselineTarget[],
+): { mode: 'valid'; targets: ParentClassAttendanceBaselineTarget[] } | { mode: 'fallback'; reason: string } => {
+  if (targets.length === 0) return { mode: 'fallback', reason: 'authoritative_target_set_empty' };
+  if (targets.length > MAX_AUTHORITATIVE_BASELINE_TARGETS_PER_EVENT) {
+    return { mode: 'fallback', reason: 'authoritative_target_cap_exceeded' };
+  }
+  const seen = new Set<string>();
+  for (const target of targets) {
+    if (target.requiresCompatibility) {
+      return { mode: 'fallback', reason: 'legacy_target_requires_compatibility' };
+    }
+    if (!normalizeText(target.parentId) || !monthDateRange(target.monthKey)) {
+      return { mode: 'fallback', reason: 'invalid_authoritative_target' };
+    }
+    const key = targetKey(target);
+    if (seen.has(key)) return { mode: 'fallback', reason: 'duplicate_authoritative_target' };
+    seen.add(key);
+  }
+  return { mode: 'valid', targets };
 };
 
 const readPreviousAttendance = (
@@ -296,75 +335,110 @@ const canonicalMonthQuery = (
 };
 
 /**
- * Brick 1C transaction coordinator for a future cutover/shadow runner.
+ * Brick 1C atomic authoritative coordinator for a future cutover/shadow runner.
  *
- * The read-model document and canonical parent-month classSessions query are read inside the same
- * Firestore transaction. Firestore retries the transaction when either the rollup document or the
- * query result changes concurrently, so the certification fence/revision describes one serializable
- * authoritative source snapshot. This helper is intentionally not wired to the deployed trigger yet.
+ * Every affected read-model document and canonical parent-month classSessions query is read before
+ * any write, inside one Firestore transaction. A parent/month move therefore certifies both the old
+ * and new targets at one transaction commit. Firestore retries if an affected read-model document
+ * or query result changes concurrently, preventing an incremental transaction and a full recompute
+ * from silently overwriting one another.
+ *
+ * This helper is intentionally not wired to the deployed trigger yet.
  */
-export const recomputeParentClassAttendanceAuthoritativeBaseline = async (input: {
+export const recomputeParentClassAttendanceAuthoritativeBaselines = async (input: {
   db: admin.firestore.Firestore;
-  target: ParentClassAttendanceBaselineTarget;
+  targets: ParentClassAttendanceBaselineTarget[];
   authoritativeEventId: unknown;
   generatedAtMs?: number;
-}): Promise<ParentClassAttendanceBaselineTransactionResult> => {
+}): Promise<ParentClassAttendanceBaselineBatchTransactionResult> => {
   const eventId = normalizeText(input.authoritativeEventId);
   if (!eventId) return { mode: 'fallback', reason: 'missing_authoritative_event_identity' };
-  if (input.target.requiresCompatibility) {
-    return { mode: 'fallback', reason: 'legacy_target_requires_compatibility' };
+  const validated = validateBatchTargets(input.targets);
+  if (validated.mode !== 'valid') return validated;
+
+  const prepared = validated.targets.map((target) => ({
+    target,
+    readModelRef: parentMonthReadModelRef(input.db, target),
+    query: canonicalMonthQuery(input.db, target),
+  }));
+  if (prepared.some((entry) => !entry.query)) {
+    return { mode: 'fallback', reason: 'invalid_authoritative_target' };
   }
-  const query = canonicalMonthQuery(input.db, input.target);
-  if (!query) return { mode: 'fallback', reason: 'invalid_target_month' };
 
-  const readModelRef = parentMonthReadModelRef(input.db, input.target);
   const generatedAtMs = input.generatedAtMs ?? Date.now();
-
   try {
     return await input.db.runTransaction(async (tx) => {
-      const readModelSnap = await tx.get(readModelRef);
-      const sessionSnap = await tx.get(query);
-      if (sessionSnap.size > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
-        return { mode: 'fallback', reason: 'authoritative_source_cap_exceeded' } as const;
+      const sourceSnapshots: Array<{
+        target: ParentClassAttendanceBaselineTarget;
+        readModelRef: admin.firestore.DocumentReference;
+        previousReadModel: Record<string, unknown> | null;
+        sessions: Array<Record<string, unknown>>;
+        sourceDocumentsRead: number;
+      }> = [];
+
+      // Keep all reads ahead of all writes. This is required by Firestore transactions and makes
+      // both sides of a parent/month move part of one serializable authoritative snapshot.
+      for (const entry of prepared) {
+        const readModelSnap = await tx.get(entry.readModelRef);
+        const sessionSnap = await tx.get(entry.query!);
+        if (sessionSnap.size > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
+          return { mode: 'fallback', reason: 'authoritative_source_cap_exceeded' } as const;
+        }
+        sourceSnapshots.push({
+          target: entry.target,
+          readModelRef: entry.readModelRef,
+          previousReadModel: readModelSnap.exists
+            ? ((readModelSnap.data() || {}) as Record<string, unknown>)
+            : null,
+          sessions: sessionSnap.docs.map(
+            (docSnap) => (docSnap.data() || {}) as Record<string, unknown>,
+          ),
+          sourceDocumentsRead: sessionSnap.size,
+        });
       }
 
-      const sessions = sessionSnap.docs.map(
-        (docSnap) => (docSnap.data() || {}) as Record<string, unknown>,
-      );
-      const previousReadModel = readModelSnap.exists
-        ? ((readModelSnap.data() || {}) as Record<string, unknown>)
-        : null;
-      const built = buildParentClassAttendanceCertifiedBaseline({
-        target: input.target,
-        sessions,
-        sourceDocumentsRead: sessionSnap.size,
-        previousReadModel,
-        authoritativeEventId: eventId,
-        generatedAtMs,
-      });
-      if (built.mode !== 'certified') return built;
+      const builtBaselines: ParentClassAttendanceCertifiedBaseline[] = [];
+      for (const source of sourceSnapshots) {
+        const built = buildParentClassAttendanceCertifiedBaseline({
+          target: source.target,
+          sessions: source.sessions,
+          sourceDocumentsRead: source.sourceDocumentsRead,
+          previousReadModel: source.previousReadModel,
+          authoritativeEventId: eventId,
+          generatedAtMs,
+        });
+        if (built.mode !== 'certified') return built;
+        builtBaselines.push(built);
+      }
 
-      const attendance = (built.readModelPatch.attendance || {}) as Record<string, unknown>;
-      tx.set(
-        readModelRef,
-        {
-          ...built.readModelPatch,
-          attendance: {
-            ...attendance,
-            incrementalAuthoritativeCommittedAt: admin.firestore.FieldValue.serverTimestamp(),
-            refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+      const committedAt = admin.firestore.FieldValue.serverTimestamp();
+      for (let index = 0; index < builtBaselines.length; index += 1) {
+        const built = builtBaselines[index];
+        const source = sourceSnapshots[index];
+        const attendance = (built.readModelPatch.attendance || {}) as Record<string, unknown>;
+        tx.set(
+          source.readModelRef,
+          {
+            ...built.readModelPatch,
+            attendance: {
+              ...attendance,
+              incrementalAuthoritativeCommittedAt: committedAt,
+              refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
           },
-        },
-        { merge: true },
-      );
+          { merge: true },
+        );
+      }
 
       return {
         mode: 'certified',
-        target: built.target,
-        projection: built.projection,
-        revisionAfter: built.revisionAfter,
-        baselineEpochAfter: built.baselineEpochAfter,
-        sourceDocumentsRead: built.sourceDocumentsRead,
+        baselines: builtBaselines.map((built) => ({
+          target: built.target,
+          projection: built.projection,
+          revisionAfter: built.revisionAfter,
+          baselineEpochAfter: built.baselineEpochAfter,
+          sourceDocumentsRead: built.sourceDocumentsRead,
+        })),
       } as const;
     });
   } catch (error) {
@@ -373,4 +447,30 @@ export const recomputeParentClassAttendanceAuthoritativeBaseline = async (input:
     }
     throw error;
   }
+};
+
+/** Convenience one-target wrapper for callers that do not have a parent/month move. */
+export const recomputeParentClassAttendanceAuthoritativeBaseline = async (input: {
+  db: admin.firestore.Firestore;
+  target: ParentClassAttendanceBaselineTarget;
+  authoritativeEventId: unknown;
+  generatedAtMs?: number;
+}): Promise<ParentClassAttendanceBaselineTransactionResult> => {
+  const result = await recomputeParentClassAttendanceAuthoritativeBaselines({
+    db: input.db,
+    targets: [input.target],
+    authoritativeEventId: input.authoritativeEventId,
+    generatedAtMs: input.generatedAtMs,
+  });
+  if (result.mode !== 'certified') return result;
+  const baseline = result.baselines[0];
+  if (!baseline) return { mode: 'fallback', reason: 'authoritative_target_set_empty' };
+  return {
+    mode: 'certified',
+    target: baseline.target,
+    projection: baseline.projection,
+    revisionAfter: baseline.revisionAfter,
+    baselineEpochAfter: baseline.baselineEpochAfter,
+    sourceDocumentsRead: baseline.sourceDocumentsRead,
+  };
 };
