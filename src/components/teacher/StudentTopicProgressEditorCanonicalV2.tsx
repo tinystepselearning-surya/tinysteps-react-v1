@@ -210,17 +210,18 @@ export default function StudentTopicProgressEditorCanonicalV2({
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const resumeSelectionAppliedRef = useRef('');
+  const [resumeProjection, setResumeProjection] = useState<{
+    key: string;
+    latestTopicId: string | null;
+    error: string | null;
+  } | null>(null);
 
-  const {
-    topics: resumeTopics,
-    loading: resumeLoading,
-    error: resumeError,
-  } = useKidTopicProgress(
-    kidId,
-    selectedCourseId || null,
-    Boolean(selectedCourseId && enrollmentId),
-    enrollmentId ?? null,
-  );
+  const resumeSelectionKey = `${kidId}::${selectedCourseId || ''}::${enrollmentId || ''}`;
+  const resumeRequired = Boolean(selectedCourseId && enrollmentId);
+  const resumeProjectionReady = !resumeRequired || resumeProjection?.key === resumeSelectionKey;
+  const resumeLoading = resumeRequired && !resumeProjectionReady;
+  const resumeError = resumeProjectionReady ? resumeProjection?.error ?? null : null;
+  const resumeTopicId = resumeProjectionReady ? resumeProjection?.latestTopicId ?? null : null;
 
   const {
     topics: existingTopics,
@@ -303,6 +304,39 @@ export default function StudentTopicProgressEditorCanonicalV2({
     };
   }, [enrollmentId]);
 
+  useEffect(() => {
+    resumeSelectionAppliedRef.current = '';
+    if (!kidId || !selectedCourseId || !enrollmentId) {
+      setResumeProjection(null);
+      return;
+    }
+
+    const key = `${kidId}::${selectedCourseId}::${enrollmentId}`;
+    let active = true;
+    const loadResumeProjection = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'students', kidId, 'courseProgress', selectedCourseId));
+        if (!active) return;
+        const data = snap.exists() ? snap.data() as any : null;
+        const latestTopicId = typeof data?.latestTopicId === 'string'
+          ? data.latestTopicId.trim() || null
+          : null;
+        setResumeProjection({ key, latestTopicId, error: null });
+      } catch (error: any) {
+        if (!active) return;
+        setResumeProjection({
+          key,
+          latestTopicId: null,
+          error: error?.message ?? 'Could not load the last saved lesson.',
+        });
+      }
+    };
+    void loadResumeProjection();
+    return () => {
+      active = false;
+    };
+  }, [enrollmentId, kidId, selectedCourseId]);
+
   const courseTopics = useMemo<TeacherTopic[]>(() => {
     if (!selectedCourseId) return [];
     if (isPhonicsCourseId(selectedCourseId)) {
@@ -328,22 +362,20 @@ export default function StudentTopicProgressEditorCanonicalV2({
       return;
     }
 
-    if (resumeLoading || resumeError) {
+    if (!resumeProjectionReady || resumeError) {
       if (!currentSelectionIsValid) setSelectedTopicId('');
       return;
     }
 
-    const resumeTopicId = selectTeacherTopicResumeId(resumeTopics, courseTopics);
-    setSelectedTopicId(resumeTopicId ?? courseTopics[0].id);
+    const resolvedResumeTopicId = selectTeacherTopicResumeId(resumeTopicId, courseTopics);
+    setSelectedTopicId(resolvedResumeTopicId ?? courseTopics[0].id);
     resumeSelectionAppliedRef.current = resumeSelectionKey;
   }, [
     courseTopics,
-    enrollmentId,
-    kidId,
     resumeError,
-    resumeLoading,
-    resumeTopics,
-    selectedCourseId,
+    resumeProjectionReady,
+    resumeSelectionKey,
+    resumeTopicId,
     selectedTopicId,
   ]);
 
