@@ -56,20 +56,34 @@ describe('B6 parent authority pillars', () => {
     expect(text).toContain('[letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words)');
   });
 
-  it('keeps the phonics parent guide on its dedicated research route and preserves a substantial evidence page', () => {
+  it('keeps the phonics parent guide on its dedicated route while rendering the canonical Blog 56 authority post', () => {
     const routes = fs.readFileSync(path.join(repoRoot, 'src/app/routes.tsx'), 'utf8');
     const dedicatedPage = fs.readFileSync(
       path.join(repoRoot, 'src/pages/blog/PhonicsForParentsResearchPage.tsx'),
       'utf8',
     );
+    const canonicalPost = bySlug.get('phonics-for-parents-guide');
 
     expect(routes).toContain("const PhonicsForParentsResearchPage = lazy(() => import('../pages/blog/PhonicsForParentsResearchPage'))");
     expect(routes).toContain("{ path: 'blog/phonics-for-parents-guide', element: <PhonicsForParentsResearchPage /> }");
-    expect(dedicatedPage).toContain('Education Endowment Foundation');
-    expect(dedicatedPage).toContain('National Reading Panel');
-    expect(dedicatedPage).toContain('Reading Rockets');
-    expect(dedicatedPage).toContain('International Dyslexia Association');
-    expect(dedicatedPage).toContain('10-minute home routine');
+
+    expect(canonicalPost?.title).toBe('Phonics for Parents: What It Is, How It Works, and How to Support Reading at Home');
+    expect(canonicalPost?.readTime).toBe('20 min read');
+    expect(canonicalPost?.modifiedDate).toBe('2026-09-01');
+
+    expect(dedicatedPage).toContain("import post from '../../content/blog/posts/research/phonics-for-parents-guide'");
+    expect(dedicatedPage).toContain('title={post.title}');
+    expect(dedicatedPage).toContain('description={post.excerpt}');
+    expect(dedicatedPage).toContain('readTimeLabel={post.readTime}');
+    expect(dedicatedPage).toContain('post.body.filter');
+    expect(dedicatedPage).toContain('post.faq.map');
+    expect(dedicatedPage).toContain('post.metaDescription || post.excerpt');
+    expect(dedicatedPage).toContain('dateModified: EFFECTIVE_DATE');
+
+    expect(dedicatedPage).not.toContain('What It Is, Why It Matters, and How to Teach It at Home');
+    expect(dedicatedPage).not.toContain('10 calm minutes a day');
+    expect(dedicatedPage).not.toContain("const ARTICLE_READ_TIME = '12 min read'");
+    expect(dedicatedPage).not.toContain('const ARTICLE_TITLE =');
   });
 
   it('keeps the two cannot-read diagnoses distinct and cross-links them instead of merging them', () => {
