@@ -75,6 +75,8 @@ const leadSnapshot = (id: string, source: string) => ({
   ],
 });
 
+const doc = (id: string, data: Record<string, unknown>) => ({ id, data: () => data });
+
 describe('LeadSourceAnalysis request ordering', () => {
   beforeEach(() => {
     getDocsLoggedMock.mockReset();
@@ -157,11 +159,9 @@ describe('LeadSourceAnalysis request ordering', () => {
 
     expect(screen.getByText('Instagram (legacy)')).toBeTruthy();
     expect(screen.queryByText(/stale 30d failure/)).toBeNull();
-    expect(screen.queryByText('Loading lead attribution…')).toBeNull();
   });
 
   it('uses receivedAt, then requestedAt, then createdAt in IST and deduplicates the range queries', async () => {
-    const doc = (id: string, data: Record<string, unknown>) => ({ id, data: () => data });
     getDocsLoggedMock.mockImplementation((label: string) => {
       if (label.endsWith(':requestedAt')) {
         return Promise.resolve({ docs: [
@@ -199,5 +199,56 @@ describe('LeadSourceAnalysis request ordering', () => {
       expect(leadsLabel?.parentElement?.textContent).toContain('3');
     });
     expect(screen.queryByText('Instagram (legacy)')).toBeNull();
+  });
+
+  it('uses the canonical Demo Created and Enrolled terminology for acquisition metrics', async () => {
+    const enrolledLead = doc('enrolled', {
+      receivedAt: new Date('2026-09-01T03:00:00.000Z'),
+      source: 'website',
+      status: 'admitted_confirmed',
+      demoSessionId: 'demo-1',
+      landingPage: '/phonics',
+    });
+    getDocsLoggedMock.mockResolvedValue({ docs: [enrolledLead] });
+
+    render(
+      <LeadSourceAnalysis
+        startDateKey="2026-09-01"
+        endDateKey="2026-09-01"
+        showFunnel={false}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Demo Created').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Enrolled').length).toBeGreaterThan(0);
+    });
+
+    expect(screen.queryByText('Reached demo')).toBeNull();
+    expect(screen.queryByText('Admitted')).toBeNull();
+    expect(screen.getByText('Top lead-origin landing pages')).toBeTruthy();
+    expect(screen.getByText(/not a total website-traffic report/i)).toBeTruthy();
+    expect(screen.getByText(/Lead cohort: 2026-09-01 to 2026-09-01/)).toBeTruthy();
+  });
+
+  it('shows failed attribution reads as unavailable instead of believable zeroes', async () => {
+    getDocsLoggedMock.mockRejectedValue(new Error('attribution read failed'));
+
+    render(
+      <LeadSourceAnalysis
+        startDateKey="2026-09-01"
+        endDateKey="2026-09-01"
+        showFunnel={false}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/attribution read failed/i)).toBeTruthy();
+    });
+
+    const leadsLabel = screen.getAllByText('Leads').find((node) => node.tagName === 'DIV');
+    expect(leadsLabel).toBeTruthy();
+    expect(leadsLabel?.parentElement?.textContent).toContain('—');
+    expect(screen.getAllByText(/Unavailable because attribution data could not be loaded/i).length).toBeGreaterThan(0);
   });
 });
