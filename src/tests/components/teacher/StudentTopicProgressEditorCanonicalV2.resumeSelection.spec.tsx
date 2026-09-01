@@ -4,15 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPhonicsLessons } from '../../../content/phonicsCurriculum';
 
-const { getDocMock, useKidTopicProgressMock } = vi.hoisted(() => ({
+const { docMock, getDocMock, useKidTopicProgressMock } = vi.hoisted(() => ({
+  docMock: vi.fn((...parts: unknown[]) => ({ parts })),
   getDocMock: vi.fn(),
   useKidTopicProgressMock: vi.fn(),
 }));
 
-let resumeRows: Array<Record<string, unknown> & { id: string }> = [];
+let projectedLatestTopicId: string | null = null;
 
 vi.mock('firebase/firestore', () => ({
-  doc: vi.fn((...parts: unknown[]) => ({ parts })),
+  doc: docMock,
   getDoc: getDocMock,
   serverTimestamp: vi.fn(() => ({ kind: 'serverTimestamp' })),
   setDoc: vi.fn(),
@@ -34,7 +35,7 @@ vi.mock('../../../components/progress/ChildSkillRatingCard', () => ({
 
 import StudentTopicProgressEditorCanonicalV2 from '../../../components/teacher/StudentTopicProgressEditorCanonicalV2';
 
-const hookResult = (topics: typeof resumeRows) => ({
+const hookResult = (topics: Array<Record<string, unknown> & { id: string }> = []) => ({
   topics,
   loading: false,
   error: null,
@@ -45,33 +46,32 @@ const hookResult = (topics: typeof resumeRows) => ({
 describe('StudentTopicProgressEditorCanonicalV2 resume selection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    resumeRows = [];
-    getDocMock.mockResolvedValue({
-      exists: () => true,
-      data: () => ({ courseId: 'early-phonics' }),
+    projectedLatestTopicId = null;
+    getDocMock.mockImplementation(async (ref: { parts?: unknown[] }) => {
+      const parts = ref?.parts ?? [];
+      if (parts.includes('courseProgress')) {
+        return {
+          exists: () => projectedLatestTopicId !== null,
+          data: () => ({ latestTopicId: projectedLatestTopicId }),
+        };
+      }
+      if (parts.includes('enrollments')) {
+        return {
+          exists: () => true,
+          data: () => ({ courseId: 'early-phonics' }),
+        };
+      }
+      return { exists: () => false, data: () => ({}) };
     });
-    useKidTopicProgressMock.mockImplementation((
-      _kidId: string,
-      _courseId: string,
-      _enabled: boolean,
-      _enrollmentId: string,
-      topicId?: string,
-    ) => {
-      if (topicId === undefined) return hookResult(resumeRows);
-      return hookResult(resumeRows.filter((row) => row.id === topicId));
-    });
+    useKidTopicProgressMock.mockReturnValue(hookResult());
   });
 
   afterEach(() => cleanup());
 
-  it('lands on the most recently saved lesson when historical progress exists', async () => {
+  it('lands on the canonical projection latest saved lesson instead of lesson 1', async () => {
     const lessons = getPhonicsLessons('early-phonics');
-    const lesson3 = lessons[2];
-    const lesson5 = lessons[4];
-    resumeRows = [
-      { id: lesson5.id, updatedAt: new Date('2026-06-03T12:26:06.720Z') },
-      { id: lesson3.id, updatedAt: new Date('2026-07-01T14:10:24.000Z') },
-    ];
+    const resumedLesson = lessons[4];
+    projectedLatestTopicId = resumedLesson.id;
 
     render(
       <StudentTopicProgressEditorCanonicalV2
@@ -83,10 +83,17 @@ describe('StudentTopicProgressEditorCanonicalV2 resume selection', () => {
     );
 
     const lessonSelect = await screen.findByLabelText(/^Lesson$/) as HTMLSelectElement;
-    await waitFor(() => expect(lessonSelect.value).toBe(lesson3.id));
+    await waitFor(() => expect(lessonSelect.value).toBe(resumedLesson.id));
+    expect(docMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'students',
+      'kid-1',
+      'courseProgress',
+      'early-phonics',
+    );
   });
 
-  it('uses lesson 1 only when there is no saved progress for the current curriculum', async () => {
+  it('uses lesson 1 only when the projection has no saved progress', async () => {
     const firstLesson = getPhonicsLessons('early-phonics')[0];
 
     render(
@@ -102,13 +109,28 @@ describe('StudentTopicProgressEditorCanonicalV2 resume selection', () => {
     await waitFor(() => expect(lessonSelect.value).toBe(firstLesson.id));
   });
 
+  it('falls back to lesson 1 when the projected latest topic is no longer in the curriculum', async () => {
+    const firstLesson = getPhonicsLessons('early-phonics')[0];
+    projectedLatestTopicId = 'retired-early-phonics-topic';
+
+    render(
+      <StudentTopicProgressEditorCanonicalV2
+        kidId="kid-legacy"
+        kidName="Legacy Student"
+        enrollmentId="enrollment-legacy"
+        courseId="early-phonics"
+      />,
+    );
+
+    const lessonSelect = await screen.findByLabelText(/^Lesson$/) as HTMLSelectElement;
+    await waitFor(() => expect(lessonSelect.value).toBe(firstLesson.id));
+  });
+
   it('does not snap back after the teacher manually chooses another lesson', async () => {
     const lessons = getPhonicsLessons('early-phonics');
     const resumedLesson = lessons[4];
     const manualLesson = lessons[6];
-    resumeRows = [
-      { id: resumedLesson.id, updatedAt: new Date('2026-07-01T14:10:24.000Z') },
-    ];
+    projectedLatestTopicId = resumedLesson.id;
 
     render(
       <StudentTopicProgressEditorCanonicalV2
