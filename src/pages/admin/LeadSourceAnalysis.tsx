@@ -16,6 +16,13 @@ import {
   leadReceivedDateKey,
   todayIstDateKey,
 } from './leadFunnelAnalytics';
+import {
+  ANALYTICS_GRAIN_LABELS,
+  ANALYTICS_METRIC_LABELS,
+  analyticsCohortDescription,
+  hasLeadDemoCreatedMilestone,
+  hasLeadEnrolledMilestone,
+} from './analyticsMeasurementContract';
 
 type LeadAttributionMap = {
   landingPage?: string | null;
@@ -56,8 +63,8 @@ type ChannelSummary = {
   channel: string;
   label: string;
   count: number;
-  demoCount: number;
-  admittedCount: number;
+  demoCreatedCount: number;
+  enrolledCount: number;
 };
 
 interface LeadSourceAnalysisProps {
@@ -70,19 +77,6 @@ interface LeadSourceAnalysisProps {
 const RANGE_OPTIONS = [7, 30, 90] as const;
 
 const normalize = (value: unknown): string => String(value || '').trim();
-
-const isDemoReached = (lead: LeadRow): boolean => {
-  if (normalize(lead.demoSessionId)) return true;
-  return [
-    'demo_pending_schedule',
-    'demo_booked',
-    'demo_completed',
-    'admission_follow_up',
-    'admitted_confirmed',
-  ].includes(normalize(lead.status).toLowerCase());
-};
-
-const isAdmitted = (lead: LeadRow): boolean => normalize(lead.status).toLowerCase() === 'admitted_confirmed';
 
 const hasAttributionEvidence = (lead: LeadRow): boolean => {
   const a = lead.attribution || {};
@@ -220,42 +214,42 @@ export default function LeadSourceAnalysis({
 
   const analysis = useMemo(() => {
     const byChannel = new Map<string, ChannelSummary>();
-    const byLanding = new Map<string, { page: string; count: number; demoCount: number; admittedCount: number }>();
+    const byLanding = new Map<string, { page: string; count: number; demoCreatedCount: number; enrolledCount: number }>();
     let attributedCount = 0;
-    let demoCount = 0;
-    let admittedCount = 0;
+    let demoCreatedCount = 0;
+    let enrolledCount = 0;
 
     rows.forEach((lead) => {
       const resolved = resolveChannel(lead);
       const landingPage = resolveLandingPage(lead);
-      const reachedDemo = isDemoReached(lead);
-      const admitted = isAdmitted(lead);
+      const demoCreated = hasLeadDemoCreatedMilestone(lead);
+      const enrolled = hasLeadEnrolledMilestone(lead);
 
       if (hasAttributionEvidence(lead)) attributedCount += 1;
-      if (reachedDemo) demoCount += 1;
-      if (admitted) admittedCount += 1;
+      if (demoCreated) demoCreatedCount += 1;
+      if (enrolled) enrolledCount += 1;
 
       const channelBucket = byChannel.get(resolved.channel) || {
         channel: resolved.channel,
         label: resolved.label,
         count: 0,
-        demoCount: 0,
-        admittedCount: 0,
+        demoCreatedCount: 0,
+        enrolledCount: 0,
       };
       channelBucket.count += 1;
-      if (reachedDemo) channelBucket.demoCount += 1;
-      if (admitted) channelBucket.admittedCount += 1;
+      if (demoCreated) channelBucket.demoCreatedCount += 1;
+      if (enrolled) channelBucket.enrolledCount += 1;
       byChannel.set(resolved.channel, channelBucket);
 
       const landingBucket = byLanding.get(landingPage) || {
         page: landingPage,
         count: 0,
-        demoCount: 0,
-        admittedCount: 0,
+        demoCreatedCount: 0,
+        enrolledCount: 0,
       };
       landingBucket.count += 1;
-      if (reachedDemo) landingBucket.demoCount += 1;
-      if (admitted) landingBucket.admittedCount += 1;
+      if (demoCreated) landingBucket.demoCreatedCount += 1;
+      if (enrolled) landingBucket.enrolledCount += 1;
       byLanding.set(landingPage, landingBucket);
     });
 
@@ -277,8 +271,8 @@ export default function LeadSourceAnalysis({
     return {
       total: rows.length,
       attributedCount,
-      demoCount,
-      admittedCount,
+      demoCreatedCount,
+      enrolledCount,
       organicCount,
       paidCount,
       socialCount,
@@ -286,6 +280,18 @@ export default function LeadSourceAnalysis({
       landingRows,
     };
   }, [rows]);
+
+  const renderMetricValue = (value: string | number): string | number => {
+    if (error) return '—';
+    if (loading) return '…';
+    return value;
+  };
+
+  const unavailableMessage = error
+    ? 'Unavailable because attribution data could not be loaded.'
+    : loading
+      ? 'Loading…'
+      : null;
 
   return (
     <div className="space-y-4">
@@ -312,11 +318,11 @@ export default function LeadSourceAnalysis({
             <div>
               <h3 className="text-base font-semibold">Marketing Attribution</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                First-touch acquisition, landing pages, demo progression and admissions from website enquiries.
+                First-touch lead attribution by acquisition channel and lead-origin landing page. This is not a total website-traffic report.
               </p>
               {controlledRange ? (
                 <p className="mt-1 text-[11px] font-medium text-slate-500">
-                  Reporting period: {startDateKey} to {endDateKey} · Asia/Kolkata
+                  {analyticsCohortDescription(startDateKey, endDateKey)}
                 </p>
               ) : null}
             </div>
@@ -338,9 +344,15 @@ export default function LeadSourceAnalysis({
             </div>
           </div>
 
+          <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-medium text-slate-600">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">{ANALYTICS_GRAIN_LABELS.leadCohort}</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">First-touch attribution</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Not total page traffic</span>
+          </div>
+
           {error ? (
             <div role="status" className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              {error}
+              {error} Metrics are shown as unavailable rather than zero so a read failure cannot look like real performance.
             </div>
           ) : null}
 
@@ -348,20 +360,20 @@ export default function LeadSourceAnalysis({
             {[
               ['Leads', analysis.total],
               ['Attribution coverage', `${analysis.attributedCount} (${pct(analysis.attributedCount, analysis.total)})`],
-              ['Reached demo', `${analysis.demoCount} (${pct(analysis.demoCount, analysis.total)})`],
-              ['Admitted', `${analysis.admittedCount} (${pct(analysis.admittedCount, analysis.total)})`],
+              [ANALYTICS_METRIC_LABELS.demoCreated, `${analysis.demoCreatedCount} (${pct(analysis.demoCreatedCount, analysis.total)})`],
+              [ANALYTICS_METRIC_LABELS.enrolled, `${analysis.enrolledCount} (${pct(analysis.enrolledCount, analysis.total)})`],
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
                 <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-                <div className="mt-1 text-lg font-semibold">{loading ? '…' : value}</div>
+                <div className="mt-1 text-lg font-semibold">{renderMetricValue(value)}</div>
               </div>
             ))}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="rounded-full border px-2.5 py-1">Organic {loading ? '…' : `${analysis.organicCount} (${pct(analysis.organicCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Paid {loading ? '…' : `${analysis.paidCount} (${pct(analysis.paidCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Social {loading ? '…' : `${analysis.socialCount} (${pct(analysis.socialCount, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Organic {renderMetricValue(`${analysis.organicCount} (${pct(analysis.organicCount, analysis.total)})`)}</span>
+            <span className="rounded-full border px-2.5 py-1">Paid {renderMetricValue(`${analysis.paidCount} (${pct(analysis.paidCount, analysis.total)})`)}</span>
+            <span className="rounded-full border px-2.5 py-1">Social {renderMetricValue(`${analysis.socialCount} (${pct(analysis.socialCount, analysis.total)})`)}</span>
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -372,22 +384,22 @@ export default function LeadSourceAnalysis({
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="p-2">Channel</th>
                     <th className="p-2 text-right">Leads</th>
-                    <th className="p-2 text-right">Demo</th>
-                    <th className="p-2 text-right">Admitted</th>
-                    <th className="p-2 text-right">Lead → admitted</th>
+                    <th className="p-2 text-right">{ANALYTICS_METRIC_LABELS.demoCreated}</th>
+                    <th className="p-2 text-right">{ANALYTICS_METRIC_LABELS.enrolled}</th>
+                    <th className="p-2 text-right">Lead → Enrolled</th>
                   </tr>
                 </thead>
                 <tbody>
                   {analysis.channelRows.length === 0 ? (
-                    <tr><td className="p-3 text-muted-foreground" colSpan={5}>{loading ? 'Loading…' : 'No leads in this period.'}</td></tr>
+                    <tr><td className="p-3 text-muted-foreground" colSpan={5}>{unavailableMessage || 'No leads in this period.'}</td></tr>
                   ) : (
                     analysis.channelRows.map((row) => (
                       <tr key={row.channel} className="border-b last:border-b-0">
                         <td className="p-2 font-medium">{row.label}</td>
                         <td className="p-2 text-right">{row.count}</td>
-                        <td className="p-2 text-right">{row.demoCount}</td>
-                        <td className="p-2 text-right">{row.admittedCount}</td>
-                        <td className="p-2 text-right font-semibold">{pct(row.admittedCount, row.count)}</td>
+                        <td className="p-2 text-right">{row.demoCreatedCount}</td>
+                        <td className="p-2 text-right">{row.enrolledCount}</td>
+                        <td className="p-2 text-right font-semibold">{pct(row.enrolledCount, row.count)}</td>
                       </tr>
                     ))
                   )}
@@ -396,26 +408,29 @@ export default function LeadSourceAnalysis({
             </div>
 
             <div className="overflow-x-auto rounded-lg border">
-              <div className="border-b px-3 py-2 text-sm font-semibold">Top first landing pages</div>
+              <div className="border-b px-3 py-2">
+                <div className="text-sm font-semibold">Top lead-origin landing pages</div>
+                <div className="mt-0.5 text-[11px] text-muted-foreground">Pages where attributed leads first entered; this does not rank pages by total visits.</div>
+              </div>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="p-2">Landing page</th>
                     <th className="p-2 text-right">Leads</th>
-                    <th className="p-2 text-right">Demo</th>
-                    <th className="p-2 text-right">Admitted</th>
+                    <th className="p-2 text-right">{ANALYTICS_METRIC_LABELS.demoCreated}</th>
+                    <th className="p-2 text-right">{ANALYTICS_METRIC_LABELS.enrolled}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {analysis.landingRows.length === 0 ? (
-                    <tr><td className="p-3 text-muted-foreground" colSpan={4}>{loading ? 'Loading…' : 'No landing-page data yet.'}</td></tr>
+                    <tr><td className="p-3 text-muted-foreground" colSpan={4}>{unavailableMessage || 'No landing-page data yet.'}</td></tr>
                   ) : (
                     analysis.landingRows.map((row) => (
                       <tr key={row.page} className="border-b last:border-b-0">
                         <td className="max-w-[300px] truncate p-2 font-mono text-xs" title={row.page}>{row.page}</td>
                         <td className="p-2 text-right">{row.count}</td>
-                        <td className="p-2 text-right">{row.demoCount}</td>
-                        <td className="p-2 text-right">{row.admittedCount}</td>
+                        <td className="p-2 text-right">{row.demoCreatedCount}</td>
+                        <td className="p-2 text-right">{row.enrolledCount}</td>
                       </tr>
                     ))
                   )}
