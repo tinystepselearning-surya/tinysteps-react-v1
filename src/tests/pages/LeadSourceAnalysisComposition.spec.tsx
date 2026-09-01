@@ -60,7 +60,7 @@ describe('LeadSourceAnalysis management dashboard composition', () => {
     expect(screen.getByText('Lead funnel mode: trend_only · analytics: true')).toBeTruthy();
     expect(screen.getByText('Acquisition V3 · Source Quality')).toBeTruthy();
     expect(screen.getByText('Acquisition source quality')).toBeTruthy();
-    expect(screen.getByText('AI / Answer Engines')).toBeTruthy();
+    expect(screen.getByText(/AI \/ Answer Engines/)).toBeTruthy();
 
     await waitFor(() => {
       expect(getDocsLoggedMock).toHaveBeenCalled();
