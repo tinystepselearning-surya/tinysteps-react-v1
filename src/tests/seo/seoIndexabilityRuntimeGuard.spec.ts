@@ -7,6 +7,7 @@ const guardSource = fs.readFileSync(
   path.resolve(process.cwd(), 'public/seo-indexability-guard.js'),
   'utf8',
 );
+const appShell = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
 
 const INDEX = 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 const NOINDEX = 'noindex, follow';
@@ -27,6 +28,13 @@ async function flushMutations(dom: JSDOM) {
 }
 
 describe('production SEO indexability hydration guard', () => {
+  it('is loaded by the shared application shell before React hydration', () => {
+    expect(appShell).toContain('<script defer src="/seo-indexability-guard.js"></script>');
+    expect(appShell.indexOf('/seo-indexability-guard.js')).toBeLessThan(
+      appShell.indexOf('/src/main.tsx'),
+    );
+  });
+
   it('restores an indexable server policy after a transient noindex mutation', async () => {
     const dom = createDom('https://tinystepslearning.com/phonics-fees-india');
     dom.window.eval(guardSource);
