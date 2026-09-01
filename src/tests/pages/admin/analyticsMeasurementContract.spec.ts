@@ -3,6 +3,7 @@ import {
   ANALYTICS_GRAIN_LABELS,
   ANALYTICS_METRIC_LABELS,
   analyticsCohortDescription,
+  hasLeadDemoCompletedMilestone,
   hasLeadDemoCreatedMilestone,
   hasLeadEnrolledMilestone,
 } from '../../../pages/admin/analyticsMeasurementContract';
@@ -30,6 +31,16 @@ describe('analytics measurement contract', () => {
     expect(hasLeadDemoCreatedMilestone({ status: 'admission_follow_up' })).toBe(true);
     expect(hasLeadDemoCreatedMilestone({ status: 'admitted_confirmed' })).toBe(true);
     expect(hasLeadDemoCreatedMilestone({ status: 'contacted' })).toBe(false);
+  });
+
+  it('projects Demo Completed only from the canonical timestamp or post-completion lifecycle states', () => {
+    expect(hasLeadDemoCompletedMilestone({ demoCompletedAt: new Date('2026-09-01T10:00:00Z'), status: 'demo_booked' })).toBe(true);
+    expect(hasLeadDemoCompletedMilestone({ status: 'demo_completed' })).toBe(true);
+    expect(hasLeadDemoCompletedMilestone({ status: 'admission_follow_up' })).toBe(true);
+    expect(hasLeadDemoCompletedMilestone({ status: 'admitted_confirmed' })).toBe(true);
+    expect(hasLeadDemoCompletedMilestone({ status: 'demo_booked' })).toBe(false);
+    expect(hasLeadDemoCompletedMilestone({ status: 'no_response' })).toBe(false);
+    expect(hasLeadDemoCompletedMilestone({ status: 'lost' })).toBe(false);
   });
 
   it('uses admitted_confirmed only as the lead-side Enrolled milestone', () => {
