@@ -342,7 +342,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'If assessment repeatedly shows that children can perform the newest pattern but lose older ones, the issue may be curriculum design rather than learner ability. Blog 59 develops the systematic-and-cumulative implementation model in more depth.',
+        'If assessment repeatedly shows that children can perform the newest pattern but lose older ones, the issue may be curriculum design rather than learner ability. [Systematic and Cumulative Phonics: A School Leader\'s Guide to Implementation](/blog/systematic-cumulative-phonics-explained-for-schools) develops this implementation model in more depth.',
     },
 
     {
