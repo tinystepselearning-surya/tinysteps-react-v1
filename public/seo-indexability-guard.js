@@ -8,8 +8,12 @@
 
   const META_NAMES = ['robots', 'googlebot', 'bingbot'];
   const LOCK_MS = 15000;
+  const initialLocation = `${window.location.pathname}${window.location.search}`;
   let baseline = null;
   let enforcing = false;
+
+  const isInitialLocation = () =>
+    `${window.location.pathname}${window.location.search}` === initialLocation;
 
   const readSingleMeta = (name) => {
     const nodes = Array.from(document.head.querySelectorAll(`meta[name="${name}"]`));
@@ -29,7 +33,7 @@
   };
 
   const enforceBaseline = () => {
-    if (!baseline || enforcing) return;
+    if (!baseline || enforcing || !isInitialLocation()) return;
     enforcing = true;
 
     try {
@@ -57,7 +61,14 @@
   // The prerendered robots tags are server-sent and therefore the authority for
   // the initial crawl. Preserve them while the SPA hydrates so a transient route,
   // lazy boundary, error boundary, or stale effect cannot flip crawl intent.
+  // Release immediately once the SPA navigates to a different URL so the next
+  // route can apply its own intentional crawl policy.
   const observer = new MutationObserver(() => {
+    if (!isInitialLocation()) {
+      observer.disconnect();
+      return;
+    }
+
     if (!baseline) {
       if (captureBaseline()) enforceBaseline();
       return;
@@ -75,7 +86,7 @@
   if (captureBaseline()) enforceBaseline();
 
   window.setTimeout(() => {
-    enforceBaseline();
+    if (isInitialLocation()) enforceBaseline();
     observer.disconnect();
   }, LOCK_MS);
 })();
