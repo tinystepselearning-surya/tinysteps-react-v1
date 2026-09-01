@@ -1,0 +1,158 @@
+name: Temporary projection-backed topic resume patch
+
+on:
+  push:
+    branches:
+      - fix/teacher-topics-resume-last-saved
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/teacher-topics-resume-last-saved
+          fetch-depth: 0
+
+      - name: Replace broad resume scan with canonical projection read
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/components/teacher/StudentTopicProgressEditorCanonicalV2.tsx')
+          text = path.read_text()
+
+          old = '''  const resumeSelectionAppliedRef = useRef('');
+
+  const {
+    topics: resumeTopics,
+    loading: resumeLoading,
+    error: resumeError,
+  } = useKidTopicProgress(
+    kidId,
+    selectedCourseId || null,
+    Boolean(selectedCourseId && enrollmentId),
+    enrollmentId ?? null,
+  );
+
+  const {
+    topics: existingTopics,'''
+          new = '''  const resumeSelectionAppliedRef = useRef('');
+  const [resumeProjection, setResumeProjection] = useState<{
+    key: string;
+    latestTopicId: string | null;
+    error: string | null;
+  } | null>(null);
+
+  const resumeSelectionKey = `${kidId}::${selectedCourseId || ''}::${enrollmentId || ''}`;
+  const resumeRequired = Boolean(selectedCourseId && enrollmentId);
+  const resumeProjectionReady = !resumeRequired || resumeProjection?.key === resumeSelectionKey;
+  const resumeLoading = resumeRequired && !resumeProjectionReady;
+  const resumeError = resumeProjectionReady ? resumeProjection?.error ?? null : null;
+  const resumeTopicId = resumeProjectionReady ? resumeProjection?.latestTopicId ?? null : null;
+
+  const {
+    topics: existingTopics,'''
+          if old not in text:
+            raise SystemExit('resume hook block anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = '''  }, [enrollmentId]);
+
+  const courseTopics = useMemo<TeacherTopic[]>(() => {'''
+          new = '''  }, [enrollmentId]);
+
+  useEffect(() => {
+    resumeSelectionAppliedRef.current = '';
+    if (!kidId || !selectedCourseId || !enrollmentId) {
+      setResumeProjection(null);
+      return;
+    }
+
+    const key = `${kidId}::${selectedCourseId}::${enrollmentId}`;
+    let active = true;
+    const loadResumeProjection = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'students', kidId, 'courseProgress', selectedCourseId));
+        if (!active) return;
+        const data = snap.exists() ? snap.data() as any : null;
+        const latestTopicId = typeof data?.latestTopicId === 'string'
+          ? data.latestTopicId.trim() || null
+          : null;
+        setResumeProjection({ key, latestTopicId, error: null });
+      } catch (error: any) {
+        if (!active) return;
+        setResumeProjection({
+          key,
+          latestTopicId: null,
+          error: error?.message ?? 'Could not load the last saved lesson.',
+        });
+      }
+    };
+    void loadResumeProjection();
+    return () => {
+      active = false;
+    };
+  }, [enrollmentId, kidId, selectedCourseId]);
+
+  const courseTopics = useMemo<TeacherTopic[]>(() => {'''
+          if old not in text:
+            raise SystemExit('projection effect insertion anchor not found')
+          text = text.replace(old, new, 1)
+
+          old = '''    if (resumeLoading || resumeError) {
+      if (!currentSelectionIsValid) setSelectedTopicId('');
+      return;
+    }
+
+    const resumeTopicId = selectTeacherTopicResumeId(resumeTopics, courseTopics);
+    setSelectedTopicId(resumeTopicId ?? courseTopics[0].id);
+    resumeSelectionAppliedRef.current = resumeSelectionKey;
+  }, [
+    courseTopics,
+    enrollmentId,
+    kidId,
+    resumeError,
+    resumeLoading,
+    resumeTopics,
+    selectedCourseId,
+    selectedTopicId,
+  ]);'''
+          new = '''    if (!resumeProjectionReady || resumeError) {
+      if (!currentSelectionIsValid) setSelectedTopicId('');
+      return;
+    }
+
+    const resolvedResumeTopicId = selectTeacherTopicResumeId(resumeTopicId, courseTopics);
+    setSelectedTopicId(resolvedResumeTopicId ?? courseTopics[0].id);
+    resumeSelectionAppliedRef.current = resumeSelectionKey;
+  }, [
+    courseTopics,
+    resumeError,
+    resumeProjectionReady,
+    resumeSelectionKey,
+    resumeTopicId,
+    selectedTopicId,
+  ]);'''
+          if old not in text:
+            raise SystemExit('resume selection effect anchor not found')
+          text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Commit refactor
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/teacher/StudentTopicProgressEditorCanonicalV2.tsx
+          git commit -m "refactor(teacher): use course projection for resume lesson"
+          git push origin HEAD:fix/teacher-topics-resume-last-saved
