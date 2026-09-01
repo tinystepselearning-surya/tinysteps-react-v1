@@ -78,7 +78,7 @@ describe('LeadSourceAnalysisV3', () => {
     render(
       <LeadSourceAnalysis
         startDateKey="2026-09-01"
-        endDateKey="2026-09-01"
+        endDateKey="2026-09-02"
         showFunnel={false}
       />,
     );
