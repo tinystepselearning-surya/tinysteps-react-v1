@@ -53,12 +53,14 @@ describe('LeadSourceAnalysis management dashboard composition', () => {
     getDocsLoggedMock.mockResolvedValue(emptySnapshot);
   });
 
-  it('keeps the live lead/admission funnel and marketing attribution together', async () => {
+  it('keeps the live lead/admission funnel and Acquisition V3 source quality together', async () => {
     render(<LeadSourceAnalysis />);
 
     expect(screen.getByText('Growth & Admissions')).toBeTruthy();
     expect(screen.getByText('Lead funnel mode: trend_only · analytics: true')).toBeTruthy();
-    expect(screen.getByText('Marketing Attribution')).toBeTruthy();
+    expect(screen.getByText('Acquisition V3 · Source Quality')).toBeTruthy();
+    expect(screen.getByText('Acquisition source quality')).toBeTruthy();
+    expect(screen.getByText('AI / Answer Engines')).toBeTruthy();
 
     await waitFor(() => {
       expect(getDocsLoggedMock).toHaveBeenCalled();
