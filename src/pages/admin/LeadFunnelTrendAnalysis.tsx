@@ -15,10 +15,13 @@ import {
 import type { DemoSession } from '../../types/models';
 import {
   addDaysToDateKey,
+  buildDemoOperationalDiagnostics,
   buildLeadFunnelAnalytics,
   funnelRate,
   leadReceivedDateKey,
+  previousEqualLengthRange,
   todayIstDateKey,
+  type DemoAgeBuckets,
   type FunnelRangePreset,
   type LeadFunnelLead,
 } from './leadFunnelAnalytics';
@@ -55,6 +58,12 @@ const earliestLeadDate = (leads: LeadFunnelLead[], fallback: string): string => 
 };
 
 const pct = (value: number): string => `${value.toFixed(1)}%`;
+const signedPp = (value: number): string => `${value > 0 ? '+' : ''}${value.toFixed(1)} pp`;
+const countChange = (current: number, previous: number): string => {
+  if (previous === 0) return current === 0 ? 'No change' : 'No prior baseline';
+  const delta = ((current - previous) / previous) * 100;
+  return `${delta > 0 ? '+' : ''}${delta.toFixed(1)}%`;
+};
 
 const FunnelStage = ({ label, value }: { label: string; value: number }) => (
   <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
@@ -69,6 +78,38 @@ const FunnelConnector = ({ label, rate }: { label: string; rate: number }) => (
     <span className="font-semibold tabular-nums text-slate-700">{pct(rate)}</span>
     <span className="sr-only">{label}</span>
   </div>
+);
+
+const ComparisonCard = ({
+  label,
+  current,
+  previous,
+  delta,
+}: {
+  label: string;
+  current: string | number;
+  previous: string | number;
+  delta: string;
+}) => (
+  <div className="rounded-xl border border-slate-200 bg-white p-3">
+    <div className="text-xs font-medium text-slate-600">{label}</div>
+    <div className="mt-1 flex items-baseline gap-2">
+      <span className="text-xl font-semibold tabular-nums text-slate-950">{current}</span>
+      <span className="text-xs font-semibold tabular-nums text-slate-600">{delta}</span>
+    </div>
+    <div className="mt-1 text-[11px] text-slate-500">Previous: {previous}</div>
+  </div>
+);
+
+const AgeRow = ({ label, buckets }: { label: string; buckets: DemoAgeBuckets }) => (
+  <tr className="border-t">
+    <td className="px-3 py-2 font-medium text-slate-800">{label}</td>
+    <td className="px-2 py-2 text-right tabular-nums">{buckets.age0To2}</td>
+    <td className="px-2 py-2 text-right tabular-nums">{buckets.age3To7}</td>
+    <td className="px-2 py-2 text-right tabular-nums">{buckets.age8To30}</td>
+    <td className="px-2 py-2 text-right tabular-nums">{buckets.age31Plus}</td>
+    <td className="px-3 py-2 text-right tabular-nums">{buckets.missingTimestamp}</td>
+  </tr>
 );
 
 export default function LeadFunnelTrendAnalysis({
@@ -109,11 +150,52 @@ export default function LeadFunnelTrendAnalysis({
     [bounds.endKey, bounds.startKey, demos, leads],
   );
 
+  const previousRange = useMemo(
+    () => previousEqualLengthRange(bounds.startKey, bounds.endKey),
+    [bounds.endKey, bounds.startKey],
+  );
+  const previousAnalytics = useMemo(
+    () => buildLeadFunnelAnalytics(leads, demos, previousRange.startKey, previousRange.endKey),
+    [demos, leads, previousRange.endKey, previousRange.startKey],
+  );
+  const operationalDiagnostics = useMemo(
+    () => buildDemoOperationalDiagnostics(demos),
+    [demos],
+  );
+
   const { cohortTotals, operational } = analytics;
+  const previousTotals = previousAnalytics.cohortTotals;
   const leadToDemo = funnelRate(cohortTotals.demoCreated, cohortTotals.received);
   const demoToComplete = funnelRate(cohortTotals.completed, cohortTotals.demoCreated);
   const completedToEnroll = funnelRate(cohortTotals.enrolled, cohortTotals.completed);
   const leadToEnroll = funnelRate(cohortTotals.enrolled, cohortTotals.received);
+  const previousDemoToComplete = funnelRate(previousTotals.completed, previousTotals.demoCreated);
+  const previousLeadToEnroll = funnelRate(previousTotals.enrolled, previousTotals.received);
+
+  const stageGaps = [
+    {
+      label: 'Lead → Demo Created',
+      description: 'Leads without a linked demo record yet',
+      count: Math.max(0, cohortTotals.received - cohortTotals.demoCreated),
+      rate: funnelRate(Math.max(0, cohortTotals.received - cohortTotals.demoCreated), cohortTotals.received),
+    },
+    {
+      label: 'Demo Created → Completed',
+      description: 'Demo-created leads without a delivered completed demo yet',
+      count: Math.max(0, cohortTotals.demoCreated - cohortTotals.completed),
+      rate: funnelRate(Math.max(0, cohortTotals.demoCreated - cohortTotals.completed), cohortTotals.demoCreated),
+    },
+    {
+      label: 'Demo Completed → Enrolled',
+      description: 'Completed-demo leads not yet enrolled',
+      count: Math.max(0, cohortTotals.completed - cohortTotals.enrolled),
+      rate: funnelRate(Math.max(0, cohortTotals.completed - cohortTotals.enrolled), cohortTotals.completed),
+    },
+  ];
+  const largestStageGap = stageGaps.reduce(
+    (largest, gap) => gap.count > largest.count ? gap : largest,
+    stageGaps[0],
+  );
 
   if (variant === 'summary') {
     return (
@@ -145,9 +227,12 @@ export default function LeadFunnelTrendAnalysis({
           <span className="rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-800">{operational.open} awaiting assignment</span>
           <span className="rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-800">{operational.assigned} assigned</span>
           <span className="rounded-full bg-violet-50 px-2.5 py-1 font-medium text-violet-800">{operational.completedAwaitingAdmin} decisions pending</span>
+          {operationalDiagnostics.staleOpenOver7Days > 0 ? (
+            <span className="rounded-full bg-rose-50 px-2.5 py-1 font-medium text-rose-800">{operationalDiagnostics.staleOpenOver7Days} open &gt;7d</span>
+          ) : null}
         </div>
         <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-          Funnel stages count leads in the selected cohort. Live demo records are a separate operational grain, so retries, reschedules, or replacements can make those totals differ legitimately.
+          Largest current cohort gap by volume: {largestStageGap.label} · {largestStageGap.count} not yet progressed. Stage gaps are open cohort states, not automatically lost leads.
         </p>
       </Card>
     );
@@ -241,6 +326,63 @@ export default function LeadFunnelTrendAnalysis({
           </div>
         </div>
 
+        <div className="mt-5 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/45 p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Stage-gap diagnosis</div>
+                <div className="mt-1 text-xs text-slate-500">Where this lead cohort has not yet progressed to the next milestone.</div>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">Not a lost-lead count</span>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {stageGaps.map((gap) => (
+                <div key={gap.label} className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="text-xs font-semibold text-slate-800">{gap.label}</div>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-2xl font-semibold tabular-nums text-slate-950">{gap.count}</span>
+                    <span className="text-xs font-medium tabular-nums text-slate-500">{pct(gap.rate)}</span>
+                  </div>
+                  <div className="mt-1 text-[11px] leading-4 text-slate-500">{gap.description}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Largest gap by volume: <strong>{largestStageGap.label}</strong> · {largestStageGap.count} leads not yet progressed. Cohorts can continue to mature after the reporting period.
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/45 p-4">
+            <div className="text-sm font-semibold text-slate-900">Previous-period comparison</div>
+            <div className="mt-1 text-xs text-slate-500">
+              Same-length preceding lead cohort: {previousRange.startKey || '—'} to {previousRange.endKey || '—'}.
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+              <ComparisonCard
+                label="Leads Received"
+                current={cohortTotals.received}
+                previous={previousTotals.received}
+                delta={countChange(cohortTotals.received, previousTotals.received)}
+              />
+              <ComparisonCard
+                label="Demo Completion"
+                current={pct(demoToComplete)}
+                previous={pct(previousDemoToComplete)}
+                delta={signedPp(demoToComplete - previousDemoToComplete)}
+              />
+              <ComparisonCard
+                label="Lead → Enrolled"
+                current={pct(leadToEnroll)}
+                previous={pct(previousLeadToEnroll)}
+                delta={signedPp(leadToEnroll - previousLeadToEnroll)}
+              />
+            </div>
+            <p className="mt-3 text-[11px] leading-4 text-slate-500">
+              This is a live cohort snapshot, not a fixed historical close. Later demo completions or enrollments can improve either cohort after its lead-receipt window ends.
+            </p>
+          </div>
+        </div>
+
         <div className="mt-5 rounded-xl border bg-white p-3">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -272,17 +414,17 @@ export default function LeadFunnelTrendAnalysis({
         </div>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.55fr_0.75fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]">
         <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
           <div className="border-b bg-slate-50/70 px-4 py-3">
             <div className="text-sm font-semibold text-slate-900">Funnel performance by intake source</div>
-            <div className="text-xs text-muted-foreground">Lead-cohort conversion for leads first received during the selected period.</div>
+            <div className="text-xs text-muted-foreground">Lead-cohort conversion by intake source, benchmarked against the selected cohort overall.</div>
           </div>
           {analytics.sourcePerformance.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground">No leads received in this period.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-sm">
+              <table className="w-full min-w-[860px] text-sm">
                 <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="px-4 py-2">Source</th>
@@ -291,7 +433,8 @@ export default function LeadFunnelTrendAnalysis({
                     <th className="px-3 py-2 text-right">{ANALYTICS_METRIC_LABELS.demoCompleted}</th>
                     <th className="px-3 py-2 text-right">{ANALYTICS_METRIC_LABELS.enrolled}</th>
                     <th className="px-3 py-2 text-right">Demo completion</th>
-                    <th className="px-4 py-2 text-right">Lead → Enrolled</th>
+                    <th className="px-3 py-2 text-right">Lead → Enrolled</th>
+                    <th className="px-4 py-2 text-right">vs cohort</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -303,7 +446,8 @@ export default function LeadFunnelTrendAnalysis({
                       <td className="px-3 py-2 text-right tabular-nums">{row.completed}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{row.enrolled}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{pct(row.demoCompletionRate)}</td>
-                      <td className="px-4 py-2 text-right font-semibold tabular-nums">{pct(row.leadToEnrollmentRate)}</td>
+                      <td className="px-3 py-2 text-right font-semibold tabular-nums">{pct(row.leadToEnrollmentRate)}</td>
+                      <td className="px-4 py-2 text-right tabular-nums text-slate-600">{signedPp(row.leadToEnrollmentRate - leadToEnroll)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -315,31 +459,64 @@ export default function LeadFunnelTrendAnalysis({
         <Card className="border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <div className="text-sm font-semibold text-slate-900">{ANALYTICS_GRAIN_LABELS.liveDemoRecords}</div>
-              <p className="mt-1 text-xs text-muted-foreground">Current workload across demo records, independent of the selected lead cohort.</p>
+              <div className="text-sm font-semibold text-slate-900">Live demo workload health</div>
+              <p className="mt-1 text-xs text-muted-foreground">Aging diagnostics for current demo records. This is independent of the selected lead cohort.</p>
             </div>
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">Demo-record grain</span>
           </div>
+
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-lg border p-3">
               <div className="text-xs text-muted-foreground">Awaiting assignment</div>
               <div className="mt-1 text-xl font-semibold tabular-nums">{operational.open}</div>
+              <div className="mt-1 text-[11px] text-slate-500">{operationalDiagnostics.staleOpenOver7Days} older than 7 days</div>
             </div>
             <div className="rounded-lg border p-3">
               <div className="text-xs text-muted-foreground">Assigned</div>
               <div className="mt-1 text-xl font-semibold tabular-nums">{operational.assigned}</div>
+              <div className="mt-1 text-[11px] text-slate-500">{operationalDiagnostics.staleAssignedOver7Days} assigned &gt;7 days</div>
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-xs text-muted-foreground">Completed · decision pending</div>
+              <div className="text-xs text-muted-foreground">Decision pending</div>
               <div className="mt-1 text-xl font-semibold tabular-nums">{operational.completedAwaitingAdmin}</div>
+              <div className="mt-1 text-[11px] text-slate-500">{operationalDiagnostics.staleDecisionOver7Days} pending &gt;7 days</div>
             </div>
             <div className="rounded-lg border p-3">
-              <div className="text-xs text-muted-foreground">Cancelled demo records</div>
-              <div className="mt-1 text-xl font-semibold tabular-nums">{operational.cancelled}</div>
+              <div className="text-xs text-muted-foreground">Very old open records</div>
+              <div className="mt-1 text-xl font-semibold tabular-nums">{operationalDiagnostics.veryStaleOpenOver30Days}</div>
+              <div className="mt-1 text-[11px] text-slate-500">Awaiting assignment &gt;30 days</div>
             </div>
           </div>
+
+          <div className="mt-4 overflow-x-auto rounded-lg border">
+            <table className="w-full min-w-[520px] text-xs">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-3 py-2 text-left">Status age</th>
+                  <th className="px-2 py-2 text-right">0–2d</th>
+                  <th className="px-2 py-2 text-right">3–7d</th>
+                  <th className="px-2 py-2 text-right">8–30d</th>
+                  <th className="px-2 py-2 text-right">31+d</th>
+                  <th className="px-3 py-2 text-right">No date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <AgeRow label="Awaiting assignment" buckets={operationalDiagnostics.openAge} />
+                <AgeRow label="Assigned" buckets={operationalDiagnostics.assignedAge} />
+                <AgeRow label="Decision pending" buckets={operationalDiagnostics.decisionAge} />
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600">{operational.cancelled} cancelled records</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600">{operationalDiagnostics.activeRescheduleLinked} active reschedule-linked</span>
+            {operationalDiagnostics.missingAgeTimestamp > 0 ? (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-800">{operationalDiagnostics.missingAgeTimestamp} missing age timestamp</span>
+            ) : null}
+          </div>
           <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-            Funnel metrics are lead-level milestones. This snapshot counts demo records, so one lead can contribute more than one record after a retry, reschedule, or replacement.
+            Older records are flagged for investigation only; age alone does not prove a record is invalid. This view is designed to reveal whether a large awaiting-assignment total is mostly recent workload or historical/stale backlog.
           </p>
         </Card>
       </div>
