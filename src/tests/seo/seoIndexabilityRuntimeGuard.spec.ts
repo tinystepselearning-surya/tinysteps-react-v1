@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+// @ts-expect-error The repository intentionally uses jsdom without @types/jsdom; this test only needs its runtime API.
 import { JSDOM } from 'jsdom';
 import { describe, expect, it } from 'vitest';
 
@@ -23,7 +24,7 @@ function createDom(url: string, robots = INDEX) {
   );
 }
 
-async function flushMutations(dom: JSDOM) {
+async function flushMutations(dom: ReturnType<typeof createDom>) {
   await new Promise<void>((resolve) => dom.window.setTimeout(resolve, 0));
 }
 
