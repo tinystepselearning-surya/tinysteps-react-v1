@@ -1,0 +1,99 @@
+name: Global progress enrollment audit (read-only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FIREBASE_PROJECT_ID: tinysteps-react-v1
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: global-progress-enrollment-readonly-audit
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run progress enrollment classifier tests
+        run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run school-wide progress audit in read-only mode
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GLOBAL_PROGRESS_AUDIT_OUTPUT: global-progress-enrollment-audit.json
+        run: node scripts/audit-global-progress-enrollment.mjs
+
+      - name: Verify post-migration safety invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const audit = JSON.parse(fs.readFileSync('global-progress-enrollment-audit.json', 'utf8'));
+
+          if (audit.mode !== 'READ_ONLY_DRY_RUN') {
+            throw new Error(`Unexpected audit mode: ${audit.mode}`);
+          }
+          if (audit.writeOperationsPerformed !== 0) {
+            throw new Error('Read-only audit reported writes.');
+          }
+          if (audit.enrollmentAudit.uniqueMapping !== 0) {
+            throw new Error(`Recoverable legacy rows remain: ${audit.enrollmentAudit.uniqueMapping}`);
+          }
+          if (audit.enrollmentAudit.ambiguous !== 0) {
+            throw new Error(`Ambiguous rows remain: ${audit.enrollmentAudit.ambiguous}`);
+          }
+          if (audit.enrollmentAudit.conflicting !== 0) {
+            throw new Error(`Conflicting rows remain: ${audit.enrollmentAudit.conflicting}`);
+          }
+          if (audit.migrationReadiness.metadataOnlySafe !== 0) {
+            throw new Error(`Safe metadata backfills remain: ${audit.migrationReadiness.metadataOnlySafe}`);
+          }
+          if (audit.enrollmentAudit.missingEnrollmentId !== audit.enrollmentAudit.unmapped) {
+            throw new Error(
+              `Unexpected missing enrollment rows: missing=${audit.enrollmentAudit.missingEnrollmentId}, unmapped=${audit.enrollmentAudit.unmapped}`,
+            );
+          }
+
+          console.log(JSON.stringify({
+            totalExamined: audit.enrollmentAudit.totalExamined,
+            withEnrollmentId: audit.enrollmentAudit.withEnrollmentId,
+            missingEnrollmentId: audit.enrollmentAudit.missingEnrollmentId,
+            unmapped: audit.enrollmentAudit.unmapped,
+            uniqueMapping: audit.enrollmentAudit.uniqueMapping,
+            ambiguous: audit.enrollmentAudit.ambiguous,
+            conflicting: audit.enrollmentAudit.conflicting,
+            writeOperationsPerformed: audit.writeOperationsPerformed,
+          }, null, 2));
+          NODE
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: global-progress-enrollment-readonly-audit
+          path: global-progress-enrollment-audit.json
+          if-no-files-found: warn
+          retention-days: 7
