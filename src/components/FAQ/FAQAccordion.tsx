@@ -94,38 +94,41 @@ export default function FAQAccordion({ items, categoryLabels = {}, onToggle }: F
                   : 'border-slate-200/80 bg-white/88 hover:border-slate-300 hover:bg-white'
               }`}
             >
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                aria-controls={answerId}
-                onClick={() => {
-                  const nextOpen = !isOpen;
-                  setExpandedIds((current) =>
-                    current.includes(item.id)
-                      ? current.filter((id) => id !== item.id)
-                      : [...current, item.id],
-                  );
-                  onToggle?.(item, nextOpen);
-                }}
-                className="flex w-full items-start justify-between gap-6 px-5 py-5 text-left sm:px-6"
-              >
-                <div className="min-w-0">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-700">
-                    {categoryLabels[item.category] || item.category}
-                  </p>
-                  <h3 id={questionId} className="faq-question text-lg font-semibold leading-7 text-slate-900">
-                    {item.question}
-                  </h3>
-                </div>
-                <span
-                  className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition ${
-                    isOpen ? 'rotate-45 border-slate-900 bg-slate-900 text-white' : 'bg-slate-50'
-                  }`}
-                  aria-hidden="true"
+              <h3 className="m-0">
+                <button
+                  id={questionId}
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={answerId}
+                  onClick={() => {
+                    const nextOpen = !isOpen;
+                    setExpandedIds((current) =>
+                      current.includes(item.id)
+                        ? current.filter((id) => id !== item.id)
+                        : [...current, item.id],
+                    );
+                    onToggle?.(item, nextOpen);
+                  }}
+                  className="flex w-full items-start justify-between gap-6 px-5 py-5 text-left sm:px-6"
                 >
-                  +
-                </span>
-              </button>
+                  <span className="min-w-0">
+                    <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.2em] text-primary-700">
+                      {categoryLabels[item.category] || item.category}
+                    </span>
+                    <span className="faq-question block text-lg font-semibold leading-7 text-slate-900">
+                      {item.question}
+                    </span>
+                  </span>
+                  <span
+                    className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition ${
+                      isOpen ? 'rotate-45 border-slate-900 bg-slate-900 text-white' : 'bg-slate-50'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    +
+                  </span>
+                </button>
+              </h3>
 
               <div
                 id={answerId}
