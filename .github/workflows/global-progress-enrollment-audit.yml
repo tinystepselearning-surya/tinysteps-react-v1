@@ -92,7 +92,7 @@ jobs:
           NODE
 
       - name: Execute approved production migration
-        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        if: "${{ github.event.head_commit.message == 'ops(migration): execute approved production backfill' }}"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
         run: |
@@ -105,7 +105,7 @@ jobs:
             | tee global-progress-migration-apply.json
 
       - name: Verify approved migration result
-        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        if: "${{ github.event.head_commit.message == 'ops(migration): execute approved production backfill' }}"
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
@@ -133,7 +133,7 @@ jobs:
           NODE
 
       - name: Run post-migration production audit
-        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        if: "${{ github.event.head_commit.message == 'ops(migration): execute approved production backfill' }}"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
           FIREBASE_PROJECT_ID: tinysteps-react-v1
@@ -141,7 +141,7 @@ jobs:
         run: node scripts/audit-global-progress-enrollment.mjs
 
       - name: Verify post-migration invariants
-        if: github.event.head_commit.message == 'ops(migration): execute approved production backfill'
+        if: "${{ github.event.head_commit.message == 'ops(migration): execute approved production backfill' }}"
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
