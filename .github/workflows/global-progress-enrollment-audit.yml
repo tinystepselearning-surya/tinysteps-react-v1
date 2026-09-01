@@ -1,9 +1,7 @@
-name: Global progress enrollment audit
+name: Global progress enrollment audit (read-only)
 
 on:
-  push:
-    branches:
-      - fix/global-progress-enrollment-migration
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,47 +12,24 @@ env:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     concurrency:
-      group: firebase-deployment-tinysteps-react-v1
+      group: global-progress-enrollment-readonly-audit
       cancel-in-progress: false
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            functions/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install root dependencies
+      - name: Install dependencies
         run: npm ci
-
-      - name: Install Functions dependencies
-        run: npm --prefix functions ci
-
-      - name: Build canonical progress projection helpers
-        run: npm --prefix functions run build
-
-      - name: Validate compiled V3 projection helper exports
-        run: |
-          node --input-type=module <<'NODE'
-          import { createRequire } from 'node:module';
-          const require = createRequire(import.meta.url);
-          const helper = require('./functions/lib/childCourseProgressProjectionV3.js');
-          for (const name of ['buildSummaryFromDocs', 'curriculumTopicsForCourse', 'docsForCourse']) {
-            if (typeof helper[name] !== 'function') {
-              throw new Error(`Missing compiled V3 projection helper: ${name}`);
-            }
-          }
-          console.log('Compiled V3 projection helper contract: OK');
-          NODE
 
       - name: Run progress enrollment classifier tests
         run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
@@ -66,172 +41,59 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: Run school-wide progress audit in read-only mode
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
           GLOBAL_PROGRESS_AUDIT_OUTPUT: global-progress-enrollment-audit.json
         run: node scripts/audit-global-progress-enrollment.mjs
 
-      - name: Build gated migration plan without writes
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/migrate-global-progress-enrollments.mjs \
-            --project "${FIREBASE_PROJECT_ID}" \
-            --progress-limit 5000 \
-            --enrollment-limit 2000 \
-            | tee global-progress-migration-plan.json
-
-      - name: Verify migration plan safety invariants
+      - name: Verify post-migration safety invariants
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const plan = JSON.parse(fs.readFileSync('global-progress-migration-plan.json', 'utf8'));
-          if (plan.mode !== 'READ_ONLY_DRY_RUN') throw new Error(`Unexpected mode: ${plan.mode}`);
-          if (plan.writeOperationsPerformed !== 0) throw new Error('Dry-run reported writes.');
-          if (plan.plan.ambiguousDocuments !== 0) throw new Error(`Ambiguous progress rows: ${plan.plan.ambiguousDocuments}`);
-          if (plan.plan.blockedUniqueDocuments !== 0) throw new Error(`Blocked deterministic rows: ${plan.plan.blockedUniqueDocuments}`);
-          if (plan.plan.unmappedDocuments !== 50) throw new Error(`Unexpected unmapped rows: ${plan.plan.unmappedDocuments}`);
-          if (plan.plan.safeBackfillDocuments <= 0) throw new Error('Expected recoverable legacy progress rows.');
-          console.log(JSON.stringify({
-            safeBackfillDocuments: plan.plan.safeBackfillDocuments,
-            affectedKidCoursePairs: plan.plan.affectedKidCoursePairs,
-            unmappedDocuments: plan.plan.unmappedDocuments,
-            alreadyCorrectDocuments: plan.plan.alreadyCorrectDocuments,
-            writeOperationsPerformed: plan.writeOperationsPerformed,
-          }, null, 2));
-          NODE
+          const audit = JSON.parse(fs.readFileSync('global-progress-enrollment-audit.json', 'utf8'));
 
-      - name: Deploy enrollment-only progress trigger guard
-        id: deploy-progress-guard
-        if: "${{ github.event.head_commit.message == 'ops(migration): execute runtime production backfill' }}"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-        run: >-
-          npx firebase-tools@latest deploy
-          --only functions:onStudentProgressReadModelWrite
-          --project "${{ env.FIREBASE_PROJECT_ID }}"
-          --non-interactive
-
-      - name: Deploy temporary runtime migration runner
-        id: deploy-migration-runner
-        if: "${{ github.event.head_commit.message == 'ops(migration): execute runtime production backfill' }}"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-        run: >-
-          npx firebase-tools@latest deploy
-          --only functions:runEnrollmentCanonicalCoverageDaily
-          --project "${{ env.FIREBASE_PROJECT_ID }}"
-          --non-interactive
-
-      - name: Wait for runtime migration marker
-        id: wait-migration
-        if: "${{ github.event.head_commit.message == 'ops(migration): execute runtime production backfill' }}"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 60); do
-            set +e
-            node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
-          import { getFirestore } from 'firebase-admin/firestore';
-          if (!getApps().length) initializeApp({ credential: applicationDefault(), projectId: 'tinysteps-react-v1' });
-          const snap = await getFirestore().collection('opsMigrations').doc('globalProgressEnrollment20260901').get();
-          const data = snap.exists ? (snap.data() || {}) : {};
-          const output = { exists: snap.exists, status: data.status || null, ...data };
-          fs.writeFileSync('runtime-progress-migration-marker.json', `${JSON.stringify(output, null, 2)}\n`, 'utf8');
-          console.log(JSON.stringify({ exists: snap.exists, status: data.status || null, attemptCount: data.attemptCount || null }));
-          if (data.status === 'completed') process.exit(0);
-          if (data.status === 'failed') process.exit(2);
-          process.exit(3);
-          NODE
-            code=$?
-            set -e
-            if [[ "$code" -eq 0 ]]; then
-              echo "Runtime migration completed."
-              exit 0
-            fi
-            if [[ "$code" -eq 2 ]]; then
-              echo "::error::Runtime migration marker reported failure."
-              cat runtime-progress-migration-marker.json || true
-              exit 1
-            fi
-            echo "Migration not completed yet (attempt ${attempt}/60); waiting 10 seconds."
-            sleep 10
-          done
-          echo "::error::Timed out waiting for runtime migration marker."
-          cat runtime-progress-migration-marker.json || true
-          exit 1
-
-      - name: Run post-migration production audit
-        if: "${{ github.event.head_commit.message == 'ops(migration): execute runtime production backfill' && steps.wait-migration.outcome == 'success' }}"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-          GLOBAL_PROGRESS_AUDIT_OUTPUT: global-progress-enrollment-post-migration-audit.json
-        run: node scripts/audit-global-progress-enrollment.mjs
-
-      - name: Verify post-migration invariants
-        if: "${{ github.event.head_commit.message == 'ops(migration): execute runtime production backfill' && steps.wait-migration.outcome == 'success' }}"
-        run: |
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const audit = JSON.parse(fs.readFileSync('global-progress-enrollment-post-migration-audit.json', 'utf8'));
-          if (audit.mode !== 'READ_ONLY_DRY_RUN') throw new Error(`Unexpected post-audit mode: ${audit.mode}`);
-          if (audit.writeOperationsPerformed !== 0) throw new Error('Post-audit reported writes.');
-          if (audit.enrollmentAudit.uniqueMapping !== 0) throw new Error(`Recoverable legacy rows remain: ${audit.enrollmentAudit.uniqueMapping}`);
-          if (audit.enrollmentAudit.ambiguous !== 0) throw new Error(`Ambiguous rows remain: ${audit.enrollmentAudit.ambiguous}`);
-          if (audit.enrollmentAudit.conflicting !== 0) throw new Error(`Conflicting rows remain: ${audit.enrollmentAudit.conflicting}`);
-          if (audit.migrationReadiness.metadataOnlySafe !== 0) throw new Error(`Safe backfills remain: ${audit.migrationReadiness.metadataOnlySafe}`);
-          if (audit.enrollmentAudit.unmapped !== 50) throw new Error(`Unexpected unmapped rows after migration: ${audit.enrollmentAudit.unmapped}`);
-          if (audit.enrollmentAudit.missingEnrollmentId !== audit.enrollmentAudit.unmapped) {
-            throw new Error(`Unexpected missing enrollment rows remain: missing=${audit.enrollmentAudit.missingEnrollmentId}, unmapped=${audit.enrollmentAudit.unmapped}`);
+          if (audit.mode !== 'READ_ONLY_DRY_RUN') {
+            throw new Error(`Unexpected audit mode: ${audit.mode}`);
           }
+          if (audit.writeOperationsPerformed !== 0) {
+            throw new Error('Read-only audit reported writes.');
+          }
+          if (audit.enrollmentAudit.uniqueMapping !== 0) {
+            throw new Error(`Recoverable legacy rows remain: ${audit.enrollmentAudit.uniqueMapping}`);
+          }
+          if (audit.enrollmentAudit.ambiguous !== 0) {
+            throw new Error(`Ambiguous rows remain: ${audit.enrollmentAudit.ambiguous}`);
+          }
+          if (audit.enrollmentAudit.conflicting !== 0) {
+            throw new Error(`Conflicting rows remain: ${audit.enrollmentAudit.conflicting}`);
+          }
+          if (audit.migrationReadiness.metadataOnlySafe !== 0) {
+            throw new Error(`Safe metadata backfills remain: ${audit.migrationReadiness.metadataOnlySafe}`);
+          }
+          if (audit.enrollmentAudit.missingEnrollmentId !== audit.enrollmentAudit.unmapped) {
+            throw new Error(
+              `Unexpected missing enrollment rows: missing=${audit.enrollmentAudit.missingEnrollmentId}, unmapped=${audit.enrollmentAudit.unmapped}`,
+            );
+          }
+
           console.log(JSON.stringify({
             totalExamined: audit.enrollmentAudit.totalExamined,
             withEnrollmentId: audit.enrollmentAudit.withEnrollmentId,
             missingEnrollmentId: audit.enrollmentAudit.missingEnrollmentId,
-            uniqueMapping: audit.enrollmentAudit.uniqueMapping,
             unmapped: audit.enrollmentAudit.unmapped,
+            uniqueMapping: audit.enrollmentAudit.uniqueMapping,
             ambiguous: audit.enrollmentAudit.ambiguous,
             conflicting: audit.enrollmentAudit.conflicting,
-            metadataOnlySafe: audit.migrationReadiness.metadataOnlySafe,
+            writeOperationsPerformed: audit.writeOperationsPerformed,
           }, null, 2));
           NODE
 
-      - name: Restore normal daily coverage scheduler
-        if: "${{ always() && github.event.head_commit.message == 'ops(migration): execute runtime production backfill' && steps.deploy-migration-runner.outcome == 'success' }}"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main --depth=1
-          git show origin/main:functions/src/enrollmentCanonicalCoverage.ts > functions/src/enrollmentCanonicalCoverage.ts
-          rm -rf functions/lib functions/tsconfig.tsbuildinfo functions/.tsbuildinfo || true
-          npm --prefix functions run build
-          npx firebase-tools@latest deploy \
-            --only functions:runEnrollmentCanonicalCoverageDaily \
-            --project "${FIREBASE_PROJECT_ID}" \
-            --non-interactive
-          echo "Restored runEnrollmentCanonicalCoverageDaily to main's normal 02:45 IST implementation."
-
-      - name: Upload migration audit reports
+      - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: global-progress-enrollment-audit
-          path: |
-            global-progress-enrollment-audit.json
-            global-progress-migration-plan.json
-            runtime-progress-migration-marker.json
-            global-progress-enrollment-post-migration-audit.json
+          name: global-progress-enrollment-readonly-audit
+          path: global-progress-enrollment-audit.json
           if-no-files-found: warn
           retention-days: 7
