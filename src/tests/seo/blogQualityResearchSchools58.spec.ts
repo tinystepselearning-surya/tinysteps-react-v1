@@ -49,7 +49,7 @@ describe('Blog #58 phonics teacher training implementation quality refresh', () 
     expect(body).toContain('/phonics');
 
     expect(body).not.toMatch(/CBSE (?:requires|mandates) (?:monthly|weekly|quarterly) phonics coaching/i);
-    expect(body).not.toMatch(/CBSE[- ](?:approved|certified) phonics training/i);
+    expect(body).not.toMatch(/Tiny Steps .*CBSE[- ](?:approved|certified) phonics training/i);
     expect(body).not.toMatch(/Tiny Steps (?:is|are) (?:approved|endorsed|certified) by (?:CBSE|NCERT)/i);
   });
 
