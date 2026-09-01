@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 
 import ChildSkillRatingCard from '../progress/ChildSkillRatingCard';
 import { db } from '../../lib/firebaseConfig';
 import { useKidTopicProgress } from '../../hooks/useKidTopicProgress';
+import { selectTeacherTopicResumeId } from '../../lib/teacherTopicResume';
 import { useAuthStore } from '../../store/useAuthStore';
 import {
   deriveLegacyProgressFromRatings,
@@ -208,6 +209,18 @@ export default function StudentTopicProgressEditorCanonicalV2({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const resumeSelectionAppliedRef = useRef('');
+
+  const {
+    topics: resumeTopics,
+    loading: resumeLoading,
+    error: resumeError,
+  } = useKidTopicProgress(
+    kidId,
+    selectedCourseId || null,
+    Boolean(selectedCourseId && enrollmentId),
+    enrollmentId ?? null,
+  );
 
   const {
     topics: existingTopics,
@@ -301,14 +314,38 @@ export default function StudentTopicProgressEditorCanonicalV2({
   }, [configuredTopics, selectedCourseId]);
 
   useEffect(() => {
+    const resumeSelectionKey = `${kidId}::${selectedCourseId || ''}::${enrollmentId || ''}`;
     if (!courseTopics.length) {
       setSelectedTopicId('');
       return;
     }
-    if (!courseTopics.some((topic) => topic.id === selectedTopicId)) {
-      setSelectedTopicId(courseTopics[0].id);
+
+    const currentSelectionIsValid = courseTopics.some((topic) => topic.id === selectedTopicId);
+    if (
+      currentSelectionIsValid
+      && resumeSelectionAppliedRef.current === resumeSelectionKey
+    ) {
+      return;
     }
-  }, [courseTopics, selectedTopicId]);
+
+    if (resumeLoading || resumeError) {
+      if (!currentSelectionIsValid) setSelectedTopicId('');
+      return;
+    }
+
+    const resumeTopicId = selectTeacherTopicResumeId(resumeTopics, courseTopics);
+    setSelectedTopicId(resumeTopicId ?? courseTopics[0].id);
+    resumeSelectionAppliedRef.current = resumeSelectionKey;
+  }, [
+    courseTopics,
+    enrollmentId,
+    kidId,
+    resumeError,
+    resumeLoading,
+    resumeTopics,
+    selectedCourseId,
+    selectedTopicId,
+  ]);
 
   const selectedTopic = useMemo(
     () => courseTopics.find((topic) => topic.id === selectedTopicId) ?? null,
@@ -409,7 +446,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
     teacherRemark,
   });
   const isDirty = Boolean(baseline) && currentSnapshot !== baseline;
-  const disabled = existingLoading || configLoading || !selectedCourseId || !selectedTopic;
+  const disabled = resumeLoading || Boolean(resumeError) || existingLoading || configLoading || !selectedCourseId || !selectedTopic;
 
   const handleSave = async (): Promise<boolean> => {
     if (!selectedTopic || !kidId) return false;
@@ -557,6 +594,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
         ) : null}
       </div>
 
+      {resumeError ? <p className="text-xs text-red-600">Couldn&apos;t determine the last saved lesson: {resumeError}</p> : null}
       {existingError ? <p className="text-xs text-red-600">Couldn&apos;t load progress: {existingError}</p> : null}
       {configError ? <p className="text-xs text-amber-700">Non-phonics curriculum: {configError}</p> : null}
 
