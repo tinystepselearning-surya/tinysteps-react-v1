@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && npm run seo:blog-consolidation && npm run content:public-facts && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:blog-rendered-consolidation && npm run content:public-facts-rendered && npm run seo:route-integrity && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && npm run seo:blog-consolidation && npm run content:public-facts && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:rendered-check && npm run seo:blog-rendered-consolidation && npm run content:public-facts-rendered && npm run seo:route-integrity && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
