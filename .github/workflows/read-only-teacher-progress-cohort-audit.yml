@@ -13,26 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
+      - run: npm ci
       - name: Authenticate to Google Cloud
         id: gcp-auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
-
-      - name: Compare teacher cohorts without writing data
+      - name: Classify active legacy vs canonical progress without writes
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
           FIREBASE_PROJECT_ID: tinysteps-react-v1
@@ -50,180 +43,91 @@ jobs:
           initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID });
           const db = getFirestore();
           const auth = getAuth();
-          const emailHash = (v) => crypto.createHash('sha256').update(String(v || '').trim().toLowerCase()).digest('hex');
+          const hash = (v) => crypto.createHash('sha256').update(String(v || '').trim().toLowerCase()).digest('hex');
           const targets = new Map([
             [process.env.FAREEHA_EMAIL_SHA256, 'fareeha'],
             [process.env.VAISHNAVI_EMAIL_SHA256, 'vaishnavi'],
           ]);
-
           const resolved = new Map();
           let pageToken;
           do {
             const page = await auth.listUsers(1000, pageToken);
             for (const user of page.users) {
-              const label = targets.get(emailHash(user.email));
-              if (label) resolved.set(label, user);
+              const label = targets.get(hash(user.email));
+              if (label) resolved.set(label, user.uid);
             }
             pageToken = page.pageToken;
-          } while (pageToken && resolved.size < targets.size);
+          } while (pageToken && resolved.size < 2);
+          if (resolved.size !== 2) process.exit(2);
 
-          if (resolved.size !== 2) {
-            console.error(`Expected 2 teacher auth users, resolved ${resolved.size}.`);
-            process.exit(2);
-          }
+          const s = (v) => typeof v === 'string' ? v.trim() : '';
+          const kidOf = (d) => s(d.kidId) || s(d.studentId) || s(d.childId) || (Array.isArray(d.kidIds) ? s(d.kidIds[0]) : '');
+          const active = (d) => ['active','trial','paused','enrolled','current','ongoing',''].includes(s(d.status).toLowerCase());
+          const canonicalTopicId = (id) => /^(phonics-foundations|early-phonics|advanced-phonics)__lesson-\d+$/i.test(id);
 
-          const toMs = (value) => {
-            if (!value) return 0;
-            if (typeof value.toMillis === 'function') return value.toMillis();
-            if (typeof value.seconds === 'number') return value.seconds * 1000;
-            const ms = new Date(value).getTime();
-            return Number.isFinite(ms) ? ms : 0;
-          };
-          const iso = (ms) => ms ? new Date(ms).toISOString() : null;
-          const stringId = (v) => typeof v === 'string' ? v.trim() : '';
-          const resolveKid = (data) => stringId(data.kidId) || stringId(data.studentId) || stringId(data.childId) || (Array.isArray(data.kidIds) ? stringId(data.kidIds[0]) : '');
-          const keysPresent = (data, keys) => keys.filter((key) => data[key] !== undefined && data[key] !== null);
-
-          async function teacherSummary(label, user) {
-            const uid = user.uid;
+          for (const label of ['fareeha','vaishnavi']) {
+            const uid = resolved.get(label);
             console.log(`::add-mask::${uid}`);
-            const [userDoc, teacherDoc, enrollmentSnap, progressByActorSnap] = await Promise.all([
-              db.collection('users').doc(uid).get(),
-              db.collection('teachers').doc(uid).get(),
-              db.collection('enrollments').where('teacherId', '==', uid).get(),
-              db.collectionGroup('progress').where('updatedBy', '==', uid).limit(5000).get().catch(() => null),
-            ]);
-
-            const userData = userDoc.exists ? userDoc.data() || {} : {};
-            const teacherData = teacherDoc.exists ? teacherDoc.data() || {} : {};
-            const enrollments = enrollmentSnap.docs.map((d) => ({ id: d.id, data: d.data() || {} }));
-            const kids = [...new Set(enrollments.map((e) => resolveKid(e.data)).filter(Boolean))];
-            const enrollmentIntegrity = {
-              total: enrollments.length,
-              missingKidId: enrollments.filter((e) => !stringId(e.data.kidId)).length,
-              canonicalTeacherMatch: enrollments.filter((e) => stringId(e.data.teacherId) === uid).length,
-              missingCourseId: enrollments.filter((e) => !stringId(e.data.courseId)).length,
-              activeLike: enrollments.filter((e) => ['active','trial','paused','enrolled','current','ongoing',''].includes(stringId(e.data.status).toLowerCase())).length,
-            };
-
-            let totalProgressDocs = 0;
-            let kidsWithProgress = 0;
-            let kidsWithoutProgress = 0;
-            let progressUpdatedByThisTeacher = 0;
-            let progressEnrollmentMismatch = 0;
-            let progressCourseMismatch = 0;
-            let progressMissingEnrollmentId = 0;
-            let earliestProgressMs = 0;
-            let latestProgressMs = 0;
-            let totalCourseProgressDocs = 0;
-            let totalCurriculumDocs = 0;
-            const perKidCounts = [];
-
-            const enrollmentById = new Map(enrollments.map((e) => [e.id, e.data]));
-            for (const kidId of kids) {
-              const [progressSnap, courseProgressSnap, curriculumSnap] = await Promise.all([
-                db.collection('students').doc(kidId).collection('progress').limit(5000).get(),
-                db.collection('students').doc(kidId).collection('courseProgress').limit(100).get(),
-                db.collection('students').doc(kidId).collection('curriculum').limit(5000).get(),
-              ]);
-              totalProgressDocs += progressSnap.size;
-              totalCourseProgressDocs += courseProgressSnap.size;
-              totalCurriculumDocs += curriculumSnap.size;
-              if (progressSnap.size > 0) kidsWithProgress += 1; else kidsWithoutProgress += 1;
-              perKidCounts.push(progressSnap.size);
-              for (const doc of progressSnap.docs) {
-                const p = doc.data() || {};
-                if (stringId(p.updatedBy) === uid) progressUpdatedByThisTeacher += 1;
-                const enrollmentId = stringId(p.enrollmentId);
-                if (!enrollmentId) progressMissingEnrollmentId += 1;
-                if (enrollmentId) {
-                  const enrollment = enrollmentById.get(enrollmentId);
-                  if (!enrollment) progressEnrollmentMismatch += 1;
-                  else {
-                    if (resolveKid(enrollment) !== kidId) progressEnrollmentMismatch += 1;
-                    if (stringId(enrollment.courseId) && stringId(p.courseId) !== stringId(enrollment.courseId)) progressCourseMismatch += 1;
-                  }
-                }
-                const ms = toMs(p.updatedAt) || toMs(p.createdAt);
-                if (ms) {
-                  earliestProgressMs = earliestProgressMs ? Math.min(earliestProgressMs, ms) : ms;
-                  latestProgressMs = Math.max(latestProgressMs, ms);
-                }
-              }
+            const enrollmentSnap = await db.collection('enrollments').where('teacherId', '==', uid).get();
+            const allEnrollments = enrollmentSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() || {} }));
+            const activeEnrollments = allEnrollments.filter((e) => active(e.data));
+            const allByKidCourse = new Map();
+            for (const e of allEnrollments) {
+              const key = `${kidOf(e.data)}::${s(e.data.courseId)}`;
+              const list = allByKidCourse.get(key) || [];
+              list.push(e.id);
+              allByKidCourse.set(key, list);
             }
 
-            const sessionsSnap = await db.collection('classSessions').where('teacherId', '==', uid).limit(5000).get();
-            let completedSessions = 0;
-            let sessionsWithProgressLikeFields = 0;
-            let sessionsBeforeAug26 = 0;
-            let completedBeforeAug26 = 0;
-            let completedOnOrAfterAug26 = 0;
-            const cutoff = Date.parse('2026-08-26T00:00:00Z');
-            const progressLikeKeys = ['progress','teacherFeedback','feedback','lessonId','lesson','topicId','skillRatings','progressRatings','mastery','teacherRemark'];
-            const progressLikeFieldCounts = Object.fromEntries(progressLikeKeys.map((key) => [key, 0]));
-            for (const doc of sessionsSnap.docs) {
-              const s = doc.data() || {};
-              const status = stringId(s.status).toLowerCase();
-              const startMs = toMs(s.startAt) || toMs(s.date);
-              if (status === 'completed') completedSessions += 1;
-              if (startMs && startMs < cutoff) {
-                sessionsBeforeAug26 += 1;
-                if (status === 'completed') completedBeforeAug26 += 1;
-              } else if (status === 'completed') {
-                completedOnOrAfterAug26 += 1;
-              }
-              const present = keysPresent(s, progressLikeKeys);
-              if (present.length) sessionsWithProgressLikeFields += 1;
-              for (const key of present) progressLikeFieldCounts[key] += 1;
-            }
-
-            return {
+            const summary = {
               teacher: label,
-              auth: {
-                disabled: Boolean(user.disabled),
-                customRole: String(user.customClaims?.role || '').toLowerCase() || null,
-                emailVerified: Boolean(user.emailVerified),
-              },
-              firestoreIdentity: {
-                userDocExists: userDoc.exists,
-                userRole: String(userData.role || '').toLowerCase() || null,
-                userStatus: String(userData.status || '').toLowerCase() || null,
-                teacherDocExists: teacherDoc.exists,
-                teacherStatus: String(teacherData.status || '').toLowerCase() || null,
-              },
-              enrollmentIntegrity,
-              canonicalProgress: {
-                enrolledKids: kids.length,
-                kidsWithProgress,
-                kidsWithoutProgress,
-                totalProgressDocs,
-                progressUpdatedByThisTeacher,
-                progressMissingEnrollmentId,
-                progressEnrollmentMismatch,
-                progressCourseMismatch,
-                earliestProgressAt: iso(earliestProgressMs),
-                latestProgressAt: iso(latestProgressMs),
-                perKidMin: perKidCounts.length ? Math.min(...perKidCounts) : 0,
-                perKidMax: perKidCounts.length ? Math.max(...perKidCounts) : 0,
-                courseProgressDocs: totalCourseProgressDocs,
-                curriculumDocs: totalCurriculumDocs,
-                globalProgressDocsByUpdatedBy: progressByActorSnap ? progressByActorSnap.size : null,
-              },
-              sessions: {
-                total: sessionsSnap.size,
-                completed: completedSessions,
-                beforeAug26: sessionsBeforeAug26,
-                completedBeforeAug26,
-                completedOnOrAfterAug26,
-                sessionsWithProgressLikeFields,
-                progressLikeFieldCounts,
-              },
+              activeEnrollments: activeEnrollments.length,
+              activeKidsWithCanonicalProgress: 0,
+              activeKidsLegacyOnly: 0,
+              activeKidsNoProgress: 0,
+              activeTotalCanonicalDocs: 0,
+              activeTotalLegacyDocs: 0,
+              legacyWithCourseId: 0,
+              legacyMissingCourseId: 0,
+              legacyCanonicalTopicId: 0,
+              legacyUniqueKidCourseMapping: 0,
+              legacyAmbiguousKidCourseMapping: 0,
+              legacyNoKidCourseMapping: 0,
+              canonicalDocsMatchingCurrentEnrollment: 0,
+              canonicalDocsOtherEnrollment: 0,
             };
-          }
 
-          const result = {};
-          for (const label of ['fareeha', 'vaishnavi']) {
-            result[label] = await teacherSummary(label, resolved.get(label));
+            for (const e of activeEnrollments) {
+              const kidId = kidOf(e.data);
+              const courseId = s(e.data.courseId);
+              const snap = await db.collection('students').doc(kidId).collection('progress').limit(5000).get();
+              let canonical = 0;
+              let legacy = 0;
+              for (const doc of snap.docs) {
+                const d = doc.data() || {};
+                const enrollmentId = s(d.enrollmentId);
+                if (enrollmentId) {
+                  canonical += 1;
+                  summary.activeTotalCanonicalDocs += 1;
+                  if (enrollmentId === e.id) summary.canonicalDocsMatchingCurrentEnrollment += 1;
+                  else summary.canonicalDocsOtherEnrollment += 1;
+                  continue;
+                }
+                legacy += 1;
+                summary.activeTotalLegacyDocs += 1;
+                const docCourse = s(d.courseId);
+                if (docCourse) summary.legacyWithCourseId += 1; else summary.legacyMissingCourseId += 1;
+                if (canonicalTopicId(doc.id)) summary.legacyCanonicalTopicId += 1;
+                const key = `${kidId}::${docCourse}`;
+                const candidates = docCourse ? (allByKidCourse.get(key) || []) : [];
+                if (candidates.length === 1) summary.legacyUniqueKidCourseMapping += 1;
+                else if (candidates.length > 1) summary.legacyAmbiguousKidCourseMapping += 1;
+                else summary.legacyNoKidCourseMapping += 1;
+              }
+              if (canonical > 0) summary.activeKidsWithCanonicalProgress += 1;
+              else if (legacy > 0) summary.activeKidsLegacyOnly += 1;
+              else summary.activeKidsNoProgress += 1;
+            }
+            console.log(JSON.stringify(summary, null, 2));
           }
-          console.log(JSON.stringify(result, null, 2));
           NODE
