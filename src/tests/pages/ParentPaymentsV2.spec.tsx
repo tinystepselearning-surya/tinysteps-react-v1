@@ -116,6 +116,11 @@ const hasOrderBy = (input: any, field: string) =>
 const hasLimit = (input: any, value: number) =>
   queryParts(input).some((part: any) => part?.kind === 'limit' && part.value === value);
 const collectionName = (input: any) => input?.args?.[0]?.args?.[1] || input?.args?.[1];
+const selectBillingMonth = (container: HTMLElement, value: string) => {
+  const monthInput = container.querySelector<HTMLInputElement>('input[type="month"]');
+  if (!monthInput) throw new Error('Expected billing month input');
+  fireEvent.change(monthInput, { target: { value } });
+};
 
 describe('ParentPaymentsV2', () => {
   beforeEach(() => {
@@ -283,7 +288,8 @@ describe('ParentPaymentsV2', () => {
   });
 
   it('renders the linked service date in the invoice instead of the charge creation date', async () => {
-    render(<ParentPaymentsV2 />);
+    const { container } = render(<ParentPaymentsV2 />);
+    selectBillingMonth(container, '2026-08');
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
 
@@ -294,7 +300,8 @@ describe('ParentPaymentsV2', () => {
 
   it('excludes a service-month mismatch and warns when verified totals differ from the ledger', async () => {
     invoiceServiceDate = '2026-09-10';
-    render(<ParentPaymentsV2 />);
+    const { container } = render(<ParentPaymentsV2 />);
+    selectBillingMonth(container, '2026-08');
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
 

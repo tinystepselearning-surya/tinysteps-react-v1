@@ -98,6 +98,10 @@ const hasWhere = (input: any, field: string, op?: string, value?: unknown) =>
       (value === undefined ? true : part.value === value),
   );
 
+const selectMonth = (value: string) => {
+  fireEvent.change(screen.getByLabelText('Month'), { target: { value } });
+};
+
 const sessionDoc = makeDoc('session-1', {
   teacherId: 'teacher-1',
   date: '2026-08-12',
@@ -158,6 +162,7 @@ describe('Teacher Earnings read-contract cutover', () => {
 
   it('uses only bounded canonical service-date session queries after View details and reuses data for student expansion', async () => {
     render(<EarningsSummary teacherId="teacher-1" />);
+    selectMonth('2026-08');
 
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[0]);
 
@@ -197,6 +202,7 @@ describe('Teacher Earnings read-contract cutover', () => {
 
   it('loads demo ledger only on demand and reuses the same month cache', async () => {
     render(<EarningsSummary teacherId="teacher-1" />);
+    selectMonth('2026-08');
 
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[1]);
 
@@ -220,6 +226,7 @@ describe('Teacher Earnings read-contract cutover', () => {
     });
 
     render(<EarningsSummary teacherId="teacher-1" />);
+    selectMonth('2026-08');
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[0]);
 
     await waitFor(() => expect(screen.getByText('Unable to load session details.')).toBeTruthy());
