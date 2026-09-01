@@ -90,10 +90,11 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/faq': {
-    title: 'Frequently Asked Questions | Tiny Steps Learning',
+    title: 'Parent FAQ: Classes, Fees & English Learning | Tiny Steps',
     description:
-      'Find answers to common questions about our 1:1 online English classes, curriculum, scheduling, pricing, and more.',
+      'Answers for parents about Tiny Steps online English classes for kids: fees, class duration, teachers, progress, scheduling, policies and the free assessment.',
     canonicalPath: '/faq',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
   },
   '/team': {
