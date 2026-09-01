@@ -78,6 +78,28 @@ describe('production SEO indexability hydration guard', () => {
     dom.window.close();
   });
 
+  it('releases the initial-page policy after SPA navigation', async () => {
+    const dom = createDom('https://tinystepslearning.com/phonics-fees-india');
+    dom.window.eval(guardSource);
+
+    dom.window.history.pushState({}, '', '/terms-and-conditions');
+    for (const name of ['robots', 'googlebot', 'bingbot']) {
+      dom.window.document.head
+        .querySelector(`meta[name="${name}"]`)!
+        .setAttribute('content', NOINDEX);
+    }
+
+    await flushMutations(dom);
+
+    for (const name of ['robots', 'googlebot', 'bingbot']) {
+      expect(
+        dom.window.document.head.querySelector(`meta[name="${name}"]`)?.getAttribute('content'),
+      ).toBe(NOINDEX);
+    }
+
+    dom.window.close();
+  });
+
   it('does not interfere with localhost prerender or developer previews', async () => {
     const dom = createDom('http://127.0.0.1:4173/phonics-fees-india');
     dom.window.eval(guardSource);
