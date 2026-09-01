@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   collectionMock,
@@ -140,6 +140,8 @@ const demoDoc = makeDoc('demo-earning-1', {
 
 describe('Teacher Earnings read-contract cutover', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-20T12:00:00.000Z'));
     vi.clearAllMocks();
     useAuthStoreMock.mockReturnValue({ user: { uid: 'teacher-1' } });
     useEarningsMock.mockReturnValue({ data: monthlySummary, isLoading: false, isError: false });
@@ -148,6 +150,10 @@ describe('Teacher Earnings read-contract cutover', () => {
       if (collectionName(input) === 'teacherEarnings') return { docs: [earningDoc, demoDoc] };
       return { docs: [] };
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('mounts from the monthly rollup without querying any detail collection', () => {

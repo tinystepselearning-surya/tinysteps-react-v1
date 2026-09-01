@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   collectionMock,
@@ -124,6 +124,8 @@ const selectBillingMonth = (container: HTMLElement, value: string) => {
 
 describe('ParentPaymentsV2', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-20T12:00:00.000Z'));
     vi.clearAllMocks();
     invoiceServiceDate = '2026-08-17';
 
@@ -228,6 +230,10 @@ describe('ParentPaymentsV2', () => {
 
       return { docs: [] };
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('loads a clean month-scoped dashboard using the stable outstanding order and month-wide KPIs', async () => {
