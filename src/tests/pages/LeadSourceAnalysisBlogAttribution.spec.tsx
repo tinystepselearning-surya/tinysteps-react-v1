@@ -70,7 +70,7 @@ describe('Brick 5 blog lead attribution', () => {
       />,
     );
 
-    await waitFor(() => expect(screen.getByText('Brick 5 · Blog lead attribution')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Blog contribution · lead attribution')).toBeTruthy());
 
     const attributed = screen.getByText('Blog-attributed leads').parentElement;
     const firstTouch = screen.getByText('First-touch blog').parentElement;
