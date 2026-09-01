@@ -84,7 +84,7 @@ export default function BlogLeadAttributionSection({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h4 id="blog-lead-attribution-heading" className="text-sm font-semibold text-slate-950">
-              Brick 5 · Blog lead attribution
+              Blog contribution · lead attribution
             </h4>
             <p className="mt-1 max-w-4xl text-[11px] text-muted-foreground">
               Business attribution only: first-touch blog entry and saved blog conversion context through Demo Created, Demo Completed and Enrolled. This does not measure article visits, Google clicks, impressions, sessions or rankings.
@@ -241,7 +241,7 @@ export default function BlogLeadAttributionSection({
       ) : null}
 
       <p className="border-t border-slate-200 px-3 py-2 text-[11px] text-muted-foreground md:px-4">
-        Brick 5 answers which blog articles are creating or influencing leads and downstream admissions. It still cannot say whether blog traffic improved or declined; that requires the later GA4 / Google Search Console traffic brick.
+        This section answers which blog articles are creating or influencing leads and downstream admissions. It still cannot say whether blog traffic improved or declined; that requires the later GA4 / Google Search Console traffic brick.
       </p>
     </section>
   );
