@@ -6,6 +6,7 @@ import type { DemoSession } from '../../types/models';
 import { listenAllDemoSessions } from '../../services/demoSessionsService';
 import LegacyDemoSessionsManagement from './LegacyDemoSessionsManagement';
 import LeadFunnelTrendAnalysis from './LeadFunnelTrendAnalysis';
+import AnalyticsV3CertificationSection from './AnalyticsV3CertificationSection';
 import type { LeadFunnelLead } from './leadFunnelAnalytics';
 
 interface DemoSessionsManagementProps {
@@ -82,14 +83,29 @@ function LeadFunnelTrendContainer({
     );
   }, [prefetchedDemos, toast]);
 
+  const resolvedLeads = prefetchedLeads || leads;
+  const resolvedDemos = prefetchedDemos || demos;
+
   return (
-    <LeadFunnelTrendAnalysis
-      leads={prefetchedLeads || leads}
-      demos={prefetchedDemos || demos}
-      startKey={startKey}
-      endKey={endKey}
-      variant={variant}
-    />
+    <>
+      <LeadFunnelTrendAnalysis
+        leads={resolvedLeads}
+        demos={resolvedDemos}
+        startKey={startKey}
+        endKey={endKey}
+        variant={variant}
+      />
+      {variant === 'full' ? (
+        <div className="mt-4">
+          <AnalyticsV3CertificationSection
+            leads={resolvedLeads}
+            demos={resolvedDemos}
+            startKey={startKey}
+            endKey={endKey}
+          />
+        </div>
+      ) : null}
+    </>
   );
 }
 
