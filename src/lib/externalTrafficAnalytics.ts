@@ -82,12 +82,37 @@ const syncAnalytics = httpsCallable<
   ExternalTrafficSyncResponse
 >(functions, 'adminSyncExternalTrafficAnalytics');
 
+type LoadCacheEntry = {
+  expiresAt: number;
+  promise: Promise<ExternalTrafficAnalyticsResponse>;
+};
+
+const LOAD_CACHE_TTL_MS = 60 * 1000;
+const loadCache = new Map<string, LoadCacheEntry>();
+
+export function clearExternalTrafficAnalyticsCache(): void {
+  loadCache.clear();
+}
+
 export async function loadExternalTrafficAnalytics(
   startDateKey: string,
   endDateKey: string,
+  options: { force?: boolean } = {},
 ): Promise<ExternalTrafficAnalyticsResponse> {
-  const response = await getAnalytics({ startDateKey, endDateKey });
-  return response.data;
+  const key = `${startDateKey}:${endDateKey}`;
+  const now = Date.now();
+  const existing = loadCache.get(key);
+  if (!options.force && existing && existing.expiresAt > now) return existing.promise;
+
+  const promise = getAnalytics({ startDateKey, endDateKey })
+    .then((response) => response.data)
+    .catch((error) => {
+      const current = loadCache.get(key);
+      if (current?.promise === promise) loadCache.delete(key);
+      throw error;
+    });
+  loadCache.set(key, { expiresAt: now + LOAD_CACHE_TTL_MS, promise });
+  return promise;
 }
 
 export async function syncExternalTrafficAnalytics(
@@ -95,5 +120,6 @@ export async function syncExternalTrafficAnalytics(
   endDateKey: string,
 ): Promise<ExternalTrafficSyncResponse> {
   const response = await syncAnalytics({ startDateKey, endDateKey });
+  clearExternalTrafficAnalyticsCache();
   return response.data;
 }
