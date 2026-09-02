@@ -109,4 +109,15 @@ describe('Brick 7 Content & SEO section', () => {
     expect(screen.getByRole('button', { name: /All 2/i })).toBeTruthy();
     expect(screen.getByText(/No session-to-lead or click-to-lead conversion rate is calculated/i)).toBeTruthy();
   });
+
+  it('closes and clears the specialist view when the selected reporting range changes', async () => {
+    const view = render(<ContentSeoAnalyticsSection startDateKey="2026-09-01" endDateKey="2026-09-02" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open Content & SEO' }));
+    await waitFor(() => expect(screen.getByText('Article A')).toBeTruthy());
+
+    view.rerender(<ContentSeoAnalyticsSection startDateKey="2026-08-01" endDateKey="2026-08-02" />);
+
+    expect(screen.getByRole('button', { name: 'Open Content & SEO' })).toBeTruthy();
+    expect(screen.queryByText('Article A')).toBeNull();
+  });
 });
