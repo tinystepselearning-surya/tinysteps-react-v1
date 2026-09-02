@@ -21,6 +21,7 @@ vi.mock('@components/ui/card', () => ({
   Card: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
 }));
 vi.mock('../../pages/admin/DemoSessionsManagement', () => ({ default: () => <div>Growth funnel</div> }));
+vi.mock('../../pages/admin/ExternalTrafficAnalyticsSection', () => ({ default: () => null }));
 
 import LeadSourceAnalysis from '../../pages/admin/LeadSourceAnalysis';
 
