@@ -152,6 +152,11 @@ export { adminCreateStudent } from "./adminCreateStudent";
 // Insights & analytics
 export { runInsightsRollupNow } from "./runInsightsRollupNow";
 export { setInsightsEnabled } from "./setInsightsEnabled";
+export {
+  getAdminExternalTrafficAnalytics,
+  adminSyncExternalTrafficAnalytics,
+  syncExternalTrafficAnalyticsDaily,
+} from './externalTrafficAnalytics';
 
 // Scheduled batch insights rollups
 export {
