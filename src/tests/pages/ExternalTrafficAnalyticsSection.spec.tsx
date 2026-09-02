@@ -115,7 +115,7 @@ describe('Brick 6 external traffic analytics', () => {
     expect(screen.getByText('GSC Clicks')).toBeTruthy();
     expect(screen.getByText('Search CTR')).toBeTruthy();
     expect(screen.getByText(/GA4 sessions and Search Console clicks are separate measurements/i)).toBeTruthy();
-    expect(screen.getByText(/2\/2 synced days · 1 partial/i)).toBeTruthy();
+    expect(screen.getAllByText(/2\/2 synced days · 1 partial/i)).toHaveLength(2);
     expect(screen.getByText('/blog/phonics-guide')).toBeTruthy();
     expect(screen.getByText('8.5')).toBeTruthy();
   });
