@@ -14,6 +14,7 @@ export type BlogPost = {
   date: string; // ISO date
   modifiedDate?: string; // ISO date; set only after a meaningful editorial revision
   readTime: string;
+  hideFromList?: boolean; // Exclude retired/supporting sources from rendered discovery recommendations
   hero?: string; // image url
   metaDescription?: string;
   excerpt: string;

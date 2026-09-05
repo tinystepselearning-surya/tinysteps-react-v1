@@ -7,6 +7,7 @@ const post: BlogPost = {
   author: 'Tiny Steps Learning',
   date: '2026-01-10',
   readTime: '7 min',
+  hideFromList: true,
   excerpt: 'If your child understands English but hesitates to speak, this step-by-step confidence plan helps: short prompts, sentence frames, gentle corrections, and weekly practice.',
   hero: '/blog/hero-speaking.jpg',
   body: [{
