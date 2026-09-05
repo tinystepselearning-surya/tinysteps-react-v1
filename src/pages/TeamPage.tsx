@@ -3,6 +3,7 @@ import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSe
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
+  FOUNDER_PROFILE_URL,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
   SITE_ORIGIN,
@@ -61,8 +62,8 @@ export default function TeamPage() {
           familyName: PUBLIC_FACTS.founder.familyName,
           alternateName: [...PUBLIC_FACTS.founder.alternateNames],
           jobTitle: 'Founder',
-          url: `${SITE_ORIGIN}/team#founder`,
-          mainEntityOfPage: { '@id': `${SITE_ORIGIN}/team#webpage` },
+          url: FOUNDER_PROFILE_URL,
+          mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
           image: `${SITE_ORIGIN}/priya-founder-tiny-steps-learning.webp`,
           worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.organizationName },
           description:
