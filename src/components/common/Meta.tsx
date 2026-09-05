@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import type { FC } from 'react';
 import { applySeo } from '../../lib/seo';
+import { QUORA_PROFILE_URL } from '../../lib/quoraProfile';
 import { organizationSchema } from '../../lib/schemas';
 
 type MetaProps = {
@@ -26,6 +27,21 @@ function hasOrganizationType(schema: Record<string, any> | undefined) {
     return type.includes('Organization') || type.includes('EducationalOrganization');
   }
   return false;
+}
+
+function withQuoraSameAs(schema: Record<string, any>) {
+  if (!hasOrganizationType(schema)) return schema;
+
+  const currentSameAs = Array.isArray(schema.sameAs)
+    ? schema.sameAs
+    : schema.sameAs
+      ? [schema.sameAs]
+      : [];
+
+  return {
+    ...schema,
+    sameAs: Array.from(new Set([...currentSameAs, QUORA_PROFILE_URL])),
+  };
 }
 
 const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, jsonLd }) => {
@@ -68,16 +84,18 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, 
     );
 
     if (!isPrivateDashboard) {
-      // Check if page-specific jsonLd already includes Organization schema
+      // Keep Quora in the published Organization.sameAs contract, including pages
+      // that provide their own Organization/EducationalOrganization JSON-LD.
       const pageJsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+      const pageJsonLdWithOfficialProfiles = pageJsonLdArray.map((schema) => withQuoraSameAs(schema));
       const hasOrgSchema = pageJsonLdArray.some((schema) => hasOrganizationType(schema));
 
       if (hasOrgSchema) {
-        // Page already includes org schema; use as-is
-        mergedJsonLd = jsonLd;
+        mergedJsonLd = Array.isArray(jsonLd)
+          ? pageJsonLdWithOfficialProfiles
+          : pageJsonLdWithOfficialProfiles[0];
       } else {
-        // Add base org schema first, then page-specific schemas
-        mergedJsonLd = [organizationSchema, ...pageJsonLdArray];
+        mergedJsonLd = [withQuoraSameAs(organizationSchema), ...pageJsonLdWithOfficialProfiles];
       }
     } else {
       // Private dashboard: use page-specific jsonLd only (if any)
