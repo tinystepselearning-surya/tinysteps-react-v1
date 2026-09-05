@@ -1,5 +1,12 @@
 import type { BlogPost } from '../types';
-import { FOUNDER_ID, ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../../lib/schemas';
+import {
+  FOUNDER_ID,
+  FOUNDER_PROFILE_PATH,
+  FOUNDER_PROFILE_URL,
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+  SITE_ORIGIN,
+} from '../../../lib/schemas';
 
 export type BlogAuthorKey = 'founder' | 'academic-team' | 'research-desk';
 
@@ -28,8 +35,8 @@ export const FOUNDER_BLOG_AUTHOR: BlogAuthorProfile = {
   schemaType: 'Person',
   name: PUBLIC_FACTS.founder.displayName,
   role: `Founder & Academic Lead, ${PUBLIC_FACTS.brandName}`,
-  profilePath: TEAM_PROFILE_PATH,
-  profileUrl: TEAM_PROFILE_URL,
+  profilePath: FOUNDER_PROFILE_PATH,
+  profileUrl: FOUNDER_PROFILE_URL,
   imageUrl: '/priya-founder-tiny-steps-learning.webp',
   bio: `Priya leads ${PUBLIC_FACTS.brandName}'s academic direction across phonics, reading, grammar, writing, and communication, including curriculum design, teacher guidance, and teaching quality.`,
 };
@@ -83,6 +90,7 @@ export function buildBlogAuthorSchema(profile: BlogAuthorProfile) {
       name: profile.name,
       url: profile.profileUrl,
       jobTitle: 'Founder',
+      mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
       worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.organizationName },
     };
   }
