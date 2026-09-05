@@ -12,7 +12,14 @@ import {
   getBlogEvidenceSummary,
   resolveBlogAuthor,
 } from '../../content/blog/shared/editorialTrust';
-import { PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
+import {
+  FOUNDER_ID,
+  FOUNDER_PROFILE_PATH,
+  FOUNDER_PROFILE_URL,
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+  SITE_ORIGIN,
+} from '../../lib/schemas';
 
 const repoRoot = process.cwd();
 const readRepoFile = (relativePath: string) =>
@@ -38,8 +45,13 @@ describe('B7 blog editorial trust and authorship', () => {
     for (const post of blogPosts) {
       const author = resolveBlogAuthor(post.author, post.category);
       expect(['founder', 'academic-team', 'research-desk']).toContain(author.key);
-      expect(author.profilePath).toBe('/team');
-      expect(author.profileUrl).toBe(`${SITE_ORIGIN}/team`);
+      if (author.key === 'founder') {
+        expect(author.profilePath).toBe(FOUNDER_PROFILE_PATH);
+        expect(author.profileUrl).toBe(FOUNDER_PROFILE_URL);
+      } else {
+        expect(author.profilePath).toBe('/team');
+        expect(author.profileUrl).toBe(`${SITE_ORIGIN}/team`);
+      }
       expect(author.name.trim().length).toBeGreaterThan(0);
       expect(author.role.trim().length).toBeGreaterThan(0);
     }
@@ -55,9 +67,12 @@ describe('B7 blog editorial trust and authorship', () => {
     expect(founder).toEqual(FOUNDER_BLOG_AUTHOR);
     expect(buildBlogAuthorSchema(founder)).toMatchObject({
       '@type': 'Person',
+      '@id': FOUNDER_ID,
       name: PUBLIC_FACTS.founder.displayName,
-      url: `${SITE_ORIGIN}/team`,
+      url: FOUNDER_PROFILE_URL,
       jobTitle: 'Founder',
+      mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
+      worksFor: { '@id': ORGANIZATION_ID },
     });
 
     const academicTeam = resolveBlogAuthor('Tiny Steps Learning', 'Phonics');
@@ -140,6 +155,7 @@ describe('B7 blog editorial trust and authorship', () => {
     expect(authorPanel).not.toContain('10+ years');
     expect(authorPanel).not.toContain('Reviewed for classroom use');
     expect(authorPanel).toContain("{ label: 'Report a correction', to: '/contact'");
+    expect(authorPanel).toContain('profilePath: FOUNDER_PROFILE_PATH');
     expect(authorPanel).toContain("profilePath: '/team'");
 
     expect(jolly).toContain('{PUBLIC_FACTS.brandName} · Academic Team');

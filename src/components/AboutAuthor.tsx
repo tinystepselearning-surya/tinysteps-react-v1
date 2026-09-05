@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PUBLIC_FACTS } from '../lib/schemas';
+import { FOUNDER_PROFILE_PATH, PUBLIC_FACTS } from '../lib/schemas';
 
 type AuthorProfile = {
   name: string;
@@ -40,7 +40,7 @@ const DEFAULT_AUTHOR: AuthorProfile = {
   role: `Founder & Academic Lead, ${PUBLIC_FACTS.brandName}`,
   bio: `Priya leads ${PUBLIC_FACTS.brandName}'s academic direction across phonics, reading, grammar, writing, and communication, including curriculum design, teacher guidance, and teaching quality.`,
   imageUrl: '/priya-founder-tiny-steps-learning.webp',
-  profilePath: '/team',
+  profilePath: FOUNDER_PROFILE_PATH,
 };
 
 const RESEARCH_AUTHOR: AuthorProfile = {

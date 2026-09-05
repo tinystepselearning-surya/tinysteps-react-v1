@@ -13,9 +13,13 @@ B10 owns technical GEO/LLM discoverability. B14 owns trust, founder, academic-de
 - Public brand: `Tiny Steps Learning`
 - Website: `https://tinystepslearning.com/`
 - Canonical organization ID: `https://tinystepslearning.com/#educational-organization`
-- Founder entity: `https://tinystepslearning.com/#founder`
+- Founder profile: `https://tinystepslearning.com/team/vannala-ravali-priya`
+- Founder Person ID: `https://tinystepslearning.com/team/vannala-ravali-priya#person`
+- Founder ProfilePage ID: `https://tinystepslearning.com/team/vannala-ravali-priya#webpage`
 - Core programs: Phonics, Grammar, Public Speaking
 - Delivery model: live online classes
+
+The earlier root-level founder identifier `https://tinystepslearning.com/#founder` is superseded by the dedicated founder profile and must not be reintroduced into current entity contracts.
 
 ## Code-controlled
 
@@ -63,7 +67,7 @@ For each official profile, manually keep these facts consistent where the platfo
 - Phonics, Grammar and Public Speaking as the core program set
 - live online English learning for children ages 3–12 as the service context
 - Hyderabad, Telangana, India only where a location field is relevant
-- founder naming consistent with the `/team` page where founder information is shown
+- founder naming consistent with `/team/vannala-ravali-priya` where founder information is shown
 
 Do not create or claim a profile URL until the profile exists and is controlled by Tiny Steps.
 
