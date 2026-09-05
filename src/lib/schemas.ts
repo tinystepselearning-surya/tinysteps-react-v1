@@ -98,7 +98,9 @@ export const OFFSITE_CORROBORATION_PACK = {
 
 export const ORGANIZATION_ID = `${SITE_ORIGIN}/#educational-organization`;
 export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
-export const FOUNDER_ID = `${SITE_ORIGIN}/#founder`;
+export const FOUNDER_PROFILE_PATH = '/team/vannala-ravali-priya';
+export const FOUNDER_PROFILE_URL = `${SITE_ORIGIN}${FOUNDER_PROFILE_PATH}`;
+export const FOUNDER_ID = `${FOUNDER_PROFILE_URL}#person`;
 
 export const organizationSchema = {
   '@context': 'https://schema.org',
@@ -119,6 +121,11 @@ export const organizationSchema = {
     familyName: PUBLIC_FACTS.founder.familyName,
     alternateName: [...PUBLIC_FACTS.founder.alternateNames],
     jobTitle: 'Founder',
+    url: FOUNDER_PROFILE_URL,
+    image: `${SITE_ORIGIN}/priya-founder-tiny-steps-learning.webp`,
+    mainEntityOfPage: {
+      '@id': `${FOUNDER_PROFILE_URL}#webpage`,
+    },
     worksFor: {
       '@id': ORGANIZATION_ID,
     },
