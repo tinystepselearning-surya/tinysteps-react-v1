@@ -105,6 +105,15 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
     ogImage: '/priya-founder-tiny-steps-learning.webp',
   },
+  '/team/vannala-ravali-priya': {
+    title: 'Vannala Ravali Priya | Founder of Tiny Steps Learning',
+    description:
+      'Meet Vannala Ravali Priya, Founder of Tiny Steps Learning. Learn about her work in phonics, English curriculum development, teacher development and academic quality.',
+    canonicalPath: '/team/vannala-ravali-priya',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    ogType: 'website',
+    ogImage: '/priya-founder-tiny-steps-learning.webp',
+  },
   '/class-samples': {
     title: 'Real Class Sample Videos for Parents | Tiny Steps Learning',
     description:

@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
+  FOUNDER_PROFILE_PATH,
   FOUNDER_PROFILE_URL,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
@@ -88,6 +90,25 @@ export default function TeamPage() {
       <TeamHero />
       <TrustMetrics />
       <FounderSection />
+      <section
+        aria-label="Founder profile"
+        className="border-y border-orange-100 bg-[#fffaf3] px-4 py-5 sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Founder profile</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">
+              Read Priya&apos;s dedicated founder profile, academic leadership scope and learning principles.
+            </p>
+          </div>
+          <Link
+            to={FOUNDER_PROFILE_PATH}
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-900 transition hover:border-slate-500 hover:bg-slate-50"
+          >
+            Vannala Ravali Priya — Founder
+          </Link>
+        </div>
+      </section>
       <OfficialProfilesSection />
       <AcademicSystemSection />
       <ResearchToClassroomSection />

@@ -150,6 +150,11 @@ const sections = [
         label: 'Team',
         description: 'Meet the educators and leadership behind the program.',
       },
+      {
+        to: '/team/vannala-ravali-priya',
+        label: 'Founder — Vannala Ravali Priya',
+        description: 'Dedicated founder profile covering Priya’s academic leadership and Tiny Steps learning principles.',
+      },
     ],
   },
   {
