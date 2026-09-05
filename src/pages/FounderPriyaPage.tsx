@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Compass, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { applySeo } from '../lib/seo';
+import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
   FOUNDER_PROFILE_PATH,
@@ -17,11 +17,14 @@ import {
   founderStoryParagraphs,
 } from './founder/founderPriyaContent';
 
-const CANONICAL_PATH = FOUNDER_PROFILE_PATH;
-const SEO_TITLE = 'Vannala Ravali Priya | Founder of Tiny Steps Learning';
+const founderSeo = getRouteConfig(FOUNDER_PROFILE_PATH);
+const CANONICAL_PATH = founderSeo?.canonicalPath ?? FOUNDER_PROFILE_PATH;
+const SEO_TITLE = founderSeo?.title ?? 'Vannala Ravali Priya | Founder of Tiny Steps Learning';
 const SEO_DESCRIPTION =
+  founderSeo?.description ??
   'Meet Vannala Ravali Priya, Founder of Tiny Steps Learning. Learn about her work in phonics, English curriculum development, teacher development and academic quality.';
-const ROBOTS = 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
+const ROBOTS =
+  founderSeo?.robots ?? 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 const FOUNDER_IMAGE = '/priya-founder-tiny-steps-learning.webp';
 const FOUNDER_IMAGE_URL = `${SITE_ORIGIN}${FOUNDER_IMAGE}`;
 const leadershipIcons = [Compass, UsersRound, ShieldCheck] as const;
