@@ -10,6 +10,7 @@ import {
 import { getBlogHeroFamily } from '../../content/blog/shared/heroFamilies';
 import { resolveBlogAuthor } from '../../content/blog/shared/editorialTrust';
 import { shouldNoindexBlogSlug } from '../../lib/blogIndexingPolicy.js';
+import { FOUNDER_PROFILE_PATH } from '../../lib/schemas';
 
 const repoRoot = process.cwd();
 const readRepoFile = (relativePath: string) =>
@@ -39,6 +40,9 @@ const SPEAKING_SUPPORT_SLUGS = [
   'speaking-competition-prep',
   'speaking-family-showcase',
 ] as const;
+
+const expectedAuthorProfilePath = (author: ReturnType<typeof resolveBlogAuthor>) =>
+  author.key === 'founder' ? FOUNDER_PROFILE_PATH : '/team';
 
 describe('B9 grammar and speaking authority guardrails', () => {
   it('keeps the 76-post inventory and uses existing broad owners instead of creating new pillars', () => {
@@ -159,14 +163,16 @@ describe('B9 grammar and speaking authority guardrails', () => {
 
     for (const slug of grammarSlugs) {
       const post = bySlug.get(slug)!;
+      const author = resolveBlogAuthor(post.author, post.category);
       expect(getBlogHeroFamily(post)).toBe('grammar-sentence-building');
-      expect(resolveBlogAuthor(post.author, post.category).profilePath).toBe('/team');
+      expect(author.profilePath).toBe(expectedAuthorProfilePath(author));
     }
 
     for (const slug of speakingSlugs) {
       const post = bySlug.get(slug)!;
+      const author = resolveBlogAuthor(post.author, post.category);
       expect(getBlogHeroFamily(post)).toBe('speaking-communication');
-      expect(resolveBlogAuthor(post.author, post.category).profilePath).toBe('/team');
+      expect(author.profilePath).toBe(expectedAuthorProfilePath(author));
     }
   });
 });
