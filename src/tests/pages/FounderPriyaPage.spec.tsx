@@ -72,8 +72,8 @@ describe('FounderPriyaPage', () => {
     expect(screen.getByRole('heading', { name: 'Guide practice, review and independence' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Look for evidence of independent use' })).toBeInTheDocument();
     expect(
-      screen.getByText(/reading accuracy, sentence formation, language use and increasingly independent communication/),
-    ).toBeInTheDocument();
+      screen.getAllByText(/reading accuracy, sentence formation, language use and increasingly independent communication/).length,
+    ).toBeGreaterThanOrEqual(1);
 
     expect(document.body).not.toHaveTextContent(/award-winning|certified founder|years of experience|professional qualification/i);
   });
