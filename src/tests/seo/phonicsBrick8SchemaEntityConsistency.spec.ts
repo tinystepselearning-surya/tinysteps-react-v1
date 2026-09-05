@@ -58,10 +58,10 @@ function enhance(pathname: string, schemas: any[], title = 'Test page') {
 }
 
 describe('Phonics Brick 8 schema, entity graph and technical consistency', () => {
-  it('keeps the canonical Tiny Steps organization, website and founder identities unchanged', () => {
+  it('keeps the canonical Tiny Steps organization and website identities while using the dedicated founder profile ID', () => {
     expect(ORGANIZATION_ID).toBe('https://tinystepslearning.com/#educational-organization');
     expect(WEBSITE_ID).toBe('https://tinystepslearning.com/#website');
-    expect(FOUNDER_ID).toBe('https://tinystepslearning.com/#founder');
+    expect(FOUNDER_ID).toBe('https://tinystepslearning.com/team/vannala-ravali-priya#person');
     expect(PUBLIC_FACTS.organizationName).toBe('Tiny Steps Early Education');
     expect(PUBLIC_FACTS.brandName).toBe('Tiny Steps Learning');
   });
