@@ -400,7 +400,7 @@ const BlogIndexPage: FC = () => {
     [],
   );
 
-  const metaTitle = 'Tiny Steps Blog | Phonics, Grammar, Speaking & English Help for Parents';
+  const metaTitle = 'Phonics, Reading, Grammar & Speaking Guides | Tiny Steps';
   const metaDescription =
     'Browse parent-friendly phonics, grammar, speaking, and English-learning guides for kids ages 3-12, plus practical routines and education research.';
 
