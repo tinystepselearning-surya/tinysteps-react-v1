@@ -3,6 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   FOUNDER_ID,
+  FOUNDER_PROFILE_URL,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
   SITE_ORIGIN,
@@ -51,19 +52,25 @@ describe('B14 trust, entity and schools authority guardrails', () => {
     }
   });
 
-  it('connects the canonical founder person to the organization and visible Team entity', () => {
-    expect(FOUNDER_ID).toBe('https://tinystepslearning.com/#founder');
+  it('connects the canonical founder person to the organization and dedicated founder profile', () => {
+    expect(FOUNDER_ID).toBe('https://tinystepslearning.com/team/vannala-ravali-priya#person');
+    expect(FOUNDER_PROFILE_URL).toBe('https://tinystepslearning.com/team/vannala-ravali-priya');
     expect(organizationSchema.founder).toMatchObject({
       '@type': 'Person',
       '@id': FOUNDER_ID,
       name: PUBLIC_FACTS.founder.fullName,
+      url: FOUNDER_PROFILE_URL,
+      mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
       worksFor: { '@id': ORGANIZATION_ID },
     });
 
     const teamPage = read('src/pages/TeamPage.tsx');
+    const founderPage = read('src/pages/FounderPriyaPage.tsx');
     const sections = read('src/pages/team/TeamPageSections.tsx');
-    expect(teamPage).toContain("url: `${SITE_ORIGIN}/team#founder`");
-    expect(teamPage).toContain("mainEntityOfPage: { '@id': `${SITE_ORIGIN}/team#webpage` }");
+    expect(teamPage).toContain('url: FOUNDER_PROFILE_URL');
+    expect(teamPage).toContain("mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` }");
+    expect(founderPage).toContain("'@type': 'ProfilePage'");
+    expect(founderPage).toContain("mainEntity: {\n    '@id': FOUNDER_ID");
     expect(sections).toContain('id="founder"');
     expect(sections).toContain('{PUBLIC_FACTS.founder.fullName}');
   });
