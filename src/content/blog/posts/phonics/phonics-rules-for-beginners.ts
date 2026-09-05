@@ -41,7 +41,7 @@ const post: BlogPost = {
 
     { type: 'h3', content: '4. Introduce common-exception words gradually inside the sequence' },
     { type: 'p', content: 'Some useful words contain correspondences that are unusual or not yet taught. These should not become a giant sight-word list learned as visual shapes. DfE guidance recommends introducing common-exception words gradually and drawing attention to the part that is exceptional while keeping phonics as the main decoding strategy.' },
-    { type: 'p', content: 'Blog #20, [Phonics vs Sight Words](/blog/phonics-vs-sight-words), owns the broader parent decision about phonics, sight words and tricky/common-exception words.' },
+    { type: 'p', content: 'Blog #20, [Phonics vs Sight Words](/blog/sight-words-or-phonics-first), owns the broader parent decision about phonics, sight words and tricky/common-exception words.' },
 
     { type: 'h3', content: '5. Add long-vowel and other common patterns in a coherent programme order' },
     { type: 'p', content: 'As the child’s basic decoding expands, the sequence can add common vowel patterns and more complex sound–spelling relationships. The key is not memorising every vowel rule together. Introduce a manageable pattern, contrast it with already-secure knowledge, use it in decoding and spelling, and revisit it cumulatively.' },

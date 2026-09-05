@@ -20,6 +20,7 @@ const route = (path, group, {
 export const PUBLIC_ROUTE_MANIFEST = [
   route('/', 'static'),
   route('/blog', 'static'),
+  route('/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', 'static'),
   route('/pricing', 'static'),
   route('/sitemap', 'static', { indexable: false, sitemap: false }),
   route('/contact', 'static'),

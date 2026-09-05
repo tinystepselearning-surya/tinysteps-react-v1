@@ -104,7 +104,7 @@ const parentGuides = [
   {
     title: 'Phonics Assessment Checklist for Parents',
     description: 'Check sounds, fresh-word decoding, blending, spelling and reading transfer.',
-    to: '/blog/week-22-phonics-diagnostics',
+    to: '/blog/phonics-diagnostics',
     label: 'Assessment guide',
   },
   { title: 'What Is the Right Age to Start Phonics?', to: '/blog/what-age-to-start-phonics' },

@@ -424,7 +424,7 @@ const items: FAQItem[] = [
     searchTerms: ['grammar rules', 'memorisation', 'memorization', 'worksheet', 'sentence building'],
     links: [
       { to: '/grammar', label: 'Explore grammar classes', emphasis: 'primary' },
-      { to: '/blog/week-7-grammar-nouns-to-paragraphs', label: 'See grammar move into real writing', emphasis: 'secondary' },
+      { to: '/blog/grammar-nouns-to-paragraphs', label: 'See grammar move into real writing', emphasis: 'secondary' },
     ],
   },
   {

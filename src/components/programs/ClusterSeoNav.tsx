@@ -32,7 +32,7 @@ const CLUSTERS = {
     intro: 'Choose the speaking resource that best matches the confidence or communication need you are seeing now.',
     links: [
       { label: 'Helping a Shy Child Speak', href: '/shy-child-speaking-confidence' },
-      { label: 'Structuring a Speech', href: '/blog/week-13-speaking-structure' },
+      { label: 'Structuring a Speech', href: '/blog/speaking-structure' },
       { label: 'Confidence Building Programs', href: '/confidence-building-program-kids' },
     ],
   },

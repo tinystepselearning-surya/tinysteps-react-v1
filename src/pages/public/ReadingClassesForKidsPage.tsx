@@ -106,7 +106,7 @@ const readingStages = [
   {
     title: '5. Understand what was read',
     detail: 'Work on vocabulary, sentence meaning, sequencing, inference, retelling, and answering questions from the text.',
-    href: '/blog/week-6-phonics-comprehension',
+    href: '/blog/phonics-comprehension',
     cta: 'Read the comprehension guide',
   },
   {
@@ -168,7 +168,7 @@ const readingProblemRoutes = [
   {
     signal: 'Reads the words but cannot explain the story',
     likelyGap: 'Vocabulary, language comprehension, sequencing, or inference may need direct support.',
-    route: '/blog/week-6-phonics-comprehension',
+    route: '/blog/phonics-comprehension',
     label: 'Read the comprehension guide',
   },
   {
@@ -504,7 +504,7 @@ export default function ReadingClassesForKidsPage() {
                 detail: 'For children who can read but remain slow, hesitant, or choppy in connected text.',
               },
               {
-                href: '/blog/week-6-phonics-comprehension',
+                href: '/blog/phonics-comprehension',
                 title: 'From Decoding to Comprehension',
                 detail: 'For children who can read printed words but still struggle to build meaning from text.',
               },
