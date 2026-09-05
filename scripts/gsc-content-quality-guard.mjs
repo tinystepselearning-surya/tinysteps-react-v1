@@ -147,6 +147,13 @@ function getHistoricalNonIndexPaths() {
 
   for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
     if (row.action === 'index') continue;
+
+    // `/blog/` and `/courses/` are historical trailing-slash duplicates of
+    // the indexable `/blog` and `/courses` canonicals. URL normalization strips
+    // the slash, so counting them here would falsely label every link to those
+    // canonical hubs as a link to a non-index URL.
+    if (row.action === 'redirect' && row.normalization === 'trailingSlash') continue;
+
     const historical = normalizePathname(row.path);
     if (historical) paths.add(historical);
 
