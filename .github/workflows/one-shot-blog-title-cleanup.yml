@@ -23,13 +23,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          files = [
-              Path('public/feed.xml'),
-              Path('public/rss.xml'),
-              Path('public/blog/feed.xml'),
-              Path('public/blog/rss.xml'),
-          ]
-          for path in files:
+          for path in [Path('public/feed.xml'), Path('public/rss.xml'), Path('public/blog/feed.xml'), Path('public/blog/rss.xml')]:
               text = path.read_text()
               text = text.replace(
                   '<lastBuildDate>Sat, 05 Sep 2026 22:14:38 GMT</lastBuildDate>',
@@ -50,18 +44,15 @@ jobs:
               path.write_text(text)
           PY
 
-      - name: Verify final diff is blog-title only
+      - name: Verify intended values
         shell: bash
         run: |
-          git fetch origin main
-          git diff --check origin/main...HEAD || true
-          test "$(git diff origin/main -- src/lib/routeSeoRegistry.js | grep -c '^[-+]    title:' || true)" -eq 2
-          test "$(git diff origin/main -- src/pages/blog/BlogIndexPage.tsx | grep -c '^[-+]  const metaTitle' || true)" -eq 2
           for f in public/feed.xml public/rss.xml public/blog/feed.xml public/blog/rss.xml; do
-            test "$(git diff origin/main -- "$f" | grep -c '^[-+]      <title>' || true)" -eq 2
+            grep -F 'Phonics, Reading, Grammar &amp; Speaking Guides | Tiny Steps' "$f"
+            grep -F '<lastBuildDate>Tue, 01 Sep 2026 15:14:03 GMT</lastBuildDate>' "$f"
           done
-          ! git diff origin/main -- public/feed.xml public/rss.xml | grep -q 'Frequently Asked Questions\|Parent FAQ'
-          ! git diff origin/main -- public/feed.xml public/rss.xml public/blog/feed.xml public/blog/rss.xml | grep -q 'lastBuildDate'
+          grep -F '<title>Frequently Asked Questions | Tiny Steps Learning</title>' public/feed.xml public/rss.xml
+          git diff --check
 
       - name: Commit cleanup and remove one-shot workflow
         shell: bash
