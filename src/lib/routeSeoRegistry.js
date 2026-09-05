@@ -54,7 +54,7 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/blog': {
-    title: 'Blog | Tiny Steps Learning',
+    title: 'Phonics, Reading, Grammar & Speaking Guides | Tiny Steps',
     description:
       'Read expert articles on English language learning, teaching strategies, and child development. Tips for parents and educators.',
     canonicalPath: '/blog',
