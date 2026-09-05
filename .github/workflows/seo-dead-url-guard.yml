@@ -1,0 +1,45 @@
+name: SEO Dead URL Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, seo/brick-4-rebased]
+
+permissions:
+  contents: read
+
+jobs:
+  dead-url-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and prerender public pages
+        run: npm run build
+
+      - name: Audit dead URLs and soft 404s
+        run: node scripts/seo-dead-url-guard.mjs
+
+      - name: Upload dead URL report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-dead-url-report
+          path: artifacts/seo-dead-url-report.json
+          if-no-files-found: ignore
