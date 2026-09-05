@@ -17,7 +17,7 @@ describe('FounderPriyaPage', () => {
 
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByRole('heading', { level: 1, name: 'Vannala Ravali Priya' })).toBeInTheDocument();
-    expect(screen.getByText('Founder, Tiny Steps Learning')).toBeInTheDocument();
+    expect(screen.getAllByText('Founder, Tiny Steps Learning').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Known to families and learners as Priya')).toBeInTheDocument();
     expect(
       screen.getByText(/Vannala Ravali Priya is the Founder of Tiny Steps Learning/),
@@ -29,6 +29,24 @@ describe('FounderPriyaPage', () => {
     expect(breadcrumb).toHaveTextContent('Vannala Ravali Priya');
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Team' })).toHaveAttribute('href', '/team');
+  });
+
+  it('uses the approved founder portrait as the primary visual identity', () => {
+    render(
+      <MemoryRouter initialEntries={['/team/vannala-ravali-priya']}>
+        <FounderPriyaPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByAltText('Vannala Ravali Priya, Founder of Tiny Steps Learning')).toHaveAttribute(
+      'src',
+      '/priya-founder-tiny-steps-learning.webp',
+    );
+    expect(screen.getByText('Academic direction across')).toBeInTheDocument();
+    expect(screen.getByText('Phonics & Reading')).toBeInTheDocument();
+    expect(screen.getByText('Grammar & Writing')).toBeInTheDocument();
+    expect(screen.getByText('Public Speaking')).toBeInTheDocument();
+    expect(screen.getByText('Founder-led academic direction')).toBeInTheDocument();
   });
 
   it('publishes self-canonical, indexable founder metadata', async () => {
@@ -54,6 +72,14 @@ describe('FounderPriyaPage', () => {
       );
       expect(document.querySelector('meta[name="googlebot"]')?.getAttribute('content')).toContain('index');
       expect(document.querySelector('meta[name="bingbot"]')?.getAttribute('content')).toContain('index');
+      expect(document.querySelector('meta[property="og:image"]')).toHaveAttribute(
+        'content',
+        'https://tinystepslearning.com/priya-founder-tiny-steps-learning.webp',
+      );
+      expect(document.querySelector('meta[name="twitter:image"]')).toHaveAttribute(
+        'content',
+        'https://tinystepslearning.com/priya-founder-tiny-steps-learning.webp',
+      );
     });
   });
 });
