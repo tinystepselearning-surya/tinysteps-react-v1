@@ -20,8 +20,10 @@ const EXPECTED_OFFICIAL_PROFILE_URLS = [
   'https://www.linkedin.com/company/tiny-steps-learning/',
 ];
 
+const PINTEREST_PROFILE_URL = 'https://www.pinterest.com/tinystepselearning/';
+
 describe('B15 off-site entity corroboration guardrails', () => {
-  it('derives visible official profiles from organization sameAs without duplicating URLs', () => {
+  it('derives schema-backed official profiles from organization sameAs without duplicating URLs', () => {
     expect(organizationSchema.sameAs).toEqual(EXPECTED_OFFICIAL_PROFILE_URLS);
     expect(organizationSchema.sameAs).toEqual(OFFICIAL_PUBLIC_PROFILE_URLS);
     expect(new Set(OFFICIAL_PUBLIC_PROFILE_URLS).size).toBe(OFFICIAL_PUBLIC_PROFILE_URLS.length);
@@ -37,6 +39,15 @@ describe('B15 off-site entity corroboration guardrails', () => {
     }
   });
 
+  it('keeps the verified Pinterest identity on one clean canonical public URL', () => {
+    const pinterestProfile = read('src/lib/pinterestProfile.ts');
+
+    expect(pinterestProfile).toContain(PINTEREST_PROFILE_URL);
+    expect(PINTEREST_PROFILE_URL).not.toContain('actingBusinessId');
+    expect(PINTEREST_PROFILE_URL).not.toMatch(/[?&](?:utm_|fbclid|gclid)/i);
+    expect(PINTEREST_PROFILE_URL).not.toContain('in.pinterest.com');
+  });
+
   it('uses public organization identities rather than admin or account-management URLs', () => {
     const sameAs = organizationSchema.sameAs.join('\n');
     expect(sameAs).not.toContain('facebook.com/tinystepslearning');
@@ -45,10 +56,12 @@ describe('B15 off-site entity corroboration guardrails', () => {
     expect(sameAs).not.toContain('viewAsMember=true');
   });
 
-  it('keeps the footer on the same canonical profile contract', () => {
+  it('keeps the footer on canonical public-profile contracts', () => {
     const footer = read('src/components/common/Footer.tsx');
     expect(footer).toContain('OFFICIAL_PUBLIC_PROFILES');
-    expect(footer).not.toMatch(/href:\s*['"]https:\/\/(?:www\.)?(?:facebook|instagram|youtube|linkedin)\.com/i);
+    expect(footer).toContain('PINTEREST_PROFILE');
+    expect(footer).not.toContain(PINTEREST_PROFILE_URL);
+    expect(footer).not.toMatch(/href:\s*['"]https:\/\/(?:www\.)?(?:facebook|instagram|youtube|linkedin|pinterest)\.com/i);
   });
 
   it('keeps the off-site fact pack aligned with canonical site facts', () => {
@@ -60,13 +73,15 @@ describe('B15 off-site entity corroboration guardrails', () => {
     expect(OFFSITE_CORROBORATION_PACK.reviewRequestPositioningNote).toMatch(/never.*incentives/i);
   });
 
-  it('exposes the declared profiles as crawlable links on the Team authority page', () => {
+  it('exposes the declared profiles and Pinterest as crawlable links on the Team authority page', () => {
     const teamPage = read('src/pages/TeamPage.tsx');
     const profileSection = read('src/components/entity/OfficialProfilesSection.tsx');
 
     expect(teamPage).toContain("import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';");
     expect(teamPage).toContain('<OfficialProfilesSection />');
-    expect(profileSection).toContain('OFFICIAL_PUBLIC_PROFILES.map');
+    expect(profileSection).toContain('OFFICIAL_PUBLIC_PROFILES');
+    expect(profileSection).toContain('PINTEREST_PROFILE');
+    expect(profileSection).toContain('visibleProfiles.map');
     expect(profileSection).toContain('href={profile.url}');
     expect(profileSection).toContain('target="_blank"');
     expect(profileSection).toContain('rel="noopener noreferrer"');
