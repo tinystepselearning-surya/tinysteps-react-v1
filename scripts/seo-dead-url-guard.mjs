@@ -45,14 +45,6 @@ function extractLocs(xml) {
   return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/gi), (match) => match[1].trim());
 }
 
-function extractHrefs(html) {
-  const hrefs = [];
-  for (const match of html.matchAll(/<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1/gi)) {
-    hrefs.push(match[2].trim());
-  }
-  return hrefs;
-}
-
 function stripHtml(html) {
   return html
     .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
@@ -64,6 +56,21 @@ function stripHtml(html) {
     .replace(/&#39;/gi, "'")
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function extractAnchors(html) {
+  const anchors = [];
+  for (const match of html.matchAll(/<a\b([^>]*)\bhref\s*=\s*(["'])(.*?)\2([^>]*)>([\s\S]*?)<\/a>/gi)) {
+    const rawHref = match[3].trim();
+    const targetPath = normalizePathname(rawHref);
+    if (!targetPath) continue;
+    anchors.push({
+      rawHref,
+      targetPath,
+      text: stripHtml(match[5]).slice(0, 160),
+    });
+  }
+  return anchors;
 }
 
 function extractTitle(html) {
@@ -187,13 +194,17 @@ async function main() {
       fail(`Canonical page looks like a soft 404: ${sourcePath} — ${soft404.reason}`);
     }
 
-    const hrefPaths = new Set(extractHrefs(html).map(normalizePathname).filter(Boolean));
-    for (const targetPath of hrefPaths) {
+    const anchorsByTarget = new Map();
+    for (const anchor of extractAnchors(html)) {
+      if (!anchorsByTarget.has(anchor.targetPath)) anchorsByTarget.set(anchor.targetPath, anchor);
+    }
+
+    for (const [targetPath, anchor] of anchorsByTarget) {
       internalLinksChecked += 1;
 
       if (redirectSources.has(targetPath)) {
-        redirectLinks.push({ source: sourcePath, target: targetPath });
-        fail(`Canonical page ${sourcePath} links to redirect alias ${targetPath}`);
+        redirectLinks.push({ source: sourcePath, target: targetPath, rawHref: anchor.rawHref, text: anchor.text });
+        fail(`Canonical page ${sourcePath} links to redirect alias ${targetPath} (href=${JSON.stringify(anchor.rawHref)}, text=${JSON.stringify(anchor.text)})`);
         continue;
       }
 
@@ -202,8 +213,8 @@ async function main() {
       if (await findRenderedHtml(targetPath)) continue;
       if (await internalFileExists(targetPath)) continue;
 
-      deadLinks.push({ source: sourcePath, target: targetPath });
-      fail(`Dead internal link from ${sourcePath} -> ${targetPath}`);
+      deadLinks.push({ source: sourcePath, target: targetPath, rawHref: anchor.rawHref, text: anchor.text });
+      fail(`Dead internal link from ${sourcePath} -> ${targetPath} (href=${JSON.stringify(anchor.rawHref)}, text=${JSON.stringify(anchor.text)})`);
     }
   }
 
