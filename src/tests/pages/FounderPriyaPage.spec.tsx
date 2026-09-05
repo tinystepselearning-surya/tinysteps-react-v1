@@ -49,6 +49,35 @@ describe('FounderPriyaPage', () => {
     expect(screen.getByText('Founder-led academic direction')).toBeInTheDocument();
   });
 
+  it('renders the evidence-backed founder story, leadership scope and academic philosophy', () => {
+    render(
+      <MemoryRouter initialEntries={['/team/vannala-ravali-priya']}>
+        <FounderPriyaPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Why Tiny Steps Learning was founded' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/make high-quality English learning more structured, personal and measurable for children/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Structured. Personal. Measurable.')).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'What Priya leads at Tiny Steps Learning' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Curriculum Direction' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Teacher Development' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Academic Quality' })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: 'Principles behind the academic work' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Start from readiness and prerequisites' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Guide practice, review and independence' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Look for evidence of independent use' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/reading accuracy, sentence formation, language use and increasingly independent communication/),
+    ).toBeInTheDocument();
+
+    expect(document.body).not.toHaveTextContent(/award-winning|certified founder|years of experience|professional qualification/i);
+  });
+
   it('publishes self-canonical, indexable founder metadata', async () => {
     render(
       <MemoryRouter initialEntries={['/team/vannala-ravali-priya']}>
