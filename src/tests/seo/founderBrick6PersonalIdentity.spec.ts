@@ -45,4 +45,11 @@ describe('Founder Brick 6 personal identity corroboration', () => {
     expect(founderPage).toContain('Vannala Ravali Priya on LinkedIn');
     expect(founderPage).toContain('separate from the Tiny Steps Learning company');
   });
+
+  it('does not propagate legacy employer or title claims into the founder authority page', () => {
+    const founderAuthority = `${read('src/pages/FounderPriyaPage.tsx')}\n${read('src/lib/schemas.ts')}`;
+    for (const legacyClaim of ['KLAY', 'ClassMonitor', 'Head Teacher at Klay', 'Teacher at ClassMonitor']) {
+      expect(founderAuthority).not.toContain(legacyClaim);
+    }
+  });
 });
