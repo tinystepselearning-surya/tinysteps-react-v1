@@ -2,6 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import FounderPriyaPage from '../../pages/FounderPriyaPage';
+import {
+  FOUNDER_ID,
+  FOUNDER_PROFILE_URL,
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+} from '../../lib/schemas';
+
+const schemaTypes = (node: Record<string, any>) => {
+  const type = node['@type'];
+  return typeof type === 'string' ? [type] : Array.isArray(type) ? type : [];
+};
 
 describe('FounderPriyaPage', () => {
   beforeEach(() => {
@@ -76,6 +87,48 @@ describe('FounderPriyaPage', () => {
     ).toBeGreaterThanOrEqual(1);
 
     expect(document.body).not.toHaveTextContent(/award-winning|certified founder|years of experience|professional qualification/i);
+  });
+
+  it('publishes one canonical Person as the main entity of a ProfilePage', async () => {
+    render(
+      <MemoryRouter initialEntries={['/team/vannala-ravali-priya']}>
+        <FounderPriyaPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      const schemas = JSON.parse(document.getElementById('ts-jsonld')?.textContent || '[]') as Array<Record<string, any>>;
+      const person = schemas.find((schema) => schema['@id'] === FOUNDER_ID);
+      const profilePage = schemas.find((schema) => schema['@id'] === `${FOUNDER_PROFILE_URL}#webpage`);
+      const breadcrumbs = schemas.find((schema) => schemaTypes(schema).includes('BreadcrumbList'));
+
+      expect(FOUNDER_ID).toBe('https://tinystepslearning.com/team/vannala-ravali-priya#person');
+      expect(person).toMatchObject({
+        '@type': 'Person',
+        '@id': FOUNDER_ID,
+        name: PUBLIC_FACTS.founder.fullName,
+        jobTitle: 'Founder',
+        url: FOUNDER_PROFILE_URL,
+        worksFor: { '@id': ORGANIZATION_ID },
+        mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
+      });
+      expect(person?.sameAs).toBeUndefined();
+
+      expect(schemaTypes(profilePage || {})).toContain('ProfilePage');
+      expect(schemaTypes(profilePage || {})).toContain('WebPage');
+      expect(profilePage).toMatchObject({
+        url: FOUNDER_PROFILE_URL,
+        mainEntity: { '@id': FOUNDER_ID },
+        about: { '@id': FOUNDER_ID },
+      });
+
+      expect(breadcrumbs?.itemListElement).toHaveLength(3);
+      expect(breadcrumbs?.itemListElement?.[2]).toMatchObject({
+        position: 3,
+        name: PUBLIC_FACTS.founder.fullName,
+        item: FOUNDER_PROFILE_URL,
+      });
+    });
   });
 
   it('publishes self-canonical, indexable founder metadata', async () => {
