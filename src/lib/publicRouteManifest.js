@@ -26,6 +26,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/why-tiny-steps', 'static'),
   route('/learning-partner', 'static'),
   route('/team', 'static'),
+  route('/team/vannala-ravali-priya', 'static'),
   route('/class-samples', 'static'),
   route('/testimonials', 'static'),
   route('/careers', 'static'),
