@@ -6,7 +6,28 @@ const ROOT = process.cwd();
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const FIREBASE_JSON = path.join(ROOT, 'firebase.json');
 
+// Canonical public pages whose accidental noindex/canonical/sitemap regression would
+// directly hurt discovery or lead acquisition. This list intentionally includes the
+// high-value URLs surfaced in the recent Search Console recovery review.
 const REQUIRED_CANONICAL_URLS = [
+  'https://tinystepslearning.com/phonics',
+  'https://tinystepslearning.com/grammar',
+  'https://tinystepslearning.com/speaking',
+  'https://tinystepslearning.com/pricing',
+  'https://tinystepslearning.com/courses',
+  'https://tinystepslearning.com/curriculum',
+  'https://tinystepslearning.com/faq',
+  'https://tinystepslearning.com/book-demo',
+  'https://tinystepslearning.com/phonics-fees-india',
+  'https://tinystepslearning.com/online-english-classes-for-kids',
+  'https://tinystepslearning.com/reading-classes-for-kids',
+  'https://tinystepslearning.com/writing-classes-for-kids',
+  'https://tinystepslearning.com/confidence-building-program-kids',
+  'https://tinystepslearning.com/summer-camp-for-kids-india',
+  'https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india',
+  'https://tinystepslearning.com/free-reading-games-for-kids',
+  'https://tinystepslearning.com/free-grammar-games-for-kids',
+  'https://tinystepslearning.com/free-sentence-building-games-for-kids',
   'https://tinystepslearning.com/courses/phonics-foundation',
   'https://tinystepslearning.com/courses/phonics-brush-up',
   'https://tinystepslearning.com/courses/phonics-advanced',
@@ -80,15 +101,21 @@ async function main() {
     'sitemap-parents.xml',
   ];
 
+  const locList = [];
   const locs = new Set();
   for (const sitemapName of sitemapNames) {
     const xml = await fs.readFile(path.join(PUBLIC_DIR, sitemapName), 'utf8');
-    for (const loc of extractLocs(xml)) locs.add(loc);
+    for (const loc of extractLocs(xml)) {
+      locList.push(loc);
+      locs.add(loc);
+    }
   }
 
   for (const url of REQUIRED_CANONICAL_URLS) {
-    if (!locs.has(url)) fail(`Missing required canonical sitemap URL: ${url}`);
-    else ok(`Required canonical sitemap URL present: ${url}`);
+    const count = locList.filter((loc) => loc === url).length;
+    if (count === 0) fail(`Missing required canonical sitemap URL: ${url}`);
+    else if (count !== 1) fail(`Canonical sitemap URL must appear exactly once: ${url} (found ${count})`);
+    else ok(`Required canonical sitemap URL present exactly once: ${url}`);
   }
 
   for (const url of FORBIDDEN_SITEMAP_URLS) {
