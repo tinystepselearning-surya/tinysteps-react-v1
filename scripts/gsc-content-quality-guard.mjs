@@ -31,6 +31,13 @@ const MIN_SECTION_HEADINGS = 2;
 const MIN_INTERNAL_LINKS = 2;
 const NEAR_DUPLICATE_THRESHOLD = 0.90;
 
+// This supporting article intentionally remains a noindex archive. The link is
+// useful to a parent who is specifically ready for video self-review, while the
+// broad speaking-confidence page remains the acquisition/index target.
+const ALLOWED_HISTORICAL_NON_INDEX_LINKS = new Set([
+  '/blog/speaking-confidence-seeds -> /blog/speaking-video-feedback',
+]);
+
 let hasError = false;
 
 function fail(message) {
@@ -68,6 +75,10 @@ function normalizePathname(value) {
   } catch {
     return null;
   }
+}
+
+function linkPair(sourcePath, targetPath) {
+  return `${sourcePath} -> ${targetPath}`;
 }
 
 async function fileExists(filePath) {
@@ -218,6 +229,14 @@ async function main() {
       if (historicalNonIndexPaths.has(linkedPath)) nonIndexLinks.add(linkedPath);
     }
 
+    const unexpectedNonIndexLinks = [...nonIndexLinks]
+      .filter((linkedPath) => !ALLOWED_HISTORICAL_NON_INDEX_LINKS.has(linkPair(routePath, linkedPath)))
+      .sort();
+
+    if (unexpectedNonIndexLinks.length > 0) {
+      fail(`${routePath} links to unexpected historical non-index URL(s): ${unexpectedNonIndexLinks.join(', ')}`);
+    }
+
     const expectedCanonical = `${SITE_ORIGIN}${routePath === '/' ? '/' : routePath}`;
     if (canonicalHrefs.length !== 1 || canonicalHrefs[0] !== expectedCanonical) {
       fail(`${routePath} must render exactly one self-canonical (${expectedCanonical}); found ${canonicalHrefs.join(', ') || 'none'}`);
@@ -259,6 +278,7 @@ async function main() {
       wordCount,
       internalLinkCount: internalLinks.size,
       linksToHistoricalNonIndexUrls: [...nonIndexLinks].sort(),
+      unexpectedHistoricalNonIndexUrls: unexpectedNonIndexLinks,
       shingles: makeShingles(mainText),
     });
 
@@ -291,6 +311,10 @@ async function main() {
     (total, report) => total + (report.linksToHistoricalNonIndexUrls?.length || 0),
     0,
   );
+  const unexpectedHistoricalNonIndexLinkCount = serializableReports.reduce(
+    (total, report) => total + (report.unexpectedHistoricalNonIndexUrls?.length || 0),
+    0,
+  );
 
   await fs.mkdir(ARTIFACTS_DIR, { recursive: true });
   await fs.writeFile(
@@ -305,8 +329,10 @@ async function main() {
         minInternalLinks: MIN_INTERNAL_LINKS,
         nearDuplicateJaccard: NEAR_DUPLICATE_THRESHOLD,
       },
+      allowedHistoricalNonIndexLinks: [...ALLOWED_HISTORICAL_NON_INDEX_LINKS].sort(),
       nearDuplicatePairs,
       historicalNonIndexLinkCount,
+      unexpectedHistoricalNonIndexLinkCount,
       targets: serializableReports,
     }, null, 2)}\n`,
     'utf8',
@@ -316,6 +342,7 @@ async function main() {
   console.log(`[gsc-content-quality] canonicalTargets=${TARGET_PATHS.length}`);
   console.log(`[gsc-content-quality] nearDuplicatePairs=${nearDuplicatePairs.length}`);
   console.log(`[gsc-content-quality] linksToHistoricalNonIndexUrls=${historicalNonIndexLinkCount}`);
+  console.log(`[gsc-content-quality] unexpectedHistoricalNonIndexLinks=${unexpectedHistoricalNonIndexLinkCount}`);
   console.log('[gsc-content-quality] report=artifacts/gsc-content-quality-report.json');
 
   if (hasError) process.exit(1);
