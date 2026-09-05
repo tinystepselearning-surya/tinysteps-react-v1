@@ -3,18 +3,84 @@ import { Compass, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import {
+  FOUNDER_ID,
+  FOUNDER_PROFILE_PATH,
+  FOUNDER_PROFILE_URL,
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+  SITE_ORIGIN,
+  WEBSITE_ID,
+} from '../lib/schemas';
+import {
   founderAcademicPrinciples,
   founderLeadershipAreas,
   founderStoryParagraphs,
 } from './founder/founderPriyaContent';
 
-const CANONICAL_PATH = '/team/vannala-ravali-priya';
+const CANONICAL_PATH = FOUNDER_PROFILE_PATH;
 const SEO_TITLE = 'Vannala Ravali Priya | Founder of Tiny Steps Learning';
 const SEO_DESCRIPTION =
   'Meet Vannala Ravali Priya, Founder of Tiny Steps Learning. Learn about her work in phonics, English curriculum development, teacher development and academic quality.';
 const ROBOTS = 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 const FOUNDER_IMAGE = '/priya-founder-tiny-steps-learning.webp';
+const FOUNDER_IMAGE_URL = `${SITE_ORIGIN}${FOUNDER_IMAGE}`;
 const leadershipIcons = [Compass, UsersRound, ShieldCheck] as const;
+
+const founderPersonSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': FOUNDER_ID,
+  name: PUBLIC_FACTS.founder.fullName,
+  givenName: PUBLIC_FACTS.founder.givenName,
+  familyName: PUBLIC_FACTS.founder.familyName,
+  alternateName: [...PUBLIC_FACTS.founder.alternateNames],
+  jobTitle: 'Founder',
+  url: FOUNDER_PROFILE_URL,
+  image: FOUNDER_IMAGE_URL,
+  mainEntityOfPage: {
+    '@id': `${FOUNDER_PROFILE_URL}#webpage`,
+  },
+  worksFor: {
+    '@id': ORGANIZATION_ID,
+    name: PUBLIC_FACTS.organizationName,
+  },
+  description:
+    'Founder of Tiny Steps Learning, leading academic direction across phonics, reading, grammar, writing and public speaking, including curriculum development, teacher development and academic quality.',
+  knowsAbout: ['Phonics', 'Reading', 'Grammar', 'Writing', 'Sentence Formation', 'Public Speaking'],
+};
+
+const founderProfilePageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  '@id': `${FOUNDER_PROFILE_URL}#webpage`,
+  name: SEO_TITLE,
+  description: SEO_DESCRIPTION,
+  url: FOUNDER_PROFILE_URL,
+  inLanguage: 'en-IN',
+  isPartOf: {
+    '@id': WEBSITE_ID,
+  },
+  publisher: {
+    '@id': ORGANIZATION_ID,
+  },
+  mainEntity: {
+    '@id': FOUNDER_ID,
+  },
+  about: {
+    '@id': FOUNDER_ID,
+  },
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  '@id': `${FOUNDER_PROFILE_URL}#breadcrumb`,
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+    { '@type': 'ListItem', position: 2, name: 'Team', item: `${SITE_ORIGIN}/team` },
+    { '@type': 'ListItem', position: 3, name: PUBLIC_FACTS.founder.fullName, item: FOUNDER_PROFILE_URL },
+  ],
+};
 
 export default function FounderPriyaPage() {
   useEffect(() => {
@@ -25,6 +91,7 @@ export default function FounderPriyaPage() {
       robots: ROBOTS,
       ogType: 'website',
       ogImage: FOUNDER_IMAGE,
+      jsonLd: [founderProfilePageSchema, founderPersonSchema, breadcrumbSchema],
     });
   }, []);
 
