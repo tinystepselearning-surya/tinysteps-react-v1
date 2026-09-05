@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import FounderPriyaPage from '../../pages/FounderPriyaPage';
 import {
   FOUNDER_ID,
+  FOUNDER_LINKEDIN_URL,
   FOUNDER_PROFILE_URL,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
@@ -112,7 +113,7 @@ describe('FounderPriyaPage', () => {
         worksFor: { '@id': ORGANIZATION_ID },
         mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
       });
-      expect(person?.sameAs).toBeUndefined();
+      expect(person?.sameAs).toEqual([FOUNDER_LINKEDIN_URL]);
 
       expect(schemaTypes(profilePage || {})).toContain('ProfilePage');
       expect(schemaTypes(profilePage || {})).toContain('WebPage');
