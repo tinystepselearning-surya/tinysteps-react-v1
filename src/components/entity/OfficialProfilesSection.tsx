@@ -1,6 +1,9 @@
 import { ExternalLink, ShieldCheck } from 'lucide-react';
 import { OFFICIAL_PUBLIC_PROFILES } from '../../lib/officialProfiles';
+import { PINTEREST_PROFILE } from '../../lib/pinterestProfile';
 import { PUBLIC_FACTS } from '../../lib/schemas';
+
+const visibleProfiles = [...OFFICIAL_PUBLIC_PROFILES, PINTEREST_PROFILE];
 
 export function OfficialProfilesSection() {
   return (
@@ -28,7 +31,7 @@ export function OfficialProfilesSection() {
           </div>
 
           <ul className="grid gap-3 sm:grid-cols-2" aria-label="Official Tiny Steps public profiles">
-            {OFFICIAL_PUBLIC_PROFILES.map((profile) => (
+            {visibleProfiles.map((profile) => (
               <li key={profile.platform}>
                 <a
                   href={profile.url}
