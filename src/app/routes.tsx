@@ -34,6 +34,7 @@ const ContactPage = lazy(() => import('../pages/ContactPage'));
 const WhyTinyStepsPage = lazy(() => import('../pages/WhyTinyStepsPage'));
 const ForSchoolsPage = lazy(() => import('../pages/ForSchoolsPage'));
 const TeamPage = lazy(() => import('../pages/TeamPage'));
+const FounderPriyaPage = lazy(() => import('../pages/FounderPriyaPage'));
 const SummerCampsPage = lazy(() => import('../pages/SummerCampsPage'));
 const SummerCampProgramPage = lazy(() => import('../pages/SummerCampProgramPage'));
 const ClassSamplesPage = lazy(() => import('../pages/ClassSamplesPage'));
@@ -523,6 +524,7 @@ const router = createBrowserRouter(
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
         { path: 'learning-partner', element: <LearningPartnerPage /> },
         { path: 'team', element: <TeamPage /> },
+        { path: 'team/vannala-ravali-priya', element: <FounderPriyaPage /> },
         { path: 'class-samples', element: <ClassSamplesPage /> },
         { path: 'testimonials', element: <TestimonialsPage /> },
         { path: 'careers', element: <CareersPage /> },
