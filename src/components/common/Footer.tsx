@@ -6,6 +6,7 @@ import {
   OFFICIAL_PUBLIC_PROFILES,
   type OfficialProfilePlatform,
 } from '../../lib/officialProfiles';
+import { PINTEREST_PROFILE } from '../../lib/pinterestProfile';
 
 const SOCIAL_ICONS: Record<OfficialProfilePlatform, string> = {
   Facebook: '📘',
@@ -14,11 +15,18 @@ const SOCIAL_ICONS: Record<OfficialProfilePlatform, string> = {
   LinkedIn: '💼',
 };
 
-const socialLinks = OFFICIAL_PUBLIC_PROFILES.map((profile) => ({
-  label: profile.platform,
-  href: profile.url,
-  icon: SOCIAL_ICONS[profile.platform],
-}));
+const socialLinks = [
+  ...OFFICIAL_PUBLIC_PROFILES.map((profile) => ({
+    label: profile.platform,
+    href: profile.url,
+    icon: SOCIAL_ICONS[profile.platform],
+  })),
+  {
+    label: PINTEREST_PROFILE.platform,
+    href: PINTEREST_PROFILE.url,
+    icon: '📌',
+  },
+];
 
 const courseLinks = [
   { label: 'Courses overview', href: '/courses' },
