@@ -101,6 +101,8 @@ export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
 export const FOUNDER_PROFILE_PATH = '/team/vannala-ravali-priya';
 export const FOUNDER_PROFILE_URL = `${SITE_ORIGIN}${FOUNDER_PROFILE_PATH}`;
 export const FOUNDER_ID = `${FOUNDER_PROFILE_URL}#person`;
+export const FOUNDER_LINKEDIN_URL = 'https://www.linkedin.com/in/ravali-priya-vannala-2b4b67249/';
+export const FOUNDER_SAME_AS = [FOUNDER_LINKEDIN_URL] as const;
 
 export const organizationSchema = {
   '@context': 'https://schema.org',
@@ -129,6 +131,7 @@ export const organizationSchema = {
     worksFor: {
       '@id': ORGANIZATION_ID,
     },
+    sameAs: [...FOUNDER_SAME_AS],
   },
   description:
     'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
