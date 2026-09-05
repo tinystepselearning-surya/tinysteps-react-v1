@@ -40,8 +40,13 @@ Canonical founder entity:
 - Full name: **Vannala Ravali Priya**
 - Familiar/display name: **Priya**
 - Role: **Founder, Tiny Steps Learning**
-- Canonical entity ID: `https://tinystepslearning.com/#founder`
-- Visible biography owner: `/team#founder`
+- Canonical profile URL: `https://tinystepslearning.com/team/vannala-ravali-priya`
+- Canonical Person `@id`: `https://tinystepslearning.com/team/vannala-ravali-priya#person`
+- Canonical ProfilePage `@id`: `https://tinystepslearning.com/team/vannala-ravali-priya#webpage`
+- Visible biography owner: `/team/vannala-ravali-priya`
+- Organisation/team authority owner: `/team`
+
+The earlier root-level founder identifier `https://tinystepslearning.com/#founder` is superseded by the dedicated first-party founder profile. Existing and future first-party references to Priya should resolve to the dedicated Person `@id` above.
 
 Verified public academic responsibilities already represented on the site:
 
