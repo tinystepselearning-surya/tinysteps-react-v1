@@ -5,11 +5,14 @@
 ```text
 Tiny Steps Early Education (public brand: Tiny Steps Learning)
   ├─ /team
-  │   ├─ founder identity and academic responsibility
+  │   ├─ organisation-level founder context and academic responsibility
   │   ├─ how curriculum and lesson plans are designed
   │   ├─ teacher preparation and shared methodology
   │   ├─ child-responsive teaching principles
   │   └─ quality and progress-review process
+  │
+  ├─ /team/vannala-ravali-priya
+  │   └─ canonical founder biography + Person/ProfilePage owner
   │
   ├─ /curriculum
   │   ├─ complete learning-roadmap owner (protected by B13)
@@ -37,7 +40,7 @@ Tiny Steps Early Education (public brand: Tiny Steps Learning)
 
 > **Who designs Tiny Steps learning and how does that design become a child-friendly live class?**
 
-It should expose the connected academic system without taking detailed curriculum ownership away from B13.
+It should expose the connected academic system without taking detailed curriculum ownership away from B13. The dedicated founder page owns Priya's canonical Person/ProfilePage identity and biography, while `/team` keeps the wider organisation and academic-system context.
 
 ### Academic design inputs
 
@@ -115,16 +118,17 @@ https://tinystepslearning.com/#educational-organization
   Tiny Steps Early Education
   alternate names: Tiny Steps Learning, Tiny Steps
        │
-       ├─ founder → https://tinystepslearning.com/#founder
+       ├─ founder → https://tinystepslearning.com/team/vannala-ravali-priya#person
        │              Vannala Ravali Priya
-       │              visible section: /team#founder
+       │              canonical profile: /team/vannala-ravali-priya
+       │              ProfilePage: /team/vannala-ravali-priya#webpage
        │
        ├─ AboutPage → /team
        │
        └─ Service → /for-schools
 ```
 
-The visible founder identity and structured-data identity must stay aligned.
+The visible founder identity and structured-data identity must stay aligned. The earlier root-level founder ID `https://tinystepslearning.com/#founder` is superseded by the dedicated founder profile.
 
 ## Evidence boundary
 
@@ -152,13 +156,16 @@ B14 must not claim:
 
 ## URL boundary
 
-B14 creates **zero new public URLs** and does not alter canonicals, redirects, sitemap, RSS or indexability. B13 curriculum/program/course ownership remains intact.
+B14 originally created **zero new public URLs** and did not alter canonicals, redirects, sitemap, RSS or indexability. The later founder-page brick introduced `/team/vannala-ravali-priya` specifically to become the canonical first-party founder identity owner. B13 curriculum/program/course ownership remains intact.
 
 ## Implementation ownership summary
 
 ```text
 /team
-    → founder + academic-design authority
+    → organisation + academic-design authority
+
+/team/vannala-ravali-priya
+    → canonical founder biography + Person/ProfilePage owner
 
 /curriculum
     → curriculum-roadmap owner
