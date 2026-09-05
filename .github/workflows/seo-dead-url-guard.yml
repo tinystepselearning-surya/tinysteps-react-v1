@@ -43,3 +43,11 @@ jobs:
           name: seo-dead-url-report
           path: artifacts/seo-dead-url-report.json
           if-no-files-found: ignore
+
+      - name: Upload malformed-link trace page
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brick4-phonics-blending-trace
+          path: dist/blog/phonics-blending-club/index.html
+          if-no-files-found: ignore
