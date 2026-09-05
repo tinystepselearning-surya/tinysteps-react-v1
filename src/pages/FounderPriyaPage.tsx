@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
-import { Compass, ShieldCheck, UsersRound } from 'lucide-react';
+import { Compass, ExternalLink, Linkedin, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
+  FOUNDER_LINKEDIN_URL,
   FOUNDER_PROFILE_PATH,
   FOUNDER_PROFILE_URL,
+  FOUNDER_SAME_AS,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
   SITE_ORIGIN,
@@ -50,6 +52,7 @@ const founderPersonSchema = {
   description:
     'Founder of Tiny Steps Learning, leading academic direction across phonics, reading, grammar, writing and public speaking, including curriculum development, teacher development and academic quality.',
   knowsAbout: ['Phonics', 'Reading', 'Grammar', 'Writing', 'Sentence Formation', 'Public Speaking'],
+  sameAs: [...FOUNDER_SAME_AS],
 };
 
 const founderProfilePageSchema = {
@@ -282,6 +285,41 @@ export default function FounderPriyaPage() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section
+        id="official-personal-profile"
+        aria-labelledby="official-personal-profile-heading"
+        className="border-t border-slate-200 bg-white px-5 py-14 sm:px-6 sm:py-16 lg:px-8"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 rounded-[28px] border border-slate-200 bg-[#fffaf3] p-6 shadow-[0_16px_42px_rgba(15,23,42,0.06)] sm:p-8 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Official personal profile</p>
+            <h2
+              id="official-personal-profile-heading"
+              className="mt-3 font-heading text-2xl font-bold tracking-[-0.025em] text-[#10243e] sm:text-3xl"
+            >
+              Vannala Ravali Priya on LinkedIn
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+              This is Priya&apos;s personal professional profile. It is separate from the Tiny Steps Learning company
+              profile and is linked here to keep the founder identity consistent across first-party and professional
+              sources.
+            </p>
+          </div>
+
+          <a
+            href={FOUNDER_LINKEDIN_URL}
+            target="_blank"
+            rel="me noopener noreferrer"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#0a66c2] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#004182] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0a66c2]"
+            aria-label="View Vannala Ravali Priya on LinkedIn (opens in a new tab)"
+          >
+            <Linkedin className="h-4 w-4" aria-hidden="true" />
+            View LinkedIn profile
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </a>
         </div>
       </section>
     </div>
