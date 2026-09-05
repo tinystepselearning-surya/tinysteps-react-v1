@@ -258,13 +258,15 @@ export default function GlobalLearnersMapSection() {
                         className="absolute inset-0 h-full w-full object-contain"
                       />
 
-                      <div className="pointer-events-none absolute inset-0 z-20">
+                      <div
+                        className="pointer-events-none absolute inset-0 z-20"
+                        aria-hidden="true"
+                      >
                         {pinnedCountries.map(({ country, point }) => (
                           <div
                             key={country.countryCode}
                             className="absolute z-30 -translate-x-1/2 -translate-y-full"
                             style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                            aria-label={country.countryName}
                           >
                             <span className="relative block h-3.5 w-3.5 rounded-full bg-[#ff8f3f] shadow-[0_0_0_3px_rgba(255,143,63,0.24),0_2px_8px_rgba(15,23,42,0.28)] md:h-5 md:w-5">
                               <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white md:h-2 md:w-2" />
