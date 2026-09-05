@@ -81,6 +81,9 @@ export default function SummerCampsPage() {
             <Link to="/book-demo" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800">
               Book regular 35-minute assessment
             </Link>
+            <Link to="/summer-camp-for-kids-india" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800">
+              Read the parent summer-camp planning guide
+            </Link>
           </div>
         </div>
       </section>
