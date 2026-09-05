@@ -60,6 +60,14 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/blog',
     ogType: 'website',
   },
+  '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading': {
+    title: 'What is Jolly Phonics and is it the best way to teach reading? | Tiny Steps',
+    description:
+      'Understand what Jolly Phonics is, how it compares with other reading approaches, and how Tiny Steps uses a structured synthetic phonics method for confident reading.',
+    canonicalPath: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    ogType: 'article',
+  },
   '/pricing': {
     title: 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning',
     description:

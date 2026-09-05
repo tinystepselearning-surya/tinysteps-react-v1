@@ -294,7 +294,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
       { label: 'See the complete Tiny Steps phonics program', to: '/phonics' },
       { label: 'View the full curriculum roadmap', to: '/curriculum' },
       { label: 'Reading fluency support', to: '/reading-fluency-program' },
-      { label: 'How to help kids read multisyllabic words', to: '/blog/week-19-phonics-multisyllabic' },
+      { label: 'How to help kids read multisyllabic words', to: '/blog/phonics-multisyllabic' },
       { label: 'Long vowel sounds for kids', to: '/blog/long-vowel-sounds-for-kids' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
@@ -356,7 +356,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     legacySlugs: ['grammar-essentials', 'basic-grammar'],
     relatedLinks: [
       { label: 'Parent course chooser', to: '/parents/choosing-course' },
-      { label: 'Grammar roadmap for parents', to: '/blog/week-7-grammar-nouns-to-paragraphs' },
+      { label: 'Grammar roadmap for parents', to: '/blog/grammar-nouns-to-paragraphs' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [

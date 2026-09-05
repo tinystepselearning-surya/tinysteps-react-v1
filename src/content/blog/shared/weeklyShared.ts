@@ -80,7 +80,7 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-2-phonics-blending-club': {
     heading: 'Real-world action plan: blending that works on school nights',
     context: 'Blending becomes automatic with short daily repetition. Use a fixed ladder from oral sounds to print to sentence.',
-    routine: ['Start with 3 oral blends: /c/ /a/ /t/, /m/ /a/ /p/, /s/ /i/ /t/ before opening a book.', 'Read a CVC ladder: sat -> sit -> sip -> tip -> tap and discuss the changed middle sound.', 'Finish with one decodable line: "The cat sat." "I tap the map."'],
+    routine: ['Start with 3 oral blends: c-a-t, m-a-p, s-i-t before opening a book.', 'Read a CVC ladder: sat -> sit -> sip -> tip -> tap and discuss the changed middle sound.', 'Finish with one decodable line: "The cat sat." "I tap the map."'],
     rescue: 'If your child guesses whole words, cover the word, reveal one sound at a time, and blend again slowly. Keep correction neutral and quick.',
     outcomes: ['Child blends 6-8 CVC words with less pausing.', 'Child notices vowel changes between similar words.', 'Child reads one short sentence by tracking each word left to right.'],
     parentQuestions: ['How long should blending practice be? Ten focused minutes daily beats one long weekend session.', 'Should I let my child skip hard words? No, help decode them once, then repeat for confidence.']

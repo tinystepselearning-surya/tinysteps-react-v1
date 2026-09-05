@@ -106,7 +106,7 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
       '/pricing',
       '/book-demo',
       '/blog/how-to-improve-reading-fluency-in-children',
-      '/blog/week-6-phonics-comprehension',
+      '/blog/phonics-comprehension',
       '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
       '/child-not-reading-properly',
     ]) {
