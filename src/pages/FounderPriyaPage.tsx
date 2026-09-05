@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
+import { Compass, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
+import {
+  founderAcademicPrinciples,
+  founderLeadershipAreas,
+  founderStoryParagraphs,
+} from './founder/founderPriyaContent';
 
 const CANONICAL_PATH = '/team/vannala-ravali-priya';
 const SEO_TITLE = 'Vannala Ravali Priya | Founder of Tiny Steps Learning';
@@ -8,6 +14,7 @@ const SEO_DESCRIPTION =
   'Meet Vannala Ravali Priya, Founder of Tiny Steps Learning. Learn about her work in phonics, English curriculum development, teacher development and academic quality.';
 const ROBOTS = 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 const FOUNDER_IMAGE = '/priya-founder-tiny-steps-learning.webp';
+const leadershipIcons = [Compass, UsersRound, ShieldCheck] as const;
 
 export default function FounderPriyaPage() {
   useEffect(() => {
@@ -120,6 +127,90 @@ export default function FounderPriyaPage() {
                 </figcaption>
               </figure>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="founder-story" className="bg-white px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Founder story</p>
+            <h2 className="mt-4 max-w-xl font-heading text-3xl font-bold leading-tight tracking-[-0.03em] text-[#10243e] sm:text-4xl">
+              Why Tiny Steps Learning was founded
+            </h2>
+            <div className="mt-7 max-w-sm rounded-[24px] border border-orange-100 bg-[#fff8ef] p-5 sm:p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Founder focus</p>
+              <p className="mt-3 font-heading text-xl font-bold leading-snug text-slate-950">
+                Structured. Personal. Measurable.
+              </p>
+            </div>
+          </div>
+
+          <div className="max-w-3xl space-y-5 text-base leading-8 text-slate-700 sm:text-lg">
+            {founderStoryParagraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="academic-leadership" className="border-y border-orange-100 bg-[#fffaf3] px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Academic leadership</p>
+            <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.03em] text-[#10243e] sm:text-4xl">
+              What Priya leads at Tiny Steps Learning
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Her role connects programme design, teacher guidance and academic quality so the learning system stays focused on observable progress.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {founderLeadershipAreas.map((area, index) => {
+              const Icon = leadershipIcons[index];
+              return (
+                <article
+                  key={area.title}
+                  className="rounded-[26px] border border-white bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.07)] sm:p-7"
+                >
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                    <Icon className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-5 font-heading text-xl font-bold text-slate-950">{area.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">{area.detail}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="academic-philosophy" className="bg-[#10243e] px-5 py-20 text-white sm:px-6 sm:py-24 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">Academic philosophy</p>
+            <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.03em] text-white sm:text-4xl">
+              Principles behind the academic work
+            </h2>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+              Tiny Steps uses readiness, guided practice, cumulative review and observable learner evidence to shape progression towards greater independence.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-3">
+            {founderAcademicPrinciples.map((principle) => (
+              <article
+                key={principle.number}
+                className="rounded-[26px] border border-white/10 bg-white/[0.06] p-6 shadow-[0_18px_50px_rgba(2,6,23,0.16)] backdrop-blur sm:p-7"
+              >
+                <span className="inline-flex rounded-full bg-orange-400/15 px-3 py-1.5 text-xs font-black tracking-[0.16em] text-orange-200">
+                  {principle.number}
+                </span>
+                <h3 className="mt-5 font-heading text-xl font-bold leading-snug text-white">{principle.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">{principle.detail}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
