@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && npm run seo:blog-consolidation && npm run content:public-facts && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:rendered-check && npm run seo:blog-rendered-consolidation && npm run content:public-facts-rendered && npm run seo:route-integrity && npm run seo:indexation-check && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && npm run seo:blog-consolidation && npm run content:public-facts && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:rendered-check && npm run seo:blog-rendered-consolidation && npm run content:public-facts-rendered && npm run seo:route-integrity && npm run seo:indexation-check && npm run seo:crawl-discovery && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
@@ -19,6 +19,7 @@
     "gen:sitemaps": "node scripts/generate-sitemaps.js",
     "seo:smoke": "node scripts/seo-smoke.mjs",
     "seo:indexation-check": "node scripts/seo-indexation-guard.mjs",
+    "seo:crawl-discovery": "node scripts/seo-crawl-discovery-guard.mjs",
     "seo:rendered-check": "node scripts/seo-rendered-html-check.mjs",
     "seo:public-games-navigation": "node scripts/check-public-game-seo-navigation.mjs",
     "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
@@ -100,7 +101,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.167.1",
-    "zod": "^4.1.12",
+    "zod": "^3.25.76",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -129,7 +130,7 @@
     "csstype": "^3.1.3",
     "debug": "^4.4.3",
     "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-hooks": "^6.2.0",
     "form-data": "^4.0.4",
     "hersheytext": "^2.0.0",
     "jsdom": "^22.1.0",
