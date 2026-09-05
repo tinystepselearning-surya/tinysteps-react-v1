@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import { getBlogHeroFamily } from '../../content/blog/shared/heroFamilies';
 import { resolveBlogAuthor } from '../../content/blog/shared/editorialTrust';
+import { FOUNDER_PROFILE_PATH } from '../../lib/schemas';
 
 const repoRoot = process.cwd();
 const readRepoFile = (relativePath: string) =>
@@ -68,7 +69,7 @@ describe('B8 first-party knowledge guardrails', () => {
       expect(post, `${slug} should remain in the registry`).toBeTruthy();
       const author = resolveBlogAuthor(post!.author, post!.category);
       expect(['founder', 'academic-team', 'research-desk']).toContain(author.key);
-      expect(author.profilePath).toBe('/team');
+      expect(author.profilePath).toBe(author.key === 'founder' ? FOUNDER_PROFILE_PATH : '/team');
     }
 
     expect(resolveBlogAuthor(bySlug.get('phonics-for-parents-guide')!.author, 'Research').key).toBe(
