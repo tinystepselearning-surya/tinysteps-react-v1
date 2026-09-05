@@ -146,7 +146,7 @@ describe('Phonics Brick 4 course-stage authority guardrails', () => {
       '/blog/why-letter-sounds-are-not-enough-to-read',
       '/blog/how-kids-learn-blending',
       '/blog/digraphs-and-tricky-words',
-      '/blog/week-19-phonics-multisyllabic',
+      '/blog/phonics-multisyllabic',
     ]) {
       expect(config.includes(`to: '${route}'`) || page.includes(`to="${route}"`)).toBe(true);
     }

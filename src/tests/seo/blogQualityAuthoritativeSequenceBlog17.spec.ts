@@ -30,7 +30,7 @@ describe('authoritative Blog #17 quality lock', () => {
     expect(body).toContain('/blog/satpin-phonics-guide');
     expect(body).toContain('/blog/cvc-words-explained-for-parents');
     expect(body).toContain('/blog/digraphs-and-tricky-words');
-    expect(body).toContain('/blog/phonics-vs-sight-words');
+    expect(body).toContain('/blog/sight-words-or-phonics-first');
     expect(body).toContain('/blog/long-vowel-sounds-for-kids');
     expect(body).toContain('/blog/r-controlled-vowels-explained');
     expect(body).toContain('/blog/how-phonics-improves-spelling');
