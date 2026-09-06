@@ -22,8 +22,11 @@ const bodyText = (slug: string) => bySlug.get(slug)!.body.map((block) => block.c
 const GRAMMAR_OWNER = 'grammar-nouns-to-paragraphs';
 const SPEAKING_OWNER = 'speaking-confidence-seeds';
 
-const GRAMMAR_SUPPORT_SLUGS = [
+const QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS = [
   'grammar-tenses',
+] as const;
+
+const NOINDEX_GRAMMAR_SUPPORT_SLUGS = [
   'grammar-conjunctions',
   'grammar-subject-verb',
   'grammar-creative-writing',
@@ -78,12 +81,16 @@ describe('B9 grammar and speaking authority guardrails', () => {
     }
   });
 
-  it('keeps the broad grammar and speaking owners indexable while supporting roadmap pages remain noindex', () => {
+  it('keeps broad owners and audited skill pages indexable while unaudited support pages remain noindex', () => {
     expect(shouldNoindexBlogSlug(GRAMMAR_OWNER)).toBe(false);
     expect(shouldNoindexBlogSlug(SPEAKING_OWNER)).toBe(false);
 
-    for (const slug of [...GRAMMAR_SUPPORT_SLUGS, ...SPEAKING_SUPPORT_SLUGS]) {
-      expect(shouldNoindexBlogSlug(slug), `${slug} should remain a support page`).toBe(true);
+    for (const slug of QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS) {
+      expect(shouldNoindexBlogSlug(slug), `${slug} completed the quality promotion gate`).toBe(false);
+    }
+
+    for (const slug of [...NOINDEX_GRAMMAR_SUPPORT_SLUGS, ...SPEAKING_SUPPORT_SLUGS]) {
+      expect(shouldNoindexBlogSlug(slug), `${slug} should remain a support page until audited`).toBe(true);
     }
   });
 
