@@ -1,305 +1,542 @@
 import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
-  slug: 'week-12-speaking-confidence-seeds',
-  title: 'Speaking Confidence Roadmap: A 7-Day Calm Plan for Kids (Ages 3–10)',
+  slug: 'speaking-confidence-seeds',
+  title: 'How to Build Speaking Confidence in Kids: A 7-Day Calm Practice Plan',
   category: 'Public Speaking',
-  author: 'Tiny Steps Academic Team',
+  author: 'Priya',
   date: '2026-04-04',
-  readTime: '12 min read',
-  hero: '/blog/hero-research.jpg',
+  modifiedDate: '2026-09-06',
+  readTime: '15 min read',
+  hero: '/blog/hero-speaking.jpg',
   metaDescription:
-    'A 7-day speaking confidence plan for kids ages 3–10 with short routines, a confidence ladder, parent scripts, games, troubleshooting, and clear progress markers.',
+    'Build speaking confidence in kids with a calm 7-day practice plan using complete answers, picture talk, retelling, voice tools and gradual audience practice.',
   excerpt:
-    'A practical speaking confidence guide for parents who want short, low-pressure practice for shy or hesitant children without forcing long performances.',
+    'A practical parent guide to speaking confidence: help children start answers, expand ideas, speak more clearly, recover from mistakes and transfer skills to new people and settings.',
+  audience: 'Parent',
+  discoveryCategory: 'Speaking & Communication',
   body: [
     {
       type: 'h2',
-      content: 'Quick answer: how do I help my child speak with more confidence?',
+      content: 'Quick answer: how can parents build speaking confidence in kids?',
     },
     {
       type: 'p',
       content:
-        'Build confidence through small speaking tasks that feel predictable and achievable. Start with familiar topics and short answers, allow thinking time, praise the attempt, and increase the speaking load gradually. The goal is not instant stage confidence; it is growing independence in everyday communication.',
-    },
-    {
-      type: 'h2',
-      content: 'What progress actually looks like',
-    },
-    {
-      type: 'li',
-      content: 'The child starts an answer with less adult prompting.',
-    },
-    {
-      type: 'li',
-      content: 'One-word replies become complete sentences and then connected ideas.',
-    },
-    {
-      type: 'li',
-      content: 'Voice becomes easier to hear in familiar settings.',
-    },
-    {
-      type: 'li',
-      content: 'A forgotten word or small mistake no longer ends the whole attempt.',
-    },
-    {
-      type: 'li',
-      content: 'Skills begin to transfer from home practice into class, relatives, groups, or presentations.',
-    },
-    {
-      type: 'h2',
-      content: 'Why some children freeze while speaking',
+        'Speaking confidence grows when children get **repeated chances to plan an idea, start speaking, add useful detail, keep going after a small mistake and use the same skill with gradually different listeners**. A calm seven-day plan can start that habit, but it is not a promise that a child will become confident in one week. The useful goal is steady independence, not instant performance.',
     },
     {
       type: 'p',
       content:
-        'Children can hesitate for different reasons: they may be naturally cautious, worry about mistakes, need more time to organise language, feel unsure about the topic, or be uncomfortable speaking in front of others. Do not assume every quiet child has the same problem. Observe when speaking is easy and when it becomes difficult.',
+        'This article is the **broad speaking-confidence roadmap**. If your child understands English but becomes quiet mainly in class or particular settings, use [My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak). If the child answers independently but replies stay very short, use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers). For organising a planned talk, use [How to Structure a Speech for Kids](/blog/speaking-structure).',
     },
+
     {
       type: 'h2',
-      content: 'The parent rule: let the idea finish before correcting it',
+      content: 'The Tiny Steps confidence path: SAFE → START → EXPAND → CONNECT → VOICE → AUDIENCE → TRANSFER',
+    },
+    {
+      type: 'li',
+      content: '**SAFE:** begin with a familiar topic and a manageable speaking demand.',
+    },
+    {
+      type: 'li',
+      content: '**START:** help the child begin an answer without the adult supplying every word.',
+    },
+    {
+      type: 'li',
+      content: '**EXPAND:** add one useful detail, reason, example or description.',
+    },
+    {
+      type: 'li',
+      content: '**CONNECT:** move from isolated sentences to two or three related ideas.',
+    },
+    {
+      type: 'li',
+      content: '**VOICE:** practise useful control of pace, volume and pausing without turning delivery into a performance test.',
+    },
+    {
+      type: 'li',
+      content: '**AUDIENCE:** reuse the skill with a different trusted listener or a slightly more demanding speaking situation.',
+    },
+    {
+      type: 'li',
+      content: '**TRANSFER:** check whether the child can use the skill on a fresh topic with less support.',
+    },
+
+    {
+      type: 'h2',
+      content: 'Speaking confidence is not the same as being naturally talkative',
     },
     {
       type: 'p',
       content:
-        'When a child is trying to express an idea, constant interruption can make the speaking task feel harder. Let the child finish first. Then choose one useful improvement, model it briefly, and ask for one calm retry. This keeps communication and correction in balance.',
-    },
-    {
-      type: 'h2',
-      content: 'The 15-second spotlight routine',
+        'A child can be quiet, thoughtful or slow to warm up and still communicate effectively. Confidence should not be measured by how many words a child says compared with a sibling or classmate. A better question is whether the child can communicate an age-appropriate idea with increasing independence in the situations that matter.',
     },
     {
       type: 'p',
       content:
-        'Use a tiny daily speaking turn at dinner, before bed, or during a walk. Ask for one idea about the day, a picture, a toy, or a favourite topic. Fifteen seconds is only a starting structure; shorten it if the child is uncomfortable and lengthen it gradually when the child is ready.',
+        'Likewise, speaking confidence is not the same as perfect grammar, a particular accent, constant eye contact or a loud voice. Those are separate language or presentation features. For many children, the first useful milestone is simply **starting the idea and staying with it long enough to be understood**.',
     },
+
     {
       type: 'h2',
-      content: '7-day speaking confidence plan (8–10 minutes a day)',
-    },
-    {
-      type: 'li',
-      content: 'Day 1 — Familiar answer: choose one easy question and give one complete sentence. Praise starting independently.',
-    },
-    {
-      type: 'li',
-      content: 'Day 2 — Picture talk: name three things in a picture, then connect two details into one sentence.',
-    },
-    {
-      type: 'li',
-      content: 'Day 3 — Add one reason: answer a familiar question using “because”.',
-    },
-    {
-      type: 'li',
-      content: 'Day 4 — Mini retell: explain what happened first and next in a short story or daily event.',
-    },
-    {
-      type: 'li',
-      content: 'Day 5 — Voice practice: say the same sentence once softly, once in a clear conversation voice, and once as if speaking to someone farther away.',
-    },
-    {
-      type: 'li',
-      content: 'Day 6 — Question game: answer one unexpected but child-friendly question without memorising a script.',
-    },
-    {
-      type: 'li',
-      content: 'Day 7 — Transfer: repeat a favourite task for another trusted person or in a short recorded voice note if the child is comfortable.',
-    },
-    {
-      type: 'h2',
-      content: '10 speaking confidence games to use at home',
-    },
-    {
-      type: 'li',
-      content: 'Spotlight Spoon — whoever holds the spoon shares one short idea.',
-    },
-    {
-      type: 'li',
-      content: 'Echo Story — parent says one expressive line and the child repeats it in their own voice.',
-    },
-    {
-      type: 'li',
-      content: 'Voice Scale — say one line in a whisper, normal conversation voice, and clear across-the-room voice.',
-    },
-    {
-      type: 'li',
-      content: 'Picture Interview — answer two simple questions about a picture.',
-    },
-    {
-      type: 'li',
-      content: 'One-Word Story — build a family story one word at a time, then let the child retell one sentence.',
-    },
-    {
-      type: 'li',
-      content: 'Puppet Reporter — interview a toy using who, what, where, and why questions.',
-    },
-    {
-      type: 'li',
-      content: 'Question Ball — toss a soft ball; the catcher answers one friendly question.',
-    },
-    {
-      type: 'li',
-      content: 'Record and Replay — make a short voice note only when the child is comfortable, then notice one thing that sounded clear.',
-    },
-    {
-      type: 'li',
-      content: 'Postcard Pitch — describe a picture in two connected sentences.',
-    },
-    {
-      type: 'li',
-      content: 'Tell Me More — parent responds to each answer with one gentle follow-up question.',
-    },
-    {
-      type: 'h2',
-      content: 'Parent scripts: what to say when a child hesitates',
-    },
-    {
-      type: 'li',
-      content: 'Before speaking: “Take your time. Start with just the first idea.”',
-    },
-    {
-      type: 'li',
-      content: 'For a short answer: “Good start. Tell me one more thing.”',
-    },
-    {
-      type: 'li',
-      content: 'After a mistake: “I understood you. Try that sentence once more smoothly.”',
-    },
-    {
-      type: 'li',
-      content: 'When stuck: “Choose one: was it fun, difficult, surprising, or something else?”',
-    },
-    {
-      type: 'li',
-      content: 'After practice: “I liked how you kept going even when you needed time to think.”',
-    },
-    {
-      type: 'h2',
-      content: 'A simple confidence ladder',
-    },
-    {
-      type: 'li',
-      content: 'Level 1 — Answer a familiar question in one complete sentence.',
-    },
-    {
-      type: 'li',
-      content: 'Level 2 — Add one reason or detail without word-by-word prompting.',
-    },
-    {
-      type: 'li',
-      content: 'Level 3 — Describe a picture or event in three connected sentences.',
-    },
-    {
-      type: 'li',
-      content: 'Level 4 — Speak briefly on a familiar topic and answer one follow-up question.',
-    },
-    {
-      type: 'li',
-      content: 'Level 5 — Use the same skills with another person, in class, or during a presentation.',
-    },
-    {
-      type: 'h2',
-      content: 'Choose the right next speaking guide for the exact gap',
+      content: 'Before practising confidence, check what is actually making speaking difficult',
     },
     {
       type: 'p',
       content:
-        'This page is the broad speaking-confidence roadmap. The best next guide depends on whether the main difficulty is starting an independent response, expanding a short answer, organising a longer talk, or using feedback without increasing pressure.',
+        'The label “shy” can hide different needs. Observe the child across familiar and unfamiliar topics, home and school, one-to-one and group situations, and—when relevant—the languages the child uses. The same outward hesitation can come from very different bottlenecks.',
     },
     {
       type: 'li',
-      content:
-        '[When a child understands English but does not speak](/blog/child-understands-english-but-does-not-speak) — use this when comprehension appears stronger than independent classroom or conversational speaking.',
+      content: '**The child understands but needs time to formulate:** allow planning time before adding a prompt.',
     },
     {
       type: 'li',
-      content:
-        '[How to expand one-word answers into fuller responses](/blog/child-gives-one-word-answers) — use this when the child answers, but the reply stays brief and needs a sentence, detail, reason, or sequence.',
+      content: '**The child starts but gives only one word:** work on response expansion rather than confidence alone.',
     },
     {
       type: 'li',
-      content:
-        '[How children can organise a short talk](/blog/week-13-speaking-structure) — a supporting practice guide for moving from conversational answers into a clear Hook–Body–Close structure.',
+      content: '**The child speaks freely at home but not in class:** compare setting pressure and independence using the dedicated diagnostic guide.',
     },
     {
       type: 'li',
-      content:
-        '[Use video for one-target speaking feedback](/blog/week-18-speaking-video-feedback) — a supporting practice guide when the child is ready to notice one speaking habit at a time without turning feedback into criticism.',
+      content: '**The child struggles to build a complete sentence even in a relaxed setting:** sentence formation or language knowledge may need priority.',
     },
     {
-      type: 'h2',
-      content: 'Troubleshooting common speaking situations',
+      type: 'li',
+      content: '**The child can speak but cannot organise a short presentation:** speech structure is the next skill, not more generic confidence practice.',
     },
     {
       type: 'p',
       content:
-        'If the child whispers, first accept the attempt and then practise the same short line in a clearer conversation voice. If the child gives one-word answers, use a sentence starter plus one follow-up question. If the child memorises speeches but struggles with questions, add flexible picture talk and “why” questions. If the child talks freely at home but stays silent elsewhere, practise the same school-style task at home first and increase the audience gradually.',
+        'For a sentence-building problem, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). For a story-based grammar-and-speaking activity, use [Story Cards for Kids](/blog/grammar-speaking-bridge).',
     },
+
     {
       type: 'h2',
-      content: 'When speaking difficulty needs more than practice',
+      content: 'What progress in speaking confidence actually looks like',
+    },
+    {
+      type: 'li',
+      content: 'The child begins an answer with less waiting for an adult sentence starter.',
+    },
+    {
+      type: 'li',
+      content: 'One-word or one-sentence responses begin to include a useful detail, reason or sequence.',
+    },
+    {
+      type: 'li',
+      content: 'The child can keep going after forgetting a word or making a small mistake.',
+    },
+    {
+      type: 'li',
+      content: 'Voice becomes easier to hear and the child can adjust pace or volume when reminded.',
+    },
+    {
+      type: 'li',
+      content: 'The same speaking skill begins to appear with a different listener, topic or setting.',
+    },
+    {
+      type: 'li',
+      content: 'The amount of adult prompting decreases even if the final answer is not yet polished.',
+    },
+
+    {
+      type: 'h2',
+      content: 'A calm 7-day speaking confidence plan',
     },
     {
       type: 'p',
       content:
-        'A speaking class is not a substitute for medical, developmental, speech-language, or mental-health assessment. If silence, communication difficulty, or distress is persistent, severe, or affecting daily participation, discuss it with the child’s school and an appropriately qualified professional rather than treating it only as a confidence issue.',
+        'Use one short practice period each day. The exact number of minutes matters less than keeping the demand manageable and stopping before practice becomes an endurance test. Repeat a day when needed; the sequence is a teaching scaffold, not a deadline.',
     },
     {
-      type: 'h2',
-      content: 'Practical next step for parents',
+      type: 'h3',
+      content: 'Day 1 — Comfortable baseline: one complete answer',
     },
     {
       type: 'p',
       content:
-        'If you are unsure whether the main gap is confidence, sentence formation, vocabulary, pronunciation, or response structure, use an assessment to identify one clear first target before adding more practice.',
+        'Ask one familiar question such as “What was your favourite part of today?” Wait before helping. Aim for one complete sentence. Notice how much support was needed: none, a topic cue, a short starter or a full model.',
+    },
+    {
+      type: 'h3',
+      content: 'Day 2 — Add one useful detail',
+    },
+    {
+      type: 'p',
+      content:
+        'Use another familiar question. After the first sentence, ask one follow-up such as “What happened next?” or “Tell me one more thing.” The goal is not a long speech; it is learning that an answer can grow beyond the first idea.',
+    },
+    {
+      type: 'h3',
+      content: 'Day 3 — Give a reason',
+    },
+    {
+      type: 'p',
+      content:
+        'Ask for an opinion on a familiar topic and invite one reason: “Which game do you prefer, and why?” A simple structure such as **idea + because + reason** helps the child organise meaning without memorising a speech.',
+    },
+    {
+      type: 'h3',
+      content: 'Day 4 — Retell a short event',
+    },
+    {
+      type: 'p',
+      content:
+        'Use a recent event, picture sequence or very short story. Ask for two or three connected ideas using prompts such as **first → next → finally** only if needed. Retelling practises connected speech without requiring the child to invent a formal presentation.',
+    },
+    {
+      type: 'h3',
+      content: 'Day 5 — Practise one voice tool',
+    },
+    {
+      type: 'p',
+      content:
+        'Choose only one delivery target: a clearer conversation volume, a slightly slower first sentence or a useful pause between ideas. Do not add posture, eye contact, gestures, pronunciation and grammar corrections all at once. One controllable target is enough.',
+    },
+    {
+      type: 'h3',
+      content: 'Day 6 — Use the same skill with another trusted listener',
+    },
+    {
+      type: 'p',
+      content:
+        'Repeat a familiar speaking task for another trusted adult, sibling or small group if the child is comfortable. Keep the content easy so the new challenge is the listener, not difficult vocabulary. If distress rises sharply, lower the demand rather than forcing the audience step.',
+    },
+    {
+      type: 'h3',
+      content: 'Day 7 — Fresh topic, less support',
+    },
+    {
+      type: 'p',
+      content:
+        'Choose a new but familiar topic and start with less help than on Day 1. Look for one observable change: quicker initiation, a fuller response, clearer voice, better recovery, or less prompting. Celebrate the specific improvement and decide what to repeat next week.',
+    },
+
+    {
+      type: 'h2',
+      content: 'Use the smallest prompt that helps the child start',
+    },
+    {
+      type: 'p',
+      content:
+        'Prompts are useful when they unlock language, but they should not become permanent. Start with the lightest support that is likely to work, then reduce it on the next similar attempt.',
     },
     {
       type: 'li',
-      content: 'Explore the speaking confidence program: /speaking',
+      content: '**Wait:** ask once and allow planning time.',
     },
     {
       type: 'li',
-      content: 'Read the parent speaking-confidence guide: /parents/speech-confidence',
+      content: '**Topic cue:** “Tell me about the match.”',
     },
     {
       type: 'li',
-      content: 'Choose the right course: /parents/choosing-course',
+      content: '**Information cue:** “Who were you playing with?”',
     },
     {
       type: 'li',
-      content: 'Book a free assessment: /book-demo',
+      content: '**Short starter:** “My favourite part was…”',
+    },
+    {
+      type: 'li',
+      content: '**Full frame:** “My favourite part was ___ because ___.”',
+    },
+    {
+      type: 'li',
+      content: '**Brief model:** give one example when lighter support is not enough, then ask a fresh question later.',
+    },
+
+    {
+      type: 'h2',
+      content: 'Parent scripts that reduce pressure without removing the speaking turn',
+    },
+    {
+      type: 'li',
+      content: '**Before speaking:** “Take your time. Start with the first idea.”',
+    },
+    {
+      type: 'li',
+      content: '**After a short answer:** “Good start. Tell me one more useful detail.”',
+    },
+    {
+      type: 'li',
+      content: '**When the child is stuck:** “Do you want a clue, a sentence starter or a moment to think?”',
+    },
+    {
+      type: 'li',
+      content: '**After a mistake:** “I understood your idea. Finish first, then we can improve one part.”',
+    },
+    {
+      type: 'li',
+      content: '**After practice:** “You started that answer without my help—that is the progress I noticed.”',
+    },
+
+    {
+      type: 'h2',
+      content: 'Speaking confidence games that still practise real communication',
+    },
+    {
+      type: 'h3',
+      content: 'Picture Interview',
+    },
+    {
+      type: 'p',
+      content:
+        'Choose one interesting picture. Ask a factual question, an inference question and an opinion question. This creates different kinds of speaking without needing a prepared speech.',
+    },
+    {
+      type: 'h3',
+      content: 'Two-Sentence Spotlight',
+    },
+    {
+      type: 'p',
+      content:
+        'Choose a familiar topic. Sentence one gives the main idea; sentence two adds a reason, example or detail. Stop there if the child has completed the task successfully.',
+    },
+    {
+      type: 'h3',
+      content: 'Question Ball',
+    },
+    {
+      type: 'p',
+      content:
+        'Take turns asking and answering one friendly question. The purpose is reciprocal conversation, not speed. Give thinking time before expecting the ball to be passed back.',
+    },
+    {
+      type: 'h3',
+      content: 'Mini Retell',
+    },
+    {
+      type: 'p',
+      content:
+        'After reading or watching something short, ask for what happened first, one important middle event and the ending. Reduce the sequence prompts over time.',
+    },
+    {
+      type: 'h3',
+      content: 'Voice Choice',
+    },
+    {
+      type: 'p',
+      content:
+        'Say the same sentence once too softly, once too quickly and once at a useful conversational pace and volume. Ask which version was easiest to understand. This turns delivery into a communication choice rather than a command to “speak louder.”',
+    },
+
+    {
+      type: 'h2',
+      content: 'Correct less during the speaking attempt—and make feedback more useful afterwards',
+    },
+    {
+      type: 'p',
+      content:
+        'When the learning goal is confidence and idea expression, interrupting every grammar or pronunciation error changes the task into constant self-monitoring. Let the child finish first. Then choose one correction that matters for clarity or the current learning target, model it briefly and invite one calm retry.',
+    },
+    {
+      type: 'p',
+      content:
+        'This does not mean grammar and pronunciation are unimportant. It means feedback should match the purpose of the speaking task. If known grammar rules repeatedly disappear in fresh speech, use the grammar-transfer guide rather than trying to fix every rule inside a confidence activity.',
+    },
+
+    {
+      type: 'h2',
+      content: 'For multilingual children: confidence and English proficiency are not the same question',
+    },
+    {
+      type: 'p',
+      content:
+        'A multilingual child may understand, joke, explain and retell freely in one language while needing more retrieval time or sentence support in English. ASHA notes that multilingualism itself is not a cause of speech or language disorders and that ability can vary across languages and language domains. Compare the communication task across the languages the child actually uses rather than assuming shorter English answers mean the child is generally poor at speaking.',
+    },
+    {
+      type: 'p',
+      content:
+        'Home languages can remain part of family communication. For practice, a child can first clarify an idea in a familiar language and then shape one English response when the goal is English speaking. Do not present the home language as something that must be removed before confidence can grow.',
+    },
+
+    {
+      type: 'h2',
+      content: 'When silence or distress needs more than a speaking-confidence routine',
+    },
+    {
+      type: 'p',
+      content:
+        'A speaking-confidence blog or class cannot diagnose anxiety, selective mutism, hearing difficulty, speech-language disorder or another developmental condition. ASHA describes selective mutism as an anxiety-related condition in which speaking can differ markedly by setting. If a child consistently speaks in some situations but cannot speak in others, or communication difficulty causes significant distress or interferes with school and everyday participation, involve the school and an appropriately qualified professional.',
+    },
+    {
+      type: 'p',
+      content:
+        'Do not use the seven-day plan as a treatment protocol for selective mutism or another diagnosed condition. Professional recommendations and any existing support plan take priority over generic practice activities.',
+    },
+
+    {
+      type: 'h2',
+      content: 'What parents should avoid',
+    },
+    {
+      type: 'li',
+      content: 'Do not finish every sentence for the child before giving them time to formulate it.',
+    },
+    {
+      type: 'li',
+      content: 'Do not compare a quiet child with a naturally talkative sibling or classmate.',
+    },
+    {
+      type: 'li',
+      content: 'Do not demand eye contact as proof of confidence; listener engagement can be shown in different appropriate ways.',
+    },
+    {
+      type: 'li',
+      content: 'Do not correct grammar, pronunciation, volume and posture simultaneously.',
+    },
+    {
+      type: 'li',
+      content: 'Do not force camera recording or a larger audience when the child is clearly distressed.',
+    },
+    {
+      type: 'li',
+      content: 'Do not treat a memorised performance as the only evidence of communication confidence.',
+    },
+    {
+      type: 'li',
+      content: 'Do not promise that a shy or hesitant child will become confident after a fixed number of days or classes.',
+    },
+
+    {
+      type: 'h2',
+      content: 'How to measure transfer after the seven-day starter plan',
+    },
+    {
+      type: 'p',
+      content:
+        'Repeat one similar speaking task with a **fresh topic**. Begin with less support and note what the child can now do independently. This distinguishes true transfer from simply memorising the week’s exact questions.',
+    },
+    {
+      type: 'li',
+      content: '**Initiation:** does the child begin without waiting for a full model?',
+    },
+    {
+      type: 'li',
+      content: '**Expansion:** can the child add one useful detail, reason or sequence?',
+    },
+    {
+      type: 'li',
+      content: '**Connection:** can two or three ideas stay on the same topic?',
+    },
+    {
+      type: 'li',
+      content: '**Recovery:** can the child continue after a pause or small mistake?',
+    },
+    {
+      type: 'li',
+      content: '**Delivery:** is the message understandable at an appropriate pace and volume?',
+    },
+    {
+      type: 'li',
+      content: '**Audience transfer:** does the skill appear with another listener or in another appropriate setting?',
+    },
+
+    {
+      type: 'h2',
+      content: 'Choose the next Tiny Steps speaking guide by the actual gap',
+    },
+    {
+      type: 'li',
+      content:
+        '[My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak) — for understanding-versus-independent-speaking diagnosis.',
+    },
+    {
+      type: 'li',
+      content:
+        '[My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers) — for expanding short independent responses.',
+    },
+    {
+      type: 'li',
+      content:
+        '[How to Structure a Speech for Kids](/blog/speaking-structure) — for organising a planned talk into a clear beginning, body and ending.',
+    },
+    {
+      type: 'li',
+      content:
+        '[How Video Feedback Helps Kids Improve Public Speaking](/blog/speaking-video-feedback) — for focused self-review once recording is appropriate and comfortable.',
+    },
+    {
+      type: 'li',
+      content:
+        '[Story Cards for Kids](/blog/grammar-speaking-bridge) — for playful grammar, connected speaking and retelling practice.',
+    },
+    {
+      type: 'p',
+      content:
+        'For the structured Tiny Steps pathway, see the [Speaking Programme](/speaking), [Curriculum](/curriculum), or [Book a Demo](/book-demo) when you want an individual starting-point assessment.',
+    },
+
+    {
+      type: 'h2',
+      content: 'Evidence and sources reviewed',
+    },
+    {
+      type: 'p',
+      content:
+        'The [Education Endowment Foundation oral language interventions review](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/oral-language-interventions) describes oral-language approaches built around spoken interaction, scaffolding, modelling, purposeful dialogue and feedback. It also cautions that formal public-speaking skills are not the explicit focus of that evidence base, so this article does not present one confidence game or seven-day routine as a proven universal intervention.',
+    },
+    {
+      type: 'p',
+      content:
+        'The [England English programmes of study](https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study) emphasise developing confidence and competence in spoken language, articulating and justifying ideas, participating in discussion, speaking audibly and fluently, and adapting communication to different audiences and purposes.',
+    },
+    {
+      type: 'p',
+      content:
+        'ASHA’s [Selective Mutism practice portal](https://www.asha.org/practice-portal/clinical-topics/selective-mutism/) explains that speaking difficulty can vary substantially by setting and may involve anxiety-related communication demands. This supports the caution not to treat persistent setting-specific silence as simple unwillingness or as a problem that generic confidence drills can diagnose.',
+    },
+    {
+      type: 'p',
+      content:
+        'ASHA’s [Spoken Language Disorders practice portal](https://www.asha.org/practice-portal/clinical-topics/spoken-language-disorders/) states that multilingualism is not a cause of speech or language disorders and notes that language competence can vary across languages and domains. The activity sequence in this article is a Tiny Steps teaching scaffold, not a clinical assessment or treatment protocol.',
     },
   ],
   faq: [
     {
-      question: 'How can I help my child speak more confidently at home?',
+      question: 'How can I build speaking confidence in my child?',
       answer:
-        'Use short familiar prompts, allow thinking time, model only when needed, ask one follow-up question, and praise the attempt before correcting one small detail.',
+        'Use short, manageable speaking opportunities in which the child plans an idea, starts independently, adds one useful detail and gradually uses the same skill with different listeners or topics. Track reduced prompting and better transfer rather than demanding an instant performance.',
     },
     {
-      question: 'Should I correct every grammar mistake while my child is speaking?',
+      question: 'Can a child become confident in speaking in seven days?',
       answer:
-        'No. Let the child finish the idea first. Then choose one useful correction and ask for a calm retry so communication is not repeatedly interrupted.',
+        'Seven days can start a useful practice routine, but it is not a reliable deadline for confidence. Children differ in language level, temperament, setting demands and support needs. Look for small observable improvements and continue the relevant steps as needed.',
+    },
+    {
+      question: 'What should I do if my child understands English but does not speak in class?',
+      answer:
+        'Do not assume the cause is simply shyness. Compare comprehension, modelled responses, prompted responses, independent responses and performance across settings. Persistent setting-specific silence may need discussion with the school and an appropriately qualified professional.',
+    },
+    {
+      question: 'Should I correct grammar while my child is practising speaking confidence?',
+      answer:
+        'Let the child finish the idea first when confidence and communication are the main goals. Afterwards, choose one correction that matters for clarity or the current target rather than interrupting every error.',
     },
     {
       question: 'What if my child gives only one-word answers?',
       answer:
-        'Start with a sentence frame such as “I like ___ because ___” and ask one gentle follow-up. Reduce the support gradually as the child begins to form complete answers independently.',
+        'If the child answers independently but stays brief, response expansion is the main target. Move from a complete sentence to one detail, reason, example or sequence and gradually reduce sentence starters.',
     },
     {
-      question: 'Are public speaking classes only for speeches and competitions?',
+      question: 'Are eye contact and a loud voice required for speaking confidence?',
       answer:
-        'No. Early goals can include everyday communication, complete answers, picture talk, storytelling, question responses, clarity, and confidence speaking with another person.',
+        'No. The message should be understandable and appropriate for the situation, but confidence is not measured by constant eye contact or maximum volume. Pace, pausing, listener awareness and suitable volume can be taught as flexible communication tools.',
     },
     {
-      question: 'How do I know speaking confidence is improving?',
+      question: 'Does speaking more than one language cause a confidence or language problem?',
       answer:
-        'Look for longer answers, easier starts, clearer voice, less avoidance, better recovery after mistakes, and transfer into new people or settings rather than a fixed number of completed lessons.',
+        'No. Multilingualism itself does not cause a speech or language disorder. A child may be more fluent or expressive in one language or topic than another, so compare communication across the languages and situations the child actually uses.',
     },
     {
-      question: 'When should parents seek professional help instead of only speaking practice?',
+      question: 'When should speaking difficulty be discussed with a professional?',
       answer:
-        'If communication difficulty, persistent silence, or distress is significant and affects everyday participation, involve the child’s school and an appropriately qualified professional for individual guidance.',
+        'Seek individual guidance when speaking or language difficulty is persistent, causes significant distress, interferes with school or daily participation, appears across languages or settings, or when a child consistently speaks in some situations but cannot speak in others. A confidence routine cannot diagnose the cause.',
     },
   ],
 };

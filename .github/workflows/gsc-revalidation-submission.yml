@@ -33,11 +33,11 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Certify historical GSC decisions
-        run: node scripts/audit-gsc-crawled-not-indexed.mjs
-
       - name: Build and prerender public pages
         run: npm run build
+
+      - name: Certify historical GSC decisions
+        run: node scripts/audit-gsc-crawled-not-indexed.mjs
 
       - name: Certify Brick 5 content quality
         run: node scripts/gsc-content-quality-guard.mjs
