@@ -43,6 +43,7 @@ const indexableRenamedSlugs = new Set([
   'speaking-structure',
   'speaking-visual-aids',
   'speaking-debate-starters',
+  'speaking-video-feedback',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
