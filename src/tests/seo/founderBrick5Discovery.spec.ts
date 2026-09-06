@@ -78,10 +78,8 @@ describe('Founder Brick 5 discovery, indexing and internal authority', () => {
     expect(sitemapPage).toContain('Founder — Vannala Ravali Priya');
   });
 
-  it('keeps Brick 5 discovery contracts independent from later identity corroboration', () => {
+  it('keeps Brick 5 focused on first-party discovery without adding personal sameAs', () => {
     const founderPage = read('src/pages/FounderPriyaPage.tsx');
-    expect(founderPage).toContain('FOUNDER_PROFILE_PATH');
-    expect(founderPage).toContain('FOUNDER_PROFILE_URL');
-    expect(founderPage).toContain("'@type': 'ProfilePage'");
+    expect(founderPage).not.toContain('sameAs');
   });
 });

@@ -6,7 +6,6 @@ import {
   FOUNDER_ID,
   FOUNDER_PROFILE_PATH,
   FOUNDER_PROFILE_URL,
-  FOUNDER_SAME_AS,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
   SITE_ORIGIN,
@@ -72,7 +71,6 @@ export default function TeamPage() {
           description:
             'Founder of Tiny Steps Learning, leading academic direction across curriculum, lesson design, teacher guidance, teaching quality and parent communication.',
           knowsAbout: ['Phonics', 'Reading', 'Grammar', 'Writing', 'Sentence Formation', 'Public Speaking'],
-          sameAs: [...FOUNDER_SAME_AS],
         },
         {
           '@context': 'https://schema.org',
