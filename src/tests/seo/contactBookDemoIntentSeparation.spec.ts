@@ -19,6 +19,7 @@ describe('Contact and book-demo intent separation', () => {
     expect(contact).toContain('School Partnerships');
     expect(contact).toContain('Contact & Support FAQs');
     expect(contact).toContain('to="/book-demo"');
+    expect(contact).toContain('data-no-booking-intercept="1"');
 
     expect(contact).not.toContain('PublicAssessmentForm');
     expect(contact).not.toContain('BookAssessmentForm');
