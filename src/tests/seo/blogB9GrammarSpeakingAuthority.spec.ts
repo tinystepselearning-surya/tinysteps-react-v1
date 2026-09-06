@@ -34,8 +34,11 @@ const QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS = [
 
 const NOINDEX_GRAMMAR_SUPPORT_SLUGS = [] as const;
 
-const SPEAKING_SUPPORT_SLUGS = [
+const QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS = [
   'speaking-structure',
+] as const;
+
+const NOINDEX_SPEAKING_SUPPORT_SLUGS = [
   'speaking-visual-aids',
   'speaking-debate-starters',
   'speaking-video-feedback',
@@ -88,7 +91,11 @@ describe('B9 grammar and speaking authority guardrails', () => {
       expect(shouldNoindexBlogSlug(slug), `${slug} completed the quality promotion gate`).toBe(false);
     }
 
-    for (const slug of [...NOINDEX_GRAMMAR_SUPPORT_SLUGS, ...SPEAKING_SUPPORT_SLUGS]) {
+    for (const slug of QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS) {
+      expect(shouldNoindexBlogSlug(slug), `${slug} completed the quality promotion gate`).toBe(false);
+    }
+
+    for (const slug of [...NOINDEX_GRAMMAR_SUPPORT_SLUGS, ...NOINDEX_SPEAKING_SUPPORT_SLUGS]) {
       expect(shouldNoindexBlogSlug(slug), `${slug} should remain a support page until audited`).toBe(true);
     }
   });
