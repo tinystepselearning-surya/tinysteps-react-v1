@@ -32,12 +32,21 @@ describe('admin attendance correction teacher payment handling', () => {
     expect(functionsIndexSource).toContain('onTeacherPayWithholdingSync');
   });
 
-  it('prepares a bounded decision before the existing attendance correction and cancels it on failure', () => {
+  it('prepares a bounded decision before the Present attendance correction and cancels it on failure', () => {
     expect(workflowSource).toContain("prepareAdminAttendanceCorrectionTeacherPayDecision");
     expect(workflowSource).toContain("adminAttendanceCorrection");
     expect(workflowSource).toContain("cancelAdminAttendanceCorrectionTeacherPayDecision");
-    expect(workflowSource.indexOf("prepareAdminAttendanceCorrectionTeacherPayDecision"))
-      .toBeLessThan(workflowSource.indexOf("adminAttendanceCorrection"));
+
+    const prepareCallIndex = workflowSource.indexOf('const prepared = await prepareFn(');
+    const presentCorrectionCallIndex = workflowSource.indexOf(
+      'const result = await correctionFn(',
+      prepareCallIndex + 1,
+    );
+    const cancelCallIndex = workflowSource.indexOf('await cancelFn(', presentCorrectionCallIndex + 1);
+
+    expect(prepareCallIndex).toBeGreaterThanOrEqual(0);
+    expect(presentCorrectionCallIndex).toBeGreaterThan(prepareCallIndex);
+    expect(cancelCallIndex).toBeGreaterThan(presentCorrectionCallIndex);
   });
 
   it('requires a conscious teacher-pay choice on both Present correction surfaces', () => {
