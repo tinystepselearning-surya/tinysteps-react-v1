@@ -36,10 +36,10 @@ const NOINDEX_GRAMMAR_SUPPORT_SLUGS = [] as const;
 
 const QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS = [
   'speaking-structure',
+  'speaking-visual-aids',
 ] as const;
 
 const NOINDEX_SPEAKING_SUPPORT_SLUGS = [
-  'speaking-visual-aids',
   'speaking-debate-starters',
   'speaking-video-feedback',
   'speaking-competition-prep',
