@@ -28,7 +28,7 @@ export const PUBLIC_SITE_FACTS = {
   },
   liveSessions: {
     minimumMinutes: 35,
-    maximumMinutes: 40,
+    maximumMinutes: 35,
     label: SCHEMA_PUBLIC_FACTS.sessionDuration,
   },
   deliveryModel: SCHEMA_PUBLIC_FACTS.deliveryModel,
