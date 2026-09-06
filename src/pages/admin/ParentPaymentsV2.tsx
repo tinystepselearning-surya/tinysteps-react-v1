@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   collection,
   collectionGroup,
@@ -67,6 +67,7 @@ import {
 
 const PAGE_SIZE = 10;
 const EPSILON = 0.01;
+const AUTO_REFRESH_COOLDOWN_MS = 30_000;
 
 type ParentPaymentsV2Props = {
   onOpenMaintenance?: () => void;
@@ -269,6 +270,8 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const lastAutoRefreshAtRef = useRef(Date.now());
 
   const [usersById, setUsersById] = useState<Record<string, ParentUser>>({});
   const [charges, setCharges] = useState<Array<Record<string, unknown> & { id: string }>>([]);
@@ -316,6 +319,42 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     () => (selectedSearchParent ? [selectedSearchParent.id] : pageIds),
     [pageIds, selectedSearchParent],
   );
+
+  const refreshPayments = useCallback(async (source: 'manual' | 'focus' = 'manual') => {
+    if (loading || refreshing) return;
+    if (source === 'focus') {
+      const now = Date.now();
+      if (now - lastAutoRefreshAtRef.current < AUTO_REFRESH_COOLDOWN_MS) return;
+      lastAutoRefreshAtRef.current = now;
+    }
+
+    setRefreshing(true);
+    setError('');
+    try {
+      if (!selectedSearchParent) {
+        const startCursor = pageStartCursors[pageNumber - 1] || null;
+        const page = await fetchMonthPage(selectedMonth, startCursor);
+        setPageIds(page.ids);
+        setPageCursor(page.endCursor);
+        setHasMore(page.hasMore);
+      }
+      setRefreshKey((value) => value + 1);
+    } catch (err) {
+      console.error('[ParentPaymentsV2] Failed to refresh payment data', err);
+      setError('Unable to refresh parent payments right now.');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loading, pageNumber, pageStartCursors, refreshing, selectedMonth, selectedSearchParent]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (document.visibilityState === 'hidden') return;
+      void refreshPayments('focus');
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [refreshPayments]);
 
   useEffect(() => {
     let active = true;
@@ -861,6 +900,14 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
               className="h-9 w-[170px] bg-white"
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void refreshPayments('manual')}
+            disabled={loading || refreshing}
+          >
+            {refreshing ? 'Refreshing…' : 'Refresh'}
+          </Button>
           {onOpenMaintenance ? (
             <Button variant="outline" size="sm" onClick={onOpenMaintenance}>
               Financial tools
