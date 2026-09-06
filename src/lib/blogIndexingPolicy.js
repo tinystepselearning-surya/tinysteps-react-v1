@@ -50,6 +50,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'speaking-visual-aids',
   'speaking-debate-starters',
   'speaking-video-feedback',
+  'speaking-competition-prep',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
