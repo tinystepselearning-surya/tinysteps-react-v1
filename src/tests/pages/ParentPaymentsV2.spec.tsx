@@ -262,6 +262,35 @@ describe('ParentPaymentsV2', () => {
     expect(screen.getByPlaceholderText('Search name, email, phone, or ID')).toBeTruthy();
   });
 
+  it('refreshes the month page, summary and visible payment scope without reopening the screen', async () => {
+    render(<ParentPaymentsV2 />);
+
+    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
+    const monthPageCallsBefore = getDocsMock.mock.calls.filter(([input]) =>
+      input?.kind === 'query' &&
+      input.args[0]?.kind === 'collectionGroup' &&
+      input.args[0]?.args?.[1] === 'months' &&
+      hasLimit(input, 11)
+    ).length;
+    const aggregateCallsBefore = getAggregateFromServerMock.mock.calls.length;
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+
+    await waitFor(() => {
+      const monthPageCallsAfter = getDocsMock.mock.calls.filter(([input]) =>
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'months' &&
+        hasLimit(input, 11)
+      ).length;
+      expect(monthPageCallsAfter).toBe(monthPageCallsBefore + 1);
+      expect(getAggregateFromServerMock.mock.calls.length).toBe(aggregateCallsBefore + 4);
+    });
+
+    expect(screen.getByText('Parent One')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeTruthy();
+  });
+
   it('shows collection status wording instead of the internal current-period status', async () => {
     getDocMock.mockResolvedValue({
       exists: () => true,
