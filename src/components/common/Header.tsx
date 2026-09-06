@@ -81,6 +81,11 @@ export default function Header() {
   }, [navigate]);
 
   const handleBookAssessment = useCallback(() => {
+    if (location.pathname === '/contact') {
+      navigate('/book-demo');
+      return;
+    }
+
     if (location.pathname === '/book-demo') {
       const assessmentForm = document.getElementById('assessment-form');
       if (assessmentForm) {
@@ -175,6 +180,7 @@ export default function Header() {
           <button
             type="button"
             onClick={handlePrimaryAction}
+            data-no-booking-intercept={location.pathname === '/contact' ? '1' : undefined}
             className={`inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition ${
               isCareersPage
                 ? 'border-blue-700 bg-gradient-to-r from-blue-700 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-500'
@@ -226,6 +232,7 @@ export default function Header() {
           <button
             type="button"
             onClick={handlePrimaryAction}
+            data-no-booking-intercept={location.pathname === '/contact' ? '1' : undefined}
             className={`rounded-full border px-3.5 py-2 text-xs font-semibold max-[380px]:px-3 max-[380px]:text-[11px] ${
               isCareersPage
                 ? 'border-blue-700 bg-gradient-to-r from-blue-700 to-cyan-600 text-white'
