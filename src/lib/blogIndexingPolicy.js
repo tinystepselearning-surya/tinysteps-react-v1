@@ -39,6 +39,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'phonics-tricky-words',
   'back-to-school-english-confidence-plan',
   'screen-smart-summer-routine-for-kids',
+  'grammar-tenses',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
