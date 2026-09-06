@@ -5,6 +5,10 @@ export const TEACHER_PAY_RATE_SNAPSHOT_FIELD = 'teacherPayRateSnapshot';
 export const FINANCIAL_TERMS_VERSION_FIELD = 'financialTermsSnapshotVersion';
 export const FINANCIAL_TERMS_CURRENCY_FIELD = 'financialTermsCurrency';
 
+export type TeacherPayDisposition = 'credit_teacher' | 'retain_school';
+
+const ADMIN_ATTENDANCE_CORRECTION_SOURCE = 'admin-attendance-correction';
+
 function finitePositive(value: unknown): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -21,6 +25,29 @@ function firstPositive(values: unknown[]): number {
     if (parsed != null) return parsed;
   }
   return 0;
+}
+
+export function normalizeTeacherPayDisposition(value: unknown): TeacherPayDisposition | null {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'credit_teacher') return 'credit_teacher';
+  if (raw === 'retain_school') return 'retain_school';
+  return null;
+}
+
+export function isRetainSchoolTeacherPayDecisionActive(
+  session: Record<string, unknown> | null | undefined,
+  nowMs = Date.now(),
+): boolean {
+  if (!session) return false;
+  if (normalizeTeacherPayDisposition(session.teacherPayDisposition) !== 'retain_school') return false;
+  if (String(session.teacherPayDecisionSource || '').trim() !== ADMIN_ATTENDANCE_CORRECTION_SOURCE) return false;
+
+  const status = String(session.teacherPayDecisionStatus || '').trim().toLowerCase();
+  if (status === 'applied') return true;
+  if (status !== 'pending') return false;
+
+  const validUntilMs = Number(session.teacherPayDecisionValidUntilMs);
+  return Number.isFinite(validUntilMs) && validUntilMs >= nowMs;
 }
 
 export function resolveSessionBillingRate(
@@ -45,7 +72,7 @@ export function resolveSessionBillingRate(
   ]);
 }
 
-export function resolveSessionTeacherPayRate(
+export function resolveSessionTeacherPayNormalRate(
   session: Record<string, unknown> | null | undefined,
   enrollment: Record<string, unknown> | null | undefined,
 ): number {
@@ -75,6 +102,14 @@ export function resolveSessionTeacherPayRate(
     enrollment?.rateTeacher,
     enrollment?.payoutRate,
   ]);
+}
+
+export function resolveSessionTeacherPayRate(
+  session: Record<string, unknown> | null | undefined,
+  enrollment: Record<string, unknown> | null | undefined,
+): number {
+  const normalRate = resolveSessionTeacherPayNormalRate(session, enrollment);
+  return isRetainSchoolTeacherPayDecisionActive(session) ? 0 : normalRate;
 }
 
 export function resolveSessionFinancialCurrency(
@@ -114,7 +149,9 @@ export function buildSessionFinancialTermsSnapshot(
   const billingRateSnapshot = resolveSessionBillingRate(session, enrollment);
   if (!(billingRateSnapshot > 0)) return null;
 
-  const teacherPayRateSnapshot = resolveSessionTeacherPayRate(session, enrollment);
+  // Snapshot the normal contractual teacher rate, not the correction-time payout decision.
+  // Brick 2 may reduce the credited amount to zero while keeping this immutable rate evidence.
+  const teacherPayRateSnapshot = resolveSessionTeacherPayNormalRate(session, enrollment);
   const financialTermsCurrency = resolveSessionFinancialCurrency(session, enrollment);
 
   return {

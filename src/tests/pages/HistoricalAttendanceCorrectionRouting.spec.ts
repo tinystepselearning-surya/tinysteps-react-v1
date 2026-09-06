@@ -10,6 +10,10 @@ const parentSource = readFileSync(
   join(process.cwd(), 'src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx'),
   'utf8',
 );
+const teacherPayWorkflowSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/attendanceCorrectionTeacherPay.ts'),
+  'utf8',
+);
 const functionsIndexSource = readFileSync(join(process.cwd(), 'functions/src/index.ts'), 'utf8');
 const callableSource = readFileSync(
   join(process.cwd(), 'functions/src/createAdminHistoricalAttendanceSession.ts'),
@@ -37,7 +41,8 @@ describe('historical attendance correction routing', () => {
     expect(candidatesSource).toContain("enrollmentRef.collection('teacherReassignments').get()");
     expect(candidatesSource).toContain("where('previousTeacherId', '==', identity)");
     expect(panelSource).toContain("(functions, 'createAdminHistoricalAttendanceSession')");
-    expect(panelSource).toContain("(functions, 'adminAttendanceCorrection')");
+    expect(panelSource).toContain('saveAdminAttendanceCorrectionWithTeacherPayDecision');
+    expect(teacherPayWorkflowSource).toContain("(functions, 'adminAttendanceCorrection')");
     expect(functionsIndexSource).toContain(
       'export { createAdminHistoricalAttendanceSession } from "./createAdminHistoricalAttendanceSession";',
     );

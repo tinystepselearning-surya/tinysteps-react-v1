@@ -11,6 +11,13 @@ import {
   createMissingSessionAndSaveAttendance,
   toIstDateLabel,
 } from './attendanceCorrectionWorkflow';
+import {
+  saveAdminAttendanceCorrectionWithTeacherPayDecision,
+  validateAttendanceCorrectionTeacherPay,
+  type AttendanceCorrectionTeacherPayDisposition,
+  type AttendanceCorrectionTeacherPayReasonCode,
+} from './attendanceCorrectionTeacherPay';
+import TeacherPayHandlingControl from './TeacherPayHandlingControl';
 
 type AttendanceStatus =
   | 'present'
@@ -92,10 +99,18 @@ export default function HistoricalAttendanceMissingSessionPanel() {
   const [startTime, setStartTime] = useState('18:00');
   const [durationMins, setDurationMins] = useState(35);
   const [status, setStatus] = useState<AttendanceStatus>('present');
+  const [teacherPayDisposition, setTeacherPayDisposition] = useState<AttendanceCorrectionTeacherPayDisposition>('');
+  const [teacherPayReasonCode, setTeacherPayReasonCode] = useState<AttendanceCorrectionTeacherPayReasonCode>('');
   const [reason, setReason] = useState('');
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (status === 'present') return;
+    setTeacherPayDisposition('');
+    setTeacherPayReasonCode('');
+  }, [status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,6 +253,15 @@ export default function HistoricalAttendanceMissingSessionPanel() {
       });
       return;
     }
+    const teacherPayError = validateAttendanceCorrectionTeacherPay({
+      newStatus: status,
+      teacherPayDisposition,
+      teacherPayReasonCode,
+    });
+    if (teacherPayError) {
+      toast({ title: 'Teacher payment decision required', description: teacherPayError, variant: 'destructive' });
+      return;
+    }
 
     saveInFlight.current = true;
     setSaving(true);
@@ -247,10 +271,6 @@ export default function HistoricalAttendanceMissingSessionPanel() {
         { enrollmentId: string; teacherId: string; date: string; startTime: string; durationMins: number; reason: string },
         { ok: boolean; sessionId: string; alreadyExisted?: boolean; historical?: boolean }
       >(functions, 'createAdminHistoricalAttendanceSession');
-      const correctionFn = httpsCallable<
-        { sessionId: string; kidId: string; newStatus: AttendanceStatus; reason: string },
-        { ok: boolean; correctionId?: string }
-      >(functions, 'adminAttendanceCorrection');
 
       const created = await createMissingSessionAndSaveAttendance({
         createSession: async () => {
@@ -264,13 +284,26 @@ export default function HistoricalAttendanceMissingSessionPanel() {
           });
           return response.data;
         },
-        saveAttendance: (sessionId) => correctionFn({ sessionId, kidId, newStatus: status, reason: trimmedReason }),
+        saveAttendance: (sessionId) => saveAdminAttendanceCorrectionWithTeacherPayDecision(functions, {
+          sessionId,
+          kidId,
+          newStatus: status,
+          reason: trimmedReason,
+          teacherPayDisposition,
+          teacherPayReasonCode,
+        }),
       });
       createdSessionId = created.sessionId;
       setReason('');
+      setTeacherPayDisposition('');
+      setTeacherPayReasonCode('');
       toast({
         title: created.alreadyExisted ? 'Historical session found & corrected' : 'Historical attendance created',
-        description: `${selectedEnrollment.courseLabel} • ${date} • ${status}. Previous course/teacher identity was preserved.`,
+        description: status === 'present'
+          ? teacherPayDisposition === 'retain_school'
+            ? `${selectedEnrollment.courseLabel} • ${date} • present. Teacher payment retained by school.`
+            : `${selectedEnrollment.courseLabel} • ${date} • present. Teacher payment credited normally.`
+          : `${selectedEnrollment.courseLabel} • ${date} • ${status}. Previous course/teacher identity was preserved.`,
       });
     } catch (error) {
       if (error instanceof AttendanceCorrectionAfterCreateError) createdSessionId = error.sessionId;
@@ -392,6 +425,15 @@ export default function HistoricalAttendanceMissingSessionPanel() {
             </select>
           </div>
         </div>
+
+        <TeacherPayHandlingControl
+          visible={status === 'present'}
+          disposition={teacherPayDisposition}
+          reasonCode={teacherPayReasonCode}
+          onDispositionChange={setTeacherPayDisposition}
+          onReasonCodeChange={setTeacherPayReasonCode}
+          disabled={saving}
+        />
 
         <div>
           <label className="mb-1 block text-xs font-medium text-slate-600">Reason (required)</label>
