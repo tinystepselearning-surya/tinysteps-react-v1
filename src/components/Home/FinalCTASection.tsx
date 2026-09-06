@@ -12,7 +12,7 @@ const FinalCTASection: React.FC = () => {
           <ul className="mx-auto mt-4 max-w-md space-y-2 text-left text-gray-700">
             <li className="flex items-start">
               <span className="mr-3 mt-1 text-primary-600">•</span>
-              <span>35–40 minute 1:1 session with a Tiny Steps mentor</span>
+              <span>35-minute 1:1 session with a Tiny Steps mentor</span>
             </li>
             <li className="flex items-start">
               <span className="mr-3 mt-1 text-primary-600">•</span>

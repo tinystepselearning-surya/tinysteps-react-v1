@@ -10,7 +10,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 const schema = z.object({
   parentName: z.string().min(2, 'Please enter your name'),
   childAge: z
-    .preprocess((v) => Number(v), z.number().min(3, 'Min age 3').max(15, 'Max age 15')),
+    .preprocess((v) => Number(v), z.number().min(3, 'Min age 3').max(12, 'Max age 12')),
   email: z.string().email('Enter a valid email'),
   phone: z.string().min(10, 'Enter 10-digit number'),
 });
@@ -75,7 +75,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         {errors.parentName && <p className="mt-1 text-xs text-red-600">{errors.parentName.message as any}</p>}
       </div>
       <div>
-        <input className="interactive-input" type="number" placeholder="Child age (3–15)" {...register('childAge')} />
+        <input className="interactive-input" type="number" placeholder="Child age (3–12)" {...register('childAge')} />
         {errors.childAge && <p className="mt-1 text-xs text-red-600">{errors.childAge.message as any}</p>}
       </div>
       <div>

@@ -23,6 +23,86 @@ function canonicalInternalBlogLinks() {
         transformed = transformed.split(source).join(destination);
       }
 
+      // P0 public-fact normalization: one authoritative audience and 1:1 duration
+      // across rendered SEO/AEO/GEO surfaces while source-level migrations complete.
+      if (id.includes('/src/lib/schemas.ts')) {
+        transformed = transformed
+          .replace("sessionDuration: '35–40 minutes per session'", "sessionDuration: '35 minutes'")
+          .replace(
+            'through ${PUBLIC_FACTS.deliveryModel} in ${PUBLIC_FACTS.sessionDuration}, serving',
+            'through ${PUBLIC_FACTS.deliveryModel}. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}, serving',
+          )
+          .replace(
+            'Classes are delivered online in ${PUBLIC_FACTS.sessionDuration}, with',
+            'Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}, with',
+          )
+          .replace(
+            'with ${PUBLIC_FACTS.sessionDuration} that balance',
+            'with standard 1:1 sessions of ${PUBLIC_FACTS.sessionDuration} that balance',
+          )
+          .replace(
+            'Classes run for ${PUBLIC_FACTS.sessionDuration} and serve',
+            'Standard 1:1 classes run for ${PUBLIC_FACTS.sessionDuration} and serve',
+          );
+      }
+
+      if (id.includes('/src/pages/HomePage.tsx')) {
+        transformed = transformed.replace(
+          'Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Each session is ${PUBLIC_FACTS.sessionDuration}.',
+          'Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer depending on group size.',
+        );
+      }
+
+      if (id.includes('/src/pages/CurriculumPage.tsx')) {
+        transformed = transformed.replace(
+          'Each live online class runs for ${PUBLIC_FACTS.sessionDuration}, with guided teaching, practice, and teacher feedback.',
+          'Standard 1:1 live online classes run for ${PUBLIC_FACTS.sessionDuration}, with guided teaching, practice, and teacher feedback. Small-group sessions are longer depending on group size.',
+        );
+      }
+
+      if (id.includes('/src/pages/public/OnlineEnglishClassesForKidsPage.tsx')) {
+        transformed = transformed.replace("stage: 'Ages 9 to 13'", "stage: 'Ages 9 to 12'");
+      }
+
+      if (id.includes('/src/content/courses.ts')) {
+        transformed = transformed
+          .replace("age: 'Ages 8–15'", "age: 'Ages 8–12'")
+          .replace("age: 'Ages 7–15'", "age: 'Ages 7–12'");
+      }
+
+      if (id.includes('/src/pages/ForSchoolsPage.tsx')) {
+        transformed = transformed.replace(
+          'For CBSE, ICSE, State Board & International Schools • Ages 3–10',
+          'For CBSE, ICSE, State Board & International Schools • Ages 3–12',
+        );
+      }
+
+      if (id.includes('/src/pages/WhyTinyStepsPage.tsx')) {
+        transformed = transformed.replace(
+          '35–40 minute live classes (1:1 or small group) with trained mentors using multisensory practice, gentle correction, and age-appropriate pacing.',
+          'Standard 1:1 live classes are 35 minutes. Small-group sessions are longer based on group size, with trained mentors using multisensory practice, gentle correction, and age-appropriate pacing.',
+        );
+      }
+
+      if (id.includes('/src/pages/public/PhonicsFeesIndiaPage.tsx')) {
+        transformed = transformed.replace(
+          'Tiny Steps charges ₹400 per live 1:1 class, or ₹4,800 for 12 classes. Classes are typically 35–40 minutes and placement begins with an assessment-first approach.',
+          'Tiny Steps charges ₹400 per live 1:1 class, or ₹4,800 for 12 classes. Standard 1:1 classes are 35 minutes, and placement begins with an assessment-first approach.',
+        );
+      }
+
+      if (id.includes('/src/pages/public/ReadingClassesForKidsPage.tsx')) {
+        transformed = transformed
+          .replace(
+            'Live classes are typically ${PUBLIC_SESSION_DURATION_LABEL}.',
+            'Standard 1:1 live classes are ${PUBLIC_SESSION_DURATION_LABEL}.',
+          )
+          .replace(
+            'Tiny Steps live classes are typically {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is',
+            'Tiny Steps standard 1:1 live classes are {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is',
+          );
+      }
+
       if (id.includes('/src/lib/testimonials.ts')) {
         transformed = transformed
           .replace(
@@ -49,8 +129,6 @@ function canonicalInternalBlogLinks() {
 
       if (id.includes('/src/pages/phonics.tsx')) {
         transformed = transformed
-          .replaceAll("label: 'Ages 3–12'", "label: 'Primary pathway: ages 3–10'")
-          .replaceAll('ageRange="Ages 3–12"', 'ageRange="Primary pathway: ages 3–10"')
           .replace(
             'Many children show early blending progress in about 4–6 guided lessons. Timelines vary by starting level, attendance consistency, and home reinforcement. Progress is usually step-by-step rather than instant.',
             PHONICS_PAGE_PROGRESS_FAQ_COPY,
@@ -67,7 +145,7 @@ function canonicalInternalBlogLinks() {
             "{ value: '30–40', label: 'Lessons to cover core phonics foundations' },",
             "{ value: 'Individual pace', label: 'Foundation coverage depends on starting level, retention, and transfer' },",
           )
-          .replace('duration="35–40 minutes, 2–3x per week"', 'duration="35–40 minutes per session"')
+          .replace('duration="35–40 minutes, 2–3x per week"', 'duration="35 minutes per 1:1 class"')
           .replace('structure="3 levels, 36+ lessons with stage-based progression"', 'structure="3 levels with stage-based progression"');
       }
 
