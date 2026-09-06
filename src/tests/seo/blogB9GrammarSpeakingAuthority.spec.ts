@@ -27,10 +27,10 @@ const QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS = [
   'grammar-conjunctions',
   'grammar-subject-verb',
   'grammar-creative-writing',
+  'grammar-assessment',
 ] as const;
 
 const NOINDEX_GRAMMAR_SUPPORT_SLUGS = [
-  'grammar-assessment',
   'grammar-editing-camp',
   'grammar-speaking-bridge',
 ] as const;
