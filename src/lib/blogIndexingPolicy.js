@@ -41,6 +41,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'screen-smart-summer-routine-for-kids',
   'grammar-tenses',
   'grammar-conjunctions',
+  'grammar-subject-verb',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
