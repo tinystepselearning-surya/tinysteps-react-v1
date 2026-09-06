@@ -90,6 +90,7 @@ describe('teacher pay withholding ledger', () => {
         teacherPayDecisionReason: 'Correction reason',
         teacherPayDecisionCorrectionId: 'correction-1',
         teacherPayDecisionByUid: 'admin-1',
+        teacherPayDecisionAt: '2026-09-06T10:00:00.000Z',
       },
       earning: { teacherId: 'teacher-1', monthKey: '2026-09' },
     });
@@ -113,7 +114,13 @@ describe('teacher pay withholding ledger', () => {
       earningId: 'session-1',
       decisionId: 'decision-1',
       normalRate: 175,
-      session: { teacherId: 'teacher-1' },
+      session: {
+        teacherId: 'teacher-1',
+        teacherPayDecisionReasonCode: 'attendance_not_updated',
+        teacherPayDecisionReason: 'Correction reason',
+        teacherPayDecisionCorrectionId: 'correction-1',
+        teacherPayDecisionByUid: 'admin-1',
+      },
       earning: { teacherId: 'teacher-1', monthKey: '2026-09' },
     })).toBeNull();
 
@@ -127,7 +134,7 @@ describe('teacher pay withholding ledger', () => {
     })).toBeNull();
   });
 
-  it('accepts exact retries but rejects a conflicting decision, audit link, or amount', () => {
+  it('accepts exact retries but rejects conflicting financial or audit identity', () => {
     const record = buildTeacherPayWithholdingLedgerRecord({
       sessionId: 'session-1',
       earningId: 'session-1',
@@ -142,5 +149,8 @@ describe('teacher pay withholding ledger', () => {
     expect(teacherPayWithholdingLedgerMatches({ ...record, teacherPayDecisionId: 'decision-2' }, record!)).toBe(false);
     expect(teacherPayWithholdingLedgerMatches({ ...record, attendanceCorrectionId: 'correction-2' }, record!)).toBe(false);
     expect(teacherPayWithholdingLedgerMatches({ ...record, schoolRetainedAmount: 150 }, record!)).toBe(false);
+    expect(teacherPayWithholdingLedgerMatches({ ...record, parentId: 'parent-2' }, record!)).toBe(false);
+    expect(teacherPayWithholdingLedgerMatches({ ...record, reason: 'Different reason' }, record!)).toBe(false);
+    expect(teacherPayWithholdingLedgerMatches({ ...record, currency: 'USD' }, record!)).toBe(false);
   });
 });
