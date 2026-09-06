@@ -49,8 +49,6 @@ function canonicalInternalBlogLinks() {
 
       if (id.includes('/src/pages/phonics.tsx')) {
         transformed = transformed
-          .replaceAll("label: 'Ages 3–12'", "label: 'Primary pathway: ages 3–10'")
-          .replaceAll('ageRange="Ages 3–12"', 'ageRange="Primary pathway: ages 3–10"')
           .replace(
             'Many children show early blending progress in about 4–6 guided lessons. Timelines vary by starting level, attendance consistency, and home reinforcement. Progress is usually step-by-step rather than instant.',
             PHONICS_PAGE_PROGRESS_FAQ_COPY,
@@ -67,7 +65,6 @@ function canonicalInternalBlogLinks() {
             "{ value: '30–40', label: 'Lessons to cover core phonics foundations' },",
             "{ value: 'Individual pace', label: 'Foundation coverage depends on starting level, retention, and transfer' },",
           )
-          .replace('duration="35–40 minutes, 2–3x per week"', 'duration="35–40 minutes per session"')
           .replace('structure="3 levels, 36+ lessons with stage-based progression"', 'structure="3 levels with stage-based progression"');
       }
 
