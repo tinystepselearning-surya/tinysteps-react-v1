@@ -44,11 +44,14 @@ type PublicAssessmentFormProps = {
   description?: string;
   submitLabel?: string;
   submitAriaLabel?: string;
+  appearance?: 'default' | 'embedded';
+  helperText?: string;
+  secondaryHelperText?: string | null;
 };
 
 const GlassCard = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
   <div
-    className={`relative overflow-hidden rounded-[24px] border border-slate-200/90 bg-white/95 backdrop-blur-xl shadow-[0_24px_70px_rgba(15,23,42,0.18)] ${className}`}
+    className={`relative overflow-hidden rounded-[24px] border border-slate-200/90 bg-white/95 backdrop-blur-xl ${className}`}
   >
     {children}
   </div>
@@ -62,6 +65,9 @@ export default function PublicAssessmentForm({
   description = 'Share a few details and we will confirm available slots on WhatsApp.',
   submitLabel = 'Book Free 35-Minute Demo on WhatsApp',
   submitAriaLabel = 'Book Free 35-Minute Demo on WhatsApp',
+  appearance = 'default',
+  helperText = 'Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp',
+  secondaryHelperText = 'After you submit, we will reply on WhatsApp with the recommended starting path, available slots, and pricing clarity.',
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const mainConcernOptions = PUBLIC_MAIN_CONCERN_OPTIONS;
@@ -371,8 +377,12 @@ export default function PublicAssessmentForm({
     }
   };
 
+  const cardClassName = appearance === 'embedded'
+    ? 'border-white/90 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:p-7'
+    : 'border-slate-200 p-5 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8';
+
   return (
-    <GlassCard className="border-slate-200 p-5 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8">
+    <GlassCard className={cardClassName}>
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
       <div className="relative mb-6 sm:mb-7">
@@ -527,10 +537,10 @@ export default function PublicAssessmentForm({
         </button>
 
         <div className="space-y-1 text-center">
-          <p className={`text-xs ${NAVY_TEXT}`}>Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
-          <p className="text-xs text-slate-600">
-            After you submit, we will reply on WhatsApp with the recommended starting path, available slots, and pricing clarity.
-          </p>
+          <p className={`text-xs ${NAVY_TEXT}`}>{helperText}</p>
+          {secondaryHelperText ? (
+            <p className="text-xs text-slate-600">{secondaryHelperText}</p>
+          ) : null}
         </div>
 
         {submitError ? (
