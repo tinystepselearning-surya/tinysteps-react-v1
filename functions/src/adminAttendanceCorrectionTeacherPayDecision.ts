@@ -33,6 +33,20 @@ function normalizeRole(value: unknown): string {
   return raw === 'learningpartner' ? 'learning-partner' : raw;
 }
 
+function normalizeStatus(value: unknown): string {
+  return clean(value, 80).toLowerCase();
+}
+
+function nonNegativeMoney(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function isPaidOrPartiallyPaidEarning(data: Record<string, unknown>): boolean {
+  const status = normalizeStatus(data.status);
+  return status === 'paid' || status === 'settled' || nonNegativeMoney(data.paidAmount) > 0;
+}
+
 async function assertAdmin(auth: { uid?: string; token?: Record<string, unknown> } | undefined): Promise<string> {
   const uid = clean(auth?.uid, 160);
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
@@ -121,6 +135,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
     const identity = await resolveAdminIdentity(uid, tokenEmail);
     const nowMs = Date.now();
     const validUntilMs = nowMs + DECISION_VALID_FOR_MS;
+    let financialHandlingMode: 'direct_accrual' | 'settled_adjustment' = 'direct_accrual';
 
     await db.runTransaction(async (tx) => {
       const [sessionSnap, earningSnap, chargeSnap] = await Promise.all([
@@ -136,12 +151,18 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
         throw new HttpsError('invalid-argument', 'Selected student is not assigned to this session.');
       }
 
-      if (session.revenueAccrued === true || earningSnap.exists || chargeSnap.exists) {
+      const earning = (earningSnap.data() || {}) as Record<string, unknown>;
+      const hasExistingFinancialLedger = session.revenueAccrued === true || earningSnap.exists || chargeSnap.exists;
+      const settledOrPartiallyPaid = earningSnap.exists && isPaidOrPartiallyPaidEarning(earning);
+
+      if (hasExistingFinancialLedger && !settledOrPartiallyPaid) {
         throw new HttpsError(
           'failed-precondition',
-          'Teacher payment handling cannot be changed after a financial ledger already exists. Use the financial adjustment workflow.',
+          'Teacher payment handling cannot be changed after an unsettled financial ledger already exists. Use explicit financial reconciliation.',
         );
       }
+
+      financialHandlingMode = settledOrPartiallyPaid ? 'settled_adjustment' : 'direct_accrual';
 
       const attendance =
         session.attendance && typeof session.attendance === 'object' && !Array.isArray(session.attendance)
@@ -160,6 +181,15 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
         reason,
         status: 'pending',
         source: SOURCE,
+        financialHandlingMode,
+        ...(settledOrPartiallyPaid
+          ? {
+              originalTeacherEarningId: earningRef.id,
+              originalTeacherEarningAmount: nonNegativeMoney(earning.amount),
+              originalTeacherPaidAmount: nonNegativeMoney(earning.paidAmount),
+              originalTeacherEarningStatus: normalizeStatus(earning.status),
+            }
+          : {}),
         decidedByUid: uid,
         decidedByName: identity.name,
         decidedByEmail: identity.email,
@@ -175,6 +205,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
           teacherPayDecisionKidId: kidId,
           teacherPayDecisionSource: SOURCE,
           teacherPayDecisionStatus: 'pending',
+          teacherPayDecisionFinancialHandlingMode: financialHandlingMode,
           teacherPayDecisionReasonCode: disposition === 'credit_teacher' ? 'normal_correction' : reasonCode,
           teacherPayDecisionReason: reason,
           teacherPayDecisionByUid: uid,
@@ -194,6 +225,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
       kidId,
       disposition,
       decisionId: decisionRef.id,
+      financialHandlingMode,
       decidedByUid: uid,
     });
 
@@ -201,6 +233,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
       ok: true,
       decisionId: decisionRef.id,
       teacherPayDisposition: disposition,
+      financialHandlingMode,
       validUntilMs,
     };
   },
@@ -302,10 +335,13 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      if (
+      const shouldWakeFinancialSync =
         earningSnap.exists &&
-        normalizeTeacherPayDisposition(session.teacherPayDisposition) === 'retain_school'
-      ) {
+        (
+          normalizeTeacherPayDisposition(session.teacherPayDisposition) === 'retain_school' ||
+          clean(session.teacherPayDecisionFinancialHandlingMode, 80) === 'settled_adjustment'
+        );
+      if (shouldWakeFinancialSync) {
         tx.set(earningRef, {
           teacherPayDecisionStatus: 'applied',
           attendanceCorrectionId: correctionId,

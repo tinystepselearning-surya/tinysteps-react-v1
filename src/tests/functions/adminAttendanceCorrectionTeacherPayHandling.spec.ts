@@ -68,9 +68,12 @@ describe('admin attendance correction teacher payment handling', () => {
     expect(withholdingSource).toContain('teacherPayRateSnapshot: normalRate');
   });
 
-  it('fails closed when a financial ledger already exists instead of rewriting paid history', () => {
-    expect(decisionSource).toContain('session.revenueAccrued === true || earningSnap.exists || chargeSnap.exists');
-    expect(decisionSource).toContain('Use the financial adjustment workflow');
+  it('fails closed for ambiguous unsettled ledgers while routing paid history to Brick 4 adjustments', () => {
+    expect(decisionSource).toContain('const hasExistingFinancialLedger =');
+    expect(decisionSource).toContain('const settledOrPartiallyPaid =');
+    expect(decisionSource).toContain('hasExistingFinancialLedger && !settledOrPartiallyPaid');
+    expect(decisionSource).toContain('Use explicit financial reconciliation.');
+    expect(decisionSource).toContain("'settled_adjustment' : 'direct_accrual'");
     expect(withholdingSource).toContain("teacherPayAdjustmentReason: 'earning_already_paid'");
     expect(withholdingSource).not.toContain("status: 'void'");
   });
