@@ -55,13 +55,14 @@ describe('Brick 4 teacher earning adjustment routing', () => {
   });
 
   it('allows paid or partially paid attendance corrections into adjustment mode but still blocks ambiguous unsettled ledgers', () => {
-    expect(teacherPayDecisionSource).toContain("financialHandlingMode: 'settled_adjustment'");
-    expect(teacherPayDecisionSource).toContain("'settled_adjustment' : 'direct_accrual'");
+    expect(teacherPayDecisionSource).toContain(
+      "financialHandlingMode = settledOrPartiallyPaid ? 'settled_adjustment' : 'direct_accrual';",
+    );
     expect(teacherPayDecisionSource).toContain('isPaidOrPartiallyPaidEarning(earning)');
     expect(teacherPayDecisionSource).toContain(
       'Teacher payment handling cannot be changed after an unsettled financial ledger already exists.',
     );
-    expect(teacherPayDecisionSource).toContain("teacherPayDecisionFinancialHandlingMode: financialHandlingMode");
+    expect(teacherPayDecisionSource).toContain('teacherPayDecisionFinancialHandlingMode: financialHandlingMode');
   });
 
   it('wakes the settled adjustment synchronizer after the authoritative attendance correction is linked', () => {
