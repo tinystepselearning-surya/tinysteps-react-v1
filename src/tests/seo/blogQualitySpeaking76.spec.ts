@@ -29,7 +29,9 @@ describe('Blog 76 family showcase quality gate', () => {
     expect(post?.modifiedDate).toBe('2026-09-06');
     expect(post?.audience).toBe('Parent');
     expect(post?.discoveryCategory).toBe('Speaking & Communication');
-    expect(post?.metaDescription.length).toBeLessThanOrEqual(160);
+    const metaDescription = post?.metaDescription ?? '';
+    expect(metaDescription).toBeTruthy();
+    expect(metaDescription.length).toBeLessThanOrEqual(160);
   });
 
   it('owns a choice-based family showcase process rather than a compulsory performance routine', () => {
