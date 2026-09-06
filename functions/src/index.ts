@@ -65,6 +65,8 @@ export {
 } from "./adminAttendanceCorrectionTeacherPayDecision";
 export { onTeacherPayWithholdingSync } from "./teacherPayWithholdingSync";
 export { getAdminTeacherPayWithholdings } from "./getAdminTeacherPayWithholdings";
+export { onTeacherEarningAdjustmentSync } from "./teacherEarningAdjustmentSync";
+export { getAdminTeacherEarningAdjustments } from "./getAdminTeacherEarningAdjustments";
 export { createAdminHistoricalAttendanceSession } from "./createAdminHistoricalAttendanceSession";
 export { getAdminHistoricalAttendanceCandidates } from "./getAdminHistoricalAttendanceCandidates";
 export {
