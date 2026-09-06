@@ -76,7 +76,7 @@ const ContactPage: FC = () => {
         <div className="pointer-events-none absolute left-[-90px] top-20 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
         <div className="pointer-events-none absolute right-[-90px] top-10 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-16 text-center sm:px-6 md:pb-16 md:pt-20 lg:px-8">
+        <div className="relative mx-auto max-w-6xl px-4 pb-12 pt-28 text-center sm:px-6 sm:pt-32 md:pb-16 lg:px-8 lg:pt-36">
           <p className="mx-auto inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
             Tiny Steps support
           </p>
