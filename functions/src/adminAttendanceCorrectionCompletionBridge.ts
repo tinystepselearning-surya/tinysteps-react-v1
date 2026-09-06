@@ -123,21 +123,11 @@ function resolveKidAttendanceStatus(session: Record<string, unknown>, kidId: str
   return '';
 }
 
-async function hasPendingRescheduleCredit(
-  db: admin.firestore.Firestore,
-  sessionId: string,
-): Promise<boolean> {
-  const snap = await db
-    .collection('rescheduleCredits')
-    .where('sourceSessionId', '==', sessionId)
-    .limit(50)
-    .get();
-
-  return snap.docs.some((docSnap) => {
-    const status = normalizeStatus(docSnap.data()?.status);
-    return status === 'open' || status === 'scheduled';
-  });
-}
+type CompletionBridgeOutcome = {
+  status: 'completed' | 'blocked' | 'stale' | 'not_required' | 'session_missing';
+  reason: string;
+  currentStatus?: string;
+};
 
 export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
   {
@@ -153,92 +143,136 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
     if (normalizeStatus(correction.newStatus) !== 'present') return;
 
     const sessionId = String(event.params.sessionId || '').trim();
+    const correctionId = String(event.params.correctionId || '').trim();
     const kidId = String(correction.kidId || '').trim();
-    if (!sessionId || !kidId) return;
+    if (!sessionId || !correctionId || !kidId) return;
 
     const db = admin.firestore();
     const sessionRef = db.collection('classSessions').doc(sessionId);
-    const sessionSnap = await sessionRef.get();
-    if (!sessionSnap.exists) return;
+    const pendingCreditsQuery = db
+      .collection('rescheduleCredits')
+      .where('sourceSessionId', '==', sessionId)
+      .limit(50);
 
-    const session = (sessionSnap.data() || {}) as Record<string, unknown>;
+    const outcome = await db.runTransaction<CompletionBridgeOutcome>(async (tx) => {
+      const currentSessionSnap = await tx.get(sessionRef);
+      if (!currentSessionSnap.exists) {
+        return { status: 'session_missing', reason: 'session_missing' };
+      }
 
-    // A later admin correction may have superseded this audit event before the
-    // trigger ran. Never complete unless the session currently still says Present.
-    if (resolveKidAttendanceStatus(session, kidId) !== 'present') {
-      logger.info('Attendance correction completion bridge skipped stale correction', {
-        sessionId,
-        kidId,
-        correctionId: event.params.correctionId,
+      const session = (currentSessionSnap.data() || {}) as Record<string, unknown>;
+
+      // The audit event may run after a newer admin correction. Re-check the
+      // authoritative session inside this transaction so a stale Present event
+      // can never complete a session that is now Absent/Cancelled/etc.
+      if (resolveKidAttendanceStatus(session, kidId) !== 'present') {
+        return {
+          status: 'stale',
+          reason: 'attendance_no_longer_present',
+          currentStatus: normalizeStatus(session.status),
+        };
+      }
+
+      const plan = planAdminPresentCorrectionCompletion({
+        newStatus: correction.newStatus,
+        currentSessionStatus: session.status,
+        sessionEndMs: resolveSessionEndMsForAttendanceCorrection(session),
       });
-      return;
-    }
 
-    const plan = planAdminPresentCorrectionCompletion({
-      newStatus: correction.newStatus,
-      currentSessionStatus: session.status,
-      sessionEndMs: resolveSessionEndMsForAttendanceCorrection(session),
-    });
+      if (!plan.shouldComplete) {
+        return {
+          status: 'not_required',
+          reason: plan.reason,
+          currentStatus: normalizeStatus(session.status),
+        };
+      }
 
-    if (!plan.shouldComplete) {
-      logger.info('Attendance correction completion bridge not required', {
-        sessionId,
-        kidId,
-        correctionId: event.params.correctionId,
-        reason: plan.reason,
-        currentStatus: normalizeStatus(session.status),
+      // Keep reschedule-chain protection in the same transaction as the final
+      // lifecycle write. This prevents an eligible Present correction from
+      // completing a session while an active replacement credit already exists.
+      const pendingCreditSnap = await tx.get(pendingCreditsQuery);
+      const hasPendingCredit = pendingCreditSnap.docs.some((docSnap) => {
+        const status = normalizeStatus(docSnap.data()?.status);
+        return status === 'open' || status === 'scheduled';
       });
-      return;
-    }
 
-    if (await hasPendingRescheduleCredit(db, sessionId)) {
-      logger.warn('Attendance correction completion bridge blocked by pending reschedule credit', {
-        sessionId,
-        kidId,
-        correctionId: event.params.correctionId,
-      });
-      await correctionSnap.ref.set(
+      if (hasPendingCredit) {
+        tx.set(
+          correctionSnap.ref,
+          {
+            completionBridge: {
+              status: 'blocked',
+              reason: 'pending_reschedule_credit',
+              checkedAt: FieldValue.serverTimestamp(),
+            },
+          },
+          { merge: true },
+        );
+        return {
+          status: 'blocked',
+          reason: 'pending_reschedule_credit',
+          currentStatus: normalizeStatus(session.status),
+        };
+      }
+
+      tx.set(
+        sessionRef,
+        {
+          status: 'completed',
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: 'adminAttendanceCorrectionCompletionBridge',
+          attendanceCorrectionCompletionBridge: {
+            correctionId,
+            kidId,
+            appliedAt: FieldValue.serverTimestamp(),
+          },
+        },
+        { merge: true },
+      );
+
+      tx.set(
+        correctionSnap.ref,
         {
           completionBridge: {
-            status: 'blocked',
-            reason: 'pending_reschedule_credit',
+            status: 'completed',
+            reason: 'corrected_present_past_session',
             checkedAt: FieldValue.serverTimestamp(),
           },
         },
         { merge: true },
       );
+
+      return {
+        status: 'completed',
+        reason: 'corrected_present_past_session',
+        currentStatus: normalizeStatus(session.status),
+      };
+    });
+
+    if (outcome.status === 'completed') {
+      logger.info('Attendance correction completion bridge applied', {
+        sessionId,
+        kidId,
+        correctionId,
+        previousSessionStatus: outcome.currentStatus || null,
+      });
       return;
     }
 
-    await sessionRef.set(
-      {
-        status: 'completed',
-        updatedAt: FieldValue.serverTimestamp(),
-        updatedBy: 'adminAttendanceCorrectionCompletionBridge',
-        attendanceCorrectionCompletionBridge: {
-          correctionId: event.params.correctionId,
-          kidId,
-          appliedAt: FieldValue.serverTimestamp(),
-        },
-      },
-      { merge: true },
-    );
-
-    await correctionSnap.ref.set(
-      {
-        completionBridge: {
-          status: 'completed',
-          reason: 'corrected_present_past_session',
-          checkedAt: FieldValue.serverTimestamp(),
-        },
-      },
-      { merge: true },
-    );
-
-    logger.info('Attendance correction completion bridge applied', {
+    const logPayload = {
       sessionId,
       kidId,
-      correctionId: event.params.correctionId,
-    });
+      correctionId,
+      reason: outcome.reason,
+      currentStatus: outcome.currentStatus || null,
+    };
+
+    if (outcome.status === 'blocked') {
+      logger.warn('Attendance correction completion bridge blocked', logPayload);
+    } else if (outcome.status === 'stale') {
+      logger.info('Attendance correction completion bridge skipped stale correction', logPayload);
+    } else {
+      logger.info('Attendance correction completion bridge not required', logPayload);
+    }
   },
 );
