@@ -124,142 +124,252 @@ export default function PublicAssessmentForm({
   }, [form.parentName, form.childName, form.whatsapp]);
 
   useEffect(() => {
-    if (!autoFocusFirstField || typeof window === 'undefined') return;
-    const timer = window.setTimeout(() => firstFieldRef.current?.focus(), 50);
+    if (!autoFocusFirstField) return;
+    const timer = window.setTimeout(() => firstFieldRef.current?.focus(), 80);
     return () => window.clearTimeout(timer);
   }, [autoFocusFirstField]);
 
   useEffect(() => {
-    const trackView = () => {
-      trackLeadFormView(source || 'public_assessment_form');
-    };
-    if (typeof window === 'undefined') return;
-    const timer = window.setTimeout(trackView, 0);
-    return () => window.clearTimeout(timer);
-  }, [source]);
+    const attribution = getPublicLeadAttribution();
+    trackLeadFormView({
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+      sourcePath: attribution.sourcePath,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      utm_term: attribution.utm_term,
+      urgency: form.urgency,
+    });
+    // mount-only event
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const trackFormStartOnce = () => {
     if (hasTrackedFormStartRef.current) return;
     hasTrackedFormStartRef.current = true;
-    trackLeadFormStart(source || 'public_assessment_form');
+    const attribution = getPublicLeadAttribution();
+    trackLeadFormStart({
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+      sourcePath: attribution.sourcePath,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      utm_term: attribution.utm_term,
+      childAge: form.childAge,
+      mainConcern: form.mainConcern,
+      urgency: form.urgency,
+    });
   };
 
-  const normalizedWhatsApp = useMemo(() => form.whatsapp.replace(/\D/g, ''), [form.whatsapp]);
-  const whatsappMessage = useMemo(
-    () => buildPublicWhatsappMessage(form),
-    [form]
-  );
-  const waLink = useMemo(
-    () => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`,
-    [whatsappMessage]
-  );
+  const waLink = useMemo(() => {
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildPublicWhatsappMessage(form))}`;
+  }, [form]);
 
-  const validate = () => {
-    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string } = {};
-    if (!form.parentName.trim()) nextErrors.parentName = 'Please enter the parent name.';
-    if (!form.childName.trim()) nextErrors.childName = 'Please enter the child name.';
-    if (!normalizedWhatsApp || normalizedWhatsApp.length < 8) nextErrors.whatsapp = 'Please enter a valid WhatsApp number.';
-    if (!form.childAge) nextErrors.childAge = 'Please choose the child age.';
-    if (!form.mainConcern) nextErrors.mainConcern = 'Please choose the area where your child needs support.';
-    setErrors(nextErrors);
-    return nextErrors;
+  const openWhatsappPopup = () => {
+    try {
+      const popup = window.open('about:blank', 'tinyStepsAssessmentWhatsApp');
+      if (popup) {
+        try {
+          popup.opener = null;
+        } catch {
+          // Ignore cross-browser opener assignment differences.
+        }
+      }
+
+      return popup;
+    } catch {
+      return null;
+    }
   };
 
   const navigateToWhatsapp = (popup: Window | null, url: string) => {
     if (popup && !popup.closed) {
-      popup.location.href = url;
-      return;
+      try {
+        if (typeof popup.location.replace === 'function') {
+          popup.location.replace(url);
+          return;
+        }
+      } catch {
+        // Fall through to assignment on the same popup if replace is unavailable.
+      }
+
+      try {
+        popup.location.href = url;
+        return;
+      } catch {
+        // Fall through to same-tab navigation below.
+      }
     }
-    window.open(url, '_blank', 'noopener,noreferrer');
+
+    window.location.assign(url);
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const validate = () => {
+    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string } = {};
+
+    if (!form.parentName.trim()) {
+      nextErrors.parentName = 'Please enter parent name.';
+    }
+
+    if (!form.childName.trim()) {
+      nextErrors.childName = 'Please enter child name.';
+    }
+
+    if (!form.whatsapp.trim()) {
+      nextErrors.whatsapp = 'Please enter WhatsApp number.';
+    }
+
+    if (!form.childAge) {
+      nextErrors.childAge = 'Please select child age.';
+    }
+
+    if (!form.mainConcern) {
+      nextErrors.mainConcern = 'Please select the support area.';
+    }
+
+    setErrors(nextErrors);
+    return {
+      isValid: Object.keys(nextErrors).length === 0,
+      nextErrors,
+    };
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (submitLockRef.current || isSubmitting) return;
-    trackFormStartOnce();
+
+    setSubmitted(false);
     setSubmitError('');
 
-    const nextErrors = validate();
-    if (Object.keys(nextErrors).length > 0) {
-      trackLeadFormError(source || 'public_assessment_form', {
-        error_fields: Object.keys(nextErrors),
+    const { isValid, nextErrors } = validate();
+    if (!isValid) {
+      const errorFields = Object.keys(nextErrors).filter(Boolean);
+      trackLeadFormError({
+        form_name: 'public_assessment_form',
+        source_context: source || 'public_assessment_form',
+        error_fields: errorFields,
+        error_message: 'validation_failed',
       });
       return;
     }
 
     submitLockRef.current = true;
-    setIsSubmitting(true);
 
-    const whatsappWindow = window.open('', '_blank');
-    if (whatsappWindow) whatsappWindow.opener = null;
+    const submittedForm = { ...form };
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildPublicWhatsappMessage(submittedForm))}`;
+    const whatsappWindow = openWhatsappPopup();
 
     const attribution = getPublicLeadAttribution();
-    const attributionEnrichment = buildLeadAttributionEnrichment(attribution);
-    const leadId = pendingLeadIdRef.current || crypto.randomUUID();
-    pendingLeadIdRef.current = leadId;
-    try {
-      window.sessionStorage.setItem(PENDING_LEAD_ID_STORAGE_KEY, leadId);
-    } catch {
-      // Continue without session persistence when storage is unavailable.
-    }
-
-    const payload = buildPublicLeadPayload({
-      form,
-      leadId,
-      source: source || 'public_assessment_form',
-      attribution,
-      attributionEnrichment,
-    });
-
     const trackingPayload = {
-      lead_id: leadId,
-      main_concern: form.mainConcern,
-      child_age: form.childAge,
-      ...attributionEnrichment,
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+      sourcePath: attribution.sourcePath,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      utm_term: attribution.utm_term,
+      childAge: submittedForm.childAge,
+      mainConcern: submittedForm.mainConcern,
+      urgency: submittedForm.urgency,
     };
 
+    trackLeadFormSubmit({
+      ...trackingPayload,
+    });
+
+    setIsSubmitting(true);
     try {
-      trackLeadFormSubmit(source || 'public_assessment_form', trackingPayload);
-      const response = await fetch('/api/public-assessment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const [
+        { collection, doc, serverTimestamp, setDoc },
+        { db },
+      ] = await Promise.all([
+        import('firebase/firestore'),
+        import('../../lib/firebaseConfig'),
+      ]);
+      const payload = buildPublicLeadPayload(submittedForm, {
+        source,
+        attribution,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      const leadRef = pendingLeadIdRef.current
+        ? doc(db, 'leads', pendingLeadIdRef.current)
+        : doc(collection(db, 'leads'));
+      pendingLeadIdRef.current = leadRef.id;
+      try {
+        window.sessionStorage.setItem(PENDING_LEAD_ID_STORAGE_KEY, leadRef.id);
+      } catch {
+        // The in-memory id still makes same-page retries idempotent.
+      }
+      await setDoc(leadRef, {
+        ...payload,
+        createdAt: serverTimestamp(),
+        requestedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
-      if (!response.ok) {
-        throw new Error(`Lead save failed with ${response.status}`);
-      }
+      // Attribution enrichment is server-side so anonymous Firestore create rules remain strict.
+      // A failure here must never lose the lead or prevent the parent from reaching WhatsApp.
+      void (async () => {
+        try {
+          const [{ httpsCallable }, { functions }] = await Promise.all([
+            import('firebase/functions'),
+            import('../../lib/firebaseConfig'),
+          ]);
+          const enrichPublicLeadAttribution = httpsCallable<
+            { leadId: string; attribution: ReturnType<typeof buildLeadAttributionEnrichment> },
+            { ok: boolean; alreadyEnriched?: boolean; acquisitionChannel?: string }
+          >(functions, 'enrichPublicLeadAttribution');
+          await enrichPublicLeadAttribution({
+            leadId: leadRef.id,
+            attribution: buildLeadAttributionEnrichment(attribution),
+          });
+        } catch (attributionError) {
+          console.warn('[PublicAssessmentForm] attribution enrichment failed', attributionError);
+        }
+      })();
 
-      setSubmitted(true);
-      trackGenerateLead(source || 'public_assessment_form', trackingPayload);
-      trackDemoBookingComplete(source || 'public_assessment_form', trackingPayload);
-      if (onSuccess) onSuccess();
-      navigateToWhatsapp(whatsappWindow, waLink);
-      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
-      setLastOpenedWaLink(waLink);
+      pendingLeadIdRef.current = null;
       try {
         window.sessionStorage.removeItem(PENDING_LEAD_ID_STORAGE_KEY);
       } catch {
-        // Ignore storage cleanup failures.
+        // Storage may be disabled; the in-memory id has already been cleared.
       }
-      pendingLeadIdRef.current = null;
-      setForm(initialState);
-      setErrors({});
-      try {
-        window.localStorage.removeItem(PREFILL_STORAGE_KEY);
-      } catch {
-        // Ignore storage cleanup failures.
-      }
+
+      // Keep conversion events tied to a successfully saved public lead.
+      trackGenerateLead({
+        ...trackingPayload,
+        page_path: window.location.pathname,
+        lead_channel: 'assessment_form',
+        lead_type: 'parent_assessment_request',
+        form_id: 'public_assessment_form',
+        source: source || 'public_assessment_form',
+        submission_id: leadRef.id,
+        value: 1,
+      });
+      trackDemoBookingComplete({
+        booking_type: 'whatsapp_assessment_request',
+        source_context: source || 'public_assessment_form',
+      });
+      navigateToWhatsapp(whatsappWindow, whatsappUrl);
+      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      setLastOpenedWaLink(whatsappUrl);
+      setSubmitted(true);
+      onSuccess?.();
     } catch (error) {
-      console.error(error);
-      trackLeadFormError(source || 'public_assessment_form', {
+      console.error('[PublicAssessmentForm] lead save failed', error);
+      trackLeadFormError({
         ...trackingPayload,
         error_fields: ['save'],
         error_message: 'lead_save_failed',
       });
-      navigateToWhatsapp(whatsappWindow, waLink);
+      navigateToWhatsapp(whatsappWindow, whatsappUrl);
       trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
-      setLastOpenedWaLink(waLink);
+      setLastOpenedWaLink(whatsappUrl);
       setSubmitError('We could not save your request on the website, but WhatsApp is opening with your completed message. Please send it so we can help you.');
     } finally {
       submitLockRef.current = false;
