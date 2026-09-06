@@ -81,6 +81,21 @@ export default function Header() {
   }, [navigate]);
 
   const handleBookAssessment = useCallback(() => {
+    if (location.pathname === '/book-demo') {
+      const assessmentForm = document.getElementById('assessment-form');
+      if (assessmentForm) {
+        const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        const top = assessmentForm.getBoundingClientRect().top + window.scrollY - 96;
+        window.scrollTo({
+          top: Math.max(0, top),
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        });
+        return;
+      }
+      navigate('/book-demo#assessment-form');
+      return;
+    }
+
     const params = new URLSearchParams(location.search);
     params.set('book', '1');
     navigate(
