@@ -25,72 +25,104 @@ import {
 
 const bookDemoSeo = getRouteConfig('/book-demo');
 const bookDemoTitle =
-  bookDemoSeo?.title ?? 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning';
+  bookDemoSeo?.title ?? 'Book a Free 35-Minute Demo Class | Tiny Steps Learning';
 const bookDemoDescription =
   bookDemoSeo?.description ??
-  'Book one free 35-minute 1:1 online demo assessment class for your child. Understand their level in phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence.';
+  'Book a free 35-minute 1:1 demo assessment for your child. Understand their current phonics, reading, grammar or spoken English level and recommended starting path.';
 const bookDemoCanonicalPath = bookDemoSeo?.canonicalPath ?? '/book-demo';
 const bookDemoCanonicalUrl = `${SITE_ORIGIN}${bookDemoCanonicalPath}`;
 
+const assessmentSteps = [
+  {
+    number: '01',
+    title: 'Understand the current stage',
+    description: 'We begin with your child’s age, current English level and learning needs.',
+  },
+  {
+    number: '02',
+    title: 'Check key skills',
+    description:
+      'Depending on your child’s level, the teacher may assess phonics, reading, grammar, sentence formation, pronunciation or speaking.',
+  },
+  {
+    number: '03',
+    title: 'Identify the starting point',
+    description: 'We identify which skills are secure and which areas need support first.',
+  },
+  {
+    number: '04',
+    title: 'Recommend the next step',
+    description: 'Parents receive a recommended Tiny Steps program and starting level based on the assessment.',
+  },
+];
+
+const assessmentOutcomes = [
+  {
+    title: 'Current level',
+    description: 'Where your child currently stands.',
+  },
+  {
+    title: 'Priority skill',
+    description: 'Which skill should receive attention first.',
+  },
+  {
+    title: 'Recommended starting path',
+    description: 'The appropriate Tiny Steps program and level.',
+  },
+  {
+    title: 'Next steps',
+    description: 'What parents can do next if they choose to continue.',
+  },
+];
+
 const decisionChecks = [
   {
-    title: 'Current skill gap',
-    description: 'Understand what is already secure and which reading, language or speaking skill needs support first.',
+    title: 'Program',
+    description: 'Which learning path is being recommended?',
   },
   {
-    title: 'Teaching interaction fit',
-    description: 'Notice how your child responds to live prompts, modelling, correction and guided practice.',
+    title: 'Starting level',
+    description: 'Where will your child begin?',
   },
   {
-    title: 'Recommended learning path',
-    description: 'Ask which Tiny Steps pathway and starting level are being recommended, and why.',
+    title: 'Class format',
+    description: 'Is the recommended option 1:1 or small group?',
   },
   {
-    title: 'Format and price clarity',
-    description: 'Review the recommended class format, expected frequency and current pricing before deciding to enrol.',
+    title: 'Pricing',
+    description: 'What does the recommended plan currently cost?',
   },
 ];
 
 const assessmentFaqItems = [
   {
-    question: 'Is the Tiny Steps demo assessment class free?',
+    question: 'Is the Tiny Steps demo assessment free?',
     answer:
-      `${FREE_DEMO_FULL_DESCRIPTION} It costs ₹0, requires no credit card, and there is no pressure to enrol.`,
+      'Yes. One free 35-minute 1:1 online assessment is available per child before enrolment.',
   },
   {
-    question: 'How long is the free demo assessment class?',
-    answer:
-      `The free demo assessment class is ${FREE_DEMO_DURATION_MINUTES} minutes.`,
+    question: 'How long is the assessment?',
+    answer: `The assessment is approximately ${FREE_DEMO_DURATION_MINUTES} minutes.`,
   },
   {
-    question: 'What will be checked in the demo assessment?',
+    question: 'What will my child be assessed on?',
     answer:
-      'The teacher may check phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence depending on the child’s age and current level.',
+      'This depends on your child’s age and current level. The teacher may check phonics, reading, grammar, sentence formation, pronunciation or speaking skills.',
   },
   {
-    question: 'Will parents get a course recommendation?',
+    question: 'Will I receive a course recommendation?',
     answer:
-      'Yes. Parents receive a recommendation on whether the child should start with phonics, grammar, reading, public speaking, or a combined learning path, based on what is observed in the assessment.',
+      'Yes. Based on the session, Tiny Steps recommends an appropriate program and starting level.',
   },
   {
-    question: 'Can I check class samples, parent feedback and pricing before I decide?',
+    question: 'Do I need to enrol after the assessment?',
     answer:
-      'Yes. You can review Tiny Steps class samples, curated first-party parent feedback, the curriculum roadmap and current pricing before or after the demo. The assessment is another decision signal, not a requirement to enrol.',
+      'No. Parents can review the recommendation, curriculum, class format and pricing before deciding.',
   },
   {
-    question: 'What should I ask after the demo assessment?',
+    question: 'How will I receive available slots?',
     answer:
-      'Ask what your child can do independently, which skill needs attention first, which program and starting level are recommended, what class format and frequency fit that need, and what the current fee will be.',
-  },
-  {
-    question: 'Does the demo guarantee progress or a particular result?',
-    answer:
-      'No. The demo provides a snapshot of the child’s current level and a recommended next step. Progress depends on the child’s starting point, attendance, practice, response to teaching and time; no specific result is guaranteed.',
-  },
-  {
-    question: 'Is there pressure to enrol after the demo?',
-    answer:
-      'No. The demo assessment is meant to give parents clarity. Families can decide after understanding the child’s needs, recommended learning path, class format and current pricing.',
+      'After submitting the form, our team will contact you on WhatsApp with available assessment timings.',
   },
 ];
 
@@ -207,180 +239,201 @@ export default function BookDemoPage() {
   }, [blogDemoContext]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <section className="mx-auto max-w-5xl px-6 py-14 text-center md:py-16">
-        <h1 className="font-heading text-4xl font-bold leading-tight md:text-5xl">
-          Book One Free 35-Minute Demo Assessment Class
-        </h1>
-        <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-700">
-          One free 35-minute 1:1 online class to understand your child&apos;s
-          current level in phonics, reading, grammar, sentence formation,
-          pronunciation, and speaking confidence.
-        </p>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#fffaf4_0%,#f8fbff_32%,#ffffff_100%)] text-slate-900">
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute left-[-80px] top-10 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
+        <div className="pointer-events-none absolute right-[-80px] top-20 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
 
-        <ul className="mx-auto mt-6 grid max-w-3xl gap-3 text-left text-sm text-slate-700 sm:grid-cols-2">
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            One free session per child
-          </li>
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            35-minute live 1:1 class
-          </li>
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            Personalised course recommendation
-          </li>
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-            No credit card or enrolment pressure
-          </li>
-        </ul>
+        <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-14 text-center sm:px-6 md:pb-14 md:pt-16 lg:px-8">
+          <p className="mx-auto inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+            Free 1:1 assessment
+          </p>
+          <h1 className="mx-auto mt-5 max-w-4xl font-heading text-4xl font-black leading-[1.05] tracking-[-0.03em] text-slate-950 md:text-6xl">
+            Book One Free 35-Minute Demo Assessment Class
+          </h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-700 md:text-xl">
+            Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or spoken English.
+          </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <a
-            href="#assessment-form"
-            className="inline-flex items-center rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:shadow-xl"
-          >
-            {FREE_DEMO_CTA_LABEL}
-          </a>
-          <Link
-            to="/class-samples"
-            className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:bg-slate-50"
-          >
-            Watch Class Samples
-          </Link>
+          <div className="mx-auto mt-6 flex max-w-4xl flex-wrap items-center justify-center gap-2.5 text-sm font-semibold text-slate-700">
+            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">35-minute live 1:1 assessment</span>
+            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">One free session per child</span>
+            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">No credit card required</span>
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="#assessment-form"
+              className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800"
+            >
+              {FREE_DEMO_CTA_LABEL}
+            </a>
+            <Link
+              to="/class-samples"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3.5 text-base font-bold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50"
+            >
+              Watch Class Samples
+            </Link>
+          </div>
+
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+            Want to see how Tiny Steps classes work first? View real class samples before booking.
+          </p>
         </div>
+      </section>
 
-        <p className="mx-auto mt-5 max-w-3xl text-sm leading-6 text-slate-600">
-          You do not need to decide during the demo. Use the session to understand your child&apos;s level, then compare the recommendation with the curriculum, class samples, parent feedback and current pricing.
-        </p>
-
-        <div id="assessment-form" className="mx-auto mt-12 max-w-2xl">
+      <section className="mx-auto max-w-4xl px-4 pb-14 sm:px-6 lg:px-8">
+        <div id="assessment-form" className="rounded-[32px] border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-6">
+          <div className="px-3 pb-3 pt-3 text-center sm:px-6">
+            <h2 className="text-2xl font-bold text-slate-950 sm:text-3xl">Book Your Assessment</h2>
+            <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              Share a few details. Our team will confirm suitable slots on WhatsApp.
+            </p>
+          </div>
           <PublicAssessmentForm
             source={assessmentSource}
             autoFocusFirstField
             onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
           />
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-4xl px-6 py-12">
-        <h2 className="mb-8 text-center text-3xl font-bold">What happens in the demo assessment?</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-              <span className="text-2xl font-bold text-blue-600">1</span>
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Understand Current Stage</h3>
-            <p className="text-gray-600">We understand your child&apos;s age and current English level.</p>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-              <span className="text-2xl font-bold text-purple-600">2</span>
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Skill Check</h3>
-            <p className="text-gray-600">
-              We check reading, phonics, grammar, sentence formation, or speaking needs based on the child&apos;s stage.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <span className="text-2xl font-bold text-green-600">3</span>
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Path Recommendation</h3>
-            <p className="text-gray-600">
-              We identify the right learning path: Phonics, Grammar, Reading, or Public Speaking.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-              <span className="text-2xl font-bold text-orange-600">4</span>
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Clear Next Step</h3>
-            <p className="text-gray-600">Parents receive a clear recommendation for the next step.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-gradient-to-r from-tiny-blue-50 to-tiny-purple-50 py-14">
-        <div className="mx-auto max-w-4xl px-6">
-          <h2 className="mb-8 text-center text-3xl font-bold">Who should book this?</h2>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6">
-            <ul className="space-y-3 text-gray-700">
-              <li>• Your child knows letters but cannot read words confidently.</li>
-              <li>• Your child reads slowly or guesses words.</li>
-              <li>• Your child speaks in one-word answers or short broken sentences.</li>
-              <li>• Your child knows grammar rules but makes mistakes while speaking or writing.</li>
-              <li>• Your child is shy or lacks confidence while speaking.</li>
-              <li>• You are unsure which Tiny Steps course is right.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-6 py-12" aria-labelledby="decision-heading">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Decision support</p>
-          <h2 id="decision-heading" className="mt-2 text-3xl font-bold text-slate-900">What to confirm before you enrol</h2>
-          <p className="mt-3 max-w-3xl leading-7 text-slate-700">
-            The demo is for clarity, not a rushed purchase. After the session, make sure you understand these four points before choosing a plan.
+          <p className="px-4 pb-3 pt-1 text-center text-xs font-medium text-slate-500 sm:text-sm">
+            Takes less than a minute • No commitment • We&apos;ll contact you on WhatsApp with available assessment slots.
           </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {decisionChecks.map((item, index) => (
-              <article key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Check {index + 1}</p>
-                <h3 className="mt-2 text-lg font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{item.description}</p>
-              </article>
-            ))}
-          </div>
-          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
-            <Link to="/class-samples" className="text-slate-700 underline underline-offset-4">Watch class samples</Link>
-            <Link to="/testimonials" className="text-slate-700 underline underline-offset-4">Read parent feedback</Link>
-            <Link to="/curriculum" className="text-slate-700 underline underline-offset-4">Review curriculum</Link>
-            <Link to="/pricing" className="text-slate-700 underline underline-offset-4">Check current pricing</Link>
-          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-6 py-12">
-        <h2 className="mb-8 text-center text-3xl font-bold">Assessment outcomes</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Current level clarity</div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Recommended starting path</div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">First skill to prioritise</div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Parent-friendly next steps</div>
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">The assessment flow</p>
+          <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
+            What Happens in the Demo Assessment?
+          </h2>
         </div>
-        <p className="mt-5 text-center text-sm leading-6 text-slate-600">
-          These outcomes describe the purpose of the assessment. They do not guarantee a particular learning result or progression speed.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-4xl px-6 py-12" aria-labelledby="demo-faq-heading">
-        <h2 id="demo-faq-heading" className="mb-8 text-center text-3xl font-bold">
-          Free demo assessment FAQs
-        </h2>
-        <div className="space-y-4">
-          {assessmentFaqItems.map((item) => (
-            <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
-              <p className="mt-2 leading-7 text-slate-700">{item.answer}</p>
+        <div className="mt-9 grid gap-5 md:grid-cols-2">
+          {assessmentSteps.map((step) => (
+            <article key={step.number} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
+              <div className="flex items-start gap-4">
+                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white">
+                  {step.number}
+                </span>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-950">{step.title}</h3>
+                  <p className="mt-2 leading-7 text-slate-600">{step.description}</p>
+                </div>
+              </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-6 py-16 text-center">
-        <h2 className="mb-4 text-3xl font-bold">Ready to understand your child’s starting point?</h2>
-        <p className="mx-auto mb-8 max-w-2xl text-gray-700">
-          Book one free 35-minute demo assessment class. No credit card or enrolment commitment is required, and you can review the recommendation before deciding.
+      <section className="border-y border-slate-100 bg-slate-50/70 py-14">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
+            Who Is This Assessment For?
+          </h2>
+          <div className="mx-auto mt-8 max-w-4xl rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="grid gap-4 md:grid-cols-2">
+              {[
+                'Your child knows letters but struggles to read words confidently.',
+                'Your child reads slowly, guesses words or finds blending difficult.',
+                'Your child understands grammar but struggles to use it correctly.',
+                'Your child speaks mainly in short or incomplete sentences.',
+                'Your child lacks confidence while speaking.',
+                'You are unsure which Tiny Steps program or level is appropriate.',
+              ].map((item) => (
+                <div key={item} className="flex gap-3 rounded-2xl bg-slate-50 px-4 py-4 text-slate-700">
+                  <span aria-hidden="true" className="mt-0.5 font-black text-orange-500">✓</span>
+                  <span className="leading-7">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Assessment outcomes</p>
+          <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
+            What Will You Understand After the Assessment?
+          </h2>
+        </div>
+        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {assessmentOutcomes.map((item) => (
+            <article key={item.title} className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-950">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+            </article>
+          ))}
+        </div>
+        <p className="mx-auto mt-5 max-w-3xl text-center text-sm leading-6 text-slate-500">
+          Assessment recommendations are based on what is observed during the session. Individual learning progress varies.
         </p>
-        <a
-          href="#assessment-form"
-          className="inline-block rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
-        >
-          {FREE_DEMO_CTA_LABEL}
-        </a>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-6 lg:px-8" aria-labelledby="decision-heading">
+        <div className="rounded-[32px] border border-slate-200 bg-slate-950 p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.16)] sm:p-8 md:p-10">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">Decision support</p>
+          <h2 id="decision-heading" className="mt-3 text-3xl font-black tracking-[-0.02em] md:text-4xl">
+            Before You Enrol
+          </h2>
+          <p className="mt-3 max-w-3xl leading-7 text-slate-300">
+            You should feel clear about these four points before choosing a program.
+          </p>
+          <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {decisionChecks.map((item) => (
+              <article key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.06] p-5">
+                <h3 className="text-lg font-bold text-white">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{item.description}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link to="/curriculum" className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15">
+              View Curriculum
+            </Link>
+            <Link to="/class-samples" className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15">
+              Watch Class Samples
+            </Link>
+            <Link to="/pricing" className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15">
+              View Pricing
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="demo-faq-heading">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Common questions</p>
+          <h2 id="demo-faq-heading" className="mt-3 text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
+            Demo Assessment FAQs
+          </h2>
+        </div>
+        <div className="mt-9 grid gap-4 md:grid-cols-2">
+          {assessmentFaqItems.map((item) => (
+            <article key={item.question} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-950">{item.question}</h3>
+              <p className="mt-2 leading-7 text-slate-600">{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl rounded-[34px] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#eff6ff_100%)] px-6 py-10 text-center shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 sm:py-12">
+          <h2 className="text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
+            Ready to Understand Your Child’s Starting Point?
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-700">
+            Book one free 35-minute assessment and receive a recommended learning path based on your child&apos;s current skills.
+          </p>
+          <a
+            href="#assessment-form"
+            className="mt-7 inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </a>
+          <p className="mt-3 text-sm text-slate-500">One free session per child • No credit card required</p>
+        </div>
       </section>
     </div>
   );
