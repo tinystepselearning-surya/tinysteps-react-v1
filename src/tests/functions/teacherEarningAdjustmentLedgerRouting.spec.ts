@@ -7,6 +7,7 @@ const adjustmentSyncSource = readFileSync(
   join(process.cwd(), 'functions/src/teacherEarningAdjustmentSync.ts'),
   'utf8',
 );
+const compactAdjustmentSyncSource = adjustmentSyncSource.replace(/\s+/g, ' ');
 const adjustmentHelperSource = readFileSync(
   join(process.cwd(), 'functions/src/helpers/teacherEarningAdjustmentLedger.ts'),
   'utf8',
@@ -41,9 +42,9 @@ describe('Brick 4 teacher earning adjustment routing', () => {
     expect(adjustmentHelperSource).toContain("recordType: 'teacher_earning_adjustment'");
     expect(adjustmentHelperSource).toContain('ledgerImmutable: true');
     expect(adjustmentSyncSource).not.toContain("collection('billingCharges')");
-    expect(adjustmentSyncSource).not.toMatch(/tx\.set\(change\.after\.ref,\s*\{[^}]*\bamount\s*:/s);
-    expect(adjustmentSyncSource).not.toMatch(/tx\.set\(change\.after\.ref,\s*\{[^}]*\bpaidAmount\s*:/s);
-    expect(adjustmentSyncSource).not.toMatch(/tx\.set\(change\.after\.ref,\s*\{[^}]*\bstatus\s*:/s);
+    expect(compactAdjustmentSyncSource).not.toMatch(/tx\.set\(change\.after\.ref, \{[^}]*\bamount\s*:/);
+    expect(compactAdjustmentSyncSource).not.toMatch(/tx\.set\(change\.after\.ref, \{[^}]*\bpaidAmount\s*:/);
+    expect(compactAdjustmentSyncSource).not.toMatch(/tx\.set\(change\.after\.ref, \{[^}]*\bstatus\s*:/);
   });
 
   it('supports retain, restoration, and repeated-decision no-op through target entitlement deltas', () => {
