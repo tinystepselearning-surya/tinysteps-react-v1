@@ -37,6 +37,10 @@ function clean(value: unknown, maxLen = 500): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLen) : '';
 }
 
+function nullableClean(value: unknown, maxLen = 500): string | null {
+  return clean(value, maxLen) || null;
+}
+
 function positiveMoney(value: unknown): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -79,6 +83,18 @@ function resolveServiceMonthKey(session: Record<string, unknown>, earning: Recor
   return '';
 }
 
+function hasTimestampIdentity(value: unknown): boolean {
+  if (!value) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  if (typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    if (typeof row.toDate === 'function') return true;
+    if (Number.isFinite(Number(row.seconds))) return true;
+  }
+  return false;
+}
+
 export function buildTeacherPayWithholdingLedgerRecord(args: {
   sessionId: string;
   earningId: string;
@@ -97,6 +113,7 @@ export function buildTeacherPayWithholdingLedgerRecord(args: {
   const reason = clean(args.session.teacherPayDecisionReason, 2000);
   const attendanceCorrectionId = clean(args.session.teacherPayDecisionCorrectionId, 160);
   const decidedByUid = clean(args.session.teacherPayDecisionByUid, 160);
+  const decidedAt = args.session.teacherPayDecisionAt;
 
   if (
     !sessionId ||
@@ -108,7 +125,8 @@ export function buildTeacherPayWithholdingLedgerRecord(args: {
     !reasonCode ||
     !reason ||
     !attendanceCorrectionId ||
-    !decidedByUid
+    !decidedByUid ||
+    !hasTimestampIdentity(decidedAt)
   ) {
     return null;
   }
@@ -124,11 +142,11 @@ export function buildTeacherPayWithholdingLedgerRecord(args: {
     recordType: 'teacher_pay_withholding',
     sessionId,
     teacherEarningId: earningId,
-    enrollmentId: clean(args.earning.enrollmentId, 160) || clean(args.session.enrollmentId, 160) || null,
+    enrollmentId: nullableClean(args.earning.enrollmentId, 160) || nullableClean(args.session.enrollmentId, 160),
     kidId: resolveKidId(args.session, args.earning),
-    parentId: clean(args.earning.parentId, 160) || clean(args.session.parentId, 160) || null,
+    parentId: nullableClean(args.earning.parentId, 160) || nullableClean(args.session.parentId, 160),
     teacherId,
-    courseId: clean(args.earning.courseId, 160) || clean(args.session.courseId, 160) || null,
+    courseId: nullableClean(args.earning.courseId, 160) || nullableClean(args.session.courseId, 160),
     serviceDate: resolveServiceDate(args.session, args.earning),
     serviceMonthKey,
     monthKey: serviceMonthKey,
@@ -143,9 +161,9 @@ export function buildTeacherPayWithholdingLedgerRecord(args: {
     attendanceCorrectionId,
     teacherPayDecisionId: decisionId,
     decidedByUid,
-    decidedByName: clean(args.session.teacherPayDecisionByName, 320) || null,
-    decidedByEmail: clean(args.session.teacherPayDecisionByEmail, 320) || null,
-    decidedAt: args.session.teacherPayDecisionAt || null,
+    decidedByName: nullableClean(args.session.teacherPayDecisionByName, 320),
+    decidedByEmail: nullableClean(args.session.teacherPayDecisionByEmail, 320),
+    decidedAt,
     status: 'active',
     source: TEACHER_PAY_WITHHOLDING_SOURCE,
     ledgerImmutable: true,
@@ -161,13 +179,22 @@ export function teacherPayWithholdingLedgerMatches(
     clean(existing.recordType, 80) === expected.recordType &&
     clean(existing.sessionId, 160) === expected.sessionId &&
     clean(existing.teacherEarningId, 160) === expected.teacherEarningId &&
+    nullableClean(existing.enrollmentId, 160) === expected.enrollmentId &&
+    nullableClean(existing.kidId, 160) === expected.kidId &&
+    nullableClean(existing.parentId, 160) === expected.parentId &&
     clean(existing.teacherId, 160) === expected.teacherId &&
+    nullableClean(existing.courseId, 160) === expected.courseId &&
+    nullableClean(existing.serviceDate, 40) === expected.serviceDate &&
     clean(existing.serviceMonthKey, 20) === expected.serviceMonthKey &&
     clean(existing.monthKey, 20) === expected.monthKey &&
+    clean(existing.currency, 20) === expected.currency &&
     clean(existing.teacherPayDecisionId, 160) === expected.teacherPayDecisionId &&
     clean(existing.attendanceCorrectionId, 160) === expected.attendanceCorrectionId &&
     clean(existing.decidedByUid, 160) === expected.decidedByUid &&
+    nullableClean(existing.decidedByName, 320) === expected.decidedByName &&
+    nullableClean(existing.decidedByEmail, 320) === expected.decidedByEmail &&
     clean(existing.reasonCode, 120) === expected.reasonCode &&
+    clean(existing.reason, 2000) === expected.reason &&
     clean(existing.teacherPayDisposition, 80) === 'retain_school' &&
     clean(existing.status, 80) === 'active' &&
     clean(existing.source, 120) === TEACHER_PAY_WITHHOLDING_SOURCE &&
