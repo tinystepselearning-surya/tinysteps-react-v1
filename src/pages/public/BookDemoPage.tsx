@@ -239,194 +239,241 @@ export default function BookDemoPage() {
   }, [blogDemoContext]);
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#fffaf4_0%,#f8fbff_32%,#ffffff_100%)] text-slate-900">
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute left-[-80px] top-10 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
-        <div className="pointer-events-none absolute right-[-80px] top-20 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
+    <div className="min-h-screen overflow-x-clip bg-[#fbfaf8] text-slate-900">
+      <section className="relative overflow-hidden border-b border-slate-200/70 bg-[radial-gradient(circle_at_8%_16%,rgba(251,146,60,0.16),transparent_28%),radial-gradient(circle_at_92%_12%,rgba(125,211,252,0.18),transparent_30%),linear-gradient(180deg,#fffdfa_0%,#f8fbff_100%)]">
+        <div className="pointer-events-none absolute left-1/2 top-[-14rem] h-[30rem] w-[52rem] -translate-x-1/2 rounded-full border border-orange-100/70" />
 
-        <div className="relative mx-auto max-w-6xl px-4 pb-10 pt-14 text-center sm:px-6 md:pb-14 md:pt-16 lg:px-8">
-          <p className="mx-auto inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
-            Free 1:1 assessment
-          </p>
-          <h1 className="mx-auto mt-5 max-w-4xl font-heading text-4xl font-black leading-[1.05] tracking-[-0.03em] text-slate-950 md:text-6xl">
-            Book One Free 35-Minute Demo Assessment Class
-          </h1>
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-700 md:text-xl">
-            Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or speaking confidence.
-          </p>
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 md:pt-20 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)] lg:items-center lg:gap-16 lg:px-8 lg:pb-20 lg:pt-24">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700 shadow-sm backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-orange-500" />
+              Free 1:1 assessment
+            </div>
 
-          <div className="mx-auto mt-6 flex max-w-4xl flex-wrap items-center justify-center gap-2.5 text-sm font-semibold text-slate-700">
-            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">35-minute live 1:1 assessment</span>
-            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">One free session per child</span>
-            <span className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">No credit card required</span>
-          </div>
+            <h1 className="mt-6 font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-[4rem]">
+              Book One Free 35-Minute Demo Assessment Class
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-650 sm:text-xl">
+              Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or speaking confidence.
+            </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="#assessment-form"
-              className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800"
-            >
-              {FREE_DEMO_CTA_LABEL}
-            </a>
-            <Link
-              to="/class-samples"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3.5 text-base font-bold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50"
-            >
-              Watch Class Samples
-            </Link>
-          </div>
-
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-600">
-            Want to see how Tiny Steps classes work first? View real class samples before booking.
-          </p>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-3xl px-4 pb-14 sm:px-6 lg:px-8">
-        <div id="assessment-form">
-          <PublicAssessmentForm
-            source={assessmentSource}
-            title="Book Your Assessment"
-            description="Share a few details. Our team will confirm suitable slots on WhatsApp."
-            submitLabel="Book Free 35-Minute Demo"
-            submitAriaLabel="Book Free 35-Minute Demo"
-            onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
-          />
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">The assessment flow</p>
-          <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
-            What Happens in the Demo Assessment?
-          </h2>
-        </div>
-        <div className="mt-9 grid gap-5 md:grid-cols-2">
-          {assessmentSteps.map((step) => (
-            <article key={step.number} className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-              <div className="flex items-start gap-4">
-                <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white">
-                  {step.number}
-                </span>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-950">{step.title}</h3>
-                  <p className="mt-2 leading-7 text-slate-600">{step.description}</p>
+            <div className="mt-7 grid max-w-2xl gap-3 sm:grid-cols-3">
+              {['35-minute live 1:1 assessment', 'One free session per child', 'No credit card required'].map((item) => (
+                <div key={item} className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-700">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-black text-orange-700">✓</span>
+                  <span>{item}</span>
                 </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="#assessment-form"
+                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                {FREE_DEMO_CTA_LABEL}
+              </a>
+              <Link
+                to="/class-samples"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/90 px-7 py-3.5 text-base font-bold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white"
+              >
+                Watch Class Samples
+                <span className="ml-2" aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+
+          <div id="assessment-form" className="scroll-mt-28 lg:py-2">
+            <PublicAssessmentForm
+              source={assessmentSource}
+              title="Book Your Assessment"
+              description="Share a few details. Our team will confirm suitable slots on WhatsApp."
+              submitLabel="Book Free 35-Minute Demo"
+              submitAriaLabel="Book Free 35-Minute Demo"
+              onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">The assessment flow</p>
+            <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
+              What Happens in the Demo Assessment?
+            </h2>
+            <p className="mt-3 max-w-2xl leading-7 text-slate-600">
+              A focused session designed to understand where your child is now and what should come next.
+            </p>
+          </div>
+
+          <div className="mt-10 grid overflow-hidden rounded-[28px] border border-slate-200 bg-[#fcfcfb] md:grid-cols-2 lg:grid-cols-4">
+            {assessmentSteps.map((step, index) => (
+              <article
+                key={step.number}
+                className={`relative p-6 sm:p-7 ${index > 0 ? 'border-t border-slate-200 md:border-t-0 md:border-l' : ''} ${index === 2 ? 'md:border-l-0 md:border-t lg:border-l lg:border-t-0' : ''} ${index === 3 ? 'md:border-t lg:border-t-0' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black tracking-[0.16em] text-orange-600">{step.number}</span>
+                  <span className="h-px w-10 bg-orange-200" aria-hidden="true" />
+                </div>
+                <h3 className="mt-5 text-lg font-black leading-6 text-slate-950">{step.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[36px] border border-orange-100 bg-[linear-gradient(120deg,#fff7ed_0%,#fffdfa_48%,#eef7ff_100%)] shadow-[0_28px_80px_rgba(15,23,42,0.07)]">
+            <div className="grid gap-10 px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:px-14 lg:py-14">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">A useful fit check</p>
+                <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
+                  Who Is This Assessment For?
+                </h2>
+                <p className="mt-4 max-w-md leading-7 text-slate-600">
+                  Especially useful when you can see the struggle, but are not yet sure which skill or level needs attention first.
+                </p>
               </div>
-            </article>
-          ))}
+
+              <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                {[
+                  'Your child knows letters but struggles to read words confidently.',
+                  'Your child reads slowly, guesses words or finds blending difficult.',
+                  'Your child understands grammar but struggles to use it correctly.',
+                  'Your child speaks mainly in short or incomplete sentences.',
+                  'Your child lacks confidence while speaking.',
+                  'You are unsure which Tiny Steps program or level is appropriate.',
+                ].map((item) => (
+                  <div key={item} className="flex gap-3 border-b border-slate-200/70 pb-4 text-slate-700 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0">
+                    <span aria-hidden="true" className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-orange-600 shadow-sm">✓</span>
+                    <span className="text-sm leading-7 sm:text-base">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="border-y border-slate-100 bg-slate-50/70 py-14">
+      <section className="bg-slate-950 py-16 text-white sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Assessment outcomes</p>
+              <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
+                What Will You Understand After the Assessment?
+              </h2>
+              <p className="mt-4 max-w-lg leading-7 text-slate-300">
+                The goal is clarity: where your child is, what matters first, and which route makes sense next.
+              </p>
+            </div>
+
+            <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2">
+              {assessmentOutcomes.map((item, index) => (
+                <article key={item.title} className="border-l border-white/15 pl-5">
+                  <span className="text-xs font-black tracking-[0.18em] text-orange-300">0{index + 1}</span>
+                  <h3 className="mt-2 text-xl font-black text-white">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{item.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="my-12 h-px bg-white/10" />
+
+          <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16" aria-labelledby="decision-heading">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Decision support</p>
+              <h2 id="decision-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-white">
+                Before You Enrol
+              </h2>
+              <p className="mt-3 max-w-md leading-7 text-slate-300">
+                You should feel clear about these four points before choosing a program.
+              </p>
+            </div>
+
+            <div>
+              <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+                {decisionChecks.map((item) => (
+                  <article key={item.title}>
+                    <h3 className="text-base font-black text-white">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">{item.description}</p>
+                  </article>
+                ))}
+              </div>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link to="/curriculum" className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">
+                  View Curriculum
+                </Link>
+                <Link to="/class-samples" className="rounded-full border border-orange-300/40 bg-orange-300/10 px-5 py-2.5 text-sm font-bold text-orange-100 transition hover:bg-orange-300/15">
+                  Watch Class Samples
+                </Link>
+                <Link to="/pricing" className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">
+                  View Pricing
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-10 text-xs leading-5 text-slate-500">
+            Assessment recommendations are based on what is observed during the session. Individual learning progress varies.
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 sm:py-20" aria-labelledby="demo-faq-heading">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
-            Who Is This Assessment For?
-          </h2>
-          <div className="mx-auto mt-8 max-w-4xl rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                'Your child knows letters but struggles to read words confidently.',
-                'Your child reads slowly, guesses words or finds blending difficult.',
-                'Your child understands grammar but struggles to use it correctly.',
-                'Your child speaks mainly in short or incomplete sentences.',
-                'Your child lacks confidence while speaking.',
-                'You are unsure which Tiny Steps program or level is appropriate.',
-              ].map((item) => (
-                <div key={item} className="flex gap-3 rounded-2xl bg-slate-50 px-4 py-4 text-slate-700">
-                  <span aria-hidden="true" className="mt-0.5 font-black text-orange-500">✓</span>
-                  <span className="leading-7">{item}</span>
-                </div>
+          <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Common questions</p>
+              <h2 id="demo-faq-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
+                Demo Assessment FAQs
+              </h2>
+              <p className="mt-4 max-w-md leading-7 text-slate-600">
+                Everything you need to know before choosing a slot.
+              </p>
+            </div>
+
+            <div className="divide-y divide-slate-200 border-y border-slate-200">
+              {assessmentFaqItems.map((item) => (
+                <details key={item.question} className="group py-1">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-5 py-5 text-left">
+                    <span className="text-base font-black text-slate-950 sm:text-lg">{item.question}</span>
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xl font-light text-slate-500 transition group-open:rotate-45" aria-hidden="true">+</span>
+                  </summary>
+                  <p className="max-w-2xl pb-5 pr-12 leading-7 text-slate-600">{item.answer}</p>
+                </details>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Assessment outcomes</p>
-          <h2 className="mt-3 text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
-            What Will You Understand After the Assessment?
-          </h2>
-        </div>
-        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {assessmentOutcomes.map((item) => (
-            <article key={item.title} className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
-            </article>
-          ))}
-        </div>
-        <p className="mx-auto mt-5 max-w-3xl text-center text-sm leading-6 text-slate-500">
-          Assessment recommendations are based on what is observed during the session. Individual learning progress varies.
-        </p>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-14 sm:px-6 lg:px-8" aria-labelledby="decision-heading">
-        <div className="rounded-[32px] border border-slate-200 bg-slate-950 p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.16)] sm:p-8 md:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-300">Decision support</p>
-          <h2 id="decision-heading" className="mt-3 text-3xl font-black tracking-[-0.02em] md:text-4xl">
-            Before You Enrol
-          </h2>
-          <p className="mt-3 max-w-3xl leading-7 text-slate-300">
-            You should feel clear about these four points before choosing a program.
-          </p>
-          <div className="mt-7 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {decisionChecks.map((item) => (
-              <article key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.06] p-5">
-                <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{item.description}</p>
-              </article>
-            ))}
+      <section className="px-4 pb-20 pt-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-orange-200 bg-[linear-gradient(115deg,#fff1e6_0%,#fff9f3_45%,#edf7ff_100%)] px-6 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 md:flex md:items-center md:justify-between md:gap-10 lg:px-12">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Ready when you are</p>
+            <h2 className="mt-2 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
+              Ready to Understand Your Child’s Starting Point?
+            </h2>
+            <p className="mt-3 max-w-2xl leading-7 text-slate-700">
+              Book one free 35-minute assessment and receive a recommended learning path based on your child&apos;s current skills.
+            </p>
           </div>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link to="/curriculum" className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15">
-              View Curriculum
-            </Link>
-            <Link to="/class-samples" className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15">
-              Watch Class Samples
-            </Link>
-            <Link to="/pricing" className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15">
-              View Pricing
-            </Link>
+          <div className="mt-7 shrink-0 md:mt-0 md:text-right">
+            <a
+              href="#assessment-form"
+              className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800"
+            >
+              Book Free Assessment
+            </a>
+            <p className="mt-3 text-xs text-slate-500">One free session per child • No credit card required</p>
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="demo-faq-heading">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Common questions</p>
-          <h2 id="demo-faq-heading" className="mt-3 text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
-            Demo Assessment FAQs
-          </h2>
-        </div>
-        <div className="mt-9 grid gap-4 md:grid-cols-2">
-          {assessmentFaqItems.map((item) => (
-            <article key={item.question} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">{item.question}</h3>
-              <p className="mt-2 leading-7 text-slate-600">{item.answer}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl rounded-[34px] border border-orange-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#eff6ff_100%)] px-6 py-10 text-center shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 sm:py-12">
-          <h2 className="text-3xl font-black tracking-[-0.02em] text-slate-950 md:text-4xl">
-            Ready to Understand Your Child’s Starting Point?
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl leading-7 text-slate-700">
-            Book one free 35-minute assessment and receive a recommended learning path based on your child&apos;s current skills.
-          </p>
-          <a
-            href="#assessment-form"
-            className="mt-7 inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800"
-          >
-            Book Free Assessment
-          </a>
-          <p className="mt-3 text-sm text-slate-500">One free session per child • No credit card required</p>
         </div>
       </section>
     </div>
