@@ -13,9 +13,11 @@
 // Callable is for manual retry only; teacher UI must not auto-call to prevent double-processing
 export { onSessionComplete } from "./onSessionComplete";
 
-// Revenue rollups (expected + earned)
+// Session-linked revenue accrual uses immutable class financial terms.
+export { onSessionRevenueWrite } from "./sessionRevenue";
+
+// Revenue payment/payout/admin maintenance callables.
 export {
-  onSessionRevenueWrite,
   recordPayment,
   recordTeacherPayout,
   previewFinanceCutoverArchive,
