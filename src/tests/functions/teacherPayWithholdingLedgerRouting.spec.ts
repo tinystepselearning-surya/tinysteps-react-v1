@@ -7,6 +7,10 @@ const withholdingSyncSource = readFileSync(
   join(process.cwd(), 'functions/src/teacherPayWithholdingSync.ts'),
   'utf8',
 );
+const decisionSource = readFileSync(
+  join(process.cwd(), 'functions/src/adminAttendanceCorrectionTeacherPayDecision.ts'),
+  'utf8',
+);
 const reportSource = readFileSync(
   join(process.cwd(), 'functions/src/getAdminTeacherPayWithholdings.ts'),
   'utf8',
@@ -31,6 +35,17 @@ describe('Brick 3 school-retained teacher pay ledger routing', () => {
     expect(withholdingSyncSource).not.toContain('tx.set(withholdingRef');
   });
 
+  it('waits for the authoritative attendance correction link before creating an immutable record', () => {
+    expect(withholdingSyncSource).toContain("normalizeStatus(session.teacherPayDecisionStatus) !== 'applied'");
+    expect(withholdingSyncSource).toContain('!clean(session.teacherPayDecisionCorrectionId)');
+    expect(withholdingSyncSource).toContain("normalizeStatus(latestDecision.status) !== 'applied'");
+    expect(withholdingSyncSource).toContain('clean(latestDecision.attendanceCorrectionId) !== latestCorrectionId');
+    expect(decisionSource).toContain("normalizeTeacherPayDisposition(session.teacherPayDisposition) === 'retain_school'");
+    expect(decisionSource).toContain("teacherPayDecisionStatus: 'applied'");
+    expect(decisionSource).toContain('attendanceCorrectionId: correctionId');
+    expect(decisionSource).toContain('tx.set(earningRef');
+  });
+
   it('preserves normal economic terms while recording zero teacher credit and school retention', () => {
     expect(helperSource).toContain('teacherRateSnapshot: normalRate');
     expect(helperSource).toContain('expectedTeacherAmount: normalRate');
@@ -39,6 +54,8 @@ describe('Brick 3 school-retained teacher pay ledger routing', () => {
     expect(helperSource).toContain("teacherPayDisposition: 'retain_school'");
     expect(helperSource).toContain("status: 'active'");
     expect(helperSource).toContain('ledgerImmutable: true');
+    expect(helperSource).toContain('attendanceCorrectionId,');
+    expect(helperSource).toContain('decidedByUid,');
   });
 
   it('keeps parent billing isolated from the withholding ledger', () => {
