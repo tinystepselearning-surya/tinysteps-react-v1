@@ -67,9 +67,10 @@ describe('admin attendance correction teacher payment handling', () => {
   });
 
   it('links the teacher-pay decision to the authoritative attendance correction audit record', () => {
+    expect(decisionSource).toContain("const SOURCE = 'admin-attendance-correction'");
     expect(decisionSource).toContain("document: 'classSessions/{sessionId}/attendanceCorrections/{correctionId}'");
     expect(decisionSource).toContain("teacherPayDecisionStatus: 'applied'");
     expect(decisionSource).toContain('teacherPayDecisionCorrectionId: correctionId');
-    expect(decisionSource).toContain("source: 'admin-attendance-correction'");
+    expect(decisionSource).toContain('source: SOURCE');
   });
 });
