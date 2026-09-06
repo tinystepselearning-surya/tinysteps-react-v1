@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { shouldIncludeBlogSlugInSitemap, shouldNoindexBlogSlug } from '../src/lib/blogIndexingPolicy.js';
+import { getPublicBlogSlug } from '../src/lib/blogWeekRenames.js';
 import { RETIRED_BLOG_SLUG_REDIRECTS } from './blog-consolidation-map.mjs';
 
 const ROOT = process.cwd();
@@ -155,13 +156,14 @@ const committedSitemapSlugs = new Set(
 const files = walk(POSTS_DIR, (file) => file.endsWith('.ts'));
 const rows = files.map((file) => {
   const source = read(file);
-  const slug = extractStringProperty(source, 'slug');
-  if (!slug) return null;
+  const sourceSlug = extractStringProperty(source, 'slug');
+  if (!sourceSlug) return null;
+  const slug = getPublicBlogSlug(sourceSlug);
 
   const sourceCategory = extractStringProperty(source, 'category');
   const sourceDate = extractStringProperty(source, 'date');
-  const effectiveDate = publicationDates.get(slug) || sourceDate;
-  const effectiveCategory = categoryOverrides.get(slug) || sourceCategory;
+  const effectiveDate = publicationDates.get(sourceSlug) || publicationDates.get(slug) || sourceDate;
+  const effectiveCategory = categoryOverrides.get(sourceSlug) || categoryOverrides.get(slug) || sourceCategory;
   const title = extractStringProperty(source, 'title');
   const excerpt = extractStringProperty(source, 'excerpt');
   const author = extractStringProperty(source, 'author');
@@ -171,9 +173,10 @@ const rows = files.map((file) => {
   const contentStrings = extractContentStrings(source);
   const bodyBlocks = (source.match(/\{\s*type\s*:\s*['\"](?:h2|h3|p|li)['\"]/g) || []).length;
   const faqCount = (source.match(/\bquestion\s*:\s*['\"`]/g) || []).length;
-  const weekly = /^week-\d+/i.test(slug);
+  const weekly = /^week-\d+/i.test(sourceSlug);
   const pageNoindex = shouldNoindexBlogSlug(slug);
-  const retiredSource = Object.hasOwn(RETIRED_BLOG_SLUG_REDIRECTS, slug);
+  const retiredSource = Object.hasOwn(RETIRED_BLOG_SLUG_REDIRECTS, sourceSlug)
+    || Object.hasOwn(RETIRED_BLOG_SLUG_REDIRECTS, slug);
   const published = !effectiveDate || effectiveDate <= AUDIT_DATE;
   const indexableByPageRobots = published && !pageNoindex && !retiredSource;
   const expectedInSitemap = published
@@ -201,6 +204,7 @@ const rows = files.map((file) => {
 
   return {
     ...base,
+    sourceSlug,
     sourceCategory,
     sourceDate,
     audience: inferAudience(base),
@@ -291,7 +295,7 @@ if (WRITE_OUTPUT) {
 const structuralFailures = [];
 if (rows.length === 0) structuralFailures.push('No blog posts were discovered.');
 if (duplicateSlugs.length > 0) structuralFailures.push(`Duplicate slugs: ${duplicateSlugs.map((item) => item.slug).join(', ')}`);
-const retiredSourceFiles = rows.filter((row) => row.retiredSource).map((row) => row.slug);
+const retiredSourceFiles = rows.filter((row) => row.retiredSource).map((row) => row.sourceSlug);
 if (retiredSourceFiles.length > 0) structuralFailures.push(`Retired redirect sources still exist as posts: ${retiredSourceFiles.join(', ')}`);
 
 if (STRICT && structuralFailures.length > 0) {

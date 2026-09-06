@@ -76,7 +76,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'A **cue card is slightly different**. It mainly helps the speaker remember key words or sequence; the audience does not need to read it. Cue cards can be useful, but they should not be confused with audience-facing visuals.',
+        'A cue card is slightly different. It mainly helps the speaker remember key words or sequence; the audience does not need to read it. Cue cards can be useful, but they should not be confused with audience-facing visuals.',
     },
 
     {
