@@ -38,10 +38,10 @@ const QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS = [
   'speaking-structure',
   'speaking-visual-aids',
   'speaking-debate-starters',
+  'speaking-video-feedback',
 ] as const;
 
 const NOINDEX_SPEAKING_SUPPORT_SLUGS = [
-  'speaking-video-feedback',
   'speaking-competition-prep',
   'speaking-family-showcase',
 ] as const;
