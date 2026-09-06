@@ -95,6 +95,16 @@ function resolveEarningMonthKey(session: Record<string, unknown>, earning: Recor
   return '';
 }
 
+function resolveEffectivePaidAmount(earning: Record<string, unknown>, normalRate: number): number {
+  const explicitPaid = nonNegativeMoney(earning.paidAmount);
+  if (explicitPaid > 0) return explicitPaid;
+  const status = clean(earning.status, 80).toLowerCase();
+  if (status === 'paid' || status === 'settled') {
+    return positiveMoney(earning.amount) || normalRate;
+  }
+  return 0;
+}
+
 export function buildTeacherEarningAdjustmentId(sessionId: string, attendanceCorrectionId: string): string {
   const safeSessionId = clean(sessionId, 160).replace(/[^A-Za-z0-9_-]/g, '_');
   const safeCorrectionId = clean(attendanceCorrectionId, 160).replace(/[^A-Za-z0-9_-]/g, '_');
@@ -178,6 +188,8 @@ export function buildTeacherEarningAdjustmentRecord(args: {
     clean(args.session.currency, 20) ||
     'INR';
   const amount = calculation.delta;
+  const earningStatusAtAdjustment = clean(args.earning.status, 80).toLowerCase();
+  const paidAmountAtAdjustment = resolveEffectivePaidAmount(args.earning, normalRate);
 
   return {
     ledgerVersion: TEACHER_EARNING_ADJUSTMENT_LEDGER_VERSION,
@@ -200,8 +212,8 @@ export function buildTeacherEarningAdjustmentRecord(args: {
     resultingNetEntitlement: calculation.targetEntitlement,
     targetTeacherEntitlement: calculation.targetEntitlement,
     normalTeacherRateSnapshot: normalRate,
-    paidAmountAtAdjustment: nonNegativeMoney(args.earning.paidAmount),
-    earningStatusAtAdjustment: clean(args.earning.status, 80).toLowerCase(),
+    paidAmountAtAdjustment,
+    earningStatusAtAdjustment,
     teacherPayDisposition: disposition,
     reasonCode,
     reason,
@@ -242,6 +254,8 @@ export function teacherEarningAdjustmentMatches(
     nonNegativeMoney(existing.resultingNetEntitlement) === expected.resultingNetEntitlement &&
     nonNegativeMoney(existing.targetTeacherEntitlement) === expected.targetTeacherEntitlement &&
     nonNegativeMoney(existing.normalTeacherRateSnapshot) === expected.normalTeacherRateSnapshot &&
+    nonNegativeMoney(existing.paidAmountAtAdjustment) === expected.paidAmountAtAdjustment &&
+    clean(existing.earningStatusAtAdjustment, 80) === expected.earningStatusAtAdjustment &&
     clean(existing.teacherPayDisposition, 80) === expected.teacherPayDisposition &&
     clean(existing.reasonCode, 120) === expected.reasonCode &&
     clean(existing.reason, 2000) === expected.reason &&
