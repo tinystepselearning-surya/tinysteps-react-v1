@@ -228,6 +228,7 @@ const ContactPage: FC = () => {
           </div>
           <Link
             to="/book-demo"
+            data-no-booking-intercept="1"
             className="mt-6 inline-flex shrink-0 items-center justify-center rounded-full bg-slate-950 px-6 py-3.5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800 md:mt-0"
           >
             Book Free Demo Assessment
