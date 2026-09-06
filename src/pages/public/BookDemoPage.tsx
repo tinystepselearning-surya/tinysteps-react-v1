@@ -282,22 +282,17 @@ export default function BookDemoPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-4 pb-14 sm:px-6 lg:px-8">
-        <div id="assessment-form" className="rounded-[32px] border border-slate-200 bg-white p-3 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-6">
-          <div className="px-3 pb-3 pt-3 text-center sm:px-6">
-            <h2 className="text-2xl font-bold text-slate-950 sm:text-3xl">Book Your Assessment</h2>
-            <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              Share a few details. Our team will confirm suitable slots on WhatsApp.
-            </p>
-          </div>
+      <section className="mx-auto max-w-3xl px-4 pb-14 sm:px-6 lg:px-8">
+        <div id="assessment-form">
           <PublicAssessmentForm
             source={assessmentSource}
             autoFocusFirstField
+            title="Book Your Assessment"
+            description="Share a few details. Our team will confirm suitable slots on WhatsApp."
+            submitLabel="Book Free 35-Minute Demo"
+            submitAriaLabel="Book Free 35-Minute Demo"
             onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
           />
-          <p className="px-4 pb-3 pt-1 text-center text-xs font-medium text-slate-500 sm:text-sm">
-            Takes less than a minute • No commitment • We&apos;ll contact you on WhatsApp with available assessment slots.
-          </p>
         </div>
       </section>
 
