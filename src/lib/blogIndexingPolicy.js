@@ -42,6 +42,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'grammar-tenses',
   'grammar-conjunctions',
   'grammar-subject-verb',
+  'grammar-creative-writing',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
