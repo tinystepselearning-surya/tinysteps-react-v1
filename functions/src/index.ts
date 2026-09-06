@@ -55,6 +55,7 @@ export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
+export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
 export { createAdminHistoricalAttendanceSession } from "./createAdminHistoricalAttendanceSession";
 export { getAdminHistoricalAttendanceCandidates } from "./getAdminHistoricalAttendanceCandidates";
 export {
@@ -80,7 +81,7 @@ export { backfillTeacherDocs } from "./adminCreateUser";
 export { adminDeleteUser } from "./adminDeleteUser";
 export { adminArchiveUser } from "./adminArchiveUser";
 export { adminUpdateUser } from "./adminUpdateUser";
-export { adminGenerateResetLink } from "./adminGenerateResetLink";
+export { adminGenerateResetLink } from "./adminCreateUser";
 export { adminResetPassword } from "./adminResetPassword";
 export { resolveLoginIdentifier } from "./resolveLoginIdentifier";
 
