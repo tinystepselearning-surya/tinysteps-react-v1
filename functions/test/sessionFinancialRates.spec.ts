@@ -28,7 +28,7 @@ describe('session financial terms snapshots', () => {
     expect(resolveSessionFinancialCurrency(session, enrollment)).toBe('INR');
   });
 
-  it('prefers legacy session-side financial evidence over mutable enrollment values', () => {
+  it('prefers positive legacy session-side financial evidence over mutable enrollment values', () => {
     const session = {
       feeAmount: 350,
       teacherPayPerSession: 150,
@@ -44,7 +44,14 @@ describe('session financial terms snapshots', () => {
     expect(resolveSessionTeacherPayRate(session, enrollment)).toBe(150);
   });
 
-  it('uses enrollment values only when the session has no financial-rate evidence', () => {
+  it('does not treat a legacy zero teacher-pay placeholder as an immutable rate', () => {
+    expect(resolveSessionTeacherPayRate(
+      { teacherPayPerSession: 0 },
+      { teacherPayPerSession: 175 },
+    )).toBe(175);
+  });
+
+  it('uses enrollment values only when the session has no positive financial-rate evidence', () => {
     const enrollment = {
       ratePerSession: 400,
       teacherPayPerSession: 175,
