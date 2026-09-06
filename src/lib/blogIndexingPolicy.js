@@ -48,6 +48,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'grammar-speaking-bridge',
   'speaking-structure',
   'speaking-visual-aids',
+  'speaking-debate-starters',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
