@@ -82,15 +82,16 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
     }
   });
 
-  it('turns the free demo into a verification step instead of an enrolment-pressure step', () => {
+  it('turns the free demo into a focused assessment and decision-support step', () => {
     expect(bookDemo).toContain("getRouteConfig('/book-demo')");
-    expect(bookDemo).toContain('You do not need to decide during the demo.');
-    expect(bookDemo).toContain('What to confirm before you enrol');
-    expect(bookDemo).toContain('The demo is for clarity, not a rushed purchase.');
-    expect(bookDemo).toContain('Does the demo guarantee progress or a particular result?');
-    expect(bookDemo).toContain('no specific result is guaranteed');
+    expect(bookDemo).toContain('What Happens in the Demo Assessment?');
+    expect(bookDemo).toContain('What Will You Understand After the Assessment?');
+    expect(bookDemo).toContain('Priority skill');
+    expect(bookDemo).toContain('Before You Enrol');
+    expect(bookDemo).toContain('Individual learning progress varies.');
+    expect(bookDemo).toContain('Watch Class Samples');
 
-    for (const destination of ['/class-samples', '/testimonials', '/curriculum', '/pricing']) {
+    for (const destination of ['/class-samples', '/curriculum', '/pricing']) {
       expect(bookDemo, destination).toContain(`to="${destination}"`);
     }
   });
