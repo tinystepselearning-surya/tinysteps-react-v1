@@ -270,6 +270,7 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
 
     const db = admin.firestore();
     const sessionRef = db.collection('classSessions').doc(sessionId);
+    const earningRef = db.collection('teacherEarnings').doc(sessionId);
 
     await db.runTransaction(async (tx) => {
       const sessionSnap = await tx.get(sessionRef);
@@ -283,7 +284,10 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
       if (!decisionId || decisionKidId !== kidId || (!pendingStillValid && decisionStatus !== 'applied')) return;
 
       const decisionRef = sessionRef.collection('teacherPayDecisions').doc(decisionId);
-      const decisionSnap = await tx.get(decisionRef);
+      const [decisionSnap, earningSnap] = await Promise.all([
+        tx.get(decisionRef),
+        tx.get(earningRef),
+      ]);
       if (!decisionSnap.exists) return;
 
       tx.set(decisionRef, {
@@ -297,6 +301,18 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
         teacherPayDecisionValidUntilMs: admin.firestore.FieldValue.delete(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
+
+      if (
+        earningSnap.exists &&
+        normalizeTeacherPayDisposition(session.teacherPayDisposition) === 'retain_school'
+      ) {
+        tx.set(earningRef, {
+          teacherPayDecisionStatus: 'applied',
+          attendanceCorrectionId: correctionId,
+          teacherPayDecisionId: decisionId,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
     });
 
     logger.info('onAdminAttendanceCorrectionTeacherPayDecisionLink: linked', {
