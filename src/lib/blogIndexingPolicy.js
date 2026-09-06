@@ -44,6 +44,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'grammar-subject-verb',
   'grammar-creative-writing',
   'grammar-assessment',
+  'grammar-editing-camp',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
