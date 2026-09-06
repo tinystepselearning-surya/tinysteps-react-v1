@@ -151,4 +151,64 @@ describe('B6 Brick 7B2 authoritative teacher-month rollup calculator', () => {
     expect(result.demoEarnings).toBe(0);
     expect(result.demoCompletedCount).toBe(1);
   });
+
+  it('uses Brick 4 posted net entitlement without rewriting paid cash history', () => {
+    const result = computeTeacherMonthlyRollupPayload({
+      monthKey: '2026-08',
+      earnings: [
+        {
+          id: 'session-adjusted',
+          data: {
+            amount: 175,
+            paidAmount: 175,
+            status: 'paid',
+            source: 'session_present_completed',
+            sessionId: 'session-adjusted',
+            teacherPayAdjustmentRequired: false,
+            teacherPayAdjustmentStatus: 'posted',
+            teacherPayNetEntitlementAmount: 0,
+          },
+        },
+      ],
+      payouts: [
+        {
+          id: 'payout-1',
+          data: {
+            amount: 175,
+            status: 'completed',
+            paidAt: '2026-08-31T12:00:00+05:30',
+          },
+        },
+      ],
+    });
+
+    expect(result.totalEarnings).toBe(0);
+    expect(result.pendingEarnings).toBe(0);
+    expect(result.totalSessions).toBe(1);
+    expect(result.payments[0]?.amount).toBe(175);
+  });
+
+  it('ignores incomplete adjustment projections and keeps the original earning amount', () => {
+    const result = computeTeacherMonthlyRollupPayload({
+      monthKey: '2026-08',
+      earnings: [
+        {
+          id: 'session-pending-adjustment',
+          data: {
+            amount: 175,
+            paidAmount: 175,
+            status: 'paid',
+            source: 'session_present_completed',
+            sessionId: 'session-pending-adjustment',
+            teacherPayAdjustmentRequired: true,
+            teacherPayAdjustmentStatus: 'posted',
+            teacherPayNetEntitlementAmount: 0,
+          },
+        },
+      ],
+      payouts: [],
+    });
+
+    expect(result.totalEarnings).toBe(175);
+  });
 });
