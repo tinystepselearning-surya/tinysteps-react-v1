@@ -40,11 +40,10 @@ const QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS = [
   'speaking-debate-starters',
   'speaking-video-feedback',
   'speaking-competition-prep',
-] as const;
-
-const NOINDEX_SPEAKING_SUPPORT_SLUGS = [
   'speaking-family-showcase',
 ] as const;
+
+const NOINDEX_SPEAKING_SUPPORT_SLUGS = [] as const;
 
 const expectedAuthorProfilePath = (author: ReturnType<typeof resolveBlogAuthor>) =>
   author.key === 'founder' ? FOUNDER_PROFILE_PATH : '/team';
