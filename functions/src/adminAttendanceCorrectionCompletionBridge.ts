@@ -6,6 +6,7 @@ import * as logger from 'firebase-functions/logger';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const DEFAULT_DURATION_MINS = 35;
 const COMPLETION_BRIDGE_ALLOWED_STATUSES = new Set([
   '',
   'scheduled',
@@ -47,6 +48,12 @@ function normalizeTime(value: unknown): string | null {
   return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}:${match[3] || '00'}`;
 }
 
+function resolveDurationMins(session: Record<string, unknown>): number {
+  const parsed = Number(session.durationMins ?? session.durationMinutes ?? DEFAULT_DURATION_MINS);
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_DURATION_MINS;
+  return Math.max(10, Math.min(180, Math.round(parsed)));
+}
+
 export function resolveSessionStartMsForAttendanceCorrection(
   session: Record<string, unknown>,
 ): number | null {
@@ -58,6 +65,14 @@ export function resolveSessionStartMsForAttendanceCorrection(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !time) return null;
   const parsed = Date.parse(`${date}T${time}+05:30`);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function resolveSessionEndMsForAttendanceCorrection(
+  session: Record<string, unknown>,
+): number | null {
+  const startMs = resolveSessionStartMsForAttendanceCorrection(session);
+  if (startMs === null) return null;
+  return startMs + resolveDurationMins(session) * 60 * 1000;
 }
 
 export type AdminPresentCompletionBridgePlan = {
@@ -73,7 +88,7 @@ export type AdminPresentCompletionBridgePlan = {
 export function planAdminPresentCorrectionCompletion(input: {
   newStatus: unknown;
   currentSessionStatus: unknown;
-  sessionStartMs: number | null;
+  sessionEndMs: number | null;
   nowMs?: number;
 }): AdminPresentCompletionBridgePlan {
   if (normalizeStatus(input.newStatus) !== 'present') {
@@ -86,7 +101,7 @@ export function planAdminPresentCorrectionCompletion(input: {
   }
 
   const nowMs = Number.isFinite(input.nowMs) ? Number(input.nowMs) : Date.now();
-  if (input.sessionStartMs === null || input.sessionStartMs > nowMs) {
+  if (input.sessionEndMs === null || input.sessionEndMs > nowMs) {
     return { shouldComplete: false, reason: 'future_or_unresolved_session' };
   }
 
@@ -162,7 +177,7 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
     const plan = planAdminPresentCorrectionCompletion({
       newStatus: correction.newStatus,
       currentSessionStatus: session.status,
-      sessionStartMs: resolveSessionStartMsForAttendanceCorrection(session),
+      sessionEndMs: resolveSessionEndMsForAttendanceCorrection(session),
     });
 
     if (!plan.shouldComplete) {
