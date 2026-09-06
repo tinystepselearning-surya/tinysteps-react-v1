@@ -7,6 +7,7 @@ const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relat
 
 const contact = read('src/pages/ContactPage.tsx');
 const bookDemo = read('src/pages/public/BookDemoPage.tsx');
+const header = read('src/components/common/Header.tsx');
 const registry = read('src/lib/routeSeoRegistry.js');
 
 describe('Contact and book-demo intent separation', () => {
@@ -32,6 +33,12 @@ describe('Contact and book-demo intent separation', () => {
     expect(bookDemo).toContain('Before You Enrol');
     expect(bookDemo).toContain('Watch Class Samples');
     expect(bookDemo).toContain('to="/class-samples"');
+  });
+
+  it('makes the global book-demo CTA scroll to the form instead of opening a suppressed modal', () => {
+    expect(header).toContain("if (location.pathname === '/book-demo')");
+    expect(header).toContain("document.getElementById('assessment-form')");
+    expect(header).toContain('window.scrollTo({');
   });
 
   it('gives the two indexable routes distinct build-time metadata', () => {
