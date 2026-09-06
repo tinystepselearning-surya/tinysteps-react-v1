@@ -78,13 +78,19 @@ describe('teacher pay withholding ledger', () => {
     });
   });
 
-  it('uses the earning month as the canonical service month fallback', () => {
+  it('uses the earning month as the canonical service month fallback after audit identity is complete', () => {
     const record = buildTeacherPayWithholdingLedgerRecord({
       sessionId: 'session-1',
       earningId: 'session-1',
       decisionId: 'decision-1',
       normalRate: 175,
-      session: { teacherId: 'teacher-1' },
+      session: {
+        teacherId: 'teacher-1',
+        teacherPayDecisionReasonCode: 'attendance_not_updated',
+        teacherPayDecisionReason: 'Correction reason',
+        teacherPayDecisionCorrectionId: 'correction-1',
+        teacherPayDecisionByUid: 'admin-1',
+      },
       earning: { teacherId: 'teacher-1', monthKey: '2026-09' },
     });
 
@@ -92,7 +98,7 @@ describe('teacher pay withholding ledger', () => {
     expect(record?.monthKey).toBe('2026-09');
   });
 
-  it('fails closed when required accounting identity is unresolved', () => {
+  it('fails closed when required accounting or audit identity is unresolved', () => {
     expect(buildTeacherPayWithholdingLedgerRecord({
       sessionId: 'session-1',
       earningId: 'session-1',
@@ -106,13 +112,22 @@ describe('teacher pay withholding ledger', () => {
       sessionId: 'session-1',
       earningId: 'session-1',
       decisionId: 'decision-1',
-      normalRate: 0,
+      normalRate: 175,
       session: { teacherId: 'teacher-1' },
-      earning: { monthKey: '2026-09' },
+      earning: { teacherId: 'teacher-1', monthKey: '2026-09' },
+    })).toBeNull();
+
+    expect(buildTeacherPayWithholdingLedgerRecord({
+      sessionId: 'session-1',
+      earningId: 'session-1',
+      decisionId: 'decision-1',
+      normalRate: 0,
+      session,
+      earning,
     })).toBeNull();
   });
 
-  it('accepts exact retries but rejects a conflicting decision or amount', () => {
+  it('accepts exact retries but rejects a conflicting decision, audit link, or amount', () => {
     const record = buildTeacherPayWithholdingLedgerRecord({
       sessionId: 'session-1',
       earningId: 'session-1',
@@ -125,6 +140,7 @@ describe('teacher pay withholding ledger', () => {
 
     expect(teacherPayWithholdingLedgerMatches({ ...record }, record!)).toBe(true);
     expect(teacherPayWithholdingLedgerMatches({ ...record, teacherPayDecisionId: 'decision-2' }, record!)).toBe(false);
+    expect(teacherPayWithholdingLedgerMatches({ ...record, attendanceCorrectionId: 'correction-2' }, record!)).toBe(false);
     expect(teacherPayWithholdingLedgerMatches({ ...record, schoolRetainedAmount: 150 }, record!)).toBe(false);
   });
 });
