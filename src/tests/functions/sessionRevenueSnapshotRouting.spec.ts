@@ -16,8 +16,9 @@ describe('session revenue immutable financial terms routing', () => {
     expect(functionsIndexSource).toContain(
       'export { onSessionRevenueWrite } from "./sessionRevenue";',
     );
-    expect(functionsIndexSource).not.toMatch(
-      /export\s*\{[^}]*onSessionRevenueWrite[^}]*\}\s*from\s*["']\.\/revenue["']/s,
+    const compactIndexSource = functionsIndexSource.replace(/\s+/g, ' ');
+    expect(compactIndexSource).not.toMatch(
+      /export\s*\{[^}]*onSessionRevenueWrite[^}]*\}\s*from\s*["']\.\/revenue["']/,
     );
   });
 
