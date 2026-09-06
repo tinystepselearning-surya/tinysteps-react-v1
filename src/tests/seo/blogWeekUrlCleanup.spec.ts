@@ -34,6 +34,7 @@ const indexableRenamedSlugs = new Set([
   'back-to-school-english-confidence-plan',
   'screen-smart-summer-routine-for-kids',
   'grammar-tenses',
+  'grammar-conjunctions',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
