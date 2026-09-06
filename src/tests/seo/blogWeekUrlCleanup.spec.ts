@@ -42,6 +42,7 @@ const indexableRenamedSlugs = new Set([
   'grammar-speaking-bridge',
   'speaking-structure',
   'speaking-visual-aids',
+  'speaking-debate-starters',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
