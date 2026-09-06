@@ -46,6 +46,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'grammar-assessment',
   'grammar-editing-camp',
   'grammar-speaking-bridge',
+  'speaking-structure',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
