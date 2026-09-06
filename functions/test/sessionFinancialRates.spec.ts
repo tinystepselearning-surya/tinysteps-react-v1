@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSessionFinancialTermsSnapshot,
   hasCompleteSessionFinancialTermsSnapshot,
+  isRetainSchoolTeacherPayDecisionActive,
   resolveSessionBillingRate,
   resolveSessionFinancialCurrency,
+  resolveSessionTeacherPayNormalRate,
   resolveSessionTeacherPayRate,
 } from '../src/helpers/sessionFinancialRates';
 
@@ -107,5 +109,70 @@ describe('session financial terms snapshots', () => {
       teacherPayRateSnapshot: 175,
       financialTermsCurrency: 'INR',
     })).toBe(false);
+  });
+
+  it('credits zero while preserving the normal snapshotted teacher rate for an active retain-school decision', () => {
+    const nowMs = 1_000_000;
+    const session = {
+      financialTermsSnapshotVersion: 1,
+      billingRateSnapshot: 400,
+      teacherPayRateSnapshot: 175,
+      financialTermsCurrency: 'INR',
+      teacherPayDisposition: 'retain_school',
+      teacherPayDecisionSource: 'admin-attendance-correction',
+      teacherPayDecisionStatus: 'pending',
+      teacherPayDecisionValidUntilMs: nowMs + 60_000,
+    };
+
+    expect(isRetainSchoolTeacherPayDecisionActive(session, nowMs)).toBe(true);
+    expect(resolveSessionTeacherPayNormalRate(session, {})).toBe(175);
+    expect(resolveSessionTeacherPayRate(session, {})).toBe(0);
+    expect(buildSessionFinancialTermsSnapshot(session, {})).toEqual({
+      financialTermsSnapshotVersion: 1,
+      billingRateSnapshot: 400,
+      teacherPayRateSnapshot: 175,
+      financialTermsCurrency: 'INR',
+    });
+  });
+
+  it('keeps an applied retain-school decision active after the preparation window expires', () => {
+    const session = {
+      teacherPayRateSnapshot: 175,
+      teacherPayDisposition: 'retain_school',
+      teacherPayDecisionSource: 'admin-attendance-correction',
+      teacherPayDecisionStatus: 'applied',
+      teacherPayDecisionValidUntilMs: 1,
+    };
+
+    expect(isRetainSchoolTeacherPayDecisionActive(session, 9_999_999)).toBe(true);
+    expect(resolveSessionTeacherPayRate(session, {})).toBe(0);
+  });
+
+  it('does not retain teacher pay for expired or cancelled pending decisions', () => {
+    const base = {
+      teacherPayRateSnapshot: 175,
+      teacherPayDisposition: 'retain_school',
+      teacherPayDecisionSource: 'admin-attendance-correction',
+    };
+
+    expect(isRetainSchoolTeacherPayDecisionActive({
+      ...base,
+      teacherPayDecisionStatus: 'pending',
+      teacherPayDecisionValidUntilMs: 500,
+    }, 501)).toBe(false);
+    expect(resolveSessionTeacherPayRate({
+      ...base,
+      teacherPayDecisionStatus: 'cancelled',
+      teacherPayDecisionValidUntilMs: 999_999,
+    }, {})).toBe(175);
+  });
+
+  it('never allows an unrelated session field to suppress teacher pay', () => {
+    expect(resolveSessionTeacherPayRate({
+      teacherPayRateSnapshot: 175,
+      teacherPayDisposition: 'retain_school',
+      teacherPayDecisionSource: 'manual-data-edit',
+      teacherPayDecisionStatus: 'applied',
+    }, {})).toBe(175);
   });
 });
