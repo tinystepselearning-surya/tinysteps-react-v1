@@ -112,7 +112,7 @@ describe('session financial terms snapshots', () => {
   });
 
   it('credits zero while preserving the normal snapshotted teacher rate for an active retain-school decision', () => {
-    const nowMs = 1_000_000;
+    const nowMs = Date.now();
     const session = {
       financialTermsSnapshotVersion: 1,
       billingRateSnapshot: 400,
