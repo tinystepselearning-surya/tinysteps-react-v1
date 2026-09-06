@@ -25,6 +25,10 @@ vi.mock('../../pages/admin/LeadFunnelTrendAnalysis', () => ({
   default: () => <div>Lead admission analytics</div>,
 }));
 
+vi.mock('../../pages/admin/AnalyticsV3CertificationSection', () => ({
+  default: () => <div>Analytics V3 certification</div>,
+}));
+
 import DemoSessionsManagement from '../../pages/admin/DemoSessionsManagement';
 
 describe('DemoSessionsManagement analytics placement', () => {
@@ -37,7 +41,20 @@ describe('DemoSessionsManagement analytics placement', () => {
     expect(screen.queryByText('Lead admission analytics')).toBeNull();
   });
 
-  it('renders the lead/admission analytics only when explicitly requested by management analytics', () => {
+  it('waits for both live snapshots instead of presenting plausible zero funnel metrics', () => {
+    render(
+      <DemoSessionsManagement
+        mode="trend_only"
+        showTrendAnalytics
+      />,
+    );
+
+    expect(screen.getByText('Loading Growth & Admissions analytics…')).toBeTruthy();
+    expect(screen.queryByText('Lead admission analytics')).toBeNull();
+    expect(screen.queryByText('Analytics V3 certification')).toBeNull();
+  });
+
+  it('renders the lead/admission analytics and Brick 8 certification when full analytics is explicitly requested', () => {
     render(
       <DemoSessionsManagement
         mode="trend_only"
@@ -48,5 +65,21 @@ describe('DemoSessionsManagement analytics placement', () => {
     );
 
     expect(screen.getByText('Lead admission analytics')).toBeTruthy();
+    expect(screen.getByText('Analytics V3 certification')).toBeTruthy();
+  });
+
+  it('keeps the Brick 8 certification panel out of compact Overview summary mode', () => {
+    render(
+      <DemoSessionsManagement
+        mode="trend_only"
+        showTrendAnalytics
+        leads={[]}
+        demos={[]}
+        analyticsVariant="summary"
+      />,
+    );
+
+    expect(screen.getByText('Lead admission analytics')).toBeTruthy();
+    expect(screen.queryByText('Analytics V3 certification')).toBeNull();
   });
 });
