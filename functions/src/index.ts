@@ -81,7 +81,7 @@ export { backfillTeacherDocs } from "./adminCreateUser";
 export { adminDeleteUser } from "./adminDeleteUser";
 export { adminArchiveUser } from "./adminArchiveUser";
 export { adminUpdateUser } from "./adminUpdateUser";
-export { adminGenerateResetLink } from "./adminCreateUser";
+export { adminGenerateResetLink } from "./adminGenerateResetLink";
 export { adminResetPassword } from "./adminResetPassword";
 export { resolveLoginIdentifier } from "./resolveLoginIdentifier";
 
@@ -188,7 +188,7 @@ export {
 } from "./lifecycle";
 export { auditTeacherTodaySessions } from "./auditTeacherTodaySessions";
 export { auditAllTransferredSessionSnapshotIssues } from "./auditAllTransferredSessionSnapshotIssues";
-export { repairTransferredTeacherSessionSnapshots } from "./repairTransferredTeacherSessionSnapshots";
+export { repairTransferredTeacherSessionSnapshots } from "./repairTransferredSessionSnapshots";
 export { adminRepairTeacherStudentSnapshots } from "./repairTeacherStudentSnapshots";
 export { traceStudentTransferHistory } from "./traceStudentTransferHistory";
 export { adminBackfillEnrollmentCanonicalFields } from "./enrollmentCanonicalBackfill";
