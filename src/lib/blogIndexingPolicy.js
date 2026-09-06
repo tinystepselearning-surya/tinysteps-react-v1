@@ -43,6 +43,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'grammar-conjunctions',
   'grammar-subject-verb',
   'grammar-creative-writing',
+  'grammar-assessment',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
