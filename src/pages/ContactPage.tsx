@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
+import { getRouteConfig } from '../lib/seo';
 import { createFAQPageSchema, createWebPageSchema, SITE_ORIGIN } from '../lib/schemas';
 
 const ADMISSIONS_WHATSAPP_URL =
@@ -12,10 +13,13 @@ const GENERAL_WHATSAPP_URL =
   'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20have%20a%20general%20question.';
 const PHONE_URL = 'tel:+919618398383';
 
-const contactSeoTitle = 'Contact Tiny Steps Learning | Admissions & Parent Support';
+const contactSeo = getRouteConfig('/contact');
+const contactSeoTitle =
+  contactSeo?.title ?? 'Contact Tiny Steps Learning | Admissions & Parent Support';
 const contactSeoDescription =
+  contactSeo?.description ??
   'Contact Tiny Steps Learning for admissions, parent support, school partnerships and general enquiries. Reach our team by WhatsApp, phone or email.';
-const contactCanonicalPath = '/contact';
+const contactCanonicalPath = contactSeo?.canonicalPath ?? '/contact';
 const contactCanonicalUrl = `${SITE_ORIGIN}${contactCanonicalPath}`;
 
 const faqItems = [
@@ -104,7 +108,7 @@ const ContactPage: FC = () => {
               <span className="text-2xl transition group-hover:translate-x-1" aria-hidden="true">→</span>
             </div>
             <p className="mt-4 leading-7 text-slate-600">
-              Questions about Tiny Steps programs, class availability, pricing or assessment bookings.
+              Questions about Tiny Steps programs, class availability, pricing or choosing the right starting point.
             </p>
             <span className="mt-5 inline-flex font-bold text-slate-950">Admissions Support</span>
           </a>
@@ -179,9 +183,9 @@ const ContactPage: FC = () => {
               className="rounded-[26px] border border-emerald-200 bg-emerald-50/70 p-6 transition hover:-translate-y-0.5 hover:shadow-md"
             >
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">WhatsApp</p>
-              <h3 className="mt-2 text-xl font-black text-slate-950">Fastest for parent support</h3>
+              <h3 className="mt-2 text-xl font-black text-slate-950">Fastest for most enquiries</h3>
               <p className="mt-3 text-sm leading-7 text-slate-600">
-                Use WhatsApp for admissions, assessments, scheduling and parent queries.
+                Use WhatsApp for admissions, scheduling and parent queries.
               </p>
               <span className="mt-5 inline-flex font-bold text-emerald-800">Chat on WhatsApp →</span>
             </a>
