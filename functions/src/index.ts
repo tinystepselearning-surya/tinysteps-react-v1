@@ -58,6 +58,12 @@ export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
+export {
+  prepareAdminAttendanceCorrectionTeacherPayDecision,
+  cancelAdminAttendanceCorrectionTeacherPayDecision,
+  onAdminAttendanceCorrectionTeacherPayDecisionLink,
+} from "./adminAttendanceCorrectionTeacherPayDecision";
+export { onTeacherPayWithholdingSync } from "./teacherPayWithholdingSync";
 export { createAdminHistoricalAttendanceSession } from "./createAdminHistoricalAttendanceSession";
 export { getAdminHistoricalAttendanceCandidates } from "./getAdminHistoricalAttendanceCandidates";
 export {
