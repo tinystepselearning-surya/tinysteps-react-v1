@@ -10,7 +10,7 @@ const post: BlogPost = {
   readTime: '16 min read',
   hero: '/blog/hero-speaking.jpg',
   metaDescription:
-    'Prepare kids for public speaking competitions with a step-by-step checklist for rules, timing, rehearsal, delivery, questions, logistics and final-day readiness.',
+    'Prepare kids for public speaking competitions with a step-by-step checklist for rules, timing, rehearsal, delivery, questions and final-day readiness.',
   excerpt:
     'A practical parent checklist for speaking competitions: understand the rules, plan the message, rehearse with purpose, check timing, simulate the event and prepare for the final day without over-coaching.',
   audience: 'Parent',
