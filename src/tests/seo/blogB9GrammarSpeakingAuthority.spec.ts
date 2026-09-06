@@ -24,10 +24,10 @@ const SPEAKING_OWNER = 'speaking-confidence-seeds';
 
 const QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS = [
   'grammar-tenses',
+  'grammar-conjunctions',
 ] as const;
 
 const NOINDEX_GRAMMAR_SUPPORT_SLUGS = [
-  'grammar-conjunctions',
   'grammar-subject-verb',
   'grammar-creative-writing',
   'grammar-assessment',
