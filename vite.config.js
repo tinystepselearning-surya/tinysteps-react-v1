@@ -46,6 +46,20 @@ function canonicalInternalBlogLinks() {
           );
       }
 
+      if (id.includes('/src/pages/HomePage.tsx')) {
+        transformed = transformed.replace(
+          'Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Each session is ${PUBLIC_FACTS.sessionDuration}.',
+          'Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer depending on group size.',
+        );
+      }
+
+      if (id.includes('/src/pages/CurriculumPage.tsx')) {
+        transformed = transformed.replace(
+          'Each live online class runs for ${PUBLIC_FACTS.sessionDuration}, with guided teaching, practice, and teacher feedback.',
+          'Standard 1:1 live online classes run for ${PUBLIC_FACTS.sessionDuration}, with guided teaching, practice, and teacher feedback. Small-group sessions are longer depending on group size.',
+        );
+      }
+
       if (id.includes('/src/pages/public/OnlineEnglishClassesForKidsPage.tsx')) {
         transformed = transformed.replace("stage: 'Ages 9 to 13'", "stage: 'Ages 9 to 12'");
       }
