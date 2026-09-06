@@ -17,6 +17,13 @@ import {
   toIstDateLabel,
   toIstTimeLabel,
 } from './attendanceCorrectionWorkflow';
+import {
+  saveAdminAttendanceCorrectionWithTeacherPayDecision,
+  validateAttendanceCorrectionTeacherPay,
+  type AttendanceCorrectionTeacherPayDisposition,
+  type AttendanceCorrectionTeacherPayReasonCode,
+} from './attendanceCorrectionTeacherPay';
+import TeacherPayHandlingControl from './TeacherPayHandlingControl';
 import HistoricalAttendanceMissingSessionPanel from './HistoricalAttendanceMissingSessionPanel';
 
 type AttendanceCorrectionMode = 'existing' | 'create';
@@ -191,6 +198,8 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [createDurationMins, setCreateDurationMins] = useState(35);
 
   const [newStatus, setNewStatus] = useState<AttendanceCorrectionStatus>('present');
+  const [teacherPayDisposition, setTeacherPayDisposition] = useState<AttendanceCorrectionTeacherPayDisposition>('');
+  const [teacherPayReasonCode, setTeacherPayReasonCode] = useState<AttendanceCorrectionTeacherPayReasonCode>('');
   const [reason, setReason] = useState('');
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [loadingSessions, setLoadingSessions] = useState(false);
@@ -198,6 +207,12 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [saving, setSaving] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [pendingSessionSelection, setPendingSessionSelection] = useState<PendingSessionSelection>(null);
+
+  useEffect(() => {
+    if (newStatus === 'present') return;
+    setTeacherPayDisposition('');
+    setTeacherPayReasonCode('');
+  }, [newStatus]);
 
   useEffect(() => {
     let cancelled = false;
@@ -551,12 +566,31 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     ? resolveAttendanceStatus(selectedSession.attendance[selectedKidId]) || 'not_marked'
     : 'not_marked';
 
+  const validateTeacherPayHandling = () => {
+    const error = validateAttendanceCorrectionTeacherPay({
+      newStatus,
+      teacherPayDisposition,
+      teacherPayReasonCode,
+    });
+    if (!error) return true;
+    toast({ title: 'Teacher payment decision required', description: error, variant: 'destructive' });
+    return false;
+  };
+
   const saveCorrection = async (sessionId: string, kidId: string, trimmedReason: string) => {
-    const correctionFn = httpsCallable<
-      { sessionId: string; kidId: string; newStatus: AttendanceCorrectionStatus; reason: string },
-      { ok: boolean; correctionId?: string }
-    >(functions, 'adminAttendanceCorrection');
-    return correctionFn({ sessionId, kidId, newStatus, reason: trimmedReason });
+    return saveAdminAttendanceCorrectionWithTeacherPayDecision(functions, {
+      sessionId,
+      kidId,
+      newStatus,
+      reason: trimmedReason,
+      teacherPayDisposition,
+      teacherPayReasonCode,
+    });
+  };
+
+  const resetTeacherPayHandling = () => {
+    setTeacherPayDisposition('');
+    setTeacherPayReasonCode('');
   };
 
   const handleSaveExisting = async () => {
@@ -578,6 +612,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       });
       return;
     }
+    if (!validateTeacherPayHandling()) return;
 
     saveInFlightRef.current = true;
     setSaving(true);
@@ -585,9 +620,14 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       await saveCorrection(selectedSessionId, selectedKidId, trimmedReason);
       toast({
         title: 'Attendance corrected',
-        description: 'Attendance correction saved with audit trail.',
+        description: newStatus === 'present'
+          ? teacherPayDisposition === 'retain_school'
+            ? 'Attendance correction saved. Teacher payment is retained by school for this class.'
+            : 'Attendance correction saved. Teacher payment will be credited normally.'
+          : 'Attendance correction saved with audit trail.',
       });
       setReason('');
+      resetTeacherPayHandling();
       setReloadKey((value) => value + 1);
     } catch (err) {
       const error = formatFunctionsError(err);
@@ -636,6 +676,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       });
       return;
     }
+    if (!validateTeacherPayHandling()) return;
 
     let createdSessionId = '';
     saveInFlightRef.current = true;
@@ -664,6 +705,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       setPendingSessionSelection({ sessionId: createdSessionId, kidId: selectedCreateKidId });
       setMode('existing');
       setReason('');
+      resetTeacherPayHandling();
       setReloadKey((value) => value + 1);
       toast({
         title: 'Session created & attendance saved',
@@ -913,6 +955,15 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           </div>
         </>
       )}
+
+      <TeacherPayHandlingControl
+        visible={newStatus === 'present'}
+        disposition={teacherPayDisposition}
+        reasonCode={teacherPayReasonCode}
+        onDispositionChange={setTeacherPayDisposition}
+        onReasonCodeChange={setTeacherPayReasonCode}
+        disabled={saving}
+      />
 
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-600">Reason (required)</label>
