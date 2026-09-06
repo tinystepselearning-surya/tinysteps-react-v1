@@ -19,10 +19,12 @@ const REQUIRED_FACTS = [
   'FREE_DEMO_PRICE',
   'ageMin: 3',
   'ageMax: 12',
+  "label: 'children aged 3–12'",
   'minimumLearners: 5000',
   'minimumCountries: 15',
   'minimumMinutes: 35',
-  'maximumMinutes: 40',
+  'maximumMinutes: 35',
+  "label: '35 minutes'",
   'focusedLaunchInr: 59000',
   'wholeSchoolInr: 149000',
   'multiCampusInr: 299000',
@@ -46,8 +48,9 @@ const REQUIRED_PARITY = [
   ['public/kb.json', 'concluded on 13 June 2026'],
   ['public/kb.json', '₹400 per class'],
   ['public/kb.json', 'free 35-minute 1:1 online demo assessment class'],
+  ['public/kb.json', 'children ages 3–12'],
+  ['public/kb.json', 'Standard 1:1 classes are 35 minutes'],
   ['src/lib/schemas.ts', 'children aged 3–12'],
-  ['src/lib/schemas.ts', '35–40 minutes per session'],
   ['src/pages/ForSchoolsPage.tsx', '₹59,000'],
   ['src/pages/ForSchoolsPage.tsx', '₹1.49 lakh'],
   ['src/pages/ForSchoolsPage.tsx', '₹2.99 lakh'],
@@ -65,6 +68,12 @@ const FORBIDDEN_RENDERED_CLAIMS = [
   [/30[–-]40[^<\n]{0,120}core phonics foundations/gi, 'fixed core-phonics lesson metric'],
   [/36\+ lessons with stage-based progression/gi, 'obsolete 36+ phonics lesson count'],
   [/35[–-]40 minutes,\s*2[–-]3x per week/gi, 'fixed weekly phonics cadence'],
+  [/35\s*[–-]\s*40\s+minutes?/gi, 'obsolete 35–40 minute public session range'],
+  [/Ages 9 to 13/gi, 'public age range extends beyond 12'],
+  [/Ages 8[–-]15/gi, 'advanced grammar age range extends beyond 12'],
+  [/Ages 7[–-]15/gi, 'advanced speaking age range extends beyond 12'],
+  [/Primary pathway:\s*ages 3[–-]10/gi, 'obsolete public phonics age range'],
+  [/For CBSE, ICSE, State Board & International Schools[^<\n]{0,80}Ages 3[–-]10/gi, 'obsolete school public age range'],
   [/Trusted by 250\+ families/gi, 'unsupported 250+ families claim'],
   [/4\.9\s*\/\s*5\s*parent satisfaction/gi, 'unsupported 4.9/5 parent satisfaction claim'],
   [/27 April 2026/gi, 'obsolete Summer Camp start date'],
@@ -141,13 +150,18 @@ if (!viteText.includes("replaceAll('content: post.progress'") || !viteText.inclu
 }
 for (const required of [
   'PHONICS_PAGE_PROGRESS_FAQ_COPY',
-  'Primary pathway: ages 3–10',
+  'P0 public-fact normalization',
+  "sessionDuration: '35 minutes'",
+  "stage: 'Ages 9 to 12'",
+  "age: 'Ages 8–12'",
+  "age: 'Ages 7–12'",
+  'For CBSE, ICSE, State Board & International Schools • Ages 3–12',
+  '35 minutes per 1:1 class',
   'Fresh-word transfer',
   'Individual pace',
-  '35–40 minutes per session',
   '3 levels with stage-based progression',
 ]) {
-  if (!viteText.includes(required)) failures.push(`phonics landing normalization missing ${JSON.stringify(required)}`);
+  if (!viteText.includes(required)) failures.push(`public normalization missing ${JSON.stringify(required)}`);
 }
 
 const files = [];
@@ -201,4 +215,4 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`PASS: public facts consistency (${files.length} public files scanned; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details; phonics landing claims normalized${CHECK_DIST ? '; rendered public HTML clean' : ''})`);
+console.log(`PASS: public facts consistency (${files.length} public files scanned; ages 3–12 and 35-minute standard 1:1 facts enforced; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details${CHECK_DIST ? '; rendered public HTML clean' : ''})`);
