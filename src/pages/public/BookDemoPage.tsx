@@ -253,7 +253,7 @@ export default function BookDemoPage() {
             <h1 className="mt-6 font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-[4rem]">
               Book One Free 35-Minute Demo Assessment Class
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-650 sm:text-xl">
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
               Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or speaking confidence.
             </p>
 
@@ -290,6 +290,9 @@ export default function BookDemoPage() {
               description="Share a few details. Our team will confirm suitable slots on WhatsApp."
               submitLabel="Book Free 35-Minute Demo"
               submitAriaLabel="Book Free 35-Minute Demo"
+              appearance="embedded"
+              helperText="Takes less than a minute • No commitment"
+              secondaryHelperText={null}
               onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
             />
           </div>
@@ -348,8 +351,8 @@ export default function BookDemoPage() {
                   'Your child speaks mainly in short or incomplete sentences.',
                   'Your child lacks confidence while speaking.',
                   'You are unsure which Tiny Steps program or level is appropriate.',
-                ].map((item) => (
-                  <div key={item} className="flex gap-3 border-b border-slate-200/70 pb-4 text-slate-700 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0">
+                ].map((item, index) => (
+                  <div key={item} className={`flex gap-3 border-b border-slate-200/70 pb-4 text-slate-700 ${index >= 4 ? 'sm:border-b-0' : ''}`}>
                     <span aria-hidden="true" className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-orange-600 shadow-sm">✓</span>
                     <span className="text-sm leading-7 sm:text-base">{item}</span>
                   </div>
