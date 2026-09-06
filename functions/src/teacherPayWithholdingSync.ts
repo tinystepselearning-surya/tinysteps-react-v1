@@ -24,6 +24,18 @@ function normalizeStatus(value: unknown): string {
   return clean(value).toLowerCase();
 }
 
+function hasAdjustmentMarker(
+  row: Record<string, unknown>,
+  reason: string,
+  decisionId: string,
+): boolean {
+  return (
+    row.teacherPayAdjustmentRequired === true &&
+    clean(row.teacherPayAdjustmentReason) === reason &&
+    clean(row.teacherPayDecisionId) === decisionId
+  );
+}
+
 function desiredWithholdingStateMatches(
   earning: Record<string, unknown>,
   normalRate: number,
@@ -71,6 +83,7 @@ export const onTeacherPayWithholdingSync = onDocumentWritten(
 
     const normalRate = resolveSessionTeacherPayNormalRate(session, null);
     if (!(normalRate > 0)) {
+      if (hasAdjustmentMarker(earning, 'normal_teacher_rate_unresolved', decisionId)) return;
       logger.error('onTeacherPayWithholdingSync: normal teacher rate unresolved', {
         earningId,
         sessionId,
@@ -89,19 +102,33 @@ export const onTeacherPayWithholdingSync = onDocumentWritten(
     const paidAmount = money(earning.paidAmount);
     const earningStatus = normalizeStatus(earning.status);
     if (paidAmount > 0 || earningStatus === 'paid' || earningStatus === 'settled') {
-      await change.after.ref.set({
-        teacherPayAdjustmentRequired: true,
-        teacherPayAdjustmentReason: 'earning_already_paid',
-        requestedTeacherPayDisposition: 'retain_school',
-        teacherPayDecisionId: decisionId,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
-      await sessionRef.set({
-        teacherPayAdjustmentRequired: true,
-        teacherPayAdjustmentReason: 'earning_already_paid',
-        teacherPayAdjustmentDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
+      const earningMarked = hasAdjustmentMarker(earning, 'earning_already_paid', decisionId);
+      const sessionMarked =
+        session.teacherPayAdjustmentRequired === true &&
+        clean(session.teacherPayAdjustmentReason) === 'earning_already_paid' &&
+        clean(session.teacherPayDecisionId) === decisionId;
+      if (earningMarked && sessionMarked) return;
+
+      const batch = db.batch();
+      if (!earningMarked) {
+        batch.set(change.after.ref, {
+          teacherPayAdjustmentRequired: true,
+          teacherPayAdjustmentReason: 'earning_already_paid',
+          requestedTeacherPayDisposition: 'retain_school',
+          teacherPayDecisionId: decisionId,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+      if (!sessionMarked) {
+        batch.set(sessionRef, {
+          teacherPayAdjustmentRequired: true,
+          teacherPayAdjustmentReason: 'earning_already_paid',
+          teacherPayDecisionId: decisionId,
+          teacherPayAdjustmentDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      }
+      await batch.commit();
       logger.error('onTeacherPayWithholdingSync: earning already paid; adjustment required', {
         earningId,
         sessionId,
@@ -128,21 +155,32 @@ export const onTeacherPayWithholdingSync = onDocumentWritten(
       const latestPaidAmount = money(latestEarning.paidAmount);
       const latestStatus = normalizeStatus(latestEarning.status);
       if (latestPaidAmount > 0 || latestStatus === 'paid' || latestStatus === 'settled') {
-        tx.set(change.after.ref, {
-          teacherPayAdjustmentRequired: true,
-          teacherPayAdjustmentReason: 'earning_already_paid',
-          requestedTeacherPayDisposition: 'retain_school',
-          teacherPayDecisionId: decisionId,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
-        tx.set(sessionRef, {
-          teacherPayAdjustmentRequired: true,
-          teacherPayAdjustmentReason: 'earning_already_paid',
-          teacherPayAdjustmentDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        if (!hasAdjustmentMarker(latestEarning, 'earning_already_paid', decisionId)) {
+          tx.set(change.after.ref, {
+            teacherPayAdjustmentRequired: true,
+            teacherPayAdjustmentReason: 'earning_already_paid',
+            requestedTeacherPayDisposition: 'retain_school',
+            teacherPayDecisionId: decisionId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+        const latestSessionMarked =
+          latestSession.teacherPayAdjustmentRequired === true &&
+          clean(latestSession.teacherPayAdjustmentReason) === 'earning_already_paid' &&
+          clean(latestSession.teacherPayDecisionId) === decisionId;
+        if (!latestSessionMarked) {
+          tx.set(sessionRef, {
+            teacherPayAdjustmentRequired: true,
+            teacherPayAdjustmentReason: 'earning_already_paid',
+            teacherPayDecisionId: decisionId,
+            teacherPayAdjustmentDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
         return;
       }
+
+      if (desiredWithholdingStateMatches(latestEarning, normalRate, decisionId)) return;
 
       tx.set(change.after.ref, {
         amount: 0,
