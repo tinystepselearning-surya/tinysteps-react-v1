@@ -68,7 +68,8 @@ function desiredWithholdingStateMatches(
     money(earning.creditedAmount) === 0 &&
     money(earning.withheldAmount) === normalRate &&
     money(earning.schoolRetainedAmount) === normalRate &&
-    money(earning.teacherPayRateSnapshot) === normalRate
+    money(earning.teacherPayRateSnapshot) === normalRate &&
+    clean(earning.teacherPayWithholdingId) !== ''
   );
 }
 
@@ -113,6 +114,15 @@ export const onTeacherPayWithholdingSync = onDocumentWritten(
 
     const decisionId = clean(session.teacherPayDecisionId);
     if (!decisionId || clean(session.teacherPayDecisionSource) !== SOURCE) return;
+
+    // Brick 3 records are immutable. Never create one while the correction decision
+    // is merely pending, because the attendanceCorrectionId has not been linked yet.
+    if (
+      normalizeStatus(session.teacherPayDecisionStatus) !== 'applied' ||
+      !clean(session.teacherPayDecisionCorrectionId)
+    ) {
+      return;
+    }
 
     const normalRate = resolveSessionTeacherPayNormalRate(session, null);
     if (!(normalRate > 0)) {
@@ -188,6 +198,40 @@ export const onTeacherPayWithholdingSync = onDocumentWritten(
       const latestDecision = (decisionSnap.data() || {}) as Record<string, unknown>;
       if (!isRetainSchoolTeacherPayDecisionActive(latestSession)) return 'no-op';
       if (clean(latestSession.teacherPayDecisionId) !== decisionId) return 'no-op';
+
+      const latestCorrectionId = clean(latestSession.teacherPayDecisionCorrectionId);
+      if (
+        normalizeStatus(latestSession.teacherPayDecisionStatus) !== 'applied' ||
+        !latestCorrectionId
+      ) {
+        return 'awaiting-decision-link';
+      }
+
+      if (
+        !decisionSnap.exists ||
+        normalizeStatus(latestDecision.status) !== 'applied' ||
+        clean(latestDecision.attendanceCorrectionId) !== latestCorrectionId
+      ) {
+        const reason = 'withholding_decision_audit_mismatch';
+        if (!hasLedgerRepairMarker(latestEarning, reason, decisionId)) {
+          tx.set(change.after.ref, {
+            teacherPayLedgerRepairRequired: true,
+            teacherPayLedgerRepairReason: reason,
+            teacherPayDecisionId: decisionId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+        if (!hasLedgerRepairMarker(latestSession, reason, decisionId)) {
+          tx.set(sessionRef, {
+            teacherPayLedgerRepairRequired: true,
+            teacherPayLedgerRepairReason: reason,
+            teacherPayDecisionId: decisionId,
+            teacherPayLedgerRepairDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+        return 'ledger-repair-required';
+      }
 
       const latestPaidAmount = money(latestEarning.paidAmount);
       const latestStatus = normalizeStatus(latestEarning.status);
@@ -298,7 +342,7 @@ export const onTeacherPayWithholdingSync = onDocumentWritten(
           teacherPayDecisionByUid: latestSession.teacherPayDecisionByUid || null,
           teacherPayDecisionByName: latestSession.teacherPayDecisionByName || null,
           teacherPayDecisionAt: latestSession.teacherPayDecisionAt || null,
-          attendanceCorrectionId: latestSession.teacherPayDecisionCorrectionId || null,
+          attendanceCorrectionId: latestCorrectionId,
           expectedAmount: normalRate,
           creditedAmount: 0,
           withheldAmount: normalRate,
