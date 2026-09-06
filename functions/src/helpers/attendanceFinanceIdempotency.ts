@@ -41,6 +41,15 @@ export function resolvePresentFinanceReplayPlan(input: {
   if (input.earningExists) {
     return { shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: false, conflict: 'missing_charge' };
   }
+
+  // A Present attendance record is not proof that finance was already accrued.
+  // Admin attendance correction can legitimately leave a historical session in
+  // Present + not-yet-completed + no-ledger state. Replaying Present in that
+  // state must be allowed to flow through the canonical session revenue trigger
+  // instead of becoming permanently stuck behind a missing-ledger conflict.
+  if (input.wasBillable && !input.alreadyAccrued) {
+    return { shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: true, conflict: null };
+  }
   if (input.wasBillable) {
     return { shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: false, conflict: 'missing_charge_and_earning' };
   }
