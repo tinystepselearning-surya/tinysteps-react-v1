@@ -25,10 +25,10 @@ import {
 
 const bookDemoSeo = getRouteConfig('/book-demo');
 const bookDemoTitle =
-  bookDemoSeo?.title ?? 'Book a Free 35-Minute Demo Class | Tiny Steps Learning';
+  bookDemoSeo?.title ?? 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning';
 const bookDemoDescription =
   bookDemoSeo?.description ??
-  'Book a free 35-minute 1:1 demo assessment for your child. Understand their current phonics, reading, grammar or spoken English level and recommended starting path.';
+  'Book a free 35-minute 1:1 demo assessment for your child. Understand their current phonics, reading, grammar or speaking-confidence level and recommended starting path.';
 const bookDemoCanonicalPath = bookDemoSeo?.canonicalPath ?? '/book-demo';
 const bookDemoCanonicalUrl = `${SITE_ORIGIN}${bookDemoCanonicalPath}`;
 
@@ -252,7 +252,7 @@ export default function BookDemoPage() {
             Book One Free 35-Minute Demo Assessment Class
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-700 md:text-xl">
-            Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or spoken English.
+            Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or speaking confidence.
           </p>
 
           <div className="mx-auto mt-6 flex max-w-4xl flex-wrap items-center justify-center gap-2.5 text-sm font-semibold text-slate-700">
@@ -286,7 +286,6 @@ export default function BookDemoPage() {
         <div id="assessment-form">
           <PublicAssessmentForm
             source={assessmentSource}
-            autoFocusFirstField
             title="Book Your Assessment"
             description="Share a few details. Our team will confirm suitable slots on WhatsApp."
             submitLabel="Book Free 35-Minute Demo"
