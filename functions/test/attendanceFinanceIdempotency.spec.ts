@@ -46,6 +46,17 @@ describe('attendance correction finance idempotency', () => {
     })).toEqual({ shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: true, conflict: null });
   });
 
+  it('allows a stuck present correction with no prior accrual to replay through canonical revenue', () => {
+    expect(resolvePresentFinanceReplayPlan({
+      wasBillable: true,
+      alreadyAccrued: false,
+      chargeExists: false,
+      chargeStatus: '',
+      earningExists: false,
+      earningStatus: '',
+    })).toEqual({ shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: true, conflict: null });
+  });
+
   it('fails closed instead of reactivating a void financial record during present replay', () => {
     expect(resolvePresentFinanceReplayPlan({
       wasBillable: true,
@@ -79,7 +90,7 @@ describe('attendance correction finance idempotency', () => {
     })).toEqual({ shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: false, conflict: 'missing_earning' });
   });
 
-  it('fails closed when both ledger records are missing for already-present attendance', () => {
+  it('fails closed when both ledger records are missing for already-accrued present attendance', () => {
     expect(resolvePresentFinanceReplayPlan({
       wasBillable: true,
       alreadyAccrued: true,

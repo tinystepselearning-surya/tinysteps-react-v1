@@ -55,6 +55,7 @@ export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
+export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
 export { createAdminHistoricalAttendanceSession } from "./createAdminHistoricalAttendanceSession";
 export { getAdminHistoricalAttendanceCandidates } from "./getAdminHistoricalAttendanceCandidates";
 export {
