@@ -35,6 +35,19 @@ describe('blog indexing policy', () => {
       ['phonics-tricky-words', 'week-3-phonics-tricky-words'],
       ['back-to-school-english-confidence-plan', 'week-25-back-to-school-plan'],
       ['screen-smart-summer-routine-for-kids', 'week-26-screen-smart-summer-routine'],
+      ['grammar-tenses', 'week-8-grammar-tenses'],
+      ['grammar-conjunctions', 'week-9-grammar-conjunctions'],
+      ['grammar-subject-verb', 'week-10-grammar-subject-verb'],
+      ['grammar-creative-writing', 'week-11-grammar-creative-writing'],
+      ['grammar-assessment', 'week-17-grammar-assessment'],
+      ['grammar-editing-camp', 'week-20-grammar-editing-camp'],
+      ['grammar-speaking-bridge', 'week-23-grammar-speaking-bridge'],
+      ['speaking-structure', 'week-13-speaking-structure'],
+      ['speaking-visual-aids', 'week-14-speaking-visual-aids'],
+      ['speaking-debate-starters', 'week-15-speaking-debate-starters'],
+      ['speaking-video-feedback', 'week-18-speaking-video-feedback'],
+      ['speaking-competition-prep', 'week-21-speaking-competition-prep'],
+      ['speaking-family-showcase', 'week-24-speaking-family-showcase'],
     ]) {
       expect(shouldNoindexBlogSlug(cleanSlug)).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(cleanSlug)).toBe(true);
@@ -42,16 +55,6 @@ describe('blog indexing policy', () => {
       // Historical source stays a redirect-era identifier rather than an indexable page.
       expect(shouldNoindexBlogSlug(legacySlug)).toBe(true);
       expect(shouldIncludeBlogSlugInSitemap(legacySlug)).toBe(false);
-    }
-  });
-
-  it('keeps remaining renamed roadmap support pages noindex and out of the sitemap', () => {
-    for (const slug of [
-      'grammar-tenses',
-      'speaking-visual-aids',
-    ]) {
-      expect(shouldNoindexBlogSlug(slug)).toBe(true);
-      expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(false);
     }
   });
 

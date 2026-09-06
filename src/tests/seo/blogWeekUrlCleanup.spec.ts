@@ -33,6 +33,19 @@ const indexableRenamedSlugs = new Set([
   'phonics-tricky-words',
   'back-to-school-english-confidence-plan',
   'screen-smart-summer-routine-for-kids',
+  'grammar-tenses',
+  'grammar-conjunctions',
+  'grammar-subject-verb',
+  'grammar-creative-writing',
+  'grammar-assessment',
+  'grammar-editing-camp',
+  'grammar-speaking-bridge',
+  'speaking-structure',
+  'speaking-visual-aids',
+  'speaking-debate-starters',
+  'speaking-video-feedback',
+  'speaking-competition-prep',
+  'speaking-family-showcase',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {

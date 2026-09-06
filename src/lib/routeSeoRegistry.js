@@ -84,9 +84,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/contact': {
-    title: 'Book a Free 35-Minute Demo Assessment | Tiny Steps Learning',
+    title: 'Contact Tiny Steps Learning | Admissions & Parent Support',
     description:
-      'Book one free 35-minute 1:1 online demo assessment class per child before enrolment. No credit card is required.',
+      'Contact Tiny Steps Learning for admissions, parent support, school partnerships and general enquiries. Reach our team by WhatsApp, phone or email.',
     canonicalPath: '/contact',
     ogType: 'website',
   },

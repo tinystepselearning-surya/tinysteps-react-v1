@@ -22,7 +22,7 @@ const bodyText = (slug: string) => bySlug.get(slug)!.body.map((block) => block.c
 const GRAMMAR_OWNER = 'grammar-nouns-to-paragraphs';
 const SPEAKING_OWNER = 'speaking-confidence-seeds';
 
-const GRAMMAR_SUPPORT_SLUGS = [
+const QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS = [
   'grammar-tenses',
   'grammar-conjunctions',
   'grammar-subject-verb',
@@ -32,7 +32,9 @@ const GRAMMAR_SUPPORT_SLUGS = [
   'grammar-speaking-bridge',
 ] as const;
 
-const SPEAKING_SUPPORT_SLUGS = [
+const NOINDEX_GRAMMAR_SUPPORT_SLUGS = [] as const;
+
+const QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS = [
   'speaking-structure',
   'speaking-visual-aids',
   'speaking-debate-starters',
@@ -40,6 +42,8 @@ const SPEAKING_SUPPORT_SLUGS = [
   'speaking-competition-prep',
   'speaking-family-showcase',
 ] as const;
+
+const NOINDEX_SPEAKING_SUPPORT_SLUGS = [] as const;
 
 const expectedAuthorProfilePath = (author: ReturnType<typeof resolveBlogAuthor>) =>
   author.key === 'founder' ? FOUNDER_PROFILE_PATH : '/team';
@@ -78,12 +82,20 @@ describe('B9 grammar and speaking authority guardrails', () => {
     }
   });
 
-  it('keeps the broad grammar and speaking owners indexable while supporting roadmap pages remain noindex', () => {
+  it('keeps broad owners and audited skill pages indexable while unaudited support pages remain noindex', () => {
     expect(shouldNoindexBlogSlug(GRAMMAR_OWNER)).toBe(false);
     expect(shouldNoindexBlogSlug(SPEAKING_OWNER)).toBe(false);
 
-    for (const slug of [...GRAMMAR_SUPPORT_SLUGS, ...SPEAKING_SUPPORT_SLUGS]) {
-      expect(shouldNoindexBlogSlug(slug), `${slug} should remain a support page`).toBe(true);
+    for (const slug of QUALITY_PROMOTED_GRAMMAR_SUPPORT_SLUGS) {
+      expect(shouldNoindexBlogSlug(slug), `${slug} completed the quality promotion gate`).toBe(false);
+    }
+
+    for (const slug of QUALITY_PROMOTED_SPEAKING_SUPPORT_SLUGS) {
+      expect(shouldNoindexBlogSlug(slug), `${slug} completed the quality promotion gate`).toBe(false);
+    }
+
+    for (const slug of [...NOINDEX_GRAMMAR_SUPPORT_SLUGS, ...NOINDEX_SPEAKING_SUPPORT_SLUGS]) {
+      expect(shouldNoindexBlogSlug(slug), `${slug} should remain a support page until audited`).toBe(true);
     }
   });
 
