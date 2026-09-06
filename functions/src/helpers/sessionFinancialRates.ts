@@ -23,14 +23,6 @@ function firstPositive(values: unknown[]): number {
   return 0;
 }
 
-function firstNonNegative(values: unknown[]): number | null {
-  for (const value of values) {
-    const parsed = finiteNonNegative(value);
-    if (parsed != null) return parsed;
-  }
-  return null;
-}
-
 export function resolveSessionBillingRate(
   session: Record<string, unknown> | null | undefined,
   enrollment: Record<string, unknown> | null | undefined,
@@ -57,10 +49,13 @@ export function resolveSessionTeacherPayRate(
   session: Record<string, unknown> | null | undefined,
   enrollment: Record<string, unknown> | null | undefined,
 ): number {
+  // A zero is authoritative only when it is an explicit versioned session snapshot.
+  // Legacy session fields sometimes contain 0 as an unresolved placeholder, so those
+  // must not suppress a later-known positive enrollment rate.
   const explicitSnapshot = finiteNonNegative(session?.[TEACHER_PAY_RATE_SNAPSHOT_FIELD]);
   if (explicitSnapshot != null) return explicitSnapshot;
 
-  const sessionRate = firstNonNegative([
+  const sessionRate = firstPositive([
     session?.teacherPayPerSession,
     session?.teacherRatePerSession,
     session?.teacherPay,
@@ -68,9 +63,9 @@ export function resolveSessionTeacherPayRate(
     session?.teacherFee,
     session?.teacherClassRate,
   ]);
-  if (sessionRate != null) return sessionRate;
+  if (sessionRate > 0) return sessionRate;
 
-  const enrollmentRate = firstNonNegative([
+  return firstPositive([
     enrollment?.teacherPayPerSession,
     enrollment?.teacherRatePerSession,
     enrollment?.teacherPay,
@@ -80,7 +75,6 @@ export function resolveSessionTeacherPayRate(
     enrollment?.rateTeacher,
     enrollment?.payoutRate,
   ]);
-  return enrollmentRate ?? 0;
 }
 
 export function resolveSessionFinancialCurrency(
