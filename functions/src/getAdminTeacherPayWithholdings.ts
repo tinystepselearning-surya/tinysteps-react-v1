@@ -82,6 +82,7 @@ function serializeRow(id: string, data: Record<string, unknown>) {
     teacherPayDecisionId: clean(data.teacherPayDecisionId, 160) || null,
     decidedByUid: clean(data.decidedByUid, 160) || null,
     decidedByName: clean(data.decidedByName, 320) || null,
+    decidedByEmail: clean(data.decidedByEmail, 320) || null,
     decidedAt: serializeTimestamp(data.decidedAt),
     recordedAt: serializeTimestamp(data.recordedAt || data.createdAt),
     status: clean(data.status, 80) || null,
@@ -158,6 +159,8 @@ export const getAdminTeacherPayWithholdings = onCall(
     return {
       ok: true,
       monthKey,
+      reportBasis: 'gross_active_withholdings_before_adjustments',
+      adjustmentsIncluded: false,
       filters: {
         teacherId: teacherId || null,
         reasonCode: reasonCode || null,
