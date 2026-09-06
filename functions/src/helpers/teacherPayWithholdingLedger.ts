@@ -20,11 +20,11 @@ export type TeacherPayWithholdingLedgerRecord = {
   creditedTeacherAmount: 0;
   schoolRetainedAmount: number;
   teacherPayDisposition: 'retain_school';
-  reasonCode: string | null;
-  reason: string | null;
-  attendanceCorrectionId: string | null;
+  reasonCode: string;
+  reason: string;
+  attendanceCorrectionId: string;
   teacherPayDecisionId: string;
-  decidedByUid: string | null;
+  decidedByUid: string;
   decidedByName: string | null;
   decidedByEmail: string | null;
   decidedAt: unknown;
@@ -93,8 +93,23 @@ export function buildTeacherPayWithholdingLedgerRecord(args: {
   const normalRate = positiveMoney(args.normalRate);
   const teacherId = clean(args.earning.teacherId, 160) || clean(args.session.teacherId, 160);
   const serviceMonthKey = resolveServiceMonthKey(args.session, args.earning);
+  const reasonCode = clean(args.session.teacherPayDecisionReasonCode, 120);
+  const reason = clean(args.session.teacherPayDecisionReason, 2000);
+  const attendanceCorrectionId = clean(args.session.teacherPayDecisionCorrectionId, 160);
+  const decidedByUid = clean(args.session.teacherPayDecisionByUid, 160);
 
-  if (!sessionId || !earningId || !decisionId || !normalRate || !teacherId || !serviceMonthKey) {
+  if (
+    !sessionId ||
+    !earningId ||
+    !decisionId ||
+    !normalRate ||
+    !teacherId ||
+    !serviceMonthKey ||
+    !reasonCode ||
+    !reason ||
+    !attendanceCorrectionId ||
+    !decidedByUid
+  ) {
     return null;
   }
 
@@ -123,11 +138,11 @@ export function buildTeacherPayWithholdingLedgerRecord(args: {
     creditedTeacherAmount: 0,
     schoolRetainedAmount: normalRate,
     teacherPayDisposition: 'retain_school',
-    reasonCode: clean(args.session.teacherPayDecisionReasonCode, 120) || null,
-    reason: clean(args.session.teacherPayDecisionReason, 2000) || null,
-    attendanceCorrectionId: clean(args.session.teacherPayDecisionCorrectionId, 160) || null,
+    reasonCode,
+    reason,
+    attendanceCorrectionId,
     teacherPayDecisionId: decisionId,
-    decidedByUid: clean(args.session.teacherPayDecisionByUid, 160) || null,
+    decidedByUid,
     decidedByName: clean(args.session.teacherPayDecisionByName, 320) || null,
     decidedByEmail: clean(args.session.teacherPayDecisionByEmail, 320) || null,
     decidedAt: args.session.teacherPayDecisionAt || null,
@@ -150,6 +165,9 @@ export function teacherPayWithholdingLedgerMatches(
     clean(existing.serviceMonthKey, 20) === expected.serviceMonthKey &&
     clean(existing.monthKey, 20) === expected.monthKey &&
     clean(existing.teacherPayDecisionId, 160) === expected.teacherPayDecisionId &&
+    clean(existing.attendanceCorrectionId, 160) === expected.attendanceCorrectionId &&
+    clean(existing.decidedByUid, 160) === expected.decidedByUid &&
+    clean(existing.reasonCode, 120) === expected.reasonCode &&
     clean(existing.teacherPayDisposition, 80) === 'retain_school' &&
     clean(existing.status, 80) === 'active' &&
     clean(existing.source, 120) === TEACHER_PAY_WITHHOLDING_SOURCE &&
