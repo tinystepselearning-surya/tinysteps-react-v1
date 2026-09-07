@@ -28,13 +28,21 @@ export const TEACHER_PAY_RETENTION_REASON_OPTIONS: Array<{
   { value: 'other', label: 'Other' },
 ];
 
+export function isFinanciallyEarnedAttendanceCorrectionStatus(value: unknown): boolean {
+  const status = String(value || '').trim().toLowerCase();
+  return status === 'present' || status === 'late';
+}
+
 export function validateAttendanceCorrectionTeacherPay(input: {
   newStatus: string;
   teacherPayDisposition: AttendanceCorrectionTeacherPayDisposition;
   teacherPayReasonCode: AttendanceCorrectionTeacherPayReasonCode;
 }): string | null {
-  if (String(input.newStatus || '').trim().toLowerCase() !== 'present') return null;
-  if (!input.teacherPayDisposition) return 'Choose how teacher payment should be handled for this Present correction.';
+  if (!isFinanciallyEarnedAttendanceCorrectionStatus(input.newStatus)) return null;
+  const statusLabel = String(input.newStatus || '').trim().toLowerCase() === 'late' ? 'Late' : 'Present';
+  if (!input.teacherPayDisposition) {
+    return `Choose how teacher payment should be handled for this ${statusLabel} correction.`;
+  }
   if (input.teacherPayDisposition === 'retain_school' && !input.teacherPayReasonCode) {
     return 'Choose a reason for retaining the teacher payment.';
   }
@@ -51,7 +59,7 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
   >(functions, 'adminAttendanceCorrection');
 
   const normalizedStatus = String(input.newStatus || '').trim().toLowerCase();
-  if (normalizedStatus !== 'present') {
+  if (!isFinanciallyEarnedAttendanceCorrectionStatus(normalizedStatus)) {
     const result = await correctionFn({
       sessionId: input.sessionId,
       kidId: input.kidId,
@@ -68,6 +76,7 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
     {
       sessionId: string;
       kidId: string;
+      intendedAttendanceStatus: 'present' | 'late';
       teacherPayDisposition: Exclude<AttendanceCorrectionTeacherPayDisposition, ''>;
       reasonCode: string;
       reason: string;
@@ -80,9 +89,11 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
     { ok: boolean }
   >(functions, 'cancelAdminAttendanceCorrectionTeacherPayDecision');
 
+  const intendedAttendanceStatus = normalizedStatus === 'late' ? 'late' : 'present';
   const prepared = await prepareFn({
     sessionId: input.sessionId,
     kidId: input.kidId,
+    intendedAttendanceStatus,
     teacherPayDisposition: input.teacherPayDisposition as Exclude<AttendanceCorrectionTeacherPayDisposition, ''>,
     reasonCode: input.teacherPayDisposition === 'credit_teacher'
       ? 'normal_correction'
