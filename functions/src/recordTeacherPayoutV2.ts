@@ -118,7 +118,13 @@ export const recordTeacherPayoutV2 = onCall(
       .where('teacherId', '==', teacherId);
 
     const allocation = await db.runTransaction(async (tx) => {
-      const existingPayoutSnap = await tx.get(payoutRef);
+      // Complete the full authoritative read set before any write. Firestore transactions reject
+      // read-after-write sequences, and query reads are already retry-safe under transaction isolation.
+      const [existingPayoutSnap, earningsSnap] = await Promise.all([
+        tx.get(payoutRef),
+        tx.get(earningsQuery),
+      ]);
+
       if (existingPayoutSnap.exists) {
         const existing = (existingPayoutSnap.data() || {}) as Record<string, unknown>;
         const existingTeacherId = clean(existing.teacherId, 160);
@@ -156,7 +162,6 @@ export const recordTeacherPayoutV2 = onCall(
         };
       }
 
-      const earningsSnap = await tx.get(earningsQuery);
       const earnings = earningsSnap.docs
         .map((docSnap) => ({
           id: docSnap.id,
@@ -177,6 +182,7 @@ export const recordTeacherPayoutV2 = onCall(
       if (remaining > 0) {
         const openEarnings = earnings
           .filter((row) => {
+            if (clean(row.data.teacherId, 160) !== teacherId) return false;
             if (status(row.data.status) === 'void') return false;
             const entitlement = resolveTeacherEarningNetEntitlementAmount(row.data);
             if (!(entitlement > 0)) return false;
@@ -188,15 +194,10 @@ export const recordTeacherPayoutV2 = onCall(
         for (const earning of openEarnings) {
           if (remaining <= 0) break;
 
-          const latestSnap = await tx.get(earning.ref);
-          if (!latestSnap.exists) continue;
-          const latest = (latestSnap.data() || {}) as Record<string, unknown>;
-          if (clean(latest.teacherId, 160) !== teacherId || latest.archived === true) continue;
-          if (status(latest.status) === 'void') continue;
-
-          const entitlement = resolveTeacherEarningNetEntitlementAmount(latest);
+          const current = earning.data;
+          const entitlement = resolveTeacherEarningNetEntitlementAmount(current);
           if (!(entitlement > 0)) continue;
-          const currentCashAllocated = resolveTeacherEarningCashAllocatedAmount(latest, entitlement);
+          const currentCashAllocated = resolveTeacherEarningCashAllocatedAmount(current, entitlement);
           const due = Math.max(entitlement - currentCashAllocated, 0);
           if (due <= 0.01) continue;
 
@@ -231,6 +232,7 @@ export const recordTeacherPayoutV2 = onCall(
       } else if (remaining < 0) {
         const paidEarnings = earnings
           .filter((row) => {
+            if (clean(row.data.teacherId, 160) !== teacherId) return false;
             if (status(row.data.status) === 'void') return false;
             const paidRaw = Number(row.data.paidAmount);
             return Number.isFinite(paidRaw) && paidRaw > 0;
@@ -240,20 +242,15 @@ export const recordTeacherPayoutV2 = onCall(
         for (const earning of paidEarnings) {
           if (remaining >= 0) break;
 
-          const latestSnap = await tx.get(earning.ref);
-          if (!latestSnap.exists) continue;
-          const latest = (latestSnap.data() || {}) as Record<string, unknown>;
-          if (clean(latest.teacherId, 160) !== teacherId || latest.archived === true) continue;
-          if (status(latest.status) === 'void') continue;
-
-          const paidRaw = Number(latest.paidAmount);
+          const current = earning.data;
+          const paidRaw = Number(current.paidAmount);
           const currentCashAllocated = Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0;
           if (currentCashAllocated <= 0) continue;
 
           const applyAmount = Math.min(Math.abs(remaining), currentCashAllocated);
           const nextCashAllocated = currentCashAllocated - applyAmount;
           remaining += applyAmount;
-          const entitlement = resolveTeacherEarningNetEntitlementAmount(latest);
+          const entitlement = resolveTeacherEarningNetEntitlementAmount(current);
 
           const updates: Record<string, unknown> = {
             paidAmount: nextCashAllocated,
