@@ -322,9 +322,12 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
       const decisionStatus = clean(session.teacherPayDecisionStatus, 80).toLowerCase();
       const decisionKidId = clean(session.teacherPayDecisionKidId, 160);
       const decisionAttendanceStatus = clean(session.teacherPayDecisionAttendanceStatus, 80).toLowerCase();
+      const linkedSessionCorrectionId = clean(session.teacherPayDecisionCorrectionId, 160);
       const validUntilMs = Number(session.teacherPayDecisionValidUntilMs);
       const pendingStillValid = decisionStatus === 'pending' && Number.isFinite(validUntilMs) && validUntilMs >= Date.now();
-      if (!decisionId || decisionKidId !== kidId || decisionAttendanceStatus !== correctionStatus || (!pendingStillValid && decisionStatus !== 'applied')) return;
+      if (!decisionId || decisionKidId !== kidId || decisionAttendanceStatus !== correctionStatus) return;
+      if (decisionStatus === 'applied' && linkedSessionCorrectionId && linkedSessionCorrectionId !== correctionId) return;
+      if (!pendingStillValid && decisionStatus !== 'applied') return;
 
       const decisionRef = sessionRef.collection('teacherPayDecisions').doc(decisionId);
       const [decisionSnap, earningSnap] = await Promise.all([
@@ -333,7 +336,11 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
       ]);
       if (!decisionSnap.exists) return;
       const decision = (decisionSnap.data() || {}) as Record<string, unknown>;
+      const storedDecisionStatus = clean(decision.status, 80).toLowerCase();
+      const linkedDecisionCorrectionId = clean(decision.attendanceCorrectionId, 160);
       if (clean(decision.intendedAttendanceStatus, 80).toLowerCase() !== correctionStatus) return;
+      if (storedDecisionStatus === 'applied' && linkedDecisionCorrectionId && linkedDecisionCorrectionId !== correctionId) return;
+      if (storedDecisionStatus !== 'pending' && storedDecisionStatus !== 'applied') return;
 
       tx.set(decisionRef, {
         status: 'applied',
