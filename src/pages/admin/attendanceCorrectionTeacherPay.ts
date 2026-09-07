@@ -12,6 +12,7 @@ export type AttendanceCorrectionTeacherPayReasonCode =
 export type AttendanceCorrectionTeacherPayInput = {
   sessionId: string;
   kidId: string;
+  previousStatus?: string;
   newStatus: string;
   reason: string;
   teacherPayDisposition: AttendanceCorrectionTeacherPayDisposition;
@@ -33,12 +34,34 @@ export function isFinanciallyEarnedAttendanceCorrectionStatus(value: unknown): b
   return status === 'present' || status === 'late';
 }
 
+export function isFinanciallyNeutralAttendedStatusTransition(input: {
+  previousStatus?: unknown;
+  newStatus?: unknown;
+}): boolean {
+  const previousStatus = String(input.previousStatus || '').trim().toLowerCase();
+  const newStatus = String(input.newStatus || '').trim().toLowerCase();
+  return (
+    previousStatus !== newStatus &&
+    isFinanciallyEarnedAttendanceCorrectionStatus(previousStatus) &&
+    isFinanciallyEarnedAttendanceCorrectionStatus(newStatus)
+  );
+}
+
+export function requiresAttendanceCorrectionTeacherPayDecision(input: {
+  previousStatus?: unknown;
+  newStatus?: unknown;
+}): boolean {
+  if (!isFinanciallyEarnedAttendanceCorrectionStatus(input.newStatus)) return false;
+  return !isFinanciallyNeutralAttendedStatusTransition(input);
+}
+
 export function validateAttendanceCorrectionTeacherPay(input: {
+  previousStatus?: string;
   newStatus: string;
   teacherPayDisposition: AttendanceCorrectionTeacherPayDisposition;
   teacherPayReasonCode: AttendanceCorrectionTeacherPayReasonCode;
 }): string | null {
-  if (!isFinanciallyEarnedAttendanceCorrectionStatus(input.newStatus)) return null;
+  if (!requiresAttendanceCorrectionTeacherPayDecision(input)) return null;
   const statusLabel = String(input.newStatus || '').trim().toLowerCase() === 'late' ? 'Late' : 'Present';
   if (!input.teacherPayDisposition) {
     return `Choose how teacher payment should be handled for this ${statusLabel} correction.`;
@@ -59,7 +82,11 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
   >(functions, 'adminAttendanceCorrection');
 
   const normalizedStatus = String(input.newStatus || '').trim().toLowerCase();
-  if (!isFinanciallyEarnedAttendanceCorrectionStatus(normalizedStatus)) {
+  const requiresDecision = requiresAttendanceCorrectionTeacherPayDecision({
+    previousStatus: input.previousStatus,
+    newStatus: normalizedStatus,
+  });
+  if (!requiresDecision) {
     const result = await correctionFn({
       sessionId: input.sessionId,
       kidId: input.kidId,
