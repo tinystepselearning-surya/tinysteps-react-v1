@@ -47,8 +47,28 @@ const REQUIRED_STRINGS = [
     value: '3-day digital games trial',
   },
   {
+    path: 'src/config/publicFacts.ts',
+    value: "label: 'children aged 3–12'",
+  },
+  {
+    path: 'src/config/publicFacts.ts',
+    value: "label: '35 minutes'",
+  },
+  {
+    path: 'src/components/forms/TrialForm.tsx',
+    value: 'Child age (3–12)',
+  },
+  {
     path: 'src/pages/PricingPage.tsx',
     value: 'STANDARD_PRICING_SUMMARY',
+  },
+  {
+    path: 'public/kb.json',
+    value: 'children ages 3–12',
+  },
+  {
+    path: 'public/kb.json',
+    value: 'Standard 1:1 classes are 35 minutes',
   },
   {
     path: 'public/kb.json',
@@ -191,6 +211,9 @@ for (const requiredPrice of ['₹400', '₹180', '₹300', '₹4,800']) {
     failures.push(`public/kb.json: /pricing must contain ${requiredPrice}`);
   }
 }
+if (!/Standard 1:1 classes are 35 minutes/i.test(pricingText)) {
+  failures.push('public/kb.json: /pricing must state standard 1:1 classes are 35 minutes');
+}
 
 if (failures.length > 0) {
   console.error(`FAIL: public offer consistency (${failures.length} issue${failures.length === 1 ? '' : 's'})`);
@@ -198,4 +221,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`PASS: public offer consistency (${files.length} files scanned, ${kbEntries.length} KB entries verified)`);
+console.log(`PASS: public offer consistency (${files.length} files scanned, ${kbEntries.length} KB entries verified; ages 3–12 and 35-minute standard 1:1 facts protected)`);
