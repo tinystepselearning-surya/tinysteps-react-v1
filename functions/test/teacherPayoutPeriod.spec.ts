@@ -37,13 +37,16 @@ describe('Brick 5 teacher payout period semantics', () => {
 
   it('fails closed for malformed earning periods or payment dates', () => {
     expect(buildTeacherPayoutPeriod({ earningMonthKey: '2026-8', paidAt: '2026-09-07' })).toBeNull();
+    expect(buildTeacherPayoutPeriod({ earningMonthKey: '2026-13', paidAt: '2026-09-07' })).toBeNull();
     expect(buildTeacherPayoutPeriod({ earningMonthKey: '2026-08', paidAt: 'not-a-date' })).toBeNull();
+    expect(buildTeacherPayoutPeriod({ earningMonthKey: '2026-08', paidAt: '2026-02-31' })).toBeNull();
   });
 
   it('prefers the explicit earningMonthKey and falls back to legacy monthKey', () => {
     expect(resolvePayoutEarningMonthKey({ earningMonthKey: '2026-08', monthKey: '2026-07' })).toBe('2026-08');
     expect(resolvePayoutEarningMonthKey({ monthKey: '2026-07' })).toBe('2026-07');
     expect(resolvePayoutEarningMonthKey({ monthKey: 'invalid' })).toBeNull();
+    expect(resolvePayoutEarningMonthKey({ monthKey: '2026-13' })).toBeNull();
   });
 
   it('caps allocated cash at the Brick 4 net entitlement', () => {
