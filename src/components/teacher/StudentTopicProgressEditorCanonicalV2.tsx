@@ -469,11 +469,14 @@ export default function StudentTopicProgressEditorCanonicalV2({
     setNeedsPractice(starSuggestions.needsPractice);
   }, [existing, starSuggestions, subskillSelectionSource]);
 
+  const resolvedSubskills = subskillSelectionSource === 'stars'
+    ? starSuggestions
+    : { strengths, needsPractice };
   const currentSnapshot = JSON.stringify({
     lessonStatus,
     ratings,
-    strengths: [...strengths].sort(),
-    needsPractice: [...needsPractice].sort(),
+    strengths: [...resolvedSubskills.strengths].sort(),
+    needsPractice: [...resolvedSubskills.needsPractice].sort(),
     subskillSelectionSource,
     teacherRemark,
   });
@@ -487,7 +490,9 @@ export default function StudentTopicProgressEditorCanonicalV2({
     try {
       const actorUid = user?.uid || null;
       const legacy = deriveLegacyProgressFromRatings(ratings, progressSkills);
-      const combinedSubskills = Array.from(new Set([...strengths, ...needsPractice]));
+      const savedStrengths = resolvedSubskills.strengths;
+      const savedNeedsPractice = resolvedSubskills.needsPractice;
+      const combinedSubskills = Array.from(new Set([...savedStrengths, ...savedNeedsPractice]));
       const savedAt = new Date();
       const statusPlan = planTeacherLessonStatusWrite(existing, lessonStatus);
       const statusScalars = buildTeacherLessonStatusScalars(statusPlan, actorUid);
@@ -545,8 +550,8 @@ export default function StudentTopicProgressEditorCanonicalV2({
         })),
         mastery: legacy.mastery,
         checks: legacy.checks,
-        strengthSubskills: [...strengths].sort(),
-        needsPracticeSubskills: [...needsPractice].sort(),
+        strengthSubskills: [...savedStrengths].sort(),
+        needsPracticeSubskills: [...savedNeedsPractice].sort(),
         selectedSubskills: [...combinedSubskills].sort(),
         subskillSelectionSource,
         teacherRemark: teacherRemark || null,

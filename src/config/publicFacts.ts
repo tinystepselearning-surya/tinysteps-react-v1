@@ -9,7 +9,7 @@ import {
 } from './publicOffer';
 
 // Canonical public business facts used by public SEO/AEO/GEO experiences.
-// Identity/programme/session wording is inherited from schemas; standard public
+// Identity/programme wording is inherited from schemas; standard public
 // pricing/demo facts are inherited from publicOffer; institutional and seasonal
 // facts are centralized here. New public claims should resolve through this
 // layer instead of introducing another page-local number.
@@ -28,8 +28,8 @@ export const PUBLIC_SITE_FACTS = {
   },
   liveSessions: {
     minimumMinutes: 35,
-    maximumMinutes: 40,
-    label: SCHEMA_PUBLIC_FACTS.sessionDuration,
+    maximumMinutes: 35,
+    label: '35 minutes',
   },
   deliveryModel: SCHEMA_PUBLIC_FACTS.deliveryModel,
   corePrograms: SCHEMA_PUBLIC_FACTS.corePrograms,

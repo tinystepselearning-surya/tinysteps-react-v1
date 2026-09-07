@@ -27,7 +27,8 @@ Canonical entity:
 - Audience: children ages **3–12**
 - Core programmes: **Phonics, Grammar, Public Speaking**
 - Delivery: **live online classes**
-- Standard session description: **35–40 minutes per session**
+- Standard 1:1 class duration: **35 minutes**
+- Small-group sessions: **longer than 35 minutes depending on group size**
 - Service geography: India and global online learners
 - Canonical website: `https://tinystepslearning.com`
 
