@@ -125,9 +125,12 @@ export const recordTeacherPayoutV2 = onCall(
       .collection('teacherEarnings')
       .where('monthKey', '==', period.earningMonthKey)
       .where('teacherId', '==', teacherId);
+    // Carry sources are only earnings whose Brick 4 adjustment is already posted. Do not scan a
+    // teacher's entire lifetime session ledger; ordinary teachers can legitimately exceed 500 rows.
     const teacherEarningsQuery = db
       .collection('teacherEarnings')
       .where('teacherId', '==', teacherId)
+      .where('teacherPayAdjustmentStatus', '==', 'posted')
       .limit(MAX_TEACHER_LEDGER_ROWS + 1);
     const offsetsQuery = db
       .collection('teacherPaymentOffsets')
@@ -196,7 +199,7 @@ export const recordTeacherPayoutV2 = onCall(
       ) {
         throw new HttpsError(
           'failed-precondition',
-          'Teacher finance ledger exceeds the safe automatic carry limit; finance repair required',
+          'Teacher adjustment/offset ledger exceeds the safe automatic carry limit; finance repair required',
         );
       }
 
@@ -207,11 +210,21 @@ export const recordTeacherPayoutV2 = onCall(
           data: (docSnap.data() || {}) as Record<string, unknown>,
         }))
         .filter((row) => row.data.archived !== true);
-      const allTeacherEarnings = teacherEarningsSnap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ref: docSnap.ref,
-        data: (docSnap.data() || {}) as Record<string, unknown>,
-      }));
+
+      const allTeacherEarningsById = new Map<string, {
+        id: string;
+        ref: admin.firestore.DocumentReference;
+        data: Record<string, unknown>;
+      }>();
+      for (const docSnap of [...earningsSnap.docs, ...teacherEarningsSnap.docs]) {
+        allTeacherEarningsById.set(docSnap.id, {
+          id: docSnap.id,
+          ref: docSnap.ref,
+          data: (docSnap.data() || {}) as Record<string, unknown>,
+        });
+      }
+      const allTeacherEarnings = Array.from(allTeacherEarningsById.values());
+
       const existingOffsets = offsetsSnap.docs.map((docSnap) => ({
         id: docSnap.id,
         data: (docSnap.data() || {}) as Record<string, unknown>,
@@ -336,22 +349,28 @@ export const recordTeacherPayoutV2 = onCall(
           const nextCashAllocated = currentCashAllocated - applyAmount;
           remaining += applyAmount;
           const entitlement = resolveTeacherEarningNetEntitlementAmount(current);
+          const offsetApplied = money(existingOffsetByTarget.get(earning.id), 0);
+          const settlement = resolveTeacherEarningSettlement({
+            entitlementAmount: entitlement,
+            cashPaidAmount: nextCashAllocated,
+            offsetAppliedAmount: offsetApplied,
+          });
 
           const updates: Record<string, unknown> = {
             paidAmount: nextCashAllocated,
+            teacherPayOffsetAppliedAmount: offsetApplied,
+            settlementStatus: settlement.settlementStatus,
+            settledBy: settlement.settledBy,
+            status: settlement.settlementStatus === 'settled' ? 'paid' : settlement.settlementStatus,
             payoutIds: FieldValue.arrayUnion(payoutRef.id),
             lastPayoutAt: paidAt,
             lastPayoutPaymentMonthKey: period.paymentMonthKey,
             updatedAt: FieldValue.serverTimestamp(),
           };
-          if (entitlement <= 0.01 || nextCashAllocated >= entitlement - 0.01) {
-            updates.status = 'paid';
-            updates.paidAt = nextCashAllocated > 0 ? paidAt : FieldValue.delete();
-          } else if (nextCashAllocated <= 0.01) {
-            updates.status = 'unpaid';
-            updates.paidAt = FieldValue.delete();
-          } else {
-            updates.status = 'partial';
+          // Keep the original positive cash paidAt while cash still contributes to a settled earning.
+          // If the refund makes the earning partial/unpaid or removes all cash, clear the aggregate field;
+          // immutable payout rows still retain the complete historical cash timeline.
+          if (settlement.settlementStatus !== 'settled' || nextCashAllocated <= 0.01) {
             updates.paidAt = FieldValue.delete();
           }
 
@@ -365,6 +384,20 @@ export const recordTeacherPayoutV2 = onCall(
           });
         }
       }
+
+      if (remaining > 0.01) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Actual cash amount exceeds outstanding teacher entitlement after carry. Record only the cash actually due.',
+        );
+      }
+      if (remaining < -0.01) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Cash refund exceeds the reversible cash allocated to this earning month.',
+        );
+      }
+      if (Math.abs(remaining) <= 0.01) remaining = 0;
 
       const cashByTarget = new Map<string, number>();
       for (const allocationRow of appliedAllocations) {
@@ -384,6 +417,17 @@ export const recordTeacherPayoutV2 = onCall(
           }
           const sourceAdjustmentId = clean(sourceEarning.data.teacherPayAdjustmentLatestId, 240);
           const sourceAdjustment = sourceAdjustmentId ? adjustmentsById.get(sourceAdjustmentId) : null;
+          const sourceCorrectionId = clean(sourceAdjustment?.attendanceCorrectionId, 160);
+          const sourceTeacherPayDecisionId =
+            clean(sourceAdjustment?.teacherPayDecisionId, 160) ||
+            clean(sourceEarning.data.teacherPayAdjustmentDecisionId, 160);
+          if (!sourceAdjustmentId || !sourceAdjustment || !sourceCorrectionId || !sourceTeacherPayDecisionId) {
+            throw new HttpsError(
+              'failed-precondition',
+              'Carry source is missing immutable Brick 4 adjustment evidence; finance repair required',
+            );
+          }
+
           const offsetRef = db.collection('teacherPaymentOffsets').doc(offset.offsetId);
           tx.create(offsetRef, {
             ledgerVersion: TEACHER_PAYMENT_OFFSET_LEDGER_VERSION,
@@ -395,12 +439,9 @@ export const recordTeacherPayoutV2 = onCall(
             targetEarningId: offset.targetEarningId,
             targetSessionId: offset.targetSessionId,
             targetEarningMonthKey: offset.targetEarningMonthKey,
-            sourceAdjustmentId: sourceAdjustmentId || null,
-            sourceCorrectionId: clean(sourceAdjustment?.attendanceCorrectionId, 160) || null,
-            sourceTeacherPayDecisionId:
-              clean(sourceAdjustment?.teacherPayDecisionId, 160) ||
-              clean(sourceEarning.data.teacherPayAdjustmentDecisionId, 160) ||
-              null,
+            sourceAdjustmentId,
+            sourceCorrectionId,
+            sourceTeacherPayDecisionId,
             payoutId: payoutRef.id,
             idempotencyKey,
             amount: offset.amount,
