@@ -40,7 +40,7 @@ The current public organization identities confirmed for Tiny Steps are:
 
 - Facebook Page — `https://www.facebook.com/profile.php?id=61593673422886`
 - Instagram — `https://www.instagram.com/tiny_steps_oel/`
-- YouTube — `https://www.youtube.com/@TinyStepsLearning-1157`
+- YouTube — `https://www.youtube.com/@TinyStepsLearning_Priya`
 - LinkedIn company page — `https://www.linkedin.com/company/tiny-steps-learning/`
 
 These four URLs are the canonical `EducationalOrganization.sameAs` set and therefore also drive the human-visible `/team` identity cards and footer social links.

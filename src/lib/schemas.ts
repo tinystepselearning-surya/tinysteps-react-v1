@@ -165,7 +165,7 @@ export const organizationSchema = {
   sameAs: [
     'https://www.facebook.com/profile.php?id=61593673422886',
     'https://www.instagram.com/tiny_steps_oel/',
-    'https://www.youtube.com/@TinyStepsLearning-1157',
+    'https://www.youtube.com/@TinyStepsLearning_Priya',
     'https://www.linkedin.com/company/tiny-steps-learning/',
   ]
 };
