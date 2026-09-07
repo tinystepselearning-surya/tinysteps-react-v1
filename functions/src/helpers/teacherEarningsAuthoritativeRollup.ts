@@ -78,15 +78,38 @@ const dayKeyFromTimestampIST = (value: unknown): string | null => {
 
 const resolveTeacherEarningPaidAmount = (
   data: Record<string, unknown>,
-  amount: number,
+  baseAmount: number,
 ): number => {
   const paidRaw = Number(data.paidAmount);
   if (Number.isFinite(paidRaw) && paidRaw > 0) {
-    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+    return Math.min(Math.max(paidRaw, 0), Math.max(baseAmount, 0));
   }
   const status = normalizeFinancialStatus(data.status);
-  if (status === 'paid') return Math.max(amount, 0);
+  if (status === 'paid' || status === 'settled') return Math.max(baseAmount, 0);
   return 0;
+};
+
+/**
+ * Brick 4 keeps the original teacherEarnings.amount and paid cash history immutable.
+ * Once a settled adjustment is posted, teacherPayNetEntitlementAmount becomes the
+ * authoritative entitlement projection for finance totals while amount remains the
+ * original contractual earning evidence.
+ */
+export const resolveTeacherEarningNetEntitlementAmount = (
+  data: Record<string, unknown>,
+): number => {
+  const baseAmount = Math.max(normalizeNumber(data.amount, 0), 0);
+  const adjustmentStatus = normalizeLowerStatus(data.teacherPayAdjustmentStatus);
+  const netRaw = Number(data.teacherPayNetEntitlementAmount);
+  if (
+    adjustmentStatus === 'posted' &&
+    data.teacherPayAdjustmentRequired === false &&
+    Number.isFinite(netRaw) &&
+    netRaw >= 0
+  ) {
+    return Number(netRaw);
+  }
+  return baseAmount;
 };
 
 const isSessionLinkedTeacherEarning = (data: Record<string, unknown>): boolean => {
@@ -127,10 +150,10 @@ const pickPreferredSessionCandidate = (
 /**
  * Pure parity calculator for the authoritative teacher-month rollup.
  *
- * This intentionally mirrors the existing revenue.ts full recompute semantics exactly:
- * archived rows are ignored, session-linked duplicates prefer canonical document ids, non-void
+ * Archived rows are ignored, session-linked duplicates prefer canonical document ids, non-void
  * rows beat void rows, latest timestamp breaks remaining ties, and payout history keeps the five
- * most recent active payout rows.
+ * most recent active payout rows. Brick 4 additionally applies a posted net-entitlement projection
+ * without rewriting the original earning amount or paid cash history.
  */
 export const computeTeacherMonthlyRollupPayload = (input: {
   monthKey: string;
@@ -188,11 +211,12 @@ export const computeTeacherMonthlyRollupPayload = (input: {
   let demoEnrollmentBonusCount = 0;
 
   for (const candidate of selectedCandidates) {
-    const amount = Math.max(normalizeNumber(candidate.data.amount, 0), 0);
-    const paidAmount = resolveTeacherEarningPaidAmount(candidate.data, amount);
-    const pendingAmount = Math.max(amount - paidAmount, 0);
+    const baseAmount = Math.max(normalizeNumber(candidate.data.amount, 0), 0);
+    const entitlementAmount = resolveTeacherEarningNetEntitlementAmount(candidate.data);
+    const paidAmount = resolveTeacherEarningPaidAmount(candidate.data, baseAmount);
+    const pendingAmount = Math.max(entitlementAmount - paidAmount, 0);
 
-    totalEarnings += amount;
+    totalEarnings += entitlementAmount;
     pendingEarnings += pendingAmount;
 
     if (isSessionLinkedTeacherEarning(candidate.data)) {
@@ -201,7 +225,7 @@ export const computeTeacherMonthlyRollupPayload = (input: {
     }
 
     if (isDemoTeacherEarningSource(candidate.source)) {
-      demoEarnings += amount;
+      demoEarnings += entitlementAmount;
       if (candidate.source === 'demo_completed') demoCompletedCount += 1;
       if (candidate.source === 'demo_enrolled_bonus') demoEnrollmentBonusCount += 1;
     }

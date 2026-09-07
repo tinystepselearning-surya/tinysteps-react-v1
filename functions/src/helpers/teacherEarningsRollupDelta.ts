@@ -1,3 +1,5 @@
+import { resolveTeacherEarningNetEntitlementAmount } from './teacherEarningsAuthoritativeRollup';
+
 export type TeacherMonthRollupTarget = {
   teacherId: string;
   monthKey: string;
@@ -47,16 +49,16 @@ const nonNegativeNumber = (value: unknown): number => {
 const authoritativeAmount = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(value, 0) : 0;
 
-const resolvePaidAmount = (data: Record<string, unknown>, amount: number): number => {
+const resolvePaidAmount = (data: Record<string, unknown>, baseAmount: number): number => {
   const explicitRaw = Number(data.paidAmount);
   if (Number.isFinite(explicitRaw) && explicitRaw > 0) {
-    return Math.min(Math.max(explicitRaw, 0), amount);
+    return Math.min(Math.max(explicitRaw, 0), baseAmount);
   }
 
   const status = normalizeStatus(data.status);
   // Authoritative normalizeFinancialStatus maps `settled` -> `paid`, but does not map `processed`.
   if (status === 'paid' || status === 'settled') {
-    return amount;
+    return baseAmount;
   }
   return 0;
 };
@@ -149,20 +151,21 @@ export const teacherEarningContributionFor = (
     return { ...ZERO_CONTRIBUTION };
   }
 
-  const amount = authoritativeAmount(data.amount);
-  const paidAmount = resolvePaidAmount(data, amount);
-  const pending = Math.max(amount - paidAmount, 0);
+  const baseAmount = authoritativeAmount(data.amount);
+  const entitlementAmount = resolveTeacherEarningNetEntitlementAmount(data);
+  const paidAmount = resolvePaidAmount(data, baseAmount);
+  const pending = Math.max(entitlementAmount - paidAmount, 0);
   const sessionLinked = isSessionLinked(data);
   const demoCompletion = isDemoCompletion(data);
   const demoEnrollmentBonus = isDemoEnrollmentBonus(data);
   const demo = demoCompletion || demoEnrollmentBonus;
 
   return {
-    totalEarnings: amount,
+    totalEarnings: entitlementAmount,
     pendingEarnings: pending,
     totalSessions: sessionLinked ? 1 : 0,
     sessionsCompleted: sessionLinked ? 1 : 0,
-    demoEarnings: demo ? amount : 0,
+    demoEarnings: demo ? entitlementAmount : 0,
     demoCompletedCount: demoCompletion ? 1 : 0,
     demoEnrollmentBonusCount: demoEnrollmentBonus ? 1 : 0,
   };
@@ -260,6 +263,9 @@ export const isCanonicalSessionCreateFastPathCandidate = (input: {
  * - session deletes, uncertified/non-canonical session creates, archive changes and duplicate rows
  *   require recompute because legacy candidate selection can change;
  * - teacher/month moves require both affected months to recompute.
+ *
+ * Brick 4 net-entitlement metadata is intentionally contribution-bearing. A posted adjustment
+ * therefore produces an exact delta instead of being mistaken for a finance-neutral metadata write.
  */
 export const planTeacherEarningsRollupChange = (input: {
   earningId: string;

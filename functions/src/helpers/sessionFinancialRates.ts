@@ -42,6 +42,18 @@ export function isRetainSchoolTeacherPayDecisionActive(
   if (normalizeTeacherPayDisposition(session.teacherPayDisposition) !== 'retain_school') return false;
   if (String(session.teacherPayDecisionSource || '').trim() !== ADMIN_ATTENDANCE_CORRECTION_SOURCE) return false;
 
+  const decisionId = String(session.teacherPayDecisionId || '').trim();
+  const adjustmentStatus = String(session.teacherPayAdjustmentStatus || '').trim().toLowerCase();
+  const adjustmentDecisionId = String(session.teacherPayAdjustmentDecisionId || '').trim();
+  if (
+    decisionId &&
+    adjustmentStatus === 'posted' &&
+    adjustmentDecisionId === decisionId &&
+    session.teacherPayAdjustmentRequired === false
+  ) {
+    return false;
+  }
+
   const status = String(session.teacherPayDecisionStatus || '').trim().toLowerCase();
   if (status === 'applied') return true;
   if (status !== 'pending') return false;
