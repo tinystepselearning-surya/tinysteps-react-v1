@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
 						<a href="https://www.instagram.com/tiny_steps_oel/" aria-label="Tiny Steps on Instagram" className="interactive-link hover:text-primary-500">
 							Ig
 						</a>
-						<a href="https://www.youtube.com/@TinyStepsLearning-1157" aria-label="Tiny Steps on YouTube" className="interactive-link hover:text-primary-500">
+						<a href="https://www.youtube.com/@TinyStepsLearning_Priya" aria-label="Tiny Steps on YouTube" className="interactive-link hover:text-primary-500">
 							YT
 						</a>
 					</div>
@@ -60,7 +60,7 @@ const Footer: React.FC = () => {
 					<h4 className="font-semibold text-white">Contact</h4>
 					<ul className="mt-4 space-y-2 text-sm">
 						<li>Phone: +1 (555) 123-4567</li>
-						<li>Email: Priya@tinystepslearning.com</li>
+						<li>Email: RavaliPriyaVannala@tinystepslearning.com</li>
 						<li>Address: 123 Learning Lane, Wonder City</li>
 					</ul>
 				</div>
