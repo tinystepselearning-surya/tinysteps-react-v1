@@ -12,6 +12,7 @@ import {
   toIstDateLabel,
 } from './attendanceCorrectionWorkflow';
 import {
+  isFinanciallyEarnedAttendanceCorrectionStatus,
   saveAdminAttendanceCorrectionWithTeacherPayDecision,
   validateAttendanceCorrectionTeacherPay,
   type AttendanceCorrectionTeacherPayDisposition,
@@ -107,7 +108,7 @@ export default function HistoricalAttendanceMissingSessionPanel() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (status === 'present') return;
+    if (isFinanciallyEarnedAttendanceCorrectionStatus(status)) return;
     setTeacherPayDisposition('');
     setTeacherPayReasonCode('');
   }, [status]);
@@ -297,12 +298,13 @@ export default function HistoricalAttendanceMissingSessionPanel() {
       setReason('');
       setTeacherPayDisposition('');
       setTeacherPayReasonCode('');
+      const financiallyEarned = isFinanciallyEarnedAttendanceCorrectionStatus(status);
       toast({
         title: created.alreadyExisted ? 'Historical session found & corrected' : 'Historical attendance created',
-        description: status === 'present'
+        description: financiallyEarned
           ? teacherPayDisposition === 'retain_school'
-            ? `${selectedEnrollment.courseLabel} • ${date} • present. Teacher payment retained by school.`
-            : `${selectedEnrollment.courseLabel} • ${date} • present. Teacher payment credited normally.`
+            ? `${selectedEnrollment.courseLabel} • ${date} • ${status}. Teacher payment retained by school.`
+            : `${selectedEnrollment.courseLabel} • ${date} • ${status}. Teacher payment credited normally.`
           : `${selectedEnrollment.courseLabel} • ${date} • ${status}. Previous course/teacher identity was preserved.`,
       });
     } catch (error) {
@@ -427,7 +429,7 @@ export default function HistoricalAttendanceMissingSessionPanel() {
         </div>
 
         <TeacherPayHandlingControl
-          visible={status === 'present'}
+          visible={isFinanciallyEarnedAttendanceCorrectionStatus(status)}
           disposition={teacherPayDisposition}
           reasonCode={teacherPayReasonCode}
           onDispositionChange={setTeacherPayDisposition}
