@@ -84,6 +84,11 @@ describe('StudentTopicProgressEditorCanonicalV2 star-derived subskills', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Rate Letter recognition 4' }));
 
+    await waitFor(() => {
+      const [strengthButton] = screen.getAllByRole('button', { name: 'Letter recognition' });
+      expect(strengthButton.className).toContain('bg-emerald-600');
+    });
+
     const letterButtons = screen.getAllByRole('button', { name: 'Letter recognition' });
     expect(letterButtons).toHaveLength(2);
     fireEvent.click(letterButtons[1]);
@@ -103,8 +108,16 @@ describe('StudentTopicProgressEditorCanonicalV2 star-derived subskills', () => {
       selectedSubskills: ['Letter recognition'],
     });
 
+    await screen.findByText(/lesson progress saved/i);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy());
+
     fireEvent.click(screen.getByRole('button', { name: 'Use star suggestions' }));
     await screen.findByText(/suggested from the skill stars/i);
+
+    await waitFor(() => {
+      const [strengthButton] = screen.getAllByRole('button', { name: 'Letter recognition' });
+      expect(strengthButton.className).toContain('bg-emerald-600');
+    });
 
     await waitFor(() => expect(saveButton.disabled).toBe(false));
     fireEvent.click(saveButton);
