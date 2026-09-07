@@ -29,7 +29,7 @@ export default function TeacherPayHandlingControl({
       <div>
         <div className="text-sm font-semibold text-slate-900">Teacher Payment Handling</div>
         <p className="mt-1 text-xs text-slate-600">
-          Required for Present attendance corrections. Parent billing is unchanged; this only decides teacher compensation.
+          Required for Present or Late attendance corrections. Parent billing is unchanged; this only decides teacher compensation.
         </p>
       </div>
 
