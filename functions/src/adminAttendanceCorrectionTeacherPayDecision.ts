@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
+import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import { normalizeTeacherPayDisposition, type TeacherPayDisposition } from './helpers/sessionFinancialRates';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -116,12 +117,16 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
     const payload = (request.data || {}) as Record<string, unknown>;
     const sessionId = clean(payload.sessionId, 160);
     const kidId = clean(payload.kidId, 160);
+    const intendedAttendanceStatus = clean(payload.intendedAttendanceStatus, 80).toLowerCase();
     const disposition = normalizeTeacherPayDisposition(payload.teacherPayDisposition);
     const reasonCode = clean(payload.reasonCode, 120).toLowerCase();
     const reason = clean(payload.reason, 2000);
 
     if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId is required.');
     if (!kidId) throw new HttpsError('invalid-argument', 'kidId is required.');
+    if (!isFinanciallyEarnedAttendanceStatus(intendedAttendanceStatus)) {
+      throw new HttpsError('invalid-argument', 'intendedAttendanceStatus must be present or late.');
+    }
     if (!disposition) throw new HttpsError('invalid-argument', 'teacherPayDisposition is required.');
     if (!reason) throw new HttpsError('invalid-argument', 'reason is required.');
     validateDispositionReason(disposition, reasonCode);
@@ -174,7 +179,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
         decisionId: decisionRef.id,
         sessionId,
         kidId,
-        intendedAttendanceStatus: 'present',
+        intendedAttendanceStatus,
         previousAttendanceStatus: previousStatus,
         teacherPayDisposition: disposition,
         reasonCode: disposition === 'credit_teacher' ? 'normal_correction' : reasonCode,
@@ -206,6 +211,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
           teacherPayDecisionSource: SOURCE,
           teacherPayDecisionStatus: 'pending',
           teacherPayDecisionFinancialHandlingMode: financialHandlingMode,
+          teacherPayDecisionAttendanceStatus: intendedAttendanceStatus,
           teacherPayDecisionReasonCode: disposition === 'credit_teacher' ? 'normal_correction' : reasonCode,
           teacherPayDecisionReason: reason,
           teacherPayDecisionByUid: uid,
@@ -223,6 +229,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
     logger.info('prepareAdminAttendanceCorrectionTeacherPayDecision: prepared', {
       sessionId,
       kidId,
+      intendedAttendanceStatus,
       disposition,
       decisionId: decisionRef.id,
       financialHandlingMode,
@@ -232,6 +239,7 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
     return {
       ok: true,
       decisionId: decisionRef.id,
+      intendedAttendanceStatus,
       teacherPayDisposition: disposition,
       financialHandlingMode,
       validUntilMs,
@@ -294,7 +302,8 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
     if (!snap) return;
     const correction = (snap.data() || {}) as Record<string, unknown>;
     if (clean(correction.source, 120) !== SOURCE) return;
-    if (clean(correction.newStatus, 80).toLowerCase() !== 'present') return;
+    const correctionStatus = clean(correction.newStatus, 80).toLowerCase();
+    if (!isFinanciallyEarnedAttendanceStatus(correctionStatus)) return;
 
     const sessionId = clean(event.params.sessionId, 160);
     const correctionId = clean(event.params.correctionId, 160);
@@ -312,9 +321,10 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
       const decisionId = clean(session.teacherPayDecisionId, 160);
       const decisionStatus = clean(session.teacherPayDecisionStatus, 80).toLowerCase();
       const decisionKidId = clean(session.teacherPayDecisionKidId, 160);
+      const decisionAttendanceStatus = clean(session.teacherPayDecisionAttendanceStatus, 80).toLowerCase();
       const validUntilMs = Number(session.teacherPayDecisionValidUntilMs);
       const pendingStillValid = decisionStatus === 'pending' && Number.isFinite(validUntilMs) && validUntilMs >= Date.now();
-      if (!decisionId || decisionKidId !== kidId || (!pendingStillValid && decisionStatus !== 'applied')) return;
+      if (!decisionId || decisionKidId !== kidId || decisionAttendanceStatus !== correctionStatus || (!pendingStillValid && decisionStatus !== 'applied')) return;
 
       const decisionRef = sessionRef.collection('teacherPayDecisions').doc(decisionId);
       const [decisionSnap, earningSnap] = await Promise.all([
@@ -322,6 +332,8 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
         tx.get(earningRef),
       ]);
       if (!decisionSnap.exists) return;
+      const decision = (decisionSnap.data() || {}) as Record<string, unknown>;
+      if (clean(decision.intendedAttendanceStatus, 80).toLowerCase() !== correctionStatus) return;
 
       tx.set(decisionRef, {
         status: 'applied',
@@ -355,6 +367,7 @@ export const onAdminAttendanceCorrectionTeacherPayDecisionLink = onDocumentCreat
       sessionId,
       correctionId,
       kidId,
+      correctionStatus,
     });
   },
 );
