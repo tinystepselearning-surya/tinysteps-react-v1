@@ -16,7 +16,17 @@ function clean(value: unknown, maxLen = 160): string {
 
 export function normalizeTeacherEarningMonthKey(value: unknown): string | null {
   const raw = clean(value, 20);
-  return /^\d{4}-\d{2}$/.test(raw) ? raw : null;
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(raw) ? raw : null;
+}
+
+export function monthKeyFromDateIST(value: Date): string {
+  const ist = new Date(value.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
+  return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+export function dayKeyFromDateIST(value: Date): string {
+  const ist = new Date(value.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
+  return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
 }
 
 export function parseTeacherPayoutPaidAt(value: unknown): Date | null {
@@ -24,9 +34,12 @@ export function parseTeacherPayoutPaidAt(value: unknown): Date | null {
   if (typeof value === 'string') {
     const raw = value.trim();
     if (!raw) return null;
-    const parsed = /^\d{4}-\d{2}-\d{2}$/.test(raw)
-      ? new Date(`${raw}T12:00:00+05:30`)
-      : new Date(raw);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      const parsed = new Date(`${raw}T12:00:00+05:30`);
+      if (Number.isNaN(parsed.getTime()) || dayKeyFromDateIST(parsed) !== raw) return null;
+      return parsed;
+    }
+    const parsed = new Date(raw);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
   if (typeof value === 'number') {
@@ -46,16 +59,6 @@ export function parseTeacherPayoutPaidAt(value: unknown): Date | null {
     }
   }
   return null;
-}
-
-export function monthKeyFromDateIST(value: Date): string {
-  const ist = new Date(value.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
-  return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-
-export function dayKeyFromDateIST(value: Date): string {
-  const ist = new Date(value.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
-  return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
 }
 
 export function buildTeacherPayoutPeriod(args: {
