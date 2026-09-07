@@ -40,6 +40,7 @@ describe('Finance Brick 6 Present/Late policy routing', () => {
     expect(correctionWorkflowSource).toContain('isFinanciallyNeutralAttendedStatusTransition');
     expect(correctionWorkflowSource).toContain('previousStatus !== newStatus');
     expect(correctionWorkflowSource).toContain('if (!requiresDecision)');
+    expect(mainPanelSource).toContain('Existing financial records remain unchanged.');
   });
 
   it('binds prepared teacher-pay decisions to the exact Present/Late correction status', () => {
@@ -49,8 +50,14 @@ describe('Finance Brick 6 Present/Late policy routing', () => {
     expect(correctionDecisionSource).toContain('decision.intendedAttendanceStatus');
   });
 
+  it('does not relink an older applied pay decision to a later neutral attendance correction', () => {
+    expect(correctionDecisionSource).toContain('linkedSessionCorrectionId !== correctionId');
+    expect(correctionDecisionSource).toContain('linkedDecisionCorrectionId !== correctionId');
+  });
+
   it('exposes payment handling for financially-earned corrections on both admin surfaces', () => {
     expect(mainPanelSource).toContain('requiresAttendanceCorrectionTeacherPayDecision');
+    expect(mainPanelSource).toContain('visible={teacherPayDecisionRequired}');
     expect(historicalPanelSource).toContain('isFinanciallyEarnedAttendanceCorrectionStatus(status)');
     expect(historicalPanelSource).toContain('visible={isFinanciallyEarnedAttendanceCorrectionStatus(status)}');
   });
