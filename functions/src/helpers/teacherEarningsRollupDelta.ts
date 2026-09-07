@@ -51,8 +51,8 @@ const authoritativeAmount = (value: unknown): number =>
 
 const resolvePaidAmount = (data: Record<string, unknown>, baseAmount: number): number => {
   const explicitRaw = Number(data.paidAmount);
-  if (Number.isFinite(explicitRaw) && explicitRaw > 0) {
-    return Math.min(Math.max(explicitRaw, 0), baseAmount);
+  if (data.paidAmount !== undefined && data.paidAmount !== null && Number.isFinite(explicitRaw) && explicitRaw >= 0) {
+    return Math.max(explicitRaw, 0);
   }
 
   const status = normalizeStatus(data.status);
@@ -114,6 +114,9 @@ const paidLikeStatusToken = (value: unknown): string => {
 const payoutStateSignature = (data: Record<string, unknown>): string =>
   JSON.stringify({
     paidAmount: nonNegativeNumber(data.paidAmount),
+    teacherPayOffsetAppliedAmount: nonNegativeNumber(data.teacherPayOffsetAppliedAmount),
+    settlementStatus: normalizeStatus(data.settlementStatus),
+    settledBy: normalizeStatus(data.settledBy),
     paidAt: timestampToken(data.paidAt),
     payoutIds: normalizedStringList(data.payoutIds),
     reversedPaidAmount: nonNegativeNumber(data.reversedPaidAmount),
@@ -154,7 +157,8 @@ export const teacherEarningContributionFor = (
   const baseAmount = authoritativeAmount(data.amount);
   const entitlementAmount = resolveTeacherEarningNetEntitlementAmount(data);
   const paidAmount = resolvePaidAmount(data, baseAmount);
-  const pending = Math.max(entitlementAmount - paidAmount, 0);
+  const offsetApplied = nonNegativeNumber(data.teacherPayOffsetAppliedAmount);
+  const pending = Math.max(entitlementAmount - paidAmount - offsetApplied, 0);
   const sessionLinked = isSessionLinked(data);
   const demoCompletion = isDemoCompletion(data);
   const demoEnrollmentBonus = isDemoEnrollmentBonus(data);

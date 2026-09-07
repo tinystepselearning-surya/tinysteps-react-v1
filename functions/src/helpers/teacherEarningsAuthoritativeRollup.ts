@@ -22,6 +22,8 @@ export type TeacherMonthlyRollupPayment = {
 export type TeacherMonthlyRollupPayload = {
   month: string;
   totalEarnings: number;
+  cashPaid: number;
+  offsetApplied: number;
   pendingEarnings: number;
   totalSessions: number;
   sessionsCompleted: number;
@@ -81,8 +83,8 @@ const resolveTeacherEarningPaidAmount = (
   baseAmount: number,
 ): number => {
   const paidRaw = Number(data.paidAmount);
-  if (Number.isFinite(paidRaw) && paidRaw > 0) {
-    return Math.min(Math.max(paidRaw, 0), Math.max(baseAmount, 0));
+  if (data.paidAmount !== undefined && data.paidAmount !== null && Number.isFinite(paidRaw) && paidRaw >= 0) {
+    return Math.max(paidRaw, 0);
   }
   const status = normalizeFinancialStatus(data.status);
   if (status === 'paid' || status === 'settled') return Math.max(baseAmount, 0);
@@ -203,6 +205,8 @@ export const computeTeacherMonthlyRollupPayload = (input: {
   ].filter((candidate) => candidate.status !== 'void');
 
   let totalEarnings = 0;
+  let cashPaid = 0;
+  let offsetApplied = 0;
   let pendingEarnings = 0;
   let totalSessions = 0;
   let sessionsCompleted = 0;
@@ -214,9 +218,13 @@ export const computeTeacherMonthlyRollupPayload = (input: {
     const baseAmount = Math.max(normalizeNumber(candidate.data.amount, 0), 0);
     const entitlementAmount = resolveTeacherEarningNetEntitlementAmount(candidate.data);
     const paidAmount = resolveTeacherEarningPaidAmount(candidate.data, baseAmount);
-    const pendingAmount = Math.max(entitlementAmount - paidAmount, 0);
+    const offsetRaw = Number(candidate.data.teacherPayOffsetAppliedAmount);
+    const earningOffsetApplied = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+    const pendingAmount = Math.max(entitlementAmount - paidAmount - earningOffsetApplied, 0);
 
     totalEarnings += entitlementAmount;
+    cashPaid += paidAmount;
+    offsetApplied += earningOffsetApplied;
     pendingEarnings += pendingAmount;
 
     if (isSessionLinkedTeacherEarning(candidate.data)) {
@@ -257,6 +265,8 @@ export const computeTeacherMonthlyRollupPayload = (input: {
   return {
     month: input.monthKey,
     totalEarnings,
+    cashPaid,
+    offsetApplied,
     pendingEarnings,
     totalSessions,
     sessionsCompleted,

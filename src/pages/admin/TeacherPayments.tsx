@@ -17,6 +17,14 @@ import { db, functions } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { buildTeacherPaymentSelectOptions } from './paymentSelectOptions';
 import {
+  buildTeacherPayoutV2Request,
+  dateInputValue,
+  resolveTeacherCashPaidAmount,
+  resolveTeacherNetEntitlementAmount,
+  resolveTeacherOffsetAppliedAmount,
+  resolveTeacherPaymentStatusLabel,
+} from './teacherPaymentsFinance';
+import {
   PAYMENT_USER_SEARCH_DEBOUNCE_MS,
   PAYMENT_USER_SEARCH_MIN_CHARS,
   searchPaymentUsers,
@@ -108,20 +116,10 @@ const isReadableDisplayName = (value: unknown) => {
 
 const normalizeStatus = (value: any) => String(value || '').trim().toLowerCase();
 
-const isSettledStatus = (status: string) => status === 'paid' || status === 'settled';
-
 const isSessionEarning = (earning: any) => {
   const source = normalizeStatus(earning?.source);
   if (source === 'session_present_completed') return true;
   return Boolean(String(earning?.sessionId || '').trim());
-};
-
-const resolvePaidAmount = (earning: any, amount: number) => {
-  const paidRaw = Number(earning?.paidAmount);
-  if (Number.isFinite(paidRaw) && paidRaw > 0) {
-    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
-  }
-  return isSettledStatus(normalizeStatus(earning?.status)) ? Math.max(amount, 0) : 0;
 };
 
 const isTeacherUser = (user: TeacherUser) => {
@@ -383,6 +381,7 @@ export default function TeacherPayments(): JSX.Element {
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutTeacherId, setPayoutTeacherId] = useState('');
   const [payoutMonth, setPayoutMonth] = useState<string>(monthKeyFromDate(new Date()));
+  const [payoutPaymentDate, setPayoutPaymentDate] = useState<string>(() => dateInputValue(new Date()));
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutNote, setPayoutNote] = useState('');
   const [payoutError, setPayoutError] = useState<string | null>(null);
@@ -769,6 +768,8 @@ export default function TeacherPayments(): JSX.Element {
         sessions: number;
         sessionEarnings: number;
         earned: number;
+        cashPaid: number;
+        offsetApplied: number;
         pending: number;
       }
     >();
@@ -780,10 +781,10 @@ export default function TeacherPayments(): JSX.Element {
       const status = normalizeStatus(earning.status);
       if (status === 'void') return;
 
-      const amountRaw = Number(earning.amount ?? 0);
-      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      const paidAmount = resolvePaidAmount(earning, amount);
-      const pending = Math.max(amount - paidAmount, 0);
+      const amount = resolveTeacherNetEntitlementAmount(earning);
+      const paidAmount = resolveTeacherCashPaidAmount(earning, amount);
+      const offsetApplied = resolveTeacherOffsetAppliedAmount(earning);
+      const pending = Math.max(amount - paidAmount - offsetApplied, 0);
       const isSession = isSessionEarning(earning);
 
       if (!map.has(teacherId)) {
@@ -792,12 +793,16 @@ export default function TeacherPayments(): JSX.Element {
           sessions: 0,
           sessionEarnings: 0,
           earned: 0,
+          cashPaid: 0,
+          offsetApplied: 0,
           pending: 0,
         });
       }
       const entry = map.get(teacherId)!;
       entry.entriesCount += 1;
       entry.earned += amount;
+      entry.cashPaid += paidAmount;
+      entry.offsetApplied += offsetApplied;
       entry.pending += pending;
       if (isSession) {
         entry.sessions += 1;
@@ -819,6 +824,12 @@ export default function TeacherPayments(): JSX.Element {
       const pending = hasLiveData
         ? Number(live?.pending ?? 0)
         : Number(rollup.pendingEarnings ?? 0) || 0;
+      const cashPaid = hasLiveData
+        ? Number(live?.cashPaid ?? 0)
+        : Number(rollup.cashPaid ?? paidByTeacher.get(t.id) ?? 0) || 0;
+      const offsetApplied = hasLiveData
+        ? Number(live?.offsetApplied ?? 0)
+        : Number(rollup.offsetApplied ?? 0) || 0;
       const sessions = hasLiveData
         ? Number(live?.sessions ?? 0)
         : Number(rollup.totalSessions ?? rollup.sessionsCompleted ?? 0) || 0;
@@ -826,16 +837,15 @@ export default function TeacherPayments(): JSX.Element {
       const fallbackRate =
         sessions > 0 ? Number(live?.sessionEarnings ?? 0) / Math.max(sessions, 1) : 0;
       const rate = rateFromRollup > 0 ? rateFromRollup : fallbackRate;
-      const paid = paidByTeacher.get(t.id) || 0;
       return {
         teacherId: t.id,
         teacherName: t.displayName || t.name || t.email || t.id,
         sessions,
         rate,
         earned,
-        paid,
+        cashPaid,
+        offsetApplied,
         pending,
-        balance: earned - paid,
       };
     });
   }, [teachers, rollups, paidByTeacher, earningsByTeacher]);
@@ -853,6 +863,9 @@ export default function TeacherPayments(): JSX.Element {
           parentLabel: string;
           statusLabel: string;
           amount: number;
+          cashPaid: number;
+          offsetApplied: number;
+          pending: number;
         }>;
         excluded: Array<{
           key: string;
@@ -863,6 +876,9 @@ export default function TeacherPayments(): JSX.Element {
           parentLabel: string;
           statusLabel: string;
           amount: number;
+          cashPaid: number;
+          offsetApplied: number;
+          pending: number;
         }>;
         completedCount: number;
         totalEarned: number;
@@ -882,8 +898,7 @@ export default function TeacherPayments(): JSX.Element {
       const teacherId = String(earning.teacherId || '').trim();
       if (!teacherId || !isSessionEarning(earning)) return;
 
-      const amountRaw = Number(earning.amount ?? 0);
-      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      const amount = resolveTeacherNetEntitlementAmount(earning);
       const sessionId = String(earning.sessionId || earning.id || '').trim();
       const session = sessionId ? sessionMap[sessionId] : undefined;
       const enrollmentId = String(earning.enrollmentId || session?.enrollmentId || '').trim();
@@ -926,7 +941,10 @@ export default function TeacherPayments(): JSX.Element {
 
       const sortMs = resolveEarningDateMillis(session, earning) || 0;
       const includeInTotals = normalizeStatus(earning.status) !== 'void';
-      const statusLabel = resolveTeacherDetailStatusLabel(includeInTotals, session, earning);
+      const statusLabel = resolveTeacherPaymentStatusLabel(
+        earning,
+        resolveTeacherDetailStatusLabel(includeInTotals, session, earning)
+      );
 
       const row = {
         key: `${sessionId || earning.id || 'earning'}_${teacherId}`,
@@ -937,6 +955,14 @@ export default function TeacherPayments(): JSX.Element {
         parentLabel,
         statusLabel,
         amount,
+        cashPaid: resolveTeacherCashPaidAmount(earning, amount),
+        offsetApplied: resolveTeacherOffsetAppliedAmount(earning),
+        pending: Math.max(
+          amount -
+            resolveTeacherCashPaidAmount(earning, amount) -
+            resolveTeacherOffsetAppliedAmount(earning),
+          0,
+        ),
       };
 
       const bucket = ensureBucket(teacherId);
@@ -1097,6 +1123,7 @@ export default function TeacherPayments(): JSX.Element {
   const openPayoutModal = (row: { teacherId: string }) => {
     setPayoutTeacherId(row.teacherId);
     setPayoutMonth(selectedMonth || monthKeyFromDate(new Date()));
+    setPayoutPaymentDate(dateInputValue(new Date()));
     setPayoutAmount('');
     setPayoutNote('');
     setPayoutError(null);
@@ -1110,7 +1137,11 @@ export default function TeacherPayments(): JSX.Element {
       return;
     }
     if (!payoutMonth) {
-      setPayoutError('Select a month.');
+      setPayoutError('Select the earning month.');
+      return;
+    }
+    if (!payoutPaymentDate) {
+      setPayoutError('Select the actual payment date.');
       return;
     }
     const amount = Number(payoutAmount);
@@ -1119,8 +1150,6 @@ export default function TeacherPayments(): JSX.Element {
       return;
     }
 
-    const paidAt = `${payoutMonth}-01`;
-    const method = 'bank_transfer';
     const note = payoutNote?.trim();
     const requestKey = payoutRequestKey || createPayoutRequestKey();
     if (!payoutRequestKey) setPayoutRequestKey(requestKey);
@@ -1130,15 +1159,17 @@ export default function TeacherPayments(): JSX.Element {
     try {
       setPayoutSaving(payoutTeacherId);
       setPayoutError(null);
-      const fn = httpsCallable(functions, 'recordTeacherPayout');
-      await fn({
+      const payload = buildTeacherPayoutV2Request({
         teacherId: payoutTeacherId,
         amount,
-        paidAt,
-        method,
-        note: note || undefined,
+        earningMonthKey: payoutMonth,
+        paymentDate: payoutPaymentDate,
+        note,
         idempotencyKey: requestKey,
       });
+      const fn = httpsCallable(functions, 'recordTeacherPayoutV2');
+      const result = await fn(payload);
+      const offsetAppliedAmount = Number((result.data as any)?.offsetAppliedAmount || 0);
       const snap = await getDoc(
         doc(db, 'teachers', payoutTeacherId, 'earnings', payoutMonth)
       );
@@ -1148,7 +1179,7 @@ export default function TeacherPayments(): JSX.Element {
       }));
       toast({
         title: 'Payout recorded',
-        description: `${selectedTeacher?.displayName || selectedTeacher?.name || selectedTeacher?.email || payoutTeacherId} · ₹${Math.round(amount).toLocaleString('en-IN')}`,
+        description: `${selectedTeacher?.displayName || selectedTeacher?.name || selectedTeacher?.email || payoutTeacherId} · ${payoutMonth} earnings · cash ${formatMoney(amount)}${offsetAppliedAmount > 0 ? ` + carry ${formatMoney(offsetAppliedAmount)}` : ''} · paid ${payoutPaymentDate}`,
       });
       setRefreshKey((prev) => prev + 1);
       setPayoutRequestKey('');
@@ -1226,14 +1257,14 @@ export default function TeacherPayments(): JSX.Element {
         <div>
           <h2 className="text-xl font-semibold">Teacher Payments</h2>
           <p className="text-sm text-muted-foreground">
-            Monthly earnings vs payouts for each teacher, with correction tools for invalid session earnings.
+            Earnings are grouped by service month; cash payouts keep their real payment date separately.
           </p>
           <p className="text-xs text-muted-foreground">
-            Archived records are excluded from active teacher payment totals.
+            Brick 4 adjustments are reflected in net entitlement. Archived records are excluded from active totals.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-sm font-medium">Month</label>
+          <label className="text-sm font-medium">Earning Month</label>
           <Input
             type="month"
             value={selectedMonth}
@@ -1328,9 +1359,9 @@ export default function TeacherPayments(): JSX.Element {
                 <th className="p-2">Teacher</th>
                 <th className="p-2">Sessions</th>
                 <th className="p-2">Rate</th>
-                <th className="p-2">Earned</th>
-                <th className="p-2">Paid</th>
-                <th className="p-2">Balance</th>
+                <th className="p-2">Net Entitlement</th>
+                <th className="p-2">Carry Applied</th>
+                <th className="p-2">Cash Paid</th>
                 <th className="p-2">Pending</th>
                 <th className="p-2">Action</th>
                 <th className="p-2">Details</th>
@@ -1365,8 +1396,8 @@ export default function TeacherPayments(): JSX.Element {
                         <td className="p-2">{row.sessions}</td>
                         <td className="p-2">{formatMoney(row.rate)}</td>
                         <td className="p-2">{formatMoney(row.earned)}</td>
-                        <td className="p-2">{formatMoney(row.paid)}</td>
-                        <td className="p-2">{formatMoney(row.balance)}</td>
+                        <td className="p-2">{formatMoney(row.offsetApplied)}</td>
+                        <td className="p-2">{formatMoney(row.cashPaid)}</td>
                         <td className="p-2">{formatMoney(row.pending)}</td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2">
@@ -1421,7 +1452,10 @@ export default function TeacherPayments(): JSX.Element {
                                         <th className="p-2">Course</th>
                                         <th className="p-2">Parent</th>
                                         <th className="p-2">Status</th>
-                                        <th className="p-2">Teacher earning amount</th>
+                                        <th className="p-2">Net entitlement</th>
+                                        <th className="p-2">Carry</th>
+                                        <th className="p-2">Cash</th>
+                                        <th className="p-2">Pending</th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -1433,13 +1467,16 @@ export default function TeacherPayments(): JSX.Element {
                                           <td className="p-2">{entry.parentLabel}</td>
                                           <td className="p-2">{entry.statusLabel}</td>
                                           <td className="p-2">{formatMoney(entry.amount)}</td>
+                                          <td className="p-2">{formatMoney(entry.offsetApplied)}</td>
+                                          <td className="p-2">{formatMoney(entry.cashPaid)}</td>
+                                          <td className="p-2">{formatMoney(entry.pending)}</td>
                                         </tr>
                                       ))}
                                     </tbody>
                                   </table>
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  Total completed classes: {details.completedCount} · Total earned:{' '}
+                                  Total completed classes: {details.completedCount} · Net entitlement:{' '}
                                   {formatMoney(details.totalEarned)}
                                 </div>
                                 {details.excluded.length > 0 ? (
@@ -1456,7 +1493,7 @@ export default function TeacherPayments(): JSX.Element {
                                             <th className="p-2">Course</th>
                                             <th className="p-2">Parent</th>
                                             <th className="p-2">Status</th>
-                                            <th className="p-2">Teacher earning amount</th>
+                                            <th className="p-2">Net entitlement</th>
                                           </tr>
                                         </thead>
                                         <tbody>
@@ -1515,25 +1552,40 @@ export default function TeacherPayments(): JSX.Element {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium">Month</label>
+              <label className="text-sm font-medium">Earning month</label>
               <Input
                 type="month"
                 value={payoutMonth}
                 onChange={(e) => setPayoutMonth(e.target.value)}
               />
+              <div className="text-xs text-muted-foreground">
+                The class/service month this payout settles.
+              </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium">Amount (₹)</label>
+              <label className="text-sm font-medium">Actual payment date</label>
+              <Input
+                type="date"
+                value={payoutPaymentDate}
+                onChange={(e) => setPayoutPaymentDate(e.target.value)}
+              />
+              <div className="text-xs text-muted-foreground">
+                Cash date is recorded separately and does not change the earning month.
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Actual cash amount (₹)</label>
               <Input
                 type="number"
                 step="1"
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
-                placeholder="Enter amount (negative allowed)"
+                placeholder="Enter bank/cash amount (negative only for a real refund)"
               />
               <div className="text-xs text-muted-foreground">
-                Use a negative amount for adjustments or refunds.
+                Use a negative amount only for an explicit cash reversal or refund.
               </div>
             </div>
 

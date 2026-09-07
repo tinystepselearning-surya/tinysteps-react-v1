@@ -25,6 +25,8 @@ export {
   reconcileSessionRevenueMonthKeys,
   adminVoidSessionCharge,
 } from "./revenue";
+// Brick 5 payout path keeps earning month separate from the real cash payment date.
+export { recordTeacherPayoutV2 } from "./recordTeacherPayoutV2";
 export { voidTeacherOrphanEarnings } from "./voidTeacherOrphanEarnings";
 export { onTeacherEarningsRollupWrite } from "./teacherEarningsRollupTrigger";
 export {
