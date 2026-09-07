@@ -2,6 +2,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { resolveSessionTeacherPayNormalRate } from './helpers/sessionFinancialRates';
+import { resolveTeacherEarningNetEntitlementAmount } from './helpers/teacherEarningsAuthoritativeRollup';
 import {
   buildTeacherEarningAdjustmentId,
   buildTeacherEarningAdjustmentRecord,
@@ -148,15 +149,28 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
       .collection('teacherPaymentOffsets')
       .where('sourceEarningId', '==', earningId)
       .limit(MAX_SESSION_ADJUSTMENTS);
+    const targetOffsetsQuery = db
+      .collection('teacherPaymentOffsets')
+      .where('targetEarningId', '==', earningId)
+      .limit(MAX_SESSION_ADJUSTMENTS);
 
     const outcome = await db.runTransaction(async (tx) => {
-      const [latestEarningSnap, latestSessionSnap, decisionSnap, adjustmentSnap, adjustmentsSnap, offsetsSnap] = await Promise.all([
+      const [
+        latestEarningSnap,
+        latestSessionSnap,
+        decisionSnap,
+        adjustmentSnap,
+        adjustmentsSnap,
+        offsetsSnap,
+        targetOffsetsSnap,
+      ] = await Promise.all([
         tx.get(change.after.ref),
         tx.get(sessionRef),
         tx.get(decisionRef),
         tx.get(adjustmentRef),
         tx.get(adjustmentsQuery),
         tx.get(offsetsQuery),
+        tx.get(targetOffsetsQuery),
       ]);
       if (!latestEarningSnap.exists || !latestSessionSnap.exists || !decisionSnap.exists) return 'no-op';
 
@@ -237,7 +251,8 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
         : null;
       const existingCorrectionAmount = existingForCorrection ? signedMoney(existingForCorrection.amount) : 0;
       const priorTotalForExpected = adjustmentsTotal - existingCorrectionAmount;
-      if (offsetsSnap.size >= MAX_SESSION_ADJUSTMENTS) {
+
+      if (offsetsSnap.size >= MAX_SESSION_ADJUSTMENTS || targetOffsetsSnap.size >= MAX_SESSION_ADJUSTMENTS) {
         const reason = 'offset_history_limit_reached';
         tx.set(change.after.ref, {
           teacherPayAdjustmentRepairRequired: true,
@@ -254,10 +269,22 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
         }, { merge: true });
         return 'repair-required';
       }
+
       const sourceOffsets = offsetsSnap.docs.map((docSnap) => ({
         id: docSnap.id,
         data: (docSnap.data() || {}) as Record<string, unknown>,
       }));
+      const targetOffsets = targetOffsetsSnap.docs
+        .map((docSnap) => ({
+          id: docSnap.id,
+          data: (docSnap.data() || {}) as Record<string, unknown>,
+        }))
+        .filter((row) => normalizeStatus(row.data.status) === 'applied');
+      const targetOffsetAppliedAmount = targetOffsets.reduce(
+        (sum, row) => sum + nonNegativeMoney(row.data.amount),
+        0,
+      );
+      const currentTargetEntitlement = resolveTeacherEarningNetEntitlementAmount(latestEarning);
 
       const validateRestoration = (resultingNetEntitlement: number) =>
         validateTeacherOffsetRestoration({
@@ -290,6 +317,38 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
           teacherEarningId: earningId,
           teacherPayOffsetConsumedAmount: consumedAmount,
           availableTeacherOverpaymentAmount: availableOverpayment,
+          financialOutcomeRecordedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      };
+
+      const validateTargetCarry = (resultingNetEntitlement: number): boolean => {
+        if (targetOffsetAppliedAmount <= 0.01) return true;
+        return Math.abs(resultingNetEntitlement - currentTargetEntitlement) <= 0.01;
+      };
+
+      const markTargetCarryRepair = (resultingNetEntitlement: number) => {
+        const reason = 'target_entitlement_change_after_carry_applied';
+        tx.set(change.after.ref, {
+          teacherPayAdjustmentRepairRequired: true,
+          teacherPayAdjustmentRepairDecisionId: decisionId,
+          teacherPayAdjustmentRepairReason: reason,
+          teacherPayOffsetAppliedAmount: targetOffsetAppliedAmount,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        tx.set(sessionRef, {
+          teacherPayAdjustmentRepairRequired: true,
+          teacherPayAdjustmentRepairDecisionId: decisionId,
+          teacherPayAdjustmentRepairReason: reason,
+          teacherPayAdjustmentRepairDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        tx.set(decisionRef, {
+          financialOutcome: 'finance_repair_required',
+          financialRepairReason: reason,
+          teacherEarningId: earningId,
+          teacherPayOffsetAppliedAmount: targetOffsetAppliedAmount,
+          currentTeacherEntitlement: currentTargetEntitlement,
+          requestedTeacherEntitlement: resultingNetEntitlement,
           financialOutcomeRecordedAt: admin.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
       };
@@ -329,6 +388,10 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
         }
 
         const target = expectedExisting.targetTeacherEntitlement;
+        if (!validateTargetCarry(target)) {
+          markTargetCarryRepair(target);
+          return 'repair-required';
+        }
         const restoration = validateRestoration(target);
         if (!restoration.valid) {
           markRestorationRepair(restoration.consumedAmount, restoration.availableOverpayment);
@@ -380,6 +443,10 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
       if (!calculation) return 'repair-required';
 
       if (calculation.delta === 0) {
+        if (!validateTargetCarry(calculation.targetEntitlement)) {
+          markTargetCarryRepair(calculation.targetEntitlement);
+          return 'repair-required';
+        }
         const restoration = validateRestoration(calculation.targetEntitlement);
         if (!restoration.valid) {
           markRestorationRepair(restoration.consumedAmount, restoration.availableOverpayment);
@@ -450,6 +517,10 @@ export const onTeacherEarningAdjustmentSync = onDocumentWritten(
       });
       if (!record) return 'repair-required';
 
+      if (!validateTargetCarry(record.resultingNetEntitlement)) {
+        markTargetCarryRepair(record.resultingNetEntitlement);
+        return 'repair-required';
+      }
       const restoration = validateRestoration(record.resultingNetEntitlement);
       if (!restoration.valid) {
         markRestorationRepair(restoration.consumedAmount, restoration.availableOverpayment);
