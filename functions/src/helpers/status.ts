@@ -27,6 +27,17 @@ export function normalizeLowerStatus(value: unknown): string {
   return String(value || '').trim().toLowerCase();
 }
 
+/**
+ * Canonical Brick 6 financial attendance policy.
+ * Present and Late both mean the class was delivered and therefore earn
+ * parent billing + normal teacher entitlement. Attendance quality remains
+ * distinct; this helper must not rewrite the stored attendance label.
+ */
+export function isFinanciallyEarnedAttendanceStatus(value: unknown): boolean {
+  const status = normalizeLowerStatus(value);
+  return status === 'present' || status === 'late';
+}
+
 export function normalizeEnrollmentStatus(value: unknown): EnrollmentStatus {
   const raw = normalizeLowerStatus(value);
   if (!raw) return 'active';
