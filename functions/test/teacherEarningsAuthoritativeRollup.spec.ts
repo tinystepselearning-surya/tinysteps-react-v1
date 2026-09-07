@@ -148,8 +148,37 @@ describe('B6 Brick 7B2 authoritative teacher-month rollup calculator', () => {
     });
 
     expect(result.totalEarnings).toBe(0);
+    expect(result.cashPaid).toBe(0);
+    expect(result.offsetApplied).toBe(0);
     expect(result.demoEarnings).toBe(0);
     expect(result.demoCompletedCount).toBe(1);
+  });
+
+  it('keeps cash and non-cash carry separate in pending settlement totals', () => {
+    const result = computeTeacherMonthlyRollupPayload({
+      monthKey: '2026-09',
+      earnings: [{
+        id: 'september-earning',
+        data: {
+          amount: 1000,
+          paidAmount: 825,
+          teacherPayOffsetAppliedAmount: 175,
+          settlementStatus: 'settled',
+          settledBy: 'cash_and_offset',
+          status: 'paid',
+        },
+      }],
+      payouts: [{
+        id: 'september-cash',
+        data: { amount: 825, status: 'completed', date: '2026-09-07' },
+      }],
+    });
+
+    expect(result.totalEarnings).toBe(1000);
+    expect(result.cashPaid).toBe(825);
+    expect(result.offsetApplied).toBe(175);
+    expect(result.pendingEarnings).toBe(0);
+    expect(result.payments[0]?.amount).toBe(825);
   });
 
   it('uses Brick 4 posted net entitlement without rewriting paid cash history', () => {
@@ -183,6 +212,8 @@ describe('B6 Brick 7B2 authoritative teacher-month rollup calculator', () => {
     });
 
     expect(result.totalEarnings).toBe(0);
+    expect(result.cashPaid).toBe(175);
+    expect(result.offsetApplied).toBe(0);
     expect(result.pendingEarnings).toBe(0);
     expect(result.totalSessions).toBe(1);
     expect(result.payments[0]?.amount).toBe(175);

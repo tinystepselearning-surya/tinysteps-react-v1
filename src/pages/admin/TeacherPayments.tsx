@@ -19,7 +19,9 @@ import { buildTeacherPaymentSelectOptions } from './paymentSelectOptions';
 import {
   buildTeacherPayoutV2Request,
   dateInputValue,
+  resolveTeacherCashPaidAmount,
   resolveTeacherNetEntitlementAmount,
+  resolveTeacherOffsetAppliedAmount,
   resolveTeacherPaymentStatusLabel,
 } from './teacherPaymentsFinance';
 import {
@@ -114,20 +116,10 @@ const isReadableDisplayName = (value: unknown) => {
 
 const normalizeStatus = (value: any) => String(value || '').trim().toLowerCase();
 
-const isSettledStatus = (status: string) => status === 'paid' || status === 'settled';
-
 const isSessionEarning = (earning: any) => {
   const source = normalizeStatus(earning?.source);
   if (source === 'session_present_completed') return true;
   return Boolean(String(earning?.sessionId || '').trim());
-};
-
-const resolvePaidAmount = (earning: any, amount: number) => {
-  const paidRaw = Number(earning?.paidAmount);
-  if (Number.isFinite(paidRaw) && paidRaw > 0) {
-    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
-  }
-  return isSettledStatus(normalizeStatus(earning?.status)) ? Math.max(amount, 0) : 0;
 };
 
 const isTeacherUser = (user: TeacherUser) => {
@@ -776,6 +768,8 @@ export default function TeacherPayments(): JSX.Element {
         sessions: number;
         sessionEarnings: number;
         earned: number;
+        cashPaid: number;
+        offsetApplied: number;
         pending: number;
       }
     >();
@@ -788,8 +782,9 @@ export default function TeacherPayments(): JSX.Element {
       if (status === 'void') return;
 
       const amount = resolveTeacherNetEntitlementAmount(earning);
-      const paidAmount = resolvePaidAmount(earning, amount);
-      const pending = Math.max(amount - paidAmount, 0);
+      const paidAmount = resolveTeacherCashPaidAmount(earning, amount);
+      const offsetApplied = resolveTeacherOffsetAppliedAmount(earning);
+      const pending = Math.max(amount - paidAmount - offsetApplied, 0);
       const isSession = isSessionEarning(earning);
 
       if (!map.has(teacherId)) {
@@ -798,12 +793,16 @@ export default function TeacherPayments(): JSX.Element {
           sessions: 0,
           sessionEarnings: 0,
           earned: 0,
+          cashPaid: 0,
+          offsetApplied: 0,
           pending: 0,
         });
       }
       const entry = map.get(teacherId)!;
       entry.entriesCount += 1;
       entry.earned += amount;
+      entry.cashPaid += paidAmount;
+      entry.offsetApplied += offsetApplied;
       entry.pending += pending;
       if (isSession) {
         entry.sessions += 1;
@@ -825,6 +824,12 @@ export default function TeacherPayments(): JSX.Element {
       const pending = hasLiveData
         ? Number(live?.pending ?? 0)
         : Number(rollup.pendingEarnings ?? 0) || 0;
+      const cashPaid = hasLiveData
+        ? Number(live?.cashPaid ?? 0)
+        : Number(rollup.cashPaid ?? paidByTeacher.get(t.id) ?? 0) || 0;
+      const offsetApplied = hasLiveData
+        ? Number(live?.offsetApplied ?? 0)
+        : Number(rollup.offsetApplied ?? 0) || 0;
       const sessions = hasLiveData
         ? Number(live?.sessions ?? 0)
         : Number(rollup.totalSessions ?? rollup.sessionsCompleted ?? 0) || 0;
@@ -832,16 +837,15 @@ export default function TeacherPayments(): JSX.Element {
       const fallbackRate =
         sessions > 0 ? Number(live?.sessionEarnings ?? 0) / Math.max(sessions, 1) : 0;
       const rate = rateFromRollup > 0 ? rateFromRollup : fallbackRate;
-      const paid = paidByTeacher.get(t.id) || 0;
       return {
         teacherId: t.id,
         teacherName: t.displayName || t.name || t.email || t.id,
         sessions,
         rate,
         earned,
-        paid,
+        cashPaid,
+        offsetApplied,
         pending,
-        balance: earned - paid,
       };
     });
   }, [teachers, rollups, paidByTeacher, earningsByTeacher]);
@@ -859,6 +863,9 @@ export default function TeacherPayments(): JSX.Element {
           parentLabel: string;
           statusLabel: string;
           amount: number;
+          cashPaid: number;
+          offsetApplied: number;
+          pending: number;
         }>;
         excluded: Array<{
           key: string;
@@ -869,6 +876,9 @@ export default function TeacherPayments(): JSX.Element {
           parentLabel: string;
           statusLabel: string;
           amount: number;
+          cashPaid: number;
+          offsetApplied: number;
+          pending: number;
         }>;
         completedCount: number;
         totalEarned: number;
@@ -945,6 +955,14 @@ export default function TeacherPayments(): JSX.Element {
         parentLabel,
         statusLabel,
         amount,
+        cashPaid: resolveTeacherCashPaidAmount(earning, amount),
+        offsetApplied: resolveTeacherOffsetAppliedAmount(earning),
+        pending: Math.max(
+          amount -
+            resolveTeacherCashPaidAmount(earning, amount) -
+            resolveTeacherOffsetAppliedAmount(earning),
+          0,
+        ),
       };
 
       const bucket = ensureBucket(teacherId);
@@ -1150,7 +1168,8 @@ export default function TeacherPayments(): JSX.Element {
         idempotencyKey: requestKey,
       });
       const fn = httpsCallable(functions, 'recordTeacherPayoutV2');
-      await fn(payload);
+      const result = await fn(payload);
+      const offsetAppliedAmount = Number((result.data as any)?.offsetAppliedAmount || 0);
       const snap = await getDoc(
         doc(db, 'teachers', payoutTeacherId, 'earnings', payoutMonth)
       );
@@ -1160,7 +1179,7 @@ export default function TeacherPayments(): JSX.Element {
       }));
       toast({
         title: 'Payout recorded',
-        description: `${selectedTeacher?.displayName || selectedTeacher?.name || selectedTeacher?.email || payoutTeacherId} · ${payoutMonth} earnings · paid ${payoutPaymentDate} · ₹${Math.round(amount).toLocaleString('en-IN')}`,
+        description: `${selectedTeacher?.displayName || selectedTeacher?.name || selectedTeacher?.email || payoutTeacherId} · ${payoutMonth} earnings · cash ${formatMoney(amount)}${offsetAppliedAmount > 0 ? ` + carry ${formatMoney(offsetAppliedAmount)}` : ''} · paid ${payoutPaymentDate}`,
       });
       setRefreshKey((prev) => prev + 1);
       setPayoutRequestKey('');
@@ -1341,8 +1360,8 @@ export default function TeacherPayments(): JSX.Element {
                 <th className="p-2">Sessions</th>
                 <th className="p-2">Rate</th>
                 <th className="p-2">Net Entitlement</th>
-                <th className="p-2">Paid</th>
-                <th className="p-2">Balance</th>
+                <th className="p-2">Carry Applied</th>
+                <th className="p-2">Cash Paid</th>
                 <th className="p-2">Pending</th>
                 <th className="p-2">Action</th>
                 <th className="p-2">Details</th>
@@ -1377,8 +1396,8 @@ export default function TeacherPayments(): JSX.Element {
                         <td className="p-2">{row.sessions}</td>
                         <td className="p-2">{formatMoney(row.rate)}</td>
                         <td className="p-2">{formatMoney(row.earned)}</td>
-                        <td className="p-2">{formatMoney(row.paid)}</td>
-                        <td className="p-2">{formatMoney(row.balance)}</td>
+                        <td className="p-2">{formatMoney(row.offsetApplied)}</td>
+                        <td className="p-2">{formatMoney(row.cashPaid)}</td>
                         <td className="p-2">{formatMoney(row.pending)}</td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2">
@@ -1434,6 +1453,9 @@ export default function TeacherPayments(): JSX.Element {
                                         <th className="p-2">Parent</th>
                                         <th className="p-2">Status</th>
                                         <th className="p-2">Net entitlement</th>
+                                        <th className="p-2">Carry</th>
+                                        <th className="p-2">Cash</th>
+                                        <th className="p-2">Pending</th>
                                       </tr>
                                     </thead>
                                     <tbody>
@@ -1445,6 +1467,9 @@ export default function TeacherPayments(): JSX.Element {
                                           <td className="p-2">{entry.parentLabel}</td>
                                           <td className="p-2">{entry.statusLabel}</td>
                                           <td className="p-2">{formatMoney(entry.amount)}</td>
+                                          <td className="p-2">{formatMoney(entry.offsetApplied)}</td>
+                                          <td className="p-2">{formatMoney(entry.cashPaid)}</td>
+                                          <td className="p-2">{formatMoney(entry.pending)}</td>
                                         </tr>
                                       ))}
                                     </tbody>
@@ -1551,13 +1576,13 @@ export default function TeacherPayments(): JSX.Element {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium">Amount (₹)</label>
+              <label className="text-sm font-medium">Actual cash amount (₹)</label>
               <Input
                 type="number"
                 step="1"
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
-                placeholder="Enter amount (negative allowed)"
+                placeholder="Enter bank/cash amount (negative only for a real refund)"
               />
               <div className="text-xs text-muted-foreground">
                 Use a negative amount only for an explicit cash reversal or refund.

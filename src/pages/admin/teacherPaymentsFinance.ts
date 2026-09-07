@@ -31,6 +31,39 @@ export const resolveTeacherNetEntitlementAmount = (earning: Record<string, unkno
   return baseAmount;
 };
 
+export const resolveTeacherCashPaidAmount = (
+  earning: Record<string, unknown>,
+  entitlementAmount = resolveTeacherNetEntitlementAmount(earning),
+): number => {
+  const paidRaw = Number(earning.paidAmount);
+  if (
+    earning.paidAmount !== undefined &&
+    earning.paidAmount !== null &&
+    Number.isFinite(paidRaw) &&
+    paidRaw >= 0
+  ) return paidRaw;
+  const status = normalizeStatus(earning.status);
+  return status === 'paid' || status === 'settled' ? Math.max(entitlementAmount, 0) : 0;
+};
+
+export const resolveTeacherOffsetAppliedAmount = (earning: Record<string, unknown>): number => {
+  const offsetRaw = Number(earning.teacherPayOffsetAppliedAmount);
+  return Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+};
+
+export const resolveTeacherSettlementAmounts = (earning: Record<string, unknown>) => {
+  const entitlement = resolveTeacherNetEntitlementAmount(earning);
+  const cashPaid = resolveTeacherCashPaidAmount(earning, entitlement);
+  const offsetApplied = resolveTeacherOffsetAppliedAmount(earning);
+  return {
+    entitlement,
+    cashPaid,
+    offsetApplied,
+    satisfied: cashPaid + offsetApplied,
+    pending: Math.max(entitlement - cashPaid - offsetApplied, 0),
+  };
+};
+
 export const resolveTeacherPaymentStatusLabel = (
   earning: Record<string, unknown>,
   fallback: string,
@@ -52,6 +85,12 @@ export const resolveTeacherPaymentStatusLabel = (
     }
     return 'Adjusted';
   }
+
+  const offsetApplied = resolveTeacherOffsetAppliedAmount(earning);
+  const settledBy = normalizeStatus(earning.settledBy);
+  if (settledBy === 'cash_and_offset') return 'Settled by Cash + Carry';
+  if (settledBy === 'offset') return 'Settled by Carry';
+  if (offsetApplied > 0) return 'Carry Applied';
 
   return fallback;
 };

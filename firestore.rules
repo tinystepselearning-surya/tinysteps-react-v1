@@ -1179,6 +1179,13 @@ function teacherProgressIdentityUnchanged() {
       allow write: if isAdmin();
     }
 
+    // Immutable non-cash settlement evidence. Only trusted server code may create rows.
+    match /teacherPaymentOffsets/{offsetId} {
+      allow read: if isAdmin()
+        || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
     // ----------------------------
     // TEACHER EARNINGS (event docs)
     // ----------------------------

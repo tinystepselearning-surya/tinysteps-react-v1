@@ -8,7 +8,7 @@ describe('Brick 5 teacher payout V2 entitlement allocation', () => {
   it('uses canonical Brick 4 net entitlement for positive cash allocation', () => {
     expect(source).toContain('resolveTeacherEarningNetEntitlementAmount');
     expect(source).toContain('const entitlement = resolveTeacherEarningNetEntitlementAmount(current);');
-    expect(source).toContain('const due = Math.max(entitlement - currentCashAllocated, 0);');
+    expect(source).toContain('const due = Math.max(entitlement - currentCashAllocated - offsetApplied, 0);');
   });
 
   it('keeps negative cash reversals explicit instead of treating a Brick 4 adjustment as cash', () => {

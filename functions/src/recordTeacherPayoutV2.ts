@@ -6,10 +6,18 @@ import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeFinancialStatus } from './helpers/status';
 import { resolveTeacherEarningNetEntitlementAmount } from './helpers/teacherEarningsAuthoritativeRollup';
 import {
+  planTeacherPaymentCarry,
+  resolveTeacherEarningHistoricalCashAmount,
+  resolveTeacherEarningSettlement,
+  TEACHER_PAYMENT_OFFSET_LEDGER_VERSION,
+  TEACHER_PAYMENT_OFFSET_RECORD_TYPE,
+  TEACHER_PAYMENT_OFFSET_SOURCE,
+  TEACHER_PAYMENT_OFFSET_TYPE,
+} from './helpers/teacherPaymentOffsetLedger';
+import {
   buildTeacherPayoutPeriod,
   parseTeacherPayoutPaidAt,
   resolvePayoutEarningMonthKey,
-  resolveTeacherEarningCashAllocatedAmount,
   TEACHER_PAYOUT_PERIOD_SEMANTICS,
   TEACHER_PAYOUT_SCHEMA_VERSION,
 } from './helpers/teacherPayoutPeriod';
@@ -17,6 +25,7 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const MAX_TEACHER_LEDGER_ROWS = 500;
 
 function clean(value: unknown, maxLen = 500): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLen) : '';
@@ -116,13 +125,28 @@ export const recordTeacherPayoutV2 = onCall(
       .collection('teacherEarnings')
       .where('monthKey', '==', period.earningMonthKey)
       .where('teacherId', '==', teacherId);
+    const teacherEarningsQuery = db
+      .collection('teacherEarnings')
+      .where('teacherId', '==', teacherId)
+      .limit(MAX_TEACHER_LEDGER_ROWS + 1);
+    const offsetsQuery = db
+      .collection('teacherPaymentOffsets')
+      .where('teacherId', '==', teacherId)
+      .limit(MAX_TEACHER_LEDGER_ROWS + 1);
+    const adjustmentsQuery = db
+      .collection('teacherEarningAdjustments')
+      .where('teacherId', '==', teacherId)
+      .limit(MAX_TEACHER_LEDGER_ROWS + 1);
 
     const allocation = await db.runTransaction(async (tx) => {
       // Complete the full authoritative read set before any write. Firestore transactions reject
       // read-after-write sequences, and query reads are already retry-safe under transaction isolation.
-      const [existingPayoutSnap, earningsSnap] = await Promise.all([
+      const [existingPayoutSnap, earningsSnap, teacherEarningsSnap, offsetsSnap, adjustmentsSnap] = await Promise.all([
         tx.get(payoutRef),
         tx.get(earningsQuery),
+        tx.get(teacherEarningsQuery),
+        tx.get(offsetsQuery),
+        tx.get(adjustmentsQuery),
       ]);
 
       if (existingPayoutSnap.exists) {
@@ -158,8 +182,22 @@ export const recordTeacherPayoutV2 = onCall(
             : [],
           appliedAmount: money(existing.appliedAmount, 0),
           unappliedAmount: money(existing.unappliedAmount, 0),
+          offsetAppliedAmount: money(existing.offsetAppliedAmount, 0),
+          availableCarryBefore: money(existing.availableCarryBefore, 0),
+          remainingCarry: money(existing.remainingCarry, 0),
           idempotentReplay: true,
         };
+      }
+
+      if (
+        teacherEarningsSnap.size > MAX_TEACHER_LEDGER_ROWS ||
+        offsetsSnap.size > MAX_TEACHER_LEDGER_ROWS ||
+        adjustmentsSnap.size > MAX_TEACHER_LEDGER_ROWS
+      ) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Teacher finance ledger exceeds the safe automatic carry limit; finance repair required',
+        );
       }
 
       const earnings = earningsSnap.docs
@@ -169,6 +207,66 @@ export const recordTeacherPayoutV2 = onCall(
           data: (docSnap.data() || {}) as Record<string, unknown>,
         }))
         .filter((row) => row.data.archived !== true);
+      const allTeacherEarnings = teacherEarningsSnap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ref: docSnap.ref,
+        data: (docSnap.data() || {}) as Record<string, unknown>,
+      }));
+      const existingOffsets = offsetsSnap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        data: (docSnap.data() || {}) as Record<string, unknown>,
+      }));
+      const adjustmentsById = new Map(
+        adjustmentsSnap.docs.map((docSnap) => [
+          docSnap.id,
+          (docSnap.data() || {}) as Record<string, unknown>,
+        ]),
+      );
+
+      const carryPlan = amount > 0
+        ? planTeacherPaymentCarry({
+            teacherId,
+            targetEarningMonthKey: period.earningMonthKey,
+            idempotencyKey,
+            earnings: allTeacherEarnings,
+            offsets: existingOffsets,
+          })
+        : {
+            allocations: [],
+            availableCarryBefore: 0,
+            offsetAppliedAmount: 0,
+            remainingCarry: 0,
+            conflict: null,
+          };
+      if (carryPlan.conflict) {
+        throw new HttpsError(
+          'failed-precondition',
+          `Teacher payment carry is ambiguous (${carryPlan.conflict}); finance repair required`,
+        );
+      }
+
+      const existingOffsetByTarget = new Map<string, number>();
+      for (const offset of existingOffsets) {
+        if (clean(offset.data.status, 80) !== 'applied') continue;
+        const targetId = clean(offset.data.targetEarningId, 180);
+        if (!targetId) continue;
+        existingOffsetByTarget.set(
+          targetId,
+          money(existingOffsetByTarget.get(targetId), 0) + Math.max(money(offset.data.amount, 0), 0),
+        );
+      }
+      const newOffsetByTarget = new Map<string, number>();
+      const newOffsetBySource = new Map<string, number>();
+      for (const offset of carryPlan.allocations) {
+        newOffsetByTarget.set(
+          offset.targetEarningId,
+          money(newOffsetByTarget.get(offset.targetEarningId), 0) + offset.amount,
+        );
+        newOffsetBySource.set(
+          offset.sourceEarningId,
+          money(newOffsetBySource.get(offset.sourceEarningId), 0) + offset.amount,
+        );
+      }
 
       let remaining = amount;
       const appliedEarningIds: string[] = [];
@@ -186,8 +284,10 @@ export const recordTeacherPayoutV2 = onCall(
             if (status(row.data.status) === 'void') return false;
             const entitlement = resolveTeacherEarningNetEntitlementAmount(row.data);
             if (!(entitlement > 0)) return false;
-            const allocated = resolveTeacherEarningCashAllocatedAmount(row.data, entitlement);
-            return allocated < entitlement - 0.01;
+            const cashAllocated = resolveTeacherEarningHistoricalCashAmount(row.data);
+            const offsetApplied =
+              money(existingOffsetByTarget.get(row.id), 0) + money(newOffsetByTarget.get(row.id), 0);
+            return cashAllocated + offsetApplied < entitlement - 0.01;
           })
           .sort((left, right) => earningSortMs(left.data) - earningSortMs(right.data));
 
@@ -197,30 +297,15 @@ export const recordTeacherPayoutV2 = onCall(
           const current = earning.data;
           const entitlement = resolveTeacherEarningNetEntitlementAmount(current);
           if (!(entitlement > 0)) continue;
-          const currentCashAllocated = resolveTeacherEarningCashAllocatedAmount(current, entitlement);
-          const due = Math.max(entitlement - currentCashAllocated, 0);
+          const currentCashAllocated = resolveTeacherEarningHistoricalCashAmount(current);
+          const offsetApplied =
+            money(existingOffsetByTarget.get(earning.id), 0) + money(newOffsetByTarget.get(earning.id), 0);
+          const due = Math.max(entitlement - currentCashAllocated - offsetApplied, 0);
           if (due <= 0.01) continue;
 
           const applyAmount = Math.min(remaining, due);
-          const nextCashAllocated = currentCashAllocated + applyAmount;
           remaining -= applyAmount;
 
-          const updates: Record<string, unknown> = {
-            paidAmount: nextCashAllocated,
-            payoutIds: FieldValue.arrayUnion(payoutRef.id),
-            lastPayoutAt: paidAt,
-            lastPayoutPaymentMonthKey: period.paymentMonthKey,
-            updatedAt: FieldValue.serverTimestamp(),
-          };
-          if (nextCashAllocated >= entitlement - 0.01) {
-            updates.status = 'paid';
-            updates.paidAt = paidAt;
-          } else {
-            updates.status = 'partial';
-            updates.paidAt = FieldValue.delete();
-          }
-
-          tx.set(earning.ref, updates, { merge: true });
           appliedEarningIds.push(earning.id);
           appliedAllocations.push({
             earningId: earning.id,
@@ -281,6 +366,113 @@ export const recordTeacherPayoutV2 = onCall(
         }
       }
 
+      const cashByTarget = new Map<string, number>();
+      for (const allocationRow of appliedAllocations) {
+        if (allocationRow.amount <= 0) continue;
+        cashByTarget.set(
+          allocationRow.earningId,
+          money(cashByTarget.get(allocationRow.earningId), 0) + allocationRow.amount,
+        );
+      }
+
+      if (amount > 0) {
+        for (const offset of carryPlan.allocations) {
+          const sourceEarning = allTeacherEarnings.find((row) => row.id === offset.sourceEarningId);
+          const targetEarning = allTeacherEarnings.find((row) => row.id === offset.targetEarningId);
+          if (!sourceEarning || !targetEarning) {
+            throw new HttpsError('failed-precondition', 'Carry allocation references missing earning evidence');
+          }
+          const sourceAdjustmentId = clean(sourceEarning.data.teacherPayAdjustmentLatestId, 240);
+          const sourceAdjustment = sourceAdjustmentId ? adjustmentsById.get(sourceAdjustmentId) : null;
+          const offsetRef = db.collection('teacherPaymentOffsets').doc(offset.offsetId);
+          tx.create(offsetRef, {
+            ledgerVersion: TEACHER_PAYMENT_OFFSET_LEDGER_VERSION,
+            recordType: TEACHER_PAYMENT_OFFSET_RECORD_TYPE,
+            teacherId,
+            sourceEarningId: offset.sourceEarningId,
+            sourceSessionId: offset.sourceSessionId,
+            sourceEarningMonthKey: offset.sourceEarningMonthKey,
+            targetEarningId: offset.targetEarningId,
+            targetSessionId: offset.targetSessionId,
+            targetEarningMonthKey: offset.targetEarningMonthKey,
+            sourceAdjustmentId: sourceAdjustmentId || null,
+            sourceCorrectionId: clean(sourceAdjustment?.attendanceCorrectionId, 160) || null,
+            sourceTeacherPayDecisionId:
+              clean(sourceAdjustment?.teacherPayDecisionId, 160) ||
+              clean(sourceEarning.data.teacherPayAdjustmentDecisionId, 160) ||
+              null,
+            payoutId: payoutRef.id,
+            idempotencyKey,
+            amount: offset.amount,
+            currency: clean(sourceEarning.data.currency, 20) || 'INR',
+            offsetType: TEACHER_PAYMENT_OFFSET_TYPE,
+            status: 'applied',
+            sourceOverpaymentAmount: offset.sourceOverpaymentAmount,
+            sourceOffsetConsumedBefore: offset.sourceConsumedBefore,
+            sourceOffsetRemainingAmount: offset.sourceRemainingAfter,
+            targetEntitlementBeforeOffset: offset.targetEntitlementBeforeOffset,
+            targetOffsetAppliedAmount: offset.targetOffsetAppliedAmount,
+            targetCashDueAfterOffset: offset.targetCashDueAfterOffset,
+            appliedAt: FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
+            createdBy: request.auth?.uid || null,
+            source: TEACHER_PAYMENT_OFFSET_SOURCE,
+            ledgerImmutable: true,
+          });
+        }
+
+        const touchedTargetIds = new Set([
+          ...Array.from(newOffsetByTarget.keys()),
+          ...Array.from(cashByTarget.keys()),
+        ]);
+        for (const targetId of touchedTargetIds) {
+          const target = allTeacherEarnings.find((row) => row.id === targetId);
+          if (!target) throw new HttpsError('failed-precondition', 'Target earning evidence is missing');
+          const entitlement = resolveTeacherEarningNetEntitlementAmount(target.data);
+          const priorCash = resolveTeacherEarningHistoricalCashAmount(target.data);
+          const cashAdded = money(cashByTarget.get(targetId), 0);
+          const nextCash = Number((priorCash + cashAdded).toFixed(2));
+          const nextOffset = Number((
+            money(existingOffsetByTarget.get(targetId), 0) + money(newOffsetByTarget.get(targetId), 0)
+          ).toFixed(2));
+          const settlement = resolveTeacherEarningSettlement({
+            entitlementAmount: entitlement,
+            cashPaidAmount: nextCash,
+            offsetAppliedAmount: nextOffset,
+          });
+          const updates: Record<string, unknown> = {
+            paidAmount: nextCash,
+            teacherPayOffsetAppliedAmount: nextOffset,
+            settlementStatus: settlement.settlementStatus,
+            settledBy: settlement.settledBy,
+            status: settlement.settlementStatus === 'settled' ? 'paid' : settlement.settlementStatus,
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+          if (cashAdded > 0) {
+            updates.payoutIds = FieldValue.arrayUnion(payoutRef.id);
+            updates.lastPayoutAt = paidAt;
+            updates.lastPayoutPaymentMonthKey = period.paymentMonthKey;
+            if (settlement.settlementStatus === 'settled') updates.paidAt = paidAt;
+          }
+          tx.set(target.ref, updates, { merge: true });
+        }
+
+        for (const [sourceId] of newOffsetBySource) {
+          const source = allTeacherEarnings.find((row) => row.id === sourceId);
+          const sourceState = carryPlan.allocations.filter((row) => row.sourceEarningId === sourceId);
+          const latest = sourceState[sourceState.length - 1];
+          if (!source || !latest) continue;
+          tx.set(source.ref, {
+            teacherPayOffsetConsumedAmount: Number((latest.sourceConsumedBefore + sourceState.reduce(
+              (sum, row) => sum + row.amount,
+              0,
+            )).toFixed(2)),
+            teacherPayOffsetRemainingAmount: latest.sourceRemainingAfter,
+            updatedAt: FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+      }
+
       const appliedAmount = amount - remaining;
       tx.create(payoutRef, {
         teacherId,
@@ -303,6 +495,10 @@ export const recordTeacherPayoutV2 = onCall(
         appliedAllocations,
         appliedAmount,
         unappliedAmount: remaining,
+        offsetAppliedAmount: carryPlan.offsetAppliedAmount,
+        availableCarryBefore: carryPlan.availableCarryBefore,
+        remainingCarry: carryPlan.remainingCarry,
+        offsetIds: carryPlan.allocations.map((row) => row.offsetId),
         createdAt: FieldValue.serverTimestamp(),
         createdBy: request.auth?.uid || null,
       });
@@ -315,6 +511,9 @@ export const recordTeacherPayoutV2 = onCall(
         appliedEarningIds,
         appliedAmount,
         unappliedAmount: remaining,
+        offsetAppliedAmount: carryPlan.offsetAppliedAmount,
+        availableCarryBefore: carryPlan.availableCarryBefore,
+        remainingCarry: carryPlan.remainingCarry,
         idempotentReplay: false,
       };
     });

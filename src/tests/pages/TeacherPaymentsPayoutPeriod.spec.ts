@@ -25,4 +25,11 @@ describe('Brick 5 Teacher Payments payout periods', () => {
     expect(source).toContain('Net Entitlement');
     expect(source).toContain('Net entitlement');
   });
+
+  it('renders entitlement, carry, actual cash, and pending separately', () => {
+    expect(source).toContain('Carry Applied');
+    expect(source).toContain('Cash Paid');
+    expect(source).toContain('Actual cash amount (₹)');
+    expect(source).toContain('resolveTeacherOffsetAppliedAmount');
+  });
 });

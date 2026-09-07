@@ -29,11 +29,11 @@ describe('Brick 5 teacher payout period routing', () => {
   it('uses Brick 4 net entitlement instead of paying the stale raw earning amount', () => {
     expect(payoutSource).toContain('resolveTeacherEarningNetEntitlementAmount');
     expect(payoutSource).not.toContain('const due = Math.max(amount - currentCashAllocated, 0)');
-    expect(payoutSource).toContain('const due = Math.max(entitlement - currentCashAllocated, 0)');
+    expect(payoutSource).toContain('const due = Math.max(entitlement - currentCashAllocated - offsetApplied, 0)');
   });
 
   it('completes transaction reads before payout allocation writes', () => {
-    const readSetIndex = payoutSource.indexOf('const [existingPayoutSnap, earningsSnap] = await Promise.all([');
+    const readSetIndex = payoutSource.indexOf('const [existingPayoutSnap, earningsSnap, teacherEarningsSnap, offsetsSnap, adjustmentsSnap] = await Promise.all([');
     const firstWriteIndex = payoutSource.indexOf('tx.set(earning.ref');
     expect(readSetIndex).toBeGreaterThanOrEqual(0);
     expect(firstWriteIndex).toBeGreaterThan(readSetIndex);
