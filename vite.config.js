@@ -23,29 +23,8 @@ function canonicalInternalBlogLinks() {
         transformed = transformed.split(source).join(destination);
       }
 
-      // P0 public-fact normalization: one authoritative audience and 1:1 duration
-      // across rendered SEO/AEO/GEO surfaces while source-level migrations complete.
-      if (id.includes('/src/lib/schemas.ts')) {
-        transformed = transformed
-          .replace("sessionDuration: '35–40 minutes per session'", "sessionDuration: '35 minutes'")
-          .replace(
-            'through ${PUBLIC_FACTS.deliveryModel} in ${PUBLIC_FACTS.sessionDuration}, serving',
-            'through ${PUBLIC_FACTS.deliveryModel}. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}, serving',
-          )
-          .replace(
-            'Classes are delivered online in ${PUBLIC_FACTS.sessionDuration}, with',
-            'Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}, with',
-          )
-          .replace(
-            'with ${PUBLIC_FACTS.sessionDuration} that balance',
-            'with standard 1:1 sessions of ${PUBLIC_FACTS.sessionDuration} that balance',
-          )
-          .replace(
-            'Classes run for ${PUBLIC_FACTS.sessionDuration} and serve',
-            'Standard 1:1 classes run for ${PUBLIC_FACTS.sessionDuration} and serve',
-          );
-      }
-
+      // P0 public-fact normalization for remaining source-level migrations.
+      // src/lib/schemas.ts now carries the canonical 35-minute standard 1:1 fact directly.
       if (id.includes('/src/pages/HomePage.tsx')) {
         transformed = transformed.replace(
           'Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Each session is ${PUBLIC_FACTS.sessionDuration}.',
