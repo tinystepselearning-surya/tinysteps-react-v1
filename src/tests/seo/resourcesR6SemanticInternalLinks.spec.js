@@ -15,6 +15,7 @@ import {
 const repoRoot = process.cwd();
 const pathwaySource = fs.readFileSync(path.join(repoRoot, 'src/components/blog/BlogSemanticPathway.tsx'), 'utf8');
 const conversionSource = fs.readFileSync(path.join(repoRoot, 'src/components/blog/BlogConversionCard.tsx'), 'utf8');
+const blogPostPageSource = fs.readFileSync(path.join(repoRoot, 'src/pages/BlogPostPage.tsx'), 'utf8');
 
 describe('Resources architecture R6 semantic internal-link engine', () => {
   it('resolves every semantic destination through Brick 5 canonical ownership', () => {
@@ -71,6 +72,12 @@ describe('Resources architecture R6 semantic internal-link engine', () => {
     expect(pathwaySource).toContain('Continue the learning path');
     expect(conversionSource).toContain('<BlogSemanticPathway slug={slug} />');
     expect(conversionSource).toContain('data-blog-conversion-family={config.family}');
+  });
+
+  it('removes the legacy same-category recommendation algorithm from article-end navigation', () => {
+    expect(blogPostPageSource).not.toContain('Explore the most relevant program, related guides, or compare courses directly.');
+    expect(blogPostPageSource).not.toContain(".filter((p) => {\n                    const sameAudience = isSchoolConversion");
+    expect(blogPostPageSource).toContain('Explore the most relevant program or compare course options directly.');
   });
 
   it('does not invent semantic links for pages without an explicit Brick 6 journey', () => {
