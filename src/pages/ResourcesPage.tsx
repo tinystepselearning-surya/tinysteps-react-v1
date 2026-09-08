@@ -136,10 +136,18 @@ const ResourcesPage: FC = () => {
           <h1 className="ts-answer-title mt-2 max-w-5xl text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:text-[2.8rem] lg:leading-[1.04]">
             English Learning Resources for Kids, Parents & Educators
           </h1>
-          <p className="ts-answer-summary mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-            Choose the pathway that matches what you need and go directly to the right Tiny Steps guide, activity,
-            parent support, or school resource.
-          </p>
+          <div className="mt-3 flex max-w-5xl flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+            <p className="ts-answer-summary max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+              Choose the pathway that matches what you need and go directly to the right Tiny Steps guide, activity,
+              parent support, or school resource.
+            </p>
+            <Link
+              to="/blog"
+              className="shrink-0 text-xs font-black text-slate-700 transition hover:text-slate-950 hover:underline sm:pb-1 sm:text-sm"
+            >
+              Browse all guides →
+            </Link>
+          </div>
         </header>
 
         <div id="resource-paths" className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
