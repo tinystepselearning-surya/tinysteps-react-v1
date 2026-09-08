@@ -7,6 +7,8 @@ const readSource = (path: string) => readFileSync(join(process.cwd(), path), 'ut
 const statusSource = readSource('functions/src/helpers/status.ts');
 const revenueSource = readSource('functions/src/sessionRevenue.ts');
 const reconciliationSource = readSource('functions/src/financeReconciliationReport.ts');
+const adminCorrectionSource = readSource('functions/src/saveTeacherSessionProgress.ts');
+const completionBridgeSource = readSource('functions/src/adminAttendanceCorrectionCompletionBridge.ts');
 const correctionWorkflowSource = readSource('src/pages/admin/attendanceCorrectionTeacherPay.ts');
 const correctionDecisionSource = readSource('functions/src/adminAttendanceCorrectionTeacherPayDecision.ts');
 const mainPanelSource = readSource('src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx');
@@ -25,8 +27,32 @@ describe('Finance Brick 6 Present/Late policy routing', () => {
     expect(revenueSource).toContain("source: 'session_present_completed'");
   });
 
-  it('keeps reconciliation expectations aligned for both Present and Late', () => {
-    expect(reconciliationSource).toMatch(/attendanceStatus\s*===\s*'present'\s*\|\|\s*attendanceStatus\s*===\s*'late'/);
+  it('routes reconciliation expectations and missing-charge diagnostics through the canonical policy', () => {
+    expect(reconciliationSource).toContain("import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';");
+    expect(reconciliationSource).toContain('return isFinanciallyEarnedAttendanceStatus(attendanceStatus);');
+    expect(reconciliationSource).toContain('function hasFinanciallyEarnedAttendance');
+    expect(reconciliationSource).toContain('!hasFinanciallyEarnedAttendance(session)');
+    expect(reconciliationSource).not.toContain('function hasPresentAttendance');
+  });
+
+  it('uses the canonical policy inside synchronous admin finance reconciliation', () => {
+    expect(adminCorrectionSource).toContain("import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';");
+    expect(adminCorrectionSource).toContain('const wasBillable = isFinanciallyEarnedAttendanceStatus(previousStatus);');
+    expect(adminCorrectionSource).toContain('const isBillableNow = isFinanciallyEarnedAttendanceStatus(newStatus);');
+    expect(adminCorrectionSource).not.toContain("const wasBillable = previousStatus === 'present';");
+    expect(adminCorrectionSource).not.toContain("const isBillableNow = newStatus === 'present';");
+  });
+
+  it('preserves paid parent and teacher reversal guards for Late-to-non-earned corrections', () => {
+    expect(adminCorrectionSource).toContain('This charge already has payment applied. Reverse payment allocation first.');
+    expect(adminCorrectionSource).toContain('This teacher earning is already paid. Reverse payout allocation first.');
+  });
+
+  it('lets the historical completion bridge process both Present and Late through the canonical helper', () => {
+    expect(completionBridgeSource).toContain("import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';");
+    expect(completionBridgeSource).toContain('if (!isFinanciallyEarnedAttendanceStatus(correctionStatus)) return;');
+    expect(completionBridgeSource).toContain('!isFinanciallyEarnedAttendanceStatus(currentAttendanceStatus)');
+    expect(completionBridgeSource).toContain('currentAttendanceStatus !== correctionStatus');
   });
 
   it('requires explicit teacher-pay handling when a correction newly becomes Present or Late', () => {
