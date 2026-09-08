@@ -29,7 +29,7 @@ export function auditKnowledgePublicSurfaces(root, concepts, { dist = false, app
   // An indirect import could create dynamic routes without writing literal candidate slugs.
   for (const file of walk(path.join(root, 'src'))) {
     const relative = path.relative(root, file).replaceAll('\\', '/');
-    if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || /\.(spec|test)\./.test(relative) || !/\.[cm]?[jt]sx?$/.test(file)) continue;
+    if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || relative.endsWith('.d.ts') || /\.(spec|test)\./.test(relative) || !/\.[cm]?[jt]sx?$/.test(file)) continue;
     const source = fs.readFileSync(file, 'utf8');
     const approvedRuntimeFile = approvedPaths.length > 0 && ['src/lib/phonicsProgrammaticPilot.js', 'src/pages/PhonicsKnowledgePage.tsx'].includes(relative);
     if (!approvedRuntimeFile && (/\b(?:from\s*|import\s*\(?|require\s*\()\s*['"][^'"]*phonicsKnowledge/.test(source) || /import\.meta\.glob\([^)]*phonicsKnowledge/.test(source))) errors.push({ code: 'runtime-publication-import', id: relative });

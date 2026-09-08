@@ -100,7 +100,8 @@ export function validatePhonicsKnowledge({
       const approved = approvedByConcept.get(c.id);
       const approvedPath = `/resources/phonics/${slug}`;
       const isExactApprovedR9 = Boolean(approved && approved.path === approvedPath && approved.slug === slug && approved.conceptId === c.id);
-      if ((occupiedSlugs.has(slug) || [...occupied].some((p) => p.endsWith(`/${slug}`))) && !isExactApprovedR9) {
+      const approvedRouteIsRedirect = redirectSources.has(approvedPath);
+      if (approvedRouteIsRedirect || ((occupiedSlugs.has(slug) || [...occupied].some((p) => p.endsWith(`/${slug}`))) && !isExactApprovedR9)) {
         slugCollisions++; fail('slug-collision', c.id, slug);
       }
       const query = normalize(`${c.label} ${c.searchIntent} ${c.parentQuestion} ${slug}`);
