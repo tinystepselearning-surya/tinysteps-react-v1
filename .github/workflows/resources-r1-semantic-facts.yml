@@ -23,6 +23,7 @@ on:
       - 'src/tests/seo/quoraEntityLink.spec.ts'
       - 'src/tests/seo/b15OffsiteEntityCorroboration.spec.ts'
       - 'scripts/audit-public-facts.mjs'
+      - 'scripts/public-offer-consistency.mjs'
       - 'docs/seo/resources-architecture/**'
   workflow_dispatch:
 
@@ -32,7 +33,7 @@ permissions:
 jobs:
   resources-r1-semantic-facts:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout repository
@@ -62,6 +63,29 @@ jobs:
 
       - name: Run type check
         run: npm run typecheck
+
+      - name: Run full unit tests and capture report
+        id: full_unit_tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/seo/resources-r1
+          npx vitest run --reporter=json --outputFile=artifacts/seo/resources-r1/vitest-results.json
+
+      - name: Upload Brick 1 unit-test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources-r1-unit-test-report
+          path: artifacts/seo/resources-r1/vitest-results.json
+          if-no-files-found: warn
+
+      - name: Enforce full unit-test gate
+        if: steps.full_unit_tests.outcome != 'success'
+        run: |
+          echo 'Full unit test suite failed; inspect resources-r1-unit-test-report.' >&2
+          exit 1
 
       # Mirror the production build chain as named steps so any regression is
       # attributable to the exact existing SEO/prerender guard that rejects it.
