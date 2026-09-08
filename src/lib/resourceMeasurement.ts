@@ -4,9 +4,9 @@ import {
   PHONICS_RESOURCE_HUB_PATH,
   getPhonicsResourceDiscoveryClusterForPath,
 } from './phonicsResourceDiscoveryGraph.js';
-import { getPhonicsProgrammaticPilotPageByPath } from './phonicsProgrammaticPilot.js';
+import { getPublishedPhonicsResourcePageByPath } from './phonicsPublicationRegistry.js';
 
-export const RESOURCE_MEASUREMENT_REVISION = '2026-09-09-r11';
+export const RESOURCE_MEASUREMENT_REVISION = '2026-09-09-r12';
 export const PHONICS_RESOURCE_PREFIX = '/resources/phonics';
 
 export type ResourceSurface = 'phonics_hub' | 'phonics_guide';
@@ -27,6 +27,7 @@ export type ResourceMeasurementContext = {
   clusterLabel?: string;
   conceptId?: string;
   publicationRevision?: string;
+  publicationWave?: string;
 };
 
 export function normalizeResourcePath(rawPath: string): string {
@@ -47,7 +48,7 @@ export function getResourceMeasurementContext(pathname: string): ResourceMeasure
     return { surface: 'phonics_hub', subject: 'phonics', pagePath: path };
   }
 
-  const page = getPhonicsProgrammaticPilotPageByPath(path);
+  const page = getPublishedPhonicsResourcePageByPath(path);
   if (!page) return null;
   const cluster = getPhonicsResourceDiscoveryClusterForPath(path);
   return {
@@ -58,6 +59,7 @@ export function getResourceMeasurementContext(pathname: string): ResourceMeasure
     clusterLabel: cluster?.label,
     conceptId: page.conceptId,
     publicationRevision: page.publicationRevision,
+    publicationWave: page.publicationWave,
   };
 }
 
@@ -86,6 +88,7 @@ function baseParams(context: ResourceMeasurementContext) {
     resource_cluster_label: context.clusterLabel,
     resource_concept_id: context.conceptId,
     publication_revision: context.publicationRevision,
+    publication_wave: context.publicationWave,
     page_path: context.pagePath,
   };
 }
