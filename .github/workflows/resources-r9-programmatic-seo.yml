@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/content/phonicsKnowledge/**'
       - 'src/lib/phonicsProgrammaticPilot.*'
+      - 'src/lib/phonicsEditorialReviewRegistry.*'
+      - 'src/lib/editorialReviewerRegistry.ts'
       - 'src/lib/canonicalTopicOwnershipRegistry.js'
       - 'src/lib/breadcrumbAeoGeoRegistry.js'
       - 'src/lib/publicRouteManifest.js'
@@ -16,11 +18,14 @@ on:
       - 'src/components/resources/PhonicsPilotGuideGrid.tsx'
       - 'src/tests/seo/resourcesR*'
       - 'scripts/audit-resources-r9-programmatic-pilot.mjs'
+      - 'scripts/audit-resources-r9-1-human-editorial-review.mjs'
       - 'scripts/audit-resources-r8-phonics-knowledge.mjs'
       - 'scripts/phonics-knowledge-*.mjs'
       - 'scripts/generate-sitemaps.js'
       - 'docs/seo/resources-architecture/R9_PROGRAMMATIC_SEO_PILOT.md'
+      - 'docs/seo/resources-architecture/R9_1_HUMAN_EDITORIAL_REVIEW.md'
       - '.github/workflows/resources-r9-programmatic-seo.yml'
+      - '.github/workflows/resources-r9-1-human-editorial-review.yml'
   workflow_dispatch:
 
 permissions:
@@ -46,6 +51,8 @@ jobs:
         run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
       - name: Audit R9 controlled programmatic pilot
         run: node scripts/audit-resources-r9-programmatic-pilot.mjs --report
+      - name: Audit R9.1 human editorial review governance
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --report
       - name: Audit Brick 8 knowledge under approved R9 publication
         run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
       - name: Audit semantic internal links
@@ -62,6 +69,8 @@ jobs:
         run: npm run build
       - name: Verify R9 rendered publication contract
         run: node scripts/audit-resources-r9-programmatic-pilot.mjs --dist --report
+      - name: Verify rendered R9.1 review claims
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --dist --report
       - name: Verify R8 blocks every non-approved candidate output
         run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
       - name: Run rendered Resources safety audit
@@ -73,5 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: resources-r9-programmatic-seo
-          path: artifacts/resources-r9-programmatic-seo.json
+          path: |
+            artifacts/resources-r9-programmatic-seo.json
+            artifacts/resources-r9-1-human-editorial-review.json
           if-no-files-found: warn
