@@ -44,7 +44,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     allGuidesLabel: 'Browse all phonics guides',
     programmeTo: '/phonics',
     programmeLabel: 'Explore live phonics support',
-    accent: 'from-sky-500/18 via-blue-500/8 to-transparent',
+    accent: 'from-sky-500/[0.18] via-blue-500/[0.08] to-transparent',
     sections: [
       {
         eyebrow: 'Learn the pathway',
@@ -89,7 +89,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     allGuidesLabel: 'Browse all grammar guides',
     programmeTo: '/grammar',
     programmeLabel: 'Explore live grammar support',
-    accent: 'from-emerald-500/18 via-teal-500/8 to-transparent',
+    accent: 'from-emerald-500/[0.18] via-teal-500/[0.08] to-transparent',
     sections: [
       {
         eyebrow: 'Learn the pathway',
@@ -133,7 +133,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     allGuidesLabel: 'Browse all speaking guides',
     programmeTo: '/speaking',
     programmeLabel: 'Explore live speaking support',
-    accent: 'from-amber-500/18 via-orange-500/8 to-transparent',
+    accent: 'from-amber-500/[0.18] via-orange-500/[0.08] to-transparent',
     sections: [
       {
         eyebrow: 'Learn the pathway',
@@ -237,7 +237,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">{config.intro}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#resource-sections" className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-100">Choose a starting point</a>
-              <Link to={config.allGuidesTo} className="rounded-full border border-white/20 bg-white/8 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/14">{config.allGuidesLabel}</Link>
+              <Link to={config.allGuidesTo} className="rounded-full border border-white/20 bg-white/[0.08] px-5 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]">{config.allGuidesLabel}</Link>
             </div>
           </div>
         </div>
@@ -245,10 +245,10 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
 
       <section id="resource-sections" className="mx-auto max-w-7xl space-y-14 px-6 py-14 sm:py-16 lg:py-20">
         {config.sections.map((section) => (
-          <section key={section.eyebrow} aria-labelledby={`${subject}-${section.eyebrow.replaceAll(' ', '-').toLowerCase()}`}>
+          <section key={section.eyebrow} aria-labelledby={`${subject}-${section.eyebrow.split(' ').join('-').toLowerCase()}`}>
             <div className="max-w-3xl">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">{section.eyebrow}</p>
-              <h2 id={`${subject}-${section.eyebrow.replaceAll(' ', '-').toLowerCase()}`} className="mt-3 text-3xl font-black tracking-[-0.025em] text-slate-950 sm:text-4xl">{section.title}</h2>
+              <h2 id={`${subject}-${section.eyebrow.split(' ').join('-').toLowerCase()}`} className="mt-3 text-3xl font-black tracking-[-0.025em] text-slate-950 sm:text-4xl">{section.title}</h2>
               <p className="mt-4 text-base leading-8 text-slate-600">{section.description}</p>
             </div>
             <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
