@@ -1,0 +1,40 @@
+name: R6 One-shot Related Cleanup
+
+on:
+  push:
+    branches:
+      - seo/resources-r6-semantic-internal-links
+    paths:
+      - '.github/workflows/r6-one-shot-related-cleanup.yml'
+      - 'scripts/r6-remove-legacy-related-links.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/resources-r6-semantic-internal-links
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Remove legacy same-category recommendation strip
+        run: node scripts/r6-remove-legacy-related-links.mjs
+
+      - name: Commit product change
+        run: |
+          if git diff --quiet -- src/pages/BlogPostPage.tsx; then
+            echo "No product change to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/BlogPostPage.tsx
+          git commit -m "refactor(resources): remove legacy category recommendations"
+          git push origin HEAD:seo/resources-r6-semantic-internal-links
