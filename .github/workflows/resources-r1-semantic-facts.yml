@@ -63,8 +63,58 @@ jobs:
       - name: Run type check
         run: npm run typecheck
 
-      - name: Build and prerender public website
-        run: npm run build
+      # Mirror the production build chain as named steps so any regression is
+      # attributable to the exact existing SEO/prerender guard that rejects it.
+      - name: Run prebuild shadowing and RSS checks
+        run: npm run prebuild
+
+      - name: Generate sitemaps
+        run: npm run gen:sitemaps
+
+      - name: Run blog consolidation source audit
+        run: npm run seo:blog-consolidation
+
+      - name: Build Vite application
+        run: npx vite build
+
+      - name: Write build metadata
+        run: node scripts/write-build-info.mjs
+
+      - name: Prerender public website
+        run: node scripts/prerender.mjs
+
+      - name: Run rendered SEO checks
+        run: npm run seo:rendered-check
+
+      - name: Run rendered blog consolidation audit
+        run: npm run seo:blog-rendered-consolidation
 
       - name: Run rendered public semantic facts audit
         run: npm run content:public-facts-rendered
+
+      - name: Run route integrity guard
+        run: npm run seo:route-integrity
+
+      - name: Run indexation guard
+        run: npm run seo:indexation-check
+
+      - name: Generate indexability report
+        run: npm run seo:indexability-report
+
+      - name: Run GSC crawled-not-indexed audit
+        run: npm run seo:gsc-crawled-audit
+
+      - name: Run GSC archive rendering audit
+        run: npm run seo:gsc-archive-rendering
+
+      - name: Write GSC index submission targets
+        run: npm run seo:gsc-index-targets
+
+      - name: Verify public bundle budget
+        run: npm run bundle:public-check
+
+      - name: Run public offer consistency guard
+        run: npm run content:offer-consistency
+
+      - name: Write IndexNow key
+        run: node scripts/write-indexnow-key.mjs
