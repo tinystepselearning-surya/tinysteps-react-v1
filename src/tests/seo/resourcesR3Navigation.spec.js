@@ -16,7 +16,7 @@ describe('Resources architecture R3 global navigation migration', () => {
     expect(nav).not.toContain('{ label: "Blog", to: "/blog" }');
   });
 
-  it('keeps Resources active for future nested resource hubs', () => {
+  it('keeps Resources active for nested resource hubs', () => {
     const nav = read('src/components/NavBar/NavBar.tsx');
 
     expect(nav).toContain('pathname === item.to || pathname.startsWith(`${item.to}/`)');
@@ -60,11 +60,15 @@ describe('Resources architecture R3 global navigation migration', () => {
     }
   });
 
-  it('does not publish subject hubs or alter the Brick 3 boundary', () => {
+  it('preserves the Brick 3 navigation boundary while allowing the approved Brick 4 subject hubs', () => {
     const manifestPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((item) => item.path));
 
     for (const pathName of ['/resources/phonics', '/resources/grammar', '/resources/speaking']) {
-      expect(manifestPaths.has(pathName)).toBe(false);
+      expect(manifestPaths.has(pathName)).toBe(true);
+    }
+
+    for (const duplicate of ['/resources/parents', '/resources/games', '/resources/schools', '/resources/blog']) {
+      expect(manifestPaths.has(duplicate)).toBe(false);
     }
   });
 });
