@@ -40,7 +40,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Phonics & Reading Resources',
     eyebrow: 'Reading foundations',
     intro:
-      'Use the existing Tiny Steps phonics and reading library by learning stage, practice need, or the problem you are seeing. These routes organise our established guides and games; they do not replace the live phonics programme or any article’s search intent.',
+      'Find the right phonics or reading support by learning stage, practice need, or the difficulty you can see. Start with a guide, move into focused practice, or use a problem pathway when your child is stuck.',
     canonicalPath: '/resources/phonics',
     allGuidesTo: '/blog?topic=Phonics',
     allGuidesLabel: 'Browse all phonics guides',
@@ -50,8 +50,8 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     sections: [
       {
         eyebrow: 'Learn the pathway',
-        title: 'Move from sounds into independent reading',
-        description: 'Start with the concept or stage you need instead of reading the library in publication order.',
+        title: 'Understand what to teach next',
+        description: 'Follow the reading progression from phonics foundations into blending and early decoding.',
         links: [
           { title: 'What is phonics for kids?', description: 'Understand the role of sounds, print, blending and decoding.', to: '/blog/what-is-phonics-for-kids', label: 'Start with phonics' },
           { title: 'SATPIN phonics guide', description: 'See why early sound sets are useful and what should come next.', to: '/blog/satpin-phonics-guide', label: 'Explore SATPIN' },
@@ -61,18 +61,18 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       },
       {
         eyebrow: 'Practise the skill',
-        title: 'Use focused practice after the explanation',
-        description: 'Interactive practice stays inside the existing Tiny Steps games ecosystem.',
+        title: 'Use focused practice',
+        description: 'Choose a short activity that matches the skill your child is currently learning.',
         links: [
           { title: 'Letter-sound games', description: 'Practise hearing and recognising individual letter sounds.', to: '/free-letter-sound-games-for-kids', label: 'Practise letter sounds' },
           { title: 'Word-building games', description: 'Move from sound knowledge into blending and word construction.', to: '/free-word-building-games-for-kids', label: 'Build words' },
-          { title: 'Reading games', description: 'Practise reading and fluency without creating another content silo.', to: '/free-reading-games-for-kids', label: 'Practise reading' },
+          { title: 'Reading games', description: 'Practise reading accuracy, confidence and fluency.', to: '/free-reading-games-for-kids', label: 'Practise reading' },
         ],
       },
       {
         eyebrow: 'Solve a problem',
-        title: 'Start from the reading difficulty you can actually see',
-        description: 'Diagnostic pages remain the intent owners; this hub only helps parents reach the right one.',
+        title: 'Start with the difficulty you see',
+        description: 'Use the closest reading concern to find the most relevant explanation and next step.',
         links: [
           { title: 'Knows ABC but cannot read words', description: 'Check whether letter names are masking a decoding gap.', to: '/blog/child-knows-abc-but-cannot-read', label: 'Check this reading gap' },
           { title: 'Knows sounds but cannot read words', description: 'Separate sound knowledge from blending and decoding transfer.', to: '/blog/why-child-knows-letter-sounds-but-cannot-read-words', label: 'Check the blending gap' },
@@ -210,6 +210,130 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     breadcrumb: { '@id': breadcrumbSchema['@id'] },
     speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
   };
+
+  if (subject === 'phonics') {
+    const panelStyles = [
+      'from-sky-50 via-white to-blue-50/80 border-sky-100',
+      'from-violet-50 via-white to-fuchsia-50/70 border-violet-100',
+      'from-amber-50 via-white to-orange-50/80 border-amber-100',
+    ] as const;
+
+    return (
+      <main className="min-h-screen bg-[radial-gradient(circle_at_12%_10%,rgba(14,165,233,0.08),transparent_24%),radial-gradient(circle_at_86%_8%,rgba(251,146,60,0.08),transparent_22%),linear-gradient(180deg,#fbfaf7_0%,#ffffff_62%,#f8fafc_100%)] text-slate-950">
+        <Meta
+          title={title}
+          description={description}
+          canonical={canonicalUrl}
+          jsonLd={[organizationSchema, websiteSchema, collectionPageSchema, breadcrumbSchema, itemListSchema]}
+        />
+
+        <section className="mx-auto max-w-7xl px-6 pb-10 pt-7 sm:pb-12 sm:pt-9 lg:pb-14">
+          <KnowledgeBreadcrumbs items={breadcrumbItems} tone="light" />
+
+          <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="max-w-4xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-700">{config.eyebrow}</p>
+              <h1 className="ts-answer-title mt-3 text-4xl font-black tracking-[-0.035em] text-slate-950 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.02]">
+                {config.title}
+              </h1>
+              <p className="ts-answer-summary mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:text-lg">
+                {config.intro}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2.5 lg:justify-end">
+              <Link
+                to={config.allGuidesTo}
+                className="rounded-full bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+              >
+                {config.allGuidesLabel}
+              </Link>
+              <Link
+                to="/resources"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
+              >
+                All Resources
+              </Link>
+            </div>
+          </div>
+
+          <div id="resource-sections" className="mt-8 grid gap-4 lg:grid-cols-3">
+            {config.sections.map((section, sectionIndex) => {
+              const sectionId = `${subject}-${section.eyebrow.split(' ').join('-').toLowerCase()}`;
+              return (
+                <section
+                  key={section.eyebrow}
+                  aria-labelledby={sectionId}
+                  className={`rounded-[1.8rem] border bg-gradient-to-br ${panelStyles[sectionIndex]} p-5 shadow-[0_18px_45px_rgba(15,23,42,0.055)] sm:p-6`}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">{section.eyebrow}</p>
+                    <span className="text-xs font-black tracking-[0.18em] text-slate-300">0{sectionIndex + 1}</span>
+                  </div>
+                  <h2 id={sectionId} className="mt-3 text-2xl font-black tracking-[-0.025em] text-slate-950">
+                    {section.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{section.description}</p>
+
+                  <div className="mt-5 space-y-2.5">
+                    {section.links.map((link) => (
+                      <Link
+                        key={`${section.eyebrow}-${link.to}`}
+                        to={link.to}
+                        className="group flex items-start justify-between gap-3 rounded-2xl border border-white/90 bg-white/85 p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:shadow-[0_12px_30px_rgba(15,23,42,0.07)]"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[15px] font-black leading-5 text-slate-950">{link.title}</span>
+                          <span className="mt-1 block text-xs leading-5 text-slate-600">{link.description}</span>
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-black text-slate-800 transition group-hover:translate-x-0.5"
+                        >
+                          →
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="border-y border-slate-200 bg-white/88">
+          <div className="mx-auto grid max-w-7xl gap-4 px-6 py-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">Need teacher-led support?</p>
+              <h2 className="mt-2 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                Resources first. Live phonics support when you need it.
+              </h2>
+              <p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-600">
+                If a guide or activity is not enough, explore the live phonics programme or use the free assessment to check the best starting level.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2.5 lg:justify-end">
+              <Link to={config.programmeTo} className="rounded-full bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800">
+                {config.programmeLabel}
+              </Link>
+              <Link to="/book-demo" className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-slate-50">
+                Check My Child’s Level
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-6 py-6">
+          <div className="flex flex-wrap items-center gap-2.5 text-sm font-bold">
+            <span className="mr-1 text-xs font-black uppercase tracking-[0.18em] text-slate-400">Explore more</span>
+            <Link to="/blog" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 hover:bg-slate-50">All Guides</Link>
+            <Link to={SUBJECTS.grammar.canonicalPath} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 hover:bg-slate-50">{SUBJECTS.grammar.title}</Link>
+            <Link to={SUBJECTS.speaking.canonicalPath} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-800 hover:bg-slate-50">{SUBJECTS.speaking.title}</Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_42%,#f8fafc_100%)] text-slate-950">
