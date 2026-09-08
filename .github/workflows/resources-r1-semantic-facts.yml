@@ -1,0 +1,70 @@
+name: Resources R1 Semantic Facts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/config/semanticFacts.ts'
+      - 'src/config/publicFacts.ts'
+      - 'src/config/publicOffer.ts'
+      - 'src/config/pricing.ts'
+      - 'src/constants/publicContact.ts'
+      - 'src/content/courses.ts'
+      - 'src/content/phonicsCurriculum.ts'
+      - 'src/lib/schemas.ts'
+      - 'src/lib/officialProfiles.ts'
+      - 'src/lib/founderProfiles.ts'
+      - 'src/lib/pinterestProfile.ts'
+      - 'src/lib/quoraProfile.ts'
+      - 'src/components/common/Meta.tsx'
+      - 'src/components/common/Footer.tsx'
+      - 'src/components/entity/OfficialProfilesSection.tsx'
+      - 'src/tests/seo/resourcesR1SemanticFacts.spec.ts'
+      - 'src/tests/seo/quoraEntityLink.spec.ts'
+      - 'src/tests/seo/b15OffsiteEntityCorroboration.spec.ts'
+      - 'scripts/audit-public-facts.mjs'
+      - 'docs/seo/resources-architecture/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r1-semantic-facts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Brick 1 semantic facts tests
+        run: >-
+          npx vitest run
+          src/tests/seo/resourcesR1SemanticFacts.spec.ts
+          src/tests/seo/quoraEntityLink.spec.ts
+          src/tests/seo/b15OffsiteEntityCorroboration.spec.ts
+
+      - name: Run public semantic facts source audit
+        run: npm run content:public-facts
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Build and prerender public website
+        run: npm run build
+
+      - name: Run rendered public semantic facts audit
+        run: npm run content:public-facts-rendered
