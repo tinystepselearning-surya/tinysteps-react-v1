@@ -6,6 +6,7 @@ import {
   getTeacherAttendanceCorrectionCutoffMillis,
 } from './helpers/attendanceCorrectionFreeze';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
+import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -378,8 +379,8 @@ async function reconcileAttendanceCorrectionFinance(args: {
     reason,
   } = args;
 
-  const wasBillable = previousStatus === 'present';
-  const isBillableNow = newStatus === 'present';
+  const wasBillable = isFinanciallyEarnedAttendanceStatus(previousStatus);
+  const isBillableNow = isFinanciallyEarnedAttendanceStatus(newStatus);
   const chargeRef = db.collection('billingCharges').doc(sessionId);
   const earningRef = db.collection('teacherEarnings').doc(sessionId);
   const [chargeSnap, earningSnap] = await Promise.all([chargeRef.get(), earningRef.get()]);
@@ -412,10 +413,10 @@ async function reconcileAttendanceCorrectionFinance(args: {
       earningStatus,
     });
     if (replayPlan.conflict === 'charge_void') {
-      throw new HttpsError('failed-precondition', 'Existing charge is void; present attendance replay requires financial review.');
+      throw new HttpsError('failed-precondition', 'Existing charge is void; financially-earned attendance replay requires financial review.');
     }
     if (replayPlan.conflict === 'earning_void') {
-      throw new HttpsError('failed-precondition', 'Existing teacher earning is void; present attendance replay requires financial review.');
+      throw new HttpsError('failed-precondition', 'Existing teacher earning is void; financially-earned attendance replay requires financial review.');
     }
     if (replayPlan.conflict === 'missing_charge') {
       throw new HttpsError('failed-precondition', 'Billing charge is missing while a teacher earning exists; use explicit financial reconciliation.');
@@ -424,7 +425,7 @@ async function reconcileAttendanceCorrectionFinance(args: {
       throw new HttpsError('failed-precondition', 'Teacher earning is missing while a billing charge exists; use explicit financial reconciliation.');
     }
     if (replayPlan.conflict === 'missing_charge_and_earning') {
-      throw new HttpsError('failed-precondition', 'Financial ledger is missing for already-present attendance; use explicit financial reconciliation.');
+      throw new HttpsError('failed-precondition', 'Financial ledger is missing for already-earned attendance; use explicit financial reconciliation.');
     }
     if (replayPlan.conflict === 'already_accrued_without_ledger') {
       throw new HttpsError('failed-precondition', 'Session is already accrued but its financial ledger is missing; use explicit financial reconciliation.');
