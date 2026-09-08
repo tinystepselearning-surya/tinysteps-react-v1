@@ -20,9 +20,47 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  compatibility-hotfix:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'seo/resources-r4-subject-hubs'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/resources-r4-subject-hubs
+          fetch-depth: 0
+      - name: Apply source compatibility fixes if needed
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/pages/SubjectResourcesPage.tsx')
+          s = p.read_text()
+          replacements = {
+            ".replaceAll(' ', '-')": ".split(' ').join('-')",
+            'from-sky-500/18 via-blue-500/8': 'from-sky-500/[0.18] via-blue-500/[0.08]',
+            'from-emerald-500/18 via-teal-500/8': 'from-emerald-500/[0.18] via-teal-500/[0.08]',
+            'from-amber-500/18 via-orange-500/8': 'from-amber-500/[0.18] via-orange-500/[0.08]',
+            'bg-white/8': 'bg-white/[0.08]',
+            'hover:bg-white/14': 'hover:bg-white/[0.14]',
+          }
+          for old, new in replacements.items():
+            s = s.replace(old, new)
+          p.write_text(s)
+          PY
+      - name: Commit source-only fix when changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/SubjectResourcesPage.tsx
+          if git diff --cached --quiet; then
+            echo "No compatibility changes required."
+            exit 0
+          fi
+          git commit -m "fix(resources): harden subject hub compatibility"
+          git push origin HEAD:seo/resources-r4-subject-hubs
+
   resources-r4-subject-hubs:
     runs-on: ubuntu-latest
     steps:
