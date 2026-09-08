@@ -26,7 +26,7 @@ const dashboardPaths: Record<string, string> = {
 const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Courses', href: '/courses', desktop: false },
   { label: 'Curriculum', href: '/curriculum' },
-  { label: 'Blog', href: '/blog' },
+  { label: 'Resources', href: '/resources' },
   { label: 'Pricing', href: '/pricing', desktop: false },
   { label: 'For Schools', href: '/for-schools' },
   { label: 'Class Samples', href: '/class-samples' },
@@ -34,6 +34,9 @@ const PRIMARY_LINKS: LinkItem[] = [
 ];
 
 const LOGIN_LINK: LinkItem = { label: 'Login', href: '/login' };
+
+const matchesPrimaryLink = (pathname: string, href: string) =>
+  pathname === href || pathname.startsWith(`${href}/`);
 
 export default function Header() {
   const { user } = useAuthStore();
@@ -145,9 +148,9 @@ export default function Header() {
             <Link
               key={link.href}
               to={link.href}
-              aria-current={location.pathname === link.href ? 'page' : undefined}
+              aria-current={matchesPrimaryLink(location.pathname, link.href) ? 'page' : undefined}
               className={`rounded-sm transition-colors hover:text-tiny-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
-                location.pathname === link.href ? 'text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-8' : ''
+                matchesPrimaryLink(location.pathname, link.href) ? 'text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-8' : ''
               }`}
             >
               {link.label}
@@ -281,10 +284,10 @@ export default function Header() {
               <Link
                 key={link.href}
                 to={link.href}
-                aria-current={location.pathname === link.href ? 'page' : undefined}
+                aria-current={matchesPrimaryLink(location.pathname, link.href) ? 'page' : undefined}
                 onClick={() => setIsOpen(false)}
                 className={`block rounded-sm py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
-                  location.pathname === link.href ? 'text-orange-700' : ''
+                  matchesPrimaryLink(location.pathname, link.href) ? 'text-orange-700' : ''
                 }`}
               >
                 {link.label}
