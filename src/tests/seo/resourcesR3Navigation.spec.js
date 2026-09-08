@@ -9,18 +9,24 @@ const repoRoot = process.cwd();
 const read = (relativePath) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('Resources architecture R3 global navigation migration', () => {
-  it('promotes Resources into the primary header instead of Blog', () => {
+  it('promotes Resources into every active public header instead of Blog', () => {
     const nav = read('src/components/NavBar/NavBar.tsx');
+    const publicHeader = read('src/components/common/Header.tsx');
 
     expect(nav).toContain('{ label: "Resources", to: "/resources" }');
     expect(nav).not.toContain('{ label: "Blog", to: "/blog" }');
+    expect(publicHeader).toContain("{ label: 'Resources', href: '/resources' }");
+    expect(publicHeader).not.toContain("{ label: 'Blog', href: '/blog' }");
   });
 
-  it('keeps Resources active for nested resource hubs', () => {
+  it('keeps Resources active for nested resource hubs in both navigation implementations', () => {
     const nav = read('src/components/NavBar/NavBar.tsx');
+    const publicHeader = read('src/components/common/Header.tsx');
 
     expect(nav).toContain('pathname === item.to || pathname.startsWith(`${item.to}/`)');
     expect(nav).toContain('matchesNavItem(location.pathname, item)');
+    expect(publicHeader).toContain('pathname === href || pathname.startsWith(`${href}/`)');
+    expect(publicHeader).toContain('matchesPrimaryLink(location.pathname, link.href)');
   });
 
   it('preserves direct editorial-library access in the footer', () => {
