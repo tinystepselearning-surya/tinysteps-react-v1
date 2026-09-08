@@ -385,8 +385,6 @@
       { "source": "/games", "destination": "/phonics-learning-games", "type": 301 },
       { "source": "/games/english-excellence", "destination": "/phonics-learning-games", "type": 301 },
       { "source": "/learningpartner", "destination": "/learning-partner", "type": 301 },
-      { "source": "/resources", "destination": "/blog", "type": 301 },
-      { "source": "/resources/", "destination": "/blog", "type": 301 },
       { "source": "/blog/week1", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
       { "source": "/blog/week2", "destination": "/blog/week-2-phonics-blending-club", "type": 301 },
       { "source": "/blog/week3", "destination": "/blog/week-3-phonics-tricky-words", "type": 301 },
@@ -452,8 +450,8 @@
       { "source": "/main/parents/reading-at-home", "destination": "/parents/reading-at-home", "type": 301 },
       { "source": "/main/parents/speech-confidence", "destination": "/parents/speech-confidence", "type": 301 },
       { "source": "/main/parents/common-mistakes", "destination": "/parents/common-mistakes", "type": 301 },
-      { "source": "/main/resources", "destination": "/blog", "type": 301 },
-      { "source": "/main/resources/", "destination": "/blog", "type": 301 },
+      { "source": "/main/resources", "destination": "/resources", "type": 301 },
+      { "source": "/main/resources/", "destination": "/resources", "type": 301 },
       { "regex": "/main/?$", "destination": "/", "type": 301 }
     ],
     "rewrites": [

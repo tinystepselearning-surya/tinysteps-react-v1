@@ -20,13 +20,13 @@ describe('Resources architecture R0 safety baseline', () => {
     }
   });
 
-  it('freezes /resources as a redirect and subject hubs as planned during R0', () => {
+  it('protects the Brick 2 /resources gateway while subject hubs remain planned', () => {
     const byPath = new Map(RESOURCE_ECOSYSTEM_REGISTRY.map((item) => [item.path, item]));
 
     expect(byPath.get('/resources')).toMatchObject({
-      currentState: 'redirect',
-      expectedRedirectTarget: '/blog',
-      protection: 'opportunity',
+      currentState: 'route',
+      pageFamily: 'learning-resource-gateway',
+      protection: 'protected',
     });
 
     for (const path of ['/resources/phonics', '/resources/grammar', '/resources/speaking']) {
