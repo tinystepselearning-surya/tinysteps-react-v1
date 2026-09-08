@@ -2,7 +2,7 @@ name: Resources R10.1 Phonics Audio Foundation
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, seo/resources-r10-discovery-graph]
     paths:
       - 'src/lib/phonicsSoundRegistry.ts'
       - 'src/content/phonicsWordSounds.ts'
