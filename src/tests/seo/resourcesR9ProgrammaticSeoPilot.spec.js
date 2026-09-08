@@ -44,7 +44,7 @@ describe('Resources architecture R9 controlled programmatic SEO pilot', () => {
   });
 
   it('keeps SATPIN, blending and CVC with their established owners', () => {
-    for (const id of ['satpin-sound-set', 'blending', 'cvc-words']) {
+    for (const id of ['satpin', 'blending', 'cvc-words']) {
       const concept = getPhonicsKnowledgeConcept(id);
       expect(concept).toBeTruthy();
       expect(concept.expansionState).toBe('existing-owner');
