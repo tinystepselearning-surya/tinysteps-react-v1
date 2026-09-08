@@ -1,0 +1,80 @@
+name: Resources R8 Phonics Knowledge Dataset
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/content/**'
+      - 'src/lib/**'
+      - 'src/config/**'
+      - 'src/constants/**'
+      - 'src/app/**'
+      - 'src/pages/**'
+      - 'src/components/**'
+      - 'src/tests/seo/resourcesR*'
+      - 'functions/src/phonicsCurriculumConfig.ts'
+      - 'scripts/**'
+      - 'public/**'
+      - 'firebase.json'
+      - '*config*'
+      - 'package*.json'
+      - 'docs/seo/resources-architecture/**'
+      - '.github/workflows/resources-r8-phonics-knowledge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r8-phonics-knowledge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R0-R8 Resources and canonical curriculum regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Audit knowledge, curriculum, ownership and zero public route delta
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          if [ -n "$PR_BASE_SHA" ]; then
+            node scripts/audit-resources-r8-phonics-knowledge.mjs --base "$PR_BASE_SHA" --report
+          else
+            node scripts/audit-resources-r8-phonics-knowledge.mjs --report
+          fi
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Audit R7 breadcrumb and AEO/GEO layer
+        run: node scripts/audit-resources-r7-aeo-geo.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify no candidate output was published
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --dist
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+      - name: Upload R8 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources-r8-phonics-knowledge
+          path: artifacts/resources-r8-phonics-knowledge.json
+          if-no-files-found: warn

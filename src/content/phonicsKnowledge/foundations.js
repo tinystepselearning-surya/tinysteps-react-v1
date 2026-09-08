@@ -1,4 +1,5 @@
 import { definePhonicsKnowledge as concept } from './schema.js';
+import { getKnowledgeCurriculumRefs } from './curriculum.js';
 
 export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
   concept('phonemic-awareness', {
@@ -27,6 +28,7 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
     nextIds: ['letter-sound-foundations', 'blending'],
     curriculumAlignment: 'prerequisite-context',
     curriculumRefs: [],
+    supportingPaths: ['/blog/phonics-rules-for-beginners', '/free-letter-sound-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'supporting-only',
     futureSlugCandidate: null,
@@ -45,7 +47,7 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
     exampleWords: ['sat', 'tap', 'pin', 'sit'],
     commonConfusions: [
       'Using letter names instead of the sound needed for blending.',
-      'Adding a strong extra vowel after a consonant sound, such as /suh/ instead of a clipped /s/.',
+      'Adding a strong extra vowel after a consonant sound, such as /suh/ instead of continuous /s/.',
     ],
     teachingNotes: [
       'Teach a small useful set and begin combining it rather than waiting for all 26 letters.',
@@ -58,11 +60,8 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
     prerequisiteIds: ['phonemic-awareness'],
     nextIds: ['satpin', 'blending'],
     curriculumAlignment: 'direct',
-    curriculumRefs: [
-      { courseId: 'phonics-foundations', lessonNumber: 1, label: 'Letter S' },
-      { courseId: 'phonics-foundations', lessonNumber: 2, label: 'Letter A' },
-      { courseId: 'phonics-foundations', lessonNumber: 3, label: 'Letter T' },
-    ],
+    curriculumRefs: getKnowledgeCurriculumRefs((lesson) => ['single_sound', 'sound_set'].includes(lesson.rubricType)),
+    supportingPaths: ['/blog/phonics-rules-for-beginners', '/free-letter-sound-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'supporting-only',
     futureSlugCandidate: null,
@@ -98,6 +97,7 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 1, label: 'Letters S, A, T' },
       { courseId: 'early-phonics', lessonNumber: 2, label: 'Letters I, P, N' },
     ],
+    supportingPaths: ['/blog/phonics-rules-for-beginners', '/free-letter-sound-games-for-kids'],
     canonicalOwnerTopicId: 'satpin-phonics',
     expansionState: 'existing-owner',
     futureSlugCandidate: null,
@@ -133,6 +133,7 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 1, label: 'Letters S, A, T' },
       { courseId: 'early-phonics', lessonNumber: 2, label: 'Letters I, P, N' },
     ],
+    supportingPaths: ['/blog/phonics-rules-for-beginners', '/free-letter-sound-games-for-kids'],
     canonicalOwnerTopicId: 'phonics-blending-progression',
     expansionState: 'existing-owner',
     futureSlugCandidate: null,
@@ -168,6 +169,7 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
       { courseId: 'phonics-foundations', lessonNumber: 27, label: 'Short Vowels' },
       { courseId: 'early-phonics', lessonNumber: 12, label: 'Short Vowels' },
     ],
+    supportingPaths: ['/blog/phonics-rules-for-beginners', '/free-letter-sound-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'supporting-only',
     futureSlugCandidate: null,
@@ -203,6 +205,7 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
       { courseId: 'phonics-foundations', lessonNumber: 27, label: 'Short Vowels' },
       { courseId: 'early-phonics', lessonNumber: 12, label: 'Short Vowels' },
     ],
+    supportingPaths: ['/blog/phonics-rules-for-beginners', '/free-letter-sound-games-for-kids'],
     canonicalOwnerTopicId: 'cvc-words-explanation',
     expansionState: 'existing-owner',
     futureSlugCandidate: null,
@@ -210,3 +213,4 @@ export const FOUNDATION_PHONICS_KNOWLEDGE = Object.freeze([
     distinctValueSignals: ['decoding-structure', 'fresh-word-transfer', 'sound-box-practice'],
   }),
 ]);
+

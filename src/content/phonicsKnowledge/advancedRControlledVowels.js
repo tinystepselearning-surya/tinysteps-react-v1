@@ -30,6 +30,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 29, label: 'Soft G and Hard G' },
       { courseId: 'advanced-phonics', lessonNumber: 13, label: 'Soft C and G, Hard C and G' },
     ],
+    supportingPaths: ['/blog/r-controlled-vowels-explained', '/blog/long-vowel-sounds-for-kids', '/free-reading-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'future-wave-2',
     futureSlugCandidate: 'soft-g-hard-g-phonics',
@@ -51,7 +52,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       'Treating every written ar sequence as identical without checking the word.',
     ],
     teachingNotes: [
-      'Mark ar as one vowel-r pattern and compare it with a familiar short-a word.',
+      'Mark ar as one vowel-r pattern and compare it with a familiar short-a word; rhotic and non-rhotic accents realise the r differently.',
       'Keep the first set regular and add less common pronunciations later.',
     ],
     practiceIdeas: [
@@ -65,6 +66,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 30, label: 'Controlling R: AR' },
       { courseId: 'advanced-phonics', lessonNumber: 21, label: 'Controlling R: AR' },
     ],
+    supportingPaths: ['/blog/r-controlled-vowels-explained', '/blog/long-vowel-sounds-for-kids', '/free-reading-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'future-wave-2',
     futureSlugCandidate: 'ar-r-controlled-vowels-phonics',
@@ -100,6 +102,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 31, label: 'Controlling R: OR' },
       { courseId: 'advanced-phonics', lessonNumber: 22, label: 'Controlling R: OR' },
     ],
+    supportingPaths: ['/blog/r-controlled-vowels-explained', '/blog/long-vowel-sounds-for-kids', '/free-reading-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'future-wave-2',
     futureSlugCandidate: 'or-r-controlled-vowels-phonics',
@@ -135,6 +138,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 32, label: 'Controlling R: ER, IR, UR' },
       { courseId: 'advanced-phonics', lessonNumber: 23, label: 'Controlling R: IR, UR, ER' },
     ],
+    supportingPaths: ['/blog/r-controlled-vowels-explained', '/blog/long-vowel-sounds-for-kids', '/free-reading-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'future-wave-2',
     futureSlugCandidate: 'er-ir-ur-r-controlled-vowels-phonics',
@@ -170,6 +174,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 33, label: 'Y as a Secret Vowel' },
       { courseId: 'advanced-phonics', lessonNumber: 14, label: 'Y as a Secret Vowel' },
     ],
+    supportingPaths: ['/blog/r-controlled-vowels-explained', '/blog/long-vowel-sounds-for-kids', '/free-reading-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'future-wave-2',
     futureSlugCandidate: 'y-as-a-vowel-phonics',
@@ -178,6 +183,8 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
   }),
   concept('diphthong-oo', {
     label: 'OO sound patterns',
+    standardTerm: 'Vowel digraph with common monophthong pronunciations',
+    phonemeDescription: 'OO commonly represents /uː/ in moon and /ʊ/ in book; the curriculum label Diphthong OO is retained in references.',
     knowledgeStage: 'advanced-patterns',
     conceptType: 'diphthong',
     progressionRank: 14,
@@ -205,6 +212,7 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
       { courseId: 'early-phonics', lessonNumber: 34, label: 'Diphthong OO' },
       { courseId: 'advanced-phonics', lessonNumber: 19, label: 'Diphthongs OO and UI' },
     ],
+    supportingPaths: ['/blog/r-controlled-vowels-explained', '/blog/long-vowel-sounds-for-kids', '/free-reading-games-for-kids'],
     canonicalOwnerTopicId: null,
     expansionState: 'future-wave-2',
     futureSlugCandidate: 'oo-sounds-phonics',
@@ -212,3 +220,4 @@ export const ADVANCED_R_CONTROLLED_AND_VOWEL_KNOWLEDGE = Object.freeze([
     distinctValueSignals: ['two-pronunciation-families', 'contrast-sort', 'vocabulary-confirmation', 'mixed-reading'],
   }),
 ]);
+
