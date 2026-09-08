@@ -1,6 +1,8 @@
 import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
+import { PHONICS_PROGRAMMATIC_PILOT_SEO } from './phonicsProgrammaticPilot.js';
 
 export const ROUTE_SEO_REGISTRY = {
+  ...PHONICS_PROGRAMMATIC_PILOT_SEO,
   '/': {
     title: 'Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning',
     description:

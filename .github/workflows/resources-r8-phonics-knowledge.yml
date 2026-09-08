@@ -49,9 +49,9 @@ jobs:
         shell: bash
         run: |
           if [ -n "$PR_BASE_SHA" ]; then
-            node scripts/audit-resources-r8-phonics-knowledge.mjs --base "$PR_BASE_SHA" --report
+            node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --base "$PR_BASE_SHA" --report
           else
-            node scripts/audit-resources-r8-phonics-knowledge.mjs --report
+            node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
           fi
       - name: Audit semantic internal links
         run: node scripts/audit-semantic-internal-links.mjs
@@ -66,7 +66,7 @@ jobs:
       - name: Build and prerender public site
         run: npm run build
       - name: Verify no candidate output was published
-        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --dist
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
       - name: Run rendered Resources safety audit
         run: node scripts/audit-resources-r0-rendered.mjs --strict
       - name: Run SEO smoke

@@ -87,7 +87,12 @@ for (const entry of CANONICAL_TOPIC_OWNERSHIP) {
     fail(`Hub path is missing from public route manifest for ${entry.id}: ${entry.hubPath}`);
   }
 
-  if (entry.ownerPath.startsWith('/resources/') && entry.ownerRole !== 'subject-hub') {
+  const isR9PhonicsSkillGuide = /^r9-phonics-/.test(entry.id)
+    && entry.ownerPath.startsWith('/resources/phonics/')
+    && entry.ownerRole === 'skill-guide'
+    && entry.intent === 'informational'
+    && entry.hubPath === '/resources/phonics';
+  if (entry.ownerPath.startsWith('/resources/') && entry.ownerRole !== 'subject-hub' && !isR9PhonicsSkillGuide) {
     fail(`Resources child route cannot own non-discovery intent for ${entry.id}: ${entry.ownerPath}`);
   }
   if (entry.ownerRole === 'subject-hub' && !SUBJECT_HUBS.has(entry.ownerPath)) {
