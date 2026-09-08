@@ -5,6 +5,7 @@ import process from 'node:process';
 
 const ROOT = process.cwd();
 const FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
+const SCHEMAS_FILE = path.join(ROOT, 'src/lib/schemas.ts');
 const VITE_CONFIG = ['vite.config.js', 'vite.config.ts', 'vite.config.jsx', 'vite.config.tsx']
   .map((name) => path.join(ROOT, name))
   .find((candidate) => fs.existsSync(candidate));
@@ -51,6 +52,7 @@ const REQUIRED_PARITY = [
   ['public/kb.json', 'children ages 3–12'],
   ['public/kb.json', 'Standard 1:1 classes are 35 minutes'],
   ['src/lib/schemas.ts', 'children aged 3–12'],
+  ['src/lib/schemas.ts', "sessionDuration: '35 minutes'"],
   ['src/pages/ForSchoolsPage.tsx', '₹59,000'],
   ['src/pages/ForSchoolsPage.tsx', '₹1.49 lakh'],
   ['src/pages/ForSchoolsPage.tsx', '₹2.99 lakh'],
@@ -129,6 +131,27 @@ else {
     if (text.includes(forbidden)) failures.push(`publicFacts.ts still exposes obsolete seasonal fact ${forbidden}`);
   }
 }
+
+if (!fs.existsSync(SCHEMAS_FILE)) failures.push('src/lib/schemas.ts is missing');
+else {
+  const schemasText = fs.readFileSync(SCHEMAS_FILE, 'utf8');
+  if (!schemasText.includes("sessionDuration: '35 minutes'")) {
+    failures.push('schemas.ts does not define the standard 1:1 duration as exactly 35 minutes');
+  }
+  if (schemasText.includes('35–40 minutes per session')) {
+    failures.push('schemas.ts still contains the obsolete generic 35–40 minute session range');
+  }
+  for (const required of [
+    'Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}',
+    'with standard 1:1 sessions of ${PUBLIC_FACTS.sessionDuration}',
+    'Standard 1:1 classes run for ${PUBLIC_FACTS.sessionDuration}',
+  ]) {
+    if (!schemasText.includes(required)) {
+      failures.push(`schemas.ts does not scope duration copy to standard 1:1 classes: missing ${JSON.stringify(required)}`);
+    }
+  }
+}
+
 for (const [relativePath, required] of REQUIRED_PARITY) {
   const filePath = path.join(ROOT, relativePath);
   if (!fs.existsSync(filePath)) { failures.push(`${relativePath} is missing`); continue; }
@@ -148,10 +171,12 @@ if (!viteText.includes('LEGACY_PHONICS_PROGRESS_COPY') || !viteText.includes('LE
 if (!viteText.includes("replaceAll('content: post.progress'") || !viteText.includes("replaceAll('content: post.support'")) {
   failures.push('legacy templated phonics timeline/support fields can still render directly');
 }
+if (viteText.includes("sessionDuration: '35–40 minutes per session'")) {
+  failures.push('vite config still carries the obsolete schemas.ts duration rewrite');
+}
 for (const required of [
   'PHONICS_PAGE_PROGRESS_FAQ_COPY',
   'P0 public-fact normalization',
-  "sessionDuration: '35 minutes'",
   "stage: 'Ages 9 to 12'",
   "age: 'Ages 8–12'",
   "age: 'Ages 7–12'",

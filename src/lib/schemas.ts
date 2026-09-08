@@ -19,7 +19,7 @@ export const PUBLIC_FACTS = {
   },
   positioning: 'premium online English learning school for children aged 3–12',
   corePrograms: ['Phonics', 'Grammar', 'Public Speaking'] as const,
-  sessionDuration: '35–40 minutes per session',
+  sessionDuration: '35 minutes',
   primaryWebsite: SITE_ORIGIN,
   deliveryModel: 'live online classes',
   geography: 'learners in India and globally online',
@@ -46,11 +46,11 @@ export const OFFSITE_CORROBORATION_PACK = {
 
   companyDescriptions: {
     short:
-      `${PUBLIC_FACTS.brandName} offers ${PUBLIC_FACTS.positioning} through ${PUBLIC_FACTS.deliveryModel} in ${PUBLIC_FACTS.sessionDuration}, serving ${PUBLIC_FACTS.geography}.`,
+      `${PUBLIC_FACTS.brandName} offers ${PUBLIC_FACTS.positioning} through ${PUBLIC_FACTS.deliveryModel}. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}, serving ${PUBLIC_FACTS.geography}.`,
     medium:
-      `${PUBLIC_FACTS.brandName} is a premium live-online English learning platform for children. The learning model is structured around ${CORE_PROGRAMS_TEXT}, so families can choose the right starting point and progress step by step. Classes are delivered online in ${PUBLIC_FACTS.sessionDuration}, with child-friendly teaching and clear parent visibility of learning goals and next steps.`,
+      `${PUBLIC_FACTS.brandName} is a premium live-online English learning platform for children. The learning model is structured around ${CORE_PROGRAMS_TEXT}, so families can choose the right starting point and progress step by step. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}, with child-friendly teaching and clear parent visibility of learning goals and next steps.`,
     long:
-      `${PUBLIC_FACTS.brandName} is built for families who want a clear, high-quality online English learning journey for children. We provide ${PUBLIC_FACTS.deliveryModel} with focused pathways in ${CORE_PROGRAMS_TEXT}. Instead of random topic coverage, teaching follows structured progression so children can build strong foundations, apply learning with confidence, and move forward with clarity. Session design is age-aware and practical, with ${PUBLIC_FACTS.sessionDuration} that balance instruction, guided practice, and feedback. We support ${PUBLIC_FACTS.geography}, while maintaining one consistent academic approach: premium, child-friendly, and outcome-focused without overclaiming.`,
+      `${PUBLIC_FACTS.brandName} is built for families who want a clear, high-quality online English learning journey for children. We provide ${PUBLIC_FACTS.deliveryModel} with focused pathways in ${CORE_PROGRAMS_TEXT}. Instead of random topic coverage, teaching follows structured progression so children can build strong foundations, apply learning with confidence, and move forward with clarity. Session design is age-aware and practical, with standard 1:1 sessions of ${PUBLIC_FACTS.sessionDuration} that balance instruction, guided practice, and feedback. We support ${PUBLIC_FACTS.geography}, while maintaining one consistent academic approach: premium, child-friendly, and outcome-focused without overclaiming.`,
   },
 
   founderBio: {
@@ -84,7 +84,7 @@ export const OFFSITE_CORROBORATION_PACK = {
     trustpilotProfileSummary:
       `${PUBLIC_FACTS.brandName} provides ${PUBLIC_FACTS.positioning} through ${PUBLIC_FACTS.deliveryModel} in ${CORE_PROGRAMS_TEXT}. Families are encouraged to share honest feedback based on their real learning experience.`,
     justdialSulekhaBusinessSummary:
-      `${PUBLIC_FACTS.brandName} offers premium live online English classes for children, including ${CORE_PROGRAMS_TEXT}. Classes run for ${PUBLIC_FACTS.sessionDuration} and serve learners in India and globally online.`,
+      `${PUBLIC_FACTS.brandName} offers premium live online English classes for children, including ${CORE_PROGRAMS_TEXT}. Standard 1:1 classes run for ${PUBLIC_FACTS.sessionDuration} and serve learners in India and globally online.`,
     linkedInCompanyAboutSummary:
       `${PUBLIC_FACTS.brandName} is a ${PUBLIC_FACTS.positioning} platform focused on ${CORE_PROGRAMS_TEXT}. We deliver ${PUBLIC_FACTS.deliveryModel} with structured progression, child-friendly teaching, and clear parent visibility of learning milestones.`,
     youTubeChannelAboutSummary:
