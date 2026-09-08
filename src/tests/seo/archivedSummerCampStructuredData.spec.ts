@@ -14,6 +14,7 @@ import path from 'path';
 describe('SEO: Archived Summer Camp 2026 Structured Data', () => {
   let pageContent: string;
   let publicFactsContent: string;
+  let semanticFactsContent: string;
 
   beforeAll(() => {
     const filePath = path.resolve(
@@ -27,6 +28,12 @@ describe('SEO: Archived Summer Camp 2026 Structured Data', () => {
       '../../config/publicFacts.ts'
     );
     publicFactsContent = fs.readFileSync(publicFactsPath, 'utf-8');
+
+    const semanticFactsPath = path.resolve(
+      __dirname,
+      '../../config/semanticFacts.ts'
+    );
+    semanticFactsContent = fs.readFileSync(semanticFactsPath, 'utf-8');
   });
 
   it('publishes FAQ guidance instead of Event or Service schema', () => {
@@ -45,9 +52,10 @@ describe('SEO: Archived Summer Camp 2026 Structured Data', () => {
     expect(pageContent).toContain("canonicalPath: '/summer-camps'");
     expect(pageContent).toContain('SUMMER_CAMP_2026_ARCHIVE_LABEL');
     expect(pageContent).toContain('Seasonal archive');
-    expect(publicFactsContent).toContain("status: 'concluded' as const");
-    expect(publicFactsContent).toContain("endDateIso: '2026-06-13'");
-    expect(publicFactsContent).toContain("endDateLabel: '13 June 2026'");
+    expect(publicFactsContent).toContain('SEMANTIC_FACTS.seasonal.summerCamp2026');
+    expect(semanticFactsContent).toContain("status: 'concluded'");
+    expect(semanticFactsContent).toContain("endDateIso: '2026-06-13'");
+    expect(semanticFactsContent).toContain("endDateLabel: '13 June 2026'");
   });
 
   it('routes current commercial intent to the regular year-round offer', () => {
