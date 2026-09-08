@@ -1,0 +1,77 @@
+name: Resources R9 Programmatic SEO Pilot
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/content/phonicsKnowledge/**'
+      - 'src/lib/phonicsProgrammaticPilot.*'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/lib/breadcrumbAeoGeoRegistry.js'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/app/routes.tsx'
+      - 'src/pages/PhonicsKnowledgePage.tsx'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/components/resources/PhonicsPilotGuideGrid.tsx'
+      - 'src/tests/seo/resourcesR*'
+      - 'scripts/audit-resources-r9-programmatic-pilot.mjs'
+      - 'scripts/audit-resources-r8-phonics-knowledge.mjs'
+      - 'scripts/phonics-knowledge-*.mjs'
+      - 'scripts/generate-sitemaps.js'
+      - 'docs/seo/resources-architecture/R9_PROGRAMMATIC_SEO_PILOT.md'
+      - '.github/workflows/resources-r9-programmatic-seo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r9-programmatic-seo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R0-R9 Resources and canonical curriculum regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Audit R9 controlled programmatic pilot
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs --report
+      - name: Audit Brick 8 knowledge under approved R9 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Audit R7 breadcrumb and AEO/GEO layer
+        run: node scripts/audit-resources-r7-aeo-geo.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify R9 rendered publication contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs --dist --report
+      - name: Verify R8 blocks every non-approved candidate output
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+      - name: Upload R9 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources-r9-programmatic-seo
+          path: artifacts/resources-r9-programmatic-seo.json
+          if-no-files-found: warn
