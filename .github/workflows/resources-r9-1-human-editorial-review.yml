@@ -1,0 +1,79 @@
+name: Resources R9.1 Human Editorial Review
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/phonicsEditorialReviewRegistry.*'
+      - 'src/lib/editorialReviewerRegistry.ts'
+      - 'src/lib/phonicsProgrammaticPilot.*'
+      - 'src/lib/schemas.ts'
+      - 'src/config/semanticFacts.ts'
+      - 'src/pages/PhonicsKnowledgePage.tsx'
+      - 'src/pages/FounderPriyaPage.tsx'
+      - 'src/tests/seo/resourcesR*'
+      - 'scripts/audit-resources-r9-1-human-editorial-review.mjs'
+      - 'scripts/audit-resources-r9-programmatic-pilot.mjs'
+      - 'scripts/audit-resources-r8-phonics-knowledge.mjs'
+      - 'scripts/phonics-knowledge-route-safety.mjs'
+      - 'docs/seo/resources-architecture/R9_1_HUMAN_EDITORIAL_REVIEW.md'
+      - '.github/workflows/resources-r9-1-human-editorial-review.yml'
+      - '.github/workflows/resources-r9-programmatic-seo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r9-1-human-editorial-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R0-R9.1 Resources and canonical curriculum regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Audit R9.1 human editorial review layer
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --report
+      - name: Audit R9 controlled programmatic pilot
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs
+      - name: Audit Brick 8 knowledge under approved R9 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Audit R7 breadcrumb and AEO/GEO layer
+        run: node scripts/audit-resources-r7-aeo-geo.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify rendered R9.1 review claims
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --dist --report
+      - name: Verify rendered R9 publication contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs --dist
+      - name: Verify R8 blocks every non-approved candidate output
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+      - name: Upload R9.1 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources-r9-1-human-editorial-review
+          path: artifacts/resources-r9-1-human-editorial-review.json
+          if-no-files-found: warn
