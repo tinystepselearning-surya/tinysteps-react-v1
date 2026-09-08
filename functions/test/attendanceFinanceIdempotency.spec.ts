@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolvePresentFinanceReplayPlan } from '../src/helpers/attendanceFinanceIdempotency';
+import { isFinanciallyEarnedAttendanceStatus } from '../src/helpers/status';
 
 describe('attendance correction finance idempotency', () => {
   it('performs no ledger writes for present to present with existing open canonical records', () => {
@@ -11,6 +12,26 @@ describe('attendance correction finance idempotency', () => {
       earningExists: true,
       earningStatus: 'unpaid',
     })).toEqual({ shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: false, conflict: null });
+  });
+
+  it('performs no ledger writes for Present-to-Late or Late-to-Present with existing canonical records', () => {
+    for (const [previousStatus, newStatus] of [['present', 'late'], ['late', 'present']] as const) {
+      expect(isFinanciallyEarnedAttendanceStatus(previousStatus)).toBe(true);
+      expect(isFinanciallyEarnedAttendanceStatus(newStatus)).toBe(true);
+      expect(resolvePresentFinanceReplayPlan({
+        wasBillable: isFinanciallyEarnedAttendanceStatus(previousStatus),
+        alreadyAccrued: true,
+        chargeExists: true,
+        chargeStatus: 'open',
+        earningExists: true,
+        earningStatus: 'unpaid',
+      })).toEqual({
+        shouldWriteCharge: false,
+        shouldWriteEarning: false,
+        deferToRevenueAccrual: false,
+        conflict: null,
+      });
+    }
   });
 
   it('performs no ledger writes for present to present with a settled charge', () => {
@@ -44,6 +65,24 @@ describe('attendance correction finance idempotency', () => {
       earningExists: false,
       earningStatus: '',
     })).toEqual({ shouldWriteCharge: false, shouldWriteEarning: false, deferToRevenueAccrual: true, conflict: null });
+  });
+
+  it('defers Absent-to-Late ledger creation to the same canonical revenue transaction', () => {
+    expect(isFinanciallyEarnedAttendanceStatus('absent')).toBe(false);
+    expect(isFinanciallyEarnedAttendanceStatus('late')).toBe(true);
+    expect(resolvePresentFinanceReplayPlan({
+      wasBillable: isFinanciallyEarnedAttendanceStatus('absent'),
+      alreadyAccrued: false,
+      chargeExists: false,
+      chargeStatus: '',
+      earningExists: false,
+      earningStatus: '',
+    })).toEqual({
+      shouldWriteCharge: false,
+      shouldWriteEarning: false,
+      deferToRevenueAccrual: true,
+      conflict: null,
+    });
   });
 
   it('allows a stuck present correction with no prior accrual to replay through canonical revenue', () => {
