@@ -1,41 +1,33 @@
-import {
-  formatINR,
-  GROUP_MONTHLY_FEES,
-  PER_CLASS_PRICE,
-} from './pricing';
+import { formatINR } from './pricing';
+import { SEMANTIC_FACTS } from './semanticFacts';
 
-export const FREE_DEMO_SESSION_COUNT = 1;
-export const FREE_DEMO_DURATION_MINUTES = 35;
-export const FREE_DEMO_PRICE = 0;
+export const FREE_DEMO_SESSION_COUNT =
+  SEMANTIC_FACTS.delivery.assessment.sessionCount;
+export const FREE_DEMO_DURATION_MINUTES =
+  SEMANTIC_FACTS.delivery.assessment.durationMinutes;
+export const FREE_DEMO_PRICE =
+  SEMANTIC_FACTS.delivery.assessment.priceInr;
 
 export const FREE_DEMO_OFFER_NAME =
-  'One Free 35-Minute Demo Assessment Class';
+  `One Free ${FREE_DEMO_DURATION_MINUTES}-Minute Demo Assessment Class`;
 
 export const FREE_DEMO_CTA_LABEL =
-  'Book Free 35-Minute Demo';
+  `Book Free ${FREE_DEMO_DURATION_MINUTES}-Minute Demo`;
 
 export const FREE_DEMO_SHORT_DESCRIPTION =
-  'One free 35-minute 1:1 online demo assessment class per child before enrolment.';
+  SEMANTIC_FACTS.delivery.assessment.claim;
 
 export const FREE_DEMO_FULL_DESCRIPTION =
-  'One free 35-minute 1:1 online demo assessment class is provided per child before enrolment. The teacher checks the child’s current level and recommends the right learning path.';
+  `${SEMANTIC_FACTS.delivery.assessment.claim} The teacher checks the child’s current level and recommends the right learning path.`;
 
 export const STANDARD_ONE_TO_ONE_PER_CLASS_PRICE =
-  PER_CLASS_PRICE;
-
-const STANDARD_SMALL_GROUP_ROWS =
-  GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1');
-
-const STANDARD_SMALL_GROUP_PER_CLASS_VALUES =
-  STANDARD_SMALL_GROUP_ROWS.map((row) =>
-    Math.round(row.monthlyFee / row.classes)
-  );
+  SEMANTIC_FACTS.pricing.standardOneToOnePerClassInr;
 
 export const STANDARD_SMALL_GROUP_MIN_PER_CLASS =
-  Math.min(...STANDARD_SMALL_GROUP_PER_CLASS_VALUES);
+  SEMANTIC_FACTS.pricing.standardSmallGroupMinPerClassInr;
 
 export const STANDARD_SMALL_GROUP_MAX_PER_CLASS =
-  Math.max(...STANDARD_SMALL_GROUP_PER_CLASS_VALUES);
+  SEMANTIC_FACTS.pricing.standardSmallGroupMaxPerClassInr;
 
 export const STANDARD_PRICING_SUMMARY =
   `Standard 1:1: ${formatINR(STANDARD_ONE_TO_ONE_PER_CLASS_PRICE)} per class` +

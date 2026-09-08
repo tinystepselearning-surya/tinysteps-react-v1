@@ -20,6 +20,7 @@ describe('Phonics landing narrative and UX guardrails', () => {
     const page = read('src/pages/phonics.tsx');
     const facts = read('src/components/programs/ProgramFacts.tsx');
     const schemas = read('src/lib/schemas.ts');
+    const semanticFacts = read('src/config/semanticFacts.ts');
 
     expect(page).toContain('Online phonics classes for kids across India');
     expect(page).toContain('Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations');
@@ -27,8 +28,10 @@ describe('Phonics landing narrative and UX guardrails', () => {
     expect(facts).toContain("{PUBLIC_FACTS.geography}");
     expect(facts).toContain('Live online delivery is not limited to one city');
     expect(facts).toContain('across major Indian metros and cities, as well as from other countries');
-    expect(schemas).toContain("geography: 'learners in India and globally online'");
-    expect(schemas).toContain("areaServed: ['IN', 'Worldwide']");
+    expect(schemas).toContain('geography: SEMANTIC_FACTS.serviceArea.onlineReach');
+    expect(schemas).toContain('areaServed: [...SEMANTIC_FACTS.serviceArea.schemaAreaServed]');
+    expect(semanticFacts).toContain("onlineReach: 'learners in India and globally online'");
+    expect(semanticFacts).toContain("schemaAreaServed: ['IN', 'Worldwide']");
   });
 
   it('keeps the public programme structure aligned to the canonical 101-lesson phonics curriculum', () => {

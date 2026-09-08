@@ -1,30 +1,34 @@
 /**
- * Reusable schema definitions for Tiny Steps Learning
- * Used across pages for consistent structured data (SEO + voice search)
+ * Reusable schema definitions for Tiny Steps Learning.
+ * Public business/entity facts are projected from the Brick 1 semantic registry.
  */
 
-import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
+import {
+  CORE_PROGRAMS_TEXT as SEMANTIC_CORE_PROGRAMS_TEXT,
+  ORGANIZATION_SAME_AS_URLS,
+  SEMANTIC_FACTS,
+} from '../config/semanticFacts';
 
-export const SITE_ORIGIN = 'https://tinystepslearning.com';
+export const SITE_ORIGIN = SEMANTIC_FACTS.brand.websiteOrigin;
 export const PUBLIC_FACTS = {
-  brandName: 'Tiny Steps Learning',
-  shortBrandName: 'Tiny Steps',
-  organizationName: 'Tiny Steps Early Education',
+  brandName: SEMANTIC_FACTS.brand.name,
+  shortBrandName: SEMANTIC_FACTS.brand.shortName,
+  organizationName: SEMANTIC_FACTS.brand.organizationName,
   founder: {
-    displayName: 'Priya',
-    fullName: 'Vannala Ravali Priya',
-    givenName: 'Ravali Priya',
-    familyName: 'Vannala',
-    alternateNames: ['Priya', 'Ravali Priya', 'Vannala Ravali Priya', 'Vannal Ravali Priya'] as const,
+    displayName: SEMANTIC_FACTS.founder.displayName,
+    fullName: SEMANTIC_FACTS.founder.fullName,
+    givenName: SEMANTIC_FACTS.founder.givenName,
+    familyName: SEMANTIC_FACTS.founder.familyName,
+    alternateNames: SEMANTIC_FACTS.founder.alternateNames,
   },
-  positioning: 'premium online English learning school for children aged 3–12',
-  corePrograms: ['Phonics', 'Grammar', 'Public Speaking'] as const,
-  sessionDuration: '35 minutes',
-  primaryWebsite: SITE_ORIGIN,
-  deliveryModel: 'live online classes',
-  geography: 'learners in India and globally online',
+  positioning: SEMANTIC_FACTS.brand.positioning,
+  corePrograms: SEMANTIC_FACTS.programmes.coreLabels,
+  sessionDuration: SEMANTIC_FACTS.delivery.standardOneToOne.durationLabel,
+  primaryWebsite: SEMANTIC_FACTS.brand.websiteOrigin,
+  deliveryModel: SEMANTIC_FACTS.delivery.mode,
+  geography: SEMANTIC_FACTS.serviceArea.onlineReach,
 } as const;
-export const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
+export const CORE_PROGRAMS_TEXT = SEMANTIC_CORE_PROGRAMS_TEXT;
 export const ENTITY_FOCUS_AREAS = [
   'phonics',
   'grammar',
@@ -91,14 +95,13 @@ export const OFFSITE_CORROBORATION_PACK = {
       `${PUBLIC_FACTS.brandName} shares learning guidance and class-focused insights for families exploring premium live-online English learning for children across ${CORE_PROGRAMS_TEXT}.`,
   },
 
-  // Internal guidance for review requests: keep trust-safe and platform-compliant.
   reviewRequestPositioningNote:
     'Request honest reviews only, and never filter for positive sentiment or offer incentives.',
 } as const;
 
 export const ORGANIZATION_ID = `${SITE_ORIGIN}/#educational-organization`;
 export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
-export const FOUNDER_PROFILE_PATH = '/team/vannala-ravali-priya';
+export const FOUNDER_PROFILE_PATH = SEMANTIC_FACTS.founder.profilePath;
 export const FOUNDER_PROFILE_URL = `${SITE_ORIGIN}${FOUNDER_PROFILE_PATH}`;
 export const FOUNDER_ID = `${FOUNDER_PROFILE_URL}#person`;
 
@@ -111,7 +114,7 @@ export const organizationSchema = {
   url: `${SITE_ORIGIN}/`,
   logo: {
     '@type': 'ImageObject',
-    url: `${SITE_ORIGIN}/logo-square.webp`
+    url: `${SITE_ORIGIN}/logo-square.webp`,
   },
   founder: {
     '@type': 'Person',
@@ -120,7 +123,7 @@ export const organizationSchema = {
     givenName: PUBLIC_FACTS.founder.givenName,
     familyName: PUBLIC_FACTS.founder.familyName,
     alternateName: [...PUBLIC_FACTS.founder.alternateNames],
-    jobTitle: 'Founder',
+    jobTitle: SEMANTIC_FACTS.founder.title,
     url: FOUNDER_PROFILE_URL,
     image: `${SITE_ORIGIN}/priya-founder-tiny-steps-learning.webp`,
     mainEntityOfPage: {
@@ -135,25 +138,25 @@ export const organizationSchema = {
   foundingDate: '2020',
   foundingLocation: {
     '@type': 'Place',
-    name: 'India'
+    name: SEMANTIC_FACTS.serviceArea.primaryCountry,
   },
   address: {
     '@type': 'PostalAddress',
-    addressLocality: 'Hyderabad',
-    addressRegion: 'Telangana',
-    addressCountry: 'IN'
+    addressLocality: SEMANTIC_FACTS.serviceArea.city,
+    addressRegion: SEMANTIC_FACTS.serviceArea.region,
+    addressCountry: SEMANTIC_FACTS.serviceArea.primaryCountryCode,
   },
-  areaServed: ['IN', 'Worldwide'],
+  areaServed: [...SEMANTIC_FACTS.serviceArea.schemaAreaServed],
   serviceType:
     'Premium online English learning school for children aged 3–12 with structured phonics, grammar, reading, sentence formation, communication, and public speaking programs',
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
-    telephone: '+91-9618398383',
-    email: PUBLIC_CONTACT_EMAIL,
-    url: `${SITE_ORIGIN}/contact`,
-    areaServed: ['IN', 'Worldwide'],
-    availableLanguage: ['en']
+    telephone: SEMANTIC_FACTS.contact.telephoneDisplay,
+    email: SEMANTIC_FACTS.contact.email,
+    url: `${SITE_ORIGIN}${SEMANTIC_FACTS.contact.contactPath}`,
+    areaServed: [...SEMANTIC_FACTS.serviceArea.schemaAreaServed],
+    availableLanguage: ['en'],
   },
   knowsAbout: [
     'online phonics classes for children',
@@ -162,12 +165,7 @@ export const organizationSchema = {
     'online communication and public speaking programs for children',
     'online public speaking classes for children',
   ],
-  sameAs: [
-    'https://www.facebook.com/profile.php?id=61593673422886',
-    'https://www.instagram.com/tiny_steps_oel/',
-    'https://www.youtube.com/@TinyStepsLearning_Priya',
-    'https://www.linkedin.com/company/tiny-steps-learning/',
-  ]
+  sameAs: [...ORGANIZATION_SAME_AS_URLS],
 };
 
 export const websiteSchema = {
@@ -189,24 +187,24 @@ export const localBusinessSchema = {
   name: PUBLIC_FACTS.brandName,
   image: `${SITE_ORIGIN}/logo-square.webp`,
   description: 'Premium online English learning school for children aged 3–12',
-  telephone: '+91-9618398383',
-  email: PUBLIC_CONTACT_EMAIL,
+  telephone: SEMANTIC_FACTS.contact.telephoneDisplay,
+  email: SEMANTIC_FACTS.contact.email,
   url: SITE_ORIGIN,
   parentOrganization: {
     '@id': ORGANIZATION_ID,
   },
   address: {
     '@type': 'PostalAddress',
-    addressLocality: 'Hyderabad',
-    addressRegion: 'Telangana',
-    addressCountry: 'IN'
+    addressLocality: SEMANTIC_FACTS.serviceArea.city,
+    addressRegion: SEMANTIC_FACTS.serviceArea.region,
+    addressCountry: SEMANTIC_FACTS.serviceArea.primaryCountryCode,
   },
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',
     dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
     opens: '07:00',
-    closes: '23:59'
-  }
+    closes: '23:59',
+  },
 };
 
 export function createWebPageSchema(params: {
@@ -279,12 +277,6 @@ export function createTestimonialsStructuredData(params: {
   };
 }
 
-/**
- * Create HowTo schema for parent guide pages
- * @param title - Guide title (e.g., "Getting started with phonics")
- * @param steps - Array of step strings
- * @returns HowTo schema object
- */
 export function createHowToSchema(title: string, steps: string[]) {
   return {
     '@context': 'https://schema.org',
@@ -294,31 +286,16 @@ export function createHowToSchema(title: string, steps: string[]) {
       '@type': 'HowToStep',
       position: index + 1,
       name: `Step ${index + 1}`,
-      text: text,
-      // Add speakable markup for voice search
+      text,
       speakable: {
         '@type': 'SpeakableSpecification',
         cssSelector: ['.how-to-step'],
-        xpath: [`//li[@class="how-to-step"][${index + 1}]`]
-      }
-    }))
+        xpath: [`//li[@class="how-to-step"][${index + 1}]`],
+      },
+    })),
   };
 }
 
-/**
- * Create BlogPosting schema with speakable markup
- * @param title - Article headline
- * @param description - Meta description
- * @param author - Author name
- * @param datePublished - ISO date string
- * @param dateModified - ISO date string
- * @param image - Image URL
- * @param articleBody - Full article text
- * @param category - Article category
- * @param url - Canonical URL
- * @param wordCount - Word count (optional)
- * @returns BlogPosting schema object
- */
 export function createBlogPostingSchema(params: {
   headline: string;
   description: string;
@@ -338,42 +315,35 @@ export function createBlogPostingSchema(params: {
     description: params.description,
     author: {
       '@type': 'Person',
-      name: params.author
+      name: params.author,
     },
     datePublished: params.datePublished,
     dateModified: params.dateModified || params.datePublished,
-    image: params.image || 'https://tinystepslearning.com/logo-square.webp',
+    image: params.image || `${SITE_ORIGIN}/logo-square.webp`,
     articleBody: params.articleBody,
     articleSection: params.category || 'Education',
     ...(params.wordCount && { wordCount: params.wordCount }),
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': params.url
+      '@id': params.url,
     },
-    // Speakable for voice search & assistant integration
     speakable: {
       '@type': 'SpeakableSpecification',
       cssSelector: ['h1', 'article > p:first-of-type'],
-      xpath: ['/html/body/article/h1', '/html/body/article/p[1]']
+      xpath: ['/html/body/article/h1', '/html/body/article/p[1]'],
     },
-    // Publisher info
     publisher: {
       '@type': 'EducationalOrganization',
       '@id': ORGANIZATION_ID,
       name: PUBLIC_FACTS.organizationName,
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_ORIGIN}/logo-square.webp`
-      }
-    }
+        url: `${SITE_ORIGIN}/logo-square.webp`,
+      },
+    },
   };
 }
 
-/**
- * Create FAQPage schema with speakable markup
- * @param items - Array of {question, answer} objects
- * @returns FAQPage schema object
- */
 export function createFAQPageSchema(items: Array<{ question: string; answer: string }>) {
   return {
     '@context': 'https://schema.org',
@@ -383,28 +353,17 @@ export function createFAQPageSchema(items: Array<{ question: string; answer: str
       name: item.question,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: item.answer
+        text: item.answer,
       },
-      // Speakable for voice assistants
       speakable: {
         '@type': 'SpeakableSpecification',
         cssSelector: ['.faq-question', '.faq-answer'],
-        xpath: ['//h3[@class="faq-question"]', '//p[@class="faq-answer"]']
-      }
-    }))
+        xpath: ['//h3[@class="faq-question"]', '//p[@class="faq-answer"]'],
+      },
+    })),
   };
 }
 
-/**
- * Create Service schema for local SEO landing pages
- * @param name - Service name
- * @param description - Service description
- * @param serviceType - Generic service type label
- * @param areaServed - Geographic area served
- * @param url - Canonical URL of the service page
- * @param audienceType - Optional audience type (e.g., "Children")
- * @returns Service schema object
- */
 export function createServiceSchema(params: {
   name: string;
   description: string;
@@ -440,13 +399,6 @@ export function createServiceSchema(params: {
   };
 }
 
-/**
- * Create Course schema for program pages (Phonics, Grammar, Speaking)
- * @param name - Course name
- * @param description - Course description
- * @param url - Course landing page URL
- * @returns Course schema object
- */
 export function createCourseSchema(params: {
   name: string;
   description: string;
@@ -466,16 +418,16 @@ export function createCourseSchema(params: {
       '@id': ORGANIZATION_ID,
       '@type': 'EducationalOrganization',
       name: PUBLIC_FACTS.organizationName,
-      url: `${SITE_ORIGIN}/`
+      url: `${SITE_ORIGIN}/`,
     },
     ...(params.educationalLevel && {
-      educationalLevel: params.educationalLevel
+      educationalLevel: params.educationalLevel,
     }),
     ...(params.teaches?.length && {
-      teaches: params.teaches
+      teaches: params.teaches,
     }),
     ...(params.areaServed && {
-      areaServed: params.areaServed
+      areaServed: params.areaServed,
     }),
     audience: {
       '@type': 'EducationalAudience',
@@ -487,10 +439,6 @@ export function createCourseSchema(params: {
   };
 }
 
-/**
- * Create an ItemList-based course list schema for course hub pages.
- * This complements per-course Course nodes with a host-carousel-friendly list.
- */
 export function createCourseListSchema(params: {
   name: string;
   url: string;
@@ -546,26 +494,6 @@ export function createCourseListSchema(params: {
   };
 }
 
-/**
- * Create Event schema for events such as summer camp batches
- *
- * @param name - Event name (e.g., "Phonics Fast Track Summer Camp 2026")
- * @param description - Event description
- * @param startDate - ISO date string
- * @param endDate - ISO date string
- * @param location - Event location (default: "Online")
- * @param eventStatus - Status of the event (EventScheduled, EventCancelled, etc.). Required for proper schema.
- * @param availability - Offer availability enum if commercial offer exists (e.g., 'https://schema.org/InStock'). Omit if no offer.
- * @param validFrom - ISO date string for offer validFrom. Required if offer exists. Must not be current build time.
- * @param price - Event price in INR (optional). Only include if commercial details are real and current.
- * @param url - Event landing page URL
- * @param locationType - Whether location is 'online', 'physical', or 'mixed'
- * @param locationName - Physical location name if applicable
- * @param virtualUrl - Virtual event URL if applicable
- * @param eventAttendanceMode - Event attendance mode
- * @param organizer - Organizer name (defaults to PUBLIC_FACTS.brandName)
- * @returns Event schema object
- */
 export function createEventSchema(params: {
   name: string;
   description: string;
@@ -573,7 +501,7 @@ export function createEventSchema(params: {
   endDate: string;
   eventStatus: 'EventScheduled' | 'EventCancelled' | 'EventPostponed' | 'EventRescheduled' | 'EventMovedOnline';
   availability?: 'https://schema.org/InStock' | 'https://schema.org/OutOfStock' | 'https://schema.org/PreOrder';
-  validFrom?: string; // ISO date. Required if availability is set.
+  validFrom?: string;
   price?: number;
   url: string;
   locationType?: 'online' | 'physical' | 'mixed';
@@ -582,23 +510,21 @@ export function createEventSchema(params: {
   eventAttendanceMode?: 'OfflineEventAttendanceMode' | 'OnlineEventAttendanceMode' | 'MixedEventAttendanceMode';
   organizer?: string;
 }) {
-  // Build location object based on type
   let location: any;
   if (params.locationType === 'physical' && params.locationName) {
     location = {
       '@type': 'Place',
-      name: params.locationName
+      name: params.locationName,
     };
   } else if (params.locationType === 'mixed' && params.virtualUrl && params.locationName) {
     location = {
       '@type': 'VirtualLocation',
-      url: params.virtualUrl || params.url
+      url: params.virtualUrl || params.url,
     };
   } else {
-    // Default to virtual
     location = {
       '@type': 'VirtualLocation',
-      url: params.virtualUrl || params.url
+      url: params.virtualUrl || params.url,
     };
   }
 
@@ -615,11 +541,10 @@ export function createEventSchema(params: {
     organizer: {
       '@type': 'Organization',
       name: params.organizer || PUBLIC_FACTS.brandName,
-      url: 'https://tinystepslearning.com'
+      url: SITE_ORIGIN,
     },
   };
 
-  // Only add offer if both availability and validFrom are explicitly provided
   if (params.availability && params.validFrom && params.price) {
     event.offers = {
       '@type': 'Offer',
@@ -627,7 +552,7 @@ export function createEventSchema(params: {
       priceCurrency: 'INR',
       availability: params.availability,
       url: params.url,
-      validFrom: params.validFrom
+      validFrom: params.validFrom,
     };
   }
 
@@ -643,5 +568,5 @@ export default {
   createServiceSchema,
   createCourseSchema,
   createCourseListSchema,
-  createEventSchema
+  createEventSchema,
 };

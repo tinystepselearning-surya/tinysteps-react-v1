@@ -1,32 +1,35 @@
 import { memo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
-import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
+import {
+  PUBLIC_CONTACT_EMAIL,
+  PUBLIC_CONTACT_MAILTO,
+  PUBLIC_CONTACT_TELEPHONE,
+  PUBLIC_WHATSAPP_NUMBER,
+} from '../../constants/publicContact';
 import {
   OFFICIAL_PUBLIC_PROFILES,
   type OfficialProfilePlatform,
 } from '../../lib/officialProfiles';
-import { PINTEREST_PROFILE } from '../../lib/pinterestProfile';
 
 const SOCIAL_ICONS: Record<OfficialProfilePlatform, string> = {
   Facebook: '📘',
   Instagram: '📸',
   YouTube: '▶️',
   LinkedIn: '💼',
+  Pinterest: '📌',
+  Quora: 'Q',
 };
 
-const socialLinks = [
-  ...OFFICIAL_PUBLIC_PROFILES.map((profile) => ({
+// Preserve the compact footer set while sourcing every URL from semanticFacts.ts.
+// Quora remains visible in the dedicated official-identity section rather than the footer.
+const socialLinks = OFFICIAL_PUBLIC_PROFILES
+  .filter((profile) => profile.platform !== 'Quora')
+  .map((profile) => ({
     label: profile.platform,
     href: profile.url,
     icon: SOCIAL_ICONS[profile.platform],
-  })),
-  {
-    label: PINTEREST_PROFILE.platform,
-    href: PINTEREST_PROFILE.url,
-    icon: '📌',
-  },
-];
+  }));
 
 const courseLinks = [
   { label: 'Courses overview', href: '/courses' },
@@ -159,14 +162,14 @@ function Footer() {
               <h3 className="mb-3 font-semibold text-white">Contact</h3>
               <ul className="space-y-2 text-sm text-white/80">
                 <li>
-                  <a href="tel:+919618398383" className="transition hover:text-tiny-green-300">
-                    Call: +91-96183-98383
+                  <a href={`tel:+${PUBLIC_WHATSAPP_NUMBER}`} className="transition hover:text-tiny-green-300">
+                    Call: {PUBLIC_CONTACT_TELEPHONE}
                   </a>
                 </li>
                 {!user ? (
                   <li>
                     <a
-                      href="https://wa.me/919618398383"
+                      href={`https://wa.me/${PUBLIC_WHATSAPP_NUMBER}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="transition hover:text-tiny-green-300"

@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import {
+  OFFICIAL_ORGANIZATION_PROFILE_URLS,
+  ORGANIZATION_SAME_AS_URLS,
+  SEMANTIC_FACTS,
+} from '../../config/semanticFacts';
 import { OFFICIAL_PUBLIC_PROFILES, OFFICIAL_PUBLIC_PROFILE_URLS } from '../../lib/officialProfiles';
 import {
   OFFSITE_CORROBORATION_PACK,
@@ -13,39 +18,49 @@ import {
 const repoRoot = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
-const EXPECTED_OFFICIAL_PROFILE_URLS = [
-  'https://www.facebook.com/profile.php?id=61593673422886',
-  'https://www.instagram.com/tiny_steps_oel/',
-  'https://www.youtube.com/@TinyStepsLearning_Priya',
-  'https://www.linkedin.com/company/tiny-steps-learning/',
-];
-
 const PINTEREST_PROFILE_URL = 'https://www.pinterest.com/tinystepselearning/';
+const QUORA_PROFILE_URL = 'https://www.quora.com/profile/Tiny-Steps-Learning';
 
 describe('B15 off-site entity corroboration guardrails', () => {
-  it('derives schema-backed official profiles from organization sameAs without duplicating URLs', () => {
-    expect(organizationSchema.sameAs).toEqual(EXPECTED_OFFICIAL_PROFILE_URLS);
-    expect(organizationSchema.sameAs).toEqual(OFFICIAL_PUBLIC_PROFILE_URLS);
+  it('derives every official organization profile from the semantic registry', () => {
+    expect(OFFICIAL_PUBLIC_PROFILE_URLS).toEqual(OFFICIAL_ORGANIZATION_PROFILE_URLS);
+    expect(OFFICIAL_PUBLIC_PROFILE_URLS).toEqual(
+      SEMANTIC_FACTS.organizationProfiles.map((profile) => profile.url),
+    );
     expect(new Set(OFFICIAL_PUBLIC_PROFILE_URLS).size).toBe(OFFICIAL_PUBLIC_PROFILE_URLS.length);
 
     const profileContract = read('src/lib/officialProfiles.ts');
-    expect(profileContract).toContain('organizationSchema.sameAs.map');
+    expect(profileContract).toContain("SEMANTIC_FACTS.organizationProfiles");
     expect(profileContract).not.toMatch(/url:\s*['"]https:\/\//);
 
     for (const profile of OFFICIAL_PUBLIC_PROFILES) {
       expect(profile.url).toMatch(/^https:\/\//);
       expect(profile.url).not.toMatch(/[?&](?:utm_|fbclid|gclid)/i);
-      expect(profile.platform).toMatch(/^(?:Facebook|Instagram|YouTube|LinkedIn)$/);
+      expect(profile.platform).toMatch(/^(?:Facebook|Instagram|YouTube|LinkedIn|Pinterest|Quora)$/);
     }
   });
 
-  it('keeps the verified Pinterest identity on one clean canonical public URL', () => {
-    const pinterestProfile = read('src/lib/pinterestProfile.ts');
+  it('keeps Organization sameAs explicit and distinct from all official profiles', () => {
+    expect(organizationSchema.sameAs).toEqual(ORGANIZATION_SAME_AS_URLS);
+    expect(organizationSchema.sameAs).toContain(QUORA_PROFILE_URL);
+    expect(organizationSchema.sameAs).not.toContain(PINTEREST_PROFILE_URL);
+    expect(OFFICIAL_PUBLIC_PROFILE_URLS).toContain(PINTEREST_PROFILE_URL);
+    expect(OFFICIAL_PUBLIC_PROFILE_URLS).toContain(QUORA_PROFILE_URL);
+  });
 
-    expect(pinterestProfile).toContain(PINTEREST_PROFILE_URL);
+  it('keeps the verified Pinterest identity on one clean canonical public URL', () => {
+    const pinterest = SEMANTIC_FACTS.organizationProfiles.find(
+      (profile) => profile.platform === 'Pinterest',
+    );
+    const pinterestCompatibilityModule = read('src/lib/pinterestProfile.ts');
+
+    expect(pinterest?.url).toBe(PINTEREST_PROFILE_URL);
+    expect(pinterest?.includeInOrganizationSameAs).toBe(false);
     expect(PINTEREST_PROFILE_URL).not.toContain('actingBusinessId');
     expect(PINTEREST_PROFILE_URL).not.toMatch(/[?&](?:utm_|fbclid|gclid)/i);
     expect(PINTEREST_PROFILE_URL).not.toContain('in.pinterest.com');
+    expect(pinterestCompatibilityModule).toContain('SEMANTIC_FACTS.organizationProfiles.find');
+    expect(pinterestCompatibilityModule).not.toContain(PINTEREST_PROFILE_URL);
   });
 
   it('uses public organization identities rather than admin or account-management URLs', () => {
@@ -56,12 +71,13 @@ describe('B15 off-site entity corroboration guardrails', () => {
     expect(sameAs).not.toContain('viewAsMember=true');
   });
 
-  it('keeps the footer on canonical public-profile contracts', () => {
+  it('keeps the footer on canonical public-profile contracts without direct social URLs', () => {
     const footer = read('src/components/common/Footer.tsx');
     expect(footer).toContain('OFFICIAL_PUBLIC_PROFILES');
-    expect(footer).toContain('PINTEREST_PROFILE');
+    expect(footer).toContain("profile.platform !== 'Quora'");
+    expect(footer).not.toContain('PINTEREST_PROFILE');
     expect(footer).not.toContain(PINTEREST_PROFILE_URL);
-    expect(footer).not.toMatch(/href:\s*['"]https:\/\/(?:www\.)?(?:facebook|instagram|youtube|linkedin|pinterest)\.com/i);
+    expect(footer).not.toMatch(/href:\s*['"]https:\/\/(?:www\.)?(?:facebook|instagram|youtube|linkedin|pinterest|quora)\.com/i);
   });
 
   it('keeps the off-site fact pack aligned with canonical site facts', () => {
@@ -73,15 +89,13 @@ describe('B15 off-site entity corroboration guardrails', () => {
     expect(OFFSITE_CORROBORATION_PACK.reviewRequestPositioningNote).toMatch(/never.*incentives/i);
   });
 
-  it('exposes the declared profiles and Pinterest as crawlable links on the Team authority page', () => {
+  it('exposes all official organization profiles as crawlable Team authority links', () => {
     const teamPage = read('src/pages/TeamPage.tsx');
     const profileSection = read('src/components/entity/OfficialProfilesSection.tsx');
 
     expect(teamPage).toContain("import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';");
     expect(teamPage).toContain('<OfficialProfilesSection />');
-    expect(profileSection).toContain('OFFICIAL_PUBLIC_PROFILES');
-    expect(profileSection).toContain('PINTEREST_PROFILE');
-    expect(profileSection).toContain('visibleProfiles.map');
+    expect(profileSection).toContain('OFFICIAL_PUBLIC_PROFILES.map');
     expect(profileSection).toContain('href={profile.url}');
     expect(profileSection).toContain('target="_blank"');
     expect(profileSection).toContain('rel="noopener noreferrer"');

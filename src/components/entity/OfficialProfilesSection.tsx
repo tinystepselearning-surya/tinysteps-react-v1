@@ -1,11 +1,7 @@
 import { ExternalLink, ShieldCheck } from 'lucide-react';
 import { FOUNDER_PUBLIC_PROFILES } from '../../lib/founderProfiles';
 import { OFFICIAL_PUBLIC_PROFILES } from '../../lib/officialProfiles';
-import { PINTEREST_PROFILE } from '../../lib/pinterestProfile';
-import { QUORA_PROFILE } from '../../lib/quoraProfile';
 import { PUBLIC_FACTS } from '../../lib/schemas';
-
-const visibleProfiles = [...OFFICIAL_PUBLIC_PROFILES, PINTEREST_PROFILE, QUORA_PROFILE];
 
 export function OfficialProfilesSection() {
   return (
@@ -33,7 +29,7 @@ export function OfficialProfilesSection() {
           </div>
 
           <ul className="grid gap-3 sm:grid-cols-2" aria-label="Official Tiny Steps public profiles">
-            {visibleProfiles.map((profile) => (
+            {OFFICIAL_PUBLIC_PROFILES.map((profile) => (
               <li key={profile.platform}>
                 <a
                   href={profile.url}
