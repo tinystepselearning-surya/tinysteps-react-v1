@@ -2,14 +2,14 @@ name: Resources R4 Migration
 
 on:
   push:
-    branches: [seo/resources-r4-subject-hubs]
+    branches:
+      - 'seo/resources-r4-subject-hubs'
 
 permissions:
   contents: write
 
 jobs:
   migrate:
-    if: startsWith(github.event.head_commit.message, 'chore(r4): run subject hub migration')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
