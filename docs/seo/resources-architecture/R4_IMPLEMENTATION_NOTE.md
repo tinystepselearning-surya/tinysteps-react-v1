@@ -1,1 +1,0 @@
-Brick 4 is limited to subject-level resource discovery. Granular phonics pattern libraries, semantic link automation, and programmatic SEO remain outside this brick.
