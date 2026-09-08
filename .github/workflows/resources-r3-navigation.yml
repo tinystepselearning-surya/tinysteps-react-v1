@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/components/NavBar/NavBar.tsx'
+      - 'src/components/common/Header.tsx'
       - 'src/components/common/Footer.tsx'
       - 'src/tests/seo/resourcesR3Navigation.spec.js'
       - 'src/tests/seo/resourcesR2LearningHub.spec.js'
