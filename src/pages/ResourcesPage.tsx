@@ -16,7 +16,7 @@ const RESOURCE_PATHWAYS = [
     title: 'Phonics & Reading',
     description:
       'Build from listening and letter sounds into blending, decoding, CVC words, spelling patterns, and reading fluency.',
-    to: '/blog?topic=Phonics',
+    to: '/resources/phonics',
     linkLabel: 'Explore phonics & reading',
     chips: ['Sounds', 'Blending', 'CVC', 'Fluency'],
     accent: 'from-sky-50 via-white to-blue-50',
@@ -27,7 +27,7 @@ const RESOURCE_PATHWAYS = [
     title: 'Grammar & Writing',
     description:
       'Strengthen sentence formation, grammar accuracy, vocabulary, punctuation, and the move from sentences into better writing.',
-    to: '/blog?topic=Grammar',
+    to: '/resources/grammar',
     linkLabel: 'Explore grammar & writing',
     chips: ['Grammar', 'Sentences', 'Vocabulary', 'Writing'],
     accent: 'from-emerald-50 via-white to-teal-50',
@@ -38,7 +38,7 @@ const RESOURCE_PATHWAYS = [
     title: 'Speaking & Communication',
     description:
       'Help children answer in fuller sentences, organise ideas, tell stories, speak clearly, and build public-speaking confidence.',
-    to: '/blog?topic=Speaking%20%26%20Communication',
+    to: '/resources/speaking',
     linkLabel: 'Explore speaking resources',
     chips: ['Confidence', 'Storytelling', 'Vocabulary', 'Speaking'],
     accent: 'from-amber-50 via-white to-orange-50',

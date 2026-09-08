@@ -505,19 +505,22 @@ export const RESOURCE_ECOSYSTEM_REGISTRY = Object.freeze([
     futureResourceNode: null,
   }),
   entry('/resources/phonics', {
-    currentState: 'planned', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'phonics-reading',
-    currentPurpose: 'Not live in R0.', primaryIntent: 'informational', primaryQueryOwner: 'planned: phonics and reading learning hub',
-    commercialReadiness: 'low', ctaPolicy: 'related-resource', primaryDestination: null, protection: 'planned', futureResourceNode: '/resources/phonics',
+    currentState: 'route', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'phonics-reading',
+    currentPurpose: 'Curated discovery layer for existing phonics and reading authorities, practice, and parent problem routes; it does not replace /phonics or any /blog/* intent owner.',
+    primaryIntent: 'informational', primaryQueryOwner: 'Tiny Steps phonics and reading resource hub',
+    commercialReadiness: 'low', ctaPolicy: 'related-resource', primaryDestination: '/blog?topic=Phonics', protection: 'protected', futureResourceNode: '/resources/phonics',
   }),
   entry('/resources/grammar', {
-    currentState: 'planned', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'grammar-writing',
-    currentPurpose: 'Not live in R0.', primaryIntent: 'informational', primaryQueryOwner: 'planned: grammar and writing learning hub',
-    commercialReadiness: 'low', ctaPolicy: 'related-resource', primaryDestination: null, protection: 'planned', futureResourceNode: '/resources/grammar',
+    currentState: 'route', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'grammar-writing',
+    currentPurpose: 'Curated discovery layer for existing grammar and writing authorities, practice, and parent problem routes; it does not replace /grammar or any /blog/* intent owner.',
+    primaryIntent: 'informational', primaryQueryOwner: 'Tiny Steps grammar and writing resource hub',
+    commercialReadiness: 'low', ctaPolicy: 'related-resource', primaryDestination: '/blog?topic=Grammar', protection: 'protected', futureResourceNode: '/resources/grammar',
   }),
   entry('/resources/speaking', {
-    currentState: 'planned', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'speaking-communication',
-    currentPurpose: 'Not live in R0.', primaryIntent: 'informational', primaryQueryOwner: 'planned: speaking and communication learning hub',
-    commercialReadiness: 'low', ctaPolicy: 'related-resource', primaryDestination: null, protection: 'planned', futureResourceNode: '/resources/speaking',
+    currentState: 'route', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'speaking-communication',
+    currentPurpose: 'Curated discovery layer for existing speaking and communication authorities, practice, and parent problem routes; it does not replace /speaking or any /blog/* intent owner.',
+    primaryIntent: 'informational', primaryQueryOwner: 'Tiny Steps speaking and communication resource hub',
+    commercialReadiness: 'low', ctaPolicy: 'related-resource', primaryDestination: '/blog?topic=Speaking%20%26%20Communication', protection: 'protected', futureResourceNode: '/resources/speaking',
   }),
 ]);
 

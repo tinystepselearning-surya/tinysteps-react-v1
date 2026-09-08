@@ -21,6 +21,7 @@ const CoursesPage = lazy(() => import('../pages/CoursesPage'));
 const CourseDetailPage = lazy(() => import('../pages/CourseDetailPage'));
 const BlogPage = lazy(() => import('../pages/BlogPage'));
 const ResourcesPage = lazy(() => import('../pages/ResourcesPage'));
+const SubjectResourcesPage = lazy(() => import('../pages/SubjectResourcesPage'));
 const BlogPostPage = lazy(() => import('../pages/BlogPostPage'));
 const PhonicsForParentsResearchPage = lazy(() => import('../pages/blog/PhonicsForParentsResearchPage'));
 const Week1SatpinLaunchPage = lazy(() => import('../pages/blog/Week1SatpinLaunchPage'));
@@ -578,6 +579,9 @@ const router = createBrowserRouter(
         { path: 'main/parents', element: <Navigate to="/parents" replace /> },
         { path: 'main/resources', element: <Navigate to="/resources" replace /> },
         { path: 'resources', element: <ResourcesPage /> },
+        { path: 'resources/phonics', element: <SubjectResourcesPage subject="phonics" /> },
+        { path: 'resources/grammar', element: <SubjectResourcesPage subject="grammar" /> },
+        { path: 'resources/speaking', element: <SubjectResourcesPage subject="speaking" /> },
         // Parents / Help hub
         { path: 'parents', element: <ParentsHubPage /> },
         { path: 'parents/getting-started', element: <ParentGettingStarted /> },

@@ -60,6 +60,27 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/resources',
     ogType: 'website',
   },
+  '/resources/phonics': {
+    title: 'Phonics & Reading Resource Hub | Tiny Steps Learning',
+    description:
+      'Browse Tiny Steps phonics and early-reading guides by learning pathway, practice need, and common reading problem. Find existing guides, games, and parent support in one place.',
+    canonicalPath: '/resources/phonics',
+    ogType: 'website',
+  },
+  '/resources/grammar': {
+    title: 'Grammar & Writing Resource Hub | Tiny Steps Learning',
+    description:
+      'Browse Tiny Steps grammar and writing resources for sentence formation, grammar accuracy, writing development, common learning problems, and focused practice.',
+    canonicalPath: '/resources/grammar',
+    ogType: 'website',
+  },
+  '/resources/speaking': {
+    title: 'Speaking & Communication Resource Hub | Tiny Steps Learning',
+    description:
+      'Browse Tiny Steps speaking and communication resources for fuller sentences, confidence, storytelling, classroom participation, common speaking problems, and practice.',
+    canonicalPath: '/resources/speaking',
+    ogType: 'website',
+  },
   '/blog': {
     title: 'Phonics, Reading, Grammar & Speaking Guides | Tiny Steps',
     description:
