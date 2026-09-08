@@ -10,7 +10,12 @@ export const RESOURCE_MEASUREMENT_REVISION = '2026-09-09-r11';
 export const PHONICS_RESOURCE_PREFIX = '/resources/phonics';
 
 export type ResourceSurface = 'phonics_hub' | 'phonics_guide';
-export type ResourceNavigationRelation = 'hub-child' | 'parent-hub' | 'cluster-sibling' | 'adjacent-pattern' | 'other-resource';
+export type ResourceNavigationRelation =
+  | 'hub-child'
+  | 'parent-hub'
+  | 'cluster-sibling'
+  | 'adjacent-pattern'
+  | 'other-resource';
 export type ResourceAssistType = 'practice' | 'commercial' | 'supporting-content';
 
 export type ResourceMeasurementContext = {
@@ -23,13 +28,20 @@ export type ResourceMeasurementContext = {
   publicationRevision?: string;
 };
 
+export function normalizeResourcePath(rawPath: string): string {
+  const withoutHash = String(rawPath || '/').split('#', 1)[0];
+  const withoutQuery = withoutHash.split('?', 1)[0];
+  const normalized = withoutQuery.toLowerCase().replace(/\/+$/, '');
+  return normalized || '/';
+}
+
 export function isPhonicsResourcePath(pathname: string): boolean {
-  const path = pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  const path = normalizeResourcePath(pathname);
   return path === PHONICS_RESOURCE_HUB_PATH || path.startsWith(`${PHONICS_RESOURCE_PREFIX}/`);
 }
 
 export function getResourceMeasurementContext(pathname: string): ResourceMeasurementContext | null {
-  const path = pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  const path = normalizeResourcePath(pathname);
   if (path === PHONICS_RESOURCE_HUB_PATH) {
     return { surface: 'phonics_hub', subject: 'phonics', pagePath: path };
   }
@@ -48,9 +60,20 @@ export function getResourceMeasurementContext(pathname: string): ResourceMeasure
   };
 }
 
-export function getResourceNavigationRelation(fromPath: string, toPath: string): ResourceNavigationRelation {
-  const edge = PHONICS_RESOURCE_DISCOVERY_EDGES.find((candidate) => candidate.from === fromPath && candidate.to === toPath);
+export function getResourceNavigationRelation(
+  fromPath: string,
+  toPath: string,
+): ResourceNavigationRelation {
+  const from = normalizeResourcePath(fromPath);
+  const to = normalizeResourcePath(toPath);
+  const edge = PHONICS_RESOURCE_DISCOVERY_EDGES.find(
+    (candidate) => candidate.from === from && candidate.to === to,
+  );
   return edge?.relation ?? 'other-resource';
+}
+
+function sanitizeLabel(label?: string) {
+  return label?.replace(/\s+/g, ' ').trim().slice(0, 120);
 }
 
 function baseParams(context: ResourceMeasurementContext) {
@@ -74,31 +97,42 @@ export function trackResourcePageView(pathname: string) {
 
 export function trackResourceNavigationClick(fromPath: string, toPath: string, label?: string) {
   const context = getResourceMeasurementContext(fromPath);
-  if (!context || !isPhonicsResourcePath(toPath)) return;
+  const destination = normalizeResourcePath(toPath);
+  if (!context || !isPhonicsResourcePath(destination)) return;
   trackEvent('resource_navigation_click', {
     ...baseParams(context),
-    destination_path: toPath,
-    navigation_relation: getResourceNavigationRelation(fromPath, toPath),
-    link_label: label?.replace(/\s+/g, ' ').trim().slice(0, 120),
+    destination_path: destination,
+    navigation_relation: getResourceNavigationRelation(context.pagePath, destination),
+    link_label: sanitizeLabel(label),
   });
 }
 
 export function classifyResourceAssistDestination(destinationPath: string): ResourceAssistType | null {
-  const path = destinationPath.toLowerCase();
-  if (path === '/book-demo' || path === '/contact' || path === '/pricing' || path === '/phonics') return 'commercial';
-  if (path.includes('game') || path.includes('tracing') || path.includes('practice')) return 'practice';
+  const path = normalizeResourcePath(destinationPath);
+  if (path === '/book-demo' || path === '/contact' || path === '/pricing' || path === '/phonics') {
+    return 'commercial';
+  }
+  if (
+    path.includes('/games/') ||
+    path.includes('game') ||
+    path.includes('tracing') ||
+    path.includes('practice')
+  ) {
+    return 'practice';
+  }
   if (path.startsWith('/blog/') || path.startsWith('/resources/')) return 'supporting-content';
   return null;
 }
 
 export function trackResourceAssistClick(fromPath: string, destinationPath: string, label?: string) {
   const context = getResourceMeasurementContext(fromPath);
-  const assistType = classifyResourceAssistDestination(destinationPath);
+  const destination = normalizeResourcePath(destinationPath);
+  const assistType = classifyResourceAssistDestination(destination);
   if (!context || !assistType) return;
   trackEvent('resource_assist_click', {
     ...baseParams(context),
-    destination_path: destinationPath,
+    destination_path: destination,
     assist_type: assistType,
-    link_label: label?.replace(/\s+/g, ' ').trim().slice(0, 120),
+    link_label: sanitizeLabel(label),
   });
 }
