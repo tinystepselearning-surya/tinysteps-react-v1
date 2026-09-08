@@ -9,7 +9,7 @@ on:
       - 'src/lib/publicRouteManifest.js'
       - 'src/lib/routeSeoRegistry.js'
       - 'src/lib/resourcesArchitectureRegistry.js'
-      - 'src/tests/seo/resourcesR2LearningHub.spec.ts'
+      - 'src/tests/seo/resourcesR2LearningHub.spec.js'
       - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
       - 'scripts/audit-resources-r0.mjs'
       - 'scripts/audit-resources-r0-rendered.mjs'
@@ -48,7 +48,7 @@ jobs:
       - name: Run Brick 2 gateway and R0 safety tests
         run: >-
           npx vitest run
-          src/tests/seo/resourcesR2LearningHub.spec.ts
+          src/tests/seo/resourcesR2LearningHub.spec.js
           src/tests/seo/resourcesR0SafetyBaseline.spec.js
 
       - name: Run structural Resources safety audit
