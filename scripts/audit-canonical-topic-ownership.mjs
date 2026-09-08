@@ -8,6 +8,7 @@ import {
 } from '../src/lib/canonicalTopicOwnershipRegistry.js';
 import { RESOURCE_SEARCH_INTENTS } from '../src/lib/resourcesArchitectureRegistry.js';
 import { PUBLIC_REDIRECT_MANIFEST, PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
+import { extractBlogEntriesFromPostFiles } from './blog-route-utils.mjs';
 
 const ROOT = process.cwd();
 const BLOG_POSTS_DIR = path.join(ROOT, 'src', 'content', 'blog', 'posts');
@@ -50,8 +51,11 @@ async function walk(dir) {
 
 const blogFiles = await walk(BLOG_POSTS_DIR);
 const blogSource = (await Promise.all(blogFiles.map((file) => fs.readFile(file, 'utf8')))).join('\n');
+const normalizedBlogEntries = extractBlogEntriesFromPostFiles(BLOG_POSTS_DIR);
+const normalizedBlogSlugs = new Set(normalizedBlogEntries.flatMap((entry) => [entry.slug, entry.sourceSlug].filter(Boolean)));
 
 function blogSlugExists(slug) {
+  if (normalizedBlogSlugs.has(slug)) return true;
   const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`slug\\s*:\\s*['\"]${escaped}['\"]`).test(blogSource);
 }
