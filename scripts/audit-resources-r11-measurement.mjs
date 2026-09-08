@@ -41,7 +41,10 @@ requireText(gate, "blockScope: status === 'blocked' ? evidence.scopeType : 'none
 requireText(tracker, 'trackResourcePageView', 'runtime tracker integration');
 requireText(tracker, 'trackResourceNavigationClick', 'runtime tracker integration');
 requireText(tracker, 'trackResourceAssistClick', 'runtime tracker integration');
+requireText(tracker, 'trackResourceExternalAssist', 'external-channel attribution');
+requireText(tracker, "trackResourceExternalAssist(resourceContext.pagePath, 'whatsapp', label)", 'WhatsApp attribution');
 requireText(tracker, 'if (isPhonicsResourcePath(destinationPath))', 'navigation de-duplication');
+requireText(measurement, 'destination === context.pagePath', 'same-page navigation suppression');
 
 requireText(docs, 'continuous measurement, not a publishing waiting room', 'governance documentation');
 requireText(docs, 'No global 16-page waiting gate', 'governance documentation');
