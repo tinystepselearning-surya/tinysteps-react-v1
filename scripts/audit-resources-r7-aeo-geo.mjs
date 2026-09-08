@@ -8,8 +8,8 @@ import {
   getBreadcrumbTrail,
 } from '../src/lib/breadcrumbAeoGeoRegistry.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/canonicalTopicOwnershipRegistry.js';
-import { SITE_ORIGIN } from '../src/lib/schemas.js';
 
+const SITE_ORIGIN = 'https://tinystepslearning.com';
 const repoRoot = process.cwd();
 const errors = [];
 const warnings = [];
