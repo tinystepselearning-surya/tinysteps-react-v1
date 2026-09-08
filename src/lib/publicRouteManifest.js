@@ -1,3 +1,5 @@
+import { PHONICS_PROGRAMMATIC_PILOT_PATHS } from './phonicsProgrammaticPilot.js';
+
 const route = (path, group, {
   indexable = true,
   prerender = true,
@@ -22,6 +24,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/blog', 'static'),
   route('/resources', 'static'),
   route('/resources/phonics', 'static'),
+  ...PHONICS_PROGRAMMATIC_PILOT_PATHS.map((path) => route(path, 'static')),
   route('/resources/grammar', 'static'),
   route('/resources/speaking', 'static'),
   route('/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', 'static'),

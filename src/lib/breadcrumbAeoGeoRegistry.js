@@ -49,6 +49,16 @@ export function getBreadcrumbTrail({ pathname, title, category } = {}) {
     return freezeTrail([home, { name: 'Resources', path }]);
   }
 
+  if (path.startsWith('/resources/phonics/')) {
+    const currentName = String(title || 'Phonics guide').trim() || 'Phonics guide';
+    return freezeTrail([
+      home,
+      { name: 'Resources', path: '/resources' },
+      { name: RESOURCE_PATH_LABELS['/resources/phonics'], path: '/resources/phonics' },
+      { name: currentName, path },
+    ]);
+  }
+
   if (RESOURCE_PATH_LABELS[path]) {
     return freezeTrail([
       home,
@@ -102,7 +112,11 @@ export function buildBreadcrumbListSchema(items, siteOrigin) {
 
 export function getAeoGeoPresentation({ pathname, category } = {}) {
   const path = normalizePath(pathname);
-  const subject = path.startsWith('/blog/') ? subjectForBlogPath(path, category) : null;
+  const subject = path.startsWith('/resources/phonics/')
+    ? 'phonics-reading'
+    : path.startsWith('/blog/')
+      ? subjectForBlogPath(path, category)
+      : null;
   const subjectPresentation = subject ? RESOURCE_SUBJECT_PRESENTATION[subject] : null;
 
   return freeze({

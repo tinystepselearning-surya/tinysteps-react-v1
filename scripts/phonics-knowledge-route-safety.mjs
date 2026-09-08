@@ -3,8 +3,9 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const R8_CHANGE_PATH = /^(?:src\/content\/phonicsKnowledge\/[^/]+\.(?:js|d\.ts)|src\/tests\/seo\/resourcesR8[^/]+\.(?:js|ts)|scripts\/(?:audit-resources-r8-phonics-knowledge|phonics-knowledge-[a-z-]+)\.mjs|docs\/seo\/resources-architecture\/R8_PHONICS_KNOWLEDGE_DATASET\.md|\.github\/workflows\/resources-r8-phonics-knowledge\.yml)$/;
-export function validateR8ChangedPaths(paths) {
-  return paths.filter((p) => !R8_CHANGE_PATH.test(p)).map((p) => ({ code: 'public-surface-delta', id: p, detail: 'Brick 8 may change only its data, validation, tests, documentation and dedicated workflow.' }));
+const R9_CHANGE_PATH = /^(?:src\/lib\/(?:phonicsProgrammaticPilot\.(?:js|d\.ts)|canonicalTopicOwnershipRegistry\.(?:js|d\.ts)|breadcrumbAeoGeoRegistry\.js|publicRouteManifest\.js|routeSeoRegistry\.js)|src\/app\/routes\.tsx|src\/pages\/(?:PhonicsKnowledgePage|SubjectResourcesPage)\.tsx|src\/components\/resources\/PhonicsPilotGuideGrid\.tsx|src\/tests\/seo\/resourcesR9[^/]+\.(?:js|ts)|scripts\/(?:audit-resources-r9-programmatic-pilot|audit-canonical-topic-ownership)\.mjs|docs\/seo\/resources-architecture\/R9_PROGRAMMATIC_SEO_PILOT\.md|\.github\/workflows\/resources-r9-programmatic-seo\.yml)$/;
+export function validateR8ChangedPaths(paths, { allowApprovedR9 = false } = {}) {
+  return paths.filter((p) => !R8_CHANGE_PATH.test(p) && !(allowApprovedR9 && R9_CHANGE_PATH.test(p))).map((p) => ({ code: 'public-surface-delta', id: p, detail: 'Brick 8 may change only its own contract unless the path is part of the explicit approved Brick 9 publication surface.' }));
 }
 export function getR8ChangedPaths(root, base) {
   // Include working-tree changes and untracked files for local checks; CI has a clean checkout.
@@ -15,21 +16,23 @@ function walk(dir) {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]);
 }
-export function auditKnowledgePublicSurfaces(root, concepts, { dist = false } = {}) {
+export function auditKnowledgePublicSurfaces(root, concepts, { dist = false, approvedPaths = [] } = {}) {
   const errors = [];
+  const approvedSlugs = new Set((approvedPaths || []).map((p) => String(p).split('/').filter(Boolean).at(-1)));
   const slugs = concepts.map((c) => c.futureSlugCandidate).filter(Boolean);
   const paths = ['src/lib/publicRouteManifest.js', 'src/app/routes.tsx', 'scripts/generate-sitemaps.js', 'scripts/prerender.mjs', 'public/llms.txt', 'firebase.json'];
   for (const p of paths) {
     if (!fs.existsSync(path.join(root, p))) { errors.push({ code: 'missing-safety-source', id: p }); continue; }
     const text = fs.readFileSync(path.join(root, p), 'utf8');
-    for (const slug of slugs) if (text.includes(slug)) errors.push({ code: 'candidate-publication', id: p, detail: slug });
+    for (const slug of slugs) if (!approvedSlugs.has(slug) && text.includes(slug)) errors.push({ code: 'candidate-publication', id: p, detail: slug });
   }
   // An indirect import could create dynamic routes without writing literal candidate slugs.
   for (const file of walk(path.join(root, 'src'))) {
     const relative = path.relative(root, file).replaceAll('\\', '/');
-    if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || /\.(spec|test)\./.test(relative) || !/\.[cm]?[jt]sx?$/.test(file)) continue;
+    if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || relative.endsWith('.d.ts') || /\.(spec|test)\./.test(relative) || !/\.[cm]?[jt]sx?$/.test(file)) continue;
     const source = fs.readFileSync(file, 'utf8');
-    if (/\b(?:from\s*|import\s*\(?|require\s*\()\s*['"][^'"]*phonicsKnowledge/.test(source) || /import\.meta\.glob\([^)]*phonicsKnowledge/.test(source)) errors.push({ code: 'runtime-publication-import', id: relative });
+    const approvedRuntimeFile = approvedPaths.length > 0 && ['src/lib/phonicsProgrammaticPilot.js', 'src/pages/PhonicsKnowledgePage.tsx'].includes(relative);
+    if (!approvedRuntimeFile && (/\b(?:from\s*|import\s*\(?|require\s*\()\s*['"][^'"]*phonicsKnowledge/.test(source) || /import\.meta\.glob\([^)]*phonicsKnowledge/.test(source))) errors.push({ code: 'runtime-publication-import', id: relative });
   }
   const outputRoots = [path.join(root, 'public')];
   if (dist) {
@@ -40,7 +43,7 @@ export function auditKnowledgePublicSurfaces(root, concepts, { dist = false } = 
     if (!/\.html$|sitemap[^/]*\.xml$|llms[^/]*\.txt$/.test(file)) continue;
     const relative = path.relative(root, file);
     const source = fs.readFileSync(file, 'utf8');
-    for (const slug of slugs) if (relative.split(path.sep).includes(slug) || source.includes(`/${slug}`)) errors.push({ code: 'candidate-output', id: relative, detail: slug });
+    for (const slug of slugs) if (!approvedSlugs.has(slug) && (relative.split(path.sep).includes(slug) || source.includes(`/${slug}`))) errors.push({ code: 'candidate-output', id: relative, detail: slug });
   }
   return errors;
 }

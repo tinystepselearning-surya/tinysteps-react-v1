@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
+import PhonicsPilotGuideGrid from '../components/resources/PhonicsPilotGuideGrid';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { ORGANIZATION_ID, SITE_ORIGIN, WEBSITE_ID, organizationSchema, websiteSchema } from '../lib/schemas';
@@ -300,6 +301,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
             })}
           </div>
         </section>
+
+        <PhonicsPilotGuideGrid />
 
         <section className="border-y border-slate-200 bg-white/88">
           <div className="mx-auto grid max-w-7xl gap-4 px-6 py-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">

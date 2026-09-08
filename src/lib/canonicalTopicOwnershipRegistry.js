@@ -1,3 +1,5 @@
+import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from './phonicsProgrammaticPilot.js';
+
 const freezeList = (values = []) => Object.freeze([...values]);
 
 const topic = (id, config) => Object.freeze({
@@ -445,6 +447,16 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     queryIntent: 'confidence building program for kids',
     supportingPaths: ['/resources/speaking', '/shy-child-speaking-confidence'],
   }),
+  ...PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => topic(page.topicId, {
+    subject: 'phonics-reading',
+    intent: 'informational',
+    ownerPath: page.path,
+    ownerRole: 'skill-guide',
+    hubPath: '/resources/phonics',
+    queryIntent: page.concept.searchIntent,
+    supportingPaths: [...new Set(['/resources/phonics', ...page.concept.supportingPaths])],
+    forbiddenCompetingOwners: [],
+  })),
 ]);
 
 export const CANONICAL_TOPIC_OWNERS_BY_ID = Object.freeze(

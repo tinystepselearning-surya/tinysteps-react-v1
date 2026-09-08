@@ -8,6 +8,7 @@ import {
 } from '../src/lib/canonicalTopicOwnershipRegistry.js';
 import { RESOURCE_SEARCH_INTENTS } from '../src/lib/resourcesArchitectureRegistry.js';
 import { PUBLIC_REDIRECT_MANIFEST, PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
+import { extractBlogEntriesFromPostFiles } from './blog-route-utils.mjs';
 
 const ROOT = process.cwd();
 const BLOG_POSTS_DIR = path.join(ROOT, 'src', 'content', 'blog', 'posts');
@@ -50,8 +51,11 @@ async function walk(dir) {
 
 const blogFiles = await walk(BLOG_POSTS_DIR);
 const blogSource = (await Promise.all(blogFiles.map((file) => fs.readFile(file, 'utf8')))).join('\n');
+const normalizedBlogEntries = extractBlogEntriesFromPostFiles(BLOG_POSTS_DIR);
+const normalizedBlogSlugs = new Set(normalizedBlogEntries.flatMap((entry) => [entry.slug, entry.sourceSlug].filter(Boolean)));
 
 function blogSlugExists(slug) {
+  if (normalizedBlogSlugs.has(slug)) return true;
   const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`slug\\s*:\\s*['\"]${escaped}['\"]`).test(blogSource);
 }
@@ -87,7 +91,12 @@ for (const entry of CANONICAL_TOPIC_OWNERSHIP) {
     fail(`Hub path is missing from public route manifest for ${entry.id}: ${entry.hubPath}`);
   }
 
-  if (entry.ownerPath.startsWith('/resources/') && entry.ownerRole !== 'subject-hub') {
+  const isR9PhonicsSkillGuide = /^r9-phonics-/.test(entry.id)
+    && entry.ownerPath.startsWith('/resources/phonics/')
+    && entry.ownerRole === 'skill-guide'
+    && entry.intent === 'informational'
+    && entry.hubPath === '/resources/phonics';
+  if (entry.ownerPath.startsWith('/resources/') && entry.ownerRole !== 'subject-hub' && !isR9PhonicsSkillGuide) {
     fail(`Resources child route cannot own non-discovery intent for ${entry.id}: ${entry.ownerPath}`);
   }
   if (entry.ownerRole === 'subject-hub' && !SUBJECT_HUBS.has(entry.ownerPath)) {
