@@ -1,0 +1,71 @@
+name: Resources R11 Measurement & Expansion Gate
+
+on:
+  pull_request:
+    branches: [main, seo/resources-r10-discovery-graph]
+    paths:
+      - 'src/lib/resourceMeasurement.ts'
+      - 'src/lib/resourceExpansionGate.ts'
+      - 'src/components/common/ConversionTracker.tsx'
+      - 'src/lib/phonicsResourceDiscoveryGraph.*'
+      - 'src/lib/phonicsProgrammaticPilot.*'
+      - 'src/tests/seo/resourcesR*'
+      - 'scripts/audit-resources-r11-measurement.mjs'
+      - 'scripts/audit-resources-r10-discovery-infrastructure.mjs'
+      - 'docs/seo/resources-architecture/R11_*'
+      - '.github/workflows/resources-r11-measurement-expansion-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r11-measurement-expansion-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R0-R11 Resources and canonical curriculum regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Audit R11 measurement and scoped expansion gate
+        run: node scripts/audit-resources-r11-measurement.mjs
+      - name: Audit R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --report
+      - name: Audit R9.1 human editorial review layer
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs
+      - name: Audit R9 controlled publication gate
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs
+      - name: Audit Brick 8 knowledge under approved publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify rendered R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --dist --report
+      - name: Verify rendered R9.1 review claims
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --dist
+      - name: Verify rendered R9 publication contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs --dist
+      - name: Verify R8 blocks every non-approved candidate output
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
