@@ -1,0 +1,83 @@
+name: Resources R7 Breadcrumb AEO GEO
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/breadcrumbAeoGeoRegistry.js'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/components/common/KnowledgeBreadcrumbs.tsx'
+      - 'src/pages/ResourcesPage.tsx'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/pages/BlogPostPage.tsx'
+      - 'src/tests/seo/resourcesR7BreadcrumbAeoGeo.spec.js'
+      - 'src/tests/seo/resourcesR6SemanticInternalLinks.spec.js'
+      - 'src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js'
+      - 'src/tests/seo/resourcesR4SubjectHubs.spec.js'
+      - 'src/tests/seo/resourcesR3Navigation.spec.js'
+      - 'src/tests/seo/resourcesR2LearningHub.spec.js'
+      - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
+      - 'scripts/audit-resources-r7-aeo-geo.mjs'
+      - 'scripts/audit-semantic-internal-links.mjs'
+      - 'scripts/audit-canonical-topic-ownership.mjs'
+      - 'scripts/audit-resources-r0.mjs'
+      - 'scripts/audit-resources-r0-rendered.mjs'
+      - 'docs/seo/resources-architecture/R7_BREADCRUMB_AEO_GEO_LAYER.md'
+      - '.github/workflows/resources-r7-breadcrumb-aeo-geo.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r7-breadcrumb-aeo-geo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Brick 7 and earlier Resources regression tests
+        run: >-
+          npx vitest run
+          src/tests/seo/resourcesR7BreadcrumbAeoGeo.spec.js
+          src/tests/seo/resourcesR6SemanticInternalLinks.spec.js
+          src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
+          src/tests/seo/resourcesR4SubjectHubs.spec.js
+          src/tests/seo/resourcesR3Navigation.spec.js
+          src/tests/seo/resourcesR2LearningHub.spec.js
+          src/tests/seo/resourcesR0SafetyBaseline.spec.js
+
+      - name: Audit Brick 7 breadcrumb and AEO/GEO layer
+        run: node scripts/audit-resources-r7-aeo-geo.mjs
+
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Build and prerender public site
+        run: npm run build
+
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+
+      - name: Run SEO smoke test
+        run: npm run seo:smoke
