@@ -1023,7 +1023,7 @@ function buildMetaDescription(src: any) {
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
                 {isSchoolConversion
                   ? 'Explore the school partnership route and related implementation guidance.'
-                  : 'Explore the most relevant program, related guides, or compare courses directly.'}
+                  : 'Explore the most relevant program or compare course options directly.'}
               </p>
               <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
                 {recommendedPrimaryAction && (
@@ -1031,22 +1031,6 @@ function buildMetaDescription(src: any) {
                     {recommendedPrimaryAction.label}
                   </Link>
                 )}
-                {blogPosts
-                  .filter((p) => {
-                    const sameAudience = isSchoolConversion
-                      ? getBlogTechnicalAuthority(p).audience === 'Schools & Research'
-                      : p.category === metaSource.category;
-                    return sameAudience
-                      && p.slug !== slug
-                      && !p.hideFromList
-                      && !shouldNoindexBlogSlug(p.slug);
-                  })
-                  .slice(0, 3)
-                  .map(related => (
-                    <Link key={related.slug} to={`/blog/${related.slug}`} className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
-                      {related.title}
-                    </Link>
-                  ))}
                 {!isSchoolConversion && !hasCoursesLink && !suppressCoursesFallback ? (
                   <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-200 bg-[#f4f8fc] px-5 py-3 text-slate-900 transition hover:bg-[#e8f1f8]">Explore all courses</Link>
                 ) : null}
