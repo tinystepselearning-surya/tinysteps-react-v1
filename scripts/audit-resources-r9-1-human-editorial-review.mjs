@@ -43,7 +43,7 @@ for (const record of PHONICS_EDITORIAL_REVIEW_RECORDS) {
 
   if (record.editorialReviewStatus === 'approved') {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(record.reviewedAt || '')) fail('approved-missing-date', record.conceptId, String(record.reviewedAt));
-    if (record.reviewedRevision !== page.reviewedRevision) fail('approved-revision-drift', record.conceptId, `${record.reviewedRevision} !== ${page.reviewedRevision}`);
+    if (record.reviewedRevision !== page.publicationRevision) fail('approved-revision-drift', record.conceptId, `${record.reviewedRevision} !== ${page.publicationRevision}`);
     if (!String(record.reviewNotes || '').trim()) warnings.push({ code: 'approved-without-notes', id: record.conceptId, detail: 'A concise review note is recommended for auditability.' });
   } else {
     if (record.reviewedAt !== null) fail('false-review-date', record.conceptId, 'Non-approved record cannot have reviewedAt.');
