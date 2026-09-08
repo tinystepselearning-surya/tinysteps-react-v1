@@ -489,23 +489,20 @@ export const RESOURCE_ECOSYSTEM_REGISTRY = Object.freeze([
     primaryDestination: '/book-demo', protection: 'protected', futureResourceNode: '/resources/speaking',
   }),
 
-  // R0 records the current redirect state. Brick 2 must change all route/hosting
-  // systems atomically before this becomes an independent indexable page.
+  // Brick 2 promotes the former /resources alias into the protected educational-discovery gateway.
   entry('/resources', {
-    currentState: 'redirect',
-    expectedRedirectTarget: '/blog',
-    pageFamily: 'architecture-opportunity',
+    currentState: 'route',
+    pageFamily: 'learning-resource-gateway',
     audience: 'mixed',
     subject: 'general-english',
-    currentPurpose: 'Legacy alias only; no independent search intent owner today.',
+    currentPurpose: 'Primary educational discovery gateway across subject guides, parent support, practice, and school resources.',
     primaryIntent: 'informational',
-    primaryQueryOwner: 'none-currently',
-    commercialReadiness: 'none',
-    ctaPolicy: 'none',
+    primaryQueryOwner: 'English learning resources for kids, parents and educators',
+    commercialReadiness: 'low',
+    ctaPolicy: 'related-resource',
     primaryDestination: '/blog',
-    protection: 'opportunity',
-    futureResourceNode: '/resources',
-    futurePurpose: 'Primary educational-discovery gateway for the Tiny Steps learning ecosystem.',
+    protection: 'protected',
+    futureResourceNode: null,
   }),
   entry('/resources/phonics', {
     currentState: 'planned', pageFamily: 'subject-resource-hub', audience: 'parents', subject: 'phonics-reading',

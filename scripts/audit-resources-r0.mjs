@@ -254,30 +254,31 @@ async function main() {
   }
 
   const resources = RESOURCE_ECOSYSTEM_REGISTRY.find((item) => item.path === '/resources');
-  if (!resources || resources.currentState !== 'redirect') {
-    record('error', 'resources-baseline-state', '/resources must be recorded as a redirect during R0.');
+  if (!resources || resources.currentState !== 'route') {
+    record('error', 'resources-current-state', '/resources must be recorded as an independent route after Brick 2.');
   } else {
-    const firebaseRedirect = firebaseRedirects.find((item) => item.source === '/resources');
-    if (!firebaseRedirect) record('error', 'resources-firebase-redirect-missing', 'Firebase /resources redirect is missing in the R0 baseline.');
-    else {
-      if (firebaseRedirect.destination !== resources.expectedRedirectTarget) {
-        record('error', 'resources-firebase-target', `Firebase /resources redirect target differs from R0 expectation: ${firebaseRedirect.destination}`);
-      }
-      if (firebaseRedirect.type !== 301) record('error', 'resources-firebase-status', `Firebase /resources redirect must remain 301 in R0, found ${firebaseRedirect.type}`);
+    const directFirebaseRedirect = firebaseRedirects.find((item) => item.source === '/resources' || item.source === '/resources/');
+    if (directFirebaseRedirect) {
+      record('error', 'resources-stale-firebase-redirect', `Firebase still redirects ${directFirebaseRedirect.source} to ${directFirebaseRedirect.destination}.`);
     }
 
     const routeRedirectPattern = /path:\s*['"]resources['"][\s\S]{0,180}Navigate\s+to=['"]\/blog['"]/m;
-    if (!routeRedirectPattern.test(routesSource)) {
-      record('warning', 'resources-react-redirect-unconfirmed', 'Could not confirm the current React /resources → /blog redirect from routes.tsx.');
+    if (routeRedirectPattern.test(routesSource)) {
+      record('error', 'resources-stale-react-redirect', 'React still redirects /resources to /blog after Brick 2.');
     }
 
-    if (getManifestRoute('/resources')) {
-      record('error', 'resources-premature-manifest-entry', '/resources must not become an indexable manifest route in R0.');
+    const routePagePattern = /path:\s*['"]resources['"][\s\S]{0,180}<ResourcesPage\s*\/>/m;
+    if (!routePagePattern.test(routesSource)) {
+      record('error', 'resources-react-page-missing', 'Could not confirm that React renders ResourcesPage at /resources.');
     }
-    if (PUBLIC_REDIRECT_MANIFEST.some((item) => item.source === '/resources')) {
-      record('warning', 'resources-redirect-manifest-drift-resolved-early', '/resources now exists in PUBLIC_REDIRECT_MANIFEST; verify Brick 2 migration plan before merging R0.');
-    } else {
-      record('warning', 'resources-legacy-redirect-outside-manifest', '/resources redirect is still defined outside PUBLIC_REDIRECT_MANIFEST. R0 records this drift; Brick 2 must remove all redirect owners atomically.');
+
+    if (PUBLIC_REDIRECT_MANIFEST.some((item) => item.source === '/resources' || item.source === '/resources/')) {
+      record('error', 'resources-public-redirect-manifest-stale', '/resources must not remain in PUBLIC_REDIRECT_MANIFEST after Brick 2.');
+    }
+
+    const mainResourcesRedirect = firebaseRedirects.find((item) => item.source === '/main/resources');
+    if (!mainResourcesRedirect || mainResourcesRedirect.destination !== '/resources' || mainResourcesRedirect.type !== 301) {
+      record('error', 'main-resources-legacy-target', 'Legacy /main/resources must permanently redirect to the new /resources gateway.');
     }
   }
 

@@ -52,7 +52,7 @@ export const GSC_CRAWLED_NOT_INDEXED_URLS = [
   { path: '/main/book-demo', action: 'redirect', indexTarget: false, target: '/book-demo', note: 'Legacy /main shell URL; permanent redirect consolidates to the canonical assessment page.' },
   { path: '/privacy', action: 'redirect', indexTarget: false, target: '/privacy-policy', note: 'Legacy legal alias; permanent redirect consolidates to the canonical privacy policy.' },
   { path: '/terms', action: 'redirect', indexTarget: false, target: '/terms-and-conditions', note: 'Legacy legal alias; permanent redirect consolidates to the canonical terms page.' },
-  { path: '/resources/', action: 'redirect', indexTarget: false, target: '/blog', note: 'Legacy resources alias; permanent redirect consolidates to the canonical content hub.' },
+  { path: '/resources/', action: 'redirect', indexTarget: false, target: '/resources', normalization: 'trailingSlash', note: 'Trailing-slash duplicate; normalize to the independent Tiny Steps Resources gateway.' },
 ];
 
 export const GSC_CRAWLED_NOT_INDEXED_COUNTS = GSC_CRAWLED_NOT_INDEXED_URLS.reduce((acc, row) => {

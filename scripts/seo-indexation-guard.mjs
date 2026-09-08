@@ -74,7 +74,7 @@ const REQUIRED_REDIRECTS = [
   ['/courses/advanced-grammar', '/courses/grammar-mastery'],
   ['/courses/basic-public-speaking', '/courses/public-speaking-foundations'],
   ['/courses/advanced-public-speaking', '/courses/public-speaking-excellence'],
-  ['/main/resources', '/blog'],
+  ['/main/resources', '/resources'],
   ['/blog/week8.html', '/blog/week-8-grammar-tenses'],
 ];
 
