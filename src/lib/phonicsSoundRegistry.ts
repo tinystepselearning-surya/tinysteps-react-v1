@@ -14,11 +14,11 @@ export type PhonicsSoundDefinition = {
 const LETTER_AUDIO_ROOT = '/games/phonics';
 export const PHONICS_PATTERN_AUDIO_ROOT = '/games/phonics/sounds';
 
-function letterSound(
-  id: string,
+function letterSound<const Id extends string>(
+  id: Id,
   graphemeExamples: readonly string[],
   exampleWords: readonly string[],
-): PhonicsSoundDefinition {
+): PhonicsSoundDefinition & { readonly id: Id; readonly assetOrigin: 'existing-letter' } {
   return {
     id,
     label: `Existing ${id.toUpperCase()} phonics sound`,
@@ -29,14 +29,14 @@ function letterSound(
   };
 }
 
-function teacherSound(
-  id: string,
+function teacherSound<const Id extends string>(
+  id: Id,
   label: string,
   graphemeExamples: readonly string[],
   exampleWords: readonly string[],
   recordingCue: string,
   note?: string,
-): PhonicsSoundDefinition {
+): PhonicsSoundDefinition & { readonly id: Id; readonly assetOrigin: 'teacher-upload' } {
   return {
     id,
     label,
@@ -126,7 +126,7 @@ export const PHONICS_SOUND_REGISTRY = [
 export type PhonicsSoundId = (typeof PHONICS_SOUND_REGISTRY)[number]['id'];
 
 const SOUND_BY_ID = new Map<PhonicsSoundId, (typeof PHONICS_SOUND_REGISTRY)[number]>(
-  PHONICS_SOUND_REGISTRY.map((sound) => [sound.id, sound]),
+  PHONICS_SOUND_REGISTRY.map((sound) => [sound.id, sound] as const),
 );
 
 export function getPhonicsSoundDefinition(soundId: PhonicsSoundId) {
