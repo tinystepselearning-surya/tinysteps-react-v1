@@ -1,72 +1,36 @@
-import { PUBLIC_FACTS as SCHEMA_PUBLIC_FACTS } from '../lib/schemas';
-import {
-  FREE_DEMO_DURATION_MINUTES,
-  FREE_DEMO_PRICE,
-  FREE_DEMO_SESSION_COUNT,
-  STANDARD_ONE_TO_ONE_PER_CLASS_PRICE,
-  STANDARD_SMALL_GROUP_MAX_PER_CLASS,
-  STANDARD_SMALL_GROUP_MIN_PER_CLASS,
-} from './publicOffer';
+import { SEMANTIC_FACTS } from './semanticFacts';
 
-// Canonical public business facts used by public SEO/AEO/GEO experiences.
-// Identity/programme wording is inherited from schemas; standard public
-// pricing/demo facts are inherited from publicOffer; institutional and seasonal
-// facts are centralized here. New public claims should resolve through this
-// layer instead of introducing another page-local number.
+// Backward-compatible public business-fact facade.
+// Brick 1 moves the canonical values into semanticFacts.ts so pages, schema,
+// offers and identity surfaces can converge on one machine-readable source.
 export const PUBLIC_SITE_FACTS = {
-  brandName: SCHEMA_PUBLIC_FACTS.brandName,
+  brandName: SEMANTIC_FACTS.brand.name,
   audience: {
-    ageMin: 3,
-    ageMax: 12,
-    label: 'children aged 3–12',
+    ageMin: SEMANTIC_FACTS.audience.coreAgeMin,
+    ageMax: SEMANTIC_FACTS.audience.coreAgeMax,
+    label: SEMANTIC_FACTS.audience.coreLabel,
   },
-  learnerReach: {
-    minimumLearners: 5000,
-    minimumCountries: 15,
-    learnersLabel: '5000+ learners',
-    countriesLabel: '15+ countries',
-  },
+  learnerReach: SEMANTIC_FACTS.learnerReach,
   liveSessions: {
-    minimumMinutes: 35,
-    maximumMinutes: 35,
-    label: '35 minutes',
+    minimumMinutes: SEMANTIC_FACTS.delivery.standardOneToOne.durationMinutes,
+    maximumMinutes: SEMANTIC_FACTS.delivery.standardOneToOne.durationMinutes,
+    label: SEMANTIC_FACTS.delivery.standardOneToOne.durationLabel,
   },
-  deliveryModel: SCHEMA_PUBLIC_FACTS.deliveryModel,
-  corePrograms: SCHEMA_PUBLIC_FACTS.corePrograms,
-  geography: SCHEMA_PUBLIC_FACTS.geography,
+  deliveryModel: SEMANTIC_FACTS.delivery.mode,
+  corePrograms: SEMANTIC_FACTS.programmes.coreLabels,
+  geography: SEMANTIC_FACTS.serviceArea.onlineReach,
   standardOffer: {
-    oneToOnePerClassInr: STANDARD_ONE_TO_ONE_PER_CLASS_PRICE,
-    smallGroupMinPerClassInr: STANDARD_SMALL_GROUP_MIN_PER_CLASS,
-    smallGroupMaxPerClassInr: STANDARD_SMALL_GROUP_MAX_PER_CLASS,
-    demoSessionCount: FREE_DEMO_SESSION_COUNT,
-    demoDurationMinutes: FREE_DEMO_DURATION_MINUTES,
-    demoPriceInr: FREE_DEMO_PRICE,
+    oneToOnePerClassInr: SEMANTIC_FACTS.pricing.standardOneToOnePerClassInr,
+    smallGroupMinPerClassInr: SEMANTIC_FACTS.pricing.standardSmallGroupMinPerClassInr,
+    smallGroupMaxPerClassInr: SEMANTIC_FACTS.pricing.standardSmallGroupMaxPerClassInr,
+    demoSessionCount: SEMANTIC_FACTS.delivery.assessment.sessionCount,
+    demoDurationMinutes: SEMANTIC_FACTS.delivery.assessment.durationMinutes,
+    demoPriceInr: SEMANTIC_FACTS.delivery.assessment.priceInr,
   },
-  schoolPartnership: {
-    focusedLaunchInr: 59000,
-    wholeSchoolInr: 149000,
-    multiCampusInr: 299000,
-    pilotInr: 24900,
-    gstExtra: true,
-    pilotDurationWeeks: 8,
-    pilotMaximumTeachers: 4,
-    pilotMaximumLearners: 60,
-  },
-  proofPolicy: {
-    aggregateRatingsRequireApprovedTestimonials: true,
-    generatedFallbackTestimonialsAllowed: false,
-    unsupportedSatisfactionPercentagesAllowed: false,
-  },
-  outcomePolicy: {
-    universalGuaranteedTimelineAllowed: false,
-    assessmentBasedProgression: true,
-    evidenceStandard: 'independent transfer to fresh, appropriately matched examples',
-  },
-  summerCamp2026: {
-    status: 'concluded' as const,
-    endDateIso: '2026-06-13',
-    endDateLabel: '13 June 2026',
-  },
+  schoolPartnership: SEMANTIC_FACTS.schoolPartnership,
+  proofPolicy: SEMANTIC_FACTS.proofPolicy,
+  outcomePolicy: SEMANTIC_FACTS.outcomePolicy,
+  summerCamp2026: SEMANTIC_FACTS.seasonal.summerCamp2026,
 } as const;
 
 export const PUBLIC_LEARNER_REACH_LABEL =
