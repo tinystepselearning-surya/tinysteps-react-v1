@@ -1,4 +1,8 @@
-import { normalizeFinancialStatus, normalizeLowerStatus } from './status';
+import {
+  isFinanciallyEarnedAttendanceStatus,
+  normalizeFinancialStatus,
+  normalizeLowerStatus,
+} from './status';
 
 export type TeacherOrphanEarningSkipReason =
   | 'already_void'
@@ -39,7 +43,7 @@ function resolveAttendanceStatus(session: Record<string, any>, kidId: string | n
 }
 
 function isBillableAttendance(status: string | null): boolean {
-  return status === 'present';
+  return isFinanciallyEarnedAttendanceStatus(status);
 }
 
 function hasAnyBillableAttendance(session: Record<string, any>): boolean {
