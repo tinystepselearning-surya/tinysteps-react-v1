@@ -144,7 +144,7 @@ function buildPage(conceptId, approval) {
     cardTitle: approval.cardTitle,
     group: approval.group,
     publicationState: 'approved-wave-1',
-    reviewedRevision: PHONICS_PROGRAMMATIC_PILOT_REVISION,
+    publicationRevision: PHONICS_PROGRAMMATIC_PILOT_REVISION,
     reviewDecision: 'Distinct parent intent, sufficient curated teaching value, direct curriculum alignment and no established canonical-owner collision.',
     concept,
   });
