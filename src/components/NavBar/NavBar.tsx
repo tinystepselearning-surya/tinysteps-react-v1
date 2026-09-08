@@ -8,7 +8,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Home", to: "/" },
   { label: "Courses", to: "/courses" },
   { label: "Curriculum", to: "/curriculum" },
-  { label: "Blog", to: "/blog" },
+  { label: "Resources", to: "/resources" },
   { label: "Pricing", to: "/pricing" },
   { label: "Parent Login", to: "/parent/login" },
 ];
@@ -21,6 +21,11 @@ const MORE_ITEMS: NavItem[] = [
   { label: "Contact", to: "/contact" },
   { label: "Dashboard", to: "/dashboard" },
 ];
+
+const matchesNavItem = (pathname: string, item: NavItem) => {
+  if (item.to === "/") return pathname === "/";
+  return pathname === item.to || pathname.startsWith(`${item.to}/`);
+};
 
 export default function NavBar(): JSX.Element {
   const containerRef = useRef<HTMLElement | null>(null);
@@ -39,9 +44,9 @@ export default function NavBar(): JSX.Element {
 
   const isHome = location.pathname === "/";
 
-  // compute active index from pathname
+  // compute active index from pathname, including future nested Resources routes
   useEffect(() => {
-    const idx = NAV_ITEMS.findIndex((n) => n.to === location.pathname);
+    const idx = NAV_ITEMS.findIndex((item) => matchesNavItem(location.pathname, item));
     setActiveIndex(idx >= 0 ? idx : 0);
   }, [location.pathname]);
 
