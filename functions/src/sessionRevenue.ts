@@ -2,7 +2,11 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
-import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
+import {
+  isFinanciallyEarnedAttendanceStatus,
+  normalizeFinancialStatus,
+  normalizeLowerStatus,
+} from './helpers/status';
 import { resolveCanonicalServiceDate } from './helpers/serviceDate';
 import {
   resolveRevenueAccrualLedgerRepairReason,
@@ -90,7 +94,7 @@ function resolveAttendanceEntryStatus(entry: unknown): string | null {
 }
 
 function isBillableAttendance(status: string | null): boolean {
-  return status === 'present';
+  return isFinanciallyEarnedAttendanceStatus(status);
 }
 
 function resolveKidId(data: Record<string, unknown> | null | undefined): string | null {

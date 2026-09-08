@@ -1,0 +1,90 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const readSource = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
+
+const statusSource = readSource('functions/src/helpers/status.ts');
+const revenueSource = readSource('functions/src/sessionRevenue.ts');
+const reconciliationSource = readSource('functions/src/financeReconciliationReport.ts');
+const adminCorrectionSource = readSource('functions/src/saveTeacherSessionProgress.ts');
+const completionBridgeSource = readSource('functions/src/adminAttendanceCorrectionCompletionBridge.ts');
+const correctionWorkflowSource = readSource('src/pages/admin/attendanceCorrectionTeacherPay.ts');
+const correctionDecisionSource = readSource('functions/src/adminAttendanceCorrectionTeacherPayDecision.ts');
+const mainPanelSource = readSource('src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx');
+const historicalPanelSource = readSource('src/pages/admin/HistoricalAttendanceMissingSessionPanel.tsx');
+
+describe('Finance Brick 6 Present/Late policy routing', () => {
+  it('defines Present and Late as the canonical financially-earned attendance statuses', () => {
+    expect(statusSource).toContain('isFinanciallyEarnedAttendanceStatus');
+    expect(statusSource).toContain("status === 'present' || status === 'late'");
+  });
+
+  it('routes session revenue through the canonical policy without renaming legacy ledger source', () => {
+    expect(revenueSource).toContain('isFinanciallyEarnedAttendanceStatus');
+    expect(revenueSource).toContain('return isFinanciallyEarnedAttendanceStatus(status);');
+    expect(revenueSource).not.toContain("return status === 'present';");
+    expect(revenueSource).toContain("source: 'session_present_completed'");
+  });
+
+  it('routes reconciliation expectations and missing-charge diagnostics through the canonical policy', () => {
+    expect(reconciliationSource).toContain("import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';");
+    expect(reconciliationSource).toContain('return isFinanciallyEarnedAttendanceStatus(attendanceStatus);');
+    expect(reconciliationSource).toContain('function hasFinanciallyEarnedAttendance');
+    expect(reconciliationSource).toContain('!hasFinanciallyEarnedAttendance(session)');
+    expect(reconciliationSource).not.toContain('function hasPresentAttendance');
+  });
+
+  it('uses the canonical policy inside synchronous admin finance reconciliation', () => {
+    expect(adminCorrectionSource).toContain("import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';");
+    expect(adminCorrectionSource).toContain('const wasBillable = isFinanciallyEarnedAttendanceStatus(previousStatus);');
+    expect(adminCorrectionSource).toContain('const isBillableNow = isFinanciallyEarnedAttendanceStatus(newStatus);');
+    expect(adminCorrectionSource).not.toContain("const wasBillable = previousStatus === 'present';");
+    expect(adminCorrectionSource).not.toContain("const isBillableNow = newStatus === 'present';");
+  });
+
+  it('preserves paid parent and teacher reversal guards for Late-to-non-earned corrections', () => {
+    expect(adminCorrectionSource).toContain('This charge already has payment applied. Reverse payment allocation first.');
+    expect(adminCorrectionSource).toContain('This teacher earning is already paid. Reverse payout allocation first.');
+  });
+
+  it('lets the historical completion bridge process both Present and Late through the canonical helper', () => {
+    expect(completionBridgeSource).toContain("import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';");
+    expect(completionBridgeSource).toContain('if (!isFinanciallyEarnedAttendanceStatus(correctionStatus)) return;');
+    expect(completionBridgeSource).toContain('!isFinanciallyEarnedAttendanceStatus(currentAttendanceStatus)');
+    expect(completionBridgeSource).toContain('currentAttendanceStatus !== correctionStatus');
+  });
+
+  it('requires explicit teacher-pay handling when a correction newly becomes Present or Late', () => {
+    expect(correctionWorkflowSource).toContain('requiresAttendanceCorrectionTeacherPayDecision');
+    expect(correctionWorkflowSource).toContain('isFinanciallyEarnedAttendanceCorrectionStatus');
+    expect(correctionWorkflowSource).toContain("intendedAttendanceStatus: 'present' | 'late'");
+    expect(correctionWorkflowSource).toContain('intendedAttendanceStatus,');
+  });
+
+  it('keeps Present-to-Late and Late-to-Present corrections financially neutral', () => {
+    expect(correctionWorkflowSource).toContain('isFinanciallyNeutralAttendedStatusTransition');
+    expect(correctionWorkflowSource).toContain('previousStatus !== newStatus');
+    expect(correctionWorkflowSource).toContain('if (!requiresDecision)');
+    expect(mainPanelSource).toContain('Existing financial records remain unchanged.');
+  });
+
+  it('binds prepared teacher-pay decisions to the exact Present/Late correction status', () => {
+    expect(correctionDecisionSource).toContain('isFinanciallyEarnedAttendanceStatus(intendedAttendanceStatus)');
+    expect(correctionDecisionSource).toContain('teacherPayDecisionAttendanceStatus: intendedAttendanceStatus');
+    expect(correctionDecisionSource).toContain('decisionAttendanceStatus !== correctionStatus');
+    expect(correctionDecisionSource).toContain('decision.intendedAttendanceStatus');
+  });
+
+  it('does not relink an older applied pay decision to a later neutral attendance correction', () => {
+    expect(correctionDecisionSource).toContain('linkedSessionCorrectionId !== correctionId');
+    expect(correctionDecisionSource).toContain('linkedDecisionCorrectionId !== correctionId');
+  });
+
+  it('exposes payment handling for financially-earned corrections on both admin surfaces', () => {
+    expect(mainPanelSource).toContain('requiresAttendanceCorrectionTeacherPayDecision');
+    expect(mainPanelSource).toContain('visible={teacherPayDecisionRequired}');
+    expect(historicalPanelSource).toContain('isFinanciallyEarnedAttendanceCorrectionStatus(status)');
+    expect(historicalPanelSource).toContain('visible={isFinanciallyEarnedAttendanceCorrectionStatus(status)}');
+  });
+});

@@ -18,6 +18,7 @@ import {
   toIstTimeLabel,
 } from './attendanceCorrectionWorkflow';
 import {
+  requiresAttendanceCorrectionTeacherPayDecision,
   saveAdminAttendanceCorrectionWithTeacherPayDecision,
   validateAttendanceCorrectionTeacherPay,
   type AttendanceCorrectionTeacherPayDisposition,
@@ -209,7 +210,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [pendingSessionSelection, setPendingSessionSelection] = useState<PendingSessionSelection>(null);
 
   useEffect(() => {
-    if (newStatus === 'present') return;
+    if (newStatus === 'present' || newStatus === 'late') return;
     setTeacherPayDisposition('');
     setTeacherPayReasonCode('');
   }, [newStatus]);
@@ -566,8 +567,15 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     ? resolveAttendanceStatus(selectedSession.attendance[selectedKidId]) || 'not_marked'
     : 'not_marked';
 
+  const teacherPayPreviousStatus = mode === 'existing' ? previousStatus : 'not_marked';
+  const teacherPayDecisionRequired = requiresAttendanceCorrectionTeacherPayDecision({
+    previousStatus: teacherPayPreviousStatus,
+    newStatus,
+  });
+
   const validateTeacherPayHandling = () => {
     const error = validateAttendanceCorrectionTeacherPay({
+      previousStatus: teacherPayPreviousStatus,
       newStatus,
       teacherPayDisposition,
       teacherPayReasonCode,
@@ -581,6 +589,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     return saveAdminAttendanceCorrectionWithTeacherPayDecision(functions, {
       sessionId,
       kidId,
+      previousStatus: teacherPayPreviousStatus,
       newStatus,
       reason: trimmedReason,
       teacherPayDisposition,
@@ -618,13 +627,16 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     setSaving(true);
     try {
       await saveCorrection(selectedSessionId, selectedKidId, trimmedReason);
+      const financiallyNeutral = !teacherPayDecisionRequired && (newStatus === 'present' || newStatus === 'late');
       toast({
         title: 'Attendance corrected',
-        description: newStatus === 'present'
-          ? teacherPayDisposition === 'retain_school'
-            ? 'Attendance correction saved. Teacher payment is retained by school for this class.'
-            : 'Attendance correction saved. Teacher payment will be credited normally.'
-          : 'Attendance correction saved with audit trail.',
+        description: financiallyNeutral
+          ? `Attendance corrected from ${previousStatus} to ${newStatus}. Existing financial records remain unchanged.`
+          : teacherPayDecisionRequired
+            ? teacherPayDisposition === 'retain_school'
+              ? 'Attendance correction saved. Teacher payment is retained by school for this class.'
+              : 'Attendance correction saved. Teacher payment will be credited normally.'
+            : 'Attendance correction saved with audit trail.',
       });
       setReason('');
       resetTeacherPayHandling();
@@ -957,7 +969,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       )}
 
       <TeacherPayHandlingControl
-        visible={newStatus === 'present'}
+        visible={teacherPayDecisionRequired}
         disposition={teacherPayDisposition}
         reasonCode={teacherPayReasonCode}
         onDispositionChange={setTeacherPayDisposition}

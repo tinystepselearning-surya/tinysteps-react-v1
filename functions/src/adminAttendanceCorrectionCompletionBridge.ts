@@ -2,6 +2,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
+import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -85,13 +86,18 @@ export type AdminPresentCompletionBridgePlan = {
     | 'blocked_lifecycle_status';
 };
 
+/**
+ * Legacy function name retained for compatibility. Brick 6 expands the same
+ * lifecycle-completion plan to every financially-earned attendance status:
+ * Present and Late.
+ */
 export function planAdminPresentCorrectionCompletion(input: {
   newStatus: unknown;
   currentSessionStatus: unknown;
   sessionEndMs: number | null;
   nowMs?: number;
 }): AdminPresentCompletionBridgePlan {
-  if (normalizeStatus(input.newStatus) !== 'present') {
+  if (!isFinanciallyEarnedAttendanceStatus(input.newStatus)) {
     return { shouldComplete: false, reason: 'not_present' };
   }
 
@@ -140,7 +146,8 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
 
     const correction = (correctionSnap.data() || {}) as Record<string, unknown>;
     if (normalizeStatus(correction.source) !== 'admin-attendance-correction') return;
-    if (normalizeStatus(correction.newStatus) !== 'present') return;
+    const correctionStatus = normalizeStatus(correction.newStatus);
+    if (!isFinanciallyEarnedAttendanceStatus(correctionStatus)) return;
 
     const sessionId = String(event.params.sessionId || '').trim();
     const correctionId = String(event.params.correctionId || '').trim();
@@ -162,19 +169,23 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
 
       const session = (currentSessionSnap.data() || {}) as Record<string, unknown>;
 
-      // The audit event may run after a newer admin correction. Re-check the
-      // authoritative session inside this transaction so a stale Present event
-      // can never complete a session that is now Absent/Cancelled/etc.
-      if (resolveKidAttendanceStatus(session, kidId) !== 'present') {
+      // The audit event may run after a newer admin correction. Re-check both
+      // entitlement and the exact attendance-quality status so a stale event
+      // cannot complete a session after a later correction changed the record.
+      const currentAttendanceStatus = resolveKidAttendanceStatus(session, kidId);
+      if (
+        !isFinanciallyEarnedAttendanceStatus(currentAttendanceStatus) ||
+        currentAttendanceStatus !== correctionStatus
+      ) {
         return {
           status: 'stale',
-          reason: 'attendance_no_longer_present',
+          reason: 'attendance_no_longer_matches_correction',
           currentStatus: normalizeStatus(session.status),
         };
       }
 
       const plan = planAdminPresentCorrectionCompletion({
-        newStatus: correction.newStatus,
+        newStatus: correctionStatus,
         currentSessionStatus: session.status,
         sessionEndMs: resolveSessionEndMsForAttendanceCorrection(session),
       });
@@ -188,8 +199,8 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
       }
 
       // Keep reschedule-chain protection in the same transaction as the final
-      // lifecycle write. This prevents an eligible Present correction from
-      // completing a session while an active replacement credit already exists.
+      // lifecycle write. This prevents an earned correction from completing a
+      // session while an active replacement credit already exists.
       const pendingCreditSnap = await tx.get(pendingCreditsQuery);
       const hasPendingCredit = pendingCreditSnap.docs.some((docSnap) => {
         const status = normalizeStatus(docSnap.data()?.status);
@@ -224,6 +235,7 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
           attendanceCorrectionCompletionBridge: {
             correctionId,
             kidId,
+            attendanceStatus: correctionStatus,
             appliedAt: FieldValue.serverTimestamp(),
           },
         },
@@ -235,7 +247,8 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
         {
           completionBridge: {
             status: 'completed',
-            reason: 'corrected_present_past_session',
+            reason: 'corrected_financially_earned_past_session',
+            attendanceStatus: correctionStatus,
             checkedAt: FieldValue.serverTimestamp(),
           },
         },
@@ -244,7 +257,7 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
 
       return {
         status: 'completed',
-        reason: 'corrected_present_past_session',
+        reason: 'corrected_financially_earned_past_session',
         currentStatus: normalizeStatus(session.status),
       };
     });
@@ -254,6 +267,7 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
         sessionId,
         kidId,
         correctionId,
+        correctionStatus,
         previousSessionStatus: outcome.currentStatus || null,
       });
       return;
@@ -263,6 +277,7 @@ export const onAdminAttendanceCorrectionCompletionBridge = onDocumentCreated(
       sessionId,
       kidId,
       correctionId,
+      correctionStatus,
       reason: outcome.reason,
       currentStatus: outcome.currentStatus || null,
     };

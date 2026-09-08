@@ -4,7 +4,7 @@ import {
   findParentMonthlyReadModelMismatches,
 } from '../src/financeReconciliationReport';
 
-describe('present session billing diagnostics', () => {
+describe('financially-earned session billing diagnostics', () => {
   it('reports a completed present session with valid linkage and fee but no charge as billable', () => {
     const diagnostic = diagnosePresentSessionBilling({
       sessionId: 'anaisha-2026-07-17',
@@ -29,14 +29,38 @@ describe('present session billing diagnostics', () => {
     });
   });
 
-  it('explains why a present session cannot safely be billed', () => {
+  it('reports a completed late session with valid linkage and fee but no charge as billable', () => {
+    const diagnostic = diagnosePresentSessionBilling({
+      sessionId: 'anaisha-2026-07-18',
+      session: {
+        status: 'completed',
+        date: '2026-07-18',
+        enrollmentId: 'enrollment-1',
+        kidId: 'anaisha',
+        attendance: { anaisha: { status: 'late' } },
+      },
+      enrollment: { parentId: 'parent-1', feePerSession: 900 },
+      enrollmentExists: true,
+      activeChargeExists: false,
+    });
+
+    expect(diagnostic).toMatchObject({
+      sessionId: 'anaisha-2026-07-18',
+      serviceDate: '2026-07-18',
+      fee: 900,
+      billable: true,
+      reasons: ['charge_missing_or_void'],
+    });
+  });
+
+  it('explains why a financially-earned session cannot safely be billed', () => {
     const diagnostic = diagnosePresentSessionBilling({
       sessionId: 'session-1',
       session: {
         status: 'completed',
         date: '2026-07-17',
         kidId: 'kid-1',
-        attendance: { 'kid-1': 'present' },
+        attendance: { 'kid-1': 'late' },
         revenueSuppressed: true,
       },
       enrollment: null,
@@ -54,10 +78,18 @@ describe('present session billing diagnostics', () => {
     expect(diagnostic?.billable).toBe(false);
   });
 
-  it('ignores non-completed or non-present sessions', () => {
+  it('ignores non-completed or financially non-earned sessions', () => {
     expect(diagnosePresentSessionBilling({
       sessionId: 'session-1',
-      session: { status: 'scheduled', attendance: { kid: 'present' } },
+      session: { status: 'scheduled', attendance: { kid: 'late' } },
+      enrollment: { parentId: 'parent-1', feePerSession: 900 },
+      enrollmentExists: true,
+      activeChargeExists: false,
+    })).toBeNull();
+
+    expect(diagnosePresentSessionBilling({
+      sessionId: 'session-2',
+      session: { status: 'completed', attendance: { kid: 'absent' } },
       enrollment: { parentId: 'parent-1', feePerSession: 900 },
       enrollmentExists: true,
       activeChargeExists: false,

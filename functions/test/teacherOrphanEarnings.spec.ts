@@ -15,6 +15,19 @@ describe('B6 Brick 4 teacher orphan earning safety', () => {
     ).toEqual({ orphan: false, voidable: false, skipReason: 'billable_session' });
   });
 
+  it('keeps completed late sessions billable and never classifies their earnings as orphaned', () => {
+    expect(
+      evaluateTeacherOrphanEarning({
+        earning: { sessionId: 'session-late', kidId: 'kid-1', amount: 175, status: 'unpaid' },
+        sessionExists: true,
+        sessionData: {
+          status: 'completed',
+          attendance: { 'kid-1': { status: 'late' } },
+        },
+      }),
+    ).toEqual({ orphan: false, voidable: false, skipReason: 'billable_session' });
+  });
+
   it('marks a missing session earning as voidable only when unpaid', () => {
     expect(
       evaluateTeacherOrphanEarning({
@@ -61,7 +74,7 @@ describe('B6 Brick 4 teacher orphan earning safety', () => {
     ).toEqual({ orphan: false, voidable: false, skipReason: 'not_session_linked' });
   });
 
-  it('preserves the existing any-present attendance semantics for tracked attendance maps', () => {
+  it('preserves the existing any-earned-attendance semantics for tracked attendance maps', () => {
     expect(
       evaluateTeacherOrphanEarning({
         earning: { sessionId: 'session-1', kidId: 'kid-1', amount: 175, status: 'unpaid' },
@@ -70,7 +83,7 @@ describe('B6 Brick 4 teacher orphan earning safety', () => {
           status: 'completed',
           attendance: {
             'kid-1': { status: 'absent' },
-            'kid-2': { status: 'present' },
+            'kid-2': { status: 'late' },
           },
         },
       }),

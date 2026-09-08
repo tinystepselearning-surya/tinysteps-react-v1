@@ -12,6 +12,7 @@ export type AttendanceCorrectionTeacherPayReasonCode =
 export type AttendanceCorrectionTeacherPayInput = {
   sessionId: string;
   kidId: string;
+  previousStatus?: string;
   newStatus: string;
   reason: string;
   teacherPayDisposition: AttendanceCorrectionTeacherPayDisposition;
@@ -28,13 +29,43 @@ export const TEACHER_PAY_RETENTION_REASON_OPTIONS: Array<{
   { value: 'other', label: 'Other' },
 ];
 
+export function isFinanciallyEarnedAttendanceCorrectionStatus(value: unknown): boolean {
+  const status = String(value || '').trim().toLowerCase();
+  return status === 'present' || status === 'late';
+}
+
+export function isFinanciallyNeutralAttendedStatusTransition(input: {
+  previousStatus?: unknown;
+  newStatus?: unknown;
+}): boolean {
+  const previousStatus = String(input.previousStatus || '').trim().toLowerCase();
+  const newStatus = String(input.newStatus || '').trim().toLowerCase();
+  return (
+    previousStatus !== newStatus &&
+    isFinanciallyEarnedAttendanceCorrectionStatus(previousStatus) &&
+    isFinanciallyEarnedAttendanceCorrectionStatus(newStatus)
+  );
+}
+
+export function requiresAttendanceCorrectionTeacherPayDecision(input: {
+  previousStatus?: unknown;
+  newStatus?: unknown;
+}): boolean {
+  if (!isFinanciallyEarnedAttendanceCorrectionStatus(input.newStatus)) return false;
+  return !isFinanciallyNeutralAttendedStatusTransition(input);
+}
+
 export function validateAttendanceCorrectionTeacherPay(input: {
+  previousStatus?: string;
   newStatus: string;
   teacherPayDisposition: AttendanceCorrectionTeacherPayDisposition;
   teacherPayReasonCode: AttendanceCorrectionTeacherPayReasonCode;
 }): string | null {
-  if (String(input.newStatus || '').trim().toLowerCase() !== 'present') return null;
-  if (!input.teacherPayDisposition) return 'Choose how teacher payment should be handled for this Present correction.';
+  if (!requiresAttendanceCorrectionTeacherPayDecision(input)) return null;
+  const statusLabel = String(input.newStatus || '').trim().toLowerCase() === 'late' ? 'Late' : 'Present';
+  if (!input.teacherPayDisposition) {
+    return `Choose how teacher payment should be handled for this ${statusLabel} correction.`;
+  }
   if (input.teacherPayDisposition === 'retain_school' && !input.teacherPayReasonCode) {
     return 'Choose a reason for retaining the teacher payment.';
   }
@@ -51,7 +82,11 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
   >(functions, 'adminAttendanceCorrection');
 
   const normalizedStatus = String(input.newStatus || '').trim().toLowerCase();
-  if (normalizedStatus !== 'present') {
+  const requiresDecision = requiresAttendanceCorrectionTeacherPayDecision({
+    previousStatus: input.previousStatus,
+    newStatus: normalizedStatus,
+  });
+  if (!requiresDecision) {
     const result = await correctionFn({
       sessionId: input.sessionId,
       kidId: input.kidId,
@@ -68,6 +103,7 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
     {
       sessionId: string;
       kidId: string;
+      intendedAttendanceStatus: 'present' | 'late';
       teacherPayDisposition: Exclude<AttendanceCorrectionTeacherPayDisposition, ''>;
       reasonCode: string;
       reason: string;
@@ -80,9 +116,11 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
     { ok: boolean }
   >(functions, 'cancelAdminAttendanceCorrectionTeacherPayDecision');
 
+  const intendedAttendanceStatus = normalizedStatus === 'late' ? 'late' : 'present';
   const prepared = await prepareFn({
     sessionId: input.sessionId,
     kidId: input.kidId,
+    intendedAttendanceStatus,
     teacherPayDisposition: input.teacherPayDisposition as Exclude<AttendanceCorrectionTeacherPayDisposition, ''>,
     reasonCode: input.teacherPayDisposition === 'credit_teacher'
       ? 'normal_correction'
