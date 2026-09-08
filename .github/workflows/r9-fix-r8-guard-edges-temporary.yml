@@ -1,0 +1,42 @@
+name: R9 Fix R8 Guard Edges Temporary
+
+on:
+  push:
+    branches:
+      - seo/resources-r9-programmatic-seo-pilot
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/resources-r9-programmatic-seo-pilot
+      - name: Fix R8 post-R9 guard edges
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('scripts/phonics-knowledge-route-safety.mjs')
+          text = p.read_text()
+          old = "    if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || /\\.(spec|test)\\./.test(relative) || !/\\.[cm]?[jt]sx?$/.test(file)) continue;\n"
+          new = "    if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || relative.endsWith('.d.ts') || /\\.(spec|test)\\./.test(relative) || !/\\.[cm]?[jt]sx?$/.test(file)) continue;\n"
+          if old not in text: raise SystemExit('route-safety scan anchor missing')
+          p.write_text(text.replace(old, new, 1))
+
+          p = Path('scripts/phonics-knowledge-validation.mjs')
+          text = p.read_text()
+          old = "      if ((occupiedSlugs.has(slug) || [...occupied].some((p) => p.endsWith(`/${slug}`))) && !isExactApprovedR9) {\n        slugCollisions++; fail('slug-collision', c.id, slug);\n      }\n"
+          new = "      const approvedRouteIsRedirect = redirectSources.has(approvedPath);\n      if (approvedRouteIsRedirect || ((occupiedSlugs.has(slug) || [...occupied].some((p) => p.endsWith(`/${slug}`))) && !isExactApprovedR9)) {\n        slugCollisions++; fail('slug-collision', c.id, slug);\n      }\n"
+          if old not in text: raise SystemExit('slug collision anchor missing')
+          p.write_text(text.replace(old, new, 1))
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/phonics-knowledge-route-safety.mjs scripts/phonics-knowledge-validation.mjs
+          git commit -m "fix(resources): harden R8 guards for approved R9 pages"
+          git push origin HEAD:seo/resources-r9-programmatic-seo-pilot
