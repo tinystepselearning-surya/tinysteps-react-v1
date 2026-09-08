@@ -3,6 +3,7 @@ import {
   ONE_TO_ONE_MONTHLY_PACKAGES,
   ULTRA_PREMIUM_PRICING,
 } from '../config/pricing';
+import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { PHONICS_LESSONS_BY_COURSE, PHONICS_STAGE_DEFINITIONS } from './phonicsCurriculum';
 
 // Lightweight course catalog and deep curriculum samples
@@ -32,14 +33,19 @@ const courseStartingPriceCopy = `Plans from ${formatINR(
   Math.max(...ULTRA_PREMIUM_PRICING.map((row) => row.package12))
 )} (12 classes)`;
 
+const phonicsFacts = SEMANTIC_FACTS.programmes.phonics.levels;
+const grammarFacts = SEMANTIC_FACTS.programmes.grammar.levels;
+const speakingFacts = SEMANTIC_FACTS.programmes.speaking.levels;
+const lessonDuration = (count: number) => `${count} lessons`;
+
 export const catalogs: CourseCatalogItem[] = [
   {
-    slug: 'phonics-foundation',
+    slug: phonicsFacts.foundations.publicSlug,
     icon: '🔤',
-    name: 'Phonics Foundations',
+    name: phonicsFacts.foundations.label,
     track: 'phonics',
-    age: 'Ages 3–7',
-    duration: '31 lessons',
+    age: phonicsFacts.foundations.ageRange.label,
+    duration: lessonDuration(phonicsFacts.foundations.lessonCount),
     frequency: 'Flexible pace',
     level: 'Foundation',
     overview: ['Letter sounds', 'Short vowels', 'Sound practice', 'Structured revision', 'Grand revision'],
@@ -53,12 +59,12 @@ export const catalogs: CourseCatalogItem[] = [
     reviews: '⭐⭐⭐⭐⭐ (127 reviews) — "Perfect for my 4‑year‑old! She’s reading now!"',
   },
   {
-    slug: 'phonics-brush-up',
+    slug: phonicsFacts.early.publicSlug,
     icon: '📘',
-    name: 'Early Phonics',
+    name: phonicsFacts.early.label,
     track: 'phonics',
-    age: 'Ages 4–8',
-    duration: '40 lessons',
+    age: phonicsFacts.early.ageRange.label,
+    duration: lessonDuration(phonicsFacts.early.lessonCount),
     frequency: 'Flexible pace',
     level: 'Early',
     overview: ['Sound sets', 'Phonics rules', 'Digraphs', 'Vowel teams + Magic E', 'Controlling R + diphthongs'],
@@ -71,12 +77,12 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'phonics-advanced',
+    slug: phonicsFacts.advanced.publicSlug,
     icon: '📚',
-    name: 'Advanced Phonics',
+    name: phonicsFacts.advanced.label,
     track: 'phonics',
-    age: 'Ages 6–12',
-    duration: '30 lessons',
+    age: phonicsFacts.advanced.ageRange.label,
+    duration: lessonDuration(phonicsFacts.advanced.lessonCount),
     frequency: 'Flexible pace',
     level: 'Advanced',
     overview: ['Core phonics rules', 'Magic E + vowel teams', 'Diphthongs + SHUN', 'Controlling R', 'Long vowel sound families'],
@@ -89,12 +95,12 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'basic-grammar',
+    slug: grammarFacts.beginner.publicSlug,
     icon: '✍️',
-    name: 'Beginner Grammar',
+    name: grammarFacts.beginner.label,
     track: 'grammar',
-    age: 'Ages 5–10',
-    duration: '36 lessons',
+    age: grammarFacts.beginner.ageRange.label,
+    duration: lessonDuration(grammarFacts.beginner.lessonCount),
     frequency: 'Flexible pace',
     level: 'Basic',
     overview: ['Word foundations', 'Grammar basics', 'Sentence building', 'Conjunctions + adverbs', 'Tenses basics', 'Guided writing + revision'],
@@ -107,12 +113,12 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'advanced-grammar',
+    slug: grammarFacts.advanced.publicSlug,
     icon: '🧠',
-    name: 'Advanced Grammar',
+    name: grammarFacts.advanced.label,
     track: 'grammar',
-    age: 'Ages 8–15',
-    duration: '36 lessons',
+    age: grammarFacts.advanced.ageRange.label,
+    duration: lessonDuration(grammarFacts.advanced.lessonCount),
     frequency: 'Flexible pace',
     level: 'Advanced',
     overview: ['Tense control', 'Clauses & complex sentences', 'Voice & reported speech', 'Paragraph cohesion'],
@@ -125,12 +131,12 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'basic-public-speaking',
+    slug: speakingFacts.beginner.publicSlug,
     icon: '🎤',
-    name: 'Public Speaking (Basic)',
+    name: speakingFacts.beginner.label,
     track: 'speaking',
-    age: 'Ages 4–7',
-    duration: '36 lessons',
+    age: speakingFacts.beginner.ageRange.label,
+    duration: lessonDuration(speakingFacts.beginner.lessonCount),
     frequency: 'Flexible pace',
     level: 'Basic',
     overview: ['Confidence & posture', 'Clear speech', 'Show & tell', 'Mini talks + Q&A'],
@@ -143,12 +149,12 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'advanced-public-speaking',
+    slug: speakingFacts.advanced.publicSlug,
     icon: '🏆',
-    name: 'Public Speaking (Advanced)',
+    name: speakingFacts.advanced.label,
     track: 'speaking',
-    age: 'Ages 7–15',
-    duration: '36 lessons',
+    age: speakingFacts.advanced.ageRange.label,
+    duration: lessonDuration(speakingFacts.advanced.lessonCount),
     frequency: 'Flexible pace',
     level: 'Advanced',
     overview: ['Presence & engagement', 'Structure + details', 'Impromptu + debate', 'Presentation mastery'],
