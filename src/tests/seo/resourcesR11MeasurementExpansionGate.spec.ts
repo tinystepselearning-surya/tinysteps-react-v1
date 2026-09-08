@@ -198,9 +198,11 @@ describe('Resources R11 measurement and expansion gate', () => {
   it('wires the measurement contract into the existing public conversion tracker without duplicate resource-assist navigation', () => {
     const tracker = readRepoFile('src/components/common/ConversionTracker.tsx');
     expect(tracker).toContain('trackResourcePageView');
-    expect(tracker).toContain('trackResourceNavigationClick');
-    expect(tracker).toContain('trackResourceAssistClick');
     expect(tracker).toContain('if (isPhonicsResourcePath(destinationPath))');
-    expect(tracker).toContain('else {\n          trackResourceAssistClick');
+    expect(tracker).toContain('trackResourceNavigationClick(resourceContext.pagePath, destinationPath, label)');
+    expect(tracker).toContain('trackResourceAssistClick(resourceContext.pagePath, destinationPath, label)');
+    expect(tracker).toContain('trackResourceExternalAssist');
+    expect(tracker).toContain("trackResourceExternalAssist(resourceContext.pagePath, 'whatsapp', label)");
+    expect(tracker).toContain("lastTrackedResourcePathRef.current = ''");
   });
 });
