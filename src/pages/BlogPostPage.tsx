@@ -29,6 +29,8 @@ import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import BlogConversionCard from '../components/blog/BlogConversionCard';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
+import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
+import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 // Meta removed — use applySeo as single source of truth
 
 const CATEGORY_ARTICLE_CONFIG = {
@@ -558,15 +560,19 @@ function buildMetaDescription(src: any) {
     [metaSource.slug, slug],
   );
 
-  const breadcrumbSchema = useMemo(() => ({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_ORIGIN}/blog` },
-      { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: canonicalArticleUrl },
-    ],
-  }), [canonicalArticleUrl, metaSource.title]);
+  const breadcrumbItems = useMemo(
+    () => getBreadcrumbTrail({
+      pathname: `/blog/${slug || metaSource.slug || ''}`,
+      title: metaSource.title || 'Article',
+      category: metaSource.category,
+    }),
+    [metaSource.category, metaSource.slug, metaSource.title, slug],
+  );
+
+  const breadcrumbSchema = useMemo(
+    () => buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN),
+    [breadcrumbItems],
+  );
 
   const articleSchema = useMemo(() => {
     if (!post && !metaSource) return null;
@@ -582,6 +588,7 @@ function buildMetaDescription(src: any) {
       ? (resolvedHero.startsWith('http') ? resolvedHero : `${SITE_ORIGIN}${resolvedHero}`)
       : `${SITE_ORIGIN}/og-default.jpg`;
     const externalCitations = post ? extractExternalCitationUrls(post) : [];
+    const quickAnswer = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
     const obj: any = {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
@@ -593,6 +600,7 @@ function buildMetaDescription(src: any) {
       image: resolvedImageUrl,
       thumbnailUrl: resolvedImageUrl,
       description: buildMetaDescription(metaSource) || undefined,
+      abstract: quickAnswer || undefined,
       articleSection: authority.discoveryCategory,
       about: buildBlogAboutSchema(authorityPost),
       keywords: buildBlogKeywords(authorityPost),
@@ -624,17 +632,39 @@ function buildMetaDescription(src: any) {
       '@id': ORGANIZATION_ID,
     };
 
-    // Speakable schema for voice search + assistant integrations
-    const speakableText = buildMetaDescription(metaSource) || metaSource.title || '';
-    if (speakableText) {
-      obj.speakable = {
-        '@type': 'SpeakableSpecification',
-        cssSelector: ['.ts-blog-hero-title', '.ts-blog-quick-answer'],
-      };
-    }
+    obj.speakable = buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']) || undefined;
 
     return obj;
   }, [articleAuthor, canonicalArticleUrl, metaSource, post, resolvedHero, slug]);
+
+  const webPageSchema = useMemo(() => {
+    const articleSlug = metaSource.slug || slug || '';
+    if (!articleSlug || !metaSource.title) return null;
+    const authorityPost = {
+      slug: articleSlug,
+      category: metaSource.category || 'Parent Tips',
+      audience: metaSource.audience,
+      discoveryCategory: metaSource.discoveryCategory,
+    };
+    const quickAnswer = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': getBlogWebPageId(articleSlug),
+      url: canonicalArticleUrl,
+      name: metaSource.title,
+      description: buildMetaDescription(metaSource) || undefined,
+      abstract: quickAnswer || undefined,
+      inLanguage: 'en-IN',
+      isPartOf: { '@id': BLOG_ID },
+      publisher: { '@id': ORGANIZATION_ID },
+      mainEntity: { '@id': getBlogArticleId(articleSlug) },
+      breadcrumb: { '@id': breadcrumbSchema['@id'] },
+      about: buildBlogAboutSchema(authorityPost),
+      speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
+    };
+  }, [breadcrumbSchema, canonicalArticleUrl, metaSource, slug]);
 
   const faqSchema = useMemo(() => {
     if (!post?.faq?.length) return null;
@@ -655,10 +685,11 @@ function buildMetaDescription(src: any) {
   const jsonLd = useMemo(() => {
     const blocks: any[] = [];
     blocks.push(breadcrumbSchema);
+    if (webPageSchema) blocks.push(webPageSchema);
     if (articleSchema) blocks.push(articleSchema);
     if (faqSchema) blocks.push(faqSchema);
     return blocks;
-  }, [breadcrumbSchema, articleSchema, faqSchema]);
+  }, [breadcrumbSchema, webPageSchema, articleSchema, faqSchema]);
 
   useEffect(() => {
     if (!slug) return;
@@ -963,9 +994,7 @@ function buildMetaDescription(src: any) {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-8">
-            <div>
-              <Link to="/blog" className="inline-flex items-center text-sm font-semibold text-primary-700">← Back to Blogs</Link>
-            </div>
+            <KnowledgeBreadcrumbs items={breadcrumbItems} tone="light" />
 
             {resolvedHero ? (
               <div className="self-start overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
@@ -986,10 +1015,10 @@ function buildMetaDescription(src: any) {
 
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Quick answer</p>
-              <h2 className="ts-blog-hero-title mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              <h2 className="ts-answer-title ts-blog-hero-title mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">
                 {metaSource.title}
               </h2>
-              <p className="ts-blog-quick-answer mt-4 max-w-4xl text-lg leading-8 text-slate-700">
+              <p className="ts-answer-summary ts-blog-quick-answer mt-4 max-w-4xl text-lg leading-8 text-slate-700">
                 {heroDescription}
               </p>
             </section>

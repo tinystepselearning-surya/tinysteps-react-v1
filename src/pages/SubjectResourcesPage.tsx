@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
+import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
+import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { ORGANIZATION_ID, SITE_ORIGIN, WEBSITE_ID, organizationSchema, websiteSchema } from '../lib/schemas';
 
@@ -176,15 +178,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
   const description = seo?.description ?? config.intro;
   const allLinks = config.sections.flatMap((section) => section.links);
 
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
-      { '@type': 'ListItem', position: 2, name: 'Resources', item: `${SITE_ORIGIN}/resources` },
-      { '@type': 'ListItem', position: 3, name: config.title, item: canonicalUrl },
-    ],
-  };
+  const breadcrumbItems = getBreadcrumbTrail({ pathname: config.canonicalPath, title: config.title });
+  const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
 
   const listId = `${canonicalUrl}#curated-resources`;
   const itemListSchema = {
@@ -212,6 +207,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     isPartOf: { '@id': WEBSITE_ID },
     publisher: { '@id': ORGANIZATION_ID },
     mainEntity: { '@id': listId },
+    breadcrumb: { '@id': breadcrumbSchema['@id'] },
+    speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
   };
 
   return (
@@ -226,15 +223,11 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
       <section className="relative overflow-hidden border-b border-slate-800 bg-slate-950 text-white">
         <div className={`absolute inset-0 bg-gradient-to-br ${config.accent}`} />
         <div className="relative mx-auto max-w-7xl px-6 py-16 sm:py-20 lg:py-24">
-          <nav aria-label="Breadcrumb" className="text-sm font-semibold text-slate-300">
-            <Link to="/resources" className="hover:text-white">Resources</Link>
-            <span aria-hidden="true" className="mx-2">/</span>
-            <span className="text-white">{config.title}</span>
-          </nav>
+          <KnowledgeBreadcrumbs items={breadcrumbItems} tone="dark" />
           <div className="mt-7 max-w-4xl">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-sky-200">{config.eyebrow}</p>
-            <h1 className="mt-4 text-4xl font-black tracking-[-0.035em] text-white sm:text-5xl lg:text-6xl">{config.title}</h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">{config.intro}</p>
+            <h1 className="ts-answer-title mt-4 text-4xl font-black tracking-[-0.035em] text-white sm:text-5xl lg:text-6xl">{config.title}</h1>
+            <p className="ts-answer-summary mt-6 max-w-3xl text-lg leading-8 text-slate-200">{config.intro}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#resource-sections" className="rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-slate-100">Choose a starting point</a>
               <Link to={config.allGuidesTo} className="rounded-full border border-white/20 bg-white/[0.08] px-5 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]">{config.allGuidesLabel}</Link>
