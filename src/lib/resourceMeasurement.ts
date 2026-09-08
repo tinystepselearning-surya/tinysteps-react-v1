@@ -17,6 +17,7 @@ export type ResourceNavigationRelation =
   | 'adjacent-pattern'
   | 'other-resource';
 export type ResourceAssistType = 'practice' | 'commercial' | 'supporting-content';
+export type ResourceExternalAssistChannel = 'whatsapp' | 'phone' | 'email';
 
 export type ResourceMeasurementContext = {
   surface: ResourceSurface;
@@ -98,7 +99,7 @@ export function trackResourcePageView(pathname: string) {
 export function trackResourceNavigationClick(fromPath: string, toPath: string, label?: string) {
   const context = getResourceMeasurementContext(fromPath);
   const destination = normalizeResourcePath(toPath);
-  if (!context || !isPhonicsResourcePath(destination)) return;
+  if (!context || !isPhonicsResourcePath(destination) || destination === context.pagePath) return;
   trackEvent('resource_navigation_click', {
     ...baseParams(context),
     destination_path: destination,
@@ -133,6 +134,22 @@ export function trackResourceAssistClick(fromPath: string, destinationPath: stri
     ...baseParams(context),
     destination_path: destination,
     assist_type: assistType,
+    link_label: sanitizeLabel(label),
+  });
+}
+
+export function trackResourceExternalAssist(
+  fromPath: string,
+  channel: ResourceExternalAssistChannel,
+  label?: string,
+) {
+  const context = getResourceMeasurementContext(fromPath);
+  if (!context) return;
+  trackEvent('resource_assist_click', {
+    ...baseParams(context),
+    destination_path: `external:${channel}`,
+    assist_type: 'commercial',
+    assist_channel: channel,
     link_label: sanitizeLabel(label),
   });
 }
