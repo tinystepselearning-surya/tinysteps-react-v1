@@ -1,0 +1,81 @@
+name: Resources R2 Learning Hub
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pages/ResourcesPage.tsx'
+      - 'src/app/routes.tsx'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/lib/resourcesArchitectureRegistry.js'
+      - 'src/tests/seo/resourcesR2LearningHub.spec.ts'
+      - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
+      - 'scripts/audit-resources-r0.mjs'
+      - 'scripts/audit-resources-r0-rendered.mjs'
+      - 'scripts/gsc-crawled-not-indexed-manifest.mjs'
+      - 'scripts/seo-indexation-guard.mjs'
+      - 'firebase.json'
+      - 'public/llms.txt'
+      - 'docs/seo/resources-architecture/**'
+      - '.github/workflows/resources-r2-learning-hub.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r2-learning-hub:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Brick 2 gateway and R0 safety tests
+        run: >-
+          npx vitest run
+          src/tests/seo/resourcesR2LearningHub.spec.ts
+          src/tests/seo/resourcesR0SafetyBaseline.spec.js
+
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Build and prerender public site
+        run: npm run build
+
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs
+
+      - name: Verify Resources sitemap discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          sitemap='dist/sitemap-static.xml'
+          if [[ ! -f "$sitemap" ]]; then
+            echo "::error::Missing $sitemap after production build"
+            exit 1
+          fi
+          if ! grep -Fq '<loc>https://tinystepslearning.com/resources</loc>' "$sitemap"; then
+            echo "::error::/resources is missing from sitemap-static.xml"
+            exit 1
+          fi
+
+      - name: Run SEO smoke test
+        run: npm run seo:smoke
