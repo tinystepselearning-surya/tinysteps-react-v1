@@ -89,6 +89,12 @@ for (const token of ['PHONICS_RESOURCE_DISCOVERY_CLUSTERS', 'Browse phonics guid
 }
 if (!errors.some((error) => error.id === 'hub-source')) pass('hub-source', 'Hub source renders the data-driven cluster navigation and direct guide links.');
 
+const detailSource = read('src/pages/PhonicsKnowledgePage.tsx');
+for (const token of ['getRelatedPhonicsResourcePages', 'getPhonicsResourceDiscoveryClusterForPath', 'data-resource-related-guides', 'data-resource-related-path', 'Explore related phonics patterns']) {
+  if (!detailSource.includes(token)) fail('detail-source', `Detail-page source is missing ${token}.`);
+}
+if (!errors.some((error) => error.id === 'detail-source')) pass('detail-source', 'Reusable detail page renders the related-guide graph for users and crawlers.');
+
 const sitemapPath = path.join(root, 'public', 'sitemap-static.xml');
 if (fs.existsSync(sitemapPath)) {
   const sitemap = fs.readFileSync(sitemapPath, 'utf8');
@@ -123,8 +129,11 @@ if (distMode) {
     }
     const html = fs.readFileSync(file, 'utf8');
     if (!html.includes(`href="${PHONICS_RESOURCE_HUB_PATH}"`)) fail('rendered-parent-link', `${page.path} does not link back to the phonics hub.`);
+    for (const related of getRelatedPhonicsResourcePages(page.path, 4)) {
+      if (!html.includes(`href="${related.path}"`)) fail('rendered-related-link', `${page.path} is missing rendered related-guide link to ${related.path}.`);
+    }
   }
-  if (!errors.some((error) => error.id.startsWith('rendered-'))) pass('rendered-discovery', 'Rendered hub/detail HTML preserves direct bidirectional discovery paths.');
+  if (!errors.some((error) => error.id.startsWith('rendered-'))) pass('rendered-discovery', 'Rendered hub/detail HTML preserves direct hub, parent and related-guide discovery paths.');
 }
 
 const report = {
