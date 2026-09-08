@@ -1,6 +1,8 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
+import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
+import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import {
   ORGANIZATION_ID,
@@ -112,24 +114,8 @@ const ResourcesPage: FC = () => {
   const canonicalPath = seo?.canonicalPath ?? '/resources';
   const canonicalUrl = `${SITE_ORIGIN}${canonicalPath}`;
 
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: `${SITE_ORIGIN}/`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Resources',
-        item: canonicalUrl,
-      },
-    ],
-  };
+  const breadcrumbItems = getBreadcrumbTrail({ pathname: canonicalPath, title: 'Resources' });
+  const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
 
   const pathwayListId = `${canonicalUrl}#resource-pathways`;
   const itemListSchema = {
@@ -157,6 +143,8 @@ const ResourcesPage: FC = () => {
     isPartOf: { '@id': WEBSITE_ID },
     publisher: { '@id': ORGANIZATION_ID },
     mainEntity: { '@id': pathwayListId },
+    breadcrumb: { '@id': breadcrumbSchema['@id'] },
+    speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
   };
 
   return (
@@ -171,14 +159,15 @@ const ResourcesPage: FC = () => {
       <section className="relative overflow-hidden border-b border-slate-800 bg-slate-950 text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(56,189,248,0.17),transparent_34%),radial-gradient(circle_at_82%_20%,rgba(251,191,36,0.14),transparent_30%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#172554_100%)]" />
         <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 sm:pb-20 sm:pt-20 lg:pb-24 lg:pt-24">
+          <KnowledgeBreadcrumbs items={breadcrumbItems} tone="dark" className="mb-7" />
           <div className="max-w-4xl">
             <span className="inline-flex rounded-full border border-white/15 bg-white/8 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.26em] text-sky-100 backdrop-blur">
               Tiny Steps Resources
             </span>
-            <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-[-0.035em] text-white sm:text-5xl lg:text-[4.25rem] lg:leading-[1.02]">
+            <h1 className="ts-answer-title mt-6 max-w-4xl text-4xl font-black tracking-[-0.035em] text-white sm:text-5xl lg:text-[4.25rem] lg:leading-[1.02]">
               English Learning Resources for Kids, Parents & Educators
             </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200 sm:text-xl">
+            <p className="ts-answer-summary mt-6 max-w-3xl text-lg leading-8 text-slate-200 sm:text-xl">
               Start with the subject, problem, or type of practice you need. Tiny Steps Resources brings together
               our learning guides, parent support, interactive activities, and school resources without making you
               search through one long article feed.
