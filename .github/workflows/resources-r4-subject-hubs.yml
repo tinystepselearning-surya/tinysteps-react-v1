@@ -1,0 +1,53 @@
+name: Resources R4 Subject Hubs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pages/ResourcesPage.tsx'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/app/routes.tsx'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/lib/resourcesArchitectureRegistry.js'
+      - 'src/tests/seo/resourcesR4SubjectHubs.spec.js'
+      - 'src/tests/seo/resourcesR2LearningHub.spec.js'
+      - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
+      - 'scripts/audit-resources-r0.mjs'
+      - 'public/llms.txt'
+      - 'docs/seo/resources-architecture/**'
+      - '.github/workflows/resources-r4-subject-hubs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r4-subject-hubs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run Brick 4 and earlier Resources regression tests
+        run: npx vitest run src/tests/seo/resourcesR4SubjectHubs.spec.js src/tests/seo/resourcesR3Navigation.spec.js src/tests/seo/resourcesR2LearningHub.spec.js src/tests/seo/resourcesR0SafetyBaseline.spec.js
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Verify subject hubs are discoverable in generated sitemap
+        shell: bash
+        run: |
+          grep -R '<loc>https://tinystepslearning.com/resources/phonics</loc>' public/sitemap*.xml
+          grep -R '<loc>https://tinystepslearning.com/resources/grammar</loc>' public/sitemap*.xml
+          grep -R '<loc>https://tinystepslearning.com/resources/speaking</loc>' public/sitemap*.xml
+      - name: Run SEO smoke test
+        run: npm run seo:smoke
