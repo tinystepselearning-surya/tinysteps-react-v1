@@ -1,15 +1,15 @@
 // Thin wrapper around applySeo to keep Meta API compatible while delegating
 import { useEffect } from 'react';
 import type { FC } from 'react';
+import { ORGANIZATION_SAME_AS_URLS } from '../../config/semanticFacts';
 import { applySeo } from '../../lib/seo';
-import { QUORA_PROFILE_URL } from '../../lib/quoraProfile';
 import { organizationSchema } from '../../lib/schemas';
 
 type MetaProps = {
   title?: string;
   description?: string;
   keywords?: string;
-  canonical?: string; // absolute preferred; if missing we auto-generate from current URL
+  canonical?: string;
   robots?: string;
   jsonLd?: Record<string, any> | Record<string, any>[];
 };
@@ -29,7 +29,7 @@ function hasOrganizationType(schema: Record<string, any> | undefined) {
   return false;
 }
 
-function withQuoraSameAs(schema: Record<string, any>) {
+function withCanonicalOrganizationSameAs(schema: Record<string, any>) {
   if (!hasOrganizationType(schema)) return schema;
 
   const currentSameAs = Array.isArray(schema.sameAs)
@@ -40,7 +40,7 @@ function withQuoraSameAs(schema: Record<string, any>) {
 
   return {
     ...schema,
-    sameAs: Array.from(new Set([...currentSameAs, QUORA_PROFILE_URL])),
+    sameAs: Array.from(new Set([...currentSameAs, ...ORGANIZATION_SAME_AS_URLS])),
   };
 }
 
@@ -49,7 +49,6 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, 
     const finalTitle = title?.trim() || DEFAULT_TITLE;
     const finalDescription = (description ?? DEFAULT_DESCRIPTION).trim();
 
-    // compute canonical path per rules
     let canonicalPath: string | undefined;
     try {
       if (canonical && canonical.trim()) {
@@ -72,7 +71,6 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, 
       canonicalPath = undefined;
     }
 
-    // Merge base org schema with page-specific jsonLd for public pages only
     let mergedJsonLd: Record<string, any> | Record<string, any>[] | undefined;
     const isPrivateDashboard = canonicalPath && (
       canonicalPath.startsWith('/admin') ||
@@ -84,21 +82,23 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, 
     );
 
     if (!isPrivateDashboard) {
-      // Keep Quora in the published Organization.sameAs contract, including pages
-      // that provide their own Organization/EducationalOrganization JSON-LD.
       const pageJsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
-      const pageJsonLdWithOfficialProfiles = pageJsonLdArray.map((schema) => withQuoraSameAs(schema));
+      const pageJsonLdWithCanonicalProfiles = pageJsonLdArray.map((schema) =>
+        withCanonicalOrganizationSameAs(schema),
+      );
       const hasOrgSchema = pageJsonLdArray.some((schema) => hasOrganizationType(schema));
 
       if (hasOrgSchema) {
         mergedJsonLd = Array.isArray(jsonLd)
-          ? pageJsonLdWithOfficialProfiles
-          : pageJsonLdWithOfficialProfiles[0];
+          ? pageJsonLdWithCanonicalProfiles
+          : pageJsonLdWithCanonicalProfiles[0];
       } else {
-        mergedJsonLd = [withQuoraSameAs(organizationSchema), ...pageJsonLdWithOfficialProfiles];
+        mergedJsonLd = [
+          withCanonicalOrganizationSameAs(organizationSchema),
+          ...pageJsonLdWithCanonicalProfiles,
+        ];
       }
     } else {
-      // Private dashboard: use page-specific jsonLd only (if any)
       mergedJsonLd = jsonLd;
     }
 
@@ -111,21 +111,20 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, 
       jsonLd: mergedJsonLd,
     });
 
-    // keywords: keep optional behavior — set/remove meta[name="keywords"]
     try {
-      const existing = typeof document !== 'undefined' ? document.querySelector('meta[name="keywords"]') as HTMLMetaElement | null : null;
+      const existing = typeof document !== 'undefined'
+        ? document.querySelector('meta[name="keywords"]') as HTMLMetaElement | null
+        : null;
       const kw = keywords?.trim();
       if (!kw) {
         if (existing) existing.remove();
-      } else {
-        if (existing) {
-          existing.setAttribute('content', kw);
-        } else if (typeof document !== 'undefined') {
-          const el = document.createElement('meta');
-          el.setAttribute('name', 'keywords');
-          el.setAttribute('content', kw);
-          document.head.appendChild(el);
-        }
+      } else if (existing) {
+        existing.setAttribute('content', kw);
+      } else if (typeof document !== 'undefined') {
+        const el = document.createElement('meta');
+        el.setAttribute('name', 'keywords');
+        el.setAttribute('content', kw);
+        document.head.appendChild(el);
       }
     } catch {
       // no-op
