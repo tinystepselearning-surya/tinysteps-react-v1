@@ -11,6 +11,8 @@ import {
   getPhonicsProgrammaticPilotPageByConceptId,
   getPhonicsProgrammaticPilotPageBySlug,
 } from '../lib/phonicsProgrammaticPilot.js';
+import { getApprovedPhonicsEditorialReview } from '../lib/phonicsEditorialReviewRegistry.js';
+import { getEditorialReviewer } from '../lib/editorialReviewerRegistry';
 import { getCanonicalTopicOwnerPath } from '../lib/canonicalTopicOwnershipRegistry.js';
 import {
   buildBreadcrumbListSchema,
@@ -89,6 +91,16 @@ function uniqueRelatedPaths(concept: PhonicsKnowledgeConcept) {
   return Array.from(new Set(concept.supportingPaths)).slice(0, 3);
 }
 
+function formatReviewDate(value: string) {
+  const date = new Date(`${value}T00:00:00Z`);
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
 export default function PhonicsKnowledgePage() {
   const { slug = '' } = useParams();
   const page = getPhonicsProgrammaticPilotPageBySlug(slug);
@@ -101,6 +113,8 @@ export default function PhonicsKnowledgePage() {
   const prerequisiteLinks = concept.prerequisiteIds.map(learningLink).filter((item): item is LearningLink => Boolean(item));
   const nextLinks = concept.nextIds.map(learningLink).filter((item): item is LearningLink => Boolean(item));
   const relatedPaths = uniqueRelatedPaths(concept);
+  const editorialReview = getApprovedPhonicsEditorialReview(page.path);
+  const reviewer = editorialReview ? getEditorialReviewer(editorialReview.reviewerKey) : null;
 
   const definedTermId = `${canonicalUrl}#phonics-concept`;
   const definedTermSchema = {
@@ -136,6 +150,7 @@ export default function PhonicsKnowledgePage() {
       name: 'Phonics and reading for children',
       url: `${SITE_ORIGIN}/resources/phonics`,
     },
+    ...(editorialReview && reviewer ? { reviewedBy: { '@id': reviewer.personId } } : {}),
     speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
   };
 
@@ -166,6 +181,24 @@ export default function PhonicsKnowledgePage() {
               {concept.quickAnswer}
             </p>
           </div>
+
+          {editorialReview && reviewer && editorialReview.reviewedAt ? (
+            <aside
+              className="mt-4 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/65 px-4 py-3.5 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+              aria-label="Human editorial review"
+              data-editorial-review="approved"
+            >
+              <p>
+                <span className="font-bold text-slate-900">Reviewed for phonics accuracy by </span>
+                <Link className="font-black text-emerald-800 underline decoration-emerald-300 underline-offset-4" to={reviewer.profilePath}>
+                  {reviewer.fullName}
+                </Link>
+              </p>
+              <p className="shrink-0 text-xs font-semibold text-slate-500">
+                {reviewer.roleLabel} · Reviewed {formatReviewDate(editorialReview.reviewedAt)}
+              </p>
+            </aside>
+          ) : null}
         </header>
 
         <section className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(16rem,0.75fr)]">
