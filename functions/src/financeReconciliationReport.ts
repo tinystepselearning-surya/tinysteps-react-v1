@@ -3,6 +3,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
 import { fetchCompletedSessionsForFinanceReconciliation } from './helpers/financeReconciliationCompletedSessions';
+import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import {
   isActiveBillingCharge,
   resolveCanonicalServiceDate,
@@ -249,7 +250,7 @@ function isExpectedFinanciallyCompletedSession(session: Record<string, unknown>)
   const kidId = resolvePrimaryKidId(session);
   const attendanceStatus = resolveAttendanceStatus(session, kidId);
   if (!attendanceStatus) return true;
-  return attendanceStatus === 'present' || attendanceStatus === 'late';
+  return isFinanciallyEarnedAttendanceStatus(attendanceStatus);
 }
 
 function sampleRows<T>(rows: T[], limit: number): T[] {
@@ -387,13 +388,13 @@ function resolveBillingChargePaidAmount(charge: Record<string, unknown>, amount:
   return status === 'paid' || status === 'settled' ? amount : 0;
 }
 
-function hasPresentAttendance(session: Record<string, unknown>): boolean {
+function hasFinanciallyEarnedAttendance(session: Record<string, unknown>): boolean {
   const attendance = session.attendance;
   if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return false;
   return Object.values(attendance).some((entry) => {
-    if (typeof entry === 'string') return normalizeStatus(entry) === 'present';
+    if (typeof entry === 'string') return isFinanciallyEarnedAttendanceStatus(entry);
     if (entry && typeof entry === 'object') {
-      return normalizeStatus((entry as Record<string, unknown>).status) === 'present';
+      return isFinanciallyEarnedAttendanceStatus((entry as Record<string, unknown>).status);
     }
     return false;
   });
@@ -407,7 +408,7 @@ export function diagnosePresentSessionBilling(input: {
   activeChargeExists: boolean;
 }): Record<string, unknown> | null {
   const { sessionId, session, enrollment, enrollmentExists, activeChargeExists } = input;
-  if (normalizeStatus(session.status) !== 'completed' || !hasPresentAttendance(session)) return null;
+  if (normalizeStatus(session.status) !== 'completed' || !hasFinanciallyEarnedAttendance(session)) return null;
   const enrollmentId = String(session.enrollmentId || '').trim();
   const resolvedEnrollment = enrollment || {};
   const parentId = String(session.parentId || resolvedEnrollment.parentId || '').trim();
