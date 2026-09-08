@@ -74,4 +74,13 @@ describe('Resources architecture R10 discovery infrastructure', () => {
     expect(source).toContain("href={`#${cluster.anchorId}`}");
     expect(source).toContain('PHONICS_PROGRAMMATIC_PILOT_PAGES');
   });
+
+  it('renders the related-page graph on every reusable phonics detail page', () => {
+    const source = read('src/pages/PhonicsKnowledgePage.tsx');
+    expect(source).toContain('getRelatedPhonicsResourcePages');
+    expect(source).toContain('getPhonicsResourceDiscoveryClusterForPath');
+    expect(source).toContain('data-resource-related-guides');
+    expect(source).toContain('data-resource-related-path');
+    expect(source).toContain('Explore related phonics patterns');
+  });
 });
