@@ -1,4 +1,4 @@
-import { PHONICS_PROGRAMMATIC_PILOT_PATHS } from './phonicsProgrammaticPilot.js';
+import { PHONICS_PUBLISHED_RESOURCE_PATHS } from './phonicsPublicationRegistry.js';
 
 const route = (path, group, {
   indexable = true,
@@ -24,7 +24,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/blog', 'static'),
   route('/resources', 'static'),
   route('/resources/phonics', 'static'),
-  ...PHONICS_PROGRAMMATIC_PILOT_PATHS.map((path) => route(path, 'static')),
+  ...PHONICS_PUBLISHED_RESOURCE_PATHS.map((path) => route(path, 'static')),
   route('/resources/grammar', 'static'),
   route('/resources/speaking', 'static'),
   route('/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', 'static'),
@@ -116,46 +116,14 @@ export const PUBLIC_ROUTE_MANIFEST = [
 ];
 
 export const PUBLIC_REDIRECT_MANIFEST = [
-  {
-    source: '/terms',
-    destination: '/terms-and-conditions',
-    status: 301,
-  },
-  {
-    source: '/terms/',
-    destination: '/terms-and-conditions',
-    status: 301,
-  },
-  {
-    source: '/online-english-classes-for-kids-india',
-    destination: '/online-english-classes-for-kids',
-    status: 301,
-  },
-  {
-    source: '/online-phonics-reading-classes',
-    destination: '/phonics',
-    status: 301,
-  },
-  {
-    source: '/how-it-works',
-    destination: '/curriculum',
-    status: 301,
-  },
-  {
-    source: '/spoken-english-classes-for-kids',
-    destination: '/spoken-english-classes-for-kids-online',
-    status: 301,
-  },
-  {
-    source: '/games',
-    destination: '/phonics-learning-games',
-    status: 301,
-  },
-  {
-    source: '/games/english-excellence',
-    destination: '/phonics-learning-games',
-    status: 301,
-  },
+  { source: '/terms', destination: '/terms-and-conditions', status: 301 },
+  { source: '/terms/', destination: '/terms-and-conditions', status: 301 },
+  { source: '/online-english-classes-for-kids-india', destination: '/online-english-classes-for-kids', status: 301 },
+  { source: '/online-phonics-reading-classes', destination: '/phonics', status: 301 },
+  { source: '/how-it-works', destination: '/curriculum', status: 301 },
+  { source: '/spoken-english-classes-for-kids', destination: '/spoken-english-classes-for-kids-online', status: 301 },
+  { source: '/games', destination: '/phonics-learning-games', status: 301 },
+  { source: '/games/english-excellence', destination: '/phonics-learning-games', status: 301 },
 ];
 
 export const APPLICATION_ROUTE_INTENT_MANIFEST = [
@@ -170,11 +138,7 @@ export const APPLICATION_ROUTE_INTENT_MANIFEST = [
   { path: '/parent/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
   { path: '/kids/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
   { path: '/messages/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
-  {
-    path: '/learning-partner/dashboard/**',
-    intent: 'private-spa',
-    robots: 'noindex, nofollow, noarchive',
-  },
+  { path: '/learning-partner/dashboard/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
   { path: '/rss.xml', intent: 'noindex', robots: 'noindex' },
   { path: '/feed.xml', intent: 'noindex', robots: 'noindex' },
   { path: '/sitemap*.xml', intent: 'noindex', robots: 'noindex' },
@@ -182,48 +146,20 @@ export const APPLICATION_ROUTE_INTENT_MANIFEST = [
 ];
 
 export const DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST = [
-  {
-    path: '/blog/**',
-    intent: 'index',
-    canonicalPath: 'self',
-    sitemap: true,
-    prerender: true,
-    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
-    seoRegistry: 'resolved',
-  },
-  {
-    path: '/courses/**',
-    intent: 'index',
-    canonicalPath: 'self',
-    sitemap: true,
-    prerender: true,
-    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
-    seoRegistry: 'resolved',
-  },
+  { path: '/blog/**', intent: 'index', canonicalPath: 'self', sitemap: true, prerender: true, robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1', seoRegistry: 'resolved' },
+  { path: '/courses/**', intent: 'index', canonicalPath: 'self', sitemap: true, prerender: true, robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1', seoRegistry: 'resolved' },
 ];
 
 export const ROUTE_INTENT_MANIFEST = [
   ...PUBLIC_ROUTE_MANIFEST,
   ...DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST,
-  ...PUBLIC_REDIRECT_MANIFEST.map((entry) => ({
-    ...entry,
-    path: entry.source,
-    intent: 'redirect',
-    permanent: entry.status === 301 || entry.status === 308,
-    sitemap: false,
-    prerender: false,
-  })),
+  ...PUBLIC_REDIRECT_MANIFEST.map((entry) => ({ ...entry, path: entry.source, intent: 'redirect', permanent: entry.status === 301 || entry.status === 308, sitemap: false, prerender: false })),
   ...APPLICATION_ROUTE_INTENT_MANIFEST,
 ];
 
-const DYNAMIC_PUBLIC_PREFIXES = DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST.map(
-  (entry) => entry.path.replace(/\*\*$/, ''),
-);
+const DYNAMIC_PUBLIC_PREFIXES = DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST.map((entry) => entry.path.replace(/\*\*$/, ''));
 const PUBLIC_ANALYTICS_EXCLUSIONS = new Set(['/parents/payments']);
-const PUBLIC_ANALYTICS_ALIASES = new Set([
-  '/games/english-excellence',
-  '/online-phonics-reading-classes',
-]);
+const PUBLIC_ANALYTICS_ALIASES = new Set(['/games/english-excellence', '/online-phonics-reading-classes']);
 
 export function isPublicAnalyticsPath(pathname) {
   const normalized = String(pathname || '/').toLowerCase().replace(/\/+$/, '') || '/';
