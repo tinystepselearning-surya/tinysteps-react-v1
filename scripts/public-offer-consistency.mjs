@@ -8,6 +8,10 @@ const SCAN_ROOTS = [
   'src/pages',
   'src/components',
   'src/content',
+  'src/config/semanticFacts.ts',
+  'src/config/publicFacts.ts',
+  'src/config/publicOffer.ts',
+  'src/constants/publicContact.ts',
   'src/hooks/useAskTinyStepsChat.ts',
   'src/lib/routeSeoRegistry.js',
   'public/kb.json',
@@ -33,14 +37,40 @@ const FORBIDDEN_PATTERNS = [
   { label: 'unqualified 3-day free trial', regex: /\b3[- ]day\s+free\s+trial\b/gi },
 ];
 
+// Brick 1 keeps the approved literals in semanticFacts.ts and requires legacy
+// facades to derive from that registry rather than duplicating those literals.
 const REQUIRED_STRINGS = [
   {
-    path: 'src/config/publicOffer.ts',
-    value: 'Standard 1:1:',
+    path: 'src/config/semanticFacts.ts',
+    value: "coreLabel: 'children aged 3–12'",
+  },
+  {
+    path: 'src/config/semanticFacts.ts',
+    value: "durationLabel: '35 minutes'",
+  },
+  {
+    path: 'src/config/semanticFacts.ts',
+    value: "claim: 'One free 35-minute 1:1 online demo assessment class per child before enrolment.'",
+  },
+  {
+    path: 'src/config/semanticFacts.ts',
+    value: 'standardOneToOnePerClassInr: PER_CLASS_PRICE',
   },
   {
     path: 'src/config/publicOffer.ts',
-    value: 'One Free 35-Minute Demo Assessment Class',
+    value: 'SEMANTIC_FACTS.delivery.assessment.durationMinutes',
+  },
+  {
+    path: 'src/config/publicOffer.ts',
+    value: 'SEMANTIC_FACTS.delivery.assessment.claim',
+  },
+  {
+    path: 'src/config/publicOffer.ts',
+    value: 'SEMANTIC_FACTS.pricing.standardOneToOnePerClassInr',
+  },
+  {
+    path: 'src/config/publicOffer.ts',
+    value: 'Standard 1:1:',
   },
   {
     path: 'src/config/publicOffer.ts',
@@ -48,11 +78,11 @@ const REQUIRED_STRINGS = [
   },
   {
     path: 'src/config/publicFacts.ts',
-    value: "label: 'children aged 3–12'",
+    value: 'SEMANTIC_FACTS.audience.coreLabel',
   },
   {
     path: 'src/config/publicFacts.ts',
-    value: "label: '35 minutes'",
+    value: 'SEMANTIC_FACTS.delivery.standardOneToOne.durationLabel',
   },
   {
     path: 'src/components/forms/TrialForm.tsx',
@@ -77,6 +107,11 @@ const REQUIRED_STRINGS = [
 ];
 
 const REQUIRED_PATTERNS = [
+  {
+    path: 'src/config/publicOffer.ts',
+    label: 'demo offer name derives from FREE_DEMO_DURATION_MINUTES',
+    regex: /One Free \$\{FREE_DEMO_DURATION_MINUTES\}-Minute Demo Assessment Class/,
+  },
   {
     path: 'src/pages/public/BookDemoPage.tsx',
     label: 'demo Service duration derived from FREE_DEMO_DURATION_MINUTES',
@@ -221,4 +256,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`PASS: public offer consistency (${files.length} files scanned, ${kbEntries.length} KB entries verified; ages 3–12 and 35-minute standard 1:1 facts protected)`);
+console.log(`PASS: public offer consistency (${files.length} files scanned, ${kbEntries.length} KB entries verified; semantic registry ownership, ages 3–12 and 35-minute standard 1:1 facts protected)`);
