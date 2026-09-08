@@ -1,5 +1,7 @@
 # Resources Architecture — R4 Canonical Ownership Map
 
+> Brick 5 now provides the machine-readable enforcement layer for this map in `src/lib/canonicalTopicOwnershipRegistry.js`. This R4 document remains the human-readable baseline that Brick 5 must preserve.
+
 Brick 4 publishes subject discovery hubs without transferring search-intent ownership away from established Tiny Steps URLs.
 
 ## Phonics & Reading
