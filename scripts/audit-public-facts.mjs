@@ -4,28 +4,39 @@ import path from 'node:path';
 import process from 'node:process';
 
 const ROOT = process.cwd();
-const FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
+const SEMANTIC_FACTS_FILE = path.join(ROOT, 'src/config/semanticFacts.ts');
+const PUBLIC_FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
 const SCHEMAS_FILE = path.join(ROOT, 'src/lib/schemas.ts');
 const VITE_CONFIG = ['vite.config.js', 'vite.config.ts', 'vite.config.jsx', 'vite.config.tsx']
   .map((name) => path.join(ROOT, name))
   .find((candidate) => fs.existsSync(candidate));
 const DIST = path.join(ROOT, 'dist');
 const CHECK_DIST = process.argv.includes('--dist');
-const REQUIRED_FACTS = [
-  'SCHEMA_PUBLIC_FACTS',
-  'STANDARD_ONE_TO_ONE_PER_CLASS_PRICE',
-  'STANDARD_SMALL_GROUP_MIN_PER_CLASS',
-  'STANDARD_SMALL_GROUP_MAX_PER_CLASS',
-  'FREE_DEMO_DURATION_MINUTES',
-  'FREE_DEMO_PRICE',
-  'ageMin: 3',
-  'ageMax: 12',
-  "label: 'children aged 3–12'",
+
+const REQUIRED_SEMANTIC_FACTS = [
+  "SEMANTIC_FACTS_VERSION = '2026-09-08-r1'",
+  "name: 'Tiny Steps Learning'",
+  "fullName: 'Vannala Ravali Priya'",
+  'coreAgeMin: 3',
+  'coreAgeMax: 12',
+  "coreLabel: 'children aged 3–12'",
+  'STANDARD_ONE_TO_ONE_DURATION_MINUTES = 35',
+  'FREE_ASSESSMENT_DURATION_MINUTES = 35',
+  'FREE_ASSESSMENT_SESSION_COUNT = 1',
+  'FREE_ASSESSMENT_PRICE_INR = 0',
+  "email: 'RavaliPriyaVannala@tinystepslearning.com'",
+  "whatsappNumber: '919618398383'",
+  "url: 'https://www.youtube.com/@TinyStepsLearning_Priya'",
+  "url: 'https://www.linkedin.com/company/tiny-steps-learning/'",
+  "url: 'https://www.pinterest.com/tinystepselearning/'",
+  "url: 'https://www.quora.com/profile/Tiny-Steps-Learning'",
+  'lessonCount: 31',
+  'lessonCount: 40',
+  'lessonCount: 30',
+  'totalLessonCount: 101',
+  'totalLessonCount: 72',
   'minimumLearners: 5000',
   'minimumCountries: 15',
-  'minimumMinutes: 35',
-  'maximumMinutes: 35',
-  "label: '35 minutes'",
   'focusedLaunchInr: 59000',
   'wholeSchoolInr: 149000',
   'multiCampusInr: 299000',
@@ -36,6 +47,30 @@ const REQUIRED_FACTS = [
   "status: 'concluded'",
   "endDateLabel: '13 June 2026'",
 ];
+
+const SEMANTIC_CONSUMERS = [
+  'src/config/publicFacts.ts',
+  'src/config/publicOffer.ts',
+  'src/constants/publicContact.ts',
+  'src/content/courses.ts',
+  'src/lib/schemas.ts',
+  'src/lib/officialProfiles.ts',
+  'src/lib/founderProfiles.ts',
+  'src/lib/pinterestProfile.ts',
+  'src/lib/quoraProfile.ts',
+];
+
+const FORBIDDEN_DUPLICATED_LITERALS = [
+  ['src/constants/publicContact.ts', /RavaliPriyaVannala@tinystepslearning\.com/g, 'duplicate contact email'],
+  ['src/constants/publicContact.ts', /919618398383/g, 'duplicate WhatsApp number'],
+  ['src/lib/schemas.ts', /https:\/\/www\.youtube\.com\/@TinyStepsLearning_Priya/g, 'duplicate YouTube URL'],
+  ['src/lib/schemas.ts', /https:\/\/www\.linkedin\.com\/company\/tiny-steps-learning\//g, 'duplicate LinkedIn company URL'],
+  ['src/lib/schemas.ts', /telephone:\s*['"]\+91-9618398383['"]/g, 'duplicate public telephone'],
+  ['src/lib/pinterestProfile.ts', /https:\/\/www\.pinterest\.com\/tinystepselearning\//g, 'duplicate Pinterest URL'],
+  ['src/lib/quoraProfile.ts', /https:\/\/www\.quora\.com\/profile\/Tiny-Steps-Learning/g, 'duplicate Quora URL'],
+  ['src/lib/founderProfiles.ts', /https:\/\/www\.linkedin\.com\/in\/ravali-priya-vannala\//g, 'duplicate founder LinkedIn URL'],
+];
+
 const REQUIRED_PARITY = [
   ['public/llms.txt', '5000+'],
   ['public/llms.txt', '15+ countries'],
@@ -51,19 +86,19 @@ const REQUIRED_PARITY = [
   ['public/kb.json', 'free 35-minute 1:1 online demo assessment class'],
   ['public/kb.json', 'children ages 3–12'],
   ['public/kb.json', 'Standard 1:1 classes are 35 minutes'],
-  ['src/lib/schemas.ts', 'children aged 3–12'],
-  ['src/lib/schemas.ts', "sessionDuration: '35 minutes'"],
   ['src/pages/ForSchoolsPage.tsx', '₹59,000'],
   ['src/pages/ForSchoolsPage.tsx', '₹1.49 lakh'],
   ['src/pages/ForSchoolsPage.tsx', '₹2.99 lakh'],
   ['src/pages/ForSchoolsPage.tsx', '₹24,900'],
 ];
+
 const FORBIDDEN_PUBLIC_CLAIMS = [
   [/Trusted by 250\+ families/gi, 'unsupported 250+ families claim'],
   [/4\.9\s*\/\s*5\s*parent satisfaction/gi, 'unsupported 4.9/5 parent satisfaction claim'],
   [/Current official offer:\s*Summer Camp/gi, 'expired Summer Camp current-offer claim'],
   [/Summer Camp 2026[^\n]{0,120}(?:enrol(?:l)? now|enroll now|reserve your child.?s seat)/gi, 'expired Summer Camp enrollment CTA'],
 ];
+
 const FORBIDDEN_RENDERED_CLAIMS = [
   [/4[–-]6 guided lessons/gi, 'fixed 4–6 lesson blending claim'],
   [/Lessons to begin first blending/gi, 'fixed first-blending lesson metric'],
@@ -81,7 +116,16 @@ const FORBIDDEN_RENDERED_CLAIMS = [
   [/27 April 2026/gi, 'obsolete Summer Camp start date'],
   [/₹\s*2,400|Rs\.\s*2,400/gi, 'obsolete Summer Camp historical fee', true],
 ];
-const SCAN_ROOTS = ['src/pages', 'src/components', 'src/content', 'public/llms.txt', 'public/kb.json', 'functions/src/ai'];
+
+const SCAN_ROOTS = [
+  'src/pages',
+  'src/components',
+  'src/content',
+  'public/llms.txt',
+  'public/kb.json',
+  'functions/src/ai',
+];
+
 const SEASONAL_PUBLIC_FILES = [
   'src/pages/SummerCampsPage.tsx',
   'src/pages/SummerCampProgramPage.tsx',
@@ -91,6 +135,7 @@ const SEASONAL_PUBLIC_FILES = [
   'public/llms.txt',
   'public/kb.json',
 ];
+
 const FORBIDDEN_SEASONAL_COPY = [
   [/27 April 2026/gi, 'obsolete Summer Camp start date'],
   [/₹\s*2,400|Rs\.\s*2,400/gi, 'obsolete Summer Camp historical fee'],
@@ -100,6 +145,7 @@ const FORBIDDEN_SEASONAL_COPY = [
   [/\b(?:camp|programme|program) is closed\b/gi, 'seasonal closed-offer language'],
   [/\b(?:historical )?(?:batch|capacity)\b[^\n]{0,80}\b(?:cap|learners|seats)\b/gi, 'obsolete seasonal capacity detail'],
 ];
+
 const failures = [];
 
 function collect(target, files, predicate = (value) => /\.(?:ts|tsx|js|jsx|json|txt)$/i.test(value)) {
@@ -121,43 +167,86 @@ function seasonalSlice(relativePath, text) {
   return index >= 0 ? text.slice(index, index + 900) : text;
 }
 
-if (!fs.existsSync(FACTS_FILE)) failures.push('src/config/publicFacts.ts is missing');
-else {
-  const text = fs.readFileSync(FACTS_FILE, 'utf8');
-  for (const required of REQUIRED_FACTS) {
-    if (!text.includes(required)) failures.push(`publicFacts.ts missing ${JSON.stringify(required)}`);
+if (!fs.existsSync(SEMANTIC_FACTS_FILE)) {
+  failures.push('src/config/semanticFacts.ts is missing');
+} else {
+  const text = fs.readFileSync(SEMANTIC_FACTS_FILE, 'utf8');
+  for (const required of REQUIRED_SEMANTIC_FACTS) {
+    if (!text.includes(required)) {
+      failures.push(`semanticFacts.ts missing ${JSON.stringify(required)}`);
+    }
   }
-  for (const forbidden of ['startDateIso', 'startDateLabel', 'historicalEnrollmentPriceInr', 'historicalListPriceInr', 'batchCap']) {
-    if (text.includes(forbidden)) failures.push(`publicFacts.ts still exposes obsolete seasonal fact ${forbidden}`);
-  }
-}
-
-if (!fs.existsSync(SCHEMAS_FILE)) failures.push('src/lib/schemas.ts is missing');
-else {
-  const schemasText = fs.readFileSync(SCHEMAS_FILE, 'utf8');
-  if (!schemasText.includes("sessionDuration: '35 minutes'")) {
-    failures.push('schemas.ts does not define the standard 1:1 duration as exactly 35 minutes');
-  }
-  if (schemasText.includes('35–40 minutes per session')) {
-    failures.push('schemas.ts still contains the obsolete generic 35–40 minute session range');
-  }
-  for (const required of [
-    'Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}',
-    'with standard 1:1 sessions of ${PUBLIC_FACTS.sessionDuration}',
-    'Standard 1:1 classes run for ${PUBLIC_FACTS.sessionDuration}',
-  ]) {
-    if (!schemasText.includes(required)) {
-      failures.push(`schemas.ts does not scope duration copy to standard 1:1 classes: missing ${JSON.stringify(required)}`);
+  for (const forbidden of ['35–40 minutes per session', "ageRange: { min: 8, max: 15", "ageRange: { min: 7, max: 15"]) {
+    if (text.includes(forbidden)) {
+      failures.push(`semanticFacts.ts contains forbidden drift ${JSON.stringify(forbidden)}`);
     }
   }
 }
 
+for (const relativePath of SEMANTIC_CONSUMERS) {
+  const filePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(filePath)) {
+    failures.push(`${relativePath} is missing`);
+    continue;
+  }
+  const text = fs.readFileSync(filePath, 'utf8');
+  if (!text.includes('SEMANTIC_FACTS')) {
+    failures.push(`${relativePath} does not consume the Brick 1 semantic facts registry`);
+  }
+}
+
+if (!fs.existsSync(PUBLIC_FACTS_FILE)) {
+  failures.push('src/config/publicFacts.ts is missing');
+} else {
+  const text = fs.readFileSync(PUBLIC_FACTS_FILE, 'utf8');
+  if (!text.includes("import { SEMANTIC_FACTS } from './semanticFacts'")) {
+    failures.push('publicFacts.ts is not a semanticFacts compatibility facade');
+  }
+}
+
+if (!fs.existsSync(SCHEMAS_FILE)) {
+  failures.push('src/lib/schemas.ts is missing');
+} else {
+  const text = fs.readFileSync(SCHEMAS_FILE, 'utf8');
+  for (const required of [
+    'ORGANIZATION_SAME_AS_URLS',
+    'sessionDuration: SEMANTIC_FACTS.delivery.standardOneToOne.durationLabel',
+    'telephone: SEMANTIC_FACTS.contact.telephoneDisplay',
+    'email: SEMANTIC_FACTS.contact.email',
+    'sameAs: [...ORGANIZATION_SAME_AS_URLS]',
+  ]) {
+    if (!text.includes(required)) {
+      failures.push(`schemas.ts missing semantic registry projection ${JSON.stringify(required)}`);
+    }
+  }
+  if (text.includes('35–40 minutes per session')) {
+    failures.push('schemas.ts still contains the obsolete generic 35–40 minute session range');
+  }
+}
+
+for (const [relativePath, regex, label] of FORBIDDEN_DUPLICATED_LITERALS) {
+  const filePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(filePath)) {
+    failures.push(`${relativePath} is missing from duplicate-literal audit`);
+    continue;
+  }
+  const text = fs.readFileSync(filePath, 'utf8');
+  regex.lastIndex = 0;
+  if (regex.test(text)) failures.push(`${relativePath}: ${label}`);
+}
+
 for (const [relativePath, required] of REQUIRED_PARITY) {
   const filePath = path.join(ROOT, relativePath);
-  if (!fs.existsSync(filePath)) { failures.push(`${relativePath} is missing`); continue; }
+  if (!fs.existsSync(filePath)) {
+    failures.push(`${relativePath} is missing`);
+    continue;
+  }
   const text = fs.readFileSync(filePath, 'utf8');
-  if (!text.includes(required)) failures.push(`${relativePath} is out of parity: missing ${JSON.stringify(required)}`);
+  if (!text.includes(required)) {
+    failures.push(`${relativePath} is out of parity: missing ${JSON.stringify(required)}`);
+  }
 }
+
 const viteText = VITE_CONFIG ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
 if (!viteText.includes('FALLBACK_TESTIMONIAL_TARGET = BASE_FALLBACK_TESTIMONIALS.length')) {
   failures.push('public build does not disable generated testimonial-count inflation');
@@ -174,6 +263,7 @@ if (!viteText.includes("replaceAll('content: post.progress'") || !viteText.inclu
 if (viteText.includes("sessionDuration: '35–40 minutes per session'")) {
   failures.push('vite config still carries the obsolete schemas.ts duration rewrite');
 }
+
 for (const required of [
   'PHONICS_PAGE_PROGRESS_FAQ_COPY',
   'P0 public-fact normalization',
@@ -236,8 +326,11 @@ if (CHECK_DIST) {
 }
 
 if (failures.length) {
-  console.error(`FAIL: public facts consistency (${failures.length} issue${failures.length === 1 ? '' : 's'})`);
+  console.error(`FAIL: public semantic facts consistency (${failures.length} issue${failures.length === 1 ? '' : 's'})`);
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`PASS: public facts consistency (${files.length} public files scanned; ages 3–12 and 35-minute standard 1:1 facts enforced; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details${CHECK_DIST ? '; rendered public HTML clean' : ''})`);
+
+console.log(
+  `PASS: public semantic facts consistency (${files.length} public files scanned; Brick 1 registry ownership enforced; ages 3–12 and 35-minute standard 1:1 facts enforced; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details${CHECK_DIST ? '; rendered public HTML clean' : ''})`,
+);
