@@ -10,6 +10,7 @@ import {
   trackBlogCtaImpression,
   trackBlogProgramClick,
 } from '../../lib/blogConversionTracking';
+import BlogSemanticPathway from './BlogSemanticPathway';
 
 type BlogConversionCardProps = {
   slug: string;
@@ -103,25 +104,29 @@ export default function BlogConversionCard({ slug, config }: BlogConversionCardP
   );
 
   return (
-    <section
-      ref={rootRef}
-      data-blog-conversion-family={config.family}
-      className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.18)] sm:px-8"
-      aria-labelledby={`blog-conversion-${slug}`}
-    >
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-center">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">{config.eyebrow}</p>
-          <h2 id={`blog-conversion-${slug}`} className="mt-3 text-3xl font-black tracking-tight">
-            {config.heading}
-          </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">{config.description}</p>
+    <>
+      <BlogSemanticPathway slug={slug} />
+
+      <section
+        ref={rootRef}
+        data-blog-conversion-family={config.family}
+        className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.18)] sm:px-8"
+        aria-labelledby={`blog-conversion-${slug}`}
+      >
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">{config.eyebrow}</p>
+            <h2 id={`blog-conversion-${slug}`} className="mt-3 text-3xl font-black tracking-tight">
+              {config.heading}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">{config.description}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            {renderAction(config.primaryAction, true)}
+            {config.secondaryAction ? renderAction(config.secondaryAction, false) : null}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3 lg:justify-end">
-          {renderAction(config.primaryAction, true)}
-          {config.secondaryAction ? renderAction(config.secondaryAction, false) : null}
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

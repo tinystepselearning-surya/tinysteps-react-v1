@@ -1,0 +1,76 @@
+name: Resources R6 Semantic Internal Links
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/semanticInternalLinkRegistry.js'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/components/blog/BlogSemanticPathway.tsx'
+      - 'src/components/blog/BlogConversionCard.tsx'
+      - 'src/pages/BlogPostPage.tsx'
+      - 'src/tests/seo/resourcesR6SemanticInternalLinks.spec.js'
+      - 'src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js'
+      - 'src/tests/seo/resourcesR4SubjectHubs.spec.js'
+      - 'src/tests/seo/resourcesR3Navigation.spec.js'
+      - 'src/tests/seo/resourcesR2LearningHub.spec.js'
+      - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
+      - 'scripts/audit-semantic-internal-links.mjs'
+      - 'scripts/audit-canonical-topic-ownership.mjs'
+      - 'scripts/audit-resources-r0.mjs'
+      - 'scripts/audit-resources-r0-rendered.mjs'
+      - 'docs/seo/resources-architecture/R6_SEMANTIC_INTERNAL_LINK_ENGINE.md'
+      - '.github/workflows/resources-r6-semantic-internal-links.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r6-semantic-internal-links:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Brick 6 and earlier Resources regression tests
+        run: >-
+          npx vitest run
+          src/tests/seo/resourcesR6SemanticInternalLinks.spec.js
+          src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
+          src/tests/seo/resourcesR4SubjectHubs.spec.js
+          src/tests/seo/resourcesR3Navigation.spec.js
+          src/tests/seo/resourcesR2LearningHub.spec.js
+          src/tests/seo/resourcesR0SafetyBaseline.spec.js
+
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Build and prerender public site
+        run: npm run build
+
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+
+      - name: Run SEO smoke test
+        run: npm run seo:smoke
