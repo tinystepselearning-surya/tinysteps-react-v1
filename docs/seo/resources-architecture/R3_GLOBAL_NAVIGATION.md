@@ -13,7 +13,7 @@ The main Tiny Steps navigation should now lead users into `/resources`, the educ
 ## What Brick 3 changes
 
 - The primary header item `Blog` (`/blog`) becomes `Resources` (`/resources`).
-- The same `NavBar` implementation serves responsive navigation, so there is no separate desktop/mobile destination to keep in sync.
+- The active public header (`src/components/common/Header.tsx`) and the legacy `NavBar` implementation must both route `Resources` to `/resources`; desktop and mobile links in the public header share the same `PRIMARY_LINKS` source.
 - Navigation matching recognizes nested `/resources/...` paths so future subject hubs keep the Resources item active.
 - The footer adds `Resources` and preserves direct access to `/blog` under the clearer label `All Guides`.
 
@@ -60,8 +60,8 @@ Changing the navigation destination must not imply canonical consolidation, redi
 
 Brick 3 is accepted only when:
 
-- the header contains `Resources → /resources`;
-- the header no longer contains `Blog → /blog`;
+- every active header implementation contains `Resources → /resources`;
+- every active header implementation removes `Blog → /blog` from primary navigation;
 - nested `/resources/...` paths resolve to the Resources active navigation item;
 - the footer contains `Resources → /resources`;
 - the footer contains `All Guides → /blog`;
