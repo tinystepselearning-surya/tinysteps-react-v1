@@ -31,6 +31,7 @@ import {
   getResourceMeasurementContext,
   isPhonicsResourcePath,
   trackResourceAssistClick,
+  trackResourceExternalAssist,
   trackResourceNavigationClick,
   trackResourcePageView,
 } from '../../lib/resourceMeasurement';
@@ -108,15 +109,28 @@ export default function ConversionTracker() {
       const href =
         node instanceof HTMLAnchorElement ? node.getAttribute('href') || undefined : undefined;
       const destinationPath = extractDestinationPathFromHref(href || '');
+      const isWhatsApp =
+        isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp');
+      const isPhone = Boolean(href?.startsWith('tel:'));
+      const isEmail = Boolean(href?.startsWith('mailto:'));
 
       // R11 measures resource discovery separately from downstream assists. A
       // phonics-resource-to-phonics-resource click is navigation only; it is not
-      // double-counted as supporting-content assistance.
-      if (resourceContext && destinationPath) {
-        if (isPhonicsResourcePath(destinationPath)) {
-          trackResourceNavigationClick(resourceContext.pagePath, destinationPath, label);
-        } else {
-          trackResourceAssistClick(resourceContext.pagePath, destinationPath, label);
+      // double-counted as supporting-content assistance. External channels are
+      // captured explicitly because they do not always have an internal path.
+      if (resourceContext) {
+        if (destinationPath) {
+          if (isPhonicsResourcePath(destinationPath)) {
+            trackResourceNavigationClick(resourceContext.pagePath, destinationPath, label);
+          } else {
+            trackResourceAssistClick(resourceContext.pagePath, destinationPath, label);
+          }
+        } else if (isWhatsApp) {
+          trackResourceExternalAssist(resourceContext.pagePath, 'whatsapp', label);
+        } else if (isPhone) {
+          trackResourceExternalAssist(resourceContext.pagePath, 'phone', label);
+        } else if (isEmail) {
+          trackResourceExternalAssist(resourceContext.pagePath, 'email', label);
         }
       }
 
@@ -124,11 +138,7 @@ export default function ConversionTracker() {
 
       const baseParams = buildBaseConversionParams(pagePath);
       const ctaLocation = inferCtaLocation(node);
-      const isWhatsApp =
-        isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp');
       const isBookDemo = isBookDemoDestination(destinationPath) || isBookDemoLabel(label);
-      const isPhone = Boolean(href?.startsWith('tel:'));
-      const isEmail = Boolean(href?.startsWith('mailto:'));
       const isLeadIntentCta =
         isWhatsApp ||
         isBookDemo ||
