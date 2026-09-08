@@ -34,7 +34,7 @@ The 15 Wave 2 concepts are:
 
 `src/lib/phonicsPublicationRegistry.js` composes the frozen R9 seed with Wave 2. It rejects duplicate paths, slugs, concept IDs and topic IDs.
 
-The public route manifest, SEO registry compatibility seam, phonics discovery graph, hub grid and detail-page resolver consume the governed publication layer rather than enumerating new URLs manually.
+The public route manifest, SEO registry, phonics discovery graph, hub grid and detail-page resolver consume the governed publication layer rather than enumerating new URLs manually. The historical R9 SEO export remains scoped to the frozen pilot.
 
 ## Human review
 

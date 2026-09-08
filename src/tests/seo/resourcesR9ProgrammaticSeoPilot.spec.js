@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PHONICS_KNOWLEDGE_DATASET, getBrick9PilotCandidates, getPhonicsKnowledgeConcept } from '../../content/phonicsKnowledge/index.js';
-import { PHONICS_PROGRAMMATIC_PILOT_PAGES, PHONICS_PROGRAMMATIC_PILOT_PATHS, getPhonicsProgrammaticPilotPageByConceptId, getPhonicsProgrammaticPilotPageByPath, getPhonicsProgrammaticPilotPageBySlug } from '../../lib/phonicsProgrammaticPilot.js';
+import { PHONICS_PROGRAMMATIC_PILOT_PAGES, PHONICS_PROGRAMMATIC_PILOT_PATHS, PHONICS_PROGRAMMATIC_PILOT_SEO, getPhonicsProgrammaticPilotPageByConceptId, getPhonicsProgrammaticPilotPageByPath, getPhonicsProgrammaticPilotPageBySlug } from '../../lib/phonicsProgrammaticPilot.js';
 import { PHONICS_WAVE_2_PAGES } from '../../lib/phonicsWave2Publication.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
 import { PUBLIC_REDIRECT_MANIFEST, PUBLIC_ROUTE_MANIFEST } from '../../lib/publicRouteManifest.js';
@@ -20,6 +20,7 @@ describe('Resources architecture R9 frozen programmatic SEO pilot under R12', ()
     const candidates = getBrick9PilotCandidates();
     expect(candidates).toHaveLength(16);
     expect(PHONICS_PROGRAMMATIC_PILOT_PAGES).toHaveLength(16);
+    expect(Object.keys(PHONICS_PROGRAMMATIC_PILOT_SEO)).toHaveLength(16);
     expect(new Set(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => page.conceptId))).toEqual(new Set(candidates.map((concept) => concept.id)));
     expect(PHONICS_PROGRAMMATIC_PILOT_PAGES.every((page) => page.publicationState === 'approved-wave-1')).toBe(true);
   });

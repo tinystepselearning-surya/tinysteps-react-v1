@@ -6,6 +6,7 @@ import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from '../../lib/phonicsProgrammaticP
 import {
   PHONICS_PUBLISHED_RESOURCE_PAGES,
   PHONICS_PUBLISHED_RESOURCE_PATHS,
+  PHONICS_PUBLISHED_RESOURCE_SEO,
   PHONICS_WAVE_2_PAGE_COUNT,
   PHONICS_WAVE_2_PAGES,
   getPublishedPhonicsResourcePageBySlug,
@@ -33,6 +34,7 @@ describe('Resources architecture R12 controlled programmatic expansion', () => {
     expect(PHONICS_WAVE_2_PAGES).toHaveLength(15);
     expect(PHONICS_PUBLISHED_RESOURCE_PAGES).toHaveLength(31);
     expect(new Set(PHONICS_PUBLISHED_RESOURCE_PATHS).size).toBe(31);
+    expect(Object.keys(PHONICS_PUBLISHED_RESOURCE_SEO)).toHaveLength(31);
   });
 
   it('publishes exactly the Brick 8 future-wave-2 set and nothing supporting-only', () => {

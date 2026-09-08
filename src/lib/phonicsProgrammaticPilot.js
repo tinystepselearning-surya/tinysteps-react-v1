@@ -2,7 +2,6 @@ import {
   getBrick9PilotCandidates,
   getPhonicsKnowledgeConcept,
 } from '../content/phonicsKnowledge/index.js';
-import { PHONICS_WAVE_2_SEO } from './phonicsWave2Publication.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -43,9 +42,7 @@ export const PHONICS_PROGRAMMATIC_PILOT_PAGES = freezeList(Object.entries(APPROV
 export const PHONICS_PROGRAMMATIC_PILOT_PATHS = freezeList(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => page.path));
 export const PHONICS_PROGRAMMATIC_PILOT_TOPIC_IDS = freezeList(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => page.topicId));
 
-const PILOT_SEO = Object.fromEntries(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => [page.path, freeze({ title: page.seoTitle, description: page.seoDescription, canonicalPath: page.path, robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1', ogType: 'website' })]));
-/** R12 compatibility: routeSeoRegistry historically consumes this export. The pilot arrays remain frozen at 16 while SEO now also exposes explicitly approved Wave 2 paths. */
-export const PHONICS_PROGRAMMATIC_PILOT_SEO = freeze({ ...PILOT_SEO, ...PHONICS_WAVE_2_SEO });
+export const PHONICS_PROGRAMMATIC_PILOT_SEO = freeze(Object.fromEntries(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => [page.path, freeze({ title: page.seoTitle, description: page.seoDescription, canonicalPath: page.path, robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1', ogType: 'website' })])));
 
 const bySlug = new Map(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => [page.slug, page]));
 const byPath = new Map(PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => [page.path, page]));

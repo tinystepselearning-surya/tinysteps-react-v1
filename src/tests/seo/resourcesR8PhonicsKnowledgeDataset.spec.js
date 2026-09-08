@@ -13,12 +13,13 @@ import { definePhonicsKnowledge } from '../../content/phonicsKnowledge/schema.js
 import { PHONICS_KNOWLEDGE_CURRICULUM as curriculum } from '../../content/phonicsKnowledge/curriculum.js';
 import { CANONICAL_TOPIC_OWNERSHIP as owners } from '../../lib/canonicalTopicOwnershipRegistry.js';
 import { PHONICS_PROGRAMMATIC_PILOT_PAGES, PHONICS_PROGRAMMATIC_PILOT_PATHS } from '../../lib/phonicsProgrammaticPilot.js';
+import { PHONICS_PUBLISHED_RESOURCE_PAGES } from '../../lib/phonicsPublicationRegistry.js';
 import { extractBlogEntriesFromPostFiles } from '../../../scripts/blog-route-utils.mjs';
 import { validatePhonicsKnowledge } from '../../../scripts/phonics-knowledge-validation.mjs';
 import { auditKnowledgePublicSurfaces, validateR8ChangedPaths } from '../../../scripts/phonics-knowledge-route-safety.mjs';
 
 const blogPaths = extractBlogEntriesFromPostFiles(path.resolve('src/content/blog/posts')).flatMap((p) => [`/blog/${p.slug}`, `/blog/${p.sourceSlug}`]);
-const validate = (overrides = {}) => validatePhonicsKnowledge({ blogPaths, approvedPilotPages: PHONICS_PROGRAMMATIC_PILOT_PAGES, ...overrides });
+const validate = (overrides = {}) => validatePhonicsKnowledge({ blogPaths, approvedPublicationPages: PHONICS_PUBLISHED_RESOURCE_PAGES, ...overrides });
 const mutate = (id, change) => dataset.map((c) => c.id === id ? { ...c, ...change } : c);
 const fails = (code, overrides) => assert.ok(validate(overrides).errors.some((e) => e.code === code), `Expected ${code}`);
 
