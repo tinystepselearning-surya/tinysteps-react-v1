@@ -14,7 +14,7 @@ describe('Resources architecture R4 subject hubs', () => {
     for (const pathName of SUBJECT_PATHS) {
       expect(PUBLIC_ROUTE_MANIFEST.find((item) => item.path === pathName)).toMatchObject({
         path: pathName,
-        group: 'resources',
+        group: 'static',
         intent: 'index',
         indexable: true,
         prerender: true,
