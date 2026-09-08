@@ -6,10 +6,9 @@ const R8_CHANGE_PATH = /^(?:src\/content\/phonicsKnowledge\/[^/]+\.(?:js|d\.ts)|
 const R9_CHANGE_PATH = /^(?:src\/lib\/(?:phonicsProgrammaticPilot\.(?:js|d\.ts)|phonicsEditorialReviewRegistry\.(?:js|d\.ts)|editorialReviewerRegistry\.ts|canonicalTopicOwnershipRegistry\.(?:js|d\.ts)|breadcrumbAeoGeoRegistry\.js|publicRouteManifest\.js|routeSeoRegistry\.js)|src\/app\/routes\.tsx|src\/pages\/(?:PhonicsKnowledgePage|SubjectResourcesPage)\.tsx|src\/components\/resources\/PhonicsPilotGuideGrid\.tsx|src\/tests\/seo\/resourcesR9[^/]+\.(?:js|ts)|scripts\/(?:audit-resources-r9-programmatic-pilot|audit-resources-r9-1-human-editorial-review|audit-canonical-topic-ownership)\.mjs|docs\/seo\/resources-architecture\/(?:R9_PROGRAMMATIC_SEO_PILOT|R9_1_HUMAN_EDITORIAL_REVIEW)\.md|\.github\/workflows\/(?:resources-r9-programmatic-seo|resources-r9-1-human-editorial-review)\.yml)$/;
 const R10_CHANGE_PATH = /^(?:src\/lib\/phonicsResourceDiscoveryGraph\.(?:js|d\.ts)|src\/components\/resources\/PhonicsPilotGuideGrid\.tsx|src\/tests\/seo\/resourcesR10[^/]+\.(?:js|ts)|scripts\/audit-resources-r10-discovery-infrastructure\.mjs|docs\/seo\/resources-architecture\/R10_DISCOVERY_INFRASTRUCTURE\.md|\.github\/workflows\/resources-r10-discovery-infrastructure\.yml)$/;
 export function validateR8ChangedPaths(paths, { allowApprovedR9 = false } = {}) {
-  return paths.filter((p) => !R8_CHANGE_PATH.test(p) && !(allowApprovedR9 && (R9_CHANGE_PATH.test(p) || R10_CHANGE_PATH.test(p)))).map((p) => ({ code: 'public-surface-delta', id: p, detail: 'Brick 8 may change only its own contract unless the path is part of the explicit approved Brick 9/R9.1 publication surface or Brick 10 discovery infrastructure.' }));
+  return paths.filter((p) => !R8_CHANGE_PATH.test(p) && !(allowApprovedR9 && (R9_CHANGE_PATH.test(p) || R10_CHANGE_PATH.test(p)))).map((p) => ({ code: 'public-surface-delta', id: p, detail: 'Brick 8 may change only its own contract unless the path is part of an explicitly governed downstream publication/discovery surface.' }));
 }
 export function getR8ChangedPaths(root, base) {
-  // Include working-tree changes and untracked files for local checks; CI has a clean checkout.
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
   return [...new Set([...git('diff', '--name-only', base), ...git('ls-files', '--others', '--exclude-standard')])];
 }
@@ -27,12 +26,17 @@ export function auditKnowledgePublicSurfaces(root, concepts, { dist = false, app
     const text = fs.readFileSync(path.join(root, p), 'utf8');
     for (const slug of slugs) if (!approvedSlugs.has(slug) && text.includes(slug)) errors.push({ code: 'candidate-publication', id: p, detail: slug });
   }
-  // An indirect import could create dynamic routes without writing literal candidate slugs.
+  const governedRuntimeFiles = new Set([
+    'src/lib/phonicsProgrammaticPilot.js',
+    'src/lib/phonicsWave2Publication.js',
+    'src/lib/phonicsPublicationRegistry.js',
+    'src/pages/PhonicsKnowledgePage.tsx',
+  ]);
   for (const file of walk(path.join(root, 'src'))) {
     const relative = path.relative(root, file).replaceAll('\\', '/');
     if (relative.startsWith('src/content/phonicsKnowledge/') || relative.startsWith('src/tests/') || relative.endsWith('.d.ts') || /\.(spec|test)\./.test(relative) || !/\.[cm]?[jt]sx?$/.test(file)) continue;
     const source = fs.readFileSync(file, 'utf8');
-    const approvedRuntimeFile = approvedPaths.length > 0 && ['src/lib/phonicsProgrammaticPilot.js', 'src/pages/PhonicsKnowledgePage.tsx'].includes(relative);
+    const approvedRuntimeFile = approvedPaths.length > 0 && governedRuntimeFiles.has(relative);
     if (!approvedRuntimeFile && (/\b(?:from\s*|import\s*\(?|require\s*\()\s*['"][^'"]*phonicsKnowledge/.test(source) || /import\.meta\.glob\([^)]*phonicsKnowledge/.test(source))) errors.push({ code: 'runtime-publication-import', id: relative });
   }
   const outputRoots = [path.join(root, 'public')];
