@@ -8,6 +8,7 @@ on:
       - 'src/lib/canonicalTopicOwnershipRegistry.js'
       - 'src/components/blog/BlogSemanticPathway.tsx'
       - 'src/components/blog/BlogConversionCard.tsx'
+      - 'src/pages/BlogPostPage.tsx'
       - 'src/tests/seo/resourcesR6SemanticInternalLinks.spec.js'
       - 'src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js'
       - 'src/tests/seo/resourcesR4SubjectHubs.spec.js'
