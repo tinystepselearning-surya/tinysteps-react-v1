@@ -1,3 +1,5 @@
+import { SEMANTIC_FACTS } from '../config/semanticFacts';
+
 export type FounderPublicProfile = {
   platform: 'LinkedIn';
   url: string;
@@ -5,15 +7,12 @@ export type FounderPublicProfile = {
 };
 
 /**
- * Verified public founder identity links.
- * Keep these person-level profiles separate from EducationalOrganization.sameAs.
+ * Verified founder identity links from the Brick 1 semantic registry.
+ * Person-level profiles remain separate from EducationalOrganization.sameAs.
  */
-export const FOUNDER_PUBLIC_PROFILES: readonly FounderPublicProfile[] = [
-  {
-    platform: 'LinkedIn',
-    url: 'https://www.linkedin.com/in/ravali-priya-vannala/',
-    purpose: 'Vannala Ravali Priya — Founder of Tiny Steps Learning',
-  },
-] as const;
+export const FOUNDER_PUBLIC_PROFILES: readonly FounderPublicProfile[] =
+  SEMANTIC_FACTS.founder.publicProfiles.map((profile) => ({ ...profile }));
 
-export const FOUNDER_PUBLIC_PROFILE_URLS = FOUNDER_PUBLIC_PROFILES.map((profile) => profile.url);
+export const FOUNDER_PUBLIC_PROFILE_URLS = FOUNDER_PUBLIC_PROFILES.map(
+  (profile) => profile.url,
+);
