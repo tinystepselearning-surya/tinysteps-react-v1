@@ -95,19 +95,19 @@ for (const token of ['getRelatedPhonicsResourcePages', 'getPhonicsResourceDiscov
 }
 if (!errors.some((error) => error.id === 'detail-source')) pass('detail-source', 'Reusable detail page renders the related-guide graph for users and crawlers.');
 
-const sitemapPath = path.join(root, 'public', 'sitemap-static.xml');
-if (fs.existsSync(sitemapPath)) {
-  const sitemap = fs.readFileSync(sitemapPath, 'utf8');
-  for (const routePath of expectedPaths) {
-    const url = `https://tinystepslearning.com${routePath}`;
-    if (count(sitemap, `<loc>${url}</loc>`) !== 1) fail('sitemap-coverage', `${url} must appear exactly once in sitemap-static.xml.`);
-  }
-  if (!errors.some((error) => error.id === 'sitemap-coverage')) pass('sitemap-coverage', `Sitemap contains the hub and all ${PHONICS_PROGRAMMATIC_PILOT_PATHS.length} published detail pages exactly once.`);
-} else {
-  fail('sitemap-missing', 'public/sitemap-static.xml is missing; run sitemap generation/build first.');
-}
-
 if (distMode) {
+  const sitemapPath = path.join(root, 'public', 'sitemap-static.xml');
+  if (fs.existsSync(sitemapPath)) {
+    const sitemap = fs.readFileSync(sitemapPath, 'utf8');
+    for (const routePath of expectedPaths) {
+      const url = `https://tinystepslearning.com${routePath}`;
+      if (count(sitemap, `<loc>${url}</loc>`) !== 1) fail('sitemap-coverage', `${url} must appear exactly once in generated sitemap-static.xml.`);
+    }
+    if (!errors.some((error) => error.id === 'sitemap-coverage')) pass('sitemap-coverage', `Generated sitemap contains the hub and all ${PHONICS_PROGRAMMATIC_PILOT_PATHS.length} published detail pages exactly once.`);
+  } else {
+    fail('sitemap-missing', 'Generated public/sitemap-static.xml is missing after build.');
+  }
+
   const hubFile = renderedHtmlPath(PHONICS_RESOURCE_HUB_PATH);
   if (!fs.existsSync(hubFile)) {
     fail('rendered-hub', `${hubFile} is missing.`);
