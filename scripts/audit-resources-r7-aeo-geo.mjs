@@ -37,7 +37,7 @@ for (const [pathname, title, category, expectedPaths] of examples) {
 
 for (const entry of CANONICAL_TOPIC_OWNERSHIP.filter((item) => item.ownerPath.startsWith('/blog/') && RESOURCE_SUBJECT_PRESENTATION[item.subject])) {
   const trail = getBreadcrumbTrail({ pathname: entry.ownerPath, title: entry.queryIntent });
-  const subject = RESOURCE_SUBJECT_PRESENTATION[item.subject];
+  const subject = RESOURCE_SUBJECT_PRESENTATION[entry.subject];
   check(trail.some((item) => item.path === subject.path), `${entry.id} does not route breadcrumb hierarchy through ${subject.path}`);
 }
 
