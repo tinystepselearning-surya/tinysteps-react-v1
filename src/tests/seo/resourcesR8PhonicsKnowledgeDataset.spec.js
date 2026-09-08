@@ -12,12 +12,13 @@ import {
 import { definePhonicsKnowledge } from '../../content/phonicsKnowledge/schema.js';
 import { PHONICS_KNOWLEDGE_CURRICULUM as curriculum } from '../../content/phonicsKnowledge/curriculum.js';
 import { CANONICAL_TOPIC_OWNERSHIP as owners } from '../../lib/canonicalTopicOwnershipRegistry.js';
+import { PHONICS_PROGRAMMATIC_PILOT_PAGES, PHONICS_PROGRAMMATIC_PILOT_PATHS } from '../../lib/phonicsProgrammaticPilot.js';
 import { extractBlogEntriesFromPostFiles } from '../../../scripts/blog-route-utils.mjs';
 import { validatePhonicsKnowledge } from '../../../scripts/phonics-knowledge-validation.mjs';
 import { auditKnowledgePublicSurfaces, validateR8ChangedPaths } from '../../../scripts/phonics-knowledge-route-safety.mjs';
 
 const blogPaths = extractBlogEntriesFromPostFiles(path.resolve('src/content/blog/posts')).flatMap((p) => [`/blog/${p.slug}`, `/blog/${p.sourceSlug}`]);
-const validate = (overrides = {}) => validatePhonicsKnowledge({ blogPaths, ...overrides });
+const validate = (overrides = {}) => validatePhonicsKnowledge({ blogPaths, approvedPilotPages: PHONICS_PROGRAMMATIC_PILOT_PAGES, ...overrides });
 const mutate = (id, change) => dataset.map((c) => c.id === id ? { ...c, ...change } : c);
 const fails = (code, overrides) => assert.ok(validate(overrides).errors.some((e) => e.code === code), `Expected ${code}`);
 
@@ -104,8 +105,8 @@ describe('Resources R8 phonics knowledge dataset', () => {
     assert.ok(get('shun-family').contrastWords.includes('vision'));
     assert.equal(get('missing-sleepy-sounds').curriculumAlignment, 'lesson-theme');
   });
-  it('keeps the actual publishing surfaces free of candidates and runtime imports', () => {
-    assert.deepEqual(auditKnowledgePublicSurfaces(process.cwd(), dataset), []);
+  it('allows only the explicit R9 approval set on publishing surfaces', () => {
+    assert.deepEqual(auditKnowledgePublicSurfaces(process.cwd(), dataset, { approvedPaths: PHONICS_PROGRAMMATIC_PILOT_PATHS }), []);
   });
   it('rejects all out-of-scope publishing changes even without a literal candidate slug', () => {
     for (const p of ['src/app/routes.tsx', 'src/pages/GeneratedPhonics.tsx', 'src/lib/publicRouteManifest.js', 'scripts/prerender.mjs', 'scripts/generate-sitemaps.js', 'public/sitemap.xml', 'public/llms.txt', 'firebase.json', 'src/lib/canonicalTopicOwnershipRegistry.js']) assert.equal(validateR8ChangedPaths([p]).length, 1, p);
