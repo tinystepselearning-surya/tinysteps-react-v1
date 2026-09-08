@@ -63,7 +63,7 @@ describe('Resources architecture R2 learning gateway', () => {
     expect(routes).not.toContain("{ path: 'resources', element: <Navigate to=\"/blog\" replace /> },");
   });
 
-  it('keeps the gateway focused on six existing ecosystem destinations until subject hubs are built', () => {
+  it('keeps the gateway focused on six ecosystem destinations and routes the three learning subjects into dedicated hubs', () => {
     const page = read('src/pages/ResourcesPage.tsx');
 
     for (const title of [
@@ -78,9 +78,9 @@ describe('Resources architecture R2 learning gateway', () => {
     }
 
     for (const destination of [
-      '/blog?topic=Phonics',
-      '/blog?topic=Grammar',
-      '/blog?topic=Speaking%20%26%20Communication',
+      '/resources/phonics',
+      '/resources/grammar',
+      '/resources/speaking',
       '/parents',
       '/free-english-games-for-kids',
       '/for-schools',
@@ -89,18 +89,16 @@ describe('Resources architecture R2 learning gateway', () => {
     }
 
     expect(page).toContain('Browse all guides');
-    expect(page).not.toContain("to: '/resources/phonics'");
-    expect(page).not.toContain("to: '/resources/grammar'");
-    expect(page).not.toContain("to: '/resources/speaking'");
   });
 
-  it('does not prematurely publish the planned subject hubs or duplicate protected ecosystem hubs', () => {
+  it('publishes only the three approved subject hubs without duplicating parent, games, school, or blog hubs', () => {
     const manifestPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((item) => item.path));
     for (const pathName of ['/resources/phonics', '/resources/grammar', '/resources/speaking']) {
-      expect(manifestPaths.has(pathName)).toBe(false);
+      expect(manifestPaths.has(pathName)).toBe(true);
       expect(RESOURCE_ECOSYSTEM_REGISTRY.find((item) => item.path === pathName)).toMatchObject({
-        currentState: 'planned',
-        protection: 'planned',
+        currentState: 'route',
+        pageFamily: 'subject-resource-hub',
+        protection: 'protected',
       });
     }
 

@@ -20,7 +20,7 @@ describe('Resources architecture R0 safety baseline', () => {
     }
   });
 
-  it('protects the Brick 2 /resources gateway while subject hubs remain planned', () => {
+  it('protects the Resources gateway and the Brick 4 subject hubs', () => {
     const byPath = new Map(RESOURCE_ECOSYSTEM_REGISTRY.map((item) => [item.path, item]));
 
     expect(byPath.get('/resources')).toMatchObject({
@@ -30,7 +30,7 @@ describe('Resources architecture R0 safety baseline', () => {
     });
 
     for (const path of ['/resources/phonics', '/resources/grammar', '/resources/speaking']) {
-      expect(byPath.get(path)).toMatchObject({ currentState: 'planned', protection: 'planned' });
+      expect(byPath.get(path)).toMatchObject({ currentState: 'route', pageFamily: 'subject-resource-hub', protection: 'protected' });
     }
   });
 
