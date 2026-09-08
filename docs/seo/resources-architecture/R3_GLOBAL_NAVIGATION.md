@@ -1,6 +1,6 @@
 # Resources Architecture — R3 Global Navigation Migration
 
-**Status:** implementation branch  
+**Status:** implemented and regression-protected  
 **Primary navigation change:** `Blog` → `Resources`  
 **Editorial archive:** `/blog` remains indexable and directly accessible as `All Guides` in the footer.
 
@@ -8,20 +8,20 @@
 
 Brick 3 changes discovery, not ownership.
 
-The main Tiny Steps navigation should now lead users into `/resources`, the educational-discovery gateway created in Brick 2. The existing `/blog` page and every `/blog/*` article remain untouched as the editorial library underneath that gateway.
+The main Tiny Steps navigation should lead users into `/resources`, the educational-discovery gateway created in Brick 2. The existing `/blog` page and every `/blog/*` article remain untouched as the editorial library underneath that gateway.
 
 ## What Brick 3 changes
 
 - The primary header item `Blog` (`/blog`) becomes `Resources` (`/resources`).
-- The active public header (`src/components/common/Header.tsx`) and the legacy `NavBar` implementation must both route `Resources` to `/resources`; desktop and mobile links in the public header share the same `PRIMARY_LINKS` source.
-- Navigation matching recognizes nested `/resources/...` paths so future subject hubs keep the Resources item active.
+- The active public-site header is `src/components/common/Header.tsx`; its desktop and mobile menus share the same `PRIMARY_LINKS` source.
+- The legacy `src/components/NavBar/NavBar.tsx` also preserves `Resources → /resources` for routes that still render that component.
+- Both navigation implementations recognize nested `/resources/...` paths so subject hubs keep the Resources item active.
 - The footer adds `Resources` and preserves direct access to `/blog` under the clearer label `All Guides`.
 
 ## What Brick 3 does not change
 
 - No `/blog` or `/blog/*` route moves, redirects, canonical changes, title changes, or body changes.
 - No changes to `/phonics`, `/grammar`, `/speaking`, `/parents`, `/for-schools`, games, pricing, comparison pages, or assessment routes.
-- No `/resources/phonics`, `/resources/grammar`, or `/resources/speaking` publication yet.
 - No programmatic SEO pages.
 - No change to sitemap ownership or indexation policy beyond relying on the Brick 2 `/resources` route.
 
@@ -29,14 +29,18 @@ The main Tiny Steps navigation should now lead users into `/resources`, the educ
 
 ### Header
 
-- Home → `/`
+The active public header must expose:
+
 - Courses → `/courses`
 - Curriculum → `/curriculum`
 - Resources → `/resources`
-- Pricing → `/pricing`
-- Parent Login → `/parent/login`
+- Pricing → `/pricing` where responsive rules allow it
+- For Schools → `/for-schools`
+- Class Samples → `/class-samples`
+- Contact → `/contact`
+- Login → `/login`
 
-`Blog` is intentionally removed from the primary header so Resources becomes the main educational-discovery entry point.
+`Blog` is intentionally removed from primary navigation so Resources becomes the main educational-discovery entry point.
 
 ### Footer
 
@@ -62,14 +66,14 @@ Brick 3 is accepted only when:
 
 - every active header implementation contains `Resources → /resources`;
 - every active header implementation removes `Blog → /blog` from primary navigation;
+- desktop and mobile public navigation derive from the same corrected `PRIMARY_LINKS` source;
 - nested `/resources/...` paths resolve to the Resources active navigation item;
 - the footer contains `Resources → /resources`;
 - the footer contains `All Guides → /blog`;
 - `/resources` and `/blog` remain separate protected, indexable, prerendered, self-canonical routes;
-- the three planned subject hubs remain unpublished;
-- Brick 2 and R0/R1 regression tests still pass;
-- TypeScript, production build/prerender, rendered Resources audit, and SEO smoke pass.
+- approved subject hubs remain `/resources/phonics`, `/resources/grammar`, and `/resources/speaking`;
+- R0–R7 regression tests, TypeScript, production build/prerender, rendered Resources audit, and SEO smoke continue to pass.
 
-## Roll-forward rule
+## Regression lesson
 
-The next subject-hub brick may publish `/resources/phonics`, `/resources/grammar`, and `/resources/speaking` only after canonical topic ownership is reconciled against existing articles and commercial programme pages.
+The original R3 test inspected only `src/components/NavBar/NavBar.tsx`. Production uses `src/components/common/Header.tsx` for the public site, so that test could pass while the live header still showed Blog. R3 now explicitly watches and tests the active public header as well as the legacy NavBar.
