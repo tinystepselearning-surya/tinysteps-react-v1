@@ -75,6 +75,10 @@ export default function ConversionTracker() {
     if (resourceContext && lastTrackedResourcePathRef.current !== resourceContext.pagePath) {
       trackResourcePageView(resourceContext.pagePath);
       lastTrackedResourcePathRef.current = resourceContext.pagePath;
+    } else if (!resourceContext) {
+      // Leaving the Resources surface ends this route-view dedupe window. If a
+      // visitor later returns to the same resource, that is a new measured view.
+      lastTrackedResourcePathRef.current = '';
     }
 
     // Keep all pre-R11 funnel behavior scoped exactly as before. Resource
