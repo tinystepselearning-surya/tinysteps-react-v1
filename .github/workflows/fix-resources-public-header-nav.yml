@@ -1,0 +1,101 @@
+name: Fix Resources Public Header Navigation
+
+on:
+  push:
+    branches:
+      - fix/resources-public-header-nav
+
+permissions:
+  contents: write
+
+jobs:
+  patch-public-header:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/resources-public-header-nav
+          fetch-depth: 0
+
+      - name: Correct active public navigation and R3 coverage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          header_path = Path('src/components/common/Header.tsx')
+          header = header_path.read_text()
+          old_link = "  { label: 'Blog', href: '/blog' },"
+          new_link = "  { label: 'Resources', href: '/resources' },"
+          if old_link not in header and new_link not in header:
+              raise SystemExit('Expected public header Blog/Resources link was not found')
+          header = header.replace(old_link, new_link)
+
+          helper_anchor = "const LOGIN_LINK: LinkItem = { label: 'Login', href: '/login' };\n"
+          helper = "\nconst matchesPrimaryLink = (pathname: string, href: string) =>\n  pathname === href || pathname.startsWith(`${href}/`);\n"
+          if 'const matchesPrimaryLink =' not in header:
+              if helper_anchor not in header:
+                  raise SystemExit('LOGIN_LINK anchor not found in public header')
+              header = header.replace(helper_anchor, helper_anchor + helper)
+
+          header = header.replace(
+              'location.pathname === link.href',
+              'matchesPrimaryLink(location.pathname, link.href)',
+          )
+          header_path.write_text(header)
+
+          test_path = Path('src/tests/seo/resourcesR3Navigation.spec.js')
+          test = test_path.read_text()
+          old_test = """  it('promotes Resources into the primary header instead of Blog', () => {\n    const nav = read('src/components/NavBar/NavBar.tsx');\n\n    expect(nav).toContain('{ label: \\\"Resources\\\", to: \\\"/resources\\\" }');\n    expect(nav).not.toContain('{ label: \\\"Blog\\\", to: \\\"/blog\\\" }');\n  });"""
+          # Use direct source spelling if escaped template above does not match.
+          old_test_direct = """  it('promotes Resources into the primary header instead of Blog', () => {\n    const nav = read('src/components/NavBar/NavBar.tsx');\n\n    expect(nav).toContain('{ label: \"Resources\", to: \"/resources\" }');\n    expect(nav).not.toContain('{ label: \"Blog\", to: \"/blog\" }');\n  });"""
+          new_test = """  it('promotes Resources into every active public header instead of Blog', () => {\n    const nav = read('src/components/NavBar/NavBar.tsx');\n    const publicHeader = read('src/components/common/Header.tsx');\n\n    expect(nav).toContain('{ label: \"Resources\", to: \"/resources\" }');\n    expect(nav).not.toContain('{ label: \"Blog\", to: \"/blog\" }');\n    expect(publicHeader).toContain(\"{ label: 'Resources', href: '/resources' }\");\n    expect(publicHeader).not.toContain(\"{ label: 'Blog', href: '/blog' }\");\n  });"""
+          if old_test_direct in test:
+              test = test.replace(old_test_direct, new_test)
+          elif old_test in test:
+              test = test.replace(old_test, new_test)
+          elif "promotes Resources into every active public header" not in test:
+              raise SystemExit('R3 primary navigation test block not found')
+
+          old_nested = """  it('keeps Resources active for nested resource hubs', () => {\n    const nav = read('src/components/NavBar/NavBar.tsx');\n\n    expect(nav).toContain('pathname === item.to || pathname.startsWith(`${item.to}/`)');\n    expect(nav).toContain('matchesNavItem(location.pathname, item)');\n  });"""
+          new_nested = """  it('keeps Resources active for nested resource hubs in both navigation implementations', () => {\n    const nav = read('src/components/NavBar/NavBar.tsx');\n    const publicHeader = read('src/components/common/Header.tsx');\n\n    expect(nav).toContain('pathname === item.to || pathname.startsWith(`${item.to}/`)');\n    expect(nav).toContain('matchesNavItem(location.pathname, item)');\n    expect(publicHeader).toContain('pathname === href || pathname.startsWith(`${href}/`)');\n    expect(publicHeader).toContain('matchesPrimaryLink(location.pathname, link.href)');\n  });"""
+          if old_nested in test:
+              test = test.replace(old_nested, new_nested)
+          elif "both navigation implementations" not in test:
+              raise SystemExit('R3 nested navigation test block not found')
+          test_path.write_text(test)
+
+          workflow_path = Path('.github/workflows/resources-r3-navigation.yml')
+          workflow = workflow_path.read_text()
+          header_watch = "      - 'src/components/common/Header.tsx'\n"
+          if header_watch not in workflow:
+              anchor = "      - 'src/components/NavBar/NavBar.tsx'\n"
+              if anchor not in workflow:
+                  raise SystemExit('R3 workflow NavBar path anchor not found')
+              workflow = workflow.replace(anchor, anchor + header_watch)
+          workflow_path.write_text(workflow)
+
+          doc_path = Path('docs/seo/resources-architecture/R3_GLOBAL_NAVIGATION.md')
+          doc = doc_path.read_text()
+          doc = doc.replace(
+              '- The same `NavBar` implementation serves responsive navigation, so there is no separate desktop/mobile destination to keep in sync.',
+              '- The active public header (`src/components/common/Header.tsx`) and the legacy `NavBar` implementation must both route `Resources` to `/resources`; desktop and mobile links in the public header share the same `PRIMARY_LINKS` source.',
+          )
+          doc = doc.replace(
+              '- the header contains `Resources → /resources`;\n- the header no longer contains `Blog → /blog`;',
+              '- every active header implementation contains `Resources → /resources`;\n- every active header implementation removes `Blog → /blog` from primary navigation;',
+          )
+          doc_path.write_text(doc)
+          PY
+
+      - name: Commit correction
+        run: |
+          if git diff --quiet; then
+            echo 'No navigation correction required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/common/Header.tsx src/tests/seo/resourcesR3Navigation.spec.js .github/workflows/resources-r3-navigation.yml docs/seo/resources-architecture/R3_GLOBAL_NAVIGATION.md
+          git commit -m 'fix(resources): use Resources in active public navigation'
+          git push origin HEAD:fix/resources-public-header-nav
