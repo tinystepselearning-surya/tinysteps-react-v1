@@ -41,8 +41,8 @@ const evidence = (
   },
   search: {
     impressions: 180,
-    clicks: 4,
-    ctr: 4 / 180,
+    clicks: 3,
+    ctr: 3 / 180,
     averagePosition: 24,
     queryCount: 18,
   },
