@@ -251,26 +251,18 @@ const ResourcesPage: FC = () => {
       <section className="relative mx-auto flex w-full max-w-[1320px] flex-col px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
         <KnowledgeBreadcrumbs items={breadcrumbItems} className="mb-2.5 text-xs sm:mb-3" />
 
-        <header className="max-w-6xl">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 sm:text-[11px]">
-              Tiny Steps Resources
-            </p>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/75 px-2.5 py-1 text-[10px] font-bold text-slate-500 shadow-sm backdrop-blur">
-              <Sparkles aria-hidden="true" className="h-3 w-3 text-orange-500" />
-              6 guided pathways
-            </span>
-          </div>
+        <header className="w-full">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 sm:text-[11px]">
+                Tiny Steps Resources
+              </p>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/75 px-2.5 py-1 text-[10px] font-bold text-slate-500 shadow-sm backdrop-blur">
+                <Sparkles aria-hidden="true" className="h-3 w-3 text-orange-500" />
+                6 guided pathways
+              </span>
+            </div>
 
-          <h1 className="ts-answer-title mt-2 max-w-5xl text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-4xl lg:text-[2.7rem] lg:leading-[1.03]">
-            English Learning Resources for Kids, Parents & Educators
-          </h1>
-
-          <div className="mt-3 flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-            <p className="ts-answer-summary max-w-3xl text-sm leading-6 text-slate-600 sm:text-[15px] sm:leading-6">
-              Choose the pathway that matches what you need and go directly to the right Tiny Steps guide, activity,
-              parent support, or school resource.
-            </p>
             <Link
               to="/blog"
               className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/[0.85] px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 sm:text-[13px]"
@@ -279,9 +271,17 @@ const ResourcesPage: FC = () => {
               <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
+
+          <h1 className="ts-answer-title mt-2 max-w-none text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-4xl lg:text-[2.7rem] lg:leading-[1.03] xl:whitespace-nowrap">
+            English Learning Resources for Kids, Parents & Educators
+          </h1>
+
+          <p className="ts-answer-summary mt-2.5 max-w-none text-sm leading-6 text-slate-600 sm:text-[15px] sm:leading-6 xl:whitespace-nowrap">
+            Choose the pathway that matches what you need and go directly to the right Tiny Steps guide, activity, parent support, or school resource.
+          </p>
         </header>
 
-        <div id="resource-paths" className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+        <div id="resource-paths" className="mt-3.5 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
           {RESOURCE_PATHWAYS.map((pathway) => (
             <ResourcePathwayCard key={pathway.title} pathway={pathway} reduceMotion={reduceMotion} />
           ))}
