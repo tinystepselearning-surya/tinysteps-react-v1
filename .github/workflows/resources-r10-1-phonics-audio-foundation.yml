@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, seo/resources-r10-discovery-graph]
     paths:
-      - 'src/lib/phonicsSoundRegistry.ts'
+      - 'src/lib/phonicsAudioFoundation.ts'
       - 'src/content/phonicsWordSounds.ts'
       - 'src/components/resources/PhonicsSoundBoxes.tsx'
       - 'src/tests/seo/resourcesR10_1PhonicsAudioFoundation.spec.ts'
