@@ -40,8 +40,8 @@ jobs:
         run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
       - name: Audit R15 high-value reading content
         run: node scripts/audit-resources-r15-high-value-reading-content.mjs --report
-      - name: Audit R14 reading knowledge architecture
-        run: node scripts/audit-resources-r14-reading-knowledge-architecture.mjs --report
+      - name: Audit R14 reading knowledge architecture after R15 execution
+        run: node scripts/audit-resources-r14-reading-knowledge-architecture.mjs --r15-executed --report
       - name: Audit R13 sound and word utility engine
         run: node scripts/audit-resources-r13-word-sound-utility.mjs --report
       - name: Audit R12 controlled expansion
