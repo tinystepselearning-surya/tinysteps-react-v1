@@ -43,12 +43,16 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run R0-R8 Resources and canonical curriculum regression tests
         run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
-      - name: Audit knowledge, curriculum, ownership and zero public route delta
+      - name: Audit knowledge, curriculum and ownership
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_REF: ${{ github.head_ref }}
         shell: bash
         run: |
-          if [ -n "$PR_BASE_SHA" ]; then
+          # The zero-public-route-delta rule belongs to Brick 8/9 implementation PRs.
+          # Other main-targeted PRs still run the full R8 knowledge/public-surface audit,
+          # but should not fail merely because they legitimately change unrelated UI files.
+          if [ -n "$PR_BASE_SHA" ] && [[ "$PR_HEAD_REF" == seo/resources-r8* || "$PR_HEAD_REF" == seo/resources-r9* ]]; then
             node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --base "$PR_BASE_SHA" --report
           else
             node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
