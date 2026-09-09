@@ -262,7 +262,7 @@ const ResourcesPage: FC = () => {
           </p>
         </header>
 
-        <div id="resource-paths" className="mt-2.5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-3">
+        <div id="resource-paths" className="mx-auto mt-5 grid w-full max-w-[1240px] gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
           {RESOURCE_PATHWAYS.map((pathway) => (
             <ResourcePathwayCard key={pathway.title} pathway={pathway} reduceMotion={reduceMotion} />
           ))}
