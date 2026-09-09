@@ -19,6 +19,60 @@
     />
     <meta name="author" content="Tiny Steps Online School" />
     <script defer src="/seo-indexability-guard.js"></script>
+    <script>
+      (() => {
+        const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+        if (pathname !== '/careers') return;
+
+        const jobPosting = {
+          '@context': 'https://schema.org',
+          '@type': 'JobPosting',
+          '@id': 'https://tinystepslearning.com/careers#online-english-teacher',
+          identifier: {
+            '@type': 'PropertyValue',
+            name: 'Tiny Steps Learning',
+            value: 'TS-ONLINE-ENGLISH-TEACHER-2026',
+          },
+          title: 'Online English Teacher - Phonics, Grammar & Public Speaking',
+          description:
+            'Tiny Steps Learning is recruiting India-based remote Online English Teachers to teach children aged 3–12 in live 1:1 classes. Teachers may be assigned Phonics, Grammar, Public Speaking or Spoken English lessons using structured Tiny Steps curriculum and teaching materials. Responsibilities include conducting engaging live 1:1 English classes, using Tiny Steps lesson materials, maintaining clear pronunciation and age-appropriate communication, following classroom presentation standards, sharing lesson audio and digital materials correctly, recording concise class progress, and maintaining full attention throughout each 35-minute class. Requirements include strong spoken and written English, clear pronunciation, confident communication, relevant child-teaching experience, a laptop or desktop with camera and microphone, reliable broadband, a quiet teaching space, comfort with Microsoft Teams and screen sharing, consistent availability, punctuality, and willingness to follow Tiny Steps teaching and child-safety standards. Graduation is preferred and experience teaching English, phonics, grammar, communication or public speaking is an advantage. Applications are open to teachers based in India through 31 December 2026. Around 3–4 teaching hours per day is preferred. Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately and successful demo conversions may qualify for additional incentives.',
+          datePosted: '2026-08-20',
+          validThrough: '2026-12-31T23:59:59+05:30',
+          employmentType: 'PART_TIME',
+          directApply: true,
+          industry: 'Online Education',
+          hiringOrganization: {
+            '@type': 'Organization',
+            name: 'Tiny Steps Learning',
+            sameAs: 'https://tinystepslearning.com',
+            url: 'https://tinystepslearning.com',
+            logo: 'https://tinystepslearning.com/android-chrome-512x512.png',
+          },
+          jobLocationType: 'TELECOMMUTE',
+          applicantLocationRequirements: {
+            '@type': 'Country',
+            name: 'India',
+          },
+          responsibilities:
+            'Conduct engaging live 1:1 English classes for children aged 3–12. Teach assigned lessons in Phonics, Grammar, Public Speaking or Spoken English using Tiny Steps materials. Maintain clear pronunciation, age-appropriate language and a child-friendly teaching style. Follow Tiny Steps classroom presentation standards. Share screens correctly, including lesson audio when required. Record concise class progress and follow scheduling, attendance and quality processes consistently. Maintain full attention throughout every 35-minute class.',
+          qualifications:
+            'Strong spoken and written English with clear pronunciation and confident communication. Graduation is preferred; relevant structured teaching experience is valued. Experience teaching children, English, phonics, grammar, communication or public speaking is an advantage. A laptop or desktop with camera and microphone, reliable broadband and a quiet teaching space are required. Applicants should be comfortable using Microsoft Teams, screen sharing and digital lesson materials and should have consistent availability.',
+          skills:
+            'Online English teaching; phonics; grammar; spoken English; public speaking; child engagement; clear pronunciation; screen sharing; digital classroom delivery.',
+          workHours:
+            'Consistent availability is required. Around 3–4 teaching hours per day is preferred. Applicants should state their available teaching window in Indian Standard Time (IST).',
+          url: 'https://tinystepslearning.com/careers',
+        };
+
+        const schemaElement = document.createElement('script');
+        schemaElement.id = 'ts-jsonld';
+        schemaElement.type = 'application/ld+json';
+        schemaElement.setAttribute('data-ts-seo', '1');
+        schemaElement.dataset.path = '/careers';
+        schemaElement.textContent = JSON.stringify(jobPosting);
+        document.head.appendChild(schemaElement);
+      })();
+    </script>
     <link rel="canonical" href="https://tinystepslearning.com/" />
     <link
       rel="alternate"
