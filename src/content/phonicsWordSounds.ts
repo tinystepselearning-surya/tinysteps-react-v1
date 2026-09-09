@@ -1,4 +1,4 @@
-import type { PhonicsSoundId } from '../lib/phonicsSoundRegistry';
+import type { PhonicsSoundId } from '../lib/phonicsAudioFoundation';
 
 export type PhonicsWordSoundSegment = {
   /** Letters shown to the learner for this sound unit. */
