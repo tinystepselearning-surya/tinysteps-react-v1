@@ -1,4 +1,4 @@
-import type { PhonicsProgrammaticPilotGroup, PhonicsProgrammaticPilotPage } from './phonicsProgrammaticPilot.js';
+import type { PhonicsPublicationGroup, PhonicsPublishedResourcePage } from './phonicsPublicationRegistry.js';
 
 export type PhonicsResourceDiscoveryRelation =
   | 'hub-child'
@@ -11,9 +11,9 @@ export interface PhonicsResourceDiscoveryCluster {
   readonly anchorId: string;
   readonly label: string;
   readonly description: string;
-  readonly group: PhonicsProgrammaticPilotGroup;
+  readonly group: PhonicsPublicationGroup;
   readonly href: `/resources/phonics#${string}`;
-  readonly pages: readonly PhonicsProgrammaticPilotPage[];
+  readonly pages: readonly PhonicsPublishedResourcePage[];
 }
 
 export interface PhonicsResourceDiscoveryEdge {
@@ -29,6 +29,6 @@ export const PHONICS_RESOURCE_DISCOVERY_EDGES: readonly PhonicsResourceDiscovery
 
 export function getPhonicsResourceDiscoveryClusterById(id: string): PhonicsResourceDiscoveryCluster | null;
 export function getPhonicsResourceDiscoveryClusterForPath(path: string): PhonicsResourceDiscoveryCluster | null;
-export function getRelatedPhonicsResourcePages(path: string, limit?: number): readonly PhonicsProgrammaticPilotPage[];
+export function getRelatedPhonicsResourcePages(path: string, limit?: number): readonly PhonicsPublishedResourcePage[];
 export function getPhonicsResourceDiscoveryTargets(from: string): readonly string[];
 export function getPhonicsResourceReachablePaths(start?: string): readonly string[];

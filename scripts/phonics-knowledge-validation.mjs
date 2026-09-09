@@ -29,12 +29,13 @@ export function validatePhonicsKnowledge({
   blogPaths = [],
   ownershipScreen = PHONICS_PILOT_OWNERSHIP_SCREEN,
   approvedPilotPages = [],
+  approvedPublicationPages = approvedPilotPages,
 } = {}) {
   const errors = [], warnings = [];
   const fail = (code, id, detail) => errors.push({ code, id, detail });
   const ids = new Set(), slugs = new Set(), exampleLists = new Map();
   const lessons = new Map(curriculum.map((x) => [x.id, x]));
-  const approvedByConcept = new Map((approvedPilotPages || []).map((page) => [page.conceptId, page]));
+  const approvedByConcept = new Map((approvedPublicationPages || []).map((page) => [page.conceptId, page]));
   const ownerById = new Map(owners.map((x) => [x.id, x]));
   const routePaths = new Set(routes.flatMap((x) => [x.path, x.canonicalPath].filter(Boolean)));
   const redirectSources = new Set(redirects.map((x) => x.source));
@@ -99,16 +100,16 @@ export function validatePhonicsKnowledge({
       slugs.add(slug);
       const approved = approvedByConcept.get(c.id);
       const approvedPath = `/resources/phonics/${slug}`;
-      const isExactApprovedR9 = Boolean(approved && approved.path === approvedPath && approved.slug === slug && approved.conceptId === c.id);
+      const isExactApprovedPublication = Boolean(approved && approved.path === approvedPath && approved.slug === slug && approved.conceptId === c.id);
       const approvedRouteIsRedirect = redirectSources.has(approvedPath);
-      if (approvedRouteIsRedirect || ((occupiedSlugs.has(slug) || [...occupied].some((p) => p.endsWith(`/${slug}`))) && !isExactApprovedR9)) {
+      if (approvedRouteIsRedirect || ((occupiedSlugs.has(slug) || [...occupied].some((p) => p.endsWith(`/${slug}`))) && !isExactApprovedPublication)) {
         slugCollisions++; fail('slug-collision', c.id, slug);
       }
       const query = normalize(`${c.label} ${c.searchIntent} ${c.parentQuestion} ${slug}`);
       if (/\b(classes|class fees|fees|pricing|price|tuition|enrol|enroll|book demo|assessment booking|best online|near me|resource hub|resources hub|resources gateway|resources discovery|learning resources)\b/.test(query)) fail('reserved-intent', c.id, 'Commercial or discovery intent cannot enter the candidate pool.');
       const canonicalQuery = owners.find((o) => normalize(o.queryIntent) === normalize(c.searchIntent) || normalize(o.queryIntent) === normalize(c.parentQuestion));
       const protectedMatch = protectedIntents.find(([id, regex]) => ownerById.has(id) && regex.test(query));
-      const approvedOwnerMatch = isExactApprovedR9 && canonicalQuery?.id === approved?.topicId && !owner && !protectedMatch;
+      const approvedOwnerMatch = isExactApprovedPublication && canonicalQuery?.id === approved?.topicId && !owner && !protectedMatch;
       if ((owner || canonicalQuery || protectedMatch) && !approvedOwnerMatch) {
         ownershipCollisions++; fail('ownership-collision', c.id, owner?.id ?? canonicalQuery?.id ?? protectedMatch[0]);
       }

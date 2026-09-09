@@ -1,4 +1,6 @@
-export const RESOURCE_EXPANSION_GATE_REVISION = '2026-09-09-r11';
+import { RESOURCE_EXPANSION_GATE_REVISION } from './resourceExpansionGovernance.js';
+
+export { RESOURCE_EXPANSION_GATE_REVISION };
 
 export type ResourceExpansionStatus =
   | 'promote'

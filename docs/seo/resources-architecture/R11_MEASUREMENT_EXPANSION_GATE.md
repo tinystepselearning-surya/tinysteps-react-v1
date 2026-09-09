@@ -17,7 +17,7 @@ It does not ask Tiny Steps to publish 16 URLs and wait for every URL to rank bef
 - New content with little evidence is `insufficient-evidence`, not `repair`.
 - Search data must come from finalized Search Console evidence; the repository does not contain fabricated current GSC metrics.
 - Existing commercial-intent owners such as `/phonics` remain protected from informational cannibalisation.
-- R11 measures and classifies. R12 decides what to generate/publish next using this evidence plus editorial/curriculum governance.
+- R11 measures and classifies existing published pages and clusters. R12's first explicitly approved Wave 2 is admitted by curriculum eligibility plus a human-controlled publication registry; R11 evidence governs repair and scale beyond that approved wave.
 
 ## Runtime measurement contract
 
@@ -158,14 +158,19 @@ A cannibalisation block requires **confirmed query-intent evidence**, not merely
 
 If a guide ranks for an informational query and `/phonics` ranks for a commercial query, that is healthy coexistence, not cannibalisation.
 
-## R12 handoff
+## R12 and later-wave handoff
 
-Brick 12 should consume R11 decisions at page and cluster level.
+An unpublished URL cannot have historical Google performance, so R11 is not a fabricated pre-publication evidence requirement for the first explicitly approved Wave 2. Initial admission and later scale are separate decisions:
+
+- **Initial Wave 2 admission:** Brick 8 curriculum eligibility + an explicit current-wave publication approval + canonical/editorial governance. A `future-wave-2` label alone cannot publish anything.
+- **Expansion beyond the approved wave:** a finalized R11 decision for the existing page or cluster + curriculum eligibility + a new explicit publication approval. This path must use `evaluateFurtherResourceScale` and cannot substitute missing evidence with a positive decision.
+
+For further scale, consume R11 decisions at page and cluster level:
 
 - `promote` → prioritize adjacent/deeper expansion
 - `observe` → maintain while other opportunities proceed
 - `repair` → repair the affected asset before duplicating its pattern
-- `insufficient-evidence` → do not punish; allow independent expansion elsewhere
+- `insufficient-evidence` → do not punish the existing page; it does not itself authorize more pages, while a separately evaluated unrelated cluster may still expand
 - `blocked` → stop only the affected scope until the hard issue is resolved
 
 R11 therefore supports a growing library of hundreds or thousands of governed resources without turning measurement into a site-wide brake.

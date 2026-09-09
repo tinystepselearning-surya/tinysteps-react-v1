@@ -1,0 +1,91 @@
+name: Resources R12 Programmatic Expansion
+
+on:
+  pull_request:
+    branches: [main, seo/resources-r11-measurement-expansion-gate]
+    paths:
+      - 'src/content/phonicsKnowledge/**'
+      - 'src/lib/phonicsProgrammaticPilot.*'
+      - 'src/lib/phonicsWave2Publication.*'
+      - 'src/lib/phonicsPublicationRegistry.*'
+      - 'src/lib/phonicsEditorialReviewRegistry.*'
+      - 'src/lib/phonicsWave2CanonicalOwnership.*'
+      - 'src/lib/phonicsResourceDiscoveryGraph.*'
+      - 'src/lib/resourceMeasurement.ts'
+      - 'src/lib/resourceExpansionGate.ts'
+      - 'src/lib/resourceExpansionGovernance.*'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/pages/PhonicsKnowledgePage.tsx'
+      - 'src/components/resources/PhonicsPilotGuideGrid.tsx'
+      - 'src/components/common/ConversionTracker.tsx'
+      - 'src/tests/seo/resourcesR*'
+      - 'scripts/audit-resources-r12-programmatic-expansion.mjs'
+      - 'scripts/audit-resources-r11-measurement.mjs'
+      - 'scripts/audit-resources-r10-discovery-infrastructure.mjs'
+      - 'scripts/audit-resources-r9-programmatic-pilot.mjs'
+      - 'scripts/audit-resources-r9-1-human-editorial-review.mjs'
+      - 'scripts/audit-resources-r8-phonics-knowledge.mjs'
+      - 'scripts/phonics-knowledge-validation.mjs'
+      - 'scripts/phonics-knowledge-route-safety.mjs'
+      - 'docs/seo/resources-architecture/R12_*'
+      - '.github/workflows/resources-r12-programmatic-expansion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r12-programmatic-expansion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R0-R12 Resources and canonical curriculum regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Audit R12 controlled expansion
+        run: node scripts/audit-resources-r12-programmatic-expansion.mjs --report
+      - name: Audit R11 measurement and scoped expansion gate
+        run: node scripts/audit-resources-r11-measurement.mjs
+      - name: Audit R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --report
+      - name: Audit R9.1 human editorial review layer
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs
+      - name: Audit frozen R9 publication contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs
+      - name: Audit R8 approved-output safety under R12 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r12-approved
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit historical canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify rendered R12 publication contract
+        run: node scripts/audit-resources-r12-programmatic-expansion.mjs --dist --report
+      - name: Verify rendered R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --dist --report
+      - name: Verify rendered R9.1 review claims
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --dist
+      - name: Verify rendered frozen R9 contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs --dist
+      - name: Verify rendered R8 approved-output safety under R12 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r12-approved --dist
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
