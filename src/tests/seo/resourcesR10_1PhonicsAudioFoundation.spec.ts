@@ -9,7 +9,6 @@ import {
   getPhonicsSoundDefinition,
 } from '../../lib/phonicsSoundRegistry';
 import { PHONICS_WORD_SOUND_FRAMEWORK_EXAMPLES } from '../../content/phonicsWordSounds';
-import { PUBLIC_ROUTE_MANIFEST } from '../../lib/publicRouteManifest.js';
 
 const root = process.cwd();
 
@@ -71,10 +70,10 @@ describe('Resources R10.1 phonics audio foundation', () => {
   });
 
   it('does not publish framework example words as public SEO routes', () => {
-    const publicPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
+    const manifestSource = fs.readFileSync(path.join(root, 'src/lib/publicRouteManifest.js'), 'utf8');
     for (const word of PHONICS_WORD_SOUND_FRAMEWORK_EXAMPLES) {
-      expect(publicPaths.has(`/resources/phonics/words/${word.slug}`)).toBe(false);
-      expect(publicPaths.has(`/phonics/${word.slug}`)).toBe(false);
+      expect(manifestSource).not.toContain(`/resources/phonics/words/${word.slug}`);
+      expect(manifestSource).not.toContain(`/phonics/${word.slug}`);
     }
   });
 
