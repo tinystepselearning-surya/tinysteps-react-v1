@@ -9,7 +9,7 @@ describe('marketing header navigation', () => {
     useAuthStore.setState({ user: null });
   });
 
-  it('shows the school link instead of Courses and Pricing in desktop navigation', () => {
+  it('keeps the desktop primary navigation focused while preserving the schools-page CTA', () => {
     render(
       <MemoryRouter initialEntries={['/for-schools']}>
         <Header />
@@ -19,11 +19,15 @@ describe('marketing header navigation', () => {
     const desktopNavigation = within(screen.getByTestId('desktop-primary-navigation'));
     expect(desktopNavigation.queryByRole('link', { name: 'Courses' })).not.toBeInTheDocument();
     expect(desktopNavigation.queryByRole('link', { name: 'Pricing' })).not.toBeInTheDocument();
-    expect(desktopNavigation.getByRole('link', { name: 'For Schools' })).toHaveAttribute('aria-current', 'page');
+    expect(desktopNavigation.queryByRole('link', { name: 'For Schools' })).not.toBeInTheDocument();
+    expect(desktopNavigation.queryByRole('link', { name: 'Class Samples' })).not.toBeInTheDocument();
+    expect(desktopNavigation.getByRole('link', { name: 'Curriculum' })).toBeInTheDocument();
+    expect(desktopNavigation.getByRole('link', { name: 'Resources' })).toBeInTheDocument();
+    expect(desktopNavigation.getByRole('link', { name: 'Contact' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'School Partnership Options' })).toBeInTheDocument();
   });
 
-  it('retains Courses and Pricing, adds For Schools, and closes after mobile navigation', () => {
+  it('retains mobile-only Courses and Pricing, omits removed primary links, and closes after navigation', () => {
     render(
       <MemoryRouter initialEntries={['/for-schools']}>
         <Header />
@@ -37,9 +41,10 @@ describe('marketing header navigation', () => {
     const mobileNavigation = within(document.getElementById('mobile-nav-menu')!);
     expect(mobileNavigation.getByRole('link', { name: 'Courses' })).toBeInTheDocument();
     expect(mobileNavigation.getByRole('link', { name: 'Pricing' })).toBeInTheDocument();
-    expect(mobileNavigation.getByRole('link', { name: 'For Schools' })).toHaveAttribute('aria-current', 'page');
+    expect(mobileNavigation.queryByRole('link', { name: 'For Schools' })).not.toBeInTheDocument();
+    expect(mobileNavigation.queryByRole('link', { name: 'Class Samples' })).not.toBeInTheDocument();
 
-    fireEvent.click(mobileNavigation.getByRole('link', { name: 'For Schools' }));
+    fireEvent.click(mobileNavigation.getByRole('link', { name: 'Resources' }));
     expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   });
 });
