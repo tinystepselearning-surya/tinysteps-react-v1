@@ -15,6 +15,9 @@ export interface PhonicsPublishedResourcePage {
   readonly publicationState: 'approved-wave-1' | 'approved-wave-2';
   readonly publicationWave: PhonicsPublicationWave;
   readonly publicationRevision: string;
+  readonly publicationApprovalState?: 'approved-for-current-wave';
+  readonly publicationApprovalRevision?: string;
+  readonly publicationApprovalBasis?: string;
   readonly reviewDecision: string;
   readonly concept: PhonicsKnowledgeConcept;
 }

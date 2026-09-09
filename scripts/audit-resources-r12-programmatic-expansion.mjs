@@ -4,6 +4,8 @@ import path from 'node:path';
 import { PHONICS_KNOWLEDGE_DATASET } from '../src/content/phonicsKnowledge/index.js';
 import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from '../src/lib/phonicsProgrammaticPilot.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES, PHONICS_PUBLISHED_RESOURCE_PATHS, PHONICS_WAVE_2_PAGES } from '../src/lib/phonicsPublicationRegistry.js';
+import { PHONICS_WAVE_2_PUBLICATION_APPROVALS } from '../src/lib/phonicsWave2Publication.js';
+import { CURRENT_WAVE_PUBLICATION_APPROVAL_STATE, evaluateFurtherResourceScale, RESOURCE_EXPANSION_GATE_REVISION } from '../src/lib/resourceExpansionGovernance.js';
 import { PHONICS_EDITORIAL_REVIEW_RECORDS, PHONICS_PUBLISHED_EDITORIAL_REVIEW_RECORDS, PHONICS_WAVE_2_EDITORIAL_REVIEW_RECORDS } from '../src/lib/phonicsEditorialReviewRegistry.js';
 import { PHONICS_WAVE_2_CANONICAL_TOPIC_OWNERSHIP, R12_CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/phonicsWave2CanonicalOwnership.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/canonicalTopicOwnershipRegistry.js';
@@ -19,6 +21,7 @@ const routeByPath = new Map(PUBLIC_ROUTE_MANIFEST.map((entry) => [entry.path, en
 
 if (PHONICS_PROGRAMMATIC_PILOT_PAGES.length !== 16) fail('seed-count', 'pilot', `Expected 16, found ${PHONICS_PROGRAMMATIC_PILOT_PAGES.length}`);
 if (PHONICS_WAVE_2_PAGES.length !== 15) fail('wave2-count', 'wave2', `Expected 15, found ${PHONICS_WAVE_2_PAGES.length}`);
+if (Object.keys(PHONICS_WAVE_2_PUBLICATION_APPROVALS).length !== 15) fail('approval-count', 'wave2', 'Wave 2 requires exactly 15 explicit current-wave approval records.');
 if (PHONICS_PUBLISHED_RESOURCE_PAGES.length !== 31) fail('published-count', 'all', `Expected 31, found ${PHONICS_PUBLISHED_RESOURCE_PAGES.length}`);
 
 const futureIds = new Set(PHONICS_KNOWLEDGE_DATASET.filter((concept) => concept.expansionState === 'future-wave-2').map((concept) => concept.id));
@@ -27,8 +30,20 @@ for (const page of PHONICS_WAVE_2_PAGES) {
   if (!futureIds.has(page.conceptId)) fail('scope', page.conceptId, 'Wave 2 page is not a Brick 8 future-wave-2 concept.');
   if (supportingIds.has(page.conceptId)) fail('supporting-only-publication', page.conceptId, page.path);
   if (page.concept.canonicalOwnerTopicId) fail('existing-owner-publication', page.conceptId, page.concept.canonicalOwnerTopicId);
+  if (page.publicationApprovalState !== CURRENT_WAVE_PUBLICATION_APPROVAL_STATE || !page.publicationApprovalRevision) fail('missing-publication-approval', page.conceptId, 'Curriculum eligibility alone must never publish a page.');
 }
-if (new Set(PHONICS_WAVE_2_PAGES.map((page) => page.conceptId)).size !== futureIds.size) fail('future-wave-coverage', 'wave2', 'Every future-wave-2 concept must be explicitly represented exactly once.');
+if (new Set(PHONICS_WAVE_2_PAGES.map((page) => page.conceptId)).size !== PHONICS_WAVE_2_PAGES.length) fail('future-wave-coverage', 'wave2', 'Every approved current-wave concept must be represented exactly once.');
+
+const missingEvidenceScale = evaluateFurtherResourceScale({ curriculumEligible: true, explicitPublicationApproval: true });
+if (missingEvidenceScale.eligible || missingEvidenceScale.reason !== 'missing-finalized-r11-decision') fail('future-scale-bypass', 'missing-evidence', 'Missing R11 evidence must never authorize later scale.');
+for (const status of ['repair', 'blocked']) {
+  const decision = evaluateFurtherResourceScale({
+    decision: { revision: RESOURCE_EXPANSION_GATE_REVISION, status, scopeType: 'cluster' },
+    curriculumEligible: true,
+    explicitPublicationApproval: true,
+  });
+  if (decision.eligible || decision.blocksOtherClusters !== false) fail('future-scale-scope', status, 'Repair/blocked must stop only the affected scope and never unrelated clusters.');
+}
 
 for (const key of ['conceptId', 'topicId', 'slug', 'path']) {
   const values = PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page[key]);

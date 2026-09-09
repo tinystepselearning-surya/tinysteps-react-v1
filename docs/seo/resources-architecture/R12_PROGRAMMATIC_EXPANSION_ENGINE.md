@@ -12,8 +12,8 @@ The architecture remains layered:
 - Brick 9 owns the frozen 16-page seed publication set.
 - R9.1 owns real human review state for that historical seed.
 - Brick 10 owns discovery graph behaviour.
-- Brick 11 owns measurement and scoped expansion decisions.
-- Brick 12 owns explicit later-wave publication approvals.
+- Brick 11 owns measurement, repair and evidence-based decisions about scale beyond an approved wave.
+- Brick 12 owns the first explicit Wave 2 publication approvals and the contract future waves must use.
 
 ## Publication scope
 
@@ -30,7 +30,14 @@ The 15 Wave 2 concepts are:
 
 ## Publication registry
 
-`src/lib/phonicsWave2Publication.js` is the explicit Wave 2 approval source. It requires a one-to-one match with the Brick 8 `future-wave-2` set and fails closed when that set changes.
+`src/lib/phonicsWave2Publication.js` is the explicit Wave 2 approval source. Every published Wave 2 record must have both Brick 8 `future-wave-2` eligibility and an `approved-for-current-wave` record at the current approval revision. Adding or changing a curriculum candidate alone does not publish it.
+
+`src/lib/resourceExpansionGovernance.js` formalizes the boundary:
+
+- `assertCurrentWavePublicationEligibility` guards this initially approved wave without pretending an unpublished URL has search history.
+- `evaluateFurtherResourceScale` requires a finalized R11 `promote` decision, curriculum eligibility and a new explicit publication approval before any later wave can scale the affected page/cluster.
+- Missing evidence, `observe`, `insufficient-evidence`, `repair` and `blocked` never become positive scale authorization.
+- A repair or block remains local and cannot freeze unrelated clusters.
 
 `src/lib/phonicsPublicationRegistry.js` composes the frozen R9 seed with Wave 2. It rejects duplicate paths, slugs, concept IDs and topic IDs.
 
@@ -63,7 +70,7 @@ All 31 pages:
 - are indexable, self-canonical, prerendered and sitemap eligible;
 - receive the R11 GA4 resource measurement context, including `publication_wave`.
 
-R11 remains a scoped evidence system. A poor or broken page/cluster can be repaired or blocked without freezing unrelated clusters.
+R11 remains a scoped evidence system. A poor or broken page/cluster can be repaired or blocked without freezing unrelated clusters. R11 is deliberately not impossible pre-publication Google evidence for this first explicit Wave 2; it is mandatory for scale beyond the already approved wave.
 
 ## CI acceptance
 
@@ -74,9 +81,9 @@ R12 is complete only when CI proves:
 3. Every page has route, SEO, sitemap, prerender and discovery coverage.
 4. The original R9 and R9.1 historical contracts remain intact.
 5. All Wave 2 human review records remain truthful.
-6. R11 measurement resolves all published pages.
+6. R11 measurement resolves all published pages, and the later-scale API cannot bypass finalized R11 decisions.
 7. Wave 2 intent ownership has no collision with historical ownership.
 8. Production rendered HTML contains unique educational value and no false review metadata.
 9. Full Resources regression, typecheck, production build and SEO smoke pass.
 
-R12 is an expansion mechanism, not permission to mass-publish arbitrary keyword pages. Future waves must be explicitly admitted through the same governed publication boundary.
+R12 is an expansion mechanism, not permission to mass-publish arbitrary keyword pages. Future waves must be explicitly admitted through curriculum and publication governance and, after this approved wave, a finalized R11 scale decision. No GSC, GA4, teacher, reviewer or editorial evidence is manufactured by this contract.

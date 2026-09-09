@@ -22,6 +22,13 @@ import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegi
 import { PUBLIC_ROUTE_MANIFEST } from '../../lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import { getResourceMeasurementContext } from '../../lib/resourceMeasurement.ts';
+import {
+  assertCurrentWavePublicationEligibility,
+  CURRENT_WAVE_PUBLICATION_APPROVAL_STATE,
+  evaluateFurtherResourceScale,
+  RESOURCE_EXPANSION_GATE_REVISION,
+} from '../../lib/resourceExpansionGovernance.js';
+import { PHONICS_WAVE_2_APPROVAL_REVISION, PHONICS_WAVE_2_PUBLICATION_APPROVALS } from '../../lib/phonicsWave2Publication.js';
 
 const root = process.cwd();
 const read = (relative) => fs.readFileSync(path.join(root, relative), 'utf8');
@@ -43,6 +50,67 @@ describe('Resources architecture R12 controlled programmatic expansion', () => {
     expect(PHONICS_WAVE_2_PAGES.every((page) => page.concept.expansionState === 'future-wave-2')).toBe(true);
     const supportingOnly = new Set(PHONICS_KNOWLEDGE_DATASET.filter((concept) => concept.expansionState === 'supporting-only').map((concept) => concept.id));
     expect(PHONICS_PUBLISHED_RESOURCE_PAGES.some((page) => supportingOnly.has(page.conceptId))).toBe(false);
+  });
+
+  it('requires an explicit current-wave approval instead of auto-publishing curriculum eligibility', () => {
+    const eligible = { id: 'future-example', expansionState: 'future-wave-2', canonicalOwnerTopicId: null };
+    expect(() => assertCurrentWavePublicationEligibility(eligible, null, {
+      curriculumState: 'future-wave-2',
+      approvalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
+    })).toThrow(/explicit current-wave approval/);
+    expect(() => assertCurrentWavePublicationEligibility(eligible, {
+      publicationApprovalState: CURRENT_WAVE_PUBLICATION_APPROVAL_STATE,
+      publicationApprovalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
+    }, {
+      curriculumState: 'future-wave-2',
+      approvalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
+    })).not.toThrow();
+    expect(Object.keys(PHONICS_WAVE_2_PUBLICATION_APPROVALS)).toHaveLength(15);
+    expect(PHONICS_WAVE_2_PAGES.every((page) => page.publicationApprovalState === CURRENT_WAVE_PUBLICATION_APPROVAL_STATE)).toBe(true);
+  });
+
+  it('rejects supporting-only and already-owned concepts even when an approval object is supplied', () => {
+    const approval = {
+      publicationApprovalState: CURRENT_WAVE_PUBLICATION_APPROVAL_STATE,
+      publicationApprovalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
+    };
+    expect(() => assertCurrentWavePublicationEligibility({ id: 'support', expansionState: 'supporting-only' }, approval, {
+      curriculumState: 'future-wave-2', approvalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
+    })).toThrow(/curriculum state/);
+    expect(() => assertCurrentWavePublicationEligibility({ id: 'owned', expansionState: 'future-wave-2', canonicalOwnerTopicId: 'existing-owner' }, approval, {
+      curriculumState: 'future-wave-2', approvalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
+    })).toThrow(/already-owned/);
+  });
+
+  it('requires a finalized R11 promote decision plus governance before any later scale', () => {
+    expect(evaluateFurtherResourceScale({ curriculumEligible: true, explicitPublicationApproval: true })).toMatchObject({ eligible: false, reason: 'missing-finalized-r11-decision' });
+    for (const status of ['observe', 'repair', 'insufficient-evidence', 'blocked']) {
+      expect(evaluateFurtherResourceScale({
+        decision: { revision: RESOURCE_EXPANSION_GATE_REVISION, status, scopeType: 'cluster' },
+        curriculumEligible: true,
+        explicitPublicationApproval: true,
+      }).eligible).toBe(false);
+    }
+    expect(evaluateFurtherResourceScale({
+      decision: { revision: RESOURCE_EXPANSION_GATE_REVISION, status: 'promote', scopeType: 'cluster' },
+      curriculumEligible: true,
+      explicitPublicationApproval: true,
+    }).eligible).toBe(true);
+  });
+
+  it('keeps R11 repair/block scope local and never turns missing evidence into promotion', () => {
+    const blocked = evaluateFurtherResourceScale({
+      decision: { revision: RESOURCE_EXPANSION_GATE_REVISION, status: 'blocked', scopeType: 'cluster' },
+      curriculumEligible: true,
+      explicitPublicationApproval: true,
+    });
+    const unrelated = evaluateFurtherResourceScale({
+      decision: { revision: RESOURCE_EXPANSION_GATE_REVISION, status: 'promote', scopeType: 'cluster' },
+      curriculumEligible: true,
+      explicitPublicationApproval: true,
+    });
+    expect(blocked).toMatchObject({ eligible: false, blockScope: 'cluster', blocksOtherClusters: false });
+    expect(unrelated).toMatchObject({ eligible: true, blocksOtherClusters: false });
   });
 
   it('gives every publication unique IDs, slugs, paths and query intent', () => {
