@@ -10,6 +10,7 @@ import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
+import type { StaticTestimonialProgram } from '../lib/staticTestimonials';
 import {
   CourseCTAGroup,
   FAQSection,
@@ -73,6 +74,43 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
   },
 };
 
+const TESTIMONIAL_PROGRAM_BY_COURSE_SLUG: Record<string, StaticTestimonialProgram> = {
+  'phonics-foundation': 'Phonics Foundations',
+  'phonics-brush-up': 'Early Phonics',
+  'phonics-advanced': 'Advanced Phonics',
+  'basic-grammar': 'Basic Grammar',
+  'advanced-grammar': 'Advanced Grammar',
+  'basic-public-speaking': 'Basic Public Speaking',
+  'advanced-public-speaking': 'Advanced Public Speaking',
+};
+
+const COURSE_PAGE_GUIDE = [
+  {
+    href: '#course-fit',
+    number: '01',
+    title: 'Check the fit',
+    detail: 'Match the outcomes to what your child needs now.',
+  },
+  {
+    href: '#lesson-path',
+    number: '02',
+    title: 'See the learning path',
+    detail: 'Review the exact stages and lesson sequence.',
+  },
+  {
+    href: '#parent-feedback',
+    number: '03',
+    title: 'Review parent feedback',
+    detail: 'Read feedback from the same course level.',
+  },
+  {
+    href: '#faq',
+    number: '04',
+    title: 'Clear final questions',
+    detail: 'Check placement and progression before deciding.',
+  },
+] as const;
+
 const WHATSAPP_BASE = 'https://wa.me/919618398383?text=';
 
 const CourseDetailPage: FC = () => {
@@ -88,7 +126,6 @@ const CourseDetailPage: FC = () => {
   }, [slug]);
   const programPath = courseTrack === 'phonics' ? '/phonics' : courseTrack === 'grammar' ? '/grammar' : '/speaking';
   const programLabel = courseTrack === 'phonics' ? 'Phonics' : courseTrack === 'grammar' ? 'Grammar' : 'Speaking & Communication';
-  const courseTag = courseTrack;
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const usedHrefs = useMemo(() => new Set<string>(), []);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[normalizedRawSlug || ''] || {};
@@ -149,6 +186,7 @@ const CourseDetailPage: FC = () => {
     `Hi Tiny Steps! I want help choosing the right ${courseHeading} option for my child.`
   )}`;
   const stageAuthority = coursePageConfig?.stageAuthority;
+  const testimonialProgram = TESTIMONIAL_PROGRAM_BY_COURSE_SLUG[course.slug];
   const courseSchemaConfig = COURSE_SCHEMA_BY_SLUG[course.slug] || {
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
@@ -298,12 +336,37 @@ const CourseDetailPage: FC = () => {
         }
       />
 
-      <LeadSection>
+      <section className="px-6 pb-3 lg:px-8" aria-label="How to use this course page">
+        <div className="mx-auto max-w-7xl rounded-[1.75rem] border border-slate-200/90 bg-white/90 p-3 shadow-[0_14px_36px_rgba(15,23,42,0.07)] backdrop-blur sm:p-4">
+          <div className="flex flex-col gap-1 px-2 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">A clear decision path</p>
+            <p className="text-xs leading-5 text-slate-500">Follow the page in order, then use the free assessment only if you still need placement help.</p>
+          </div>
+          <ol className="grid gap-2 md:grid-cols-4">
+            {COURSE_PAGE_GUIDE.map((step) => (
+              <li key={step.href}>
+                <a
+                  href={step.href}
+                  className="group flex h-full items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3.5 py-3 transition hover:border-slate-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                >
+                  <span className="mt-0.5 text-xs font-black tracking-[0.12em] text-orange-600">{step.number}</span>
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-900 group-hover:text-slate-950">{step.title}</span>
+                    <span className="mt-0.5 block text-xs leading-5 text-slate-500">{step.detail}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <LeadSection id="course-fit" className="scroll-mt-24">
         <LeadCard className="bg-gradient-to-br from-white via-orange-50/40 to-sky-50/40">
           <LeadSectionHeading
-            eyebrow="Course overview"
-            title="What this course helps your child improve first"
-            description="Use the overview and outcomes to check whether this level matches the skills your child needs now."
+            eyebrow="Step 1 · Course fit"
+            title="First, check what this course is designed to improve"
+            description="Match these outcomes to what you are seeing now. If several points fit your child, continue to the lesson path below."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <LeadCard className="border-slate-100 bg-white">
@@ -327,10 +390,10 @@ const CourseDetailPage: FC = () => {
       </LeadSection>
 
       {stageAuthority ? (
-        <LeadSection id="phonics-stage-fit">
+        <LeadSection id="phonics-stage-fit" className="scroll-mt-24">
           <LeadCard className="bg-gradient-to-br from-white via-sky-50/35 to-orange-50/35">
             <LeadSectionHeading
-              eyebrow="Phonics stage fit"
+              eyebrow="Course fit · Phonics stage"
               title={stageAuthority.title}
               description={stageAuthority.directAnswer}
             />
@@ -402,25 +465,12 @@ const CourseDetailPage: FC = () => {
         </LeadSection>
       ) : null}
 
-      <LeadSection className="pb-2">
-        <TestimonialsSection
-          title="Parent feedback for this learning track"
-          subtitle="Approved reviews from families in the same course pathway."
-          courseTag={courseTag}
-          limit={3}
-          compact
-          className="px-0"
-          viewAllHref="/testimonials"
-          viewAllLabel="View all program reviews"
-        />
-      </LeadSection>
-
-      <LeadSection>
+      <LeadSection id="lesson-path" className="scroll-mt-24">
         <LeadCard>
           <LeadSectionHeading
-            eyebrow="Lesson path"
-            title="How the course unfolds lesson by lesson"
-            description="Parents can see the learning path clearly before they commit."
+            eyebrow="Step 2 · Learning path"
+            title="Then, see how the course unfolds lesson by lesson"
+            description="The first stage is open as a sample. Expand only the stages you want to inspect, or open all stages for a complete curriculum view."
           />
           <p className="mt-3 text-sm leading-6 text-slate-700">
             See the detailed lesson sequence for this level below. For the relationship between Phonics, Grammar, and Speaking, see the{' '}
@@ -430,7 +480,7 @@ const CourseDetailPage: FC = () => {
           </p>
           {weeksState && weeksState.length ? (
             <div className="mt-5">
-              <WeekAccordion items={weeksState} />
+              <WeekAccordion items={weeksState} defaultOpenFirst />
             </div>
           ) : (
             <p className="mt-4 text-sm text-slate-700">Detailed lesson-by-lesson curriculum coming soon.</p>
@@ -438,13 +488,27 @@ const CourseDetailPage: FC = () => {
         </LeadCard>
       </LeadSection>
 
+      <LeadSection id="parent-feedback" className="scroll-mt-24 pb-2">
+        <TestimonialsSection
+          title={`Parent feedback for ${course.name}`}
+          subtitle="Approved feedback from families in this exact course level, shown after the curriculum so you can compare the learning plan with the outcomes parents noticed."
+          program={testimonialProgram}
+          courseTag={courseTrack}
+          limit={3}
+          compact
+          className="px-0"
+          viewAllHref="/testimonials"
+          viewAllLabel="View all program reviews"
+        />
+      </LeadSection>
+
       {Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 ? (
-        <LeadSection id="faq">
+        <LeadSection id="faq" className="scroll-mt-24">
           <LeadCard>
             <LeadSectionHeading
-              eyebrow="FAQs"
+              eyebrow="Step 4 · Before you decide"
               title="Questions parents usually ask before enrolling"
-              description="These answers explain placement, progression, and what to expect before you choose a course."
+              description="Use these answers to clear placement, progression, and course-expectation questions before choosing a starting level."
             />
             <div className="mt-6">
               <FAQSection items={coursePageConfig.faq} />
@@ -455,38 +519,41 @@ const CourseDetailPage: FC = () => {
 
       <LeadSection className="pb-4">
         <FinalLeadCTA
-          title="Need help confirming whether this is the right starting level?"
-          description="Continue exploring related guidance or book a personalized assessment before choosing the course pack."
+          title="Not sure this is the right starting level?"
+          description="The free 35-minute 1:1 demo is an assessment, not a commitment. We’ll check your child’s current skills, confirm the most useful starting level, and suggest the first learning focus."
           actions={
-            <CourseCTAGroup
-              items={[
-                {
-                  label: 'Book Free 35-Minute Demo',
-                  to: '/book-demo',
-                  variant: 'primary',
-                  onClick: () =>
-                    trackCoursePageCtaClick({
-                      page_path: canonicalPath,
-                      cta_label: 'Book Free 35-Minute Demo',
-                      cta_location: 'footer',
-                      destination_path: '/book-demo',
-                      program: courseTrack,
-                    }),
-                },
-                { label: 'View Full Curriculum Roadmap', to: '/curriculum', variant: 'ghost' },
-                { label: `View ${programLabel} Program`, to: programPath, variant: 'ghost' },
-              ]}
-              renderLink={(item, className) => (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  onClick={item.onClick}
-                  className={`${className} ${item.variant === 'ghost' ? 'border-white/30 bg-transparent text-white hover:bg-white/10' : 'bg-white text-slate-900 hover:bg-slate-100'}`}
-                >
-                  {item.label}
-                </Link>
-              )}
-            />
+            <>
+              <Link
+                to="/book-demo"
+                onClick={() =>
+                  trackCoursePageCtaClick({
+                    page_path: canonicalPath,
+                    cta_label: 'Book Free 35-Minute Demo',
+                    cta_location: 'footer',
+                    destination_path: '/book-demo',
+                    program: courseTrack,
+                  })
+                }
+                className="inline-flex items-center justify-center rounded-full border border-white bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-[0_12px_26px_rgba(0,0,0,0.18)] transition hover:bg-orange-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                Book Free 35-Minute Demo
+              </Link>
+              <Link
+                to="/curriculum"
+                onClick={() =>
+                  trackCoursePageCtaClick({
+                    page_path: canonicalPath,
+                    cta_label: 'View Curriculum Roadmap',
+                    cta_location: 'footer',
+                    destination_path: '/curriculum',
+                    program: courseTrack,
+                  })
+                }
+                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:border-white/70 hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                View Curriculum Roadmap
+              </Link>
+            </>
           }
         />
         {Array.isArray(coursePageConfig?.relatedLinks) && coursePageConfig.relatedLinks.length > 0 ? (
