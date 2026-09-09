@@ -115,7 +115,10 @@ export function getSpeakingCommunicationSemanticInternalLinksForPath(pathname, o
   const seenTargets = new Set();
   const combined = [];
 
-  for (const entry of [...upstream, ...additive]) {
+  // When R22 owns a speaking journey, its focused links should occupy the
+  // visible pathway before older generic speaking links. Unaffected pages have
+  // no additive links, so their upstream output remains exactly unchanged.
+  for (const entry of [...additive, ...upstream]) {
     if (seenTargets.has(entry.to)) continue;
     seenTargets.add(entry.to);
     combined.push(entry);
