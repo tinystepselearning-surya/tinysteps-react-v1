@@ -174,7 +174,7 @@ describe('rolling schedule recurrence engine', () => {
 
     expect(rows).toHaveLength(52);
     expect(rows[0].date).toBe('2026-01-05');
-    expect(rows.at(-1)?.date).toBe('2026-12-28');
+    expect(rows[rows.length - 1]?.date).toBe('2026-12-28');
   });
 
   it('rejects duplicate deterministic occurrence identities before materialization', () => {
