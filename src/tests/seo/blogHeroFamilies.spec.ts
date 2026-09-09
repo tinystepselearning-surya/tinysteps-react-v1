@@ -27,13 +27,18 @@ const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
 const INTENTIONAL_EXISTING_HERO_SLUGS = [
   'are-phonics-apps-enough-for-kids',
   'can-child-improve-english-in-10-days',
+  'how-children-recognise-words-automatically-after-phonics',
   'how-phonics-grammar-and-communication-work-together',
   'how-to-choose-phonics-classes',
+  'how-to-teach-paragraph-writing-to-kids',
+  'how-vocabulary-supports-reading-comprehension',
   'online-english-classes-for-kids-india',
   'online-phonics-classes-vs-school',
   'grammar-creative-writing',
   'phonics-diagnostics',
   'phonics-comprehension',
+  'phonological-awareness-vs-phonemic-awareness-vs-phonics',
+  'punctuation-and-capital-letters-for-kids',
   'why-child-reads-words-but-does-not-understand-story',
   'why-parents-choose-online-phonics',
 ] as const;

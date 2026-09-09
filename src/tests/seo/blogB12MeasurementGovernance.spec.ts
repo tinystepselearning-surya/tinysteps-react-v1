@@ -9,8 +9,8 @@ const readRepoFile = (relativePath: string) =>
   fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('B12 measurement and publishing governance', () => {
-  it('keeps the 76-post authority corpus unchanged', () => {
-    expect(blogPosts).toHaveLength(76);
+  it('keeps the post-R18 81-source authority corpus stable', () => {
+    expect(blogPosts).toHaveLength(81);
   });
 
   it('turns B11 sourceDetail plus acquisition fields into a useful admin summary', () => {

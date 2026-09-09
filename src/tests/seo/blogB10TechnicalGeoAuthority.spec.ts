@@ -27,8 +27,8 @@ const retiredDuplicates = [
 ] as const;
 
 describe('B10 technical SEO, GEO, and LLM authority guardrails', () => {
-  it('keeps the 76-post corpus and registers only live, indexable authority owners', () => {
-    expect(blogPosts).toHaveLength(76);
+  it('keeps the post-R18 81-source corpus and registers only live, indexable authority owners', () => {
+    expect(blogPosts).toHaveLength(81);
     for (const slug of Object.keys(BLOG_TECHNICAL_AUTHORITY)) {
       expect(bySlug.has(slug), `${slug} must remain a live blog record`).toBe(true);
       expect(shouldNoindexBlogSlug(slug), `${slug} must remain indexable authority`).toBe(false);
