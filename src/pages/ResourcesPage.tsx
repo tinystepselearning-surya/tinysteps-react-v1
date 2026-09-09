@@ -8,7 +8,6 @@ import {
   MessagesSquare,
   PenLine,
   School,
-  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
@@ -132,7 +131,7 @@ function ResourcePathwayCard({
           event.currentTarget.style.setProperty('--spotlight-x', `${event.clientX - rect.left}px`);
           event.currentTarget.style.setProperty('--spotlight-y', `${event.clientY - rect.top}px`);
         }}
-        className={`group relative isolate flex h-full min-h-[150px] overflow-hidden rounded-[1.4rem] border border-slate-200/90 bg-white/[0.92] px-[18px] py-4 shadow-[0_9px_26px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,background-color] duration-300 hover:bg-white hover:shadow-[0_18px_42px_rgba(15,23,42,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${pathway.hoverBorder}`}
+        className={`group relative isolate flex h-full min-h-[140px] overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white/[0.92] px-[17px] py-[14px] shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,background-color] duration-300 hover:bg-white hover:shadow-[0_16px_38px_rgba(15,23,42,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${pathway.hoverBorder}`}
       >
         <span
           aria-hidden="true"
@@ -147,7 +146,7 @@ function ResourcePathwayCard({
         />
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-[18px] top-0 z-10 h-[3px] origin-left rounded-b-full bg-gradient-to-r ${pathway.accentLine} transition-transform duration-300 group-hover:scale-x-100 md:scale-x-[0.72]`}
+          className={`pointer-events-none absolute inset-x-[17px] top-0 z-10 h-[3px] origin-left rounded-b-full bg-gradient-to-r ${pathway.accentLine} transition-transform duration-300 group-hover:scale-x-100 md:scale-x-[0.72]`}
         />
 
         <div className="relative z-10 flex w-full flex-col">
@@ -167,10 +166,10 @@ function ResourcePathwayCard({
             </span>
           </div>
 
-          <h2 className="mt-2.5 text-[1.22rem] font-black tracking-[-0.025em] text-slate-950 sm:text-[1.28rem]">
+          <h2 className="mt-2 text-[1.2rem] font-black tracking-[-0.025em] text-slate-950 sm:text-[1.25rem]">
             {pathway.title}
           </h2>
-          <p className="mt-1 max-w-[40rem] text-[12.5px] leading-[1.28rem] text-slate-600 sm:text-[13px]">
+          <p className="mt-0.5 max-w-[40rem] text-[12.5px] leading-[1.24rem] text-slate-600 sm:text-[13px]">
             {pathway.description}
           </p>
         </div>
@@ -236,20 +235,14 @@ const ResourcesPage: FC = () => {
         className="pointer-events-none absolute left-1/2 top-0 h-44 w-[64rem] -translate-x-1/2 rounded-full bg-white/[0.65] blur-3xl"
       />
 
-      <section className="relative mx-auto flex w-full max-w-[1320px] flex-col px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
-        <KnowledgeBreadcrumbs items={breadcrumbItems} className="mb-2.5 text-xs sm:mb-3" />
+      <section className="relative mx-auto flex w-full max-w-[1320px] flex-col px-5 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-5">
+        <KnowledgeBreadcrumbs items={breadcrumbItems} className="mb-2 text-xs" />
 
         <header className="w-full">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 sm:text-[11px]">
-                Tiny Steps Resources
-              </p>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/75 px-2.5 py-1 text-[10px] font-bold text-slate-500 shadow-sm backdrop-blur">
-                <Sparkles aria-hidden="true" className="h-3 w-3 text-orange-500" />
-                6 guided pathways
-              </span>
-            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 sm:text-[11px]">
+              Tiny Steps Resources
+            </p>
 
             <Link
               to="/blog"
@@ -260,16 +253,16 @@ const ResourcesPage: FC = () => {
             </Link>
           </div>
 
-          <h1 className="ts-answer-title mt-2 max-w-none text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-4xl lg:text-[2.7rem] lg:leading-[1.03] xl:whitespace-nowrap">
+          <h1 className="ts-answer-title mt-1.5 max-w-none text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-4xl lg:text-[2.7rem] lg:leading-[1.03] xl:whitespace-nowrap">
             English Learning Resources for Kids, Parents & Educators
           </h1>
 
-          <p className="ts-answer-summary mt-2.5 max-w-none text-sm leading-6 text-slate-600 sm:text-[15px] sm:leading-6 xl:whitespace-nowrap">
+          <p className="ts-answer-summary mt-2 max-w-none text-sm leading-6 text-slate-600 sm:text-[15px] sm:leading-6 xl:whitespace-nowrap">
             Choose the pathway that matches what you need and go directly to the right Tiny Steps guide, activity, parent support, or school resource.
           </p>
         </header>
 
-        <div id="resource-paths" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-3.5">
+        <div id="resource-paths" className="mt-2.5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-3">
           {RESOURCE_PATHWAYS.map((pathway) => (
             <ResourcePathwayCard key={pathway.title} pathway={pathway} reduceMotion={reduceMotion} />
           ))}
