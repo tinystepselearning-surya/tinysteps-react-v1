@@ -40,7 +40,7 @@ export const R22_SPEAKING_COMMUNICATION_EXISTING_CANONICAL_TOPIC_OWNERSHIP = fre
   existingOwner({
     id: 'speaking-video-feedback-guide',
     intent: 'practice',
-    ownerRole: 'practice-guide',
+    ownerRole: 'activity-guide',
     ownerPath: '/blog/speaking-video-feedback',
     queryIntent: 'video feedback for kids public speaking',
     supportingPaths: ['/resources/speaking', '/blog/public-speaking-delivery-for-kids', '/blog/speaking-structure'],
@@ -54,7 +54,7 @@ export const R22_SPEAKING_COMMUNICATION_EXISTING_CANONICAL_TOPIC_OWNERSHIP = fre
   existingOwner({
     id: 'speaking-family-showcase-practice',
     intent: 'practice',
-    ownerRole: 'practice-guide',
+    ownerRole: 'activity-guide',
     ownerPath: '/blog/speaking-family-showcase',
     queryIntent: 'family speaking practice for kids',
     supportingPaths: ['/resources/speaking', '/blog/speaking-confidence-seeds', '/blog/conversation-skills-for-kids'],
@@ -62,7 +62,7 @@ export const R22_SPEAKING_COMMUNICATION_EXISTING_CANONICAL_TOPIC_OWNERSHIP = fre
   existingOwner({
     id: 'story-card-speaking-bridge',
     intent: 'practice',
-    ownerRole: 'activity-bridge',
+    ownerRole: 'activity-guide',
     ownerPath: '/blog/grammar-speaking-bridge',
     queryIntent: 'story cards speaking practice for kids',
     supportingPaths: ['/resources/speaking', '/resources/grammar', '/blog/how-to-teach-storytelling-to-kids'],
