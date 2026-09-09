@@ -49,7 +49,8 @@ function buttonClass(variant: CtaItem['variant']) {
 function getNodeText(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node);
   if (!isValidElement(node)) return '';
-  return Children.toArray(node.props.children).map(getNodeText).join(' ');
+  const props = node.props as { children?: ReactNode };
+  return Children.toArray(props.children).map(getNodeText).join(' ');
 }
 
 function isLegacyInternalTrustAside(node: ReactNode): boolean {
