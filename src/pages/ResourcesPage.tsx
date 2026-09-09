@@ -34,7 +34,7 @@ const RESOURCE_PATHWAYS = [
     icon: BookOpenText,
     iconTone: 'border-sky-200/80 bg-sky-50 text-sky-700',
     accentLine: 'from-sky-400 via-cyan-400 to-blue-500',
-    orb: 'bg-sky-200/55',
+    orb: 'bg-sky-200/[0.55]',
     hoverBorder: 'group-hover:border-sky-300/90',
     spotlight: 'rgba(14, 165, 233, 0.16)',
   },
@@ -48,7 +48,7 @@ const RESOURCE_PATHWAYS = [
     icon: PenLine,
     iconTone: 'border-emerald-200/80 bg-emerald-50 text-emerald-700',
     accentLine: 'from-emerald-400 via-teal-400 to-cyan-500',
-    orb: 'bg-emerald-200/55',
+    orb: 'bg-emerald-200/[0.55]',
     hoverBorder: 'group-hover:border-emerald-300/90',
     spotlight: 'rgba(16, 185, 129, 0.15)',
   },
@@ -62,7 +62,7 @@ const RESOURCE_PATHWAYS = [
     icon: MessagesSquare,
     iconTone: 'border-amber-200/80 bg-amber-50 text-amber-700',
     accentLine: 'from-amber-400 via-orange-400 to-rose-400',
-    orb: 'bg-amber-200/55',
+    orb: 'bg-amber-200/[0.55]',
     hoverBorder: 'group-hover:border-amber-300/90',
     spotlight: 'rgba(245, 158, 11, 0.15)',
   },
@@ -76,7 +76,7 @@ const RESOURCE_PATHWAYS = [
     icon: HeartHandshake,
     iconTone: 'border-rose-200/80 bg-rose-50 text-rose-700',
     accentLine: 'from-rose-400 via-pink-400 to-orange-400',
-    orb: 'bg-rose-200/55',
+    orb: 'bg-rose-200/[0.55]',
     hoverBorder: 'group-hover:border-rose-300/90',
     spotlight: 'rgba(244, 63, 94, 0.13)',
   },
@@ -90,7 +90,7 @@ const RESOURCE_PATHWAYS = [
     icon: Gamepad2,
     iconTone: 'border-violet-200/80 bg-violet-50 text-violet-700',
     accentLine: 'from-violet-400 via-fuchsia-400 to-pink-400',
-    orb: 'bg-violet-200/55',
+    orb: 'bg-violet-200/[0.55]',
     hoverBorder: 'group-hover:border-violet-300/90',
     spotlight: 'rgba(139, 92, 246, 0.14)',
   },
@@ -104,7 +104,7 @@ const RESOURCE_PATHWAYS = [
     icon: School,
     iconTone: 'border-indigo-200/80 bg-indigo-50 text-indigo-700',
     accentLine: 'from-indigo-400 via-blue-400 to-slate-500',
-    orb: 'bg-indigo-200/55',
+    orb: 'bg-indigo-200/[0.55]',
     hoverBorder: 'group-hover:border-indigo-300/90',
     spotlight: 'rgba(99, 102, 241, 0.14)',
   },
@@ -114,11 +114,9 @@ type ResourcePathway = (typeof RESOURCE_PATHWAYS)[number];
 
 function ResourcePathwayCard({
   pathway,
-  index,
   reduceMotion,
 }: {
   pathway: ResourcePathway;
-  index: number;
   reduceMotion: boolean;
 }) {
   const Icon = pathway.icon;
@@ -126,11 +124,10 @@ function ResourcePathwayCard({
   return (
     <motion.div
       className="h-full"
-      initial={{ opacity: 0, y: reduceMotion ? 0 : 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.42, delay: reduceMotion ? 0 : index * 0.055, ease: 'easeOut' }}
+      initial={false}
       whileHover={reduceMotion ? undefined : { y: -5 }}
       whileTap={reduceMotion ? undefined : { scale: 0.992 }}
+      transition={{ type: 'spring', stiffness: 310, damping: 24, mass: 0.75 }}
     >
       <Link
         to={pathway.to}
@@ -140,7 +137,7 @@ function ResourcePathwayCard({
           event.currentTarget.style.setProperty('--spotlight-x', `${event.clientX - rect.left}px`);
           event.currentTarget.style.setProperty('--spotlight-y', `${event.clientY - rect.top}px`);
         }}
-        className={`group relative isolate flex h-full min-h-[174px] overflow-hidden rounded-[1.5rem] border border-slate-200/90 bg-white/92 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.055)] transition-[border-color,box-shadow,background-color] duration-300 hover:bg-white hover:shadow-[0_22px_52px_rgba(15,23,42,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${pathway.hoverBorder}`}
+        className={`group relative isolate flex h-full min-h-[174px] overflow-hidden rounded-[1.5rem] border border-slate-200/90 bg-white/[0.92] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.055)] transition-[border-color,box-shadow,background-color] duration-300 hover:bg-white hover:shadow-[0_22px_52px_rgba(15,23,42,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${pathway.hoverBorder}`}
       >
         <span
           aria-hidden="true"
@@ -248,7 +245,7 @@ const ResourcesPage: FC = () => {
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-0 h-44 w-[64rem] -translate-x-1/2 rounded-full bg-white/65 blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-0 h-44 w-[64rem] -translate-x-1/2 rounded-full bg-white/[0.65] blur-3xl"
       />
 
       <section className="relative mx-auto flex w-full max-w-[1320px] flex-col px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
@@ -276,7 +273,7 @@ const ResourcesPage: FC = () => {
             </p>
             <Link
               to="/blog"
-              className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 sm:text-[13px]"
+              className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/[0.85] px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 sm:text-[13px]"
             >
               Browse all guides
               <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -285,13 +282,8 @@ const ResourcesPage: FC = () => {
         </header>
 
         <div id="resource-paths" className="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
-          {RESOURCE_PATHWAYS.map((pathway, index) => (
-            <ResourcePathwayCard
-              key={pathway.title}
-              pathway={pathway}
-              index={index}
-              reduceMotion={reduceMotion}
-            />
+          {RESOURCE_PATHWAYS.map((pathway) => (
+            <ResourcePathwayCard key={pathway.title} pathway={pathway} reduceMotion={reduceMotion} />
           ))}
         </div>
       </section>
