@@ -11,6 +11,10 @@ import {
   getPhonicsProgrammaticPilotPageByConceptId,
   getPhonicsProgrammaticPilotPageBySlug,
 } from '../lib/phonicsProgrammaticPilot.js';
+import {
+  getPhonicsResourceDiscoveryClusterForPath,
+  getRelatedPhonicsResourcePages,
+} from '../lib/phonicsResourceDiscoveryGraph.js';
 import { getApprovedPhonicsEditorialReview } from '../lib/phonicsEditorialReviewRegistry.js';
 import { getEditorialReviewer } from '../lib/editorialReviewerRegistry';
 import { getCanonicalTopicOwnerPath } from '../lib/canonicalTopicOwnershipRegistry.js';
@@ -113,6 +117,8 @@ export default function PhonicsKnowledgePage() {
   const prerequisiteLinks = concept.prerequisiteIds.map(learningLink).filter((item): item is LearningLink => Boolean(item));
   const nextLinks = concept.nextIds.map(learningLink).filter((item): item is LearningLink => Boolean(item));
   const relatedPaths = uniqueRelatedPaths(concept);
+  const discoveryCluster = getPhonicsResourceDiscoveryClusterForPath(page.path);
+  const relatedGuides = getRelatedPhonicsResourcePages(page.path, 4);
   const editorialReview = getApprovedPhonicsEditorialReview(page.path);
   const reviewer = editorialReview ? getEditorialReviewer(editorialReview.reviewerKey) : null;
 
@@ -254,6 +260,32 @@ export default function PhonicsKnowledgePage() {
             </div>
           </section>
         ) : null}
+
+        <section className="mt-8 rounded-[1.8rem] border border-sky-100 bg-sky-50/45 p-5 sm:p-7" data-resource-related-guides>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-700">Explore related phonics patterns</p>
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.025em] text-slate-950">
+                {discoveryCluster ? `More from ${discoveryCluster.label.toLowerCase()}` : 'Continue through the phonics resource graph'}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">These links are selected from the published Tiny Steps phonics graph, prioritising nearby patterns in the same family before adjacent curriculum concepts.</p>
+            </div>
+            <Link to="/resources/phonics" className="text-sm font-black text-sky-700 hover:text-sky-900">Browse all phonics resources →</Link>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {relatedGuides.map((related) => (
+              <Link
+                key={related.path}
+                to={related.path}
+                data-resource-related-path={related.path}
+                className="group rounded-2xl border border-sky-100 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-[0_12px_30px_rgba(15,23,42,0.07)]"
+              >
+                <span className="block text-sm font-black leading-5 text-slate-950 group-hover:text-sky-800">{related.cardTitle}</span>
+                <span className="mt-1.5 line-clamp-2 block text-xs leading-5 text-slate-500">{related.concept.quickAnswer}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-8 rounded-[1.8rem] border border-slate-200 bg-white p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-4">

@@ -1,11 +1,13 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  PHONICS_PROGRAMMATIC_PILOT_GROUPS,
   PHONICS_PROGRAMMATIC_PILOT_PAGES,
-  getPhonicsProgrammaticPilotPagesByGroup,
   type PhonicsProgrammaticPilotPage,
 } from '../../lib/phonicsProgrammaticPilot.js';
+import {
+  PHONICS_RESOURCE_DISCOVERY_CLUSTERS,
+  PHONICS_RESOURCE_DISCOVERY_REVISION,
+} from '../../lib/phonicsResourceDiscoveryGraph.js';
 
 export const PHONICS_PILOT_RESOURCE_LINKS = Object.freeze(
   PHONICS_PROGRAMMATIC_PILOT_PAGES.map((page) => Object.freeze({
@@ -16,16 +18,10 @@ export const PHONICS_PILOT_RESOURCE_LINKS = Object.freeze(
   })),
 );
 
-const groupDescriptions: Record<string, string> = {
-  'Spelling rules': 'Understand the rule boundary, examples and exceptions before asking a child to apply the spelling independently.',
-  'Consonant patterns': 'Focus on one sound or consonant spelling pattern at a time, with clear contrasts and decoding practice.',
-  'Vowel patterns': 'Compare vowel spellings carefully so children learn patterns without assuming that one spelling always has one sound.',
-  'Word structure': 'Use syllable and word-structure cues to move beyond single-syllable decoding into longer words.',
-};
-
 const GuideCard: FC<{ page: PhonicsProgrammaticPilotPage }> = ({ page }) => (
   <Link
     to={page.path}
+    data-resource-discovery-path={page.path}
     className="group rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_10px_32px_rgba(15,23,42,0.045)] transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_16px_38px_rgba(15,23,42,0.08)]"
   >
     <div className="flex items-start justify-between gap-3">
@@ -43,35 +39,54 @@ const GuideCard: FC<{ page: PhonicsProgrammaticPilotPage }> = ({ page }) => (
 );
 
 const PhonicsPilotGuideGrid: FC = () => (
-  <section aria-labelledby="focused-phonics-guides" className="mt-10 rounded-[2rem] border border-slate-200/80 bg-slate-50/70 p-5 sm:p-7 lg:p-8">
+  <section
+    aria-labelledby="focused-phonics-guides"
+    className="mx-auto mt-10 max-w-7xl rounded-[2rem] border border-slate-200/80 bg-slate-50/70 p-5 shadow-[0_18px_52px_rgba(15,23,42,0.045)] sm:p-7 lg:p-8"
+    data-resource-discovery-revision={PHONICS_RESOURCE_DISCOVERY_REVISION}
+  >
     <div className="max-w-3xl">
       <p className="text-[11px] font-black uppercase tracking-[0.24em] text-sky-700">Focused phonics guides</p>
       <h2 id="focused-phonics-guides" className="mt-2 text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-3xl">
         Learn one spelling or sound pattern clearly
       </h2>
       <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-        These focused guides sit below the broader phonics pathway. Choose the pattern your child is currently learning rather than working through every page at once.
+        Browse by pattern family, then open the exact guide your child needs. Every published phonics guide remains reachable directly from this hub as the library grows.
       </p>
     </div>
 
-    <div className="mt-7 space-y-7">
-      {PHONICS_PROGRAMMATIC_PILOT_GROUPS.map((group) => {
-        const pages = getPhonicsProgrammaticPilotPagesByGroup(group);
-        return (
-          <section key={group} aria-labelledby={`pilot-group-${group.toLowerCase().replace(/\s+/g, '-')}`}>
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <h3 id={`pilot-group-${group.toLowerCase().replace(/\s+/g, '-')}`} className="text-base font-black text-slate-900">{group}</h3>
-                <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-500">{groupDescriptions[group]}</p>
-              </div>
-              <span className="text-xs font-bold text-slate-400">{pages.length} guides</span>
+    <nav aria-label="Browse phonics guide families" className="mt-5 flex flex-wrap gap-2">
+      {PHONICS_RESOURCE_DISCOVERY_CLUSTERS.map((cluster) => (
+        <a
+          key={cluster.id}
+          href={`#${cluster.anchorId}`}
+          className="rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-black text-slate-700 transition hover:border-sky-300 hover:text-sky-800"
+        >
+          {cluster.label} <span className="text-slate-400">({cluster.pages.length})</span>
+        </a>
+      ))}
+    </nav>
+
+    <div className="mt-7 space-y-8">
+      {PHONICS_RESOURCE_DISCOVERY_CLUSTERS.map((cluster) => (
+        <section
+          key={cluster.id}
+          id={cluster.anchorId}
+          aria-labelledby={`${cluster.anchorId}-title`}
+          data-resource-discovery-cluster={cluster.id}
+          className="scroll-mt-24"
+        >
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div className="max-w-3xl">
+              <h3 id={`${cluster.anchorId}-title`} className="text-base font-black text-slate-900">{cluster.label}</h3>
+              <p className="mt-1 text-sm leading-5 text-slate-500">{cluster.description}</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {pages.map((page) => <GuideCard key={page.path} page={page} />)}
-            </div>
-          </section>
-        );
-      })}
+            <span className="text-xs font-bold text-slate-400">{cluster.pages.length} guides</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {cluster.pages.map((page) => <GuideCard key={page.path} page={page} />)}
+          </div>
+        </section>
+      ))}
     </div>
   </section>
 );
