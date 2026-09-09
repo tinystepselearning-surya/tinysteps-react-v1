@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getStaticTestimonialsForSection, type StaticTestimonial } from '../../lib/staticTestimonials';
+import {
+  getStaticTestimonialsForProgram,
+  getStaticTestimonialsForSection,
+  type StaticTestimonial,
+  type StaticTestimonialProgram,
+} from '../../lib/staticTestimonials';
 
 type TestimonialsSectionProps = {
   title: string;
@@ -8,6 +13,7 @@ type TestimonialsSectionProps = {
   limit?: number;
   pageTag?: string;
   courseTag?: string;
+  program?: StaticTestimonialProgram;
   featuredOnly?: boolean;
   compact?: boolean;
   className?: string;
@@ -24,12 +30,12 @@ function TestimonialCard({ item, compact }: { item: StaticTestimonial; compact?:
   const childLine = formatChildLine(item);
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="mb-2 text-sm font-semibold text-amber-600" aria-label={`${item.rating} out of 5 stars`}>
         {'★'.repeat(item.rating)}
       </p>
       <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
-      <p className={`mt-2 text-slate-700 ${compact ? 'text-sm leading-6' : 'text-base leading-7'}`}>"{item.quote}"</p>
+      <p className={`mt-2 flex-1 text-slate-700 ${compact ? 'text-sm leading-6' : 'text-base leading-7'}`}>"{item.quote}"</p>
       <div className="mt-4 border-t border-slate-100 pt-3">
         <p className="text-sm font-semibold text-slate-900">— {item.parentName}</p>
         {childLine ? <p className="text-xs text-slate-500">{childLine}</p> : null}
@@ -46,6 +52,7 @@ export default function TestimonialsSection({
   limit = 4,
   pageTag,
   courseTag,
+  program,
   featuredOnly = false,
   compact = false,
   className = '',
@@ -55,11 +62,16 @@ export default function TestimonialsSection({
   void featuredOnly;
 
   const items = useMemo(
-    () => getStaticTestimonialsForSection({ pageTag, courseTag, limit }),
-    [courseTag, limit, pageTag],
+    () => (program
+      ? getStaticTestimonialsForProgram(program, limit)
+      : getStaticTestimonialsForSection({ pageTag, courseTag, limit })),
+    [courseTag, limit, pageTag, program],
   );
 
-  const columnsClass = useMemo(() => (compact ? 'md:grid-cols-2' : 'md:grid-cols-2 xl:grid-cols-3'), [compact]);
+  const columnsClass = useMemo(
+    () => (compact ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-3'),
+    [compact],
+  );
 
   if (items.length === 0) {
     return (
@@ -85,13 +97,13 @@ export default function TestimonialsSection({
           {viewAllHref ? (
             <Link
               to={viewAllHref}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
             >
               {viewAllLabel}
             </Link>
           ) : null}
         </div>
-        <div className={`grid gap-4 ${columnsClass}`}>
+        <div className={`grid items-stretch gap-4 ${columnsClass}`}>
           {items.map((item) => (
             <TestimonialCard key={item.id} item={item} compact={compact} />
           ))}
