@@ -1,0 +1,111 @@
+import type { BlogPost } from '../../types';
+
+const post: BlogPost = {
+  slug: 'phonological-awareness-vs-phonemic-awareness-vs-phonics',
+  title: 'Phonological Awareness vs Phonemic Awareness vs Phonics: A Parent Guide',
+  category: 'Research',
+  author: 'Tiny Steps Research Desk',
+  date: '2026-09-09',
+  readTime: '15 min read',
+  hero: '/blog/hero-research.jpg',
+  metaDescription:
+    'Phonological awareness, phonemic awareness and phonics explained for parents: what happens with spoken sounds, where print enters, and what to practise next.',
+  excerpt:
+    'Understand the difference between phonological awareness, phonemic awareness and phonics, with simple child examples and a clear guide to where print enters reading.',
+  audience: 'Parent',
+  discoveryCategory: 'Parent Guides',
+  body: [
+    { type: 'h2', content: 'Quick answer: the difference is mainly the size of the sound unit — and whether print is involved' },
+    { type: 'p', content: '**Phonological awareness** is a broad ability to notice and work with the sound structure of spoken language. It can include words in sentences, syllables, rhyme, onset-rime and individual speech sounds. **Phonemic awareness** is the phoneme-level part of phonological awareness: hearing, blending, segmenting and manipulating individual speech sounds. **Phonics** connects those spoken sounds with written letters or letter groups so a child can read and spell from print.' },
+    { type: 'p', content: 'A useful parent boundary is: **phonological and phonemic awareness can be demonstrated without looking at letters; phonics begins when speech sounds are explicitly connected with print**. The skills interact, so this is not a rule that children must complete a long oral-only stage before they are allowed to see letters.' },
+
+    { type: 'h2', content: 'One word can show all three skills' },
+    { type: 'p', content: 'Take the word **map**. A child can work with it in several different ways.' },
+    { type: 'li', content: '**Phonological awareness:** the child can notice that *map* is one spoken word, clap one syllable, or recognise that *map* rhymes with *cap*.' },
+    { type: 'li', content: '**Phonemic awareness:** without showing the written word, the child can blend /m/ /a/ /p/ into *map*, segment *map* into three phonemes, or change /m/ to /t/ to make *tap*.' },
+    { type: 'li', content: '**Phonics:** the child sees **m-a-p**, retrieves the sounds represented by those graphemes and blends through the print to read *map*; for spelling, the child can map the heard phonemes back to letters.' },
+    { type: 'p', content: 'This distinction matters because the same word can be used for oral sound work and for print-based reading work. What changes is the task the child is being asked to perform.' },
+
+    { type: 'h2', content: 'Phonological awareness is the broad sound-awareness umbrella' },
+    { type: 'p', content: 'Phonological awareness covers several levels of spoken-language sound structure. Parents do not need to turn this into a rigid checklist, but knowing the levels helps explain why “my child can rhyme” and “my child can segment phonemes” are related but different achievements.' },
+    { type: 'h3', content: 'Words in sentences' },
+    { type: 'p', content: 'A child can notice that **The dog runs** contains three spoken words. This is sound-and-language awareness before individual phonemes are the focus.' },
+    { type: 'h3', content: 'Syllables' },
+    { type: 'p', content: 'A child can clap or count the spoken beats in a word. **Elephant** can be heard as three syllables: el-e-phant. Syllable work is phonological awareness, not phonics, unless the activity also asks the child to connect those sounds with written patterns.' },
+    { type: 'h3', content: 'Rhyme and onset-rime' },
+    { type: 'p', content: 'A child can recognise that **cat** and **hat** rhyme or work with the beginning and rime of a spoken word. This again operates on spoken sound structure.' },
+    { type: 'h3', content: 'Individual phonemes' },
+    { type: 'p', content: 'At the most fine-grained level, the child works with individual speech sounds. That phoneme-level work is what we call phonemic awareness.' },
+
+    { type: 'h2', content: 'Phonemic awareness is specifically about individual speech sounds' },
+    { type: 'p', content: 'A phoneme is a speech sound that can distinguish one word from another. Phonemic-awareness tasks ask the child to attend to those individual sounds in spoken words.' },
+    { type: 'li', content: '**Identify:** “What sound do you hear first in *sun*?”' },
+    { type: 'li', content: '**Blend:** “What word do /s/ /u/ /n/ make?”' },
+    { type: 'li', content: '**Segment:** “Tell me the sounds you hear in *ship*.” → /sh/ /i/ /p/' },
+    { type: 'li', content: '**Manipulate:** “Say *map*. Change /m/ to /t/. What word now?” → *tap*' },
+    { type: 'p', content: 'These examples can be done with eyes closed because the task is about the spoken sound sequence. If written **s-u-n** or **sh-i-p** is shown and the child is asked to connect sounds to those graphemes, the task has moved into phonics.' },
+
+    { type: 'h2', content: 'Phonics is where speech sounds and written graphemes meet' },
+    { type: 'p', content: 'Phonics teaches that written letters and letter groups represent sounds in spoken words. Children use those relationships in two directions: **print → sound → word** when reading, and **spoken word → phonemes → graphemes** when spelling.' },
+    { type: 'p', content: 'This is why knowing alphabet names is not enough for decoding. A child may know that the letter **B** is called “bee” but still need to learn that **b** commonly represents /b/ in words such as *bat*. The broader [What Is Phonics for Kids?](/blog/what-is-phonics-for-kids) guide owns the full start-here explanation.' },
+
+    { type: 'h2', content: 'Oral blending and printed-word blending are related but not identical tasks' },
+    { type: 'p', content: 'If an adult says /m/ /a/ /p/ and the child combines the sounds into *map* without seeing letters, the child is demonstrating **phonemic blending**. If the child looks at **m-a-p**, retrieves the taught sound for each grapheme and combines them into *map*, the child is using **phonics for decoding**.' },
+    { type: 'p', content: 'A child can therefore succeed at one task and still need support with the other. If oral blending is secure but printed words remain difficult, check grapheme–phoneme knowledge and attention across the full printed word. If letter sounds are known but the child cannot combine them, use [How Kids Learn Blending](/blog/how-kids-learn-blending) and [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words).' },
+
+    { type: 'h2', content: 'Do children need to finish phonemic awareness before starting phonics?' },
+    { type: 'p', content: 'No universal long oral-only waiting period is supported by the evidence we use for Tiny Steps. Phonemic awareness is important, but sound awareness and letter–sound teaching can develop together. In fact, working with letters can help make phoneme identities more concrete for some children.' },
+    { type: 'p', content: 'The practical question is not “Has my child completed every oral game?” It is “Can the child hear and hold the sounds needed for the phonics task, and can they connect those sounds with the print they have been taught?” Instruction should respond to the actual bottleneck rather than enforce an artificial stage boundary.' },
+
+    { type: 'h2', content: 'What this can look like at home' },
+    { type: 'h3', content: 'If the goal is phonological awareness' },
+    { type: 'li', content: 'Clap the syllables in familiar spoken words.' },
+    { type: 'li', content: 'Notice rhyming words in a song or story.' },
+    { type: 'li', content: 'Count the words in a short spoken sentence.' },
+    { type: 'p', content: 'Keep the task oral when you want to see whether the child can hear the sound structure without print support.' },
+    { type: 'h3', content: 'If the goal is phonemic awareness' },
+    { type: 'li', content: 'Blend two or three spoken sounds into a word.' },
+    { type: 'li', content: 'Stretch a simple spoken word and identify its phonemes.' },
+    { type: 'li', content: 'Change one sound to make a new spoken word.' },
+    { type: 'p', content: 'Use words whose pronunciation is clear in the child’s variety of English, and avoid adding extra “uh” sounds to consonants when modelling.' },
+    { type: 'h3', content: 'If the goal is phonics' },
+    { type: 'li', content: 'Show a taught grapheme and retrieve its sound.' },
+    { type: 'li', content: 'Blend a printed word built from taught correspondences.' },
+    { type: 'li', content: 'Say a word and let the child segment and represent the sounds with known graphemes.' },
+    { type: 'p', content: 'The [Tiny Steps phonics resources hub](/resources/phonics) now keeps this distinction visible: sound awareness supports the reading system, while the word utility uses explicit grapheme-to-sound mappings instead of guessing pronunciation from spelling.' },
+
+    { type: 'h2', content: 'Five parent observations that help locate the gap' },
+    { type: 'li', content: '**Can the child hear syllables and rhyme?** If not, broader phonological-awareness play may help.' },
+    { type: 'li', content: '**Can the child orally blend simple phonemes?** If not, practise hearing and combining the sound sequence.' },
+    { type: 'li', content: '**Can the child orally segment simple words?** If not, spelling from sounds will also be harder.' },
+    { type: 'li', content: '**Can the child retrieve taught sounds from printed graphemes?** If not, strengthen the sound–print link.' },
+    { type: 'li', content: '**Can the child blend a fresh printed word built from taught code?** If not, check whether the problem is sound recall, blending, visual attention or an untaught spelling pattern.' },
+    { type: 'p', content: 'These are teaching observations, not diagnostic cut-offs. A child can also have broader speech, hearing, language, attention or learning needs that require appropriate professional assessment.' },
+
+    { type: 'h2', content: 'Common confusion: “sound” does not always mean one written letter' },
+    { type: 'p', content: 'English phonics is not a one-letter-one-sound system. The word **ship** has four letters but can be analysed as three phonemes /sh/ /i/ /p/. The first phoneme is represented by the two-letter grapheme **sh**. Likewise, **night** contains the three-letter grapheme **igh** representing the long-i sound in that word.' },
+    { type: 'p', content: 'That is why Tiny Steps stores phoneme/grapheme mappings explicitly in the sound-and-word utility rather than automatically splitting every word into letters.' },
+
+    { type: 'h2', content: 'Evidence and source boundary' },
+    { type: 'p', content: 'The definitions and distinctions above are supported by foundational-reading research and guidance, but the Tiny Steps examples and parent observation framework are editorial teaching tools, not standardized tests. The evidence does not justify one universal age, number of oral-only weeks, or mastery threshold for every child.' },
+    { type: 'li', content: '[IES / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding](https://ies.ed.gov/ncee/wwc/PracticeGuide/21/Published): recommends developing awareness of speech sounds, linking sounds to letters, decoding, word analysis, spelling and connected-text reading.' },
+    { type: 'li', content: '[Department for Education — The Reading Framework](https://www.gov.uk/government/publications/the-reading-framework-teaching-the-foundations-of-literacy): implementation guidance for systematic synthetic phonics, blending, assessment, fluency and matched reading material.' },
+    { type: 'li', content: '[Reading Rockets — Phonological and Phonemic Awareness](https://www.readingrockets.org/literacy-home/reading-101-guide-parents/reading-basics/phonological-and-phonemic-awareness): a parent-facing explanation of the oral sound-awareness distinction and common examples.' },
+    { type: 'p', content: 'Tiny Steps uses these sources to support the underlying concepts; we do not treat any commercial or informational website’s wording or sequence as a template to copy.' },
+
+    { type: 'h2', content: 'What to use next' },
+    { type: 'li', content: 'For the broad print-based reading explanation: [What Is Phonics for Kids?](/blog/what-is-phonics-for-kids).' },
+    { type: 'li', content: 'For a child who knows sounds but cannot combine them: [How Kids Learn Blending](/blog/how-kids-learn-blending).' },
+    { type: 'li', content: 'For explicit sound-and-word examples: [Phonics & Reading Resources](/resources/phonics).' },
+    { type: 'li', content: 'If you need a child-specific starting point: [book a free assessment](/book-demo).' },
+  ],
+  faq: [
+    { question: 'What is phonological awareness in simple words?', answer: 'Phonological awareness is the broad ability to notice and work with the sound structure of spoken language, including words, syllables, rhyme and individual speech sounds.' },
+    { question: 'What is the difference between phonological awareness and phonemic awareness?', answer: 'Phonemic awareness is the phoneme-level part of phonological awareness. It focuses specifically on individual speech sounds, such as blending, segmenting or changing phonemes in spoken words.' },
+    { question: 'What is the difference between phonemic awareness and phonics?', answer: 'Phonemic awareness can be demonstrated without print and focuses on speech sounds. Phonics explicitly connects those sounds with written letters or graphemes for reading and spelling.' },
+    { question: 'Should phonemic awareness be taught before phonics?', answer: 'Children need enough speech-sound awareness to use phonics successfully, but they do not need to complete a long universal oral-only stage first. Sound awareness and letter–sound learning can develop together.' },
+    { question: 'Is oral blending phonics?', answer: 'Oral blending without print is a phonemic-awareness task. Blending a printed word by retrieving sounds from graphemes is phonics-based decoding.' },
+  ],
+};
+
+export default post;
