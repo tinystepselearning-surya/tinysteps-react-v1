@@ -14,7 +14,7 @@ export type CurriculumOverride = {
   courses: Record<string, { weeks?: WeekOverride[] }>;
 };
 
-const PHONICS_OVERRIDE_KEYS = new Set([
+const AUTHORITATIVE_SOURCE_OVERRIDE_KEYS = new Set([
   'phonics-foundation',
   'phonics-foundations',
   'phonics-early',
@@ -22,15 +22,17 @@ const PHONICS_OVERRIDE_KEYS = new Set([
   'early-phonics',
   'phonics-advanced',
   'advanced-phonics',
+  'grammar-mastery',
+  'advanced-grammar',
 ]);
 
-const withoutLegacyPhonicsOverrides = (
+const withoutSourceOwnedOverrides = (
   value: CurriculumOverride | null,
 ): CurriculumOverride | null => {
   if (!value?.courses) return value;
 
   const courses = Object.fromEntries(
-    Object.entries(value.courses).filter(([slug]) => !PHONICS_OVERRIDE_KEYS.has(slug)),
+    Object.entries(value.courses).filter(([slug]) => !AUTHORITATIVE_SOURCE_OVERRIDE_KEYS.has(slug)),
   );
 
   return { ...value, courses };
@@ -46,10 +48,10 @@ export async function loadCurriculumOverrides(): Promise<CurriculumOverride | nu
     if (!res.ok) return null;
     const data = (await res.json()) as CurriculumOverride;
 
-    // Phonics is maintained in src/content/phonicsCurriculum.ts and courses.ts.
-    // Ignore legacy runtime JSON overrides so an older six-stage payload cannot
-    // overwrite the approved 31/40/30 lesson sequences on the public curriculum.
-    return withoutLegacyPhonicsOverrides(data);
+    // Phonics and Advanced Grammar are maintained in source curriculum modules.
+    // Ignore legacy runtime JSON for these routes so older six-stage payloads cannot
+    // overwrite approved lesson sequences, stage goals, outcomes, or public-page structure.
+    return withoutSourceOwnedOverrides(data);
   } catch (err) {
     console.warn('[curriculumLoader] Failed to load overrides', err);
     return null;
