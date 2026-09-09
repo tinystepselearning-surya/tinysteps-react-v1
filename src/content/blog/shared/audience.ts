@@ -18,7 +18,10 @@ export const SCHOOL_RESEARCH_SLUGS = new Set<string>([
 ]);
 
 export const PARENT_RESEARCH_SLUGS = new Set<string>([
+  'how-children-recognise-words-automatically-after-phonics',
+  'how-vocabulary-supports-reading-comprehension',
   'phonics-for-parents-guide',
+  'phonological-awareness-vs-phonemic-awareness-vs-phonics',
   'science-of-phonics-learning',
 ]);
 

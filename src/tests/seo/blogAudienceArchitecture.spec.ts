@@ -49,7 +49,7 @@ describe('blog audience architecture', () => {
 
     expect(missing).toEqual([]);
     expect(SCHOOL_RESEARCH_SLUGS.size).toBe(8);
-    expect(PARENT_RESEARCH_SLUGS.size).toBe(2);
+    expect(PARENT_RESEARCH_SLUGS.size).toBe(5);
   });
 
   it('enriches every normalized article with the expected audience and discovery category', () => {

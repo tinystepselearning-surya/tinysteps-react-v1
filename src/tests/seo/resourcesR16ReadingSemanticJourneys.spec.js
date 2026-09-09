@@ -84,14 +84,15 @@ describe('Resources R16 reading semantic journeys', () => {
     for (const id of nextBySource.keys()) expect(visit(id)).toBe(true);
   });
 
-  it('keeps commercial links out of the rendered educational pathway', () => {
+  it('keeps commercial links out of the rendered educational pathway through the downstream adapter', () => {
     const links = getReadingSemanticInternalLinksForPath('/blog/why-child-reads-words-but-does-not-understand-story', {
       limit: 4,
       excludeRelations: ['assessment', 'programme'],
     });
     expect(links.every((link) => !['assessment', 'programme'].includes(link.relation))).toBe(true);
-    expect(pathwaySource).toContain('getReadingSemanticInternalLinksForPath');
+    expect(pathwaySource).toContain('getGrammarWritingSemanticInternalLinksForPath');
     expect(pathwaySource).not.toContain("from '../../lib/semanticInternalLinkRegistry.js'");
+    expect(pathwaySource).not.toContain("from '../../lib/readingSemanticJourneyGraph.js'");
     expect(pathwaySource).toContain("excludeRelations: ['assessment', 'programme']");
   });
 
