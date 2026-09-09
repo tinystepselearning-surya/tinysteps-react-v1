@@ -1,0 +1,105 @@
+name: Resources R18 High-Value Grammar Writing Content
+
+on:
+  pull_request:
+    branches: [main, seo/resources-r17-grammar-writing-architecture]
+    paths:
+      - 'src/content/blog/posts/grammar/punctuation-and-capital-letters-for-kids.ts'
+      - 'src/content/blog/posts/grammar/how-to-teach-paragraph-writing-to-kids.ts'
+      - 'src/lib/grammarWritingContentExecutionRegistry.*'
+      - 'src/lib/grammarWritingContentCanonicalOwnership.*'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/tests/seo/resourcesR18*'
+      - 'src/tests/seo/resourcesR17*'
+      - 'scripts/audit-resources-r18-high-value-grammar-writing-content.mjs'
+      - 'scripts/audit-resources-r17-grammar-writing-architecture.mjs'
+      - 'docs/seo/resources-architecture/R18_*'
+      - '.github/workflows/resources-r18-high-value-grammar-writing-content.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r18-high-value-grammar-writing-content:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R0-R18 Resources and canonical curriculum regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Audit R18 high-value grammar writing content
+        run: node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --report
+      - name: Audit R17 grammar writing architecture after R18 execution
+        run: node scripts/audit-resources-r17-grammar-writing-architecture.mjs --r18-executed --report
+      - name: Audit R16 reading semantic journeys
+        run: node scripts/audit-resources-r16-reading-semantic-journeys.mjs --report
+      - name: Audit R15 high-value reading content
+        run: node scripts/audit-resources-r15-high-value-reading-content.mjs --report
+      - name: Audit R14 reading architecture after R15 execution
+        run: node scripts/audit-resources-r14-reading-knowledge-architecture.mjs --r15-executed --report
+      - name: Audit R13 sound and word utility engine
+        run: node scripts/audit-resources-r13-word-sound-utility.mjs --report
+      - name: Audit R12 controlled expansion
+        run: node scripts/audit-resources-r12-programmatic-expansion.mjs --report
+      - name: Audit R11 measurement and scoped expansion gate
+        run: node scripts/audit-resources-r11-measurement.mjs
+      - name: Audit R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --report
+      - name: Audit R9.1 human editorial review layer
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs
+      - name: Audit frozen R9 publication contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs
+      - name: Audit R8 approved-output safety under R12 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r12-approved
+      - name: Audit historical Brick 6 semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit historical canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify rendered R18 grammar writing content and discovery
+        run: node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --dist --report
+      - name: Verify rendered R16 reading semantic journeys
+        run: node scripts/audit-resources-r16-reading-semantic-journeys.mjs --dist --report
+      - name: Verify rendered R15 reading content and discovery
+        run: node scripts/audit-resources-r15-high-value-reading-content.mjs --dist --report
+      - name: Verify rendered R13 utility remains intact
+        run: node scripts/audit-resources-r13-word-sound-utility.mjs --dist --report
+      - name: Verify rendered R12 publication contract
+        run: node scripts/audit-resources-r12-programmatic-expansion.mjs --dist --report
+      - name: Verify rendered R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --dist --report
+      - name: Verify rendered R9.1 review claims
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs --dist
+      - name: Verify rendered frozen R9 contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs --dist
+      - name: Verify rendered R8 approved-output safety under R12 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r12-approved --dist
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+      - name: Upload R18 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources-r18-high-value-grammar-writing-content
+          path: |
+            artifacts/resources-r18-high-value-grammar-writing-content.json
+            artifacts/resources-r17-grammar-writing-architecture.json
+          if-no-files-found: warn
