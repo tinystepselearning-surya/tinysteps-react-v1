@@ -13,6 +13,12 @@ const root = process.cwd();
 const errors = [];
 const warnings = [];
 const add = (code, id, detail) => errors.push({ code, id, detail });
+const allowR18Execution = process.argv.includes('--r18-executed');
+let r18ExecutionById = new Map();
+if (allowR18Execution) {
+  const { GRAMMAR_WRITING_CONTENT_EXECUTION } = await import('../src/lib/grammarWritingContentExecutionRegistry.js');
+  r18ExecutionById = new Map(GRAMMAR_WRITING_CONTENT_EXECUTION.map((item) => [item.id, item]));
+}
 
 const domainIds = GRAMMAR_WRITING_KNOWLEDGE_DOMAINS.map((item) => item.id);
 if (GRAMMAR_WRITING_KNOWLEDGE_DOMAINS.length !== 9) add('domain-count', 'grammar-writing', `Expected 9 domains, found ${GRAMMAR_WRITING_KNOWLEDGE_DOMAINS.length}.`);
@@ -62,10 +68,17 @@ const publicationSurfaces = [
 ].filter((file) => fs.existsSync(file));
 for (const item of creates) {
   const slug = item.proposedPath.split('/').filter(Boolean).at(-1);
+  const execution = r18ExecutionById.get(item.id);
+  const explicitlyExecuted = allowR18Execution && execution?.state === 'published' && execution.path === item.proposedPath;
+  let occurrences = 0;
   for (const file of publicationSurfaces) {
     const text = fs.readFileSync(file, 'utf8');
-    if (text.includes(slug)) add('gap-already-published', item.id, path.relative(root, file));
+    if (!text.includes(slug)) continue;
+    occurrences += 1;
+    if (!explicitlyExecuted) add('gap-already-published', item.id, path.relative(root, file));
   }
+  if (allowR18Execution && !explicitlyExecuted) add('gap-missing-r18-execution', item.id, item.proposedPath);
+  if (allowR18Execution && explicitlyExecuted && occurrences === 0) add('executed-gap-not-found', item.id, item.proposedPath);
 }
 
 const source = fs.readFileSync(path.join(root, 'src/lib/grammarWritingKnowledgeArchitecture.js'), 'utf8');
@@ -81,6 +94,7 @@ const summary = {
   refresh: GRAMMAR_WRITING_CONTENT_AUDIT.filter((item) => item.action === 'refresh').length,
   consolidate: GRAMMAR_WRITING_CONTENT_AUDIT.filter((item) => item.action === 'consolidate').length,
   create: creates.length,
+  downstreamExecuted: allowR18Execution ? creates.filter((item) => r18ExecutionById.get(item.id)?.state === 'published').length : 0,
 };
 const result = { summary, errors, warnings };
 console.log(JSON.stringify(result, null, 2));
@@ -89,4 +103,6 @@ if (process.argv.includes('--report')) {
   fs.writeFileSync(path.join(root, 'artifacts/resources-r17-grammar-writing-architecture.json'), `${JSON.stringify(result, null, 2)}\n`);
 }
 if (errors.length) process.exitCode = 1;
-else console.log(`PASS: R17 maps ${summary.domains} grammar/writing domains, protects ${summary.keep} strong existing owners, and records only ${summary.create} unpublished content gaps.`);
+else console.log(allowR18Execution
+  ? `PASS: R17 planning remains intact and exactly ${summary.downstreamExecuted} controlled CREATE gaps are explicitly executed by R18.`
+  : `PASS: R17 maps ${summary.domains} grammar/writing domains, protects ${summary.keep} strong existing owners, and records only ${summary.create} unpublished content gaps.`);

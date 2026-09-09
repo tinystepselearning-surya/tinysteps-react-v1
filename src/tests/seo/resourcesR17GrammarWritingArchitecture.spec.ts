@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import { getCanonicalTopicOwnerPath } from '../../lib/canonicalTopicOwnershipRegistry.js';
+import { getGrammarWritingContentExecution } from '../../lib/grammarWritingContentExecutionRegistry.js';
 import {
   GRAMMAR_WRITING_CONTENT_ACTIONS,
   GRAMMAR_WRITING_CONTENT_AUDIT,
@@ -60,7 +61,7 @@ describe('Resources R17 grammar and writing knowledge architecture', () => {
     }
   });
 
-  it('records only two genuine CREATE gaps and does not publish them', () => {
+  it('preserves exactly two R17 CREATE decisions while requiring explicit R18 execution before publication', () => {
     const slugs = new Set(blogPosts.map((post) => post.slug));
     const creates = getGrammarWritingContentAuditByAction('create');
     expect(creates).toHaveLength(2);
@@ -71,7 +72,10 @@ describe('Resources R17 grammar and writing knowledge architecture', () => {
     for (const record of creates) {
       expect(record.path).toBeNull();
       expect(record.proposedPath).toMatch(/^\/blog\/[a-z0-9-]+$/);
-      expect(slugs.has(record.proposedPath!.replace(/^\/blog\//, ''))).toBe(false);
+      const execution = getGrammarWritingContentExecution(record.id);
+      expect(execution?.state).toBe('published');
+      expect(execution?.path).toBe(record.proposedPath);
+      expect(slugs.has(record.proposedPath!.replace(/^\/blog\//, ''))).toBe(true);
     }
   });
 
