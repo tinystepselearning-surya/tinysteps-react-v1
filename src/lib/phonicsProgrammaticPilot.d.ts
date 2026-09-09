@@ -16,7 +16,7 @@ export interface PhonicsProgrammaticPilotPage {
   readonly cardTitle: string;
   readonly group: PhonicsProgrammaticPilotGroup;
   readonly publicationState: 'approved-wave-1';
-  readonly reviewedRevision: string;
+  readonly publicationRevision: string;
   readonly reviewDecision: string;
   readonly concept: PhonicsKnowledgeConcept;
 }
