@@ -131,7 +131,7 @@ export default function PhonicsSoundBoxes({
       </div>
 
       <p className="mt-5 text-xs leading-5 text-slate-500">
-        Each button uses an explicit reviewed sound mapping. Tiny Steps does not guess pronunciation from spelling.
+        Each button uses an explicit stored sound mapping. Tiny Steps does not guess pronunciation from spelling.
       </p>
     </section>
   );
