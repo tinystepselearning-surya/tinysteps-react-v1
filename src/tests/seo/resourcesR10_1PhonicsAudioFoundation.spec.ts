@@ -7,7 +7,7 @@ import {
   PHONICS_SOUND_REGISTRY,
   PHONICS_SOUND_UPLOAD_MANIFEST,
   getPhonicsSoundDefinition,
-} from '../../lib/phonicsSoundRegistry';
+} from '../../lib/phonicsAudioFoundation';
 import { PHONICS_WORD_SOUND_FRAMEWORK_EXAMPLES } from '../../content/phonicsWordSounds';
 
 const root = process.cwd();
@@ -23,19 +23,31 @@ describe('Resources R10.1 phonics audio foundation', () => {
     }
   });
 
-  it('gives every new teacher recording one stable future filename', () => {
+  it('maps every teacher sound ID to an explicit supplied recording filename', () => {
     expect(PHONICS_SOUND_UPLOAD_MANIFEST.length).toBeGreaterThanOrEqual(20);
     expect(new Set(PHONICS_SOUND_UPLOAD_MANIFEST.map((entry) => entry.id)).size)
       .toBe(PHONICS_SOUND_UPLOAD_MANIFEST.length);
-    expect(new Set(PHONICS_SOUND_UPLOAD_MANIFEST.map((entry) => entry.filename)).size)
-      .toBe(PHONICS_SOUND_UPLOAD_MANIFEST.length);
 
     for (const entry of PHONICS_SOUND_UPLOAD_MANIFEST) {
-      expect(entry.filename).toBe(`${entry.id}.mp3`);
-      expect(entry.uploadPath).toBe(`public${PHONICS_PATTERN_AUDIO_ROOT}/${entry.id}.mp3`);
+      expect(entry.filename.endsWith('.mp3')).toBe(true);
+      expect(entry.uploadPath).toBe(`public${PHONICS_PATTERN_AUDIO_ROOT}/${entry.filename}`);
       expect(entry.recordingCue.length).toBeGreaterThan(12);
       expect(entry.exampleWords.length).toBeGreaterThanOrEqual(2);
     }
+
+    const byId = new Map(PHONICS_SOUND_UPLOAD_MANIFEST.map((entry) => [entry.id, entry] as const));
+    expect(byId.get('sh')?.filename).toBe('sh-ship.mp3');
+    expect(byId.get('th-voiceless')?.filename).toBe('th-thin.mp3');
+    expect(byId.get('th-voiced')?.filename).toBe('th-the.mp3');
+    expect(byId.get('wh')?.filename).toBe('wh-whip.mp3');
+    expect(byId.get('long-a')?.filename).toBe('a-cake.mp3');
+    expect(byId.get('long-u')?.filename).toBe('u-use-cue.mp3');
+    expect(byId.get('oo-long')?.filename).toBe('oo-boot-new.mp3');
+    expect(byId.get('oo-short')?.filename).toBe('oo-book-bush.mp3');
+    expect(byId.get('schwa')?.filename).toBe('Schwa-What.mp3');
+    expect(byId.get('er')?.filename).toBe('er-herd-bird-turn.mp3');
+    expect(byId.get('ir')?.filename).toBe('er-herd-bird-turn.mp3');
+    expect(byId.get('ur')?.filename).toBe('er-herd-bird-turn.mp3');
   });
 
   it('does not require duplicate recordings for graphemes that reuse a canonical sound', () => {
