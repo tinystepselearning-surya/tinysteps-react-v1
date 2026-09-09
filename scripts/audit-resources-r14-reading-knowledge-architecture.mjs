@@ -13,6 +13,12 @@ const root = process.cwd();
 const errors = [];
 const warnings = [];
 const add = (code, id, detail) => errors.push({ code, id, detail });
+const allowR15Execution = process.argv.includes('--r15-executed');
+let r15ExecutionById = new Map();
+if (allowR15Execution) {
+  const { READING_CONTENT_EXECUTION } = await import('../src/lib/readingContentExecutionRegistry.js');
+  r15ExecutionById = new Map(READING_CONTENT_EXECUTION.map((item) => [item.id, item]));
+}
 
 const domainIds = READING_KNOWLEDGE_DOMAINS.map((item) => item.id);
 if (READING_KNOWLEDGE_DOMAINS.length !== 9) add('domain-count', 'reading-knowledge', `Expected 9 domains, found ${READING_KNOWLEDGE_DOMAINS.length}.`);
@@ -61,10 +67,17 @@ const publicationSurfaces = [
 
 for (const item of createRecords) {
   const slug = item.proposedPath.split('/').filter(Boolean).at(-1);
+  const execution = r15ExecutionById.get(item.id);
+  const explicitlyExecuted = allowR15Execution && execution?.state === 'published' && execution.path === item.proposedPath;
+  let occurrences = 0;
   for (const file of publicationSurfaces) {
     const text = fs.readFileSync(file, 'utf8');
-    if (text.includes(slug)) add('gap-already-published', item.id, path.relative(root, file));
+    if (!text.includes(slug)) continue;
+    occurrences += 1;
+    if (!explicitlyExecuted) add('gap-already-published', item.id, path.relative(root, file));
   }
+  if (allowR15Execution && !explicitlyExecuted) add('gap-missing-r15-execution', item.id, item.proposedPath);
+  if (allowR15Execution && explicitlyExecuted && occurrences === 0) add('executed-gap-not-found', item.id, item.proposedPath);
 }
 
 const source = fs.readFileSync(path.join(root, 'src/lib/readingKnowledgeArchitecture.js'), 'utf8');
@@ -79,6 +92,7 @@ const summary = {
   refresh: READING_CONTENT_AUDIT.filter((item) => item.action === 'refresh').length,
   consolidate: READING_CONTENT_AUDIT.filter((item) => item.action === 'consolidate').length,
   create: createRecords.length,
+  downstreamExecuted: allowR15Execution ? createRecords.filter((item) => r15ExecutionById.get(item.id)?.state === 'published').length : 0,
 };
 
 const result = { summary, errors, warnings };
@@ -88,4 +102,6 @@ if (process.argv.includes('--report')) {
   fs.writeFileSync(path.join(root, 'artifacts/resources-r14-reading-knowledge-architecture.json'), `${JSON.stringify(result, null, 2)}\n`);
 }
 if (errors.length) process.exitCode = 1;
-else console.log(`PASS: R14 maps ${summary.domains} reading domains, protects ${summary.keep + summary.refresh} existing high-value owners, and records only ${summary.create} unpublished content gaps.`);
+else console.log(allowR15Execution
+  ? `PASS: R14 planning remains intact and exactly ${summary.downstreamExecuted} controlled CREATE gaps are explicitly executed by R15.`
+  : `PASS: R14 maps ${summary.domains} reading domains, protects ${summary.keep + summary.refresh} existing high-value owners, and records only ${summary.create} unpublished content gaps.`);
