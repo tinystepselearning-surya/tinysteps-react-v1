@@ -3,7 +3,7 @@ import type { PhonicsWordSoundSegment } from '../../content/phonicsWordSounds';
 import {
   getPhonicsSoundDefinition,
   type PhonicsSoundId,
-} from '../../lib/phonicsSoundRegistry';
+} from '../../lib/phonicsAudioFoundation';
 
 type PlaybackState = 'idle' | 'playing' | 'unavailable';
 
