@@ -1,5 +1,5 @@
-import type { FC } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState, type FC } from 'react';
+import { motion } from 'framer-motion';
 import {
   ArrowUpRight,
   BookOpenText,
@@ -105,6 +105,21 @@ const RESOURCE_PATHWAYS = [
 
 type ResourcePathway = (typeof RESOURCE_PATHWAYS)[number];
 
+function usePrefersReducedMotion() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setReduceMotion(mediaQuery.matches);
+
+    updatePreference();
+    mediaQuery.addEventListener?.('change', updatePreference);
+    return () => mediaQuery.removeEventListener?.('change', updatePreference);
+  }, []);
+
+  return reduceMotion;
+}
+
 function ResourcePathwayCard({
   pathway,
   reduceMotion,
@@ -179,7 +194,7 @@ function ResourcePathwayCard({
 }
 
 const ResourcesPage: FC = () => {
-  const reduceMotion = useReducedMotion() ?? false;
+  const reduceMotion = usePrefersReducedMotion();
   const seo = getRouteConfig('/resources');
   const title = seo?.title ?? 'English Learning Resources for Kids, Parents & Educators | Tiny Steps';
   const description =
