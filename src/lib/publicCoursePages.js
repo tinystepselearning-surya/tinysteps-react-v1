@@ -385,7 +385,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     h1: 'Grammar Mastery Classes for Stronger Writing',
     title: 'Grammar Mastery Classes for Kids | Tiny Steps',
     description:
-      'Advanced grammar and writing support for children who need stronger tenses, sentence control, editing, paragraph writing, and confident expression.',
+      'Learners progress from basic grammar knowledge to confident, accurate speaking and independent writing, with stronger sentence structure, tense control, clarity, fluency, and self-editing skills.',
     educationalLevel: 'Advanced',
     track: 'grammar',
     breadcrumbName: 'Grammar Mastery',
