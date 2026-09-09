@@ -10,6 +10,7 @@ import {
 type TestimonialsSectionProps = {
   title: string;
   subtitle?: string;
+  eyebrow?: string;
   limit?: number;
   pageTag?: string;
   courseTag?: string;
@@ -49,6 +50,7 @@ function TestimonialCard({ item, compact }: { item: StaticTestimonial; compact?:
 export default function TestimonialsSection({
   title,
   subtitle,
+  eyebrow = 'Parent Reviews',
   limit = 4,
   pageTag,
   courseTag,
@@ -68,10 +70,7 @@ export default function TestimonialsSection({
     [courseTag, limit, pageTag, program],
   );
 
-  const columnsClass = useMemo(
-    () => (compact ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-3'),
-    [compact],
-  );
+  const columnsClass = 'md:grid-cols-2 xl:grid-cols-3';
 
   if (items.length === 0) {
     return (
@@ -90,7 +89,7 @@ export default function TestimonialsSection({
       <div className="mx-auto max-w-6xl">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Reviews</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">{eyebrow}</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">{title}</h2>
             {subtitle ? <p className="mt-2 max-w-3xl text-sm text-slate-600 sm:text-base">{subtitle}</p> : null}
           </div>
