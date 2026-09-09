@@ -4,9 +4,15 @@ Date: 2026-09-09
 
 ## Goal
 
-Create a reusable, reviewable phonics-audio contract that can power interactive sound boxes on future word/reference pages without recording every word sound-by-sound.
+Create a reusable phonics-audio foundation that can power explicit sound boxes without recording every word sound-by-sound and without guessing pronunciation from spelling.
 
 This is a parallel capability layer. It does not publish new SEO URLs and it does not replace Brick 11 measurement work.
+
+## Compatibility boundary
+
+R10.1 now keeps its implementation in `src/lib/phonicsAudioFoundation.ts` rather than `phonicsSoundRegistry.ts`.
+
+That is deliberate: the later R13 utility engine owns the broader semantic `phonicsSoundRegistry` contract. Keeping the R10.1 module foundation-specific prevents TypeScript/JavaScript module shadowing when the later brick is merged.
 
 ## Existing assets
 
@@ -14,64 +20,72 @@ Tiny Steps already has one MP3 per base letter at:
 
 `/public/games/phonics/a.mp3` through `/public/games/phonics/z.mp3`.
 
-Those files remain the canonical source for the current single-letter recordings.
+Those remain available as the existing single-letter layer.
 
-## New asset convention
+## Supplied teacher recordings
 
-New reusable phonics sounds use:
+Pattern audio uses:
 
-`/public/games/phonics/sounds/<sound-id>.mp3`
+`/public/games/phonics/sounds/<supplied-filename>.mp3`
 
-The code registry owns the exact `sound-id` values. Teachers can record files independently and upload them later using those exact filenames.
+The sound ID and the asset filename are separate concepts. R10.1 points to the actual supplied filenames such as:
+
+- `sh-ship.mp3`
+- `th-thin.mp3` / `th-the.mp3`
+- `a-cake.mp3`
+- `oo-book-bush.mp3` / `oo-boot-new.mp3`
+- `er-herd-bird-turn.mp3`
+- `Schwa-What.mp3`
+
+The full foundation upload list is documented in `PHONICS_AUDIO_TEACHER_UPLOAD_LIST.md`.
 
 ## Missing-audio behaviour
 
-A sound can be registered before the MP3 exists.
+A sound can be registered before the MP3 exists in the repository.
 
-The UI still renders the play control. On click it attempts the registered asset path. If the file is not present or cannot be decoded, the component reports `Audio coming soon` and does not substitute browser TTS or an incorrect letter sound.
-
-Therefore, once the correct MP3 is uploaded to the registered path, the existing control starts playing it without a code change.
+The UI attempts only the explicit registered asset path. If the file is missing or cannot be decoded, the component reports `Audio coming soon`. It does not substitute browser TTS or silently choose another phonics sound.
 
 ## Why sound IDs are reading-specific
 
-A grapheme is not always one sound. The registry therefore uses reading-specific IDs for ambiguous spellings, for example:
+A grapheme is not always one sound. The foundation keeps reading-specific choices for ambiguous spellings, for example:
 
 - `th-voiceless` vs `th-voiced`
 - `oo-long` vs `oo-short`
-- `ow-long-o` vs `ow-ou`
-- `ea-long-e` vs `ea-short-e` vs `ea-long-a`
+- long-O `ow` vs /ow/ `ow`
 
 Word segmentation must select the intended sound ID explicitly. The system must never infer a phoneme only from spelling.
 
 ## Word sound-map contract
 
-Future word pages use reviewed segments:
+The R10.1 examples are framework records only. They are explicitly stored mappings; they are **not** claimed to be human-reviewed publication records.
 
 ```ts
 {
   word: 'ship',
+  editorialState: 'framework-example',
   segments: [
     { grapheme: 'sh', soundId: 'sh' },
-    { grapheme: 'i', soundId: 'i-short' },
+    { grapheme: 'i', soundId: 'i' },
     { grapheme: 'p', soundId: 'p' },
   ]
 }
 ```
 
-The reusable sound-box component renders one button per segment. Each button resolves audio through the canonical sound registry.
+The reusable sound-box component renders one control per stored segment and resolves audio through the R10.1 foundation registry.
 
 ## Safety rules
 
 1. Do not auto-segment arbitrary words from spelling alone.
 2. Do not use browser TTS as a phoneme-fact source.
 3. Do not silently substitute a different sound when an asset is missing.
-4. Every word map must reference registered sound IDs.
-5. Ambiguous graphemes must use reading-specific IDs.
-6. Uploading audio must not require editing word data.
-7. Whole-word audio is a separate future layer from phoneme-box audio.
+4. Every framework word map must reference registered sound IDs.
+5. Ambiguous graphemes must use explicit reading-specific IDs.
+6. Whole-word audio is separate from isolated sound-box audio.
+7. Framework examples must not emit reviewer claims, review dates, or review schema.
+8. R10.1 must not shadow the later R13 `phonicsSoundRegistry` module.
 
 ## Scaling path
 
-`existing A-Z recordings -> canonical reusable sound registry -> teacher uploads -> reviewed word segmentation -> interactive sound boxes -> programmatic word/reference pages`
+`existing A-Z recordings -> supplied pattern recordings -> explicit framework mappings -> reusable sound boxes -> R13 governed semantic sound/word utility`
 
-This keeps audio production small and reusable even when the word library grows to thousands of pages.
+R10.1 is therefore a safe foundation layer, while R13 remains the place for the broader 56-sound registry, larger starter word bank, and public phonics-hub utility.
