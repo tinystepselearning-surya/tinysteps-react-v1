@@ -84,7 +84,8 @@ for (const id of nextGraph.keys()) if (!visit(id)) add('next-cycle', id, 'Direct
 
 const pathwayFile = path.join(root, 'src/components/blog/BlogSemanticPathway.tsx');
 const pathwaySource = fs.readFileSync(pathwayFile, 'utf8');
-if (!pathwaySource.includes('getReadingSemanticInternalLinksForPath')) add('runtime-adapter-missing', 'BlogSemanticPathway', 'Blog pathway must use the R16 additive adapter.');
+const usesR16OrDownstreamAdapter = pathwaySource.includes('getReadingSemanticInternalLinksForPath') || pathwaySource.includes('getGrammarWritingSemanticInternalLinksForPath');
+if (!usesR16OrDownstreamAdapter) add('runtime-adapter-missing', 'BlogSemanticPathway', 'Blog pathway must use the R16 adapter or an additive downstream adapter that composes it.');
 if (pathwaySource.includes("from '../../lib/semanticInternalLinkRegistry.js'")) add('legacy-direct-import', 'BlogSemanticPathway', 'Runtime must not bypass the R16 adapter with a direct Brick 6 import.');
 if (!pathwaySource.includes("excludeRelations: ['assessment', 'programme']")) add('commercial-ui-boundary', 'BlogSemanticPathway', 'Educational pathway must continue excluding assessment/programme links.');
 
