@@ -121,8 +121,28 @@ export const catalogs: CourseCatalogItem[] = [
     duration: lessonDuration(grammarFacts.advanced.lessonCount),
     frequency: 'Flexible pace',
     level: 'Advanced',
-    overview: ['Tense control', 'Clauses & complex sentences', 'Voice & reported speech', 'Paragraph cohesion'],
-    outcomes: ['Write structured paragraphs', 'Edit grammar mistakes', 'Use advanced grammar confidently'],
+    overview: [
+      'Sentence foundations',
+      'Tense control',
+      'Grammar accuracy',
+      'Connecting ideas',
+      'Advanced sentence craft',
+      'Speaking & writing mastery',
+    ],
+    outcomes: [
+      'Speak in complete and grammatically controlled sentences',
+      'Use tense accurately according to time and meaning',
+      'Ask questions and form negative sentences naturally',
+      'Connect ideas using compound and complex sentence structures',
+      'Express reason, result, time, condition, and contrast clearly',
+      'Use richer and more varied sentence structures',
+      'Recognise and correct common grammatical errors',
+      'Maintain grammar, tense, and cohesion across longer writing',
+      'Write organised and meaningful paragraphs independently',
+      'Narrate, describe, explain, and express opinions confidently',
+      'Adapt language according to audience and purpose',
+      'Review and improve their own writing with less teacher support',
+    ],
     price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Thinking & Research (essay planning, language analysis)',
@@ -171,13 +191,22 @@ export const catalogs: CourseCatalogItem[] = [
 const buildLessonTitles = (labels: string[]) =>
   labels.map((label, idx) => `Lesson ${idx + 1} — ${label}`);
 
+type CurriculumStageDefinition = {
+  title: string;
+  start: number;
+  end: number;
+  focus?: string;
+  learns?: string[];
+};
+
 const buildStageItems = (
   lessonTitles: string[],
-  stages: { title: string; start: number; end: number; focus?: string }[],
+  stages: CurriculumStageDefinition[],
 ) =>
   stages.map((stage) => ({
     title: stage.title,
     focus: stage.focus,
+    learns: stage.learns,
     lessons: lessonTitles.slice(stage.start - 1, stage.end),
   }));
 
@@ -231,42 +260,42 @@ const GRAMMAR_BASIC_LABELS = [
 ];
 
 const GRAMMAR_ADVANCED_LABELS = [
-  'Tense review: simple vs continuous',
-  'Time clauses and tense choice',
-  'Choose the correct tense',
-  'Edit tense shifts',
-  'Tense mastery practice',
-  'Revision: tense control',
-  'Present perfect',
-  'Past perfect',
-  'Future perfect',
-  'Modal verbs: meaning + choice',
-  'Edit modal sentences',
-  'Revision: perfects + modals',
-  'Independent vs dependent clauses',
-  'Relative clauses',
-  'Complex sentences with clauses',
-  'Punctuation in complex sentences',
-  'Fix fragments',
-  'Revision: clauses',
-  'Active vs passive voice',
-  'Convert active → passive',
-  'Reported speech basics',
-  'Reported speech + tense shift',
-  'Edit for clarity',
-  'Revision: voice + reported speech',
-  'Commas + semicolons',
-  'Transition words',
-  'Paragraph structure',
-  'Cohesion and flow',
-  'Paragraph edit practice',
-  'Revision: cohesion',
-  'Tone and formality',
-  'Claim + reason',
-  'Evidence sentence',
-  'Word choice + impact',
-  'Counterargument',
-  'Final writing showcase',
+  'Subject, Verb & Object',
+  'Simple Present Tense',
+  'Simple Past Tense',
+  'Simple Future Tense',
+  'Simple Tenses Revision',
+  'Expanding a Basic Sentence',
+  'Present Time: Simple Present vs Present Continuous',
+  'Past Time: Simple Past vs Past Continuous',
+  'Talking About the Future Naturally',
+  'Present Perfect & Simple Past',
+  'Past Perfect & Event Sequence',
+  'Tense Mastery: Speak, Write & Edit',
+  'Forming Questions Naturally',
+  'Negative Sentences & Short Answers',
+  'Modal Verbs: Meaning & Choice',
+  'Talking About Quantity Accurately',
+  'Clear Pronoun Reference & Avoiding Repetition',
+  'Grammar Accuracy Challenge',
+  'Compound Sentences',
+  'Expressing Reason & Result',
+  'Expressing Time & Sequence',
+  'Conditions & Possibilities',
+  'Contrast & Concession',
+  'Connecting Ideas Mastery',
+  'Independent & Dependent Clauses',
+  'Relative Clauses',
+  'Sentence Combining & Sentence Variety',
+  'Sentence Repair: Fragments, Run-ons & Awkward Sentences',
+  'Direct & Reported Speech',
+  'Active & Passive Voice + Tone',
+  'Building a Powerful Paragraph',
+  'Cohesion & Paragraph Flow',
+  'Narrative Speaking & Writing',
+  'Description & Explanation',
+  'Opinion, Reason & Evidence',
+  'Final Grammar, Speaking & Writing Mastery Showcase',
 ];
 
 const SPEAKING_BASIC_LABELS = [
@@ -380,13 +409,90 @@ const GRAMMAR_BASIC_STAGES = [
   { title: 'Stage 6 — Sentence Writing and Final Revision', start: 31, end: 36, focus: 'Goal: Apply learning to build and write meaningful sentences and short paragraphs.' },
 ];
 
-const GRAMMAR_ADVANCED_STAGES = [
-  { title: 'Stage 1 — Tense Control', start: 1, end: 6, focus: 'Control tense choices and keep them consistent.' },
-  { title: 'Stage 2 — Perfect Tenses + Modals', start: 7, end: 12, focus: 'Use perfect tenses and modals accurately.' },
-  { title: 'Stage 3 — Clauses + Complex Sentences', start: 13, end: 18, focus: 'Build complex sentences with clauses.' },
-  { title: 'Stage 4 — Voice + Reported Speech', start: 19, end: 24, focus: 'Use voice and reported speech clearly.' },
-  { title: 'Stage 5 — Paragraph Cohesion', start: 25, end: 30, focus: 'Write cohesive paragraphs with transitions.' },
-  { title: 'Stage 6 — Tone + Argument + Impact', start: 31, end: 36, focus: 'Write with tone, argument, and impact.' },
+const GRAMMAR_ADVANCED_STAGES: CurriculumStageDefinition[] = [
+  {
+    title: 'Stage 1 — Sentence Foundations',
+    start: 1,
+    end: 6,
+    focus: 'Goal: Build accurate sentences and control the three basic time frames.',
+    learns: [
+      'Build complete and grammatically correct sentences',
+      'Use present, past, and future simple tenses accurately',
+      'Choose the correct tense according to time and meaning',
+      'Expand basic sentences with meaningful detail',
+      'Improve sentence clarity and structure',
+    ],
+  },
+  {
+    title: 'Stage 2 — Tense Control',
+    start: 7,
+    end: 12,
+    focus: 'Goal: Use different tense forms naturally while speaking and writing.',
+    learns: [
+      'Distinguish routines from actions happening now',
+      'Describe completed and ongoing past actions accurately',
+      'Talk naturally about future plans, arrangements, and predictions',
+      'Use present perfect to connect past experiences with the present',
+      'Sequence past events clearly using past perfect',
+      'Maintain accurate tense across connected speaking and writing',
+    ],
+  },
+  {
+    title: 'Stage 3 — Grammar Accuracy',
+    start: 13,
+    end: 18,
+    focus: 'Goal: Speak and write with greater grammatical accuracy in everyday communication.',
+    learns: [
+      'Form grammatically correct questions using natural word order',
+      'Build accurate negative sentences and short responses',
+      'Use modal verbs for ability, possibility, advice, permission, and obligation',
+      'Talk about quantity using appropriate expressions',
+      'Use pronouns clearly without confusing the reader or listener',
+      'Identify and correct common grammatical mistakes independently',
+    ],
+  },
+  {
+    title: 'Stage 4 — Connecting Ideas',
+    start: 19,
+    end: 24,
+    focus: 'Goal: Join ideas smoothly and express relationships between them clearly.',
+    learns: [
+      'Combine related ideas into compound sentences',
+      'Explain reasons and results clearly',
+      'Organise events using accurate time and sequence language',
+      'Express conditions, possibilities, and imagined situations',
+      'Connect contrasting ideas naturally',
+      'Turn short, disconnected sentences into fluent and connected English',
+    ],
+  },
+  {
+    title: 'Stage 5 — Advanced Sentence Craft',
+    start: 25,
+    end: 30,
+    focus: 'Goal: Build, combine, vary, and edit more sophisticated sentence structures.',
+    learns: [
+      'Understand how clauses work together to form complete sentences',
+      'Add information smoothly using relative clauses',
+      'Combine short sentences into richer and more mature structures',
+      'Recognise and correct fragments, run-ons, and awkward sentences',
+      'Use direct and reported speech accurately',
+      'Choose appropriate voice and tone according to purpose and audience',
+    ],
+  },
+  {
+    title: 'Stage 6 — Speaking & Writing Mastery',
+    start: 31,
+    end: 36,
+    focus: 'Goal: Apply grammar confidently in independent speaking, writing, and editing.',
+    learns: [
+      'Organise ideas into clear and well-developed paragraphs',
+      'Connect sentences smoothly and maintain logical flow',
+      'Narrate events using accurate tense and sentence variety',
+      'Describe and explain ideas clearly using precise language',
+      'Express opinions and support them with reasons and examples',
+      'Review, edit, and improve speaking and writing independently',
+    ],
+  },
 ];
 
 const SPEAKING_BASIC_STAGES = [
@@ -407,8 +513,15 @@ const SPEAKING_ADVANCED_STAGES = [
   { title: 'Stage 6 — Presentation Mastery', start: 31, end: 36, focus: 'Deliver polished presentations.' },
 ];
 
+type CurriculumWeek = {
+  title: string;
+  focus?: string;
+  learns?: string[];
+  lessons?: string[];
+};
+
 // Deep curriculum for detail pages (stage-based, lesson-by-lesson)
-export const curriculumBySlug: Record<string, { weeks?: { title: string; focus?: string; lessons?: string[] }[] }> = {
+export const curriculumBySlug: Record<string, { weeks?: CurriculumWeek[] }> = {
   'phonics-foundation': {
     weeks: buildStageItems(PHONICS_FOUNDATIONS_LESSONS, PHONICS_FOUNDATIONS_STAGES),
   },
