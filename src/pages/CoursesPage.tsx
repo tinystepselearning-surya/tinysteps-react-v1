@@ -18,18 +18,18 @@ const BOOK_ASSESSMENT_HREF = '/book-demo';
 const VIEW_PRICING_HREF = '/pricing';
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 
-const trustPoints = [
+const heroFacts = [
   'Courses for children aged 3–12',
-  'Phonics, Grammar, Reading, and Public Speaking paths',
-  'Live teacher-guided classes',
-  'One free 35-minute 1:1 demo assessment class before course recommendation',
+  'Phonics, Reading, Grammar, and Public Speaking pathways',
+  'Live teacher-guided online classes',
+  'Assessment-led placement before a course recommendation',
 ];
 
 const howItWorksSteps = [
-  'We understand your child’s age, school level, and parent concerns.',
-  'We check reading, phonics, grammar, sentence formation, and speaking confidence based on age.',
-  'We identify the strongest starting point: Phonics, Grammar, Reading, Public Speaking, or a combined path.',
-  'Parents receive a simple next-step recommendation after the assessment.',
+  'We understand your child’s age, school level, and the main concern you are seeing now.',
+  'We check the relevant reading, phonics, grammar, sentence-formation, and speaking skills for that age and stage.',
+  'We identify the most useful starting pathway and level instead of placing every child by age alone.',
+  'Parents receive a clear next-step recommendation after the assessment.',
 ];
 
 const phonicsCards = [
@@ -120,6 +120,7 @@ const quickAnswerFaqItems = [
       'Parents can book one free 35-minute 1:1 online demo assessment class. The assessment helps identify the child’s current level and recommends the most suitable Tiny Steps course path.',
   },
 ];
+
 const quickAnswerFaqSchema = {
   ...createFAQPageSchema(quickAnswerFaqItems),
   '@id': 'https://tinystepslearning.com/courses#quick-answer-faq',
@@ -187,14 +188,14 @@ function CoursesPage() {
       <section className="px-6 py-14 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-7 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">Course Selection Hub</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">English learning pathways</p>
             <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Find the Right English Course for Your Child</h1>
-            <p className="mt-4 max-w-3xl text-sm text-white/85 sm:text-base">
-              Tiny Steps helps children build stronger reading, grammar, sentence formation, and speaking confidence through structured live online classes.
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-white/85 sm:text-base">
+              Compare the learning need first, then the course level. If the starting point is still unclear, the free 1:1 assessment can confirm the most useful path.
             </p>
 
             <div className="mt-6 grid gap-2 text-sm text-white/90 sm:grid-cols-2">
-              {trustPoints.map((point) => (
+              {heroFacts.map((point) => (
                 <p key={point}>• {point}</p>
               ))}
             </div>
@@ -202,30 +203,21 @@ function CoursesPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to={BOOK_ASSESSMENT_HREF}
-                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
+                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 Book Free 35-Minute Demo
               </Link>
               <Link
-                to={VIEW_PRICING_HREF}
-                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
-              >
-                View Pricing
-              </Link>
-              <Link
                 to="/curriculum"
-                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 View Curriculum Roadmap
               </Link>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-white/90">
-              <Link to="/online-english-classes-for-kids" className="underline underline-offset-4">
-                Online English Classes for Kids
-              </Link>
-              <Link to="/spoken-english-classes-for-kids-online" className="underline underline-offset-4">
-                Spoken English Classes Online
+              <Link
+                to={VIEW_PRICING_HREF}
+                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              >
+                View Pricing
               </Link>
             </div>
           </div>
@@ -235,10 +227,10 @@ function CoursesPage() {
       <section id="program-overview" className="px-6 py-5 sm:py-7">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Journey overview</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Which course should my child start with?</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-              Every child starts at a different level. Use this quick guide to pick the best starting point.
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Step 1 · Identify the main need</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Which learning pathway fits what you are seeing now?</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              Start with the skill that is currently holding your child back. You can compare levels inside that pathway next.
             </p>
           </div>
 
@@ -275,7 +267,7 @@ function CoursesPage() {
               >
                 <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.bestFor}</p>
-                <Link to={item.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-2">
+                <Link to={item.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
                   {item.ctaLabel}
                 </Link>
               </div>
@@ -284,68 +276,49 @@ function CoursesPage() {
         </div>
       </section>
 
-      <section id="phonics-program-section" className="px-6 py-10">
-        <div className="mx-auto max-w-6xl mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Parent FAQs before choosing a course</h2>
-          <p className="mt-3 max-w-4xl text-sm text-slate-700 sm:text-base">
-            Choose the first course based on your child&apos;s main bottleneck. Reading and blending gaps usually need
-            Phonics first, sentence accuracy and writing gaps usually need Grammar first, and hesitation or expression
-            gaps usually need Speaking first. This focused start makes progress easier to see and avoids overload.
-            Next step: book one assessment to confirm the starting track and level.
-          </p>
-          <p className="mt-3 max-w-4xl text-sm text-slate-700">
-            Parent help reads: <Link to="/blog/child-knows-letter-sounds-but-cannot-read" className="font-medium underline underline-offset-2 hover:text-slate-900">child knows sounds but cannot read words</Link>, <Link to="/blog/how-to-improve-sentence-formation-in-kids" className="font-medium underline underline-offset-2 hover:text-slate-900">improve sentence formation in kids</Link>, and <Link to="/blog/why-child-answers-only-in-one-word" className="font-medium underline underline-offset-2 hover:text-slate-900">child answers only in one word</Link>.
-          </p>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {quickAnswerFaqItems.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-2 text-sm text-slate-700">
-                  {item.answer}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-
+      <section id="phonics-program-section" className="px-6 pb-7 pt-10">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Phonics Program — From Sounds to Reading Confidence</h2>
-          <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
-            <AutoLinkedText text="Your child learns to read naturally — not by memorizing, but by understanding sounds." />
-          </p>
-          <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
-            <AutoLinkedText text="Our phonics track follows a structured synthetic phonics approach inspired by methods such as Jolly Phonics." />
-          </p>
+          <div className="mb-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Step 2 · Compare course levels</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Compare the levels inside each pathway</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
+              Age is a guide, not the placement rule. Open the level that looks closest to your child’s current skills to see its detailed curriculum and outcomes.
+            </p>
+          </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            {phonicsCards.map((card) => (
-              <article key={card.title} className="flex h-full flex-col rounded-3xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/35 to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">{card.tag}</p>
-                <h3 className="mt-2 text-xl font-bold text-slate-900">{card.title}</h3>
-                <p className="mt-1 text-sm font-semibold text-slate-600">{card.age}</p>
-                <ul className="mt-4 space-y-2 text-sm text-slate-700">
-                  {card.focus.map((point) => (
-                    <li key={point} className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      <span><AutoLinkedText text={point} usedHrefs={phonicsUsedHrefs} /></span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={phonicsUsedHrefs} /></p>
-                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
-                  <a
-                    href={BOOK_ASSESSMENT_HREF}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+          <div className="rounded-[28px] border border-emerald-100/90 bg-gradient-to-r from-emerald-50/35 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
+            <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Phonics Program — From Sounds to Reading Confidence</h2>
+            <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
+              <AutoLinkedText text="Your child learns to read naturally — not by memorizing, but by understanding sounds." />
+            </p>
+            <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
+              <AutoLinkedText text="Our phonics track follows a structured synthetic phonics approach inspired by methods such as Jolly Phonics." />
+            </p>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              {phonicsCards.map((card) => (
+                <article key={card.title} className="flex h-full flex-col rounded-3xl border border-emerald-100/80 bg-gradient-to-b from-emerald-50/35 to-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">{card.tag}</p>
+                  <h3 className="mt-2 text-xl font-bold text-slate-900">{card.title}</h3>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{card.age}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                    {card.focus.map((point) => (
+                      <li key={point} className="flex items-start gap-2">
+                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span><AutoLinkedText text={point} usedHrefs={phonicsUsedHrefs} /></span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={phonicsUsedHrefs} /></p>
+                  <Link
+                    to={card.href}
+                    className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                   >
-                    Book Free 35-Minute Demo
-                  </a>
-                  <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View course details
                   </Link>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -371,24 +344,19 @@ function CoursesPage() {
                   ))}
                 </ul>
                 <p className="mt-4 rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={grammarUsedHrefs} /></p>
-                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
-                  <a
-                    href={BOOK_ASSESSMENT_HREF}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
-                  >
-                    Book Free 35-Minute Demo
-                  </a>
-                  <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
-                    View course details
-                  </Link>
-                </div>
+                <Link
+                  to={card.href}
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                >
+                  View course details
+                </Link>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="speaking-program-section" className="px-6 py-10">
+      <section id="speaking-program-section" className="px-6 py-7">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-amber-100/80 bg-gradient-to-r from-amber-50/40 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Speaking Program — From Confidence to Expression</h2>
           <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
@@ -409,82 +377,67 @@ function CoursesPage() {
                   ))}
                 </ul>
                 <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={speakingUsedHrefs} /></p>
-                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
-                  <a
-                    href={BOOK_ASSESSMENT_HREF}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
-                  >
-                    Book Free 35-Minute Demo
-                  </a>
-                  <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
-                    View course details
-                  </Link>
-                </div>
+                <Link
+                  to={card.href}
+                  className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+                >
+                  View course details
+                </Link>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-6 py-6">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Why Parents Choose Tiny Steps</h2>
-          <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {trustPoints.map((point) => (
-              <div key={point} className="flex items-start gap-3 rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white to-slate-50 px-4 py-3.5 text-sm font-medium text-slate-700 shadow-sm">
-                <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs text-emerald-700">✓</span>
-                <span>{point}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-10">
+      <section id="placement" className="px-6 py-10">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">How we recommend the right path</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Step 3 · Confirm placement</p>
+          <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">How we recommend the right starting path</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
+            The free demo is used as an assessment when placement is unclear. It is not a commitment to enroll.
+          </p>
           <div className="mt-6 grid gap-3 md:grid-cols-4">
             {howItWorksSteps.map((step, index) => (
               <div key={step} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Step {index + 1}</p>
-                <p className="mt-2 font-semibold text-slate-900">{step}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">{index + 1}</p>
+                <p className="mt-2 font-semibold leading-6 text-slate-900">{step}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-6 pb-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Common parent situations</h2>
-          <p className="mt-3 text-sm text-slate-700">
-            For parents in Hyderabad, Tiny Steps offers live online classes across phonics, reading, grammar, sentence formation, and public speaking through{' '}
-            <Link to="/online-english-classes-hyderabad" className="font-semibold underline underline-offset-2">
-              Online English Classes in Hyderabad
-            </Link>
-            .
+      <section id="course-faq" className="px-6 pb-8 pt-4">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Step 4 · Clear final questions</p>
+          <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Questions parents ask before choosing a course</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
+            Use these answers after comparing the pathways and levels. If your child sits between two options, the assessment can confirm the starting point.
           </p>
-          <div className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child knows ABC but cannot read words.&rdquo; → Start with <Link to="/phonics" className="font-semibold underline underline-offset-2">Phonics</Link></p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads but makes many sentence mistakes.&rdquo; → Start with <Link to="/grammar" className="font-semibold underline underline-offset-2">Grammar</Link></p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child gives one-word answers.&rdquo; → Start with <Link to="/speaking" className="font-semibold underline underline-offset-2">Public Speaking and Sentence Formation</Link></p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads slowly and avoids books.&rdquo; → Start with <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2">Reading Fluency support</Link></p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">&ldquo;I am not sure where to start.&rdquo; → <Link to={BOOK_ASSESSMENT_HREF} className="font-semibold underline underline-offset-2">Book Free 35-Minute Demo</Link></p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.answer}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
       <section className="px-6 pb-16 pt-4">
         <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-7 text-center text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
-          <h2 className="text-2xl font-bold sm:text-3xl">Start Your Child’s English Journey Today</h2>
-          <p className="mt-3 text-sm text-white/85 sm:text-base">No pressure. Just the right start.</p>
-          <a
-            href={BOOK_ASSESSMENT_HREF}
-            className="mt-7 inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_10px_26px_rgba(255,255,255,0.2)] transition hover:-translate-y-0.5 hover:bg-slate-100"
+          <h2 className="text-2xl font-bold sm:text-3xl">Not sure which path fits your child?</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/85 sm:text-base">
+            Book the free 35-minute 1:1 demo assessment. We’ll check the relevant skills, confirm the most useful starting level, and explain the next learning focus.
+          </p>
+          <Link
+            to={BOOK_ASSESSMENT_HREF}
+            className="mt-7 inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_10px_26px_rgba(255,255,255,0.2)] transition hover:-translate-y-0.5 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           >
             Book Free 35-Minute Demo
-          </a>
-          <p className="mt-5 text-xs font-medium text-white/80">Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
+          </Link>
+          <p className="mt-5 text-xs font-medium text-white/80">Free 35-minute 1:1 assessment • No commitment • Starting-level guidance</p>
         </div>
       </section>
     </div>
