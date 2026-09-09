@@ -320,7 +320,7 @@ const CourseDetailPage: FC = () => {
           <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Parent trust</p>
             <p className="mt-3 text-sm leading-7 text-slate-700">
-              This page includes a curated sample of parent feedback for this learning track. If you are unsure whether this is the right starting point, book the free 35-minute 1:1 online demo assessment class first and ask for the exact first 12-class plan before enrolling.
+              This page includes a curated sample of parent feedback for this course level. If you are unsure whether this is the right starting point, book the free 35-minute 1:1 online demo assessment class first and ask for the exact first 12-class plan before enrolling.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -490,6 +490,7 @@ const CourseDetailPage: FC = () => {
 
       <LeadSection id="parent-feedback" className="scroll-mt-24 pb-2">
         <TestimonialsSection
+          eyebrow="Step 3 · Parent feedback"
           title={`Parent feedback for ${course.name}`}
           subtitle="Approved feedback from families in this exact course level, shown after the curriculum so you can compare the learning plan with the outcomes parents noticed."
           program={testimonialProgram}
