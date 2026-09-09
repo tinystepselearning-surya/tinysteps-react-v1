@@ -186,10 +186,12 @@ export const PHONICS_WORD_SOUND_FRAMEWORK_EXAMPLES = [
   },
 ] as const satisfies readonly PhonicsWordSoundMap[];
 
-const WORD_BY_SLUG = new Map(
-  PHONICS_WORD_SOUND_FRAMEWORK_EXAMPLES.map((entry) => [entry.slug, entry] as const),
+const WORD_BY_SLUG: ReadonlyMap<string, PhonicsWordSoundMap> = new Map(
+  PHONICS_WORD_SOUND_FRAMEWORK_EXAMPLES.map(
+    (entry): readonly [string, PhonicsWordSoundMap] => [entry.slug, entry],
+  ),
 );
 
-export function getPhonicsWordSoundFrameworkExample(slug: string) {
+export function getPhonicsWordSoundFrameworkExample(slug: string): PhonicsWordSoundMap | null {
   return WORD_BY_SLUG.get(slug) ?? null;
 }
