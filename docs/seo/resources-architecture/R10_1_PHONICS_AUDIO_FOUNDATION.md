@@ -10,7 +10,7 @@ This is a parallel capability layer. It does not publish new SEO URLs and it doe
 
 ## Compatibility boundary
 
-R10.1 now keeps its implementation in `src/lib/phonicsAudioFoundation.ts` rather than `phonicsSoundRegistry.ts`.
+R10.1 keeps its implementation in `src/lib/phonicsAudioFoundation.ts` rather than `phonicsSoundRegistry.ts`.
 
 That is deliberate: the later R13 utility engine owns the broader semantic `phonicsSoundRegistry` contract. Keeping the R10.1 module foundation-specific prevents TypeScript/JavaScript module shadowing when the later brick is merged.
 
