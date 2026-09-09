@@ -28,8 +28,6 @@ const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Resources', href: '/resources' },
   { label: 'Pricing', href: '/pricing', desktop: false },
-  { label: 'For Schools', href: '/for-schools' },
-  { label: 'Class Samples', href: '/class-samples' },
   { label: 'Contact', href: '/contact' },
 ];
 
