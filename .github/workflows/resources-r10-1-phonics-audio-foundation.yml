@@ -1,0 +1,48 @@
+name: Resources R10.1 Phonics Audio Foundation
+
+on:
+  pull_request:
+    branches: [main, seo/resources-r10-discovery-graph]
+    paths:
+      - 'src/lib/phonicsAudioFoundation.ts'
+      - 'src/content/phonicsWordSounds.ts'
+      - 'src/components/resources/PhonicsSoundBoxes.tsx'
+      - 'src/tests/seo/resourcesR10_1PhonicsAudioFoundation.spec.ts'
+      - 'public/games/phonics/*.mp3'
+      - 'public/games/phonics/sounds/**'
+      - 'docs/seo/resources-architecture/R10_1_PHONICS_AUDIO_FOUNDATION.md'
+      - 'docs/seo/resources-architecture/PHONICS_AUDIO_TEACHER_UPLOAD_LIST.md'
+      - '.github/workflows/resources-r10-1-phonics-audio-foundation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resources-r10-1-phonics-audio-foundation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run R10.1 audio foundation tests
+        run: npx vitest run src/tests/seo/resourcesR10_1PhonicsAudioFoundation.spec.ts
+      - name: Run Resources regression tests
+        run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
