@@ -36,6 +36,21 @@ type SubjectConfig = {
   sections: ResourceSection[];
 };
 
+const GRAMMAR_WRITING_FEATURED_GUIDES: ResourceLink[] = [
+  {
+    title: 'Punctuation & capital letters',
+    description: 'Teach sentence boundaries, capitals and end punctuation through meaning and independent transfer.',
+    to: '/blog/punctuation-and-capital-letters-for-kids',
+    label: 'Explore punctuation',
+  },
+  {
+    title: 'Paragraph writing',
+    description: 'Move from complete sentences into one focused paragraph with relevant detail, order and cohesion.',
+    to: '/blog/how-to-teach-paragraph-writing-to-kids',
+    label: 'Explore paragraph writing',
+  },
+];
+
 const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
   phonics: {
     title: 'Phonics & Reading Resources',
@@ -177,7 +192,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
   const canonicalUrl = `${SITE_ORIGIN}${config.canonicalPath}`;
   const title = seo?.title ?? config.title;
   const description = seo?.description ?? config.intro;
-  const allLinks = config.sections.flatMap((section) => section.links);
+  const featuredLinks = subject === 'grammar' ? GRAMMAR_WRITING_FEATURED_GUIDES : [];
+  const allLinks = [...featuredLinks, ...config.sections.flatMap((section) => section.links)];
 
   const breadcrumbItems = getBreadcrumbTrail({ pathname: config.canonicalPath, title: config.title });
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
@@ -362,6 +378,27 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
           </div>
         </div>
       </section>
+
+      {subject === 'grammar' ? (
+        <section data-grammar-writing-featured-guides className="border-b border-slate-200 bg-white">
+          <div className="mx-auto max-w-7xl px-6 py-7 sm:py-8">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-700">Focused parent guides</p>
+                <h2 className="mt-2 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">Two useful next steps for writing mechanics and paragraph structure</h2>
+              </div>
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:min-w-[620px]">
+                {GRAMMAR_WRITING_FEATURED_GUIDES.map((link) => (
+                  <Link key={link.to} to={link.to} className="group rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5 transition hover:border-slate-300 hover:bg-white hover:shadow-sm">
+                    <span className="block text-sm font-black text-slate-950 group-hover:text-emerald-700">{link.title}</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-600">{link.description}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section id="resource-sections" className="mx-auto max-w-7xl space-y-14 px-6 py-14 sm:py-16 lg:py-20">
         {config.sections.map((section) => (
