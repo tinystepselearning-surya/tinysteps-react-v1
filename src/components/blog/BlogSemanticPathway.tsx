@@ -5,6 +5,8 @@ import {
   type ResolvedSpeakingCommunicationSemanticLink,
 } from '../../lib/speakingCommunicationSemanticJourneyGraph.js';
 
+// R22 is the runtime adapter. It composes getGrammarWritingSemanticInternalLinksForPath,
+// which in turn composes the R16 reading adapter and the frozen Brick 6 graph.
 type BlogSemanticPathwayProps = {
   slug: string;
 };
