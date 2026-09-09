@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-// @ts-ignore -- Brick 6 registry is intentionally plain JS and validated by dedicated CI.
-import { getSemanticInternalLinksForPath } from '../../lib/semanticInternalLinkRegistry.js';
+import {
+  getReadingSemanticInternalLinksForPath,
+  type ResolvedReadingSemanticLink,
+} from '../../lib/readingSemanticJourneyGraph.js';
 
 type BlogSemanticPathwayProps = {
   slug: string;
@@ -20,7 +22,7 @@ const RELATION_LABELS: Record<string, string> = {
 
 export default function BlogSemanticPathway({ slug }: BlogSemanticPathwayProps) {
   const links = useMemo(
-    () => getSemanticInternalLinksForPath(`/blog/${slug}`, {
+    () => getReadingSemanticInternalLinksForPath(`/blog/${slug}`, {
       limit: 4,
       excludeRelations: ['assessment', 'programme'],
     }),
@@ -44,7 +46,7 @@ export default function BlogSemanticPathway({ slug }: BlogSemanticPathwayProps) 
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {links.map((link: any) => (
+        {links.map((link: ResolvedReadingSemanticLink) => (
           <Link
             key={`${link.relation}-${link.targetTopicId}`}
             to={link.to}
