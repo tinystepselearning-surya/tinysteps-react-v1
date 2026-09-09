@@ -7,6 +7,7 @@ import {
   getReadingContentAuditByAction,
   getReadingKnowledgeDomain,
 } from '../../lib/readingKnowledgeArchitecture.js';
+import { getReadingContentExecution } from '../../lib/readingContentExecutionRegistry.js';
 import { getCanonicalTopicOwnerPath } from '../../lib/canonicalTopicOwnershipRegistry.js';
 
 describe('Resources R14 reading knowledge architecture', () => {
@@ -58,15 +59,18 @@ describe('Resources R14 reading knowledge architecture', () => {
     }
   });
 
-  it('records only a small set of genuine CREATE gaps and does not publish them', () => {
+  it('preserves the three R14 CREATE decisions while requiring explicit R15 execution before publication', () => {
     const publicSlugs = new Set(blogPosts.map((post) => post.slug));
     const createRecords = getReadingContentAuditByAction('create');
     expect(createRecords).toHaveLength(3);
     for (const record of createRecords) {
       expect(record.path).toBeNull();
       expect(record.proposedPath).toMatch(/^\/blog\/[a-z0-9-]+$/);
+      const execution = getReadingContentExecution(record.id);
+      expect(execution?.state).toBe('published');
+      expect(execution?.path).toBe(record.proposedPath);
       const slug = record.proposedPath!.replace(/^\/blog\//, '');
-      expect(publicSlugs.has(slug)).toBe(false);
+      expect(publicSlugs.has(slug)).toBe(true);
     }
   });
 

@@ -19,6 +19,21 @@ export const PHONICS_PILOT_RESOURCE_LINKS = Object.freeze(
   })),
 );
 
+export const READING_KNOWLEDGE_GUIDE_LINKS = Object.freeze([
+  Object.freeze({
+    title: 'Sound awareness vs phonics',
+    to: '/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics',
+  }),
+  Object.freeze({
+    title: 'Vocabulary & comprehension',
+    to: '/blog/how-vocabulary-supports-reading-comprehension',
+  }),
+  Object.freeze({
+    title: 'How words become automatic',
+    to: '/blog/how-children-recognise-words-automatically-after-phonics',
+  }),
+]);
+
 const GuideCard: FC<{ page: PhonicsPublishedResourcePage }> = ({ page }) => (
   <Link
     to={page.path}
@@ -40,6 +55,19 @@ const PhonicsPilotGuideGrid: FC = () => (
   <>
     <div className="mx-auto max-w-7xl px-6">
       <PhonicsWordSoundUtility />
+
+      <nav aria-label="Reading knowledge guides" className="mt-4 flex flex-wrap items-center gap-2" data-reading-knowledge-guides>
+        <span className="mr-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Reading knowledge</span>
+        {READING_KNOWLEDGE_GUIDE_LINKS.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-800"
+          >
+            {link.title}
+          </Link>
+        ))}
+      </nav>
     </div>
 
     <section
