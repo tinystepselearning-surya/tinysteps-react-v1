@@ -30,7 +30,6 @@ const RESOURCE_PATHWAYS = [
     description:
       'Build from letter sounds and blending into decoding, CVC words, spelling patterns, and confident reading fluency.',
     to: '/resources/phonics',
-    linkLabel: 'Explore phonics & reading',
     icon: BookOpenText,
     iconTone: 'border-sky-200/80 bg-sky-50 text-sky-700',
     accentLine: 'from-sky-400 via-cyan-400 to-blue-500',
@@ -44,7 +43,6 @@ const RESOURCE_PATHWAYS = [
     description:
       'Strengthen grammar, sentence formation, vocabulary, punctuation, and the move from stronger sentences into better writing.',
     to: '/resources/grammar',
-    linkLabel: 'Explore grammar & writing',
     icon: PenLine,
     iconTone: 'border-emerald-200/80 bg-emerald-50 text-emerald-700',
     accentLine: 'from-emerald-400 via-teal-400 to-cyan-500',
@@ -58,7 +56,6 @@ const RESOURCE_PATHWAYS = [
     description:
       'Build fuller answers, organised ideas, storytelling, clear speaking, vocabulary, and age-appropriate public-speaking confidence.',
     to: '/resources/speaking',
-    linkLabel: 'Explore speaking resources',
     icon: MessagesSquare,
     iconTone: 'border-amber-200/80 bg-amber-50 text-amber-700',
     accentLine: 'from-amber-400 via-orange-400 to-rose-400',
@@ -72,7 +69,6 @@ const RESOURCE_PATHWAYS = [
     description:
       'Start from the reading, learning, progress, or course-choice concern you are actually seeing at home and find the closest support path.',
     to: '/parents',
-    linkLabel: 'Open Parent Help',
     icon: HeartHandshake,
     iconTone: 'border-rose-200/80 bg-rose-50 text-rose-700',
     accentLine: 'from-rose-400 via-pink-400 to-orange-400',
@@ -86,7 +82,6 @@ const RESOURCE_PATHWAYS = [
     description:
       'Practise tracing, sounds, listening, word building, spelling, reading, grammar, sentences, and speaking through focused learning games.',
     to: '/free-english-games-for-kids',
-    linkLabel: 'Explore free activities',
     icon: Gamepad2,
     iconTone: 'border-violet-200/80 bg-violet-50 text-violet-700',
     accentLine: 'from-violet-400 via-fuchsia-400 to-pink-400',
@@ -100,7 +95,6 @@ const RESOURCE_PATHWAYS = [
     description:
       'Explore school phonics implementation, foundational-literacy guidance, teacher development, learning benchmarks, and partnership resources.',
     to: '/for-schools',
-    linkLabel: 'Explore school resources',
     icon: School,
     iconTone: 'border-indigo-200/80 bg-indigo-50 text-indigo-700',
     accentLine: 'from-indigo-400 via-blue-400 to-slate-500',
@@ -125,66 +119,60 @@ function ResourcePathwayCard({
     <motion.div
       className="h-full"
       initial={false}
-      whileHover={reduceMotion ? undefined : { y: -5 }}
-      whileTap={reduceMotion ? undefined : { scale: 0.992 }}
+      whileHover={reduceMotion ? undefined : { y: -4 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.994 }}
       transition={{ type: 'spring', stiffness: 310, damping: 24, mass: 0.75 }}
     >
       <Link
         to={pathway.to}
+        aria-label={`Open ${pathway.title}`}
         onPointerMove={(event) => {
           if (reduceMotion || event.pointerType === 'touch') return;
           const rect = event.currentTarget.getBoundingClientRect();
           event.currentTarget.style.setProperty('--spotlight-x', `${event.clientX - rect.left}px`);
           event.currentTarget.style.setProperty('--spotlight-y', `${event.clientY - rect.top}px`);
         }}
-        className={`group relative isolate flex h-full min-h-[174px] overflow-hidden rounded-[1.5rem] border border-slate-200/90 bg-white/[0.92] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.055)] transition-[border-color,box-shadow,background-color] duration-300 hover:bg-white hover:shadow-[0_22px_52px_rgba(15,23,42,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${pathway.hoverBorder}`}
+        className={`group relative isolate flex h-full min-h-[150px] overflow-hidden rounded-[1.4rem] border border-slate-200/90 bg-white/[0.92] px-[18px] py-4 shadow-[0_9px_26px_rgba(15,23,42,0.05)] transition-[border-color,box-shadow,background-color] duration-300 hover:bg-white hover:shadow-[0_18px_42px_rgba(15,23,42,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${pathway.hoverBorder}`}
       >
         <span
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
-            background: `radial-gradient(320px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), ${pathway.spotlight}, transparent 58%)`,
+            background: `radial-gradient(300px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), ${pathway.spotlight}, transparent 58%)`,
           }}
         />
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute -right-10 -top-12 z-0 h-32 w-32 rounded-full blur-3xl transition-transform duration-500 group-hover:scale-125 ${pathway.orb}`}
+          className={`pointer-events-none absolute -right-10 -top-12 z-0 h-28 w-28 rounded-full blur-3xl transition-transform duration-500 group-hover:scale-125 ${pathway.orb}`}
         />
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-5 top-0 z-10 h-[3px] origin-left rounded-b-full bg-gradient-to-r ${pathway.accentLine} transition-transform duration-300 group-hover:scale-x-100 md:scale-x-[0.72]`}
+          className={`pointer-events-none absolute inset-x-[18px] top-0 z-10 h-[3px] origin-left rounded-b-full bg-gradient-to-r ${pathway.accentLine} transition-transform duration-300 group-hover:scale-x-100 md:scale-x-[0.72]`}
         />
 
         <div className="relative z-10 flex w-full flex-col">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
               <span
-                className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition duration-300 group-hover:-rotate-2 group-hover:scale-105 ${pathway.iconTone}`}
+                className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl border shadow-[0_4px_12px_rgba(15,23,42,0.045)] transition duration-300 group-hover:-rotate-2 group-hover:scale-105 ${pathway.iconTone}`}
               >
-                <Icon aria-hidden="true" className="h-[19px] w-[19px]" strokeWidth={2.05} />
+                <Icon aria-hidden="true" className="h-[17px] w-[17px]" strokeWidth={2.05} />
               </span>
-              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-500 sm:text-[10px]">
+              <p className="text-[9px] font-black uppercase tracking-[0.21em] text-slate-500 sm:text-[9.5px]">
                 {pathway.eyebrow}
               </p>
             </div>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-slate-200 bg-white/80 text-slate-500 shadow-sm transition duration-300 group-hover:border-slate-300 group-hover:bg-slate-950 group-hover:text-white">
-              <ArrowUpRight aria-hidden="true" className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-slate-200 bg-white/80 text-slate-500 shadow-sm transition duration-300 group-hover:border-slate-300 group-hover:bg-slate-950 group-hover:text-white">
+              <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </span>
           </div>
 
-          <h2 className="mt-3 text-[1.28rem] font-black tracking-[-0.025em] text-slate-950 sm:text-[1.34rem]">
+          <h2 className="mt-2.5 text-[1.22rem] font-black tracking-[-0.025em] text-slate-950 sm:text-[1.28rem]">
             {pathway.title}
           </h2>
-          <p className="mt-1.5 max-w-[40rem] text-[13px] leading-[1.38rem] text-slate-600 sm:text-[13.5px]">
+          <p className="mt-1 max-w-[40rem] text-[12.5px] leading-[1.28rem] text-slate-600 sm:text-[13px]">
             {pathway.description}
           </p>
-
-          <div className="mt-auto flex items-center pt-3 text-[12.5px] font-black text-slate-900 sm:text-[13px]">
-            <span>{pathway.linkLabel}</span>
-            <span aria-hidden="true" className="ml-2 inline-block transition-transform duration-300 group-hover:translate-x-1">
-              →
-            </span>
-          </div>
         </div>
       </Link>
     </motion.div>
@@ -281,7 +269,7 @@ const ResourcesPage: FC = () => {
           </p>
         </header>
 
-        <div id="resource-paths" className="mt-3.5 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+        <div id="resource-paths" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-3.5">
           {RESOURCE_PATHWAYS.map((pathway) => (
             <ResourcePathwayCard key={pathway.title} pathway={pathway} reduceMotion={reduceMotion} />
           ))}
