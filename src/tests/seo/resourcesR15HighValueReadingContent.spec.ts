@@ -8,6 +8,7 @@ import {
 } from '../../lib/readingContentExecutionRegistry.js';
 import { R15_READING_CANONICAL_TOPIC_OWNERSHIP } from '../../lib/readingContentCanonicalOwnership.js';
 import { R12_CANONICAL_TOPIC_OWNERSHIP } from '../../lib/phonicsWave2CanonicalOwnership.js';
+import { PHONICS_WORD_UTILITY_RECORDS } from '../../lib/phonicsWordUtilityRegistry.js';
 
 const root = process.cwd();
 const read = (relative: string) => fs.readFileSync(path.join(root, relative), 'utf8');
@@ -83,6 +84,27 @@ describe('Resources R15 high-value reading content execution', () => {
     expect(text).toContain('memorising the word as a picture');
     expect(text).toContain('Guessing from shape, picture or first letter');
     expect(text).toContain('spelling, pronunciation and meaning');
+    expect(text).toContain('explicitly mapped word record');
+  });
+
+  it('never presents pending word mappings as human-reviewed or emits reviewer metadata', () => {
+    const article = bySlug.get(CREATED[2]);
+    const articleText = article?.body.map((block) => block.content).join('\n') ?? '';
+    const utilitySources = [
+      read('src/components/resources/PhonicsWordSoundUtility.tsx'),
+      read('src/components/resources/PhonicsWordSoundBox.tsx'),
+      read('src/lib/phonicsWordUtilityRegistry.js'),
+    ].join('\n');
+    expect(PHONICS_WORD_UTILITY_RECORDS.every((record) => record.humanReviewState === 'pending')).toBe(true);
+    for (const record of PHONICS_WORD_UTILITY_RECORDS) {
+      expect(record).not.toHaveProperty('reviewedAt');
+      expect(record).not.toHaveProperty('reviewedBy');
+    }
+    expect(articleText).not.toMatch(/reviewed word|human-reviewed word|reviewed segmentation|verified by a reviewer/i);
+    expect(utilitySources).not.toContain('reviewedBy');
+    expect(utilitySources).not.toContain('reviewedAt');
+    expect(utilitySources).toContain('humanReviewState: PHONICS_WORD_HUMAN_REVIEW_STATE');
+    expect(utilitySources).toContain('The tool never guesses an unknown word from spelling.');
   });
 
   it('assigns exactly one additive canonical owner to each new reading intent without colliding with R12', () => {

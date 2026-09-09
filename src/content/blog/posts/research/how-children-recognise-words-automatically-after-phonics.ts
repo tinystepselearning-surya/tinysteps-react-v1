@@ -38,7 +38,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'A second example: rain' },
     { type: 'p', content: 'The word **rain** can be analysed as **r | ai | n**. When the child has learned that **ai** can represent the long-a sound in this word, accurate decoding gives a strong spelling–sound analysis. Repeated meaningful encounters can make the whole word increasingly familiar.' },
-    { type: 'p', content: 'This is one reason Tiny Steps built the [phonics sound-and-word utility](/resources/phonics) around explicit grapheme-to-sound mappings. The utility does not guess that every spelling has one pronunciation; it stores the reading required by the reviewed word.' },
+    { type: 'p', content: 'This is one reason Tiny Steps built the [phonics sound-and-word utility](/resources/phonics) around explicit grapheme-to-sound mappings. The utility does not guess that every spelling has one pronunciation; it stores the reading defined by each explicitly mapped word record.' },
 
     { type: 'h2', content: 'Why strong phonics knowledge helps words become familiar' },
     { type: 'p', content: 'If a child can analyse a word’s graphemes and phonemes accurately, the spelling has an organised relationship with the pronunciation rather than being an arbitrary visual shape. That makes repeated encounters more informative.' },

@@ -7,6 +7,7 @@ import {
   R15_CANONICAL_TOPIC_OWNERSHIP,
 } from '../src/lib/readingContentCanonicalOwnership.js';
 import { R12_CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/phonicsWave2CanonicalOwnership.js';
+import { PHONICS_WORD_UTILITY_RECORDS } from '../src/lib/phonicsWordUtilityRegistry.js';
 
 const root = process.cwd();
 const dist = process.argv.includes('--dist');
@@ -59,6 +60,14 @@ for (const item of CREATED) {
   if ((source.match(/type: 'h2'/g) || []).length < 8) add('thin-structure', item.id, 'Expected at least 8 H2 sections.');
   if ((source.match(/question:/g) || []).length < 5) add('thin-faq', item.id, 'Expected at least 5 FAQs.');
   if (source.includes('readnaturally.com') || source.includes('jollylearning.com') || source.includes('literacytrust.org.uk')) add('reference-copy-boundary', item.id, 'Competitor/reference sites may inspire architecture but are not R15 evidence sources.');
+}
+
+const automaticWordSource = read('src/content/blog/posts/research/how-children-recognise-words-automatically-after-phonics.ts');
+if (/reviewed word|human-reviewed word|reviewed segmentation|verified by a reviewer/i.test(automaticWordSource)) add('false-word-review-claim', 'automatic-word-recognition', 'Pending explicit word mappings must not be described as reviewed.');
+if (!automaticWordSource.includes('explicitly mapped word record')) add('missing-mapping-boundary', 'automatic-word-recognition', 'Article must distinguish an explicit mapping from automatic pronunciation guessing.');
+for (const record of PHONICS_WORD_UTILITY_RECORDS) {
+  if (record.humanReviewState !== 'pending') add('unexpected-word-review-state', record.word, record.humanReviewState);
+  if ('reviewedAt' in record || 'reviewedBy' in record) add('false-word-review-metadata', record.word, 'Pending word records cannot expose reviewer metadata or dates.');
 }
 
 const expectedSatisfiedPaths = new Set(['/blog/how-to-improve-reading-fluency-in-children', '/blog/phonics-comprehension']);
