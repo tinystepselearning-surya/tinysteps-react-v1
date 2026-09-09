@@ -28,8 +28,20 @@ const accents = [
   { border: 'from-[#e4fdee] via-white to-[#fdf5d8]', pill: 'from-[#34d399] to-[#a3e635]' }
 ];
 
-export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: boolean }> = ({ items, defaultOpenAll = false }) => {
-  const [open, setOpen] = useState(() => items.map(() => defaultOpenAll));
+type WeekAccordionProps = {
+  items: WeekItem[];
+  defaultOpenAll?: boolean;
+  defaultOpenFirst?: boolean;
+};
+
+export const WeekAccordion: React.FC<WeekAccordionProps> = ({
+  items,
+  defaultOpenAll = false,
+  defaultOpenFirst = true,
+}) => {
+  const [open, setOpen] = useState(() =>
+    items.map((_, index) => defaultOpenAll || (defaultOpenFirst && index === 0)),
+  );
   const [openDays, setOpenDays] = useState(() => items.map(() => false));
   const baseId = useId();
 
@@ -40,9 +52,24 @@ export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: 
 
   return (
     <div className="space-y-4">
-      <div className="mb-3 flex flex-wrap gap-3 text-sm">
-        <button className="rounded-full border border-gray-200 bg-white/80 px-4 py-1.5 text-gray-700 shadow-sm" onClick={expandAll}>Expand all stages</button>
-        <button className="rounded-full border border-gray-200 bg-white/60 px-4 py-1.5 text-gray-700 shadow-sm" onClick={collapseAll}>Collapse all stages</button>
+      <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
+        <button
+          type="button"
+          className="rounded-full border border-gray-200 bg-white px-4 py-1.5 font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+          onClick={expandAll}
+        >
+          Expand all stages
+        </button>
+        <button
+          type="button"
+          className="rounded-full border border-gray-200 bg-white px-4 py-1.5 font-medium text-gray-700 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+          onClick={collapseAll}
+        >
+          Collapse all stages
+        </button>
+        <span className="text-xs leading-5 text-gray-500 sm:ml-1">
+          Open a stage to compare its goal, lessons, and learning outcomes.
+        </span>
       </div>
 
       {items.map((w, i) => {
@@ -51,122 +78,130 @@ export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: 
         const accent = accents[i % accents.length];
 
         return (
-          <div key={w.title} className={`rounded-[32px] p-[1px] bg-gradient-to-r ${accent.border} shadow-card-hover`}>
-            <div className="rounded-[28px] bg-white/95">
+          <div key={w.title} className={`rounded-[32px] bg-gradient-to-r p-[1px] ${accent.border} shadow-card-hover`}>
+            <div className="overflow-hidden rounded-[28px] bg-white/95">
               <button
                 type="button"
                 aria-expanded={isOpen}
                 aria-controls={id}
-                className="flex w-full items-start gap-4 px-5 py-4 text-left"
+                className="flex w-full items-start gap-4 px-5 py-4 text-left transition hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500 sm:items-center"
                 onClick={() => toggle(i)}
               >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${accent.pill} text-white font-semibold shadow-md`}>
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${accent.pill} font-semibold text-white shadow-md`}>
                   S{i + 1}
                 </div>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-gray-900">{w.title}</span>
                     {w.focus && (
-                      <span className="rounded-full bg-gray-100 px-3 py-0.5 text-xs font-semibold text-gray-600">
+                      <span className="rounded-full bg-gray-100 px-3 py-0.5 text-xs font-semibold leading-5 text-gray-600">
                         {w.focus}
                       </span>
                     )}
                   </div>
                   {w.mastery && (
-                    <div className="text-xs text-gray-500">Mastery: {w.mastery}</div>
+                    <div className="mt-1 text-xs text-gray-500">Mastery: {w.mastery}</div>
                   )}
                 </div>
-                <span className={cn('text-primary-600 transition-transform duration-300', isOpen ? 'rotate-180' : 'rotate-0')}>▼</span>
+                <span
+                  aria-hidden="true"
+                  className={cn('mt-1 shrink-0 text-primary-600 transition-transform duration-300 sm:mt-0', isOpen ? 'rotate-180' : 'rotate-0')}
+                >
+                  ▼
+                </span>
               </button>
-              <div id={id} className={cn('collapsible-body border-t border-gray-50 px-5 pb-5 pt-2', isOpen ? 'open' : '')}>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {w.lessons && (
-                    <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
-                      <div className="font-semibold text-gray-900">Lessons in this stage</div>
-                      <ul className="mt-2 list-disc pl-4">
-                        {w.lessons.map((l) => (
-                          <li key={l}>{l}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {w.learns && (
-                    <div className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 text-sm text-gray-700">
-                      <div className="font-semibold text-gray-900">What we learn</div>
-                      <ul className="mt-2 list-disc pl-4">
-                        {w.learns.map((l) => (
-                          <li key={l}>{l}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {w.activities && (
-                    <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
-                      <div className="font-semibold text-gray-900">Class activities</div>
-                      <ul className="mt-2 list-disc pl-4">
-                        {w.activities.map((a) => (
-                          <li key={a}>{a}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {w.homework && (
-                    <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
-                      <div className="font-semibold text-gray-900">Home practice</div>
-                      <ul className="mt-2 list-disc pl-4">
-                        {w.homework.map((h) => (
-                          <li key={h}>{h}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
 
-                {Array.isArray(w.days) && w.days.length > 0 && (
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleDays(i)}
-                      className="rounded-full border border-dashed border-gray-300 bg-white/80 px-4 py-1 text-xs font-semibold text-gray-700"
-                      aria-expanded={openDays[i]}
-                    >
-                      {openDays[i] ? 'Hide daily breakdown' : 'Show daily breakdown'}
-                    </button>
-                    {openDays[i] && (
-                      <div className="mt-3 grid gap-3 md:grid-cols-2">
-                        {w.days.map((d, di) => (
-                          <div key={di} className="rounded-2xl border border-gray-100 bg-gray-50/80 p-3 text-sm text-gray-700">
-                            <div className="font-semibold text-gray-900">
-                              {d.title || `Day ${typeof d.day === 'number' ? d.day : d.day || di + 1}`}
-                            </div>
-                            {d.learns && d.learns.length > 0 && (
-                              <ul className="mt-1 list-disc pl-4 text-xs">
-                                {d.learns.map((x) => <li key={x}>{x}</li>)}
-                              </ul>
-                            )}
-                            {d.activities && d.activities.length > 0 && (
-                              <div className="mt-1 text-xs">
-                                <div className="font-medium text-gray-900">Activities</div>
-                                <ul className="list-disc pl-4 text-gray-700">
-                                  {d.activities.map((x) => <li key={x}>{x}</li>)}
-                                </ul>
-                              </div>
-                            )}
-                            {d.homework && d.homework.length > 0 && (
-                              <div className="mt-1 text-xs">
-                                <div className="font-medium text-gray-900">Homework</div>
-                                <ul className="list-disc pl-4 text-gray-700">
-                                  {d.homework.map((x) => <li key={x}>{x}</li>)}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))}
+              {isOpen ? (
+                <div id={id} className="border-t border-gray-100 px-5 pb-5 pt-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {w.lessons && (
+                      <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
+                        <div className="font-semibold text-gray-900">Lessons in this stage</div>
+                        <ul className="mt-2 list-disc space-y-0.5 pl-4">
+                          {w.lessons.map((l) => (
+                            <li key={l}>{l}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {w.learns && (
+                      <div className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 text-sm text-gray-700">
+                        <div className="font-semibold text-gray-900">What we learn</div>
+                        <ul className="mt-2 list-disc space-y-0.5 pl-4">
+                          {w.learns.map((l) => (
+                            <li key={l}>{l}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {w.activities && (
+                      <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
+                        <div className="font-semibold text-gray-900">Class activities</div>
+                        <ul className="mt-2 list-disc pl-4">
+                          {w.activities.map((a) => (
+                            <li key={a}>{a}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {w.homework && (
+                      <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
+                        <div className="font-semibold text-gray-900">Home practice</div>
+                        <ul className="mt-2 list-disc pl-4">
+                          {w.homework.map((h) => (
+                            <li key={h}>{h}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+
+                  {Array.isArray(w.days) && w.days.length > 0 && (
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleDays(i)}
+                        className="rounded-full border border-dashed border-gray-300 bg-white px-4 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                        aria-expanded={openDays[i]}
+                      >
+                        {openDays[i] ? 'Hide daily breakdown' : 'Show daily breakdown'}
+                      </button>
+                      {openDays[i] && (
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          {w.days.map((d, di) => (
+                            <div key={di} className="rounded-2xl border border-gray-100 bg-gray-50/80 p-3 text-sm text-gray-700">
+                              <div className="font-semibold text-gray-900">
+                                {d.title || `Day ${typeof d.day === 'number' ? d.day : d.day || di + 1}`}
+                              </div>
+                              {d.learns && d.learns.length > 0 && (
+                                <ul className="mt-1 list-disc pl-4 text-xs">
+                                  {d.learns.map((x) => <li key={x}>{x}</li>)}
+                                </ul>
+                              )}
+                              {d.activities && d.activities.length > 0 && (
+                                <div className="mt-1 text-xs">
+                                  <div className="font-medium text-gray-900">Activities</div>
+                                  <ul className="list-disc pl-4 text-gray-700">
+                                    {d.activities.map((x) => <li key={x}>{x}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                              {d.homework && d.homework.length > 0 && (
+                                <div className="mt-1 text-xs">
+                                  <div className="font-medium text-gray-900">Homework</div>
+                                  <ul className="list-disc pl-4 text-gray-700">
+                                    {d.homework.map((x) => <li key={x}>{x}</li>)}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         );
