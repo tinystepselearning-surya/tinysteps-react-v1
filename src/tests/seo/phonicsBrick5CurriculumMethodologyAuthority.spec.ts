@@ -30,9 +30,9 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
   it('makes the curriculum-versus-methodology distinction explicit for parents', () => {
     const curriculum = read(curriculumPath);
 
-    expect(curriculum).toContain('How the roadmap becomes classroom teaching');
-    expect(curriculum).toContain('Curriculum explains <strong>what</strong> children learn');
-    expect(curriculum).toContain('Teaching methodology explains <strong>how</strong> a teacher models the skill');
+    expect(curriculum).toContain('Step 3 · See how the roadmap becomes a live lesson');
+    expect(curriculum).toContain('The curriculum explains <strong>what</strong> children learn');
+    expect(curriculum).toContain('the teacher models the target skill, guides practice, corrects errors, adjusts support');
     expect(curriculum).toContain('The sequence stays structured, but the pace is responsive.');
   });
 
@@ -60,7 +60,7 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
       expect(curriculum, route).toContain(`to="${route}"`);
     }
 
-    expect(curriculum).toContain('See the academic design and teacher-support system');
+    expect(curriculum).toContain('Meet the Tiny Steps team');
     expect(curriculum).toContain('Watch real class samples');
     expect(curriculum).toContain('Explore the Phonics & Reading program');
   });
@@ -99,6 +99,6 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
       /scientifically proven|clinically proven|psychology-backed|guaranteed results|guaranteed progress|CBSE-endorsed|IB-endorsed|Cambridge-endorsed/i,
     );
     expect(sources).not.toMatch(/learning styles?/i);
-    expect(read(curriculumPath)).toContain('they are not accreditation claims');
+    expect(read(curriculumPath)).toContain('does not imply formal affiliation with those school systems');
   });
 });
