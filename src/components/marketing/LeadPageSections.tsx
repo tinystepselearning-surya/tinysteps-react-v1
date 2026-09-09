@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Children, isValidElement, type ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 type TrustChip = {
@@ -46,6 +46,17 @@ function buttonClass(variant: CtaItem['variant']) {
   }
 }
 
+function getNodeText(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (!isValidElement(node)) return '';
+  return Children.toArray(node.props.children).map(getNodeText).join(' ');
+}
+
+function isLegacyInternalTrustAside(node: ReactNode): boolean {
+  const text = getNodeText(node).replace(/\s+/g, ' ').trim();
+  return text.includes('Parent trust') && text.includes('Pricing trust') && text.includes('Delivery model');
+}
+
 export function LeadPageShell({ children }: { children: ReactNode }) {
   return (
     <div className="lead-page-shell relative overflow-x-clip bg-gradient-to-b from-orange-50/65 via-white to-sky-50/70 pb-20">
@@ -85,6 +96,8 @@ export function LeadHero({
   description: ReactNode;
   showLeftDecoration?: boolean;
 }) {
+  const visibleAside = isLegacyInternalTrustAside(aside) ? null : aside;
+
   return (
     <section
       className={
@@ -135,7 +148,7 @@ export function LeadHero({
         </div>
 
         <div className="space-y-4">
-          {aside}
+          {visibleAside}
           {stats?.length ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {stats.map((item, index) => (
