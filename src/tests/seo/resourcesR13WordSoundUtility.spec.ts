@@ -53,7 +53,7 @@ describe('Resources R13 sound and word utility engine', () => {
       expect(record.segments.map((segment) => segment.grapheme).join('')).toBe(record.word);
       expect(record.humanReviewState).toBe('pending');
       expect(record.utilityState).toBe('starter-curated');
-      expect(record.meaning.length).toBeGreaterThan(10);
+      expect(record.meaning.trim().split(/\s+/).length).toBeGreaterThanOrEqual(2);
       expect(record.exampleSentence.length).toBeGreaterThan(10);
       expect(record.trickyPart.length).toBeGreaterThan(10);
       for (const segment of record.segments) expect(getPhonicsSound(segment.soundId)).toBeTruthy();
