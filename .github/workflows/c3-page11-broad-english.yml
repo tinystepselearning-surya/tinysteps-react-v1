@@ -22,6 +22,8 @@ jobs:
         run: python scripts/tmp-c3-page11-remove-grid-patch.py
       - name: Remove fragile confidence insertion from helper
         run: python scripts/tmp-c3-page11-remove-confidence-insert.py
+      - name: Remove fragile trust-list patch from helper
+        run: python scripts/tmp-c3-page11-remove-trust-patch.py
       - name: Apply Page 11 broad English reconciliation
         run: python scripts/tmp-c3-page11-broad-english.py
       - name: Focused source check
