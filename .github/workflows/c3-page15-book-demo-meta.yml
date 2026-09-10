@@ -1,0 +1,39 @@
+name: C3 Page 15 Book Demo Meta Apply
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page15-book-demo-meta.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  align-book-demo-meta:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply Page 15 book demo metadata alignment
+        run: python scripts/tmp-c3-page15-book-demo-meta.py
+      - name: Focused source check
+        run: |
+          git diff --check
+          grep -F "Free 35-Minute 1:1 English Assessment | Tiny Steps" src/lib/routeSeoRegistry.js
+          grep -F "free English assessment for kids online" src/lib/routeSeoRegistry.js
+          grep -F "Book a Free {FREE_DEMO_DURATION_MINUTES}-Minute 1:1 English Assessment" src/pages/public/BookDemoPage.tsx
+          grep -F "What Can the Assessment Recommend?" src/pages/public/BookDemoPage.tsx
+          grep -F "areaServed: ['India', 'Worldwide']" src/pages/public/BookDemoPage.tsx
+          ! grep -F "No credit card required" src/pages/public/BookDemoPage.tsx
+          ! grep -F "Takes less than a minute" src/pages/public/BookDemoPage.tsx
+      - name: Commit Page 15 alignment
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/routeSeoRegistry.js
+          git commit -m 'C3 page 15: align demo assessment owner metadata'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
