@@ -180,7 +180,7 @@ export default function OnlineEnglishClassesForKidsPage() {
       educationalLevel: 'English support for children ages 3–12',
       teaches: [
         'phonics',
-        'reading fluency',
+        'reading',
         'grammar',
         'writing',
         'sentence formation',
@@ -276,7 +276,7 @@ export default function OnlineEnglishClassesForKidsPage() {
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
               'Parents looking for online English classes for children instead of broad after-school tuition.',
-              'Children who need phonics, reading, grammar, writing, or spoken-English support inside one structured learning system.',
+              'Children who need phonics, reading, grammar, writing, spoken-English, or public-speaking and communication support inside one structured learning system.',
               'Families comparing live 1:1 English tutoring and small-group options before deciding.',
               'Parents in India or abroad who want visible progress, transparent pricing, and a clear next step.',
             ].map((item) => (
@@ -337,8 +337,8 @@ export default function OnlineEnglishClassesForKidsPage() {
             />
             <div className="mt-5 space-y-3">
               {[
-                '5000+ students served',
-                'Families in 15+ countries',
+                PUBLIC_LEARNER_REACH_LABEL,
+                'India + worldwide online access',
                 'Live teacher-led learning',
                 'Class samples available before parents decide',
                 'Parent-visible progress updates after classes begin',
@@ -383,7 +383,7 @@ export default function OnlineEnglishClassesForKidsPage() {
             />
             <ol className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
               <li>1. Parents share the child’s age, current concerns, country/time zone, and goals.</li>
-              <li>2. Tiny Steps checks the relevant phonics, reading, grammar, writing, sentence-formation, or speaking skills.</li>
+              <li>2. Tiny Steps checks the relevant phonics, reading, grammar, writing, spoken-English, public-speaking, communication, or confidence need.</li>
               <li>3. Families receive a recommended starting path with next-step guidance.</li>
               <li>4. Parents then review pricing and available schedule fit with context.</li>
             </ol>
@@ -430,6 +430,7 @@ export default function OnlineEnglishClassesForKidsPage() {
               ['/writing-classes-for-kids', 'Writing classes for kids'],
               ['/spoken-english-classes-for-kids-online', 'Spoken English classes'],
               ['/speaking', 'Public speaking & communication'],
+              ['/confidence-building-program-kids', 'Confidence building'],
               ['/pricing', 'Pricing'],
               ['/online-english-classes-hyderabad', 'Hyderabad page'],
             ].map(([href, label]) => (
