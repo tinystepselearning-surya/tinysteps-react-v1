@@ -1,0 +1,34 @@
+name: C3 Page 2 Phonics Comparison Apply
+
+on:
+  push:
+    paths:
+      - '.github/workflows/c3-page2-phonics-comparison-apply.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-page2:
+    if: github.ref == 'refs/heads/seo/c1-parent-commercial-search-universe'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply Page 2 reconciliation
+        run: node scripts/apply-c3-page2-phonics-comparison.mjs
+      - name: Review Page 2 diff
+        run: git diff --check && git diff -- src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx src/lib/routeSeoRegistry.js
+      - name: Commit Page 2 only
+        run: |
+          if git diff --quiet -- src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx src/lib/routeSeoRegistry.js; then
+            echo 'No Page 2 changes to commit.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx src/lib/routeSeoRegistry.js
+          git commit -m 'C3 page 2: reconcile phonics comparison owner'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
