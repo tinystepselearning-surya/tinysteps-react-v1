@@ -145,9 +145,9 @@ const ConversionHero: React.FC = () => {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl">
-        <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(28rem,0.92fr)] lg:items-start">
           {/* LEFT CONTENT */}
-          <div className="flex flex-col justify-center">
+          <div className="flex min-w-0 flex-col justify-center">
             <div
               className="inline-flex w-fit items-center gap-3 rounded-full border border-amber-200/80 bg-white/90 px-4 py-2 text-[12px] font-extrabold tracking-[0.06em] text-[#9A3412] shadow-[0_12px_30px_rgba(251,146,60,0.14)] backdrop-blur-md"
             >
@@ -159,25 +159,27 @@ const ConversionHero: React.FC = () => {
             </div>
 
             <h1
-              className="mt-6 max-w-4xl text-[2.95rem] font-black leading-[0.92] tracking-[-0.05em] text-[#172033] md:text-[4.7rem] lg:text-[5.6rem]"
+              className="mt-6 max-w-4xl text-[clamp(2.75rem,11.5vw,4.2rem)] font-black leading-[0.94] tracking-[-0.05em] text-[#172033] sm:text-[clamp(3.5rem,9vw,4.5rem)] lg:text-[clamp(3.5rem,5.35vw,4.65rem)] xl:text-[4.8rem] 2xl:text-[5rem]"
             >
-              <span
-                className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
-              >
-                Online{" "}
+              <span className="block lg:whitespace-nowrap" data-hero-line="online-english">
+                <span
+                  className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
+                >
+                  Online
+                </span>{" "}
+                <span className="bg-gradient-to-r from-[#F59E0B] via-[#F97316] to-[#FBBF24] bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(245,158,11,0.18)]">
+                  English
+                </span>
               </span>
-              <span className="bg-gradient-to-r from-[#F59E0B] via-[#F97316] to-[#FBBF24] bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(245,158,11,0.18)]">
-                English Classes
-              </span>
-              <span
-                className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
-              >
-                {" "}for{" "}
-              </span>
-              <span
-                className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
-              >
-                Kids
+              <span className="block lg:whitespace-nowrap" data-hero-line="classes-for-kids">
+                <span className="bg-gradient-to-r from-[#F59E0B] via-[#F97316] to-[#FBBF24] bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(245,158,11,0.18)]">
+                  Classes
+                </span>{" "}
+                <span
+                  className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
+                >
+                  for Kids
+                </span>
               </span>
             </h1>
 
@@ -225,7 +227,7 @@ const ConversionHero: React.FC = () => {
           </div>
 
           {/* RIGHT FORM CARD */}
-          <div className="relative lg:pl-6">
+          <div className="relative min-w-0 lg:pl-6">
             <div className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
