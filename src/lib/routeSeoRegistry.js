@@ -599,7 +599,7 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/online-english-classes-for-kids',
     ogType: 'website',
     keywords:
-      'online English classes for kids,online English classes for children,live online English classes for kids,1 to 1 English classes for kids online,online English tutor for kids,online English classes for kids ages 3 to 12,online English classes for kids India,online English classes for NRI kids,online English classes for kids in UAE,online English classes for kids in USA,online English classes for kids in UK,online English classes for kids in Australia,online English classes for kids in Singapore,online English classes for kids worldwide',
+      'online English classes for kids,online English classes for children,live online English classes for kids,1 to 1 English classes for kids online,online English tutor for kids,1 to 1 English tutor for kids online,online English classes for kids ages 3 to 12,online English classes for kids India,online English classes for NRI kids,online English classes for kids in UAE,online English classes for kids in USA,online English classes for kids in UK,online English classes for kids in Australia,online English classes for kids in Singapore,online English classes for kids worldwide',
   },
   '/online-english-classes-hyderabad': {
     title: 'Online English Classes for Kids in Hyderabad | Tiny Steps Learning',
