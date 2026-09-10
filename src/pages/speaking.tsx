@@ -308,7 +308,7 @@ export default function SpeakingPage() {
 
               <div className="mx-auto mt-4 w-full max-w-full rounded-2xl border border-[#E9C68D] bg-gradient-to-br from-[#FFF8EC] via-[#FFF6E8] to-[#FFF1D8] px-4 py-3.5 text-center shadow-[0_8px_22px_rgba(122,74,16,0.07)] md:mt-5 md:max-w-[450px] md:rounded-[22px] md:px-5 md:py-4">
                 <span className="block text-[16px] font-extrabold leading-snug text-[#6B3A0E] md:text-[19px]">We identify the child&apos;s speaking gap first.</span>
-                <span className="mt-1 block text-[14px] font-medium leading-snug text-[#7A4A10] md:mt-1.5 md:text-[16px]">Then we suggest the right confidence path.</span>
+                <span className="mt-1 block text-[14px] font-medium leading-snug text-[#7A4A10] md:mt-1.5 md:text-[16px]">Then we suggest the right speaking and communication path.</span>
               </div>
             </aside>
           </div>
@@ -331,7 +331,7 @@ export default function SpeakingPage() {
 
       <ResponsiveTeachingSection
         id="teacher-delivery"
-        program="Public Speaking"
+        program="Public Speaking & Communication"
         introduction="Teachers provide a predictable speaking routine: model a clear response, offer guided prompts, listen to the child’s attempt and help them retry. Prompts are reduced gradually so confidence grows alongside independent expression."
         steps={[
           { title: 'Model and organise', detail: 'The teacher shows how to form a complete answer, add relevant detail and organise ideas for the task.' },
