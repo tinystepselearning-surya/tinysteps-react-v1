@@ -1,0 +1,42 @@
+name: C3 Page 5 Reading Fluency Meta
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page5-reading-fluency-meta.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  align-fluency-owner:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+
+      - name: Align prerender metadata
+        run: python scripts/tmp-c3-page5-reading-fluency-meta.py
+
+      - name: Verify Page 5 owner boundary
+        run: |
+          git diff --check
+          grep -F "Reading Fluency Classes for Kids Online | Tiny Steps Learning" src/pages/public/ReadingFluencyProgramPage.tsx
+          grep -F "Reading Fluency Classes for Kids Online | Tiny Steps Learning" src/lib/routeSeoRegistry.js
+          grep -F "reading fluency programme for kids" src/pages/public/ReadingFluencyProgramPage.tsx
+          grep -F "Reading Classes for Kids" src/pages/public/ReadingFluencyProgramPage.tsx
+          ! grep -F "'help child read fluently'" src/pages/public/ReadingFluencyProgramPage.tsx
+          ! grep -F "'slow reader support'" src/pages/public/ReadingFluencyProgramPage.tsx
+          ! grep -F '<ClusterSeoNav cluster="phonics"' src/pages/public/ReadingFluencyProgramPage.tsx
+
+      - name: Commit prerender alignment
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/routeSeoRegistry.js
+          git commit -m 'C3 page 5: align reading fluency metadata'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
