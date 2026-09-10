@@ -1,0 +1,90 @@
+name: Brick 8 Calendar Projection Codemod
+
+on:
+  push:
+    branches:
+      - rolling-schedule-brick-8-calendar-projections
+    paths:
+      - .github/workflows/brick8-calendar-projection-codemod.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rolling-schedule-brick-8-calendar-projections
+      - name: Wire parent and teacher calendar projections
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # ---------- Teacher enrollment data reuse: preserve already-read enrollment rows ----------
+          p = Path('src/hooks/useTeacherFilteredData.ts')
+          s = p.read_text()
+          old = """interface FilteredStudent {\n  uid: string;\n  fullName: string;\n  studentName?: string;\n  grade?: string;\n  progressStatus?: 'on_track' | 'needs_attention';\n  lastSessionDate?: string;\n  enrollmentStatus?: string;\n}\n\ntype EnrollmentRow = Record<string, unknown> & {\n  id: string;\n};\n"""
+          new = """export type TeacherScheduleEnrollment = Record<string, unknown> & {\n  id: string;\n};\n\ninterface FilteredStudent {\n  uid: string;\n  fullName: string;\n  studentName?: string;\n  grade?: string;\n  progressStatus?: 'on_track' | 'needs_attention';\n  lastSessionDate?: string;\n  enrollmentStatus?: string;\n  scheduleEnrollments?: TeacherScheduleEnrollment[];\n}\n\ntype EnrollmentRow = TeacherScheduleEnrollment;\n"""
+          if old not in s: raise SystemExit('teacher student type anchor missing')
+          s = s.replace(old, new, 1)
+
+          old = """      const next: FilteredStudent = {\n        uid,\n        fullName,\n        studentName: fullName,\n        progressStatus: ACTIVE_PROGRESS_STATUS,\n        enrollmentStatus: readName(row.status).toLowerCase() || undefined,\n      };\n\n      const previous = merged.get(uid);\n      if (!previous) {\n        merged.set(uid, next);\n        return;\n      }\n\n      const preferNextName = previous.fullName === 'Student name pending' && next.fullName !== 'Student name pending';\n      if (preferNextName) {\n        merged.set(uid, { ...previous, ...next });\n      }\n"""
+          new = """      const next: FilteredStudent = {\n        uid,\n        fullName,\n        studentName: fullName,\n        progressStatus: ACTIVE_PROGRESS_STATUS,\n        enrollmentStatus: readName(row.status).toLowerCase() || undefined,\n        scheduleEnrollments: [row],\n      };\n\n      const previous = merged.get(uid);\n      if (!previous) {\n        merged.set(uid, next);\n        return;\n      }\n\n      const scheduleEnrollmentById = new Map<string, TeacherScheduleEnrollment>();\n      (previous.scheduleEnrollments || []).forEach((enrollment) => scheduleEnrollmentById.set(enrollment.id, enrollment));\n      scheduleEnrollmentById.set(row.id, row);\n      const preferNextName = previous.fullName === 'Student name pending' && next.fullName !== 'Student name pending';\n      merged.set(uid, {\n        ...previous,\n        ...(preferNextName ? { fullName: next.fullName, studentName: next.studentName } : {}),\n        enrollmentStatus: next.enrollmentStatus || previous.enrollmentStatus,\n        scheduleEnrollments: Array.from(scheduleEnrollmentById.values()),\n      });\n"""
+          if old not in s: raise SystemExit('teacher enrollment merge anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          # ---------- Teacher schedule: merge display-only projections into calendar rows ----------
+          p = Path('src/pages/teacher/components/schedule/ScheduleView.tsx')
+          s = p.read_text()
+          anchor = """import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';\n"""
+          insert = """import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';\nimport {\n  buildRollingScheduleCalendarProjections,\n  isRollingScheduleProjection,\n} from '../../../../lib/scheduling/rollingScheduleCalendarProjection';\n"""
+          if anchor not in s: raise SystemExit('teacher projection import anchor missing')
+          s = s.replace(anchor, insert, 1)
+
+          anchor = """  const { students } = useTeacherFilteredStudents();\n  const resolvedTeacherId = teacherId || auth.currentUser?.uid || '';\n\n  const studentNameById = useMemo(\n"""
+          insert = """  const { students } = useTeacherFilteredStudents();\n  const resolvedTeacherId = teacherId || auth.currentUser?.uid || '';\n\n  const teacherScheduleEnrollments = useMemo(\n    () => students.flatMap((student) => student.scheduleEnrollments || []),\n    [students],\n  );\n\n  const projectedSessions = useMemo<TeacherSession[]>(() => {\n    const projections = buildRollingScheduleCalendarProjections({\n      enrollments: teacherScheduleEnrollments,\n      realSessions: sessions as unknown as Record<string, unknown>[],\n      fromYmd: format(rangeStart, 'yyyy-MM-dd'),\n      toYmd: format(rangeEnd, 'yyyy-MM-dd'),\n    });\n    return projections.map((row) => ({\n      id: row.id,\n      enrollmentId: row.enrollmentId,\n      teacherId: row.teacherId || resolvedTeacherId,\n      courseId: row.courseId || '',\n      courseName: row.courseName,\n      date: row.date,\n      startTime: row.startTime,\n      endTime: row.endTime,\n      durationMins: row.durationMins,\n      durationMinutes: row.durationMinutes,\n      kidIds: row.kidIds || (row.kidId ? [row.kidId] : []),\n      kidId: row.kidId,\n      studentId: row.studentId,\n      studentName: row.studentName,\n      kidName: row.kidName,\n      childName: row.childName,\n      status: 'scheduled',\n      source: row.source,\n      isScheduleProjection: true,\n      projectionOnly: true,\n    } as TeacherSession & { isScheduleProjection: true; projectionOnly: true }));\n  }, [rangeEnd, rangeStart, resolvedTeacherId, sessions, teacherScheduleEnrollments]);\n\n  const displaySessions = useMemo(\n    () => [...sessions, ...projectedSessions].sort((a, b) => {\n      const aStart = getSessionStartMillis(a) ?? 0;\n      const bStart = getSessionStartMillis(b) ?? 0;\n      return aStart - bStart;\n    }),\n    [projectedSessions, sessions],\n  );\n\n  const studentNameById = useMemo(\n"""
+          if anchor not in s: raise SystemExit('teacher projection construction anchor missing')
+          s = s.replace(anchor, insert, 1)
+
+          s = s.replace("""  const tryOpenAttendance = useCallback((session: TeacherSession) => {\n    if (!isAttendanceAllowedNow(session)) {\n""", """  const tryOpenAttendance = useCallback((session: TeacherSession) => {\n    if (isRollingScheduleProjection(session)) {\n      toast({\n        title: 'Planned recurring class',\n        description: 'This future calendar entry is display-only. Attendance becomes available after the real session enters the 14-day operational window.',\n      });\n      return;\n    }\n    if (!isAttendanceAllowedNow(session)) {\n""", 1)
+
+          s = s.replace("""    sessions.forEach((session) => {\n      const kidId = getPrimarySessionKidId(session);\n""", """    displaySessions.forEach((session) => {\n      const kidId = getPrimarySessionKidId(session);\n""", 1)
+          s = s.replace("""  }, [sessions, studentNameById, getPrimarySessionKidId, getSessionStudentLabel]);\n""", """  }, [displaySessions, studentNameById, getPrimarySessionKidId, getSessionStudentLabel]);\n""", 1)
+          old = """  const filteredSessions = useMemo(() => {\n    if (selectedStudentId === 'all') return sessions;\n    return sessions.filter((session) => getSessionKidIds(session).includes(selectedStudentId));\n  }, [sessions, selectedStudentId, getSessionKidIds]);\n"""
+          new = """  const filteredSessions = useMemo(() => {\n    if (selectedStudentId === 'all') return displaySessions;\n    return displaySessions.filter((session) => getSessionKidIds(session).includes(selectedStudentId));\n  }, [displaySessions, selectedStudentId, getSessionKidIds]);\n"""
+          if old not in s: raise SystemExit('teacher filtered sessions anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          # ---------- Parent calendar: project only the calendar, never Today/Upcoming ----------
+          p = Path('src/pages/parent/ParentDashboard.tsx')
+          s = p.read_text()
+          anchor = """import { isSessionCanonicalForEnrollment } from \"../../lib/sessionScheduleIntegrity\";\n"""
+          insert = """import { isSessionCanonicalForEnrollment } from \"../../lib/sessionScheduleIntegrity\";\nimport {\n  buildRollingScheduleCalendarProjections,\n  isRollingScheduleProjection,\n} from \"../../lib/scheduling/rollingScheduleCalendarProjection\";\n"""
+          if anchor not in s: raise SystemExit('parent projection import anchor missing')
+          s = s.replace(anchor, insert, 1)
+
+          old = """  const classesCalendarSessions = useMemo(() => {\n    const startMs = classesCalendarStart.getTime();\n    const endMs = classesCalendarEnd.getTime();\n    return sortedClassSessions.filter((row) => {\n      const ts = row.start.getTime();\n      return ts >= startMs && ts <= endMs;\n    });\n  }, [sortedClassSessions, classesCalendarStart, classesCalendarEnd]);\n"""
+          new = """  const classesCalendarSessions = useMemo(() => {\n    const startMs = classesCalendarStart.getTime();\n    const endMs = classesCalendarEnd.getTime();\n    const realRows = sortedClassSessions.filter((row) => {\n      const ts = row.start.getTime();\n      return ts >= startMs && ts <= endMs;\n    });\n\n    const kidId = selectedKidId ? String(selectedKidId) : '';\n    const projectionEnrollments = ((enrollmentsQuery.data ?? []) as Enrollment[]).filter((enrollment) => {\n      if (!kidId) return false;\n      if (String(enrollment.kidId || '') === kidId) return true;\n      if (Array.isArray(enrollment.kidIds) && enrollment.kidIds.some((id) => String(id) === kidId)) return true;\n      return String(enrollment.studentId || '') === kidId;\n    });\n    const projectionRows = buildRollingScheduleCalendarProjections({\n      enrollments: projectionEnrollments as unknown as Record<string, unknown>[],\n      realSessions: ((kidSessionsQuery.data ?? []) as KidSession[]) as unknown as Record<string, unknown>[],\n      fromYmd: toYMD(classesCalendarStart),\n      toYmd: toYMD(classesCalendarEnd),\n    }).map((session) => ({\n      session: session as unknown as KidSession,\n      start: session.startAt,\n      status: 'scheduled',\n    }));\n\n    return [...realRows, ...projectionRows].sort((a, b) => a.start.getTime() - b.start.getTime());\n  }, [\n    classesCalendarEnd,\n    classesCalendarStart,\n    enrollmentsQuery.data,\n    kidSessionsQuery.data,\n    selectedKidId,\n    sortedClassSessions,\n  ]);\n"""
+          if old not in s: raise SystemExit('parent calendar sessions anchor missing')
+          s = s.replace(old, new, 1)
+
+          s = s.replace("""  const openJoinClass = async (session: KidSession) => {\n    if (joiningSessionId === session.id) return;\n""", """  const openJoinClass = async (session: KidSession) => {\n    if (isRollingScheduleProjection(session)) return;\n    if (joiningSessionId === session.id) return;\n""", 1)
+
+          s = s.replace("""  const canJoinSession = useCallback((session: KidSession, status: string) => {\n    return (\n      status !== \"completed\" &&\n""", """  const canJoinSession = useCallback((session: KidSession, status: string) => {\n    if (isRollingScheduleProjection(session)) return false;\n    return (\n      status !== \"completed\" &&\n""", 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit projection wiring
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/hooks/useTeacherFilteredData.ts src/pages/teacher/components/schedule/ScheduleView.tsx src/pages/parent/ParentDashboard.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m 'Wire rolling projections into parent and teacher calendars'
+          git push origin HEAD:rolling-schedule-brick-8-calendar-projections
