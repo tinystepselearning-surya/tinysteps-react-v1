@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { getDocsLogged } from '../../lib/firestoreReadLogging';
+import { buildRollingScheduleAnalyticsProjection } from '../../lib/scheduling/rollingScheduleAnalyticsProjection';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -42,19 +43,6 @@ const ANALYTICS_VIEWS: Array<{ id: AnalyticsView; label: string }> = [
   { id: 'teachers', label: 'Teachers' },
 ];
 
-const CANCELLED_SESSION_STATUSES = new Set(['cancelled', 'canceled']);
-const NON_PLANNED_SESSION_STATUSES = new Set([
-  'reschedule_requested',
-  'rescheduled',
-  'no_show',
-  'noshow',
-  'consumed',
-  'settled',
-  'paid',
-  'locked',
-]);
-const SCHEDULE_SESSION_SOURCES = new Set(['enrollmentschedule', 'enrollmentschedulereplace']);
-const UPCOMING_SESSION_STATUSES = new Set(['scheduled', 'open', 'upcoming']);
 const ACTIVE_LIKE_ENROLLMENT_STATUSES = new Set([
   'trial',
   'active',
@@ -64,17 +52,6 @@ const ACTIVE_LIKE_ENROLLMENT_STATUSES = new Set([
   'enrolled',
   'current',
   'ongoing',
-]);
-const NON_PROJECTABLE_ENROLLMENT_STATUSES = new Set([
-  'paused',
-  'pending_teacher',
-  'completed',
-  'discontinued',
-  'expired',
-  'cancelled',
-  'canceled',
-  'archived',
-  'inactive',
 ]);
 const LEGACY_PAST_ENROLLMENT_STATUSES = new Set([
   'completed',
@@ -129,28 +106,6 @@ const normalizeEnrollmentStatus = (enrollment: any): string => {
   if (raw === 'canceled') return 'cancelled';
   if (raw === 'inactive') return 'archived';
   return raw;
-};
-
-const isEnrollmentProjectable = (enrollment: any): boolean => {
-  const rawStatus = normalizeStatus(enrollment?.status);
-  if (rawStatus && NON_PROJECTABLE_ENROLLMENT_STATUSES.has(rawStatus)) return false;
-  return ACTIVE_LIKE_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollment));
-};
-
-const isPlannedScheduleSession = (session: any): boolean => {
-  const sessionStatus = normalizeStatus(session?.status);
-  if (sessionStatus && CANCELLED_SESSION_STATUSES.has(sessionStatus)) return false;
-  if (sessionStatus && NON_PLANNED_SESSION_STATUSES.has(sessionStatus)) return false;
-  const source = normalizeStatus(session?.source);
-  return !source || SCHEDULE_SESSION_SOURCES.has(source);
-};
-
-const resolvePositiveNumber = (...values: unknown[]): number => {
-  for (const value of values) {
-    const num = Number(value);
-    if (Number.isFinite(num) && num > 0) return num;
-  }
-  return 0;
 };
 
 type CachedDataset = { value: unknown; loadedAt: number };
@@ -367,58 +322,13 @@ export default function AnalyticsDashboardV3(): JSX.Element {
     ? teacherFinanceSummaryData.summary
     : rawTeacherSummary;
 
-  const plannedProjection = useMemo(() => {
-    let plannedSessions = 0;
-    let remainingScheduledSessions = 0;
-    let projectedRevenue = 0;
-    let missingFeeSessions = 0;
-    const enrollmentIds = new Set<string>();
-    const enrollmentById = new Map<string, any>();
-    enrollments.forEach((enrollment) => {
-      const id = String(enrollment?.id || '').trim();
-      if (id) enrollmentById.set(id, enrollment);
-    });
-    const courseById = new Map<string, any>();
-    courses.forEach((course) => {
-      [course?.id, course?.courseId, course?.slug, course?.code]
-        .map((value) => String(value || '').trim())
-        .filter(Boolean)
-        .forEach((key) => {
-          if (!courseById.has(key)) courseById.set(key, course);
-        });
-    });
-
-    classSessions.forEach((session) => {
-      if (!isPlannedScheduleSession(session)) return;
-      const enrollmentId = String(session?.enrollmentId || '').trim();
-      if (!enrollmentId) return;
-      const enrollment = enrollmentById.get(enrollmentId);
-      if (!enrollment || !isEnrollmentProjectable(enrollment)) return;
-      plannedSessions += 1;
-      if (UPCOMING_SESSION_STATUSES.has(normalizeStatus(session?.status))) remainingScheduledSessions += 1;
-      enrollmentIds.add(enrollmentId);
-      const course = courseById.get(String(session?.courseId || enrollment?.courseId || '').trim());
-      const feePerSession = resolvePositiveNumber(
-        session?.feeAmount,
-        session?.feePerClass,
-        enrollment?.feePerClass,
-        enrollment?.ratePerSession,
-        course?.feePerClass,
-        course?.ratePerSession,
-      );
-      if (feePerSession > 0) projectedRevenue += feePerSession;
-      else missingFeeSessions += 1;
-    });
-
-    return {
-      plannedSessions,
-      remainingScheduledSessions,
-      scheduleDrivenEnrollments: enrollmentIds.size,
-      projectedRevenue,
-      avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
-      missingFeeSessions,
-    };
-  }, [classSessions, courses, enrollments]);
+  const plannedProjection = useMemo(() => buildRollingScheduleAnalyticsProjection({
+    monthKey: selectedMonth,
+    todayYmd: todayIst,
+    enrollments,
+    realSessions: classSessions,
+    courses,
+  }), [classSessions, courses, enrollments, selectedMonth, todayIst]);
 
   const enrollmentBuckets = useMemo(() => {
     const counts = { activeLike: 0, past: 0, other: 0 };
@@ -624,7 +534,7 @@ export default function AnalyticsDashboardV3(): JSX.Element {
 
       {activeView === 'finance' ? (
         <section className="space-y-5">
-          <SectionHeading title="Finance & Collections" description="Teacher payout summaries use certified monthly rollups when available, with an automatic month-bounded ledger fallback if certification is absent or invalidated." />
+          <SectionHeading title="Finance & Collections" description="Actual billing and teacher payouts remain ledger-based; scheduled-month forecasts use enrollment recurrence plus persisted session overrides." />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard label="Billed Revenue (Month)" value={loading ? '…' : formatMoney(expectedRevenue)} />
             <MetricCard label="Settled Revenue (Month)" value={loading ? '…' : formatMoney(earnedRevenue)} />
@@ -666,7 +576,7 @@ export default function AnalyticsDashboardV3(): JSX.Element {
 
       {activeView === 'delivery' ? (
         <section className="space-y-5">
-          <SectionHeading title="Delivery & Enrollment" description="Delivery detail loads session, enrollment, course, and charge data only when this view is opened." />
+          <SectionHeading title="Delivery & Enrollment" description="Delivery actuals stay session-based while current and future scheduled-month counts are recurrence-derived without pre-creating far-future sessions." />
           {!loading && !error ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

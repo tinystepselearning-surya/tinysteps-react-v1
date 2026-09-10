@@ -82,6 +82,8 @@ describe('StudentTopicProgressEditorCanonicalV2 star-derived subskills', () => {
     await screen.findByText('Current lesson');
     expect(screen.getByText(/suggested from the skill stars/i)).toBeTruthy();
 
+    const lessonSelect = screen.getByRole('combobox', { name: 'Lesson' }) as HTMLSelectElement;
+    await waitFor(() => expect(lessonSelect.disabled).toBe(false));
     fireEvent.click(screen.getByRole('button', { name: 'Rate Letter recognition 4' }));
 
     await waitFor(() => {
