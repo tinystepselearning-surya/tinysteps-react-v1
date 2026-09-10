@@ -1,0 +1,31 @@
+name: C3 Page 7 Writing Meta Apply
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page7-writing-meta.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-writing-meta:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply Page 7 writing metadata
+        run: python scripts/tmp-c3-page7-writing-meta.py
+      - name: Focused diff check
+        run: git diff --check && git diff -- src/lib/routeSeoRegistry.js
+      - name: Commit Page 7 metadata
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/lib/routeSeoRegistry.js
+          git commit -m 'C3 page 7: align writing owner metadata'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
