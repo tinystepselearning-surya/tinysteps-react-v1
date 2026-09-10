@@ -571,11 +571,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/writing-classes-for-kids': {
-    title: 'English Writing Classes for Kids | Tiny Steps Learning',
+    title: 'Creative Writing Classes for Kids Online | Live 1:1 | Tiny Steps',
     description:
-      'English writing classes for kids focused on sentence writing, paragraph writing, grammar in use, and clearer idea expression with live guidance.',
+      'Live 1:1 creative and English writing classes for kids in India and worldwide. Build ideas, paragraphs, school answers, editing skills and independent writing with personalised feedback.',
     canonicalPath: '/writing-classes-for-kids',
     ogType: 'website',
+    keywords:
+      'creative writing classes for kids online,online writing classes for kids,writing classes for kids,English writing classes for kids,1 to 1 writing classes online,paragraph writing classes for kids,story writing classes for kids,school writing support for kids,writing tutor for kids online,writing improvement classes for kids,creative writing tutor for kids,online writing classes for kids worldwide',
   },
   '/phonics-fees-india': {
     title: 'Phonics Class Fees in India 2026 | 1:1 & Group Price Guide',
