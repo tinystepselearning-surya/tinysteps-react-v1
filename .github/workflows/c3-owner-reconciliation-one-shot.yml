@@ -28,8 +28,16 @@ jobs:
 
       - name: Apply deterministic C3 reconciliation
         run: |
-          # Remove one obsolete no-op assertion from the temporary migration script.
+          # Remove one obsolete no-op assertion and fix literal template placeholders
+          # inside the temporary audit-generator block before executing it.
           sed -i "/speaking trust chip anchor/d" scripts/reconcile-commercial-c3-owner-pages.mjs
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/reconcile-commercial-c3-owner-pages.mjs')
+          s = p.read_text()
+          s = s.replace(r'\\${', r'\${')
+          p.write_text(s)
+          PY
           node scripts/reconcile-commercial-c3-owner-pages.mjs
 
       - name: Install dependencies
