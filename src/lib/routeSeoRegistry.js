@@ -553,11 +553,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/reading-classes-for-kids': {
-    title: 'Reading Classes for Kids in India | Tiny Steps',
+    title: 'Online Reading Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.',
+      'Live 1:1 online reading classes for kids ages 3–12 in India and worldwide. Build accurate reading, comprehension, vocabulary and reading confidence with assessment-first support.',
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
+    keywords:
+      'online reading classes for kids,reading classes for kids,reading classes for kids India,reading classes near me,reading class for kids near me,reading and writing classes for kids near me,english reading classes for kids,english reading classes for kids near me,best reading classes for kids,best online reading classes for kids,online reading improvement classes,reading improvement classes for kids,reading classes for struggling readers,child struggling to read,reading comprehension classes for kids,reading tutor online,online reading tutor for kids,reading support for kids,help child read fluently,1-to-1 reading classes online,online reading classes in India,reading classes in India,online reading classes for kids worldwide',
   },
   '/spoken-english-classes-for-kids-online': {
     title: 'Spoken English Classes for Kids Online | Tiny Steps Learning',

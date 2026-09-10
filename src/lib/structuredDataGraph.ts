@@ -401,19 +401,22 @@ function enhanceReading(nodes: any[], canonicalUrl: string, webpage: any) {
     '@context': 'https://schema.org',
     '@type': 'Service',
     '@id': READING_SERVICE_ID,
-    name: 'Tiny Steps Reading Support Programme',
+    name: 'Tiny Steps Online Reading Classes for Kids',
     description:
-      'Live online reading support for children across decoding, accurate word reading, fluency, vocabulary, comprehension, and reading confidence.',
-    serviceType: 'Live online reading classes for children',
+      'Live 1:1 online reading classes for children ages 3–12 across accurate word reading, sentence reading, smoother connected reading, vocabulary, comprehension, and reading confidence.',
+    serviceType: 'Online reading classes for children',
     url: canonicalUrl,
     provider: organizationRef(),
-    areaServed: ['India', 'Worldwide online'],
+    areaServed: [
+      { '@type': 'Country', name: 'India' },
+      { '@type': 'Place', name: 'Worldwide' },
+    ],
     audience: {
       '@type': 'EducationalAudience',
       educationalRole: 'student',
       audienceType: 'Children ages 3–12',
     },
-    subjectOf: webpageRef(canonicalUrl),
+    mainEntityOfPage: webpageRef(canonicalUrl),
   });
 
   webpage.mainEntity = serviceRef(readingService['@id']);
