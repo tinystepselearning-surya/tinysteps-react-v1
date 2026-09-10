@@ -93,7 +93,23 @@ jobs:
       - name: Re-audit rendered R19 grammar and writing journeys
         run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --dist --report
       - name: Check public games navigation
-        run: npm run seo:public-games-navigation
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/gr7-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/login >/dev/null; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            cat /tmp/gr7-preview.log
+            exit 1
+          fi
+          npm run seo:public-games-navigation
       - name: Run SEO smoke
         run: npm run seo:smoke
       - name: Upload GR1-GR7 closure evidence
