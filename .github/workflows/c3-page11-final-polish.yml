@@ -1,0 +1,35 @@
+name: C3 Page 11 Final Polish
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page11-final-polish.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  polish-broad-english:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply final Page 11 polish
+        run: python scripts/tmp-c3-page11-final-polish.py
+      - name: Focused source check
+        run: |
+          git diff --check
+          grep -F "['/confidence-building-program-kids', 'Confidence building']" src/pages/public/OnlineEnglishClassesForKidsPage.tsx
+          grep -F "PUBLIC_LEARNER_REACH_LABEL" src/pages/public/OnlineEnglishClassesForKidsPage.tsx
+          ! grep -F "        'reading fluency'," src/pages/public/OnlineEnglishClassesForKidsPage.tsx
+      - name: Commit Page 11 polish
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/public/OnlineEnglishClassesForKidsPage.tsx
+          git commit -m 'C3 page 11: finalize broad English owner'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
