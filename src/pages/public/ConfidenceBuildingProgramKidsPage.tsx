@@ -179,7 +179,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
         <section className="mt-8 rounded-2xl border border-sky-100 bg-sky-50 p-6 md:p-7">
           <h2 className="text-2xl font-bold text-slate-900">Quick answer: when is Confidence Building the right programme?</h2>
           <p className="mt-3 leading-7 text-slate-700">
-            Choose this specialist programme when the child&apos;s **confidence itself** is the main barrier: they hesitate to start, avoid participating, become much quieter under speaking pressure, or rely heavily on adult prompting despite having something to say. If the main goal is broader communication, everyday English fluency, or grammar accuracy, another Tiny Steps programme is the clearer owner.
+            Choose this specialist programme when the child&apos;s confidence itself is the main barrier: they hesitate to start, avoid participating, become much quieter under speaking pressure, or rely heavily on adult prompting despite having something to say. If the main goal is broader communication, everyday English fluency, or grammar accuracy, another Tiny Steps programme is the clearer owner.
           </p>
         </section>
 
@@ -212,7 +212,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
             ))}
           </div>
           <p className="mt-5 text-sm leading-7 text-slate-700 md:text-base">
-            Activities may include short answers, picture talk, simple explanations, storytelling or presentation-style tasks when they are useful for confidence practice. Those activities are tools; the specialist outcome here is **greater speaking comfort and independent participation**.
+            Activities may include short answers, picture talk, simple explanations, storytelling or presentation-style tasks when they are useful for confidence practice. Those activities are tools; the specialist outcome here is greater speaking comfort and independent participation.
           </p>
         </section>
 
@@ -247,7 +247,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
         <section className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">Searching about a shy child, or looking for classes?</h2>
           <p className="mt-3 leading-7 text-slate-700">
-            If you are still trying to understand **why your child hesitates or appears shy while speaking**, use our parent diagnostic guide first. If you already want **structured live confidence-building classes**, this page is the programme owner.
+            If you are still trying to understand why your child hesitates or appears shy while speaking, use our parent diagnostic guide first. If you already want structured live confidence-building classes, this page is the programme owner.
           </p>
           <Link to="/shy-child-speaking-confidence" className="mt-4 inline-block font-semibold underline underline-offset-2">
             Read: Shy Child Speaking Confidence Help
@@ -268,7 +268,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
         <section className="mt-8 rounded-2xl border border-sky-100 bg-white p-6 md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">How parents can measure confidence progress</h2>
           <p className="mt-3 leading-7 text-slate-700">
-            Confidence should be judged through behaviour on fresh speaking tasks rather than promises about a fixed number of classes. Useful signs include faster response initiation, fewer prompts, more consistent participation, calmer retries after mistakes, clearer voice and eye-level engagement where appropriate, and greater willingness to attempt unfamiliar topics.
+            Confidence should be judged through behaviour on fresh speaking tasks rather than promises about a fixed number of classes. Useful signs include faster response initiation, fewer prompts, more consistent participation, calmer retries after mistakes, steadier delivery, and greater willingness to attempt unfamiliar topics.
           </p>
         </section>
 

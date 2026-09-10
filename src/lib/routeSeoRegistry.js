@@ -665,11 +665,13 @@ export const ROUTE_SEO_REGISTRY = {
       'reading fluency program for kids,reading fluency programme for kids,reading fluency classes for kids online,online reading fluency classes,reading fluency tutor for kids,1 to 1 reading fluency classes,live reading fluency classes for kids,reading fluency course for kids',
   },
   '/confidence-building-program-kids': {
-    title: 'Confidence Building Program for Kids | Tiny Steps',
+    title: 'Confidence Building Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Structured communication pathway for children needing stronger vocabulary, sentence formation, guided speaking, storytelling, expression, and confidence.',
+      'Live 1:1 confidence-building classes for kids in India and worldwide. Build speaking comfort, participation confidence and independent expression in 35-minute classes.',
     canonicalPath: '/confidence-building-program-kids',
     ogType: 'website',
+    keywords:
+      'confidence building classes for kids,confidence building program for kids,online confidence building classes for kids,1 to 1 confidence building classes for kids,speaking confidence classes for kids,confidence classes for shy children,live confidence building classes for kids,online confidence program for kids,confidence building classes for children,confidence building classes for kids worldwide',
   },
   '/english-foundation-program': {
     title: 'English Foundation Program for Kids | Tiny Steps',
