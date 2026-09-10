@@ -244,7 +244,6 @@ const assessmentServiceSchema = {
     price: '0',
     priceCurrency: 'INR',
     url: bookDemoCanonicalUrl,
-    availability: 'https://schema.org/InStock',
   },
 };
 
