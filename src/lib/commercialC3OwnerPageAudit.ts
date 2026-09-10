@@ -3,8 +3,8 @@ import { COMMERCIAL_C2_OWNERSHIP_CLUSTERS, COMMERCIAL_C2_STATUS } from './commer
 const freeze = <T extends object>(value: T): Readonly<T> => Object.freeze(value);
 const freezeList = <T>(values: readonly T[]): readonly T[] => Object.freeze([...values]);
 
-export const COMMERCIAL_C3_REVISION = '2026-09-10-c3-r2';
-export const COMMERCIAL_C3_STATUS = 'implementation-in-progress';
+export const COMMERCIAL_C3_REVISION = '2026-09-10-c3-r3';
+export const COMMERCIAL_C3_STATUS = 'implementation-complete';
 
 export type CommercialC3AuditAction = 'PROTECT' | 'STRENGTHEN' | 'REPAIR';
 export type CommercialC3SignalStatus = 'strong' | 'adequate' | 'needs-strengthening';
