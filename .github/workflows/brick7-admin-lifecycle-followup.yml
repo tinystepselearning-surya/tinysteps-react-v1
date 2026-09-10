@@ -1,0 +1,31 @@
+name: Brick 7 Admin Lifecycle Follow-up
+
+on:
+  push:
+    branches:
+      - rolling-schedule-brick-7-admin-cutover
+    paths:
+      - .github/workflows/brick7-admin-lifecycle-followup.yml
+      - scripts/brick7-admin-lifecycle-followup.py
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rolling-schedule-brick-7-admin-cutover
+      - name: Apply lifecycle follow-up
+        run: python3 scripts/brick7-admin-lifecycle-followup.py
+      - name: Commit transformed source
+        run: |
+          rm scripts/brick7-admin-lifecycle-followup.py
+          rm .github/workflows/brick7-admin-lifecycle-followup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/admin/StudentManagement/StudentList.tsx scripts/brick7-admin-lifecycle-followup.py .github/workflows/brick7-admin-lifecycle-followup.yml
+          git commit -m "Route rolling enrollment discontinuation safely"
+          git push origin HEAD:rolling-schedule-brick-7-admin-cutover
