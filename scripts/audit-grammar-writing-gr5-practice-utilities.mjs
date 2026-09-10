@@ -22,6 +22,7 @@ const errors = [];
 const warnings = [];
 const addError = (code, detail) => errors.push({ code, detail });
 const addWarning = (code, detail) => warnings.push({ code, detail });
+const sameSet = (left, right) => left.length === right.length && left.every((value) => right.includes(value));
 
 if (GRAMMAR_WRITING_PRACTICE_UTILITIES.map((item) => item.id).join('|') !== GRAMMAR_WRITING_GR5_PRACTICE_KINDS.join('|')) addError('gr4-handoff-drift', GRAMMAR_WRITING_PRACTICE_UTILITIES.map((item) => item.id).join(','));
 if (GRAMMAR_WRITING_PRACTICE_UTILITIES.length !== 9) addError('utility-count-drift', String(GRAMMAR_WRITING_PRACTICE_UTILITIES.length));
@@ -52,7 +53,7 @@ for (const item of GRAMMAR_WRITING_PRACTICE_UTILITIES) {
 
 for (const problem of GRAMMAR_WRITING_PARENT_PROBLEMS) {
   const actual = getGrammarWritingPracticeUtilitiesForParentProblem(problem.id).map((item) => item.id);
-  if (actual.join('|') !== problem.recommendedPracticeKinds.join('|')) addError('gr4-reciprocity', `${problem.id}:${actual.join(',')}`);
+  if (!sameSet(actual, problem.recommendedPracticeKinds)) addError('gr4-reciprocity', `${problem.id}:${actual.join(',')}`);
 }
 for (const skill of GRAMMAR_WRITING_SKILL_TAXONOMY) if (!connectedSkills.has(skill.id)) addError('gr1-practice-gap', skill.id);
 for (const tense of GRAMMAR_WRITING_TENSE_NODES) if (!connectedTenses.has(tense.id)) addError('gr2-practice-gap', tense.id);
