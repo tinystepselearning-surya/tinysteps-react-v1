@@ -564,11 +564,13 @@ export const ROUTE_SEO_REGISTRY = {
       'online reading classes for kids,reading classes for kids,reading classes for kids India,reading classes near me,reading class for kids near me,reading and writing classes for kids near me,english reading classes for kids,english reading classes for kids near me,best reading classes for kids,best online reading classes for kids,online reading improvement classes,reading improvement classes for kids,reading classes for struggling readers,child struggling to read,reading comprehension classes for kids,reading tutor online,online reading tutor for kids,reading support for kids,help child read fluently,1-to-1 reading classes online,online reading classes in India,reading classes in India,online reading classes for kids worldwide',
   },
   '/spoken-english-classes-for-kids-online': {
-    title: 'Spoken English Classes for Kids Online | Tiny Steps Learning',
+    title: 'Spoken English Classes for Kids Online | Live 1:1 | Tiny Steps',
     description:
-      'Live spoken English classes for kids online. Help children move past one-word answers, build sentence confidence, and speak clearly with grammar-linked support.',
+      'Live 1:1 spoken English classes for kids in India and worldwide. Build fuller sentences, conversational fluency, grammar in use and speaking confidence in 35-minute classes.',
     canonicalPath: '/spoken-english-classes-for-kids-online',
     ogType: 'website',
+    keywords:
+      'spoken English classes for kids online,English speaking classes for kids,online spoken English classes for kids,1 to 1 spoken English classes for kids,English fluency classes for kids,conversational English classes for kids,English conversation classes for kids online,online English speaking practice for kids,spoken English classes for NRI kids,online English speaking tutor for kids,online spoken English classes for kids worldwide',
   },
   '/writing-classes-for-kids': {
     title: 'Creative Writing Classes for Kids Online | Live 1:1 | Tiny Steps',
