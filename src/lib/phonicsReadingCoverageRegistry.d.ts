@@ -1,6 +1,8 @@
 export type PhonicsReadingCoverageState = 'canonical-owner' | 'supporting-owner' | 'dataset-practice-only' | 'evidence-gated-hold';
 export interface PhonicsReadingCoverageEntry {
   readonly conceptId: string;
+  readonly label: string;
+  readonly conceptType: string;
   readonly state: PhonicsReadingCoverageState;
   readonly ownerPath: string | null;
   readonly ownerTopicId: string | null;
