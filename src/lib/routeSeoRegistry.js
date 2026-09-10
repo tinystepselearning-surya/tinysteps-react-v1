@@ -35,11 +35,13 @@ export const ROUTE_SEO_REGISTRY = {
       'online phonics classes,online phonics classes for kids,phonics classes for kids,phonics classes in India,live 1:1 phonics classes,1 to 1 phonics classes online,personalised phonics classes for kids,live online phonics classes,structured phonics classes for kids,synthetic phonics classes,phonics classes for struggling readers,phonics tutor online for kids,phonics classes for blending,phonics classes for decoding,phonics classes for ages 3 to 12',
   },
   '/grammar': {
-    title: 'Grammar Classes for Kids in India | Tiny Steps',
+    title: 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book one free 35-minute 1:1 demo assessment class.',
+      'Live 1:1 online grammar classes for kids in India and worldwide. Build sentence formation, tenses, punctuation, grammar accuracy and clearer school answers with assessment-first placement.',
     canonicalPath: '/grammar',
     ogType: 'website',
+    keywords:
+      'online grammar classes for kids,grammar classes for kids,grammar classes for kids India,English grammar classes for kids,1 to 1 grammar classes online,online grammar tutor for kids,sentence formation classes for kids,grammar classes for sentence formation,grammar classes to improve school answers,grammar correction classes for kids,online grammar classes in India,online grammar classes for kids worldwide',
   },
   '/speaking': {
     title: 'Public Speaking Classes for Kids in India | Tiny Steps',

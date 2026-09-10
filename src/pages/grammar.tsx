@@ -1,10 +1,29 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
+import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
+import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
-import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
+
+const grammarFacts = SEMANTIC_FACTS.programmes.grammar;
+const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
+
+const GRAMMAR_SEO_KEYWORDS = [
+  'online grammar classes for kids',
+  'grammar classes for kids',
+  'grammar classes for kids India',
+  'English grammar classes for kids',
+  '1 to 1 grammar classes online',
+  'online grammar tutor for kids',
+  'sentence formation classes for kids',
+  'grammar classes for sentence formation',
+  'grammar classes to improve school answers',
+  'grammar correction classes for kids',
+  'online grammar classes in India',
+  'online grammar classes for kids worldwide',
+];
 
 const faqItems = [
   {
@@ -31,6 +50,26 @@ const faqItems = [
     question: 'How does Tiny Steps show grammar progress to parents?',
     answer:
       'Parents receive practical progress visibility: what was practised, common errors, improvement points, and next-step goals across grammar clarity, sentence formation, writing clarity, and school-answer confidence.',
+  },
+  {
+    question: 'What ages are Tiny Steps grammar classes for?',
+    answer:
+      'Beginner Grammar is designed for ages 5–10 and Advanced Grammar for ages 8–12. The age ranges overlap intentionally because placement depends on the child’s current grammar control and readiness, not age alone.',
+  },
+  {
+    question: 'Are Tiny Steps grammar classes live and 1:1?',
+    answer:
+      `Yes. Standard Tiny Steps grammar classes are live 1:1 online classes and run for ${PUBLIC_SESSION_DURATION_LABEL}.`,
+  },
+  {
+    question: 'Can children outside India join Tiny Steps grammar classes?',
+    answer:
+      'Yes. Tiny Steps grammar classes are available to families in India and worldwide, including NRI families, subject to a compatible teacher schedule and the child’s learning fit.',
+  },
+  {
+    question: 'What is the difference between grammar classes and writing classes?',
+    answer:
+      'Grammar classes focus on sentence structure, parts of speech, tenses, punctuation, correction and accurate language use. Writing classes go further into idea development, paragraph structure, creative writing, editing and longer written responses. A child may need one or both depending on the assessment.',
   },
 ];
 
@@ -65,17 +104,17 @@ const grammarPathwayCards = [
   },
   {
     name: 'Writing clarity',
-    description: 'Improve answer structure, correction skills, and paragraph-level clarity.',
-    href: '/reading-classes-for-kids',
-    anchor: 'reading classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/reading-classes-for-kids`,
+    description: 'Apply grammar accurately in written answers; use the dedicated writing programme for paragraph and creative-writing development.',
+    href: '/writing-classes-for-kids',
+    anchor: 'writing classes for kids',
+    url: `${PUBLIC_FACTS.primaryWebsite}/writing-classes-for-kids`,
   },
   {
     name: 'Confident school answers',
-    description: 'Apply grammar for clear expression in written and oral school responses.',
-    href: '/speaking',
-    anchor: 'public speaking and communication classes',
-    url: `${PUBLIC_FACTS.primaryWebsite}/speaking`,
+    description: 'Apply grammar accurately when building complete, clear school responses.',
+    href: '/grammar',
+    anchor: 'grammar classes for school-answer clarity',
+    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
 ];
 
@@ -90,6 +129,9 @@ const grammarPyramidLevels = [
 export default function GrammarPage() {
   const canonicalPath = '/grammar';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+  const seoTitle = 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps';
+  const seoDescription =
+    'Live 1:1 online grammar classes for kids in India and worldwide. Build sentence formation, tenses, punctuation, grammar accuracy and clearer school answers with assessment-first placement.';
 
   useEffect(() => {
     const breadcrumbSchema = {
@@ -100,6 +142,15 @@ export default function GrammarPage() {
         { '@type': 'ListItem', position: 2, name: 'Curriculum', item: 'https://tinystepslearning.com/curriculum' },
         { '@type': 'ListItem', position: 3, name: 'Grammar Classes for Kids', item: canonicalUrl },
       ],
+    };
+
+    const webpageSchema = {
+      ...createWebPageSchema({
+        name: 'Online Grammar Classes for Kids',
+        description: seoDescription,
+        url: canonicalUrl,
+      }),
+      '@id': `${canonicalUrl}#webpage`,
     };
 
     const pathwayItemListSchema = {
@@ -114,10 +165,9 @@ export default function GrammarPage() {
         position: index + 1,
         url: card.url,
         item: {
-          '@type': 'Course',
+          '@type': 'Thing',
           name: card.name,
           description: card.description,
-          areaServed: 'India',
         },
       })),
     };
@@ -128,23 +178,23 @@ export default function GrammarPage() {
     };
 
     const courseSchema = createCourseSchema({
-      name: 'Grammar Classes for Kids',
+      name: 'Online Grammar Classes for Kids',
       description:
-        'Live online grammar classes for kids in India focused on sentence formation, tenses, punctuation, writing clarity, and confident school answers.',
+        'Live 1:1 online grammar classes for kids focused on sentence formation, parts of speech, tenses, punctuation, grammar correction and clearer school answers.',
       url: canonicalUrl,
-      educationalLevel: 'Primary and middle-school grammar support',
-      teaches: ['grammar', 'sentence formation', 'tenses', 'punctuation', 'writing clarity'],
-      areaServed: 'India',
+      educationalLevel: 'Beginner Grammar ages 5–10; Advanced Grammar ages 8–12',
+      teaches: ['grammar', 'sentence formation', 'parts of speech', 'tenses', 'punctuation', 'grammar correction', 'school-answer clarity'],
+      areaServed: ['India', 'Worldwide'],
     });
 
     applySeo({
-      title: 'Grammar Classes for Kids in India | Tiny Steps',
-      description:
-        'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book one free 35-minute 1:1 online demo assessment class.',
+      title: seoTitle,
+      description: seoDescription,
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, courseSchema, pathwayItemListSchema, faqSchema],
+      keywords: GRAMMAR_SEO_KEYWORDS,
+      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, pathwayItemListSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -172,13 +222,13 @@ export default function GrammarPage() {
                 Grammar clarity for children
               </p>
               <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">
-                Grammar Classes for Kids in India
+                Online Grammar Classes for Kids
               </h1>
               <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                Help your child build grammar clarity, sentence formation, writing clarity, and stronger school answers through structured live online grammar classes for kids in India.
+                Tiny Steps provides live 1:1 online grammar classes for children in India and worldwide. Build sentence formation, grammar accuracy, tenses, punctuation, correction skills, and clearer school answers through level-matched teaching.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps follows an assessment-first grammar path to understand whether your child needs help with sentence formation, tenses, punctuation, writing clarity, or grammar use in school answers. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book one free 35-minute 1:1 online demo assessment class</Link>.
+                Tiny Steps follows an assessment-first grammar path to understand whether your child needs Beginner Grammar, Advanced Grammar, or focused support with sentence formation, tenses, punctuation, correction, or grammar use in school answers. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book one free {demoMinutes}-minute 1:1 online demo assessment class</Link>.
               </p>
 
               <div className="mt-7">
@@ -194,11 +244,11 @@ export default function GrammarPage() {
                 >
                   View Full Curriculum Roadmap
                 </Link>
-                <p className="mt-3 text-sm text-slate-600 md:text-[15px]">Takes 20-30 seconds • No commitment</p>
+                <p className="mt-3 text-sm text-slate-600 md:text-[15px]">One free {demoMinutes}-minute 1:1 assessment before enrolment</p>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {['Grammar clarity', 'Sentence formation', 'Parent progress visibility'].map((chip) => (
+                {[grammarFacts.levels.beginner.ageRange.label + ' Beginner', grammarFacts.levels.advanced.ageRange.label + ' Advanced', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, 'India + worldwide'].map((chip) => (
                   <span key={chip} className="rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm sm:px-3.5">
                     {chip}
                   </span>
@@ -311,8 +361,8 @@ export default function GrammarPage() {
                 problem: 'Child struggles to build complete sentences',
                 meaning: 'Sentence structure and idea flow may need guided practice.',
                 support: 'Suggested Tiny Steps support: sentence formation support',
-                href: '/online-english-classes-for-kids',
-                anchor: 'online English classes for kids in India',
+                href: '/grammar',
+                anchor: 'online grammar classes for kids',
               },
               {
                 pill: 'Tense clarity practice',
@@ -327,24 +377,24 @@ export default function GrammarPage() {
                 problem: 'Child makes article/preposition mistakes',
                 meaning: 'Small grammar units may not be applied consistently in real writing.',
                 support: 'Suggested Tiny Steps support: grammar accuracy support',
-                href: '/reading-classes-for-kids',
-                anchor: 'reading classes for kids',
+                href: '/grammar',
+                anchor: 'grammar classes for kids',
               },
               {
                 pill: 'Writing clarity and answer building',
                 problem: 'Child writes very short or unclear answers',
                 meaning: 'The child may need support with sentence expansion and answer organization.',
                 support: 'Suggested Tiny Steps support: writing clarity and answer-building support',
-                href: '/grammar',
-                anchor: 'grammar classes for kids',
+                href: '/writing-classes-for-kids',
+                anchor: 'writing classes for kids',
               },
               {
                 pill: 'Grammar usage and clear expression',
                 problem: 'Child needs better grammar while speaking',
                 meaning: 'Grammar control may break during oral responses and explanation tasks.',
                 support: 'Suggested Tiny Steps support: grammar usage and clear expression',
-                href: '/speaking',
-                anchor: 'public speaking and communication classes',
+                href: '/spoken-english-classes-for-kids-online',
+                anchor: 'spoken English classes for kids online',
               },
             ].map((item) => (
               <article
@@ -406,9 +456,9 @@ export default function GrammarPage() {
 
       <section className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online grammar classes for kids across India</h2>
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online grammar classes for kids in India and worldwide</h2>
           <p className="mt-3 text-base leading-7 text-slate-700">
-            Tiny Steps supports children across India through live online grammar classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> and receive a level-based grammar and sentence formation path.
+            Tiny Steps supports families across India and internationally through the same live online grammar programme. Children in India and NRI/international families can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book one free {demoMinutes}-minute 1:1 online demo assessment class</Link>; suitable class timings and the correct grammar level are confirmed before enrolment.
           </p>
         </div>
       </section>
@@ -473,7 +523,7 @@ export default function GrammarPage() {
             </article>
           </div>
           <p className="mt-4 text-slate-700">
-            Tiny Steps connects grammar with real usage so children do not only memorise rules; they learn to apply them in speaking and writing. Families can also connect grammar progress with <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2">reading classes for kids</Link> where comprehension support is needed.
+            Tiny Steps connects grammar with real usage so children do not only memorise rules; they learn to apply grammar accurately in speaking and writing. For paragraph structure, creative writing, editing, and longer written responses, use the dedicated <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2">Writing Classes for Kids</Link>. For grammar use during spoken responses, see <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2">Spoken English Classes for Kids</Link>.
           </p>
         </div>
       </section>
@@ -566,35 +616,35 @@ export default function GrammarPage() {
 
       <section className="bg-[#fff6ec] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Age-wise grammar outcomes</h2>
+          <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar levels and age guidance</h2>
           <div className="grid gap-4 md:gap-5 md:grid-cols-3">
             <article className="flex h-full flex-col rounded-2xl border border-amber-100 bg-gradient-to-br from-white to-amber-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
-              <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">Ages 5-7</span>
+              <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">{grammarFacts.levels.beginner.label} · {grammarFacts.levels.beginner.ageRange.label}</span>
               <p className="mt-3 text-sm text-slate-700">
-                Naming words, action words, describing words, simple sentences, basic punctuation, and oral sentence practice.
+                {grammarFacts.levels.beginner.lessonCount} lessons build core grammar, sentence formation, punctuation, tense foundations, and accurate use in meaningful sentences.
               </p>
-              <Link to="/grammar" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                Start with grammar foundation
+              <Link to="/curriculum?tab=grammar" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
+                See Beginner Grammar curriculum
               </Link>
             </article>
 
             <article className="flex h-full flex-col rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
-              <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">Ages 8-10</span>
+              <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">{grammarFacts.levels.advanced.label} · {grammarFacts.levels.advanced.ageRange.label}</span>
               <p className="mt-3 text-sm text-slate-700">
-                Tenses, articles, prepositions, conjunctions, sentence correction, paragraph clarity, and school answers.
+                {grammarFacts.levels.advanced.lessonCount} lessons develop stronger tense control, sentence complexity, correction, grammar in context, and accurate written and spoken expression.
               </p>
-              <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                Build grammar and sentence clarity
+              <Link to="/curriculum?tab=grammar" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
+                See Advanced Grammar curriculum
               </Link>
             </article>
 
             <article className="flex h-full flex-col rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
-              <span className="inline-flex w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-800">Ages 11-12</span>
+              <span className="inline-flex w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-800">Placement by readiness</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children need stronger grammar accuracy, paragraph-quality answers, editing skills, explanation clarity, and confident written and oral expression.
+                The age ranges overlap intentionally. Assessment considers current grammar accuracy, sentence control, correction skill, and readiness so the child starts in the appropriate track rather than being placed by age alone.
               </p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                Book one free 35-minute 1:1 online demo assessment class
+                Check the right grammar level
               </Link>
             </article>
           </div>
@@ -703,9 +753,9 @@ export default function GrammarPage() {
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">
-            <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-white">reading classes for kids</Link>
+            <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-white">writing classes for kids</Link>
             <span className="hidden sm:inline text-slate-400">•</span>
-            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-white">online phonics classes for kids</Link>
+            <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2 hover:text-white">spoken English classes for kids</Link>
             <span className="hidden sm:inline text-slate-400">•</span>
             <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
           </div>
@@ -717,7 +767,6 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <ClusterSeoNav cluster="phonics" />
     </div>
   );
 }

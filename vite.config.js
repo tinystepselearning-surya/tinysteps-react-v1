@@ -43,9 +43,9 @@ function canonicalInternalBlogLinks() {
         transformed = transformed.replace("stage: 'Ages 9 to 13'", "stage: 'Ages 9 to 12'");
       }
 
-      // C3: grammar and speaking already serve international families; normalize
-      // only their structured-data geography while preserving their proven copy.
-      if (id.includes('/src/pages/grammar.tsx') || id.includes('/src/pages/speaking.tsx')) {
+      // C3: speaking still has a source-level geography migration pending its
+      // dedicated owner-page pass. Grammar now carries canonical geography directly.
+      if (id.includes('/src/pages/speaking.tsx')) {
         transformed = transformed.replace("areaServed: 'India'", "areaServed: ['India', 'Worldwide']");
       }
 
