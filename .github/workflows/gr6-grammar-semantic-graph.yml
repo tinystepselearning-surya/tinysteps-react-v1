@@ -1,0 +1,97 @@
+name: GR6 Grammar Writing Semantic Graph
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/grammarWritingKnowledgeTaxonomy.*'
+      - 'src/lib/grammarWritingTenseArchitecture.*'
+      - 'src/lib/grammarWritingWritingProgression.*'
+      - 'src/lib/grammarWritingParentProblemArchitecture.*'
+      - 'src/lib/grammarWritingPracticeUtilities.*'
+      - 'src/lib/grammarWritingGr6SemanticGraph.*'
+      - 'src/lib/grammarWritingSemanticJourneyGraph.js'
+      - 'src/lib/grammarWritingSemanticCanonicalOwnership.js'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/tests/seo/grammarWritingGr1Taxonomy.spec.ts'
+      - 'src/tests/seo/grammarWritingGr2TenseArchitecture.spec.ts'
+      - 'src/tests/seo/grammarWritingGr3WritingProgression.spec.ts'
+      - 'src/tests/seo/grammarWritingGr4ParentProblems.spec.ts'
+      - 'src/tests/seo/grammarWritingGr5PracticeUtilities.spec.ts'
+      - 'src/tests/seo/grammarWritingGr6SemanticGraph.spec.ts'
+      - 'scripts/audit-grammar-writing-gr1-taxonomy.mjs'
+      - 'scripts/audit-grammar-writing-gr2-tenses.mjs'
+      - 'scripts/audit-grammar-writing-gr3-writing-progression.mjs'
+      - 'scripts/audit-grammar-writing-gr4-parent-problems.mjs'
+      - 'scripts/audit-grammar-writing-gr5-practice-utilities.mjs'
+      - 'scripts/audit-grammar-writing-gr6-semantic-graph.mjs'
+      - 'scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs'
+      - 'docs/seo/resources-architecture/GR1_*'
+      - 'docs/seo/resources-architecture/GR2_*'
+      - 'docs/seo/resources-architecture/GR3_*'
+      - 'docs/seo/resources-architecture/GR4_*'
+      - 'docs/seo/resources-architecture/GR5_*'
+      - 'docs/seo/resources-architecture/GR6_*'
+      - '.github/workflows/gr6-grammar-semantic-graph.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gr6-grammar-writing-semantic-graph:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run GR1-GR6 and grammar Resources regression tests
+        run: npx vitest run src/tests/seo/grammarWritingGr1Taxonomy.spec.ts src/tests/seo/grammarWritingGr2TenseArchitecture.spec.ts src/tests/seo/grammarWritingGr3WritingProgression.spec.ts src/tests/seo/grammarWritingGr4ParentProblems.spec.ts src/tests/seo/grammarWritingGr5PracticeUtilities.spec.ts src/tests/seo/grammarWritingGr6SemanticGraph.spec.ts src/tests/seo/resourcesR17GrammarWritingArchitecture.spec.ts src/tests/seo/resourcesR19GrammarWritingSemanticJourneys.spec.ts
+      - name: Audit GR1 grammar and writing taxonomy
+        run: node scripts/audit-grammar-writing-gr1-taxonomy.mjs --report
+      - name: Audit GR2 tense architecture
+        run: node scripts/audit-grammar-writing-gr2-tenses.mjs --report
+      - name: Audit GR3 writing progression
+        run: node scripts/audit-grammar-writing-gr3-writing-progression.mjs --report
+      - name: Audit GR4 parent problem architecture
+        run: node scripts/audit-grammar-writing-gr4-parent-problems.mjs --report
+      - name: Audit GR5 practice utilities
+        run: node scripts/audit-grammar-writing-gr5-practice-utilities.mjs --report
+      - name: Audit GR6 semantic graph
+        run: node scripts/audit-grammar-writing-gr6-semantic-graph.mjs --report
+      - name: Audit R19 grammar and writing semantic journeys
+        run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
+      - name: Audit R17 grammar and writing architecture after R18 execution
+        run: node scripts/audit-resources-r17-grammar-writing-architecture.mjs --r18-executed --report
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Check shadowing
+        run: node scripts/check-shadowing.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+      - name: Upload GR1-GR6 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grammar-writing-gr1-gr6-architecture
+          path: |
+            artifacts/grammar-writing-gr1-taxonomy.json
+            artifacts/grammar-writing-gr2-tenses.json
+            artifacts/grammar-writing-gr3-writing-progression.json
+            artifacts/grammar-writing-gr4-parent-problems.json
+            artifacts/grammar-writing-gr5-practice-utilities.json
+            artifacts/grammar-writing-gr6-semantic-graph.json
+          if-no-files-found: warn
