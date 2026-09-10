@@ -83,7 +83,7 @@ describe('Session B GR4 grammar/writing parent problem architecture', () => {
     const ruleTransfer = getGrammarWritingParentProblem('knows-rules-but-does-not-use-them');
     const oralWriting = getGrammarWritingParentProblem('speaking-grammar-does-not-transfer-to-writing');
     expect(ruleTransfer?.problemClass).toBe('grammar-transfer');
-    expect(ruleTransfer?.diagnosticQuestions.join(' ')).toContain('controlled');
+    expect(ruleTransfer?.diagnosticQuestions.join(' ')).toContain('cued fresh sentence');
     expect(oralWriting?.problemClass).toBe('oral-written-transfer');
     expect(oralWriting?.firstTeachingMove).toContain('SAY → HOLD → WRITE → READ BACK → COMPARE');
     expect(oralWriting?.diagnosticQuestions.join(' ')).toContain('spoken and written versions');
