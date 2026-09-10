@@ -648,11 +648,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/reading-fluency-program': {
-    title: 'Reading Fluency Program for Kids Who Read Slowly | Tiny Steps',
+    title: 'Reading Fluency Classes for Kids Online | Tiny Steps Learning',
     description:
-      'Reading fluency support for children who read slowly, pause often, or lose meaning, with a clear path from decoding and blending to fluency and comprehension.',
+      'Live 1:1 reading fluency classes for kids in India and worldwide. Build smoother connected reading, phrasing, accuracy and expression after decoding is stable.',
     canonicalPath: '/reading-fluency-program',
     ogType: 'website',
+    keywords:
+      'reading fluency program for kids,reading fluency programme for kids,reading fluency classes for kids online,online reading fluency classes,reading fluency tutor for kids,1 to 1 reading fluency classes,live reading fluency classes for kids,reading fluency course for kids',
   },
   '/confidence-building-program-kids': {
     title: 'Confidence Building Program for Kids | Tiny Steps',
