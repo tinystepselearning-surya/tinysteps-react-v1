@@ -16,6 +16,16 @@ import {
 const canonicalPath = '/spoken-english-classes-for-kids-online';
 const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
 
+const SPOKEN_ENGLISH_SEO_KEYWORDS = [
+  'spoken English classes for kids online',
+  'English speaking classes for kids',
+  'online spoken English classes for kids',
+  '1 to 1 spoken English classes for kids',
+  'English fluency classes for kids',
+  'spoken English classes for NRI kids',
+  'online English speaking tutor for kids',
+];
+
 const painPoints = [
   'Child gives one-word answers',
   'Child understands English but does not speak confidently',
@@ -44,6 +54,21 @@ const faqItems = [
     answer:
       'Yes. Better spoken English depends on grammar in use, sentence formation, and practice applying words clearly in real responses.',
   },
+  {
+    question: 'What is the difference between spoken English and public speaking classes?',
+    answer:
+      'Spoken English focuses on everyday sentence formation, fluency, response length, and comfortable conversation. Public speaking adds structured presentation, storytelling, show-and-tell, audience awareness, and broader communication skills. Parents looking mainly for public speaking should use the Tiny Steps Speaking program.',
+  },
+  {
+    question: 'Are Tiny Steps spoken English classes live and 1:1?',
+    answer:
+      'Yes. Tiny Steps offers live 1:1 online learning, with a standard class duration of 35 minutes. Small-group options may also be available for selected schedules or programme fits.',
+  },
+  {
+    question: 'Can NRI families and children outside India join?',
+    answer:
+      'Yes. Tiny Steps supports families in India and worldwide. Families in the UAE, United States, United Kingdom, Australia, Singapore and other locations can enquire for suitable live online timings, subject to teacher and slot availability.',
+  },
 ];
 
 export default function SpokenEnglishClassesForKidsPage() {
@@ -64,7 +89,7 @@ export default function SpokenEnglishClassesForKidsPage() {
         'Live spoken English classes for kids online focused on sentence expansion, confident responses, grammar in use, and speaking confidence.',
       url: canonicalUrl,
       educationalLevel: 'School-age spoken English support',
-      teaches: ['spoken English', 'sentence expansion', 'grammar in use', 'response confidence', 'public speaking readiness'],
+      teaches: ['spoken English', 'sentence expansion', 'grammar in use', 'English fluency', 'response confidence'],
       areaServed: ['India', 'Worldwide'],
     });
 
@@ -76,9 +101,10 @@ export default function SpokenEnglishClassesForKidsPage() {
     applySeo({
       title: 'Spoken English Classes for Kids Online | Tiny Steps Learning',
       description:
-        'Live spoken English classes for kids online. Help children move past one-word answers, build sentence confidence, and speak clearly with grammar-linked support.',
+        'Live 1:1 spoken English classes for kids online. Build fuller sentences, English fluency and speaking confidence with 35-minute teacher-led classes and a free assessment.',
       canonicalPath,
       ogType: 'website',
+      keywords: SPOKEN_ENGLISH_SEO_KEYWORDS,
       jsonLd: [breadcrumbSchema, courseSchema, faqSchema],
     });
   }, []);
@@ -86,35 +112,35 @@ export default function SpokenEnglishClassesForKidsPage() {
   return (
     <LeadPageShell>
       <LeadHero
-        eyebrow="Speaking confidence support"
+        eyebrow="Live spoken English • India and worldwide"
         title="Spoken English Classes for Kids Online"
         description={
           <>
             <p>
-              Tiny Steps helps children speak in fuller sentences, answer more confidently, and express ideas clearly through structured live spoken-English classes for kids online.
+              Tiny Steps helps children speak in fuller sentences, improve English fluency, answer more confidently, and express ideas clearly through structured live spoken-English classes for kids online.
             </p>
             <p className="mt-3">
-              This page is built for parents searching for spoken English classes for children, shy child speaking help, or stronger English speaking confidence for kids.
+              Live 1:1 support is available to families in India and worldwide, including NRI families looking for teacher-led English speaking practice across compatible time zones.
             </p>
           </>
         }
         trustChips={[
           { label: '5000+ students served', tone: 'warm' as const },
           { label: 'Families in 15+ countries', tone: 'cool' as const },
-          { label: 'Grammar-linked speaking support', tone: 'neutral' as const },
+          { label: 'Live 1:1 • 35 minutes', tone: 'neutral' as const },
           { label: 'Free speaking assessment', tone: 'mint' as const },
         ]}
         stats={[
           { label: 'Per class', value: '₹400', helper: 'current approved pricing' },
           { label: '12 classes', value: '₹4,800', helper: 'pricing preview for parents' },
-          { label: 'Class style', value: 'Live', helper: '1:1 and small-group formats' },
-          { label: 'Parent visibility', value: 'Weekly', helper: 'updates and next-step guidance' },
+          { label: 'Standard class', value: '35 min', helper: 'live teacher-guided session' },
+          { label: 'Delivery', value: 'Online', helper: 'India and worldwide' },
         ]}
         actions={
           <CourseCTAGroup
             items={[
-              { to: '/book-demo', label: 'Book a Free Speaking Confidence Assessment', variant: 'primary' },
-              { to: '/class-samples', label: 'See Class Samples', variant: 'secondary' },
+              { to: '/book-demo', label: 'Book a Free Speaking Assessment', variant: 'primary' },
+              { to: '/speaking', label: 'Compare Public Speaking Support', variant: 'secondary' },
               { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
             ]}
             renderLink={(item, className) => (
@@ -126,7 +152,7 @@ export default function SpokenEnglishClassesForKidsPage() {
         }
         aside={
           <LeadCard className="bg-[linear-gradient(160deg,#fff8ef_0%,#ffffff_48%,#fff0f3_100%)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">When parents land on this page</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">When spoken-English support is a good fit</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {painPoints.map((item) => (
                 <span key={item} className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
@@ -135,7 +161,7 @@ export default function SpokenEnglishClassesForKidsPage() {
               ))}
             </div>
             <p className="mt-4 text-sm leading-7 text-slate-700">
-              The child may understand English, but still freeze, shorten answers, or avoid speaking in class without structured support.
+              The child may understand English, but still freeze, shorten answers, or avoid speaking in class without structured sentence and fluency practice.
             </p>
           </LeadCard>
         }
@@ -146,27 +172,27 @@ export default function SpokenEnglishClassesForKidsPage() {
           <LeadCard className="bg-[linear-gradient(145deg,#0f172a_0%,#1e293b_100%)] text-white">
             <LeadSectionHeading
               eyebrow="Why children struggle to speak"
-              title="Understanding is not the same as speaking confidence"
+              title="Understanding is not the same as speaking fluency"
               description="Many children know the words, but they do not yet know how to expand ideas into clear spoken answers."
             />
             <div className="mt-5 space-y-3 text-sm leading-7 text-slate-200">
               <p>Some children hesitate because they are unsure of sentence structure.</p>
               <p>Some stay brief because one-word answers feel safer than trying a full response.</p>
-              <p>Some are shy in class and need low-pressure speaking turns before they start participating more naturally.</p>
+              <p>Some need repeated live conversation practice before spoken English becomes more automatic.</p>
             </div>
           </LeadCard>
 
           <LeadCard>
             <LeadSectionHeading
               eyebrow="How Tiny Steps helps"
-              title="Speaking confidence grows through structure"
-              description="Tiny Steps connects spoken English practice with grammar, sentence formation, and real-time guided speaking turns."
+              title="Spoken English improves through guided use"
+              description="Tiny Steps connects speaking practice with grammar, sentence formation, vocabulary, and real-time guided speaking turns."
             />
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               {[
                 'Builds response length through sentence starters and follow-up prompts.',
-                'Links speaking with grammar in use so children can apply better sentence structure while speaking.',
-                'Uses storytelling, show-and-tell, and answer routines to improve clarity and confidence.',
+                'Links speaking with grammar in use so children apply better sentence structure while speaking.',
+                'Uses conversation, storytelling, and answer routines to improve fluency and clarity.',
                 'Gives parents visibility into what improved and what needs more practice next.',
               ].map((item) => (
                 <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-7 text-slate-700">
@@ -174,19 +200,27 @@ export default function SpokenEnglishClassesForKidsPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-5 text-sm leading-7 text-slate-700">
-              Parents often pair this page with{' '}
-              <Link to="/grammar" className="font-semibold underline underline-offset-4">
-                grammar
-              </Link>{' '}
-              and{' '}
-              <Link to="/speaking" className="font-semibold underline underline-offset-4">
-                speaking
-              </Link>{' '}
-              because fuller answers usually depend on both confidence and sentence structure.
-            </p>
           </LeadCard>
         </div>
+      </LeadSection>
+
+      <LeadSection>
+        <LeadCard className="bg-[linear-gradient(150deg,#eef8ff_0%,#ffffff_50%,#fff8ef_100%)]">
+          <LeadSectionHeading
+            eyebrow="Spoken English vs public speaking"
+            title="Choose the page that matches the child’s main goal"
+            description="Keeping these intents separate helps parents find the right starting point without duplicating programme ownership."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-sky-200 bg-white p-5 text-sm leading-7 text-slate-700">
+              <strong className="text-slate-900">Choose spoken English</strong> when the main goal is fuller everyday answers, sentence formation, English fluency, and comfortable conversation.
+            </div>
+            <div className="rounded-2xl border border-orange-200 bg-white p-5 text-sm leading-7 text-slate-700">
+              <strong className="text-slate-900">Choose public speaking & communication</strong> for storytelling, presentation, show-and-tell, audience-facing confidence, and broader communication skills.{' '}
+              <Link to="/speaking" className="font-semibold underline underline-offset-4">Explore the Speaking program</Link>.
+            </div>
+          </div>
+        </LeadCard>
       </LeadSection>
 
       <LeadSection>
@@ -194,21 +228,21 @@ export default function SpokenEnglishClassesForKidsPage() {
           <LeadCard>
             <LeadSectionHeading
               eyebrow="Assessment path"
-              title="How the speaking confidence assessment works"
+              title="How the spoken English assessment works"
               description="The goal is to identify why the child is getting stuck while speaking, not just whether they are shy."
             />
             <ol className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
-              <li>1. Tiny Steps checks response length, clarity, sentence formation, and comfort while speaking.</li>
-              <li>2. We identify whether the next step is spoken-English practice, grammar-linked sentence work, or broader speaking-confidence support.</li>
-              <li>3. Parents receive a practical recommendation before enrollment.</li>
+              <li>1. Tiny Steps checks response length, clarity, sentence formation, vocabulary use, and comfort while speaking.</li>
+              <li>2. We identify whether the next step is spoken-English practice, grammar-linked sentence work, or broader public-speaking support.</li>
+              <li>3. Parents receive a practical recommendation before enrolment.</li>
             </ol>
           </LeadCard>
 
           <LeadCard className="bg-[linear-gradient(150deg,#ecfdf5_0%,#ffffff_45%,#fff8ef_100%)]">
             <LeadSectionHeading
-              eyebrow="Pricing and trust proof"
-              title="Clear pricing, real trust signals"
-              description="Parents should be able to compare value before they decide."
+              eyebrow="Pricing and international access"
+              title="Clear pricing for live online support"
+              description="Families can understand the standard offer before deciding."
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-emerald-200 bg-white p-4">
@@ -216,15 +250,15 @@ export default function SpokenEnglishClassesForKidsPage() {
                 <p className="mt-2 text-3xl font-bold text-slate-900">₹400</p>
               </div>
               <div className="rounded-2xl border border-emerald-200 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">12 classes</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">₹4,800</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Standard class</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">35 min</p>
               </div>
             </div>
             <div className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
               <p>• 5000+ students served</p>
               <p>• Families in 15+ countries</p>
-              <p>• Founder and teacher-led live learning</p>
-              <p>• Class samples and assessment before parents decide</p>
+              <p>• NRI and international families can enquire for compatible live timings</p>
+              <p>• One free 35-minute 1:1 assessment before parents decide</p>
             </div>
           </LeadCard>
         </div>
@@ -234,8 +268,8 @@ export default function SpokenEnglishClassesForKidsPage() {
         <LeadCard>
           <LeadSectionHeading
             eyebrow="Parents also ask"
-            title="FAQs"
-            description="Answer-first wording helps parents compare whether this page matches their child’s current challenge."
+            title="Frequently asked questions"
+            description="Concise answers help parents decide whether spoken-English support matches the child’s current need."
           />
           <div className="mt-6">
             <FAQSection items={faqItems.map((item) => ({ question: item.question, answer: item.answer }))} />
@@ -245,17 +279,17 @@ export default function SpokenEnglishClassesForKidsPage() {
 
       <LeadSection>
         <FinalLeadCTA
-          title="Ready to help your child speak more confidently?"
+          title="Ready to help your child speak in fuller English sentences?"
           description={
             <>
-              If your child gives one-word answers, hesitates in class, or needs sentence expansion support, start with a free speaking confidence assessment.
+              If your child gives one-word answers, hesitates in conversation, or needs stronger English fluency, start with one free 35-minute 1:1 assessment.
             </>
           }
           actions={
             <CourseCTAGroup
               items={[
-                { to: '/book-demo', label: 'Book a Free Speaking Confidence Assessment', variant: 'primary' },
-                { to: '/contact', label: 'Contact Tiny Steps', variant: 'ghost' },
+                { to: '/book-demo', label: 'Book a Free Speaking Assessment', variant: 'primary' },
+                { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
               ]}
               renderLink={(item, className) => (
                 <Link key={item.label} to={item.to || '/'} className={className}>
