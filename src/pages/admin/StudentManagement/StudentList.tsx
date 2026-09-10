@@ -17,7 +17,6 @@ import {
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../../lib/firebaseConfig';
-import { doesSessionMatchEnrollmentSchedule } from '../../../lib/sessionScheduleIntegrity';
 import { buildCanonicalOperationalTeacherWriteFields } from '../../../lib/teacherIdentity';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -1286,6 +1285,9 @@ type EnrollmentLite = {
   currency?: string;
   joinUrl?: string;
   schedule?: {
+    schemaVersion?: number;
+    deliveryMode?: string;
+    revision?: number;
     timezone?: string;
     // Weekday mapping follows JS Date.getDay(): 0=Sun, 1=Mon, ... 6=Sat.
     weeklySlots?: Array<{
@@ -1549,138 +1551,6 @@ function dateLikeToYmd(value: any): string | null {
   return null;
 }
 
-const SCHEDULE_EXCEPTION_SOURCE_TOKENS = ['ad_hoc', 'adhoc', 'makeup', 'reschedule', 'manual_one_off', 'approved_request', 'one_off'];
-const CONSUMED_SESSION_STATUSES = new Set(['completed', 'consumed', 'settled', 'paid']);
-const ACTIVE_FUTURE_SESSION_STATUSES = new Set(['scheduled', 'upcoming', 'planned', 'open', 'in_progress']);
-const RESCHEDULE_PENDING_STATUSES = new Set(['reschedule_requested', 'rescheduled']);
-
-function normalizeSessionStatus(value: unknown): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (raw === 'canceled') return 'cancelled';
-  if (!raw) return 'scheduled';
-  return raw;
-}
-
-function isScheduleExceptionSessionDoc(sessionLike: Record<string, unknown>): boolean {
-  if (sessionLike.isAdHoc === true || sessionLike.isMakeup === true) return true;
-  if (sessionLike.makeupCreditId || sessionLike.makeupForSessionId) return true;
-  const adHocType = String(sessionLike.adHocType || '').trim().toLowerCase();
-  if (adHocType && (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc'))) {
-    return true;
-  }
-  const source = String(sessionLike.source || '').trim().toLowerCase();
-  return SCHEDULE_EXCEPTION_SOURCE_TOKENS.some((token) => source.includes(token));
-}
-
-function resolveSessionStartMsForStats(sessionLike: Record<string, unknown>): number | null {
-  const fromStartAt = dateLikeToDate(sessionLike.startAt);
-  if (fromStartAt) return fromStartAt.getTime();
-  const dateKey = String(sessionLike.date || '').trim();
-  const timeKey = String(sessionLike.startTime || '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
-  const iso = /^\d{2}:\d{2}$/.test(timeKey)
-    ? `${dateKey}T${timeKey}:00+05:30`
-    : `${dateKey}T00:00:00+05:30`;
-  const parsed = Date.parse(iso);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function parseYmdToUtcDate(ymd: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || '').trim());
-  if (!match) return null;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
-  const dt = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-  return Number.isNaN(dt.getTime()) ? null : dt;
-}
-
-function toYmdFromUtcDate(dt: Date): string {
-  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
-}
-
-function formatYmdForAdminDisplay(ymd: string): string {
-  const dt = parseYmdToUtcDate(ymd);
-  if (!dt) return ymd;
-  return new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(dt);
-}
-
-type PlannedCoveragePreview = {
-  totalSlotsInRange: number;
-  capStopsAtYmd: string | null;
-};
-
-function estimatePlannedCoverage(options: {
-  classesStartDate: string;
-  weeklySlots: ScheduleWeeklySlot[];
-  generateWeeks: number;
-  endDate?: string;
-  plannedSessions: number;
-}): PlannedCoveragePreview | null {
-  const planned = Math.max(0, Math.floor(safeNumber(options.plannedSessions, 0)));
-  if (planned <= 0) return null;
-
-  const start = parseYmdToUtcDate(options.classesStartDate);
-  if (!start) return null;
-
-  const endFromInput = options.endDate ? parseYmdToUtcDate(options.endDate) : null;
-  const fallbackEnd = new Date(start.getTime());
-  const weeks = Math.max(1, Math.min(52, Math.floor(safeNumber(options.generateWeeks, 8))));
-  fallbackEnd.setUTCDate(fallbackEnd.getUTCDate() + (weeks * 7 - 1));
-  const end = endFromInput || fallbackEnd;
-  if (end.getTime() < start.getTime()) return null;
-
-  const normalizedSlots = sortWeeklySlots(options.weeklySlots)
-    .map((slot) => ({
-      weekday: slot.weekday,
-      time: slot.time,
-      durationMinutes: clampDurationMinutes(slot.durationMinutes, 35),
-    }))
-    .filter((slot) => isValidWeekday(slot.weekday) && isValidTimeHHmm(slot.time));
-  const uniqueSlotMap = new Map<string, { weekday: number; time: string; durationMinutes: number }>();
-  normalizedSlots.forEach((slot) => {
-    uniqueSlotMap.set(`${slot.weekday}|${slot.time}|${slot.durationMinutes}`, slot);
-  });
-  const uniqueSlots = Array.from(uniqueSlotMap.values());
-  if (!uniqueSlots.length) return null;
-
-  const slotsByWeekday = new Map<number, { weekday: number; time: string; durationMinutes: number }[]>();
-  uniqueSlots.forEach((slot) => {
-    const existing = slotsByWeekday.get(slot.weekday) || [];
-    existing.push(slot);
-    slotsByWeekday.set(slot.weekday, existing);
-  });
-
-  let slotCount = 0;
-  let capStopsAtYmd: string | null = null;
-  for (
-    let day = new Date(start.getTime());
-    day.getTime() <= end.getTime();
-    day.setUTCDate(day.getUTCDate() + 1)
-  ) {
-    const daySlots = slotsByWeekday.get(day.getUTCDay());
-    if (!daySlots || !daySlots.length) continue;
-    for (let idx = 0; idx < daySlots.length; idx += 1) {
-      slotCount += 1;
-      if (!capStopsAtYmd && slotCount === planned) {
-        capStopsAtYmd = toYmdFromUtcDate(day);
-      }
-    }
-  }
-
-  return {
-    totalSlotsInRange: slotCount,
-    capStopsAtYmd: planned <= slotCount ? capStopsAtYmd : null,
-  };
-}
-
 function formatYMDCompact(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1733,6 +1603,15 @@ function enrollmentLabel(e: EnrollmentLite): string {
   const fee = safeNumber(e.feePerClass, 0);
   const feeText = fee > 0 ? ` — ₹${fee}/class` : '';
   return `${courseTitle}${teacher ? ` — ${teacher}` : ''}${feeText}`;
+}
+
+function isCanonicalRollingEnrollmentForAdmin(enrollment: EnrollmentLite | null | undefined): boolean {
+  return Boolean(
+    enrollment?.schedule &&
+    Number(enrollment.schedule.schemaVersion) === 1 &&
+    String(enrollment.schedule.deliveryMode || '').trim().toLowerCase() === 'rolling' &&
+    String(enrollment.schedule.timezone || '').trim() === 'Asia/Kolkata'
+  );
 }
 
 function normalizeEnrollmentStatus(value: any): string {
@@ -1824,21 +1703,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [editingWeeklySlotId, setEditingWeeklySlotId] = useState<string | null>(null);
   const [durationMins, setDurationMins] = useState<number>(35);
   const [feePerClass, setFeePerClass] = useState<number>(0);
-  const [generateWeeks, setGenerateWeeks] = useState<number>(8);
-  const [plannedSessions, setPlannedSessions] = useState<number>(0);
-  const [endDate, setEndDate] = useState<string>(''); // optional
-  const [meetingLink, setMeetingLink] = useState<string>(''); // optional (Zoom/Meet)
+  const [meetingLink, setMeetingLink] = useState<string>(''); // optional Teams meeting link
   const [savingSchedule, setSavingSchedule] = useState<boolean>(false);
-  const [pauseUpcomingCount, setPauseUpcomingCount] = useState<number>(1);
-  const [pausingSchedule, setPausingSchedule] = useState<boolean>(false);
-  const [resumingSchedule, setResumingSchedule] = useState<boolean>(false);
-  const [scheduleLiveStats, setScheduleLiveStats] = useState<{
-    consumedCount: number;
-    activeFutureCount: number;
-    pausedFutureCount: number;
-    makeupRescheduleCount: number;
-    pendingMakeupCount: number;
-  } | null>(null);
+  const [scheduleLifecycleAction, setScheduleLifecycleAction] = useState<'paused' | 'active' | 'discontinued' | null>(null);
   const [adHocFor, setAdHocFor] = useState<Student | null>(null);
   const [adHocEnrollmentId, setAdHocEnrollmentId] = useState<string>('');
   const [adHocDate, setAdHocDate] = useState<string>(toISODate(new Date()));
@@ -1886,13 +1753,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         : [{ slotId: createScheduleSlotId(), weekday: 1, time: '18:00', durationMinutes: baseDuration }],
     );
     setDurationMins(normalizedSlots[0]?.durationMinutes ?? baseDuration);
-    setGenerateWeeks(safeNumber(enrollment.schedule?.weeksAhead, 8));
-    setPlannedSessions(safeNumber(enrollment.schedule?.plannedSessions, 0));
-    setEndDate(
-      typeof enrollment.schedule?.endDateYmd === 'string'
-        ? enrollment.schedule.endDateYmd
-        : '',
-    );
     setFeePerClass(safeNumber(enrollment.feePerClass, 0));
     setMeetingLink(enrollment.joinUrl || '');
     setEditingWeeklySlotId(null);
@@ -1902,30 +1762,34 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     () => formatWeeklySlotSummary(weeklySlots),
     [weeklySlots],
   );
-  const plannedCoveragePreview = useMemo(
-    () =>
-      estimatePlannedCoverage({
-        classesStartDate,
-        weeklySlots,
-        generateWeeks,
-        endDate,
-        plannedSessions,
-      }),
-    [classesStartDate, endDate, generateWeeks, plannedSessions, weeklySlots],
-  );
 
   const handleDeleteEnrollment = async (enrollmentId: string) => {
     if (!window.confirm('Discontinue this enrollment?')) return;
     try {
-      const functions = getFunctions(undefined, 'asia-south1');
-      const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
-      await setEnrollmentStatus({
-        enrollmentId,
-        status: 'discontinued',
-        reason: 'admin_deleted',
-      });
+      const regionalFunctions = getFunctions(undefined, 'asia-south1');
+      const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+      const enrollmentData = enrollmentSnap.exists()
+        ? ({ id: enrollmentSnap.id, ...(enrollmentSnap.data() as Record<string, unknown>) } as EnrollmentLite)
+        : null;
+
+      if (isCanonicalRollingEnrollmentForAdmin(enrollmentData)) {
+        const setRollingEnrollmentLifecycle = httpsCallable(regionalFunctions, 'setRollingEnrollmentLifecycle');
+        await setRollingEnrollmentLifecycle({
+          enrollmentId,
+          status: 'discontinued',
+          reason: 'admin_deleted',
+        });
+      } else {
+        // Legacy enrollments remain supported until their first rolling-schedule save.
+        const setEnrollmentStatus = httpsCallable(regionalFunctions, 'setEnrollmentStatus');
+        await setEnrollmentStatus({
+          enrollmentId,
+          status: 'discontinued',
+          reason: 'admin_deleted',
+        });
+      }
       toast({ title: 'Enrollment discontinued' });
-      enrollmentsQuery.refetch();
+      await enrollmentsQuery.refetch();
     } catch (err) {
       console.error(err);
       toast({
@@ -2320,126 +2184,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return enrollments.find((enrollment) => enrollment.id === scheduleEnrollmentId) || null;
   }, [enrollmentsByStudent, scheduleEnrollmentId, scheduleFor]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (!selectedScheduleEnrollment?.id) {
-        setScheduleLiveStats(null);
-        return;
-      }
-      try {
-        const sessionsSnap = await getDocs(
-          query(collection(db, 'classSessions'), where('enrollmentId', '==', selectedScheduleEnrollment.id)),
-        );
-        const nowMs = Date.now();
-        let consumedCount = 0;
-        let activeFutureCount = 0;
-        let pausedFutureCount = 0;
-        let makeupRescheduleCount = 0;
-        let pendingMakeupCount = 0;
-
-        sessionsSnap.docs.forEach((docSnap) => {
-          const row = docSnap.data() as Record<string, unknown>;
-          const status = normalizeSessionStatus(row.status);
-          const startMs = resolveSessionStartMsForStats(row);
-          const isFuture = startMs !== null && startMs > nowMs;
-          const isException = isScheduleExceptionSessionDoc(row);
-          const isRescheduleState = RESCHEDULE_PENDING_STATUSES.has(status);
-          const matchesRegularSchedule = doesSessionMatchEnrollmentSchedule(
-            row,
-            selectedScheduleEnrollment as unknown as Record<string, unknown>,
-          );
-
-          if (isException || isRescheduleState) {
-            makeupRescheduleCount += 1;
-            if (
-              isRescheduleState ||
-              (isException && isFuture && ACTIVE_FUTURE_SESSION_STATUSES.has(status))
-            ) {
-              pendingMakeupCount += 1;
-            }
-          }
-
-          if (!matchesRegularSchedule || isException) return;
-
-          if (CONSUMED_SESSION_STATUSES.has(status)) {
-            consumedCount += 1;
-            return;
-          }
-          if (isFuture && status === 'paused') {
-            pausedFutureCount += 1;
-            return;
-          }
-          if (isFuture && ACTIVE_FUTURE_SESSION_STATUSES.has(status)) {
-            activeFutureCount += 1;
-          }
-        });
-
-        if (!cancelled) {
-          setScheduleLiveStats({
-            consumedCount,
-            activeFutureCount,
-            pausedFutureCount,
-            makeupRescheduleCount,
-            pendingMakeupCount,
-          });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error('schedule live stats fetch error', error);
-          setScheduleLiveStats(null);
-        }
-      }
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedScheduleEnrollment]);
-
-  const plannedTargetForDisplay = Math.max(
-    0,
-    safeNumber(
-      selectedScheduleEnrollment?.scheduleProgress?.plannedSessionsTarget ??
-      selectedScheduleEnrollment?.schedule?.plannedSessions ??
-      plannedSessions,
-      0,
-    ),
-  );
-  const plannedConsumedForDisplay = Math.max(
-    0,
-    safeNumber(
-      scheduleLiveStats?.consumedCount ??
-      selectedScheduleEnrollment?.scheduleProgress?.consumedCount,
-      0,
-    ),
-  );
-  const plannedRemainingForDisplay = plannedTargetForDisplay > 0 ?
-    Math.max(0, plannedTargetForDisplay - plannedConsumedForDisplay) :
-    0;
-  const activePauseCountForDisplay = Math.max(
-    0,
-    safeNumber(selectedScheduleEnrollment?.schedulePause?.remainingCount, 0),
-  );
-  const hasActivePauseForDisplay =
-    Boolean(selectedScheduleEnrollment?.schedulePause?.active) && activePauseCountForDisplay > 0;
-  const pausedFutureForDisplay = Math.max(
-    0,
-    safeNumber(
-      scheduleLiveStats?.pausedFutureCount ??
-      selectedScheduleEnrollment?.scheduleProgress?.pausedFutureCount,
-      0,
-    ),
-  );
-  const hasResumablePauseForDisplay = hasActivePauseForDisplay || pausedFutureForDisplay > 0;
-  const makeupRescheduleCountForDisplay = Math.max(
-    0,
-    safeNumber(scheduleLiveStats?.makeupRescheduleCount, 0),
-  );
-  const pendingMakeupCountForDisplay = Math.max(
-    0,
-    safeNumber(scheduleLiveStats?.pendingMakeupCount, 0),
-  );
+  const selectedScheduleStatus = normalizeEnrollmentStatus(selectedScheduleEnrollment?.status);
+  const selectedScheduleIsRolling = isCanonicalRollingEnrollmentForAdmin(selectedScheduleEnrollment);
+  const selectedScheduleIsTerminal = isPastEnrollmentStatus(selectedScheduleStatus);
 
   const studentById = useMemo(() => {
     const map = new Map<string, Student>();
@@ -2493,9 +2240,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     setScheduleFor(student);
     setScheduleEnrollmentId(first.id);
-    setGenerateWeeks(8);
-    setEndDate('');
-    setPauseUpcomingCount(1);
     applyScheduleFormFromEnrollment(first);
   }
 
@@ -2529,8 +2273,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     if (!scheduleFor) return;
 
     const enrolls = enrollmentsByStudent[scheduleFor.id] || [];
-    const selectedEnrollment = enrolls.find(e => e.id === scheduleEnrollmentId);
-
+    const selectedEnrollment = enrolls.find((e) => e.id === scheduleEnrollmentId);
     if (!scheduleEnrollmentId || !selectedEnrollment) {
       toast({ title: 'Select an enrollment', variant: 'destructive' });
       return;
@@ -2538,17 +2281,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     const enrollStart = parseISODateOnly(enrollmentStartDate);
     const classStart = parseISODateOnly(classesStartDate);
-    const classEnd = endDate ? parseISODateOnly(endDate) : null;
     if (!enrollStart || !classStart) {
       toast({ title: 'Invalid start date', variant: 'destructive' });
-      return;
-    }
-    if (endDate && !classEnd) {
-      toast({ title: 'Invalid end date', variant: 'destructive' });
-      return;
-    }
-    if (classEnd && classEnd.getTime() < classStart.getTime()) {
-      toast({ title: 'End date must be after classes start date', variant: 'destructive' });
       return;
     }
 
@@ -2557,7 +2291,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       toast({ title: 'Fee per class required', description: 'Enter a fee > 0.', variant: 'destructive' });
       return;
     }
-
     if (!Array.isArray(weeklySlots) || weeklySlots.length === 0) {
       toast({ title: 'At least one weekly slot is required', variant: 'destructive' });
       return;
@@ -2585,7 +2318,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         toast({ title: 'Duration must be positive in all slots', variant: 'destructive' });
         return;
       }
-
       const duplicateKey = `${slot.weekday}_${slot.time}_${clampDurationMinutes(slot.durationMinutes, durationMins)}`;
       if (duplicateKeys.has(duplicateKey)) {
         toast({ title: 'Duplicate slot found', description: 'Remove duplicate weekday + time + duration entries.', variant: 'destructive' });
@@ -2594,161 +2326,94 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       duplicateKeys.add(duplicateKey);
     }
 
-    const slotsToSave = normalizedSlots.map((slot) => ({
+    const weeklySlotsPayload = normalizedSlots.map((slot) => ({
       weekday: slot.weekday,
       time: slot.time,
       durationMinutes: clampDurationMinutes(slot.durationMinutes, durationMins),
     }));
-
-    const weeks = Math.max(1, Math.min(52, safeNumber(generateWeeks, 8)));
-    const planned = Math.max(0, Math.min(365, safeNumber(plannedSessions, 0)));
+    const payload = {
+      enrollmentId: scheduleEnrollmentId,
+      enrollmentStartDate,
+      classesStartDate,
+      feePerClass: fee,
+      joinUrl: meetingLink ? meetingLink : null,
+      currency: 'INR',
+      weeklySlots: weeklySlotsPayload,
+    };
 
     setSavingSchedule(true);
     try {
-      // Backend-authoritative orchestration:
-      // - updates enrollment schedule fields
-      // - generates sessions with deterministic IDs + duplicate prevention
-      const functions = getFunctions(undefined, 'asia-south1');
-      const saveEnrollmentScheduleAndGenerateSessions = httpsCallable<
-        {
-          enrollmentId: string;
-          enrollmentStartDate: string;
-          classesStartDate: string;
-          feePerClass: number;
-          joinUrl?: string | null;
-          currency?: string;
-          weeklySlots: Array<{
-            weekday: number;
-            time: string;
-            durationMinutes: number;
-          }>;
-          weeksAhead?: number;
-          plannedSessions?: number;
-          endDate?: string;
-          idempotencyKey: string;
-        },
-        {
-          created: number;
-          skipped: number;
-          replaced?: number;
-          cancelledBlockersRestored?: number;
-          cancelledBlockersSkipped?: number;
-          plannedSessionsTarget?: number | null;
-          plannedSessionsGenerated?: number;
-          plannedSessionsConsumed?: number;
-          plannedSessionsActiveFuture?: number;
-          plannedSessionsPausedFuture?: number;
-          plannedSessionsRemaining?: number;
-          plannedSessionsUnfilled?: number;
-          plannedSessionsCapReached?: boolean;
-          rangeStart: string;
-          rangeEnd: string;
-          rangeStartYmd?: string;
-          rangeEndYmd?: string;
-          idempotentReplay?: boolean;
-          orchestrationState?: 'generated' | 'replayed';
-        }
-      >(functions, 'saveEnrollmentScheduleAndGenerateSessions');
-
-      const idempotencyKey =
-        typeof globalThis.crypto?.randomUUID === 'function'
-          ? globalThis.crypto.randomUUID()
-          : `schedule_${scheduleEnrollmentId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-      const result = await saveEnrollmentScheduleAndGenerateSessions({
-        enrollmentId: scheduleEnrollmentId,
-        enrollmentStartDate,
-        classesStartDate,
-        feePerClass: fee,
-        joinUrl: meetingLink ? meetingLink : null,
-        currency: 'INR',
-        weeklySlots: slotsToSave,
-        weeksAhead: weeks,
-        plannedSessions: planned,
-        ...(endDate ? { endDate } : {}),
-        idempotencyKey,
-      });
-
-      const {
-        created,
-        skipped,
-        replaced,
-        cancelledBlockersRestored,
-        cancelledBlockersSkipped,
-        plannedSessionsTarget,
-        plannedSessionsConsumed,
-        plannedSessionsActiveFuture,
-        plannedSessionsPausedFuture,
-        plannedSessionsRemaining,
-        plannedSessionsCapReached,
-        idempotentReplay,
-      } = result.data;
-      const plannedSummary =
-        plannedSessionsTarget && plannedSessionsConsumed !== undefined
-          ? ` · ${plannedSessionsConsumed} of ${plannedSessionsTarget} planned classes completed`
-          : '';
-      const remainingSummary =
-        plannedSessionsTarget && plannedSessionsRemaining !== undefined
-          ? ` · ${plannedSessionsRemaining} remaining`
-          : '';
-      const futureSummary =
-        plannedSessionsActiveFuture !== undefined
-          ? ` · ${plannedSessionsActiveFuture} active future scheduled`
-          : '';
-      const pausedSummary =
-        plannedSessionsPausedFuture && plannedSessionsPausedFuture > 0
-          ? ` · ${plannedSessionsPausedFuture} paused future session${plannedSessionsPausedFuture === 1 ? '' : 's'}`
-          : '';
-      const restoredCancelledSummary =
-        cancelledBlockersRestored && cancelledBlockersRestored > 0
-          ? ` · restored ${cancelledBlockersRestored} cancelled blocker${cancelledBlockersRestored === 1 ? '' : 's'}`
-          : '';
-      const skippedCancelledSummary =
-        cancelledBlockersSkipped && cancelledBlockersSkipped > 0
-          ? ` · skipped ${cancelledBlockersSkipped} unsafe cancelled blocker${cancelledBlockersSkipped === 1 ? '' : 's'}`
-          : '';
-      const capReachedSummary =
-        plannedSessionsTarget && plannedSessionsCapReached
-          ? ' · Planned class limit reached. Increase planned classes to continue future scheduling.'
-          : '';
-      const replaySummary = idempotentReplay ? ' · replayed prior success' : '';
-      const additionalSummary =
-        plannedSessionsTarget && created > 0 && !plannedSessionsCapReached
-          ? ` · ${created} additional future session${created === 1 ? '' : 's'} created`
-          : '';
-      const noNewBecauseCapSummary =
-        plannedSessionsTarget && created === 0 && plannedSessionsCapReached
-          ? ' · No new sessions created because the planned class limit is already reached.'
-          : '';
-
-      toast({
-        title: 'Schedule saved',
-        description:
-          typeof replaced === 'number'
-            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${restoredCancelledSummary}${skippedCancelledSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`
-            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${restoredCancelledSummary}${skippedCancelledSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`,
-      });
+      const regionalFunctions = getFunctions(undefined, 'asia-south1');
+      if (isCanonicalRollingEnrollmentForAdmin(selectedEnrollment)) {
+        const reconcileRollingEnrollmentSchedule = httpsCallable<
+          typeof payload,
+          {
+            scheduleChanged: boolean;
+            scheduleRevision: number;
+            horizonDays: number;
+            orchestrationState: 'reconciled' | 'saved_paused' | 'unchanged';
+            cancelledStaleSessions: number;
+            protectedStaleSessions: number;
+            patchedRetainedSessions: number;
+            protectedRetainedSessions: number;
+            restoredPreviouslyReconciledSessions: number;
+            materializedSessionsCreated: number;
+            materializedSessionsPreserved: number;
+          }
+        >(regionalFunctions, 'reconcileRollingEnrollmentSchedule');
+        const result = await reconcileRollingEnrollmentSchedule(payload);
+        const data = result.data;
+        const protectedCount = safeNumber(data.protectedStaleSessions, 0) + safeNumber(data.protectedRetainedSessions, 0);
+        const createdCount = safeNumber(data.materializedSessionsCreated, 0);
+        const preservedCount = safeNumber(data.materializedSessionsPreserved, 0);
+        toast({
+          title: data.scheduleChanged ? 'Recurring schedule updated' : 'Schedule saved',
+          description:
+            `Continuous weekly schedule is ${selectedScheduleStatus === 'paused' ? 'saved while paused' : 'active'}. ` +
+            `${createdCount} upcoming session${createdCount === 1 ? '' : 's'} created; ${preservedCount} preserved.` +
+            (safeNumber(data.cancelledStaleSessions, 0) > 0 ? ` ${data.cancelledStaleSessions} stale future session${data.cancelledStaleSessions === 1 ? '' : 's'} cancelled.` : '') +
+            (safeNumber(data.restoredPreviouslyReconciledSessions, 0) > 0 ? ` ${data.restoredPreviouslyReconciledSessions} prior occurrence${data.restoredPreviouslyReconciledSessions === 1 ? '' : 's'} restored.` : '') +
+            (protectedCount > 0 ? ` ${protectedCount} protected session${protectedCount === 1 ? '' : 's'} left untouched.` : ''),
+        });
+      } else {
+        const saveRollingEnrollmentSchedule = httpsCallable<
+          typeof payload & { idempotencyKey: string },
+          {
+            scheduleRevision: number;
+            horizonDays: number;
+            orchestrationState: 'activated' | 'saved_paused' | 'replayed';
+            initialMaterialization: {
+              expectedCount: number;
+              existingCount: number;
+              createdCount: number;
+              raceAlreadyExistsCount: number;
+              materializedThroughYmd: string;
+            } | null;
+            pausedSessionsCancelled: number;
+          }
+        >(regionalFunctions, 'saveRollingEnrollmentSchedule');
+        const idempotencyKey =
+          typeof globalThis.crypto?.randomUUID === 'function'
+            ? globalThis.crypto.randomUUID()
+            : `rolling_${scheduleEnrollmentId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const result = await saveRollingEnrollmentSchedule({...payload, idempotencyKey});
+        const materialized = result.data.initialMaterialization;
+        toast({
+          title: 'Continuous schedule activated',
+          description: materialized
+            ? `Weekly recurrence is now continuous. ${safeNumber(materialized.createdCount, 0)} upcoming session${safeNumber(materialized.createdCount, 0) === 1 ? '' : 's'} created and ${safeNumber(materialized.existingCount, 0) + safeNumber(materialized.raceAlreadyExistsCount, 0)} preserved within the 14-day operational window.`
+            : 'Weekly recurrence is saved as a continuous schedule. It will remain paused until you resume the enrollment.',
+        });
+      }
 
       setScheduleFor(null);
-      enrollmentsQuery.refetch();
+      clearEnrollmentsCacheForStudents([scheduleFor.id]);
+      await enrollmentsQuery.refetch();
     } catch (err: any) {
-      console.error('Error saving schedule:', err);
-      
-      // Extract meaningful error message from Firebase error
-      let errorMessage = 'Failed to save schedule / create sessions.';
-      
-      if (err?.message) {
-        // Firebase functions errors come through as err.message
-        errorMessage = err.message;
-      } else if (err?.details) {
-        errorMessage = String(err.details);
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
+      console.error('Error saving rolling schedule:', err);
       toast({
-        title: 'Error',
-        description: errorMessage,
+        title: 'Unable to save schedule',
+        description: extractCallableErrorMessage(err, 'Failed to save the continuous recurring schedule.'),
         variant: 'destructive',
       });
     } finally {
@@ -2756,94 +2421,69 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     }
   }
 
-  async function handlePauseUpcomingSchedule() {
-    if (!scheduleFor || !scheduleEnrollmentId) return;
-    setPausingSchedule(true);
-    try {
-      const functions = getFunctions(undefined, 'asia-south1');
-      const pauseEnrollmentUpcomingSessions = httpsCallable<
-        { enrollmentId: string; count: number },
-        {
-          pausedCount: number;
-          plannedSessionsTarget?: number | null;
-          plannedSessionsConsumed?: number;
-          plannedSessionsRemaining?: number;
-          plannedSessionsCapReached?: boolean;
-        }
-      >(functions, 'pauseEnrollmentUpcomingSessions');
-      const result = await pauseEnrollmentUpcomingSessions({
-        enrollmentId: scheduleEnrollmentId,
-        count: pauseUpcomingCount,
-      });
-      const pausedCount = safeNumber(result.data?.pausedCount, 0);
-      const plannedTarget = safeNumber(result.data?.plannedSessionsTarget, 0);
-      const consumedCount = safeNumber(result.data?.plannedSessionsConsumed, 0);
-      const remainingCount = safeNumber(result.data?.plannedSessionsRemaining, 0);
-      const capReached = Boolean(result.data?.plannedSessionsCapReached);
+  async function handleRollingScheduleLifecycle(target: 'paused' | 'active' | 'discontinued') {
+    if (!scheduleFor || !scheduleEnrollmentId || !selectedScheduleEnrollment) return;
+    if (!isCanonicalRollingEnrollmentForAdmin(selectedScheduleEnrollment)) {
       toast({
-        title: 'Classes paused',
-        description:
-          `Paused ${pausedCount} upcoming regular session${pausedCount === 1 ? '' : 's'}.` +
-          (plannedTarget > 0 ?
-            ` ${consumedCount} of ${plannedTarget} planned classes completed. ${remainingCount} remaining.` :
-            '') +
-          (capReached ? ' Planned class limit reached.' : ''),
-      });
-      enrollmentsQuery.refetch();
-    } catch (err: any) {
-      console.error('Error pausing upcoming schedule:', err);
-      toast({
-        title: 'Error',
-        description: err?.message || 'Failed to pause upcoming classes.',
+        title: 'Save schedule first',
+        description: 'Save this enrollment once to convert its recurring timetable to continuous scheduling before changing lifecycle state.',
         variant: 'destructive',
       });
-    } finally {
-      setPausingSchedule(false);
+      return;
     }
-  }
+    if (target === 'discontinued') {
+      const confirmed = window.confirm('Discontinue this enrollment? Recurring classes will stop until a new enrollment is created.');
+      if (!confirmed) return;
+    }
 
-  async function handleResumeSchedule() {
-    if (!scheduleFor || !scheduleEnrollmentId) return;
-    setResumingSchedule(true);
+    setScheduleLifecycleAction(target);
     try {
-      const functions = getFunctions(undefined, 'asia-south1');
-      const resumeEnrollmentSchedule = httpsCallable<
-        { enrollmentId: string },
+      const regionalFunctions = getFunctions(undefined, 'asia-south1');
+      const setRollingEnrollmentLifecycle = httpsCallable<
+        { enrollmentId: string; status: 'paused' | 'active' | 'discontinued'; reason?: string },
         {
-          resumedCount: number;
-          plannedSessionsTarget?: number | null;
-          plannedSessionsConsumed?: number;
-          plannedSessionsRemaining?: number;
-          plannedSessionsCapReached?: boolean;
+          previousStatus: string;
+          status: 'active' | 'paused' | 'discontinued';
+          cancelledSessionsCount: number;
+          restoredSessionsCount: number;
+          materializedSessionsCreated: number;
+          materializedSessionsPreserved: number;
         }
-      >(functions, 'resumeEnrollmentSchedule');
-      const result = await resumeEnrollmentSchedule({
+      >(regionalFunctions, 'setRollingEnrollmentLifecycle');
+      const result = await setRollingEnrollmentLifecycle({
         enrollmentId: scheduleEnrollmentId,
+        status: target,
+        ...(target === 'discontinued' ? { reason: 'admin_discontinued' } : {}),
       });
-      const resumedCount = safeNumber(result.data?.resumedCount, 0);
-      const plannedTarget = safeNumber(result.data?.plannedSessionsTarget, 0);
-      const consumedCount = safeNumber(result.data?.plannedSessionsConsumed, 0);
-      const remainingCount = safeNumber(result.data?.plannedSessionsRemaining, 0);
-      const capReached = Boolean(result.data?.plannedSessionsCapReached);
-      toast({
-        title: 'Schedule resumed',
-        description:
-          `Resumed ${resumedCount} paused future session${resumedCount === 1 ? '' : 's'}.` +
-          (plannedTarget > 0 ?
-            ` ${consumedCount} of ${plannedTarget} planned classes completed. ${remainingCount} remaining.` :
-            '') +
-          (capReached ? ' Planned class limit reached.' : ''),
-      });
-      enrollmentsQuery.refetch();
+      const data = result.data;
+      if (target === 'paused') {
+        toast({
+          title: 'Schedule paused',
+          description: `Recurring classes are paused indefinitely. ${safeNumber(data.cancelledSessionsCount, 0)} eligible upcoming session${safeNumber(data.cancelledSessionsCount, 0) === 1 ? '' : 's'} suspended; protected history was left untouched.`,
+        });
+      } else if (target === 'active') {
+        toast({
+          title: 'Schedule resumed',
+          description: `Continuous recurrence is active again. ${safeNumber(data.restoredSessionsCount, 0)} paused occurrence${safeNumber(data.restoredSessionsCount, 0) === 1 ? '' : 's'} restored and ${safeNumber(data.materializedSessionsCreated, 0)} missing upcoming session${safeNumber(data.materializedSessionsCreated, 0) === 1 ? '' : 's'} created.`,
+        });
+      } else {
+        toast({
+          title: 'Enrollment discontinued',
+          description: `Recurring scheduling has stopped. ${safeNumber(data.cancelledSessionsCount, 0)} eligible upcoming session${safeNumber(data.cancelledSessionsCount, 0) === 1 ? '' : 's'} cancelled; protected history remains intact.`,
+        });
+        setScheduleFor(null);
+      }
+      clearEnrollmentsCacheForStudents([scheduleFor.id]);
+      await enrollmentsQuery.refetch();
     } catch (err: any) {
-      console.error('Error resuming schedule:', err);
+      console.error('Error changing rolling schedule lifecycle:', err);
       toast({
-        title: 'Error',
-        description: err?.message || 'Failed to resume schedule.',
+        title: 'Unable to change schedule status',
+        description: extractCallableErrorMessage(err, 'Failed to update the continuous schedule status.'),
         variant: 'destructive',
       });
     } finally {
-      setResumingSchedule(false);
+      setScheduleLifecycleAction(null);
     }
   }
 
@@ -3928,7 +3568,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               Schedule Classes {scheduleFor?.fullName ? `— ${scheduleFor.fullName}` : ''}
             </DialogTitle>
             <DialogDescription>
-              Schedule new class sessions for this student's enrolled courses.
+              Set the student's weekly recurring timetable. It stays active until you pause or discontinue the enrollment.
             </DialogDescription>
           </DialogHeader>
 
@@ -4084,119 +3724,66 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   </div>
                 </div>
 
-                <div>
-                  <div className="text-sm font-medium mb-1">Generate for (weeks)</div>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={52}
-                    value={generateWeeks}
-                    onChange={(e) => setGenerateWeeks(safeNumber(e.target.value, 8))}
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    Lookahead window for future recurring sessions. Planned classes and end date still control completion.
+                <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-medium text-slate-800">Continuous recurring schedule</div>
+                      <div className="text-xs text-slate-600 mt-1">
+                        Weekly classes continue automatically while this enrollment is active. The system keeps only the next 14 days operationally materialized.
+                      </div>
+                    </div>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      selectedScheduleStatus === 'paused'
+                        ? 'bg-amber-100 text-amber-800'
+                        : selectedScheduleIsTerminal
+                          ? 'bg-slate-200 text-slate-700'
+                          : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {selectedScheduleStatus === 'paused'
+                        ? 'Paused'
+                        : selectedScheduleIsTerminal
+                          ? 'Discontinued'
+                          : 'Active'}
+                    </span>
                   </div>
-                </div>
 
-                <div>
-                  <div className="text-sm font-medium mb-1">Planned classes (optional)</div>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={365}
-                    value={plannedSessions}
-                    onChange={(e) => setPlannedSessions(safeNumber(e.target.value, 0))}
-                    placeholder="e.g., 28"
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    If set, this is the total number of regular classes to be completed for this enrollment.
-                  </div>
-                  {plannedCoveragePreview?.capStopsAtYmd ? (
-                    <div className="text-xs text-amber-700 mt-1">
-                      At current weekly cadence, planned classes may be completed around {formatYmdForAdminDisplay(plannedCoveragePreview.capStopsAtYmd)} if classes run without pauses/reschedules.
+                  {!selectedScheduleIsRolling ? (
+                    <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+                      This enrollment uses the previous finite schedule format. Saving once will convert it to continuous scheduling; no historical sessions are deleted.
                     </div>
                   ) : null}
-                  {plannedTargetForDisplay > 0 ? (
-                    <div className="text-xs text-gray-700 mt-1">
-                      {plannedConsumedForDisplay} of {plannedTargetForDisplay} planned classes completed. {plannedRemainingForDisplay} remaining.
-                    </div>
-                  ) : null}
-                  <div className="text-xs text-gray-700 mt-1">
-                    Regular planned classes: {plannedTargetForDisplay > 0 ? plannedTargetForDisplay : 0} · Regular completed classes: {plannedConsumedForDisplay} · Remaining regular classes: {plannedTargetForDisplay > 0 ? plannedRemainingForDisplay : 0}
-                  </div>
-                  <div className="text-xs text-gray-700 mt-1">
-                    Makeup/reschedule sessions: {makeupRescheduleCountForDisplay} · Pending makeup sessions: {pendingMakeupCountForDisplay}
-                  </div>
-                  {plannedTargetForDisplay > 0 && plannedRemainingForDisplay <= 0 ? (
-                    <div className="text-xs text-amber-700 mt-1">
-                      Planned classes completed. Increase planned classes to continue scheduling.
-                    </div>
-                  ) : null}
-                  {typeof selectedScheduleEnrollment?.scheduleProgress?.completionMessage === 'string' &&
-                  selectedScheduleEnrollment.scheduleProgress.completionMessage.trim() ? (
-                    <div className="text-xs text-amber-700 mt-1">
-                      {selectedScheduleEnrollment.scheduleProgress.completionMessage.trim()}
-                    </div>
-                  ) : null}
-                </div>
 
-                <div>
-                  <div className="text-sm font-medium mb-1">Pause upcoming classes</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Select
-                      value={String(pauseUpcomingCount)}
-                      onValueChange={(value) => setPauseUpcomingCount(safeNumber(value, 1))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Count" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[1, 2, 3, 5, 10].map((option) => (
-                          <SelectItem key={option} value={String(option)}>
-                            {option} session{option === 1 ? '' : 's'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={pausingSchedule || resumingSchedule || !scheduleEnrollmentId}
-                      onClick={handlePauseUpcomingSchedule}
-                    >
-                      {pausingSchedule ? 'Pausing...' : 'Pause'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={pausingSchedule || resumingSchedule || !scheduleEnrollmentId || !hasResumablePauseForDisplay}
-                      onClick={handleResumeSchedule}
-                    >
-                      {resumingSchedule ? 'Resuming...' : 'Resume'}
-                    </Button>
-                  </div>
-                  {hasActivePauseForDisplay ? (
-                    <div className="text-xs text-amber-700 mt-1">
-                      Classes are paused for the next {activePauseCountForDisplay} scheduled session{activePauseCountForDisplay === 1 ? '' : 's'}.
+                  {selectedScheduleIsRolling && !selectedScheduleIsTerminal ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {selectedScheduleStatus === 'paused' ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={scheduleLifecycleAction !== null || savingSchedule}
+                          onClick={() => handleRollingScheduleLifecycle('active')}
+                        >
+                          {scheduleLifecycleAction === 'active' ? 'Resuming...' : 'Resume schedule'}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={scheduleLifecycleAction !== null || savingSchedule}
+                          onClick={() => handleRollingScheduleLifecycle('paused')}
+                        >
+                          {scheduleLifecycleAction === 'paused' ? 'Pausing...' : 'Pause schedule'}
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={scheduleLifecycleAction !== null || savingSchedule}
+                        onClick={() => handleRollingScheduleLifecycle('discontinued')}
+                      >
+                        {scheduleLifecycleAction === 'discontinued' ? 'Discontinuing...' : 'Discontinue enrollment'}
+                      </Button>
                     </div>
                   ) : null}
-                  {!hasActivePauseForDisplay && pausedFutureForDisplay > 0 ? (
-                    <div className="text-xs text-amber-700 mt-1">
-                      {pausedFutureForDisplay} future paused session{pausedFutureForDisplay === 1 ? '' : 's'} can be resumed.
-                    </div>
-                  ) : null}
-                </div>
-
-                <div>
-                  <div className="text-sm font-medium mb-1">End date (optional)</div>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                  <div className="text-xs text-gray-500 mt-1">
-                    If set, it overrides “weeks” as the date boundary.
-                  </div>
                 </div>
 
                 <div className="md:col-span-2">
@@ -4210,10 +3797,10 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               </div>
 
               <div className="text-xs text-gray-500">
-                Schedule changes apply only to eligible upcoming sessions. Past/completed/billed sessions are not changed.
+                Schedule changes reconcile only the 14-day operational window. Past, completed, billed, makeup, rescheduled and manual sessions are protected.
               </div>
               <div className="text-xs text-gray-500">
-                Missed past sessions should be handled via reschedule workflow, not recurring schedule edits.
+                There is no weeks, planned-class, or end-date cap. Pause remains in effect until Resume is selected.
               </div>
             </div>
           ) : null}
@@ -4222,8 +3809,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             <Button variant="secondary" onClick={() => setScheduleFor(null)} disabled={savingSchedule}>
               Cancel
             </Button>
-            <Button onClick={handleSaveSchedule} disabled={savingSchedule}>
-              {savingSchedule ? 'Saving...' : 'Save Schedule'}
+            <Button onClick={handleSaveSchedule} disabled={savingSchedule || scheduleLifecycleAction !== null || selectedScheduleIsTerminal}>
+              {savingSchedule ? 'Saving...' : selectedScheduleIsRolling ? 'Save Schedule' : 'Activate Continuous Schedule'}
             </Button>
           </DialogFooter>
         </DialogContent>
