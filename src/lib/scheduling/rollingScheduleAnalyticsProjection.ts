@@ -1,5 +1,8 @@
 import { isScheduleExceptionSession } from '../sessionScheduleIntegrity';
-import { resolveEnrollmentRollingScheduleContract } from './enrollmentRollingScheduleContract';
+import {
+  resolveEnrollmentRollingScheduleContract,
+  resolveRollingScheduleLifecycleState,
+} from './enrollmentRollingScheduleContract';
 import {
   enumerateRollingScheduleOccurrences,
   ROLLING_SCHEDULE_UTC_OFFSET_MINUTES,
@@ -332,7 +335,17 @@ export const buildRollingScheduleAnalyticsProjection = (
   };
 
   enrollmentById.forEach((enrollment, enrollmentId) => {
-    const contract = resolveEnrollmentRollingScheduleContract(enrollment);
+    let contract;
+    try {
+      contract = resolveEnrollmentRollingScheduleContract(enrollment);
+    } catch {
+      const lifecycleState = resolveRollingScheduleLifecycleState(enrollment);
+      if (selectedMonthIsPast || lifecycleState === 'active') {
+        addActualSessions(enrollmentId, enrollment, () => true);
+      }
+      return;
+    }
+
     const isCanonicalRolling = contract.source === 'canonical_rolling' && Boolean(contract.schedule);
 
     if (selectedMonthIsPast) {
@@ -356,10 +369,11 @@ export const buildRollingScheduleAnalyticsProjection = (
 
     if (contract.lifecycleState !== 'active' || !contract.schedule) return;
 
+    const nextDayYmd = addDaysYmd(todayYmd, 1);
     const recurrenceFromYmd = selectedMonthIsFuture
       ? startYmd
-      : addDaysYmd(todayYmd, 1) > startYmd
-        ? addDaysYmd(todayYmd, 1)
+      : nextDayYmd > startYmd
+        ? nextDayYmd
         : startYmd;
     if (recurrenceFromYmd > endYmd) return;
 
