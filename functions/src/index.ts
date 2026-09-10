@@ -174,6 +174,7 @@ export {
   batchInsightsRollup11pm,
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
+export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
 
 // Games: catalog management and level results
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
