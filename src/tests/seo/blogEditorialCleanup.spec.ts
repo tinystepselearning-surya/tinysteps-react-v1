@@ -81,8 +81,8 @@ describe('blog editorial cleanup', () => {
     expect(post.title).toContain('Week 10');
   });
 
-  it('leaves the normalized post-B3 registry free of known template leakage', () => {
-    expect(blogPosts.length).toBe(81);
+  it('leaves the normalized post-R21 84-article registry free of known template leakage', () => {
+    expect(blogPosts.length).toBe(84);
 
     for (const post of blogPosts) {
       expect(post.title, `${post.slug}: Week prefix leaked into primary title`).not.toMatch(/^\s*Week\s+\d+\s*(?::|[-–—])/i);

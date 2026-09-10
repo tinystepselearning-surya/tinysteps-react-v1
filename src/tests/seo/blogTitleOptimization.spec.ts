@@ -37,10 +37,10 @@ const LOCKED_WEEK_TITLES_BY_PUBLIC_SLUG: Readonly<Record<string, string>> = Obje
 });
 
 describe('optimized public blog titles', () => {
-  it('locks the 35 approved title changes across the public registry', () => {
+  it('locks the 35 approved title changes across the expanded public registry', () => {
     expect(Object.keys(BLOG_TITLE_OPTIMIZATIONS)).toHaveLength(10);
     expect(Object.keys(LOCKED_WEEK_TITLES_BY_PUBLIC_SLUG)).toHaveLength(25);
-    expect(blogPosts).toHaveLength(81);
+    expect(blogPosts).toHaveLength(84);
 
     const lockedTitles = {
       ...LOCKED_WEEK_TITLES_BY_PUBLIC_SLUG,

@@ -1,4 +1,4 @@
-import { Children, isValidElement, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 type TrustChip = {
@@ -46,18 +46,6 @@ function buttonClass(variant: CtaItem['variant']) {
   }
 }
 
-function getNodeText(node: ReactNode): string {
-  if (typeof node === 'string' || typeof node === 'number') return String(node);
-  if (!isValidElement(node)) return '';
-  const props = node.props as { children?: ReactNode };
-  return Children.toArray(props.children).map(getNodeText).join(' ');
-}
-
-function isLegacyInternalTrustAside(node: ReactNode): boolean {
-  const text = getNodeText(node).replace(/\s+/g, ' ').trim();
-  return text.includes('Parent trust') && text.includes('Pricing trust') && text.includes('Delivery model');
-}
-
 export function LeadPageShell({ children }: { children: ReactNode }) {
   return (
     <div className="lead-page-shell relative overflow-x-clip bg-gradient-to-b from-orange-50/65 via-white to-sky-50/70 pb-20">
@@ -97,7 +85,7 @@ export function LeadHero({
   description: ReactNode;
   showLeftDecoration?: boolean;
 }) {
-  const visibleAside = isLegacyInternalTrustAside(aside) ? null : aside;
+  const hasHeroSidebar = aside != null || Boolean(stats?.length);
 
   return (
     <section
@@ -113,7 +101,7 @@ export function LeadHero({
       ) : null}
       <div className="pointer-events-none absolute right-[7%] top-24 h-16 w-16 rotate-12 rounded-2xl border border-sky-200/70 bg-white/30" />
       <div
-        className={`relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.04fr_0.96fr] ${
+        className={`relative mx-auto grid max-w-7xl gap-10 ${hasHeroSidebar ? 'lg:grid-cols-[1.04fr_0.96fr]' : 'lg:grid-cols-1'} ${
           alignDesktopTop ? 'lg:items-start' : 'lg:items-center'
         }`}
       >
@@ -148,31 +136,33 @@ export function LeadHero({
           {supportingText ? <div className="mt-5 max-w-3xl text-sm leading-6 text-slate-700">{supportingText}</div> : null}
         </div>
 
-        <div className="space-y-4">
-          {visibleAside}
-          {stats?.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {stats.map((item, index) => (
-                <div
-                  key={item.label}
-                  className={`rounded-3xl border p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)] ${
-                    index % 4 === 0
-                      ? 'border-orange-200/80 bg-gradient-to-br from-white to-orange-50'
-                      : index % 4 === 1
-                        ? 'border-sky-200/80 bg-gradient-to-br from-white to-sky-50'
-                        : index % 4 === 2
-                          ? 'border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50'
-                          : 'border-violet-200/80 bg-gradient-to-br from-white to-violet-50'
-                  }`}
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-                  <p className="mt-1 text-2xl font-bold text-slate-950">{item.value}</p>
-                  {item.helper ? <p className="mt-1 text-sm text-slate-600">{item.helper}</p> : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        {hasHeroSidebar ? (
+          <div className="space-y-4">
+            {aside}
+            {stats?.length ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {stats.map((item, index) => (
+                  <div
+                    key={item.label}
+                    className={`rounded-3xl border p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)] ${
+                      index % 4 === 0
+                        ? 'border-orange-200/80 bg-gradient-to-br from-white to-orange-50'
+                        : index % 4 === 1
+                          ? 'border-sky-200/80 bg-gradient-to-br from-white to-sky-50'
+                          : index % 4 === 2
+                            ? 'border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50'
+                            : 'border-violet-200/80 bg-gradient-to-br from-white to-violet-50'
+                    }`}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-950">{item.value}</p>
+                    {item.helper ? <p className="mt-1 text-sm text-slate-600">{item.helper}</p> : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </section>
   );

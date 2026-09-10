@@ -14,11 +14,17 @@ import {
 
 const root = process.cwd();
 const distMode = process.argv.includes('--dist');
+const allowR21Execution = process.argv.includes('--r21-executed');
 const errors = [];
 const add = (code, id, detail) => errors.push({ code, id, detail });
 const routePaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
 const ownersById = new Map(R19_CANONICAL_TOPIC_OWNERSHIP.map((entry) => [entry.id, entry]));
 const ownerPaths = new Set(R19_CANONICAL_TOPIC_OWNERSHIP.map((entry) => entry.ownerPath));
+let r21ExecutionById = new Map();
+if (allowR21Execution) {
+  const { SPEAKING_COMMUNICATION_CONTENT_EXECUTION } = await import('../src/lib/speakingCommunicationContentExecutionRegistry.js');
+  r21ExecutionById = new Map(SPEAKING_COMMUNICATION_CONTENT_EXECUTION.map((item) => [item.id, item]));
+}
 
 const collectFiles = (directory) => fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
   const absolute = path.join(directory, entry.name);
@@ -52,9 +58,21 @@ for (const item of SPEAKING_COMMUNICATION_CONTENT_AUDIT.filter((entry) => entry.
 }
 for (const item of create) {
   const slug = item.proposedPath?.replace(/^\/blog\//, '');
-  if (!slug || hasBlogSlug(slug) || routePaths.has(item.proposedPath) || ROUTE_SEO_REGISTRY[item.proposedPath] || ownerPaths.has(item.proposedPath)) add('create-published', item.id, item.proposedPath);
-  if (item.path || item.canonicalTopicId || item.publicationApproved || item.implementationState !== 'proposal-only') add('create-boundary', item.id, 'CREATE records must remain proposal-only and ownerless.');
+  if (!slug) {
+    add('create-path', item.id, item.proposedPath);
+    continue;
+  }
+  if (item.path || item.canonicalTopicId || item.publicationApproved || item.implementationState !== 'proposal-only') add('create-boundary', item.id, 'R20 CREATE planning records must remain proposal-only and ownerless even after downstream execution.');
+
+  if (allowR21Execution) {
+    const execution = r21ExecutionById.get(item.id);
+    if (!execution || execution.state !== 'published' || execution.path !== item.proposedPath) add('r21-execution-missing', item.id, `Expected published execution at ${item.proposedPath}.`);
+    if (!hasBlogSlug(slug)) add('r21-source-missing', item.id, item.proposedPath);
+  } else if (hasBlogSlug(slug) || routePaths.has(item.proposedPath) || ROUTE_SEO_REGISTRY[item.proposedPath] || ownerPaths.has(item.proposedPath)) {
+    add('create-published', item.id, item.proposedPath);
+  }
 }
+if (allowR21Execution && r21ExecutionById.size !== create.length) add('r21-execution-count', 'R20', `Expected exactly ${create.length} downstream R21 executions, found ${r21ExecutionById.size}.`);
 
 const legacy = consolidate[0];
 if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/speaking-confidence-seeds' || legacy.implementationState !== 'hold' || legacy.urlChangeAuthorized) add('legacy-hold', 'legacy-hidden-confidence-article', 'R20 must authorize no new redirect, deletion or canonical change.');
@@ -86,7 +104,9 @@ if (distMode) {
   }
   for (const item of create) {
     const html = path.join(root, 'dist', ...item.proposedPath.slice(1).split('/'), 'index.html');
-    if (fs.existsSync(html)) add('rendered-create-proposal', item.id, item.proposedPath);
+    if (allowR21Execution) {
+      if (!fs.existsSync(html)) add('missing-rendered-r21-execution', item.id, item.proposedPath);
+    } else if (fs.existsSync(html)) add('rendered-create-proposal', item.id, item.proposedPath);
   }
   for (const route of ['/resources/speaking', '/speaking', '/spoken-english-classes-for-kids-online']) {
     const html = path.join(root, 'dist', ...route.slice(1).split('/'), 'index.html');
@@ -101,7 +121,8 @@ const report = {
   keep: keep.length,
   consolidateHold: consolidate.length,
   createProposals: create.length,
-  publishedCreates: 0,
+  downstreamExecuted: allowR21Execution ? r21ExecutionById.size : 0,
+  publishedCreates: allowR21Execution ? r21ExecutionById.size : 0,
   distMode,
   errors,
 };
@@ -111,4 +132,6 @@ if (process.argv.includes('--report')) {
   fs.writeFileSync(path.join(root, 'artifacts/resources-r20-speaking-communication-architecture.json'), `${JSON.stringify(report, null, 2)}\n`);
 }
 if (errors.length) process.exitCode = 1;
-else console.log('PASS: R20 preserves 10 strong speaking owners, holds 1 legacy consolidation candidate and keeps 3 CREATE records unpublished.');
+else console.log(allowR21Execution
+  ? 'PASS: R20 planning remains intact and exactly 3 explicit R21 speaking content executions are present.'
+  : 'PASS: R20 preserves 10 strong speaking owners, holds 1 legacy consolidation candidate and keeps 3 CREATE records unpublished.');

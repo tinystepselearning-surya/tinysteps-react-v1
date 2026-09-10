@@ -5,7 +5,7 @@ import { blogPosts } from '../../content/blog';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
 import { R19_CANONICAL_TOPIC_OWNERSHIP } from '../../lib/grammarWritingSemanticCanonicalOwnership.js';
 import { getGrammarWritingSemanticInternalLinksForPath } from '../../lib/grammarWritingSemanticJourneyGraph.js';
-import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
+import { getSpeakingCommunicationContentExecution } from '../../lib/speakingCommunicationContentExecutionRegistry.js';
 import {
   SPEAKING_COMMUNICATION_CONTENT_AUDIT,
   SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS,
@@ -36,17 +36,23 @@ describe('Resources R20 speaking and communication knowledge architecture', () =
     expect(architecture).toContain('multilingual performance can differ by setting/topic');
   });
 
-  it('keeps ten strong pages, holds one consolidation candidate and leaves three CREATE records unpublished', () => {
+  it('keeps ten strong pages, holds one consolidation candidate and preserves exactly three R20 CREATE decisions for explicit R21 execution', () => {
     expect(getSpeakingCommunicationContentAuditByAction('keep')).toHaveLength(10);
     expect(getSpeakingCommunicationContentAuditByAction('consolidate')).toHaveLength(1);
-    expect(getSpeakingCommunicationContentAuditByAction('create')).toHaveLength(3);
-    for (const item of getSpeakingCommunicationContentAuditByAction('create')) {
+    const creates = getSpeakingCommunicationContentAuditByAction('create');
+    expect(creates).toHaveLength(3);
+    expect(creates.map((item) => item.id)).toEqual([
+      'conversation-skills-parent-guide',
+      'storytelling-retelling-parent-guide',
+      'speaking-delivery-parent-guide',
+    ]);
+    for (const item of creates) {
       expect(item).toMatchObject({ path: null, canonicalTopicId: null, implementationState: 'proposal-only', publicationApproved: false });
-      expect(item.proposedPath).toMatch(/^\/blog\//);
-      expect(routeManifestSource).not.toContain(`route('${item.proposedPath!}'`);
-      expect(ROUTE_SEO_REGISTRY[item.proposedPath!]).toBeUndefined();
-      const slug = item.proposedPath!.replace('/blog/', '');
-      expect(publicBlogSlugs.has(slug)).toBe(false);
+      expect(item.proposedPath).toMatch(/^\/blog\/[a-z0-9-]+$/);
+      const execution = getSpeakingCommunicationContentExecution(item.id);
+      expect(execution?.state).toBe('published');
+      expect(execution?.path).toBe(item.proposedPath);
+      expect(publicBlogSlugs.has(item.proposedPath!.replace('/blog/', ''))).toBe(true);
     }
   });
 
