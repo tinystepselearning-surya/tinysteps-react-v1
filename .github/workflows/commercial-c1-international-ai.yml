@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - 'src/lib/commercialC1InternationalAiResearch.ts'
+      - 'src/lib/commercialC1InternationalCoreSubjectCompletion.ts'
       - 'src/tests/seo/commercialC1InternationalAiResearch.spec.ts'
+      - 'src/tests/seo/commercialC1InternationalCoreSubjectCompletion.spec.ts'
       - 'scripts/audit-commercial-c1-international-ai.mjs'
       - 'docs/seo/commercial-growth/C1_INTERNATIONAL_AI_RESEARCH.md'
       - '.github/workflows/commercial-c1-international-ai.yml'
@@ -31,7 +33,7 @@ jobs:
       - name: Install Chromium for prerender
         run: npx playwright install --with-deps chromium
       - name: Run C1 international/AI tests
-        run: npx vitest run src/tests/seo/commercialC1InternationalAiResearch.spec.ts src/tests/seo/commercialC1SearchUniverse.spec.ts src/tests/seo/commercialC0Foundation.spec.ts
+        run: npx vitest run src/tests/seo/commercialC1InternationalAiResearch.spec.ts src/tests/seo/commercialC1InternationalCoreSubjectCompletion.spec.ts src/tests/seo/commercialC1SearchUniverse.spec.ts src/tests/seo/commercialC0Foundation.spec.ts
       - name: Audit international/AI research
         run: node scripts/audit-commercial-c1-international-ai.mjs
       - name: Audit base C1 research
