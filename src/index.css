@@ -42,7 +42,7 @@
   }
 
   body {
-    font-family: 'Inter Variable', 'Inter', 'Segoe UI', Arial, sans-serif;
+    font-family: 'Inter', 'Poppins', 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     @apply font-body text-gray-900 scroll-smooth;
     background: radial-gradient(circle at top, #fff1cc 0%, #ffe5b4 30%, #f2f7ff 85%);
   }
