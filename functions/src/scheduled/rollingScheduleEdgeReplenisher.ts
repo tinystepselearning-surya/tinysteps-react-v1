@@ -88,9 +88,16 @@ export async function runRollingScheduleEdgeReplenisher(
   for (let index = 0; index < dueSnap.docs.length; index += 1) {
     const enrollmentDoc = dueSnap.docs[index];
     const enrollmentId = enrollmentDoc.id;
-    const enrollment = enrollmentDoc.data() as Record<string, unknown>;
 
     try {
+      // Brick 5 lifecycle transitions clear the due pointer before cancelling
+      // or restoring sessions. Re-read the enrollment immediately before plan
+      // construction so a stale due-query snapshot cannot materialize a class
+      // after an admin has paused or discontinued the enrollment.
+      const liveEnrollmentSnap = await db.collection('enrollments').doc(enrollmentId).get();
+      if (!liveEnrollmentSnap.exists) continue;
+      const enrollment = liveEnrollmentSnap.data() as Record<string, unknown>;
+
       const plan = buildRollingScheduleDueEdgePlan({
         enrollmentId,
         enrollment,
