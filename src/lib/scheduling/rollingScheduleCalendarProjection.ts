@@ -6,6 +6,7 @@ import {
   enumerateRollingScheduleOccurrences,
   ROLLING_SCHEDULE_UTC_OFFSET_MINUTES,
 } from './rollingScheduleRecurrence';
+import { isRealSessionAuthoritativeForRollingCalendar } from './rollingScheduleRealSessionAuthority';
 
 export const ROLLING_SCHEDULE_PROJECTION_SOURCE = 'rolling_schedule_projection' as const;
 
@@ -162,9 +163,10 @@ const enrollmentKidIds = (enrollment: RecordLike): string[] => {
  * Builds display-only recurrence rows strictly beyond the physical classSession horizon.
  *
  * The function never reads or writes Firestore. Canonical rolling enrollments are the only
- * projection authority. Real classSession documents always win for an occurrence, including
- * cancelled or otherwise non-operational real documents, so a projection can never conceal
- * the persisted state that will become actionable inside the 14-day window.
+ * projection authority. Within the 14-day physical window, persisted real sessions remain
+ * authoritative. Beyond that window, stale ordinary rows left by the retired finite scheduler
+ * are intentionally ignored so they cannot suppress recurrence projections after cutover.
+ * Explicit real exceptions remain authoritative at any distance.
  */
 export const buildRollingScheduleCalendarProjections = (
   input: BuildRollingScheduleCalendarProjectionsInput,
@@ -180,9 +182,23 @@ export const buildRollingScheduleCalendarProjections = (
   const fromYmd = input.fromYmd > firstProjectionYmd ? input.fromYmd : firstProjectionYmd;
   if (fromYmd > input.toYmd) return [];
 
-  const realIds = new Set(input.realSessions.map((session) => text(session.id)).filter(Boolean));
+  const enrollmentsById = new Map<string, RecordLike>();
+  input.enrollments.forEach((enrollment) => {
+    const enrollmentId = text(enrollment.id);
+    if (enrollmentId) enrollmentsById.set(enrollmentId, enrollment);
+  });
+  const authoritativeRealSessions = input.realSessions.filter((session) => {
+    const enrollmentId = enrollmentIdFromSession(session);
+    if (!enrollmentId) return true;
+    return isRealSessionAuthoritativeForRollingCalendar({
+      session,
+      enrollment: enrollmentsById.get(enrollmentId),
+      todayYmd,
+    });
+  });
+  const realIds = new Set(authoritativeRealSessions.map((session) => text(session.id)).filter(Boolean));
   const realOccurrenceIdentities = new Set(
-    input.realSessions
+    authoritativeRealSessions
       .map(sessionOccurrenceIdentity)
       .filter((value): value is string => Boolean(value)),
   );
