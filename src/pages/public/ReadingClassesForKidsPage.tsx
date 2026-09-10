@@ -385,7 +385,7 @@ export default function ReadingClassesForKidsPage() {
                 ))}
               </div>
               <p className="mt-5 text-sm leading-6 text-slate-600">
-                Tiny Steps standard live 1:1 reading classes are {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is {oneToOnePrice} per class; confirm current options on the <Link to="/pricing" className="font-semibold underline underline-offset-2">pricing page</Link>.
+                Tiny Steps standard live 1:1 reading classes are {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is ₹{oneToOnePrice} per class; confirm current options on the <Link to="/pricing" className="font-semibold underline underline-offset-2">pricing page</Link>.
               </p>
             </aside>
           </div>
@@ -464,6 +464,10 @@ export default function ReadingClassesForKidsPage() {
           </div>
           <p className="mt-6 text-sm leading-6 text-slate-600">
             No reading provider is the best fit for every child. Tiny Steps explains its approach and shows supporting evidence so parents can decide whether the programme matches their child’s reading gap.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Searching for reading and writing classes for kids together? This page focuses on reading. For sentence, paragraph, and creative-writing support, use the dedicated{' '}
+            <Link to="/writing-classes-for-kids" className="font-semibold text-sky-800 underline underline-offset-2">Writing Classes for Kids</Link> page.
           </p>
         </div>
       </section>
