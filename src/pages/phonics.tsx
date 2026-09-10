@@ -71,14 +71,14 @@ const faqItems = [
       'Yes. Online phonics classes are useful when they teach sound-letter links, blending, decoding, and reading practice in a clear sequence with live correction.',
   },
   {
-    question: 'What should parents look for in the best online phonics classes?',
+    question: 'How should parents choose an online phonics class for their child?',
     answer:
-      'Look for assessment-first placement, explicit sound teaching, systematic progression, blending and segmenting practice, live correction, decoding instead of guessing, reading and spelling transfer, and clear progress updates for parents. The strongest fit depends on the child’s current level rather than a marketing claim alone.',
+      'Look for assessment-first placement, explicit sound teaching, systematic progression, blending and segmenting practice, live correction, reading and spelling transfer, and clear progress visibility. The right class should match the child’s current decoding level and adapt when a prerequisite skill is not secure.',
   },
   {
-    question: 'Are 1:1 phonics classes better than group phonics classes?',
+    question: 'When is live 1:1 phonics support useful?',
     answer:
-      'Both formats can work. Live 1:1 phonics classes are especially useful when a child needs individual pacing, immediate correction, or support for a specific blending, decoding, spelling, or fluency gap. Group classes can suit children who are progressing comfortably at a shared pace.',
+      'Live 1:1 phonics support is especially useful when a child needs individual pacing, immediate correction, or focused help with a specific blending, decoding, spelling or fluency gap. The teacher can observe each attempt and adjust the next practice step immediately.',
   },
   {
     question: 'At what age should a child start phonics?',
@@ -98,7 +98,7 @@ const faqItems = [
   {
     question: 'How long does it take to see progress in blending?',
     answer:
-      'Many children show early blending progress in about 4–6 guided lessons. Timelines vary by starting level, attendance consistency, and home reinforcement. Progress is usually step-by-step rather than instant.',
+      'Blending progress depends on the child’s starting point. We look for increasing accuracy, less prompting, retention across lessons and successful blending of fresh words at the child’s current stage rather than promising a fixed number of lessons.',
   },
   {
     question: 'Do phonics classes help with spelling?',
@@ -115,45 +115,35 @@ const faqItems = [
     answer:
       'Yes. Parents receive practical updates on milestones, current gaps, and the next steps in the child’s phonics learning path.',
   },
+  {
+    question: 'How long is each Tiny Steps 1:1 phonics class?',
+    answer:
+      'A standard Tiny Steps live 1:1 phonics class is 35 minutes.',
+  },
+  {
+    question: 'Can families outside India join Tiny Steps phonics classes?',
+    answer:
+      'Yes. Tiny Steps supports families in India and worldwide through live online phonics classes, subject to compatible teacher and class timings.',
+  },
 ];
 const schemaFaqItems = faqItems;
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
 const PHONICS_SEO_KEYWORDS = [
-  'phonics for kids',
-  'phonics for parents',
-  'synthetic phonics',
-  'structured phonics',
-  'Jolly Phonics',
-  'phonics-based reading',
-  'blending sounds into words',
-  'what is phonics',
-  'why phonics is important',
-  'how to teach phonics at home',
   'online phonics classes',
   'online phonics classes for kids',
-  'online phonics classes for kids in India',
-  'phonics classes in India',
   'phonics classes for kids',
-  'best online phonics classes',
-  'best online phonics classes in India',
-  'best phonics classes for kids',
-  'best phonics classes in India',
-  'best phonics course for kids',
-  'best online phonics course for kids',
-  'best phonics program for kids',
+  'phonics classes in India',
   'live 1:1 phonics classes',
   '1 to 1 phonics classes online',
   'personalised phonics classes for kids',
   'live online phonics classes',
   'structured phonics classes for kids',
+  'synthetic phonics classes',
   'phonics classes for struggling readers',
   'phonics tutor online for kids',
-  'online reading and phonics classes',
-  'synthetic phonics program for kids',
-  'reading classes for kids',
-  'live 1:1 online phonics classes',
-  'free phonics assessment',
-  'SATPIN phonics',
+  'phonics classes for blending',
+  'phonics classes for decoding',
+  'phonics classes for ages 3 to 12',
 ];
 
 const trustChips = [
@@ -185,38 +175,22 @@ const pyramidLevels = [
   { step: '2', title: 'Blending', helper: 'Join sounds into words' },
   { step: '1', title: 'Letter sounds', helper: 'Build sound recognition' },
 ];
-const bestClassCriteria = [
+const classFitCriteria = [
   {
-    title: 'Assessment-first placement',
-    detail: 'A strong phonics programme checks what the child can already hear, decode, blend, read, and spell before choosing the starting level.',
+    title: 'Start from the child’s current level',
+    detail: 'Placement should check what the child can already hear, decode, blend, read and spell before selecting the starting point.',
   },
   {
-    title: 'Explicit, systematic progression',
-    detail: 'Sound–spelling links should be taught in a planned sequence that builds from easier patterns to more complex decoding.',
+    title: 'Follow a cumulative sequence',
+    detail: 'Sound–spelling links should build in a planned order so new patterns depend on skills the child has already secured.',
   },
   {
-    title: 'Blending and segmenting',
-    detail: 'Children need repeated practice joining sounds to read words and separating sounds to support spelling.',
+    title: 'Correct errors while they happen',
+    detail: 'The teacher should hear the child read, identify the exact decoding error, model the correction and give another attempt.',
   },
   {
-    title: 'Decoding instead of guessing',
-    detail: 'Teaching should help children work through unfamiliar words from their sound patterns rather than depend on pictures or memory.',
-  },
-  {
-    title: 'Live observation and correction',
-    detail: 'A teacher should hear the child read, identify the exact error, model the correction, and give the child another attempt.',
-  },
-  {
-    title: 'Reading and spelling transfer',
-    detail: 'The programme should connect phonics patterns to word reading, sentence reading, and spelling instead of stopping at isolated sounds.',
-  },
-  {
-    title: 'Pacing matched to readiness',
-    detail: 'Children should move forward when the prerequisite skill is secure, with extra practice when a decoding pattern is still unstable.',
-  },
-  {
-    title: 'Parent-visible progress',
-    detail: 'Parents should know what has improved, what still needs work, and what the next learning goal is.',
+    title: 'Check transfer into real reading',
+    detail: 'Progress should appear in fresh word reading, sentence reading and spelling—not only in memorised sound drills.',
   },
 ];
 const intentSupportChips = ['Letter sounds', 'Blending', 'CVC words', 'Reading fluency'];
@@ -437,17 +411,17 @@ export default function PhonicsPage({
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
   const registry = getRouteConfig(canonicalPath);
-  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids in India | Tiny Steps";
+  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids | Live 1:1 | Tiny Steps";
   const description =
     seoOverrides?.description ??
     registry?.description ??
-    "Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book one free 35-minute 1:1 online demo assessment class.";
+    "Live 1:1 online phonics classes for kids ages 3–12 in India and worldwide. Build blending, decoding, spelling and reading fluency with assessment-first placement.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
-  const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids in India";
+  const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids";
   const heroSubtitle =
     heroSubtitleOverride ??
-    "Premium phonics for kids in India through live 1:1 online phonics classes. We guide children from letter sounds to blending and reading, with structured spelling support and parent-visible progress. Start with a free phonics assessment to choose the right level.";
+    "Live 1:1 online phonics classes for children ages 3–12 in India and worldwide. We teach letter sounds, blending, decoding, spelling patterns and reading fluency through a structured level-based pathway with parent-visible progress.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -488,8 +462,8 @@ export default function PhonicsPage({
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#phonics-class-quality-criteria`,
-      name: 'What parents should look for in online phonics classes',
-      itemListElement: bestClassCriteria.map((criterion, index) => ({
+      name: 'How parents can evaluate online phonics classes',
+      itemListElement: classFitCriteria.map((criterion, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -575,11 +549,11 @@ export default function PhonicsPage({
               <MetricPill>Parent progress updates</MetricPill>
             </div>
             <p className="mt-5 max-w-[660px] text-sm leading-6 text-slate-700">
-              Parents comparing providers often start with our{' '}
+              If you want a provider-by-provider decision framework, use our{' '}
               <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                best online phonics classes for kids in India
+                phonics class comparison guide
               </Link>{' '}
-              guide before booking a free 35-minute 1:1 online demo assessment class.
+              before booking a free 35-minute 1:1 online demo assessment class.
             </p>
             <p className="mt-3 text-xs font-medium text-slate-600">
               Founder-reviewed academic page · structured synthetic phonics pathway.
@@ -679,7 +653,7 @@ export default function PhonicsPage({
             {[
               ['Overview', '#overview'],
               ['Who It’s For', '#problems'],
-              ['How to Choose', '#best-phonics-classes'],
+              ['How to Choose', '#choosing-phonics-support'],
               ['Teaching', '#teacher-delivery'],
               ['Program', '#program'],
               ['Progress', '#progress'],
@@ -714,11 +688,11 @@ export default function PhonicsPage({
           </div>
           <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-4xl text-sm leading-6 text-slate-700">
-              Compare options in our{' '}
+              Need to compare providers, formats or value? Use our{' '}
               <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                best online phonics classes for kids in India
+                dedicated phonics comparison guide
               </Link>{' '}
-              guide or book one free 35-minute 1:1 online demo assessment class to choose the right starting level.
+              or book one free 35-minute 1:1 online demo assessment class to check the right starting level.
             </p>
             <Link to="/book-demo" className="inline-flex shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800">
               Check the Starting Level
@@ -780,18 +754,15 @@ export default function PhonicsPage({
         </div>
       </SectionShell>
 
-      <SectionShell id="best-phonics-classes">
+      <SectionShell id="choosing-phonics-support">
         <div className="rounded-[2rem] border border-orange-100 bg-gradient-to-br from-[#FFF9F1] via-white to-[#F2FAFF] p-6 shadow-xl sm:p-8">
           <SectionHeader
-            eyebrow="Parent comparison framework"
-            title="What should parents look for in the best online phonics classes?"
-            subtitle="The strongest programme is not the one with the biggest claim. It is the one that can show how a child is placed, taught, corrected, progressed, and supported from sounds into real reading."
+            eyebrow="Choosing the right support"
+            title="How to evaluate an online phonics class for your child"
+            subtitle="A useful phonics class should begin at the child’s actual reading level, teach skills cumulatively, correct errors live, and check whether learning transfers into fresh words and connected reading."
           />
-          <p className="mt-4 max-w-5xl text-sm leading-7 text-slate-700 sm:text-base">
-            Parents searching for the best online phonics classes in India or the best phonics classes for kids should compare the teaching process rather than rely on rankings alone. These eight criteria help families evaluate whether a programme is structured enough to support decoding, spelling, and reading progress.
-          </p>
           <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {bestClassCriteria.map((criterion, index) => (
+            {classFitCriteria.map((criterion, index) => (
               <PremiumCard key={criterion.title} className="h-full p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
                 <div className="flex items-center gap-3">
                   <NumberBadge value={index + 1} />
@@ -801,35 +772,19 @@ export default function PhonicsPage({
               </PremiumCard>
             ))}
           </div>
-          <div className="mt-7 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="text-lg font-semibold text-slate-900">How Tiny Steps maps to these criteria</h3>
-              <p className="mt-2 text-sm leading-7 text-slate-700">
-                Tiny Steps uses assessment-first placement, a structured synthetic phonics progression, live 1:1 correction, reading and spelling practice, readiness-based pacing, and parent progress updates. Parents can inspect the evidence before deciding rather than depending on a broad “best” claim.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link to="/curriculum?tab=phonics" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
-                  Review phonics curriculum
-                </Link>
-                <Link to="/class-samples" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
-                  Watch class samples
-                </Link>
-                <Link to="/testimonials" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
-                  Read parent feedback
-                </Link>
-                <Link to="/pricing" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
-                  Check pricing
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Need a deeper comparison?</p>
-              <h3 className="mt-2 text-lg font-semibold text-slate-900">Use the dedicated buyer guide</h3>
+          <div className="mt-7 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-3xl">
+              <h3 className="text-lg font-semibold text-slate-900">Want a deeper provider comparison?</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">
-                Compare 1:1 vs group format, curriculum structure, teacher attention, pricing, placement, and parent support in one decision-focused page.
+                The dedicated comparison guide covers 1:1 versus group format, curriculum structure, teacher attention, pricing, placement and parent support. This programme page stays focused on how Tiny Steps phonics works.
               </p>
-              <Link to="/best-online-phonics-classes-for-kids-in-india" className="mt-4 inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
-                Compare online phonics classes
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/best-online-phonics-classes-for-kids-in-india" className="rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                Open comparison guide
+              </Link>
+              <Link to="/curriculum?tab=phonics" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                Review curriculum
               </Link>
             </div>
           </div>
@@ -868,7 +823,7 @@ export default function PhonicsPage({
           <ProgramFacts
             ageRange="Ages 3–12"
             format="Live 1:1 online guidance"
-            duration="35–40 minutes, 2–3x per week"
+            duration="35 minutes per live 1:1 class"
             structure="3 levels, 101 structured lessons with stage-based progression"
             outcomes={[
               'Build sound-letter recognition',
@@ -915,10 +870,10 @@ export default function PhonicsPage({
           <ProgramProof
             title="Progress parents can track lesson by lesson"
             metrics={[
-              { value: '4–6', label: 'Lessons to begin first blending, depending on readiness' },
-              { value: '30–40', label: 'Lessons to cover core phonics foundations' },
+              { value: 'Fresh-word transfer', label: 'Blending checked on unfamiliar words at the child’s current stage' },
+              { value: 'Individual pace', label: 'Progression depends on starting level, retention, accuracy and transfer' },
               { value: 'Stage-based', label: 'Parent-visible progress checkpoints' },
-              { value: 'Live guidance', label: 'Correction, pacing, and confidence support' },
+              { value: 'Live 1:1', label: 'Immediate correction, pacing and guided retries' },
             ]}
           />
         </div>
@@ -986,14 +941,14 @@ export default function PhonicsPage({
       <SectionShell>
         <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-orange-50/30 to-sky-50/30 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8">
           <SectionHeader
-            eyebrow="Available across India"
-            title="Online phonics classes for kids across India"
-            subtitle="Live online support without location barriers."
+            eyebrow="India and worldwide"
+            title="Live online phonics classes for families in India and worldwide"
+            subtitle="One structured live 1:1 pathway, with class timings matched where teacher availability allows."
           />
           <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
             <div>
               <p className="text-sm leading-relaxed text-slate-700">
-                Tiny Steps supports children across India through live online classes. Parents from cities such as Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can book one free 35-minute 1:1 online demo assessment class and receive a level-based phonics path.
+                Tiny Steps supports children in India and worldwide through live online classes. Families in India, the UAE, United States, United Kingdom, Australia, Singapore and other locations—including NRI families—can request a free 35-minute 1:1 demo assessment, subject to compatible teacher and class timings.
               </p>
               <p className="mt-3 text-sm leading-relaxed text-slate-700">
                 Families often combine phonics with{' '}
@@ -1010,7 +965,7 @@ export default function PhonicsPage({
                 </Link>
                 , and broader{' '}
                 <Link to="/online-english-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                  online English classes for kids in India
+                  online English classes for kids
                 </Link>
                 .
               </p>
