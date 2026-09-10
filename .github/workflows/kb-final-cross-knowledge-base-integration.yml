@@ -1,0 +1,145 @@
+name: KB-FINAL Cross Knowledge Base Integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/knowledgeBaseFinalClosure.*'
+      - 'src/lib/phonicsReading*'
+      - 'src/lib/grammarWriting*'
+      - 'src/lib/speakingCommunication*'
+      - 'src/lib/canonicalTopicOwnershipRegistry.*'
+      - 'src/lib/publicRouteManifest.*'
+      - 'src/content/phonicsKnowledge*'
+      - 'src/content/courses.ts'
+      - 'src/components/blog/BlogSemanticPathway.tsx'
+      - 'src/tests/seo/sessionAPhonicsReadingClosure.spec.ts'
+      - 'src/tests/seo/grammarWritingGr7Closure.spec.ts'
+      - 'src/tests/seo/resourcesSP6SpeakingCommunicationCompletion.spec.ts'
+      - 'src/tests/seo/knowledgeBaseFinalIntegration.spec.ts'
+      - 'scripts/audit-kb-final-cross-knowledge-base-integration.mjs'
+      - 'scripts/audit-grammar-writing-gr7-closure.mjs'
+      - 'scripts/audit-resources-sp6-speaking-communication-closure.mjs'
+      - 'docs/seo/session-a-phonics-reading/**'
+      - 'docs/seo/resources-architecture/GR*'
+      - 'docs/seo/resources-architecture/SP0_SP6_*'
+      - 'docs/seo/resources-architecture/KB_FINAL_*'
+      - '.github/workflows/kb-final-cross-knowledge-base-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kb-final-cross-knowledge-base-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+
+      - name: Run KB-FINAL and three frozen session closure tests
+        run: npx vitest run src/tests/seo/knowledgeBaseFinalIntegration.spec.ts src/tests/seo/sessionAPhonicsReadingClosure.spec.ts src/tests/seo/grammarWritingGr7Closure.spec.ts src/tests/seo/resourcesSP6SpeakingCommunicationCompletion.spec.ts
+      - name: Run full repository test suite
+        run: npx vitest run
+
+      - name: Audit KB-FINAL cross-knowledge-base integration
+        run: node scripts/audit-kb-final-cross-knowledge-base-integration.mjs --report
+      - name: Audit Session B GR7 closure
+        run: node scripts/audit-grammar-writing-gr7-closure.mjs --report
+      - name: Audit Session C SP6 closure
+        run: node scripts/audit-resources-sp6-speaking-communication-closure.mjs --report
+      - name: Audit R22 speaking semantic journeys
+        run: node scripts/audit-resources-r22-speaking-communication-semantic-journeys.mjs --report
+      - name: Audit R21 high-value speaking content
+        run: node scripts/audit-resources-r21-high-value-speaking-content.mjs --report
+      - name: Audit R20 speaking architecture after R21 execution
+        run: node scripts/audit-resources-r20-speaking-communication-architecture.mjs --r21-executed --report
+      - name: Audit R19 grammar and writing semantic journeys
+        run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
+      - name: Audit R18 high-value grammar writing content
+        run: node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --report
+      - name: Audit R17 grammar writing architecture after R18 execution
+        run: node scripts/audit-resources-r17-grammar-writing-architecture.mjs --r18-executed --report
+      - name: Audit R16 reading semantic journeys
+        run: node scripts/audit-resources-r16-reading-semantic-journeys.mjs --report
+      - name: Audit R15 high-value reading content
+        run: node scripts/audit-resources-r15-high-value-reading-content.mjs --report
+      - name: Audit R14 reading architecture after R15 execution
+        run: node scripts/audit-resources-r14-reading-knowledge-architecture.mjs --r15-executed --report
+      - name: Audit R13 sound and word utility engine
+        run: node scripts/audit-resources-r13-word-sound-utility.mjs --report
+      - name: Audit R12 controlled expansion
+        run: node scripts/audit-resources-r12-programmatic-expansion.mjs --report
+      - name: Audit R11 measurement and scoped expansion gate
+        run: node scripts/audit-resources-r11-measurement.mjs
+      - name: Audit R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --report
+      - name: Audit R9.1 human editorial review layer
+        run: node scripts/audit-resources-r9-1-human-editorial-review.mjs
+      - name: Audit frozen R9 publication contract
+        run: node scripts/audit-resources-r9-programmatic-pilot.mjs
+      - name: Audit R8 approved-output safety under R12 publication
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r12-approved
+      - name: Audit semantic internal links
+        run: node scripts/audit-semantic-internal-links.mjs
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Run structural Resources safety audit
+        run: node scripts/audit-resources-r0.mjs
+      - name: Check shadowing
+        run: node scripts/check-shadowing.mjs
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run KB-FINAL integration audit after production build
+        run: node scripts/audit-kb-final-cross-knowledge-base-integration.mjs --report
+      - name: Verify rendered SP6 closure
+        run: node scripts/audit-resources-sp6-speaking-communication-closure.mjs --dist --report
+      - name: Verify rendered R22 speaking journeys
+        run: node scripts/audit-resources-r22-speaking-communication-semantic-journeys.mjs --dist --report
+      - name: Verify rendered R21 speaking content
+        run: node scripts/audit-resources-r21-high-value-speaking-content.mjs --dist --report
+      - name: Verify rendered R20 architecture after R21 execution
+        run: node scripts/audit-resources-r20-speaking-communication-architecture.mjs --r21-executed --dist --report
+      - name: Verify rendered R19 grammar writing journeys
+        run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --dist --report
+      - name: Verify rendered R18 grammar writing content
+        run: node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --dist --report
+      - name: Verify rendered R16 reading journeys
+        run: node scripts/audit-resources-r16-reading-semantic-journeys.mjs --dist --report
+      - name: Verify rendered R15 reading content
+        run: node scripts/audit-resources-r15-high-value-reading-content.mjs --dist --report
+      - name: Verify rendered R13 utility remains intact
+        run: node scripts/audit-resources-r13-word-sound-utility.mjs --dist --report
+      - name: Verify rendered R12 publication contract
+        run: node scripts/audit-resources-r12-programmatic-expansion.mjs --dist --report
+      - name: Verify rendered R10 discovery graph
+        run: node scripts/audit-resources-r10-discovery-infrastructure.mjs --dist --report
+      - name: Run rendered Resources safety audit
+        run: node scripts/audit-resources-r0-rendered.mjs --strict
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+
+      - name: Upload KB-FINAL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-final-cross-knowledge-base-integration
+          path: |
+            artifacts/kb-final-cross-knowledge-base-integration.json
+            artifacts/grammar-writing-gr7-closure.json
+            artifacts/resources-sp6-speaking-communication-closure.json
+            artifacts/resources-r22-speaking-communication-semantic-journeys.json
+          if-no-files-found: warn
