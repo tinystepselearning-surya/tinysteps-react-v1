@@ -4,18 +4,38 @@
 **Baseline main SHA:** `eb97f3777039ea754b2c6e778cdebb9f3b5f4d22`  
 **Mission:** Complete the structured literacy knowledge/practice system without mass-producing thin word or phonics-pattern pages.
 
+## Final state
+
+**PHONICS & READING = FROZEN**
+
+Session A is complete on the isolated branch. PH0–PH7 are closed, the closure gate is green, and the exact validated implementation head before this status-only freeze commit was `973756d193c31e3c7f6c8e9ef053bc8e72968c03`.
+
 ## Brick status
 
 | Brick | Mission | Status |
 | --- | --- | --- |
-| PH0 | Current-state & gap audit | IN PROGRESS |
-| PH1 | Phonics knowledge model | NOT STARTED |
-| PH2 | Audio & word dataset | NOT STARTED |
-| PH3 | Core pattern resource coverage | NOT STARTED |
-| PH4 | Parent problem coverage | NOT STARTED |
-| PH5 | Interactive practice layer | NOT STARTED |
-| PH6 | Semantic journeys | NOT STARTED |
-| PH7 | Closure audit | NOT STARTED |
+| PH0 | Current-state & gap audit | COMPLETE |
+| PH1 | Phonics knowledge model | COMPLETE |
+| PH2 | Audio & word dataset | COMPLETE |
+| PH3 | Core pattern resource coverage | COMPLETE |
+| PH4 | Parent problem coverage | COMPLETE |
+| PH5 | Interactive practice layer | COMPLETE |
+| PH6 | Semantic journeys | COMPLETE |
+| PH7 | Closure audit | COMPLETE |
+
+## Validation evidence
+
+The exact implementation head `973756d193c31e3c7f6c8e9ef053bc8e72968c03` passed all PR workflows required for Session A closure:
+
+- CI/CD Deploy to Firebase — success; deploy job correctly skipped on pull request
+- Resources R8 Phonics Knowledge Dataset — success
+- Resources R13 Word Sound Utility Engine — success
+- SEO Crawl & Discovery Guard — success
+- SEO Dead URL Guard — success
+- GSC Content Quality & Consolidation Guard — success
+- GSC Revalidation & Submission Plan — success
+
+Repository-wide CI also passed Cloud Functions build/tests, Firestore rules tests, lead-deduplication emulator tests, lint, TypeScript, complete unit tests with coverage, production-build configuration validation, app build, and SEO smoke.
 
 ## Non-negotiable guardrails
 
@@ -32,4 +52,4 @@
 
 ## Merge rule
 
-Do not merge this branch to `main` until PH0–PH7 are complete, the closure audit is green, and the Session A state is explicitly marked **PHONICS & READING = FROZEN**.
+Session A now satisfies the PH0–PH7 completion and freeze requirements. PR #287 may be reviewed and merged to `main` as one unit when explicitly authorized. Until then, keep the branch isolated and do not merge it.
