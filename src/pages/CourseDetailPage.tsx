@@ -261,7 +261,7 @@ const CourseDetailPage: FC = () => {
         supportingText={`Premium 1:1 pricing starts at ${formatINR(400)}/class, with the 12-class starter plan at ${formatINR(starterPackage.monthlyFee)} when that format fits your child.`}
         stats={[
           { label: 'Students guided', value: '5000+', helper: 'Structured programs across phonics, grammar, reading, and speaking' },
-          { label: 'Countries reached', value: '15+', helper: 'Parent trust built across India and global family communities' },
+          { label: 'Countries reached', value: '15+', helper: 'Families learning with Tiny Steps in India and around the world' },
           { label: 'Course level', value: course.level, helper: 'Assessment-led placement before enrollment' },
           { label: 'Program format', value: 'Live 1:1', helper: 'Pacing adjusts to the child rather than a group average' },
         ]}
@@ -315,24 +315,6 @@ const CourseDetailPage: FC = () => {
               )
             }
           />
-        }
-        aside={
-          <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Parent trust</p>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
-              This page includes a curated sample of parent feedback for this course level. If you are unsure whether this is the right starting point, book the free 35-minute 1:1 online demo assessment class first and ask for the exact first 12-class plan before enrolling.
-            </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pricing trust</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{formatINR(400)}/class • {formatINR(starterPackage.monthlyFee)} / 12 classes</p>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Delivery model</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">Assessment first, then level-based progression</p>
-              </div>
-            </div>
-          </LeadCard>
         }
       />
 
