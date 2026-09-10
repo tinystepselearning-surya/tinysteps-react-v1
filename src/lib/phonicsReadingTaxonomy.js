@@ -33,10 +33,9 @@ function skill(id, config) {
 
 /**
  * PH1 is the authoritative high-level structured-literacy progression for
- * Session A. It is intentionally route-agnostic: taxonomy membership never
- * auto-publishes a URL. Granular R8 phonics concepts remain useful supporting
- * knowledge; this layer provides the complete child-skill progression that was
- * previously spread across curriculum, articles, games and reading journeys.
+ * Session A. Taxonomy membership is route-agnostic and never auto-publishes a
+ * URL. Existing R8 knowledge concepts remain the granular teaching source; this
+ * layer provides one complete child-skill progression across phonics and reading.
  */
 export const PHONICS_READING_TAXONOMY = freezeList([
   skill('phonemic-awareness', {
@@ -47,7 +46,7 @@ export const PHONICS_READING_TAXONOMY = freezeList([
     graphemes: [],
     phonemes: ['individual spoken phonemes', 'onsets and rimes where developmentally useful'],
     exampleWords: ['sat', 'map', 'fish', 'ship'],
-    exceptions: ['This is an oral language skill; printed letters are not required for the core task.'],
+    exceptions: ['This is an oral-language skill; printed letters are not required for the core task.'],
     pronunciationConventions: ['Model clean speech sounds without adding an extra schwa to consonants.', 'Accept ordinary accent variation while keeping the target contrast clear.'],
     relatedSkillIds: ['blending', 'segmenting'],
     nextSkillIds: ['letter-sounds'],
@@ -164,14 +163,14 @@ export const PHONICS_READING_TAXONOMY = freezeList([
     skill: 'Decode and spell frequent multi-letter vowel spellings while learning that one spelling can have more than one pronunciation.',
     teachingStage: 'pattern-decoding',
     prerequisiteIds: ['long-vowels'],
-    graphemes: ['ai', 'ay', 'ee', 'ea', 'oa', 'ow', 'ie', 'igh', 'oo'],
+    graphemes: ['ai', 'ay', 'ee', 'ea', 'oa', 'ow', 'ie', 'igh', 'oo', 'ui'],
     phonemes: ['long-vowel phonemes', 'common oo variants'],
-    exampleWords: ['rain', 'play', 'seed', 'team', 'boat', 'night', 'book', 'moon'],
+    exampleWords: ['rain', 'play', 'seed', 'team', 'boat', 'night', 'book', 'moon', 'fruit'],
     exceptions: ['Vowel teams are not one-sound-only rules; ea, ow, oo and other spellings can represent multiple pronunciations.'],
     pronunciationConventions: ['Store and teach pronunciation at word/pattern level where the spelling is ambiguous.', 'Do not infer a sound from the grapheme alone when multiple legitimate mappings exist.'],
     relatedSkillIds: ['long-vowels', 'advanced-patterns', 'spelling-rules'],
     nextSkillIds: ['spelling-rules', 'r-controlled'],
-    knowledgeConceptIds: ['vowel-team-ai', 'vowel-team-ee', 'vowel-team-ea', 'vowel-team-oa', 'diphthong-oo'],
+    knowledgeConceptIds: ['vowel-team-ai', 'vowel-team-ee', 'vowel-team-ea', 'vowel-team-ie', 'vowel-team-oa', 'diphthong-oo', 'vowel-team-ui'],
     learningBoundary: 'Pattern knowledge should improve transfer to unfamiliar words, not become another memorised word list.',
   }),
   skill('spelling-rules', {
@@ -186,7 +185,7 @@ export const PHONICS_READING_TAXONOMY = freezeList([
     pronunciationConventions: ['Teach the sound first, then the positional spelling choice.', 'Separate grapheme choice from pronunciation when multiple spellings represent the same phoneme.'],
     relatedSkillIds: ['segmenting', 'vowel-teams', 'multisyllabic-decoding'],
     nextSkillIds: ['r-controlled', 'advanced-patterns'],
-    knowledgeConceptIds: ['ck-rule', 'floss-rule', 'digraph-tch', 'dge-rule', 'consonant-le'],
+    knowledgeConceptIds: ['ck-rule', 'floss-rule', 'digraph-tch', 'j-sounds', 'consonant-le'],
     learningBoundary: 'A child should explain and apply the generalisation in mixed dictation rather than reproduce an isolated rule sentence.',
   }),
   skill('r-controlled', {
@@ -210,18 +209,18 @@ export const PHONICS_READING_TAXONOMY = freezeList([
     teachingStage: 'advanced-decoding',
     prerequisiteIds: ['vowel-teams', 'spelling-rules', 'r-controlled'],
     graphemes: ['oi', 'oy', 'ou', 'ow', 'aw', 'au', 'eigh', 'augh', 'ough', 'kn', 'wr', 'mb', 'soft c', 'soft g', 'y', 'schwa'],
-    phonemes: ['diphthongs', 'alternative vowel phonemes', 'soft consonant phonemes', 'schwa', 'silent-letter outcomes'],
-    exampleWords: ['coin', 'toy', 'out', 'cow', 'haul', 'eight', 'caught', 'night', 'city', 'gem', 'happy', 'about'],
+    phonemes: ['diphthongs and alternate vowel outcomes', 'soft consonant phonemes', 'schwa', 'silent-letter outcomes'],
+    exampleWords: ['coin', 'toy', 'out', 'cow', 'haul', 'eight', 'caught', 'city', 'gem', 'happy', 'about'],
     exceptions: ['OUGH and several advanced spelling families have multiple pronunciations and must not be taught as one deterministic sound rule.', 'Schwa depends on stress and accent.'],
     pronunciationConventions: ['Use explicit word-level sound mappings for ambiguous spellings.', 'Preserve accent-sensitive notes for r-colouring, wh, schwa and other variable outcomes.'],
     relatedSkillIds: ['vowel-teams', 'r-controlled', 'multisyllabic-decoding'],
     nextSkillIds: ['multisyllabic-decoding'],
-    knowledgeConceptIds: ['soft-c-hard-c', 'soft-g-hard-g', 'silent-kn-wr-mb', 'shy-i-toughy-y', 'schwa-lazy-vowel', 'ough-family'],
+    knowledgeConceptIds: ['soft-c-hard-c', 'soft-g-hard-g', 'digraph-kn', 'y-secret-vowel', 'diphthong-oi-oy', 'diphthong-au-aw', 'diphthong-ou-ow', 'j-sounds', 'shun-family', 'schwa-lazy-vowel', 'missing-sleepy-sounds', 'long-vowel-families'],
     learningBoundary: 'The system should group meaningful pattern families; it must not create a separate public page for every word or pronunciation variant.',
   }),
   skill('multisyllabic-decoding', {
     label: 'Multisyllabic decoding',
-    skill: 'Break longer words into manageable syllable/morpheme units, apply known patterns, blend the parts and confirm the whole word in context.',
+    skill: 'Break longer words into manageable syllable or morpheme units, apply known patterns, blend the parts and confirm the whole word in context.',
     teachingStage: 'advanced-decoding',
     prerequisiteIds: ['advanced-patterns', 'spelling-rules'],
     graphemes: ['closed syllables', 'open syllables', 'consonant-le', 'common prefixes and suffixes'],
