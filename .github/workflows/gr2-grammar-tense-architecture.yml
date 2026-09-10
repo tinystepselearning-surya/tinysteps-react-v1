@@ -15,6 +15,7 @@ on:
       - 'scripts/audit-grammar-writing-gr2-tenses.mjs'
       - 'docs/seo/resources-architecture/GR1_*'
       - 'docs/seo/resources-architecture/GR2_*'
+      - '.github/workflows/gr1-grammar-knowledge-taxonomy.yml'
       - '.github/workflows/gr2-grammar-tense-architecture.yml'
   workflow_dispatch:
 
