@@ -38,13 +38,14 @@ for (const source of ownerSources) if (!exists(source)) failures.push(`owner sou
 if (exists(c3Path)) {
   const c3 = read(c3Path);
   const rowCount = (c3.match(/audit\(\{ clusterId:/g) || []).length;
-  if (rowCount !== 15) failures.push(`expected 15 C3 cluster audits, found ${rowCount}`);
+  if (rowCount !== 16) failures.push(`expected 16 C3 machine-readable cluster audits, found ${rowCount}`);
   for (const cluster of [
     'phonics-provider','phonics-comparison','phonics-price','reading-provider','reading-fluency','grammar-provider','writing-provider','spoken-english-provider','public-speaking-provider','communication-provider','confidence-building','broad-english-provider','broad-english-hyderabad','english-tutor-provider','general-pricing','free-demo-booking',
   ]) {
-    // communication/public-speaking share one page; the list intentionally includes all C2 IDs and catches typo/missing IDs.
     if (!c3.includes(`clusterId:'${cluster}'`)) failures.push(`C3 missing cluster audit ${cluster}`);
   }
+  if (!c3.includes('expectedClusterAudits: 16')) failures.push('C3 must lock all 16 machine-readable C2 clusters');
+  if (!c3.includes('expectedUserFacingOwnershipBoundaries: 15')) failures.push('C3 must preserve the 15 user-facing ownership boundaries');
   if (!c3.includes('expectedUniqueOwnerPages: 14')) failures.push('C3 must lock 14 unique owner pages');
   if (!c3.includes('countryPagesCreated: 0')) failures.push('C3 must create zero country pages');
   if (!c3.includes('aiPromptPagesCreated: 0')) failures.push('C3 must create zero AI-prompt pages');
@@ -60,7 +61,7 @@ const strengthened = {
   'src/pages/public/ReadingFluencyProgramPage.tsx': ['reading fluency classes for kids online','createCourseSchema','createWebPageSchema',"areaServed: ['India', 'Worldwide']",'35 minutes'],
   'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': ['confidence building classes for kids','createCourseSchema','createWebPageSchema','general public speaking or communication classes','35 minutes'],
   'src/pages/public/SpokenEnglishClassesForKidsPage.tsx': ['spoken English classes for NRI kids','1 to 1 spoken English classes for kids','difference between spoken English and public speaking','35 minutes'],
-  'src/pages/public/OnlineEnglishClassesForKidsPage.tsx': ['online English tutor for kids','NRI families','United Arab Emirates','United States','United Kingdom','Australia','Singapore','Ages 3 to 12'],
+  'src/pages/public/OnlineEnglishClassesForKidsPage.tsx': ['online English tutor for kids','NRI families','UAE','United States','United Kingdom','Australia','Singapore','Ages 3–12'],
 };
 for (const [file, tokens] of Object.entries(strengthened)) {
   if (!exists(file)) continue;
@@ -128,4 +129,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Commercial C3 owner-page audit passed: 15 clusters / 14 unique owner pages, owner signals protected or strengthened.');
+console.log('Commercial C3 owner-page audit passed: 16 machine-readable clusters / 15 user-facing boundaries / 14 unique owner pages.');
