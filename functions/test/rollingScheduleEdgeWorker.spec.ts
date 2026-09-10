@@ -345,7 +345,7 @@ describe('rolling schedule Brick 4 due-edge worker', () => {
     expect(resolveRollingEdgeWorkerTodayYmd(new Date('2026-09-10T18:30:00.000Z'))).toBe('2026-09-11');
   });
 
-  it('discovers work only through the due pointer and never scans classSessions or invokes the full-window materializer', () => {
+  it('discovers work only through the due pointer and transactionally point-reads deterministic sessions', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'functions/src/scheduled/rollingScheduleEdgeReplenisher.ts'),
       'utf8',
@@ -353,7 +353,10 @@ describe('rolling schedule Brick 4 due-edge worker', () => {
     expect(source).toContain(".where('scheduleMaterialization.nextMaterializationDueYmd', '<=', todayYmd)");
     expect(source).toContain(".orderBy('scheduleMaterialization.nextMaterializationDueYmd', 'asc')");
     expect(source).toContain('.limit(MAX_ROLLING_EDGE_ENROLLMENTS_PER_RUN)');
-    expect(source).not.toContain("collection('classSessions')");
+    expect(source).toContain('db.runTransaction(async (tx) =>');
+    expect(source).toContain('const enrollmentSnap = await tx.get(enrollmentRef)');
+    expect(source).toContain("db.collection('classSessions').doc(occurrence.sessionId)");
+    expect(source).not.toContain("collection('classSessions').where");
     expect(source).not.toContain('materializeRollingEnrollmentWindowInternal');
     expect(source).not.toContain("where('enrollmentId'");
   });
@@ -369,15 +372,14 @@ describe('rolling schedule Brick 4 due-edge worker', () => {
     expect(source).not.toContain('every 5 minutes');
   });
 
-  it('registers only the scheduled Brick 4 entry point and leaves the legacy finite scheduler untouched', () => {
+  it('registers the daily rolling worker while retaining legacy implementation code only behind compatibility routing', () => {
     const indexSource = readFileSync(resolve(process.cwd(), 'functions/src/index.ts'), 'utf8');
     const finiteSchedulerSource = readFileSync(
       resolve(process.cwd(), 'functions/src/createSessionsFromSchedule.ts'),
       'utf8',
     );
-    expect(indexSource).toContain(
-      'rollingScheduleEdgeReplenisherDaily',
-    );
+    expect(indexSource).toContain('rollingScheduleEdgeReplenisherDaily');
+    expect(indexSource).toContain('from "./scheduling/rollingScheduleCompatibility"');
     expect(finiteSchedulerSource).toContain('saveEnrollmentScheduleAndGenerateSessions');
     expect(finiteSchedulerSource).toContain('plannedSessions');
     expect(finiteSchedulerSource).toContain('weeksAhead');
