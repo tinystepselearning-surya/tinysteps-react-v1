@@ -43,6 +43,12 @@ function canonicalInternalBlogLinks() {
         transformed = transformed.replace("stage: 'Ages 9 to 13'", "stage: 'Ages 9 to 12'");
       }
 
+      // C3: grammar and speaking already serve international families; normalize
+      // only their structured-data geography while preserving their proven copy.
+      if (id.includes('/src/pages/grammar.tsx') || id.includes('/src/pages/speaking.tsx')) {
+        transformed = transformed.replace("areaServed: 'India'", "areaServed: ['India', 'Worldwide']");
+      }
+
       if (id.includes('/src/content/courses.ts')) {
         transformed = transformed
           .replace("age: 'Ages 8–15'", "age: 'Ages 8–12'")
