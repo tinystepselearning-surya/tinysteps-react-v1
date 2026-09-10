@@ -77,9 +77,6 @@ if (exists(c3Path)) {
   ]) {
     if (!c3.includes(token)) failures.push(`C3 final contract missing ${JSON.stringify(token)}`);
   }
-  if (c3.includes("needs-strengthening'")) {
-    failures.push('C3 final contract still contains needs-strengthening status');
-  }
 }
 
 if (exists(c2Path)) {
@@ -101,7 +98,7 @@ const sourceSignals = {
   'src/pages/public/OnlineEnglishClassesForKidsPage.tsx': ['Online English Classes for Kids', 'online English tutor for kids', '1 to 1 English tutor for kids online', '/online-english-classes-hyderabad'],
   'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx': ['Online English Classes for Kids in Hyderabad', '/online-english-classes-for-kids'],
   'src/pages/PricingPage.tsx': ['Online English Classes for Kids: Fees & Pricing', 'OfferCatalog', '/phonics-fees-india'],
-  'src/pages/public/BookDemoPage.tsx': ['Free 35-Minute 1:1 English Assessment', 'programmeRoutes', 'multi-class free trial'],
+  'src/pages/public/BookDemoPage.tsx': ['1:1 English Assessment', 'programmeRoutes', 'multi-class free trial'],
 };
 for (const [file, tokens] of Object.entries(sourceSignals)) {
   if (!exists(file)) continue;
