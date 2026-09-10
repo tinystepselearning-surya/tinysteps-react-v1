@@ -30,8 +30,8 @@ const B8_ENRICHED_SLUGS = [
 ] as const;
 
 describe('B8 first-party knowledge guardrails', () => {
-  it('keeps the post-B3 inventory stable and does not restore the retired reading-confidence URL', () => {
-    expect(blogPosts).toHaveLength(81);
+  it('keeps the post-R21 inventory stable and does not restore the retired reading-confidence URL', () => {
+    expect(blogPosts).toHaveLength(84);
 
     const slugs = new Set(blogPosts.map((post) => post.slug));
     expect(slugs.has('how-tiny-steps-builds-reading-confidence')).toBe(false);

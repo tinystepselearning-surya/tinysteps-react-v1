@@ -8,6 +8,8 @@ export type PhonicsSoundCategory =
   | 'Soft and Silent Consonant(s)'
   | 'Other Vowel Teams';
 
+export type PhonicsSoundAssetState = 'approved' | 'pending' | 'not-required';
+
 export interface PhonicsSoundEntry {
   readonly id: string;
   readonly label: string;
@@ -21,15 +23,17 @@ export interface PhonicsSoundEntry {
   readonly example: string;
   readonly accentSensitive: boolean;
   readonly note: string | null;
-  readonly assetState: 'expected-upload';
+  readonly assetState: PhonicsSoundAssetState;
 }
 
 export const PHONICS_SOUND_REGISTRY_REVISION: string;
 export const PHONICS_SOUND_AUDIO_BASE: '/games/phonics/sounds';
+export const PHONICS_SOUND_ASSET_STATES: readonly PhonicsSoundAssetState[];
 export const PHONICS_SOUND_CATEGORIES: readonly PhonicsSoundCategory[];
 export const PHONICS_SOUND_REGISTRY: readonly PhonicsSoundEntry[];
 export const PHONICS_EXPECTED_AUDIO_FILES: readonly string[];
 export const PHONICS_EXPECTED_AUDIO_PATHS: readonly string[];
 export function getPhonicsSound(soundId: string): PhonicsSoundEntry | null;
 export function getPhonicsSoundsByCategory(category: PhonicsSoundCategory): readonly PhonicsSoundEntry[];
+export function getPhonicsSoundsByAssetState(assetState: PhonicsSoundAssetState): readonly PhonicsSoundEntry[];
 export function getPhonicsSoundAudioCandidates(soundId: string): readonly string[];

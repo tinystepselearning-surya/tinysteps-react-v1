@@ -1,8 +1,9 @@
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
 
-export const PHONICS_SOUND_REGISTRY_REVISION = '2026-09-09-r13';
+export const PHONICS_SOUND_REGISTRY_REVISION = '2026-09-10-ph2';
 export const PHONICS_SOUND_AUDIO_BASE = '/games/phonics/sounds';
+export const PHONICS_SOUND_ASSET_STATES = freezeList(['approved', 'pending', 'not-required']);
 
 export const PHONICS_SOUND_CATEGORIES = freezeList([
   'Schwa',
@@ -29,7 +30,7 @@ const sound = (id, config) => freeze({
   example: config.example,
   accentSensitive: Boolean(config.accentSensitive),
   note: config.note ?? null,
-  assetState: 'expected-upload',
+  assetState: config.assetState ?? 'pending',
 });
 
 export const PHONICS_SOUND_REGISTRY = freezeList([
@@ -100,16 +101,17 @@ export const PHONICS_SOUND_REGISTRY = freezeList([
 
 const ids = PHONICS_SOUND_REGISTRY.map((entry) => entry.id);
 const files = PHONICS_SOUND_REGISTRY.map((entry) => entry.audioFile);
-if (new Set(ids).size !== ids.length) throw new Error('R13 phonics sound registry contains duplicate sound IDs.');
-if (new Set(files).size !== files.length) throw new Error('R13 phonics sound registry contains duplicate primary audio filenames.');
+if (new Set(ids).size !== ids.length) throw new Error('PH2/R13 phonics sound registry contains duplicate sound IDs.');
+if (new Set(files).size !== files.length) throw new Error('PH2/R13 phonics sound registry contains duplicate primary audio filenames.');
 for (const entry of PHONICS_SOUND_REGISTRY) {
-  if (!PHONICS_SOUND_CATEGORIES.includes(entry.category)) throw new Error(`R13 sound has unsupported category: ${entry.id}`);
-  if (!entry.audioFile.endsWith('.mp3') || entry.audioPath !== `${PHONICS_SOUND_AUDIO_BASE}/${entry.audioFile}`) throw new Error(`R13 sound has invalid audio path: ${entry.id}`);
-  if (!entry.spellings.length || entry.phonemeCount < 1) throw new Error(`R13 sound is missing spelling/phoneme metadata: ${entry.id}`);
+  if (!PHONICS_SOUND_CATEGORIES.includes(entry.category)) throw new Error(`PH2/R13 sound has unsupported category: ${entry.id}`);
+  if (!PHONICS_SOUND_ASSET_STATES.includes(entry.assetState)) throw new Error(`PH2/R13 sound has unsupported asset state: ${entry.id}`);
+  if (!entry.audioFile.endsWith('.mp3') || entry.audioPath !== `${PHONICS_SOUND_AUDIO_BASE}/${entry.audioFile}`) throw new Error(`PH2/R13 sound has invalid audio path: ${entry.id}`);
+  if (!entry.spellings.length || entry.phonemeCount < 1) throw new Error(`PH2/R13 sound is missing spelling/phoneme metadata: ${entry.id}`);
 }
 
-export const PHONICS_EXPECTED_AUDIO_FILES = freezeList(files);
-export const PHONICS_EXPECTED_AUDIO_PATHS = freezeList(PHONICS_SOUND_REGISTRY.map((entry) => entry.audioPath));
+export const PHONICS_EXPECTED_AUDIO_FILES = freezeList(PHONICS_SOUND_REGISTRY.filter((entry) => entry.assetState === 'pending').map((entry) => entry.audioFile));
+export const PHONICS_EXPECTED_AUDIO_PATHS = freezeList(PHONICS_SOUND_REGISTRY.filter((entry) => entry.assetState === 'pending').map((entry) => entry.audioPath));
 const byId = new Map(PHONICS_SOUND_REGISTRY.map((entry) => [entry.id, entry]));
 
 export function getPhonicsSound(soundId) {
@@ -118,6 +120,10 @@ export function getPhonicsSound(soundId) {
 
 export function getPhonicsSoundsByCategory(category) {
   return freezeList(PHONICS_SOUND_REGISTRY.filter((entry) => entry.category === category));
+}
+
+export function getPhonicsSoundsByAssetState(assetState) {
+  return freezeList(PHONICS_SOUND_REGISTRY.filter((entry) => entry.assetState === assetState));
 }
 
 export function getPhonicsSoundAudioCandidates(soundId) {
