@@ -18,6 +18,8 @@ jobs:
         with:
           ref: seo/c1-parent-commercial-search-universe
           fetch-depth: 0
+      - name: Correct helper regex patterns
+        run: python scripts/tmp-c3-page9-helper-fix.py
       - name: Apply Page 9 speaking reconciliation
         run: python scripts/tmp-c3-page9-speaking.py
       - name: Focused diff check
