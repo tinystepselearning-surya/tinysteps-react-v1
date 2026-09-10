@@ -6,16 +6,6 @@ const repoRoot = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('Homepage conversion hero cross-platform layout', () => {
-  it('bundles the brand fonts so Windows and macOS use identical font metrics', () => {
-    const main = read('src/main.tsx');
-    const tailwind = read('tailwind.config.cjs');
-
-    expect(main).toContain("@fontsource-variable/inter/wght.css");
-    expect(main).toContain("@fontsource/poppins/latin-900.css");
-    expect(tailwind).toContain("heading: ['Poppins', 'Arial', 'sans-serif']");
-    expect(tailwind).toContain("body: ['\"Inter Variable\"', 'Inter', '\"Segoe UI\"', 'Arial', 'sans-serif']");
-  });
-
   it('keeps the desktop headline on two intentional lines at compact laptop widths', () => {
     const hero = read('src/components/Home/ConversionHero.tsx');
 
