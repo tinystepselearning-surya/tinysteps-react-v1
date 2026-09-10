@@ -5,7 +5,7 @@
  * Each function is defined in its own module for better organization and testing.
  *
  * IMPORTANT: This file should ONLY contain exports, never function implementations.
- * Callable functions are for manual retry/admin operations; UI should NOT auto-call.
+ * Callable functions are for manual retry only; UI should NOT auto-call.
  * Firestore triggers handle automatic background processing.
  */
 
@@ -63,8 +63,10 @@ export {
   resumeEnrollmentSchedule,
   setEnrollmentStatus,
   createEnrollment,
-  transitionEnrollmentCourse,
 } from "./scheduling/rollingScheduleCompatibility";
+// Course transitions are cut over unconditionally: every destination enrollment is rolling,
+// even when the source enrollment predates the rolling scheduler.
+export { transitionEnrollmentCourse } from "./scheduling/rollingScheduleCourseTransition";
 export {
   saveRollingEnrollmentSchedule,
   setRollingEnrollmentLifecycle,
