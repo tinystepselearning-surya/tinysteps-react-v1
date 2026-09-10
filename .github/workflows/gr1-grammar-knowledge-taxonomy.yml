@@ -7,18 +7,23 @@ on:
       - 'src/lib/grammarWritingKnowledgeTaxonomy.*'
       - 'src/lib/grammarWritingTenseArchitecture.*'
       - 'src/lib/grammarWritingWritingProgression.*'
+      - 'src/lib/grammarWritingParentProblemArchitecture.*'
       - 'src/lib/grammarWritingKnowledgeArchitecture.js'
       - 'src/lib/grammarWritingSemanticCanonicalOwnership.js'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
       - 'src/content/courses.ts'
       - 'src/tests/seo/grammarWritingGr1Taxonomy.spec.ts'
       - 'src/tests/seo/grammarWritingGr2TenseArchitecture.spec.ts'
       - 'src/tests/seo/grammarWritingGr3WritingProgression.spec.ts'
+      - 'src/tests/seo/grammarWritingGr4ParentProblems.spec.ts'
       - 'scripts/audit-grammar-writing-gr1-taxonomy.mjs'
       - 'scripts/audit-grammar-writing-gr2-tenses.mjs'
       - 'scripts/audit-grammar-writing-gr3-writing-progression.mjs'
+      - 'scripts/audit-grammar-writing-gr4-parent-problems.mjs'
       - 'docs/seo/resources-architecture/GR1_*'
       - 'docs/seo/resources-architecture/GR2_*'
       - 'docs/seo/resources-architecture/GR3_*'
+      - 'docs/seo/resources-architecture/GR4_*'
       - '.github/workflows/gr1-grammar-knowledge-taxonomy.yml'
   workflow_dispatch:
 
@@ -41,14 +46,16 @@ jobs:
         run: npm ci
       - name: Install Chromium for prerender
         run: npx playwright install --with-deps chromium
-      - name: Run GR1-GR3 and Resources grammar regression tests
-        run: npx vitest run src/tests/seo/grammarWritingGr1Taxonomy.spec.ts src/tests/seo/grammarWritingGr2TenseArchitecture.spec.ts src/tests/seo/grammarWritingGr3WritingProgression.spec.ts src/tests/seo/resourcesR17GrammarWritingArchitecture.spec.ts src/tests/seo/resourcesR19GrammarWritingSemanticJourneys.spec.ts
+      - name: Run GR1-GR4 and Resources grammar regression tests
+        run: npx vitest run src/tests/seo/grammarWritingGr1Taxonomy.spec.ts src/tests/seo/grammarWritingGr2TenseArchitecture.spec.ts src/tests/seo/grammarWritingGr3WritingProgression.spec.ts src/tests/seo/grammarWritingGr4ParentProblems.spec.ts src/tests/seo/resourcesR17GrammarWritingArchitecture.spec.ts src/tests/seo/resourcesR19GrammarWritingSemanticJourneys.spec.ts
       - name: Audit GR1 grammar and writing taxonomy
         run: node scripts/audit-grammar-writing-gr1-taxonomy.mjs --report
       - name: Audit GR2 tense architecture
         run: node scripts/audit-grammar-writing-gr2-tenses.mjs --report
       - name: Audit GR3 writing progression
         run: node scripts/audit-grammar-writing-gr3-writing-progression.mjs --report
+      - name: Audit GR4 parent problem architecture
+        run: node scripts/audit-grammar-writing-gr4-parent-problems.mjs --report
       - name: Audit R19 grammar and writing semantic journeys
         run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
       - name: Audit R17 grammar and writing architecture after R18 execution
@@ -63,13 +70,14 @@ jobs:
         run: npm run build
       - name: Run SEO smoke
         run: npm run seo:smoke
-      - name: Upload GR1-GR3 audit evidence
+      - name: Upload GR1-GR4 audit evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: grammar-writing-gr1-gr3-architecture
+          name: grammar-writing-gr1-gr4-architecture
           path: |
             artifacts/grammar-writing-gr1-taxonomy.json
             artifacts/grammar-writing-gr2-tenses.json
             artifacts/grammar-writing-gr3-writing-progression.json
+            artifacts/grammar-writing-gr4-parent-problems.json
           if-no-files-found: warn
