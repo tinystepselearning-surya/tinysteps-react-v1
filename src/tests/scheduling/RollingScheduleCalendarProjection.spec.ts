@@ -56,7 +56,7 @@ describe('rolling schedule display projection', () => {
     expect(rows.every((row) => row.source === ROLLING_SCHEDULE_PROJECTION_SOURCE)).toBe(true);
   });
 
-  it('real session documents win over recurrence projections for the same occurrence', () => {
+  it('ignores stale ordinary real documents beyond the rolling physical horizon', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [{
@@ -65,6 +65,27 @@ describe('rolling schedule display projection', () => {
         date: '2026-09-29',
         startTime: '18:00',
         status: 'cancelled',
+        source: 'enrollmentScheduleReplace',
+      }],
+      fromYmd: '2026-09-25',
+      toYmd: '2026-10-02',
+      todayYmd: '2026-09-10',
+    });
+
+    expect(rows.map((row) => row.date)).toEqual(['2026-09-29', '2026-10-01']);
+  });
+
+  it('keeps explicit real schedule exceptions authoritative beyond the physical horizon', () => {
+    const rows = buildRollingScheduleCalendarProjections({
+      enrollments: [rollingEnrollment()],
+      realSessions: [{
+        id: 'manual-special',
+        enrollmentId: 'enr-1',
+        date: '2026-09-29',
+        startTime: '18:00',
+        status: 'scheduled',
+        source: 'manual_one_off',
+        isAdHoc: true,
       }],
       fromYmd: '2026-09-25',
       toYmd: '2026-10-02',
@@ -74,7 +95,7 @@ describe('rolling schedule display projection', () => {
     expect(rows.map((row) => row.date)).toEqual(['2026-10-01']);
   });
 
-  it('also recognizes a persisted occurrence by enrollment/date/time when its document id is nonstandard', () => {
+  it('does not let a nonstandard stale ordinary document suppress a long-range projection', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [{
@@ -82,12 +103,13 @@ describe('rolling schedule display projection', () => {
         enrollmentId: 'enr-1',
         date: '2026-09-29',
         startTime: '18:00:00',
+        source: 'enrollmentSchedule',
       }],
       fromYmd: '2026-09-25',
       toYmd: '2026-09-30',
       todayYmd: '2026-09-10',
     });
-    expect(rows).toEqual([]);
+    expect(rows.map((row) => row.date)).toEqual(['2026-09-29']);
   });
 
   it('does not speculate for paused, discontinued, inactive, or unconverted legacy enrollments', () => {
