@@ -53,11 +53,13 @@ export const ROUTE_SEO_REGISTRY = {
       'public speaking classes for kids online,public speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
   '/book-demo': {
-    title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
+    title: 'Free 35-Minute 1:1 English Assessment | Tiny Steps',
     description:
-      'Book a free 1:1 online English assessment for your child. Understand their level in phonics, reading, grammar, sentence formation, and speaking confidence.',
+      'Book one free 35-minute live 1:1 online English assessment for your child. Identify the right phonics, reading, grammar, writing or speaking path before enrolment.',
     canonicalPath: '/book-demo',
     ogType: 'website',
+    keywords:
+      'free English assessment for kids online,free online English assessment for kids,free English demo class for kids,free online English demo class,free 1 to 1 English demo class,English level assessment for kids,online English assessment for child,free English trial class for kids,book English demo class for kids,free phonics assessment online,free reading assessment for kids,free grammar assessment for kids,free speaking assessment for kids',
   },
   '/resources': {
     title: 'English Learning Resources for Kids, Parents & Educators | Tiny Steps',
