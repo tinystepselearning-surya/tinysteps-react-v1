@@ -1,0 +1,31 @@
+name: C3 Page 9 Speaking Apply
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page9-speaking.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-speaking:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply Page 9 speaking reconciliation
+        run: python scripts/tmp-c3-page9-speaking.py
+      - name: Focused diff check
+        run: git diff --check && git diff -- src/pages/speaking.tsx src/lib/routeSeoRegistry.js vite.config.js
+      - name: Commit Page 9 changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/speaking.tsx src/lib/routeSeoRegistry.js vite.config.js
+          git commit -m 'C3 page 9: reconcile speaking and communication owner'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
