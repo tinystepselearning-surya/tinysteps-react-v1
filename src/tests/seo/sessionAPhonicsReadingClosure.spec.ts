@@ -23,7 +23,6 @@ describe('Session A PH7 closure gate', () => {
   it('keeps sound and word readiness explicit and conservative', () => {
     expect(PHONICS_SOUND_ASSET_STATES).toEqual(['approved', 'pending', 'not-required']);
     expect(PHONICS_SOUND_REGISTRY.every((entry) => PHONICS_SOUND_ASSET_STATES.includes(entry.assetState))).toBe(true);
-    expect(PHONICS_SOUND_REGISTRY.some((entry) => entry.assetState === 'expected-upload')).toBe(false);
     expect(PHONICS_WORD_UTILITY_RECORDS.every((entry) => entry.humanReviewState === 'pending')).toBe(true);
   });
 
