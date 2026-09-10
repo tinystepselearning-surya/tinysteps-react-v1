@@ -1,0 +1,65 @@
+name: Commercial C0 Revenue Measurement & Facts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/commercialC0Foundation.ts'
+      - 'src/tests/seo/commercialC0Foundation.spec.ts'
+      - 'scripts/audit-commercial-c0-foundation.mjs'
+      - 'docs/seo/commercial-growth/C0_REVENUE_MEASUREMENT_COMMERCIAL_FACTS.md'
+      - '.github/workflows/commercial-c0-revenue-measurement-facts.yml'
+      - 'src/config/semanticFacts.ts'
+      - 'src/config/pricing.ts'
+      - 'src/lib/conversionTracking.ts'
+      - 'src/lib/analytics.ts'
+      - 'functions/src/leadLifecycle.ts'
+      - 'src/lib/knowledgeBaseFinalClosure.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-c0-revenue-measurement-facts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for production prerender
+        run: npx playwright install --with-deps chromium
+
+      - name: Run C0 and KB-FINAL contract tests
+        run: npx vitest run src/tests/seo/commercialC0Foundation.spec.ts src/tests/seo/knowledgeBaseFinalIntegration.spec.ts
+      - name: Audit C0 measurement and facts contract
+        run: node scripts/audit-commercial-c0-foundation.mjs --report
+      - name: Audit public facts source of truth
+        run: npm run content:public-facts
+      - name: Run type check
+        run: npm run typecheck
+      - name: Run full repository test suite
+        run: npx vitest run
+
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run C0 audit after production build
+        run: node scripts/audit-commercial-c0-foundation.mjs --report
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+
+      - name: Upload C0 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: commercial-c0-revenue-measurement-facts
+          path: artifacts/commercial-c0-foundation.json
+          if-no-files-found: warn
