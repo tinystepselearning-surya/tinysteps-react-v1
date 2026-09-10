@@ -6,7 +6,7 @@ const post: BlogPost = {
   category: 'Public Speaking',
   author: 'Priya',
   date: '2026-09-10',
-  readTime: '15 min read',
+  readTime: '16 min read',
   metaDescription:
     'Teach storytelling to kids through clear sequence, relevant details, retelling, story creation, listener awareness, oral rehearsal and gradual independence.',
   excerpt:
@@ -66,6 +66,12 @@ const post: BlogPost = {
     { type: 'p', content: '“We went to the beach on Sunday. When I ran into the water, one slipper floated away. My brother spotted it near some rocks and brought it back with a stick. After that I carried both slippers until we left.” The extra details explain the problem, response and ending.' },
     { type: 'p', content: 'The goal is not to make every retell this long. It is to include the information that keeps the listener oriented.' },
 
+    { type: 'h2', content: 'Retelling and summarising are different speaking jobs' },
+    { type: 'p', content: 'A **retell** preserves the important sequence and enough detail for the listener to follow what happened. A **summary** compresses that message further: it selects only the central situation, main change or problem, and important outcome. A child can tell a long coherent story and still need separate practice deciding what is essential.' },
+    { type: 'li', content: '**Retell:** “We went to the beach, my slipper floated away, my brother found it near the rocks with a stick, and after that I carried both slippers.”' },
+    { type: 'li', content: '**Summary:** “At the beach I lost a slipper in the water, but my brother found it and we got it back.”' },
+    { type: 'p', content: 'Practise the full retell first. Then ask, **“If the listener only needs the most important part, what must stay?”** Try a three-sentence or short spoken summary as a temporary scaffold, not as a permanent word-count rule. The useful test is whether the shorter version still preserves the central meaning.' },
+
     { type: 'h2', content: 'A worked original-story example' },
     { type: 'p', content: '**SET:** “A boy named Kabir found a tiny door behind his bookshelf.” **START:** “When he opened it, he heard rain even though his room was sunny.” **CHANGE:** “He stepped through and landed in a forest where all the paths were flooding.” **BUILD:** “Kabir used fallen branches to make a bridge for a trapped fox.” **END:** “The fox led him back to the door before it disappeared.”' },
     { type: 'p', content: 'This example has a clear sequence, but children do not need fantasy or dramatic plots. A simple story about a lost lunchbox can be equally useful if the events connect.' },
@@ -84,7 +90,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Add expression only when it helps the listener understand' },
     { type: 'p', content: 'Once the sequence is stable, voice can show meaning: a pause before the surprising event, a slightly slower pace at an important moment, or emphasis on a key word. Expression should support the message, not turn every story into exaggerated acting.' },
-    { type: 'p', content: 'If delivery itself is the main target, use [Public Speaking Delivery for Kids](/blog/public-speaking-delivery-for-kids) after that guide is available in the R21 content set.' },
+    { type: 'p', content: 'If delivery itself is the main target, use [Public Speaking Delivery for Kids](/blog/public-speaking-delivery-for-kids).' },
 
     { type: 'h2', content: 'Common storytelling problems and what they may mean' },
     { type: 'h3', content: 'The child jumps between events' },
@@ -102,6 +108,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Details become more relevant rather than simply more numerous.' },
     { type: 'li', content: 'The child uses fewer adult prompts or visible supports.' },
     { type: 'li', content: 'A retell can change wording while preserving the core sequence.' },
+    { type: 'li', content: 'The child can shorten a full retell into a useful summary without losing the central meaning.' },
     { type: 'li', content: 'The child adjusts what is explained for a new listener.' },
 
     { type: 'h2', content: 'Multilingual storytelling can use the child’s stronger language as a resource' },
@@ -124,9 +131,10 @@ const post: BlogPost = {
   faq: [
     { question: 'What should I teach first in storytelling?', answer: 'Start with a familiar event or simple retell. Help the child make the main people and situation clear, put important events in a meaningful order, include relevant details and finish the event before adding performance techniques.' },
     { question: 'Is retelling the same as creating a story?', answer: 'No. Retelling uses known source material and mainly requires selecting and organising events. Creating a new story also requires inventing characters, situations and events, so it usually places a higher planning demand on the child.' },
+    { question: 'What is the difference between retelling and summarising?', answer: 'A retell preserves the important sequence and enough detail for the listener to follow the event. A summary selects only the central situation, main change or problem, and important outcome, so it is shorter without losing the core meaning.' },
     { question: 'Should children memorise stories word for word?', answer: 'Usually not for ordinary speaking practice. It is often more useful to remember the sequence of ideas and retell flexibly. Some school performances may require memorisation, but that is a different task.' },
     { question: 'How many details should a child include?', answer: 'There is no fixed number. Include enough detail for the listener to understand the people, important change, event sequence and ending. Extra details should clarify or enrich the story rather than bury the main event.' },
-    { question: 'How do I know storytelling is improving?', answer: 'Look for clearer event order, more relevant detail, fewer adult prompts, flexible retelling rather than exact recitation, and better adjustment for listeners who do not already know the story.' },
+    { question: 'How do I know storytelling is improving?', answer: 'Look for clearer event order, more relevant detail, useful oral summaries, fewer adult prompts, flexible retelling rather than exact recitation, and better adjustment for listeners who do not already know the story.' },
   ],
 };
 

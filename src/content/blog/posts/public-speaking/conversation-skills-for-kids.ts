@@ -6,7 +6,7 @@ const post: BlogPost = {
   category: 'Public Speaking',
   author: 'Priya',
   date: '2026-09-10',
-  readTime: '15 min read',
+  readTime: '16 min read',
   metaDescription:
     'Help kids build conversation skills through listening, turn-taking, fuller responses, follow-up questions, staying on topic and communication repair.',
   excerpt:
@@ -41,6 +41,13 @@ const post: BlogPost = {
     { type: 'h2', content: 'Skill 4: expand a response with one useful addition' },
     { type: 'p', content: 'Conversation becomes easier to continue when the child gives the partner something to work with. A practical pattern is **ANSWER + ONE MORE THING**. “Yes” can become “Yes, I went on Saturday.” “I like football” can become “I like football because I play with my cousins.”' },
     { type: 'p', content: 'Do not turn this into a rule that every answer must contain three sentences. Some questions need only a short reply. Expansion is useful when it makes the message clearer, more informative or easier for the other person to respond to.' },
+
+    { type: 'h2', content: 'When vocabulary disappears during speaking: RETRIEVE → USE → REUSE' },
+    { type: 'p', content: 'A child can recognise a word while reading or listening and still fail to retrieve it quickly during spontaneous speaking. That does not mean the word was never learned. Speaking adds time pressure: the child must retrieve vocabulary while also planning the message, building the sentence and watching the listener.' },
+    { type: 'li', content: '**RETRIEVE:** choose two or three useful words for the actual topic and give the child a moment to recall or select them.' },
+    { type: 'li', content: '**USE:** model a natural sentence only if needed, then ask the child to use one word in a real conversational turn.' },
+    { type: 'li', content: '**REUSE:** bring the word back later with a different question, example, listener or setting so retrieval does not depend on one memorised prompt.' },
+    { type: 'p', content: 'Avoid giving a long vocabulary list immediately before the child speaks. The goal is not to display many new words at once; it is to make a small amount of useful language increasingly available without prompting. If the child can retrieve the words but still cannot organise them into a clear sentence, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). If replies remain extremely brief for several possible reasons, use the [one-word-answer diagnostic](/blog/child-gives-one-word-answers).' },
 
     { type: 'h2', content: 'Skill 5: ask follow-up questions that connect to what was said' },
     { type: 'p', content: 'A follow-up question shows that the child heard the previous contribution and wants to know more. Useful starters include **What happened next? How did you feel? Why did you choose that? Which one did you like? What do you mean by…?** The important part is connection, not memorising a list of question stems.' },
@@ -88,7 +95,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Follow-up questions become more specific to the conversation.' },
     { type: 'li', content: 'The child can clarify or rephrase when communication breaks down.' },
     { type: 'li', content: 'The same skills begin to appear with different partners, topics and settings.' },
-    { type: 'p', content: 'Transfer matters. A child may converse comfortably with a parent and need more support with peers, teachers or unfamiliar adults. Compare similar communication jobs across settings rather than judging confidence from one situation.' },
+    { type: 'p', content: 'Transfer matters. A child may converse comfortably with a parent and need more support with peers, teachers or unfamiliar adults. Compare similar communication jobs across settings rather than judging confidence from one situation. For predictable school routines such as answering, asking for clarification and joining group talk, use the [classroom participation plan](/blog/back-to-school-english-confidence-plan).' },
 
     { type: 'h2', content: 'Multilingual children may show different conversation profiles in different languages' },
     { type: 'p', content: 'A multilingual child may have richer vocabulary, faster retrieval or greater social confidence in one language or setting than another. That difference does not automatically indicate a problem. Use the child’s stronger language and familiar topics as resources while building English conversation skills.' },
@@ -107,12 +114,14 @@ const post: BlogPost = {
     { type: 'h2', content: 'What to use next' },
     { type: 'li', content: 'If answers remain extremely brief: [use the one-word-answer guide](/blog/child-gives-one-word-answers).' },
     { type: 'li', content: 'If the child understands but rarely starts speaking independently: [use the understands-but-does-not-speak guide](/blog/child-understands-english-but-does-not-speak).' },
+    { type: 'li', content: 'For classroom answering, clarification and group participation: [use the classroom participation plan](/blog/back-to-school-english-confidence-plan).' },
     { type: 'li', content: 'For structured opinion and response: [use the debate guide](/blog/speaking-debate-starters).' },
     { type: 'li', content: 'For short interactive practice: [open the free speaking games](/free-speaking-games-for-kids).' },
   ],
   faq: [
     { question: 'What are the most important conversation skills for kids?', answer: 'Useful foundations are listening to the other speaker, taking turns, responding to what was said, adding relevant information, asking connected follow-up questions and repairing misunderstandings when needed.' },
     { question: 'How can I help a child who only answers questions but never continues the conversation?', answer: 'Model one extra conversational move at a time. After the answer, prompt the child to add one useful detail or ask one connected question, then fade the prompt as the move becomes more independent.' },
+    { question: 'What if my child knows vocabulary but cannot find the words while speaking?', answer: 'Use a small retrieve-use-reuse cycle. Choose a few useful words for the real topic, let the child use one in a meaningful turn, then bring it back later with a different question or listener so retrieval becomes less prompt-dependent.' },
     { question: 'Does good conversation require eye contact?', answer: 'No single eye-contact rule defines good conversation. Focus on whether the child is attending to the message, responding appropriately and participating in a way that works for the child and setting.' },
     { question: 'Should I correct grammar during every conversation?', answer: 'Usually not. Too many corrections can interrupt the exchange. Keep the conversation meaningful and choose one language target only when correction is genuinely useful.' },
     { question: 'How do I know conversation practice is transferring?', answer: 'Look for the same skills with different partners, topics and settings: more connected responses, relevant additions, follow-up questions, repair and less dependence on adult prompts.' },
