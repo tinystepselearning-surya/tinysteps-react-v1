@@ -156,8 +156,8 @@ module.exports = {
 				'pulse-glow': 'pulse-glow 2s ease-in-out infinite'
 			},
 			fontFamily: {
-				heading: ['Poppins', 'sans-serif'],
-				body: ['Inter', 'sans-serif'],
+				heading: ['Poppins', 'Arial', 'sans-serif'],
+				body: ['"Inter Variable"', 'Inter', '"Segoe UI"', 'Arial', 'sans-serif'],
 				mono: ['Fira Code', 'monospace']
 			},
 			spacing: {
