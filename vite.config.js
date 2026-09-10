@@ -64,10 +64,13 @@ function canonicalInternalBlogLinks() {
       }
 
       if (id.includes('/src/pages/public/PhonicsFeesIndiaPage.tsx')) {
-        transformed = transformed.replace(
-          'Tiny Steps charges ₹400 per live 1:1 class, or ₹4,800 for 12 classes. Classes are typically 35–40 minutes and placement begins with an assessment-first approach.',
-          'Tiny Steps charges ₹400 per live 1:1 class, or ₹4,800 for 12 classes. Standard 1:1 classes are 35 minutes, and placement begins with an assessment-first approach.',
-        );
+        transformed = transformed
+          .replace(
+            'Tiny Steps charges ₹400 per live 1:1 class, or ₹4,800 for 12 classes. Classes are typically 35–40 minutes and placement begins with an assessment-first approach.',
+            'Tiny Steps charges ₹400 per live 1:1 class, or ₹4,800 for 12 classes. Standard 1:1 classes are 35 minutes, and placement begins with an assessment-first approach.',
+          )
+          .replace('<div>35–40 min</div>', '<div>35 min</div>')
+          .replace('₹4,800 for 12 classes · 35–40 min · 1 child : 1 teacher', '₹4,800 for 12 classes · 35 min · 1 child : 1 teacher');
       }
 
       if (id.includes('/src/pages/public/ReadingClassesForKidsPage.tsx')) {
