@@ -377,14 +377,14 @@ export const ROUTE_SEO_REGISTRY = {
   '/best-online-phonics-classes-for-kids-in-india': {
     title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.',
+      'Compare online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, live correction, reading transfer, progress visibility and overall value.',
     canonicalPath: '/best-online-phonics-classes-for-kids-in-india',
     ogType: 'website',
   },
   '/best-online-phonics-classes-india': {
     title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.',
+      'Compare online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, live correction, reading transfer, progress visibility and overall value.',
     canonicalPath: '/best-online-phonics-classes-for-kids-in-india',
     ogType: 'website',
   },
