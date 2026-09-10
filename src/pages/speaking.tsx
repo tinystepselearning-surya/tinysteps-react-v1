@@ -323,7 +323,7 @@ export default function SpeakingPage() {
             </p>
             <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
             <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Public speaking classes for kids should help children move from short answers and hesitation to complete sentences, structured responses, storytelling, show-and-tell confidence, reading aloud expression, and presentation readiness. Tiny Steps begins with a free 35-minute 1:1 online demo assessment class to identify whether the child needs sentence expansion, speaking comfort, storytelling flow, or confidence support.
+              Public speaking classes for kids should help children move from short answers and hesitation to complete sentences, structured responses, storytelling, show-and-tell confidence, reading aloud expression, and presentation readiness. Tiny Steps begins with a free {demoMinutes}-minute 1:1 online demo assessment class to identify whether the child needs public-speaking structure, communication practice, everyday spoken-English support, grammar support, or specialist confidence-building support.
             </p>
           </article>
         </div>
@@ -644,7 +644,7 @@ export default function SpeakingPage() {
               to="/book-demo"
               className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
             >
-              Book Free 35-Minute Demo
+              Book Free {demoMinutes}-Minute Demo
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">
