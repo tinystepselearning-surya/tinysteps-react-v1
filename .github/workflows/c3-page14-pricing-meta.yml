@@ -1,0 +1,40 @@
+name: C3 Page 14 Pricing Meta Apply
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page14-pricing-meta.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  align-pricing-meta:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply Page 14 pricing metadata alignment
+        run: python scripts/tmp-c3-page14-pricing-meta.py
+      - name: Focused source check
+        run: |
+          git diff --check
+          grep -F "Online English Classes for Kids Fees & Pricing | Tiny Steps" src/lib/routeSeoRegistry.js
+          grep -F "online English classes for kids fees" src/lib/routeSeoRegistry.js
+          grep -F "Online English Classes for Kids: Fees & Pricing" src/pages/PricingPage.tsx
+          grep -F "See the phonics fee research" src/pages/PricingPage.tsx
+          ! grep -F "STANDARD_PRICING_SUMMARY" src/pages/PricingPage.tsx
+          ! grep -F "Optional Game Subscriptions" src/pages/PricingPage.tsx
+          ! grep -F "we’ll arrange it" src/pages/PricingPage.tsx
+          ! grep -F "Daily AI reading/speaking coach prompts" src/pages/PricingPage.tsx
+      - name: Commit Page 14 alignment
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/PricingPage.tsx src/lib/routeSeoRegistry.js
+          git commit -m 'C3 page 14: align pricing owner metadata'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
