@@ -1,0 +1,33 @@
+name: C1-C3 Sync Current Main
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c1-c3-sync-main.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-main:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Fetch current main
+        run: git fetch origin main
+      - name: Merge current main into C1-C3 branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git merge --no-ff --no-edit origin/main
+      - name: Verify merge state
+        run: |
+          git status --short
+          git merge-base --is-ancestor origin/main HEAD
+      - name: Push reconciled branch
+        run: git push origin HEAD:seo/c1-parent-commercial-search-universe
