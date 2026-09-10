@@ -1,6 +1,10 @@
 import {describe, expect, it} from 'vitest';
 import {enumerateRollingScheduleOccurrences} from '../../lib/scheduling/rollingScheduleRecurrence';
-import {buildRollingMaterializationPlan} from '../../../functions/src/scheduling/rollingScheduleMaterializer';
+import {PARENT_UPCOMING_CLASS_DAYS} from '../../pages/parent/parentClassSessionReadPolicy';
+import {
+  ROLLING_SCHEDULE_HORIZON_DAYS,
+  buildRollingMaterializationPlan,
+} from '../../../functions/src/scheduling/rollingScheduleMaterializer';
 
 const backendEnrollment = (schedule: Record<string, unknown>): Record<string, unknown> => ({
   status: 'active',
@@ -14,6 +18,11 @@ const backendEnrollment = (schedule: Record<string, unknown>): Record<string, un
 });
 
 describe('rolling schedule cross-runtime parity', () => {
+  it('keeps the materialization horizon exactly aligned with the existing parent upcoming policy', () => {
+    expect(ROLLING_SCHEDULE_HORIZON_DAYS).toBe(PARENT_UPCOMING_CLASS_DAYS);
+    expect(PARENT_UPCOMING_CLASS_DAYS).toBe(14);
+  });
+
   it('keeps Brick 1 projection and Brick 3 materialization occurrence identity identical', () => {
     const schedule = {
       timezone: 'Asia/Kolkata',
