@@ -365,12 +365,12 @@ describe('rolling schedule materializer', () => {
         durationMinutes: 35,
       })),
     };
-    const plan = buildRollingMaterializationPlan({
+
+    expect(() => buildRollingMaterializationPlan({
       enrollmentId: 'enrollment-1',
       enrollment,
       anchorYmd: '2026-09-10',
-    });
-    expect(plan.occurrences.length).toBeLessThanOrEqual(MAX_ROLLING_WINDOW_OCCURRENCES);
+    })).toThrow(`safe occurrence cap of ${MAX_ROLLING_WINDOW_OCCURRENCES}`);
   });
 
   it('keeps the Firestore adapter point-read only and never scans/deletes existing sessions', () => {
