@@ -57,6 +57,12 @@ export { repairEnrollmentFutureSessionsFromSchedule } from "./createSessionsFrom
 export { repairCancelledFutureRegularSessionsForEnrollment } from "./createSessionsFromSchedule";
 export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
+// Rolling scheduling remains isolated from the legacy finite scheduler until the admin UI cutover brick.
+export {
+  saveRollingEnrollmentSchedule,
+  setRollingEnrollmentLifecycle,
+} from "./scheduling/rollingScheduleLifecycle";
+export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingScheduleReconciliation";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
@@ -174,6 +180,7 @@ export {
   batchInsightsRollup11pm,
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
+export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
 
 // Games: catalog management and level results
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";

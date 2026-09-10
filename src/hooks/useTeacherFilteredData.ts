@@ -6,6 +6,10 @@ import { getDocsLogged } from '../lib/firestoreReadLogging';
 import { operationalTeacherRecordBelongsTo } from '../lib/teacherIdentity';
 import { useAuthStore } from '../store/useAuthStore';
 
+export type TeacherScheduleEnrollment = Record<string, unknown> & {
+  id: string;
+};
+
 interface FilteredStudent {
   uid: string;
   fullName: string;
@@ -14,11 +18,10 @@ interface FilteredStudent {
   progressStatus?: 'on_track' | 'needs_attention';
   lastSessionDate?: string;
   enrollmentStatus?: string;
+  scheduleEnrollments?: TeacherScheduleEnrollment[];
 }
 
-type EnrollmentRow = Record<string, unknown> & {
-  id: string;
-};
+type EnrollmentRow = TeacherScheduleEnrollment;
 
 type QueryError = Error & { code?: string | null };
 
@@ -92,6 +95,7 @@ async function fetchTeacherFilteredStudents(teacherId: string): Promise<Filtered
         studentName: fullName,
         progressStatus: ACTIVE_PROGRESS_STATUS,
         enrollmentStatus: readName(row.status).toLowerCase() || undefined,
+        scheduleEnrollments: [row],
       };
 
       const previous = merged.get(uid);
@@ -100,10 +104,16 @@ async function fetchTeacherFilteredStudents(teacherId: string): Promise<Filtered
         return;
       }
 
+      const scheduleEnrollmentById = new Map<string, TeacherScheduleEnrollment>();
+      (previous.scheduleEnrollments || []).forEach((enrollment) => scheduleEnrollmentById.set(enrollment.id, enrollment));
+      scheduleEnrollmentById.set(row.id, row);
       const preferNextName = previous.fullName === 'Student name pending' && next.fullName !== 'Student name pending';
-      if (preferNextName) {
-        merged.set(uid, { ...previous, ...next });
-      }
+      merged.set(uid, {
+        ...previous,
+        ...(preferNextName ? { fullName: next.fullName, studentName: next.studentName } : {}),
+        enrollmentStatus: next.enrollmentStatus || previous.enrollmentStatus,
+        scheduleEnrollments: Array.from(scheduleEnrollmentById.values()),
+      });
     });
   };
 
