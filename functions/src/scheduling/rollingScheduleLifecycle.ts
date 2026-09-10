@@ -686,9 +686,10 @@ export const saveRollingEnrollmentSchedule = onCall(
       });
     });
 
-    if (replayResult) {
+    const replay = replayResult as SaveRollingEnrollmentScheduleResult | null;
+    if (replay) {
       return {
-        ...replayResult,
+        ...replay,
         idempotentReplay: true,
         orchestrationState: 'replayed',
       };
