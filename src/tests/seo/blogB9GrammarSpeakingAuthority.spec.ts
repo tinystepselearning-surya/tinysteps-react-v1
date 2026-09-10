@@ -49,8 +49,8 @@ const expectedAuthorProfilePath = (author: ReturnType<typeof resolveBlogAuthor>)
   author.key === 'founder' ? FOUNDER_PROFILE_PATH : '/team';
 
 describe('B9 grammar and speaking authority guardrails', () => {
-  it('keeps the post-R18 81-source inventory and uses existing broad owners instead of creating new pillars', () => {
-    expect(blogPosts).toHaveLength(81);
+  it('keeps the post-R21 84-source inventory while preserving the established broad authority owners', () => {
+    expect(blogPosts).toHaveLength(84);
     expect(bySlug.has(GRAMMAR_OWNER)).toBe(true);
     expect(bySlug.has(SPEAKING_OWNER)).toBe(true);
 

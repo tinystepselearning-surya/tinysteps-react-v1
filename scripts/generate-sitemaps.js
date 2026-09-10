@@ -19,6 +19,17 @@ function writeXml(file, xml) {
 }
 
 function fmt(date){ return date.toISOString().slice(0,10); }
+const SITE_TIME_ZONE = 'Asia/Kolkata';
+function siteLocalDate(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: SITE_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${byType.year}-${byType.month}-${byType.day}`;
+}
 function lastmodFrom(p,fallback){ try { return fmt(fs.statSync(p).mtime); } catch { return fallback || fmt(new Date()); } }
 function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   return `\n  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod || fmt(new Date())}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
@@ -89,7 +100,9 @@ const EXCLUDED_BLOG_SLUGS = new Set([
   const staticRoutesForSitemap = uniqueRoutes(SITEMAP_STATIC_ROUTES)
     .filter((route) => isCanonicalSelfRoute(route));
   const parentRoutes = uniqueRoutes(SITEMAP_PARENT_ROUTES);
-  const today = fmt(new Date());
+  // Tiny Steps publishes on the India business date. Using UTC here can hide a
+  // legitimately published IST article for the first 5.5 hours of its date.
+  const today = siteLocalDate();
 
   // sitemap-static.xml (top-level canonical marketing pages)
   const staticLastmod = lastmodFrom(appRoutesTs);
