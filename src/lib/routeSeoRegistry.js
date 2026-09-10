@@ -574,13 +574,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/phonics-fees-india': {
-    title: 'Phonics Class Fees in India 2026 | ₹400 1:1 | Tiny Steps',
+    title: 'Phonics Class Fees in India 2026 | 1:1 & Group Price Guide',
     description:
-      'Tiny Steps phonics classes cost ₹400 per 35-minute live 1:1 class in India. See 12, 16 and 24-class package prices, small-group fees and the free assessment.',
+      'Compare 2026 phonics class fees in India for live 1:1 and group classes, including market fee bands, package costs and Tiny Steps ₹400 live 1:1 pricing.',
     canonicalPath: '/phonics-fees-india',
     ogType: 'website',
     keywords:
-      'phonics classes fees in India,phonics class fees India,online phonics classes fees,phonics classes cost India,1 to 1 phonics class fees,phonics course price India,phonics class price per session,phonics classes fees for kids,small group phonics fees',
+      'phonics classes fees in India,phonics class fees India,online phonics classes fees,phonics classes cost India,1 to 1 phonics class fees,group phonics class fees,phonics course price India,phonics class price per session,phonics classes fees for kids,small group phonics fees',
   },
   '/online-english-classes-for-kids': {
     title: 'Online English Classes for Kids in India and Worldwide | Tiny Steps',
