@@ -1,0 +1,58 @@
+name: GR1 Grammar Writing Knowledge Taxonomy
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/grammarWritingKnowledgeTaxonomy.js'
+      - 'src/lib/grammarWritingKnowledgeArchitecture.js'
+      - 'src/tests/seo/grammarWritingGr1Taxonomy.spec.ts'
+      - 'scripts/audit-grammar-writing-gr1-taxonomy.mjs'
+      - 'docs/seo/resources-architecture/GR1_*'
+      - '.github/workflows/gr1-grammar-knowledge-taxonomy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gr1-grammar-writing-knowledge-taxonomy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run GR1 and Resources grammar regression tests
+        run: npx vitest run src/tests/seo/grammarWritingGr1Taxonomy.spec.ts src/tests/seo/resourcesR17GrammarWritingArchitecture.spec.ts src/tests/seo/resourcesR19GrammarWritingSemanticJourneys.spec.ts
+      - name: Audit GR1 grammar and writing taxonomy
+        run: node scripts/audit-grammar-writing-gr1-taxonomy.mjs --report
+      - name: Audit R19 grammar and writing semantic journeys
+        run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
+      - name: Audit R17 grammar and writing architecture after R18 execution
+        run: node scripts/audit-resources-r17-grammar-writing-architecture.mjs --r18-executed --report
+      - name: Audit canonical topic ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Check shadowing
+        run: node scripts/check-shadowing.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Run SEO smoke
+        run: npm run seo:smoke
+      - name: Upload GR1 audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gr1-grammar-writing-knowledge-taxonomy
+          path: artifacts/grammar-writing-gr1-taxonomy.json
+          if-no-files-found: warn
