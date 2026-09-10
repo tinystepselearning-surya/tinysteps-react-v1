@@ -106,6 +106,10 @@ import {
 import { getJoinLinkCandidate, resolveSessionJoinLink } from "../../lib/sessionJoinLink";
 import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
+  buildRollingScheduleCalendarProjections,
+  isRollingScheduleProjection,
+} from "../../lib/scheduling/rollingScheduleCalendarProjection";
+import {
   formatCurrencyINR,
   formatSkillChipLabel,
   pickDashboardPracticeChips,
@@ -2627,11 +2631,38 @@ export default function ParentDashboard() {
   const classesCalendarSessions = useMemo(() => {
     const startMs = classesCalendarStart.getTime();
     const endMs = classesCalendarEnd.getTime();
-    return sortedClassSessions.filter((row) => {
+    const realRows = sortedClassSessions.filter((row) => {
       const ts = row.start.getTime();
       return ts >= startMs && ts <= endMs;
     });
-  }, [sortedClassSessions, classesCalendarStart, classesCalendarEnd]);
+
+    const kidId = selectedKidId ? String(selectedKidId) : '';
+    const projectionEnrollments = ((enrollmentsQuery.data ?? []) as Enrollment[]).filter((enrollment) => {
+      if (!kidId) return false;
+      if (String(enrollment.kidId || '') === kidId) return true;
+      if (Array.isArray(enrollment.kidIds) && enrollment.kidIds.some((id) => String(id) === kidId)) return true;
+      return String(enrollment.studentId || '') === kidId;
+    });
+    const projectionRows = buildRollingScheduleCalendarProjections({
+      enrollments: projectionEnrollments as unknown as Record<string, unknown>[],
+      realSessions: ((kidSessionsQuery.data ?? []) as KidSession[]) as unknown as Record<string, unknown>[],
+      fromYmd: toYMD(classesCalendarStart),
+      toYmd: toYMD(classesCalendarEnd),
+    }).map((session) => ({
+      session: session as unknown as KidSession,
+      start: session.startAt,
+      status: 'scheduled',
+    }));
+
+    return [...realRows, ...projectionRows].sort((a, b) => a.start.getTime() - b.start.getTime());
+  }, [
+    classesCalendarEnd,
+    classesCalendarStart,
+    enrollmentsQuery.data,
+    kidSessionsQuery.data,
+    selectedKidId,
+    sortedClassSessions,
+  ]);
 
   const classesCalendarSessionsByDay = useMemo(() => {
     const map: Record<string, Array<{ session: KidSession; start: Date; status: string }>> = {};
@@ -2695,6 +2726,7 @@ export default function ParentDashboard() {
   };
 
   const openJoinClass = async (session: KidSession) => {
+    if (isRollingScheduleProjection(session)) return;
     if (joiningSessionId === session.id) return;
     hapticLight();
     setJoiningSessionId(session.id);
@@ -4182,6 +4214,7 @@ export default function ParentDashboard() {
     walletLastUpdatedText === "—" ? null : walletLastUpdatedText;
 
   const canJoinSession = useCallback((session: KidSession, status: string) => {
+    if (isRollingScheduleProjection(session)) return false;
     return (
       status !== "completed" &&
       status !== "cancelled" &&

@@ -8,6 +8,7 @@ import {
   isOperationalManualSession,
   isSessionCanonicalForEnrollment,
   isSessionStatusOperationallyVisible,
+  isSessionWithinRollingOperationalAuthority,
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../lib/sessionScheduleIntegrity';
 
@@ -27,6 +28,17 @@ const baseEnrollment = {
         durationMinutes: 35,
       },
     ],
+  },
+};
+
+const rollingEnrollment = {
+  ...baseEnrollment,
+  schedule: {
+    schemaVersion: 1,
+    deliveryMode: 'rolling',
+    timezone: 'Asia/Kolkata',
+    revision: 3,
+    weeklySlots: baseEnrollment.schedule.weeklySlots,
   },
 };
 
@@ -119,6 +131,44 @@ describe('sessionScheduleIntegrity', () => {
     'does not blanket-hide the %s attendance state',
     (status) => expect(isSessionStatusOperationallyVisible(status)).toBe(true),
   );
+
+  it('keeps rolling ordinary real sessions authoritative through today + 14 and rejects today + 15 legacy spillover', () => {
+    const regular = {
+      enrollmentId: 'enr_1',
+      courseId: 'phonics',
+      kidId: 'kid_1',
+      teacherId: 'teacher_current',
+      durationMinutes: 35,
+      status: 'scheduled',
+      source: 'enrollmentScheduleReplace',
+    };
+    expect(isSessionWithinRollingOperationalAuthority(
+      { ...regular, date: '2026-09-24' },
+      rollingEnrollment,
+      '2026-09-10',
+    )).toBe(true);
+    expect(isSessionWithinRollingOperationalAuthority(
+      { ...regular, date: '2026-09-25' },
+      rollingEnrollment,
+      '2026-09-10',
+    )).toBe(false);
+  });
+
+  it('keeps explicit rolling schedule exceptions real even beyond the 14-day physical horizon', () => {
+    expect(isSessionWithinRollingOperationalAuthority({
+      ...manualSession,
+      date: '2026-10-15',
+      manualSessionState: 'approved',
+    }, rollingEnrollment, '2026-09-10')).toBe(true);
+  });
+
+  it('does not impose the rolling horizon on genuinely legacy enrollments', () => {
+    expect(isSessionWithinRollingOperationalAuthority({
+      enrollmentId: 'enr_1',
+      date: '2026-12-01',
+      source: 'enrollmentSchedule',
+    }, baseEnrollment, '2026-09-10')).toBe(true);
+  });
 
   it('accepts canonical sessions when the teacher only appears in alias fields', () => {
     const session = {

@@ -5,7 +5,7 @@
  * Each function is defined in its own module for better organization and testing.
  *
  * IMPORTANT: This file should ONLY contain exports, never function implementations.
- * Callable functions are for manual retry/admin operations; UI should NOT auto-call.
+ * Callable functions are for manual retry only; UI should NOT auto-call.
  * Firestore triggers handle automatic background processing.
  */
 
@@ -50,13 +50,28 @@ export { prepareTeacherFinanceAnalyticsRollups } from "./prepareTeacherFinanceAn
 export { reconcileParentPaymentsMonthReadModels } from "./reconcileParentPaymentsMonthReadModels";
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 
-// Bulk session generator from enrollment schedule config
-export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
-export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromSchedule";
-export { repairEnrollmentFutureSessionsFromSchedule } from "./createSessionsFromSchedule";
-export { repairCancelledFutureRegularSessionsForEnrollment } from "./createSessionsFromSchedule";
-export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
-export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
+// Production cutover compatibility surface. Existing clients may continue using the
+// legacy callable names, but canonical rolling enrollments are detected server-side and
+// routed to the bounded rolling lifecycle/materialization/reconciliation paths. Genuine
+// legacy enrollments retain their previous finite-scheduler behavior until converted.
+export {
+  createSessionsFromSchedule,
+  saveEnrollmentScheduleAndGenerateSessions,
+  repairEnrollmentFutureSessionsFromSchedule,
+  repairCancelledFutureRegularSessionsForEnrollment,
+  pauseEnrollmentUpcomingSessions,
+  resumeEnrollmentSchedule,
+  setEnrollmentStatus,
+  createEnrollment,
+} from "./scheduling/rollingScheduleCompatibility";
+// Course transitions are cut over unconditionally: every destination enrollment is rolling,
+// even when the source enrollment predates the rolling scheduler.
+export { transitionEnrollmentCourse } from "./scheduling/rollingScheduleCourseTransition";
+export {
+  saveRollingEnrollmentSchedule,
+  setRollingEnrollmentLifecycle,
+} from "./scheduling/rollingScheduleLifecycle";
+export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingScheduleReconciliation";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
@@ -174,6 +189,7 @@ export {
   batchInsightsRollup11pm,
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
+export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
 
 // Games: catalog management and level results
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
@@ -188,16 +204,13 @@ export { enrichPublicLeadAttribution } from "./enrichPublicLeadAttribution";
 export { onWebsiteLeadIdentityWrite } from "./websiteLeadDeduplication";
 export { notFoundRoute } from "./notFoundRoute";
 
-// Enrollment lifecycle (createEnrollment also permits the assigned Learning Partner)
+// Enrollment lifecycle helpers not replaced by the compatibility surface.
 export {
-  setEnrollmentStatus,
   reassignEnrollmentTeacher,
   repairEnrollmentTeacherSessionConsistency,
   archiveKid,
   createAdminManualSession,
   cancelAdminManualSession,
-  createEnrollment,
-  transitionEnrollmentCourse,
 } from "./lifecycle";
 export { auditTeacherTodaySessions } from "./auditTeacherTodaySessions";
 export { auditAllTransferredSessionSnapshotIssues } from "./auditAllTransferredSessionSnapshotIssues";

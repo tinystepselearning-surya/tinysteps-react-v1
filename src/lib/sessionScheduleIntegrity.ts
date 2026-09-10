@@ -1,6 +1,10 @@
 const IST_OFFSET_MINUTES = 330;
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+const ROLLING_SCHEDULE_CONTRACT_VERSION = 1;
+const ROLLING_SCHEDULE_HORIZON_DAYS = 14;
+const ROLLING_SCHEDULE_DELIVERY_MODE = 'rolling';
+const ROLLING_SCHEDULE_TIME_ZONE = 'Asia/Kolkata';
 
 const OPERATIONAL_ENROLLMENT_STATUSES = new Set(['active', 'trial']);
 
@@ -424,11 +428,61 @@ export const doesSessionMatchEnrollmentSchedule = (
   });
 };
 
+const isCanonicalRollingEnrollmentForSessionAuthority = (
+  enrollmentLike: Record<string, unknown>,
+): boolean => {
+  const scheduleLike = enrollmentLike.schedule;
+  if (!scheduleLike || typeof scheduleLike !== 'object' || Array.isArray(scheduleLike)) return false;
+  const schedule = scheduleLike as Record<string, unknown>;
+  return Number(schedule.schemaVersion) === ROLLING_SCHEDULE_CONTRACT_VERSION
+    && normalizeText(schedule.deliveryMode).toLowerCase() === ROLLING_SCHEDULE_DELIVERY_MODE
+    && normalizeText(schedule.timezone) === ROLLING_SCHEDULE_TIME_ZONE;
+};
+
+const resolveSessionYmd = (sessionLike: Record<string, unknown>): string | null => {
+  const direct = normalizeText(sessionLike.date);
+  if (YMD_RE.test(direct)) return direct;
+  const startAt = toDateMaybe(sessionLike.startAt);
+  if (!startAt) return null;
+  const shifted = new Date(startAt.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${String(shifted.getUTCDate()).padStart(2, '0')}`;
+};
+
+const indiaTodayYmd = (now = new Date()): string => {
+  const shifted = new Date(now.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
+  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${String(shifted.getUTCDate()).padStart(2, '0')}`;
+};
+
+const addCalendarDaysYmd = (ymd: string, days: number): string => {
+  const [year, month, day] = ymd.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+};
+
+/**
+ * Canonical rolling enrollments deliberately treat ordinary real session documents as
+ * operational authority only through today + 14 days. This prevents old finite-generator
+ * rows beyond the physical horizon from leaking into parent/teacher calendars after cutover.
+ * Explicit manual/makeup/reschedule/replacement exceptions remain authoritative real rows.
+ */
+export const isSessionWithinRollingOperationalAuthority = (
+  sessionLike: Record<string, unknown>,
+  enrollmentLike: Record<string, unknown> | undefined,
+  todayYmd = indiaTodayYmd(),
+): boolean => {
+  if (!enrollmentLike || !isCanonicalRollingEnrollmentForSessionAuthority(enrollmentLike)) return true;
+  if (isScheduleExceptionSession(sessionLike)) return true;
+  const sessionYmd = resolveSessionYmd(sessionLike);
+  if (!sessionYmd) return false;
+  return sessionYmd <= addCalendarDaysYmd(todayYmd, ROLLING_SCHEDULE_HORIZON_DAYS);
+};
+
 export const isSessionCanonicalForEnrollment = (
   sessionLike: Record<string, unknown>,
   enrollmentLike: Record<string, unknown> | undefined,
 ): boolean => {
   if (!enrollmentLike) return false;
   if (!isEnrollmentOperationallyActive(enrollmentLike)) return false;
-  return doesSessionMatchEnrollmentSchedule(sessionLike, enrollmentLike);
+  if (!doesSessionMatchEnrollmentSchedule(sessionLike, enrollmentLike)) return false;
+  return isSessionWithinRollingOperationalAuthority(sessionLike, enrollmentLike);
 };
