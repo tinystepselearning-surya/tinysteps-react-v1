@@ -239,11 +239,11 @@ describe('Brick 5 rolling lifecycle contracts', () => {
 
   it('keeps Brick 5 lifecycle work bounded and isolated from the legacy finite generator', () => {
     const source = readFileSync(
-      resolve(process.cwd(), 'src/scheduling/rollingScheduleLifecycle.ts'),
+      resolve(process.cwd(), 'functions/src/scheduling/rollingScheduleLifecycle.ts'),
       'utf8',
     );
     const edgeSource = readFileSync(
-      resolve(process.cwd(), 'src/scheduled/rollingScheduleEdgeReplenisher.ts'),
+      resolve(process.cwd(), 'functions/src/scheduled/rollingScheduleEdgeReplenisher.ts'),
       'utf8',
     );
 
