@@ -25,6 +25,10 @@ import { toast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';
 import {
+  buildRollingScheduleCalendarProjections,
+  isRollingScheduleProjection,
+} from '../../../../lib/scheduling/rollingScheduleCalendarProjection';
+import {
   format,
   startOfMonth,
   endOfMonth,
@@ -278,6 +282,51 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const { students } = useTeacherFilteredStudents();
   const resolvedTeacherId = teacherId || auth.currentUser?.uid || '';
 
+  const teacherScheduleEnrollments = useMemo(
+    () => students.flatMap((student) => student.scheduleEnrollments || []),
+    [students],
+  );
+
+  const projectedSessions = useMemo<TeacherSession[]>(() => {
+    const projections = buildRollingScheduleCalendarProjections({
+      enrollments: teacherScheduleEnrollments,
+      realSessions: sessions as unknown as Record<string, unknown>[],
+      fromYmd: format(rangeStart, 'yyyy-MM-dd'),
+      toYmd: format(rangeEnd, 'yyyy-MM-dd'),
+    });
+    return projections.map((row) => ({
+      id: row.id,
+      enrollmentId: row.enrollmentId,
+      teacherId: row.teacherId || resolvedTeacherId,
+      courseId: row.courseId || '',
+      courseName: row.courseName,
+      date: row.date,
+      startTime: row.startTime,
+      endTime: row.endTime,
+      durationMins: row.durationMins,
+      durationMinutes: row.durationMinutes,
+      kidIds: row.kidIds || (row.kidId ? [row.kidId] : []),
+      kidId: row.kidId,
+      studentId: row.studentId,
+      studentName: row.studentName,
+      kidName: row.kidName,
+      childName: row.childName,
+      status: 'scheduled',
+      source: row.source,
+      isScheduleProjection: true,
+      projectionOnly: true,
+    } as TeacherSession & { isScheduleProjection: true; projectionOnly: true }));
+  }, [rangeEnd, rangeStart, resolvedTeacherId, sessions, teacherScheduleEnrollments]);
+
+  const displaySessions = useMemo(
+    () => [...sessions, ...projectedSessions].sort((a, b) => {
+      const aStart = getSessionStartMillis(a) ?? 0;
+      const bStart = getSessionStartMillis(b) ?? 0;
+      return aStart - bStart;
+    }),
+    [projectedSessions, sessions],
+  );
+
   const studentNameById = useMemo(
     () => new Map(students.map((s) => [s.uid, s.fullName || ''])),
     [students],
@@ -416,6 +465,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   }, [canOverrideAttendanceTime]);
 
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
+    if (isRollingScheduleProjection(session)) {
+      toast({
+        title: 'Planned recurring class',
+        description: 'This future calendar entry is display-only. Attendance becomes available after the real session enters the 14-day operational window.',
+      });
+      return;
+    }
     if (!isAttendanceAllowedNow(session)) {
       const allowedAt = getAttendanceAllowedAtMillis(session);
       const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
@@ -438,7 +494,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
   const studentFilterOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
-    sessions.forEach((session) => {
+    displaySessions.forEach((session) => {
       const kidId = getPrimarySessionKidId(session);
       if (!kidId) return;
       const label = getSessionStudentLabel(session);
@@ -450,7 +506,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       }
     });
     return Array.from(byId.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [sessions, studentNameById, getPrimarySessionKidId, getSessionStudentLabel]);
+  }, [displaySessions, studentNameById, getPrimarySessionKidId, getSessionStudentLabel]);
 
   useEffect(() => {
     if (selectedStudentId === 'all') return;
@@ -460,9 +516,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   }, [selectedStudentId, studentFilterOptions]);
 
   const filteredSessions = useMemo(() => {
-    if (selectedStudentId === 'all') return sessions;
-    return sessions.filter((session) => getSessionKidIds(session).includes(selectedStudentId));
-  }, [sessions, selectedStudentId, getSessionKidIds]);
+    if (selectedStudentId === 'all') return displaySessions;
+    return displaySessions.filter((session) => getSessionKidIds(session).includes(selectedStudentId));
+  }, [displaySessions, selectedStudentId, getSessionKidIds]);
 
   const attendanceSummary = useMemo(() => {
     let completedPresent = 0;
