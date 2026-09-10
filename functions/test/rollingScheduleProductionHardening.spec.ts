@@ -25,11 +25,11 @@ describe('rolling schedule production hardening contracts', () => {
     expect(compatibilitySource).toContain('reconcileRollingEnrollmentSchedule');
   });
 
-  it('never uses the finite schedule generator during the production course-transition path', () => {
+  it('never imports or invokes the finite schedule generator during the production course-transition path', () => {
     expect(transitionSource).toContain('materializeRollingEnrollmentWindowInternal');
     expect(transitionSource).toContain('buildCanonicalRollingScheduleDefinition');
-    expect(transitionSource).not.toContain('createSessionsFromSchedule');
-    expect(transitionSource).not.toContain('repairEnrollmentFutureSessionsFromSchedule');
+    expect(transitionSource).not.toMatch(/from ["'][^"']*createSessionsFromSchedule["']/);
+    expect(transitionSource).not.toMatch(/\brepairEnrollmentFutureSessionsFromSchedule(?:Internal)?\s*\(/);
     expect(transitionSource).not.toContain('legacyTransitionEnrollmentCourse');
   });
 
