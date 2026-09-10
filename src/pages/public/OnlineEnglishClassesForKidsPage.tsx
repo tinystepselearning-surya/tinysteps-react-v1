@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../../config/publicFacts';
+import { ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
 import { applySeo } from '../../lib/seo';
-import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 import {
   CourseCTAGroup,
   FAQSection,
@@ -15,56 +17,78 @@ import {
 
 const canonicalPath = '/online-english-classes-for-kids';
 const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
+const starterPackage = ONE_TO_ONE_MONTHLY_PACKAGES.find((pkg) => pkg.id === 'starter');
+const starterPackageFee = starterPackage?.monthlyFee ?? PER_CLASS_PRICE * 12;
+const seoTitle = 'Online English Classes for Kids | Live 1:1 | Tiny Steps';
+const seoDescription =
+  'Live online English classes and 1:1 English tutoring for kids ages 3–12 in India and worldwide. Find the right phonics, reading, grammar, writing or speaking path after a free assessment.';
 
 const ONLINE_ENGLISH_SEO_KEYWORDS = [
   'online English classes for kids',
+  'online English classes for children',
+  'live online English classes for kids',
   '1 to 1 English classes for kids online',
   'online English tutor for kids',
-  'English tutor for NRI kids',
+  'online English classes for kids ages 3 to 12',
+  'online English classes for kids India',
   'online English classes for NRI kids',
   'online English classes for kids in UAE',
   'online English classes for kids in USA',
   'online English classes for kids in UK',
   'online English classes for kids in Australia',
   'online English classes for kids in Singapore',
+  'online English classes for kids worldwide',
 ];
 
 const trustChips = [
-  { label: '5000+ students served', tone: 'warm' as const },
-  { label: 'Families in 15+ countries', tone: 'cool' as const },
+  { label: PUBLIC_LEARNER_REACH_LABEL, tone: 'warm' as const },
+  { label: 'India + worldwide online access', tone: 'cool' as const },
   { label: 'Live 1:1 and small-group options', tone: 'neutral' as const },
-  { label: 'Weekly parent updates', tone: 'mint' as const },
+  { label: 'Parent-visible progress updates', tone: 'mint' as const },
 ];
 
 const heroStats = [
-  { label: 'Pricing', value: '₹400', helper: 'per standard 1:1 class' },
-  { label: 'Parent pack', value: '₹4,800', helper: 'for 12 classes' },
-  { label: 'Standard 1:1', value: '35 min', helper: 'live teacher-guided class' },
-  { label: 'Assessment first', value: 'Free', helper: 'before enrolment' },
+  { label: 'Pricing', value: formatINR(PER_CLASS_PRICE), helper: 'per standard 1:1 class' },
+  { label: '12-class package', value: formatINR(starterPackageFee), helper: 'standard 1:1 pricing' },
+  { label: 'Standard 1:1', value: PUBLIC_SESSION_DURATION_LABEL, helper: 'live teacher-guided class' },
+  { label: 'Assessment first', value: 'Free', helper: `one ${demoMinutes}-minute 1:1 demo` },
 ];
 
 const programmeTracks = [
   {
     title: 'Phonics',
-    description: 'For children who know letters but need blending, decoding, and an early reading system that actually sticks.',
+    description: 'For children who need letter-sound knowledge, blending, decoding, spelling patterns, or an early reading pathway.',
     href: '/phonics',
     accent: 'from-[#fff6e9] to-[#ffffff]',
   },
   {
     title: 'Reading',
-    description: 'For children who read slowly, forget words, or need fluency, comprehension, and reading-aloud confidence.',
+    description: 'For broader reading support across accuracy, connected reading, vocabulary, comprehension, and reading confidence.',
     href: '/reading-classes-for-kids',
     accent: 'from-[#eef8ff] to-[#ffffff]',
   },
   {
-    title: 'Grammar & writing',
-    description: 'For sentence structure, tense clarity, school-answer confidence, paragraph writing, and clearer written expression.',
+    title: 'Grammar',
+    description: 'For sentence formation, parts of speech, tense control, articles, prepositions, punctuation, and grammar accuracy.',
     href: '/grammar',
     accent: 'from-[#f6f4ff] to-[#ffffff]',
   },
   {
-    title: 'Spoken English & public speaking',
-    description: 'For sentence expansion, English fluency, confident responses, clearer expression, storytelling, and presentations.',
+    title: 'Writing',
+    description: 'For idea development, paragraph organisation, creative writing, school answers, editing, and independent written expression.',
+    href: '/writing-classes-for-kids',
+    accent: 'from-[#fff8ef] to-[#ffffff]',
+  },
+  {
+    title: 'Spoken English',
+    description: 'For everyday conversation, fuller spoken responses, vocabulary in use, and conversational English fluency.',
+    href: '/spoken-english-classes-for-kids-online',
+    accent: 'from-[#ecfdf5] to-[#ffffff]',
+  },
+  {
+    title: 'Public Speaking & Communication',
+    description: 'For structured answers, storytelling, show-and-tell, classroom communication, presentations, and audience awareness.',
     href: '/speaking',
     accent: 'from-[#fff0f3] to-[#ffffff]',
   },
@@ -98,22 +122,22 @@ const faqItems = [
   {
     question: 'How do I know which English class my child needs first?',
     answer:
-      'Tiny Steps starts with a free 35-minute 1:1 online demo assessment class to check whether the main gap is phonics, reading, grammar, writing, sentence formation, or spoken English confidence.',
+      `Tiny Steps starts with one free ${demoMinutes}-minute 1:1 online demo assessment class to identify whether the main need is phonics, reading, grammar, writing, spoken English, public speaking and communication, or specialist confidence-building support.`,
   },
   {
     question: 'Do you offer one-on-one English classes or an online English tutor for kids?',
     answer:
-      'Yes. Tiny Steps offers live 1:1 online English learning and may also offer small-group options. The standard 1:1 class is 35 minutes, with the learning path chosen after assessment.',
+      `Yes. Tiny Steps offers live 1:1 online English learning and may also offer small-group options. Standard 1:1 classes are ${PUBLIC_SESSION_DURATION_LABEL}; small-group duration varies with group size. The learning path is chosen after assessment.`,
   },
   {
     question: 'Can online English classes help if my child is shy or gives short answers?',
     answer:
-      'Yes. Children who understand English but do not speak confidently often need guided sentence expansion, structured speaking turns, and low-pressure confidence building.',
+      'Sometimes. If everyday English conversation or fluency is the main need, Spoken English is the clearer programme. If confidence itself is the primary barrier despite adequate language for the task, the specialist Confidence Building programme may fit better. The assessment helps separate these needs.',
   },
   {
     question: 'What is the pricing preview for parents?',
     answer:
-      'The current standard 1:1 price is ₹400 per class and ₹4,800 for 12 classes. Parents can review the full pricing page after the free assessment confirms the right starting path.',
+      `The current standard 1:1 price is ${formatINR(PER_CLASS_PRICE)} per class and ${formatINR(starterPackageFee)} for 12 classes. Parents can review the full pricing page after the free assessment confirms the right starting path.`,
   },
   {
     question: 'Do you support NRI families and children outside India?',
@@ -139,10 +163,19 @@ export default function OnlineEnglishClassesForKidsPage() {
       ],
     };
 
+    const webpageSchema = {
+      ...createWebPageSchema({
+        name: 'Online English Classes for Kids',
+        description: seoDescription,
+        url: canonicalUrl,
+      }),
+      '@id': `${canonicalUrl}#webpage`,
+    };
+
     const courseSchema = createCourseSchema({
       name: 'Online English Classes for Kids',
       description:
-        'Live online English classes and 1:1 English tutoring for kids in India and worldwide covering phonics, reading, grammar, writing, spoken English, and public speaking confidence.',
+        'Live online English classes and 1:1 English tutoring for children ages 3–12 in India and worldwide, with assessment-led placement into phonics, reading, grammar, writing, spoken English, or public speaking and communication.',
       url: canonicalUrl,
       educationalLevel: 'English support for children ages 3–12',
       teaches: [
@@ -152,7 +185,8 @@ export default function OnlineEnglishClassesForKidsPage() {
         'writing',
         'sentence formation',
         'spoken English',
-        'public speaking confidence',
+        'public speaking',
+        'communication skills',
       ],
       areaServed: ['India', 'Worldwide'],
     });
@@ -163,13 +197,13 @@ export default function OnlineEnglishClassesForKidsPage() {
     };
 
     applySeo({
-      title: 'Online English Classes for Kids in India and Worldwide | Tiny Steps',
-      description:
-        'Live online English classes and 1:1 English tutoring for kids ages 3–12. Phonics, reading, grammar, writing and speaking support for India, NRI and worldwide families.',
+      title: seoTitle,
+      description: seoDescription,
       canonicalPath,
       ogType: 'website',
       keywords: ONLINE_ENGLISH_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, courseSchema, faqSchema],
+      robots: 'index,follow',
+      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, faqSchema],
     });
   }, []);
 
@@ -177,14 +211,14 @@ export default function OnlineEnglishClassesForKidsPage() {
     <LeadPageShell>
       <LeadHero
         eyebrow="Ages 3–12 • India, NRI and worldwide"
-        title="Online English Classes for Kids: Live 1:1 and Small-Group Support"
+        title="Online English Classes for Kids"
         description={
           <>
             <p>
-              Tiny Steps offers live online English classes for kids who need a clear path across phonics, reading, grammar, writing, spoken English, and presentation confidence.
+              Tiny Steps offers live online English classes for children ages 3–12 in India and worldwide, with live 1:1 teaching and selected small-group options across phonics, reading, grammar, writing, spoken English, and public speaking and communication.
             </p>
             <p className="mt-3">
-              Parents looking for a live 1:1 English tutor can begin with one free 35-minute assessment, then review the recommended programme, transparent pricing, class samples, and compatible timings before enrolment.
+              Parents who are not yet sure which English programme fits can begin with one free {demoMinutes}-minute 1:1 assessment, then review the recommended owner programme, transparent pricing, class samples, and compatible timings before enrolment.
             </p>
           </>
         }
@@ -202,7 +236,7 @@ export default function OnlineEnglishClassesForKidsPage() {
         actions={
           <CourseCTAGroup
             items={[
-              { to: '/book-demo', label: 'Book Free 35-Minute Demo', variant: 'primary' },
+              { to: '/book-demo', label: `Book Free ${demoMinutes}-Minute Demo`, variant: 'primary' },
               { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
               { to: '/class-samples', label: 'See Class Samples', variant: 'secondary' },
             ]}
@@ -219,7 +253,7 @@ export default function OnlineEnglishClassesForKidsPage() {
             <div className="mt-4 grid gap-3">
               {[
                 'Structured pathways instead of broad tuition coverage',
-                'One free 35-minute 1:1 demo assessment before recommending the first class plan',
+                `One free ${demoMinutes}-minute 1:1 demo assessment before recommending the first class plan`,
                 'Live 1:1 teaching with small-group options for selected fits',
                 'Class samples, pricing clarity, and parent-visible progress',
               ].map((item) => (
@@ -279,7 +313,7 @@ export default function OnlineEnglishClassesForKidsPage() {
             <LeadSectionHeading
               eyebrow="Outcomes by age and stage"
               title="English goals change across ages 3–12"
-              description="Tiny Steps does not use the same classroom expectations for every age band."
+              description="These are broad examples of how goals may change with age, not fixed programme levels. Assessment still determines the correct subject and starting point."
             />
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               {outcomeStages.map((item) => (
@@ -299,7 +333,7 @@ export default function OnlineEnglishClassesForKidsPage() {
             <LeadSectionHeading
               eyebrow="Trust proof"
               title="What parents want to know before booking"
-              description="This page is built for families looking for a national or global online English solution, not only a local city page."
+              description="This page is built for families looking for one broad India-and-worldwide online English entry point, not a duplicated country or city landing page."
             />
             <div className="mt-5 space-y-3">
               {[
@@ -307,7 +341,7 @@ export default function OnlineEnglishClassesForKidsPage() {
                 'Families in 15+ countries',
                 'Live teacher-led learning',
                 'Class samples available before parents decide',
-                'Weekly parent updates after classes begin',
+                'Parent-visible progress updates after classes begin',
               ].map((item) => (
                 <div key={item} className="rounded-2xl border border-white bg-white/90 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
                   {item}
@@ -344,7 +378,7 @@ export default function OnlineEnglishClassesForKidsPage() {
           <LeadCard>
             <LeadSectionHeading
               eyebrow="How it works"
-              title="How the free 35-minute 1:1 online demo assessment works"
+              title={`How the free ${demoMinutes}-minute 1:1 online demo assessment works`}
               description="Parents get a recommendation before they spend time or money."
             />
             <ol className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
@@ -364,15 +398,15 @@ export default function OnlineEnglishClassesForKidsPage() {
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-emerald-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Per class</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">₹400</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{formatINR(PER_CLASS_PRICE)}</p>
               </div>
               <div className="rounded-2xl border border-emerald-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">12 classes</p>
-                <p className="mt-2 text-3xl font-bold text-slate-900">₹4,800</p>
+                <p className="mt-2 text-3xl font-bold text-slate-900">{formatINR(starterPackageFee)}</p>
               </div>
             </div>
             <p className="mt-4 text-sm leading-7 text-slate-700">
-              The standard 1:1 class is 35 minutes. Review all available formats and packages on the{' '}
+              Standard 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}. Small-group duration varies with group size. Review all available formats and packages on the{' '}
               <Link to="/pricing" className="font-semibold underline underline-offset-4">
                 pricing page
               </Link>.
@@ -426,13 +460,13 @@ export default function OnlineEnglishClassesForKidsPage() {
           title="Ready to choose the right English starting point for your child?"
           description={
             <>
-              Start with a free 35-minute 1:1 online demo assessment, then review pricing and the recommended path for phonics, reading, grammar, writing, spoken English, or communication.
+              Start with one free {demoMinutes}-minute 1:1 online demo assessment, then review pricing and the recommended path for phonics, reading, grammar, writing, spoken English, public speaking and communication, or specialist confidence support.
             </>
           }
           actions={
             <CourseCTAGroup
               items={[
-                { to: '/book-demo', label: 'Book Free 35-Minute Demo', variant: 'primary' },
+                { to: '/book-demo', label: `Book Free ${demoMinutes}-Minute Demo`, variant: 'primary' },
                 { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
               ]}
               renderLink={(item, className) => (
