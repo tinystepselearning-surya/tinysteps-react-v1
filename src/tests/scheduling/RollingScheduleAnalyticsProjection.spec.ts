@@ -204,6 +204,40 @@ describe('rolling schedule monthly analytics projection', () => {
     });
   });
 
+  it('fails closed to actual sessions when an active schedule is malformed', () => {
+    const malformedEnrollment = rollingEnrollment({
+      schedule: {
+        schemaVersion: 1,
+        deliveryMode: 'rolling',
+        revision: 4,
+        timezone: 'Asia/Kolkata',
+        weeklySlots: [{ weekday: 4, time: '99:99', durationMinutes: 35 }],
+      },
+    });
+    const result = build({
+      enrollments: [malformedEnrollment],
+      realSessions: [
+        {
+          id: 'legacy-safe-row',
+          enrollmentId: 'enr-1',
+          date: '2026-10-01',
+          startTime: '18:00',
+          status: 'scheduled',
+          source: 'enrollmentSchedule',
+          feeAmount: 400,
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      plannedSessions: 1,
+      remainingScheduledSessions: 1,
+      realPlannedSessions: 1,
+      recurrenceProjectedSessions: 0,
+      projectedRevenue: 400,
+    });
+  });
+
   it('does not let makeup/reschedule/manual exceptions replace a regular recurrence occurrence', () => {
     const result = build({
       realSessions: [
