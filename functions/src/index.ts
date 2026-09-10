@@ -62,6 +62,7 @@ export {
   saveRollingEnrollmentSchedule,
   setRollingEnrollmentLifecycle,
 } from "./scheduling/rollingScheduleLifecycle";
+export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingScheduleReconciliation";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
