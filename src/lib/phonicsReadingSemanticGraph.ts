@@ -1,6 +1,5 @@
-import { PHONICS_KNOWLEDGE_DATASET } from '../content/phonicsKnowledge';
 import { PHONICS_READING_TAXONOMY } from './phonicsReadingTaxonomy.js';
-import { PHONICS_READING_COVERAGE, getPhonicsReadingCoverage } from './phonicsReadingCoverageRegistry.js';
+import { PHONICS_READING_COVERAGE } from './phonicsReadingCoverageRegistry.js';
 import { PHONICS_READING_PROBLEMS } from './phonicsReadingProblemRegistry.js';
 import { PHONICS_PRACTICE_CAPABILITIES } from './phonicsPracticeCapabilityRegistry';
 import { R16_READING_SEMANTIC_JOURNEYS } from './readingSemanticJourneyGraph.js';
@@ -37,9 +36,8 @@ const node = (id: string, kind: PhonicsReadingSemanticNodeKind, label: string, p
 
 const nodes: PhonicsReadingSemanticNode[] = [];
 for (const skill of PHONICS_READING_TAXONOMY) nodes.push(node(`skill:${skill.id}`, 'skill', skill.label));
-for (const concept of PHONICS_KNOWLEDGE_DATASET) {
-  const coverage = getPhonicsReadingCoverage(concept.id);
-  nodes.push(node(`pattern:${concept.id}`, 'pattern', concept.label, coverage?.ownerPath ?? null));
+for (const coverage of PHONICS_READING_COVERAGE) {
+  nodes.push(node(`pattern:${coverage.conceptId}`, 'pattern', coverage.label, coverage.ownerPath));
 }
 for (const practice of PHONICS_PRACTICE_CAPABILITIES) nodes.push(node(`practice:${practice.id}`, 'practice', practice.label, practice.path));
 for (const problem of PHONICS_READING_PROBLEMS) nodes.push(node(`problem:${problem.id}`, 'problem', problem.label, problem.ownerPath));
@@ -67,8 +65,13 @@ for (const skill of PHONICS_READING_TAXONOMY) {
 }
 
 const explicitPatternSkill = new Map<string, string>();
-for (const skill of PHONICS_READING_TAXONOMY) for (const conceptId of skill.knowledgeConceptIds) if (!explicitPatternSkill.has(conceptId)) explicitPatternSkill.set(conceptId, skill.id);
+for (const skill of PHONICS_READING_TAXONOMY) {
+  for (const conceptId of skill.knowledgeConceptIds) if (!explicitPatternSkill.has(conceptId)) explicitPatternSkill.set(conceptId, skill.id);
+}
 const familyFallbackSkill: Record<string, string> = {
+  'phonological-foundation': 'phonemic-awareness',
+  'decoding-skill': 'blending',
+  'vowel-system': 'cvc',
   'sound-symbol': 'letter-sounds',
   digraph: 'digraphs',
   'spelling-rule': 'spelling-rules',
@@ -80,10 +83,10 @@ const familyFallbackSkill: Record<string, string> = {
   'alternate-vowel': 'advanced-patterns',
   'advanced-pattern': 'advanced-patterns',
 };
-for (const concept of PHONICS_KNOWLEDGE_DATASET) {
-  if (explicitPatternSkill.has(concept.id)) continue;
-  const skillId = familyFallbackSkill[concept.conceptType];
-  if (skillId) addEdge(`skill:${skillId}`, `pattern:${concept.id}`, 'teaches-pattern');
+for (const coverage of PHONICS_READING_COVERAGE) {
+  if (explicitPatternSkill.has(coverage.conceptId)) continue;
+  const skillId = familyFallbackSkill[coverage.conceptType];
+  if (skillId) addEdge(`skill:${skillId}`, `pattern:${coverage.conceptId}`, 'teaches-pattern');
 }
 
 for (const practice of PHONICS_PRACTICE_CAPABILITIES) {
@@ -145,4 +148,4 @@ export function getPhonicsReadingSemanticOrphans(): readonly PhonicsReadingSeman
   return Object.freeze(PHONICS_READING_SEMANTIC_NODES.filter((entry) => !connected.has(entry.id)));
 }
 
-if (PHONICS_READING_COVERAGE.length !== PHONICS_KNOWLEDGE_DATASET.length) throw new Error('PH6 requires complete PH3 pattern coverage.');
+if (PHONICS_READING_COVERAGE.length !== 40) throw new Error('PH6 requires complete 40-concept PH3 coverage.');
