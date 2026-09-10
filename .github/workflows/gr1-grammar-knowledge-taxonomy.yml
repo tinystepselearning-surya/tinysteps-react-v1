@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'src/lib/grammarWritingKnowledgeTaxonomy.js'
+      - 'src/lib/grammarWritingKnowledgeTaxonomy.*'
       - 'src/lib/grammarWritingKnowledgeArchitecture.js'
       - 'src/tests/seo/grammarWritingGr1Taxonomy.spec.ts'
       - 'scripts/audit-grammar-writing-gr1-taxonomy.mjs'
