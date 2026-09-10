@@ -43,12 +43,6 @@ function canonicalInternalBlogLinks() {
         transformed = transformed.replace("stage: 'Ages 9 to 13'", "stage: 'Ages 9 to 12'");
       }
 
-      // C3: speaking still has a source-level geography migration pending its
-      // dedicated owner-page pass. Grammar now carries canonical geography directly.
-      if (id.includes('/src/pages/speaking.tsx')) {
-        transformed = transformed.replace("areaServed: 'India'", "areaServed: ['India', 'Worldwide']");
-      }
-
       if (id.includes('/src/content/courses.ts')) {
         transformed = transformed
           .replace("age: 'Ages 8–15'", "age: 'Ages 8–12'")
