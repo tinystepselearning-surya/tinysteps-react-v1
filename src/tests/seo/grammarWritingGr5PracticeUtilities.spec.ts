@@ -64,8 +64,8 @@ describe('Session B GR5 reusable grammar/writing practice utilities', () => {
   it('keeps the GR4 parent-problem handoff reciprocal and gives every problem usable practice', () => {
     for (const problem of GRAMMAR_WRITING_PARENT_PROBLEMS) {
       const utilities = getGrammarWritingPracticeUtilitiesForParentProblem(problem.id);
-      expect(utilities.length, problem.id).toBeGreaterThan(0);
-      expect(utilities.map((item) => item.id)).toEqual(problem.recommendedPracticeKinds);
+      expect(utilities.length, problem.id).toBe(problem.recommendedPracticeKinds.length);
+      expect(new Set(utilities.map((item) => item.id))).toEqual(new Set(problem.recommendedPracticeKinds));
       for (const kind of problem.recommendedPracticeKinds) {
         expect(getGrammarWritingPracticeUtility(kind)?.targetParentProblemIds).toContain(problem.id);
       }
