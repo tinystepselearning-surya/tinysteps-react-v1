@@ -1,0 +1,31 @@
+name: C3 Page 8 Spoken English Apply
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-page8-spoken-english.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-spoken-english:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - name: Apply Page 8 spoken English reconciliation
+        run: python scripts/tmp-c3-page8-spoken-english.py
+      - name: Focused diff check
+        run: git diff --check && git diff -- src/pages/public/SpokenEnglishClassesForKidsPage.tsx src/lib/routeSeoRegistry.js
+      - name: Commit Page 8 changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/pages/public/SpokenEnglishClassesForKidsPage.tsx src/lib/routeSeoRegistry.js
+          git commit -m 'C3 page 8: reconcile spoken English owner'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
