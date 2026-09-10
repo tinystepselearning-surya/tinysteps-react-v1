@@ -254,7 +254,9 @@ describe('Brick 5 rolling lifecycle contracts', () => {
     expect(source).toContain("'schedule.weeksAhead': FieldValue.delete()");
     expect(source).toContain("'schedule.plannedSessions': FieldValue.delete()");
     expect(source).toContain("'schedule.endDateYmd': FieldValue.delete()");
-    expect(edgeSource).toContain("const liveEnrollmentSnap = await db.collection('enrollments').doc(enrollmentId).get()");
-    expect(edgeSource).toContain('if (!liveEnrollmentSnap.exists) continue');
+    expect(edgeSource).toContain('db.runTransaction(async (tx) =>');
+    expect(edgeSource).toContain('const enrollmentSnap = await tx.get(enrollmentRef)');
+    expect(edgeSource).toContain("tx.create(db.collection('classSessions').doc(occurrence.sessionId), payload)");
+    expect(edgeSource).toContain('tx.update(enrollmentRef, buildMaterializationPatch(plan.finalMaterialization))');
   });
 });
