@@ -18,8 +18,8 @@ jobs:
         with:
           ref: seo/c1-parent-commercial-search-universe
           fetch-depth: 0
-      - name: Correct Page 11 helper matcher
-        run: python scripts/tmp-c3-page11-helper-fix.py
+      - name: Remove cosmetic grid patch from helper
+        run: python scripts/tmp-c3-page11-remove-grid-patch.py
       - name: Apply Page 11 broad English reconciliation
         run: python scripts/tmp-c3-page11-broad-english.py
       - name: Focused source check
