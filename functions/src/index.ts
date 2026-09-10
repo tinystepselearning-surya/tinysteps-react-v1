@@ -57,6 +57,11 @@ export { repairEnrollmentFutureSessionsFromSchedule } from "./createSessionsFrom
 export { repairCancelledFutureRegularSessionsForEnrollment } from "./createSessionsFromSchedule";
 export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
+// Rolling scheduling remains isolated from the legacy finite scheduler until the admin UI cutover brick.
+export {
+  saveRollingEnrollmentSchedule,
+  setRollingEnrollmentLifecycle,
+} from "./scheduling/rollingScheduleLifecycle";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
