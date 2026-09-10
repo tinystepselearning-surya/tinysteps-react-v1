@@ -39,6 +39,14 @@ jobs:
           p.write_text(s)
           PY
           node scripts/reconcile-commercial-c3-owner-pages.mjs
+          # The second-pass audit found a second copy of this unsupported frequency
+          # statement in the trust-proof section. Keep the claim factual and frequency-neutral.
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/pages/public/OnlineEnglishClassesForKidsPage.tsx')
+          s = p.read_text().replace('Weekly parent updates after classes begin', 'Parent progress visibility after classes begin')
+          p.write_text(s)
+          PY
 
       - name: Install dependencies
         run: npm ci
