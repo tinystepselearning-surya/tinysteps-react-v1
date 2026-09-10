@@ -5,14 +5,21 @@ import { COMMERCIAL_C2_OWNERSHIP_CLUSTERS } from '../../lib/commercialC2KeywordO
 import {
   COMMERCIAL_C3_OWNER_PAGE_AUDITS,
   COMMERCIAL_C3_POLICY,
+  COMMERCIAL_C3_RECONCILIATION_STATUS,
+  COMMERCIAL_C3_REVISION,
   COMMERCIAL_C3_UNIQUE_OWNER_PATHS,
 } from '../../lib/commercialC3OwnerPageAudit';
 
 const repoRoot = path.resolve(process.cwd());
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+const lower = (relativePath: string) => read(relativePath).toLowerCase();
 
-describe('Commercial C3 canonical owner page audit', () => {
-  it('audits every machine-readable C2 ownership cluster exactly once across 14 unique pages', () => {
+const ownerSources = Array.from(new Set(COMMERCIAL_C3_OWNER_PAGE_AUDITS.map((entry) => entry.sourcePath)));
+
+describe('Commercial C3 final canonical-owner reconciliation', () => {
+  it('locks the final 15-boundary / 14-page architecture against all 16 C2 clusters', () => {
+    expect(COMMERCIAL_C3_REVISION).toBe('2026-09-11-c3-r4');
+    expect(COMMERCIAL_C3_RECONCILIATION_STATUS).toBe('15-of-15-reconciled');
     expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS).toHaveLength(16);
     expect(COMMERCIAL_C3_POLICY.expectedUserFacingOwnershipBoundaries).toBe(15);
     expect(COMMERCIAL_C3_UNIQUE_OWNER_PATHS).toHaveLength(14);
@@ -21,83 +28,117 @@ describe('Commercial C3 canonical owner page audit', () => {
     expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS.filter((entry) => entry.ownerPath === '/online-english-classes-for-kids')).toHaveLength(2);
 
     for (const cluster of COMMERCIAL_C2_OWNERSHIP_CLUSTERS) {
-      expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS.filter((entry) => entry.clusterId === cluster.id), cluster.id).toHaveLength(1);
+      const matches = COMMERCIAL_C3_OWNER_PAGE_AUDITS.filter((entry) => entry.clusterId === cluster.id);
+      expect(matches, cluster.id).toHaveLength(1);
+      expect(matches[0]?.ownerPath, cluster.id).toBe(cluster.canonicalOwnerPath);
     }
   });
 
-  it('points every audited owner to a real source file', () => {
+  it('points every audited owner to a real source file with no unresolved signal status', () => {
     for (const entry of COMMERCIAL_C3_OWNER_PAGE_AUDITS) {
       expect(fs.existsSync(path.join(repoRoot, entry.sourcePath)), `${entry.ownerPath} -> ${entry.sourcePath}`).toBe(true);
+      for (const status of [entry.seo, entry.aeo, entry.geo, entry.conversion, entry.schema, entry.highIntent]) {
+        expect(status, `${entry.clusterId} still needs strengthening`).not.toBe('needs-strengthening');
+      }
     }
   });
 
-  it('keeps country and AI prompt page creation at zero', () => {
+  it('keeps country-page and AI-prompt-page creation at zero', () => {
     expect(COMMERCIAL_C3_POLICY.countryPagesCreated).toBe(0);
     expect(COMMERCIAL_C3_POLICY.aiPromptPagesCreated).toBe(0);
+    expect(COMMERCIAL_C3_POLICY.sourceLevelFactsRequired).toBe(true);
   });
 
-  it('strengthens the writing owner for creative-writing/provider intent', () => {
-    const source = read('src/pages/public/WritingClassesForKidsPage.tsx');
-    expect(source).toContain('creative writing classes for kids online');
-    expect(source).toContain('Creative & English Writing Classes for Kids Online');
-    expect(source).toContain('createCourseSchema');
-    expect(source).toContain("areaServed: ['India', 'Worldwide']");
-    expect(source).toContain('standard class is 35 minutes');
-    expect(source).toContain('How is a writing class different from a grammar class?');
+  it('keeps the final programme boundaries visible in owner source', () => {
+    const reading = lower('src/pages/public/ReadingClassesForKidsPage.tsx');
+    expect(reading).toContain('/reading-fluency-program');
+    expect(reading).toContain('/writing-classes-for-kids');
+
+    const fluency = lower('src/pages/public/ReadingFluencyProgramPage.tsx');
+    expect(fluency).toContain('/reading-classes-for-kids');
+    expect(fluency).toContain('reading fluency');
+
+    const grammar = lower('src/pages/grammar.tsx');
+    expect(grammar).toContain('/writing-classes-for-kids');
+    expect(grammar).toContain('/spoken-english-classes-for-kids-online');
+
+    const writing = lower('src/pages/public/WritingClassesForKidsPage.tsx');
+    expect(writing).toContain('/grammar');
+    expect(writing).toContain('creative writing');
+
+    const spoken = lower('src/pages/public/SpokenEnglishClassesForKidsPage.tsx');
+    expect(spoken).toContain('/speaking');
+    expect(spoken).toContain('/confidence-building-program-kids');
+
+    const speaking = lower('src/pages/speaking.tsx');
+    expect(speaking).toContain('/spoken-english-classes-for-kids-online');
+    expect(speaking).toContain('/confidence-building-program-kids');
+
+    const confidence = lower('src/pages/public/ConfidenceBuildingProgramKidsPage.tsx');
+    expect(confidence).toContain('/speaking');
+    expect(confidence).toContain('/shy-child-speaking-confidence');
   });
 
-  it('keeps reading fluency a narrow specialist owner with stronger programme facts', () => {
-    const source = read('src/pages/public/ReadingFluencyProgramPage.tsx');
-    expect(source).toContain('reading fluency classes for kids online');
-    expect(source).toContain('createCourseSchema');
-    expect(source).toContain('createWebPageSchema');
-    expect(source).toContain("areaServed: ['India', 'Worldwide']");
-    expect(source).toContain('The standard class is 35 minutes');
-    expect(source).toContain('broader reading-class searches belong to our');
-    expect(source).toContain('to="/reading-classes-for-kids"');
-  });
-
-  it('keeps confidence-building specialist intent separate from broad communication', () => {
-    const source = read('src/pages/public/ConfidenceBuildingProgramKidsPage.tsx');
-    expect(source).toContain('confidence building classes for kids');
-    expect(source).toContain('createCourseSchema');
-    expect(source).toContain('createWebPageSchema');
-    expect(source).toContain('general public speaking or communication classes');
-    expect(source).toContain('to="/speaking"');
-    expect(source).toContain('standard class is 35 minutes');
-  });
-
-  it('strengthens spoken English without stealing the /speaking owner', () => {
-    const source = read('src/pages/public/SpokenEnglishClassesForKidsPage.tsx');
-    expect(source).toContain('spoken English classes for NRI kids');
-    expect(source).toContain('1 to 1 spoken English classes for kids');
-    expect(source).toContain('What is the difference between spoken English and public speaking classes?');
-    expect(source).toContain('Parents looking mainly for public speaking should use the Tiny Steps Speaking program.');
-    expect(source).toContain('35 minutes');
-  });
-
-  it('strengthens the broad English owner for tutor, NRI and six-market international intent', () => {
-    const source = read('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
-    for (const token of ['online English tutor for kids', 'NRI families', 'UAE', 'United States', 'United Kingdom', 'Australia', 'Singapore']) {
+  it('keeps broad English as one global chooser plus generic tutor owner', () => {
+    const source = lower('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
+    for (const token of [
+      'online english tutor for kids',
+      '1 to 1 english tutor for kids online',
+      'nri families',
+      'uae',
+      'united states',
+      'united kingdom',
+      'australia',
+      'singapore',
+      '/online-english-classes-hyderabad',
+    ]) {
       expect(source, token).toContain(token);
     }
-    expect(source).toContain('Ages 3 to 5');
-    expect(source).toContain('Ages 6 to 8');
-    expect(source).toContain('Ages 9 to 12');
-    expect(source).not.toContain('Ages 9 to 13');
+    expect(source).not.toContain('ages 9 to 13');
   });
 
-  it('normalizes Tiny Steps phonics-fee duration to the canonical 35-minute standard 1:1 fact', () => {
+  it('keeps all commercial owner facts at source instead of relying on owner-specific Vite rewrites', () => {
     const vite = read('vite.config.js');
-    expect(vite).toContain(".replace('<div>35–40 min</div>', '<div>35 min</div>')");
-    expect(vite).toContain("₹4,800 for 12 classes · 35 min · 1 child : 1 teacher");
-    expect(vite).toContain('Standard 1:1 classes are 35 minutes');
+    for (const obsoleteOwnerRewrite of [
+      "id.includes('/src/pages/public/OnlineEnglishClassesForKidsPage.tsx')",
+      "id.includes('/src/pages/public/PhonicsFeesIndiaPage.tsx')",
+      "id.includes('/src/pages/public/ReadingClassesForKidsPage.tsx')",
+      "id.includes('/src/pages/phonics.tsx')",
+    ]) {
+      expect(vite, obsoleteOwnerRewrite).not.toContain(obsoleteOwnerRewrite);
+    }
+
+    for (const sourcePath of ownerSources) {
+      expect(read(sourcePath), `${sourcePath} still contains stale 35–40 wording`).not.toContain('35–40');
+    }
   });
 
-  it('protects high-performing owner canonicals instead of creating alternates', () => {
-    const protectedPaths = ['/phonics', '/best-online-phonics-classes-for-kids-in-india', '/reading-classes-for-kids', '/grammar', '/speaking', '/online-english-classes-hyderabad', '/pricing', '/book-demo'];
-    for (const ownerPath of protectedPaths) {
-      expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS.some((entry) => entry.ownerPath === ownerPath && entry.action === 'PROTECT'), ownerPath).toBe(true);
+  it('keeps the pricing owner tied to canonical pricing and removes unsupported commercial promises', () => {
+    const pricing = read('src/pages/PricingPage.tsx');
+    expect(pricing).toContain('ONE_TO_ONE_MONTHLY_PACKAGES');
+    expect(pricing).toContain('GROUP_MONTHLY_FEES');
+    expect(pricing).toContain('ULTRA_PREMIUM_PRICING');
+    expect(pricing).toContain("'@type': 'OfferCatalog'");
+    expect(pricing).toContain('/phonics-fees-india');
+    for (const stale of [
+      'Optional Game Subscriptions',
+      'Daily AI reading/speaking coach prompts',
+      'Monthly parent Q&A call',
+      'we’ll arrange it',
+      'We set up 2-month or 3-month payment splits for most families.',
+    ]) {
+      expect(pricing, stale).not.toContain(stale);
     }
+  });
+
+  it('keeps demo/assessment as the single transactional owner without unsupported friction claims', () => {
+    const demo = read('src/pages/public/BookDemoPage.tsx');
+    expect(demo).toContain('programmeRoutes');
+    expect(demo).toContain("areaServed: ['India', 'Worldwide']");
+    expect(demo).toContain('Is the free demo a multi-class free trial?');
+    expect(demo).toContain('/confidence-building-program-kids');
+    expect(demo).not.toContain('No credit card required');
+    expect(demo).not.toContain('Takes less than a minute');
+    expect(demo).not.toContain("availability: 'https://schema.org/InStock'");
   });
 });
