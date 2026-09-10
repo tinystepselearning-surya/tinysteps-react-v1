@@ -50,14 +50,21 @@ export { prepareTeacherFinanceAnalyticsRollups } from "./prepareTeacherFinanceAn
 export { reconcileParentPaymentsMonthReadModels } from "./reconcileParentPaymentsMonthReadModels";
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 
-// Bulk session generator from enrollment schedule config
-export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
-export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromSchedule";
-export { repairEnrollmentFutureSessionsFromSchedule } from "./createSessionsFromSchedule";
-export { repairCancelledFutureRegularSessionsForEnrollment } from "./createSessionsFromSchedule";
-export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
-export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
-// Rolling scheduling remains isolated from the legacy finite scheduler until the admin UI cutover brick.
+// Production cutover compatibility surface. Existing clients may continue using the
+// legacy callable names, but canonical rolling enrollments are detected server-side and
+// routed to the bounded rolling lifecycle/materialization/reconciliation paths. Genuine
+// legacy enrollments retain their previous finite-scheduler behavior until converted.
+export {
+  createSessionsFromSchedule,
+  saveEnrollmentScheduleAndGenerateSessions,
+  repairEnrollmentFutureSessionsFromSchedule,
+  repairCancelledFutureRegularSessionsForEnrollment,
+  pauseEnrollmentUpcomingSessions,
+  resumeEnrollmentSchedule,
+  setEnrollmentStatus,
+  createEnrollment,
+  transitionEnrollmentCourse,
+} from "./scheduling/rollingScheduleCompatibility";
 export {
   saveRollingEnrollmentSchedule,
   setRollingEnrollmentLifecycle,
@@ -195,16 +202,13 @@ export { enrichPublicLeadAttribution } from "./enrichPublicLeadAttribution";
 export { onWebsiteLeadIdentityWrite } from "./websiteLeadDeduplication";
 export { notFoundRoute } from "./notFoundRoute";
 
-// Enrollment lifecycle (createEnrollment also permits the assigned Learning Partner)
+// Enrollment lifecycle helpers not replaced by the compatibility surface.
 export {
-  setEnrollmentStatus,
   reassignEnrollmentTeacher,
   repairEnrollmentTeacherSessionConsistency,
   archiveKid,
   createAdminManualSession,
   cancelAdminManualSession,
-  createEnrollment,
-  transitionEnrollmentCourse,
 } from "./lifecycle";
 export { auditTeacherTodaySessions } from "./auditTeacherTodaySessions";
 export { auditAllTransferredSessionSnapshotIssues } from "./auditAllTransferredSessionSnapshotIssues";
