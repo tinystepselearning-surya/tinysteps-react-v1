@@ -12,11 +12,13 @@ const repoRoot = path.resolve(process.cwd());
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('Commercial C3 canonical owner page audit', () => {
-  it('audits every C2 ownership cluster exactly once across 14 unique pages', () => {
-    expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS).toHaveLength(15);
+  it('audits every machine-readable C2 ownership cluster exactly once across 14 unique pages', () => {
+    expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS).toHaveLength(16);
+    expect(COMMERCIAL_C3_POLICY.expectedUserFacingOwnershipBoundaries).toBe(15);
     expect(COMMERCIAL_C3_UNIQUE_OWNER_PATHS).toHaveLength(14);
-    expect(new Set(COMMERCIAL_C3_OWNER_PAGE_AUDITS.map((entry) => entry.clusterId)).size).toBe(15);
+    expect(new Set(COMMERCIAL_C3_OWNER_PAGE_AUDITS.map((entry) => entry.clusterId)).size).toBe(16);
     expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS.filter((entry) => entry.ownerPath === '/speaking')).toHaveLength(2);
+    expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS.filter((entry) => entry.ownerPath === '/online-english-classes-for-kids')).toHaveLength(2);
 
     for (const cluster of COMMERCIAL_C2_OWNERSHIP_CLUSTERS) {
       expect(COMMERCIAL_C3_OWNER_PAGE_AUDITS.filter((entry) => entry.clusterId === cluster.id), cluster.id).toHaveLength(1);
