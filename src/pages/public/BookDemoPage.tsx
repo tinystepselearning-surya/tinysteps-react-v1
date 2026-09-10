@@ -22,75 +22,130 @@ import {
   FREE_DEMO_FULL_DESCRIPTION,
   FREE_DEMO_OFFER_NAME,
 } from '../../config/publicOffer';
+import { PUBLIC_SITE_FACTS } from '../../config/publicFacts';
 
 const bookDemoSeo = getRouteConfig('/book-demo');
 const bookDemoTitle =
-  bookDemoSeo?.title ?? 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning';
+  bookDemoSeo?.title ?? `Free ${FREE_DEMO_DURATION_MINUTES}-Minute 1:1 English Assessment | Tiny Steps`;
 const bookDemoDescription =
   bookDemoSeo?.description ??
-  'Book a free 35-minute 1:1 demo assessment for your child. Understand their current phonics, reading, grammar or speaking-confidence level and recommended starting path.';
+  `Book one free ${FREE_DEMO_DURATION_MINUTES}-minute live 1:1 online English assessment for your child. Identify the right phonics, reading, grammar, writing or speaking path before enrolment.`;
 const bookDemoCanonicalPath = bookDemoSeo?.canonicalPath ?? '/book-demo';
 const bookDemoCanonicalUrl = `${SITE_ORIGIN}${bookDemoCanonicalPath}`;
+
+const assessmentKeywords = [
+  'free English assessment for kids online',
+  'free online English assessment for kids',
+  'free English demo class for kids',
+  'free online English demo class',
+  'free 1 to 1 English demo class',
+  'English level assessment for kids',
+  'online English assessment for child',
+  'free English trial class for kids',
+  'book English demo class for kids',
+  'free phonics assessment online',
+  'free reading assessment for kids',
+  'free grammar assessment for kids',
+  'free speaking assessment for kids',
+];
 
 const assessmentSteps = [
   {
     number: '01',
     title: 'Understand the current stage',
-    description: 'We begin with your child’s age, current English level and learning needs.',
+    description: 'We begin with your child’s age, current English level and the main concern you are seeing.',
   },
   {
     number: '02',
-    title: 'Check key skills',
+    title: 'Check the relevant skills',
     description:
-      'Depending on your child’s level, the teacher may assess phonics, reading, grammar, sentence formation, pronunciation or speaking.',
+      'The teacher focuses on the skills connected to that concern—for example phonics, reading, grammar, writing, spoken English or communication.',
   },
   {
     number: '03',
     title: 'Identify the starting point',
-    description: 'We identify which skills are secure and which areas need support first.',
+    description: 'We identify which skills appear secure and which area should receive attention first.',
   },
   {
     number: '04',
     title: 'Recommend the next step',
-    description: 'Parents receive a recommended Tiny Steps program and starting level based on the assessment.',
+    description: 'Parents receive a recommended Tiny Steps programme and starting point based on what was observed.',
   },
 ];
 
 const assessmentOutcomes = [
   {
     title: 'Current level',
-    description: 'Where your child currently stands.',
+    description: 'A clearer view of the child’s present skill level in the area assessed.',
   },
   {
     title: 'Priority skill',
-    description: 'Which skill should receive attention first.',
+    description: 'Which learning need should receive attention first.',
   },
   {
     title: 'Recommended starting path',
-    description: 'The appropriate Tiny Steps program and level.',
+    description: 'The most appropriate Tiny Steps programme and starting point.',
   },
   {
     title: 'Next steps',
-    description: 'What parents can do next if they choose to continue.',
+    description: 'What parents can review next if they choose to continue.',
   },
 ];
 
 const decisionChecks = [
   {
-    title: 'Program',
+    title: 'Programme',
     description: 'Which learning path is being recommended?',
   },
   {
-    title: 'Starting level',
-    description: 'Where will your child begin?',
+    title: 'Starting point',
+    description: 'Where should your child begin?',
   },
   {
     title: 'Class format',
-    description: 'Is the recommended option 1:1 or small group?',
+    description: 'Is the suitable option live 1:1 or an available small group?',
   },
   {
     title: 'Pricing',
-    description: 'What does the recommended plan currently cost?',
+    description: 'What does the recommended format currently cost?',
+  },
+];
+
+const programmeRoutes = [
+  {
+    name: 'Phonics',
+    href: '/phonics',
+    fit: 'Letter sounds, blending, decoding, spelling patterns and early reading foundations.',
+  },
+  {
+    name: 'Reading',
+    href: '/reading-classes-for-kids',
+    fit: 'Broader reading accuracy, connected reading, vocabulary, comprehension and reading confidence.',
+  },
+  {
+    name: 'Grammar',
+    href: '/grammar',
+    fit: 'Sentence structure, parts of speech, tenses, punctuation and grammar accuracy.',
+  },
+  {
+    name: 'Writing',
+    href: '/writing-classes-for-kids',
+    fit: 'Idea development, paragraphs, stories, school writing, editing and independent written expression.',
+  },
+  {
+    name: 'Spoken English',
+    href: '/spoken-english-classes-for-kids-online',
+    fit: 'Everyday conversation, fuller responses, vocabulary in use and conversational fluency.',
+  },
+  {
+    name: 'Public Speaking & Communication',
+    href: '/speaking',
+    fit: 'Structured answers, storytelling, presentations, show-and-tell and general communication skills.',
+  },
+  {
+    name: 'Confidence Building',
+    href: '/confidence-building-program-kids',
+    fit: 'Specialist support when speaking comfort, participation confidence or dependence on prompting is the main barrier.',
   },
 ];
 
@@ -98,31 +153,46 @@ const assessmentFaqItems = [
   {
     question: 'Is the Tiny Steps demo assessment free?',
     answer:
-      'Yes. One free 35-minute 1:1 online assessment is available per child before enrolment.',
+      `Yes. Tiny Steps offers one free ${FREE_DEMO_DURATION_MINUTES}-minute live 1:1 online demo assessment per child before enrolment.`,
   },
   {
     question: 'How long is the assessment?',
-    answer: `The assessment is approximately ${FREE_DEMO_DURATION_MINUTES} minutes.`,
+    answer: `The live 1:1 assessment is ${FREE_DEMO_DURATION_MINUTES} minutes.`,
   },
   {
-    question: 'What will my child be assessed on?',
+    question: 'Do I need to know which programme my child needs before booking?',
     answer:
-      'This depends on your child’s age and current level. The teacher may check phonics, reading, grammar, sentence formation, pronunciation or speaking skills.',
+      'No. The form asks for the main concern you are seeing. The assessment is designed to help identify the most appropriate Tiny Steps programme and starting point.',
   },
   {
-    question: 'Will I receive a course recommendation?',
+    question: 'What can my child be assessed on?',
     answer:
-      'Yes. Based on the session, Tiny Steps recommends an appropriate program and starting level.',
+      'The session is targeted to the child’s main concern and current level. Depending on the need, the teacher may check phonics, reading, grammar, writing, spoken English, public speaking or communication confidence rather than trying to test every skill in one session.',
+  },
+  {
+    question: 'Will I receive a programme recommendation?',
+    answer:
+      'Yes. Based on what is observed during the session, Tiny Steps recommends an appropriate programme and starting point. Parents can then review the curriculum, class format and pricing before deciding.',
+  },
+  {
+    question: 'Is the free demo a multi-class free trial?',
+    answer:
+      `No. The current Tiny Steps free offer is one ${FREE_DEMO_DURATION_MINUTES}-minute live 1:1 demo assessment session per child. It is an assessment and programme-fit session, not a multi-class free course.`,
+  },
+  {
+    question: 'Can families outside India book the free assessment?',
+    answer:
+      'Yes. Tiny Steps serves families in India and worldwide. International and NRI families can request an assessment, subject to compatible teacher timings.',
   },
   {
     question: 'Do I need to enrol after the assessment?',
     answer:
-      'No. Parents can review the recommendation, curriculum, class format and pricing before deciding.',
+      'No. Parents can review the recommendation, programme, class format, available timings and current pricing before deciding whether to enrol.',
   },
   {
     question: 'How will I receive available slots?',
     answer:
-      'After submitting the form, our team will contact you on WhatsApp with available assessment timings.',
+      'After submitting the form, the Tiny Steps team will contact you on WhatsApp to discuss the child’s requirement and arrange a suitable assessment slot.',
   },
 ];
 
@@ -131,15 +201,23 @@ const breadcrumbSchema = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
-    { '@type': 'ListItem', position: 2, name: 'Book Demo', item: bookDemoCanonicalUrl },
+    { '@type': 'ListItem', position: 2, name: 'Free Demo Assessment', item: bookDemoCanonicalUrl },
   ],
 };
 
-const webpageSchema = createWebPageSchema({
-  name: FREE_DEMO_OFFER_NAME,
-  description: bookDemoDescription,
-  url: bookDemoCanonicalUrl,
-});
+const webpageSchema = {
+  ...createWebPageSchema({
+    name: FREE_DEMO_OFFER_NAME,
+    description: bookDemoDescription,
+    url: bookDemoCanonicalUrl,
+  }),
+  '@id': `${bookDemoCanonicalUrl}#webpage`,
+  about: [
+    { '@type': 'Thing', name: 'Free online English assessment for kids' },
+    { '@type': 'Thing', name: 'English level assessment for children' },
+    { '@type': 'Thing', name: 'Online English demo class for kids' },
+  ],
+};
 
 const assessmentServiceSchema = {
   '@context': 'https://schema.org',
@@ -153,13 +231,20 @@ const assessmentServiceSchema = {
     '@id': ORGANIZATION_ID,
     name: PUBLIC_FACTS.organizationName,
   },
-  serviceType: 'Online English demo assessment class for children',
+  serviceType: 'Free live 1:1 online English demo assessment for children',
   duration: `PT${FREE_DEMO_DURATION_MINUTES}M`,
+  areaServed: ['India', 'Worldwide'],
+  audience: {
+    '@type': 'EducationalAudience',
+    educationalRole: 'student',
+    audienceType: PUBLIC_SITE_FACTS.audience.label,
+  },
   offers: {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'INR',
     url: bookDemoCanonicalUrl,
+    availability: 'https://schema.org/InStock',
   },
 };
 
@@ -167,7 +252,7 @@ const decisionChecklistSchema = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   '@id': `${bookDemoCanonicalUrl}#decision-checklist`,
-  name: 'What parents should confirm before enrolling after a Tiny Steps demo',
+  name: 'What parents should confirm before enrolling after a Tiny Steps assessment',
   itemListOrder: 'https://schema.org/ItemListOrderAscending',
   itemListElement: decisionChecks.map((item, index) => ({
     '@type': 'ListItem',
@@ -213,6 +298,7 @@ export default function BookDemoPage() {
       description: bookDemoDescription,
       canonicalPath: bookDemoCanonicalPath,
       ogType: 'website',
+      keywords: assessmentKeywords,
       jsonLd: [
         webpageSchema,
         assessmentServiceSchema,
@@ -247,18 +333,22 @@ export default function BookDemoPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700 shadow-sm backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-orange-500" />
-              Free 1:1 assessment
+              Free live 1:1 assessment
             </div>
 
             <h1 className="mt-6 font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-[4rem]">
-              Book One Free 35-Minute Demo Assessment Class
+              Book a Free {FREE_DEMO_DURATION_MINUTES}-Minute 1:1 English Assessment
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
-              Understand your child&apos;s current level and find the right starting point for phonics, reading, grammar or speaking confidence.
+              Tell us the main concern you are seeing. The live assessment helps identify your child&apos;s current starting point and the most suitable Tiny Steps learning path.
             </p>
 
             <div className="mt-7 grid max-w-2xl gap-3 sm:grid-cols-3">
-              {['35-minute live 1:1 assessment', 'One free session per child', 'No credit card required'].map((item) => (
+              {[
+                `${FREE_DEMO_DURATION_MINUTES}-minute live 1:1 assessment`,
+                'One free session per child',
+                `${PUBLIC_SITE_FACTS.audience.label} · India & worldwide`,
+              ].map((item) => (
                 <div key={item} className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-700">
                   <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-black text-orange-700">✓</span>
                   <span>{item}</span>
@@ -286,12 +376,12 @@ export default function BookDemoPage() {
           <div id="assessment-form" className="scroll-mt-28 lg:py-2">
             <PublicAssessmentForm
               source={assessmentSource}
-              title="Book Your Assessment"
-              description="Share a few details. Our team will confirm suitable slots on WhatsApp."
-              submitLabel="Book Free 35-Minute Demo"
-              submitAriaLabel="Book Free 35-Minute Demo"
+              title="Book Your Free Assessment"
+              description="Share your child’s main concern. Our team will contact you on WhatsApp and arrange a suitable assessment slot."
+              submitLabel={FREE_DEMO_CTA_LABEL}
+              submitAriaLabel={FREE_DEMO_CTA_LABEL}
               appearance="embedded"
-              helperText="Takes less than a minute • No commitment"
+              helperText="One free live 1:1 assessment per child • No enrolment commitment"
               secondaryHelperText={null}
               onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
             />
@@ -307,7 +397,7 @@ export default function BookDemoPage() {
               What Happens in the Demo Assessment?
             </h2>
             <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-              A focused session designed to understand where your child is now and what should come next.
+              A focused {FREE_DEMO_DURATION_MINUTES}-minute session designed to understand the child&apos;s main learning need and what should come next.
             </p>
           </div>
 
@@ -339,18 +429,18 @@ export default function BookDemoPage() {
                   Who Is This Assessment For?
                 </h2>
                 <p className="mt-4 max-w-md leading-7 text-slate-600">
-                  Especially useful when you can see the struggle, but are not yet sure which skill or level needs attention first.
+                  Especially useful when you can see the difficulty but are not yet sure which programme or starting point fits best.
                 </p>
               </div>
 
               <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
                 {[
-                  'Your child knows letters but struggles to read words confidently.',
-                  'Your child reads slowly, guesses words or finds blending difficult.',
-                  'Your child understands grammar but struggles to use it correctly.',
-                  'Your child speaks mainly in short or incomplete sentences.',
-                  'Your child lacks confidence while speaking.',
-                  'You are unsure which Tiny Steps program or level is appropriate.',
+                  'Your child knows letters or sounds but struggles to blend and read unfamiliar words.',
+                  'Your child reads but is slow, guesses words, or has difficulty understanding connected text.',
+                  'Your child makes recurring grammar or sentence-structure errors while speaking or writing.',
+                  'Your child needs help developing ideas, paragraphs, stories or school writing.',
+                  'Your child gives short or hesitant responses in everyday English conversation.',
+                  'Your child needs public-speaking, communication or confidence support—or you are simply not sure where to start.',
                 ].map((item, index) => (
                   <div key={item} className={`flex gap-3 border-b border-slate-200/70 pb-4 text-slate-700 ${index >= 4 ? 'sm:border-b-0' : ''}`}>
                     <span aria-hidden="true" className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-orange-600 shadow-sm">✓</span>
@@ -359,6 +449,32 @@ export default function BookDemoPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-16 sm:py-20" aria-labelledby="programme-routes-heading">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Assessment-led routing</p>
+            <h2 id="programme-routes-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
+              What Can the Assessment Recommend?
+            </h2>
+            <p className="mt-4 leading-7 text-slate-600">
+              You do not need to choose a programme before booking. The assessment helps identify the most relevant starting path; each programme page then explains the curriculum in depth.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {programmeRoutes.map((route) => (
+              <article key={route.href} className="rounded-[26px] border border-slate-200 bg-[#fcfcfb] p-6">
+                <h3 className="text-lg font-black text-slate-950">{route.name}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{route.fit}</p>
+                <Link to={route.href} className="mt-5 inline-flex text-sm font-bold text-orange-700 underline decoration-orange-200 underline-offset-4">
+                  Explore {route.name}
+                </Link>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -372,7 +488,7 @@ export default function BookDemoPage() {
                 What Will You Understand After the Assessment?
               </h2>
               <p className="mt-4 max-w-lg leading-7 text-slate-300">
-                The goal is clarity: where your child is, what matters first, and which route makes sense next.
+                The goal is decision clarity: what appears secure, what needs attention first, and which route makes sense next.
               </p>
             </div>
 
@@ -396,7 +512,7 @@ export default function BookDemoPage() {
                 Before You Enrol
               </h2>
               <p className="mt-3 max-w-md leading-7 text-slate-300">
-                You should feel clear about these four points before choosing a program.
+                You should feel clear about these four points before choosing a paid programme or package.
               </p>
             </div>
 
@@ -424,7 +540,7 @@ export default function BookDemoPage() {
           </div>
 
           <p className="mt-10 text-xs leading-5 text-slate-500">
-            Assessment recommendations are based on what is observed during the session. Individual learning progress varies.
+            Assessment recommendations are based on what is observed during the session. A single assessment does not measure every English skill, and individual learning progress varies.
           </p>
         </div>
       </section>
@@ -435,10 +551,10 @@ export default function BookDemoPage() {
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Common questions</p>
               <h2 id="demo-faq-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
-                Demo Assessment FAQs
+                Free Demo Assessment FAQs
               </h2>
               <p className="mt-4 max-w-md leading-7 text-slate-600">
-                Everything you need to know before choosing a slot.
+                What parents need to know before requesting a slot.
               </p>
             </div>
 
@@ -465,7 +581,7 @@ export default function BookDemoPage() {
               Ready to Understand Your Child’s Starting Point?
             </h2>
             <p className="mt-3 max-w-2xl leading-7 text-slate-700">
-              Book one free 35-minute assessment and receive a recommended learning path based on your child&apos;s current skills.
+              Book one free {FREE_DEMO_DURATION_MINUTES}-minute live 1:1 assessment and receive a recommended learning path based on the skills observed during the session.
             </p>
           </div>
           <div className="mt-7 shrink-0 md:mt-0 md:text-right">
@@ -473,9 +589,9 @@ export default function BookDemoPage() {
               href="#assessment-form"
               className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800"
             >
-              Book Free Assessment
+              {FREE_DEMO_CTA_LABEL}
             </a>
-            <p className="mt-3 text-xs text-slate-500">One free session per child • No credit card required</p>
+            <p className="mt-3 text-xs text-slate-500">One free live 1:1 assessment per child • No enrolment commitment</p>
           </div>
         </div>
       </section>
