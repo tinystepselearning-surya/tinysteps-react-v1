@@ -1,0 +1,52 @@
+name: C3 Final Contract Check
+
+on:
+  push:
+    branches:
+      - seo/c1-parent-commercial-search-universe
+    paths:
+      - '.github/workflows/c3-final-contract-check.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  c3-final-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: seo/c1-parent-commercial-search-universe
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Apply final audit mechanics fix
+        run: python scripts/tmp-c3-final-contract-fix.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Run focused C1-C3 contract tests
+        run: >-
+          npx vitest run
+          src/tests/seo/commercialC3OwnerPageAudit.spec.ts
+          src/tests/seo/commercialC2KeywordOwnership.spec.ts
+          src/tests/seo/commercialC1ObservedSearchEvidence.spec.ts
+          src/tests/seo/commercialC1InternationalAiResearch.spec.ts
+      - name: Run final C3 audit
+        run: node scripts/audit-commercial-c3-owner-pages.mjs
+      - name: Run C2 ownership audit
+        run: node scripts/audit-commercial-c2-keyword-ownership.mjs
+      - name: Run C1 observed-evidence audit
+        run: node scripts/audit-commercial-c1-observed-search-evidence.mjs
+      - name: Run typecheck
+        run: npm run typecheck
+      - name: Commit audit-mechanics fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/audit-commercial-c3-owner-pages.mjs
+          git diff --cached --check
+          git commit -m 'C3 final: fix reconciliation audit mechanics'
+          git push origin HEAD:seo/c1-parent-commercial-search-universe
