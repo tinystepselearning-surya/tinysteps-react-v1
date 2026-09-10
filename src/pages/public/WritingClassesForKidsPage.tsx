@@ -2,13 +2,33 @@ import { useEffect } from 'react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
-import { createFAQPageSchema } from '../../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+
+const canonicalPath = '/writing-classes-for-kids';
+const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+
+const WRITING_SEO_KEYWORDS = [
+  'creative writing classes for kids online',
+  'online writing classes for kids',
+  'writing classes for kids',
+  'English writing classes for kids',
+  '1 to 1 writing classes online',
+  'paragraph writing classes for kids',
+  'sentence writing classes for kids',
+  'school writing support for kids',
+  'writing tutor for kids online',
+];
 
 const faqItems = [
   {
     question: 'What do online writing classes for kids improve first?',
     answer:
       'The first target depends on the child. Common starting points are complete sentence formation, punctuation, tense control, idea organisation, and turning spoken answers into clear written responses.',
+  },
+  {
+    question: 'Do Tiny Steps writing classes include creative writing?',
+    answer:
+      'Yes. Creative writing is developed through idea generation, description, storytelling, vocabulary choice, sentence variety, paragraph organisation, and editing. The aim is independent expression, not copying a model answer.',
   },
   {
     question: 'My child knows grammar rules but cannot write clear answers. Can this help?',
@@ -24,6 +44,16 @@ const faqItems = [
     question: 'How is a writing class different from a grammar class?',
     answer:
       'Grammar teaches how language works. Writing requires the child to use grammar while choosing ideas, sequencing information, building sentences, revising, and communicating clearly. Tiny Steps connects the two rather than treating writing as rule memorisation.',
+  },
+  {
+    question: 'Are Tiny Steps writing classes live and 1:1?',
+    answer:
+      'Tiny Steps offers live 1:1 online English learning. The standard class is 35 minutes, with the child receiving direct teacher feedback on the writing process and the next improvement target.',
+  },
+  {
+    question: 'Can families outside India join online writing classes?',
+    answer:
+      'Yes. Tiny Steps supports families in India and worldwide through live online classes. Available class timings are confirmed with the family before enrolment.',
   },
   {
     question: 'How can parents see whether writing is improving?',
@@ -113,18 +143,29 @@ export default function WritingClassesForKidsPage() {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Writing Classes for Kids', item: 'https://tinystepslearning.com/writing-classes-for-kids' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${PUBLIC_FACTS.primaryWebsite}/` },
+        { '@type': 'ListItem', position: 2, name: 'Writing Classes for Kids', item: canonicalUrl },
       ],
     };
 
-    applySeo({
-      title: 'English Writing Classes for Kids | Tiny Steps Learning',
+    const courseSchema = createCourseSchema({
+      name: 'Creative and English Writing Classes for Kids Online',
       description:
-        'Live English writing classes for kids focused on sentence formation, paragraph writing, grammar in use, editing, and clearer idea expression with personalised feedback.',
-      canonicalPath: '/writing-classes-for-kids',
+        'Live online writing classes for kids focused on creative writing, sentence formation, paragraph writing, school answers, editing, and independent expression.',
+      url: canonicalUrl,
+      educationalLevel: 'School-age writing support',
+      teaches: ['creative writing', 'sentence formation', 'paragraph writing', 'school writing', 'editing', 'idea organisation'],
+      areaServed: ['India', 'Worldwide'],
+    });
+
+    applySeo({
+      title: 'Creative Writing Classes for Kids Online | Tiny Steps Learning',
+      description:
+        'Live online writing classes for kids covering creative writing, sentence formation, paragraph writing, school answers and editing with personalised 1:1 feedback.',
+      canonicalPath,
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, createFAQPageSchema(faqItems)],
+      keywords: WRITING_SEO_KEYWORDS,
+      jsonLd: [breadcrumbSchema, courseSchema, createFAQPageSchema(faqItems)],
     });
   }, []);
 
@@ -132,14 +173,17 @@ export default function WritingClassesForKidsPage() {
     <div className="container mx-auto max-w-6xl px-6 py-12">
       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-violet-50 px-6 py-10 text-center shadow-sm md:px-10 md:py-14">
         <div className="mx-auto inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
-          Tiny Steps • Writing Support
+          Tiny Steps • Live Writing Support
         </div>
         <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-bold text-slate-900 md:text-5xl">
-          English Writing Classes for Kids
+          Creative & English Writing Classes for Kids Online
         </h1>
         <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-700">
-          Help your child move from knowing grammar rules to actually using them in clear sentences, paragraphs,
-          school answers, descriptions, and independent writing.
+          Live 1:1 writing support helps children turn ideas into clear sentences, creative descriptions, organised paragraphs,
+          stronger school answers, and more independent writing.
+        </p>
+        <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+          Available to families in India and worldwide. The standard live 1:1 class is 35 minutes, and parents can start with one free 35-minute demo assessment before choosing a path.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
@@ -152,16 +196,16 @@ export default function WritingClassesForKidsPage() {
             to="/grammar"
             className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 font-semibold text-slate-900 transition hover:bg-slate-50"
           >
-            Explore Grammar & Writing Path
+            Explore Grammar Support
           </Link>
         </div>
       </section>
 
       <section className="mt-10 rounded-3xl border border-emerald-100 bg-emerald-50 p-6 md:p-8">
-        <h2 className="text-2xl font-bold text-slate-900">What are English writing classes for kids?</h2>
+        <h2 className="text-2xl font-bold text-slate-900">What do online writing and creative writing classes for kids teach?</h2>
         <p className="mt-3 max-w-4xl leading-7 text-slate-700">
           Writing classes give children guided practice in turning ideas into organised written language. A useful programme does more than teach grammar definitions:
-          it helps the child understand a prompt, form a complete sentence, connect ideas, revise errors, and use the same skill in an unfamiliar task.
+          it helps the child understand a prompt, generate ideas, form complete sentences, add useful detail, connect ideas into paragraphs, revise errors, and use the same skill in an unfamiliar task.
           Tiny Steps uses live feedback so the teacher can see where the writing process is breaking down and target that stage directly.
         </p>
       </section>
@@ -200,9 +244,9 @@ export default function WritingClassesForKidsPage() {
           <h2 className="text-2xl font-bold">What Tiny Steps targets</h2>
           <ul className="mt-5 space-y-3 text-sm leading-6 text-slate-100">
             <li>• Complete sentence formation and clearer word order.</li>
+            <li>• Creative idea development, description, storytelling, and vocabulary choice.</li>
             <li>• Grammar applied inside real writing, not isolated rule drills only.</li>
             <li>• Paragraph planning and connection between ideas.</li>
-            <li>• Vocabulary choices that make meaning more precise.</li>
             <li>• Editing habits so children learn to notice and fix their own errors.</li>
             <li>• Transfer into school-style answers, descriptions, summaries, and longer writing.</li>
           </ul>
@@ -210,7 +254,7 @@ export default function WritingClassesForKidsPage() {
       </section>
 
       <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-50 p-6 md:p-8">
-        <h2 className="text-3xl font-bold text-slate-900">How a guided writing lesson works</h2>
+        <h2 className="text-3xl font-bold text-slate-900">How a guided 1:1 writing lesson works</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           {lessonLoop.map((item, index) => (
             <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -269,14 +313,14 @@ export default function WritingClassesForKidsPage() {
       <section className="mt-12 rounded-3xl bg-slate-900 p-8 text-center text-white md:p-10">
         <h2 className="text-3xl font-bold">Find the writing bottleneck before choosing a level</h2>
         <p className="mx-auto mt-3 max-w-3xl text-slate-200">
-          Book one free 35-minute 1:1 online demo assessment class and ask the teacher to identify whether the first priority is sentence formation, grammar application, paragraph structure, editing, or confidence expressing ideas.
+          Book one free 35-minute 1:1 online demo assessment class and ask the teacher to identify whether the first priority is sentence formation, creative idea development, paragraph structure, editing, or confidence expressing ideas.
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <Link to="/book-demo" className="rounded-full bg-white px-7 py-3 font-semibold text-slate-900 transition hover:bg-slate-100">
             Book Free 35-Minute Demo
           </Link>
-          <Link to="/parents/tracking-progress" className="rounded-full border border-white/20 px-7 py-3 font-semibold text-white">
-            How to Track Progress
+          <Link to="/pricing" className="rounded-full border border-white/20 px-7 py-3 font-semibold text-white">
+            See Pricing
           </Link>
         </div>
       </section>
