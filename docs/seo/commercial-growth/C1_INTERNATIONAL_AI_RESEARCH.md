@@ -1,6 +1,6 @@
 # C1 — International + AI-Style Commercial Research
 
-Revision: 2026-09-10-c1-r3  
+Revision: 2026-09-10-c1-r4  
 Status: research-complete  
 Scope: research only; ownership remains C2
 
@@ -55,6 +55,19 @@ Observed current provider patterns include Rays Education, Englishly Global, Win
 
 Important: these are market observations. They do not prove Tiny Steps ranks for each international query and do not authorize country landing pages.
 
+## Actual international evidence now available
+
+The later user-provided GSC Web Search export confirms meaningful whole-site visibility in every priority geography:
+
+- India — 1,909 clicks / 33,025 impressions
+- United States — **1,587 / 26,641**
+- United Kingdom — 264 / 5,254
+- Australia — 280 / 3,873
+- United Arab Emirates — 104 / 1,700
+- Singapore — 73 / 1,041
+
+This validates the six-market research layer, but it still does **not** authorize six country pages because the country totals include informational/resource traffic. Explicit country-modified commercial queries are sparse in the top-1,000 GSC query export.
+
 ## AI-style parent-query layer
 
 C1 also contains a separate conversational-query layer designed around the way a parent may ask ChatGPT, Gemini, Copilot, Perplexity or another answer engine for help.
@@ -73,6 +86,22 @@ It includes prompts such as:
 - deciding whether an India-based teacher can fit a US, UK, UAE or Australian school/timezone context
 
 These are research prompts, not SEO pages. C2 determines whether their intent belongs to an existing commercial owner or requires a distinct owner.
+
+## Actual conversational + Bing AI evidence now available
+
+The later search exports turn part of this layer from hypothesis into observed evidence.
+
+Google Web contains a natural-language search asking what online course can help a six-year-old in Jeddah move from memorizing English words to speaking complete sentences. It recorded 11 impressions at average position 3.45.
+
+Bing AI grounding data directly cites Tiny Steps for:
+
+- `phonics classes for kids` — 25 citations / 16.23% citation share
+- `online phonics classes` — 24 citations / 20.34% citation share
+- `beginner phonics program age range` — 26 citations / 43.33% citation share
+
+The supplied Bing AI page report records 120 citations for `/phonics`, 34 for `/online-english-classes-for-kids`, 15 for `/speaking` and 3 for `/reading-classes-for-kids`.
+
+Therefore AI commercial visibility is now **observed for phonics**, while other commercial programmes remain materially weaker.
 
 ## Enrolment-stage gap closed
 
@@ -110,6 +139,8 @@ The international opportunity is not automatically “build six country pages.�
 - how strongly Tiny Steps should surface its live 1:1 format, global availability, timezone flexibility, free assessment and transparent ₹400/class value proposition.
 
 The budget-drop-off heuristic makes price/value intent commercially important. C2 should treat price objections as a genuine parent-decision cluster rather than a minor FAQ concern.
+
+Detailed observed Google/Bing metrics are stored in `commercialC1ObservedSearchEvidence.ts` and documented in `C1_OBSERVED_GSC_BING_EVIDENCE_2026-09-10.md`.
 
 ## Guardrail
 
