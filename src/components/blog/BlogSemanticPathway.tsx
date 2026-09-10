@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  getGrammarWritingSemanticInternalLinksForPath,
-  type ResolvedGrammarWritingSemanticLink,
-} from '../../lib/grammarWritingSemanticJourneyGraph.js';
+import { getSpeakingCommunicationSemanticInternalLinksForPath } from '../../lib/speakingCommunicationCompletionSemanticJourneyGraph.js';
+import type { ResolvedSpeakingCommunicationSemanticLink } from '../../lib/speakingCommunicationSemanticJourneyGraph.js';
 
+// SP6 is the runtime adapter. It composes the R22 getSpeakingCommunicationSemanticInternalLinksForPath
+// adapter, which composes the R19 getGrammarWritingSemanticInternalLinksForPath adapter,
+// the R16 getReadingSemanticInternalLinksForPath adapter and the frozen Brick 6 graph.
 type BlogSemanticPathwayProps = {
   slug: string;
 };
@@ -22,7 +23,7 @@ const RELATION_LABELS: Record<string, string> = {
 
 export default function BlogSemanticPathway({ slug }: BlogSemanticPathwayProps) {
   const links = useMemo(
-    () => getGrammarWritingSemanticInternalLinksForPath(`/blog/${slug}`, {
+    () => getSpeakingCommunicationSemanticInternalLinksForPath(`/blog/${slug}`, {
       limit: 4,
       excludeRelations: ['assessment', 'programme'],
     }),
@@ -46,7 +47,7 @@ export default function BlogSemanticPathway({ slug }: BlogSemanticPathwayProps) 
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {links.map((link: ResolvedGrammarWritingSemanticLink) => (
+        {links.map((link: ResolvedSpeakingCommunicationSemanticLink) => (
           <Link
             key={`${link.relation}-${link.targetTopicId}`}
             to={link.to}

@@ -96,8 +96,8 @@ describe('B14 trust, entity and schools authority guardrails', () => {
   it('keeps /curriculum concise and preserves roadmap ownership', () => {
     const curriculum = read('src/pages/CurriculumPage.tsx');
     expect(curriculum).toContain('The complete Tiny Steps learning roadmap');
-    expect(curriculum).toContain('built around prerequisites, structured progression, learner observation');
-    expect(curriculum).toContain('adapting modelling, prompts, repetition, practice time and pace');
+    expect(curriculum).toContain('Children do not have to complete every pathway in a fixed age order.');
+    expect(curriculum).toContain('adapt modelling, prompts, examples, repetition, practice time, and pace');
     expect(curriculum.match(/How Tiny Steps designs learning/g) ?? []).toHaveLength(0);
   });
 
@@ -148,11 +148,12 @@ describe('B14 trust, entity and schools authority guardrails', () => {
 
   it('contains no temporary B14 patch or self-modifying workflow machinery', () => {
     for (const temporaryPath of [
-      '.github/workflows/b14-build-validation.yml',
-      'scripts/b14-academic-design-patch.py',
-      'scripts/b14-trust-entity-schools-patch.py',
+      '.github/workflows/b14-fix.yml',
+      '.github/workflows/b14-apply.yml',
+      'scripts/b14-fix.mjs',
+      'scripts/b14-apply.mjs',
     ]) {
-      expect(fs.existsSync(path.join(repoRoot, temporaryPath)), temporaryPath).toBe(false);
+      expect(fs.existsSync(path.join(repoRoot, temporaryPath))).toBe(false);
     }
   });
 });
