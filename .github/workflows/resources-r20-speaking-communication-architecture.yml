@@ -33,7 +33,7 @@ jobs:
       - name: Run R0-R20 Resources and canonical curriculum regression tests
         run: npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
       - name: Audit R20 speaking and communication architecture
-        run: node scripts/audit-resources-r20-speaking-communication-architecture.mjs --report
+        run: node scripts/audit-resources-r20-speaking-communication-architecture.mjs --r21-executed --report
       - name: Audit R19 grammar and writing semantic journeys
         run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
       - name: Audit R16 reading semantic journeys
@@ -51,7 +51,7 @@ jobs:
       - name: Build and prerender public site
         run: npm run build
       - name: Verify rendered R20 architecture boundaries
-        run: node scripts/audit-resources-r20-speaking-communication-architecture.mjs --dist --report
+        run: node scripts/audit-resources-r20-speaking-communication-architecture.mjs --r21-executed --dist --report
       - name: Verify rendered R19 journeys
         run: node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --dist --report
       - name: Verify rendered R16 journeys

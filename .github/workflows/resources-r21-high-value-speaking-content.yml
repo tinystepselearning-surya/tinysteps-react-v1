@@ -16,6 +16,8 @@ on:
       - 'scripts/audit-resources-r21-high-value-speaking-content.mjs'
       - 'scripts/generate-sitemaps.js'
       - 'docs/seo/resources-architecture/R21_*'
+      - '.github/workflows/resources-r14-reading-knowledge-architecture.yml'
+      - '.github/workflows/resources-r20-speaking-communication-architecture.yml'
       - '.github/workflows/resources-r21-high-value-speaking-content.yml'
   workflow_dispatch:
 
