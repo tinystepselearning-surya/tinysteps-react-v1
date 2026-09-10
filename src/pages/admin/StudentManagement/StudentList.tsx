@@ -1766,15 +1766,30 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const handleDeleteEnrollment = async (enrollmentId: string) => {
     if (!window.confirm('Discontinue this enrollment?')) return;
     try {
-      const functions = getFunctions(undefined, 'asia-south1');
-      const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
-      await setEnrollmentStatus({
-        enrollmentId,
-        status: 'discontinued',
-        reason: 'admin_deleted',
-      });
+      const regionalFunctions = getFunctions(undefined, 'asia-south1');
+      const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+      const enrollmentData = enrollmentSnap.exists()
+        ? ({ id: enrollmentSnap.id, ...(enrollmentSnap.data() as Record<string, unknown>) } as EnrollmentLite)
+        : null;
+
+      if (isCanonicalRollingEnrollmentForAdmin(enrollmentData)) {
+        const setRollingEnrollmentLifecycle = httpsCallable(regionalFunctions, 'setRollingEnrollmentLifecycle');
+        await setRollingEnrollmentLifecycle({
+          enrollmentId,
+          status: 'discontinued',
+          reason: 'admin_deleted',
+        });
+      } else {
+        // Legacy enrollments remain supported until their first rolling-schedule save.
+        const setEnrollmentStatus = httpsCallable(regionalFunctions, 'setEnrollmentStatus');
+        await setEnrollmentStatus({
+          enrollmentId,
+          status: 'discontinued',
+          reason: 'admin_deleted',
+        });
+      }
       toast({ title: 'Enrollment discontinued' });
-      enrollmentsQuery.refetch();
+      await enrollmentsQuery.refetch();
     } catch (err) {
       console.error(err);
       toast({
