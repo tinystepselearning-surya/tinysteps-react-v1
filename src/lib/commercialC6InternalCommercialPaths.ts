@@ -65,7 +65,6 @@ const decisionEdges = [
 
   edge('/online-english-classes-hyderabad', '/online-english-classes-for-kids', 'local-to-broad'),
 
-  edge('/pricing', '/online-english-classes-for-kids', 'price-to-programme'),
   edge('/pricing', '/phonics', 'price-to-programme'),
   edge('/pricing', '/reading-classes-for-kids', 'price-to-programme'),
   edge('/pricing', '/grammar', 'price-to-programme'),
@@ -95,8 +94,8 @@ export const COMMERCIAL_C6_R4_JOURNEYS = freezeList<Readonly<CommercialC6R4Journ
   }),
   freeze({
     id: 'cross-programme-pricing-path',
-    label: 'General pricing → programme chooser → assessment',
-    sequence: freezeList(['/pricing', '/online-english-classes-for-kids', '/book-demo']),
+    label: 'General pricing → assessment-led programme fit',
+    sequence: freezeList(['/pricing', '/book-demo']),
   }),
   freeze({
     id: 'reading-fit-path',
@@ -134,6 +133,8 @@ export const COMMERCIAL_C6_R4_POLICY = freeze({
   c4MetadataMutationAllowed: false,
   c5ConversionOwnerMutationAllowed: false,
   bodyCopyChangeRequired: false,
+  crossProgrammePricingRule:
+    'When the parent does not yet know the correct programme, /pricing should lead directly to the assessment owner rather than forcing a broad-programme detour. Subject-aware programme links remain available for parents who already know the learning need.',
   navigationRule:
     'Internal commercial links should answer the next parent decision without creating a new owner, while every pre-conversion owner retains a direct route to /book-demo.',
 });
