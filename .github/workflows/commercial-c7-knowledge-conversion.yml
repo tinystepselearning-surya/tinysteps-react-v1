@@ -6,12 +6,16 @@ on:
     paths:
       - 'src/lib/commercialC7KnowledgeConversionAudit.ts'
       - 'src/lib/commercialC7KnowledgeOwnerMapping.ts'
+      - 'src/lib/commercialC7IntentNextStepRules.ts'
       - 'src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts'
       - 'src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts'
+      - 'src/tests/seo/commercialC7IntentNextStepRules.spec.ts'
       - 'scripts/audit-commercial-c7-r0-knowledge-conversion.mjs'
       - 'scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs'
+      - 'scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs'
       - 'docs/seo/commercial-growth/C7_R0_KNOWLEDGE_CONVERSION_AUDIT_*'
       - 'docs/seo/commercial-growth/C7_R1_KNOWLEDGE_OWNER_MAPPING_*'
+      - 'docs/seo/commercial-growth/C7_R2_INTENT_NEXT_STEP_RULES_*'
       - 'src/content/blog/shared/authorityLinking.ts'
       - 'src/lib/canonicalTopicOwnershipRegistry.js'
       - 'src/lib/speakingCommunicationCompletionCanonicalOwnership.js'
@@ -65,6 +69,7 @@ jobs:
           npx vitest run
           src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts
           src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts
+          src/tests/seo/commercialC7IntentNextStepRules.spec.ts
           src/tests/seo/knowledgeBaseFinalIntegration.spec.ts
           src/tests/seo/commercialC6ValidationFreeze.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
@@ -74,6 +79,8 @@ jobs:
         run: node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
       - name: Audit C7-R1 knowledge owner mapping
         run: node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
+      - name: Audit C7-R2 intent next-step rules
+        run: node scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs
       - name: Audit C6 frozen architecture
         run: node scripts/audit-commercial-c6-r5-validation-freeze.mjs
       - name: Audit frozen cross-knowledge-base integration
@@ -90,5 +97,6 @@ jobs:
         run: |
           node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
           node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
+          node scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs
       - name: Run SEO smoke
         run: npm run seo:smoke
