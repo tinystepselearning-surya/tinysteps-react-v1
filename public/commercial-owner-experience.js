@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const REVISION = '2026-09-11-commercial-ux-r1';
+  const REVISION = '2026-09-11-commercial-ux-r2';
   const OWNER_PATHS = Object.freeze([
     '/phonics',
     '/best-online-phonics-classes-for-kids-in-india',
@@ -43,39 +43,22 @@ html.${ROOT_ACTIVE_CLASS} {
   --ts-commercial-muted: #475569;
   --ts-commercial-orange: #f97316;
   --ts-commercial-sky: #0ea5e9;
-  --ts-commercial-surface: rgba(255,255,255,.94);
 }
-html.${ROOT_ACTIVE_CLASS} body {
-  background: #ffffff;
-}
+html.${ROOT_ACTIVE_CLASS} body { background: #fff; }
 html.${ROOT_ACTIVE_CLASS} #root main h1,
-html.${ROOT_ACTIVE_CLASS} #root main h2 {
-  text-wrap: balance;
-}
+html.${ROOT_ACTIVE_CLASS} #root main h2 { text-wrap: balance; }
 html.${ROOT_ACTIVE_CLASS} #root main p,
-html.${ROOT_ACTIVE_CLASS} #root main li {
-  text-wrap: pretty;
-}
+html.${ROOT_ACTIVE_CLASS} #root main li { text-wrap: pretty; }
 html.${ROOT_ACTIVE_CLASS} #root main section,
-html.${ROOT_ACTIVE_CLASS} #root main [id] {
-  scroll-margin-top: 108px;
-}
-html.${ROOT_ACTIVE_CLASS} #root main :is(a,button)[class*="rounded"] {
-  touch-action: manipulation;
-}
-html.${ROOT_ACTIVE_CLASS} #root main :is(a,button)[class*="rounded"]:active {
-  transform: translateY(1px) scale(.99);
-}
-html.${ROOT_ACTIVE_CLASS} #root main details > summary {
-  transition: color 180ms ease, background-color 180ms ease;
-}
-html.${ROOT_ACTIVE_CLASS} #root main details[open] > summary {
-  color: var(--ts-commercial-ink);
-}
+html.${ROOT_ACTIVE_CLASS} #root main [id] { scroll-margin-top: 108px; }
+html.${ROOT_ACTIVE_CLASS} #root main :is(a,button)[class*="rounded"] { touch-action: manipulation; }
+html.${ROOT_ACTIVE_CLASS} #root main :is(a,button)[class*="rounded"]:active { transform: translateY(1px) scale(.99); }
+html.${ROOT_ACTIVE_CLASS} #root main details > summary { transition: color 180ms ease, background-color 180ms ease; }
+html.${ROOT_ACTIVE_CLASS} #root main details[open] > summary { color: var(--ts-commercial-ink); }
 
-/* Legacy pricing bridge: preserve content while matching the current commercial visual language. */
+/* Pricing: bridge the legacy glass-panel system into the current commercial language. */
 html[data-ts-commercial-path="/pricing"] #root .page-gradient {
-  background: linear-gradient(180deg, rgba(255,248,239,.88) 0%, #ffffff 46%, rgba(238,248,255,.76) 100%) !important;
+  background: linear-gradient(180deg, rgba(255,248,239,.88) 0%, #fff 46%, rgba(238,248,255,.76) 100%) !important;
 }
 html[data-ts-commercial-path="/pricing"] #root .glass-panel {
   border: 1px solid rgba(226,232,240,.94) !important;
@@ -91,25 +74,72 @@ html[data-ts-commercial-path="/pricing"] #root .gradient-chip {
   color: #c2410c !important;
   box-shadow: 0 4px 14px rgba(249,115,22,.08) !important;
 }
-html[data-ts-commercial-path="/pricing"] #root .page-gradient > section:first-of-type {
-  padding-top: clamp(2rem, 5vw, 4rem) !important;
-}
+html[data-ts-commercial-path="/pricing"] #root .page-gradient > section:first-of-type { padding-top: clamp(2rem,5vw,4rem) !important; }
 
-/* Writing bridge: remove the boxed-page feel while keeping every existing section and semantic owner intact. */
-html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.container {
+/* Writing: replace the boxed-document feel with full-page rhythm without changing content. */
+html[data-ts-commercial-path="/writing-classes-for-kids"] #root main.container {
   max-width: none !important;
   padding: 0 0 5rem !important;
-  background: linear-gradient(180deg, rgba(236,253,245,.58) 0%, #ffffff 38%, rgba(245,243,255,.54) 100%);
+  background: linear-gradient(180deg, rgba(236,253,245,.58) 0%, #fff 38%, rgba(245,243,255,.54) 100%);
 }
-html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.container > section {
-  width: min(calc(100% - 2rem), 72rem);
+html[data-ts-commercial-path="/writing-classes-for-kids"] #root main.container > section {
+  width: min(calc(100% - 2rem),72rem);
   margin-left: auto;
   margin-right: auto;
 }
-html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.container > section:first-child {
+html[data-ts-commercial-path="/writing-classes-for-kids"] #root main.container > section:first-child {
   margin-top: 2rem;
   border-radius: 32px !important;
   box-shadow: 0 24px 64px rgba(15,23,42,.08) !important;
+}
+html[data-ts-commercial-path="/writing-classes-for-kids"] #root main.container > section:not(:first-child) {
+  border-radius: 28px !important;
+  box-shadow: 0 10px 34px rgba(15,23,42,.045);
+}
+
+/* Reading Fluency: modernize the narrow legacy utility-card layout into the same premium surface system. */
+html[data-ts-commercial-path="/reading-fluency-program"] #root main > div.container {
+  max-width: none !important;
+  padding: 2rem 0 5rem !important;
+  background: linear-gradient(180deg, rgba(239,246,255,.88) 0%, #fff 38%, rgba(255,247,237,.62) 100%);
+}
+html[data-ts-commercial-path="/reading-fluency-program"] #root main > div.container > section {
+  width: min(calc(100% - 2rem),72rem);
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 28px !important;
+}
+html[data-ts-commercial-path="/reading-fluency-program"] #root main > div.container > section:first-child {
+  padding: clamp(2rem,5vw,4rem) clamp(1.25rem,4vw,3rem) !important;
+  border: 1px solid rgba(186,230,253,.8);
+  background: radial-gradient(circle at 12% 16%,rgba(251,146,60,.13),transparent 28%),radial-gradient(circle at 88% 8%,rgba(56,189,248,.14),transparent 30%),#fff;
+  box-shadow: 0 24px 64px rgba(15,23,42,.08);
+}
+html[data-ts-commercial-path="/reading-fluency-program"] #root main > div.container > section:not(:first-child) {
+  padding: clamp(1.4rem,3vw,2rem) !important;
+  box-shadow: 0 10px 32px rgba(15,23,42,.045);
+}
+html[data-ts-commercial-path="/reading-fluency-program"] #root main > div.container article.rounded-lg { border-radius: 18px !important; }
+html[data-ts-commercial-path="/reading-fluency-program"] #root main > div.container a.rounded-lg { border-radius: 999px !important; }
+
+/* Confidence Building: widen the older boxed column and give it the same scroll rhythm as current programme owners. */
+html[data-ts-commercial-path="/confidence-building-program-kids"] #root main.container {
+  max-width: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+html[data-ts-commercial-path="/confidence-building-program-kids"] #root main.container > section {
+  width: min(calc(100% - 2rem),72rem);
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 28px !important;
+}
+html[data-ts-commercial-path="/confidence-building-program-kids"] #root main.container > section:first-child {
+  background: radial-gradient(circle at 14% 16%,rgba(251,146,60,.14),transparent 28%),radial-gradient(circle at 88% 10%,rgba(56,189,248,.14),transparent 30%),rgba(255,255,255,.97) !important;
+  box-shadow: 0 24px 64px rgba(15,23,42,.08) !important;
+}
+html[data-ts-commercial-path="/confidence-building-program-kids"] #root main.container > section:not(:first-child) {
+  box-shadow: 0 10px 32px rgba(15,23,42,.045);
 }
 
 #${PROGRESS_ID} {
@@ -126,7 +156,7 @@ html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.cont
   height: 100%;
   transform: scaleX(0);
   transform-origin: left center;
-  background: linear-gradient(90deg, #f97316 0%, #fb7185 52%, #0ea5e9 100%);
+  background: linear-gradient(90deg,#f97316 0%,#fb7185 52%,#0ea5e9 100%);
   box-shadow: 0 0 16px rgba(249,115,22,.28);
   will-change: transform;
 }
@@ -139,7 +169,7 @@ html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.cont
   grid-template-columns: minmax(0,1fr) auto;
   align-items: center;
   gap: 14px;
-  width: min(520px, calc(100vw - 40px));
+  width: min(520px,calc(100vw - 40px));
   padding: 12px 12px 12px 16px;
   border: 1px solid rgba(226,232,240,.92);
   border-radius: 22px;
@@ -149,16 +179,10 @@ html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.cont
   opacity: 0;
   transform: translateY(18px);
   pointer-events: none;
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity 220ms ease,transform 220ms ease;
 }
-#${CTA_ID}.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-#${CTA_ID} .ts-commercial-cta-copy {
-  min-width: 0;
-}
+#${CTA_ID}.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#${CTA_ID} .ts-commercial-cta-copy { min-width: 0; }
 #${CTA_ID} .ts-commercial-cta-eyebrow {
   display: block;
   margin-bottom: 2px;
@@ -182,33 +206,28 @@ html[data-ts-commercial-path="/writing-classes-for-kids"] #root main > main.cont
   border: 0;
   border-radius: 999px;
   background: #0f172a;
-  color: white;
+  color: #fff;
   cursor: pointer;
   font: inherit;
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
   box-shadow: 0 10px 24px rgba(15,23,42,.16);
-  transition: background-color 180ms ease, transform 180ms ease;
+  transition: background-color 180ms ease,transform 180ms ease;
 }
 #${CTA_ID} button:hover { background: #1e293b; }
 #${CTA_ID} button:active { transform: translateY(1px) scale(.99); }
-#${CTA_ID} button:focus-visible {
-  outline: 3px solid rgba(249,115,22,.42);
-  outline-offset: 3px;
-}
-html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
-  animation: tsCommercialSectionEnter 460ms cubic-bezier(.2,.8,.2,1) both;
-}
+#${CTA_ID} button:focus-visible { outline: 3px solid rgba(249,115,22,.42); outline-offset: 3px; }
+html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercialSectionEnter 460ms cubic-bezier(.2,.8,.2,1) both; }
 @keyframes tsCommercialSectionEnter {
   from { opacity: .88; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@media (max-width: 767px) {
+@media (max-width:767px) {
   #${CTA_ID} {
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
     width: auto;
     grid-template-columns: 1fr;
     gap: 8px;
@@ -218,7 +237,7 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
   #${CTA_ID} .ts-commercial-cta-copy { display: none; }
   #${CTA_ID} button { width: 100%; min-height: 44px; }
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion:reduce) {
   html.${ROOT_ACTIVE_CLASS} #root main *,
   #${CTA_ID},
   #${CTA_ID} button {
@@ -263,7 +282,6 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
   function ensureCta() {
     let cta = document.getElementById(CTA_ID);
     if (cta) return cta;
-
     cta = document.createElement('aside');
     cta.id = CTA_ID;
     cta.setAttribute('aria-label', 'Free Tiny Steps assessment');
@@ -282,7 +300,11 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
   function getPageRoot() {
     const layoutMain = document.querySelector('#root main');
     if (!layoutMain) return null;
-    return layoutMain.firstElementChild || layoutMain;
+    const first = layoutMain.firstElementChild;
+    if (!first) return layoutMain;
+    if (first.tagName === 'MAIN') return first;
+    const nestedMain = first.querySelector(':scope > main');
+    return nestedMain || first;
   }
 
   function disconnectSectionObserver() {
@@ -305,11 +327,10 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
       const pageRoot = getPageRoot();
       if (!pageRoot) {
         sectionMutationObserver = new MutationObserver(() => {
-          if (getPageRoot()) {
-            sectionMutationObserver?.disconnect();
-            sectionMutationObserver = null;
-            setupSectionReveals();
-          }
+          if (!getPageRoot()) return;
+          sectionMutationObserver?.disconnect();
+          sectionMutationObserver = null;
+          setupSectionReveals();
         });
         sectionMutationObserver.observe(document.getElementById('root') || document.body, { childList: true, subtree: true });
         return;
@@ -329,11 +350,8 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
       sections.forEach((section) => sectionObserver.observe(section));
     };
 
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(start, { timeout: 1200 });
-    } else {
-      sectionSetupTimer = window.setTimeout(start, 420);
-    }
+    if ('requestIdleCallback' in window) window.requestIdleCallback(start, { timeout: 1200 });
+    else sectionSetupTimer = window.setTimeout(start, 420);
   }
 
   function updateScrollState() {
@@ -344,9 +362,7 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
     const maxScroll = Math.max(1, doc.scrollHeight - window.innerHeight);
     const progressValue = Math.min(1, Math.max(0, window.scrollY / maxScroll));
     const progress = ensureProgress().firstElementChild;
-    if (progress instanceof HTMLElement) {
-      progress.style.transform = `scaleX(${progressValue})`;
-    }
+    if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${progressValue})`;
 
     const cta = ensureCta();
     const shouldShow = currentPath !== '/book-demo' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
@@ -366,6 +382,7 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
   }
 
   function activate(path) {
+    const routeChanged = currentPath !== path;
     currentPath = path;
     active = true;
     ensureStyles();
@@ -373,7 +390,7 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter {
     document.documentElement.dataset.tsCommercialPath = path;
     ensureProgress().hidden = false;
     ensureCta().hidden = false;
-    setupSectionReveals();
+    if (routeChanged) setupSectionReveals();
     requestScrollUpdate();
   }
 
