@@ -91,12 +91,18 @@ export const COMMERCIAL_C7_R3_HANDOFFS = freezeList<Readonly<CommercialC7R3Hando
 const handoffByPath = new Map(COMMERCIAL_C7_R3_HANDOFFS.map((handoff) => [handoff.path, handoff]));
 
 export const COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES = freezeList([
+  freeze({ path: '/blog', reason: 'The blog library is a discovery surface with intent-specific article routes, not a single commercial CTA surface.' }),
+  freeze({ path: '/parents', reason: 'The Parents Hub already orchestrates multiple concern-specific programme routes and the free assessment.' }),
   freeze({ path: '/resources/phonics', reason: 'Subject hub already exposes the phonics programme and assessment.' }),
   freeze({ path: '/resources/grammar', reason: 'Subject hub already exposes the grammar programme and assessment.' }),
   freeze({ path: '/resources/speaking', reason: 'Subject hub already exposes the speaking programme and assessment.' }),
+  freeze({ path: '/child-not-reading-properly', reason: 'Standalone reading-gap page already exposes phonics/reading support and assessment.' }),
   freeze({ path: '/slow-reader-child-help', reason: 'Standalone problem page already contains the specialist fluency owner and assessment.' }),
   freeze({ path: '/shy-child-speaking-confidence', reason: 'Standalone problem page already contains the confidence owner and assessment.' }),
 ]);
+
+const protectedExistingPathSet = new Set(COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES.map((item) => item.path));
+const usesSharedR3Renderer = (path: string) => path.startsWith('/blog/') || path.startsWith('/resources/phonics/');
 
 export const COMMERCIAL_C7_R3_POLICY = freeze({
   liveContextualHandoffsAllowed: true,
@@ -112,8 +118,9 @@ export const COMMERCIAL_C7_R3_POLICY = freeze({
   maxCommercialPromptsPerKnowledgeSurface: 2,
   softDiscoveryReceivesCommercialPrompt: false,
   preserveExistingCorrectStandaloneHandoffs: true,
+  everyNonSoftRuleMustBeRenderedOrProtected: true,
   rule:
-    'C7-R3 implements only R2-authorised contextual handoffs through shared knowledge renderers. It does not edit individual blog bodies, create URLs, change metadata or mutate frozen commercial ownership. Existing standalone pages that already expose the correct owner plus assessment are protected rather than duplicated.',
+    'C7-R3 implements only R2-authorised contextual handoffs through shared knowledge renderers. It does not edit individual blog bodies, create URLs, change metadata or mutate frozen commercial ownership. Existing navigation/decision hubs and standalone pages that already expose the correct next steps are explicitly protected rather than duplicated.',
 });
 
 export const COMMERCIAL_C7_R3_SUMMARY = freeze({
@@ -151,5 +158,8 @@ for (const handoff of COMMERCIAL_C7_R3_HANDOFFS) {
   if (promptCount > handoff.maxCommercialPrompts || promptCount > 2) throw new Error(`C7-R3 exceeded the prompt cap on ${handoff.path}.`);
   if (handoff.ruleClass === 'OWNER_THEN_ASSESSMENT' && handoff.secondary?.to !== '/book-demo') {
     throw new Error(`C7-R3 must keep assessment secondary on ${handoff.path}.`);
+  }
+  if (!usesSharedR3Renderer(handoff.path) && !protectedExistingPathSet.has(handoff.path)) {
+    throw new Error(`C7-R3 has no renderer or protected existing placement for ${handoff.path}.`);
   }
 }
