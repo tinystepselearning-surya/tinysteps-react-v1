@@ -52,6 +52,15 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
       - name: Run C6 and upstream commercial tests
         run: >-
           npx vitest run
@@ -77,6 +86,8 @@ jobs:
         run: npm run typecheck
       - name: Run full repository tests
         run: npm test
+      - name: Validate Ask Tiny Steps production build configuration
+        run: node scripts/validate-ask-tiny-steps-build-env.mjs
       - name: Build and prerender public site
         run: npm run build
       - name: Re-run C6 audits after build
