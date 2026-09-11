@@ -12,6 +12,7 @@ type LinkCandidate = { label: string; to: string };
 
 const commercialOwnerSet = new Set(COMMERCIAL_C2_OWNERSHIP_CLUSTERS.map((entry) => entry.canonicalOwnerPath));
 commercialOwnerSet.add('/book-demo');
+const genericLegacyRoutes = new Set(['/courses']);
 
 function alreadyLinksTo(bodyText: string, destination: string) {
   return bodyText.includes(`](${destination})`) || bodyText.includes(`(${destination})`);
@@ -25,6 +26,7 @@ function supportingLegacyLinks(plan: BlogAuthorityPlan | null, excluded: Readonl
   if (!plan) return [];
   return uniqueLinks([plan.primary, ...(plan.secondary ? [plan.secondary] : [])])
     .filter((link) => !commercialOwnerSet.has(link.to))
+    .filter((link) => !genericLegacyRoutes.has(link.to))
     .filter((link) => !excluded.has(link.to))
     .slice(0, 1);
 }
@@ -39,7 +41,7 @@ export function applyCommercialC7ContextualHandoffs(post: BlogPost): BlogPost {
   const bodyText = post.body.map((block) => block.content).join('\n');
 
   if (!handoff) {
-    const softLinks = supportingLegacyLinks(legacyPlan, new Set())
+    const softLinks = supportingLegacyLinks(legacyPlan, new Set<string>())
       .filter((link) => !alreadyLinksTo(bodyText, link.to));
     if (!softLinks.length) return post;
     return {
