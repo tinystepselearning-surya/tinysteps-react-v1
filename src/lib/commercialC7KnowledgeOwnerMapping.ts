@@ -62,7 +62,6 @@ type MappingInput = Pick<
 const frozenCommercialOwnerPaths = unique(COMMERCIAL_C2_OWNERSHIP_CLUSTERS.map((entry) => entry.canonicalOwnerPath));
 const commercialOwnerSet = new Set(frozenCommercialOwnerPaths);
 const finalKnowledgeIntentSet = new Set(['informational', 'problem-aware', 'progress-aware', 'practice']);
-const r0ByPath = new Map(COMMERCIAL_C7_R0_KNOWLEDGE_SURFACES.map((surface) => [surface.path, surface]));
 const blogPlanByPath = new Map(B7_BLOG_AUTHORITY_PLANS.map((plan) => [`/blog/${plan.slug}`, plan]));
 
 const finalKnowledgeInputs = new Map<string, MappingInput>();
