@@ -42,6 +42,7 @@ requireTokens('src/lib/commercialC6InternalCommercialPaths.ts', [
   'c4MetadataMutationAllowed: false',
   'c5ConversionOwnerMutationAllowed: false',
   'bodyCopyChangeRequired: false',
+  'crossProgrammePricingRule:',
   "id: 'phonics-comparison-path'",
   "id: 'cross-programme-pricing-path'",
   "id: 'reading-fit-path'",
@@ -63,7 +64,7 @@ const sourceEdges = [
   ['src/pages/public/ConfidenceBuildingProgramKidsPage.tsx', ['/speaking', '/book-demo']],
   ['src/pages/public/OnlineEnglishClassesForKidsPage.tsx', ['/phonics', '/reading-classes-for-kids', '/grammar', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online', '/speaking', '/book-demo']],
   ['src/pages/public/OnlineEnglishClassesHyderabadPage.tsx', ['/online-english-classes-for-kids', '/book-demo']],
-  ['src/pages/PricingPage.tsx', ['/online-english-classes-for-kids', '/phonics', '/reading-classes-for-kids', '/grammar', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online', '/speaking', '/book-demo']],
+  ['src/pages/PricingPage.tsx', ['/phonics', '/reading-classes-for-kids', '/grammar', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online', '/speaking', '/book-demo']],
   ['src/pages/public/BookDemoPage.tsx', ['/pricing', '/online-english-classes-for-kids']],
 ];
 
@@ -98,4 +99,5 @@ console.log('Commercial C6-R4 internal commercial path audit passed.');
 console.log('All 14 commercial owners remain inside the frozen C2/C3 architecture.');
 console.log('All 13 pre-conversion owners retain a direct /book-demo path.');
 console.log('Comparison, fees, programme-fit, local-fit and conversion-support handoffs are present in source.');
+console.log('General pricing can move directly to assessment when programme fit is unresolved; subject-aware programme handoffs remain available.');
 console.log('No new commercial URL, C2 owner, C4 metadata change or second conversion owner is introduced.');
