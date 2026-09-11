@@ -29,8 +29,12 @@ function canonicalInternalBlogLinks() {
 
       // Legacy curriculum tab URLs all render the same roadmap document. Route
       // programme exploration directly to the canonical programme owner pages.
-      for (const [source, destination] of Object.entries(LEGACY_CURRICULUM_PROGRAM_LINKS)) {
-        transformed = transformed.split(source).join(destination);
+      // Keep test source unchanged so source-inspection tests still read the
+      // repository exactly as committed.
+      if (!id.includes('/src/tests/')) {
+        for (const [source, destination] of Object.entries(LEGACY_CURRICULUM_PROGRAM_LINKS)) {
+          transformed = transformed.split(source).join(destination);
+        }
       }
 
       // P0 public-fact normalization for remaining source-level migrations.
