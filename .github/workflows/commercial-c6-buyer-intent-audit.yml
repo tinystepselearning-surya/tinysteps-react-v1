@@ -7,28 +7,40 @@ on:
       - 'src/lib/commercialC6BuyerIntentAudit.ts'
       - 'src/lib/commercialC6BuyerIntentArchitecture.ts'
       - 'src/lib/commercialC6ParentDecisionFramework.ts'
+      - 'src/lib/commercialC6InternalCommercialPaths.ts'
       - 'src/tests/seo/commercialC6BuyerIntentAudit.spec.ts'
       - 'src/tests/seo/commercialC6BuyerIntentArchitecture.spec.ts'
       - 'src/tests/seo/commercialC6PricingDecisionSupport.spec.ts'
       - 'src/tests/seo/commercialC6ParentDecisionFramework.spec.ts'
+      - 'src/tests/seo/commercialC6InternalCommercialPaths.spec.ts'
       - 'scripts/audit-commercial-c6-buyer-intent.mjs'
       - 'scripts/audit-commercial-c6-r1-r2.mjs'
       - 'scripts/audit-commercial-c6-r3-parent-decision.mjs'
+      - 'scripts/audit-commercial-c6-r4-internal-paths.mjs'
       - 'docs/seo/commercial-growth/C6_R0_BUYER_INTENT_AUDIT_*'
       - 'docs/seo/commercial-growth/C6_R1_BUYER_INTENT_ARCHITECTURE_*'
       - 'docs/seo/commercial-growth/C6_R2_PRICING_IMPLEMENTATION_*'
       - 'docs/seo/commercial-growth/C6_R3_PARENT_DECISION_FRAMEWORK_*'
+      - 'docs/seo/commercial-growth/C6_R4_INTERNAL_COMMERCIAL_PATHS_*'
       - 'src/lib/commercialC1SearchUniverse.ts'
       - 'src/lib/commercialC1InternationalAiResearch.ts'
       - 'src/lib/commercialC2KeywordOwnership.ts'
       - 'src/lib/commercialC4CtrOptimization.ts'
       - 'src/lib/commercialC5ConversionFlow.ts'
-      - 'src/pages/PricingPage.tsx'
+      - 'src/pages/phonics.tsx'
+      - 'src/pages/grammar.tsx'
       - 'src/pages/speaking.tsx'
-      - 'src/pages/public/BookDemoPage.tsx'
-      - 'src/pages/public/OnlineEnglishClassesForKidsPage.tsx'
+      - 'src/pages/PricingPage.tsx'
       - 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx'
       - 'src/pages/public/PhonicsFeesIndiaPage.tsx'
+      - 'src/pages/public/ReadingClassesForKidsPage.tsx'
+      - 'src/pages/public/ReadingFluencyProgramPage.tsx'
+      - 'src/pages/public/WritingClassesForKidsPage.tsx'
+      - 'src/pages/public/SpokenEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx'
+      - 'src/pages/public/BookDemoPage.tsx'
       - '.github/workflows/commercial-c6-buyer-intent-audit.yml'
   workflow_dispatch:
 
@@ -73,6 +85,7 @@ jobs:
           src/tests/seo/commercialC6BuyerIntentArchitecture.spec.ts
           src/tests/seo/commercialC6PricingDecisionSupport.spec.ts
           src/tests/seo/commercialC6ParentDecisionFramework.spec.ts
+          src/tests/seo/commercialC6InternalCommercialPaths.spec.ts
           src/tests/seo/commercialC5ConversionFlow.spec.ts
           src/tests/seo/commercialC4CtrOptimization.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
@@ -82,6 +95,8 @@ jobs:
         run: node scripts/audit-commercial-c6-r1-r2.mjs
       - name: Audit C6-R3 parent decision framework
         run: node scripts/audit-commercial-c6-r3-parent-decision.mjs
+      - name: Audit C6-R4 internal commercial paths
+        run: node scripts/audit-commercial-c6-r4-internal-paths.mjs
       - name: Audit C5 decision flow
         run: node scripts/audit-commercial-c5-conversion-flow.mjs
       - name: Audit C4 CTR governance
@@ -103,5 +118,6 @@ jobs:
           node scripts/audit-commercial-c6-buyer-intent.mjs
           node scripts/audit-commercial-c6-r1-r2.mjs
           node scripts/audit-commercial-c6-r3-parent-decision.mjs
+          node scripts/audit-commercial-c6-r4-internal-paths.mjs
       - name: Run SEO smoke
         run: npm run seo:smoke
