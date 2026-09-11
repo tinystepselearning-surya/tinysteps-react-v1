@@ -6,6 +6,7 @@ import {
   B7_PHONICS_FEATURED_GUIDES,
   getBlogAuthorityPlan,
 } from '../../content/blog/shared/authorityLinking';
+import { getCommercialC7R3Handoff } from '../../lib/commercialC7ContextualHandoffImplementation';
 
 const PHONICS = '/phonics';
 const BEST_PHONICS = '/best-online-phonics-classes-for-kids-in-india';
@@ -64,9 +65,11 @@ describe('Phonics Brick 7 intent-aware internal linking', () => {
     expect(getBlogAuthorityPlan('why-child-reads-words-but-does-not-understand-story')?.primary.to).toBe('/reading-classes-for-kids');
   });
 
-  it('ensures each mapped article contains its primary next-step route after normalization', () => {
+  it('ensures each mapped article contains the current authoritative next-step route after normalization', () => {
     for (const plan of B7_BLOG_AUTHORITY_PLANS) {
-      expect(finalBody(plan.slug), `Blog #${plan.number} primary destination`).toContain(`(${plan.primary.to})`);
+      const c7Handoff = getCommercialC7R3Handoff(`/blog/${plan.slug}`);
+      const expectedDestination = c7Handoff?.primary.to ?? plan.primary.to;
+      expect(finalBody(plan.slug), `Blog #${plan.number} primary destination`).toContain(`(${expectedDestination})`);
     }
   });
 
