@@ -73,7 +73,6 @@ const decisionEdges = [
   edge('/pricing', '/speaking', 'price-to-programme'),
 
   edge('/book-demo', '/pricing', 'conversion-support'),
-  edge('/book-demo', '/online-english-classes-for-kids', 'conversion-support'),
 ] as const;
 
 export const COMMERCIAL_C6_R4_EDGES = freezeList<Readonly<CommercialC6R4Edge>>([
@@ -135,6 +134,8 @@ export const COMMERCIAL_C6_R4_POLICY = freeze({
   bodyCopyChangeRequired: false,
   crossProgrammePricingRule:
     'When the parent does not yet know the correct programme, /pricing should lead directly to the assessment owner rather than forcing a broad-programme detour. Subject-aware programme links remain available for parents who already know the learning need.',
+  conversionSupportRule:
+    '/book-demo may hand parents to /pricing for a remaining fee decision, but it should not force them backward to a broad programme chooser because the assessment page already exposes programme-fit routes directly.',
   navigationRule:
     'Internal commercial links should answer the next parent decision without creating a new owner, while every pre-conversion owner retains a direct route to /book-demo.',
 });
