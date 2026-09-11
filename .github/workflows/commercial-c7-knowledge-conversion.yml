@@ -7,15 +7,21 @@ on:
       - 'src/lib/commercialC7KnowledgeConversionAudit.ts'
       - 'src/lib/commercialC7KnowledgeOwnerMapping.ts'
       - 'src/lib/commercialC7IntentNextStepRules.ts'
+      - 'src/lib/commercialC7ContextualHandoffImplementation.ts'
+      - 'src/content/blog/index.ts'
+      - 'src/content/blog/shared/commercialHandoffs.ts'
       - 'src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts'
       - 'src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts'
       - 'src/tests/seo/commercialC7IntentNextStepRules.spec.ts'
+      - 'src/tests/seo/commercialC7ContextualHandoffs.spec.ts'
       - 'scripts/audit-commercial-c7-r0-knowledge-conversion.mjs'
       - 'scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs'
       - 'scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs'
+      - 'scripts/audit-commercial-c7-r3-contextual-handoffs.mjs'
       - 'docs/seo/commercial-growth/C7_R0_KNOWLEDGE_CONVERSION_AUDIT_*'
       - 'docs/seo/commercial-growth/C7_R1_KNOWLEDGE_OWNER_MAPPING_*'
       - 'docs/seo/commercial-growth/C7_R2_INTENT_NEXT_STEP_RULES_*'
+      - 'docs/seo/commercial-growth/C7_R3_CONTEXTUAL_COMMERCIAL_HANDOFFS_*'
       - 'src/content/blog/shared/authorityLinking.ts'
       - 'src/lib/canonicalTopicOwnershipRegistry.js'
       - 'src/lib/speakingCommunicationCompletionCanonicalOwnership.js'
@@ -23,6 +29,8 @@ on:
       - 'src/lib/knowledgeBaseFinalClosure.js'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/pages/PhonicsKnowledgePage.tsx'
+      - 'src/pages/public/SlowReaderChildHelpPage.tsx'
+      - 'src/pages/public/ShyChildSpeakingConfidencePage.tsx'
       - 'src/lib/commercialC2KeywordOwnership.ts'
       - 'src/lib/commercialC4CtrOptimization.ts'
       - 'src/lib/commercialC5ConversionFlow.ts'
@@ -70,6 +78,7 @@ jobs:
           src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts
           src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts
           src/tests/seo/commercialC7IntentNextStepRules.spec.ts
+          src/tests/seo/commercialC7ContextualHandoffs.spec.ts
           src/tests/seo/knowledgeBaseFinalIntegration.spec.ts
           src/tests/seo/commercialC6ValidationFreeze.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
@@ -81,6 +90,8 @@ jobs:
         run: node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
       - name: Audit C7-R2 intent next-step rules
         run: node scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs
+      - name: Audit C7-R3 contextual commercial handoffs
+        run: node scripts/audit-commercial-c7-r3-contextual-handoffs.mjs
       - name: Audit C6 frozen architecture
         run: node scripts/audit-commercial-c6-r5-validation-freeze.mjs
       - name: Audit frozen cross-knowledge-base integration
@@ -98,5 +109,6 @@ jobs:
           node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
           node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
           node scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs
+          node scripts/audit-commercial-c7-r3-contextual-handoffs.mjs
       - name: Run SEO smoke
         run: npm run seo:smoke
