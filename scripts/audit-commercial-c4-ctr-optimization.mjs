@@ -24,7 +24,7 @@ if (exists(c4Path)) {
   for (const token of [
     "COMMERCIAL_C4_REVISION = '2026-09-11-c4-r2'",
     "COMMERCIAL_C4_STATUS = 'experiment-governance-armed'",
-    'COMMERCIAL_C4_GSC_CORE_QUERY_EVIDENCE',
+    'COMMERCIAL_C1_GSC_CORE_QUERY_EVIDENCE',
     'COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS',
     'evaluateCommercialC4FreshObservation',
     "'CONTROL' | 'READY' | 'DEPLOYED' | 'MEASURING' | 'WIN' | 'LOSS' | 'INCONCLUSIVE'",
