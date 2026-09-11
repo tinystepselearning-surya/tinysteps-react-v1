@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-09-06T00:00:00+05:30",
+  "source": "gsc-url-inspection",
+  "note": "Replace this template with a dated snapshot file after checking GSC. Files beginning with _ are ignored by the tracker.",
+  "urls": [
+    {
+      "path": "/book-demo",
+      "state": "crawled-not-indexed",
+      "coverageReason": "Crawled - currently not indexed",
+      "requestIndexingAt": "2026-09-06T00:00:00+05:30",
+      "liveTestPassed": true,
+      "note": "Example only"
+    }
+  ]
+}

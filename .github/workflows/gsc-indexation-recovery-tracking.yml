@@ -1,0 +1,65 @@
+name: GSC Indexation Recovery Tracking
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'data/gsc-indexation-snapshots/**'
+      - 'scripts/gsc-indexation-recovery-tracker.mjs'
+      - 'scripts/gsc-revalidation-submission-plan.mjs'
+      - 'scripts/gsc-content-quality-guard.mjs'
+      - '.github/workflows/gsc-indexation-recovery-tracking.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gsc-indexation-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Certify historical GSC decisions
+        run: node scripts/audit-gsc-crawled-not-indexed.mjs
+
+      - name: Build and prerender public pages
+        run: npm run build
+
+      - name: Certify Brick 5 content quality
+        run: node scripts/gsc-content-quality-guard.mjs
+
+      - name: Rebuild Brick 6 readiness plan
+        run: node scripts/gsc-revalidation-submission-plan.mjs
+
+      - name: Measure Brick 7 indexation recovery
+        run: node scripts/gsc-indexation-recovery-tracker.mjs
+
+      - name: Upload Brick 7 recovery artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gsc-brick-7-indexation-recovery
+          path: |
+            artifacts/gsc-revalidation-submission-report.json
+            artifacts/gsc-indexation-recovery-report.json
+            artifacts/gsc-indexation-recovery-report.md
+            artifacts/gsc-indexation-next-actions.txt
+          if-no-files-found: ignore
