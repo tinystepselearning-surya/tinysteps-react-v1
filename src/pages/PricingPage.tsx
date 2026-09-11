@@ -158,6 +158,34 @@ const offerCatalog = {
 
 type PricingProgram = 'premium' | 'ultra';
 
+const subjectPricingRoutes = [
+  {
+    label: 'Reading',
+    href: '/reading-classes-for-kids',
+    parentQuestion: 'Does my child need decoding, fluency or comprehension support?',
+  },
+  {
+    label: 'Grammar',
+    href: '/grammar',
+    parentQuestion: 'Is sentence formation, tense use or grammar accuracy the main gap?',
+  },
+  {
+    label: 'Writing',
+    href: '/writing-classes-for-kids',
+    parentQuestion: 'Does my child need help developing ideas, paragraphs or independent writing?',
+  },
+  {
+    label: 'Spoken English',
+    href: '/spoken-english-classes-for-kids-online',
+    parentQuestion: 'Is everyday conversational fluency the main goal?',
+  },
+  {
+    label: 'Public Speaking',
+    href: '/speaking',
+    parentQuestion: 'Does my child need structured answers, storytelling or presentation practice?',
+  },
+] as const;
+
 const PricingPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const programParam = searchParams.get('program');
@@ -396,6 +424,35 @@ const PricingPage: FC = () => {
                 <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="subject-fees" className="mx-auto max-w-6xl scroll-mt-28 px-6 pb-12">
+        <div className="rounded-[2rem] border border-indigo-100 bg-gradient-to-br from-white via-white to-indigo-50/60 p-6 shadow-sm sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">Fees by learning need</p>
+          <h2 className="mt-2 text-3xl font-bold text-slate-950">Looking for fees for a specific English programme?</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+            For Reading, Grammar, Writing, Spoken English and Public Speaking, this page remains the Tiny Steps fee and value owner. Standard live 1:1 pricing is shared across the core programme system, so the next decision is not a different fee page—it is whether that programme matches your child&apos;s current need.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {subjectPricingRoutes.map((route) => (
+              <article key={route.href} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-700">{route.label} fees</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-950">Use this pricing page, then check programme fit</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{route.parentQuestion}</p>
+                <Link to={route.href} className="mt-4 inline-flex text-sm font-semibold text-slate-950 underline underline-offset-4">
+                  Check {route.label} programme fit
+                </Link>
+              </article>
+            ))}
+          </div>
+          <div className="mt-6 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm leading-6 text-slate-700">
+            <strong>Phonics is the exception:</strong> parents researching phonics market fees can use the dedicated{' '}
+            <Link to="/phonics-fees-india" className="font-semibold text-slate-950 underline underline-offset-4">
+              Phonics Class Fees in India
+            </Link>{' '}
+            page. For all programmes, the free assessment remains the safest way to confirm learning fit before choosing a package.
           </div>
         </div>
       </section>
