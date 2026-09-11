@@ -41,6 +41,7 @@ describe('Commercial C7-R3 contextual commercial handoffs', () => {
     expect(COMMERCIAL_C7_R3_POLICY.c5ConversionOwnerMutationAllowed).toBe(false);
     expect(COMMERCIAL_C7_R3_POLICY.c6ArchitectureMutationAllowed).toBe(false);
     expect(COMMERCIAL_C7_R3_POLICY.singleConversionOwner).toBe('/book-demo');
+    expect(COMMERCIAL_C7_R3_POLICY.everyNonSoftRuleMustBeRenderedOrProtected).toBe(true);
   });
 
   it('resolves the broad-English buyer guide to the frozen broad-English owner instead of /courses', () => {
@@ -96,14 +97,17 @@ describe('Commercial C7-R3 contextual commercial handoffs', () => {
     }
   });
 
-  it('covers shared focused-phonics routes while protecting existing bridge surfaces', () => {
+  it('covers shared renderers while explicitly protecting navigation hubs and correct standalone paths', () => {
     expect(COMMERCIAL_C7_R3_SUMMARY.focusedPhonicsHandoffCount).toBeGreaterThan(0);
     expect(COMMERCIAL_C7_R3_SUMMARY.blogHandoffCount).toBeGreaterThan(0);
     expect(COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES.map((item) => item.path)).toEqual(
       expect.arrayContaining([
+        '/blog',
+        '/parents',
         '/resources/phonics',
         '/resources/grammar',
         '/resources/speaking',
+        '/child-not-reading-properly',
         '/slow-reader-child-help',
         '/shy-child-speaking-confidence',
       ]),
