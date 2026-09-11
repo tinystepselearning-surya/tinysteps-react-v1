@@ -45,10 +45,9 @@ Purpose: let a parent compare the approach, understand fee/value, confirm progra
 ### 2. Cross-programme pricing path
 
 `/pricing`
-→ `/online-english-classes-for-kids`
 → `/book-demo`
 
-The pricing hub also links directly to the core programme owners so a parent can move from fee/value evaluation to programme fit without generating subject-specific fee pages.
+When a parent is comparing general English pricing but does not yet know whether the child needs phonics, reading, grammar, writing, spoken English or public speaking, the assessment is the cleanest next decision. The pricing page already offers subject-aware programme links for parents who do know the learning need, so R4 does not force an unnecessary detour through the broad-English owner.
 
 ### 3. Reading fit path
 
@@ -86,13 +85,14 @@ The Hyderabad owner stays local-intent only and hands programme selection to the
 
 `/pricing` keeps the general/non-phonics fee and value decision while linking to:
 
-- `/online-english-classes-for-kids`
 - `/phonics`
 - `/reading-classes-for-kids`
 - `/grammar`
 - `/writing-classes-for-kids`
 - `/spoken-english-classes-for-kids-online`
 - `/speaking`
+
+It also retains the direct `/book-demo` assessment path. This is deliberate: unresolved programme fit should be solved by the assessment rather than a forced extra commercial page.
 
 Phonics keeps its distinct fee-research owner at `/phonics-fees-india`.
 
@@ -111,7 +111,9 @@ R4 adds a source-level test and standalone audit that verify:
 
 **No live page rewrite is authorised by default in R4.**
 
-The current C3/C5/R2 implementation already established the required handoffs. R4 first validates those existing links. If CI identifies a missing source edge, only that specific handoff should be repaired; unrelated body copy and metadata must remain untouched.
+The first validation run identified that the model had assumed a `/pricing` → `/online-english-classes-for-kids` handoff that was not present in source. Review showed that the existing pricing page already provides subject-aware programme handoffs plus a direct assessment route. R4 therefore corrected the graph to the stronger assessment-first path rather than adding a redundant navigation link merely to satisfy the model.
+
+If later evidence identifies a genuine missing buyer-decision handoff, only that specific route should be repaired; unrelated body copy and metadata must remain untouched.
 
 ## Exit criteria
 
