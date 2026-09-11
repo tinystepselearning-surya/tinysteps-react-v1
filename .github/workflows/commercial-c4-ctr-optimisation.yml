@@ -1,0 +1,75 @@
+name: Commercial C4 CTR Optimisation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/commercialC4CtrOptimization.ts'
+      - 'src/tests/seo/commercialC4CtrOptimization.spec.ts'
+      - 'scripts/audit-commercial-c4-ctr-optimization.mjs'
+      - 'docs/seo/commercial-growth/C4_*'
+      - 'src/lib/commercialC3OwnerPageAudit.ts'
+      - 'src/lib/commercialC2KeywordOwnership.ts'
+      - 'src/lib/commercialC1ObservedSearchEvidence.ts'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/pages/phonics.tsx'
+      - 'src/pages/grammar.tsx'
+      - 'src/pages/speaking.tsx'
+      - 'src/pages/PricingPage.tsx'
+      - 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx'
+      - 'src/pages/public/PhonicsFeesIndiaPage.tsx'
+      - 'src/pages/public/ReadingClassesForKidsPage.tsx'
+      - 'src/pages/public/ReadingFluencyProgramPage.tsx'
+      - 'src/pages/public/WritingClassesForKidsPage.tsx'
+      - 'src/pages/public/SpokenEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx'
+      - 'src/pages/public/BookDemoPage.tsx'
+      - '.github/workflows/commercial-c4-ctr-optimisation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-c4-ctr-optimisation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run C4 and upstream commercial tests
+        run: >-
+          npx vitest run
+          src/tests/seo/commercialC4CtrOptimization.spec.ts
+          src/tests/seo/commercialC3OwnerPageAudit.spec.ts
+          src/tests/seo/commercialC2KeywordOwnership.spec.ts
+          src/tests/seo/commercialC1ObservedSearchEvidence.spec.ts
+      - name: Audit C4 CTR baseline
+        run: node scripts/audit-commercial-c4-ctr-optimization.mjs
+      - name: Audit C3 owner pages
+        run: node scripts/audit-commercial-c3-owner-pages.mjs
+      - name: Audit C2 ownership and cannibalisation
+        run: node scripts/audit-commercial-c2-keyword-ownership.mjs
+      - name: Audit C1 observed evidence
+        run: node scripts/audit-commercial-c1-observed-search-evidence.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Run full repository tests
+        run: npm test
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run C4 CTR baseline after build
+        run: node scripts/audit-commercial-c4-ctr-optimization.mjs
+      - name: Run SEO smoke
+        run: npm run seo:smoke
