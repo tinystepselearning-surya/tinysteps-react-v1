@@ -26,6 +26,11 @@ import {
   trackProgramCtaClick,
   trackWhatsappClick,
 } from '../../lib/conversionTracking';
+import { isCommercialC5OwnerPath } from '../../lib/commercialC5ConversionFlow';
+import {
+  trackCommercialC5DecisionClick,
+  trackCommercialC5OwnerView,
+} from '../../lib/commercialC5Tracking';
 import { captureLeadAttribution as capturePublicLeadAttribution } from '../../lib/leadAttribution';
 import {
   getResourceMeasurementContext,
@@ -65,11 +70,14 @@ function inferCtaLocation(node: HTMLElement): string {
 export default function ConversionTracker() {
   const location = useLocation();
   const lastTrackedLandingPathRef = useRef<string>('');
+  const lastTrackedCommercialOwnerPathRef = useRef<string>('');
   const lastTrackedResourcePathRef = useRef<string>('');
 
   useEffect(() => {
     const pagePath = location.pathname;
     const isMarketingPage = isMarketingPath(pagePath);
+    const isCommercialOwner = isCommercialC5OwnerPath(pagePath);
+    const isMeasuredLanding = isFunnelLandingPath(pagePath) || isCommercialOwner;
     const resourceContext = getResourceMeasurementContext(pagePath);
 
     if (resourceContext && lastTrackedResourcePathRef.current !== resourceContext.pagePath) {
@@ -88,7 +96,7 @@ export default function ConversionTracker() {
       captureLeadAttribution(pagePath);
       capturePublicLeadAttribution();
 
-      if (isFunnelLandingPath(pagePath) && lastTrackedLandingPathRef.current !== pagePath) {
+      if (isMeasuredLanding && lastTrackedLandingPathRef.current !== pagePath) {
         trackLandingPageView({
           page_path: pagePath,
           page_title: typeof document !== 'undefined' ? document.title : '',
@@ -97,7 +105,25 @@ export default function ConversionTracker() {
           source_context: 'conversion_tracker',
         });
         lastTrackedLandingPathRef.current = pagePath;
+      } else if (!isMeasuredLanding) {
+        // A later return to the same commercial landing page should be a fresh
+        // route-view observation, not permanently deduped for the browser session.
+        lastTrackedLandingPathRef.current = '';
       }
+
+      if (isCommercialOwner && lastTrackedCommercialOwnerPathRef.current !== pagePath) {
+        trackCommercialC5OwnerView({
+          page_path: pagePath,
+          page_title: typeof document !== 'undefined' ? document.title : '',
+          source_context: 'conversion_tracker',
+        });
+        lastTrackedCommercialOwnerPathRef.current = pagePath;
+      } else if (!isCommercialOwner) {
+        lastTrackedCommercialOwnerPathRef.current = '';
+      }
+    } else {
+      lastTrackedLandingPathRef.current = '';
+      lastTrackedCommercialOwnerPathRef.current = '';
     }
 
     if (!isMarketingPage && !resourceContext) return;
@@ -152,6 +178,17 @@ export default function ConversionTracker() {
         destinationPath === '/pricing';
       const isHighIntentFunnelCta =
         isHighIntentPath(pagePath) && destinationPath && isHighIntentCtaLabel(label);
+
+      if (isCommercialOwner) {
+        trackCommercialC5DecisionClick({
+          page_path: pagePath,
+          cta_label: label,
+          cta_location: ctaLocation,
+          destination_path: destinationPath,
+          href,
+          source_context: 'conversion_tracker',
+        });
+      }
 
       if (isWhatsApp || isBookDemo || isHighIntentFunnelCta) {
         trackCtaClick({
