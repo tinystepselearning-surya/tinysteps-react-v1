@@ -31,6 +31,11 @@ import {
   trackCommercialC5DecisionClick,
   trackCommercialC5OwnerView,
 } from '../../lib/commercialC5Tracking';
+import {
+  isCommercialC7MeasuredKnowledgePath,
+  trackCommercialC7HandoffClick,
+  trackCommercialC7KnowledgeView,
+} from '../../lib/commercialC7KnowledgeMeasurement';
 import { captureLeadAttribution as capturePublicLeadAttribution } from '../../lib/leadAttribution';
 import {
   getResourceMeasurementContext,
@@ -71,12 +76,14 @@ export default function ConversionTracker() {
   const location = useLocation();
   const lastTrackedLandingPathRef = useRef<string>('');
   const lastTrackedCommercialOwnerPathRef = useRef<string>('');
+  const lastTrackedC7KnowledgePathRef = useRef<string>('');
   const lastTrackedResourcePathRef = useRef<string>('');
 
   useEffect(() => {
     const pagePath = location.pathname;
     const isMarketingPage = isMarketingPath(pagePath);
     const isCommercialOwner = isCommercialC5OwnerPath(pagePath);
+    const isC7KnowledgePage = isCommercialC7MeasuredKnowledgePath(pagePath);
     const isMeasuredLanding = isFunnelLandingPath(pagePath) || isCommercialOwner;
     const resourceContext = getResourceMeasurementContext(pagePath);
 
@@ -87,6 +94,17 @@ export default function ConversionTracker() {
       // Leaving the Resources surface ends this route-view dedupe window. If a
       // visitor later returns to the same resource, that is a new measured view.
       lastTrackedResourcePathRef.current = '';
+    }
+
+    if (isC7KnowledgePage && lastTrackedC7KnowledgePathRef.current !== pagePath) {
+      trackCommercialC7KnowledgeView({
+        page_path: pagePath,
+        page_title: typeof document !== 'undefined' ? document.title : '',
+        source_context: 'conversion_tracker',
+      });
+      lastTrackedC7KnowledgePathRef.current = pagePath;
+    } else if (!isC7KnowledgePage) {
+      lastTrackedC7KnowledgePathRef.current = '';
     }
 
     // Keep all pre-R11 funnel behavior scoped exactly as before. Resource
@@ -126,7 +144,7 @@ export default function ConversionTracker() {
       lastTrackedCommercialOwnerPathRef.current = '';
     }
 
-    if (!isMarketingPage && !resourceContext) return;
+    if (!isMarketingPage && !resourceContext && !isC7KnowledgePage) return;
 
     const clickHandler = (event: MouseEvent) => {
       const node = findTrackableNode(event.target);
@@ -143,6 +161,7 @@ export default function ConversionTracker() {
         isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp');
       const isPhone = Boolean(href?.startsWith('tel:'));
       const isEmail = Boolean(href?.startsWith('mailto:'));
+      const ctaLocation = inferCtaLocation(node);
 
       // R11 measures resource discovery separately from downstream assists. A
       // phonics-resource-to-phonics-resource click is navigation only; it is not
@@ -164,10 +183,19 @@ export default function ConversionTracker() {
         }
       }
 
+      if (isC7KnowledgePage && destinationPath) {
+        trackCommercialC7HandoffClick({
+          page_path: pagePath,
+          destination_path: destinationPath,
+          cta_label: label,
+          cta_location: ctaLocation,
+          source_context: 'conversion_tracker',
+        });
+      }
+
       if (!isMarketingPage) return;
 
       const baseParams = buildBaseConversionParams(pagePath);
-      const ctaLocation = inferCtaLocation(node);
       const isBookDemo = isBookDemoDestination(destinationPath) || isBookDemoLabel(label);
       const isLeadIntentCta =
         isWhatsApp ||

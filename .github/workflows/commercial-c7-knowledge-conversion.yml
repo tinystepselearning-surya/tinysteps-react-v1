@@ -1,0 +1,133 @@
+name: Commercial C7 Knowledge Conversion Graph
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/commercialC7KnowledgeConversionAudit.ts'
+      - 'src/lib/commercialC7KnowledgeOwnerMapping.ts'
+      - 'src/lib/commercialC7IntentNextStepRules.ts'
+      - 'src/lib/commercialC7ContextualHandoffImplementation.ts'
+      - 'src/lib/commercialC7KnowledgeMeasurement.ts'
+      - 'src/lib/commercialC7ValidationFreeze.ts'
+      - 'src/components/common/ConversionTracker.tsx'
+      - 'src/content/blog/index.ts'
+      - 'src/content/blog/shared/commercialHandoffs.ts'
+      - 'src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts'
+      - 'src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts'
+      - 'src/tests/seo/commercialC7IntentNextStepRules.spec.ts'
+      - 'src/tests/seo/commercialC7ContextualHandoffs.spec.ts'
+      - 'src/tests/seo/commercialC7KnowledgeMeasurement.spec.ts'
+      - 'src/tests/seo/commercialC7ValidationFreeze.spec.ts'
+      - 'src/tests/seo/phonicsBrick7IntentLinking.spec.ts'
+      - 'scripts/audit-commercial-c7-r0-knowledge-conversion.mjs'
+      - 'scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs'
+      - 'scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs'
+      - 'scripts/audit-commercial-c7-r3-contextual-handoffs.mjs'
+      - 'scripts/audit-commercial-c7-r4-knowledge-measurement.mjs'
+      - 'scripts/audit-commercial-c7-r5-validation-freeze.mjs'
+      - 'docs/seo/commercial-growth/C7_R0_KNOWLEDGE_CONVERSION_AUDIT_*'
+      - 'docs/seo/commercial-growth/C7_R1_KNOWLEDGE_OWNER_MAPPING_*'
+      - 'docs/seo/commercial-growth/C7_R2_INTENT_NEXT_STEP_RULES_*'
+      - 'docs/seo/commercial-growth/C7_R3_CONTEXTUAL_COMMERCIAL_HANDOFFS_*'
+      - 'docs/seo/commercial-growth/C7_R4_KNOWLEDGE_CONVERSION_MEASUREMENT_*'
+      - 'docs/seo/commercial-growth/C7_R5_VALIDATION_FREEZE_*'
+      - 'src/content/blog/shared/authorityLinking.ts'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/lib/speakingCommunicationCompletionCanonicalOwnership.js'
+      - 'src/lib/phonicsPublicationRegistry.js'
+      - 'src/lib/knowledgeBaseFinalClosure.js'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/pages/PhonicsKnowledgePage.tsx'
+      - 'src/pages/public/SlowReaderChildHelpPage.tsx'
+      - 'src/pages/public/ShyChildSpeakingConfidencePage.tsx'
+      - 'src/lib/commercialC2KeywordOwnership.ts'
+      - 'src/lib/commercialC4CtrOptimization.ts'
+      - 'src/lib/commercialC5ConversionFlow.ts'
+      - 'src/lib/commercialC6ValidationFreeze.ts'
+      - '.github/workflows/commercial-c7-knowledge-conversion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-c7-knowledge-conversion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
+      VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN }}
+      VITE_ASK_TINY_STEPS_FIREBASE_PROJECT_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_PROJECT_ID }}
+      VITE_ASK_TINY_STEPS_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_STORAGE_BUCKET }}
+      VITE_ASK_TINY_STEPS_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_ASK_TINY_STEPS_FIREBASE_APP_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_APP_ID }}
+      VITE_ASK_TINY_STEPS_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_RECAPTCHA_ENTERPRISE_SITE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run C7 and frozen-baseline tests
+        run: >-
+          npx vitest run
+          src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts
+          src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts
+          src/tests/seo/commercialC7IntentNextStepRules.spec.ts
+          src/tests/seo/commercialC7ContextualHandoffs.spec.ts
+          src/tests/seo/commercialC7KnowledgeMeasurement.spec.ts
+          src/tests/seo/commercialC7ValidationFreeze.spec.ts
+          src/tests/seo/phonicsBrick7IntentLinking.spec.ts
+          src/tests/seo/knowledgeBaseFinalIntegration.spec.ts
+          src/tests/seo/commercialC6ValidationFreeze.spec.ts
+          src/tests/seo/commercialC2KeywordOwnership.spec.ts
+          src/tests/seo/commercialC5ConversionFlow.spec.ts
+          src/tests/seo/commercialC4CtrOptimization.spec.ts
+      - name: Audit C7-R0 knowledge conversion inventory
+        run: node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
+      - name: Audit C7-R1 knowledge owner mapping
+        run: node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
+      - name: Audit C7-R2 intent next-step rules
+        run: node scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs
+      - name: Audit C7-R3 contextual commercial handoffs
+        run: node scripts/audit-commercial-c7-r3-contextual-handoffs.mjs
+      - name: Audit C7-R4 knowledge conversion measurement
+        run: node scripts/audit-commercial-c7-r4-knowledge-measurement.mjs
+      - name: Audit C7-R5 validation and freeze
+        run: node scripts/audit-commercial-c7-r5-validation-freeze.mjs
+      - name: Audit C6 frozen architecture
+        run: node scripts/audit-commercial-c6-r5-validation-freeze.mjs
+      - name: Audit frozen cross-knowledge-base integration
+        run: node scripts/audit-kb-final-cross-knowledge-base-integration.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Run full repository tests
+        run: npm test
+      - name: Validate Ask Tiny Steps production build configuration
+        run: node scripts/validate-ask-tiny-steps-build-env.mjs
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run C7 audits after build
+        run: |
+          node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
+          node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
+          node scripts/audit-commercial-c7-r2-intent-next-step-rules.mjs
+          node scripts/audit-commercial-c7-r3-contextual-handoffs.mjs
+          node scripts/audit-commercial-c7-r4-knowledge-measurement.mjs
+          node scripts/audit-commercial-c7-r5-validation-freeze.mjs
+      - name: Run SEO smoke
+        run: npm run seo:smoke

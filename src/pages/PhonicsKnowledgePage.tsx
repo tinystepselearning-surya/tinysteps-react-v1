@@ -22,6 +22,7 @@ import {
 import { getApprovedPhonicsEditorialReview } from '../lib/phonicsEditorialReviewRegistry.js';
 import { getEditorialReviewer } from '../lib/editorialReviewerRegistry';
 import { getCanonicalTopicOwnerPath } from '../lib/canonicalTopicOwnershipRegistry.js';
+import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
 import {
   buildBreadcrumbListSchema,
   buildSpeakableSpecification,
@@ -80,6 +81,7 @@ export default function PhonicsKnowledgePage() {
   const relatedGuides = getRelatedPhonicsResourcePages(page.path, 4);
   const editorialReview = getApprovedPhonicsEditorialReview(page.path);
   const reviewer = editorialReview ? getEditorialReviewer(editorialReview.reviewerKey) : null;
+  const c7Handoff = getCommercialC7R3Handoff(page.path);
 
   const definedTermId = `${canonicalUrl}#phonics-concept`;
   const definedTermSchema = {
@@ -130,7 +132,23 @@ export default function PhonicsKnowledgePage() {
 
         <section className="mt-8 rounded-[1.8rem] border border-slate-200 bg-white p-5 sm:p-7"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Related Tiny Steps resources</p><h2 className="mt-2 text-2xl font-black tracking-[-0.025em] text-slate-950">Keep the pattern inside the bigger reading pathway</h2></div><Link to="/resources/phonics" className="text-sm font-black text-sky-700 hover:text-sky-900">Back to Phonics & Reading →</Link></div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{relatedPaths.map((to) => <Link key={to} to={to} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-bold leading-6 text-slate-700 transition hover:border-sky-200 hover:bg-sky-50/50 hover:text-sky-900">{to.startsWith('/blog/') ? 'Read the related guide' : to.includes('game') ? 'Use focused practice' : 'Open the related resource'}<span className="mt-1 block break-words text-xs font-medium text-slate-400">{to}</span></Link>)}</div></section>
 
-        <section className="mt-8 rounded-[1.8rem] bg-slate-950 p-6 text-white sm:p-8"><div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Need help finding the actual gap?</p><h2 className="mt-2 text-2xl font-black tracking-[-0.025em]">Use an assessment when practice alone is not showing what is stuck.</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">The focused guide explains one pattern. A broader assessment can separate sound knowledge, blending, decoding, spelling and fluency needs.</p></div><Link to="/book-demo" className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-sky-50">Book free assessment</Link></div></section>
+        {c7Handoff ? (
+          <section className="mt-8 rounded-[1.8rem] bg-slate-950 p-6 text-white sm:p-8" data-c7-contextual-handoff={c7Handoff.ruleClass}>
+            <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Your next learning step</p>
+                <h2 className="mt-2 text-2xl font-black tracking-[-0.025em]">{c7Handoff.heading}</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{c7Handoff.intro}</p>
+              </div>
+              <div className="flex flex-col gap-2 sm:min-w-56">
+                <Link to={c7Handoff.primary.to} className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-sky-50">{c7Handoff.primary.label}</Link>
+                {c7Handoff.secondary ? <Link to={c7Handoff.secondary.to} className="rounded-full border border-white/40 px-5 py-3 text-center text-sm font-black text-white transition hover:border-white/70">{c7Handoff.secondary.label}</Link> : null}
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="mt-8 rounded-[1.8rem] bg-slate-950 p-6 text-white sm:p-8"><div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Need help finding the actual gap?</p><h2 className="mt-2 text-2xl font-black tracking-[-0.025em]">Use an assessment when practice alone is not showing what is stuck.</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">The focused guide explains one pattern. A broader assessment can separate sound knowledge, blending, decoding, spelling and fluency needs.</p></div><Link to="/book-demo" className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-sky-50">Book free assessment</Link></div></section>
+        )}
       </article>
     </main>
   );
