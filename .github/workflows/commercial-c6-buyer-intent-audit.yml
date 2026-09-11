@@ -1,0 +1,65 @@
+name: Commercial C6-R0 Buyer Intent Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/commercialC6BuyerIntentAudit.ts'
+      - 'src/tests/seo/commercialC6BuyerIntentAudit.spec.ts'
+      - 'scripts/audit-commercial-c6-buyer-intent.mjs'
+      - 'docs/seo/commercial-growth/C6_R0_BUYER_INTENT_AUDIT_*'
+      - 'src/lib/commercialC1SearchUniverse.ts'
+      - 'src/lib/commercialC1InternationalAiResearch.ts'
+      - 'src/lib/commercialC2KeywordOwnership.ts'
+      - 'src/lib/commercialC4CtrOptimization.ts'
+      - 'src/lib/commercialC5ConversionFlow.ts'
+      - 'src/pages/PricingPage.tsx'
+      - 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx'
+      - 'src/pages/public/PhonicsFeesIndiaPage.tsx'
+      - '.github/workflows/commercial-c6-buyer-intent-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-c6-r0-buyer-intent-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run C6-R0 and upstream commercial tests
+        run: >-
+          npx vitest run
+          src/tests/seo/commercialC6BuyerIntentAudit.spec.ts
+          src/tests/seo/commercialC5ConversionFlow.spec.ts
+          src/tests/seo/commercialC4CtrOptimization.spec.ts
+          src/tests/seo/commercialC2KeywordOwnership.spec.ts
+      - name: Audit C6-R0 buyer intent coverage
+        run: node scripts/audit-commercial-c6-buyer-intent.mjs
+      - name: Audit C5 decision flow
+        run: node scripts/audit-commercial-c5-conversion-flow.mjs
+      - name: Audit C4 CTR governance
+        run: node scripts/audit-commercial-c4-ctr-optimization.mjs
+      - name: Audit C2 ownership and cannibalisation
+        run: node scripts/audit-commercial-c2-keyword-ownership.mjs
+      - name: Audit C1 observed search evidence
+        run: node scripts/audit-commercial-c1-observed-search-evidence.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Run full repository tests
+        run: npm test
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run C6-R0 audit after build
+        run: node scripts/audit-commercial-c6-buyer-intent.mjs
+      - name: Run SEO smoke
+        run: npm run seo:smoke
