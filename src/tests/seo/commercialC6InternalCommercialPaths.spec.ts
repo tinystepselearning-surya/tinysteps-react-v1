@@ -48,7 +48,7 @@ describe('Commercial C6-R4 internal commercial paths', () => {
     const edges = new Set(COMMERCIAL_C6_R4_EDGES.map((edge) => edgeKey(edge.from, edge.to)));
     expect(COMMERCIAL_C6_R4_JOURNEYS).toHaveLength(6);
     for (const journey of COMMERCIAL_C6_R4_JOURNEYS) {
-      expect(journey.sequence.at(-1)).toBe('/book-demo');
+      expect(journey.sequence[journey.sequence.length - 1]).toBe('/book-demo');
       for (let index = 0; index < journey.sequence.length - 1; index += 1) {
         expect(edges.has(edgeKey(journey.sequence[index], journey.sequence[index + 1]))).toBe(true);
       }
