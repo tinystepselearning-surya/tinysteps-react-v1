@@ -53,6 +53,12 @@ describe('Commercial owner UX consistency layer', () => {
     expect(experience).toContain("currentPath !== '/book-demo'");
   });
 
+  it('keeps the delayed CTA inaccessible while visually hidden and clear of mobile controls', () => {
+    expect(index).toContain('#ts-commercial-owner-cta { visibility: hidden; }');
+    expect(index).toContain('#ts-commercial-owner-cta.is-visible { visibility: visible; }');
+    expect(index).toContain('#ts-commercial-owner-cta { left: 64px !important; }');
+  });
+
   it('contains explicit visual bridges only for the four audited legacy outliers', () => {
     for (const path of [
       '/pricing',
