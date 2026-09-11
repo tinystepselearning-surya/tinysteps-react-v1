@@ -62,15 +62,25 @@ if (baseRef) {
       .split('\n')
       .map((value) => value.trim())
       .filter(Boolean);
-    const forbiddenLiveChanges = changed.filter((file) =>
-      file.startsWith('src/pages/') ||
-      file.startsWith('src/content/blog/posts/') ||
-      file === 'src/content/blog/shared/authorityLinking.ts' ||
-      file === 'src/lib/canonicalTopicOwnershipRegistry.js' ||
-      file === 'src/lib/commercialC2KeywordOwnership.ts' ||
-      file === 'src/lib/commercialC6ValidationFreeze.ts'
-    );
-    check(forbiddenLiveChanges.length === 0, 'audit-only-diff', `R0 changed protected live/ownership files: ${forbiddenLiveChanges.join(', ')}`);
+    const laterBrickLiveAllowlist = new Set([
+      'src/content/blog/index.ts',
+      'src/content/blog/shared/commercialHandoffs.ts',
+      'src/pages/PhonicsKnowledgePage.tsx',
+    ]);
+    const forbiddenLiveChanges = changed.filter((file) => {
+      if (laterBrickLiveAllowlist.has(file)) return false;
+      return (
+        file.startsWith('src/pages/') ||
+        file.startsWith('src/content/blog/posts/') ||
+        file === 'src/content/blog/shared/authorityLinking.ts' ||
+        file === 'src/lib/canonicalTopicOwnershipRegistry.js' ||
+        file === 'src/lib/commercialC2KeywordOwnership.ts' ||
+        file === 'src/lib/commercialC4CtrOptimization.ts' ||
+        file === 'src/lib/commercialC5ConversionFlow.ts' ||
+        file === 'src/lib/commercialC6ValidationFreeze.ts'
+      );
+    });
+    check(forbiddenLiveChanges.length === 0, 'audit-only-diff', `Cumulative C7 changed protected live/ownership files outside the R3 allowlist: ${forbiddenLiveChanges.join(', ')}`);
   } catch (error) {
     addFailure('audit-only-diff', error instanceof Error ? error.message : String(error));
   }
@@ -84,4 +94,4 @@ if (failures.length) {
 
 console.log(`C7-R0 knowledge conversion audit passed (${checks.length} checks).`);
 console.log('Baseline: frozen KB + 51 blog authority plans + 31 published phonics pages + 3 subject hubs + 14 commercial owners.');
-console.log('Policy: audit only; no live knowledge copy, metadata, ownership, C6 architecture or conversion-owner changes authorised.');
+console.log('Policy: R0 remains audit-only; cumulative later-brick live changes are limited to the explicit C7-R3 shared-renderer allowlist.');
