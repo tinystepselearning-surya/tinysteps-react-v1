@@ -5,11 +5,16 @@ on:
     branches: [main]
     paths:
       - 'src/lib/commercialC7KnowledgeConversionAudit.ts'
+      - 'src/lib/commercialC7KnowledgeOwnerMapping.ts'
       - 'src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts'
+      - 'src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts'
       - 'scripts/audit-commercial-c7-r0-knowledge-conversion.mjs'
+      - 'scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs'
       - 'docs/seo/commercial-growth/C7_R0_KNOWLEDGE_CONVERSION_AUDIT_*'
+      - 'docs/seo/commercial-growth/C7_R1_KNOWLEDGE_OWNER_MAPPING_*'
       - 'src/content/blog/shared/authorityLinking.ts'
       - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/lib/speakingCommunicationCompletionCanonicalOwnership.js'
       - 'src/lib/phonicsPublicationRegistry.js'
       - 'src/lib/knowledgeBaseFinalClosure.js'
       - 'src/pages/SubjectResourcesPage.tsx'
@@ -59,6 +64,7 @@ jobs:
         run: >-
           npx vitest run
           src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts
+          src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts
           src/tests/seo/knowledgeBaseFinalIntegration.spec.ts
           src/tests/seo/commercialC6ValidationFreeze.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
@@ -66,6 +72,8 @@ jobs:
           src/tests/seo/commercialC4CtrOptimization.spec.ts
       - name: Audit C7-R0 knowledge conversion inventory
         run: node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
+      - name: Audit C7-R1 knowledge owner mapping
+        run: node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
       - name: Audit C6 frozen architecture
         run: node scripts/audit-commercial-c6-r5-validation-freeze.mjs
       - name: Audit frozen cross-knowledge-base integration
@@ -78,7 +86,9 @@ jobs:
         run: node scripts/validate-ask-tiny-steps-build-env.mjs
       - name: Build and prerender public site
         run: npm run build
-      - name: Re-run C7 audit after build
-        run: node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
+      - name: Re-run C7 audits after build
+        run: |
+          node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
+          node scripts/audit-commercial-c7-r1-knowledge-owner-mapping.mjs
       - name: Run SEO smoke
         run: npm run seo:smoke
