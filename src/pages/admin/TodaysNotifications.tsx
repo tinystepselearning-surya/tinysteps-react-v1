@@ -208,6 +208,27 @@ const COUNTRY_CODE_TIMEZONE_DEFAULTS: Record<string, string> = {
 const getMessageDraftKey = (sessionId: string, recipient: MessageRecipient): string =>
   `${sessionId}:${recipient}:message`;
 
+const copyTextToClipboard = async (value: string): Promise<void> => {
+  const text = String(value || '').trim();
+  if (!text) throw new Error('Nothing to copy.');
+
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  if (!copied) throw new Error('Clipboard copy is unavailable in this browser.');
+};
+
 const countryCodeFromOptionId = (optionId: string): string => {
   const selected = COUNTRY_OPTIONS.find((option) => option.id === optionId);
   return selected ? selected.code : '';
@@ -597,7 +618,6 @@ const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {
     editPhone: '',
   };
 };
-
 const formatKolkataTime = (date: Date | null): string => {
   if (!date) return '';
   return new Intl.DateTimeFormat('en-US', {
@@ -1711,6 +1731,18 @@ export default function TodaysNotifications() {
     window.open(trimmed, '_blank', 'noopener,noreferrer');
   };
 
+  const getCachedJoinUrl = (row: any): string => {
+    const enrollmentId =
+      (typeof row.enrollmentId === 'string' && row.enrollmentId.trim()) ||
+      (typeof row.id === 'string' && row.id.includes('_') ? row.id.split('_')[0].trim() : '');
+    return resolveSessionJoinLink(
+      row,
+      enrollmentId && enrollmentMap[enrollmentId]
+        ? { [enrollmentId]: enrollmentMap[enrollmentId] as Record<string, unknown> }
+        : undefined,
+    );
+  };
+
   const handleJoinClass = async (row: any) => {
     if (joiningSessionId === row.id) return;
 
@@ -1719,12 +1751,7 @@ export default function TodaysNotifications() {
       const enrollmentId =
         (typeof row.enrollmentId === 'string' && row.enrollmentId.trim()) ||
         (typeof row.id === 'string' && row.id.includes('_') ? row.id.split('_')[0].trim() : '');
-      const cachedJoinUrl = resolveSessionJoinLink(
-        row,
-        enrollmentId && enrollmentMap[enrollmentId]
-          ? { [enrollmentId]: enrollmentMap[enrollmentId] as Record<string, unknown> }
-          : undefined,
-      );
+      const cachedJoinUrl = getCachedJoinUrl(row);
       if (cachedJoinUrl) {
         openMeetingLink(cachedJoinUrl);
         return;
@@ -1770,6 +1797,78 @@ export default function TodaysNotifications() {
       });
     } finally {
       setJoiningSessionId((current) => (current === row.id ? null : current));
+    }
+  };
+
+  const handleCopyTeamsLink = async (row: any) => {
+    const joinUrl = getCachedJoinUrl(row);
+    if (!joinUrl) {
+      toast({
+        title: 'Teams link unavailable',
+        description: 'No meeting link is currently loaded for this class.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(joinUrl);
+      toast({ title: 'Teams link copied' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not copy Teams link',
+        description: error?.message || 'Please copy the link manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCopyAllTeacherLinks = async () => {
+    if (teacherFilter === ALL_TEACHERS_FILTER) {
+      toast({
+        title: 'Select a teacher first',
+        description: 'Choose one teacher to copy the visible class links.',
+      });
+      return;
+    }
+
+    const availableRows = sortedRows
+      .map((row) => ({ row, joinUrl: getCachedJoinUrl(row) }))
+      .filter((item) => Boolean(item.joinUrl));
+
+    if (!availableRows.length) {
+      toast({
+        title: 'No Teams links available',
+        description: `No meeting links are currently loaded for ${teacherFilter}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const clipboardText = availableRows
+      .map(({ row, joinUrl }) => {
+        const dateKey = String(row.sessionDateKey || row.date || '').trim();
+        const dateLabel = isYmdDateKey(dateKey) ? formatKolkataShortDateFromDateKey(dateKey) : dateKey || '-';
+        const timeLabel = String(row.classTimeIst || row.classTime || 'Time TBD').trim();
+        return `${row.studentLabel || 'Student'} | ${dateLabel} | ${timeLabel} | ${joinUrl}`;
+      })
+      .join('\n');
+
+    try {
+      await copyTextToClipboard(clipboardText);
+      const missingCount = sortedRows.length - availableRows.length;
+      toast({
+        title: `${availableRows.length} Teams link${availableRows.length === 1 ? '' : 's'} copied`,
+        description: missingCount > 0
+          ? `${missingCount} visible class${missingCount === 1 ? '' : 'es'} had no loaded meeting link.`
+          : `${teacherFilter} — all visible class links copied.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Could not copy Teams links',
+        description: error?.message || 'Please copy the links manually.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -2006,6 +2105,17 @@ export default function TodaysNotifications() {
               </SelectContent>
             </Select>
           </div>
+          {mode !== 'overall-admissions' && teacherFilter !== ALL_TEACHERS_FILTER ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs"
+              onClick={() => void handleCopyAllTeacherLinks()}
+              disabled={sortedRows.length === 0}
+            >
+              Copy All Teams Links
+            </Button>
+          ) : null}
           {mode !== 'overall-admissions' ? (
             <Button
               size="sm"
@@ -2155,9 +2265,9 @@ export default function TodaysNotifications() {
             <Table
               className={
                 mode === 'today'
-                  ? 'min-w-[1160px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
+                  ? 'min-w-[1280px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
                   : isNotificationActionsEnabled
-                    ? 'min-w-[1160px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
+                    ? 'min-w-[1280px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
                     : 'min-w-[980px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
               }
             >
@@ -2178,7 +2288,7 @@ export default function TodaysNotifications() {
                   <TableHead className="w-[110px] whitespace-nowrap">Session Type</TableHead>
                   {isNotificationActionsEnabled ? (
                     <>
-                      <TableHead className="w-[280px] whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[400px] whitespace-nowrap">Actions</TableHead>
                       <TableHead className="w-[88px] whitespace-nowrap">Notified</TableHead>
                     </>
                   ) : null}
@@ -2196,6 +2306,7 @@ export default function TodaysNotifications() {
                   const isEditingTeacherPhone = editingPhone?.key === teacherPhoneEditKey;
                   const parentMessage = buildResolvedRowMessage(row, 'parent');
                   const teacherMessage = buildResolvedRowMessage(row, 'teacher');
+                  const cachedJoinUrl = getCachedJoinUrl(row);
                   const hasDirectJoinUrl =
                     (typeof row.joinUrl === 'string' && row.joinUrl.trim().length > 0) ||
                     (typeof row.meetingLink === 'string' && row.meetingLink.trim().length > 0);
@@ -2208,6 +2319,7 @@ export default function TodaysNotifications() {
                     (typeof enrollmentJoinSource?.meetingLink === 'string' &&
                       enrollmentJoinSource.meetingLink.trim().length > 0);
                   const canJoinClass = hasDirectJoinUrl || hasEnrollmentJoinUrl || Boolean(row.enrollmentId);
+                  const canCopyTeamsLink = Boolean(cachedJoinUrl);
 
                   return (
                     <TableRow key={row.id}>
@@ -2469,6 +2581,15 @@ export default function TodaysNotifications() {
                                 disabled={!canJoinClass || joiningSessionId === row.id}
                               >
                                 {joiningSessionId === row.id ? 'Opening…' : 'Join Class'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 px-3 text-xs"
+                                onClick={() => void handleCopyTeamsLink(row)}
+                                disabled={!canCopyTeamsLink}
+                              >
+                                Copy Teams Link
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
