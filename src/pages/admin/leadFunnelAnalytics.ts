@@ -58,6 +58,31 @@ export interface FunnelAnalyticsResult {
   };
 }
 
+export interface FunnelDateRange {
+  startKey: string;
+  endKey: string;
+}
+
+export interface DemoAgeBuckets {
+  age0To2: number;
+  age3To7: number;
+  age8To30: number;
+  age31Plus: number;
+  missingTimestamp: number;
+}
+
+export interface DemoOperationalDiagnostics {
+  openAge: DemoAgeBuckets;
+  assignedAge: DemoAgeBuckets;
+  decisionAge: DemoAgeBuckets;
+  staleOpenOver7Days: number;
+  veryStaleOpenOver30Days: number;
+  staleAssignedOver7Days: number;
+  staleDecisionOver7Days: number;
+  activeRescheduleLinked: number;
+  missingAgeTimestamp: number;
+}
+
 const EMPTY_TOTALS: FunnelCohortTotals = {
   received: 0,
   demoCreated: 0,
@@ -66,6 +91,16 @@ const EMPTY_TOTALS: FunnelCohortTotals = {
   enrolled: 0,
   cancelled: 0,
 };
+
+const EMPTY_AGE_BUCKETS = (): DemoAgeBuckets => ({
+  age0To2: 0,
+  age3To7: 0,
+  age8To30: 0,
+  age31Plus: 0,
+  missingTimestamp: 0,
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const toMillis = (value: unknown): number => {
   if (!value) return 0;
@@ -142,6 +177,20 @@ export const addDaysToDateKey = (dateKey: string, days: number): string => {
 export const dateKeyInRange = (dateKey: string | null, startKey: string, endKey: string): boolean =>
   Boolean(dateKey && dateKey >= startKey && dateKey <= endKey);
 
+export const previousEqualLengthRange = (startKey: string, endKey: string): FunnelDateRange => {
+  const start = new Date(`${startKey}T00:00:00Z`);
+  const end = new Date(`${endKey}T00:00:00Z`);
+  if (!startKey || !endKey || !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start > end) {
+    return { startKey: '', endKey: '' };
+  }
+  const dayCount = Math.floor((end.getTime() - start.getTime()) / DAY_MS) + 1;
+  const previousEndKey = addDaysToDateKey(startKey, -1);
+  return {
+    startKey: addDaysToDateKey(previousEndKey, -(dayCount - 1)),
+    endKey: previousEndKey,
+  };
+};
+
 const normalizeSource = (value: unknown): string => {
   if (typeof value !== 'string' || !value.trim()) return 'Unknown';
   const normalized = value.trim().toLowerCase();
@@ -176,6 +225,69 @@ const demosForLead = (
   const explicit = demosById.get(lead.demoSessionId);
   if (!explicit || linked.some((demo) => demo.id === explicit.id)) return linked;
   return [...linked, explicit];
+};
+
+const addAgeBucket = (buckets: DemoAgeBuckets, timestamp: unknown, nowMs: number): number | null => {
+  const millis = toMillis(timestamp);
+  if (!millis) {
+    buckets.missingTimestamp += 1;
+    return null;
+  }
+  const ageDays = Math.max(0, Math.floor((nowMs - millis) / DAY_MS));
+  if (ageDays <= 2) buckets.age0To2 += 1;
+  else if (ageDays <= 7) buckets.age3To7 += 1;
+  else if (ageDays <= 30) buckets.age8To30 += 1;
+  else buckets.age31Plus += 1;
+  return ageDays;
+};
+
+export const buildDemoOperationalDiagnostics = (
+  demos: DemoSession[],
+  now: unknown = new Date(),
+): DemoOperationalDiagnostics => {
+  const nowMs = toMillis(now) || Date.now();
+  const diagnostics: DemoOperationalDiagnostics = {
+    openAge: EMPTY_AGE_BUCKETS(),
+    assignedAge: EMPTY_AGE_BUCKETS(),
+    decisionAge: EMPTY_AGE_BUCKETS(),
+    staleOpenOver7Days: 0,
+    veryStaleOpenOver30Days: 0,
+    staleAssignedOver7Days: 0,
+    staleDecisionOver7Days: 0,
+    activeRescheduleLinked: 0,
+    missingAgeTimestamp: 0,
+  };
+
+  demos.forEach((demo) => {
+    if ((demo.status === 'open' || demo.status === 'assigned') && (demo.rescheduledFromDemoId || demo.rescheduledToDemoId)) {
+      diagnostics.activeRescheduleLinked += 1;
+    }
+
+    if (demo.status === 'open') {
+      const ageDays = addAgeBucket(diagnostics.openAge, demo.createdAt, nowMs);
+      if (ageDays === null) diagnostics.missingAgeTimestamp += 1;
+      else {
+        if (ageDays > 7) diagnostics.staleOpenOver7Days += 1;
+        if (ageDays > 30) diagnostics.veryStaleOpenOver30Days += 1;
+      }
+      return;
+    }
+
+    if (demo.status === 'assigned') {
+      const ageDays = addAgeBucket(diagnostics.assignedAge, demo.assignedAt || demo.createdAt, nowMs);
+      if (ageDays === null) diagnostics.missingAgeTimestamp += 1;
+      else if (ageDays > 7) diagnostics.staleAssignedOver7Days += 1;
+      return;
+    }
+
+    if (demo.status === 'completed' && !demo.conversionStatus) {
+      const ageDays = addAgeBucket(diagnostics.decisionAge, demo.completedAt || demo.lastUpdatedAt || demo.createdAt, nowMs);
+      if (ageDays === null) diagnostics.missingAgeTimestamp += 1;
+      else if (ageDays > 7) diagnostics.staleDecisionOver7Days += 1;
+    }
+  });
+
+  return diagnostics;
 };
 
 export const buildLeadFunnelAnalytics = (

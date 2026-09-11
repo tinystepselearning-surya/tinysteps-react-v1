@@ -1,2 +1,2 @@
-export { default } from './LeadsInquiriesWorkspaceV2';
-export { type LeadsWorkspaceView } from './LeadsInquiriesWorkspaceV2';
+export { default } from './LeadsInquiriesWorkspaceV3';
+export { type LeadsWorkspaceView } from './LeadsInquiriesWorkspaceV3';

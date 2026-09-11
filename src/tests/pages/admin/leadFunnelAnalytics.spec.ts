@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { DemoSession } from '../../../types/models';
 import {
+  buildDemoOperationalDiagnostics,
   buildLeadFunnelAnalytics,
   funnelRate,
   leadReceivedDateKey,
+  previousEqualLengthRange,
   type LeadFunnelLead,
 } from '../../../pages/admin/leadFunnelAnalytics';
 
@@ -175,5 +177,62 @@ describe('lead funnel analytics', () => {
     expect(result.cohortTotals.completed).toBe(0);
     expect(result.cohortTotals.enrolled).toBe(0);
     expect(result.activity[0]).toMatchObject({ completed: 0, enrolled: 0 });
+  });
+
+  it('builds the immediately preceding equal-length comparison range', () => {
+    expect(previousEqualLengthRange('2026-08-01', '2026-08-31')).toEqual({
+      startKey: '2026-07-01',
+      endKey: '2026-07-31',
+    });
+    expect(previousEqualLengthRange('2026-09-01', '2026-09-01')).toEqual({
+      startKey: '2026-08-31',
+      endKey: '2026-08-31',
+    });
+    expect(previousEqualLengthRange('', '2026-09-01')).toEqual({ startKey: '', endKey: '' });
+  });
+
+  it('ages live demo backlog without treating age alone as cancellation', () => {
+    const now = new Date('2026-09-01T12:00:00.000Z');
+    const demos: DemoSession[] = [
+      demo({ id: 'open-new', status: 'open', createdAt: ts('2026-08-31T12:00:00.000Z') as any }),
+      demo({ id: 'open-10d', status: 'open', createdAt: ts('2026-08-22T12:00:00.000Z') as any }),
+      demo({ id: 'open-40d', status: 'open', createdAt: ts('2026-07-23T12:00:00.000Z') as any }),
+      demo({ id: 'assigned-old', status: 'assigned', assignedAt: ts('2026-08-20T12:00:00.000Z') as any }),
+      demo({
+        id: 'decision-old',
+        status: 'completed',
+        completedAt: ts('2026-08-15T12:00:00.000Z') as any,
+        conversionStatus: null,
+      }),
+      demo({
+        id: 'reschedule-active',
+        status: 'open',
+        createdAt: ts('2026-08-30T12:00:00.000Z') as any,
+        rescheduledFromDemoId: 'older-demo',
+      }),
+      demo({ id: 'missing-date', status: 'open', createdAt: null }),
+      demo({
+        id: 'completed-enrolled',
+        status: 'completed',
+        completedAt: ts('2026-08-01T12:00:00.000Z') as any,
+        conversionStatus: 'enrolled',
+      }),
+    ];
+
+    const diagnostics = buildDemoOperationalDiagnostics(demos, now);
+    expect(diagnostics.openAge).toMatchObject({
+      age0To2: 2,
+      age8To30: 1,
+      age31Plus: 1,
+      missingTimestamp: 1,
+    });
+    expect(diagnostics.assignedAge.age8To30).toBe(1);
+    expect(diagnostics.decisionAge.age8To30).toBe(1);
+    expect(diagnostics.staleOpenOver7Days).toBe(2);
+    expect(diagnostics.veryStaleOpenOver30Days).toBe(1);
+    expect(diagnostics.staleAssignedOver7Days).toBe(1);
+    expect(diagnostics.staleDecisionOver7Days).toBe(1);
+    expect(diagnostics.activeRescheduleLinked).toBe(1);
+    expect(diagnostics.missingAgeTimestamp).toBe(1);
   });
 });
