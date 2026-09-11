@@ -26,7 +26,7 @@ This file owns the approved public semantic facts for:
 - proof/outcome safety policy;
 - concluded Summer Camp 2026 status.
 
-The registry is versioned as `2026-09-08-r1`.
+The registry is versioned as `2026-09-12-r1`.
 
 ## Canonical programme facts
 
