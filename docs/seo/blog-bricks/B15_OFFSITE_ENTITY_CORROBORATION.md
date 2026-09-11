@@ -39,7 +39,7 @@ B15 adds no new external account merely for SEO and makes no unverified accredit
 The current public organization identities confirmed for Tiny Steps are:
 
 - Facebook Page — `https://www.facebook.com/profile.php?id=61593673422886`
-- Instagram — `https://www.instagram.com/tiny_steps_oel/`
+- Instagram — `https://www.instagram.com/tinystepslearning_priya/`
 - YouTube — `https://www.youtube.com/@TinyStepsLearning_Priya`
 - LinkedIn company page — `https://www.linkedin.com/company/tiny-steps-learning/`
 

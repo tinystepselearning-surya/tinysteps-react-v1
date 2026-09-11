@@ -1,6 +1,6 @@
 import { GROUP_MONTHLY_FEES, PER_CLASS_PRICE } from './pricing';
 
-export const SEMANTIC_FACTS_VERSION = '2026-09-08-r1';
+export const SEMANTIC_FACTS_VERSION = '2026-09-12-r1';
 
 const STANDARD_ONE_TO_ONE_DURATION_MINUTES = 35;
 const FREE_ASSESSMENT_DURATION_MINUTES = 35;
@@ -175,7 +175,7 @@ export const SEMANTIC_FACTS = {
     },
     {
       platform: 'Instagram',
-      url: 'https://www.instagram.com/tiny_steps_oel/',
+      url: 'https://www.instagram.com/tinystepslearning_priya/',
       purpose: 'Tiny Steps Learning classroom and learning updates',
       includeInOrganizationSameAs: true,
     },
