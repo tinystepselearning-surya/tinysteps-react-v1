@@ -53,10 +53,12 @@ describe('Commercial owner UX consistency layer', () => {
     expect(experience).toContain("currentPath !== '/book-demo'");
   });
 
-  it('keeps the delayed CTA inaccessible while visually hidden and clear of mobile controls', () => {
+  it('keeps the delayed CTA inaccessible while hidden and clear of existing mobile controls', () => {
     expect(index).toContain('#ts-commercial-owner-cta { visibility: hidden; }');
     expect(index).toContain('#ts-commercial-owner-cta.is-visible { visibility: visible; }');
     expect(index).toContain('#ts-commercial-owner-cta { left: 64px !important; }');
+    expect(index).toContain('body:has(#ts-commercial-owner-cta.is-visible) [data-floating-assistant="1"]');
+    expect(index).toContain('bottom: calc(9.5rem + env(safe-area-inset-bottom)) !important;');
   });
 
   it('contains explicit visual bridges only for the four audited legacy outliers', () => {
