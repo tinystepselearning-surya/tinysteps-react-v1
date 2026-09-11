@@ -1,14 +1,14 @@
 # C3 — Final 15-Owner Reconciliation
 
-Date: 2026-09-11  
-Branch: `seo/c1-parent-commercial-search-universe`  
+Date: 2026-09-11
+Branch: `seo/c1-parent-commercial-search-universe`
 Scope: 15 user-facing commercial ownership boundaries / 16 machine-readable C2 clusters / 14 unique canonical URLs.
 
 ## Status
 
-**Implementation: 15/15 RECONCILED**  
-**C1 ownership input: unchanged**  
-**C2 canonical ownership: unchanged**  
+**Implementation: 15/15 RECONCILED**
+**C1 ownership input: unchanged**
+**C2 canonical ownership: unchanged**
 **Final merge gate: full exact-head CI pending**
 
 The earlier second-pass audit reopened C3 because source facts, metadata, programme handoffs and a small number of trust claims no longer matched the canonical C2 ownership map. Every item from that audit has now been revisited page-by-page.

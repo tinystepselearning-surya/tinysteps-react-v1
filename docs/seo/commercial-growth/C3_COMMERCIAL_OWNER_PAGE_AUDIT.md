@@ -1,7 +1,7 @@
 # C3 — Canonical Commercial Owner Page Audit & Intent Implementation
 
-Revision: 2026-09-10-c3-r2  
-Status: implementation-complete pending exact-head CI  
+Revision: 2026-09-10-c3-r2
+Status: implementation-complete pending exact-head CI
 Depends on: C1 frozen, C2 ownership-complete
 
 ## Mission
@@ -20,7 +20,7 @@ Therefore C3 audits:
 - **15 user-facing ownership boundaries**
 - **14 unique canonical owner pages**
 
-`/speaking` owns two machine clusters: public speaking and general communication.  
+`/speaking` owns two machine clusters: public speaking and general communication.
 `/online-english-classes-for-kids` owns two machine clusters: broad English and generic English-tutor intent.
 
 ## Page-by-page audit
@@ -64,7 +64,7 @@ C1 found real international visibility and researched UAE, USA, UK, Australia, S
 - Broad English / generic tutor / NRI intent → `/online-english-classes-for-kids`
 - Explicit Hyderabad intent remains → `/online-english-classes-hyderabad`
 
-Country pages created in C3: **0**.  
+Country pages created in C3: **0**.
 AI-prompt pages created in C3: **0**.
 
 ## Cannibalisation boundaries retained

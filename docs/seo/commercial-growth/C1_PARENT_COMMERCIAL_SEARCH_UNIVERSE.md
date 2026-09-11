@@ -1,7 +1,7 @@
 # C1 — Parent Commercial Search Universe
 
-Revision: 2026-09-10-c1-r3  
-Status: research-complete  
+Revision: 2026-09-10-c1-r3
+Status: research-complete
 Depends on: C0 frozen, KB-FINAL frozen
 
 ## Mission

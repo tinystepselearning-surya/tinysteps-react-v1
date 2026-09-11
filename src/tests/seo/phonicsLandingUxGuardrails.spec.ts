@@ -22,8 +22,8 @@ describe('Phonics landing narrative and UX guardrails', () => {
     const schemas = read('src/lib/schemas.ts');
     const semanticFacts = read('src/config/semanticFacts.ts');
 
-    expect(page).toContain('Online phonics classes for kids across India');
-    expect(page).toContain('Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations');
+    expect(page).toContain('Live online phonics classes for families in India and worldwide');
+    expect(page).toContain('India, the UAE, United States, United Kingdom, Australia, Singapore and other locations');
     expect(page).toContain("areaServed: ['India', 'Worldwide']");
     expect(facts).toContain("{PUBLIC_FACTS.geography}");
     expect(facts).toContain('Live online delivery is not limited to one city');
@@ -45,23 +45,17 @@ describe('Phonics landing narrative and UX guardrails', () => {
     const page = read('src/pages/phonics.tsx');
     const brick1 = read('src/tests/seo/phonicsBrick1Authority.spec.ts');
 
-    expect(page).toContain('What should parents look for in the best online phonics classes?');
-    expect(page).toContain('Assessment-first placement');
-    expect(page).toContain('Explicit, systematic progression');
-    expect(page).toContain('Blending and segmenting');
-    expect(page).toContain('Decoding instead of guessing');
-    expect(page).toContain('Live observation and correction');
-    expect(page).toContain('Reading and spelling transfer');
-    expect(page).toContain('Pacing matched to readiness');
-    expect(page).toContain('Parent-visible progress');
+    expect(page).toContain('How to evaluate an online phonics class for your child');
+    expect(page).toContain('Start from the child’s current level');
+    expect(page).toContain('Follow a cumulative sequence');
+    expect(page).toContain('Correct errors while they happen');
+    expect(page).toContain('Check transfer into real reading');
     expect(page).toContain('#phonics-class-quality-criteria');
-    expect(page).toContain('rather than depending on a broad “best” claim');
 
     for (const href of [
       '/curriculum?tab=phonics',
       '/class-samples',
-      '/testimonials',
-      '/pricing',
+      '/phonics-fees-india',
       '/best-online-phonics-classes-for-kids-in-india',
     ]) {
       expect(page, href).toContain(href);
@@ -93,7 +87,7 @@ describe('Phonics landing narrative and UX guardrails', () => {
     const markers = [
       'id="overview"',
       'id="problems"',
-      'id="best-phonics-classes"',
+      'id="choosing-phonics-support"',
       'id="teacher-delivery"',
       'id="program"',
       'id="learning-path"',

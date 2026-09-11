@@ -109,7 +109,7 @@ describe('B14 trust, entity and schools authority guardrails', () => {
     const expectations = [
       ['src/pages/phonics.tsx', 'program="Phonics"', 'sound–spelling accuracy'],
       ['src/pages/grammar.tsx', 'program="Grammar"', 'self-corrects'],
-      ['src/pages/speaking.tsx', 'program="Public Speaking"', 'idea organisation'],
+      ['src/pages/speaking.tsx', 'program="Public Speaking & Communication"', 'idea organisation'],
     ] as const;
     for (const [file, program, evidence] of expectations) {
       const page = read(file);

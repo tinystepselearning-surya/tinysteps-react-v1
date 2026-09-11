@@ -1,7 +1,7 @@
 # C1 — International + AI-Style Commercial Research
 
-Revision: 2026-09-10-c1-r4  
-Status: research-complete  
+Revision: 2026-09-10-c1-r4
+Status: research-complete
 Scope: research only; ownership remains C2
 
 ## Why this enhancement exists

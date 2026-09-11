@@ -1,7 +1,7 @@
 # C1 — Observed Google + Bing Search Evidence
 
-Date reviewed: 10 September 2026  
-Status: evidence-complete  
+Date reviewed: 10 September 2026
+Status: evidence-complete
 Scope: research only; canonical ownership remains C2
 
 ## Source files reviewed
@@ -12,7 +12,7 @@ Scope: research only; canonical ownership remains C2
 
 The export contains `Chart.csv`, `Queries.csv`, `Pages.csv`, `Countries.csv`, `Devices.csv`, `Search appearance.csv` and `Filters.csv`.
 
-Filter: Web Search, Last 3 months.  
+Filter: Web Search, Last 3 months.
 Observed daily range in `Chart.csv`: **9 June 2026 through 8 September 2026**.
 
 Whole-property totals from the daily chart:

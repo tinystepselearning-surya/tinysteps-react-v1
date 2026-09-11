@@ -30,7 +30,8 @@ describe('Contact and book-demo intent separation', () => {
 
   it('keeps /book-demo focused on assessment conversion and parent decision support', () => {
     expect(bookDemo).toContain('PublicAssessmentForm');
-    expect(bookDemo).toContain('Book One Free 35-Minute Demo Assessment Class');
+    expect(bookDemo).toContain('Book a Free {FREE_DEMO_DURATION_MINUTES}-Minute 1:1 English Assessment');
+    expect(bookDemo).toContain('One free session per child');
     expect(bookDemo).toContain('What Happens in the Demo Assessment?');
     expect(bookDemo).toContain('What Will You Understand After the Assessment?');
     expect(bookDemo).toContain('Before You Enrol');
@@ -46,9 +47,7 @@ describe('Contact and book-demo intent separation', () => {
 
   it('gives the two indexable routes distinct build-time metadata', () => {
     expect(registry).toContain("title: 'Contact Tiny Steps Learning | Admissions & Parent Support'");
-    expect(registry).toContain(
-      "title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning'",
-    );
+    expect(registry).toContain("title: 'Free 35-Minute 1:1 English Assessment | Tiny Steps'");
     expect(registry).toContain("canonicalPath: '/contact'");
     expect(registry).toContain("canonicalPath: '/book-demo'");
   });

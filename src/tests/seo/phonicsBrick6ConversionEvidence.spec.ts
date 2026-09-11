@@ -25,12 +25,12 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
     expect(FREE_DEMO_FULL_DESCRIPTION).toContain('before enrolment');
 
     for (const token of [
-      'STANDARD_PRICING_SUMMARY',
+      'formatINR(PER_CLASS_PRICE)',
       'ONE_TO_ONE_MONTHLY_PACKAGES',
       'GROUP_MONTHLY_FEES',
       'ULTRA_PREMIUM_PRICING',
-      'What is included?',
-      'How to choose the right plan',
+      'What is included in the live class fee?',
+      'How parents should compare online English class fees',
       'to="/book-demo"',
     ]) {
       expect(pricing, token).toContain(token);
@@ -39,12 +39,12 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
 
   it('keeps /pricing as the general price owner and /phonics-fees-india as the phonics-fee explainer', () => {
     expect(pricing).toContain("getRouteConfig('/pricing')");
-    expect(pricing).toContain('Transparent Pricing for Premium 1:1 English Classes');
-    expect(phonicsFees).toContain("canonicalPath: '/phonics-fees-india'");
+    expect(pricing).toContain('Online English Classes for Kids: Fees & Pricing');
+    expect(phonicsFees).toContain("routeConfig?.canonicalPath ?? '/phonics-fees-india'");
     expect(phonicsFees).toContain('Phonics Class Fees in India');
-    expect(phonicsFees).toContain('Compare 1:1 and group fees separately');
-    expect(phonicsFees).toContain('Price is not a quality ranking.');
-    expect(phonicsFees).toContain('How we calculated these prices');
+    expect(phonicsFees).toContain('Compare 1:1 and group phonics fees separately');
+    expect(phonicsFees).toContain('not a nationwide census and not a quality ranking');
+    expect(phonicsFees).toContain('How we calculated the benchmark');
     expect(phonicsFees).toContain('Phonics fees FAQs');
     expect(phonicsFees).toContain('to="/phonics"');
     expect(phonicsFees).toContain('<ClusterSeoNav cluster="phonics" compact />');
@@ -88,7 +88,7 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
     expect(bookDemo).toContain('What Will You Understand After the Assessment?');
     expect(bookDemo).toContain('Priority skill');
     expect(bookDemo).toContain('Before You Enrol');
-    expect(bookDemo).toContain('Individual learning progress varies.');
+    expect(bookDemo).toContain('individual learning progress varies.');
     expect(bookDemo).toContain('Watch Class Samples');
 
     for (const destination of ['/class-samples', '/curriculum', '/pricing']) {

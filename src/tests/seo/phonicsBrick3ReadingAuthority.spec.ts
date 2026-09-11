@@ -31,7 +31,6 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
       'online reading improvement classes',
       'reading classes for struggling readers',
       'child struggling to read',
-      'reading fluency classes',
       'reading comprehension classes',
       'reading tutor online',
       'reading support for kids',
@@ -146,9 +145,9 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
   it('keeps client metadata aligned with the build-time prerender registry', () => {
     const page = read(readingPagePath);
     const registry = read('src/lib/routeSeoRegistry.js');
-    const title = 'Reading Classes for Kids in India | Tiny Steps';
+    const title = 'Online Reading Classes for Kids | Live 1:1 | Tiny Steps';
     const description =
-      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.';
+      'Live 1:1 online reading classes for kids ages 3–12 in India and worldwide. Build accurate reading, comprehension, vocabulary and reading confidence with assessment-first support.';
 
     expect(page).toContain(`const seoTitle = '${title}'`);
     expect(page).toContain(description);

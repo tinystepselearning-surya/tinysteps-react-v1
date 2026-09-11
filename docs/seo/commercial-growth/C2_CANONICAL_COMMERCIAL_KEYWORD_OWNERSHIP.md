@@ -1,7 +1,7 @@
 # C2 — Canonical Commercial Keyword Ownership + Cannibalisation Map
 
-Revision: 2026-09-10-c2-r1  
-Status: ownership-complete  
+Revision: 2026-09-10-c2-r1
+Status: ownership-complete
 Depends on: C1 base research complete, C1 international/AI research complete, C1 observed Google/Bing evidence complete
 
 ## Mission
