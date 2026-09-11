@@ -23,7 +23,10 @@
     <style>
       #ts-commercial-owner-cta { visibility: hidden; }
       #ts-commercial-owner-cta.is-visible { visibility: visible; }
-      @media (max-width: 767px) {
+      @media (min-width: 640px) {
+        #ts-commercial-owner-cta { bottom: 80px !important; }
+      }
+      @media (max-width: 639px) {
         #ts-commercial-owner-cta { left: 64px !important; }
         body:has(#ts-commercial-owner-cta.is-visible) [data-floating-assistant="1"] {
           bottom: calc(9.5rem + env(safe-area-inset-bottom)) !important;
