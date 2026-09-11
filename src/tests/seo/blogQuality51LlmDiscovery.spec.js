@@ -16,6 +16,23 @@ import {
 const repoRoot = process.cwd();
 const postsBySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 
+const COMMERCIAL_OWNER_ROUTES = [
+  '/phonics',
+  '/best-online-phonics-classes-for-kids-in-india',
+  '/phonics-fees-india',
+  '/reading-classes-for-kids',
+  '/reading-fluency-program',
+  '/grammar',
+  '/writing-classes-for-kids',
+  '/spoken-english-classes-for-kids-online',
+  '/speaking',
+  '/confidence-building-program-kids',
+  '/online-english-classes-for-kids',
+  '/online-english-classes-hyderabad',
+  '/pricing',
+  '/book-demo',
+];
+
 describe('Blogs 1-51 search and LLM discovery lock', () => {
   it('keeps the first 51 quality-reviewed editorial authorities complete, unique and indexable', () => {
     expect(PHONICS_34_AUTHORITY_SLUGS).toHaveLength(34);
@@ -49,10 +66,32 @@ describe('Blogs 1-51 search and LLM discovery lock', () => {
     expect(llmsFull).toContain('Blogs 35-51 — Parent Communication / English Support Programme');
   });
 
+  it('publishes all 14 canonical commercial owner URLs in llms.txt and the static sitemap', () => {
+    const sitemap = fs.readFileSync(path.join(repoRoot, 'public/sitemap-static.xml'), 'utf8');
+    const llms = fs.readFileSync(path.join(repoRoot, 'public/llms.txt'), 'utf8');
+
+    expect(COMMERCIAL_OWNER_ROUTES).toHaveLength(14);
+    expect(new Set(COMMERCIAL_OWNER_ROUTES).size).toBe(14);
+    expect(llms).toContain('## Commercial Programme & Decision Pages');
+
+    for (const route of COMMERCIAL_OWNER_ROUTES) {
+      const absoluteUrl = `https://tinystepslearning.com${route}`;
+      expect(sitemap, `${route} missing from static sitemap`).toContain(`<loc>${absoluteUrl}</loc>`);
+      expect(llms, `${route} missing from llms.txt`).toContain(absoluteUrl);
+    }
+  });
+
   it('keeps public AI/search crawlers allowed while private Tiny Steps routes remain blocked', () => {
     const robots = fs.readFileSync(path.join(repoRoot, 'public/robots.txt'), 'utf8');
 
     for (const crawler of [
+      'Bingbot',
+      'Googlebot',
+      'Google-Extended',
+      'Applebot',
+      'Applebot-Extended',
+      'DuckDuckBot',
+      'DuckAssistBot',
       'OAI-SearchBot',
       'ChatGPT-User',
       'GPTBot',
@@ -63,7 +102,7 @@ describe('Blogs 1-51 search and LLM discovery lock', () => {
       'CCBot',
     ]) {
       expect(robots, `${crawler} must remain explicitly allowed on public routes`).toMatch(
-        new RegExp(`User-agent:\\s*${crawler}[\\s\\S]{0,140}Allow:\\s*\\/`, 'i'),
+        new RegExp(`User-agent:\\s*${crawler}[\\s\\S]{0,260}Allow:\\s*\\/`, 'i'),
       );
     }
 
