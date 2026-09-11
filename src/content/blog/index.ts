@@ -5,7 +5,7 @@ import { applyBlogEditorialCleanup } from './shared/editorialCleanup';
 import { applyLegacyWeekBlogRename } from './shared/legacyWeekRenames';
 import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
-import { applyBlogAuthorityLinking } from './shared/authorityLinking';
+import { applyCommercialC7ContextualHandoffs } from './shared/commercialHandoffs';
 import { applyBlogTitleOptimization } from '../../lib/blogTitleOptimization.js';
 
 type PostModule = {
@@ -56,12 +56,12 @@ const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((po
   } as BlogPost;
   const publicPost = applyLegacyWeekBlogRename(normalized);
   const titledPost = applyBlogTitleOptimization(publicPost) as BlogPost;
-  const authorityLinkedPost = applyBlogAuthorityLinking(titledPost);
+  const contextualLinkedPost = applyCommercialC7ContextualHandoffs(titledPost);
 
   return {
-    ...authorityLinkedPost,
-    audience: getBlogAudience(authorityLinkedPost),
-    discoveryCategory: getBlogDiscoveryCategory(authorityLinkedPost),
+    ...contextualLinkedPost,
+    audience: getBlogAudience(contextualLinkedPost),
+    discoveryCategory: getBlogDiscoveryCategory(contextualLinkedPost),
   };
 });
 
