@@ -11,7 +11,7 @@ Implement the C7-R1 owner map and C7-R2 next-step rules on live knowledge surfac
 
 ### Shared blog pipeline
 
-`src/content/blog/shared/commercialHandoffs.ts` now applies the R2 rule for each blog path after title/editorial normalization.
+`src/content/blog/shared/commercialHandoffs.ts` now applies the R2 rule for each individual blog path after title/editorial normalization.
 
 The transformer:
 - uses the R3 primary owner and optional secondary assessment exactly as authorised by R2;
@@ -34,14 +34,19 @@ Important corrected routes include:
 
 Where R2 resolves a programme owner, the rendered next-step block shows that owner first. `/book-demo` appears only when R2 authorises assessment as a secondary step. If a page has no R3 handoff, the existing assessment fallback remains available.
 
-## Protected existing surfaces
+## Protected existing placements
 
-R3 does not duplicate handoffs on surfaces that already expose the correct programme/specialist owner plus assessment, including:
-- `/resources/phonics`
-- `/resources/grammar`
-- `/resources/speaking`
-- `/slow-reader-child-help`
-- `/shy-child-speaking-confidence`
+R3 does not duplicate a new generic CTA block where the page already acts as a discovery/decision hub or already exposes the correct next steps. Protected surfaces are:
+- `/blog` — discovery library with intent-specific article routes;
+- `/parents` — multi-programme concern routing plus assessment;
+- `/resources/phonics` — phonics programme plus assessment;
+- `/resources/grammar` — grammar programme plus assessment;
+- `/resources/speaking` — speaking programme plus assessment;
+- `/child-not-reading-properly` — phonics/reading routes plus assessment;
+- `/slow-reader-child-help` — specialist reading-fluency owner plus assessment;
+- `/shy-child-speaking-confidence` — confidence-building owner plus assessment.
+
+R3 contains a runtime coverage guard: every non-soft R2 rule must either use one of the shared R3 renderers or belong to this explicit protected-placement set. Any uncovered route fails validation.
 
 ## Guardrails
 
