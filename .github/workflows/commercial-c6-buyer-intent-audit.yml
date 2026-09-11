@@ -8,20 +8,24 @@ on:
       - 'src/lib/commercialC6BuyerIntentArchitecture.ts'
       - 'src/lib/commercialC6ParentDecisionFramework.ts'
       - 'src/lib/commercialC6InternalCommercialPaths.ts'
+      - 'src/lib/commercialC6ValidationFreeze.ts'
       - 'src/tests/seo/commercialC6BuyerIntentAudit.spec.ts'
       - 'src/tests/seo/commercialC6BuyerIntentArchitecture.spec.ts'
       - 'src/tests/seo/commercialC6PricingDecisionSupport.spec.ts'
       - 'src/tests/seo/commercialC6ParentDecisionFramework.spec.ts'
       - 'src/tests/seo/commercialC6InternalCommercialPaths.spec.ts'
+      - 'src/tests/seo/commercialC6ValidationFreeze.spec.ts'
       - 'scripts/audit-commercial-c6-buyer-intent.mjs'
       - 'scripts/audit-commercial-c6-r1-r2.mjs'
       - 'scripts/audit-commercial-c6-r3-parent-decision.mjs'
       - 'scripts/audit-commercial-c6-r4-internal-paths.mjs'
+      - 'scripts/audit-commercial-c6-r5-validation-freeze.mjs'
       - 'docs/seo/commercial-growth/C6_R0_BUYER_INTENT_AUDIT_*'
       - 'docs/seo/commercial-growth/C6_R1_BUYER_INTENT_ARCHITECTURE_*'
       - 'docs/seo/commercial-growth/C6_R2_PRICING_IMPLEMENTATION_*'
       - 'docs/seo/commercial-growth/C6_R3_PARENT_DECISION_FRAMEWORK_*'
       - 'docs/seo/commercial-growth/C6_R4_INTERNAL_COMMERCIAL_PATHS_*'
+      - 'docs/seo/commercial-growth/C6_R5_VALIDATION_FREEZE_*'
       - 'src/lib/commercialC1SearchUniverse.ts'
       - 'src/lib/commercialC1InternationalAiResearch.ts'
       - 'src/lib/commercialC2KeywordOwnership.ts'
@@ -86,6 +90,7 @@ jobs:
           src/tests/seo/commercialC6PricingDecisionSupport.spec.ts
           src/tests/seo/commercialC6ParentDecisionFramework.spec.ts
           src/tests/seo/commercialC6InternalCommercialPaths.spec.ts
+          src/tests/seo/commercialC6ValidationFreeze.spec.ts
           src/tests/seo/commercialC5ConversionFlow.spec.ts
           src/tests/seo/commercialC4CtrOptimization.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
@@ -97,6 +102,8 @@ jobs:
         run: node scripts/audit-commercial-c6-r3-parent-decision.mjs
       - name: Audit C6-R4 internal commercial paths
         run: node scripts/audit-commercial-c6-r4-internal-paths.mjs
+      - name: Audit C6-R5 validation and freeze
+        run: node scripts/audit-commercial-c6-r5-validation-freeze.mjs
       - name: Audit C5 decision flow
         run: node scripts/audit-commercial-c5-conversion-flow.mjs
       - name: Audit C4 CTR governance
@@ -119,5 +126,6 @@ jobs:
           node scripts/audit-commercial-c6-r1-r2.mjs
           node scripts/audit-commercial-c6-r3-parent-decision.mjs
           node scripts/audit-commercial-c6-r4-internal-paths.mjs
+          node scripts/audit-commercial-c6-r5-validation-freeze.mjs
       - name: Run SEO smoke
         run: npm run seo:smoke
