@@ -14,7 +14,7 @@ const DIST = path.join(ROOT, 'dist');
 const CHECK_DIST = process.argv.includes('--dist');
 
 const REQUIRED_SEMANTIC_FACTS = [
-  "SEMANTIC_FACTS_VERSION = '2026-09-08-r1'",
+  "SEMANTIC_FACTS_VERSION = '2026-09-12-r1'",
   "name: 'Tiny Steps Learning'",
   "fullName: 'Vannala Ravali Priya'",
   'coreAgeMin: 3',
