@@ -10,6 +10,12 @@ const LEGACY_PHONICS_PROGRESS_COPY =
 const LEGACY_PHONICS_SUPPORT_COPY =
   'If progress is not becoming more independent despite consistent, stage-matched instruction and practice, review placement, teaching sequence, correction quality and text difficulty. Involve the child’s school and an appropriate qualified professional when broader speech, language, hearing or learning concerns are also present.';
 
+const LEGACY_CURRICULUM_PROGRAM_LINKS = Object.freeze({
+  '/curriculum?tab=phonics': '/phonics',
+  '/curriculum?tab=grammar': '/grammar',
+  '/curriculum?tab=speaking': '/speaking',
+});
+
 function canonicalInternalBlogLinks() {
   return {
     name: 'canonical-internal-blog-links-and-public-proof',
@@ -18,6 +24,12 @@ function canonicalInternalBlogLinks() {
       if (!id.includes('/src/')) return null;
       let transformed = code;
       for (const [source, destination] of Object.entries(RETIRED_BLOG_PATH_REDIRECTS)) {
+        transformed = transformed.split(source).join(destination);
+      }
+
+      // Legacy curriculum tab URLs all render the same roadmap document. Route
+      // programme exploration directly to the canonical programme owner pages.
+      for (const [source, destination] of Object.entries(LEGACY_CURRICULUM_PROGRAM_LINKS)) {
         transformed = transformed.split(source).join(destination);
       }
 
