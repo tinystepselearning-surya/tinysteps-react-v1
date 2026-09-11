@@ -1,7 +1,7 @@
 # C7-R3 — Contextual Commercial Handoffs
 
 Date: 2026-09-11
-Status: IMPLEMENTED — VALIDATION PENDING
+Status: IMPLEMENTED — VALIDATION IN PROGRESS
 
 ## Purpose
 
@@ -18,10 +18,11 @@ The transformer:
 - keeps `/book-demo` secondary when the programme need is already known;
 - keeps comparison and fee research inside their dedicated owner;
 - does not add a commercial prompt to `SOFT_DISCOVERY` content;
-- may retain one non-commercial legacy support link such as a class sample, curriculum or parent resource;
+- may retain one useful non-commercial legacy support link such as a class sample, curriculum or parent resource;
+- drops the generic `/courses` fallback once a precise frozen owner is known;
 - falls back to the existing B7 authority-linking behaviour only when a blog has no C7 rule.
 
-This fixes important owner mismatches centrally. Examples include:
+Important corrected routes include:
 - `/blog/online-english-classes-for-kids-india` → `/online-english-classes-for-kids`;
 - `/blog/child-understands-english-but-does-not-speak` → `/spoken-english-classes-for-kids-online` → `/book-demo`;
 - `/blog/how-to-improve-reading-fluency-in-children` → `/reading-fluency-program`;
