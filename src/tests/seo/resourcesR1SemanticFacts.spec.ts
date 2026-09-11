@@ -32,7 +32,7 @@ const catalogBySlug = new Map(catalogs.map((course) => [course.slug, course]));
 
 describe('Resources R1 semantic facts registry', () => {
   it('freezes the canonical brand, founder, audience, delivery, pricing and contact facts', () => {
-    expect(SEMANTIC_FACTS_VERSION).toBe('2026-09-08-r1');
+    expect(SEMANTIC_FACTS_VERSION).toBe('2026-09-12-r1');
     expect(SEMANTIC_FACTS.brand.name).toBe('Tiny Steps Learning');
     expect(SEMANTIC_FACTS.founder.fullName).toBe('Vannala Ravali Priya');
     expect(SEMANTIC_FACTS.audience.coreAgeMin).toBe(3);
