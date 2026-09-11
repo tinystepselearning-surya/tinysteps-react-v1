@@ -20,6 +20,13 @@
     <meta name="author" content="Tiny Steps Online School" />
     <script defer src="/seo-indexability-guard.js"></script>
     <script defer src="/commercial-owner-experience.js"></script>
+    <style>
+      #ts-commercial-owner-cta { visibility: hidden; }
+      #ts-commercial-owner-cta.is-visible { visibility: visible; }
+      @media (max-width: 767px) {
+        #ts-commercial-owner-cta { left: 64px !important; }
+      }
+    </style>
     <script>
       (() => {
         const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
