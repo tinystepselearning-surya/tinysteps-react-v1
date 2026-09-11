@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/lib/commercialC4CtrOptimization.ts'
+      - 'src/lib/commercialC4SerpSnapshot.ts'
       - 'src/tests/seo/commercialC4CtrOptimization.spec.ts'
       - 'scripts/audit-commercial-c4-ctr-optimization.mjs'
       - 'docs/seo/commercial-growth/C4_*'
@@ -55,7 +56,7 @@ jobs:
           src/tests/seo/commercialC3OwnerPageAudit.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
           src/tests/seo/commercialC1ObservedSearchEvidence.spec.ts
-      - name: Audit C4 CTR baseline
+      - name: Audit C4 CTR experiment governance
         run: node scripts/audit-commercial-c4-ctr-optimization.mjs
       - name: Audit C3 owner pages
         run: node scripts/audit-commercial-c3-owner-pages.mjs
@@ -69,7 +70,7 @@ jobs:
         run: npm test
       - name: Build and prerender public site
         run: npm run build
-      - name: Re-run C4 CTR baseline after build
+      - name: Re-run C4 governance after build
         run: node scripts/audit-commercial-c4-ctr-optimization.mjs
       - name: Run SEO smoke
         run: npm run seo:smoke
