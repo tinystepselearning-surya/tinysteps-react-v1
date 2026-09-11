@@ -12,6 +12,7 @@ on:
       - 'scripts/audit-commercial-c5-conversion-flow.mjs'
       - 'docs/seo/commercial-growth/C5_*'
       - 'src/lib/commercialC0Foundation.ts'
+      - 'src/lib/commercialC1ObservedSearchEvidence.ts'
       - 'src/lib/commercialC2KeywordOwnership.ts'
       - 'src/lib/commercialC3OwnerPageAudit.ts'
       - 'src/lib/commercialC4CtrOptimization.ts'
@@ -59,6 +60,7 @@ jobs:
           src/tests/seo/commercialC4CtrOptimization.spec.ts
           src/tests/seo/commercialC3OwnerPageAudit.spec.ts
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
+          src/tests/seo/commercialC1ObservedSearchEvidence.spec.ts
           src/tests/seo/commercialC0Foundation.spec.ts
       - name: Audit C5 commercial CRO decision flow
         run: node scripts/audit-commercial-c5-conversion-flow.mjs
@@ -68,8 +70,10 @@ jobs:
         run: node scripts/audit-commercial-c3-owner-pages.mjs
       - name: Audit C2 ownership and cannibalisation
         run: node scripts/audit-commercial-c2-keyword-ownership.mjs
-      - name: Audit C0 revenue measurement and facts
-        run: node scripts/audit-commercial-c0-foundation.mjs
+      - name: Audit C1 observed search evidence
+        run: node scripts/audit-commercial-c1-observed-search-evidence.mjs
+      - name: Verify C0 revenue/facts regression tests
+        run: npx vitest run src/tests/seo/commercialC0Foundation.spec.ts
       - name: Run type check
         run: npm run typecheck
       - name: Run full repository tests
