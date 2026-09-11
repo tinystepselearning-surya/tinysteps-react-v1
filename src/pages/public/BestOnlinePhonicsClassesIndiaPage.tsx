@@ -11,13 +11,15 @@ import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../li
 
 const primaryIntentKeywords = [
   'best online phonics classes in India',
+  'best online phonics classes for kids in India',
   'best phonics classes for kids',
   'best phonics classes online',
   'best phonics course in India',
   'how to choose phonics classes',
+  'compare online phonics classes for kids',
   'online phonics classes comparison',
-  'phonics classes fees',
-  'phonics class cost',
+  'phonics class reviews India',
+  'best 1:1 phonics classes for kids',
   '1-to-1 vs group phonics classes',
   'what to look for in a phonics class',
   'which phonics program is best for my child',
@@ -142,9 +144,9 @@ const tinyStepsEvidence = [
   },
   {
     criterion: 'Commercial clarity',
-    tinySteps: 'Current public pricing can be reviewed before enrolment.',
-    href: '/pricing',
-    label: 'Check pricing',
+    tinySteps: 'Parents can review the dedicated Tiny Steps phonics-fee page before enrolment, including the current standard 1:1 reference price and package context.',
+    href: '/phonics-fees-india',
+    label: 'Review phonics fees',
   },
 ];
 
@@ -173,9 +175,9 @@ const faqItems = [
     answer: `Tiny Steps serves ${PUBLIC_SITE_FACTS.audience.label}. Younger learners often begin with early sound and blending foundations, while older children can join when decoding, spelling, or reading gaps remain.`,
   },
   {
-    question: 'How much do Tiny Steps online phonics classes cost?',
+    question: 'How should parents compare phonics class pricing?',
     answer:
-      'The current standard reference is ₹400 per 1:1 class, with the starter 12-class plan at ₹4,800. Parents can review current pricing before enrolment and confirm the suitable package after the free assessment.',
+      'Compare price together with class format, teacher attention, duration, placement, materials, progress visibility and policies. Tiny Steps publishes its phonics fees separately so parents can review the current standard 1:1 reference and package context without turning this comparison guide into a fee page.',
   },
   {
     question: 'How do I know whether my child needs phonics or broader reading support?',
@@ -215,7 +217,7 @@ const pageNavItems = [
   { id: 'format-comparison', label: 'Compare' },
   { id: 'tiny-steps-evidence', label: 'Tiny Steps' },
   { id: 'parent-reviews', label: 'Reviews' },
-  { id: 'pricing', label: 'Cost' },
+  { id: 'pricing', label: 'Value' },
   { id: 'faq', label: 'FAQs' },
 ];
 
@@ -303,7 +305,8 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
   const seoTitle = routeConfig?.title ?? 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning';
   const seoDescription =
-    'Compare the best online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, teacher correction, transfer evidence, phonics class cost, fees, and progress visibility.';
+    routeConfig?.description ??
+    'Compare online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, live correction, reading transfer, progress visibility and overall value.';
   const starterPlan = ONE_TO_ONE_MONTHLY_PACKAGES.find((pkg) => pkg.id === 'starter');
   const [activeSection, setActiveSection] = useState(pageNavItems[0].id);
 
@@ -360,8 +363,9 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       '@id': `${canonicalUrl}#webpage`,
       about: [
         { '@type': 'Thing', name: 'Online phonics classes comparison' },
+        { '@type': 'Thing', name: 'How to choose phonics classes for kids' },
         { '@type': 'Thing', name: '1-to-1 vs group phonics classes' },
-        { '@type': 'Thing', name: 'Phonics class fees and cost' },
+        { '@type': 'Thing', name: 'Phonics provider evaluation' },
       ],
     };
 
@@ -420,7 +424,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               Compare phonics programmes by child fit, teaching quality, 1-to-1 vs group format, proof of reading transfer, progress visibility, fees, and total class cost before you choose.
             </p>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-              This page is the Tiny Steps buyer-comparison guide. For the full Tiny Steps phonics method, levels, and learning pathway, use the{' '}
+              This page is the Tiny Steps buyer-comparison guide. It is published by Tiny Steps—not an independent third-party ranking—and deliberately avoids unsupported “#1” claims. For the full Tiny Steps phonics method, levels, and learning pathway, use the{' '}
               <Link to="/phonics" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-700">
                 main phonics programme page
               </Link>
@@ -681,7 +685,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         note="The comparison framework focuses on child fit, teaching quality, transfer evidence, and practical clarity before enrolment."
         highlights={[
           { label: 'Audience', value: PUBLIC_SITE_FACTS.audience.label },
-          { label: 'Comparison focus', value: 'Fit, teaching, transfer evidence, format, progress, fees and cost' },
+          { label: 'Comparison focus', value: 'Fit, teaching, transfer evidence, format, progress and value' },
           { label: 'Primary next step', value: 'Free 35-minute 1:1 demo assessment before package selection' },
         ]}
         badges={['Founder reviewed', 'Buyer comparison guide']}
@@ -706,21 +710,21 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       <Section id="pricing" tint="warm">
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch">
           <div>
-            <SectionHeading eyebrow="Phonics classes fees" title="What does Tiny Steps phonics cost?" />
+            <SectionHeading eyebrow="Value comparison" title="How should price factor into a phonics-class decision?" />
             <p className="mt-4 text-base leading-8 text-slate-700">
-              The current standard reference is <strong>{formatINR(PER_CLASS_PRICE)} per 1:1 class</strong>
+              Price matters, but it should be compared alongside teaching quality, individual attention, duration, placement, progress visibility and policies. For transparency, Tiny Steps currently references <strong>{formatINR(PER_CLASS_PRICE)} per standard 1:1 class</strong>
               {starterPlan ? (
                 <>
                   {' '}and <strong>{formatINR(starterPlan.monthlyFee)} for {starterPlan.classes} classes</strong>
                 </>
-              ) : null}. Parents should compare total programme clarity—not price alone—because a lower cost is not automatically stronger teaching, and a higher cost is not proof of better teaching.
+              ) : null}. The dedicated phonics-fee page owns the full fee and package explanation.
             </p>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
-                to="/pricing"
+                to="/phonics-fees-india"
                 className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/60 hover:shadow-md sm:w-auto"
               >
-                View Current Pricing
+                Review Phonics Fees
               </Link>
               <Link
                 to="/book-demo"

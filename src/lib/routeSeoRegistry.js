@@ -26,34 +26,40 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/phonics': {
-    title: 'Online Phonics Classes for Kids in India | Live 1:1 | Tiny Steps',
+    title: 'Online Phonics Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Explore live 1:1 online phonics classes for kids in India and what to look for when comparing the best phonics classes. Structured blending, decoding, spelling and fluency with assessment-first placement.',
+      'Live 1:1 online phonics classes for kids ages 3–12 in India and worldwide. Build blending, decoding, spelling and reading fluency with assessment-first placement.',
     canonicalPath: '/phonics',
     ogType: 'website',
     keywords:
-      'online phonics classes,online phonics classes for kids,online phonics classes for kids in India,phonics classes for kids,phonics classes in India,best online phonics classes,best online phonics classes in India,best phonics classes for kids,best phonics classes in India,best phonics course for kids,best online phonics course for kids,best phonics program for kids,live 1:1 phonics classes,1 to 1 phonics classes online,personalised phonics classes for kids,structured phonics classes for kids,synthetic phonics classes,phonics classes for struggling readers,phonics tutor online for kids,online reading and phonics classes',
+      'online phonics classes,online phonics classes for kids,phonics classes for kids,phonics classes in India,live 1:1 phonics classes,1 to 1 phonics classes online,personalised phonics classes for kids,live online phonics classes,structured phonics classes for kids,synthetic phonics classes,phonics classes for struggling readers,phonics tutor online for kids,phonics classes for blending,phonics classes for decoding,phonics classes for ages 3 to 12',
   },
   '/grammar': {
-    title: 'Grammar Classes for Kids in India | Tiny Steps',
+    title: 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book one free 35-minute 1:1 demo assessment class.',
+      'Live 1:1 online grammar classes for kids in India and worldwide. Build sentence formation, tenses, punctuation, grammar accuracy and clearer school answers with assessment-first placement.',
     canonicalPath: '/grammar',
     ogType: 'website',
+    keywords:
+      'online grammar classes for kids,grammar classes for kids,grammar classes for kids India,English grammar classes for kids,1 to 1 grammar classes online,online grammar tutor for kids,sentence formation classes for kids,grammar classes for sentence formation,grammar classes to improve school answers,grammar correction classes for kids,online grammar classes in India,online grammar classes for kids worldwide',
   },
   '/speaking': {
-    title: 'Public Speaking Classes for Kids in India | Tiny Steps',
+    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps',
     description:
-      'Live online public speaking classes for kids in India. Build sentence formation, storytelling, show-and-tell, clear expression and confidence. Book one free 35-minute 1:1 demo assessment class.',
+      'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
     canonicalPath: '/speaking',
     ogType: 'website',
+    keywords:
+      'public speaking classes for kids online,public speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
   '/book-demo': {
-    title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
+    title: 'Free 35-Minute 1:1 English Assessment | Tiny Steps',
     description:
-      'Book a free 1:1 online English assessment for your child. Understand their level in phonics, reading, grammar, sentence formation, and speaking confidence.',
+      'Book one free 35-minute live 1:1 online English assessment for your child. Identify the right phonics, reading, grammar, writing or speaking path before enrolment.',
     canonicalPath: '/book-demo',
     ogType: 'website',
+    keywords:
+      'free English assessment for kids online,free online English assessment for kids,free English demo class for kids,free online English demo class,free 1 to 1 English demo class,English level assessment for kids,online English assessment for child,free English trial class for kids,book English demo class for kids,free phonics assessment online,free reading assessment for kids,free grammar assessment for kids,free speaking assessment for kids',
   },
   '/resources': {
     title: 'English Learning Resources for Kids, Parents & Educators | Tiny Steps',
@@ -99,11 +105,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'article',
   },
   '/pricing': {
-    title: 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning',
+    title: 'Online English Classes for Kids Fees & Pricing | Tiny Steps',
     description:
-      'Standard 1:1 classes cost ₹400 per class and small groups cost ₹180–₹300 per child per class. Book one free 35-minute 1:1 demo assessment class.',
+      'See Tiny Steps online English class fees: standard live 1:1 ₹400/class, 12 classes ₹4,800, small groups ₹180–₹300 per child/class, plus native-teacher options.',
     canonicalPath: '/pricing',
     ogType: 'website',
+    keywords:
+      'online English classes for kids fees,online English classes fees,English classes for kids price,online English classes pricing,online English classes cost India,English classes fees India,1 to 1 English class fees,1 to 1 English classes price,online English tutor fees for kids,small group English class fees,live online English class price,online English course fees for kids',
   },
   '/sitemap': {
     title: 'Sitemap | Tiny Steps Learning',
@@ -377,14 +385,14 @@ export const ROUTE_SEO_REGISTRY = {
   '/best-online-phonics-classes-for-kids-in-india': {
     title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.',
+      'Compare online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, live correction, reading transfer, progress visibility and overall value.',
     canonicalPath: '/best-online-phonics-classes-for-kids-in-india',
     ogType: 'website',
   },
   '/best-online-phonics-classes-india': {
     title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.',
+      'Compare online phonics classes for kids in India by child fit, 1:1 vs group format, curriculum, live correction, reading transfer, progress visibility and overall value.',
     canonicalPath: '/best-online-phonics-classes-for-kids-in-india',
     ogType: 'website',
   },
@@ -553,46 +561,58 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/reading-classes-for-kids': {
-    title: 'Reading Classes for Kids in India | Tiny Steps',
+    title: 'Online Reading Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.',
+      'Live 1:1 online reading classes for kids ages 3–12 in India and worldwide. Build accurate reading, comprehension, vocabulary and reading confidence with assessment-first support.',
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
+    keywords:
+      'online reading classes for kids,reading classes for kids,reading classes for kids India,reading classes near me,reading class for kids near me,reading and writing classes for kids near me,english reading classes for kids,english reading classes for kids near me,best reading classes for kids,best online reading classes for kids,online reading improvement classes,reading improvement classes for kids,reading classes for struggling readers,child struggling to read,reading comprehension classes for kids,reading tutor online,online reading tutor for kids,reading support for kids,help child read fluently,1-to-1 reading classes online,online reading classes in India,reading classes in India,online reading classes for kids worldwide',
   },
   '/spoken-english-classes-for-kids-online': {
-    title: 'Spoken English Classes for Kids Online | Tiny Steps Learning',
+    title: 'Spoken English Classes for Kids Online | Live 1:1 | Tiny Steps',
     description:
-      'Live spoken English classes for kids online. Help children move past one-word answers, build sentence confidence, and speak clearly with grammar-linked support.',
+      'Live 1:1 spoken English classes for kids in India and worldwide. Build fuller sentences, conversational fluency, grammar in use and speaking confidence in 35-minute classes.',
     canonicalPath: '/spoken-english-classes-for-kids-online',
     ogType: 'website',
+    keywords:
+      'spoken English classes for kids online,English speaking classes for kids,online spoken English classes for kids,1 to 1 spoken English classes for kids,English fluency classes for kids,conversational English classes for kids,English conversation classes for kids online,online English speaking practice for kids,spoken English classes for NRI kids,online English speaking tutor for kids,online spoken English classes for kids worldwide',
   },
   '/writing-classes-for-kids': {
-    title: 'English Writing Classes for Kids | Tiny Steps Learning',
+    title: 'Creative Writing Classes for Kids Online | Live 1:1 | Tiny Steps',
     description:
-      'English writing classes for kids focused on sentence writing, paragraph writing, grammar in use, and clearer idea expression with live guidance.',
+      'Live 1:1 creative and English writing classes for kids in India and worldwide. Build ideas, paragraphs, school answers, editing skills and independent writing with personalised feedback.',
     canonicalPath: '/writing-classes-for-kids',
     ogType: 'website',
+    keywords:
+      'creative writing classes for kids online,online writing classes for kids,writing classes for kids,English writing classes for kids,1 to 1 writing classes online,paragraph writing classes for kids,story writing classes for kids,school writing support for kids,writing tutor for kids online,writing improvement classes for kids,creative writing tutor for kids,online writing classes for kids worldwide',
   },
   '/phonics-fees-india': {
-    title: 'Phonics Class Fees in India | Tiny Steps Learning',
+    title: 'Phonics Class Fees in India 2026 | 1:1 & Group Price Guide',
     description:
-      'Understand phonics class fees in India, what affects pricing, and how to choose the right live support format based on your child’s learning needs.',
+      'Compare 2026 phonics class fees in India for live 1:1 and group classes, including market fee bands, package costs and Tiny Steps ₹400 live 1:1 pricing.',
     canonicalPath: '/phonics-fees-india',
     ogType: 'website',
+    keywords:
+      'phonics classes fees in India,phonics class fees India,online phonics classes fees,phonics classes cost India,1 to 1 phonics class fees,group phonics class fees,phonics course price India,phonics class price per session,phonics classes fees for kids,small group phonics fees',
   },
   '/online-english-classes-for-kids': {
-    title: 'Online English Classes for Kids in India and Worldwide | Tiny Steps',
+    title: 'Online English Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live online English classes for kids in India and worldwide. Build reading, grammar, spoken English, and confidence through structured 1:1 and small-group classes.',
+      'Live online English classes and 1:1 English tutoring for kids ages 3–12 in India and worldwide. Find the right phonics, reading, grammar, writing or speaking path after a free assessment.',
     canonicalPath: '/online-english-classes-for-kids',
     ogType: 'website',
+    keywords:
+      'online English classes for kids,online English classes for children,live online English classes for kids,1 to 1 English classes for kids online,online English tutor for kids,1 to 1 English tutor for kids online,online English classes for kids ages 3 to 12,online English classes for kids India,online English classes for NRI kids,online English classes for kids in UAE,online English classes for kids in USA,online English classes for kids in UK,online English classes for kids in Australia,online English classes for kids in Singapore,online English classes for kids worldwide',
   },
   '/online-english-classes-hyderabad': {
-    title: 'Online English Classes for Kids in Hyderabad | Tiny Steps Learning',
+    title: 'Online English Classes for Kids in Hyderabad | Tiny Steps',
     description:
-      'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book one free 35-minute 1:1 demo assessment class.',
+      'Live online English classes for kids ages 3–12 in Hyderabad. Start with a free 35-minute 1:1 assessment, then choose the right phonics, reading, grammar, writing or speaking path.',
     canonicalPath: '/online-english-classes-hyderabad',
     ogType: 'website',
+    keywords:
+      'online English classes for kids in Hyderabad,online English classes Hyderabad kids,English classes for kids Hyderabad,English classes for children in Hyderabad,live online English classes for kids Hyderabad,1 to 1 English classes for kids Hyderabad,online English learning for kids Hyderabad',
   },
   '/english-classes-for-4-year-old': {
     title: 'English Classes for 4 Year Old | Tiny Steps Learning',
@@ -644,18 +664,22 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/reading-fluency-program': {
-    title: 'Reading Fluency Program for Kids Who Read Slowly | Tiny Steps',
+    title: 'Reading Fluency Classes for Kids Online | Tiny Steps Learning',
     description:
-      'Reading fluency support for children who read slowly, pause often, or lose meaning, with a clear path from decoding and blending to fluency and comprehension.',
+      'Live 1:1 reading fluency classes for kids in India and worldwide. Build smoother connected reading, phrasing, accuracy and expression after decoding is stable.',
     canonicalPath: '/reading-fluency-program',
     ogType: 'website',
+    keywords:
+      'reading fluency program for kids,reading fluency programme for kids,reading fluency classes for kids online,online reading fluency classes,reading fluency tutor for kids,1 to 1 reading fluency classes,live reading fluency classes for kids,reading fluency course for kids',
   },
   '/confidence-building-program-kids': {
-    title: 'Confidence Building Program for Kids | Tiny Steps',
+    title: 'Confidence Building Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Structured communication pathway for children needing stronger vocabulary, sentence formation, guided speaking, storytelling, expression, and confidence.',
+      'Live 1:1 confidence-building classes for kids in India and worldwide. Build speaking comfort, participation confidence and independent expression in 35-minute classes.',
     canonicalPath: '/confidence-building-program-kids',
     ogType: 'website',
+    keywords:
+      'confidence building classes for kids,confidence building program for kids,online confidence building classes for kids,1 to 1 confidence building classes for kids,speaking confidence classes for kids,confidence classes for shy children,live confidence building classes for kids,online confidence program for kids,confidence building classes for children,confidence building classes for kids worldwide',
   },
   '/english-foundation-program': {
     title: 'English Foundation Program for Kids | Tiny Steps',

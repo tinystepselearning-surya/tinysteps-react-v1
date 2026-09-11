@@ -1,216 +1,311 @@
 import { useEffect } from 'react';
-import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { Link } from 'react-router-dom';
+import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../../config/publicFacts';
 import { applySeo } from '../../lib/seo';
-import { createFAQPageSchema } from '../../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+
+const canonicalPath = '/confidence-building-program-kids';
+const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
+const seoTitle = 'Confidence Building Classes for Kids | Live 1:1 | Tiny Steps';
+const seoDescription =
+  'Live 1:1 confidence-building classes for kids in India and worldwide. Build speaking comfort, participation confidence and independent expression in 35-minute classes.';
+
+const CONFIDENCE_SEO_KEYWORDS = [
+  'confidence building classes for kids',
+  'confidence building program for kids',
+  'online confidence building classes for kids',
+  '1 to 1 confidence building classes for kids',
+  'speaking confidence classes for kids',
+  'confidence classes for shy children',
+  'live confidence building classes for kids',
+  'online confidence program for kids',
+  'confidence building classes for children',
+  'confidence building classes for kids worldwide',
+];
 
 const faqItems = [
   {
-    question: 'What is a confidence-building program for kids?',
+    question: 'What are confidence-building classes for kids?',
     answer:
-      'A confidence-building program helps children build communication habits step by step, from comfort and vocabulary to clearer sentence formation, expression, and confident responses.',
+      'Confidence-building classes give children repeated, guided opportunities to respond, participate, explain simple ideas, and speak with gradually less prompting. The goal is stronger speaking comfort and more independent participation, not performance pressure.',
   },
   {
-    question: 'Is this program only for shy children?',
+    question: 'Who is this confidence-building programme for?',
     answer:
-      'No. It helps shy children, but it also supports children who understand ideas but cannot express them clearly, give short answers, or struggle with sentence flow and communication confidence.',
+      'It is designed for children whose main barrier is speaking confidence itself: they may know what they want to say but hesitate to begin, avoid participating, depend heavily on prompts, or become much quieter in speaking situations.',
   },
   {
-    question: 'What if my child understands English but does not express ideas clearly?',
+    question: 'Is this the same as Spoken English classes?',
     answer:
-      'This usually points to a sentence-formation and expression gap. Tiny Steps builds vocabulary, response structure, and guided speaking routines so children can communicate ideas with clarity.',
+      'No. Spoken English is the better owner when the main goal is everyday English conversation, sentence expansion, vocabulary in use, or conversational fluency. Confidence Building is for children whose main difficulty is willingness, comfort, participation, or independence while speaking.',
   },
   {
-    question: 'How does Tiny Steps build confidence without pressure?',
+    question: 'Is this the same as Public Speaking & Communication classes?',
     answer:
-      'Tiny Steps uses low-pressure guided speaking, predictable routines, and gradual progression. Children are encouraged to grow through repeated small wins, not forced performance.',
+      'No. Public Speaking & Communication is broader and focuses on structured answers, storytelling, show-and-tell, presentations, audience awareness, and general communication skills. Confidence Building is the specialist pathway when confidence itself is the primary barrier.',
   },
   {
-    question: 'Does this program include sentence formation and storytelling?',
+    question: 'What if grammar or sentence accuracy is the real problem?',
     answer:
-      'Yes. Sentence formation, guided answers, storytelling, and expression are core parts of this pathway, along with listening and vocabulary support.',
+      'If the child is willing to speak but repeatedly struggles with tense control, sentence structure, articles, prepositions, or grammatical accuracy, the Grammar programme is usually the clearer starting point. The free assessment helps separate confidence from language-skill gaps.',
   },
   {
-    question: 'What happens in a Tiny Steps communication assessment?',
+    question: 'Are Tiny Steps confidence-building classes live and 1:1?',
     answer:
-      'Tiny Steps checks confidence pattern, vocabulary, sentence formation, response quality, and expression readiness, then recommends the most suitable communication pathway.',
+      `Yes. Standard Tiny Steps 1:1 classes are live online and run for ${PUBLIC_SESSION_DURATION_LABEL}. The format gives the child direct speaking time, guided retries, and individual pacing.`,
+  },
+  {
+    question: 'Can families outside India join the confidence-building programme?',
+    answer:
+      'Yes. Tiny Steps supports families in India and worldwide, including NRI families and families in the UAE, United States, United Kingdom, Australia, Singapore, and other locations, subject to compatible teacher timings and learning fit.',
+  },
+  {
+    question: 'How can parents tell whether confidence is improving?',
+    answer:
+      'Look for observable changes across fresh speaking situations: the child starts responses more readily, needs fewer prompts, gives a little more detail, participates more consistently, recovers from mistakes more comfortably, and transfers confidence to new tasks.',
+  },
+  {
+    question: 'Is this programme a treatment for anxiety or a speech or language disorder?',
+    answer:
+      'No. Tiny Steps provides educational English and communication support, not clinical diagnosis or treatment. If a child has persistent anxiety, speech, language, hearing, or developmental concerns, parents should also seek guidance from an appropriately qualified professional.',
+  },
+];
+
+const confidenceSteps = [
+  {
+    title: '1. Create a safe entry point',
+    text: 'Begin with predictable, low-pressure prompts that the child can answer without feeling tested or rushed.',
+  },
+  {
+    title: '2. Build successful speaking turns',
+    text: 'Use short, achievable speaking opportunities so the child experiences repeated success rather than one high-pressure performance.',
+  },
+  {
+    title: '3. Guide, retry, and reduce support',
+    text: 'Teachers model or prompt only as much as needed, then gradually reduce support as the child becomes more independent.',
+  },
+  {
+    title: '4. Transfer confidence to new tasks',
+    text: 'Confidence is checked on fresh questions, topics, and classroom-style speaking situations instead of relying on rehearsed answers.',
   },
 ];
 
 export default function ConfidenceBuildingProgramKidsPage() {
   useEffect(() => {
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${PUBLIC_FACTS.primaryWebsite}/` },
+        { '@type': 'ListItem', position: 2, name: 'Confidence Building Classes for Kids', item: canonicalUrl },
+      ],
+    };
+
+    const webpageSchema = {
+      ...createWebPageSchema({
+        name: 'Confidence Building Classes for Kids',
+        description: seoDescription,
+        url: canonicalUrl,
+      }),
+      '@id': `${canonicalUrl}#webpage`,
+    };
+
+    const courseSchema = createCourseSchema({
+      name: 'Confidence Building Classes for Kids',
+      description:
+        'Live 1:1 online confidence-building classes for children whose primary barrier is speaking comfort, participation confidence, response initiation, or independent expression.',
+      url: canonicalUrl,
+      educationalLevel: 'School-age confidence support with assessment-led placement',
+      teaches: [
+        'speaking comfort',
+        'participation confidence',
+        'response initiation',
+        'independent expression',
+        'guided speaking confidence',
+        'confidence transfer to fresh speaking tasks',
+      ],
+      areaServed: ['India', 'Worldwide'],
+    });
+
     const faqSchema = {
       ...createFAQPageSchema(faqItems),
-      '@id': 'https://tinystepslearning.com/confidence-building-program-kids#faq',
+      '@id': `${canonicalUrl}#faq`,
     };
 
     applySeo({
-      title: 'Confidence Building Program for Kids | Tiny Steps Learning',
-      description:
-        'Confidence building program for kids focused on expressive speaking, communication confidence, reduced hesitation, vocabulary growth, and public speaking readiness.',
-      canonicalPath: '/confidence-building-program-kids',
+      title: seoTitle,
+      description: seoDescription,
+      canonicalPath,
+      robots: 'index,follow',
       ogType: 'website',
-      jsonLd: [faqSchema],
+      keywords: CONFIDENCE_SEO_KEYWORDS,
+      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, faqSchema],
     });
   }, []);
 
   return (
-    <div className="container mx-auto max-w-4xl px-6 py-12">
-      <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Confidence Building Program for Kids: Communication Pathway</h1>
-        <p className="mt-4 text-lg text-slate-700">
-          A structured pathway for children who need steady communication confidence growth through sentence clarity, expression, and guided speaking.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/book-demo"
-            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
-          >
-            Book Free 35-Minute Demo
-          </Link>
-          <Link
-            to="/courses"
-            className="inline-block rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
-          >
-            Explore Courses
-          </Link>
-        </div>
-      </section>
+    <div className="bg-gradient-to-b from-[#fff9f1] via-white to-[#eef8ff] pb-16">
+      <main className="container mx-auto max-w-5xl px-4 py-10 sm:px-6 md:py-14">
+        <section className="rounded-[28px] border border-orange-100 bg-white/95 p-6 text-center shadow-sm md:p-10">
+          <p className="mx-auto inline-flex rounded-full bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
+            Specialist speaking-confidence pathway
+          </p>
+          <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-bold tracking-[-0.03em] text-slate-900 md:text-5xl">
+            Confidence Building Classes for Kids
+          </h1>
+          <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-700">
+            Live 1:1 online support for children whose main barrier is hesitation, low speaking comfort, limited participation, or dependence on prompts even when they have ideas to share.
+          </p>
+          <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+            Standard 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}. Families in India and worldwide can begin with one free {demoMinutes}-minute 1:1 online demo assessment to confirm whether confidence-building is the right pathway.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/book-demo"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-900 px-7 py-3 font-semibold text-white transition hover:bg-slate-800"
+            >
+              Book Free {demoMinutes}-Minute Demo
+            </Link>
+            <Link
+              to="/pricing"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-900 transition hover:bg-slate-50"
+            >
+              See Class Pricing
+            </Link>
+          </div>
+        </section>
 
-      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
-        <p className="text-slate-700">
-          This page is the Tiny Steps communication pathway guide, not a generic class catalog. It helps parents understand when children need structured confidence-building across listening, vocabulary, sentence formation, expression, and guided speaking progression.
-        </p>
-      </section>
+        <section className="mt-8 rounded-2xl border border-sky-100 bg-sky-50 p-6 md:p-7">
+          <h2 className="text-2xl font-bold text-slate-900">Quick answer: when is Confidence Building the right programme?</h2>
+          <p className="mt-3 leading-7 text-slate-700">
+            Choose this specialist programme when the child&apos;s confidence itself is the main barrier: they hesitate to start, avoid participating, become much quieter under speaking pressure, or rely heavily on adult prompting despite having something to say. If the main goal is broader communication, everyday English fluency, or grammar accuracy, another Tiny Steps programme is the clearer owner.
+          </p>
+        </section>
 
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this program is for</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Children who need communication confidence growth over time.</li>
-          <li>• Children who understand but struggle to express full ideas clearly.</li>
-          <li>• Children with weak sentence formation, short answers, or low expression.</li>
-          <li>• Parents who want a guided pathway instead of random activity classes.</li>
-        </ul>
-      </section>
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900">Signs that confidence may be the main barrier</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {[
+              'The child knows an answer but often waits for repeated prompting before starting.',
+              'The child speaks more freely in comfortable settings but becomes very quiet in class-style situations.',
+              'The child avoids volunteering, show-and-tell, or unfamiliar speaking tasks even when the content is manageable.',
+              'Mistakes quickly reduce willingness to continue, even when the child can retry with support.',
+              'The child needs reassurance before ordinary speaking turns and depends on adults to carry the interaction.',
+              'The main concern is participation and speaking comfort rather than decoding, grammar, or conversational English knowledge.',
+            ].map((item) => (
+              <article key={item} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-6 text-slate-700 md:text-base">
+                {item}
+              </article>
+            ))}
+          </div>
+        </section>
 
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Difference between shyness, low confidence, weak sentence formation, and lack of expression</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Shyness: child hesitates mainly in social or class-speaking situations.</li>
-          <li>• Low confidence: child avoids speaking even when ideas are known.</li>
-          <li>• Weak sentence formation: child ideas are present but answer structure is incomplete.</li>
-          <li>• Lack of expression: child speaks with low clarity, low detail, or low voice confidence.</li>
-        </ul>
-      </section>
+        <section className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900">How Tiny Steps builds speaking confidence</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {confidenceSteps.map((step) => (
+              <article key={step.title} className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+                <h3 className="font-bold text-slate-900">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700 md:text-base">{step.text}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-5 text-sm leading-7 text-slate-700 md:text-base">
+            Activities may include short answers, picture talk, simple explanations, storytelling or presentation-style tasks when they are useful for confidence practice. Those activities are tools; the specialist outcome here is greater speaking comfort and independent participation.
+          </p>
+        </section>
 
-      <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What confidence-building means at Tiny Steps</h2>
-        <p className="text-slate-700">
-          At Tiny Steps, confidence-building is a structured communication progression. We develop the child&apos;s ability to listen, process, form sentences, and express ideas clearly with supportive guidance.
-        </p>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Skills developed in this program</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Listening and response readiness</li>
-          <li>• Vocabulary expansion for better idea expression</li>
-          <li>• Sentence formation and guided answers</li>
-          <li>• Storytelling structure and expression quality</li>
-          <li>• Presentation readiness and communication confidence</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">How the program is different from random activity classes</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• We use assessment-first placement, not one-size-fits-all activities.</li>
-          <li>• We follow a defined communication pathway with measurable milestones.</li>
-          <li>• We integrate sentence formation, vocabulary, expression, and confidence together.</li>
-          <li>• Parents receive practical next steps, not only participation updates.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
-        <p className="text-slate-700">
-          comfort → vocabulary → sentence formation → guided speaking → storytelling → expression → confident communication
-        </p>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check before suggesting this pathway</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Communication comfort in guided and open speaking situations</li>
-          <li>• Vocabulary range and sentence formation readiness</li>
-          <li>• Expression clarity, response depth, and confidence patterns</li>
-          <li>• Grammar and reading support needs that influence speaking confidence</li>
-          <li>• Best next step: confidence pathway, speaking pathway, or blended support</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">FAQs</h2>
-        <div className="space-y-4">
-          {faqItems.map((item) => (
-            <article key={item.question}>
-              <h3 className="font-semibold text-slate-900">{item.question}</h3>
-              <p className="mt-1 text-sm text-slate-700">{item.answer}</p>
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900">Confidence Building vs other Tiny Steps programmes</h2>
+          <p className="mt-3 max-w-4xl leading-7 text-slate-700">
+            Similar symptoms can come from different learning needs. The free assessment helps identify the primary barrier before placement.
+          </p>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <article className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5">
+              <h3 className="font-bold text-slate-900">Confidence Building</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Best when hesitation, participation confidence, speaking comfort, or dependence on prompting is the primary barrier.</p>
             </article>
-          ))}
-        </div>
-      </section>
+            <article className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5">
+              <h3 className="font-bold text-slate-900">Public Speaking & Communication</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Best for structured answers, storytelling, show-and-tell, classroom communication, presentations, and audience awareness.</p>
+              <Link to="/speaking" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Speaking & Communication</Link>
+            </article>
+            <article className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
+              <h3 className="font-bold text-slate-900">Spoken English</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Best when everyday conversational English, fuller responses, vocabulary in use, or conversational fluency is the main goal.</p>
+              <Link to="/spoken-english-classes-for-kids-online" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Spoken English</Link>
+            </article>
+            <article className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5">
+              <h3 className="font-bold text-slate-900">Grammar</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Best when the child is willing to speak but grammar accuracy, sentence structure, tense control, articles, or prepositions are the main problem.</p>
+              <Link to="/grammar" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Grammar</Link>
+            </article>
+          </div>
+        </section>
 
-      <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Parent action: book one free 35-minute 1:1 online demo assessment class first</h2>
-        <p className="mt-2 text-slate-200">Get a clear communication pathway based on your child&apos;s current confidence and expression stage.</p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/book-demo"
-            className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-          >
-            Book Free 35-Minute Demo
+        <section className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900">Searching about a shy child, or looking for classes?</h2>
+          <p className="mt-3 leading-7 text-slate-700">
+            If you are still trying to understand why your child hesitates or appears shy while speaking, use our parent diagnostic guide first. If you already want structured live confidence-building classes, this page is the programme owner.
+          </p>
+          <Link to="/shy-child-speaking-confidence" className="mt-4 inline-block font-semibold underline underline-offset-2">
+            Read: Shy Child Speaking Confidence Help
           </Link>
-          <Link
-            to="/courses"
-            className="inline-block rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition hover:border-white/70"
-          >
-            Explore Courses
-          </Link>
-        </div>
-      </section>
+        </section>
 
-      <section className="mt-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Related pathways for parents</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>
-            • If your concern is mostly hesitation or shy speaking behavior:{' '}
-            <Link to="/shy-child-speaking-confidence" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Shy Child Speaking Confidence Help
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900">What we check before recommending this pathway</h2>
+          <ul className="mt-5 space-y-3 text-slate-700">
+            <li>• How readily the child starts a response without repeated prompting.</li>
+            <li>• Whether confidence changes between familiar, guided, and fresh speaking tasks.</li>
+            <li>• How the child reacts to mistakes, retries, wait time, and teacher support.</li>
+            <li>• Whether language knowledge—such as grammar or everyday spoken English—is actually the stronger underlying need.</li>
+            <li>• Whether broader public-speaking and communication goals are more important than confidence-building itself.</li>
+          </ul>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-sky-100 bg-white p-6 md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900">How parents can measure confidence progress</h2>
+          <p className="mt-3 leading-7 text-slate-700">
+            Confidence should be judged through behaviour on fresh speaking tasks rather than promises about a fixed number of classes. Useful signs include faster response initiation, fewer prompts, more consistent participation, calmer retries after mistakes, steadier delivery, and greater willingness to attempt unfamiliar topics.
+          </p>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 md:p-8" id="faq">
+          <h2 className="text-2xl font-bold text-slate-900">Frequently asked questions</h2>
+          <div className="mt-5 space-y-4">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-5">
+                <h3 className="font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700 md:text-base">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-[28px] bg-slate-900 p-7 text-center text-white md:p-9">
+          <h2 className="text-2xl font-bold md:text-3xl">Start with a free confidence assessment</h2>
+          <p className="mx-auto mt-3 max-w-3xl leading-7 text-slate-200">
+            The free {demoMinutes}-minute 1:1 online assessment helps determine whether your child primarily needs Confidence Building, Spoken English, Grammar, or the broader Speaking & Communication programme.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-white px-7 py-3 font-semibold text-slate-900 transition hover:bg-slate-100">
+              Book Free {demoMinutes}-Minute Demo
             </Link>
-          </li>
-          <li>
-            • If you want the core communication/public speaking track:{' '}
-            <Link to="/speaking" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Speaking Program
+            <Link to="/pricing" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-white/40 px-6 py-3 font-semibold text-white transition hover:border-white/70">
+              See Pricing
             </Link>
-          </li>
-          <li>
-            • If sentence accuracy is limiting expression:{' '}
-            <Link to="/grammar" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Grammar Program
-            </Link>
-          </li>
-          <li>
-            • If reading confidence is reducing communication confidence:{' '}
-            <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Reading Classes for Kids
-            </Link>
-          </li>
-        </ul>
-      </section>
-      <ClusterSeoNav cluster="speaking" />
+          </div>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-300">
+            <Link to="/speaking" className="underline underline-offset-2 hover:text-white">Speaking & Communication</Link>
+            <span className="hidden sm:inline text-slate-500">•</span>
+            <Link to="/spoken-english-classes-for-kids-online" className="underline underline-offset-2 hover:text-white">Spoken English</Link>
+            <span className="hidden sm:inline text-slate-500">•</span>
+            <Link to="/resources/speaking" className="underline underline-offset-2 hover:text-white">Speaking resources</Link>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

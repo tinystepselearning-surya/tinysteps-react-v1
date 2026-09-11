@@ -19,20 +19,15 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
     expect(routes).toContain("{ path: 'best-online-phonics-classes-for-kids-in-india', element: <BestOnlinePhonicsClassesIndiaPage /> }");
   });
 
-  it('covers the primary and high-value phonics search-intent family', () => {
+  it('covers generic phonics-provider intent without retaking comparison ownership', () => {
     const registry = read('src/lib/routeSeoRegistry.js');
     const page = read('src/pages/phonics.tsx');
 
     const requiredTerms = [
       'online phonics classes',
       'online phonics classes for kids',
-      'online phonics classes for kids in India',
       'phonics classes for kids',
       'phonics classes in India',
-      'best online phonics classes',
-      'best online phonics classes in India',
-      'best phonics classes for kids',
-      'best phonics course for kids',
       'live 1:1 phonics classes',
       'structured phonics classes for kids',
       'phonics classes for struggling readers',
@@ -41,24 +36,24 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
     for (const term of requiredTerms) {
       expect(`${registry}\n${page}`, term).toContain(term);
     }
+
+    expect(page).not.toContain("'best online phonics classes'");
+    expect(page).not.toContain("'phonics classes fees'");
   });
 
-  it('answers best-class intent with a defensible comparison framework rather than an unsupported ranking claim', () => {
+  it('offers programme-fit guidance and delegates provider comparison to its canonical owner', () => {
     const page = read('src/pages/phonics.tsx');
 
-    expect(page).toContain('What should parents look for in the best online phonics classes?');
-    expect(page).toContain('Assessment-first placement');
-    expect(page).toContain('Explicit, systematic progression');
-    expect(page).toContain('Blending and segmenting');
-    expect(page).toContain('Decoding instead of guessing');
-    expect(page).toContain('Live observation and correction');
-    expect(page).toContain('Reading and spelling transfer');
-    expect(page).toContain('Pacing matched to readiness');
-    expect(page).toContain('Parent-visible progress');
+    expect(page).toContain('How to evaluate an online phonics class for your child');
+    expect(page).toContain('Start from the child’s current level');
+    expect(page).toContain('Follow a cumulative sequence');
+    expect(page).toContain('Correct errors while they happen');
+    expect(page).toContain('Check transfer into real reading');
+    expect(page).toContain('Want a deeper provider comparison?');
+    expect(page).toContain('This programme page stays focused on how Tiny Steps phonics works.');
 
     expect(page).not.toContain("Tiny Steps is India's #1");
     expect(page).not.toContain('Tiny Steps is the best phonics');
-    expect(page).toContain('rather than depending on a broad “best” claim');
   });
 
   it('keeps commercial proof routes visible from the decision section', () => {
@@ -67,8 +62,7 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
     for (const href of [
       '/curriculum?tab=phonics',
       '/class-samples',
-      '/testimonials',
-      '/pricing',
+      '/phonics-fees-india',
       '/best-online-phonics-classes-for-kids-in-india',
     ]) {
       expect(page, href).toContain(href);
@@ -78,19 +72,19 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
   it('exposes AEO FAQ answers and machine-readable GEO criteria from the same visible concepts', () => {
     const page = read('src/pages/phonics.tsx');
 
-    expect(page).toContain('What should parents look for in the best online phonics classes?');
-    expect(page).toContain('Are 1:1 phonics classes better than group phonics classes?');
+    expect(page).toContain('How should parents choose an online phonics class for their child?');
+    expect(page).toContain('When is live 1:1 phonics support useful?');
     expect(page).toContain("'@type': 'ItemList'");
     expect(page).toContain('#phonics-class-quality-criteria');
-    expect(page).toContain("name: 'What parents should look for in online phonics classes'");
-    expect(page).toContain('itemListElement: bestClassCriteria.map');
+    expect(page).toContain("name: 'How parents can evaluate online phonics classes'");
+    expect(page).toContain('itemListElement: classFitCriteria.map');
   });
 
   it('uses the strengthened search snippet without changing the canonical URL', () => {
     const registry = read('src/lib/routeSeoRegistry.js');
 
-    expect(registry).toContain("title: 'Online Phonics Classes for Kids in India | Live 1:1 | Tiny Steps'");
-    expect(registry).toContain('what to look for when comparing the best phonics classes');
+    expect(registry).toContain("title: 'Online Phonics Classes for Kids | Live 1:1 | Tiny Steps'");
+    expect(registry).toContain('assessment-first placement');
     expect(registry).toContain("canonicalPath: '/phonics'");
   });
 });

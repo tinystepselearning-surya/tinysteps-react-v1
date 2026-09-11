@@ -29,8 +29,6 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
       'best phonics course in India',
       'how to choose phonics classes',
       'online phonics classes comparison',
-      'phonics classes fees',
-      'phonics class cost',
       '1-to-1 vs group phonics classes',
       'what to look for in a phonics class',
       'which phonics program is best for my child',
@@ -54,16 +52,16 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(page).toContain('Comparison red flags');
   });
 
-  it('covers 1-to-1 vs group, fees and cost without treating one format or price as universally best', () => {
+  it('covers format and value comparison while delegating fee ownership', () => {
     const page = read('src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx');
 
     expect(page).toContain('1-to-1 vs group phonics classes vs app practice');
     expect(page).toContain('Live 1:1 phonics');
     expect(page).toContain('Small-group phonics');
     expect(page).toContain('App or self-practice');
-    expect(page).toContain('What does Tiny Steps phonics cost?');
-    expect(page).toContain('a lower cost is not automatically stronger teaching');
-    expect(page).toContain('a higher cost is not proof of better teaching');
+    expect(page).toContain('How should price factor into a phonics-class decision?');
+    expect(page).toContain('The dedicated phonics-fee page owns the full fee and package explanation.');
+    expect(page).toContain('to="/phonics-fees-india"');
     expect(page).toContain('No single provider format is automatically best for every child.');
   });
 
@@ -115,6 +113,6 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(page).toContain('createFAQPageSchema(faqItems)');
     expect(page).toContain("name: 'Online phonics classes comparison'");
     expect(page).toContain("name: '1-to-1 vs group phonics classes'");
-    expect(page).toContain("name: 'Phonics class fees and cost'");
+    expect(page).toContain("name: 'Phonics provider evaluation'");
   });
 });

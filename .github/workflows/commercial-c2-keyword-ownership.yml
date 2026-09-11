@@ -1,0 +1,56 @@
+name: Commercial C2 Keyword Ownership
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/commercialC2KeywordOwnership.ts'
+      - 'src/tests/seo/commercialC2KeywordOwnership.spec.ts'
+      - 'scripts/audit-commercial-c2-keyword-ownership.mjs'
+      - 'docs/seo/commercial-growth/C2_*'
+      - '.github/workflows/commercial-c2-keyword-ownership.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-c2-keyword-ownership:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run C2 and upstream C1 contract tests
+        run: >-
+          npx vitest run
+          src/tests/seo/commercialC2KeywordOwnership.spec.ts
+          src/tests/seo/commercialC1SearchUniverse.spec.ts
+          src/tests/seo/commercialC1InternationalAiResearch.spec.ts
+          src/tests/seo/commercialC1InternationalCoreSubjectCompletion.spec.ts
+          src/tests/seo/commercialC1ObservedSearchEvidence.spec.ts
+      - name: Audit C2 ownership and cannibalisation
+        run: node scripts/audit-commercial-c2-keyword-ownership.mjs
+      - name: Audit C1 observed evidence
+        run: node scripts/audit-commercial-c1-observed-search-evidence.mjs
+      - name: Audit C1 international and AI research
+        run: node scripts/audit-commercial-c1-international-ai.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Run full repository tests
+        run: npm test
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run C2 audit after build
+        run: node scripts/audit-commercial-c2-keyword-ownership.mjs
+      - name: Run SEO smoke
+        run: npm run seo:smoke

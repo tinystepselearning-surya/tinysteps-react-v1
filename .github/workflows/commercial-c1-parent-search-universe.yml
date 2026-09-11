@@ -1,0 +1,46 @@
+name: Commercial C1 Parent Search Universe
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/commercialC1SearchUniverse.ts'
+      - 'src/tests/seo/commercialC1SearchUniverse.spec.ts'
+      - 'scripts/audit-commercial-c1-search-universe.mjs'
+      - 'docs/seo/commercial-growth/C1_*'
+      - '.github/workflows/commercial-c1-parent-search-universe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-c1-parent-search-universe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run C1 and C0 contract tests
+        run: npx vitest run src/tests/seo/commercialC1SearchUniverse.spec.ts src/tests/seo/commercialC0Foundation.spec.ts
+      - name: Audit C1 search universe
+        run: node scripts/audit-commercial-c1-search-universe.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Run full repository tests
+        run: npm test
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Re-run C1 audit after build
+        run: node scripts/audit-commercial-c1-search-universe.mjs
+      - name: Run SEO smoke
+        run: npm run seo:smoke

@@ -38,7 +38,7 @@ describe('Best online phonics buyer guide UX refresh', () => {
     expect(page).toContain("{ id: 'comparison-framework', label: 'Choose' }");
     expect(page).toContain("{ id: 'programme-fit', label: 'Child fit' }");
     expect(page).toContain("{ id: 'tiny-steps-evidence', label: 'Tiny Steps' }");
-    expect(page).toContain("{ id: 'pricing', label: 'Cost' }");
+    expect(page).toContain("{ id: 'pricing', label: 'Value' }");
     expect(page).toContain("{ id: 'faq', label: 'FAQs' }");
     expect(page).toContain('scroll-mt-[176px]');
     expect(page).toContain('to="/book-demo"');

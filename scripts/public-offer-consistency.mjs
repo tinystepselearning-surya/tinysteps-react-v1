@@ -88,9 +88,24 @@ const REQUIRED_STRINGS = [
     path: 'src/components/forms/TrialForm.tsx',
     value: 'Child age (3–12)',
   },
+  // C3 pricing owner reads live pricing directly from the canonical pricing
+  // registry. Verify actual source usage instead of requiring the older summary
+  // compatibility constant from publicOffer.ts.
   {
     path: 'src/pages/PricingPage.tsx',
-    value: 'STANDARD_PRICING_SUMMARY',
+    value: 'formatINR(PER_CLASS_PRICE)',
+  },
+  {
+    path: 'src/pages/PricingPage.tsx',
+    value: 'ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee',
+  },
+  {
+    path: 'src/pages/PricingPage.tsx',
+    value: 'GROUP_MONTHLY_FEES.filter',
+  },
+  {
+    path: 'src/pages/PricingPage.tsx',
+    value: 'answer: FREE_DEMO_FULL_DESCRIPTION',
   },
   {
     path: 'public/kb.json',

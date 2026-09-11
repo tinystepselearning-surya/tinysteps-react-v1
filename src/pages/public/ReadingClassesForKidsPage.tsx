@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import {
   PUBLIC_AGE_RANGE_LABEL,
   PUBLIC_SESSION_DURATION_LABEL,
@@ -13,6 +12,12 @@ import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../li
 const READING_SEO_KEYWORDS = [
   'online reading classes for kids',
   'reading classes for kids',
+  'reading classes for kids India',
+  'reading classes near me',
+  'reading class for kids near me',
+  'reading and writing classes for kids near me',
+  'english reading classes for kids',
+  'english reading classes for kids near me',
   'best reading classes for kids',
   'best online reading classes for kids',
   'best reading classes online',
@@ -20,8 +25,7 @@ const READING_SEO_KEYWORDS = [
   'reading improvement classes for kids',
   'reading classes for struggling readers',
   'child struggling to read',
-  'reading fluency classes',
-  'reading comprehension classes',
+  'reading comprehension classes for kids',
   'reading tutor online',
   'online reading tutor for kids',
   'reading support for kids',
@@ -29,6 +33,7 @@ const READING_SEO_KEYWORDS = [
   '1-to-1 reading classes online',
   'online reading classes in India',
   'reading classes in India',
+  'online reading classes for kids worldwide',
 ];
 
 const faqItems = [
@@ -70,7 +75,17 @@ const faqItems = [
   {
     question: 'Can reading classes help my child read more fluently?',
     answer:
-      'Yes, when the child’s decoding is stable enough and practice uses appropriate text, repeated guided reading, phrasing work, correction, and meaning checks. If decoding is still weak, that should be addressed before speed becomes the main goal.',
+      'Yes, when the child’s decoding is stable enough and practice uses appropriate text, repeated guided reading, phrasing work, correction, and meaning checks. If accurate word reading is already secure and slow or choppy connected reading is the main difficulty, Tiny Steps uses a dedicated Reading Fluency Programme for that narrower need.',
+  },
+  {
+    question: 'Should I choose general reading classes or the Reading Fluency Programme?',
+    answer:
+      'Choose general reading support when the child needs help across several reading areas or the main bottleneck is still unclear. Choose the dedicated Reading Fluency Programme when decoding and word accuracy are already established but connected reading remains slow, hesitant, or choppy. The free assessment can help route the child to the right starting point.',
+  },
+  {
+    question: 'Can children outside India join Tiny Steps reading classes?',
+    answer:
+      'Yes. Tiny Steps reading classes are live online and available to families in India and internationally, including NRI families, subject to a compatible teacher schedule and the child’s learning fit.',
   },
   {
     question: 'How does Tiny Steps decide the right reading path?',
@@ -78,7 +93,7 @@ const faqItems = [
   },
   {
     question: 'How long is each Tiny Steps reading class?',
-    answer: `Live classes are typically ${PUBLIC_SESSION_DURATION_LABEL}.`,
+    answer: `Standard live 1:1 reading classes are ${PUBLIC_SESSION_DURATION_LABEL}.`,
   },
 ];
 
@@ -222,9 +237,9 @@ export default function ReadingClassesForKidsPage() {
   const canonicalPath = '/reading-classes-for-kids';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
   // Keep these values aligned with routeSeoRegistry.js because that registry supplies build-time prerender metadata.
-  const seoTitle = 'Reading Classes for Kids in India | Tiny Steps';
+  const seoTitle = 'Online Reading Classes for Kids | Live 1:1 | Tiny Steps';
   const seoDescription =
-    'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.';
+    'Live 1:1 online reading classes for kids ages 3–12 in India and worldwide. Build accurate reading, comprehension, vocabulary and reading confidence with assessment-first support.';
 
   useEffect(() => {
     const breadcrumbSchema = {
@@ -239,7 +254,7 @@ export default function ReadingClassesForKidsPage() {
 
     const webpageSchema = {
       ...createWebPageSchema({
-        name: 'Online Reading Classes for Kids in India',
+        name: 'Online Reading Classes for Kids',
         description: seoDescription,
         url: canonicalUrl,
       }),
@@ -325,18 +340,19 @@ export default function ReadingClassesForKidsPage() {
                 Assessment-led reading support
               </p>
               <h1 className="mt-4 max-w-[800px] text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[40px] md:text-[48px] lg:text-[54px]">
-                Online Reading Classes for Kids in India
+                Online Reading Classes for Kids
               </h1>
               <p className="mt-5 max-w-[760px] text-base leading-7 text-slate-700 md:text-lg md:leading-8">
-                Tiny Steps provides live 1:1 reading support for children who need help with decoding, sentence reading, fluency, comprehension, vocabulary, or reading confidence. We identify the reading gap first, then teach the next skill instead of giving every child the same reading practice.
+                Tiny Steps provides 35-minute live 1:1 online reading classes for children ages 3–12 in India and worldwide. Support can target decoding, sentence reading, smoother connected reading, comprehension, vocabulary, or reading confidence. We identify the reading gap first, then teach the next skill instead of giving every child the same reading practice.
               </p>
               <p className="mt-3 max-w-[760px] text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                For families searching for reading classes for struggling readers, online reading improvement classes, or an online reading tutor for kids, the starting point matters more than the label. If decoding is still the bottleneck, we route the child to phonics first.
+                For families searching for reading classes near me, English reading classes for kids, reading classes for struggling readers, or an online reading tutor, the same live programme is available online from India and internationally. If decoding is still the bottleneck, we route the child to phonics first; if accurate word reading is established and slow or choppy connected reading is the main issue, we route to the dedicated reading-fluency programme.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {[
                   PUBLIC_AGE_RANGE_LABEL,
-                  'Live 1:1 online classes',
+                  `${PUBLIC_SESSION_DURATION_LABEL} live 1:1 classes`,
+                  'India + worldwide online',
                   `${demoMinutes}-minute free demo assessment`,
                   'Parent-visible progress',
                 ].map((chip) => (
@@ -359,7 +375,7 @@ export default function ReadingClassesForKidsPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Quick answer</p>
               <h2 className="mt-2 text-2xl font-bold text-slate-900">What should reading classes actually help with?</h2>
               <p className="mt-3 leading-7 text-slate-700">
-                Reading support should match the child’s current gap. Some children need decoding first; others need reading fluency classes, reading comprehension classes, vocabulary support, or guided reading-aloud practice.
+                Reading support should match the child’s current gap. Some children need decoding first; others need smoother connected reading, comprehension, vocabulary support, or guided reading-aloud practice.
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {['Decoding accuracy', 'Sentence reading', 'Reading fluency', 'Comprehension', 'Vocabulary', 'Reading confidence'].map((item) => (
@@ -369,7 +385,7 @@ export default function ReadingClassesForKidsPage() {
                 ))}
               </div>
               <p className="mt-5 text-sm leading-6 text-slate-600">
-                Tiny Steps live classes are typically {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is {oneToOnePrice} per class; confirm current options on the <Link to="/pricing" className="font-semibold underline underline-offset-2">pricing page</Link>.
+                Tiny Steps standard live 1:1 reading classes are {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is ₹{oneToOnePrice} per class; confirm current options on the <Link to="/pricing" className="font-semibold underline underline-offset-2">pricing page</Link>.
               </p>
             </aside>
           </div>
@@ -423,6 +439,11 @@ export default function ReadingClassesForKidsPage() {
               </article>
             ))}
           </div>
+          <div className="mt-6 rounded-2xl border border-sky-200 bg-white px-5 py-4 text-sm leading-6 text-slate-700">
+            <strong className="text-slate-950">General reading classes or the specialist fluency programme?</strong>{' '}
+            Stay on this page when the child needs broader reading support or the main gap is not yet clear. If decoding and word accuracy are already secure but connected reading remains slow, hesitant, or choppy, use the{' '}
+            <Link to="/reading-fluency-program" className="font-semibold text-sky-800 underline underline-offset-2">Reading Fluency Programme</Link>.
+          </div>
         </div>
       </section>
 
@@ -443,6 +464,10 @@ export default function ReadingClassesForKidsPage() {
           </div>
           <p className="mt-6 text-sm leading-6 text-slate-600">
             No reading provider is the best fit for every child. Tiny Steps explains its approach and shows supporting evidence so parents can decide whether the programme matches their child’s reading gap.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            Searching for reading and writing classes for kids together? This page focuses on reading. For sentence, paragraph, and creative-writing support, use the dedicated{' '}
+            <Link to="/writing-classes-for-kids" className="font-semibold text-sky-800 underline underline-offset-2">Writing Classes for Kids</Link> page.
           </p>
         </div>
       </section>
@@ -573,7 +598,6 @@ export default function ReadingClassesForKidsPage() {
         </div>
       </section>
 
-      <ClusterSeoNav cluster="phonics" />
     </div>
   );
 }
