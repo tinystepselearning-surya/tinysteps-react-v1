@@ -34,6 +34,7 @@ export type CommercialC6BuyerStage = 'comparison' | 'price' | 'enrolment';
 export type CommercialC6EvidenceSource = 'c1-base' | 'c1-international' | 'c1-ai-style';
 export type CommercialC6EvidenceStrength =
   | 'observed-serp'
+  | 'observed-ai'
   | 'observed-site'
   | 'hypothesis'
   | 'international-research'
