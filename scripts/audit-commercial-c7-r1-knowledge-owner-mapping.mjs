@@ -56,17 +56,25 @@ if (baseRef) {
       .split('\n')
       .map((value) => value.trim())
       .filter(Boolean);
-    const forbiddenLiveChanges = changed.filter((file) =>
-      file.startsWith('src/pages/') ||
-      file.startsWith('src/content/blog/posts/') ||
-      file === 'src/content/blog/shared/authorityLinking.ts' ||
-      file === 'src/lib/canonicalTopicOwnershipRegistry.js' ||
-      file === 'src/lib/commercialC2KeywordOwnership.ts' ||
-      file === 'src/lib/commercialC4CtrOptimization.ts' ||
-      file === 'src/lib/commercialC5ConversionFlow.ts' ||
-      file === 'src/lib/commercialC6ValidationFreeze.ts'
-    );
-    check(forbiddenLiveChanges.length === 0, 'architecture-only-diff', `R1 changed protected live/ownership files: ${forbiddenLiveChanges.join(', ')}`);
+    const laterBrickLiveAllowlist = new Set([
+      'src/content/blog/index.ts',
+      'src/content/blog/shared/commercialHandoffs.ts',
+      'src/pages/PhonicsKnowledgePage.tsx',
+    ]);
+    const forbiddenLiveChanges = changed.filter((file) => {
+      if (laterBrickLiveAllowlist.has(file)) return false;
+      return (
+        file.startsWith('src/pages/') ||
+        file.startsWith('src/content/blog/posts/') ||
+        file === 'src/content/blog/shared/authorityLinking.ts' ||
+        file === 'src/lib/canonicalTopicOwnershipRegistry.js' ||
+        file === 'src/lib/commercialC2KeywordOwnership.ts' ||
+        file === 'src/lib/commercialC4CtrOptimization.ts' ||
+        file === 'src/lib/commercialC5ConversionFlow.ts' ||
+        file === 'src/lib/commercialC6ValidationFreeze.ts'
+      );
+    });
+    check(forbiddenLiveChanges.length === 0, 'architecture-only-diff', `Cumulative C7 changed protected live/ownership files outside the R3 allowlist: ${forbiddenLiveChanges.join(', ')}`);
   } catch (error) {
     addFailure('architecture-only-diff', error instanceof Error ? error.message : String(error));
   }
@@ -80,4 +88,4 @@ if (failures.length) {
 
 console.log(`C7-R1 knowledge owner mapping audit passed (${checks.length} checks).`);
 console.log('Architecture: final frozen knowledge view -> at most one frozen C2 commercial owner per commercially relevant surface.');
-console.log('Policy: no live knowledge copy, C2/C4/C5/C6 ownership, metadata or conversion architecture changes authorised in R1.');
+console.log('Policy: R1 remains architecture-only; cumulative later-brick live changes are limited to the explicit C7-R3 shared-renderer allowlist.');
