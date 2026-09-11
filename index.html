@@ -18,6 +18,30 @@
       content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
     />
     <meta name="author" content="Tiny Steps Online School" />
+    <script>
+      (() => {
+        const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+        if (pathname !== '/curriculum') return;
+
+        const params = new URLSearchParams(window.location.search);
+        const course = String(params.get('course') || '').toLowerCase();
+        let tab = String(params.get('tab') || '').toLowerCase();
+
+        if (!tab && course) {
+          if (course.includes('grammar')) tab = 'grammar';
+          else if (course.includes('speaking')) tab = 'speaking';
+          else tab = 'phonics';
+        }
+
+        const programmeOwners = {
+          phonics: '/phonics',
+          grammar: '/grammar',
+          speaking: '/speaking',
+        };
+        const target = programmeOwners[tab];
+        if (target) window.location.replace(target);
+      })();
+    </script>
     <script defer src="/seo-indexability-guard.js"></script>
     <script defer src="/commercial-owner-experience.js"></script>
     <style>

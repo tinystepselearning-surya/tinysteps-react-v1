@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { cn } from '../lib/utils';
-import Button from '../Button/Button';
 import { Link } from 'react-router-dom';
 
 type CourseCardProps = {
@@ -20,13 +19,10 @@ type CourseCardProps = {
   ibLens?: string[];
 };
 
-export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, duration, frequency, level, overview, outcomes, reviews, slug, ibLens = [] }) => {
+export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, duration, frequency, level, overview, outcomes, reviews, ibLens = [] }) => {
   const [open, setOpen] = useState(false);
-  const tab = encodeURIComponent(track);
-  const courseSlug = slug ? encodeURIComponent(slug) : '';
-  const curriculumHref = courseSlug
-    ? `/curriculum?tab=${tab}&course=${courseSlug}`
-    : `/curriculum?tab=${tab}`;
+  const programHref = track === 'grammar' ? '/grammar' : track === 'speaking' ? '/speaking' : '/phonics';
+
   return (
     <div
       className={cn(
@@ -47,25 +43,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, 
           </ul>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {/* ✅ Don’t toggle the card when clicking the link */}
-          {!slug ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="min-w-[150px] whitespace-nowrap"
-              onClick={(e) => e.stopPropagation()}
-            >
-              View Curriculum
-            </Button>
-          ) : (
-            <Link
-              to={curriculumHref}
-              onClick={(e) => e.stopPropagation()}
-              className="mt-0 inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700"
-            >
-              View Full Curriculum <span aria-hidden>→</span>
-            </Link>
-          )}
+          <Link
+            to={programHref}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-0 inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700"
+          >
+            Explore Programme <span aria-hidden>→</span>
+          </Link>
 
           <Link
             to="/pricing"
