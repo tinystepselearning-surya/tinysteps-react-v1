@@ -1,0 +1,151 @@
+name: SEO640 final completion validation
+on:
+  push:
+    branches: [work/seo640-finish-validation]
+    paths: [.github/workflows/seo640-finish-validation.yml]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 0272b1a75628643016b83e6851f43b9187a53a61
+          fetch-depth: 0
+          path: repair
+      - name: Apply only the locally reviewed completion changes
+        working-directory: repair
+        run: |
+          test "$(git rev-parse HEAD)" = 0272b1a75628643016b83e6851f43b9187a53a61
+          python3 ../control/scripts/seo640-finish-repair.py
+          cp ../control/scripts/test/prerender-browser.test.mjs scripts/test/
+          cp ../control/scripts/test/prerender-output.test.mjs scripts/test/
+          cp ../control/scripts/test/recovery-internal-links-build.test.mjs scripts/test/
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          expected = {
+            '.github/workflows/seo-dead-url-guard.yml': '19ed992c98baf202313f93a93cec1821b9b77edc7c3dc26164ecc5aa07c7d80b',
+            'scripts/prerender-readiness.mjs': '82b818ec7cc9f8890501304019affd7ff6db7f414bf4b8eac9b8059ebf829d40',
+            'scripts/test/prerender-readiness.spec.mjs': '3b58d9cf0b751b88fac09ab052ae4a8a80c363ea7eec6f9f870842dd5009cf72',
+            'scripts/test/prerender-schema-graph.spec.mjs': '341628a58e66351dd079adc2c42f27df3494aa832dad500c2723588e7cbfb016',
+            'scripts/test/prerender-special-layouts.spec.mjs': '347bbdd93aff74d185c8b212df97ac88b632a63c7f6427583fb3685cf538ef7a',
+            'src/config/seoRecoveryBrick8InternalLinks.ts': '3480ff2074d9aac85a809f3fee4f7ecdd919b9b8006071c5907366b4a5c63315',
+            'scripts/test/prerender-browser.test.mjs': '648c246eb9a282c44ee6a9db86b4e89007503bc019e8ec86df1ccecd5eebdc76',
+            'scripts/test/prerender-output.test.mjs': '321e06f7fdaa571a3244b00019be9fcb3dd969e2a831d67a2b4b30e0d53aad63',
+            'scripts/test/recovery-internal-links-build.test.mjs': '1afc2ca291f85f3081241af850551f9eb35930a78f586048d2ca3d520d934408',
+          }
+          for name, digest in expected.items():
+            assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == digest, name
+          print('All nine changed files match the reviewed completion patch.')
+          PY
+          git diff --check
+      - name: Commit candidate without changing main or the PR branch
+        id: commit
+        working-directory: repair
+        run: |
+          git add .github/workflows/seo-dead-url-guard.yml scripts/prerender-readiness.mjs scripts/test/prerender-*.mjs scripts/test/recovery-internal-links-build.test.mjs src/config/seoRecoveryBrick8InternalLinks.ts
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = 9
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(seo): finish prerender identity and compiled alias protections'
+          git push origin HEAD:refs/heads/work/seo640-final-candidate
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+  unit-and-static:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: mkdir -p ../evidence
+      - run: npm ci
+      - run: npm ci --prefix functions --include=dev
+      - run: npm --prefix functions run build
+      - name: ESLint and TypeScript
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee ../evidence/lint.log
+          npm run typecheck 2>&1 | tee ../evidence/typecheck.log
+      - name: Full unchanged coverage gate
+        run: |
+          set -o pipefail
+          npm run test:unit -- --coverage --reporter=default --reporter=json --outputFile=../evidence/unit.json 2>&1 | tee ../evidence/unit.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seo640-final-unit
+          path: ../evidence/
+          retention-days: 7
+  three-clean-builds:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: mkdir -p ../evidence
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Unit regression and real browser/production-transform tests
+        run: |
+          set -o pipefail
+          npx vitest run scripts/test/prerender-readiness.spec.mjs scripts/test/prerender-schema-graph.spec.mjs scripts/test/prerender-special-layouts.spec.mjs src/tests/seo/recoveryBrick8InternalLinkArchitecture.spec.ts 2>&1 | tee ../evidence/focused.log
+          node --test scripts/test/prerender-browser.test.mjs scripts/test/recovery-internal-links-build.test.mjs 2>&1 | tee ../evidence/browser-and-alias.log
+      - name: Prove the new compiled-alias test catches the previous defect
+        run: |
+          set -o pipefail
+          git show 0272b1a75628643016b83e6851f43b9187a53a61:src/config/seoRecoveryBrick8InternalLinks.ts > src/config/seoRecoveryBrick8InternalLinks.ts
+          set +e
+          node --test scripts/test/recovery-internal-links-build.test.mjs > ../evidence/expected-baseline-alias-failure.log 2>&1
+          baseline_status=$?
+          set -e
+          git checkout -- src/config/seoRecoveryBrick8InternalLinks.ts
+          test "$baseline_status" -ne 0
+          grep -q 'deepStrictEqual' ../evidence/expected-baseline-alias-failure.log
+          echo 'PASS: the compiled-alias regression fails on the previous source and passes on the candidate.'
+      - name: Three consecutive fresh production builds and saved-output checks
+        run: |
+          set -o pipefail
+          git rev-parse HEAD | tee ../evidence/commit.txt
+          for pass in 1 2 3; do
+            rm -rf dist
+            npm run build 2>&1 | tee "../evidence/build-${pass}.log"
+            node --test scripts/test/prerender-output.test.mjs 2>&1 | tee "../evidence/saved-output-${pass}.log"
+            node scripts/seo-dead-url-guard.mjs 2>&1 | tee "../evidence/dead-url-${pass}.log"
+            npm run seo:smoke 2>&1 | tee "../evidence/smoke-${pass}.log"
+            cp dist/blog/speaking-video-feedback/index.html "../evidence/speaking-video-feedback-${pass}.html"
+            cp artifacts/seo-dead-url-report.json "../evidence/dead-url-${pass}.json"
+            echo "PASS: clean build $pass including all existing downstream gates" | tee -a ../evidence/summary.txt
+          done
+      - name: Preserve final diff and available failing-output diagnostics
+        if: always()
+        run: |
+          git diff 3e34735d9b31828f6c6cde397c3903a80151ce01 HEAD > ../evidence/final-repair.patch
+          if test -f dist/blog/speaking-video-feedback/index.html; then cp dist/blog/speaking-video-feedback/index.html ../evidence/latest-video-feedback.html; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seo640-final-builds
+          path: ../evidence/
+          retention-days: 7
