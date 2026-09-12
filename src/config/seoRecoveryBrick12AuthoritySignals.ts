@@ -108,7 +108,7 @@ export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
   },
   'phonics-for-parents-guide': {
     heading: 'Choose the phonics guide that matches the next step',
-    intro: 'For early sequence and blending use the SATPIN guide; when sounds are known but word reading is still difficult, use the diagnostic guide. For structured teaching support, continue to',
+    intro: 'For early sequence and blending use the SATPIN guide; when sounds are known but word reading is still difficult, use the diagnostic guide. For structured teaching support, continue with',
     signals: [
       { label: 'the SATPIN phonics guide', to: SATPIN_MASTER },
       ...decodingSignals,
@@ -145,7 +145,7 @@ export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
     signals: decodingSignals,
   },
   'online-phonics-classes-vs-school': {
-    heading: 'Compare providers without changing the generic programme owner',
+    heading: 'Compare online phonics options using one clear framework',
     intro: 'For provider-selection criteria, continue with',
     signals: [
       { label: 'the online phonics class comparison guide', to: PHONICS_COMPARISON },
