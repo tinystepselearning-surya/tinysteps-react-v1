@@ -40,6 +40,43 @@ export function normalizeRevisionId(value) {
   return text.split('/').filter(Boolean).at(-1) || '';
 }
 
+export function trafficPercentForRevision(service, revision) {
+  const targetRevision = normalizeRevisionId(revision);
+  if (!targetRevision) throw new Error('Missing target revision for traffic verification');
+
+  const latestReadyRevision = normalizeRevisionId(service?.latestReadyRevision);
+  const trafficStatuses = Array.isArray(service?.trafficStatuses) ? service.trafficStatuses : [];
+  const desiredTraffic = Array.isArray(service?.traffic) ? service.traffic : [];
+
+  // Cloud Run documents that an empty traffic configuration defaults to 100%
+  // traffic to the latest Ready revision. Some API responses represent this
+  // implicit default without an observed trafficStatuses entry.
+  if (!trafficStatuses.length) {
+    if (!desiredTraffic.length && latestReadyRevision === targetRevision) return 100;
+    return 0;
+  }
+
+  let total = 0;
+  for (const status of trafficStatuses) {
+    const percent = Number(status?.percent ?? 0);
+    if (!Number.isFinite(percent) || !Number.isInteger(percent) || percent < 0 || percent > 100) {
+      throw new Error(`Invalid Cloud Run traffic percent: ${status?.percent ?? 'missing'}`);
+    }
+
+    const statusRevision = normalizeRevisionId(status?.revision);
+    if (status?.type === 'TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST') {
+      if (statusRevision && statusRevision !== latestReadyRevision) {
+        throw new Error(`Cloud Run LATEST traffic revision ${statusRevision} does not match latest ready ${latestReadyRevision || 'missing'}`);
+      }
+      if (latestReadyRevision === targetRevision) total += percent;
+      continue;
+    }
+
+    if (statusRevision === targetRevision) total += percent;
+  }
+  return total;
+}
+
 const TRANSIENT = [
   /429\b/i,
   /too many requests/i,
