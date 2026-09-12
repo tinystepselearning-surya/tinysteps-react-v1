@@ -17,6 +17,11 @@ const renderedBody = (slug: string) => {
   return post!.body.map((block) => String(block.content || '')).join('\n');
 };
 
+const READING_OWNER_SLUGS = new Set([
+  'prevent-summer-slide-reading',
+  'phonics-comprehension',
+]);
+
 describe('SEO recovery Brick 12 authority signals', () => {
   it('locks the recovery hierarchy into one Tier A, two Tier B and three Tier C owners', () => {
     expect(SEO_RECOVERY_BRICK12_AUTHORITY_NODES).toMatchObject({
@@ -107,10 +112,11 @@ describe('SEO recovery Brick 12 authority signals', () => {
     }
   });
 
-  it('keeps the established phonics authority set connected upward to the main programme owner', () => {
+  it('keeps the established phonics knowledge set connected to the correct frozen programme owner', () => {
     for (const slug of PHONICS_AUTHORITY_SLUGS) {
       const body = renderedBody(slug);
-      expect(body, `${slug} lost its upward /phonics authority signal`).toContain('/phonics');
+      const expectedOwner = READING_OWNER_SLUGS.has(slug) ? '/reading-classes-for-kids' : '/phonics';
+      expect(body, `${slug} lost its upward ${expectedOwner} authority signal`).toContain(expectedOwner);
     }
   });
 
