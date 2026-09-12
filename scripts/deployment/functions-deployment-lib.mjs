@@ -34,6 +34,12 @@ export function batch(items, size = BATCH_SIZE) {
   return out;
 }
 
+export function normalizeRevisionId(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  return text.split('/').filter(Boolean).at(-1) || '';
+}
+
 const TRANSIENT = [
   /429\b/i,
   /too many requests/i,
