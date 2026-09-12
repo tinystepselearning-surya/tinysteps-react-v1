@@ -24,6 +24,10 @@ const faqItems = [
   {
     question: 'What is a good practice routine for this game?',
     answer: 'Use short daily sessions, guide your child to trace slowly, and encourage them to repeat each sound after tracing.'
+  },
+  {
+    question: 'Does tracing letters with sounds teach a child to read words?',
+    answer: 'Not by itself. Sound-supported tracing helps connect print and sound, but children still need to blend taught sounds from left to right and apply them to fresh words for decoding.'
   }
 ];
 
@@ -83,7 +87,7 @@ export default function LetterTracingWithSoundsGamePage() {
       <header className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50 to-sky-50 p-6 shadow-sm sm:p-8">
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">Letter Tracing With Sounds Game</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
-          Build letter formation and sound awareness together. Children trace each letter, hear its sound, and reinforce phonics through repeatable practice.
+          Build letter formation and sound awareness together. Children trace each letter, hear its sound, and reinforce the print–sound connection before moving into blending and word reading.
         </p>
         <Link
           to={`${PAGE_PATH}?level=0&pair=0&step=0&fs=1#play`}
@@ -120,20 +124,40 @@ export default function LetterTracingWithSoundsGamePage() {
             <li>1. Begin with the warm-up lines and curves.</li>
             <li>2. Ask your child to start from the red dot and trace slowly.</li>
             <li>3. Encourage repeating each sound after tracing.</li>
+            <li>4. After sound recall is secure, move into blending rather than repeating tracing indefinitely.</li>
           </ol>
         </article>
       </section>
 
       <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="text-xl font-bold text-slate-900">Why tracing helps early writing</h2>
+        <h2 className="text-xl font-bold text-slate-900">How tracing with sounds fits into phonics</h2>
         <p className="mt-3 text-sm leading-7 text-slate-700">
-          Tracing helps children build writing rhythm, directional control, and hand stability. Adding sounds strengthens the phonics connection, so letter writing and letter reading grow together.
+          Tracing helps children build writing rhythm, directional control, and hand stability. Adding sounds strengthens the connection between a printed letter and a phonics sound. That is useful preparation, but it is not the same as decoding: reading requires children to retrieve taught sounds, blend them from left to right, and apply the process to fresh words.
         </p>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-sky-200 bg-sky-50/50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-800">Next learning step</p>
+        <h2 className="mt-2 text-xl font-bold text-slate-900">Move from sound recall into blending</h2>
+        <p className="mt-3 text-sm leading-7 text-slate-700">
+          If your child can recognise and say the sounds, the next useful step is to combine those sounds into simple words. Choose the route that matches the child&apos;s current need.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <Link to="/blog/satpin-phonics-guide" className="rounded-2xl border border-sky-200 bg-white p-4 font-semibold text-sky-950 transition hover:border-sky-400">
+            SATPIN sounds, order and first words
+          </Link>
+          <Link to="/free-word-building-game-for-kids" className="rounded-2xl border border-sky-200 bg-white p-4 font-semibold text-sky-950 transition hover:border-sky-400">
+            Free blending and word-building practice
+          </Link>
+          <Link to="/blog/why-child-knows-letter-sounds-but-cannot-read-words" className="rounded-2xl border border-sky-200 bg-white p-4 font-semibold text-sky-950 transition hover:border-sky-400">
+            Child knows sounds but cannot blend
+          </Link>
+        </div>
       </section>
 
       <section className="mt-4 grid gap-4 sm:grid-cols-2">
         <article className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
-          <h2 className="text-xl font-bold text-slate-900">Link to Tiny Steps phonics classes</h2>
+          <h2 className="text-xl font-bold text-slate-900">Structured phonics support</h2>
           <p className="mt-2 text-sm text-slate-700">
             Want teacher-guided phonics support along with home practice?
           </p>
@@ -145,7 +169,7 @@ export default function LetterTracingWithSoundsGamePage() {
           <h2 className="text-xl font-bold text-slate-900">Continue with free Tiny Steps phonics games</h2>
           <div className="mt-2 flex flex-col gap-2 text-sm">
             <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-sky-900 underline underline-offset-4">
-              Free ABC Tracing Game for Kids
+              Free ABC Tracing Game for Kids — letter formation owner
             </Link>
             <Link to="/free-balloon-pop-phonics-game-for-kids" className="font-semibold text-sky-900 underline underline-offset-4">
               Tiny Steps Phonics Balloon Pop — hear a sound and pop the matching letter
