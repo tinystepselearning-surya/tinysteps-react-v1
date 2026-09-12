@@ -283,21 +283,36 @@ export const findPhoneCountryOptionByCallingCode = (
   return PHONE_COUNTRY_OPTIONS.find((option) => digitsOnly(option.code) === normalizedCode);
 };
 
+const optionSearchValues = (option: PhoneCountryOption): string[] => [
+  option.name,
+  option.id,
+  option.label,
+  ...(option.aliases || []),
+].map((value) => value.toLowerCase());
+
+const countrySearchRank = (option: PhoneCountryOption, normalized: string, queryDigits: string): number => {
+  const values = optionSearchValues(option);
+  const codeDigits = digitsOnly(option.code);
+  if (values.some((value) => value === normalized)) return 0;
+  if (queryDigits && codeDigits === queryDigits) return 1;
+  if (values.some((value) => value.startsWith(normalized))) return 2;
+  if (values.some((value) => value.includes(normalized))) return 3;
+  if (queryDigits && codeDigits.startsWith(queryDigits)) return 4;
+  if (queryDigits && codeDigits.includes(queryDigits)) return 5;
+  return Number.MAX_SAFE_INTEGER;
+};
+
 export const searchPhoneCountryOptions = (query: string): PhoneCountryOption[] => {
   const normalized = normalizeCountrySearch(query);
   if (!normalized) return [...PHONE_COUNTRY_OPTIONS];
   const queryDigits = digitsOnly(normalized);
 
-  return PHONE_COUNTRY_OPTIONS.filter((option) => {
-    const textValues = [
-      option.name,
-      option.id,
-      option.label,
-      ...(option.aliases || []),
-    ].map((value) => value.toLowerCase());
-    const textMatch = textValues.some((value) => value.includes(normalized));
-    const codeDigits = digitsOnly(option.code);
-    const codeMatch = Boolean(queryDigits) && codeDigits.includes(queryDigits);
-    return textMatch || codeMatch;
-  });
+  return PHONE_COUNTRY_OPTIONS
+    .map((option) => ({ option, rank: countrySearchRank(option, normalized, queryDigits) }))
+    .filter(({ rank }) => rank !== Number.MAX_SAFE_INTEGER)
+    .sort((left, right) => {
+      if (left.rank !== right.rank) return left.rank - right.rank;
+      return left.option.name.localeCompare(right.option.name, undefined, { sensitivity: 'base' });
+    })
+    .map(({ option }) => option);
 };
