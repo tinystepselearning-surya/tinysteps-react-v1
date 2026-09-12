@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureReadyRoute, installPrerenderShell, readPrerenderReadiness } from '../prerender-readiness.mjs';
 
@@ -106,9 +107,18 @@ describe('prerender readiness is based on the requested page, not HTML size', ()
     expect(readPrerenderReadiness(staticContract)).toBe(false);
   });
 
-  it('runs after serialization without module closures', () => {
-    const browserFunction = new Function(`return (${readPrerenderReadiness.toString()})`)();
+  it('runs the native browser function after serialization without module closures', () => {
+    // Playwright receives native ESM, not Vitest's transformed/coverage wrapper.
+    const source = fs.readFileSync(path.join(process.cwd(), 'scripts/prerender-readiness.mjs'), 'utf8');
+    const start = source.indexOf('export function readPrerenderReadiness');
+    const end = source.indexOf('\n/** Always render', start);
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    const nativeFunction = source.slice(start + 'export '.length, end).trim();
+    const browserFunction = new Function(`return (${nativeFunction})`)();
     expect(browserFunction(contract)).toBe(true);
+    document.querySelector('h1').textContent = '404 - Page Not Found';
+    expect(browserFunction(contract)).toBe(false);
   });
 });
 
@@ -182,7 +192,7 @@ describe('prerender input/output isolation', () => {
   });
 
   it('connects strict capture before writes and removes the timed-out-markup fallback', () => {
-    const driver = fs.readFileSync(new URL('../prerender.mjs', import.meta.url), 'utf8');
+    const driver = fs.readFileSync(path.join(process.cwd(), 'scripts/prerender.mjs'), 'utf8');
     expect(driver).toContain('await installPrerenderShell(page, HOST, originalShell)');
     expect(driver).toContain('const html = await captureReadyRoute(page, url, contract, { maxRetries });\n  await writeRouteHtml(route, html);');
     expect(driver).not.toContain('hasMeaningfulMarkup');
