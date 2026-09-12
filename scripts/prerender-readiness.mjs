@@ -66,14 +66,20 @@ export function readPrerenderReadiness(contract) {
     for (const node of document.head.querySelectorAll('script[type="application/ld+json"]')) {
       try { collect(JSON.parse(node.textContent || '')); } catch { /* Not ready until valid article schema exists. */ }
     }
+    const hasType = (schema, type) => (Array.isArray(schema['@type']) ? schema['@type'] : [schema['@type']]).includes(type);
     const matchingArticle = schemas.some((schema) => {
-      const types = Array.isArray(schema['@type']) ? schema['@type'] : [schema['@type']];
-      // The dedicated parents research article uses mainEntityOfPage.@id rather
-      // than url. An explicit wrong url must not be masked by this alternative.
       const mainPage = typeof schema.mainEntityOfPage === 'string'
         ? schema.mainEntityOfPage : schema.mainEntityOfPage?.['@id'];
-      const articleUrl = schema.url ?? mainPage;
-      return types.includes('BlogPosting') && articleUrl === contract.canonicalUrl
+      // applySeo's graph normalizer links articles to canonicalUrl#webpage.
+      // Resolve that reference through a real WebPage node, not a prefix match.
+      // An explicit wrong article url is never hidden by the alternative identity.
+      const matchesPage = schema.url != null
+        ? schema.url === contract.canonicalUrl
+        : mainPage === contract.canonicalUrl || schemas.some((node) =>
+          hasType(node, 'WebPage') && node['@id'] === mainPage
+          && typeof mainPage === 'string' && node.url === contract.canonicalUrl,
+        );
+      return hasType(schema, 'BlogPosting') && matchesPage
         && typeof schema.headline === 'string' && schema.headline.trim().length > 0
         && headings.some((heading) => heading.replace(/\s+/g, ' ') === schema.headline.trim().replace(/\s+/g, ' '));
     });
