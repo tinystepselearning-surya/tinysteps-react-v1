@@ -1177,8 +1177,11 @@ export default function TodaysNotifications() {
 
     const loadSessions = async () => {
       try {
+        // Today can use the low-read daily snapshot. Upcoming/date views must use the
+        // live selected-date projection so sessions created or repaired after the 04:00
+        // snapshot are visible immediately instead of appearing missing until tomorrow.
         const result =
-          selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey
+          mode === 'today'
             ? await loadManualReminderDayBuckets({
                 deps: {
                   fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),

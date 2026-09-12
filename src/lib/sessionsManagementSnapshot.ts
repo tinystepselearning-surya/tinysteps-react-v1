@@ -222,26 +222,11 @@ export async function loadSessionsManagementDateSnapshot(
   dateKey: string,
 ): Promise<SessionsManagementDatePayload> {
   rejectUninjectedTestNetwork();
+  // The daily snapshot is intentionally optimized for low reads, but it can be hours
+  // old. A user explicitly selecting an upcoming date needs current session truth.
+  // Always request the bounded live date projection instead of returning an in-snapshot
+  // or sessionStorage copy that may predate schedule materialization/edits.
   const snapshot = await loadSessionsManagementSnapshot();
-  const cached = readStoredCache();
-
-  if (snapshot.dateKeys.includes(dateKey)) {
-    return {
-      snapshotId: snapshot.snapshotId,
-      dateKey,
-      sessions: snapshot.sessions.filter((row) => String(row.data.date || '').trim() === dateKey),
-      enrollments: snapshot.enrollments,
-      users: snapshot.users,
-      kids: snapshot.kids,
-      students: snapshot.students,
-      courses: snapshot.courses,
-      sourceStats: snapshot.sourceStats,
-    };
-  }
-
-  const existing = cached?.extraDates[dateKey];
-  if (existing && existing.snapshotId === snapshot.snapshotId) return existing;
-
   const callable = httpsCallable(functions, 'getSessionsManagementDateSnapshot');
   const response = await callable({ dateKey });
   const result = response.data as Record<string, unknown>;
