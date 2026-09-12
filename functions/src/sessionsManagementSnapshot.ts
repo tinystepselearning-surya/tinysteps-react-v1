@@ -15,6 +15,7 @@ const SNAPSHOT_COLLECTION = 'adminSessionsManagementSnapshots';
 const CURRENT_DOC = 'current';
 const LEASE_DOC = 'refreshLease';
 const SCHEMA_VERSION = 1;
+const SNAPSHOT_HORIZON_DAYS = 14;
 const SESSION_LIMIT_PER_DATE = 200;
 const OVERALL_ENROLLMENT_LIMIT = 250;
 const SHARD_SIZE = 75;
@@ -404,8 +405,12 @@ async function buildSnapshotPayload(
   generatedByUid: string | null,
 ): Promise<SnapshotPayload> {
   const baseDateKey = getKolkataDateKey();
-  // A hidden third bucket keeps Today/Tomorrow correct between midnight and the next 04:00 refresh.
-  const dateKeys = [baseDateKey, shiftDateKey(baseDateKey, 1), shiftDateKey(baseDateKey, 2)];
+  // Publish the same authoritative today-through-14-days horizon used by the rolling
+  // materializer and parent upcoming-session policy. No client-side recurrence or live
+  // Tomorrow/Date read is required for this operational window.
+  const dateKeys = Array.from({ length: SNAPSHOT_HORIZON_DAYS + 1 }, (_, index) =>
+    shiftDateKey(baseDateKey, index),
+  );
   const sessionQueries = dateKeys.map((dateKey) =>
     db().collection('classSessions').where('date', '==', dateKey).limit(SESSION_LIMIT_PER_DATE).get(),
   );
@@ -413,6 +418,15 @@ async function buildSnapshotPayload(
     Promise.all(sessionQueries),
     db().collection('enrollments').limit(OVERALL_ENROLLMENT_LIMIT).get(),
   ]);
+
+  const saturatedDateIndex = sessionSnapshots.findIndex(
+    (snap) => snap.size >= SESSION_LIMIT_PER_DATE,
+  );
+  if (saturatedDateIndex >= 0) {
+    throw new Error(
+      `Sessions Management session snapshot reached safety limit for ${dateKeys[saturatedDateIndex]}; refusing to publish a potentially truncated snapshot.`,
+    );
+  }
 
   const sessions = sessionSnapshots.flatMap((snap) => snap.docs.map(rowFromSnapshot));
   const baseEnrollments = overallEnrollmentSnap.docs.map(rowFromSnapshot);
