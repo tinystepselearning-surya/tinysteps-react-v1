@@ -1,3 +1,4 @@
+import { normalizeSeoRecoveryInternalHref } from '../../../config/seoRecoveryBrick8InternalLinks';
 import type { BlogBlock, BlogPost } from '../types';
 
 const WEEK_TITLE_PREFIX = /^\s*Week\s+\d+\s*(?::|[-–—])\s*/i;
@@ -36,11 +37,12 @@ export function cleanBlogText(content: string): string {
   }
 
   const readerFacing = removeInternalBlogNumbering(original);
-
-  return readerFacing.replace(
+  const markdownReady = readerFacing.replace(
     RAW_ACTION_ROUTE,
     (_match, verb: string, label: string, route: string) => `[${verb} ${label.trim()}](${route})`,
   );
+
+  return normalizeSeoRecoveryInternalHref(markdownReady);
 }
 
 export function cleanBlogBlock(block: BlogBlock): BlogBlock {
