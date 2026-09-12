@@ -20,6 +20,8 @@ export const SEO_RECOVERY_BRICK8_RETIRED_INTERNAL_PATHS = Object.freeze({
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.phonicsComparison,
   '/blog/best-phonics-classes-for-kids':
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.phonicsComparison,
+  '/blog/week-1-phonics-satpin-launch':
+    SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.satpinHomePractice,
 } as const);
 
 type RetiredInternalPath = keyof typeof SEO_RECOVERY_BRICK8_RETIRED_INTERNAL_PATHS;
