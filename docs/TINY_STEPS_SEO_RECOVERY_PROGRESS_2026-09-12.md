@@ -277,25 +277,82 @@ Historical source remains permanently retired:
 
 ## BRICK 6 — Establish SATPIN as a Master Authority Hub
 
-**Status:** ⏭️ NEXT
+**Status:** ✅ CLOSED — SATPIN master authority strengthened and home-routine intent preserved
 
-Primary authority:
+**Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_6_SATPIN_AUTHORITY_2026-09-12.md`  
+**Regression test:** `src/tests/seo/recoveryBrick6SatpinAuthority.spec.ts`
+
+Master authority preserved:
 
 `/blog/satpin-phonics-guide`
 
-Supporting practical article:
+Supporting implementation page preserved:
 
 `/blog/phonics-satpin-launch`
 
-Brick 6 will strengthen the existing SATPIN master owner rather than create another SATPIN page.
+### Authority strengthening completed
+
+- [x] no new SATPIN URL created
+- [x] title aligned to sounds, order, words and blending
+- [x] meta/excerpt expanded around the same master query family
+- [x] dedicated SATPIN-order section added
+- [x] dedicated SATPIN-words section added
+- [x] dedicated SATPIN-sentences / early-reading section added
+- [x] dedicated `What comes after SATPIN?` section added
+- [x] FAQ coverage expanded for order, words, blending, reading and next steps
+- [x] internal `Blog #` editorial numbering removed from parent-facing copy
+- [x] evidence boundary preserved: SATPIN is useful but not a mandatory universal first sequence
+- [x] no fixed duration or mastery percentage asserted
+- [x] broader CVC, blending and diagnostic intents remain on their existing owners
+- [x] `/blog/phonics-satpin-launch` remains the practical home-routine support article
+- [x] support article continues to point to the SATPIN master guide
+- [x] master guide links toward `/phonics` and `/book-demo`
+- [x] regression protection added
+
+### Public support-page identity
+
+The source slug remains:
+
+`week-1-phonics-satpin-launch`
+
+The existing rename registry maps it to the public authority slug:
+
+`phonics-satpin-launch`
+
+No URL migration was introduced in Brick 6.
+
+### Implementation commits
+
+- `bf8134024dad4f7ae4c543a3b0085610c183a674` — strengthen SATPIN master guide
+- `f9c38717c54c5f26d4998d5198c842a9e4766bf1` — Brick 6 regression guard
+- `dcaaa737c2edd49abb2a2d4dac2fd6238b73a415` — Brick 6 artifact
+
+**Brick 6 decision:** CLOSED.
+
+---
+
+## BRICK 7 — Protect the Tracing Authority Page
+
+**Status:** ⏭️ NEXT
+
+Primary tracing authority:
+
+`/free-letter-tracing-game-for-kids`
+
+Supporting tracing-with-sounds utility:
+
+`/letter-tracing-with-sounds-game`
+
+Brick 7 will protect the high-performing tracing resource without creating more tracing URLs.
 
 Planned scope:
 
-- audit current SATPIN query coverage and page depth;
-- protect the existing master URL;
-- strengthen coverage of SATPIN meaning, order, sounds, blending, words, sentences, reading and what comes next;
-- keep the home-practice / launch article differentiated as an implementation routine;
-- improve internal authority flow from the support article into the SATPIN master guide and then toward `/phonics`;
-- preserve existing URL/canonical/indexing signals;
-- add Brick 6 regression protection;
-- create no new SEO page.
+- audit the current tracing owner and tracing-with-sounds support page;
+- preserve `/free-letter-tracing-game-for-kids` for ABC / alphabet / letter-tracing intent;
+- keep `/letter-tracing-with-sounds-game` differentiated around tracing plus sound support;
+- strengthen useful explanatory copy without weakening the interactive resource;
+- create a natural learning bridge from letter formation → letter sounds → blending → reading;
+- add contextual pathways into SATPIN and `/phonics` only where educationally appropriate;
+- protect existing URL/canonical/indexing signals;
+- add Brick 7 regression protection;
+- create no new tracing SEO page.
