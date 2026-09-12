@@ -31,7 +31,7 @@ describe('SEO recovery Brick 10 CTR experiments', () => {
     for (const experiment of SEO_RECOVERY_BRICK10_EXPERIMENTS) {
       expect(experiment.title.length, experiment.page).toBeLessThanOrEqual(65);
       expect(experiment.metaDescription.length, experiment.page).toBeGreaterThanOrEqual(100);
-      expect(experiment.metaDescription.length, experiment.page).toBeLessThanOrEqual(165);
+      expect(experiment.metaDescription.length, experiment.page).toBeLessThanOrEqual(160);
       expect(experiment.baseline.impressions, experiment.page).toBeGreaterThanOrEqual(150);
       expect(experiment.baseline.position, experiment.page).toBeLessThan(10);
     }
