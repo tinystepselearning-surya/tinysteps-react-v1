@@ -8,6 +8,7 @@ import {
   uniqueRoutes,
 } from './seo-route-inventory.mjs';
 import { extractBlogEntriesFromPostFiles, listMdxEntries } from './blog-route-utils.mjs';
+import { RETIRED_BLOG_PATH_REDIRECTS } from './blog-consolidation-map.mjs';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
 import { shouldIncludeBlogSlugInSitemap } from '../src/lib/blogIndexingPolicy.js';
 import { getPublicCourseSitemapPaths } from '../src/lib/publicCoursePages.js';
@@ -77,6 +78,11 @@ const SUPPORTING_LONG_TAIL = new Set([
 const EXCLUDED_BLOG_SLUGS = new Set([
   'spoken-english-classes-for-kids-confidence',
 ]);
+const RETIRED_BLOG_SLUGS = new Set(
+  Object.keys(RETIRED_BLOG_PATH_REDIRECTS)
+    .filter((route) => route.startsWith('/blog/'))
+    .map((route) => route.slice('/blog/'.length)),
+);
 
 (function main(){
   const root = path.resolve(__dirname, '..');
@@ -142,7 +148,10 @@ const EXCLUDED_BLOG_SLUGS = new Set([
     ...blogPostEntries.map((entry) => entry.slug),
     ...mdxEntries.map((entry) => entry.slug),
   ])
-    .filter((slug) => Boolean(slug) && !EXCLUDED_BLOG_SLUGS.has(slug) && shouldIncludeBlogSlugInSitemap(slug))
+    .filter((slug) => Boolean(slug)
+      && !EXCLUDED_BLOG_SLUGS.has(slug)
+      && !RETIRED_BLOG_SLUGS.has(slug)
+      && shouldIncludeBlogSlugInSitemap(slug))
     .sort();
   if (blogRoutes.length === 0) {
     // Guardrail: never ship an empty blog sitemap (Google flags it as a missing <url> tag issue).
