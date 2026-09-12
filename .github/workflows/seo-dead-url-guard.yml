@@ -30,8 +30,14 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Verify browser readiness and production alias normalization
+        run: node --test scripts/test/prerender-browser.test.mjs scripts/test/recovery-internal-links-build.test.mjs
+
       - name: Build and prerender public pages
         run: npm run build
+
+      - name: Verify generated article identity in Chromium
+        run: node --test scripts/test/prerender-output.test.mjs
 
       - name: Audit dead URLs and soft 404s
         run: node scripts/seo-dead-url-guard.mjs
