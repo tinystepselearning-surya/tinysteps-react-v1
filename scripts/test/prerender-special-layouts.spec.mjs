@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { readPrerenderReadiness } from '../prerender-readiness.mjs';
 
@@ -59,7 +60,7 @@ describe('dedicated research article schema identity', () => {
   });
 
   it('tracks the actual dedicated research renderer rather than changing its SEO contract', () => {
-    const source = fs.readFileSync(new URL('../../src/pages/blog/PhonicsForParentsResearchPage.tsx', import.meta.url), 'utf8');
+    const source = fs.readFileSync(path.join(process.cwd(), 'src/pages/blog/PhonicsForParentsResearchPage.tsx'), 'utf8');
     expect(source).toContain("'@type': 'BlogPosting'");
     expect(source).toContain('mainEntityOfPage: {');
     expect(source).toContain("'@id': ARTICLE_URL");
