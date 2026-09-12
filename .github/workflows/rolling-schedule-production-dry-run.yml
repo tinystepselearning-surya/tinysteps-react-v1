@@ -1,0 +1,76 @@
+name: Rolling schedule production dry run
+
+on:
+  push:
+    branches:
+      - fix/rolling-schedule-materialization-repair
+    paths:
+      - .github/workflows/rolling-schedule-production-dry-run.yml
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_PROJECT_ID: tinysteps-react-v1
+      REPAIR_ANCHOR_YMD: '2026-09-12'
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/rolling-schedule-materialization-repair
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Authenticate read-only audit identity
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run production dry run with zero writes
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        shell: bash
+        run: |
+          cd functions
+          node <<'NODE'
+          const admin = require('firebase-admin');
+          const {
+            runRollingScheduleRepairInternal,
+          } = require('./lib/scheduling/rollingScheduleRepair');
+
+          if (!admin.apps.length) {
+            admin.initializeApp({ projectId: process.env.FIREBASE_PROJECT_ID });
+          }
+
+          runRollingScheduleRepairInternal(admin.firestore(), {
+            apply: false,
+            anchorYmd: process.env.REPAIR_ANCHOR_YMD,
+            maxEnrollments: 250,
+          })
+            .then((summary) => {
+              console.log('ROLLING_SCHEDULE_PRODUCTION_DRY_RUN_START');
+              console.log(JSON.stringify(summary, null, 2));
+              console.log('ROLLING_SCHEDULE_PRODUCTION_DRY_RUN_END');
+            })
+            .catch((error) => {
+              console.error(error);
+              process.exitCode = 1;
+            });
+          NODE
