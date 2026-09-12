@@ -30,7 +30,6 @@ const REQUIRED_URLS = [
   'https://tinystepslearning.com/why-tiny-steps',
   'https://tinystepslearning.com/contact',
   'https://tinystepslearning.com/blog',
-  'https://tinystepslearning.com/blog/how-to-choose-phonics-classes',
   'https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read',
   'https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words',
   'https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india',
