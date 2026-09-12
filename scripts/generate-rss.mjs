@@ -8,7 +8,10 @@ import {
   rewriteLegacyWeekBlogPaths,
 } from '../src/lib/blogWeekRenames.js';
 import { getOptimizedBlogTitle } from '../src/lib/blogTitleOptimization.js';
-import { rewriteRetiredBlogPaths } from './blog-consolidation-map.mjs';
+import {
+  RETIRED_BLOG_PATH_REDIRECTS,
+  rewriteRetiredBlogPaths,
+} from './blog-consolidation-map.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +46,10 @@ const BLOG_SLUG_PATH = path.join(ROOT_DIR, 'src/content/blog/posts');
 const BLOG_DEFAULTS_PATH = path.join(ROOT_DIR, 'src/content/blog/shared/defaults.ts');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 const PUBLIC_BLOG_DIR = path.join(PUBLIC_DIR, 'blog');
+const LLM_DISCOVERY_FILES = [
+  path.join(PUBLIC_DIR, 'llms.txt'),
+  path.join(PUBLIC_DIR, 'llms-full.txt'),
+];
 
 function escapeXml(value) {
   return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
@@ -160,6 +167,32 @@ function buildRssXml({ title, description, feedPath, items }) {
   return ['<?xml version="1.0" encoding="UTF-8"?>', '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">', '  <channel>', `    <title>${escapeXml(title)}</title>`, `    <description>${escapeXml(description)}</description>`, `    <link>${escapeXml(SITE_URL)}</link>`, `    <atom:link href="${escapeXml(feedLink)}" rel="self" type="application/rss+xml" />`, '    <language>en-us</language>', `    <lastBuildDate>${escapeXml(lastBuildDate)}</lastBuildDate>`, itemXml, '  </channel>', '</rss>', ''].join('\n');
 }
 function writeFile(targetPath, content) { fs.mkdirSync(path.dirname(targetPath), { recursive: true }); fs.writeFileSync(targetPath, content, 'utf8'); }
+
+function normalizeLlmDiscoveryFiles() {
+  const retiredCommercialBlogUrls = Object.entries(RETIRED_BLOG_PATH_REDIRECTS)
+    .filter(([, destination]) => !destination.startsWith('/blog/'))
+    .map(([source]) => `${SITE_URL}${source}`);
+
+  for (const filePath of LLM_DISCOVERY_FILES) {
+    if (!fs.existsSync(filePath)) continue;
+    let text = fs.readFileSync(filePath, 'utf8');
+    text = text
+      .split('\n')
+      .filter((line) => !retiredCommercialBlogUrls.some((url) => line.includes(url)))
+      .join('\n')
+      .replace('Complete Quality-Reviewed Editorial Library — 51', 'Complete Quality-Reviewed Editorial Library — 50')
+      .replace('The 51 links below are the current quality-reviewed Tiny Steps editorial set.', 'The 50 links below are the current quality-reviewed Tiny Steps editorial set.')
+      .replace('### Blogs 1-34 — Phonics Authority Programme', '### Phonics Authority Programme — 33 articles')
+      .replace(
+        'Complete LLM-facing directory for the first 51 quality-reviewed Tiny Steps blog authorities: Blogs 1-34 from the Phonics authority programme and Blogs 35-51 from the Parent Communication / English support programme.',
+        'Complete LLM-facing directory for 50 quality-reviewed Tiny Steps blog authorities: 33 from the Phonics authority programme and 17 from the Parent Communication / English support programme.',
+      )
+      .replace('## Blogs 1-34 — Phonics Authority Programme', '## Phonics Authority Programme — 33 articles')
+      .replace('## Blogs 35-51 — Parent Communication / English Support Programme', '## Parent Communication / English Support Programme — 17 articles');
+    fs.writeFileSync(filePath, `${text.replace(/\n+$/, '')}\n`, 'utf8');
+  }
+}
+
 function main() {
   const blogItems = parseBlogItemsFromSource();
   const blogItemMap = new Map(blogItems.map((item) => [item.link, item]));
@@ -176,6 +209,7 @@ function main() {
   writeFile(path.join(PUBLIC_DIR, 'feed.xml'), buildRssXml({ title: SITE_TITLE, description: SITE_DESCRIPTION, feedPath: '/feed.xml', items: siteFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'rss.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/rss.xml', items: blogFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'feed.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/feed.xml', items: blogFeedItems }));
-  console.log('Generated RSS feeds: public/rss.xml, public/feed.xml, public/blog/rss.xml, public/blog/feed.xml');
+  normalizeLlmDiscoveryFiles();
+  console.log('Generated RSS feeds and normalized retired commercial blog URLs from LLM discovery files.');
 }
 main();
