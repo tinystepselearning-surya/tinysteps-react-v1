@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
   EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyFailure,
-  digestBoundedOutput, discoverEndpointPlan,
+  digestBoundedOutput, discoverEndpointPlan, normalizeRevisionId,
 } from './deployment/functions-deployment-lib.mjs';
 
 const require = createRequire(import.meta.url);
@@ -196,7 +196,7 @@ async function verifyTargets(targets) {
     const fnUrl = `https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/functions/${encodeURIComponent(target.id)}`;
     const fn = await googleJson(fnUrl);
     if (fn.state !== 'ACTIVE') throw new Error(`Function ${target.id} is not ACTIVE (state=${fn.state ?? 'unknown'})`);
-    const functionRevision = fn.serviceConfig?.revision;
+    const functionRevision = normalizeRevisionId(fn.serviceConfig?.revision);
     const serviceResource = fn.serviceConfig?.service;
     if (!functionRevision || !serviceResource) throw new Error(`Function ${target.id} is missing service revision metadata`);
     const serviceId = serviceResource.split('/').at(-1);
@@ -209,13 +209,15 @@ async function verifyTargets(targets) {
     if (service.terminalCondition?.state && service.terminalCondition.state !== 'CONDITION_SUCCEEDED') {
       throw new Error(`Cloud Run terminal condition is not successful for ${target.id}: ${service.terminalCondition.state}`);
     }
-    const created = service.latestCreatedRevision;
-    const ready = service.latestReadyRevision;
+    const created = normalizeRevisionId(service.latestCreatedRevision);
+    const ready = normalizeRevisionId(service.latestReadyRevision);
     if (created !== ready || ready !== functionRevision) {
       throw new Error(`Revision mismatch for ${target.id}: function=${functionRevision}, created=${created}, ready=${ready}`);
     }
     const traffic = service.trafficStatuses ?? [];
-    const latestTraffic = traffic.filter(x => x.revision === functionRevision).reduce((n, x) => n + Number(x.percent || 0), 0);
+    const latestTraffic = traffic
+      .filter(x => normalizeRevisionId(x.revision) === functionRevision)
+      .reduce((n, x) => n + Number(x.percent || 0), 0);
     if (latestTraffic !== 100) throw new Error(`Function ${target.id} latest revision has ${latestTraffic}% traffic, expected 100%`);
   }
 }

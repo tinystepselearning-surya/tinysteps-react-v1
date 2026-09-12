@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   discoverEndpointPlan, batch, classifyFailure, terminalFailedTargets, digestBoundedOutput,
+  normalizeRevisionId,
 } from '../deployment/functions-deployment-lib.mjs';
 
 const fn = (entryPoint, region = ['asia-south1'], platform = 'gcfv2') => ({ __endpoint: { entryPoint, region, platform } });
@@ -19,6 +20,15 @@ test('fails closed on unexpected region or platform', () => {
 
 test('batches deterministically in groups of five', () => {
   assert.deepEqual(batch([1,2,3,4,5,6,7,8,9,10,11]), [[1,2,3,4,5],[6,7,8,9,10],[11]]);
+});
+
+test('normalizes short and fully-qualified Cloud Run revision identifiers', () => {
+  const id = 'adminadjustparentwallet-00100-fiz';
+  const full = `projects/tinysteps-react-v1/locations/asia-south1/services/adminadjustparentwallet/revisions/${id}`;
+  assert.equal(normalizeRevisionId(id), id);
+  assert.equal(normalizeRevisionId(full), id);
+  assert.equal(normalizeRevisionId(`/${full}/`), id);
+  assert.equal(normalizeRevisionId(null), '');
 });
 
 test('extracts terminal failed targets and retries only transient failures', () => {
