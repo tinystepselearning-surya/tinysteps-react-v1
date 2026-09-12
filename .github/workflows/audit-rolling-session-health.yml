@@ -1,6 +1,12 @@
 name: Audit rolling session health
 
 on:
+  push:
+    branches:
+      - audit/fix-upcoming-session-materialization
+    paths:
+      - .github/workflows/audit-rolling-session-health.yml
+      - scripts/audit-rolling-session-health.mjs
   workflow_dispatch:
 
 permissions:
