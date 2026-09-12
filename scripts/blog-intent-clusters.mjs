@@ -185,23 +185,22 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
   {
     id: 'phonics-class-selection',
     audience: 'Parent',
-    queryIntent: 'How to choose phonics classes versus online/school format comparison and online-class benefits',
-    risk: 'medium',
+    queryIntent: 'Online/school format comparison and online-class benefits after commercial provider-selection consolidation',
+    risk: 'resolved',
     action: 'differentiate',
     canonicalOwner: null,
-    slugs: ['how-to-choose-phonics-classes', 'online-phonics-classes-vs-school', 'why-parents-choose-online-phonics'],
-    retiredSlugs: ['best-online-phonics-classes-for-kids', 'best-phonics-classes-for-kids'],
-    retiredRedirectOwner: 'how-to-choose-phonics-classes',
+    slugs: ['online-phonics-classes-vs-school', 'why-parents-choose-online-phonics'],
     evidence: gsc(
       {
-        'how-to-choose-phonics-classes': { clicks: 0, impressions: 30 },
+        'how-to-choose-phonics-classes': { clicks: 0, impressions: 30, historicalRedirectSource: true },
         'online-phonics-classes-vs-school': { clicks: 0, impressions: 20 },
         'why-parents-choose-online-phonics': { clicks: 0, impressions: 35 },
         'best-online-phonics-classes-for-kids': { clicks: 2, impressions: 563, historicalRedirectSource: true },
       },
-      'Selection checklist, modality comparison and online-benefits intent can coexist. Existing “best classes” duplicates remain consolidated into the selection owner.',
+      'The provider-selection framework is now consolidated into the dedicated commercial comparison owner. The two remaining editorial pages serve distinct modality-comparison and online-benefits questions and should stay differentiated.',
     ),
-    notes: 'Keep titles/meta/internal anchors distinct and preserve existing retired-source redirect lineage.',
+    notes:
+      'Brick 4 retires how-to-choose-phonics-classes and the historical best-classes aliases directly into /best-online-phonics-classes-for-kids-in-india. Keep only the two distinct informational support articles in this blog cluster.',
   },
   {
     id: 'phonics-apps-and-games',
