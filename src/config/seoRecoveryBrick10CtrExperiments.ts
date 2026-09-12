@@ -69,7 +69,7 @@ export const SEO_RECOVERY_BRICK10_EXPERIMENTS = Object.freeze([
     baseline: { clicks: 1, impressions: 176, ctr: 0.005681818181818182, position: 7.170454545454546 },
     title: 'Digraphs and Tricky Words for Kids: Examples & Reading Tips',
     metaDescription:
-      'Learn digraphs and tricky words with examples such as sh, ch and ng. See what children can decode, what needs extra attention and how to avoid whole-word guessing.',
+      'Learn digraphs and tricky words with sh, ch and ng examples. See what children can decode, what needs extra attention and how to avoid whole-word guessing.',
     rationale:
       'Low CTR at a page-one average position. The test adds child/parent language and concrete digraph examples while preserving the page’s decode-vs-remember distinction.',
   },
