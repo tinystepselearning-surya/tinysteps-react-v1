@@ -9,7 +9,8 @@ import {
 } from '../../content/blog/shared/editorialCleanup';
 
 const EXPOSED_ACTION_ROUTE = /\b(Explore|Read|Visit|Build|Compare|Try|Play|Book|Start|See|View|Open)\s+([^.:!?]{1,120}?):\s*(\/[a-z0-9][a-z0-9\-_/?.=&%#]*)/i;
-const INTERNAL_BLOG_NUMBER = /\bBlog\s+#\d+\b/i;
+const INTERNAL_BLOG_NUMBER = /\bBlog\s+#?\d+\b/i;
+const INTERNAL_OWNERSHIP_JARGON = /\b(?:This guide owns|This page owns|This article is the \*\*[^*]+ owner\*\*|choose the right owner)\b/i;
 
 describe('blog editorial cleanup', () => {
   it('removes Week N from the primary title while preserving useful topic wording', () => {
@@ -30,7 +31,7 @@ describe('blog editorial cleanup', () => {
       .toBe('Frequently Asked Questions');
   });
 
-  it('removes internal Blog # numbering from public article copy', () => {
+  it('removes internal Blog numbering with or without a hash from public article copy', () => {
     expect(cleanBlogText('Use Blog #5, [How Kids Learn Blending](/blog/how-kids-learn-blending).'))
       .toBe('Use [How Kids Learn Blending](/blog/how-kids-learn-blending).');
     expect(cleanBlogText('Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the encoding roadmap.'))
@@ -43,6 +44,19 @@ describe('blog editorial cleanup', () => {
       .toBe('This guide covers the broader parent question.');
     expect(cleanBlogText('This Blog #4 explains the conceptual difference.'))
       .toBe('This guide explains the conceptual difference.');
+    expect(cleanBlogText('Blog 56 is the parent-support guide.'))
+      .toBe('This guide is the parent-support guide.');
+  });
+
+  it('replaces internal SEO ownership jargon with reader-facing differentiation language', () => {
+    expect(cleanBlogText('This guide owns the **parent grammar-assessment and next-step planning** intent.'))
+      .toBe('This guide focuses on **parent grammar-assessment and next-step planning**.');
+    expect(cleanBlogText('This page owns **which blending activity to use for a specific bottleneck**.'))
+      .toBe('This page focuses on **which blending activity to use for a specific bottleneck**.');
+    expect(cleanBlogText('This article is the **SATPIN explanation and progression owner**: sounds, order and words.'))
+      .toBe('This guide focuses on **SATPIN explanation and progression**: sounds, order and words.');
+    expect(cleanBlogText('Summer reading plan vs summer phonics plan: choose the right owner'))
+      .toBe('Summer reading plan vs summer phonics plan: choose the right guide');
   });
 
   it('turns multiple exposed internal routes into readable links instead of dropping destinations', () => {
@@ -61,6 +75,12 @@ describe('blog editorial cleanup', () => {
   it('normalizes a bare legacy booking query into the current demo route', () => {
     expect(cleanBlogBlock({ type: 'li', content: '/?book=1' }).content)
       .toBe('[Book a free Tiny Steps assessment](/book-demo)');
+  });
+
+  it('normalizes the historical SATPIN source path to its public support URL', () => {
+    expect(
+      cleanBlogText('[SATPIN home plan](/blog/week-1-phonics-satpin-launch)'),
+    ).toBe('[SATPIN home plan](/blog/phonics-satpin-launch)');
   });
 
   it('does not mutate the source object', () => {
@@ -94,7 +114,8 @@ describe('blog editorial cleanup', () => {
       for (const block of post.body) {
         expect(block.content, `${post.slug}: FAQ template heading leaked`).not.toMatch(/FAQ section with \d+ parent questions/i);
         expect(block.content, `${post.slug}: raw internal action route leaked`).not.toMatch(EXPOSED_ACTION_ROUTE);
-        expect(block.content, `${post.slug}: internal Blog # numbering leaked`).not.toMatch(INTERNAL_BLOG_NUMBER);
+        expect(block.content, `${post.slug}: internal Blog numbering leaked`).not.toMatch(INTERNAL_BLOG_NUMBER);
+        expect(block.content, `${post.slug}: internal ownership jargon leaked`).not.toMatch(INTERNAL_OWNERSHIP_JARGON);
       }
     }
   });
