@@ -153,12 +153,11 @@ Brick 12 does not:
 
 ## Key implementation commits
 
-- `6951261cefadb7274482b66389e1d000b9e6621a` — initial Brick 12 hierarchy registry
-- `907077b2c40b7553f92cde10de0867598da8a576` — specialist authority-signal applicator
-- `80e7746d06aecccdb578f6d1cd46c8992b1a4348` — wire Brick 12 after C7 commercial handoffs
-- `98183dce20120243899f0a7de708a704a9d6d2b2` — tiered regression contract before final specialist-only tightening
-- `41ca9291fb1c88b326569a054d9c729c2be1a806` — keep Brick 12 specialist signals non-commercial
-- `98183dce20120243899f0a7de708a704a9d6d2b2` / subsequent test update — authority regression refinement
+- `6951261cefadb7274482b66389e1d000b9e6621a` — establish the Brick 12 tier registry
+- `907077b2c40b7553f92cde10de0867598da8a576` — add the missing-signal applicator
+- `80e7746d06aecccdb578f6d1cd46c8992b1a4348` — run Brick 12 after C7 commercial handoffs
+- `41ca9291fb1c88b326569a054d9c729c2be1a806` — restrict Brick 12 to specialist, non-commercial reinforcement
+- `98183dce20120243899f0a7de708a704a9d6d2b2` — finalize the tiered authority regression contract
 
 ## Definition of done
 
