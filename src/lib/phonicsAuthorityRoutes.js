@@ -1,4 +1,4 @@
-export const PHONICS_34_AUTHORITY_SLUGS = Object.freeze([
+export const PHONICS_AUTHORITY_SLUGS = Object.freeze([
   'benefits-of-phonics-for-kids',
   'child-knows-abc-but-cannot-read',
   'cvc-words-explained-for-parents',
@@ -8,7 +8,6 @@ export const PHONICS_34_AUTHORITY_SLUGS = Object.freeze([
   'how-phonics-builds-reading-confidence',
   'how-phonics-classes-help-kids-read',
   'how-phonics-improves-spelling',
-  'how-to-choose-phonics-classes',
   'long-vowel-sounds-for-kids',
   'online-phonics-classes-vs-school',
   'online-phonics-games',
@@ -35,6 +34,6 @@ export const PHONICS_34_AUTHORITY_SLUGS = Object.freeze([
   'why-parents-choose-online-phonics',
 ]);
 
-export const PHONICS_34_AUTHORITY_ROUTES = Object.freeze(
-  PHONICS_34_AUTHORITY_SLUGS.map((slug) => `/blog/${slug}`),
+export const PHONICS_AUTHORITY_ROUTES = Object.freeze(
+  PHONICS_AUTHORITY_SLUGS.map((slug) => `/blog/${slug}`),
 );
