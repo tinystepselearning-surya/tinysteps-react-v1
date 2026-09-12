@@ -7,6 +7,7 @@ import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
 import { applyCommercialC7ContextualHandoffs } from './shared/commercialHandoffs';
 import { applyBlogTitleOptimization } from '../../lib/blogTitleOptimization.js';
+import { applySeoRecoveryBrick10CtrExperiment } from '../../config/seoRecoveryBrick10CtrExperiments';
 
 type PostModule = {
   default?: BlogPost | PhonicsSeoPost;
@@ -56,7 +57,8 @@ const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((po
   } as BlogPost;
   const publicPost = applyLegacyWeekBlogRename(normalized);
   const titledPost = applyBlogTitleOptimization(publicPost) as BlogPost;
-  const contextualLinkedPost = applyCommercialC7ContextualHandoffs(titledPost);
+  const ctrTestedPost = applySeoRecoveryBrick10CtrExperiment(titledPost);
+  const contextualLinkedPost = applyCommercialC7ContextualHandoffs(ctrTestedPost);
 
   return {
     ...contextualLinkedPost,
