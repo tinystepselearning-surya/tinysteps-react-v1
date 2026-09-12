@@ -228,13 +228,16 @@ Historical metadata entries, dormant CTA overrides, committed generated files aw
 
 ## BRICK 5 — Strengthen the Parent-Problem Authority Page
 
-**Status:** ⏭️ NEXT
+**Status:** ✅ CLOSED — canonical parent decoding diagnostic strengthened
 
-Brick 5 will strengthen the current canonical diagnostic owner:
+**Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_5_PARENT_PROBLEM_AUTHORITY_2026-09-12.md`  
+**Regression test:** `src/tests/seo/recoveryBrick5ParentProblemAuthority.spec.ts`
+
+Canonical owner preserved:
 
 `/blog/why-child-knows-letter-sounds-but-cannot-read-words`
 
-The historical shorter URL remains retired:
+Historical source remains permanently retired:
 
 `/blog/child-knows-letter-sounds-but-cannot-read`
 
@@ -242,16 +245,57 @@ The historical shorter URL remains retired:
 
 `/blog/why-child-knows-letter-sounds-but-cannot-read-words`
 
-Brick 5 must **not reverse this existing consolidation**.
+### Authority strengthening completed
+
+- [x] exact high-intent title retained
+- [x] meta/excerpt strengthened around `cannot blend`, CVC decoding and fresh-word transfer
+- [x] user-facing `Blog 50` ownership language removed
+- [x] diagnostic sequence expanded to six explicit stages
+- [x] dedicated CVC-decoding stage added
+- [x] CVC explainer linked as a supporting authority
+- [x] ABC-known, blending, fluency and comprehension intents kept separate
+- [x] home-practice routine aligned to the diagnostic sequence
+- [x] structured-support section added without hard-selling
+- [x] `/phonics` and `/book-demo` handoffs preserved
+- [x] FAQ coverage strengthened around real parent wording
+- [x] professional-review / non-diagnostic boundary preserved
+- [x] no new SEO URL created
+
+### Protected six-stage sequence
+
+**Sound recall → Oral blend → Printed blend → CVC decoding → Fresh-word transfer → Connected-text transfer**
+
+### Implementation commits
+
+- `d4fcc3011d236d44a4b69a2fed64a224bbb7c818` — strengthen canonical parent decoding authority
+- `139febd25ef6b7176e768ba3ffbb314f760bc6b9` — Brick 5 regression guard
+- `1dc647f1776db00b3a8d18b6bfd891a48932f58f` — Brick 5 artifact
+
+**Brick 5 decision:** CLOSED.
+
+---
+
+## BRICK 6 — Establish SATPIN as a Master Authority Hub
+
+**Status:** ⏭️ NEXT
+
+Primary authority:
+
+`/blog/satpin-phonics-guide`
+
+Supporting practical article:
+
+`/blog/phonics-satpin-launch`
+
+Brick 6 will strengthen the existing SATPIN master owner rather than create another SATPIN page.
 
 Planned scope:
 
-- audit current search intent and content depth;
-- strengthen the distinction between sound recall, oral blending, printed blending, fresh-word transfer and connected-text transfer;
-- cover CVC blending and “says each sound but cannot make the word” parent language naturally;
-- improve problem → diagnosis → home-practice → structured-support flow;
-- keep the CTA diagnostic and assessment-led rather than hard sales;
-- strengthen internal links to the correct phonics authority and blending support pages;
-- protect canonical, URL and existing redirect lineage;
-- add Brick 5 regression protection;
-- create no new SEO URL.
+- audit current SATPIN query coverage and page depth;
+- protect the existing master URL;
+- strengthen coverage of SATPIN meaning, order, sounds, blending, words, sentences, reading and what comes next;
+- keep the home-practice / launch article differentiated as an implementation routine;
+- improve internal authority flow from the support article into the SATPIN master guide and then toward `/phonics`;
+- preserve existing URL/canonical/indexing signals;
+- add Brick 6 regression protection;
+- create no new SEO page.
