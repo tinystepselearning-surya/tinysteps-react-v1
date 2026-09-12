@@ -6,6 +6,7 @@ import { applyLegacyWeekBlogRename } from './shared/legacyWeekRenames';
 import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
 import { applyCommercialC7ContextualHandoffs } from './shared/commercialHandoffs';
+import { applySeoRecoveryBrick12AuthoritySignals } from './shared/recoveryAuthoritySignals';
 import { applyBlogTitleOptimization } from '../../lib/blogTitleOptimization.js';
 import { applySeoRecoveryBrick10CtrExperiment } from '../../config/seoRecoveryBrick10CtrExperiments';
 
@@ -59,11 +60,12 @@ const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((po
   const titledPost = applyBlogTitleOptimization(publicPost) as BlogPost;
   const ctrTestedPost = applySeoRecoveryBrick10CtrExperiment(titledPost);
   const contextualLinkedPost = applyCommercialC7ContextualHandoffs(ctrTestedPost);
+  const recoveryAuthorityLinkedPost = applySeoRecoveryBrick12AuthoritySignals(contextualLinkedPost);
 
   return {
-    ...contextualLinkedPost,
-    audience: getBlogAudience(contextualLinkedPost),
-    discoveryCategory: getBlogDiscoveryCategory(contextualLinkedPost),
+    ...recoveryAuthorityLinkedPost,
+    audience: getBlogAudience(recoveryAuthorityLinkedPost),
+    discoveryCategory: getBlogDiscoveryCategory(recoveryAuthorityLinkedPost),
   };
 });
 
