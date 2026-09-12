@@ -1,0 +1,27 @@
+name: SEO640 isolated source inspection
+on:
+  push:
+    branches: [work/seo640-finish-validation]
+    paths: [.github/workflows/seo640-source-inspection.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0272b1a75628643016b83e6851f43b9187a53a61
+          persist-credentials: false
+      - name: Export tracked source and guidance only
+        run: |
+          mkdir -p /tmp/seo640-source
+          git archive HEAD | gzip > /tmp/seo640-source/pr332-source.tar.gz
+          git rev-parse HEAD > /tmp/seo640-source/commit.txt
+          find . -iname AGENTS.md -not -path './.git/*' -print > /tmp/seo640-source/guidance-paths.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seo640-exact-source
+          path: /tmp/seo640-source/
+          retention-days: 3
