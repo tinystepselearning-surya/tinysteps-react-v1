@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { normalizeSeoRecoveryInternalHref } from '../../config/seoRecoveryBrick8InternalLinks';
 
 type TopicClusterLinksProps = {
   title: string;
@@ -29,16 +30,20 @@ const PHONICS_PARENT_GUIDES = [
 const MAX_PHONICS_RESOURCE_LINKS = 8;
 
 export default function TopicClusterLinks({ title, links, className = '' }: TopicClusterLinksProps) {
+  const canonicalLinks = links.map((link) => ({
+    ...link,
+    href: normalizeSeoRecoveryInternalHref(link.href),
+  }));
   const isPhonicsResourceHub =
     title.toLowerCase().includes('phonics') &&
-    links.some((link) => link.href === '/blog/satpin-phonics-guide');
+    canonicalLinks.some((link) => link.href === '/blog/satpin-phonics-guide');
 
-  const existingHrefs = new Set(links.map((link) => link.href));
-  const openSlots = Math.max(0, MAX_PHONICS_RESOURCE_LINKS - links.length);
+  const existingHrefs = new Set(canonicalLinks.map((link) => link.href));
+  const openSlots = Math.max(0, MAX_PHONICS_RESOURCE_LINKS - canonicalLinks.length);
   const curatedAdditions = isPhonicsResourceHub
     ? PHONICS_PARENT_GUIDES.filter((link) => !existingHrefs.has(link.href)).slice(0, openSlots)
     : [];
-  const resourceLinks = isPhonicsResourceHub ? [...links, ...curatedAdditions] : links;
+  const resourceLinks = isPhonicsResourceHub ? [...canonicalLinks, ...curatedAdditions] : canonicalLinks;
   const displayLinks =
     isPhonicsResourceHub && !resourceLinks.some((link) => link.href === BALLOON_POP_LINK.href)
       ? [...resourceLinks, BALLOON_POP_LINK]
