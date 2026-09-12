@@ -2,6 +2,7 @@ import { onRequest } from "firebase-functions/v2/https";
 
 const REGION = "asia-south1";
 const SITE_ORIGIN = "https://tinystepslearning.com";
+const PHONICS_COMPARISON_OWNER = "/best-online-phonics-classes-for-kids-in-india";
 
 // Canonical consolidation redirects for retired blog URLs. These requests only
 // reach this function after Firebase static-file resolution, so surviving
@@ -13,8 +14,9 @@ const CANONICAL_BLOG_REDIRECTS: Record<string, string> = {
   "/blog/child-reads-words-but-does-not-understand-story": "/blog/why-child-reads-words-but-does-not-understand-story",
   "/blog/june-school-readiness-english-revision-plan": "/blog/june-school-reopening-english-readiness-plan",
   "/blog/how-long-does-it-take-child-to-learn-phonics": "/blog/how-long-does-phonics-take",
-  "/blog/best-online-phonics-classes-for-kids": "/blog/how-to-choose-phonics-classes",
-  "/blog/best-phonics-classes-for-kids": "/blog/how-to-choose-phonics-classes",
+  "/blog/how-to-choose-phonics-classes": PHONICS_COMPARISON_OWNER,
+  "/blog/best-online-phonics-classes-for-kids": PHONICS_COMPARISON_OWNER,
+  "/blog/best-phonics-classes-for-kids": PHONICS_COMPARISON_OWNER,
   "/blog/phonics-grammar-speaking-connected-english-communication": "/blog/how-phonics-grammar-and-communication-work-together",
   "/blog/engage-children-phonics-grammar-speaking-at-home": "/blog/how-to-engage-kids-in-english-learning-at-home",
   "/blog/best-age-to-start-phonics-classes-for-kids": "/blog/what-age-to-start-phonics",
