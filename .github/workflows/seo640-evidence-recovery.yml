@@ -10,14 +10,14 @@ jobs:
   evidence:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      EVIDENCE_DIR: ${{ runner.temp }}/seo640-evidence
     steps:
       - uses: actions/checkout@v4
         with:
           ref: 85af4912a061e245c04ed76bd0fabcb30d6c97fd
           fetch-depth: 0
           persist-credentials: false
+      - name: Resolve an absolute evidence directory
+        run: echo "EVIDENCE_DIR=$RUNNER_TEMP/seo640-evidence" >> "$GITHUB_ENV"
       - name: Recover and verify the already completed tests and three clean builds
         env:
           GH_TOKEN: ${{ github.token }}
@@ -45,9 +45,9 @@ jobs:
               except urllib.error.HTTPError as error:
                   if error.code not in (301, 302, 303, 307, 308):
                       raise
-                  # Never forward the GitHub token to the signed log/archive URL.
                   location = error.headers['Location']
                   assert location.startswith('https://')
+                  # Do not forward the GitHub token to the signed download URL.
                   with urllib.request.urlopen(location, timeout=60) as response:
                       return response.read()
           def decoded(endpoint):
@@ -121,6 +121,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: seo640-verified-completion-evidence
-          path: ${{ env.EVIDENCE_DIR }}
+          path: ${{ runner.temp }}/seo640-evidence
           if-no-files-found: error
           retention-days: 7
