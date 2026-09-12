@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   discoverEndpointPlan, batch, classifyFailure, terminalFailedTargets, digestBoundedOutput,
-  normalizeRevisionId,
+  normalizeRevisionId, trafficPercentForRevision,
 } from '../deployment/functions-deployment-lib.mjs';
 
 const fn = (entryPoint, region = ['asia-south1'], platform = 'gcfv2') => ({ __endpoint: { entryPoint, region, platform } });
@@ -29,6 +29,50 @@ test('normalizes short and fully-qualified Cloud Run revision identifiers', () =
   assert.equal(normalizeRevisionId(full), id);
   assert.equal(normalizeRevisionId(`/${full}/`), id);
   assert.equal(normalizeRevisionId(null), '');
+});
+
+test('counts explicit Cloud Run revision traffic after normalizing resource names', () => {
+  const id = 'adminadjustparentwallet-00100-fiz';
+  const full = `projects/tinysteps-react-v1/locations/asia-south1/services/adminadjustparentwallet/revisions/${id}`;
+  const service = {
+    latestReadyRevision: full,
+    trafficStatuses: [{ revision: full, percent: 100 }],
+  };
+  assert.equal(trafficPercentForRevision(service, id), 100);
+});
+
+test('counts Cloud Run LATEST traffic against latest ready revision', () => {
+  const id = 'adminadjustparentwallet-00100-fiz';
+  const service = {
+    latestReadyRevision: `projects/tinysteps-react-v1/locations/asia-south1/services/adminadjustparentwallet/revisions/${id}`,
+    trafficStatuses: [{ type: 'TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST', percent: 100 }],
+  };
+  assert.equal(trafficPercentForRevision(service, id), 100);
+});
+
+test('accepts documented implicit 100% latest traffic only when no traffic config is present', () => {
+  const id = 'adminadjustparentwallet-00100-fiz';
+  assert.equal(trafficPercentForRevision({ latestReadyRevision: id, traffic: [], trafficStatuses: [] }, id), 100);
+  assert.equal(trafficPercentForRevision({ latestReadyRevision: id, traffic: [{ percent: 100 }], trafficStatuses: [] }, id), 0);
+});
+
+test('fails closed for split, mismatched, or malformed Cloud Run traffic', () => {
+  const id = 'adminadjustparentwallet-00100-fiz';
+  assert.equal(trafficPercentForRevision({
+    latestReadyRevision: id,
+    trafficStatuses: [
+      { type: 'TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST', percent: 90 },
+      { revision: 'older-revision', percent: 10 },
+    ],
+  }, id), 90);
+  assert.equal(trafficPercentForRevision({
+    latestReadyRevision: 'different-revision',
+    trafficStatuses: [{ type: 'TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST', percent: 100 }],
+  }, id), 0);
+  assert.throws(() => trafficPercentForRevision({
+    latestReadyRevision: id,
+    trafficStatuses: [{ type: 'TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST', percent: 101 }],
+  }, id), /Invalid Cloud Run traffic percent/);
 });
 
 test('extracts terminal failed targets and retries only transient failures', () => {
