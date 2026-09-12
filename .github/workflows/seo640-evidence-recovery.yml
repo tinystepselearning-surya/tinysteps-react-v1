@@ -77,7 +77,9 @@ jobs:
               candidates = [name for name in archive.namelist() if name.endswith('seo-dead-url-report.json')]
               assert len(candidates) == 1
               report = json.loads(archive.read(candidates[0]))
-          assert not report['failures']
+          for key in ['deadLinks', 'redirectAliasLinks', 'soft404Pages']:
+              assert report[key] == [], (key, report[key])
+          assert report['canonicalPages'] == report['renderedCanonicalPages']
           (out / 'seo-dead-url-report.json').write_text(json.dumps(report, indent=2))
           summary = {
               'validatedCommit': sha,
