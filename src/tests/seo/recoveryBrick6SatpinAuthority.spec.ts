@@ -40,7 +40,7 @@ describe('SEO recovery Brick 6 SATPIN authority', () => {
   it('keeps the main guide educational, evidence-bounded and free of internal editorial numbering', () => {
     const source = read(guidePath);
 
-    expect(source).toContain('SATPIN is a practical **launch set**, not a finish line');
+    expect(source).toContain('Tiny Steps therefore treats SATPIN as a practical **launch set**, not a finish line');
     expect(source).toContain('does **not** establish SATPIN as the single mandatory first set');
     expect(source).toContain('This article provides educational guidance, not diagnosis.');
     expect(source).not.toMatch(/Blog #\d+/);
