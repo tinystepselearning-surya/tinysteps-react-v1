@@ -8,7 +8,7 @@ describe('authoritative Blog #4 quality lock', () => {
   it('owns the digraph-versus-tricky-word decision without teaching whole-word guessing', () => {
     const post = bySlug.get('digraphs-and-tricky-words');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('Digraphs and Tricky Words: What to Decode and What to Remember');
+    expect(post?.title).toBe('Digraphs and Tricky Words for Kids: Examples & Reading Tips');
     expect(post?.author).toBe('Priya');
     expect(post?.modifiedDate).toBe('2026-08-30');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);

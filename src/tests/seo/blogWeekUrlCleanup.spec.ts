@@ -1,3 +1,4 @@
+import { RECOVERY_CTR_TITLES } from './fixtures/seoRecoveryCorpus';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -49,9 +50,9 @@ const indexableRenamedSlugs = new Set([
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
-  it('keeps all 84 post-R21 articles while exposing unique, week-free public slugs', () => {
-    expect(blogPosts).toHaveLength(84);
-    expect(new Set(blogPosts.map((post) => post.slug)).size).toBe(84);
+  it('keeps all 83 post-Brick-4 articles while exposing unique, week-free public slugs', () => {
+    expect(blogPosts).toHaveLength(83);
+    expect(new Set(blogPosts.map((post) => post.slug)).size).toBe(83);
     expect(LEGACY_WEEK_SOURCE_SLUGS).toHaveLength(27);
     expect(LEGACY_WEEK_PUBLIC_SLUGS).toHaveLength(27);
     expect(new Set(LEGACY_WEEK_PUBLIC_SLUGS).size).toBe(27);
@@ -68,7 +69,7 @@ describe('weekly blog title and URL cleanup', () => {
   it('removes editorial Week N labels from every renamed public title', () => {
     for (const [sourceSlug, rename] of Object.entries(LEGACY_WEEK_BLOG_RENAMES)) {
       expect(rename.title, sourceSlug).not.toMatch(/\bWeek\s+\d+\b/i);
-      expect(bySlug.get(rename.slug)?.title).toBe(rename.title);
+      expect(bySlug.get(rename.slug)?.title).toBe(RECOVERY_CTR_TITLES[rename.slug] ?? rename.title);
     }
   });
 

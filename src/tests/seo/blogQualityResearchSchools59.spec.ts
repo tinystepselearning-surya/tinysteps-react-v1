@@ -23,7 +23,7 @@ describe('Blog #59 systematic and cumulative phonics implementation quality refr
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
     expect(body).toContain('systematic tells you the route; cumulative makes sure earlier learning stays usable');
-    expect(body).toContain('Blog 59 owns the implementation-system question');
+    expect(body).toContain('This guide covers the implementation-system question');
     expect(body).toContain('What “systematic” should mean beyond a marketing label');
     expect(body).toContain('What “cumulative” should look like in actual lessons');
     expect(body).toContain('Define → Sequence → Teach → Retrieve → Apply → Check → Reteach → Sustain');

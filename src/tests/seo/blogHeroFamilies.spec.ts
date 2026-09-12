@@ -30,7 +30,6 @@ const INTENTIONAL_EXISTING_HERO_SLUGS = [
   'conversation-skills-for-kids',
   'how-children-recognise-words-automatically-after-phonics',
   'how-phonics-grammar-and-communication-work-together',
-  'how-to-choose-phonics-classes',
   'how-to-teach-paragraph-writing-to-kids',
   'how-to-teach-storytelling-to-kids',
   'how-vocabulary-supports-reading-comprehension',

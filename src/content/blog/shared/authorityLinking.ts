@@ -32,6 +32,7 @@ const EARLY = '/courses/phonics-brush-up';
 const ADVANCED = '/courses/phonics-advanced';
 const READING = '/reading-classes-for-kids';
 
+// Historical founder-approved sequence. Brick 4 retired Blog 10; do not renumber the surviving articles.
 export const B7_BLOG_AUTHORITY_PLANS: readonly BlogAuthorityPlan[] = Object.freeze([
   { number: 1, slug: 'benefits-of-phonics-for-kids', intent: 'phonics-information', primary: { label: 'see the full Tiny Steps phonics pathway', to: PHONICS } },
   { number: 2, slug: 'child-knows-abc-but-cannot-read', intent: 'phonics-diagnostic', primary: { label: 'see the structured phonics pathway', to: PHONICS }, secondary: { label: 'review the Foundation Phonics starting stage', to: FOUNDATION } },
@@ -99,7 +100,6 @@ export const B7_PHONICS_FEATURED_GUIDES = Object.freeze([
 ]);
 
 export const B7_BEST_PHONICS_DECISION_GUIDES = Object.freeze([
-  'how-to-choose-phonics-classes',
   'online-phonics-classes-vs-school',
   'why-parents-choose-online-phonics',
   'are-phonics-apps-enough-for-kids',

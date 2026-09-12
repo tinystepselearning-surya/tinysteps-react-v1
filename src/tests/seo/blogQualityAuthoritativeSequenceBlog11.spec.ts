@@ -8,7 +8,7 @@ describe('authoritative Blog #11 quality lock', () => {
   it('owns long-vowel pattern order and mix-up interpretation without prescribing one universal sequence', () => {
     const post = bySlug.get('long-vowel-sounds-for-kids');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups');
+    expect(post?.title).toBe('Long Vowel Sounds for Kids: Rules, Patterns & Examples');
     expect(post?.author).toBe('Priya');
     expect(post?.modifiedDate).toBe('2026-08-30');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
@@ -47,7 +47,7 @@ describe('authoritative Blog #11 quality lock', () => {
 
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
-    expect(body).toContain('That article owns the practical-activity intent; this guide owns pattern order, interpretation and common mix-ups');
+    expect(body).toContain('That article owns the practical-activity intent; this guide covers pattern order, interpretation and common mix-ups');
     expect(body).toContain('editorial framework, not a standardized assessment');
     expect(body).toContain('they do not diagnose dyslexia or another learning condition');
 

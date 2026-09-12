@@ -22,7 +22,7 @@ describe('authoritative Blog #31 quality lock', () => {
     const body = post?.body.map((block) => block.content).join('\n') || '';
 
     expect(body).toContain('decoding identifies the printed words; comprehension builds a coherent meaning from those words and the language they express');
-    expect(body).toContain('This guide owns the bridge from accurate decoding into meaning');
+    expect(body).toContain('This guide covers the bridge from accurate decoding into meaning');
     expect(body).toContain('/blog/how-to-improve-reading-fluency-in-children');
     expect(body).toContain('/blog/why-child-reads-words-but-does-not-understand-story');
     expect(body).toContain('Start with the bottleneck, not with a worksheet');

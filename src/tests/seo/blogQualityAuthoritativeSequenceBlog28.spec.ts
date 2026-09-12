@@ -23,7 +23,7 @@ describe('authoritative Blog #28 quality lock', () => {
 
     expect(body).toContain('Tricky words, high-frequency words and sight words are not the same thing');
     expect(body).toContain('Some tricky words are only temporarily tricky');
-    expect(body).toContain('This guide owns the teaching routine — not the whole tricky-word topic');
+    expect(body).toContain('This guide covers the teaching routine — not the whole tricky-word topic');
     expect(body).toContain('/blog/digraphs-and-tricky-words');
     expect(body).toContain('The Tiny Steps six-step tricky-word routine');
     expect(body).toContain('1) Say — start with the spoken word');

@@ -23,7 +23,7 @@ describe('Blog #57 CBSE phonics scope and sequence quality refresh', () => {
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
     expect(body).toContain('there is no single mandatory commercial-style “CBSE grapheme order”');
-    expect(body).toContain('Blog 57 owns the progression question');
+    expect(body).toContain('This guide covers the progression question');
     expect(body).toContain('Hear → Map → Blend → Spell → Extend → Analyse → Read Fluently → Transfer');
     expect(body).toContain('Stage 1 — Oral language and phonological awareness');
     expect(body).toContain('Stage 2 — Introduce a useful first set of sound–spelling correspondences');

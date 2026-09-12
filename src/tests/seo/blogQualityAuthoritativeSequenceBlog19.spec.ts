@@ -38,10 +38,10 @@ describe('authoritative Blog #19 quality lock', () => {
   it('owns the SATPIN starter-set explanation and progression decision without presenting SATPIN as a universal mandatory sequence', () => {
     const post = bySlug.get('satpin-phonics-guide');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('SATPIN Phonics Guide for Parents: How to Start and What to Expect');
+    expect(post?.title).toBe('SATPIN Phonics Guide: Sounds, Order, Words & Blending');
     expect(post?.author).toBe('Priya');
     expect(post?.date).toBe('2025-11-06');
-    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.modifiedDate).toBe('2026-09-12');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
@@ -59,7 +59,7 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(body).toContain('A parent-friendly SATPIN start sequence');
     expect(body).toContain('What should SATPIN progress look like?');
     expect(body).toContain('Five common SATPIN difficulties and what to practise next');
-    expect(body).toContain('When should a child move beyond SATPIN?');
+    expect(body).toContain('What comes after SATPIN?');
 
     expect(body).toContain('/blog/phonics-rules-for-beginners');
     expect(body).toContain('/blog/phonics-games-for-letter-sounds');
@@ -96,7 +96,7 @@ describe('authoritative Blog #19 quality lock', () => {
     }
   });
 
-  it('adds evidence, non-diagnostic safeguards, practical-owner boundaries and five extractable FAQs', () => {
+  it('adds evidence, non-diagnostic safeguards, practical-owner boundaries and nine extractable FAQs', () => {
     const post = bySlug.get('satpin-phonics-guide');
     expect(post).toBeDefined();
 
@@ -111,8 +111,8 @@ describe('authoritative Blog #19 quality lock', () => {
       path.join(repoRoot, 'src/content/blog/posts/phonics/satpin-phonics-guide.ts'),
       'utf8',
     );
-    expect(source).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
-    expect(body).toContain('This article is the **SATPIN explanation and progression owner**');
+    expect(source).toContain('[SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
+    expect(body).toContain('This guide focuses on **SATPIN explanation and progression**');
     expect(body).toContain('The evidence below supports **systematic and explicit sound–spelling teaching');
     expect(body).toContain('does **not** establish SATPIN as the single mandatory first set');
     expect(body).toContain('SATPIN difficulty is not, by itself, evidence of dyslexia');
@@ -121,11 +121,15 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(body).toContain('[Letter Tracing With Sounds](/letter-tracing-with-sounds-game)');
     expect(body).toContain('Neither game, by itself, proves that a child can blend SATPIN into words');
 
-    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq).toHaveLength(9);
     expect(post?.faq?.some((item) => /What is SATPIN phonics/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /Why is SATPIN often taught early/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /all six SATPIN sounds before blending/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /ready to move beyond SATPIN/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /knows SATPIN sounds but cannot blend/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /What is the correct SATPIN order/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /What words can children make with SATPIN/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /How do SATPIN words become early reading/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /What comes after SATPIN/i.test(item.question))).toBe(true);
   });
 });

@@ -35,7 +35,7 @@ describe('authoritative Blog #34 quality lock', () => {
     expect(body).toContain('What online phonics cannot replace');
 
     expect(body).toContain('/blog/online-phonics-classes-vs-school');
-    expect(body).toContain('/blog/how-to-choose-phonics-classes');
+    expect(body).toContain('/best-online-phonics-classes-for-kids-in-india');
     expect(body).toContain('/blog/how-phonics-classes-help-kids-read');
     expect(body).toContain('/blog/online-phonics-games');
     expect(body).toContain('/blog/how-long-does-phonics-take');

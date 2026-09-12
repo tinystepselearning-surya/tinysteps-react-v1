@@ -23,7 +23,7 @@ describe('Blog #58 phonics teacher training implementation quality refresh', () 
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
     expect(body).toContain('a phonics workshop can start implementation, but it cannot prove implementation');
-    expect(body).toContain('Blog 58 owns the teacher-capability and implementation question');
+    expect(body).toContain('This guide covers the teacher-capability and implementation question');
     expect(body).toContain('Why the evidence points beyond one-off training');
     expect(body).toContain('The Indian context also treats teacher capacity building as part of foundational-literacy implementation');
     expect(body).toContain('What an initial phonics workshop can do well');

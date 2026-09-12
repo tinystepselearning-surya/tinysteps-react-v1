@@ -59,6 +59,21 @@ describe('blog editorial cleanup', () => {
       .toBe('Summer reading plan vs summer phonics plan: choose the right guide');
   });
 
+  it('cleans plain ownership wording without losing the topic or its links', () => {
+    expect(cleanBlogText('This page owns ordinary two-way conversation skills. Read [the guide](/blog/conversation-skills-for-kids).'))
+      .toBe('This page covers ordinary two-way conversation skills. Read [the guide](/blog/conversation-skills-for-kids).');
+    expect(cleanBlogText('This guide owns the broad grammar roadmap.'))
+      .toBe('This guide covers the broad grammar roadmap.');
+  });
+
+  it('keeps ownership cleanup idempotent and preserves ordinary ownership statements', () => {
+    const cleaned = cleanBlogText('This page owns ordinary two-way conversation skills.');
+    expect(cleanBlogText(cleaned)).toBe(cleaned);
+    expect(cleanBlogText('The child owns a storybook.')).toBe('The child owns a storybook.');
+    expect(cleanBlogText('Use the activity guide; this guide owns pattern order.'))
+      .toBe('Use the activity guide; this guide covers pattern order.');
+  });
+
   it('turns multiple exposed internal routes into readable links instead of dropping destinations', () => {
     const cleaned = cleanBlogText(
       'Explore grammar support: /grammar. Build communication confidence: /speaking. Compare learning routes: /courses. Read connected-skill guide: /blog/how-phonics-grammar-and-communication-work-together. Try home routine ideas: /blog/how-to-engage-kids-in-english-learning-at-home.',
@@ -101,8 +116,8 @@ describe('blog editorial cleanup', () => {
     expect(post.title).toContain('Week 10');
   });
 
-  it('leaves the normalized post-R21 84-article registry free of known template leakage', () => {
-    expect(blogPosts.length).toBe(84);
+  it('leaves the normalized post-Brick-4 83-article registry free of known template leakage', () => {
+    expect(blogPosts.length).toBe(83);
 
     for (const post of blogPosts) {
       expect(post.title, `${post.slug}: Week prefix leaked into primary title`).not.toMatch(/^\s*Week\s+\d+\s*(?::|[-–—])/i);

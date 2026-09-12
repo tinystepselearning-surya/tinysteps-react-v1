@@ -22,7 +22,7 @@ describe('authoritative Blog #27 quality lock', () => {
     const body = post?.body.map((block) => block.content).join('\n') || '';
 
     expect(body).toContain('Summer slide is not a diagnosis or an individual forecast.');
-    expect(body).toContain('Summer reading plan vs summer phonics plan: choose the right owner');
+    expect(body).toContain('Summer reading plan vs summer phonics plan: choose the right guide');
     expect(body).toContain('/blog/phonics-summer-plan');
     expect(body).toContain('Choose the right 10-minute routine by reading stage');
     expect(body).toContain('Stage A — pre-reader or very early phonics learner');

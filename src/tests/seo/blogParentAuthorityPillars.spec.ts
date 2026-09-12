@@ -29,8 +29,8 @@ function bodyText(slug: string) {
 }
 
 describe('B6 parent authority pillars', () => {
-  it('keeps the post-R21 84-article registry while defining exactly the seven GSC-prioritised authority URLs', () => {
-    expect(blogPosts).toHaveLength(84);
+  it('keeps the post-Brick-4 83-article registry while defining exactly the seven GSC-prioritised authority URLs', () => {
+    expect(blogPosts).toHaveLength(83);
     expect(PARENT_AUTHORITY_PILLARS).toHaveLength(7);
     expect(new Set(PARENT_AUTHORITY_SLUGS).size).toBe(7);
     expect(getParentAuthorityPosts(blogPosts)).toHaveLength(7);
@@ -45,9 +45,9 @@ describe('B6 parent authority pillars', () => {
     }
   });
 
-  it('protects SATPIN as the strongest authority URL without changing its primary title', () => {
+  it('protects SATPIN as the strongest authority URL with its approved Brick 10 title experiment', () => {
     const satpin = bySlug.get('satpin-phonics-guide');
-    expect(satpin?.title).toBe('SATPIN Phonics Guide for Parents: How to Start and What to Expect');
+    expect(satpin?.title).toBe('SATPIN Phonics Guide: Sounds, Order, Words & Blending');
     expect(getParentAuthorityPillar('satpin-phonics-guide')?.role).toBe('protected-authority');
     expect(getParentAuthorityPillar('satpin-phonics-guide')?.changePolicy).toBe('protect');
 

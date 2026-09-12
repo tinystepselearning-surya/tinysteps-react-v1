@@ -29,7 +29,7 @@ describe('authoritative Blog #6 quality lock', () => {
     expect(body).toContain('/blog/cvc-words-explained-for-parents');
     expect(body).toContain('/blog/digraphs-and-tricky-words');
     expect(body).toContain('/blog/how-to-improve-reading-fluency-in-children');
-    expect(body).toContain('/blog/how-to-choose-phonics-classes');
+    expect(body).toContain('/best-online-phonics-classes-for-kids-in-india');
     expect(body).toContain('/blog/phonics-diagnostics');
     expect(body).toContain('/phonics');
     expect(body).toContain('/curriculum');
