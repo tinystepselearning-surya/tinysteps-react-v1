@@ -1,7 +1,7 @@
-import { PHONICS_34_AUTHORITY_SLUGS } from './phonicsAuthorityRoutes.js';
+import { PHONICS_AUTHORITY_SLUGS } from './phonicsAuthorityRoutes.js';
 
 /**
- * Blogs 35-51 from the parent communication / English support quality programme.
+ * Parent communication / English support quality programme.
  * These are public authority slugs after any legacy week-* URL migration.
  */
 export const PARENT_COMMUNICATION_17_AUTHORITY_SLUGS = Object.freeze([
@@ -29,15 +29,16 @@ export const PARENT_COMMUNICATION_17_AUTHORITY_ROUTES = Object.freeze(
 );
 
 /**
- * The first 51 quality-reviewed Tiny Steps editorial authorities:
- * - Blogs 1-34: Phonics authority programme
- * - Blogs 35-51: Parent communication / English support programme
+ * Current quality-reviewed Tiny Steps editorial authorities after recovery
+ * consolidation: 33 phonics authorities + 17 parent communication authorities.
+ * The retired phonics class-selection blog now resolves to the dedicated
+ * commercial comparison owner instead of remaining a second editorial owner.
  */
-export const QUALITY_51_AUTHORITY_SLUGS = Object.freeze([
-  ...PHONICS_34_AUTHORITY_SLUGS,
+export const QUALITY_AUTHORITY_SLUGS = Object.freeze([
+  ...PHONICS_AUTHORITY_SLUGS,
   ...PARENT_COMMUNICATION_17_AUTHORITY_SLUGS,
 ]);
 
-export const QUALITY_51_AUTHORITY_ROUTES = Object.freeze(
-  QUALITY_51_AUTHORITY_SLUGS.map((slug) => `/blog/${slug}`),
+export const QUALITY_AUTHORITY_ROUTES = Object.freeze(
+  QUALITY_AUTHORITY_SLUGS.map((slug) => `/blog/${slug}`),
 );
