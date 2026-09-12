@@ -9,7 +9,7 @@ const fn = (entryPoint, region = ['asia-south1'], platform = 'gcfv2') => ({ __en
 test('discovers and sorts compiled v2 asia-south1 exports', () => {
   const plan = discoverEndpointPlan({ z: fn('zFn'), a: fn('aFn'), helper: {} });
   assert.deepEqual(plan.map(x => x.id), ['a', 'z']);
-  assert.equal(plan[0].selector, 'functions:default:a');
+  assert.equal(plan[0].selector, 'functions:a');
 });
 
 test('fails closed on unexpected region or platform', () => {
