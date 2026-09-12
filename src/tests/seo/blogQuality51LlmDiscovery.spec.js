@@ -4,10 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import {
   PARENT_COMMUNICATION_17_AUTHORITY_SLUGS,
-  QUALITY_51_AUTHORITY_ROUTES,
-  QUALITY_51_AUTHORITY_SLUGS,
+  QUALITY_AUTHORITY_ROUTES,
+  QUALITY_AUTHORITY_SLUGS,
 } from '../../lib/editorialQualityRoutes.js';
-import { PHONICS_34_AUTHORITY_SLUGS } from '../../lib/phonicsAuthorityRoutes.js';
+import { PHONICS_AUTHORITY_SLUGS } from '../../lib/phonicsAuthorityRoutes.js';
 import {
   shouldIncludeBlogSlugInSitemap,
   shouldNoindexBlogSlug,
@@ -33,15 +33,16 @@ const COMMERCIAL_OWNER_ROUTES = [
   '/book-demo',
 ];
 
-describe('Blogs 1-51 search and LLM discovery lock', () => {
-  it('keeps the first 51 quality-reviewed editorial authorities complete, unique and indexable', () => {
-    expect(PHONICS_34_AUTHORITY_SLUGS).toHaveLength(34);
+describe('Quality-reviewed editorial search and LLM discovery lock', () => {
+  it('keeps the current 50 quality-reviewed editorial authorities complete, unique and indexable', () => {
+    expect(PHONICS_AUTHORITY_SLUGS).toHaveLength(33);
     expect(PARENT_COMMUNICATION_17_AUTHORITY_SLUGS).toHaveLength(17);
-    expect(QUALITY_51_AUTHORITY_SLUGS).toHaveLength(51);
-    expect(new Set(QUALITY_51_AUTHORITY_SLUGS).size).toBe(51);
-    expect(QUALITY_51_AUTHORITY_ROUTES).toHaveLength(51);
+    expect(QUALITY_AUTHORITY_SLUGS).toHaveLength(50);
+    expect(new Set(QUALITY_AUTHORITY_SLUGS).size).toBe(50);
+    expect(QUALITY_AUTHORITY_ROUTES).toHaveLength(50);
+    expect(QUALITY_AUTHORITY_SLUGS).not.toContain('how-to-choose-phonics-classes');
 
-    for (const slug of QUALITY_51_AUTHORITY_SLUGS) {
+    for (const slug of QUALITY_AUTHORITY_SLUGS) {
       const post = postsBySlug.get(slug);
       expect(post, `missing normalized BlogPost for ${slug}`).toBeDefined();
       expect(shouldNoindexBlogSlug(slug), `${slug} unexpectedly noindexed`).toBe(false);
@@ -49,21 +50,21 @@ describe('Blogs 1-51 search and LLM discovery lock', () => {
     }
   });
 
-  it('publishes every quality-reviewed Blog 1-51 URL in sitemap-blog.xml, llms.txt and llms-full.txt', () => {
+  it('publishes every current quality-reviewed editorial URL in sitemap-blog.xml, llms.txt and llms-full.txt', () => {
     const sitemap = fs.readFileSync(path.join(repoRoot, 'public/sitemap-blog.xml'), 'utf8');
     const llms = fs.readFileSync(path.join(repoRoot, 'public/llms.txt'), 'utf8');
     const llmsFull = fs.readFileSync(path.join(repoRoot, 'public/llms-full.txt'), 'utf8');
 
-    for (const route of QUALITY_51_AUTHORITY_ROUTES) {
+    for (const route of QUALITY_AUTHORITY_ROUTES) {
       const absoluteUrl = `https://tinystepslearning.com${route}`;
       expect(sitemap, `${route} missing from blog sitemap`).toContain(`<loc>${absoluteUrl}</loc>`);
       expect(llms, `${route} missing from llms.txt`).toContain(absoluteUrl);
       expect(llmsFull, `${route} missing from llms-full.txt`).toContain(absoluteUrl);
     }
 
-    expect(llms).toContain('Complete Quality-Reviewed Editorial Library — 51');
-    expect(llmsFull).toContain('Blogs 1-34 — Phonics Authority Programme');
-    expect(llmsFull).toContain('Blogs 35-51 — Parent Communication / English Support Programme');
+    expect(llms).toContain('Complete Quality-Reviewed Editorial Library');
+    expect(llmsFull).toContain('Phonics Authority Programme');
+    expect(llmsFull).toContain('Parent Communication / English Support Programme');
   });
 
   it('publishes all 14 canonical commercial owner URLs in llms.txt and the static sitemap', () => {
