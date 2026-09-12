@@ -17,9 +17,23 @@ export function readPrerenderReadiness(contract) {
   );
   const isNoindex = (value) => /(?:^|[,\s])(?:noindex|none)(?:[,\s]|$)/i.test(value);
   const problems = [];
-  if (!root || !headings.length || text.length <= (contract.requireArticle ? 600 : 200)) {
-    problems.push('meaningful route content is not ready');
-  }
+
+  // This existing full-screen game has no h1/h2. Require its actual start-screen
+  // controls and assets, not arbitrary HTML size or an exception for all games.
+  const isChristmasGame = contract.canonicalUrl === 'https://tinystepslearning.com/seasonal/christmas-tree';
+  const buttonLabels = Array.from(root?.querySelectorAll('button') || [])
+    .map((node) => (node.textContent || '').trim());
+  const gameReady = isChristmasGame
+    && text.includes('Christmas Tree Decorator')
+    && text.includes('Tap Start to enable music and touch controls.')
+    && ['Start Game', 'Reset', 'Exit'].every((label) => buttonLabels.includes(label))
+    && Boolean(root?.querySelector('img[src="/seasonal/christmas/tree.png"][alt="Christmas tree"]'))
+    && Boolean(root?.querySelector('img[src="/seasonal/christmas/gamebg.jpeg"][alt="Christmas background"]'));
+  const contentReady = isChristmasGame
+    ? gameReady
+    : headings.length > 0 && text.length > (contract.requireArticle ? 600 : 200);
+  if (!root || !contentReady) problems.push('meaningful route content is not ready');
+
   if (/\b(?:404|page not found|article not found|unexpected application error)\b/i.test(document.title)
       || headings.some((heading) => /^(?:404\b|page not found|article not found|unexpected application error)/i.test(heading))) {
     problems.push('router rendered an error or not-found page');
@@ -28,8 +42,8 @@ export function readPrerenderReadiness(contract) {
     problems.push('article markup is missing');
   }
 
-  // Generic BlogPostPage routes must finish their own SEO effect. Do not use
-  // static metadata injection to turn a missing article into an indexable page.
+  // Article routes must finish their own SEO effect. Do not use static metadata
+  // injection to turn a missing article into an indexable page.
   if (contract.checkArticleMetadata) {
     if (canonicals.length !== 1 || canonicals[0] !== contract.canonicalUrl) {
       problems.push('article canonical is missing or belongs to another route');
@@ -54,7 +68,12 @@ export function readPrerenderReadiness(contract) {
     }
     const matchingArticle = schemas.some((schema) => {
       const types = Array.isArray(schema['@type']) ? schema['@type'] : [schema['@type']];
-      return types.includes('BlogPosting') && schema.url === contract.canonicalUrl
+      // The dedicated parents research article uses mainEntityOfPage.@id rather
+      // than url. An explicit wrong url must not be masked by this alternative.
+      const mainPage = typeof schema.mainEntityOfPage === 'string'
+        ? schema.mainEntityOfPage : schema.mainEntityOfPage?.['@id'];
+      const articleUrl = schema.url ?? mainPage;
+      return types.includes('BlogPosting') && articleUrl === contract.canonicalUrl
         && typeof schema.headline === 'string' && schema.headline.trim().length > 0
         && headings.some((heading) => heading.replace(/\s+/g, ' ') === schema.headline.trim().replace(/\s+/g, ' '));
     });
