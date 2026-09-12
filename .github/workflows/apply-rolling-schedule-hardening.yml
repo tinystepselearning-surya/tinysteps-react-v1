@@ -108,13 +108,15 @@ jobs:
           src/tests/scheduling/RollingScheduleRuntimeParity.spec.ts
 
       - name: Lint changed Functions files
-        run: >-
-          npm --prefix functions exec eslint --
-          src/scheduling/rollingScheduleRepair.ts
-          src/sessionsManagementSnapshot.ts
-          src/index.ts
-          test/rollingScheduleRepair.spec.ts
-          test/sessionsManagementSnapshotRollingHorizon.spec.ts
+        shell: bash
+        run: |
+          cd functions
+          npx eslint \
+            src/scheduling/rollingScheduleRepair.ts \
+            src/sessionsManagementSnapshot.ts \
+            src/index.ts \
+            test/rollingScheduleRepair.spec.ts \
+            test/sessionsManagementSnapshotRollingHorizon.spec.ts
 
       - name: Commit validated patch and remove temporary workflow
         shell: bash
