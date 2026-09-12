@@ -333,26 +333,58 @@ No URL migration was introduced in Brick 6.
 
 ## BRICK 7 — Protect the Tracing Authority Page
 
-**Status:** ⏭️ NEXT
+**Status:** ✅ CLOSED — tracing traffic owner protected and reading pathway strengthened
 
-Primary tracing authority:
+**Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_7_TRACING_AUTHORITY_2026-09-12.md`  
+**Regression test:** `src/tests/seo/recoveryBrick7TracingAuthority.spec.ts`
+
+Primary tracing owner preserved:
 
 `/free-letter-tracing-game-for-kids`
 
-Supporting tracing-with-sounds utility:
+Distinct sound-supported tracing page preserved:
 
 `/letter-tracing-with-sounds-game`
 
-Brick 7 will protect the high-performing tracing resource without creating more tracing URLs.
+### Authority protection completed
+
+- [x] no new tracing SEO URL created
+- [x] generic tracing owner retains its URL, title, H1, A–Z structure and interactive game
+- [x] sound-enabled tracing remains separately indexable for a narrower print–sound practice intent
+- [x] tracing is explicitly separated from decoding evidence
+- [x] reading-development bridge added: **letter formation → sounds → blending → reading**
+- [x] generic tracing page now links to sound-supported tracing, SATPIN, word building and `/phonics`
+- [x] assessment remains downstream of educational guidance
+- [x] sound-enabled tracing page now points into SATPIN, blending practice and the sounds-known-but-cannot-read diagnostic
+- [x] both tracing pages remain in public route and sitemap architecture
+- [x] existing practice-capability boundaries preserved
+- [x] regression protection added
+
+### Implementation commits
+
+- `d4e57003ff1d6d98c95a0c434dc4ff19b12ffa4b` — primary tracing-owner learning path
+- `9b7ee8368326881dc20290c4e96ccfed06b5ffac` — sound-supported tracing differentiation
+- `070577f2203726eabf3d860fc39f0292d33efe48` — Brick 7 regression guard
+- `35999128eb9533a96dd377ce12f314a70cfbc6b4` — Brick 7 artifact
+
+**Brick 7 decision:** CLOSED.
+
+---
+
+## BRICK 8 — Rebuild the Internal-Link Architecture
+
+**Status:** ⏭️ NEXT
+
+Brick 8 will systematically audit and clean authority flow across the recovery ecosystem.
 
 Planned scope:
 
-- audit the current tracing owner and tracing-with-sounds support page;
-- preserve `/free-letter-tracing-game-for-kids` for ABC / alphabet / letter-tracing intent;
-- keep `/letter-tracing-with-sounds-game` differentiated around tracing plus sound support;
-- strengthen useful explanatory copy without weakening the interactive resource;
-- create a natural learning bridge from letter formation → letter sounds → blending → reading;
-- add contextual pathways into SATPIN and `/phonics` only where educationally appropriate;
-- protect existing URL/canonical/indexing signals;
-- add Brick 7 regression protection;
-- create no new tracing SEO page.
+- find direct internal links that still point to retired aliases;
+- replace redirect-hop internal links with final authority URLs;
+- ensure SATPIN support → SATPIN master → `/phonics`;
+- ensure parent-problem / blending content → correct diagnostic owner → `/phonics`;
+- ensure tracing → sounds / SATPIN / blending → `/phonics`;
+- ensure comparison and fees pages reinforce `/phonics` without collapsing their distinct intents;
+- use descriptive anchors instead of generic `click here` patterns where practical;
+- protect the locked owner map with regression checks;
+- create no new SEO page.
