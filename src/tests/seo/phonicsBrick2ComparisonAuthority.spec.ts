@@ -81,13 +81,15 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(page).toContain('Commercial clarity');
   });
 
-  it('keeps buyer guidance connected to the authoritative editorial comparison article', () => {
+  it('keeps the retired editorial comparison URL consolidated into the buyer guide', () => {
     const page = read('src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx');
-    const article = read('src/content/blog/posts/phonics/how-to-choose-phonics-classes.ts');
+    const consolidationMap = read('scripts/blog-consolidation-map.mjs');
+    const retiredArticlePath = path.join(repoRoot, 'src/content/blog/posts/phonics/how-to-choose-phonics-classes.ts');
 
-    expect(page).toContain('/blog/how-to-choose-phonics-classes');
-    expect(article).toContain('Tiny Steps uses a four-gate parent comparison framework');
-    expect(article).toContain('fit → teaching quality → proof of transfer → practical clarity');
+    expect(page).not.toContain('/blog/how-to-choose-phonics-classes');
+    expect(fs.existsSync(retiredArticlePath)).toBe(false);
+    expect(consolidationMap).toContain("'/blog/how-to-choose-phonics-classes': PHONICS_COMPARISON_OWNER");
+    expect(consolidationMap).toContain("const PHONICS_COMPARISON_OWNER = '/best-online-phonics-classes-for-kids-in-india'");
   });
 
   it('uses centralized public facts and preserves realistic-claims boundaries', () => {
