@@ -51,6 +51,7 @@ export default function ClusterSeoNav({ cluster, compact = false }: ClusterSeoNa
   const sectionRef = useRef<HTMLElement>(null);
   const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
   const isPremiumPhonicsBuyer = cluster === 'phonics' && normalizedPath === BUYER_GUIDE_PATH;
+  const visibleLinks = data?.links.filter((link) => link.href !== normalizedPath) ?? [];
 
   useEffect(() => {
     if (!isPremiumPhonicsBuyer || typeof window === 'undefined') return undefined;
@@ -137,10 +138,12 @@ export default function ClusterSeoNav({ cluster, compact = false }: ClusterSeoNa
           className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-slate-200 pt-5 text-sm"
         >
           <span className="font-bold text-slate-950">{data.hubTitle}:</span>
-          <Link to={data.hubHref} className="font-semibold text-sky-700 hover:text-sky-900">
-            Hub
-          </Link>
-          {data.links.map((link) => (
+          {data.hubHref !== normalizedPath ? (
+            <Link to={data.hubHref} className="font-semibold text-sky-700 hover:text-sky-900">
+              Hub
+            </Link>
+          ) : null}
+          {visibleLinks.map((link) => (
             <Link key={link.href} to={link.href} className="text-slate-600 hover:text-sky-800">
               {link.label}
             </Link>
@@ -162,13 +165,15 @@ export default function ClusterSeoNav({ cluster, compact = false }: ClusterSeoNa
             <h2 className="mb-2 text-2xl font-black tracking-tight text-slate-950 sm:text-[28px]">{data.hubTitle}</h2>
             <p className="mx-auto mb-6 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">{data.intro}</p>
             <div className="flex flex-wrap justify-center gap-3">
-              <Link
-                to={data.hubHref}
-                className="inline-flex min-h-[44px] items-center rounded-full bg-[linear-gradient(135deg,#FF8800_0%,#FF6A00_100%)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,106,0,0.26)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_32px_rgba(255,106,0,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF8800] focus-visible:ring-offset-2"
-              >
-                {data.hubTitle} Hub
-              </Link>
-              {data.links.map((link) => (
+              {data.hubHref !== normalizedPath ? (
+                <Link
+                  to={data.hubHref}
+                  className="inline-flex min-h-[44px] items-center rounded-full bg-[linear-gradient(135deg,#FF8800_0%,#FF6A00_100%)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,106,0,0.26)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_32px_rgba(255,106,0,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF8800] focus-visible:ring-offset-2"
+                >
+                  {data.hubTitle} Hub
+                </Link>
+              ) : null}
+              {visibleLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
@@ -190,13 +195,15 @@ export default function ClusterSeoNav({ cluster, compact = false }: ClusterSeoNa
         <h2 className="mb-2 text-xl font-bold text-slate-900">{data.hubTitle}</h2>
         <p className="mx-auto mb-5 max-w-2xl text-sm leading-6 text-slate-600">{data.intro}</p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            to={data.hubHref}
-            className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            {data.hubTitle} Hub
-          </Link>
-          {data.links.map((link) => (
+          {data.hubHref !== normalizedPath ? (
+            <Link
+              to={data.hubHref}
+              className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              {data.hubTitle} Hub
+            </Link>
+          ) : null}
+          {visibleLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
