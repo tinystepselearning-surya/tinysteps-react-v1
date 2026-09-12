@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import {
   EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyFailure,
   digestBoundedOutput, discoverEndpointPlan, normalizeRevisionId,
+  trafficPercentForRevision,
 } from './deployment/functions-deployment-lib.mjs';
 
 const require = createRequire(import.meta.url);
@@ -214,10 +215,7 @@ async function verifyTargets(targets) {
     if (created !== ready || ready !== functionRevision) {
       throw new Error(`Revision mismatch for ${target.id}: function=${functionRevision}, created=${created}, ready=${ready}`);
     }
-    const traffic = service.trafficStatuses ?? [];
-    const latestTraffic = traffic
-      .filter(x => normalizeRevisionId(x.revision) === functionRevision)
-      .reduce((n, x) => n + Number(x.percent || 0), 0);
+    const latestTraffic = trafficPercentForRevision(service, functionRevision);
     if (latestTraffic !== 100) throw new Error(`Function ${target.id} latest revision has ${latestTraffic}% traffic, expected 100%`);
   }
 }
