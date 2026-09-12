@@ -279,7 +279,7 @@ export default function FreeLetterTracingGamePage() {
               <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
                 <h2 className="text-xl font-bold text-slate-900">Next step after tracing</h2>
                 <p className="mt-3 text-sm leading-7 text-slate-700">
-                  Letter tracing helps children recognise shapes and letter formation. For reading, children also need letter sounds, blending, and phonics practice. Book a free phonics assessment if you want to know the right starting level for your child.
+                  Letter tracing helps children recognise shapes and letter formation. For reading, move from letter formation to sound recall, then blending and word reading rather than treating tracing as reading practice by itself.
                 </p>
               </article>
             </section>
@@ -357,6 +357,36 @@ export default function FreeLetterTracingGamePage() {
               <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
                 To print a worksheet, choose a letter first and use the Print button on the tracing screen. That keeps the printable ABC tracing worksheet focused on one current letter or shape instead of the full A to Z discovery page.
               </p>
+            </section>
+
+            <section className="abc-print-hide mt-5 rounded-[28px] border border-sky-200 bg-[linear-gradient(145deg,#f5fbff_0%,#ffffff_58%,#eff6ff_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-800">Reading pathway after tracing</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900">Letter formation → sounds → blending → reading</h2>
+              <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
+                Tracing is useful for letter-form familiarity, but it does not prove that a child can retrieve phonics sounds or decode words. Use the next step that matches what your child is ready to practise.
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Link to="/letter-tracing-with-sounds-game" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-300">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Step 1</span>
+                  <span className="mt-2 block text-base font-bold text-slate-900">Connect letters with sounds</span>
+                  <span className="mt-2 block text-sm leading-6 text-slate-600">Use sound-supported tracing when letter formation is ready to connect with phonics sound recall.</span>
+                </Link>
+                <Link to="/blog/satpin-phonics-guide" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-300">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Step 2</span>
+                  <span className="mt-2 block text-base font-bold text-slate-900">Understand the first phonics set</span>
+                  <span className="mt-2 block text-sm leading-6 text-slate-600">Use the SATPIN guide for sounds, order, early words and when to begin blending.</span>
+                </Link>
+                <Link to="/free-word-building-game-for-kids" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-300">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Step 3</span>
+                  <span className="mt-2 block text-base font-bold text-slate-900">Blend and build simple words</span>
+                  <span className="mt-2 block text-sm leading-6 text-slate-600">Move from isolated sounds into controlled word-building and early decoding practice.</span>
+                </Link>
+                <Link to="/phonics" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-sky-300">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Step 4</span>
+                  <span className="mt-2 block text-base font-bold text-slate-900">Follow a structured phonics pathway</span>
+                  <span className="mt-2 block text-sm leading-6 text-slate-600">Explore teacher-guided phonics when your child needs structured progression, correction and reading transfer.</span>
+                </Link>
+              </div>
             </section>
 
             <section className="abc-print-hide mt-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
