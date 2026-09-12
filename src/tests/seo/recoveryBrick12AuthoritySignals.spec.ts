@@ -93,11 +93,14 @@ describe('SEO recovery Brick 12 authority signals', () => {
     }
   });
 
-  it('uses the broad parent guide as a discovery bridge into the two specialist authorities', () => {
-    const body = renderedBody('phonics-for-parents-guide');
-    expect(body).toContain('/blog/satpin-phonics-guide');
-    expect(body).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
-    expect(body).toContain('/phonics');
+  it('preserves the dedicated broad parent-guide route instead of layering a second rendering contract onto it', () => {
+    const dedicatedPage = read('src/pages/blog/PhonicsForParentsResearchPage.tsx');
+    const parentGuide = read('src/content/blog/posts/research/phonics-for-parents-guide.ts');
+
+    expect(dedicatedPage).toContain("import post from '../../content/blog/posts/research/phonics-for-parents-guide'");
+    expect(parentGuide).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
+    expect(parentGuide).toContain('/phonics');
+    expect(SEO_RECOVERY_BRICK12_BLOG_RULES).not.toHaveProperty('phonics-for-parents-guide');
   });
 
   it('keeps provider-decision support feeding the comparison owner rather than creating another buyer owner', () => {
@@ -125,7 +128,7 @@ describe('SEO recovery Brick 12 authority signals', () => {
     expect(Object.keys(SEO_RECOVERY_BRICK12_BLOG_RULES)).toEqual(
       expect.arrayContaining([
         'phonics-satpin-launch',
-        'phonics-for-parents-guide',
+        'how-kids-learn-blending',
         'why-letter-sounds-are-not-enough-to-read',
       ]),
     );
