@@ -6,7 +6,8 @@ import { RETIRED_BLOG_PATH_REDIRECTS } from './blog-consolidation-map.mjs';
 
 const ROOT = process.cwd();
 const POSTS_DIR = path.join(ROOT, 'src/content/blog/posts');
-const SITEMAP = path.join(ROOT, 'public/sitemap-blog.xml');
+const BLOG_SITEMAP = path.join(ROOT, 'public/sitemap-blog.xml');
+const STATIC_SITEMAP = path.join(ROOT, 'public/sitemap-static.xml');
 const RSS_FILES = [
   path.join(ROOT, 'public/rss.xml'),
   path.join(ROOT, 'public/feed.xml'),
@@ -28,7 +29,6 @@ const AUTHORITY_CANONICAL_SLUGS = [
   'can-child-improve-english-in-10-days',
   'child-gives-one-word-answers',
   'how-long-does-phonics-take',
-  'how-to-choose-phonics-classes',
   'how-phonics-grammar-and-communication-work-together',
   'how-to-engage-kids-in-english-learning-at-home',
   'what-age-to-start-phonics',
@@ -86,21 +86,32 @@ if (!viteText.includes('canonicalInternalBlogLinks')) {
 
 for (const [sourcePath, destinationPath] of Object.entries(RETIRED_BLOG_PATH_REDIRECTS)) {
   const sourceSlug = sourcePath.replace('/blog/', '');
-  const destinationSlug = destinationPath.replace('/blog/', '');
+  const destinationIsBlog = destinationPath.startsWith('/blog/');
+  const destinationSlug = destinationIsBlog ? destinationPath.replace('/blog/', '') : null;
 
   if (hasSlug(sourceSlug)) failures.push(`retired source post still exists: ${sourceSlug}`);
-  if (!hasSlug(destinationSlug)) failures.push(`canonical destination post missing: ${destinationSlug}`);
-  if (!redirectText.includes(`\"${sourcePath}\": \"${destinationPath}\"`)) {
+  if (destinationIsBlog && destinationSlug && !hasSlug(destinationSlug)) {
+    failures.push(`canonical destination post missing: ${destinationSlug}`);
+  }
+  if (!redirectText.includes(`\"${sourcePath}\": \"${destinationPath}\"`)
+      && !redirectText.includes(`\"${sourcePath}\": PHONICS_COMPARISON_OWNER`)) {
     failures.push(`server 301 mapping missing: ${sourcePath} -> ${destinationPath}`);
   }
 
-  if (fs.existsSync(SITEMAP)) {
-    const sitemapText = fs.readFileSync(SITEMAP, 'utf8');
-    if (sitemapText.includes(`https://tinystepslearning.com${sourcePath}`)) {
+  if (fs.existsSync(BLOG_SITEMAP)) {
+    const blogSitemapText = fs.readFileSync(BLOG_SITEMAP, 'utf8');
+    if (blogSitemapText.includes(`https://tinystepslearning.com${sourcePath}`)) {
       failures.push(`retired URL leaked into sitemap-blog.xml: ${sourcePath}`);
     }
-    if (!sitemapText.includes(`https://tinystepslearning.com${destinationPath}`)) {
-      failures.push(`canonical destination missing from sitemap-blog.xml: ${destinationPath}`);
+    if (destinationIsBlog && !blogSitemapText.includes(`https://tinystepslearning.com${destinationPath}`)) {
+      failures.push(`canonical blog destination missing from sitemap-blog.xml: ${destinationPath}`);
+    }
+  }
+
+  if (!destinationIsBlog && fs.existsSync(STATIC_SITEMAP)) {
+    const staticSitemapText = fs.readFileSync(STATIC_SITEMAP, 'utf8');
+    if (!staticSitemapText.includes(`https://tinystepslearning.com${destinationPath}`)) {
+      failures.push(`canonical commercial destination missing from sitemap-static.xml: ${destinationPath}`);
     }
   }
 
