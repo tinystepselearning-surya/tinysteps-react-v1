@@ -8,7 +8,7 @@ describe('authoritative Blog #11 quality lock', () => {
   it('owns long-vowel pattern order and mix-up interpretation without prescribing one universal sequence', () => {
     const post = bySlug.get('long-vowel-sounds-for-kids');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups');
+    expect(post?.title).toBe('Long Vowel Sounds for Kids: Rules, Patterns & Examples');
     expect(post?.author).toBe('Priya');
     expect(post?.modifiedDate).toBe('2026-08-30');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);

@@ -23,7 +23,7 @@ describe('Blog #60 letter sounds are not enough for reading quality refresh', ()
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
     expect(body).toContain('knowing letter sounds is prerequisite knowledge, not evidence that a child can read');
-    expect(body).toContain('Blog 60 owns the “what comes after letter sounds?” question');
+    expect(body).toContain('This guide covers the “what comes after letter sounds?” question');
     expect(body).toContain('What the NCF evidence actually says beyond alphabet sounds');
     expect(body).toContain('Current CBSE guidance also places letter recognition inside a larger literacy pathway');
     expect(body).toContain('Retrieve → Combine → Expand → Spell → Mix → Read → Transfer → Become Fluent');

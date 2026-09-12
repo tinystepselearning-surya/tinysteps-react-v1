@@ -22,8 +22,8 @@ describe('B0 blog baseline audit', () => {
     const output = runAudit();
 
     expect(output).toContain('[blog-b0] baseline inventory');
-    expect(output).toContain('"sourcePostFiles": 84');
-    expect(output).toContain('"routedPostSlugs": 84');
+    expect(output).toContain('"sourcePostFiles": 83');
+    expect(output).toContain('"routedPostSlugs": 83');
     expect(output).toContain('"duplicateSlugs": 0');
     expect(output).toContain('"publishedPosts": 84');
     expect(output).toContain('"weeklyPosts": 12');

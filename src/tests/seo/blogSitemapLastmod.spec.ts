@@ -27,13 +27,19 @@ const AUTHORITATIVE_1_TO_20 = [
 ] as const;
 
 describe('authoritative Blogs #1-#20 sitemap freshness', () => {
-  it('keeps the real 2026-08-30 refresh date on all twenty articles', () => {
+  it('keeps truthful refresh dates on the nineteen surviving articles and excludes retired Blog 10', () => {
     const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 
     for (const slug of AUTHORITATIVE_1_TO_20) {
       const post = bySlug.get(slug);
+      if (slug === 'how-to-choose-phonics-classes') {
+        expect(post, 'Brick 4 retired this article').toBeUndefined();
+        continue;
+      }
       expect(post, `${slug} should remain in the public blog registry`).toBeDefined();
-      expect(post?.modifiedDate, `${slug} should expose the batch refresh date`).toBe('2026-08-30');
+      expect(post?.modifiedDate, `${slug} should expose its actual refresh date`).toBe(
+        slug === 'satpin-phonics-guide' ? '2026-09-12' : '2026-08-30',
+      );
     }
   });
 

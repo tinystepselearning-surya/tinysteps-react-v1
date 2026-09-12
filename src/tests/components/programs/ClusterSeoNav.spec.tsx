@@ -12,10 +12,13 @@ describe('ClusterSeoNav', () => {
     );
 
     expect(screen.getAllByRole('link')).toHaveLength(7);
+    for (const link of screen.getAllByRole('link')) {
+      expect(link).not.toHaveAttribute('href', '/blog/how-to-choose-phonics-classes');
+    }
     expect(screen.getByRole('link', { name: /explore phonics hub/i })).toHaveAttribute('href', '/phonics');
-    expect(screen.getByRole('link', { name: /how to choose a phonics class/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /compare online phonics classes/i })).toHaveAttribute(
       'href',
-      '/blog/how-to-choose-phonics-classes',
+      '/best-online-phonics-classes-for-kids-in-india',
     );
     expect(screen.getByRole('link', { name: /online phonics classes vs school/i })).toHaveAttribute(
       'href',

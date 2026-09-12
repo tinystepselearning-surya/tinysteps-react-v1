@@ -1,3 +1,4 @@
+import { RECOVERY_CTR_TITLES } from './fixtures/seoRecoveryCorpus';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -20,8 +21,8 @@ const LOCKED_WEEK_TITLES_BY_PUBLIC_SLUG: Readonly<Record<string, string>> = Obje
   'phonics-diagnostics': 'Phonics Assessment Checklist for Parents Before a New School Term',
   'grammar-nouns-to-paragraphs': 'Grammar Basics for Kids: From Nouns to Paragraphs — A Parent Roadmap',
   'grammar-tenses': 'English Tenses for Kids: Simple Present, Past and Future Explained',
-  'grammar-conjunctions': 'Conjunctions for Kids: How to Use and, but, because and so',
-  'grammar-subject-verb': 'Subject-Verb Agreement for Kids: Common Mistakes and Easy Fixes',
+  'grammar-conjunctions': 'Conjunctions for Kids: And, But, Because & So Examples',
+  'grammar-subject-verb': 'Subject-Verb Agreement for Kids: Rules, Examples & Mistakes',
   'grammar-assessment': 'Grammar Assessment for Kids: A Simple Parent Checklist',
   'grammar-editing-camp': 'Grammar Editing Practice for Kids: Find and Fix Common Mistakes',
   'grammar-speaking-bridge': 'Story Cards for Kids: Build Grammar and Speaking Skills Together',
@@ -40,7 +41,7 @@ describe('optimized public blog titles', () => {
   it('locks the 35 approved title changes across the expanded public registry', () => {
     expect(Object.keys(BLOG_TITLE_OPTIMIZATIONS)).toHaveLength(10);
     expect(Object.keys(LOCKED_WEEK_TITLES_BY_PUBLIC_SLUG)).toHaveLength(25);
-    expect(blogPosts).toHaveLength(84);
+    expect(blogPosts).toHaveLength(83);
 
     const lockedTitles = {
       ...LOCKED_WEEK_TITLES_BY_PUBLIC_SLUG,
@@ -59,7 +60,7 @@ describe('optimized public blog titles', () => {
 
   it('keeps the migrated weekly title contract aligned with the public registry', () => {
     for (const rename of Object.values(LEGACY_WEEK_BLOG_RENAMES)) {
-      expect(bySlug.get(rename.slug)?.title).toBe(rename.title);
+      expect(bySlug.get(rename.slug)?.title).toBe(RECOVERY_CTR_TITLES[rename.slug] ?? rename.title);
     }
   });
 

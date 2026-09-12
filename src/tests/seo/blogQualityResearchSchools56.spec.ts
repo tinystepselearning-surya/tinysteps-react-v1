@@ -23,7 +23,7 @@ describe('Blog #56 phonics for parents quality refresh', () => {
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
     expect(body).toContain('home practice should reinforce the child’s taught reading system, not compete with it');
-    expect(body).toContain('Blog 56 is the parent-support guide');
+    expect(body).toContain('This guide is the parent-support guide');
     expect(body).toContain('hear → map → blend → recognise → spell → read in text');
     expect(body).toContain('Phonemic awareness and phonics are connected, but they are not the same thing');
     expect(body).toContain('The Tiny Steps home-support loop: retrieve → read → spell → reread → transfer');

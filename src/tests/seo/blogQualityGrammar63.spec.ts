@@ -13,7 +13,7 @@ describe('Blog #63 conjunctions quality', () => {
   it('owns conjunction meaning and sentence-combining intent with accurate evergreen guidance', () => {
     const post = bySlug.get('grammar-conjunctions');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('Conjunctions for Kids: How to Use and, but, because and so');
+    expect(post?.title).toBe('Conjunctions for Kids: And, But, Because & So Examples');
     expect(post?.author).toBe('Priya');
     expect(post?.modifiedDate).toBe('2026-09-06');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);

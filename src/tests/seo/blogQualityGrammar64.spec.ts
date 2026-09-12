@@ -13,7 +13,7 @@ describe('Blog #64 subject-verb agreement quality', () => {
   it('owns SVA intent with accurate evergreen rules and transfer guidance', () => {
     const post = bySlug.get('grammar-subject-verb');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('Subject-Verb Agreement for Kids: Common Mistakes and Easy Fixes');
+    expect(post?.title).toBe('Subject-Verb Agreement for Kids: Rules, Examples & Mistakes');
     expect(post?.author).toBe('Priya');
     expect(post?.modifiedDate).toBe('2026-09-06');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);

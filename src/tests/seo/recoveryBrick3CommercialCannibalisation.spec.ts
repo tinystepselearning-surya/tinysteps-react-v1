@@ -1,3 +1,5 @@
+// @ts-expect-error Consolidation tooling is executable ESM JavaScript.
+import { RETIRED_BLOG_PATH_REDIRECTS } from '../../../scripts/blog-consolidation-map.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -70,15 +72,19 @@ describe('SEO recovery Brick 3 commercial ownership guardrails', () => {
     }
   });
 
-  it('hands the one remaining editorial/commercial collision to Brick 4 without creating a new owner', () => {
+  it('verifies the Brick 4 retirement without creating or restoring a competing owner', () => {
     const comparison = read('src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx');
-    const howToChoose = read('src/content/blog/posts/phonics/how-to-choose-phonics-classes.ts');
+    const retiredPostExists = fs.existsSync(path.join(root, 'src/content/blog/posts/phonics/how-to-choose-phonics-classes.ts'));
     const brick1 = read('docs/TINY_STEPS_SEO_RECOVERY_BRICK_1_URL_OWNERSHIP_REGISTRY_2026-09-12.md');
 
-    expect(howToChoose).toContain("slug: 'how-to-choose-phonics-classes'");
+    expect(retiredPostExists).toBe(false);
     expect(comparison).toContain("'how to choose phonics classes'");
     expect(brick1).toContain('`/blog/how-to-choose-phonics-classes`');
-    expect(brick1).toContain('**MERGE**');
+    expect(brick1).toContain('/best-online-phonics-classes-for-kids-in-india');
+    const retirement = SEO_RECOVERY_BRICK3_PENDING_BRICK4_RETIREMENT;
+    for (const source of [retirement.source, ...retirement.historicalSources]) {
+      expect(RETIRED_BLOG_PATH_REDIRECTS[source]).toBe(retirement.destination);
+    }
 
     expect(SEO_RECOVERY_BRICK3_PENDING_BRICK4_RETIREMENT).toEqual({
       source: '/blog/how-to-choose-phonics-classes',

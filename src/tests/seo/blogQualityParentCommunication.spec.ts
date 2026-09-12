@@ -28,7 +28,7 @@ describe('parent tips and English communication blog quality refresh', () => {
     expect(body).toContain('We treat these as **practice resources**');
     expect(body).toContain('/blog/how-kids-learn-blending');
     expect(body).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
-    expect(body).toContain('/blog/how-to-choose-phonics-classes');
+    expect(body).toContain('/best-online-phonics-classes-for-kids-in-india');
     expect(body).toContain('/free-balloon-pop-phonics-game-for-kids');
     expect(body).toContain('/letter-tracing-with-sounds-game');
     expect(body).toContain('/phonics');

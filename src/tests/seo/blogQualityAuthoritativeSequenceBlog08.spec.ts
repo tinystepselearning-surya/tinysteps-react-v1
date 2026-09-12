@@ -34,7 +34,7 @@ describe('authoritative Blog #8 quality lock', () => {
     expect(body).toContain('/blog/how-phonics-improves-spelling');
     expect(body).toContain('/blog/how-long-does-phonics-take');
     expect(body).toContain('/blog/how-phonics-builds-reading-confidence');
-    expect(body).toContain('/blog/how-to-choose-phonics-classes');
+    expect(body).toContain('/best-online-phonics-classes-for-kids-in-india');
     expect(body).toContain('/blog/online-phonics-classes-vs-school');
     expect(body).toContain('/phonics');
     expect(body).toContain('/curriculum');

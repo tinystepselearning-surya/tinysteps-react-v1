@@ -11,6 +11,9 @@ import { getCommercialC7R3Handoff } from '../../lib/commercialC7ContextualHandof
 const PHONICS = '/phonics';
 const BEST_PHONICS = '/best-online-phonics-classes-for-kids-in-india';
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
+const retiredSlug = 'how-to-choose-phonics-classes';
+// Exclude only the explicitly approved retirement, never arbitrary missing records.
+const activePlans = B7_BLOG_AUTHORITY_PLANS.filter((plan) => plan.slug !== retiredSlug);
 
 function finalBody(slug: string) {
   const post = bySlug.get(slug);
@@ -19,14 +22,19 @@ function finalBody(slug: string) {
 }
 
 describe('Phonics Brick 7 intent-aware internal linking', () => {
-  it('maps exactly Blogs 1-51 in the founder-approved sequence', () => {
+  it('preserves the historical 1-51 sequence and resolves all fifty surviving articles', () => {
     expect(B7_BLOG_AUTHORITY_PLANS).toHaveLength(51);
     expect(B7_BLOG_AUTHORITY_PLANS.map((plan) => plan.number)).toEqual(
       Array.from({ length: 51 }, (_, index) => index + 1),
     );
     expect(new Set(B7_BLOG_AUTHORITY_PLANS.map((plan) => plan.slug)).size).toBe(51);
+    expect(activePlans).toHaveLength(50);
+    expect(B7_BLOG_AUTHORITY_PLANS.filter((plan) => !bySlug.has(plan.slug)).map((plan) => ({ number: plan.number, slug: plan.slug, destination: plan.primary.to }))).toEqual([
+      { number: 10, slug: retiredSlug, destination: BEST_PHONICS },
+    ]);
+    expect(bySlug.has(retiredSlug)).toBe(false);
 
-    for (const plan of B7_BLOG_AUTHORITY_PLANS) {
+    for (const plan of activePlans) {
       expect(bySlug.has(plan.slug), `Blog #${plan.number} slug must resolve: ${plan.slug}`).toBe(true);
     }
   });
@@ -66,7 +74,7 @@ describe('Phonics Brick 7 intent-aware internal linking', () => {
   });
 
   it('ensures each mapped article contains the current authoritative next-step route after normalization', () => {
-    for (const plan of B7_BLOG_AUTHORITY_PLANS) {
+    for (const plan of activePlans) {
       const c7Handoff = getCommercialC7R3Handoff(`/blog/${plan.slug}`);
       const expectedDestination = c7Handoff?.primary.to ?? plan.primary.to;
       expect(finalBody(plan.slug), `Blog #${plan.number} primary destination`).toContain(`(${expectedDestination})`);
@@ -74,7 +82,7 @@ describe('Phonics Brick 7 intent-aware internal linking', () => {
   });
 
   it('does not duplicate an authority route when the article already contains it', () => {
-    for (const plan of B7_BLOG_AUTHORITY_PLANS) {
+    for (const plan of activePlans) {
       const body = finalBody(plan.slug);
       const nextStepHeadingCount = (
         body.match(/Where this fits in the learning pathway|Compare the next step before you decide|Choose the next step from the skill gap|Choose the next reading step|Choose the next grammar step|Choose the next speaking step|Keep the next step practical|Choose the next English learning step/g) ?? []
@@ -85,12 +93,14 @@ describe('Phonics Brick 7 intent-aware internal linking', () => {
 
   it('keeps reverse-link recommendations curated instead of dumping the 51-blog inventory', () => {
     expect(B7_PHONICS_FEATURED_GUIDES).toHaveLength(8);
-    expect(B7_BEST_PHONICS_DECISION_GUIDES).toHaveLength(6);
+    expect(B7_BEST_PHONICS_DECISION_GUIDES).toHaveLength(5);
+    expect(B7_BEST_PHONICS_DECISION_GUIDES).not.toContain(retiredSlug);
     expect(new Set(B7_PHONICS_FEATURED_GUIDES).size).toBe(B7_PHONICS_FEATURED_GUIDES.length);
     expect(new Set(B7_BEST_PHONICS_DECISION_GUIDES).size).toBe(B7_BEST_PHONICS_DECISION_GUIDES.length);
 
     for (const slug of [...B7_PHONICS_FEATURED_GUIDES, ...B7_BEST_PHONICS_DECISION_GUIDES]) {
       expect(getBlogAuthorityPlan(slug)).not.toBeNull();
+      expect(bySlug.has(slug), `${slug} must be a live recommendation`).toBe(true);
     }
   });
 });

@@ -17,7 +17,7 @@ describe('Blog #50 letter-sounds-to-decoding diagnostic quality refresh', () => 
     expect(post?.title).toBe('Why Does My Child Know Letter Sounds But Cannot Read Words?');
     expect(post?.category).toBe('Parent Tips');
     expect(post?.author).toBe('Priya');
-    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.modifiedDate).toBe('2026-09-12');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
     expect(post?.audience).toBe('Parent');
     expect(post?.discoveryCategory).toBe('Phonics');
@@ -71,7 +71,7 @@ describe('Blog #50 letter-sounds-to-decoding diagnostic quality refresh', () => 
     const evidence = getBlogEvidenceSummary(post!);
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(12);
-    expect(post?.faq).toHaveLength(6);
+    expect(post?.faq).toHaveLength(7);
     expect(post?.faq?.some((item) => /know letter sounds but cannot read words/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /say s, a and t but not read sat/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /teach more letter sounds.*cannot blend/i.test(item.question))).toBe(true);

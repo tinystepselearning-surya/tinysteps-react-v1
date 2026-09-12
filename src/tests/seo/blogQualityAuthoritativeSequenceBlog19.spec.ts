@@ -38,10 +38,10 @@ describe('authoritative Blog #19 quality lock', () => {
   it('owns the SATPIN starter-set explanation and progression decision without presenting SATPIN as a universal mandatory sequence', () => {
     const post = bySlug.get('satpin-phonics-guide');
     expect(post).toBeDefined();
-    expect(post?.title).toBe('SATPIN Phonics Guide for Parents: How to Start and What to Expect');
+    expect(post?.title).toBe('SATPIN Phonics Guide: Sounds, Order, Words & Blending');
     expect(post?.author).toBe('Priya');
     expect(post?.date).toBe('2025-11-06');
-    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.modifiedDate).toBe('2026-09-12');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
@@ -112,7 +112,7 @@ describe('authoritative Blog #19 quality lock', () => {
       'utf8',
     );
     expect(source).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
-    expect(body).toContain('This article is the **SATPIN explanation and progression owner**');
+    expect(body).toContain('This guide focuses on **SATPIN explanation and progression**');
     expect(body).toContain('The evidence below supports **systematic and explicit sound–spelling teaching');
     expect(body).toContain('does **not** establish SATPIN as the single mandatory first set');
     expect(body).toContain('SATPIN difficulty is not, by itself, evidence of dyslexia');
