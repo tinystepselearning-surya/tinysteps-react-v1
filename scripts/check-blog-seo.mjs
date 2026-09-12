@@ -7,7 +7,7 @@ const PORT = 5173;
 const SLUGS = [
   'week-1-phonics-satpin-launch',
   'online-english-classes-for-kids',
-  'how-to-choose-phonics-classes',
+  'satpin-phonics-guide',
 ];
 
 function startPreview() {
