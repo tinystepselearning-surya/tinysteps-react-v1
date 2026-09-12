@@ -20,13 +20,16 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 0272b1a75628643016b83e6851f43b9187a53a61
+          ref: 01972160427c1f74c96fca64a715df31fa3d6562
           fetch-depth: 0
           path: repair
-      - name: Apply only the locally reviewed completion changes
+      - name: Apply only the reviewed completion changes
         working-directory: repair
         run: |
-          test "$(git rev-parse HEAD)" = 0272b1a75628643016b83e6851f43b9187a53a61
+          test "$(git rev-parse HEAD)" = 01972160427c1f74c96fca64a715df31fa3d6562
+          # The workflow edit is already authorized and committed in the seed.
+          # Replay its exact patch for hash verification; no workflow diff is pushed.
+          git show 0272b1a75628643016b83e6851f43b9187a53a61:.github/workflows/seo-dead-url-guard.yml > .github/workflows/seo-dead-url-guard.yml
           python3 ../control/scripts/seo640-finish-repair.py
           cp ../control/scripts/test/prerender-browser.test.mjs scripts/test/
           cp ../control/scripts/test/prerender-output.test.mjs scripts/test/
@@ -47,15 +50,16 @@ jobs:
           }
           for name, digest in expected.items():
             assert hashlib.sha256(Path(name).read_bytes()).hexdigest() == digest, name
-          print('All nine changed files match the reviewed completion patch.')
+          print('All nine final files match the reviewed completion patch.')
           PY
           git diff --check
+          git diff --exit-code -- .github/workflows
       - name: Commit candidate without changing main or the PR branch
         id: commit
         working-directory: repair
         run: |
-          git add .github/workflows/seo-dead-url-guard.yml scripts/prerender-readiness.mjs scripts/test/prerender-*.mjs scripts/test/recovery-internal-links-build.test.mjs src/config/seoRecoveryBrick8InternalLinks.ts
-          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = 9
+          git add scripts/prerender-readiness.mjs scripts/test/prerender-*.mjs scripts/test/recovery-internal-links-build.test.mjs src/config/seoRecoveryBrick8InternalLinks.ts
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = 8
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(seo): finish prerender identity and compiled alias protections'
           git push origin HEAD:refs/heads/work/seo640-final-candidate
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
