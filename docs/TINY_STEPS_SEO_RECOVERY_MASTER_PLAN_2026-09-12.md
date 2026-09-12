@@ -1,6 +1,6 @@
 # Tiny Steps SEO Recovery Plan — Master Brick-by-Brick Reference
 
-**Status:** Locked baseline plan  
+**Status:** Locked baseline plan, reconciled to implemented canonical ownership  
 **Primary objective:** Recover commercial phonics visibility, remove cannibalisation, strengthen existing authority URLs, improve CTR, and avoid unnecessary SEO expansion.  
 **Working principle:** **No new SEO pages during recovery. Consolidate, improve, and reinforce existing URLs.**
 
@@ -66,8 +66,12 @@ Assign **one primary URL owner** to every important search intent.
 | SATPIN phonics | `/blog/satpin-phonics-guide` |
 | SATPIN method/order | `/blog/satpin-phonics-guide` |
 | SATPIN home practice | `/blog/phonics-satpin-launch` |
-| child knows sounds but cannot read | `/blog/child-knows-letter-sounds-but-cannot-read` |
+| child knows sounds but cannot read | `/blog/why-child-knows-letter-sounds-but-cannot-read-words` |
 | ABC / alphabet / letter tracing | `/free-letter-tracing-game-for-kids` |
+
+## Reconciliation Note
+
+Brick 5 implementation consolidated the originally planned diagnostic URL `/blog/child-knows-letter-sounds-but-cannot-read` into the surviving canonical owner `/blog/why-child-knows-letter-sounds-but-cannot-read-words`. The original route is retired and must remain a permanent redirect, not a competing owner.
 
 ## Permanent Rule
 
@@ -203,9 +207,13 @@ Reduce index noise and combine authority.
 
 ## Confirmed Priority Candidate
 
-Primary surviving URL:
+Primary surviving URL after Brick 5 consolidation:
 
-`/blog/child-knows-letter-sounds-but-cannot-read`
+`/blog/why-child-knows-letter-sounds-but-cannot-read-words`
+
+Historical planned owner:
+
+`/blog/child-knows-letter-sounds-but-cannot-read` → **301** → `/blog/why-child-knows-letter-sounds-but-cannot-read-words`
 
 Any duplicate / near-duplicate article covering the same intent should be merged into the surviving URL.
 
@@ -239,7 +247,7 @@ One strong URL owns the topic and all internal / technical signals point to it.
 
 ## Primary URL
 
-`/blog/child-knows-letter-sounds-but-cannot-read`
+`/blog/why-child-knows-letter-sounds-but-cannot-read-words`
 
 ## Objective
 
@@ -560,9 +568,9 @@ Reinforce the surviving authority URLs using existing site content.
 
 ### Tier C — Informational Authority
 
-- SATPIN guide
-- child-knows-sounds-but-cannot-read
-- tracing resource
+- `/blog/satpin-phonics-guide`
+- `/blog/why-child-knows-letter-sounds-but-cannot-read-words`
+- `/free-letter-tracing-game-for-kids`
 
 ### Tier D — Supporting Articles
 
@@ -637,7 +645,7 @@ Confirm Google is choosing the intended Tiny Steps URL for each major query.
 | best phonics classes online | `/best-online-phonics-classes-for-kids-in-india` |
 | phonics fees | `/phonics-fees-india` |
 | SATPIN | `/blog/satpin-phonics-guide` |
-| child knows sounds but cannot read | `/blog/child-knows-letter-sounds-but-cannot-read` |
+| child knows sounds but cannot read | `/blog/why-child-knows-letter-sounds-but-cannot-read-words` |
 
 ## Definition of Done
 
