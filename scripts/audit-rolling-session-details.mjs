@@ -1,0 +1,35 @@
+import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'tinysteps-react-v1';
+const ANCHOR = process.env.AUDIT_ANCHOR_YMD || '2026-09-12';
+const DAYS = 14;
+const IST = 330;
+const ACTIVE = new Set(['', 'active', 'trial', 'enrolled', 'current', 'ongoing', 'pending_teacher', 'pending_payment', 'pending_lp']);
+if (!getApps().length) initializeApp({ credential: applicationDefault(), projectId: PROJECT_ID });
+const db = getFirestore();
+const t = v => typeof v === 'string' ? v.trim() : (typeof v === 'number' && Number.isFinite(v) ? String(v) : '');
+const rec = v => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+const p2 = v => String(v).padStart(2,'0');
+const parse = y => { const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t(y)); if(!m)return null; return Date.UTC(+m[1],+m[2]-1,+m[3]); };
+const ymd = ms => { const d=new Date(ms); return `${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}`; };
+const add=(y,n)=>ymd(parse(y)+n*86400000);
+const indiaDate=v=>{ if(!v)return null; if(typeof v==='string'&&parse(v)!==null)return v; let d=null; if(typeof v?.toDate==='function'){try{d=v.toDate()}catch{}} else { const q=new Date(v); if(!Number.isNaN(q.getTime()))d=q; } if(!d)return null; const s=new Date(d.getTime()+IST*60000); return ymd(Date.UTC(s.getUTCFullYear(),s.getUTCMonth(),s.getUTCDate())); };
+const startDate=e=>indiaDate(e.classesStartDateYmd)||indiaDate(e.classesStartDate)||indiaDate(e.startDateYmd)||indiaDate(e.startDate)||null;
+const active=e=>!e.archivedAt&&e.archived!==true&&e.isArchived!==true&&ACTIVE.has(t(e.status).toLowerCase());
+const slots=e=>{const s=rec(e.schedule)?e.schedule:{};if(Array.isArray(s.weeklySlots)&&s.weeklySlots.length)return s.weeklySlots.map(x=>({weekday:Number(x?.weekday),time:t(x?.time),duration:Number(x?.durationMinutes??x?.durationMins??35)})).filter(x=>Number.isInteger(x.weekday)&&x.weekday>=0&&x.weekday<=6&&/^([01]\d|2[0-3]):[0-5]\d$/.test(x.time)&&x.duration>0);if(Array.isArray(s.weekdays)&&s.weekdays.length&&/^([01]\d|2[0-3]):[0-5]\d$/.test(t(s.timeHHmm)))return s.weekdays.map(w=>({weekday:Number(w),time:t(s.timeHHmm),duration:Number(s.durationMins??35)})).filter(x=>Number.isInteger(x.weekday)&&x.weekday>=0&&x.weekday<=6);return[]};
+const kidId=e=>t(e.kidId||e.childId||e.studentId);
+const parentId=e=>t(e.parentId||e.primaryParentId)||(Array.isArray(e.parentIds)&&e.parentIds.map(t).filter(Boolean).length===1?e.parentIds.map(t).filter(Boolean)[0]:'');
+const teacherId=e=>{if(t(e.teacherId))return t(e.teacherId);const vals=[...(Array.isArray(e.teacherIds)?e.teacherIds:[]),e.assignedTeacherId,e.primaryTeacherId,e.teacherUid,e.teacher_id].map(t).filter(Boolean);const u=[...new Set(vals)];return u.length===1?u[0]:''};
+const expected=(id,e)=>{const ss=slots(e), out=[];if(!ss.length)return out;const a=parse(ANCHOR), z=parse(add(ANCHOR,DAYS));const sd=startDate(e), from=sd&&parse(sd)!==null?Math.max(a,parse(sd)):a;for(let ms=from;ms<=z;ms+=86400000){const wd=new Date(ms).getUTCDay(),date=ymd(ms);for(const s of ss.filter(x=>x.weekday===wd))out.push({date,weekday:wd,time:s.time,id:`${id}_${date.replace(/-/g,'')}_${s.time.replace(':','')}`});}return out};
+const enrollSnap=await db.collection('enrollments').get();
+const ens=enrollSnap.docs.map(d=>({id:d.id,...d.data()})).filter(active);
+const kidIds=[...new Set(ens.map(kidId).filter(Boolean))], parentIds=[...new Set(ens.map(parentId).filter(Boolean))], teacherIds=[...new Set(ens.map(teacherId).filter(Boolean))];
+const readMap=async(name,ids)=>{const m=new Map();for(let i=0;i<ids.length;i+=100){const refs=ids.slice(i,i+100).map(id=>db.collection(name).doc(id));for(const s of await db.getAll(...refs))if(s.exists)m.set(s.id,s.data()||{});}return m};
+const kids=await readMap('kids',kidIds), users=await readMap('users',[...new Set([...parentIds,...teacherIds])]);
+const allExp=ens.flatMap(e=>expected(e.id,e));const sess=await readMap('classSessions',allExp.map(x=>x.id));
+const rows=[];
+for(const e of ens){const ex=expected(e.id,e), miss=ex.filter(x=>!sess.has(x.id)), present=ex.length-miss.length, pid=parentId(e),kid=kidId(e),tid=teacherId(e),k=kids.get(kid)||{},p=users.get(pid)||{},tr=users.get(tid)||{}, material=rec(e.scheduleMaterialization)?e.scheduleMaterialization:null; if(!miss.length&&ex.length&&material)continue; rows.push({enrollmentId:e.id,status:t(e.status),student:t(k.fullName||k.name||e.childName||e.kidName||e.studentName),parent:t(p.name||p.fullName||e.parentName),teacher:t(tr.name||tr.fullName||e.teacherName),scheduleSlots:slots(e).map(s=>`${s.weekday}:${s.time}`),expected:ex.length,present,missing:miss.length,missingDates:miss.map(x=>x.date),missingSunday:miss.filter(x=>x.weekday===0).map(x=>`${x.date} ${x.time}`),hasMaterialization:Boolean(material),materializedThrough:t(material?.materializedThroughYmd),nextDue:t(material?.nextMaterializationDueYmd)});}
+rows.sort((a,b)=>b.missing-a.missing||a.student.localeCompare(b.student));
+console.log('DETAIL_ROWS_START');console.log(JSON.stringify(rows,null,2));console.log('DETAIL_ROWS_END');
+console.log('MATCHES_JAMES_GANESH_START');console.log(JSON.stringify(rows.filter(r=>/james|ganesh/i.test(`${r.student} ${r.parent}`)),null,2));console.log('MATCHES_JAMES_GANESH_END');
