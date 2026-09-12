@@ -5,13 +5,14 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
 import { getPublicCourseSitemapPaths } from "../src/lib/publicCoursePages.js";
-import { shouldIncludeBlogSlugInSitemap } from "../src/lib/blogIndexingPolicy.js";
+import { shouldIncludeBlogSlugInSitemap, shouldNoindexBlogSlug } from "../src/lib/blogIndexingPolicy.js";
 import { PHONICS_34_AUTHORITY_ROUTES } from "../src/lib/phonicsAuthorityRoutes.js";
 import { PUBLIC_ROUTE_MANIFEST } from "../src/lib/publicRouteManifest.js";
 import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
 import { extractBlogEntriesFromPostFiles, listMdxEntries } from "./blog-route-utils.mjs";
 import { isClarityAllowedPath } from "./clarity-route-policy.mjs";
 import { PARENT_HELP_ROUTES, PRERENDER_STATIC_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
+import { captureReadyRoute, installPrerenderShell } from "./prerender-readiness.mjs";
 
 const DIST = path.resolve(process.cwd(), "dist");
 const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4173;
@@ -300,87 +301,29 @@ async function writeRouteHtml(route, html) {
   console.log("Wrote", outFile);
 }
 
-/**
- * Render a single route with retry logic and content validation.
- * @param page Playwright page instance
- * @param route The route path (e.g. "/phonics")
- * @param maxRetries Maximum number of retry attempts
- * @returns Promise that resolves when route is successfully rendered
- */
+/** Render from a clean shell and never write a timed-out error-page fallback. */
 async function renderRouteWithRetry(page, route, maxRetries = 2) {
   const url = `${HOST}${route}`;
-  const navigationStrategy = { waitUntil: "load", timeout: 60000 };
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Prerendering ${url}${attempt > 1 ? ` (attempt ${attempt}/${maxRetries})` : ''}`);
-      
-      await page.goto(url, navigationStrategy);
-
-      // Prefer a hydrated root, but fall back to meaningful markup for long-form routes that
-      // occasionally miss the innerText threshold before Playwright's readiness timeout.
-      let readinessError = null;
-      try {
-        await page.waitForFunction(
-          (currentRoute) => {
-            const root = document.getElementById('root');
-            if (!root) return false;
-            const textLength = root.innerText?.length || 0;
-            const hasHeading = root.querySelector('h1, h2') !== null;
-            const hasLoadingText = /\bloading\b/i.test(root.innerText || '');
-
-            if (typeof currentRoute === 'string' && currentRoute.startsWith('/blog/')) {
-              const hasBlogArticle = root.querySelector('article') !== null || root.querySelector('.ts-blog-hero-title') !== null;
-              return !hasLoadingText && hasBlogArticle && textLength > 600;
-            }
-
-            return !hasLoadingText && (textLength > 200 || hasHeading);
-          },
-          route,
-          { timeout: 10000 }
-        );
-      } catch (error) {
-        readinessError = error;
-      }
-
-      const html = await page.content();
-
-      if (readinessError) {
-        const hasMeaningfulMarkup = (() => {
-          if (route.startsWith('/blog/')) {
-            return html.length > 2500 && /<(article|h1|h2)\b/i.test(html);
-          }
-          return html.length > 1500 && /<(main|article|h1|h2)\b/i.test(html);
-        })();
-        if (!hasMeaningfulMarkup) {
-          throw readinessError;
-        }
-        console.warn(
-          `[prerender] Falling back to HTML-structure readiness for ${route}: ${readinessError.message}`
-        );
-      }
-      
-      // Validate HTML has meaningful content
-      if (html.length < 1000) {
-        throw new Error(`HTML too short (${html.length} bytes) - likely empty shell`);
-      }
-      
-      await writeRouteHtml(route, html);
-      return; // Success - exit retry loop
-      
-    } catch (err) {
-      if (attempt === maxRetries) {
-        console.error(`❌ FAILED to prerender ${route} after ${maxRetries} attempts:`);
-        console.error(err.message);
-        throw new Error(`Prerender failed for route: ${route}`);
-      }
-      console.warn(`Retry ${attempt}/${maxRetries} for ${route} failed: ${err.message}`);
-      await new Promise((r) => setTimeout(r, 2000)); // Wait 2s before retry
-    }
-  }
+  const config = ROUTE_SEO_CONFIG[route];
+  const canonicalPath = config?.canonicalPath || route;
+  // Dedicated static articles have registry metadata injected below. Generic
+  // BlogPostPage articles must supply their own matching metadata and schema.
+  const dynamicArticle = route.startsWith('/blog/') && !config;
+  const contract = {
+    canonicalUrl: `https://tinystepslearning.com${canonicalPath}`,
+    requireArticle: dynamicArticle,
+    checkArticleMetadata: dynamicArticle,
+    expectedNoindex: shouldNoindexBlogSlug(route.replace(/^\/blog\//, '')),
+  };
+  console.log(`Prerendering ${url}`);
+  const html = await captureReadyRoute(page, url, contract, { maxRetries });
+  await writeRouteHtml(route, html);
 }
 
 async function prerender() {
+  // Vite preview serves dist, and writeRouteHtml overwrites dist/index.html.
+  // Preserve the original shell so later routes cannot hydrate a previous page.
+  const originalShell = await fs.readFile(path.join(DIST, 'index.html'), 'utf8');
   const proc = startPreview();
 
   try {
@@ -391,7 +334,8 @@ async function prerender() {
     let browser;
     try {
       browser = await chromium.launch();
-      const page = await browser.newPage();
+      const page = await browser.newPage({ serviceWorkers: 'block' });
+      await installPrerenderShell(page, HOST, originalShell);
       const seedRoutes = uniqueRoutes([
         ...PRERENDER_STATIC_ROUTES,
         ...PARENT_HELP_ROUTES,
@@ -458,8 +402,6 @@ async function prerender() {
         }
       }
 
-      await browser.close();
-
       // Print summary
       console.log(`\n✅ Prerender Summary:`);
       console.log(`   ✓ Success: ${successCount}/${ROUTES.length} routes`);
@@ -480,6 +422,8 @@ async function prerender() {
         "Tip: run `npx playwright install --with-deps chromium` in CI to ensure Playwright browsers are available."
       );
       throw launchErr;
+    } finally {
+      if (browser) await browser.close();
     }
   } finally {
     try {
