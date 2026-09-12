@@ -61,6 +61,8 @@ import {
   writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
 import { removeExpiredManualReminderCaches } from './manualReminderCache';
+import PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';
+import { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';
 
 interface ClassSessionDoc {
   id: string;
@@ -230,14 +232,14 @@ const copyTextToClipboard = async (value: string): Promise<void> => {
 };
 
 const countryCodeFromOptionId = (optionId: string): string => {
-  const selected = COUNTRY_OPTIONS.find((option) => option.id === optionId);
+  const selected = PHONE_COUNTRY_OPTIONS.find((option) => option.id === optionId);
   return selected ? selected.code : '';
 };
 
 const optionIdFromCountryCode = (countryCode: string): string => {
   const normalized = normalizeCountryCode(countryCode);
-  const selected = COUNTRY_OPTIONS.find((option) => option.code === normalized);
-  return selected ? selected.id : CUSTOM_COUNTRY_ID;
+  const matches = PHONE_COUNTRY_OPTIONS.filter((option) => option.code === normalized);
+  return matches.length === 1 ? matches[0].id : CUSTOM_COUNTRY_ID;
 };
 
 const chunkIds = (ids: string[], size = 10): string[][] => {
@@ -496,7 +498,7 @@ const inferCountryCodeFromInternationalDigits = (value: string): string => {
   const digits = digitsOnly(value);
   if (!digits) return '';
   const candidates = Array.from(
-    new Set(COUNTRY_OPTIONS.map((option) => option.code)),
+    new Set(PHONE_COUNTRY_OPTIONS.map((option) => option.code)),
   ).sort((a, b) => digitsOnly(b).length - digitsOnly(a).length);
   const found = candidates.find((code) => digits.startsWith(digitsOnly(code)));
   return found || '';
@@ -550,8 +552,14 @@ const applyTemplatePlaceholders = (
 
 const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {
   const countryCode = normalizeCountryCode(String(userLike?.phoneCountryCode || ''));
+  const phoneLocalRaw = digitsOnly(String(userLike?.phoneLocal || ''));
   const phoneRaw = normalizePhoneForSave(String(userLike?.phone || ''));
-  const phoneDigits = digitsOnly(phoneRaw);
+  const phoneDigitsFromPhone = digitsOnly(phoneRaw);
+  const phoneDigits =
+    phoneLocalRaw ||
+    (countryCode && looksLikeInternationalWithPlus(phoneRaw)
+      ? stripCountryCodePrefix(phoneRaw, countryCode)
+      : phoneDigitsFromPhone);
   const whatsappE164Digits = digitsOnly(String(userLike?.whatsappE164 || ''));
   const hasStructured = Boolean(countryCode && phoneDigits);
 
@@ -560,10 +568,10 @@ const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {
     const whatsappDigits = whatsappE164Digits || builtDigits;
     return {
       status: whatsappDigits.length >= 8 ? 'ok' : 'missing',
-      display: `${countryCode} ${phoneRaw}`,
+      display: `${countryCode} ${phoneDigits}`,
       whatsappDigits: whatsappDigits.length >= 8 ? whatsappDigits : '',
       editCountryCode: countryCode,
-      editPhone: phoneRaw,
+      editPhone: phoneDigits,
     };
   }
 
@@ -1960,26 +1968,47 @@ export default function TodaysNotifications() {
     currentPhone: string,
   ) => {
     if (!userDocId) return;
+    const normalizedCountryCode = normalizeCountryCode(countryCode);
+    const normalizedCurrentPhone = normalizePhoneForSave(currentPhone);
+    const localPhoneDigits =
+      normalizedCountryCode && looksLikeInternationalWithPlus(normalizedCurrentPhone)
+        ? stripCountryCodePrefix(normalizedCurrentPhone, normalizedCountryCode)
+        : digitsOnly(normalizedCurrentPhone);
     setEditingPhone({
       key,
       userDocId,
-      countryOptionId: optionIdFromCountryCode(countryCode),
-      countryCode: normalizeCountryCode(countryCode),
-      phone: normalizePhoneForSave(currentPhone),
+      countryOptionId: optionIdFromCountryCode(normalizedCountryCode),
+      countryCode: normalizedCountryCode,
+      phone: localPhoneDigits,
     });
   };
 
   const handleSavePhoneEdit = async () => {
     if (!editingPhone) return;
     const countryCodeInput = String(editingPhone.countryCode || '').trim();
-    if (!isCountryCodeInputValid(countryCodeInput)) return;
+    if (!isCountryCodeInputValid(countryCodeInput)) {
+      toast({ title: 'Select a country', description: 'Choose a valid country/calling code before saving.', variant: 'destructive' });
+      return;
+    }
+
     const nextCountryCode = normalizeCountryCode(countryCodeInput);
-    const nextPhone = normalizePhoneForSave(editingPhone.phone);
-    const nextPhoneDigits = digitsOnly(nextPhone);
-    const nextWhatsappE164 = nextCountryCode
-      ? `${digitsOnly(nextCountryCode)}${nextPhoneDigits}`
-      : '';
-    if (!nextPhone || !nextCountryCode || !nextPhoneDigits) return;
+    const nextPhoneDigits = digitsOnly(editingPhone.phone);
+    if (!nextCountryCode || !nextPhoneDigits) {
+      toast({ title: 'Phone number required', description: 'Enter the local phone number using digits only.', variant: 'destructive' });
+      return;
+    }
+
+    const nextWhatsappE164 = `${nextCountryCode}${nextPhoneDigits}`;
+    const e164DigitCount = digitsOnly(nextWhatsappE164).length;
+    if (e164DigitCount < 8 || e164DigitCount > 15) {
+      toast({ title: 'Check phone number', description: 'Country code + phone number must contain 8–15 digits.', variant: 'destructive' });
+      return;
+    }
+
+    const nextCountryIso =
+      editingPhone.countryOptionId && editingPhone.countryOptionId !== CUSTOM_COUNTRY_ID
+        ? editingPhone.countryOptionId
+        : '';
 
     setSavingPhoneKey(editingPhone.key);
     try {
@@ -1987,8 +2016,10 @@ export default function TodaysNotifications() {
         doc(db, 'users', editingPhone.userDocId),
         {
           phoneCountryCode: nextCountryCode,
-          phone: nextPhone,
-          whatsappE164: nextWhatsappE164 || null,
+          phoneLocal: nextPhoneDigits,
+          phone: nextWhatsappE164,
+          whatsappE164: nextWhatsappE164,
+          ...(nextCountryIso ? { countryCode: nextCountryIso } : {}),
           updatedAt: serverTimestamp(),
           updatedBy: user?.uid || null,
         },
@@ -2005,8 +2036,10 @@ export default function TodaysNotifications() {
             data: {
               ...existing.data,
               phoneCountryCode: nextCountryCode,
-              phone: nextPhone,
-              whatsappE164: nextWhatsappE164 || null,
+              phoneLocal: nextPhoneDigits,
+              phone: nextWhatsappE164,
+              whatsappE164: nextWhatsappE164,
+              ...(nextCountryIso ? { countryCode: nextCountryIso } : {}),
             },
           };
         });
@@ -2014,15 +2047,9 @@ export default function TodaysNotifications() {
       });
 
       setEditingPhone(null);
-      toast({
-        title: 'Phone updated',
-      });
+      toast({ title: 'Phone updated', description: `Saved ${nextWhatsappE164} as the WhatsApp-ready number.` });
     } catch (error: any) {
-      toast({
-        title: 'Unable to save phone number',
-        description: error?.message || 'Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Unable to save phone number', description: error?.message || 'Please try again.', variant: 'destructive' });
     } finally {
       setSavingPhoneKey(null);
     }
@@ -2405,9 +2432,12 @@ export default function TodaysNotifications() {
                                     value={editingPhone?.phone || ''}
                                     onChange={(event) =>
                                       setEditingPhone((prev) =>
-                                        prev ? { ...prev, phone: event.target.value } : prev,
+                                        prev ? { ...prev, phone: digitsOnly(event.target.value) } : prev,
                                       )
                                     }
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     placeholder="Phone number"
                                     className="h-8 text-xs"
                                     autoFocus
@@ -2506,9 +2536,12 @@ export default function TodaysNotifications() {
                                     value={editingPhone?.phone || ''}
                                     onChange={(event) =>
                                       setEditingPhone((prev) =>
-                                        prev ? { ...prev, phone: event.target.value } : prev,
+                                        prev ? { ...prev, phone: digitsOnly(event.target.value) } : prev,
                                       )
                                     }
+                                    type="tel"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                     placeholder="Phone number"
                                     className="h-8 text-xs"
                                     autoFocus
@@ -2706,6 +2739,23 @@ export default function TodaysNotifications() {
           </div>
         </Card>
       )}
+
+      <PhoneNumberEditorDialog
+        open={Boolean(editingPhone)}
+        value={editingPhone}
+        title={
+          editingPhone?.key.includes(':teacher-phone')
+            ? 'Edit Teacher Phone'
+            : 'Edit Parent Phone'
+        }
+        description="Search and select the country/calling code, then enter only the local phone digits."
+        saving={Boolean(editingPhone && savingPhoneKey === editingPhone.key)}
+        onChange={(next) => setEditingPhone(next)}
+        onClose={() => {
+          if (!savingPhoneKey) setEditingPhone(null);
+        }}
+        onSave={() => void handleSavePhoneEdit()}
+      />
 
       <Dialog open={Boolean(messageEditor)} onOpenChange={(open) => (!open ? closeMessageEditor() : undefined)}>
         <DialogContent className="w-[calc(100vw-1rem)] max-w-3xl border-slate-200">
