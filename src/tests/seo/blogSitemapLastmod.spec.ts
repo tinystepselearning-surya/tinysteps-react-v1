@@ -26,14 +26,19 @@ const AUTHORITATIVE_1_TO_20 = [
   'science-of-phonics-learning',
 ] as const;
 
+const AUTHORITATIVE_REFRESH_FLOOR = '2026-08-30';
+
 describe('authoritative Blogs #1-#20 sitemap freshness', () => {
-  it('keeps the real 2026-08-30 refresh date on all twenty articles', () => {
+  it('keeps at least the real 2026-08-30 refresh date on all twenty articles', () => {
     const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 
     for (const slug of AUTHORITATIVE_1_TO_20) {
       const post = bySlug.get(slug);
       expect(post, `${slug} should remain in the public blog registry`).toBeDefined();
-      expect(post?.modifiedDate, `${slug} should expose the batch refresh date`).toBe('2026-08-30');
+      expect(
+        post?.modifiedDate && post.modifiedDate >= AUTHORITATIVE_REFRESH_FLOOR,
+        `${slug} should retain the batch refresh date or a newer genuine refresh date`,
+      ).toBe(true);
     }
   });
 
