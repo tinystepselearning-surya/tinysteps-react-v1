@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/audit-rolling-session-health.yml
       - scripts/audit-rolling-session-health.mjs
+      - scripts/audit-rolling-session-details.mjs
   workflow_dispatch:
 
 permissions:
@@ -41,7 +42,12 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
-      - name: Run STRICTLY read-only Firestore audit
+      - name: Run STRICTLY read-only Firestore health audit
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
         run: node scripts/audit-rolling-session-health.mjs
+
+      - name: Run STRICTLY read-only affected enrollment details
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: node scripts/audit-rolling-session-details.mjs
