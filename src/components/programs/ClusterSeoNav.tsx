@@ -8,7 +8,7 @@ const CLUSTERS = {
     hubHref: '/phonics',
     intro: 'If you are comparing phonics support, use the guide that matches the decision you are making rather than reading every article.',
     links: [
-      { label: 'How to Choose a Phonics Class', href: '/blog/how-to-choose-phonics-classes' },
+      { label: 'Compare Online Phonics Classes', href: '/best-online-phonics-classes-for-kids-in-india' },
       { label: 'Online Phonics Classes vs School', href: '/blog/online-phonics-classes-vs-school' },
       { label: 'Are Phonics Apps Enough?', href: '/blog/are-phonics-apps-enough-for-kids' },
       { label: 'How Long Does Phonics Take?', href: '/blog/how-long-does-phonics-take' },
