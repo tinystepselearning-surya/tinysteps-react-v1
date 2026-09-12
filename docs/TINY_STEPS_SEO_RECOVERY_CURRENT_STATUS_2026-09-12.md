@@ -18,8 +18,8 @@
 | 10 — CTR optimization | ✅ CLOSED / MEASURING | Five-page GSC-backed snippet experiment implemented; outcome requires post-change measurement |
 | 11 — Technical consolidation | ✅ CLOSED / DEPLOYMENT-GATED | Canonical, redirect, sitemap, RSS/feed, LLM discovery and build controls consolidated |
 | 12 — Authority signals | ✅ CLOSED | Tier A/B/C hierarchy locked; targeted support → specialist-owner signals added without overriding C7 commercial routing |
-| 13 — GSC measurement | ⏭️ NEXT | Formal recovery measurement buckets and before/after framework |
-| 14 — Query-owner consistency | Pending | Verify correct ranking URL for each priority query family |
+| 13 — GSC measurement | ✅ CLOSED | Revenue SEO, qualified informational SEO and traffic SEO now measured separately with GSC + business-attribution rules |
+| 14 — Query-owner consistency | ⏭️ NEXT | Verify the intended ranking URL for each priority query family and identify residual ownership drift |
 | 15 — Stabilization | Pending | 7-day, 14–21-day and 28+ day post-change verification |
 
 ## Current recovery boundary
@@ -28,6 +28,8 @@ No new SEO landing pages should be added during recovery. Existing owners should
 
 Brick 12 keeps authority deliberately layered: supporting content reinforces the relevant SATPIN, diagnostic or comparison authority; those established owners carry the upward relationship to `/phonics`. Commercial CTA strength remains controlled by the existing C7 architecture rather than by Brick 12.
 
+Brick 13 now prevents headline traffic from masking commercial performance. Revenue-intent search, qualified informational search and free-resource traffic are separate reporting buckets. First-touch website attribution is layered on top so Google Organic leads, ChatGPT referrals and other channels remain distinct.
+
 ## Measurement note
 
-Brick 10 is implemented but its CTR result cannot be declared successful until enough post-change Search Console data exists. Brick 11 is technically implemented, while live generated-output verification remains part of deployment/stabilization checks. Brick 13 is the next recovery stage and will formalize revenue SEO, qualified informational SEO and traffic SEO measurement separately.
+The finalized GSC baseline is 2026-08-13 to 2026-09-09 compared with 2026-07-16 to 2026-08-12. Brick 10 is implemented but its CTR result still requires post-change measurement. Brick 11 is technically implemented, while live generated-output verification remains part of deployment/stabilization checks. September website attribution is treated as an incomplete snapshot because its exact date range was not supplied and admissions can lag leads/demos.
