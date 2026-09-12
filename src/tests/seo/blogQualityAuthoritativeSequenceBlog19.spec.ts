@@ -96,7 +96,7 @@ describe('authoritative Blog #19 quality lock', () => {
     }
   });
 
-  it('adds evidence, non-diagnostic safeguards, practical-owner boundaries and five extractable FAQs', () => {
+  it('adds evidence, non-diagnostic safeguards, practical-owner boundaries and nine extractable FAQs', () => {
     const post = bySlug.get('satpin-phonics-guide');
     expect(post).toBeDefined();
 
@@ -121,11 +121,15 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(body).toContain('[Letter Tracing With Sounds](/letter-tracing-with-sounds-game)');
     expect(body).toContain('Neither game, by itself, proves that a child can blend SATPIN into words');
 
-    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq).toHaveLength(9);
     expect(post?.faq?.some((item) => /What is SATPIN phonics/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /Why is SATPIN often taught early/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /all six SATPIN sounds before blending/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /ready to move beyond SATPIN/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /knows SATPIN sounds but cannot blend/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /What is the correct SATPIN order/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /What words can children make with SATPIN/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /How do SATPIN words become early reading/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /What comes after SATPIN/i.test(item.question))).toBe(true);
   });
 });
