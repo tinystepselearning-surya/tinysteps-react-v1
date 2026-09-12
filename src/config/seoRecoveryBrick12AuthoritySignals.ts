@@ -96,6 +96,11 @@ const decodingSignals = Object.freeze([
  * already point upward to /phonics through the existing authority-linking layer.
  * Brick 12 adds only the missing specialist-hub edge where that relationship is
  * genuinely useful to a reader.
+ *
+ * The dedicated /blog/phonics-for-parents-guide React route is intentionally
+ * left outside this post-processing layer. Its existing source already links to
+ * the decoding diagnostic and /phonics, while SATPIN already points back to that
+ * broad parent guide. Brick 12 avoids adding a second rendering contract there.
  */
 export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
   'phonics-satpin-launch': {
@@ -104,14 +109,6 @@ export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
     signals: [
       { label: 'the SATPIN phonics guide', to: SATPIN_MASTER },
       { label: 'the structured Tiny Steps phonics pathway', to: PHONICS_PROGRAMME },
-    ],
-  },
-  'phonics-for-parents-guide': {
-    heading: 'Choose the phonics guide that matches the next step',
-    intro: 'For early sequence and blending use the SATPIN guide; when sounds are known but word reading is still difficult, use the diagnostic guide. For structured teaching support, continue with',
-    signals: [
-      { label: 'the SATPIN phonics guide', to: SATPIN_MASTER },
-      ...decodingSignals,
     ],
   },
   'how-kids-learn-blending': {
