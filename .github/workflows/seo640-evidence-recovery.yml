@@ -1,0 +1,126 @@
+name: SEO640 verified evidence export
+on:
+  push:
+    branches: [work/seo640-finish-validation]
+    paths: [.github/workflows/seo640-evidence-recovery.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EVIDENCE_DIR: ${{ runner.temp }}/seo640-evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 85af4912a061e245c04ed76bd0fabcb30d6c97fd
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Recover and verify the already completed tests and three clean builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import io, json, os, re, urllib.request, urllib.error, zipfile
+          from pathlib import Path
+          out = Path(os.environ['EVIDENCE_DIR'])
+          out.mkdir(parents=True, exist_ok=True)
+          repo = 'tinystepselearning-surya/tinysteps-react-v1'
+          sha = '85af4912a061e245c04ed76bd0fabcb30d6c97fd'
+          api = 'https://api.github.com/repos/' + repo
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          def get(endpoint):
+              request = urllib.request.Request(api + endpoint, headers={
+                  'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+              })
+              try:
+                  with urllib.request.build_opener(NoRedirect).open(request, timeout=60) as response:
+                      return response.read()
+              except urllib.error.HTTPError as error:
+                  if error.code not in (301, 302, 303, 307, 308):
+                      raise
+                  # Never forward the GitHub token to the signed log/archive URL.
+                  location = error.headers['Location']
+                  assert location.startswith('https://')
+                  with urllib.request.urlopen(location, timeout=60) as response:
+                      return response.read()
+          def decoded(endpoint):
+              return json.loads(get(endpoint))
+          jobs = {
+              'unit-and-static': (103612658872, [
+                  'Run npm --prefix functions run build', 'ESLint and TypeScript',
+                  'Full unchanged coverage gate',
+              ]),
+              'three-clean-builds': (103612659037, [
+                  'Unit regression and real browser/production-transform tests',
+                  'Prove the new compiled-alias test catches the previous defect',
+                  'Three consecutive fresh production builds and saved-output checks',
+                  'Preserve final diff and available failing-output diagnostics',
+              ]),
+          }
+          logs = {}
+          for name, (job_id, required) in jobs.items():
+              job = decoded('/actions/jobs/' + str(job_id))
+              assert job['run_id'] == 34715772318
+              steps = {step['name']: step for step in job['steps']}
+              for step_name in required:
+                  assert steps[step_name]['conclusion'] == 'success', (name, step_name)
+              failed = [step['name'] for step in job['steps'] if step['conclusion'] == 'failure']
+              assert failed == ['Run actions/upload-artifact@v4'], (name, failed)
+              (out / (name + '-job.json')).write_text(json.dumps(job, indent=2))
+              log = get('/actions/jobs/' + str(job_id) + '/logs').decode('utf-8-sig')
+              log = re.sub(r'\x1b\[[0-9;]*m', '', log)
+              assert sha in log, 'Logs must identify the exact checked-out candidate'
+              assert "Relative pathing '.' and '..' is not allowed" in log
+              (out / (name + '.log')).write_text(log)
+              logs[name] = log
+          builds = logs['three-clean-builds']
+          markers = re.findall(r'PASS: clean build ([123]) including all existing downstream gates', builds)
+          assert markers == ['1', '2', '3'], markers
+          assert 'PASS: the compiled-alias regression fails on the previous source and passes on the candidate.' in builds
+          unit = logs['unit-and-static']
+          assert re.search(r'Tests\s+3054 passed\s*\|\s*97 skipped', unit), 'Unexpected unit result'
+          assert re.search(r'Test Files\s+498 passed\s*\|\s*13 skipped', unit), 'Unexpected file result'
+          normal = decoded('/actions/runs/34715800037')
+          assert normal['head_sha'] == sha and normal['conclusion'] == 'success'
+          artifact = decoded('/actions/artifacts/10304673482')
+          assert artifact['workflow_run']['id'] == 34715800037
+          with zipfile.ZipFile(io.BytesIO(get('/actions/artifacts/10304673482/zip'))) as archive:
+              candidates = [name for name in archive.namelist() if name.endswith('seo-dead-url-report.json')]
+              assert len(candidates) == 1
+              report = json.loads(archive.read(candidates[0]))
+          assert not report['failures'], report['failures']
+          (out / 'seo-dead-url-report.json').write_text(json.dumps(report, indent=2))
+          summary = {
+              'validatedCommit': sha,
+              'validationRun': 34715772318,
+              'unitTests': {'passed': 3054, 'failed': 0, 'existingSkipped': 97},
+              'testFiles': {'passed': 498, 'existingSkipped': 13},
+              'consecutiveCleanBuilds': markers,
+              'oldAliasImplementationFailsRegression': True,
+              'newAliasImplementationPassesRegression': True,
+              'normalSeoDeadUrlGuardRun': 34715800037,
+              'normalSeoDeadUrlGuardConclusion': 'success',
+              'artifactOnlyFailure': "The original standalone validation passed every test/build step but rejected '../evidence/' during upload. This read-only export preserves its logs using an absolute path without relabelling the old run.",
+          }
+          (out / 'verified-summary.json').write_text(json.dumps(summary, indent=2))
+          print(json.dumps(summary, indent=2))
+          PY
+      - name: Preserve the exact reviewable repair diff
+        run: |
+          test "$(git rev-parse HEAD)" = 85af4912a061e245c04ed76bd0fabcb30d6c97fd
+          git diff --check 3e34735d9b31828f6c6cde397c3903a80151ce01 HEAD
+          git diff 3e34735d9b31828f6c6cde397c3903a80151ce01 HEAD > "$EVIDENCE_DIR/pr332-repair.patch"
+          git diff --name-only 3e34735d9b31828f6c6cde397c3903a80151ce01 HEAD > "$EVIDENCE_DIR/changed-files.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seo640-verified-completion-evidence
+          path: ${{ env.EVIDENCE_DIR }}
+          if-no-files-found: error
+          retention-days: 7
