@@ -37,3 +37,8 @@ export const PHONICS_AUTHORITY_SLUGS = Object.freeze([
 export const PHONICS_AUTHORITY_ROUTES = Object.freeze(
   PHONICS_AUTHORITY_SLUGS.map((slug) => `/blog/${slug}`),
 );
+
+// Backward-compatible export names retained because older build/audit code still
+// imports them. The recovery consolidation reduced the live set from 34 to 33.
+export const PHONICS_34_AUTHORITY_SLUGS = PHONICS_AUTHORITY_SLUGS;
+export const PHONICS_34_AUTHORITY_ROUTES = PHONICS_AUTHORITY_ROUTES;
