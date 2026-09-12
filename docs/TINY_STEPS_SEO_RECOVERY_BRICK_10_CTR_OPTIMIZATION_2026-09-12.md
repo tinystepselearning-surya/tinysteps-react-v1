@@ -68,7 +68,7 @@ Reason: Zero clicks despite average position 6.30. The snippet now exposes the a
 
 **Title:** `Digraphs and Tricky Words for Kids: Examples & Reading Tips`
 
-**Meta:** `Learn digraphs and tricky words with examples such as sh, ch and ng. See what children can decode, what needs extra attention and how to avoid whole-word guessing.`
+**Meta:** `Learn digraphs and tricky words with sh, ch and ng examples. See what children can decode, what needs extra attention and how to avoid whole-word guessing.`
 
 Reason: The page already sits around position 7 but has weak CTR. The test adds concrete digraph examples and clarifies the reading job.
 
@@ -94,7 +94,7 @@ Regression guard:
 The guard ensures:
 
 - exactly five URLs are in the first experiment batch;
-- title/meta lengths remain controlled;
+- titles stay within 65 characters and meta descriptions within 160 characters;
 - each page had meaningful impressions and average position under 10 at baseline;
 - renamed weekly grammar pages receive the experiment on their public slugs;
 - non-experiment pages remain untouched.
