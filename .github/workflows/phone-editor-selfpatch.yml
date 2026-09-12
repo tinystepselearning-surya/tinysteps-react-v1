@@ -28,90 +28,7 @@ jobs:
           cache: npm
 
       - name: Apply targeted source patch
-        shell: bash
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const file = 'src/pages/admin/TodaysNotifications.tsx';
-          let source = fs.readFileSync(file, 'utf8');
-
-          const replaceOnce = (before, after, label) => {
-            const index = source.indexOf(before);
-            if (index < 0) throw new Error(`Patch anchor not found: ${label}`);
-            if (source.indexOf(before, index + before.length) >= 0) {
-              throw new Error(`Patch anchor is not unique: ${label}`);
-            }
-            source = source.slice(0, index) + after + source.slice(index + before.length);
-          };
-
-          replaceOnce(
-            "import { removeExpiredManualReminderCaches } from './manualReminderCache';\n",
-            "import { removeExpiredManualReminderCaches } from './manualReminderCache';\nimport PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';\nimport { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';\n",
-            'phone editor imports',
-          );
-
-          replaceOnce(
-            `const countryCodeFromOptionId = (optionId: string): string => {\n  const selected = COUNTRY_OPTIONS.find((option) => option.id === optionId);\n  return selected ? selected.code : '';\n};\n\nconst optionIdFromCountryCode = (countryCode: string): string => {\n  const normalized = normalizeCountryCode(countryCode);\n  const selected = COUNTRY_OPTIONS.find((option) => option.code === normalized);\n  return selected ? selected.id : CUSTOM_COUNTRY_ID;\n};`,
-            `const countryCodeFromOptionId = (optionId: string): string => {\n  const selected = PHONE_COUNTRY_OPTIONS.find((option) => option.id === optionId);\n  return selected ? selected.code : '';\n};\n\nconst optionIdFromCountryCode = (countryCode: string): string => {\n  const normalized = normalizeCountryCode(countryCode);\n  const matches = PHONE_COUNTRY_OPTIONS.filter((option) => option.code === normalized);\n  return matches.length === 1 ? matches[0].id : CUSTOM_COUNTRY_ID;\n};`,
-            'country option helpers',
-          );
-
-          replaceOnce(
-            `    new Set(COUNTRY_OPTIONS.map((option) => option.code)),`,
-            `    new Set(PHONE_COUNTRY_OPTIONS.map((option) => option.code)),`,
-            'international calling code inference',
-          );
-
-          replaceOnce(
-            `  const countryCode = normalizeCountryCode(String(userLike?.phoneCountryCode || ''));\n  const phoneRaw = normalizePhoneForSave(String(userLike?.phone || ''));\n  const phoneDigits = digitsOnly(phoneRaw);\n  const whatsappE164Digits = digitsOnly(String(userLike?.whatsappE164 || ''));\n  const hasStructured = Boolean(countryCode && phoneDigits);`,
-            `  const countryCode = normalizeCountryCode(String(userLike?.phoneCountryCode || ''));\n  const phoneLocalRaw = digitsOnly(String(userLike?.phoneLocal || ''));\n  const phoneRaw = normalizePhoneForSave(String(userLike?.phone || ''));\n  const phoneDigitsFromPhone = digitsOnly(phoneRaw);\n  const phoneDigits =\n    phoneLocalRaw ||\n    (countryCode && looksLikeInternationalWithPlus(phoneRaw)\n      ? stripCountryCodePrefix(phoneRaw, countryCode)\n      : phoneDigitsFromPhone);\n  const whatsappE164Digits = digitsOnly(String(userLike?.whatsappE164 || ''));\n  const hasStructured = Boolean(countryCode && phoneDigits);`,
-            'structured phone resolution',
-          );
-
-          replaceOnce(
-            `      display: \`${'${countryCode} ${phoneRaw}'}\`,\n      whatsappDigits: whatsappDigits.length >= 8 ? whatsappDigits : '',\n      editCountryCode: countryCode,\n      editPhone: phoneRaw,`,
-            `      display: \`${'${countryCode} ${phoneDigits}'}\`,\n      whatsappDigits: whatsappDigits.length >= 8 ? whatsappDigits : '',\n      editCountryCode: countryCode,\n      editPhone: phoneDigits,`,
-            'structured phone display/edit value',
-          );
-
-          replaceOnce(
-            `  const handleStartPhoneEdit = (\n    key: string,\n    userDocId: string,\n    countryCode: string,\n    currentPhone: string,\n  ) => {\n    if (!userDocId) return;\n    setEditingPhone({\n      key,\n      userDocId,\n      countryOptionId: optionIdFromCountryCode(countryCode),\n      countryCode: normalizeCountryCode(countryCode),\n      phone: normalizePhoneForSave(currentPhone),\n    });\n  };`,
-            `  const handleStartPhoneEdit = (\n    key: string,\n    userDocId: string,\n    countryCode: string,\n    currentPhone: string,\n  ) => {\n    if (!userDocId) return;\n    const normalizedCountryCode = normalizeCountryCode(countryCode);\n    const normalizedCurrentPhone = normalizePhoneForSave(currentPhone);\n    const localPhoneDigits =\n      normalizedCountryCode && looksLikeInternationalWithPlus(normalizedCurrentPhone)\n        ? stripCountryCodePrefix(normalizedCurrentPhone, normalizedCountryCode)\n        : digitsOnly(normalizedCurrentPhone);\n    setEditingPhone({\n      key,\n      userDocId,\n      countryOptionId: optionIdFromCountryCode(normalizedCountryCode),\n      countryCode: normalizedCountryCode,\n      phone: localPhoneDigits,\n    });\n  };`,
-            'phone editor start handler',
-          );
-
-          const savePattern = /  const handleSavePhoneEdit = async \(\) => \{[\s\S]*?\n  \};\n\n  const isOverallAdmissionsMode/;
-          const saveMatch = source.match(savePattern);
-          if (!saveMatch) throw new Error('Patch anchor not found: phone save handler');
-          source = source.replace(
-            savePattern,
-            `  const handleSavePhoneEdit = async () => {\n    if (!editingPhone) return;\n    const countryCodeInput = String(editingPhone.countryCode || '').trim();\n    if (!isCountryCodeInputValid(countryCodeInput)) {\n      toast({\n        title: 'Select a country',\n        description: 'Choose a valid country/calling code before saving.',\n        variant: 'destructive',\n      });\n      return;\n    }\n\n    const nextCountryCode = normalizeCountryCode(countryCodeInput);\n    const nextPhoneDigits = digitsOnly(editingPhone.phone);\n    if (!nextCountryCode || !nextPhoneDigits) {\n      toast({\n        title: 'Phone number required',\n        description: 'Enter the local phone number using digits only.',\n        variant: 'destructive',\n      });\n      return;\n    }\n\n    const nextWhatsappE164 = \`${'${nextCountryCode}${nextPhoneDigits}'}\`;\n    const e164DigitCount = digitsOnly(nextWhatsappE164).length;\n    if (e164DigitCount < 8 || e164DigitCount > 15) {\n      toast({\n        title: 'Check phone number',\n        description: 'Country code + phone number must contain 8–15 digits.',\n        variant: 'destructive',\n      });\n      return;\n    }\n\n    const nextCountryIso =\n      editingPhone.countryOptionId && editingPhone.countryOptionId !== CUSTOM_COUNTRY_ID\n        ? editingPhone.countryOptionId\n        : '';\n\n    setSavingPhoneKey(editingPhone.key);\n    try {\n      await setDoc(\n        doc(db, 'users', editingPhone.userDocId),\n        {\n          phoneCountryCode: nextCountryCode,\n          phoneLocal: nextPhoneDigits,\n          phone: nextWhatsappE164,\n          whatsappE164: nextWhatsappE164,\n          ...(nextCountryIso ? { countryCode: nextCountryIso } : {}),\n          updatedAt: serverTimestamp(),\n          updatedBy: user?.uid || null,\n        },\n        { merge: true },\n      );\n\n      setUsersMap((prev) => {\n        const nextMap: Record<string, ResolvedUserDoc> = { ...prev };\n        Object.keys(nextMap).forEach((lookupKey) => {\n          const existing = nextMap[lookupKey];\n          if (!existing || existing.docId !== editingPhone.userDocId) return;\n          nextMap[lookupKey] = {\n            ...existing,\n            data: {\n              ...existing.data,\n              phoneCountryCode: nextCountryCode,\n              phoneLocal: nextPhoneDigits,\n              phone: nextWhatsappE164,\n              whatsappE164: nextWhatsappE164,\n              ...(nextCountryIso ? { countryCode: nextCountryIso } : {}),\n            },\n          };\n        });\n        return nextMap;\n      });\n\n      setEditingPhone(null);\n      toast({\n        title: 'Phone updated',\n        description: \`Saved ${'${nextWhatsappE164}'} as the WhatsApp-ready number.\`,\n      });\n    } catch (error: any) {\n      toast({\n        title: 'Unable to save phone number',\n        description: error?.message || 'Please try again.',\n        variant: 'destructive',\n      });\n    } finally {\n      setSavingPhoneKey(null);\n    }\n  };\n\n  const isOverallAdmissionsMode`,
-          );
-
-          const rawPhoneSetter = `prev ? { ...prev, phone: event.target.value } : prev`;
-          const numericPhoneSetter = `prev ? { ...prev, phone: digitsOnly(event.target.value) } : prev`;
-          const setterOccurrences = source.split(rawPhoneSetter).length - 1;
-          if (setterOccurrences !== 2) {
-            throw new Error(`Expected two inline phone inputs, found ${setterOccurrences}`);
-          }
-          source = source.split(rawPhoneSetter).join(numericPhoneSetter);
-
-          const phoneInputAnchor = `                                    placeholder="Phone number"\n                                    className="h-8 text-xs"`;
-          const phoneInputReplacement = `                                    type="tel"\n                                    inputMode="numeric"\n                                    pattern="[0-9]*"\n                                    placeholder="Phone number"\n                                    className="h-8 text-xs"`;
-          const inputOccurrences = source.split(phoneInputAnchor).length - 1;
-          if (inputOccurrences !== 2) {
-            throw new Error(`Expected two inline phone input anchors, found ${inputOccurrences}`);
-          }
-          source = source.split(phoneInputAnchor).join(phoneInputReplacement);
-
-          replaceOnce(
-            `      <Dialog open={Boolean(messageEditor)} onOpenChange={(open) => (!open ? closeMessageEditor() : undefined)}>`,
-            `      <PhoneNumberEditorDialog\n        open={Boolean(editingPhone)}\n        value={editingPhone}\n        title={\n          editingPhone?.key.includes(':teacher-phone')\n            ? 'Edit Teacher Phone'\n            : 'Edit Parent Phone'\n        }\n        description="Search and select the country/calling code, then enter only the local phone digits."\n        saving={Boolean(editingPhone && savingPhoneKey === editingPhone.key)}\n        onChange={(next) => setEditingPhone(next)}\n        onClose={() => {\n          if (!savingPhoneKey) setEditingPhone(null);\n        }}\n        onSave={() => void handleSavePhoneEdit()}\n      />\n\n      <Dialog open={Boolean(messageEditor)} onOpenChange={(open) => (!open ? closeMessageEditor() : undefined)}>`,
-            'phone dialog render',
-          );
-
-          fs.writeFileSync(file, source);
-          NODE
+        run: node scripts/apply-phone-editor-patch.mjs
 
       - name: Install dependencies
         run: npm ci
@@ -122,12 +39,12 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Commit integration and remove temporary workflow
+      - name: Commit integration and remove temporary tooling
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/phone-editor-selfpatch.yml
+          git rm .github/workflows/phone-editor-selfpatch.yml scripts/apply-phone-editor-patch.mjs
           git add src/pages/admin/TodaysNotifications.tsx
           git diff --cached --check
           git commit -m "fix: improve sessions phone editor"
