@@ -6,22 +6,22 @@ const post: BlogPost = {
   category: 'Parent Tips',
   author: 'Priya',
   date: '2026-05-15',
-  modifiedDate: '2026-08-30',
-  readTime: '19 min read',
+  modifiedDate: '2026-09-12',
+  readTime: '20 min read',
   metaDescription:
-    'Child knows letter sounds but cannot read words? Check oral blending, printed blending, sound sequencing and fresh-word transfer to find the real decoding gap.',
+    'Child knows letter sounds but cannot blend or read words? Check sound recall, oral blending, CVC decoding and fresh-word transfer to find the real gap.',
   excerpt:
-    'Knowing individual letter sounds is only one part of learning to read. This guide helps parents locate the missing bridge between sound recall, blending, decoding and independent reading of fresh words.',
+    'If your child knows phonics sounds but cannot blend or read fresh words, this guide helps locate the gap between sound recall, blending, CVC decoding and connected reading.',
   audience: 'Parent',
   discoveryCategory: 'Phonics',
   body: [
     { type: 'h2', content: 'Quick answer: knowing individual sounds is not the same as being able to decode a word' },
     { type: 'p', content: 'A child can correctly say the sounds for **s**, **a** and **t** and still be unable to read **sat**. Letter-sound recall is one necessary part of early reading, but the child must also keep the sounds in order, blend them from left to right, recognise the resulting spoken word and repeat that process on unfamiliar words.' },
     { type: 'p', content: 'So the most useful parent question is not “How many sounds does my child know?” It is: **Can my child use already-known sounds to read a fresh, appropriately simple word without guessing or waiting for me to supply the answer?**' },
-    { type: 'p', content: 'Tiny Steps uses an editorial five-stage decoding check for this specific problem: **Sound recall → Oral blend → Printed blend → Fresh-word transfer → Connected-text transfer**. The first stage that consistently breaks is usually the better teaching target. This is a teaching and observation framework, not a standardized reading assessment.' },
+    { type: 'p', content: 'Tiny Steps uses an editorial six-stage decoding check for this specific problem: **Sound recall → Oral blend → Printed blend → CVC decoding → Fresh-word transfer → Connected-text transfer**. The first stage that consistently breaks is usually the better teaching target. This is a teaching and observation framework, not a standardized reading assessment.' },
 
-    { type: 'h2', content: 'Blog 50 is the diagnostic owner for “knows letter sounds but cannot read words”' },
-    { type: 'p', content: 'This page is deliberately narrow. It is for a child who already knows many of the relevant **letter sounds** but cannot yet combine those sounds into unfamiliar written words independently.' },
+    { type: 'h2', content: 'Is this the right guide for your child?' },
+    { type: 'p', content: 'Use this guide when your child already knows many of the relevant **letter sounds or phonics sounds but cannot blend them into words**, reads only a few rehearsed words, or struggles to decode fresh CVC words independently.' },
     { type: 'p', content: 'If the child mainly knows alphabet **names** but the sound-to-letter links themselves are weak, start with [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read). If you want the developmental stages of blending, use [How Kids Learn Blending](/blog/how-kids-learn-blending). If you already know the blending stage and need activities, use [Phonics Blending Activities](/blog/phonics-blending-activities).' },
     { type: 'p', content: 'If word reading is already reasonably accurate but connected reading is slow, effortful or poorly phrased, move to [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children). If the child reads the words but does not understand the story, use [Why Does My Child Read Words But Not Understand Stories?](/blog/why-child-reads-words-but-does-not-understand-story).' },
 
@@ -29,7 +29,7 @@ const post: BlogPost = {
     { type: 'p', content: 'The IES foundational reading guide gives strong-evidence recommendations for linking speech sounds to letters and for teaching children to decode words. Its decoding guidance specifically describes blending letter sounds and sound-spelling patterns **from left to right** to produce a recognisable pronunciation. The DfE Reading Framework describes the same core process: look through the graphemes in order, say the corresponding phonemes and blend them into the whole word.' },
     { type: 'p', content: 'That means a child may appear to “know phonics” because they can answer isolated sound cards, while the actual reading process is still unstable. Functional decoding requires the sounds to work together under print.' },
 
-    { type: 'h2', content: 'The Tiny Steps five-stage decoding check' },
+    { type: 'h2', content: 'The Tiny Steps six-stage decoding check' },
     { type: 'h3', content: 'Stage 1 — Sound recall' },
     { type: 'p', content: 'Show a small mixed set of already-taught letters or graphemes. Can the child give the sounds accurately without relying on alphabet order or a memorised card sequence? Slow or inconsistent retrieval can make blending much harder because too much attention is spent recalling each sound.' },
     { type: 'p', content: 'If sound recall itself needs practice, [Tiny Steps Phonics Balloon Pop](/free-balloon-pop-phonics-game-for-kids) can be used as a short listen-and-match activity. It is a **practice resource**, not proof that the child can blend or read words. Once sound recall is stable, move on rather than keeping the child indefinitely on isolated sound games.' },
@@ -38,14 +38,18 @@ const post: BlogPost = {
     { type: 'p', content: 'Remove print. Say a simple sequence such as /m/ /a/ /p/. Can the child merge it into **map**? If oral blending breaks before letters are even visible, more visual flashcards are unlikely to solve the central problem. The child may need explicit practice hearing, holding and combining phonemes in spoken words.' },
 
     { type: 'h3', content: 'Stage 3 — Printed blend' },
-    { type: 'p', content: 'Now show a simple word built only from sound-spelling patterns the child has been taught. Ask the child to work from left to right. Watch whether the child connects the sounds into one blend or gives three isolated sounds, pauses, and then guesses.' },
+    { type: 'p', content: 'Now show a simple word built only from sound-spelling patterns the child has been taught. Ask the child to work from left to right. Watch whether the child keeps the graphemes in sequence and joins the sounds, or gives isolated sounds, pauses, loses the first sound and then guesses.' },
     { type: 'p', content: 'DfE systematic synthetic phonics criteria explicitly describe decoding print by identifying and blending phonemes **from left to right all through the word**. IES likewise recommends direct teaching of blending with modelling, feedback and gradual movement toward independent application.' },
 
-    { type: 'h3', content: 'Stage 4 — Fresh-word transfer' },
+    { type: 'h3', content: 'Stage 4 — CVC decoding' },
+    { type: 'p', content: 'Next, use a small set of simple consonant-vowel-consonant words such as **sat, map, pin** or other CVC words built only from patterns the child already knows. The question is no longer just whether the child can say the sounds. Can the child complete the whole decoding sequence and arrive at the word without an adult supplying it?' },
+    { type: 'p', content: 'If oral blending works but simple printed CVC words still break down, the difficulty may be in keeping sound-symbol information active under print, tracking left to right, or completing the blend independently. [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) gives the wider CVC progression; this page focuses on diagnosing why a child who already knows the sounds still cannot read the word.' },
+
+    { type: 'h3', content: 'Stage 5 — Fresh-word transfer' },
     { type: 'p', content: 'Use another decodable word built from the same taught patterns but not just rehearsed. This is a powerful distinction. A child who reads only the familiar practice list may be recalling specific words; a child who can read a fresh matched word is showing that the decoding process transfers.' },
     { type: 'p', content: 'The UK phonics screening check includes phonically decodable pseudo-words specifically because unfamiliar items help show whether a child can apply phonics rather than rely only on remembered vocabulary. Parents do not need to recreate a formal screening check at home—the useful principle is simply to include **fresh decodable examples**.' },
 
-    { type: 'h3', content: 'Stage 5 — Connected-text transfer' },
+    { type: 'h3', content: 'Stage 6 — Connected-text transfer' },
     { type: 'p', content: 'Once single-word decoding is becoming secure, place the same patterns in a short decodable sentence or passage. Some children can blend a word in isolation but lose the process when they must also track spaces, punctuation and meaning. Connected text shows whether decoding is beginning to function inside real reading.' },
 
     { type: 'h2', content: 'Six common reasons a child knows sounds but still cannot read words' },
@@ -69,12 +73,13 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Do not confuse this with the sight-word question' },
     { type: 'p', content: 'If a child is struggling to blend regular unfamiliar words, adding a large memorisation list does not repair the decoding process. [Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first) explains the separate question of high-frequency and common-exception words.' },
-    { type: 'p', content: 'The goal is not to make a child sound out every familiar word forever. Accurate decoding of new words becomes increasingly efficient with successful practice, while frequently encountered words become more automatic. Blog 50 owns the **missing decoding bridge**, not the later question of reading speed.' },
+    { type: 'p', content: 'The goal is not to make a child sound out every familiar word forever. Accurate decoding of new words becomes increasingly efficient with successful practice, while frequently encountered words become more automatic. For this problem, **independent decoding strategy and fresh-word transfer** are more informative than racing through a familiar list.' },
 
-    { type: 'h2', content: 'A practical home routine: known sounds, easy words, one fresh transfer' },
+    { type: 'h2', content: 'A practical home routine: known sounds, CVC words, one fresh transfer' },
     { type: 'li', content: '**Sound recall:** briefly check only the graphemes needed for today’s words.' },
     { type: 'li', content: '**Oral blend:** merge two or three simple spoken sound sequences with no print.' },
-    { type: 'li', content: '**Printed blend:** read a small set of words made only from taught patterns.' },
+    { type: 'li', content: '**Printed blend:** track the graphemes from left to right and join the sounds smoothly.' },
+    { type: 'li', content: '**CVC word:** read a small set of simple CVC words made only from taught patterns.' },
     { type: 'li', content: '**Fresh word:** add one or two new matched words so you can see whether the strategy transfers.' },
     { type: 'li', content: '**Sentence:** read one short decodable sentence when single-word blending is stable enough.' },
     { type: 'li', content: '**Encoding:** build or spell one related word so the child also maps sounds back to print.' },
@@ -101,19 +106,24 @@ const post: BlogPost = {
     { type: 'li', content: 'The child starts the word with less prompting.' },
     { type: 'li', content: 'Sounds stay in the correct left-to-right order.' },
     { type: 'li', content: 'The child blends instead of guessing after the first letter.' },
+    { type: 'li', content: 'Simple CVC words using known patterns are read more independently.' },
     { type: 'li', content: 'The child can retry after an error.' },
     { type: 'li', content: 'A fresh word using known patterns can be decoded.' },
     { type: 'li', content: 'The same strategy begins to appear in short connected text.' },
-    { type: 'p', content: 'Speed can fluctuate when words become longer or spelling patterns become more complex. For Blog 50, **independent strategy and fresh-word transfer** are more informative than racing through a familiar list.' },
+    { type: 'p', content: 'Speed can fluctuate when words become longer or spelling patterns become more complex. **Independent strategy and fresh-word transfer** are more informative here than racing through a familiar list.' },
 
     { type: 'h2', content: 'What a good phonics class should check before adding harder material' },
     { type: 'li', content: 'Current grapheme–phoneme knowledge, not only age or school grade.' },
     { type: 'li', content: 'Oral blending and printed blending separately.' },
-    { type: 'li', content: 'Words that use the sound-spelling patterns already taught.' },
+    { type: 'li', content: 'Independent CVC decoding with known sound-spelling patterns.' },
     { type: 'li', content: 'Fresh-word decoding rather than only repeated lists.' },
     { type: 'li', content: 'Live correction followed by a child retry.' },
     { type: 'li', content: 'Transfer from isolated words into matched connected text.' },
     { type: 'p', content: 'EEF’s current phonics evidence notes that phonics should be explicit and systematic and matched to the child’s current phonemic awareness and letter-sound knowledge. It also notes that older struggling readers can still benefit from phonics when **decoding** is the actual problem; vocabulary and comprehension difficulties need different support.' },
+
+    { type: 'h2', content: 'When structured phonics support makes sense' },
+    { type: 'p', content: 'Structured support is worth considering when the child knows the required sounds but still needs repeated adult prompting to blend, cannot reliably decode simple matched CVC words, or cannot transfer the strategy to a fresh word after appropriate modelling and practice.' },
+    { type: 'p', content: 'The useful next step is not simply “more phonics.” It is to identify **where the sequence breaks** and start there. You can review the full [Tiny Steps phonics pathway](/phonics), or [book the free 35-minute 1:1 demo assessment](/book-demo) if you want help identifying the child’s current starting point before choosing a programme stage.' },
 
     { type: 'h2', content: 'Older child, same decoding bottleneck: do not assume phonics is only for beginners' },
     { type: 'p', content: 'An older child can know many letter sounds and common words yet still struggle to decode longer unfamiliar words. IES guidance for grades 4–9 gives a strong-evidence recommendation to build decoding of complex multisyllabic words. The material and language should be age-respectful, but a genuine decoding gap still needs decoding instruction.' },
@@ -143,11 +153,15 @@ const post: BlogPost = {
   faq: [
     {
       question: 'Why does my child know letter sounds but cannot read words?',
-      answer: 'Knowing isolated sounds does not automatically create decoding. The child must hold the sounds in order, blend them from left to right and transfer the same process to unfamiliar words. Check sound recall, oral blending and printed blending separately.',
+      answer: 'Knowing isolated sounds does not automatically create decoding. The child must hold the sounds in order, blend them from left to right, decode simple matched words and transfer the same process to unfamiliar words. Check sound recall, oral blending, printed blending and CVC decoding separately.',
+    },
+    {
+      question: 'My child knows phonics sounds but cannot blend. What should I practise first?',
+      answer: 'First remove print and check oral blending. If the child cannot merge a spoken sequence such as /m/ /a/ /p/ into map, practise hearing and combining sounds orally. If oral blending works, return to simple printed words using only sound-spelling patterns the child already knows.',
     },
     {
       question: 'Why can my child say s, a and t but not read sat?',
-      answer: 'The likely missing bridge is blending. The child can retrieve each sound but may not yet keep the sequence active long enough to combine it into one spoken word. Practise oral blending and then printed blending with already-known sounds.',
+      answer: 'The likely missing bridge is blending or completing the decoding sequence under print. The child may retrieve each sound but not yet keep the sequence active long enough to combine it into one spoken word. Check oral blending, printed blending and simple CVC decoding separately.',
     },
     {
       question: 'Should I teach more letter sounds if my child cannot blend words?',
