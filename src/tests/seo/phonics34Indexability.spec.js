@@ -7,8 +7,8 @@ import {
   shouldNoindexBlogSlug,
 } from '../../lib/blogIndexingPolicy.js';
 import {
-  PHONICS_34_AUTHORITY_ROUTES,
-  PHONICS_34_AUTHORITY_SLUGS,
+  PHONICS_AUTHORITY_ROUTES,
+  PHONICS_AUTHORITY_SLUGS,
 } from '../../lib/phonicsAuthorityRoutes.js';
 import { PUBLIC_ROUTE_MANIFEST } from '../../lib/publicRouteManifest.js';
 import { injectSeoMetadata } from '../../../scripts/prerender.mjs';
@@ -32,13 +32,14 @@ function firebaseSourceMatchesRoute(source, route) {
   return new RegExp(`^${escaped}$`).test(route);
 }
 
-describe('Phonics 34 search and AI crawlability lock', () => {
-  it('keeps exactly 34 authoritative public phonics articles resolvable and indexable', () => {
-    expect(PHONICS_34_AUTHORITY_SLUGS).toHaveLength(34);
-    expect(new Set(PHONICS_34_AUTHORITY_SLUGS).size).toBe(34);
-    expect(PHONICS_34_AUTHORITY_ROUTES).toHaveLength(34);
+describe('Phonics authority search and AI crawlability lock', () => {
+  it('keeps the current 33 authoritative public phonics articles resolvable and indexable', () => {
+    expect(PHONICS_AUTHORITY_SLUGS).toHaveLength(33);
+    expect(new Set(PHONICS_AUTHORITY_SLUGS).size).toBe(33);
+    expect(PHONICS_AUTHORITY_ROUTES).toHaveLength(33);
+    expect(PHONICS_AUTHORITY_SLUGS).not.toContain('how-to-choose-phonics-classes');
 
-    for (const slug of PHONICS_34_AUTHORITY_SLUGS) {
+    for (const slug of PHONICS_AUTHORITY_SLUGS) {
       const route = `/blog/${slug}`;
       const post = postsBySlug.get(slug);
 
@@ -54,7 +55,7 @@ describe('Phonics 34 search and AI crawlability lock', () => {
     }
   });
 
-  it('overrides stale noindex metadata for every Phonics 34 prerender and emits one self-canonical index directive', () => {
+  it('overrides stale noindex metadata for every phonics authority prerender and emits one self-canonical index directive', () => {
     const staleNoindexHtml = `<!doctype html><html><head>
       <title>stale</title>
       <meta name="description" content="stale">
@@ -64,7 +65,7 @@ describe('Phonics 34 search and AI crawlability lock', () => {
       <link rel="canonical" href="https://tinystepslearning.com/stale">
     </head><body><article><h1>Article</h1><p>Meaningful rendered article content.</p></article></body></html>`;
 
-    for (const route of PHONICS_34_AUTHORITY_ROUTES) {
+    for (const route of PHONICS_AUTHORITY_ROUTES) {
       const output = injectSeoMetadata(staleNoindexHtml, route);
       const escapedRoute = route.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -104,7 +105,7 @@ describe('Phonics 34 search and AI crawlability lock', () => {
     expect(robots).toContain('Sitemap: https://tinystepslearning.com/sitemap.xml');
   });
 
-  it('does not apply an X-Robots-Tag noindex hosting header to any Phonics 34 article route', () => {
+  it('does not apply an X-Robots-Tag noindex hosting header to any phonics authority route', () => {
     const firebase = JSON.parse(fs.readFileSync(path.join(repoRoot, 'firebase.json'), 'utf8'));
     const headers = firebase?.hosting?.headers || [];
     const authorityNoindexHeaders = headers.filter((entry) => {
@@ -114,7 +115,7 @@ describe('Phonics 34 search and AI crawlability lock', () => {
       );
       if (!hasNoindexHeader) return false;
 
-      return PHONICS_34_AUTHORITY_ROUTES.some((route) =>
+      return PHONICS_AUTHORITY_ROUTES.some((route) =>
         firebaseSourceMatchesRoute(entry?.source, route),
       );
     });
@@ -135,10 +136,10 @@ describe('Phonics 34 search and AI crawlability lock', () => {
     }
   });
 
-  it('publishes every Phonics 34 authority URL in the LLM-facing full authority directory', () => {
+  it('publishes every current phonics authority URL in the LLM-facing full authority directory', () => {
     const llmsFull = fs.readFileSync(path.join(repoRoot, 'public/llms-full.txt'), 'utf8');
 
-    for (const route of PHONICS_34_AUTHORITY_ROUTES) {
+    for (const route of PHONICS_AUTHORITY_ROUTES) {
       expect(llmsFull).toContain(`https://tinystepslearning.com${route}`);
     }
   });
