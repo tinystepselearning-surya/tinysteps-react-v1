@@ -17,8 +17,8 @@
 | 9 — Existing-page quality | ✅ CLOSED | Shared quality standard and targeted cleanup implemented |
 | 10 — CTR optimization | ✅ CLOSED / MEASURING | Five-page GSC-backed snippet experiment implemented; outcome requires post-change measurement |
 | 11 — Technical consolidation | ✅ CLOSED / DEPLOYMENT-GATED | Canonical, redirect, sitemap, RSS/feed, LLM discovery and build controls consolidated |
-| 12 — Authority signals | ⏭️ NEXT | Re-establish authority hierarchy and supporting signals |
-| 13 — GSC measurement | Pending | Formal recovery measurement buckets |
+| 12 — Authority signals | ✅ CLOSED | Tier A/B/C hierarchy locked; targeted support → specialist-owner signals added without overriding C7 commercial routing |
+| 13 — GSC measurement | ⏭️ NEXT | Formal recovery measurement buckets and before/after framework |
 | 14 — Query-owner consistency | Pending | Verify correct ranking URL for each priority query family |
 | 15 — Stabilization | Pending | 7-day, 14–21-day and 28+ day post-change verification |
 
@@ -26,6 +26,8 @@
 
 No new SEO landing pages should be added during recovery. Existing owners should be strengthened, consolidated and measured before any expansion decision.
 
+Brick 12 keeps authority deliberately layered: supporting content reinforces the relevant SATPIN, diagnostic or comparison authority; those established owners carry the upward relationship to `/phonics`. Commercial CTA strength remains controlled by the existing C7 architecture rather than by Brick 12.
+
 ## Measurement note
 
-Brick 10 is implemented but its CTR result cannot be declared successful until enough post-change Search Console data exists. Brick 11 is technically implemented, while live generated-output verification remains part of deployment/stabilization checks.
+Brick 10 is implemented but its CTR result cannot be declared successful until enough post-change Search Console data exists. Brick 11 is technically implemented, while live generated-output verification remains part of deployment/stabilization checks. Brick 13 is the next recovery stage and will formalize revenue SEO, qualified informational SEO and traffic SEO measurement separately.
