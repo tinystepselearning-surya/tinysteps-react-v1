@@ -202,22 +202,127 @@ Brick 1 explicitly keeps these separate:
 
 ## BRICK 2 — Restore `/phonics` as the Main Commercial Authority
 
+**Status:** ✅ CLOSED — existing strong owner preserved and recovery-certified
+
+### Brick artifact
+
+`docs/TINY_STEPS_SEO_RECOVERY_BRICK_2_PHONICS_AUTHORITY_2026-09-12.md`
+
+### Regression protection
+
+`src/tests/seo/recoveryBrick2PhonicsAuthority.spec.ts`
+
+Test commit:
+
+`55e528e349e6c0090a7fd4d6626a1721f7f50297`
+
+Brick artifact commit:
+
+`b0dd85ae1ad87c6ee1629b674192a343b836c97f`
+
+### Audit conclusion
+
+The current `/phonics` page already satisfies the intended Brick 2 authority contract. It has:
+
+- self-canonical `/phonics`
+- commercial H1 `Online Phonics Classes for Kids`
+- aligned title and meta description
+- live 1:1 proposition
+- ages 3–12
+- assessment-first placement
+- 35-minute standard live class duration
+- three programme levels
+- cumulative phonics methodology
+- blending, decoding, spelling and reading-fluency coverage
+- parent-visible progress
+- FAQ coverage and FAQ schema
+- Course schema
+- pathway and quality-criteria ItemList schema
+- testimonials / class-sample / curriculum trust pathways
+- explicit handoff to the comparison owner
+- explicit handoff to the phonics fee owner
+- SATPIN, blending, reading-problem and free-practice support links
+
+### Controlled Brick 2 decision
+
+Because the owner page is already strong, Brick 2 deliberately **did not perform another large rewrite**.
+
+Preserved unchanged:
+
+- URL
+- canonical
+- title
+- meta description
+- H1
+- hero structure
+- programme hierarchy
+- sitemap membership
+- schema architecture
+
+This reduces ranking volatility and gives later cannibalisation cleanup a cleaner measurement environment.
+
+### Generic alias consolidation confirmed
+
+The repository already permanently consolidates:
+
+- `/phonics-classes-for-kids` → `/phonics`
+- `/online-phonics-reading-classes` → `/phonics`
+
+These redirects remain protected.
+
+### Ownership separation confirmed
+
+- `/phonics` remains the generic commercial programme owner.
+- `/best-online-phonics-classes-for-kids-in-india` remains the best/compare/provider-selection owner.
+- `/phonics-fees-india` remains the phonics fee/cost owner.
+- `/book-demo` remains the assessment/demo transactional owner.
+
+### Known cleanup queued for later bricks
+
+The `/phonics` source still contains direct links to the retired historical diagnostic path:
+
+`/blog/child-knows-letter-sounds-but-cannot-read`
+
+The path already 301s to the correct current owner:
+
+`/blog/why-child-knows-letter-sounds-but-cannot-read-words`
+
+This is not a second indexable owner and therefore does not block Brick 2. Direct-link cleanup is assigned to Brick 8 / Brick 11, where internal-link and technical consolidation are handled systematically.
+
+### Definition of Done
+
+- [x] Generic commercial authority verified.
+- [x] Canonical protected.
+- [x] Title/meta/H1 verified.
+- [x] Assessment-first programme proposition verified.
+- [x] Curriculum/methodology/outcomes verified.
+- [x] Comparison ownership separated.
+- [x] Fee ownership separated.
+- [x] Informational/support pathways verified.
+- [x] FAQ/schema coverage verified.
+- [x] Generic aliases confirmed as redirects into `/phonics`.
+- [x] Recovery regression test committed.
+- [x] No new indexable page created.
+- [x] No unnecessary broad rewrite introduced.
+
+**Brick 2 decision:** CLOSED.
+
+---
+
+## BRICK 3 — Remove Commercial Cannibalisation
+
 **Status:** ⏭️ NEXT
 
-Brick 2 will audit the current `/phonics` implementation against the locked ownership registry and make only the controlled changes required to reinforce it as the generic commercial phonics owner.
+Brick 3 will physically clean the remaining commercial overlap around the now-certified `/phonics` authority owner.
 
-Planned Brick 2 scope:
+Primary Brick 3 targets:
 
-- current title/meta/H1 audit
-- opening 250–350 word intent audit
-- programme proposition and age-range clarity
-- assessment/placement clarity
-- curriculum/methodology/outcome coverage
-- FAQ and testimonial relevance
-- commercial query wording without keyword stuffing
-- internal-link intake from existing supporting pages
-- schema/canonical safety check
-- no URL change
-- no new page creation
+- protect `/phonics` as generic programme owner
+- protect `/best-online-phonics-classes-for-kids-in-india` as comparison owner
+- protect `/phonics-fees-india` as fee owner
+- audit `/blog/how-to-choose-phonics-classes` against the comparison page and prepare/execute the approved consolidation path
+- ensure historical “best phonics” aliases resolve directly to the final comparison owner without redirect chains
+- reposition any remaining commercial-support content that still competes for the same head queries
+- verify homepage and informational blogs do not present themselves as the generic commercial phonics owner
 
-Brick 2 must be completed before Brick 3 physically removes commercial cannibalisation.
+Brick 3 must not create a new commercial URL.
