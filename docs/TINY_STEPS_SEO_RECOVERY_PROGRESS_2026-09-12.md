@@ -103,7 +103,7 @@ Known direct-link cleanup to a retired diagnostic alias remains queued for Brick
 
 ## BRICK 3 — Remove Commercial Cannibalisation
 
-**Status:** ✅ CLOSED — commercial ownership control locked; physical duplicate retirement handed to Brick 4
+**Status:** ✅ CLOSED — commercial ownership control locked
 
 **Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_3_COMMERCIAL_CANNIBALISATION_2026-09-12.md`  
 **Ownership registry:** `src/lib/seoRecoveryBrick3CommercialOwnership.ts`  
@@ -111,9 +111,10 @@ Known direct-link cleanup to a retired diagnostic alias remains queued for Brick
 
 **Ownership registry commit:** `bd322318114ac401503aaee25e9865be180946c2`  
 **Regression-test commit:** `909f76cf5619fbabd12221c53e793f517673c70d`  
-**Artifact commit:** `850941c5f08a8e270298014d0f86318ecd353746`
+**Artifact commit:** `850941c5f08a8e270298014d0f86318ecd353746`  
+**Closure commit:** `c23dd4b052ad844bca035c459c5ced21c3913737`
 
-### Commercial owner boundaries now locked
+Commercial owner boundaries locked:
 
 - `/phonics` — generic phonics programme intent.
 - `/best-online-phonics-classes-for-kids-in-india` — best / compare / review / provider-selection intent.
@@ -121,47 +122,13 @@ Known direct-link cleanup to a retired diagnostic alias remains queued for Brick
 - `/pricing` — cross-programme pricing and packages.
 - `/book-demo` — assessment / demo / trial intent.
 
-### Existing aliases confirmed clean
+Existing aliases confirmed:
 
 - `/phonics-classes-for-kids` → `/phonics`
 - `/online-phonics-reading-classes` → `/phonics`
 - `/best-online-phonics-classes-india` → `/best-online-phonics-classes-for-kids-in-india`
 
-### One remaining commercial collision
-
-The only approved overlapping page remaining is:
-
-`/blog/how-to-choose-phonics-classes`
-
-which overlaps the dedicated comparison owner:
-
-`/best-online-phonics-classes-for-kids-in-india`
-
-Brick 3 locks the final destination but deliberately does **not** retire the source yet. Brick 4 owns merge/retirement mechanics so we do not create temporary redirect chains or change the same redirect topology twice.
-
-### Brick 4 redirect requirement
-
-After content-preservation verification, Brick 4 must create this final shape:
-
-- `/blog/how-to-choose-phonics-classes` → **301** → `/best-online-phonics-classes-for-kids-in-india`
-- `/blog/best-online-phonics-classes-for-kids` → **301 directly** → `/best-online-phonics-classes-for-kids-in-india`
-- `/blog/best-phonics-classes-for-kids` → **301 directly** → `/best-online-phonics-classes-for-kids-in-india`
-
-No redirect chain through the retiring `how-to-choose` URL is allowed.
-
-### Definition of Done
-
-- [x] Generic programme owner protected.
-- [x] Comparison owner protected.
-- [x] Fee owner protected.
-- [x] Pricing and assessment owners protected.
-- [x] Existing commercial aliases verified.
-- [x] Remaining overlap reduced to one approved duplicate.
-- [x] Final merge destination locked.
-- [x] Direct-redirect requirement documented.
-- [x] Code-level ownership registry added.
-- [x] Regression protection added.
-- [x] No new commercial URL created.
+Brick 3 isolated the remaining approved commercial duplicate and locked its final destination for Brick 4.
 
 **Brick 3 decision:** CLOSED.
 
@@ -169,29 +136,122 @@ No redirect chain through the retiring `how-to-choose` URL is allowed.
 
 ## BRICK 4 — Merge Genuine Duplicate Pages
 
-**Status:** ⏭️ NEXT
+**Status:** ✅ CLOSED — provider-selection duplicate retired into the commercial comparison authority
 
-Brick 4 will perform the first physical consolidation under the locked registry.
+**Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_4_DUPLICATE_MERGE_2026-09-12.md`  
+**Regression test:** `src/tests/seo/recoveryBrick4DuplicateMerge.spec.ts`
 
-Immediate target:
+### Consolidation completed
+
+Retired source:
 
 `/blog/how-to-choose-phonics-classes`
 
-→ merge useful source material into →
+Final authority owner:
 
 `/best-online-phonics-classes-for-kids-in-india`
 
-→ retire source with direct **301**.
+Historical aliases also now resolve directly to the final owner:
 
-Brick 4 must also:
+- `/blog/best-online-phonics-classes-for-kids`
+- `/blog/best-phonics-classes-for-kids`
 
-- redirect both historical “best phonics” blog aliases directly to the final comparison owner;
-- remove the retired source from blog discovery/indexing outputs;
-- update sitemap/RSS/LLM/editorial-authority registries that currently treat it as a live article;
-- preserve useful source material before deletion;
-- update internal links to the final owner;
-- verify no redirect chain remains;
-- run consolidation/regression checks;
-- review other Brick 1 merge candidates only where user intent is genuinely duplicated.
+Final topology:
 
-Brick 4 must not merge pages merely because they share vocabulary.
+```text
+/blog/how-to-choose-phonics-classes
+    └── 301 → /best-online-phonics-classes-for-kids-in-india
+
+/blog/best-online-phonics-classes-for-kids
+    └── 301 → /best-online-phonics-classes-for-kids-in-india
+
+/blog/best-phonics-classes-for-kids
+    └── 301 → /best-online-phonics-classes-for-kids-in-india
+```
+
+No redirect chain through another retired URL is allowed.
+
+### Content-preservation decision
+
+The retiring article’s useful provider-selection concepts were audited before deletion. The surviving comparison page already contains the equivalent decision framework through:
+
+- child-fit / placement decision gates
+- teaching-quality checks
+- proof-of-transfer checks
+- format comparison
+- provider scorecard
+- trial / demo questions
+- red flags
+- pricing questions
+- links to programme, fee and assessment owners
+
+Therefore no duplicate block of retired copy was pasted into the surviving page. The authority owner already covers the useful decision job.
+
+### Technical and discovery cleanup
+
+- [x] retired source post deleted from `src/content/blog/posts/phonics/`
+- [x] consolidation map points all three retired paths directly to the final comparison owner
+- [x] server-side canonical redirect map updated
+- [x] consolidation audit expanded for blog → commercial-page destinations
+- [x] retired URL removed from RSS required URLs
+- [x] prebuild LLM discovery cleanup added
+- [x] phonics editorial authority set updated from 34 → 33
+- [x] overall quality-reviewed editorial set updated from 51 → 50
+- [x] blog intent matrix updated so only distinct informational support pages remain
+- [x] dedicated Brick 4 regression guard added
+
+### Surviving informational pages deliberately preserved
+
+- `/blog/online-phonics-classes-vs-school` — delivery-mode comparison
+- `/blog/why-parents-choose-online-phonics` — online-format benefits / parent fit
+
+These are not merged because they serve different informational jobs from commercial provider selection.
+
+### Key implementation commits
+
+- `19dbd29805308daa0eaa3bf61847816ed026c72b` — final consolidation topology
+- `d2dc29e20d8647efc652178df73e30c2da7fd2ca` — server redirects
+- `d0f4ae19583a0d74b8aced2a87037dc3621cc722` — consolidation audit
+- `03341c055b04da69296ed66f8cefde3742b759ae` — duplicate source deletion
+- `8dfdf6ac349969b1d6bfca7b28c7e2c3e3456865` — intent matrix update
+- `41311eee83f5bbdb8330d014f29b3a4757aa65e0` — feed / LLM discovery normalization
+- `cb1fc1b0d87152fe827cd710da021cd3e46da771` — Brick 4 regression guard
+- `87f5094a1af8715cc4dd603c8dc4160c22426d7f` — Brick 4 artifact
+
+### Deferred cleanup
+
+Historical metadata entries, dormant CTA overrides, committed generated files awaiting normal prebuild regeneration, and old audit documentation may still mention the retired slug. These are not live competing owners and are reserved for Brick 8 / Brick 11 cleanup.
+
+**Brick 4 decision:** CLOSED.
+
+---
+
+## BRICK 5 — Strengthen the Parent-Problem Authority Page
+
+**Status:** ⏭️ NEXT
+
+Brick 5 will strengthen the current canonical diagnostic owner:
+
+`/blog/why-child-knows-letter-sounds-but-cannot-read-words`
+
+The historical shorter URL remains retired:
+
+`/blog/child-knows-letter-sounds-but-cannot-read`
+
+→ **301** →
+
+`/blog/why-child-knows-letter-sounds-but-cannot-read-words`
+
+Brick 5 must **not reverse this existing consolidation**.
+
+Planned scope:
+
+- audit current search intent and content depth;
+- strengthen the distinction between sound recall, oral blending, printed blending, fresh-word transfer and connected-text transfer;
+- cover CVC blending and “says each sound but cannot make the word” parent language naturally;
+- improve problem → diagnosis → home-practice → structured-support flow;
+- keep the CTA diagnostic and assessment-led rather than hard sales;
+- strengthen internal links to the correct phonics authority and blending support pages;
+- protect canonical, URL and existing redirect lineage;
+- add Brick 5 regression protection;
+- create no new SEO URL.
