@@ -20,7 +20,7 @@ export function discoverEndpointPlan(exported) {
     if (!/^[A-Za-z][A-Za-z0-9_-]{0,62}$/.test(id)) throw new Error(`Unsafe function id: ${id}`);
     if (seen.has(id)) throw new Error(`Duplicate function id: ${id}`);
     seen.add(id);
-    functions.push({ exportName, id, region: regions[0], selector: `functions:default:${id}` });
+    functions.push({ exportName, id, region: regions[0], selector: `functions:${id}` });
   }
   if (!functions.length) throw new Error('No deployable compiled function exports found');
   functions.sort((a, b) => a.id.localeCompare(b.id));
