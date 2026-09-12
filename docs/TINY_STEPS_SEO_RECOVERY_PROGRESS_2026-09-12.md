@@ -420,21 +420,56 @@ Raw redirect maps, generated discovery/sitemap artifacts, historical audit docum
 
 ## BRICK 9 — Upgrade Existing Page Quality
 
+**Status:** ✅ CLOSED — shared quality standard locked and targeted reader-facing gaps repaired
+
+**Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_9_EXISTING_PAGE_QUALITY_2026-09-12.md`  
+**Quality registry:** `src/config/seoRecoveryBrick9PageQuality.ts`  
+**Regression test:** `src/tests/seo/recoveryBrick9ExistingPageQuality.spec.ts`
+
+### Quality work completed
+
+- [x] 14-point quality standard locked: intent, title, meta, H1, introduction, H2s, examples, expertise, FAQs, internal links, CTA, schema, duplication and freshness
+- [x] ten priority recovery pages classified under one protect-or-strengthen contract
+- [x] established commercial winners protected from unnecessary Brick 9 title/meta rewrites
+- [x] blog editorial cleanup now handles `Blog 12` as well as `Blog #12` numbering
+- [x] common internal SEO ownership jargon is converted to reader-facing differentiation language before blog rendering
+- [x] historical SATPIN source links normalize to `/blog/phonics-satpin-launch`
+- [x] sound-supported tracing copy no longer exposes the phrase `letter formation owner`
+- [x] SATPIN master/support differentiation remains intact
+- [x] parent diagnostic six-stage sequence remains intact
+- [x] tracing remains explicitly separated from decoding evidence
+- [x] no new SEO page, URL migration or ownership change introduced
+- [x] regression protection expanded
+
+### Implementation commits
+
+- `2b73d4d6d40768d589ed5100d45ae5b1aa789824` — normalize historical SATPIN support path
+- `7edd4ed19fcf2ee61ae9b303e57823961ac01455` — reader-facing blog ownership cleanup
+- `2da3daa500900ec13d9c66f3580177cc513266c3` — editorial-quality regression expansion
+- `109082a735200d8641c49c4766d46f3ad329e43f` — sound-tracing copy polish
+- `26d3ed4cfe63fb71bc2300cee6f6befe928ecad4` — Brick 9 quality registry
+- `f667553a815eaa940bfa644b6601a11cbb2ec5d9` — Brick 9 existing-page quality guard
+- `28a571cc095b8cf746ff04b71029176209f2b25b` — Brick 9 artifact
+
+### Deferred to Brick 11
+
+A few isolated literals in large static source files still point at already-retired aliases or use older internal ownership terminology. Permanent redirects/canonical ownership already protect those URLs, but Brick 11 should remove the raw source residue together with redirect maps, generated discovery artifacts and final canonical consistency checks.
+
+**Brick 9 decision:** CLOSED.
+
+---
+
+## BRICK 10 — Improve CTR on Existing Winners
+
 **Status:** ⏭️ NEXT
 
-Brick 9 will apply the shared page-quality checklist to priority existing URLs without creating new pages.
+Brick 10 will use search-performance evidence to test controlled snippet improvements on existing URLs only.
 
 Planned scope:
 
-- search-intent alignment;
-- title/meta quality;
-- H1 and heading hierarchy;
-- opening answer quality;
-- examples and evidence;
-- Tiny Steps-specific expertise;
-- FAQ usefulness;
-- CTA fit to intent;
-- schema/visible-content consistency;
-- duplication control;
-- freshness and accuracy;
-- controlled page-by-page improvements only.
+- prioritize high-impression, low-CTR pages that already rank within reach;
+- preserve established URL ownership;
+- test title and meta changes in controlled batches rather than wholesale rewrites;
+- strengthen answer-first openings only where intent mismatch is evident;
+- measure clicks, impressions, CTR, average position and query-owner consistency;
+- do not create new SEO pages as a substitute for weak snippets.
