@@ -18,7 +18,7 @@ function articlePage(mainEntityOfPage = { '@type': 'WebPage', '@id': articleUrl 
     <link rel="canonical" href="${articleUrl}">
     <meta name="description" content="A parent guide to phonics and supporting reading at home.">
     <meta name="robots" content="index, follow">
-    <script type="application/ld+json">${JSON.stringify({ '@type': 'BlogPosting', headline: articleTitle, mainEntityOfPage, ...extra })}</script>`;
+    <script type="application/ld+json">${JSON.stringify({ '@type': 'BlogPosting', headline: articleTitle, description: 'A parent guide to phonics and supporting reading at home.', mainEntityOfPage, ...extra })}</script>`;
   document.getElementById('root').innerHTML = `<article><h1>${articleTitle}</h1><p>${'Support the taught system and check transfer into fresh words. '.repeat(20)}</p></article>`;
 }
 

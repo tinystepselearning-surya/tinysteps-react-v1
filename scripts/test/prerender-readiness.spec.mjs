@@ -5,6 +5,7 @@ import { captureReadyRoute, installPrerenderShell, readPrerenderReadiness } from
 
 const canonicalUrl = 'https://tinystepslearning.com/blog/speaking-video-feedback';
 const title = 'How Video Feedback Helps Kids Improve Public Speaking';
+const description = 'A parent guide to useful video feedback for children.';
 const contract = { canonicalUrl, requireArticle: true, checkArticleMetadata: true, expectedNoindex: false };
 const paragraph = 'Children review a recording, choose one clear improvement, and try another speech. '.repeat(12);
 
@@ -13,7 +14,7 @@ function readyArticle({ noindex = false } = {}) {
     <link rel="canonical" href="${canonicalUrl}">
     <meta name="description" content="A parent guide to useful video feedback for children.">
     ${['robots', 'googlebot', 'bingbot'].map((name) => `<meta name="${name}" content="${noindex ? 'noindex, follow' : 'index, follow'}">`).join('')}
-    <script type="application/ld+json">${JSON.stringify({ '@type': 'BlogPosting', url: canonicalUrl, headline: title })}</script>`;
+    <script type="application/ld+json">${JSON.stringify({ '@type': 'BlogPosting', url: canonicalUrl, headline: title, description })}</script>`;
   document.body.innerHTML = `<div id="root"><main><article><h1>${title}</h1><p>${paragraph}</p></article></main></div>`;
 }
 
@@ -68,6 +69,29 @@ describe('prerender readiness is based on the requested page, not HTML size', ()
 
   it.each(['', '   '])('rejects an empty description (%j)', (value) => {
     document.querySelector('meta[name="description"]').content = value;
+    expect(readPrerenderReadiness(contract)).toBe(false);
+  });
+
+  it('rejects a stale nonempty title even with the correct article and canonical', () => {
+    document.title = 'SATPIN Phonics Guide | Tiny Steps Blog';
+    expect(readPrerenderReadiness(contract)).toBe(false);
+  });
+
+  it('rejects a stale nonempty description even with the correct article and canonical', () => {
+    document.querySelector('meta[name="description"]').content = 'An unrelated guide about vowel sounds.';
+    expect(readPrerenderReadiness(contract)).toBe(false);
+  });
+
+  it('rejects a missing description identity in otherwise matching schema', () => {
+    const script = document.querySelector('script');
+    const schema = JSON.parse(script.textContent);
+    delete schema.description;
+    script.textContent = JSON.stringify(schema);
+    expect(readPrerenderReadiness(contract)).toBe(false);
+  });
+
+  it('rejects duplicate title elements', () => {
+    document.head.append(document.querySelector('title').cloneNode(true));
     expect(readPrerenderReadiness(contract)).toBe(false);
   });
 

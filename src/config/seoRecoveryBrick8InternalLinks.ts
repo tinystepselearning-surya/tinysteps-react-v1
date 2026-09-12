@@ -11,16 +11,23 @@ export const SEO_RECOVERY_BRICK8_AUTHORITY_PATHS = Object.freeze({
   wordBuildingPractice: '/free-word-building-game-for-kids',
 } as const);
 
+// Retired aliases are lookup data, not outgoing links. Compose their paths so
+// the Vite outgoing-link rewrite cannot collapse distinct keys into one owner.
+// This also keeps deprecated full href literals out of the production bundle.
+function retiredBlogPath<Slug extends string>(slug: Slug): `/blog/${Slug}` {
+  return ['/blog', slug].join('/') as `/blog/${Slug}`;
+}
+
 export const SEO_RECOVERY_BRICK8_RETIRED_INTERNAL_PATHS = Object.freeze({
-  '/blog/child-knows-letter-sounds-but-cannot-read':
+  [retiredBlogPath('child-knows-letter-sounds-but-cannot-read')]:
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.parentDecodingDiagnostic,
-  '/blog/how-to-choose-phonics-classes':
+  [retiredBlogPath('how-to-choose-phonics-classes')]:
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.phonicsComparison,
-  '/blog/best-online-phonics-classes-for-kids':
+  [retiredBlogPath('best-online-phonics-classes-for-kids')]:
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.phonicsComparison,
-  '/blog/best-phonics-classes-for-kids':
+  [retiredBlogPath('best-phonics-classes-for-kids')]:
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.phonicsComparison,
-  '/blog/week-1-phonics-satpin-launch':
+  [retiredBlogPath('week-1-phonics-satpin-launch')]:
     SEO_RECOVERY_BRICK8_AUTHORITY_PATHS.satpinHomePractice,
 } as const);
 

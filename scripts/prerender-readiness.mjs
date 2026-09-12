@@ -67,7 +67,7 @@ export function readPrerenderReadiness(contract) {
       try { collect(JSON.parse(node.textContent || '')); } catch { /* Not ready until valid article schema exists. */ }
     }
     const hasType = (schema, type) => (Array.isArray(schema['@type']) ? schema['@type'] : [schema['@type']]).includes(type);
-    const matchingArticle = schemas.some((schema) => {
+    const matchingArticle = schemas.find((schema) => {
       const mainPage = typeof schema.mainEntityOfPage === 'string'
         ? schema.mainEntityOfPage : schema.mainEntityOfPage?.['@id'];
       // applySeo's graph normalizer links articles to canonicalUrl#webpage.
@@ -84,6 +84,21 @@ export function readPrerenderReadiness(contract) {
         && headings.some((heading) => heading.replace(/\s+/g, ' ') === schema.headline.trim().replace(/\s+/g, ' '));
     });
     if (!matchingArticle) problems.push('matching article headline and BlogPosting schema are not ready');
+    else {
+      const normalize = (value) => typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+      const headline = normalize(matchingArticle.headline);
+      // These are the two title formats supported by the existing blog renderers.
+      // A nonempty title from the previous route is not sufficient.
+      if (document.head.querySelectorAll('title').length !== 1
+          || ![headline, `${headline} | Tiny Steps Blog`].includes(normalize(document.title))) {
+        problems.push('document title does not match the current article');
+      }
+      const canonicalPage = schemas.find((node) => hasType(node, 'WebPage') && node.url === contract.canonicalUrl);
+      const articleDescription = normalize(matchingArticle.description ?? canonicalPage?.description);
+      if (!articleDescription || normalize(descriptions[0]) !== articleDescription) {
+        problems.push('description does not match the current article schema');
+      }
+    }
   }
 
   const state = { ready: problems.length === 0, problems, title: document.title, headings, canonicals, descriptions, robots };

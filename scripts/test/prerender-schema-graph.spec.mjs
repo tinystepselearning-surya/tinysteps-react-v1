@@ -72,6 +72,16 @@ describe('prerender checks the rendered SEO graph, not only the input object', (
     expect(readPrerenderReadiness(contract)).toBe(false);
   });
 
+  it('rejects stale metadata even when the canonical WebPage identity resolves', () => {
+    document.querySelector('meta[name="description"]').content = 'The previous article description.';
+    expect(readPrerenderReadiness(contract)).toBe(false);
+  });
+
+  it('rejects a stale document title even with a matching visible headline and graph', () => {
+    document.title = 'SATPIN Phonics Guide | Tiny Steps Blog';
+    expect(readPrerenderReadiness(contract)).toBe(false);
+  });
+
   it('still requires a matching visible headline after graph identity resolves', () => {
     document.querySelector('h1').textContent = 'An unrelated article';
     expect(readPrerenderReadiness(contract)).toBe(false);
