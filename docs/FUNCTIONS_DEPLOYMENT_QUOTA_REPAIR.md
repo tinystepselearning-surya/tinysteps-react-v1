@@ -12,7 +12,7 @@ This change does **not** repair, mutate, or authorize any Sessions Management da
 
 - Discover deployable functions from the compiled `functions/lib/index.js` exports carrying Firebase `__endpoint` metadata. New exports are therefore included automatically.
 - Require the verified Gen 2, Node 22, `asia-south1` topology and fail closed on an unexpected platform, runtime, region, duplicate, or unsafe selector.
-- Deploy explicit `functions:default:<export>` selectors in deterministic sequential groups of five.
+- Because this repository has no explicit Firebase `codebase` annotation, deploy documented `functions:<export>` selectors in deterministic sequential groups of five.
 - Pin the production Functions mutation CLI to Firebase CLI `15.30.0` for reproducibility.
 - Preserve the existing production concurrency lock and the explicit retired-function allowlist. No active function is deleted/recreated by this repair.
 - Wait at least 60 seconds plus jitter before the first mutation attempt for every batch. Retry waits are 120 and 240 seconds plus jitter.
