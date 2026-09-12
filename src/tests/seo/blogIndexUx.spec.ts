@@ -20,7 +20,7 @@ import {
 describe('B5 blog index UX model with post-B7 polish', () => {
   it('uses the real normalized post-Brick-4 registry instead of a stale hard-coded article count', () => {
     expect(blogPosts.length).toBe(83);
-    expect(getPublishedCountLabel(blogPosts.length)).toBe('84 published articles');
+    expect(getPublishedCountLabel(blogPosts.length)).toBe('83 published articles');
 
     const source = fs.readFileSync(path.join(process.cwd(), 'src/pages/blog/BlogIndexPage.tsx'), 'utf8');
     expect(source).not.toContain('56+ curated parent articles');

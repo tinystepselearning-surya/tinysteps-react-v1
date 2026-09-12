@@ -59,6 +59,19 @@ describe('blog editorial cleanup', () => {
       .toBe('Summer reading plan vs summer phonics plan: choose the right guide');
   });
 
+  it('cleans plain ownership wording without losing the topic or its links', () => {
+    expect(cleanBlogText('This page owns ordinary two-way conversation skills. Read [the guide](/blog/conversation-skills-for-kids).'))
+      .toBe('This page covers ordinary two-way conversation skills. Read [the guide](/blog/conversation-skills-for-kids).');
+    expect(cleanBlogText('This guide owns the broad grammar roadmap.'))
+      .toBe('This guide covers the broad grammar roadmap.');
+  });
+
+  it('keeps ownership cleanup idempotent and preserves ordinary ownership statements', () => {
+    const cleaned = cleanBlogText('This page owns ordinary two-way conversation skills.');
+    expect(cleanBlogText(cleaned)).toBe(cleaned);
+    expect(cleanBlogText('The child owns a storybook.')).toBe('The child owns a storybook.');
+  });
+
   it('turns multiple exposed internal routes into readable links instead of dropping destinations', () => {
     const cleaned = cleanBlogText(
       'Explore grammar support: /grammar. Build communication confidence: /speaking. Compare learning routes: /courses. Read connected-skill guide: /blog/how-phonics-grammar-and-communication-work-together. Try home routine ideas: /blog/how-to-engage-kids-in-english-learning-at-home.',

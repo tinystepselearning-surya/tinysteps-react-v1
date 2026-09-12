@@ -48,5 +48,7 @@ describe('authoritative Blog #10 post-Brick-4 consolidation quality lock', () =>
     expect(comparison).not.toMatch(/read fluently in \d+ (?:days|weeks|months)/i);
     expect(comparison).not.toMatch(/guaranteed? to read/i);
     expect(comparison).not.toContain('/blog/how-to-choose-phonics-classes');
+    expect(comparison).toContain('href="#provider-scorecard"');
+    expect(comparison).toContain('<Section id="provider-scorecard">');
   });
 });

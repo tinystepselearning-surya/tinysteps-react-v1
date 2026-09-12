@@ -31,15 +31,16 @@ describe('Blog #50 letter-sounds-to-decoding diagnostic quality refresh', () => 
     expect(pillar?.changePolicy).toBe('evidence-harden');
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
-    expect(body).toContain('Sound recall → Oral blend → Printed blend → Fresh-word transfer → Connected-text transfer');
+    expect(body).toContain('Sound recall → Oral blend → Printed blend → CVC decoding → Fresh-word transfer → Connected-text transfer');
     expect(body).toContain('Stage 1 — Sound recall');
     expect(body).toContain('Stage 2 — Oral blend');
     expect(body).toContain('Stage 3 — Printed blend');
-    expect(body).toContain('Stage 4 — Fresh-word transfer');
-    expect(body).toContain('Stage 5 — Connected-text transfer');
+    expect(body).toContain('Stage 4 — CVC decoding');
+    expect(body).toContain('Stage 5 — Fresh-word transfer');
+    expect(body).toContain('Stage 6 — Connected-text transfer');
     expect(body).toContain('Six common reasons a child knows sounds but still cannot read words');
     expect(body).toContain('Do not confuse this with the sight-word question');
-    expect(body).toContain('A practical home routine: known sounds, easy words, one fresh transfer');
+    expect(body).toContain('A practical home routine: known sounds, CVC words, one fresh transfer');
     expect(body).toContain('What progress should look like');
     expect(body).toContain('Older child, same decoding bottleneck: do not assume phonics is only for beginners');
     expect(body).toContain('fresh decodable examples');

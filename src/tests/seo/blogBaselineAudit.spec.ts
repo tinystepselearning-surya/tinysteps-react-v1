@@ -25,15 +25,16 @@ describe('B0 blog baseline audit', () => {
     expect(output).toContain('"sourcePostFiles": 83');
     expect(output).toContain('"routedPostSlugs": 83');
     expect(output).toContain('"duplicateSlugs": 0');
-    expect(output).toContain('"publishedPosts": 84');
+    expect(output).toContain('"publishedPosts": 83');
     expect(output).toContain('"weeklyPosts": 12');
     expect(output).toContain('"pageNoindexPosts": 0');
-    expect(output).toContain('"indexableByPageRobots": 84');
-    expect(output).toContain('"expectedGeneratedSitemapPosts": 83');
-    expect(output).toContain('"committedSitemapBlogUrls": 83');
+    expect(output).toContain('"indexableByPageRobots": 83');
+    expect(output).toContain('"expectedGeneratedSitemapPosts": 82');
+    expect(output).toContain('"committedSitemapBlogUrls": 82');
     expect(output).toContain('"missingExpectedFromCommittedSitemap": []');
     expect(output).toContain('"unexpectedCommittedSitemapSlugs": []');
-    expect(output).toContain('"retiredRedirectSources": 12');
+    expect(output).toContain('"retiredSlugsInCommittedSitemap": []');
+    expect(output).toContain('"retiredRedirectSources": 13');
     expect(output).toContain('[blog-b0] PASS: registry structure is internally consistent.');
   });
 

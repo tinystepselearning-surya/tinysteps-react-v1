@@ -804,16 +804,15 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-violet-100/65 blur-3xl" aria-hidden="true" />
           <div className="relative">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Go deeper</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Use the full parent comparison framework</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Review the parent comparison scorecard</h2>
             <p className="mt-3 max-w-4xl text-base leading-8 text-slate-700">
-              For a deeper editorial checklist covering placement, teaching sequence, decodable reading, transfer evidence, teacher training, progress reporting, pricing clarity, and red flags, read our complete parent guide.
+              Use the scorecard above to compare placement, teaching sequence, decodable reading, transfer evidence, teacher training, progress reporting, pricing clarity, and red flags on the same basis.
             </p>
-            <Link
-              to="/blog/how-to-choose-phonics-classes"
+            <a href="#provider-scorecard"
               className="mt-5 inline-flex min-h-[46px] items-center rounded-full bg-slate-950 px-5 py-2.5 font-semibold text-white shadow-sm motion-safe:transition-all hover:-translate-y-0.5 hover:bg-slate-800 hover:shadow-md"
             >
-              How to Choose a Phonics Class
-            </Link>
+              Review the parent comparison scorecard
+            </a>
           </div>
         </div>
       </Section>

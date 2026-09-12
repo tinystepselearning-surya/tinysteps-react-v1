@@ -59,7 +59,7 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(body).toContain('A parent-friendly SATPIN start sequence');
     expect(body).toContain('What should SATPIN progress look like?');
     expect(body).toContain('Five common SATPIN difficulties and what to practise next');
-    expect(body).toContain('When should a child move beyond SATPIN?');
+    expect(body).toContain('What comes after SATPIN?');
 
     expect(body).toContain('/blog/phonics-rules-for-beginners');
     expect(body).toContain('/blog/phonics-games-for-letter-sounds');
@@ -111,7 +111,7 @@ describe('authoritative Blog #19 quality lock', () => {
       path.join(repoRoot, 'src/content/blog/posts/phonics/satpin-phonics-guide.ts'),
       'utf8',
     );
-    expect(source).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
+    expect(source).toContain('[SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
     expect(body).toContain('This guide focuses on **SATPIN explanation and progression**');
     expect(body).toContain('The evidence below supports **systematic and explicit sound–spelling teaching');
     expect(body).toContain('does **not** establish SATPIN as the single mandatory first set');
