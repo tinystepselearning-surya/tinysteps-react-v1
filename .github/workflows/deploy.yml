@@ -51,6 +51,9 @@ jobs:
       - name: Run Cloud Functions unit tests
         run: npm --prefix functions test
 
+      - name: Run bounded Functions deployment tests
+        run: node --test scripts/test/functions-deployment.node-test.mjs
+
       - name: Run teacher progress enrollment audit classifier tests
         run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
 
@@ -206,6 +209,9 @@ jobs:
       - name: Verify function deployment metadata
         run: node scripts/verify-function-deployment-metadata.mjs
 
+      - name: Plan bounded Cloud Functions deployment
+        run: node scripts/deploy-functions-batched.mjs --plan
+
       - name: Authenticate to Google Cloud
         id: gcp-auth
         uses: google-github-actions/auth@v2
@@ -255,7 +261,7 @@ jobs:
               --region=asia-south1 \
               >/dev/null 2>&1; then
               echo "Deleting retired Cloud Function: ${function_name}"
-              npx firebase-tools@latest functions:delete "${function_name}" \
+              npx firebase-tools@15.30.0 functions:delete "${function_name}" \
                 --region asia-south1 \
                 --project "${FIREBASE_PROJECT_ID}" \
                 --force
@@ -264,10 +270,20 @@ jobs:
             fi
           done
 
-      - name: Deploy Cloud Functions
-        run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
+      - name: Deploy Cloud Functions in bounded batches
+        run: node scripts/deploy-functions-batched.mjs --deploy
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload bounded Functions deployment report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-deployment-report-${{ github.sha }}
+          path: artifacts/functions-deployment-report.json
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Enforce School callable public transport invocation
         run: >-
