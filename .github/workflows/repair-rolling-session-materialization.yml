@@ -1,0 +1,57 @@
+name: Repair rolling session materialization
+
+on:
+  push:
+    branches:
+      - audit/fix-upcoming-session-materialization
+    paths:
+      - .github/workflows/repair-rolling-session-materialization.yml
+      - scripts/repair-rolling-session-materialization.mjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repair-dry-run:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_PROJECT_ID: tinysteps-react-v1
+      REPAIR_ANCHOR_YMD: '2026-09-12'
+      REPAIR_MAX_ENROLLMENTS: '250'
+
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: audit/fix-upcoming-session-materialization
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Cloud Functions locally
+        run: npm --prefix functions run build
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Dry-run one-time rolling materialization repair
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: node scripts/repair-rolling-session-materialization.mjs
