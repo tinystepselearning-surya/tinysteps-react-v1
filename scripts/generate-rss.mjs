@@ -179,7 +179,8 @@ function normalizeLlmDiscoveryFiles() {
     text = text
       .split('\n')
       .filter((line) => !retiredCommercialBlogUrls.some((url) => line.includes(url)))
-      .join('\n')
+      .join('\n');
+    text = rewriteLegacyWeekBlogPaths(rewriteRetiredBlogPaths(text))
       .replace('Complete Quality-Reviewed Editorial Library — 51', 'Complete Quality-Reviewed Editorial Library — 50')
       .replace('The 51 links below are the current quality-reviewed Tiny Steps editorial set.', 'The 50 links below are the current quality-reviewed Tiny Steps editorial set.')
       .replace('### Blogs 1-34 — Phonics Authority Programme', '### Phonics Authority Programme — 33 articles')
@@ -210,6 +211,6 @@ function main() {
   writeFile(path.join(PUBLIC_BLOG_DIR, 'rss.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/rss.xml', items: blogFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'feed.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/feed.xml', items: blogFeedItems }));
   normalizeLlmDiscoveryFiles();
-  console.log('Generated RSS feeds and normalized retired commercial blog URLs from LLM discovery files.');
+  console.log('Generated RSS feeds and canonicalized retired/legacy URLs across discovery files.');
 }
 main();
