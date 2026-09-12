@@ -42,3 +42,8 @@ export const QUALITY_AUTHORITY_SLUGS = Object.freeze([
 export const QUALITY_AUTHORITY_ROUTES = Object.freeze(
   QUALITY_AUTHORITY_SLUGS.map((slug) => `/blog/${slug}`),
 );
+
+// Backward-compatible export names retained for older discovery tests and
+// tooling. The live recovery set is 50 editorial authorities, not 51.
+export const QUALITY_51_AUTHORITY_SLUGS = QUALITY_AUTHORITY_SLUGS;
+export const QUALITY_51_AUTHORITY_ROUTES = QUALITY_AUTHORITY_ROUTES;
