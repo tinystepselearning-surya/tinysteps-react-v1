@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { REVIEWED_SEO_RECOVERY_BLOBS, isReviewedSeoRecoveryFile } from './commercial-c7-reviewed-seo-repair.mjs';
 
 const root = process.cwd();
 const failures = [];
@@ -91,6 +92,8 @@ if (baseRef) {
       'src/pages/PhonicsKnowledgePage.tsx',
     ]);
     const forbiddenLiveChanges = changed.filter((file) => {
+      // Permit only byte-for-byte reviewed retirement repairs; future edits still fail.
+      if (Object.hasOwn(REVIEWED_SEO_RECOVERY_BLOBS, file) && isReviewedSeoRecoveryFile(file, read(file))) return false;
       if (allowedLiveFiles.has(file)) return false;
       if (file.startsWith('src/content/blog/posts/')) return true;
       if (file.startsWith('src/pages/')) return true;

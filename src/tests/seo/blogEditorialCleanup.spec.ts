@@ -70,6 +70,8 @@ describe('blog editorial cleanup', () => {
     const cleaned = cleanBlogText('This page owns ordinary two-way conversation skills.');
     expect(cleanBlogText(cleaned)).toBe(cleaned);
     expect(cleanBlogText('The child owns a storybook.')).toBe('The child owns a storybook.');
+    expect(cleanBlogText('Use the activity guide; this guide owns pattern order.'))
+      .toBe('Use the activity guide; this guide covers pattern order.');
   });
 
   it('turns multiple exposed internal routes into readable links instead of dropping destinations', () => {

@@ -48,7 +48,7 @@ function removeInternalSeoOwnershipLanguage(content: string): string {
       /\bThat\s+page\s+owns\s+the\s+([^.!?]+?)\s+so\s+this\s+guide\s+does\s+not\s+duplicate\s+it\./gi,
       'That page focuses on the $1, while this guide stays focused on its main topic.',
     )
-    .replace(/\bThis\s+(page|guide)\s+owns\b/gi, 'This $1 covers')
+    .replace(/\b(This)\s+(page|guide)\s+owns\b/gi, '$1 $2 covers')
     .replace(/\bchoose\s+the\s+right\s+owner\b/gi, 'choose the right guide');
 }
 

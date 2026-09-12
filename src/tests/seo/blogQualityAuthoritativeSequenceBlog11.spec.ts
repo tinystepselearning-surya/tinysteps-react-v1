@@ -47,7 +47,7 @@ describe('authoritative Blog #11 quality lock', () => {
 
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
-    expect(body).toContain('That article owns the practical-activity intent; this guide owns pattern order, interpretation and common mix-ups');
+    expect(body).toContain('That article owns the practical-activity intent; this guide covers pattern order, interpretation and common mix-ups');
     expect(body).toContain('editorial framework, not a standardized assessment');
     expect(body).toContain('they do not diagnose dyslexia or another learning condition');
 
