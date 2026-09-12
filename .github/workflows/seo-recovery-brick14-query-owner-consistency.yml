@@ -1,0 +1,36 @@
+name: SEO Recovery Brick 14 Query Owner Consistency
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/config/seoRecoveryBrick14QueryOwnerConsistency.ts'
+      - 'src/tests/seo/recoveryBrick14QueryOwnerConsistency.spec.ts'
+      - 'src/lib/commercialC2KeywordOwnership.ts'
+      - 'docs/TINY_STEPS_SEO_RECOVERY_BRICK_14_*'
+      - 'docs/TINY_STEPS_SEO_RECOVERY_CURRENT_STATUS_2026-09-12.md'
+      - '.github/workflows/seo-recovery-brick14-query-owner-consistency.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brick14-query-owner-consistency:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run Brick 14 and C2 ownership tests
+        run: >-
+          npx vitest run
+          src/tests/seo/recoveryBrick14QueryOwnerConsistency.spec.ts
+          src/tests/seo/commercialC2KeywordOwnership.spec.ts
+      - name: Run type check
+        run: npm run typecheck
