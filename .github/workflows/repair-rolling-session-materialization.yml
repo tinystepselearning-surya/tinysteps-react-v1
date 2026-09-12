@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  repair-dry-run:
+  repair-apply:
     runs-on: ubuntu-latest
     env:
       FIREBASE_PROJECT_ID: tinysteps-react-v1
@@ -51,7 +51,7 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
-      - name: Dry-run one-time rolling materialization repair
+      - name: Apply one-time rolling materialization repair
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
-        run: node scripts/repair-rolling-session-materialization.mjs
+        run: node scripts/repair-rolling-session-materialization.mjs --apply
