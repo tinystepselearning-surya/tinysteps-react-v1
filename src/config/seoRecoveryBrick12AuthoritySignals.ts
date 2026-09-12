@@ -80,27 +80,23 @@ export const SEO_RECOVERY_BRICK12_OWNER_EDGES = Object.freeze([
   { from: TRACING_OWNER, to: PHONICS_PROGRAMME },
 ] as const);
 
-const decodingSignals = Object.freeze([
-  {
-    label: 'why a child can know letter sounds but still struggle to read words',
-    to: PARENT_DECODING_DIAGNOSTIC,
-  },
-  {
-    label: 'the structured Tiny Steps phonics pathway',
-    to: PHONICS_PROGRAMME,
-  },
-]);
+const decodingSignal = Object.freeze({
+  label: 'why a child can know letter sounds but still struggle to read words',
+  to: PARENT_DECODING_DIAGNOSTIC,
+});
 
 /**
- * Targeted Tier-D -> Tier-C reinforcement. Most established phonics articles
- * already point upward to /phonics through the existing authority-linking layer.
- * Brick 12 adds only the missing specialist-hub edge where that relationship is
- * genuinely useful to a reader.
+ * Targeted Tier-D -> Tier-B/C reinforcement.
+ *
+ * This layer deliberately does NOT add /phonics, /book-demo or pricing CTAs.
+ * Commercial handoffs remain governed by the existing C7 owner/next-step rules.
+ * Brick 12 only supplies a missing specialist-authority edge; the specialist
+ * owner itself carries the established upward relationship to Tier A.
  *
  * The dedicated /blog/phonics-for-parents-guide React route is intentionally
- * left outside this post-processing layer. Its existing source already links to
- * the decoding diagnostic and /phonics, while SATPIN already points back to that
- * broad parent guide. Brick 12 avoids adding a second rendering contract there.
+ * outside this post-processing layer. Its existing source already links to the
+ * decoding diagnostic and /phonics, while SATPIN already points back to that
+ * broad parent guide. Brick 12 avoids creating a second rendering contract there.
  */
 export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
   'phonics-satpin-launch': {
@@ -108,45 +104,43 @@ export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
     intro: 'For the full explanation of SATPIN order, sounds, words and blending progression, continue with',
     signals: [
       { label: 'the SATPIN phonics guide', to: SATPIN_MASTER },
-      { label: 'the structured Tiny Steps phonics pathway', to: PHONICS_PROGRAMME },
     ],
   },
   'how-kids-learn-blending': {
     heading: 'If blending is still the sticking point',
     intro: 'If a child can say individual sounds but cannot combine them into unfamiliar words, continue with',
-    signals: decodingSignals,
+    signals: [decodingSignal],
   },
   'phonics-blending-activities': {
     heading: 'If activities are not transferring into word reading',
     intro: 'When blending practice works only with familiar examples or heavy prompting, continue with',
-    signals: decodingSignals,
+    signals: [decodingSignal],
   },
   'phonics-blending-club': {
     heading: 'If the daily routine is not transferring into fresh words',
     intro: 'When repeated blending practice is not becoming independent, continue with',
-    signals: decodingSignals,
+    signals: [decodingSignal],
   },
   'cvc-words-explained-for-parents': {
     heading: 'If CVC words are still not becoming independent',
     intro: 'When a child knows the sounds but cannot reliably blend fresh CVC words, continue with',
-    signals: decodingSignals,
+    signals: [decodingSignal],
   },
   'phonics-diagnostics': {
     heading: 'Use the diagnostic that matches a sound-to-word breakdown',
     intro: 'If the assessment shows that letter sounds are present but blending or decoding is weak, continue with',
-    signals: decodingSignals,
+    signals: [decodingSignal],
   },
   'why-letter-sounds-are-not-enough-to-read': {
     heading: 'Move from the research explanation to the child-level diagnostic',
     intro: 'For a practical check of where sound knowledge stops transferring into word reading, continue with',
-    signals: decodingSignals,
+    signals: [decodingSignal],
   },
   'online-phonics-classes-vs-school': {
     heading: 'Compare online phonics options using one clear framework',
     intro: 'For provider-selection criteria, continue with',
     signals: [
       { label: 'the online phonics class comparison guide', to: PHONICS_COMPARISON },
-      { label: 'the Tiny Steps phonics programme', to: PHONICS_PROGRAMME },
     ],
   },
   'why-parents-choose-online-phonics': {
@@ -154,7 +148,6 @@ export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
     intro: 'For a structured provider-selection framework, continue with',
     signals: [
       { label: 'the online phonics class comparison guide', to: PHONICS_COMPARISON },
-      { label: 'the Tiny Steps phonics programme', to: PHONICS_PROGRAMME },
     ],
   },
   'are-phonics-apps-enough-for-kids': {
@@ -162,7 +155,6 @@ export const SEO_RECOVERY_BRICK12_BLOG_RULES = Object.freeze({
     intro: 'For a structured provider-selection framework, continue with',
     signals: [
       { label: 'the online phonics class comparison guide', to: PHONICS_COMPARISON },
-      { label: 'the Tiny Steps phonics programme', to: PHONICS_PROGRAMME },
     ],
   },
 } satisfies Record<string, SeoRecoveryBrick12BlogRule>);
