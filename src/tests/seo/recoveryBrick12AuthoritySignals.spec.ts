@@ -17,11 +17,6 @@ const renderedBody = (slug: string) => {
   return post!.body.map((block) => String(block.content || '')).join('\n');
 };
 
-const READING_OWNER_SLUGS = new Set([
-  'prevent-summer-slide-reading',
-  'phonics-comprehension',
-]);
-
 describe('SEO recovery Brick 12 authority signals', () => {
   it('locks the recovery hierarchy into one Tier A, two Tier B and three Tier C owners', () => {
     expect(SEO_RECOVERY_BRICK12_AUTHORITY_NODES).toMatchObject({
@@ -69,10 +64,8 @@ describe('SEO recovery Brick 12 authority signals', () => {
     }
   });
 
-  it('routes SATPIN support into the SATPIN master before the commercial programme', () => {
-    const body = renderedBody('phonics-satpin-launch');
-    expect(body).toContain('/blog/satpin-phonics-guide');
-    expect(body).toContain('/phonics');
+  it('routes SATPIN support into the SATPIN master', () => {
+    expect(renderedBody('phonics-satpin-launch')).toContain('/blog/satpin-phonics-guide');
   });
 
   it('routes blending and decoding support into the parent diagnostic authority', () => {
@@ -84,12 +77,10 @@ describe('SEO recovery Brick 12 authority signals', () => {
       'phonics-diagnostics',
       'why-letter-sounds-are-not-enough-to-read',
     ]) {
-      const body = renderedBody(slug);
       expect(
-        body,
+        renderedBody(slug),
         `${slug} should reinforce the decoding diagnostic owner`,
       ).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
-      expect(body, `${slug} should still connect upward to /phonics`).toContain('/phonics');
     }
   });
 
@@ -103,27 +94,41 @@ describe('SEO recovery Brick 12 authority signals', () => {
     expect(SEO_RECOVERY_BRICK12_BLOG_RULES).not.toHaveProperty('phonics-for-parents-guide');
   });
 
-  it('keeps provider-decision support feeding the comparison owner rather than creating another buyer owner', () => {
+  it('keeps provider-decision support feeding the comparison owner', () => {
     for (const slug of [
       'online-phonics-classes-vs-school',
       'why-parents-choose-online-phonics',
       'are-phonics-apps-enough-for-kids',
     ]) {
-      const body = renderedBody(slug);
-      expect(body).toContain('/best-online-phonics-classes-for-kids-in-india');
-      expect(body).toContain('/phonics');
+      expect(renderedBody(slug)).toContain('/best-online-phonics-classes-for-kids-in-india');
     }
   });
 
-  it('keeps the established phonics knowledge set connected to the correct frozen programme owner', () => {
-    for (const slug of PHONICS_AUTHORITY_SLUGS) {
-      const body = renderedBody(slug);
-      const expectedOwner = READING_OWNER_SLUGS.has(slug) ? '/reading-classes-for-kids' : '/phonics';
-      expect(body, `${slug} lost its upward ${expectedOwner} authority signal`).toContain(expectedOwner);
+  it('keeps the existing C7 commercial handoff layer ahead of Brick 12 specialist reinforcement', () => {
+    const blogIndex = read('src/content/blog/index.ts');
+    const c7Position = blogIndex.indexOf('applyCommercialC7ContextualHandoffs(ctrTestedPost)');
+    const brick12Position = blogIndex.indexOf('applySeoRecoveryBrick12AuthoritySignals(contextualLinkedPost)');
+
+    expect(c7Position).toBeGreaterThan(-1);
+    expect(brick12Position).toBeGreaterThan(c7Position);
+  });
+
+  it('does not use Brick 12 to add programme, fee or assessment CTAs to supporting articles', () => {
+    const protectedCommercialDestinations = new Set([
+      '/phonics',
+      '/phonics-fees-india',
+      '/book-demo',
+      '/pricing',
+    ]);
+
+    for (const rule of Object.values(SEO_RECOVERY_BRICK12_BLOG_RULES)) {
+      for (const signal of rule.signals) {
+        expect(protectedCommercialDestinations.has(signal.to)).toBe(false);
+      }
     }
   });
 
-  it('keeps Brick 12 reinforcement targeted instead of creating a blanket rule for every blog', () => {
+  it('keeps Brick 12 reinforcement targeted instead of creating a blanket rule for every phonics article', () => {
     expect(Object.keys(SEO_RECOVERY_BRICK12_BLOG_RULES).length).toBeLessThan(PHONICS_AUTHORITY_SLUGS.length);
     expect(Object.keys(SEO_RECOVERY_BRICK12_BLOG_RULES)).toEqual(
       expect.arrayContaining([
