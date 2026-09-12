@@ -373,18 +373,68 @@ Distinct sound-supported tracing page preserved:
 
 ## BRICK 8 — Rebuild the Internal-Link Architecture
 
+**Status:** ✅ CLOSED — rendered authority flow normalized and protected
+
+**Artifact:** `docs/TINY_STEPS_SEO_RECOVERY_BRICK_8_INTERNAL_LINK_ARCHITECTURE_2026-09-12.md`  
+**Authority registry:** `src/config/seoRecoveryBrick8InternalLinks.ts`  
+**Regression test:** `src/tests/seo/recoveryBrick8InternalLinkArchitecture.spec.ts`
+
+### Internal-link architecture completed
+
+- [x] recovery authority destinations recorded centrally
+- [x] retired commercial-blog URLs normalize directly to the comparison owner
+- [x] retired parent-diagnostic URL normalizes directly to the canonical diagnostic owner
+- [x] query strings and fragments survive path normalization
+- [x] shared blog editorial cleanup applies canonical-link normalization before rendering
+- [x] final normalized blog body set is protected from Brick 8 retired paths
+- [x] phonics cluster navigation points directly to the commercial comparison authority
+- [x] cluster navigation avoids avoidable current-page self-links
+- [x] SATPIN support → SATPIN master → `/phonics` flow protected
+- [x] parent diagnostic → `/phonics` → assessment flow protected
+- [x] tracing → sound support / SATPIN / blending → `/phonics` flow protected
+- [x] no new SEO page or URL migration introduced
+
+### Retired paths handled by Brick 8
+
+- `/blog/child-knows-letter-sounds-but-cannot-read` → `/blog/why-child-knows-letter-sounds-but-cannot-read-words`
+- `/blog/how-to-choose-phonics-classes` → `/best-online-phonics-classes-for-kids-in-india`
+- `/blog/best-online-phonics-classes-for-kids` → `/best-online-phonics-classes-for-kids-in-india`
+- `/blog/best-phonics-classes-for-kids` → `/best-online-phonics-classes-for-kids-in-india`
+
+### Implementation commits
+
+- `d0dd67da9cb850adf570e99e3acc826a5a69b4b3` — Brick 8 authority/retired-path registry
+- `7ce4e6885f92f3bf5d07154fdd05cb02100eaa19` — normalize retired links in blog editorial cleanup
+- `cc3c6bf8b98d0ad6eb22f0088f123f7f0a806e12` — move phonics cluster navigation to comparison owner
+- `ca099dcb19c0d06652f186024a5addf945fab510` — remove current-page self-links from cluster navigation
+- `0f8a13c994adcba7339f0d3053e61bc5ff209e1e` / `87084fc186659ba039a20472664296447f2c0323` — Brick 8 regression protection
+- `740b53543194bf69eafb93fe481e773d1f665c59` — Brick 8 artifact
+
+### Deferred to Brick 11
+
+Raw redirect maps, generated discovery/sitemap artifacts, historical audit documentation, dormant metadata/CTA records, and any isolated static source literal that is already protected by the permanent redirect layer are reserved for the technical-consolidation sweep. They are not treated as competing authority owners in Brick 8.
+
+**Brick 8 decision:** CLOSED.
+
+---
+
+## BRICK 9 — Upgrade Existing Page Quality
+
 **Status:** ⏭️ NEXT
 
-Brick 8 will systematically audit and clean authority flow across the recovery ecosystem.
+Brick 9 will apply the shared page-quality checklist to priority existing URLs without creating new pages.
 
 Planned scope:
 
-- find direct internal links that still point to retired aliases;
-- replace redirect-hop internal links with final authority URLs;
-- ensure SATPIN support → SATPIN master → `/phonics`;
-- ensure parent-problem / blending content → correct diagnostic owner → `/phonics`;
-- ensure tracing → sounds / SATPIN / blending → `/phonics`;
-- ensure comparison and fees pages reinforce `/phonics` without collapsing their distinct intents;
-- use descriptive anchors instead of generic `click here` patterns where practical;
-- protect the locked owner map with regression checks;
-- create no new SEO page.
+- search-intent alignment;
+- title/meta quality;
+- H1 and heading hierarchy;
+- opening answer quality;
+- examples and evidence;
+- Tiny Steps-specific expertise;
+- FAQ usefulness;
+- CTA fit to intent;
+- schema/visible-content consistency;
+- duplication control;
+- freshness and accuracy;
+- controlled page-by-page improvements only.
