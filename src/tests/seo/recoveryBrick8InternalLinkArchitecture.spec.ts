@@ -7,6 +7,7 @@ import {
   isSeoRecoveryRetiredInternalHref,
   normalizeSeoRecoveryInternalHref,
 } from '../../config/seoRecoveryBrick8InternalLinks';
+import { blogPosts } from '../../content/blog';
 import { cleanBlogText } from '../../content/blog/shared/editorialCleanup';
 
 const root = process.cwd();
@@ -50,6 +51,17 @@ describe('SEO recovery Brick 8 internal-link architecture', () => {
     ).toBe(
       '[Why sounds are not becoming words](/blog/why-child-knows-letter-sounds-but-cannot-read-words)',
     );
+  });
+
+  it('keeps every rendered blog-body link off the Brick 8 retired URL set', () => {
+    const retiredPaths = Object.keys(SEO_RECOVERY_BRICK8_RETIRED_INTERNAL_PATHS);
+
+    for (const post of blogPosts) {
+      const renderedBody = post.body.map((block) => String(block.content || '')).join('\n');
+      for (const retiredPath of retiredPaths) {
+        expect(renderedBody, `${post.slug} still renders retired internal path ${retiredPath}`).not.toContain(retiredPath);
+      }
+    }
   });
 
   it('keeps phonics cluster navigation on live owners and avoids current-page self-links', () => {
