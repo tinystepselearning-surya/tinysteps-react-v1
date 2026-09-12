@@ -1,0 +1,57 @@
+name: SEO Recovery Brick 15 Stabilization
+
+on:
+  pull_request:
+    paths:
+      - 'src/config/seoRecoveryBrick13Measurement.ts'
+      - 'src/config/seoRecoveryBrick14QueryOwnerConsistency.ts'
+      - 'src/config/seoRecoveryBrick15Stabilization.ts'
+      - 'src/lib/phonicsAuthorityRoutes.js'
+      - 'src/lib/phonicsAuthorityRoutes.d.ts'
+      - 'src/lib/editorialQualityRoutes.js'
+      - 'src/lib/editorialQualityRoutes.d.ts'
+      - 'src/tests/seo/recoveryBrick6SatpinAuthority.spec.ts'
+      - 'src/tests/seo/recoveryBrick13Measurement.spec.ts'
+      - 'src/tests/seo/recoveryBrick14QueryOwnerConsistency.spec.ts'
+      - 'src/tests/seo/recoveryBrick15Stabilization.spec.ts'
+      - 'scripts/audit-seo-recovery-brick11.mjs'
+      - 'scripts/blog-consolidation-map.mjs'
+      - 'scripts/generate-sitemaps.js'
+      - 'scripts/generate-rss.mjs'
+      - 'docs/TINY_STEPS_SEO_RECOVERY_BRICK_15_*'
+      - 'docs/TINY_STEPS_SEO_RECOVERY_CURRENT_STATUS_2026-09-12.md'
+      - '.github/workflows/seo-recovery-brick15-stabilization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brick15-stabilization:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Regenerate sitemap and discovery surfaces
+        run: |
+          npm run gen:sitemaps
+          npm run generate:rss
+      - name: Audit blog consolidation and recovery technical controls
+        run: |
+          npm run seo:blog-consolidation
+          npm run seo:recovery-brick11
+      - name: Run stabilization contract tests
+        run: >-
+          npx vitest run
+          src/tests/seo/recoveryBrick13Measurement.spec.ts
+          src/tests/seo/recoveryBrick14QueryOwnerConsistency.spec.ts
+          src/tests/seo/recoveryBrick15Stabilization.spec.ts
+          src/tests/seo/recoveryBrick6SatpinAuthority.spec.ts
+      - name: Run type check
+        run: npm run typecheck
