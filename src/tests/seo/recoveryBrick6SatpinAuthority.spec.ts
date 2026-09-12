@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error Legacy week rename registry is executable ESM JavaScript.
 import { LEGACY_WEEK_BLOG_RENAMES } from '../../lib/blogWeekRenames.js';
 import { PHONICS_AUTHORITY_SLUGS } from '../../lib/phonicsAuthorityRoutes.js';
 
