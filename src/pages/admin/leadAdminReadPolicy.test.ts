@@ -21,4 +21,13 @@ describe('Leads admin read/write guardrails', () => {
     expect(source).toContain('limit(safeLimit)');
     expect(source).not.toContain('onSnapshot(');
   });
+
+  it('makes enquiry-created dates explicit without hiding later updates', async () => {
+    const source = await import('./LeadsInquiriesWorkspaceV2?raw').then((module) => module.default as string);
+    expect(source).toContain('Enquiry from');
+    expect(source).toContain('Enquiry to');
+    expect(source).toContain('Enquiry month and custom-date filters use the enquiry-created date, not the last-updated date.');
+    expect(source).toContain('Enquired {formatUpdated(row.createdAtMs)}');
+    expect(source).toContain('Updated {formatUpdated(row.updatedAtMs)}');
+  });
 });

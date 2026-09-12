@@ -798,10 +798,10 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
       <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course, teacher or attribution" className="pl-9" /></div>
       <div><Label className="mb-1 block text-xs text-slate-500">Enquiry month</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry month"><SelectValue placeholder="All months" /></SelectTrigger><SelectContent><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
-      <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">From date</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
-      <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">To date</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
+      <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">Enquiry from</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
+      <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">Month and custom-date filters query the full <span className="font-medium text-slate-700">{bucketMeta[bucket].title}</span> list on Firestore without loading every lead. Text search applies to the loaded page; choose <span className="font-medium text-slate-700">All</span> only when you intentionally need full-list text search.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">Enquiry month and custom-date filters use the enquiry-created date, not the last-updated date. They query the full <span className="font-medium text-slate-700">{bucketMeta[bucket].title}</span> list on Firestore without loading every lead. Text search applies to the loaded page; choose <span className="font-medium text-slate-700">All</span> only when you intentionally need full-list text search.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
@@ -825,7 +825,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
             )}
           </div>
           <div><div className="text-sm font-medium text-slate-800">{row.teacherName}</div><div className="text-xs text-slate-500">Teacher</div></div>
-          <div><Badge variant="outline">{row.statusLabel}</Badge><div className="mt-1 text-xs text-slate-500">{row.followUpAtMs ? `Follow-up ${formatFollowUp(row.followUpAtMs)}` : `Updated ${formatUpdated(row.updatedAtMs)}`}</div></div>
+          <div>
+            <Badge variant="outline">{row.statusLabel}</Badge>
+            <div className="mt-1 text-xs font-medium text-slate-600">Enquired {formatUpdated(row.createdAtMs)}</div>
+            {row.updatedAtMs > row.createdAtMs + 60_000 && <div className="text-[11px] text-slate-400">Updated {formatUpdated(row.updatedAtMs)}</div>}
+            {row.followUpAtMs > 0 && <div className="text-[11px] text-slate-500">Follow-up {formatFollowUp(row.followUpAtMs)}</div>}
+          </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> WhatsApp</Button>}
             {renderAction(row)}
