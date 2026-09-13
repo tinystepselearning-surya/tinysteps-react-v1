@@ -1,9 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import {
-  discoverEndpointPlan, batch, classifyFailure, terminalFailedTargets, digestBoundedOutput,
-  normalizeRevisionId, trafficPercentForRevision,
+  discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
+  digestBoundedOutput, enforcePartition, filterEndpointPlan, functionsChangeDecision,
+  normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
+  remainingTargets, validateCheckpoint,
 } from '../deployment/functions-deployment-lib.mjs';
+
+const execFileAsync = promisify(execFile);
 
 const fn = (entryPoint, region = ['asia-south1'], platform = 'gcfv2') => ({ __endpoint: { entryPoint, region, platform } });
 
@@ -90,9 +96,154 @@ test('does not retry unknown or permission failures', () => {
   assert.equal(classifyFailure(denied, ['alpha']).reason, 'permanent-or-mixed-failure');
 });
 
+test('keeps bounded retry support for attributed provider 5xx and network failures', () => {
+  for (const message of ['HTTP 503 while updating alpha', 'ETIMEDOUT while updating alpha']) {
+    const output = `${message}\nFunctions deploy had errors with the following functions:\n alpha(asia-south1)`;
+    assert.equal(classifyFailure(output, ['alpha']).retryable, true);
+  }
+});
+
 test('report stores digest metadata, not raw output', () => {
   const d = digestBoundedOutput('secret-ish raw output');
   assert.equal(d.bytes, 21);
   assert.match(d.sha256, /^[a-f0-9]{64}$/);
   assert.equal('output' in d, false);
+});
+
+test('exit zero with no CLI target records reconciles a latest serving revision as ready', async () => {
+  const revision = 'alpha-00001-abc';
+  const provider = classifyProviderState('alpha', {
+    state: 'ACTIVE',
+    serviceConfig: { revision, service: 'projects/project/locations/asia-south1/services/alpha' },
+  }, {
+    reconciling: false,
+    generation: '7',
+    observedGeneration: '7',
+    terminalCondition: { state: 'CONDITION_SUCCEEDED' },
+    latestCreatedRevision: revision,
+    latestReadyRevision: revision,
+    trafficStatuses: [{ revision, percent: 100 }],
+  });
+  const result = await classifyAttempt({
+    exitCode: 0,
+    output: 'Deploy complete!',
+    expectedTargets: ['alpha'],
+    reconcileTarget: async () => provider,
+  });
+  assert.deepEqual(result.ready.map(item => item.target), ['alpha']);
+  assert.deepEqual(result.failed, []);
+  assert.deepEqual(result.uncertain, []);
+  assert.equal(result.reason, 'all-targets-ready');
+});
+
+test('an explicit provider FAILED state retains target and provider reason', async () => {
+  const provider = classifyProviderState('alpha', { state: 'FAILED', stateMessages: [{ message: 'Build rejected' }] });
+  const result = await classifyAttempt({
+    exitCode: 0,
+    output: '',
+    expectedTargets: ['alpha'],
+    reconcileTarget: async () => provider,
+  });
+  assert.equal(result.failed[0].target, 'alpha');
+  assert.equal(result.failed[0].reason, 'provider-function-state-failed');
+  assert.match(result.failed[0].evidence.stateMessages[0].message, /Build rejected/);
+  assert.equal(result.retryable, false);
+});
+
+test('indeterminate provider state attributes every expected target as uncertain', async () => {
+  const expectedTargets = ['alpha', 'beta'];
+  const result = await classifyAttempt({
+    exitCode: 0,
+    output: '',
+    expectedTargets,
+    reconcileTarget: async target => ({ classification: 'uncertain', reason: 'provider-revision-mismatch', evidence: { target } }),
+  });
+  assert.deepEqual(result.uncertain.map(item => item.target), expectedTargets);
+  assert.equal(result.reason, 'uncertain-targets');
+});
+
+test('regression batch keeps all five batch 34 targets represented exactly once', async () => {
+  const targets = [
+    'setEnrollmentStatus',
+    'setInsightsEnabled',
+    'setRollingEnrollmentLifecycle',
+    'setWalletAutomationConfig',
+    'syncMessageThreadsForActiveStudents',
+  ];
+  const states = new Map([
+    [targets[0], 'ready'],
+    [targets[1], 'failed'],
+    [targets[2], 'uncertain'],
+    [targets[3], 'ready'],
+    [targets[4], 'ready'],
+  ]);
+  const result = await classifyAttempt({
+    exitCode: 0,
+    output: 'Deploy complete!',
+    expectedTargets: targets,
+    reconcileTarget: async target => ({ classification: states.get(target), reason: `provider-${states.get(target)}`, evidence: { target } }),
+  });
+  const represented = [...result.ready, ...result.failed, ...result.uncertain].map(item => item.target).sort();
+  assert.deepEqual(represented, [...targets].sort());
+  assert.throws(() => enforcePartition(targets, { ready: [{ target: targets[0] }], failed: [{ target: targets[0] }], uncertain: targets.slice(1).map(target => ({ target })) }), /partition invariant/);
+});
+
+test('explicit CLI successes remain successful without provider fallback', async () => {
+  let reconciliations = 0;
+  const result = await classifyAttempt({
+    exitCode: 0,
+    output: '✔  functions[alpha(asia-south1)] Successful update operation.',
+    expectedTargets: ['alpha'],
+    reconcileTarget: async () => { reconciliations++; return { classification: 'uncertain' }; },
+  });
+  assert.deepEqual(result.ready.map(item => item.target), ['alpha']);
+  assert.equal(reconciliations, 0);
+});
+
+test('change decision deploys only for Functions artifact/config paths and fails safe', () => {
+  const base = { before: 'a'.repeat(40), sha: 'b'.repeat(40), isAncestor: true, firebaseFunctionsBefore: { source: 'functions' }, firebaseFunctionsAfter: { source: 'functions' } };
+  assert.equal(functionsChangeDecision({ ...base, changedFiles: ['src/App.tsx'] }).changed, false);
+  assert.equal(functionsChangeDecision({ ...base, changedFiles: ['.github/workflows/deploy.yml', 'scripts/deploy-functions-batched.mjs'] }).changed, false);
+  assert.equal(functionsChangeDecision({ ...base, changedFiles: ['firebase.json'] }).changed, false);
+  assert.equal(functionsChangeDecision({ ...base, changedFiles: ['functions/src/index.ts'] }).changed, true);
+  assert.equal(functionsChangeDecision({ ...base, changedFiles: ['firebase.json'], firebaseFunctionsAfter: { source: 'functions', runtime: 'nodejs22' } }).changed, true);
+  assert.equal(functionsChangeDecision({ ...base, before: '0'.repeat(40), changedFiles: [] }).changed, true);
+  assert.equal(functionsChangeDecision({ ...base, isAncestor: false, changedFiles: [] }).changed, true);
+});
+
+test('--only and environment target filters preserve surgical recovery support', () => {
+  const plan = [{ id: 'alpha', selector: 'functions:alpha' }, { id: 'beta', selector: 'functions:beta' }];
+  assert.equal(parseDeploymentArgs(['--plan', '--only', 'alpha']).only, 'alpha');
+  assert.equal(parseDeploymentArgs(['--plan'], { FUNCTIONS_DEPLOY_ONLY: 'beta' }).only, 'beta');
+  assert.deepEqual(filterEndpointPlan(plan, 'functions:beta'), [plan[1]]);
+  assert.throws(() => filterEndpointPlan(plan, 'missing'), /Unknown Functions target/);
+});
+
+test('checkpoint resume accepts matching identity and rejects stale metadata', () => {
+  const targets = [{ id: 'alpha', selector: 'functions:alpha' }, { id: 'beta', selector: 'functions:beta' }];
+  const expected = {
+    project: 'project', region: 'asia-south1', codebase: 'default', commit: 'a'.repeat(40),
+    targets, planHash: deploymentPlanHash({ project: 'project', region: 'asia-south1', codebase: 'default', targets }),
+  };
+  const checkpoint = { ...expected, confirmedReady: ['alpha'] };
+  const confirmedReady = validateCheckpoint(checkpoint, expected);
+  assert.deepEqual([...confirmedReady], ['alpha']);
+  assert.deepEqual(remainingTargets(targets, confirmedReady), [targets[1]]);
+  assert.throws(() => validateCheckpoint({ ...checkpoint, commit: 'b'.repeat(40) }, expected), /Checkpoint identity mismatch/);
+  assert.throws(() => validateCheckpoint({ ...checkpoint, confirmedReady: ['missing'] }, expected), /confirmedReady list is invalid/);
+});
+
+test('--plan resolves the exact regression batch without invoking deployment mode', async () => {
+  const targets = [
+    'setEnrollmentStatus',
+    'setInsightsEnabled',
+    'setRollingEnrollmentLifecycle',
+    'setWalletAutomationConfig',
+    'syncMessageThreadsForActiveStudents',
+  ];
+  const { stdout } = await execFileAsync(process.execPath, [
+    'scripts/deploy-functions-batched.mjs', '--plan', '--only', targets.join(','),
+  ], { cwd: process.cwd(), env: { ...process.env, GITHUB_ACTIONS: 'false' } });
+  assert.match(stdout, /5 targets in 1 sequential batch/);
+  assert.match(stdout, new RegExp(`Batch 1: ${targets.join(', ')}`));
 });

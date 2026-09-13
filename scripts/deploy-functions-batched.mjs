@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import { createRequire } from 'node:module';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
-  EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyFailure,
-  digestBoundedOutput, discoverEndpointPlan, normalizeRevisionId,
-  trafficPercentForRevision,
+  EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
+  digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan,
+  functionsChangeDecision, normalizeRevisionId, parseDeploymentArgs,
+  remainingTargets, validateCheckpoint,
 } from './deployment/functions-deployment-lib.mjs';
 
 const require = createRequire(import.meta.url);
@@ -19,106 +20,143 @@ const SETTLE_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_MS = 15 * 1000;
 const BACKOFF_SECONDS = [60, 120, 240];
 
-const mode = process.argv[2];
-if (!['--plan', '--deploy'].includes(mode)) {
-  console.error('Usage: node scripts/deploy-functions-batched.mjs --plan|--deploy');
+let options;
+try {
+  options = parseDeploymentArgs(process.argv.slice(2), process.env);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
   process.exit(2);
 }
 
+if (options.mode === '--check-changes') {
+  await checkFunctionsChanged(options);
+  process.exit(0);
+}
+
+const firebaseConfig = JSON.parse(await readFile(resolve('firebase.json'), 'utf8'));
+const functionsConfig = firebaseConfig?.functions;
+if (!functionsConfig || functionsConfig.source !== 'functions') throw new Error('firebase.json must define functions.source as "functions"');
+if (functionsConfig.runtime && functionsConfig.runtime !== EXPECTED_RUNTIME) throw new Error(`firebase.json Functions runtime must be ${EXPECTED_RUNTIME}`);
+const codebase = functionsConfig.codebase || 'default';
+const commit = process.env.GITHUB_SHA || null;
 const report = {
-  version: 1,
+  version: 2,
   project: PROJECT,
   region: EXPECTED_REGION,
+  codebase,
   firebaseCliVersion: FIREBASE_CLI,
-  commit: process.env.GITHUB_SHA || null,
-  mode: mode.slice(2),
+  commit,
+  mode: options.mode.slice(2),
   startedAt: new Date().toISOString(),
+  confirmedReady: [],
   batches: [],
 };
 
 try {
   await validateRuntimeContract();
   const exportsObject = require(resolve('functions/lib/index.js'));
-  const plan = discoverEndpointPlan(exportsObject);
+  const fullPlan = discoverEndpointPlan(exportsObject);
+  const plan = filterEndpointPlan(fullPlan, options.only);
+  if (!plan.length) throw new Error('Resolved Functions deployment plan is empty');
   report.targetCount = plan.length;
   report.targets = plan.map(({ id, selector }) => ({ id, selector }));
+  report.planHash = deploymentPlanHash({ project: PROJECT, region: EXPECTED_REGION, codebase, targets: report.targets });
   const groups = batch(plan, 5);
   report.batchCount = groups.length;
 
-  if (mode === '--plan') {
+  if (options.mode === '--plan') {
     report.status = 'planned';
-    console.log(`Functions deployment plan: ${plan.length} targets in ${groups.length} sequential batch(es) of at most 5.`);
-    groups.forEach((g, i) => console.log(`Batch ${i + 1}: ${g.map(x => x.id).join(', ')}`));
+    report.finishedAt = new Date().toISOString();
+    console.log(`Functions deployment plan ${report.planHash}: ${plan.length} targets in ${groups.length} sequential batch(es) of at most 5.`);
+    groups.forEach((group, index) => console.log(`Batch ${index + 1}: ${group.map(target => target.id).join(', ')}`));
     await persistReport();
     process.exit(0);
   }
 
   validateDeployContext();
   await requireCurrentMain();
+  if (options.resumeFrom) {
+    const checkpoint = JSON.parse(await readFile(resolve(options.resumeFrom), 'utf8'));
+    const ready = validateCheckpoint(checkpoint, report);
+    report.resumedFrom = resolve(options.resumeFrom);
+    report.priorBatches = Array.isArray(checkpoint.batches) ? checkpoint.batches : [];
+    report.confirmedReady = [...ready].sort();
+  }
+  const confirmedReady = new Set(report.confirmedReady);
   await waitForRegionalOperationsToSettle();
 
-  for (let i = 0; i < groups.length; i++) {
-    const group = groups[i];
-    const batchReport = { index: i + 1, targets: group.map(x => x.id), attempts: [] };
+  for (let index = 0; index < groups.length; index++) {
+    const group = groups[index];
+    let pending = remainingTargets(group, confirmedReady);
+    const batchReport = {
+      index: index + 1,
+      targets: group.map(target => target.id),
+      resumedReady: group.filter(target => confirmedReady.has(target.id)).map(target => target.id),
+      attempts: [],
+    };
     report.batches.push(batchReport);
-    let pending = group;
+    if (!pending.length) {
+      batchReport.status = 'skipped-confirmed-ready';
+      await persistReport();
+      continue;
+    }
 
     for (let attempt = 0; attempt < BACKOFF_SECONDS.length && pending.length; attempt++) {
       await requireCurrentMain();
       await sleepWithJitter(BACKOFF_SECONDS[attempt]);
       await requireCurrentMain();
       await waitForRegionalOperationsToSettle();
-
-      console.log(`Deploying batch ${i + 1}/${groups.length}, attempt ${attempt + 1}: ${pending.map(x => x.id).join(', ')}`);
-      const selectors = pending.map(x => x.selector).join(',');
+      console.log(`Deploying batch ${index + 1}/${groups.length}, attempt ${attempt + 1}: ${pending.map(target => target.id).join(', ')}`);
       const result = await runBounded('npx', [
         '--yes', `firebase-tools@${FIREBASE_CLI}`, 'deploy',
-        '--only', selectors,
+        '--only', pending.map(target => target.selector).join(','),
         '--project', PROJECT,
         '--non-interactive',
       ]);
-      const meta = digestBoundedOutput(result.output);
+      const outputMeta = digestBoundedOutput(result.output);
+      const classification = result.truncated
+        ? await classifyTruncatedAttempt(result, pending)
+        : await classifyAttempt({ exitCode: result.code, output: result.output, expectedTargets: pending, reconcileTarget });
       const attemptReport = {
         attempt: attempt + 1,
-        targets: pending.map(x => x.id),
+        targets: pending.map(target => target.id),
         exitCode: result.code,
-        outputBytes: meta.bytes,
-        outputSha256: meta.sha256,
+        outputBytes: outputMeta.bytes,
+        outputSha256: outputMeta.sha256,
         outputTruncated: result.truncated,
+        outcome: classification.reason,
+        retryable: classification.retryable,
+        ready: classification.ready,
+        failed: classification.failed,
+        uncertain: classification.uncertain,
       };
       batchReport.attempts.push(attemptReport);
+      for (const item of classification.ready) confirmedReady.add(item.target);
+      report.confirmedReady = [...confirmedReady].sort();
+      await persistReport();
 
-      await waitForRegionalOperationsToSettle();
-
-      if (result.code === 0) {
-        await verifyTargets(pending);
-        attemptReport.classification = 'success';
+      const unresolvedItems = [...classification.failed, ...classification.uncertain];
+      if (!unresolvedItems.length) {
         pending = [];
         break;
       }
-      if (result.truncated) throw new Error(`Firebase CLI output was truncated for batch ${i + 1}; refusing to classify/retry`);
-
-      const classification = classifyFailure(result.output, pending.map(x => x.id));
-      attemptReport.classification = classification.reason;
-      attemptReport.failedTargets = classification.failedTargets;
-      if (!classification.retryable) {
-        throw new Error(`Batch ${i + 1} failed closed: ${classification.reason} (${classification.failedTargets.join(', ') || 'no target attribution'})`);
-      }
-
-      const failedSet = new Set(classification.failedTargets);
-      const succeeded = pending.filter(x => !failedSet.has(x.id));
-      if (succeeded.length) await verifyTargets(succeeded);
-      pending = pending.filter(x => failedSet.has(x.id));
+      const details = unresolvedItems
+        .map(item => `${item.target}: ${item.reason}${item.evidence ? ` (${formatEvidence(item.evidence)})` : ''}`)
+        .join('; ');
+      if (!classification.retryable) throw new Error(`Batch ${index + 1} failed closed with target attribution: ${details}. Resume with this report after correcting the cause.`);
+      const unresolvedIds = new Set(unresolvedItems.map(item => item.target));
+      pending = pending.filter(target => unresolvedIds.has(target.id));
     }
 
-    if (pending.length) throw new Error(`Batch ${i + 1} exhausted bounded retries: ${pending.map(x => x.id).join(', ')}`);
-    await verifyTargets(group);
+    if (pending.length) throw new Error(`Batch ${index + 1} exhausted bounded retries: ${pending.map(target => target.id).join(', ')}`);
+    batchReport.status = 'confirmed-ready';
+    await persistReport();
   }
 
   report.status = 'verified';
   report.finishedAt = new Date().toISOString();
   await persistReport();
-  console.log(`Verified ${report.targetCount} Cloud Functions and their Cloud Run revisions.`);
+  console.log(`Verified ${report.targetCount} Cloud Functions; ${report.confirmedReady.length} are checkpointed ready.`);
 } catch (error) {
   report.status = 'failed';
   report.finishedAt = new Date().toISOString();
@@ -153,9 +191,9 @@ async function requireCurrentMain() {
 }
 
 async function accessToken() {
-  const r = await runBounded('gcloud', ['auth', 'print-access-token'], 128 * 1024);
-  if (r.code !== 0 || r.truncated) throw new Error('Unable to obtain Google access token for deployment verification');
-  const token = r.output.trim().split(/\r?\n/).at(-1);
+  const result = await runBounded('gcloud', ['auth', 'print-access-token'], 128 * 1024);
+  if (result.code !== 0 || result.truncated) throw new Error('Unable to obtain Google access token for deployment verification');
+  const token = result.output.trim().split(/\r?\n/).at(-1);
   if (!token) throw new Error('Google access token was empty');
   return token;
 }
@@ -173,9 +211,8 @@ async function listUnfinishedOperations() {
   do {
     const qs = new URLSearchParams({ pageSize: '100' });
     if (pageToken) qs.set('pageToken', pageToken);
-    const url = `https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/operations?${qs}`;
-    const body = await googleJson(url);
-    for (const op of body.operations ?? []) if (op.done !== true) unfinished.push(op.name);
+    const body = await googleJson(`https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/operations?${qs}`);
+    for (const operation of body.operations ?? []) if (operation.done !== true) unfinished.push(operation.name);
     pageToken = body.nextPageToken || '';
   } while (pageToken);
   return unfinished;
@@ -192,32 +229,60 @@ async function waitForRegionalOperationsToSettle() {
   }
 }
 
-async function verifyTargets(targets) {
-  for (const target of targets) {
-    const fnUrl = `https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/functions/${encodeURIComponent(target.id)}`;
-    const fn = await googleJson(fnUrl);
-    if (fn.state !== 'ACTIVE') throw new Error(`Function ${target.id} is not ACTIVE (state=${fn.state ?? 'unknown'})`);
-    const functionRevision = normalizeRevisionId(fn.serviceConfig?.revision);
-    const serviceResource = fn.serviceConfig?.service;
-    if (!functionRevision || !serviceResource) throw new Error(`Function ${target.id} is missing service revision metadata`);
-    const serviceId = serviceResource.split('/').at(-1);
-    const runUrl = `https://run.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/services/${encodeURIComponent(serviceId)}`;
-    const service = await googleJson(runUrl);
-    if (service.reconciling === true) throw new Error(`Cloud Run service for ${target.id} is still reconciling`);
-    if (service.generation !== service.observedGeneration) {
-      throw new Error(`Cloud Run generation mismatch for ${target.id}: generation=${service.generation}, observed=${service.observedGeneration}`);
-    }
-    if (service.terminalCondition?.state && service.terminalCondition.state !== 'CONDITION_SUCCEEDED') {
-      throw new Error(`Cloud Run terminal condition is not successful for ${target.id}: ${service.terminalCondition.state}`);
-    }
-    const created = normalizeRevisionId(service.latestCreatedRevision);
-    const ready = normalizeRevisionId(service.latestReadyRevision);
-    if (created !== ready || ready !== functionRevision) {
-      throw new Error(`Revision mismatch for ${target.id}: function=${functionRevision}, created=${created}, ready=${ready}`);
-    }
-    const latestTraffic = trafficPercentForRevision(service, functionRevision);
-    if (latestTraffic !== 100) throw new Error(`Function ${target.id} latest revision has ${latestTraffic}% traffic, expected 100%`);
+async function reconcileTarget(targetId) {
+  const fnUrl = `https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/functions/${encodeURIComponent(targetId)}`;
+  const fn = await googleJson(fnUrl);
+  if (fn.state !== 'ACTIVE') return classifyProviderState(targetId, fn);
+  const functionRevision = normalizeRevisionId(fn.serviceConfig?.revision);
+  const serviceResource = fn.serviceConfig?.service;
+  if (!functionRevision || !serviceResource) return classifyProviderState(targetId, fn);
+
+  const serviceId = serviceResource.split('/').at(-1);
+  const service = await googleJson(`https://run.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/services/${encodeURIComponent(serviceId)}`);
+  return classifyProviderState(targetId, fn, service);
+}
+
+async function classifyTruncatedAttempt(result, pending) {
+  return classifyAttempt({
+    exitCode: result.code,
+    output: '',
+    expectedTargets: pending,
+    reconcileTarget: async id => {
+      const reconciled = await reconcileTarget(id);
+      return reconciled.classification === 'ready' || reconciled.classification === 'failed'
+        ? reconciled
+        : { classification: 'uncertain', reason: 'firebase-cli-output-truncated', evidence: reconciled.evidence };
+    },
+  });
+}
+
+async function checkFunctionsChanged({ before, sha }) {
+  let decision;
+  try {
+    const ancestor = await runBounded('git', ['merge-base', '--is-ancestor', before || '', sha || ''], 64 * 1024);
+    if (ancestor.code !== 0) throw new Error('before SHA is not an ancestor of the deployed SHA');
+    const diff = await runBounded('git', ['diff', '--name-only', '-z', before, sha], MAX_CAPTURE_BYTES);
+    if (diff.code !== 0 || diff.truncated) throw new Error('git diff was unavailable or truncated');
+    decision = functionsChangeDecision({
+      before,
+      sha,
+      isAncestor: true,
+      changedFiles: diff.output.split('\0').filter(Boolean),
+      firebaseFunctionsBefore: await firebaseFunctionsConfigAt(before),
+      firebaseFunctionsAfter: await firebaseFunctionsConfigAt(sha),
+    });
+  } catch (error) {
+    decision = { changed: true, reason: `fail-safe:${error instanceof Error ? error.message : String(error)}` };
   }
+  const value = decision.changed ? 'true' : 'false';
+  console.log(`FUNCTIONS_CHANGED=${value} (${decision.reason})`);
+  if (process.env.GITHUB_OUTPUT) await appendFile(process.env.GITHUB_OUTPUT, `functions_changed=${value}\nreason=${decision.reason}\n`, 'utf8');
+}
+
+async function firebaseFunctionsConfigAt(revision) {
+  const result = await runBounded('git', ['show', `${revision}:firebase.json`], MAX_CAPTURE_BYTES);
+  if (result.code !== 0 || result.truncated) throw new Error(`firebase.json unavailable at ${revision}`);
+  return JSON.parse(result.output).functions ?? null;
 }
 
 async function sleepWithJitter(seconds) {
@@ -226,7 +291,7 @@ async function sleepWithJitter(seconds) {
   await sleep(seconds * 1000 + jitterMs);
 }
 
-function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+function sleep(ms) { return new Promise(resolvePromise => setTimeout(resolvePromise, ms)); }
 
 async function runBounded(command, args, limit = MAX_CAPTURE_BYTES) {
   return new Promise((resolvePromise, reject) => {
@@ -236,17 +301,21 @@ async function runBounded(command, args, limit = MAX_CAPTURE_BYTES) {
     let truncated = false;
     const collect = chunk => {
       if (bytes >= limit) { truncated = true; return; }
-      const b = Buffer.from(chunk);
-      const keep = Math.min(b.length, limit - bytes);
-      chunks.push(b.subarray(0, keep));
+      const buffer = Buffer.from(chunk);
+      const keep = Math.min(buffer.length, limit - bytes);
+      chunks.push(buffer.subarray(0, keep));
       bytes += keep;
-      if (keep < b.length) truncated = true;
+      if (keep < buffer.length) truncated = true;
     };
     child.stdout.on('data', collect);
     child.stderr.on('data', collect);
     child.on('error', reject);
     child.on('close', code => resolvePromise({ code: code ?? 1, output: Buffer.concat(chunks).toString('utf8'), truncated }));
   });
+}
+
+function formatEvidence(evidence) {
+  return typeof evidence === 'string' ? evidence.replace(/\s+/g, ' ').slice(0, 500) : JSON.stringify(evidence).slice(0, 1000);
 }
 
 async function persistReport() {
