@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>WhatsApp Coexistence Setup | Tiny Steps Admin</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #f8fafc; color: #0f172a; }
+    main { width: min(760px, calc(100% - 32px)); margin: 48px auto; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 28px; box-shadow: 0 12px 40px rgba(15, 23, 42, .08); }
+    h1 { margin: 0 0 10px; font-size: 28px; }
+    h2 { margin: 24px 0 8px; font-size: 18px; }
+    p, li { line-height: 1.55; }
+    .muted { color: #64748b; }
+    .status { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: #f1f5f9; white-space: pre-wrap; }
+    .warning { margin-top: 18px; padding: 14px 16px; border-radius: 12px; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+    .success { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+    .error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    button { margin-top: 18px; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px; font-size: 16px; font-weight: 700; cursor: pointer; background: #16a34a; color: #fff; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    code { background: #f1f5f9; border-radius: 6px; padding: 2px 6px; }
+    .check { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; }
+    .check input { margin-top: 4px; }
+    a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <h1>WhatsApp Business App coexistence</h1>
+      <p class="muted">Temporary Tiny Steps admin tool. It launches Meta Embedded Signup for the existing WhatsApp Business app coexistence flow.</p>
+
+      <div class="warning">
+        <strong>Safety rule:</strong> If Meta shows wording such as <em>migrate</em>, <em>disconnect from existing account</em>, <em>unregister</em>, or <em>replace your WhatsApp Business app</em>, stop immediately and close the popup.
+      </div>
+
+      <h2>Configuration</h2>
+      <ul>
+        <li>Meta app: <strong>Tiny Steps CRM</strong></li>
+        <li>App ID: <code>1401105561770791</code></li>
+        <li>Embedded Signup configuration: <code>1054093100779716</code></li>
+        <li>Flow: <code>whatsapp_business_app_onboarding</code></li>
+      </ul>
+
+      <div id="auth-status" class="status">Checking Tiny Steps admin access…</div>
+
+      <label class="check">
+        <input id="ack" type="checkbox" disabled />
+        <span>I understand that I must stop if Meta presents a migration/disconnect flow instead of WhatsApp Business App coexistence.</span>
+      </label>
+
+      <button id="connect" type="button" disabled>Connect WhatsApp Business</button>
+      <div id="signup-status" class="status" hidden></div>
+
+      <p class="muted" style="margin-top:22px">This page does not call OpenAI or any AI service. It does not exchange or store Meta access tokens. Any authorization code returned by Meta remains only in browser memory for this test.</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js';
+    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js';
+
+    const META_APP_ID = '1401105561770791';
+    const META_CONFIG_ID = '1054093100779716';
+    const META_API_VERSION = 'v25.0';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyBZ5h2M3hataZjWM7480e76QAiFmEVK37Y',
+      authDomain: 'tinysteps-react-v1.firebaseapp.com',
+      projectId: 'tinysteps-react-v1',
+      storageBucket: 'tinysteps-react-v1.firebasestorage.app',
+      messagingSenderId: '31484691215',
+      appId: '1:31484691215:web:2e8854696bc7e27b63347a',
+    };
+
+    const authStatus = document.getElementById('auth-status');
+    const signupStatus = document.getElementById('signup-status');
+    const connectButton = document.getElementById('connect');
+    const acknowledgement = document.getElementById('ack');
+
+    let isAdmin = false;
+    let facebookReady = false;
+
+    const refreshButtonState = () => {
+      acknowledgement.disabled = !isAdmin;
+      connectButton.disabled = !(isAdmin && facebookReady && acknowledgement.checked);
+    };
+
+    const setSignupStatus = (message, kind = '') => {
+      signupStatus.hidden = false;
+      signupStatus.className = `status ${kind}`.trim();
+      signupStatus.textContent = message;
+    };
+
+    acknowledgement.addEventListener('change', refreshButtonState);
+
+    const trustedMetaOrigins = new Set([
+      'https://www.facebook.com',
+      'https://web.facebook.com',
+      'https://business.facebook.com',
+    ]);
+
+    window.addEventListener('message', (event) => {
+      if (!trustedMetaOrigins.has(event.origin)) return;
+
+      let payload = event.data;
+      if (typeof payload === 'string') {
+        try { payload = JSON.parse(payload); } catch { return; }
+      }
+
+      if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
+
+      const eventName = String(payload.event || 'UNKNOWN').toUpperCase();
+      const data = payload.data && typeof payload.data === 'object' ? payload.data : {};
+
+      if (eventName === 'FINISH') {
+        const wabaId = data.waba_id || 'not returned';
+        const phoneNumberId = data.phone_number_id || 'not returned';
+        setSignupStatus(`Meta reports coexistence signup finished.\nWABA ID: ${wabaId}\nPhone Number ID: ${phoneNumberId}\n\nStop here and send a screenshot before we configure webhooks or messaging.`, 'success');
+        return;
+      }
+
+      if (eventName === 'CANCEL') {
+        setSignupStatus('Meta signup was cancelled. No further action was taken.');
+        return;
+      }
+
+      if (eventName === 'ERROR') {
+        setSignupStatus(`Meta reported an Embedded Signup error: ${data.error_message || data.message || 'Unknown error'}`, 'error');
+        return;
+      }
+
+      setSignupStatus(`Meta Embedded Signup event received: ${eventName}`);
+    });
+
+    window.fbAsyncInit = function () {
+      window.FB.init({
+        appId: META_APP_ID,
+        cookie: true,
+        xfbml: false,
+        version: META_API_VERSION,
+      });
+      facebookReady = true;
+      refreshButtonState();
+    };
+
+    const sdk = document.createElement('script');
+    sdk.id = 'facebook-jssdk';
+    sdk.async = true;
+    sdk.defer = true;
+    sdk.crossOrigin = 'anonymous';
+    sdk.src = 'https://connect.facebook.net/en_US/sdk.js';
+    sdk.onerror = () => setSignupStatus('Could not load the Meta JavaScript SDK. Check browser blockers and reload.', 'error');
+    document.head.appendChild(sdk);
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      isAdmin = false;
+      refreshButtonState();
+
+      if (!user) {
+        authStatus.className = 'status error';
+        authStatus.innerHTML = 'You are not signed in to Tiny Steps. Sign in at <a href="/surya/login">/surya/login</a>, then return to this page.';
+        return;
+      }
+
+      try {
+        const profile = await getDoc(doc(db, 'users', user.uid));
+        const role = profile.exists() ? String(profile.data()?.role || '').trim().toLowerCase() : '';
+        if (role !== 'admin') {
+          authStatus.className = 'status error';
+          authStatus.textContent = 'Access denied. This setup tool is restricted to Tiny Steps administrators.';
+          return;
+        }
+
+        isAdmin = true;
+        authStatus.className = 'status success';
+        authStatus.textContent = `Admin access confirmed for ${user.email || user.uid}.`;
+        refreshButtonState();
+      } catch (error) {
+        authStatus.className = 'status error';
+        authStatus.textContent = `Could not verify your admin role: ${error instanceof Error ? error.message : String(error)}`;
+      }
+    });
+
+    connectButton.addEventListener('click', () => {
+      if (!isAdmin || !facebookReady || !acknowledgement.checked || !window.FB) return;
+
+      setSignupStatus('Opening Meta Embedded Signup…');
+
+      window.FB.login((response) => {
+        const authorizationCodeReceived = Boolean(response?.authResponse?.code);
+        if (authorizationCodeReceived) {
+          setSignupStatus('Meta returned an authorization code. It is not stored or sent anywhere by this test page. Complete/inspect the coexistence steps in the Meta popup, then stop and send a screenshot.');
+          return;
+        }
+
+        if (response?.status === 'unknown') {
+          setSignupStatus('Meta login was cancelled or not completed. No connection was made.');
+        }
+      }, {
+        config_id: META_CONFIG_ID,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: 'whatsapp_business_app_onboarding',
+          sessionInfoVersion: '3',
+        },
+      });
+    });
+  </script>
+</body>
+</html>
