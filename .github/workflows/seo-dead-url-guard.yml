@@ -3,6 +3,17 @@ name: SEO Dead URL Guard
 on:
   pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/seo-dead-url-guard.yml'
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'firebase.json'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'tsconfig*.json'
   push:
     branches: [main, seo/brick-4-final]
 
