@@ -1,8 +1,6 @@
 name: GSC Content Quality & Consolidation Guard
 
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
