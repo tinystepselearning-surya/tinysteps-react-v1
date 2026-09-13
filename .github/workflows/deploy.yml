@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      functions_only:
+        description: Optional comma-separated Function targets for a surgical main-branch recovery
+        required: false
+        type: string
 
 # Global environment variables
 env:
@@ -54,6 +59,9 @@ jobs:
       - name: Run bounded Functions deployment tests
         run: node --test scripts/test/functions-deployment.node-test.mjs
 
+      - name: Validate bounded Functions deployment plan (zero mutation)
+        run: node scripts/deploy-functions-batched.mjs --plan
+
       - name: Run teacher progress enrollment audit classifier tests
         run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
 
@@ -65,14 +73,14 @@ jobs:
 
       - name: Run Firestore rules tests
         run: >-
-          npx firebase-tools@latest emulators:exec
+          npx firebase-tools@15.30.0 emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
           --only firestore
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts src/tests/firestore/teacherProgressAuthorization.rules.spec.ts src/tests/firestore/childCourseProgress.rules.spec.ts"
 
       - name: Run website lead deduplication transaction tests
         run: >-
-          npx firebase-tools@latest emulators:exec
+          npx firebase-tools@15.30.0 emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
           --only firestore
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --config functions/vitest.config.ts functions/test/websiteLeadDeduplication.emulator.spec.ts"
@@ -147,6 +155,13 @@ jobs:
             package-lock.json
             functions/package-lock.json
 
+      - name: Decide whether the Functions artifact changed
+        id: functions-changes
+        run: >-
+          node scripts/deploy-functions-batched.mjs --check-changes
+          --before "${{ github.event.before }}"
+          --sha "${{ github.sha }}"
+
       - name: Install dependencies
         run: npm ci
 
@@ -193,12 +208,15 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.staging-gcp-auth.outputs.credentials_file_path }}
 
       - name: Clean stale functions build artifacts
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: rm -rf functions/lib functions/tsconfig.tsbuildinfo functions/.tsbuildinfo || true
 
       - name: Install Functions dependencies
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: npm ci --prefix functions --include=dev
 
       - name: Build Cloud Functions
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: npm --prefix functions run build
 
       - name: Verify deployment commit
@@ -207,9 +225,11 @@ jobs:
           git rev-parse HEAD && git log -1 --oneline
 
       - name: Verify function deployment metadata
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: node scripts/verify-function-deployment-metadata.mjs
 
       - name: Plan bounded Cloud Functions deployment
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: node scripts/deploy-functions-batched.mjs --plan
 
       - name: Authenticate to Google Cloud
@@ -239,6 +259,7 @@ jobs:
           fi
 
       - name: Ensure retired Meta WhatsApp and app reminder functions are absent
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         shell: bash
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
@@ -271,6 +292,7 @@ jobs:
           done
 
       - name: Deploy Cloud Functions in bounded batches
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: node scripts/deploy-functions-batched.mjs --deploy
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
@@ -286,12 +308,14 @@ jobs:
           retention-days: 7
 
       - name: Enforce School callable public transport invocation
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         run: >-
           node scripts/ensure-school-callable-public-invocation.mjs
           --project "${{ env.FIREBASE_PROJECT_ID }}"
           --region asia-south1
 
       - name: Enforce lead attribution callable public transport invocation
+        if: steps.functions-changes.outputs.functions_changed == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -321,7 +345,7 @@ jobs:
 
       - name: Deploy Firestore Security Rules
         run: >-
-          npx firebase-tools@latest deploy
+          npx firebase-tools@15.30.0 deploy
           --only firestore:rules
           --project "${{ env.FIREBASE_PROJECT_ID }}"
           --non-interactive
@@ -387,3 +411,75 @@ jobs:
         env:
           INDEXNOW_SITEMAP: dist/sitemap.xml
         run: npm run indexnow:submit
+
+  recover-functions-manually:
+    # An empty manual input is deliberately a no-op. Recovery is main-only and
+    # shares the production lock so it cannot overlap a normal deployment.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.functions_only != ''
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: firebase-deployment-tinysteps-react-v1
+      cancel-in-progress: false
+    env:
+      FUNCTIONS_DEPLOY_ONLY: ${{ inputs.functions_only }}
+
+    steps:
+      - name: Checkout selected main commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Cloud Functions
+        run: npm --prefix functions run build
+
+      - name: Verify deployment commit
+        run: |
+          echo "Deploying surgical recovery from commit:"
+          git rev-parse HEAD
+          git log -1 --oneline
+
+      - name: Verify function deployment metadata
+        run: node scripts/verify-function-deployment-metadata.mjs
+
+      - name: Validate surgical Functions plan (zero mutation)
+        run: node scripts/deploy-functions-batched.mjs --plan
+
+      - name: Authenticate to Google Cloud
+        id: recovery-gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy only validated recovery targets
+        run: node scripts/deploy-functions-batched.mjs --deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.recovery-gcp-auth.outputs.credentials_file_path }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload surgical Functions deployment report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-recovery-report-${{ github.sha }}
+          path: artifacts/functions-deployment-report.json
+          if-no-files-found: warn
+          retention-days: 7

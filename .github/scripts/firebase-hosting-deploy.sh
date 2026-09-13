@@ -40,7 +40,7 @@ trap cleanup EXIT
 
 if [[ "$MODE" == "channel" ]]; then
   echo "Deploying Firebase Hosting to ${TARGET_DESCRIPTION}..."
-  if run_with_log npx firebase-tools@latest hosting:channel:deploy "$CHANNEL_ID" --project "$PROJECT_ID" --non-interactive; then
+  if run_with_log npx firebase-tools@15.30.0 hosting:channel:deploy "$CHANNEL_ID" --project "$PROJECT_ID" --non-interactive; then
     echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} succeeded."
     exit 0
   fi
@@ -57,7 +57,7 @@ if [[ "$MODE" == "channel" ]]; then
 fi
 
 echo "Deploying Firebase Hosting to ${TARGET_DESCRIPTION}..."
-if run_with_log npx firebase-tools@latest deploy --only hosting --project "$PROJECT_ID" --non-interactive; then
+if run_with_log npx firebase-tools@15.30.0 deploy --only hosting --project "$PROJECT_ID" --non-interactive; then
   echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} succeeded."
   exit 0
 fi
