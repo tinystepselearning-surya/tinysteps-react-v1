@@ -177,7 +177,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Authenticate to Google Cloud
-        id: staging-gcp-auth
+        id: gcp-auth
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
@@ -205,7 +205,7 @@ jobs:
       - name: Deploy to Firebase Staging Preview Channel
         run: bash .github/scripts/firebase-hosting-deploy.sh channel staging
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.staging-gcp-auth.outputs.credentials_file_path }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
       - name: Clean stale functions build artifacts
         if: steps.functions-changes.outputs.functions_changed == 'true'
@@ -231,13 +231,6 @@ jobs:
       - name: Plan bounded Cloud Functions deployment
         if: steps.functions-changes.outputs.functions_changed == 'true'
         run: node scripts/deploy-functions-batched.mjs --plan
-
-      - name: Authenticate to Google Cloud
-        id: gcp-auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
-          create_credentials_file: true
 
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
