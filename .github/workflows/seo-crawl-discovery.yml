@@ -16,6 +16,17 @@ on:
       - 'tsconfig*.json'
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/seo-crawl-discovery.yml'
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'firebase.json'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'tsconfig*.json'
   workflow_dispatch:
 
 jobs:
