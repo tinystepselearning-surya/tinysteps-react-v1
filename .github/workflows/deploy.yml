@@ -368,17 +368,6 @@ jobs:
           path: artifacts/school-callable-transport-verification.md
           if-no-files-found: warn
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
       - name: Validate Ask Tiny Steps production build configuration
         run: node scripts/validate-ask-tiny-steps-build-env.mjs
 
