@@ -1,10 +1,6 @@
 name: GSC Revalidation & Submission Plan
 
 on:
-  pull_request:
-    branches:
-      - main
-      - seo/brick-5-content-quality-consolidation
   push:
     branches: [main]
   workflow_dispatch:
