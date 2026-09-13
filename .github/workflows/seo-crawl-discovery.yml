@@ -3,6 +3,17 @@ name: SEO Crawl & Discovery Guard
 on:
   pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/seo-crawl-discovery.yml'
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'firebase.json'
+      - 'index.html'
+      - 'vite.config.*'
+      - 'tsconfig*.json'
   push:
     branches: [main]
   workflow_dispatch:
