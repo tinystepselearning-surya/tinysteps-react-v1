@@ -175,7 +175,9 @@ async function validateRuntimeContract() {
 
 function validateDeployContext() {
   if (process.env.GITHUB_ACTIONS !== 'true') throw new Error('--deploy is restricted to GitHub Actions');
-  if (process.env.GITHUB_EVENT_NAME !== 'push') throw new Error('--deploy requires a push event');
+  const event = process.env.GITHUB_EVENT_NAME;
+  if (!['push', 'workflow_dispatch'].includes(event)) throw new Error('--deploy requires a push or workflow_dispatch event');
+  if (event === 'workflow_dispatch' && !options.only) throw new Error('Manual Functions recovery requires a non-empty FUNCTIONS_DEPLOY_ONLY/--only target list');
   if (process.env.GITHUB_REF !== 'refs/heads/main') throw new Error('--deploy requires refs/heads/main');
   if (process.env.GITHUB_REPOSITORY !== EXPECTED_REPOSITORY) throw new Error(`Unexpected repository: ${process.env.GITHUB_REPOSITORY}`);
   if (!/^[a-f0-9]{40}$/.test(process.env.GITHUB_SHA || '')) throw new Error('Missing/invalid GITHUB_SHA');

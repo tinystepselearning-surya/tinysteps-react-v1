@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      functions_only:
+        description: Optional comma-separated Function targets for a surgical main-branch recovery
+        required: false
+        type: string
 
 # Global environment variables
 env:
@@ -406,3 +411,75 @@ jobs:
         env:
           INDEXNOW_SITEMAP: dist/sitemap.xml
         run: npm run indexnow:submit
+
+  recover-functions-manually:
+    # An empty manual input is deliberately a no-op. Recovery is main-only and
+    # shares the production lock so it cannot overlap a normal deployment.
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.functions_only != ''
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: firebase-deployment-tinysteps-react-v1
+      cancel-in-progress: false
+    env:
+      FUNCTIONS_DEPLOY_ONLY: ${{ inputs.functions_only }}
+
+    steps:
+      - name: Checkout selected main commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Cloud Functions
+        run: npm --prefix functions run build
+
+      - name: Verify deployment commit
+        run: |
+          echo "Deploying surgical recovery from commit:"
+          git rev-parse HEAD
+          git log -1 --oneline
+
+      - name: Verify function deployment metadata
+        run: node scripts/verify-function-deployment-metadata.mjs
+
+      - name: Validate surgical Functions plan (zero mutation)
+        run: node scripts/deploy-functions-batched.mjs --plan
+
+      - name: Authenticate to Google Cloud
+        id: recovery-gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy only validated recovery targets
+        run: node scripts/deploy-functions-batched.mjs --deploy
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.recovery-gcp-auth.outputs.credentials_file_path }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload surgical Functions deployment report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functions-recovery-report-${{ github.sha }}
+          path: artifacts/functions-deployment-report.json
+          if-no-files-found: warn
+          retention-days: 7

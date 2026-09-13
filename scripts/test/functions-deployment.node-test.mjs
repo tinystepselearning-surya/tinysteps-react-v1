@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { promisify } from 'node:util';
 import {
   discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
@@ -211,12 +212,28 @@ test('change decision deploys only for Functions artifact/config paths and fails
   assert.equal(functionsChangeDecision({ ...base, isAncestor: false, changedFiles: [] }).changed, true);
 });
 
+test('--check-changes fails safe when a valid-looking before SHA is unavailable locally', async () => {
+  const { stdout } = await execFileAsync(process.execPath, [
+    'scripts/deploy-functions-batched.mjs', '--check-changes',
+    '--before', 'f'.repeat(40), '--sha', 'e'.repeat(40),
+  ], { cwd: process.cwd() });
+  assert.match(stdout, /FUNCTIONS_CHANGED=true \(fail-safe:/);
+});
+
 test('--only and environment target filters preserve surgical recovery support', () => {
   const plan = [{ id: 'alpha', selector: 'functions:alpha' }, { id: 'beta', selector: 'functions:beta' }];
   assert.equal(parseDeploymentArgs(['--plan', '--only', 'alpha']).only, 'alpha');
   assert.equal(parseDeploymentArgs(['--plan'], { FUNCTIONS_DEPLOY_ONLY: 'beta' }).only, 'beta');
   assert.deepEqual(filterEndpointPlan(plan, 'functions:beta'), [plan[1]]);
   assert.throws(() => filterEndpointPlan(plan, 'missing'), /Unknown Functions target/);
+});
+
+test('workflow dispatch exposes a main-only non-empty surgical recovery input', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  assert.match(workflow, /workflow_dispatch:\n\s+inputs:\n\s+functions_only:/);
+  assert.match(workflow, /recover-functions-manually:[\s\S]*github\.ref == 'refs\/heads\/main'[\s\S]*inputs\.functions_only != ''/);
+  assert.match(workflow, /FUNCTIONS_DEPLOY_ONLY: \$\{\{ inputs\.functions_only \}\}/);
+  assert.match(workflow, /recover-functions-manually:[\s\S]*group: firebase-deployment-tinysteps-react-v1[\s\S]*cancel-in-progress: false/);
 });
 
 test('checkpoint resume accepts matching identity and rejects stale metadata', () => {
