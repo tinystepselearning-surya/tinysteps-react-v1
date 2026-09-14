@@ -13,11 +13,11 @@ import { hasCompleteWebsiteCanonicalMetadata } from '../src/websiteLeadDeduplica
 const timestamp = (iso: string) => admin.firestore.Timestamp.fromDate(new Date(iso));
 
 describe('lead/demo Firestore event idempotency', () => {
-  it('converges receivedAt to one deterministic anchor instead of reversing before/after forever', () => {
-    const earlier = timestamp('2026-08-05T01:12:17.973Z');
+  it('locks receivedAt to the original stored cohort anchor and converges without a trigger loop', () => {
+    const original = timestamp('2026-08-05T01:12:17.973Z');
     const later = timestamp('2026-08-05T01:12:37.943Z');
     const base = {
-      firstInquiryAt: earlier,
+      firstInquiryAt: original,
       requestedAt: later,
       createdAt: later,
       status: 'demo_pending_schedule',
@@ -26,10 +26,28 @@ describe('lead/demo Firestore event idempotency', () => {
       phoneNormalized: '00966550372174',
     };
 
-    expect(buildLeadCanonicalizationPatch({ ...base, receivedAt: later }, { receivedAt: earlier }))
-      .toMatchObject({ receivedAt: earlier });
-    expect(buildLeadCanonicalizationPatch({ ...base, receivedAt: earlier }, { receivedAt: later }))
-      .toEqual({});
+    expect(buildLeadCanonicalizationPatch({ ...base, receivedAt: later }, { receivedAt: original }))
+      .toMatchObject({ receivedAt: original, receivedAtOriginal: original });
+
+    expect(buildLeadCanonicalizationPatch(
+      { ...base, receivedAt: original, receivedAtOriginal: original },
+      { receivedAt: later },
+    )).toEqual({});
+
+    const earlierEdit = timestamp('2026-08-04T01:12:17.973Z');
+    expect(buildLeadCanonicalizationPatch(
+      { ...base, receivedAt: earlierEdit, receivedAtOriginal: original },
+      { receivedAt: original, receivedAtOriginal: original },
+    )).toMatchObject({ receivedAt: original });
+  });
+
+  it('initializes the immutable backing anchor from receivedAt on a newly created lead', () => {
+    const receivedAt = timestamp('2026-08-05T01:12:17.973Z');
+    expect(buildLeadCanonicalizationPatch({
+      receivedAt,
+      status: 'new',
+      lifecycleVersion: 2,
+    })).toMatchObject({ receivedAtOriginal: receivedAt });
   });
 
   it('ignores timestamp-only lead and demo updates', () => {
