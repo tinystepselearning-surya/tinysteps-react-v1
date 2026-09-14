@@ -23,6 +23,14 @@ describe('leadAcquisition', () => {
     });
   });
 
+  it('classifies AI assistant referrals before generic referral traffic', () => {
+    expect(classifyLeadAcquisition({ referrerDomain: 'chatgpt.com' })).toMatchObject({ channel: 'chatgpt' });
+    expect(classifyLeadAcquisition({ referrerDomain: 'gemini.google.com' })).toMatchObject({ channel: 'google_gemini' });
+    expect(classifyLeadAcquisition({ referrerDomain: 'perplexity.ai' })).toMatchObject({ channel: 'perplexity' });
+    expect(classifyLeadAcquisition({ referrerDomain: 'copilot.microsoft.com' })).toMatchObject({ channel: 'microsoft_copilot' });
+    expect(classifyLeadAcquisition({ referrerDomain: 'claude.ai' })).toMatchObject({ channel: 'claude' });
+  });
+
   it('classifies social and referral sources', () => {
     expect(classifyLeadAcquisition({ utmSource: 'instagram', utmMedium: 'social' }).channel).toBe('instagram');
     expect(classifyLeadAcquisition({ utmSource: 'ig', utmMedium: 'social' }).channel).toBe('instagram');

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { isPublicAnalyticsPath } from './publicRouteManifest.js';
+import { classifyMarketingPath } from './analyticsClassification';
 
 let initialized = false;
 let interactionArmed = false;
@@ -15,19 +16,27 @@ const MOBILE_FALLBACK_DELAY_MS = 12000;
 const IDLE_LOAD_TIMEOUT_MS = 9000;
 
 function shouldRunAnalytics() {
-  // Skip prerender/headless automation contexts.
   if (typeof navigator !== 'undefined' && navigator.webdriver) return false;
-
-  // Only run in production (no GA in local dev)
   if (!import.meta.env.PROD) return false;
-
-  // Only run on your main domain (prevents GA in preview/staging domains)
   if (location.hostname !== 'tinystepslearning.com') return false;
-
-  // Never run on portal routes
   if (!isPublicAnalyticsPath(location.pathname)) return false;
-
   return true;
+}
+
+function resolveEventPath(params?: Record<string, any>): string {
+  const explicitPath = params?.page_path || params?.page || params?.sourcePath;
+  if (typeof explicitPath === 'string' && explicitPath.trim()) return explicitPath;
+  if (typeof window !== 'undefined') return window.location.pathname;
+  return '/';
+}
+
+function withMarketingContext(params?: Record<string, any>) {
+  const eventParams = params || {};
+  const context = classifyMarketingPath(resolveEventPath(eventParams));
+  return {
+    ...context,
+    ...eventParams,
+  };
 }
 
 const loadScript = (id: string) => {
@@ -51,15 +60,6 @@ const loadClarity = (id: string) => {
   script.id = 'clarity-script';
   script.src = `https://www.clarity.ms/tag/${id}`;
   document.head.appendChild(script);
-};
-
-const primeGtagQueue = (id: string) => {
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function () {
-    window.dataLayer.push(arguments);
-  };
-  window.gtag('js', new Date());
-  window.gtag('config', id);
 };
 
 const queueScriptLoad = (id: string) => {
@@ -127,9 +127,7 @@ const armInteractionLoader = (id: string) => {
 };
 
 export const initAnalytics = () => {
-  // ✅ hard stop for admin/teacher/parent/kid/lp/dev + non-prod + non-domain
   if (!shouldRunAnalytics()) return;
-
   if (initialized) return;
 
   const measurementId =
@@ -147,9 +145,7 @@ export const initAnalytics = () => {
 };
 
 const ensureInit = () => {
-  // ✅ double-safety: prevent init if route/domain/env is not allowed
   if (!shouldRunAnalytics()) return false;
-
   if (!initialized) initAnalytics();
   return initialized;
 };
@@ -158,19 +154,20 @@ export const trackPageView = (path: string) => {
   if (!shouldRunAnalytics()) return;
   if (!ensureInit()) return;
 
-  window.gtag('event', 'page_view', { page_path: path });
+  const context = classifyMarketingPath(path);
+  window.gtag('event', 'page_view', {
+    page_path: path,
+    ...context,
+  });
 };
 
 export function trackEvent(name: string, params?: Record<string, any>) {
   try {
     if (typeof window === 'undefined') return;
     if (!ensureInit()) return;
+    if (!window.gtag) return;
 
-    if (!window.gtag) {
-      return;
-    }
-
-    window.gtag('event', name, params || {});
+    window.gtag('event', name, withMarketingContext(params));
   } catch (err) {
     console.error('[GA ERROR]', err);
   }

@@ -3,6 +3,11 @@ export type AcquisitionChannel =
   | 'google_ads'
   | 'bing_organic'
   | 'microsoft_ads'
+  | 'chatgpt'
+  | 'google_gemini'
+  | 'perplexity'
+  | 'microsoft_copilot'
+  | 'claude'
   | 'instagram'
   | 'facebook'
   | 'linkedin'
@@ -56,6 +61,42 @@ export function classifyLeadAcquisition(input: AcquisitionInput): AcquisitionCla
   const utmSource = normalize(input.utmSource);
   const utmMedium = normalize(input.utmMedium);
   const referrerDomain = normalize(input.referrerDomain || deriveReferrerDomain(input.referrer));
+
+  const hasChatGpt =
+    matchesSource(utmSource, ['chatgpt', 'openai']) ||
+    matchesDomain(referrerDomain, ['chatgpt.com', 'openai.com']);
+  const hasGemini =
+    matchesSource(utmSource, ['gemini', 'google_gemini', 'google-gemini']) ||
+    matchesDomain(referrerDomain, ['gemini.google.com']);
+  const hasPerplexity =
+    matchesSource(utmSource, ['perplexity', 'perplexity_ai', 'perplexity-ai']) ||
+    matchesDomain(referrerDomain, ['perplexity.ai']);
+  const hasCopilot =
+    matchesSource(utmSource, ['copilot', 'microsoft_copilot', 'microsoft-copilot']) ||
+    matchesDomain(referrerDomain, ['copilot.microsoft.com', 'copilot.com']);
+  const hasClaude =
+    matchesSource(utmSource, ['claude', 'anthropic']) ||
+    matchesDomain(referrerDomain, ['claude.ai', 'anthropic.com']);
+
+  if (hasChatGpt) {
+    return { channel: 'chatgpt', source: utmSource || referrerDomain || 'chatgpt', label: 'ChatGPT / OpenAI' };
+  }
+
+  if (hasGemini) {
+    return { channel: 'google_gemini', source: utmSource || referrerDomain || 'gemini', label: 'Google Gemini' };
+  }
+
+  if (hasPerplexity) {
+    return { channel: 'perplexity', source: utmSource || referrerDomain || 'perplexity', label: 'Perplexity' };
+  }
+
+  if (hasCopilot) {
+    return { channel: 'microsoft_copilot', source: utmSource || referrerDomain || 'copilot', label: 'Microsoft Copilot' };
+  }
+
+  if (hasClaude) {
+    return { channel: 'claude', source: utmSource || referrerDomain || 'claude', label: 'Claude' };
+  }
 
   const hasGoogle =
     matchesSource(utmSource, ['google', 'google_ads', 'google-ads', 'googleads', 'adwords']) ||
@@ -133,6 +174,16 @@ export function acquisitionChannelLabel(channel: string | null | undefined): str
       return 'Bing Organic';
     case 'microsoft_ads':
       return 'Microsoft Ads';
+    case 'chatgpt':
+      return 'ChatGPT / OpenAI';
+    case 'google_gemini':
+      return 'Google Gemini';
+    case 'perplexity':
+      return 'Perplexity';
+    case 'microsoft_copilot':
+      return 'Microsoft Copilot';
+    case 'claude':
+      return 'Claude';
     case 'instagram':
       return 'Instagram';
     case 'facebook':
