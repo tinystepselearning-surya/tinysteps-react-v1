@@ -32,6 +32,7 @@ vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
 
 import {
   LEAD_STATUSES_BY_BUCKET,
+  leadReceivedAtMillis,
   leadStatusBelongsToBucket,
   usePagedLeads,
   type LeadPageSize,
@@ -54,8 +55,21 @@ function timestamp(ms: number) {
   return { toMillis: () => ms };
 }
 
-function makeDoc(id: string, status: string, createdAtMs: number, source = 'manual') {
-  const data = { status, source, createdAt: timestamp(createdAtMs) };
+function makeDoc(
+  id: string,
+  status: string,
+  createdAtMs: number,
+  source = 'manual',
+  receivedAtMs?: number,
+  requestedAtMs?: number,
+) {
+  const data = {
+    status,
+    source,
+    createdAt: timestamp(createdAtMs),
+    ...(receivedAtMs === undefined ? {} : { receivedAt: timestamp(receivedAtMs) }),
+    ...(requestedAtMs === undefined ? {} : { requestedAt: timestamp(requestedAtMs) }),
+  };
   return {
     id,
     data: () => data,
@@ -95,6 +109,7 @@ function Harness({
     <div>
       <span data-testid="loading">{String(result.isLoading)}</span>
       <span data-testid="ids">{result.leads.map((lead) => lead.id).join(',')}</span>
+      <span data-testid="created-at">{String((result.leads[0]?.createdAt as { toMillis?: () => number } | undefined)?.toMillis?.() || 0)}</span>
       <span data-testid="page">{result.pageNumber}</span>
       <span data-testid="total-pages">{String(result.totalPages)}</span>
       <span data-testid="filtered-total">{String(result.filteredTotal)}</span>
@@ -110,11 +125,6 @@ function Harness({
 
 const getDataQueryArgs = (callIndex: number) => {
   const queryObject = firestoreMocks.getDocs.mock.calls[callIndex]?.[0] as { args?: unknown[] } | undefined;
-  return queryObject?.args || [];
-};
-
-const getCountQueryArgs = (callIndex: number) => {
-  const queryObject = firestoreMocks.getCountFromServer.mock.calls[callIndex]?.[0] as { args?: unknown[] } | undefined;
   return queryObject?.args || [];
 };
 
@@ -150,6 +160,79 @@ describe('lead pagination status mapping', () => {
     expect(leadStatusBelongsToBucket('demo_completed', 'admin_review')).toBe(true);
     expect(leadStatusBelongsToBucket('no_response', 'closed')).toBe(true);
     expect(LEAD_STATUSES_BY_BUCKET.open).not.toContain('demo_booked');
+  });
+});
+
+describe('canonical enquiry received date', () => {
+  it('uses receivedAt, then requestedAt, then createdAt', () => {
+    expect(leadReceivedAtMillis({
+      receivedAt: timestamp(1_000),
+      requestedAt: timestamp(2_000),
+      createdAt: timestamp(3_000),
+    })).toBe(1_000);
+    expect(leadReceivedAtMillis({ requestedAt: timestamp(2_000), createdAt: timestamp(3_000) })).toBe(2_000);
+    expect(leadReceivedAtMillis({ createdAt: timestamp(3_000) })).toBe(3_000);
+  });
+
+  it('uses three bounded receipt-date lanes and shares them across card counts and rows', async () => {
+    const canonicalOpen = makeDoc('canonical-open', 'demo_pending_schedule', 9_000, 'manual', 2_000);
+    const canonicalTeacher = makeDoc('canonical-teacher', 'demo_booked', 9_100, 'manual', 2_500);
+    const legacyRequested = makeDoc('legacy-requested', 'demo_completed', 9_500, 'manual', undefined, 3_000);
+    const legacyCreated = makeDoc('legacy-created', 'no_response', 4_000);
+
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([canonicalOpen, canonicalTeacher]))
+      .mockResolvedValueOnce(makeSnapshot([legacyRequested]))
+      .mockResolvedValueOnce(makeSnapshot([legacyCreated]));
+
+    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    await waitFor(() => expect(screen.getByTestId('open-count')).toHaveTextContent('1'));
+    expect(screen.getByTestId('teacher-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('review-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('closed-count')).toHaveTextContent('1');
+    expect(screen.getByTestId('filtered-total')).toHaveTextContent('1');
+    expect(screen.getByTestId('ids')).toHaveTextContent('canonical-open');
+    expect(screen.getByTestId('created-at')).toHaveTextContent('2000');
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(3);
+    expect(firestoreMocks.getCountFromServer).not.toHaveBeenCalled();
+
+    expect(getDataQueryArgs(0)).toContainEqual({
+      kind: 'where',
+      args: ['receivedAt', '>=', { kind: 'timestamp', value: 1_000 }],
+    });
+    expect(getDataQueryArgs(0)).toContainEqual({
+      kind: 'where',
+      args: ['receivedAt', '<=', { kind: 'timestamp', value: 5_000 }],
+    });
+    expect(getDataQueryArgs(0)).toContainEqual({ kind: 'orderBy', args: ['receivedAt', 'desc'] });
+    expect(getDataQueryArgs(1)).toContainEqual({ kind: 'orderBy', args: ['requestedAt', 'desc'] });
+    expect(getDataQueryArgs(2)).toContainEqual({ kind: 'orderBy', args: ['createdAt', 'desc'] });
+
+    for (let index = 0; index < 3; index += 1) {
+      expect(getDataQueryArgs(index)).not.toContainEqual({
+        kind: 'where',
+        args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
+      });
+    }
+  });
+
+  it('does not let a legacy requestedAt/createdAt lane override an existing canonical receivedAt', async () => {
+    const canonicalOutside = makeDoc('canonical-outside', 'demo_pending_schedule', 2_000, 'manual', 9_000, 3_000);
+    const canonicalInside = makeDoc('canonical-inside', 'demo_pending_schedule', 9_000, 'manual', 2_000, 3_000);
+
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([canonicalInside]))
+      .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]))
+      .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]));
+
+    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('ids')).toHaveTextContent('canonical-inside');
+    expect(screen.getByTestId('ids')).not.toHaveTextContent('canonical-outside');
+    expect(screen.getByTestId('open-count')).toHaveTextContent('1');
   });
 });
 
@@ -220,116 +303,24 @@ describe('usePagedLeads bounded Firestore reads', () => {
     expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2);
   });
 
-  it('applies custom date bounds at Firestore instead of filtering only the loaded page', async () => {
-    const docs = Array.from({ length: 4 }, (_, index) =>
-      makeDoc(`july-${index}`, 'demo_pending_schedule', 4_000 - index));
-    firestoreMocks.getCountFromServer
-      .mockResolvedValueOnce({ data: () => ({ count: 4 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) });
-    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot(docs));
+  it('paginates a received-date-filtered bucket from the shared bounded result set', async () => {
+    const receivedDocs = Array.from({ length: 12 }, (_, index) =>
+      makeDoc(`received-${index}`, 'demo_pending_schedule', 100_000 + index, 'manual', 5_000 - index));
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot(receivedDocs))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
-    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
-
+    render(<Harness dateFromMs={1_000} dateToMs={6_000} />);
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
-    await waitFor(() => expect(screen.getByTestId('open-count')).toHaveTextContent('4'));
-    expect(firestoreMocks.timestampFromMillis).toHaveBeenCalledWith(1_000);
-    expect(firestoreMocks.timestampFromMillis).toHaveBeenCalledWith(5_000);
-    expect(firestoreMocks.where).toHaveBeenCalledWith(
-      'createdAt',
-      '>=',
-      { kind: 'timestamp', value: 1_000 },
-    );
-    expect(firestoreMocks.where).toHaveBeenCalledWith(
-      'createdAt',
-      '<=',
-      { kind: 'timestamp', value: 5_000 },
-    );
-    expect(screen.getByTestId('filtered-total')).toHaveTextContent('4');
-    expect(screen.getByTestId('total-pages')).toHaveTextContent('1');
-  });
+    expect(screen.getByTestId('ids').textContent?.split(',')).toHaveLength(10);
+    expect(screen.getByTestId('filtered-total')).toHaveTextContent('12');
+    expect(screen.getByTestId('has-next')).toHaveTextContent('true');
 
-  it('updates all four card counts when the month/date range changes', async () => {
-    firestoreMocks.getCountFromServer
-      .mockResolvedValueOnce({ data: () => ({ count: 181 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 3 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 21 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 20 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 7 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 1 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 4 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 12 }) });
-    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
-
-    const { rerender } = render(<Harness />);
-    await waitFor(() => expect(screen.getByTestId('open-count')).toHaveTextContent('181'));
-    expect(screen.getByTestId('teacher-count')).toHaveTextContent('3');
-    expect(screen.getByTestId('review-count')).toHaveTextContent('21');
-    expect(screen.getByTestId('closed-count')).toHaveTextContent('20');
-
-    rerender(<Harness dateFromMs={1_000} dateToMs={5_000} />);
-
-    await waitFor(() => expect(screen.getByTestId('open-count')).toHaveTextContent('7'));
-    expect(screen.getByTestId('teacher-count')).toHaveTextContent('1');
-    expect(screen.getByTestId('review-count')).toHaveTextContent('4');
-    expect(screen.getByTestId('closed-count')).toHaveTextContent('12');
-    expect(firestoreMocks.getCountFromServer).toHaveBeenCalledTimes(8);
-
-    for (let index = 4; index < 8; index += 1) {
-      const countArgs = getCountQueryArgs(index);
-      expect(countArgs).toContainEqual({
-        kind: 'where',
-        args: ['createdAt', '>=', { kind: 'timestamp', value: 1_000 }],
-      });
-      expect(countArgs).toContainEqual({
-        kind: 'where',
-        args: ['createdAt', '<=', { kind: 'timestamp', value: 5_000 }],
-      });
-      expect(countArgs).toContainEqual({ kind: 'orderBy', args: ['createdAt', 'desc'] });
-    }
-    expect(getCountQueryArgs(4)).toContainEqual({
-      kind: 'where',
-      args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
-    });
-    expect(getCountQueryArgs(5)).toContainEqual({
-      kind: 'where',
-      args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.in_progress]],
-    });
-    expect(getCountQueryArgs(6)).toContainEqual({
-      kind: 'where',
-      args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.admin_review]],
-    });
-    expect(getCountQueryArgs(7)).toContainEqual({
-      kind: 'where',
-      args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.closed]],
-    });
-  });
-
-  it('keeps the Open row query index-safe while the count index is provisioned', async () => {
-    firestoreMocks.getCountFromServer
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) })
-      .mockResolvedValueOnce({ data: () => ({ count: 0 }) });
-    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
-
-    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
-
-    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
-    const dataArgs = getDataQueryArgs(0);
-    expect(dataArgs).toContainEqual({
-      kind: 'where',
-      args: ['createdAt', '>=', { kind: 'timestamp', value: 1_000 }],
-    });
-    expect(dataArgs).toContainEqual({
-      kind: 'where',
-      args: ['createdAt', '<=', { kind: 'timestamp', value: 5_000 }],
-    });
-    expect(dataArgs).not.toContainEqual({
-      kind: 'where',
-      args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
-    });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('2'));
+    await waitFor(() => expect(screen.getByTestId('ids').textContent?.split(',')).toHaveLength(2));
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(3);
   });
 
   it('loads the entire bucket only when All is explicitly selected', async () => {
