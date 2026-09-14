@@ -36,6 +36,8 @@ export interface PagedLeadRecord {
   id: string;
   status?: unknown;
   source?: unknown;
+  receivedAt?: unknown;
+  requestedAt?: unknown;
   createdAt?: unknown;
   parentName?: unknown;
   childName?: unknown;
@@ -65,98 +67,166 @@ const EMPTY_COUNTS: LeadBucketCounts = {
 const normalizeText = (value: unknown): string => String(value || '').trim().toLowerCase();
 
 const timestampToMillis = (value: unknown): number => {
-  if (!value || typeof value !== 'object') return 0;
-  const candidate = value as { toMillis?: () => number; seconds?: number; nanoseconds?: number };
-  if (typeof candidate.toMillis === 'function') return candidate.toMillis();
-  if (typeof candidate.seconds === 'number') {
-    return candidate.seconds * 1000 + Math.floor((candidate.nanoseconds || 0) / 1_000_000);
+  if (!value) return 0;
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : 0;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (typeof value === 'object') {
+    const candidate = value as {
+      toMillis?: () => number;
+      toDate?: () => Date;
+      seconds?: number;
+      nanoseconds?: number;
+    };
+    if (typeof candidate.toMillis === 'function') return candidate.toMillis();
+    if (typeof candidate.toDate === 'function') {
+      const date = candidate.toDate();
+      return date instanceof Date && Number.isFinite(date.getTime()) ? date.getTime() : 0;
+    }
+    if (typeof candidate.seconds === 'number') {
+      return candidate.seconds * 1000 + Math.floor((candidate.nanoseconds || 0) / 1_000_000);
+    }
   }
   return 0;
 };
 
+/**
+ * Universal lead-received timestamp. receivedAt is authoritative; requestedAt and
+ * createdAt are compatibility fallbacks only for historical records.
+ */
+export const leadReceivedAtMillis = (lead: Record<string, unknown>): number =>
+  timestampToMillis(lead.receivedAt) ||
+  timestampToMillis(lead.requestedAt) ||
+  timestampToMillis(lead.createdAt);
+
 const toLeadRecord = <T extends PagedLeadRecord>(
   docSnapshot: QueryDocumentSnapshot<DocumentData>,
-): T => ({
-  id: docSnapshot.id,
-  ...(docSnapshot.data() as Record<string, unknown>),
-}) as T;
+): T => {
+  const data = docSnapshot.data() as Record<string, unknown>;
+  const receivedValue = data.receivedAt || data.requestedAt || data.createdAt;
+  return {
+    id: docSnapshot.id,
+    ...data,
+    // LeadsInquiriesWorkspaceV2 calls this visible value createdAt. Alias only in
+    // memory so the row displays the same canonical receipt anchor as Analytics.
+    createdAt: receivedValue,
+  } as T;
+};
 
 export const leadStatusBelongsToBucket = (status: unknown, bucket: SimpleLeadBucket): boolean =>
   LEAD_STATUSES_BY_BUCKET[bucket].includes(normalizeText(status));
 
-const sortLeadDocsByCreatedAtDesc = (
+const sortLeadDocsByReceivedAtDesc = (
   left: QueryDocumentSnapshot<DocumentData>,
   right: QueryDocumentSnapshot<DocumentData>,
 ): number => {
-  const timeDiff = timestampToMillis(right.data().createdAt) - timestampToMillis(left.data().createdAt);
+  const timeDiff = leadReceivedAtMillis(right.data()) - leadReceivedAtMillis(left.data());
   if (timeDiff !== 0) return timeDiff;
   return right.id.localeCompare(left.id);
 };
 
 const buildCreatedAtConstraints = (
-  dateFromMs: number,
-  dateToMs: number,
   cursor: QueryDocumentSnapshot<DocumentData> | null,
   batchSize?: number,
 ): QueryConstraint[] => {
-  const constraints: QueryConstraint[] = [];
-  if (dateFromMs) constraints.push(where('createdAt', '>=', Timestamp.fromMillis(dateFromMs)));
-  if (dateToMs) constraints.push(where('createdAt', '<=', Timestamp.fromMillis(dateToMs)));
-  constraints.push(orderBy('createdAt', 'desc'));
+  const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
   if (cursor) constraints.push(startAfter(cursor));
   if (batchSize) constraints.push(limit(batchSize));
   return constraints;
 };
 
-const getBucketCount = async (
-  bucket: SimpleLeadBucket,
-  dateFromMs = 0,
-  dateToMs = 0,
-): Promise<number> => {
-  const constraints: QueryConstraint[] = [
-    where('status', 'in', [...LEAD_STATUSES_BY_BUCKET[bucket]]),
-  ];
-  if (dateFromMs) constraints.push(where('createdAt', '>=', Timestamp.fromMillis(dateFromMs)));
-  if (dateToMs) constraints.push(where('createdAt', '<=', Timestamp.fromMillis(dateToMs)));
-  if (dateFromMs || dateToMs) constraints.push(orderBy('createdAt', 'desc'));
-
-  const snapshot = await getCountFromServer(
-    query(collection(db, LEADS_COLLECTION), ...constraints),
-  );
-  return Number(snapshot.data().count || 0);
+const buildReceiptRangeConstraints = (
+  field: 'receivedAt' | 'requestedAt' | 'createdAt',
+  dateFromMs: number,
+  dateToMs: number,
+): QueryConstraint[] => {
+  const constraints: QueryConstraint[] = [];
+  if (dateFromMs) constraints.push(where(field, '>=', Timestamp.fromMillis(dateFromMs)));
+  if (dateToMs) constraints.push(where(field, '<=', Timestamp.fromMillis(dateToMs)));
+  constraints.push(orderBy(field, 'desc'));
+  return constraints;
 };
 
-const isWithinDateRange = (
+const isWithinReceivedDateRange = (
   docSnapshot: QueryDocumentSnapshot<DocumentData>,
   dateFromMs: number,
   dateToMs: number,
 ): boolean => {
-  const createdAtMs = timestampToMillis(docSnapshot.data().createdAt);
-  if (!createdAtMs) return false;
-  if (dateFromMs && createdAtMs < dateFromMs) return false;
-  if (dateToMs && createdAtMs > dateToMs) return false;
+  const receivedAtMs = leadReceivedAtMillis(docSnapshot.data());
+  if (!receivedAtMs) return false;
+  if (dateFromMs && receivedAtMs < dateFromMs) return false;
+  if (dateToMs && receivedAtMs > dateToMs) return false;
   return true;
 };
 
-const isMissingCompositeIndexError = (error: unknown): boolean => {
-  const candidate = error as { code?: unknown; message?: unknown } | null;
-  const code = String(candidate?.code || '').toLowerCase();
-  const message = String(candidate?.message || error || '');
-  return code.includes('failed-precondition') || /requires an index|index.*required|create it here/i.test(message);
-};
-
-const getDateRangeBucketCountsFallback = async (
+/**
+ * Bounded receipt-date read. Canonical rows come from receivedAt. Two additional
+ * bounded compatibility lanes retain historical records that predate receivedAt.
+ * The three result sets are de-duplicated before workflow-bucket filtering.
+ */
+const getReceivedDateRangeDocs = async (
   dateFromMs: number,
   dateToMs: number,
-): Promise<LeadBucketCounts> => {
+): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
+  const [receivedSnapshot, requestedSnapshot, createdSnapshot] = await Promise.all([
+    getDocs(query(
+      collection(db, LEADS_COLLECTION),
+      ...buildReceiptRangeConstraints('receivedAt', dateFromMs, dateToMs),
+    )),
+    getDocs(query(
+      collection(db, LEADS_COLLECTION),
+      ...buildReceiptRangeConstraints('requestedAt', dateFromMs, dateToMs),
+    )),
+    getDocs(query(
+      collection(db, LEADS_COLLECTION),
+      ...buildReceiptRangeConstraints('createdAt', dateFromMs, dateToMs),
+    )),
+  ]);
+
+  const docsById = new Map<string, QueryDocumentSnapshot<DocumentData>>();
+  receivedSnapshot.docs.forEach((docSnapshot) => docsById.set(docSnapshot.id, docSnapshot));
+  requestedSnapshot.docs.forEach((docSnapshot) => {
+    const data = docSnapshot.data();
+    if (!timestampToMillis(data.receivedAt)) docsById.set(docSnapshot.id, docSnapshot);
+  });
+  createdSnapshot.docs.forEach((docSnapshot) => {
+    const data = docSnapshot.data();
+    if (!timestampToMillis(data.receivedAt) && !timestampToMillis(data.requestedAt)) {
+      docsById.set(docSnapshot.id, docSnapshot);
+    }
+  });
+
+  return Array.from(docsById.values())
+    .filter((docSnapshot) => isWithinReceivedDateRange(docSnapshot, dateFromMs, dateToMs))
+    .sort(sortLeadDocsByReceivedAtDesc);
+};
+
+const getBucketDocs = async (bucket: SimpleLeadBucket): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
   const snapshot = await getDocs(
     query(
       collection(db, LEADS_COLLECTION),
-      ...buildCreatedAtConstraints(dateFromMs, dateToMs, null),
+      where('status', 'in', [...LEAD_STATUSES_BY_BUCKET[bucket]]),
     ),
   );
+  return snapshot.docs;
+};
+
+const getBucketCount = async (bucket: SimpleLeadBucket): Promise<number> => {
+  const snapshot = await getCountFromServer(
+    query(
+      collection(db, LEADS_COLLECTION),
+      where('status', 'in', [...LEAD_STATUSES_BY_BUCKET[bucket]]),
+    ),
+  );
+  return Number(snapshot.data().count || 0);
+};
+
+const countDocsByBucket = (docs: QueryDocumentSnapshot<DocumentData>[]): LeadBucketCounts => {
   const counts: LeadBucketCounts = { ...EMPTY_COUNTS };
-  for (const docSnapshot of snapshot.docs) {
+  for (const docSnapshot of docs) {
     const status = docSnapshot.data().status;
     if (leadStatusBelongsToBucket(status, 'open')) counts.open += 1;
     else if (leadStatusBelongsToBucket(status, 'in_progress')) counts.in_progress += 1;
@@ -196,9 +266,21 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   const requestIdRef = useRef(0);
   const pageStartCursorsRef = useRef<Array<QueryDocumentSnapshot<DocumentData> | null>>([null]);
   const smallBucketCacheRef = useRef(new Map<SimpleLeadBucket, QueryDocumentSnapshot<DocumentData>[]>());
+  const receivedRangeCacheRef = useRef<{
+    key: string;
+    promise: Promise<QueryDocumentSnapshot<DocumentData>[]>;
+  } | null>(null);
 
   onErrorRef.current = onError;
   onNewWebsiteLeadsRef.current = onNewWebsiteLeads;
+
+  const loadReceivedRangeDocs = useCallback(() => {
+    const key = `${dateFromMs || 0}:${dateToMs || 0}:${reloadVersion}`;
+    if (receivedRangeCacheRef.current?.key === key) return receivedRangeCacheRef.current.promise;
+    const promise = getReceivedDateRangeDocs(dateFromMs, dateToMs);
+    receivedRangeCacheRef.current = { key, promise };
+    return promise;
+  }, [dateFromMs, dateToMs, reloadVersion]);
 
   const refreshCounts = useCallback(async () => {
     setCountsLoading(true);
@@ -209,21 +291,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
       }
 
       if (hasDateFilter) {
-        try {
-          const [open, inProgress, adminReview, closed] = await Promise.all([
-            getBucketCount('open', dateFromMs, dateToMs),
-            getBucketCount('in_progress', dateFromMs, dateToMs),
-            getBucketCount('admin_review', dateFromMs, dateToMs),
-            getBucketCount('closed', dateFromMs, dateToMs),
-          ]);
-          setBucketCounts({ open, in_progress: inProgress, admin_review: adminReview, closed });
-        } catch (error) {
-          if (!isMissingCompositeIndexError(error)) throw error;
-          console.warn(
-            '[usePagedLeads] Leads status/date index is not READY yet; using one bounded date-range scan for card counts.',
-          );
-          setBucketCounts(await getDateRangeBucketCountsFallback(dateFromMs, dateToMs));
-        }
+        setBucketCounts(countDocsByBucket(await loadReceivedRangeDocs()));
         return;
       }
 
@@ -240,7 +308,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     } finally {
       setCountsLoading(false);
     }
-  }, [dateFromMs, dateToMs, hasDateFilter, invalidDateRange]);
+  }, [hasDateFilter, invalidDateRange, loadReceivedRangeDocs]);
 
   useEffect(() => {
     void refreshCounts();
@@ -249,6 +317,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   useEffect(() => {
     if (pageState.key === optionKey) return;
     pageStartCursorsRef.current = [null];
+    receivedRangeCacheRef.current = null;
     setFilteredTotal(null);
     setFilteredHasNext(false);
     setPageState({ key: optionKey, index: 0 });
@@ -283,34 +352,29 @@ export function usePagedLeads<T extends PagedLeadRecord>({
       }
 
       try {
+        if (hasDateFilter) {
+          const rangeDocs = await loadReceivedRangeDocs();
+          const matching = rangeDocs.filter((docSnapshot) =>
+            leadStatusBelongsToBucket(docSnapshot.data().status, bucket));
+          const start = pageSize === 'all' ? 0 : effectivePageIndex * pageSize;
+          const pageDocs = pageSize === 'all' ? matching : matching.slice(start, start + pageSize);
+          setFilteredTotal(matching.length);
+          setFilteredHasNext(pageSize !== 'all' && start + pageSize < matching.length);
+          publish(pageDocs);
+          return;
+        }
+
         const statuses = [...LEAD_STATUSES_BY_BUCKET[bucket]];
 
         if (pageSize === 'all') {
-          if (hasDateFilter) {
-            const snapshot = await getDocs(
-              query(
-                collection(db, LEADS_COLLECTION),
-                ...buildCreatedAtConstraints(dateFromMs, dateToMs, null),
-              ),
-            );
-            const matching = snapshot.docs.filter((docSnapshot) =>
-              leadStatusBelongsToBucket(docSnapshot.data().status, bucket));
-            setFilteredTotal(matching.length);
-            publish(matching);
-          } else {
-            const snapshot = await getDocs(
-              query(collection(db, LEADS_COLLECTION), where('status', 'in', statuses)),
-            );
-            setFilteredTotal(null);
-            publish([...snapshot.docs].sort(sortLeadDocsByCreatedAtDesc));
-          }
+          const docs = await getBucketDocs(bucket);
+          setFilteredTotal(null);
+          publish([...docs].sort(sortLeadDocsByReceivedAtDesc));
           return;
         }
 
         // With Teacher / Admin Review / Closed are normally small operational queues.
-        // For <=100 rows, fetch the exact status-filtered queue once and paginate the
-        // cached result locally. Date filtering then happens inside that small cache, so
-        // the row list itself does not depend on a composite status + createdAt index.
+        // For <=100 rows, fetch the exact status-filtered queue once and paginate locally.
         if (bucket !== 'open') {
           let cached = smallBucketCacheRef.current.get(bucket);
           if (!cached) {
@@ -319,39 +383,32 @@ export function usePagedLeads<T extends PagedLeadRecord>({
               const snapshot = await getDocs(
                 query(collection(db, LEADS_COLLECTION), where('status', 'in', statuses)),
               );
-              cached = [...snapshot.docs].sort(sortLeadDocsByCreatedAtDesc);
+              cached = [...snapshot.docs].sort(sortLeadDocsByReceivedAtDesc);
               smallBucketCacheRef.current.set(bucket, cached);
             }
           }
           if (cached) {
-            const matching = hasDateFilter
-              ? cached.filter((docSnapshot) => isWithinDateRange(docSnapshot, dateFromMs, dateToMs))
-              : cached;
             const start = effectivePageIndex * pageSize;
-            setFilteredTotal(hasDateFilter ? matching.length : null);
-            setFilteredHasNext(start + pageSize < matching.length);
-            publish(matching.slice(start, start + pageSize));
+            setFilteredTotal(null);
+            publish(cached.slice(start, start + pageSize));
             return;
           }
         }
 
-        // Open can be large. Walk the built-in createdAt index from newest to oldest,
-        // applying the requested month/custom-date bounds at the query itself. We do not
-        // add a status predicate here, keeping the page read path index-safe even while
-        // the dedicated status/date count index is being provisioned.
+        // Open can be large. Preserve the existing bounded createdAt cursor for ordinary
+        // unfiltered browsing. Date-filtered views use the canonical received-date path above.
         let cursor = pageStartCursorsRef.current[effectivePageIndex] || null;
         const matchingDocs: QueryDocumentSnapshot<DocumentData>[] = [];
         let reachedEnd = false;
         let pageBoundaryCursor: QueryDocumentSnapshot<DocumentData> | null = null;
-        const targetMatches = pageSize + (hasDateFilter ? 1 : 0);
 
-        while (matchingDocs.length < targetMatches && !reachedEnd) {
-          const remaining = targetMatches - matchingDocs.length;
+        while (matchingDocs.length < pageSize && !reachedEnd) {
+          const remaining = pageSize - matchingDocs.length;
           const batchSize = Math.min(100, Math.max(remaining, Math.min(5, pageSize)));
           const snapshot = await getDocs(
             query(
               collection(db, LEADS_COLLECTION),
-              ...buildCreatedAtConstraints(dateFromMs, dateToMs, cursor, batchSize),
+              ...buildCreatedAtConstraints(cursor, batchSize),
             ),
           );
           if (snapshot.empty) {
@@ -363,35 +420,23 @@ export function usePagedLeads<T extends PagedLeadRecord>({
             cursor = docSnapshot;
             if (!leadStatusBelongsToBucket(docSnapshot.data().status, bucket)) continue;
             matchingDocs.push(docSnapshot);
-            if (matchingDocs.length === pageSize) pageBoundaryCursor = docSnapshot;
-            if (matchingDocs.length === targetMatches) break;
+            if (matchingDocs.length === pageSize) {
+              pageBoundaryCursor = docSnapshot;
+              break;
+            }
           }
 
           if (snapshot.docs.length < batchSize) reachedEnd = true;
         }
 
-        const pageDocs = matchingDocs.slice(0, pageSize);
-        const hasFilteredNextPage = hasDateFilter
-          ? matchingDocs.length > pageSize
-          : false;
-        setFilteredHasNext(hasFilteredNextPage);
-
-        if (pageDocs.length === pageSize && pageBoundaryCursor) {
+        if (matchingDocs.length === pageSize && pageBoundaryCursor) {
           pageStartCursorsRef.current[effectivePageIndex + 1] = pageBoundaryCursor;
         } else {
           pageStartCursorsRef.current.splice(effectivePageIndex + 1);
         }
 
-        if (hasDateFilter) {
-          if (!hasFilteredNextPage && reachedEnd) {
-            setFilteredTotal(effectivePageIndex * pageSize + pageDocs.length);
-          } else {
-            setFilteredTotal(null);
-          }
-        } else {
-          setFilteredTotal(null);
-        }
-        publish(pageDocs);
+        setFilteredTotal(null);
+        publish(matchingDocs);
       } catch (error) {
         fail(error);
       }
@@ -403,11 +448,10 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     };
   }, [
     bucket,
-    dateFromMs,
-    dateToMs,
     effectivePageIndex,
     hasDateFilter,
     invalidDateRange,
+    loadReceivedRangeDocs,
     optionKey,
     pageSize,
     pageState.key,
@@ -415,7 +459,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   ]);
 
   // Preserve new website-enquiry alerts without reopening the former unbounded active
-  // leads listener. Only the five newest lead documents stay live.
+  // leads listener. Notification recency uses the same canonical receipt anchor.
   useEffect(() => {
     let hasServerBaseline = false;
     return onSnapshot(
@@ -438,13 +482,14 @@ export function usePagedLeads<T extends PagedLeadRecord>({
             if (change.type !== 'added' || change.doc.metadata.hasPendingWrites) return false;
             const data = change.doc.data();
             if (normalizeText(data.source) !== 'website') return false;
-            const createdAtMs = timestampToMillis(data.createdAt);
-            return createdAtMs > 0 && now - createdAtMs <= RECENT_NOTIFICATION_WINDOW_MS;
+            const receivedAtMs = leadReceivedAtMillis(data);
+            return receivedAtMs > 0 && now - receivedAtMs <= RECENT_NOTIFICATION_WINDOW_MS;
           })
           .map((change) => toLeadRecord<T>(change.doc));
         if (newWebsiteLeads.length === 0) return;
         onNewWebsiteLeadsRef.current(newWebsiteLeads);
         smallBucketCacheRef.current.clear();
+        receivedRangeCacheRef.current = null;
         void refreshCounts();
         const rangeIncludesNow =
           (!dateFromMs || now >= dateFromMs) && (!dateToMs || now <= dateToMs);
@@ -459,6 +504,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
 
   const reloadPage = useCallback((resetToFirst = false) => {
     smallBucketCacheRef.current.delete(bucket);
+    receivedRangeCacheRef.current = null;
     if (resetToFirst) {
       pageStartCursorsRef.current = [null];
       if (effectivePageIndex !== 0) {
