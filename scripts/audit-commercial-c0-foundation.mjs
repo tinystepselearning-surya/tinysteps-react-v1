@@ -182,11 +182,26 @@ try {
     .split('\n')
     .map((value) => value.trim())
     .filter(Boolean);
-  const unexpected = changed.filter((file) => !requiredC0Files.includes(file));
+
+  // The workflow intentionally monitors dependencies such as leadLifecycle.ts,
+  // pricing, attribution and analytics. A dependency-only PR must be audited for
+  // C0 contract drift, but it is not itself a C0 authoring PR and therefore must
+  // not fail merely because it contains normal product/test files.
+  const c0ScopeLockTriggers = [
+    '.github/workflows/commercial-c0-revenue-measurement-facts.yml',
+    'docs/seo/commercial-growth/C0_REVENUE_MEASUREMENT_COMMERCIAL_FACTS.md',
+    'src/lib/commercialC0Foundation.ts',
+    'src/tests/seo/commercialC0Foundation.spec.ts',
+  ];
+  const enforceScopeLock = changed.some((file) => c0ScopeLockTriggers.includes(file));
+  const unexpected = enforceScopeLock
+    ? changed.filter((file) => !requiredC0Files.includes(file))
+    : [];
+
   if (unexpected.length) {
     unexpected.forEach((file) => failures.push(`C0 scope violation: unexpected changed file ${file}`));
   }
-  evidence.checks.changedFiles = { changed, unexpected };
+  evidence.checks.changedFiles = { changed, enforceScopeLock, unexpected };
 } catch {
   evidence.checks.changedFiles = {
     skipped: true,
