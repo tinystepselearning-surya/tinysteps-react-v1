@@ -213,8 +213,10 @@ export const buildLeadFunnelAnalytics = (
     if (isCompletedDemo(demo)) increment(toIstDateKey(demo.completedAt), 'completed');
     increment(toIstDateKey((demo as DemoSession & { cancelledAt?: unknown }).cancelledAt), 'cancelled');
     if (isEnrolledDemo(demo)) {
+      // Enrollment activity belongs to the actual conversion event. lastUpdatedAt is
+      // deliberately excluded so unrelated admin edits cannot create false daily spikes.
       increment(
-        toIstDateKey((demo as DemoSession & { enrolledAt?: unknown }).enrolledAt || demo.lastUpdatedAt || demo.completedAt),
+        toIstDateKey((demo as DemoSession & { enrolledAt?: unknown }).enrolledAt),
         'enrolled',
       );
     }
