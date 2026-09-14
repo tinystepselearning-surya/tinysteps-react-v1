@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { FOUNDER_PUBLIC_PROFILE_URLS } from '../../lib/founderProfiles';
 import { FOUNDER_PROFILE_PATH, FOUNDER_PROFILE_URL } from '../../lib/schemas';
 import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 
@@ -78,8 +79,12 @@ describe('Founder Brick 5 discovery, indexing and internal authority', () => {
     expect(sitemapPage).toContain('Founder — Vannala Ravali Priya');
   });
 
-  it('keeps Brick 5 focused on first-party discovery without adding personal sameAs', () => {
+  it('keeps first-party discovery while publishing only verified personal sameAs profiles', () => {
+    expect(FOUNDER_PUBLIC_PROFILE_URLS).toEqual([
+      'https://www.linkedin.com/in/ravali-priya-vannala/',
+    ]);
+
     const founderPage = read('src/pages/FounderPriyaPage.tsx');
-    expect(founderPage).not.toContain('sameAs');
+    expect(founderPage).toContain('sameAs: [...FOUNDER_PUBLIC_PROFILE_URLS]');
   });
 });
