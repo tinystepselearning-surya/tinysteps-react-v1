@@ -59,6 +59,11 @@ describe('lead funnel analytics', () => {
   it('falls back from receivedAt to requestedAt and createdAt', () => {
     expect(leadReceivedDateKey({ id: 'a', requestedAt: ts('2026-08-09T03:00:00.000Z') })).toBe('2026-08-09');
     expect(leadReceivedDateKey({ id: 'b', createdAt: ts('2026-08-08T20:00:00.000Z') })).toBe('2026-08-09');
+    expect(leadReceivedDateKey({
+      id: 'c',
+      receivedAt: { malformed: true },
+      requestedAt: ts('2026-08-09T03:00:00.000Z'),
+    })).toBe('2026-08-09');
   });
 
   it('counts one lead once in cohort conversion even when it has multiple rescheduled demos', () => {

@@ -119,8 +119,11 @@ export const toIstDateKey = (value: unknown): string | null => {
 
 export const todayIstDateKey = (): string => toIstDateKey(new Date()) || '';
 
-export const leadReceivedDateKey = (lead: LeadFunnelLead): string | null =>
-  toIstDateKey(lead.receivedAt || lead.requestedAt || lead.createdAt);
+export const leadReceivedDateKey = (lead: LeadFunnelLead): string | null => {
+  if (toMillis(lead.receivedAt)) return toIstDateKey(lead.receivedAt);
+  if (toMillis(lead.requestedAt)) return toIstDateKey(lead.requestedAt);
+  return toIstDateKey(lead.createdAt);
+};
 
 export const formatDateKeyLabel = (dateKey: string): string => {
   const parsed = new Date(`${dateKey}T00:00:00Z`);
@@ -213,8 +216,10 @@ export const buildLeadFunnelAnalytics = (
     if (isCompletedDemo(demo)) increment(toIstDateKey(demo.completedAt), 'completed');
     increment(toIstDateKey((demo as DemoSession & { cancelledAt?: unknown }).cancelledAt), 'cancelled');
     if (isEnrolledDemo(demo)) {
+      // Enrollment activity belongs to the actual conversion event. lastUpdatedAt is
+      // deliberately excluded so unrelated admin edits cannot create false daily spikes.
       increment(
-        toIstDateKey((demo as DemoSession & { enrolledAt?: unknown }).enrolledAt || demo.lastUpdatedAt || demo.completedAt),
+        toIstDateKey((demo as DemoSession & { enrolledAt?: unknown }).enrolledAt),
         'enrolled',
       );
     }

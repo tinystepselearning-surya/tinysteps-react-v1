@@ -113,21 +113,46 @@ export const buildLeadCanonicalizationPatch = (
   eventBefore: Record<string, unknown> = {},
 ): Record<string, unknown> => {
   const updates: Record<string, unknown> = {};
-  // Never restore the immediately previous value: X -> Y -> X forms a permanent
-  // Firestore feedback loop. The cohort anchor is deterministic across deliveries.
-  const existingAnchor = earliestTimestamp(
-    current.receivedAt,
-    eventBefore.receivedAt,
-    current.firstInquiryAt,
-    eventBefore.firstInquiryAt,
-  );
-  const receivedAt = existingAnchor || earliestTimestamp(current.requestedAt, current.createdAt);
-  if (receivedAt && timestampMillis(current.receivedAt) !== timestampMillis(receivedAt)) {
-    updates.receivedAt = receivedAt;
-  } else if (!current.receivedAt) {
-    updates.receivedAt =
-      current.requestedAt || current.createdAt || admin.firestore.FieldValue.serverTimestamp();
+
+  // receivedAt is the immutable lead-cohort anchor. receivedAtOriginal is the internal
+  // backing value that prevents an edit-trigger correction from oscillating X -> Y -> X.
+  // Existing records acquire the backing value lazily; new records acquire it on creation.
+  const previousOriginal = timestampMillis(eventBefore.receivedAtOriginal)
+    ? eventBefore.receivedAtOriginal
+    : null;
+  const currentOriginal = timestampMillis(current.receivedAtOriginal)
+    ? current.receivedAtOriginal
+    : null;
+  const previousReceivedAt = timestampMillis(eventBefore.receivedAt)
+    ? eventBefore.receivedAt
+    : null;
+  const currentReceivedAt = timestampMillis(current.receivedAt)
+    ? current.receivedAt
+    : null;
+
+  const immutableReceivedAt =
+    previousOriginal ||
+    currentOriginal ||
+    previousReceivedAt ||
+    currentReceivedAt ||
+    earliestTimestamp(current.firstInquiryAt, current.requestedAt, current.createdAt) ||
+    admin.firestore.FieldValue.serverTimestamp();
+
+  if (
+    !currentOriginal ||
+    (timestampMillis(immutableReceivedAt) > 0 &&
+      timestampMillis(currentOriginal) !== timestampMillis(immutableReceivedAt))
+  ) {
+    updates.receivedAtOriginal = immutableReceivedAt;
   }
+  if (
+    !current.receivedAt ||
+    (timestampMillis(immutableReceivedAt) > 0 &&
+      timestampMillis(current.receivedAt) !== timestampMillis(immutableReceivedAt))
+  ) {
+    updates.receivedAt = immutableReceivedAt;
+  }
+
   if (!cleanText(current.status, 80)) updates.status = 'new';
   if (!current.lifecycleVersion) updates.lifecycleVersion = 2;
 
