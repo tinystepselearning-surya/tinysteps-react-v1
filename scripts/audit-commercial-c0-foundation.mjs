@@ -130,6 +130,20 @@ const requiredC0Files = [
   'src/lib/commercialC0Foundation.ts',
   'src/tests/seo/commercialC0Foundation.spec.ts',
 ];
+
+// These files define the frozen C0 foundation itself. When one of them changes,
+// enforce the original C0-only isolation rule. Dependency files such as
+// analytics.ts, conversionTracking.ts, pricing.ts, semanticFacts.ts and
+// leadLifecycle.ts intentionally trigger this workflow as regression checks;
+// changing one of those must not make an otherwise unrelated PR a C0 scope
+// violation.
+const c0ScopeOwnershipFiles = [
+  '.github/workflows/commercial-c0-revenue-measurement-facts.yml',
+  'docs/seo/commercial-growth/C0_REVENUE_MEASUREMENT_COMMERCIAL_FACTS.md',
+  'src/lib/commercialC0Foundation.ts',
+  'src/tests/seo/commercialC0Foundation.spec.ts',
+];
+
 for (const relativePath of requiredC0Files) {
   if (!fs.existsSync(path.join(ROOT, relativePath))) failures.push(`${relativePath} is missing`);
 }
@@ -183,25 +197,21 @@ try {
     .map((value) => value.trim())
     .filter(Boolean);
 
-  // The workflow intentionally monitors dependencies such as leadLifecycle.ts,
-  // pricing, attribution and analytics. A dependency-only PR must be audited for
-  // C0 contract drift, but it is not itself a C0 authoring PR and therefore must
-  // not fail merely because it contains normal product/test files.
-  const c0ScopeLockTriggers = [
-    '.github/workflows/commercial-c0-revenue-measurement-facts.yml',
-    'docs/seo/commercial-growth/C0_REVENUE_MEASUREMENT_COMMERCIAL_FACTS.md',
-    'src/lib/commercialC0Foundation.ts',
-    'src/tests/seo/commercialC0Foundation.spec.ts',
-  ];
-  const enforceScopeLock = changed.some((file) => c0ScopeLockTriggers.includes(file));
-  const unexpected = enforceScopeLock
+  const scopeIsolationActive = changed.some((file) => c0ScopeOwnershipFiles.includes(file));
+  const unexpected = scopeIsolationActive
     ? changed.filter((file) => !requiredC0Files.includes(file))
     : [];
 
   if (unexpected.length) {
     unexpected.forEach((file) => failures.push(`C0 scope violation: unexpected changed file ${file}`));
   }
-  evidence.checks.changedFiles = { changed, enforceScopeLock, unexpected };
+  evidence.checks.changedFiles = {
+    changed,
+    scopeIsolationActive,
+    scopeMode: scopeIsolationActive ? 'c0-foundation-isolation' : 'regression-contract-only',
+    scopeOwnershipFilesChanged: changed.filter((file) => c0ScopeOwnershipFiles.includes(file)),
+    unexpected,
+  };
 } catch {
   evidence.checks.changedFiles = {
     skipped: true,

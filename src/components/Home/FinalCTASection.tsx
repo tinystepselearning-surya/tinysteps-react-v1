@@ -30,7 +30,7 @@ const FinalCTASection: React.FC = () => {
           </Link>
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">
-            <p>Join 5000+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
+            <p>Tiny Steps has served 5000+ students, with families across 15+ countries including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
             <p>For fresh public reviews, parents may also check trusted third-party profiles such as Trustpilot, JustDial, and Reddit.</p>
           </div>
         </div>
