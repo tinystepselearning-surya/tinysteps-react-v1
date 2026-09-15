@@ -1,6 +1,6 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
-import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
+import React, { lazy, startTransition, Suspense, useEffect, useRef, useState } from "react";
 import { organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -71,80 +71,27 @@ const homeFaqSchema = {
 
 export default function HomePage() {
   const belowFoldAnchorRef = useRef<HTMLDivElement | null>(null);
+  const deferredAnchorRef = useRef<HTMLDivElement | null>(null);
   const [showPrimaryBelowFoldSections, setShowPrimaryBelowFoldSections] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    let settled = false;
-    let observer: IntersectionObserver | null = null;
-    let fallbackTimer: number | undefined;
-
-    const reveal = () => {
-      if (settled) return;
-      settled = true;
-      setShowPrimaryBelowFoldSections(true);
-      observer?.disconnect();
-      if (fallbackTimer !== undefined) {
-        window.clearTimeout(fallbackTimer);
-        fallbackTimer = undefined;
-      }
-      window.removeEventListener("scroll", reveal);
-      window.removeEventListener("pointerdown", reveal);
-      window.removeEventListener("touchstart", reveal);
-      window.removeEventListener("keydown", reveal);
-    };
-
-    const target = belowFoldAnchorRef.current;
-    if (target && "IntersectionObserver" in window) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) reveal();
-        },
-        { rootMargin: "900px 0px 900px 0px", threshold: 0.01 }
-      );
-      observer.observe(target);
-    }
-
-    window.addEventListener("scroll", reveal, { passive: true, once: true });
-    window.addEventListener("pointerdown", reveal, { passive: true, once: true });
-    window.addEventListener("touchstart", reveal, { passive: true, once: true });
-    window.addEventListener("keydown", reveal, { once: true });
-    fallbackTimer = window.setTimeout(reveal, 2200);
-
-    return () => {
-      observer?.disconnect();
-      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
-      window.removeEventListener("scroll", reveal);
-      window.removeEventListener("pointerdown", reveal);
-      window.removeEventListener("touchstart", reveal);
-      window.removeEventListener("keydown", reveal);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof navigator !== "undefined" && navigator.webdriver) return;
-
-    const activate = () => setShowDeferredSections(true);
-    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
-    const connection = (navigator as any)?.connection;
-    const effectiveType =
-      typeof connection?.effectiveType === "string" ? connection.effectiveType.toLowerCase() : "";
-    const isConstrainedNetwork =
-      Boolean(connection?.saveData) || effectiveType === "slow-2g" || effectiveType === "2g";
-    const fallbackDelayMs = isMobileViewport
-      ? isConstrainedNetwork ? 9200 : 6800
-      : isConstrainedNetwork ? 12000 : 9800;
     const win = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
       cancelIdleCallback?: (id: number) => void;
     };
-
+    let settled = false;
+    let observer: IntersectionObserver | null = null;
     let idleId: number | undefined;
     let timeoutId: number | undefined;
 
-    const clearScheduledActivation = () => {
+    const activate = () => {
+      if (settled) return;
+      settled = true;
+      startTransition(() => setShowPrimaryBelowFoldSections(true));
+      observer?.disconnect();
       if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
         win.cancelIdleCallback(idleId);
         idleId = undefined;
@@ -155,32 +102,95 @@ export default function HomePage() {
       }
     };
 
-    const onFirstInteraction = () => {
-      clearScheduledActivation();
-      activate();
-      window.removeEventListener("pointerdown", onFirstInteraction);
-      window.removeEventListener("keydown", onFirstInteraction);
-      window.removeEventListener("touchstart", onFirstInteraction);
-      window.removeEventListener("scroll", onFirstInteraction);
-    };
-
-    window.addEventListener("pointerdown", onFirstInteraction, { passive: true, once: true });
-    window.addEventListener("keydown", onFirstInteraction, { once: true });
-    window.addEventListener("touchstart", onFirstInteraction, { passive: true, once: true });
-    window.addEventListener("scroll", onFirstInteraction, { passive: true, once: true });
+    const target = belowFoldAnchorRef.current;
+    if (target && "IntersectionObserver" in window) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) activate();
+        },
+        { rootMargin: "900px 0px 900px 0px", threshold: 0.01 }
+      );
+      observer.observe(target);
+    }
 
     if (typeof win.requestIdleCallback === "function") {
-      idleId = win.requestIdleCallback(activate, { timeout: fallbackDelayMs });
+      idleId = win.requestIdleCallback(activate, { timeout: 6000 });
     } else {
-      timeoutId = window.setTimeout(activate, fallbackDelayMs);
+      timeoutId = window.setTimeout(activate, 4200);
     }
 
     return () => {
-      window.removeEventListener("pointerdown", onFirstInteraction);
-      window.removeEventListener("keydown", onFirstInteraction);
-      window.removeEventListener("touchstart", onFirstInteraction);
-      window.removeEventListener("scroll", onFirstInteraction);
-      clearScheduledActivation();
+      observer?.disconnect();
+      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (typeof navigator !== "undefined" && navigator.webdriver) return;
+
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    const connection = (navigator as any)?.connection;
+    const effectiveType =
+      typeof connection?.effectiveType === "string" ? connection.effectiveType.toLowerCase() : "";
+    const isConstrainedNetwork =
+      Boolean(connection?.saveData) || effectiveType === "slow-2g" || effectiveType === "2g";
+    const fallbackDelayMs = isMobileViewport
+      ? isConstrainedNetwork ? 18000 : 14000
+      : isConstrainedNetwork ? 20000 : 16000;
+
+    let settled = false;
+    let observer: IntersectionObserver | null = null;
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    const activate = () => {
+      if (settled) return;
+      settled = true;
+      startTransition(() => setShowDeferredSections(true));
+      observer?.disconnect();
+      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
+        idleId = undefined;
+      }
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+    };
+
+    const target = deferredAnchorRef.current;
+    if (target && "IntersectionObserver" in window) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) activate();
+        },
+        { rootMargin: "1200px 0px 1200px 0px", threshold: 0.01 }
+      );
+      observer.observe(target);
+    }
+
+    if (!isConstrainedNetwork) {
+      if (typeof win.requestIdleCallback === "function") {
+        idleId = win.requestIdleCallback(activate, { timeout: fallbackDelayMs });
+      } else {
+        timeoutId = window.setTimeout(activate, fallbackDelayMs);
+      }
+    }
+
+    return () => {
+      observer?.disconnect();
+      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, []);
 
@@ -217,6 +227,8 @@ export default function HomePage() {
           <WhyTinyStepsSection />
         </>
       ) : null}
+
+      <div ref={deferredAnchorRef} className="h-px w-full" aria-hidden="true" />
 
       {showDeferredSections ? (
         <>
