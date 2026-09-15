@@ -9,6 +9,7 @@ import { queryClient } from './lib/queryClient';
 import { initSentry } from './lib/sentry';
 import { ErrorFallback } from './components/ErrorFallback';
 import { initAnalytics } from './lib/analytics';
+import { installInpRum } from './lib/inpRum';
 
 class RootErrorBoundary extends React.Component<
   { children: ReactNode },
@@ -115,7 +116,6 @@ const scheduleNonCriticalBoot = () => {
 
   const win = window as Window & {
     requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    cancelIdleCallback?: (id: number) => void;
   };
   const isMobileViewport = window.matchMedia?.('(max-width: 767px)').matches;
   const connection = (navigator as any)?.connection;
@@ -124,66 +124,21 @@ const scheduleNonCriticalBoot = () => {
   const isConstrainedNetwork =
     Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
   const fallbackDelayMs = isMobileViewport
-    ? isConstrainedNetwork ? 14000 : 11000
-    : isConstrainedNetwork ? 18000 : 15000;
+    ? isConstrainedNetwork ? 15000 : 12000
+    : isConstrainedNetwork ? 19000 : 16000;
 
-  let hasBooted = false;
-  let idleId: number | undefined;
-  let timeoutId: number | undefined;
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(boot, { timeout: fallbackDelayMs });
+    return;
+  }
 
-  const removeInteractionListeners = () => {
-    window.removeEventListener('pointerdown', onFirstInteraction);
-    window.removeEventListener('keydown', onFirstInteraction);
-    window.removeEventListener('touchstart', onFirstInteraction);
-    window.removeEventListener('scroll', onFirstInteraction);
-  };
-
-  const clearTimers = () => {
-    if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
-      win.cancelIdleCallback(idleId);
-      idleId = undefined;
-    }
-    if (timeoutId !== undefined) {
-      window.clearTimeout(timeoutId);
-      timeoutId = undefined;
-    }
-  };
-
-  const scheduleBoot = (idleTimeoutMs: number, timeoutMs: number) => {
-    if (hasBooted) return;
-    if (typeof win.requestIdleCallback === 'function') {
-      idleId = win.requestIdleCallback(() => {
-        if (hasBooted) return;
-        hasBooted = true;
-        boot();
-      }, { timeout: idleTimeoutMs });
-      return;
-    }
-    timeoutId = window.setTimeout(() => {
-      if (hasBooted) return;
-      hasBooted = true;
-      boot();
-    }, timeoutMs);
-  };
-
-  const onFirstInteraction = () => {
-    removeInteractionListeners();
-    clearTimers();
-    scheduleBoot(8000, 1800);
-  };
-
-  window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
-  window.addEventListener('keydown', onFirstInteraction, { once: true });
-  window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
-  window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
-
-  timeoutId = window.setTimeout(() => {
-    removeInteractionListeners();
-    clearTimers();
-    scheduleBoot(10000, 2400);
-  }, fallbackDelayMs);
+  window.setTimeout(boot, fallbackDelayMs);
 };
 
+// INP observation is intentionally installed before analytics/Sentry boot. It is
+// a local PerformanceObserver only; reporting is deferred to idle time and uses
+// the existing analytics queue without adding work to the measured interaction.
+installInpRum();
 scheduleNonCriticalBoot();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
