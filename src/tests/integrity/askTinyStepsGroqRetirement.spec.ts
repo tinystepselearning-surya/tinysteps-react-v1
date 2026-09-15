@@ -19,6 +19,13 @@ describe('Ask Tiny Steps provider retirement', () => {
     expect(aiClient).not.toContain("'gemini-3.7-flash',");
     expect(mainFirebase).not.toContain('tiny-steps-ask-ai');
     expect(functionsIndex).not.toContain('export { askTinySteps }');
-    expect(deployWorkflow).toMatch(/retired_functions=\([\s\S]*?\baskTinySteps\b/);
+    expect(deployWorkflow).not.toContain('retired_functions=(');
+    expect(deployWorkflow).not.toContain('functions:delete');
+    expect(deployWorkflow).toContain('- name: Refuse stale production deployment');
+    expect(deployWorkflow).toContain('- name: Deploy Cloud Functions in bounded batches');
+    expect(deployWorkflow).toMatch(/workflow_dispatch:\n\s+inputs:\n\s+functions_only:/);
+    expect(deployWorkflow).toMatch(
+      /Deploy Cloud Functions in bounded batches[\s\S]*?if: steps\.functions-changes\.outputs\.functions_changed == 'true'/,
+    );
   });
 });
