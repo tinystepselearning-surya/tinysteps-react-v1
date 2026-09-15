@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import FounderPriyaPage from '../../pages/FounderPriyaPage';
+import { FOUNDER_PUBLIC_PROFILE_URLS } from '../../lib/founderProfiles';
 import {
   FOUNDER_ID,
   FOUNDER_PROFILE_URL,
@@ -112,7 +113,7 @@ describe('FounderPriyaPage', () => {
         worksFor: { '@id': ORGANIZATION_ID },
         mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
       });
-      expect(person?.sameAs).toBeUndefined();
+      expect(person?.sameAs).toEqual([...FOUNDER_PUBLIC_PROFILE_URLS]);
 
       expect(schemaTypes(profilePage || {})).toContain('ProfilePage');
       expect(schemaTypes(profilePage || {})).toContain('WebPage');

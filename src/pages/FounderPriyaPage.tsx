@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { Compass, ShieldCheck, UsersRound } from 'lucide-react';
+import { Compass, ExternalLink, ShieldCheck, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { FOUNDER_PUBLIC_PROFILES, FOUNDER_PUBLIC_PROFILE_URLS } from '../lib/founderProfiles';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
@@ -28,6 +29,7 @@ const ROBOTS =
 const FOUNDER_IMAGE = '/priya-founder-tiny-steps-learning.webp';
 const FOUNDER_IMAGE_URL = `${SITE_ORIGIN}${FOUNDER_IMAGE}`;
 const leadershipIcons = [Compass, UsersRound, ShieldCheck] as const;
+const primaryFounderProfile = FOUNDER_PUBLIC_PROFILES[0];
 
 const founderPersonSchema = {
   '@context': 'https://schema.org',
@@ -40,6 +42,7 @@ const founderPersonSchema = {
   jobTitle: 'Founder',
   url: FOUNDER_PROFILE_URL,
   image: FOUNDER_IMAGE_URL,
+  sameAs: [...FOUNDER_PUBLIC_PROFILE_URLS],
   mainEntityOfPage: {
     '@id': `${FOUNDER_PROFILE_URL}#webpage`,
   },
@@ -146,6 +149,19 @@ export default function FounderPriyaPage() {
               <p className="mt-2 text-base font-semibold text-slate-500 sm:text-lg">
                 Known to families and learners as Priya
               </p>
+
+              <div className="mt-5">
+                <a
+                  href={primaryFounderProfile.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-orange-300 hover:text-orange-700 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+                  aria-label={`${PUBLIC_FACTS.founder.fullName} on ${primaryFounderProfile.platform} (opens in a new tab)`}
+                >
+                  Official founder profile on {primaryFounderProfile.platform}
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </div>
 
               <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl sm:leading-9">
                 Vannala Ravali Priya is the Founder of Tiny Steps Learning, an online English learning school for
