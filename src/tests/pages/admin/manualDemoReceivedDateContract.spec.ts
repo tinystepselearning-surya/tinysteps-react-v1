@@ -13,7 +13,8 @@ describe('manual demo lead received-date contract', () => {
     expect(adminUi).toContain('Request Received Date *');
     expect(adminUi).toContain('id="demo-request-received-date"');
     expect(adminUi).toContain("requestReceivedDate: form.requestReceivedDate");
-    expect(service).toContain('requestReceivedDate: input.requestReceivedDate');
+    expect(service).toContain("const requestReceivedDate = input.requestReceivedDate?.trim() || null");
+    expect(service).toContain('requestReceivedDate,');
   });
 
   it('uses the manually entered receipt date only to initialize a lead that has no receivedAt yet', () => {

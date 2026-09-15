@@ -119,8 +119,11 @@ export const toIstDateKey = (value: unknown): string | null => {
 
 export const todayIstDateKey = (): string => toIstDateKey(new Date()) || '';
 
-export const leadReceivedDateKey = (lead: LeadFunnelLead): string | null =>
-  toIstDateKey(lead.receivedAt || lead.requestedAt || lead.createdAt);
+export const leadReceivedDateKey = (lead: LeadFunnelLead): string | null => {
+  if (toMillis(lead.receivedAt)) return toIstDateKey(lead.receivedAt);
+  if (toMillis(lead.requestedAt)) return toIstDateKey(lead.requestedAt);
+  return toIstDateKey(lead.createdAt);
+};
 
 export const formatDateKeyLabel = (dateKey: string): string => {
   const parsed = new Date(`${dateKey}T00:00:00Z`);

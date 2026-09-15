@@ -39,6 +39,11 @@ describe('lead/demo Firestore event idempotency', () => {
       { ...base, receivedAt: earlierEdit, receivedAtOriginal: original },
       { receivedAt: original, receivedAtOriginal: original },
     )).toMatchObject({ receivedAt: original });
+
+    expect(buildLeadCanonicalizationPatch(
+      { ...base, receivedAt: original, receivedAtOriginal: later },
+      { receivedAt: original, receivedAtOriginal: original },
+    )).toMatchObject({ receivedAtOriginal: original });
   });
 
   it('initializes the immutable backing anchor from receivedAt on a newly created lead', () => {

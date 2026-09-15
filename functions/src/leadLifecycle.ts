@@ -138,7 +138,11 @@ export const buildLeadCanonicalizationPatch = (
     earliestTimestamp(current.firstInquiryAt, current.requestedAt, current.createdAt) ||
     admin.firestore.FieldValue.serverTimestamp();
 
-  if (!current.receivedAtOriginal) {
+  if (
+    !currentOriginal ||
+    (timestampMillis(immutableReceivedAt) > 0 &&
+      timestampMillis(currentOriginal) !== timestampMillis(immutableReceivedAt))
+  ) {
     updates.receivedAtOriginal = immutableReceivedAt;
   }
   if (

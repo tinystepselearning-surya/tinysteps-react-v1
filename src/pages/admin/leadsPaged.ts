@@ -102,11 +102,17 @@ export const leadReceivedAtMillis = (lead: Record<string, unknown>): number =>
   timestampToMillis(lead.requestedAt) ||
   timestampToMillis(lead.createdAt);
 
+const leadReceivedAtValue = (lead: Record<string, unknown>): unknown => {
+  if (timestampToMillis(lead.receivedAt)) return lead.receivedAt;
+  if (timestampToMillis(lead.requestedAt)) return lead.requestedAt;
+  return lead.createdAt;
+};
+
 const toLeadRecord = <T extends PagedLeadRecord>(
   docSnapshot: QueryDocumentSnapshot<DocumentData>,
 ): T => {
   const data = docSnapshot.data() as Record<string, unknown>;
-  const receivedValue = data.receivedAt || data.requestedAt || data.createdAt;
+  const receivedValue = leadReceivedAtValue(data);
   return {
     id: docSnapshot.id,
     ...data,

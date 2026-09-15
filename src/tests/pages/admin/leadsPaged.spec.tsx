@@ -234,6 +234,34 @@ describe('canonical enquiry received date', () => {
     expect(screen.getByTestId('ids')).not.toHaveTextContent('canonical-outside');
     expect(screen.getByTestId('open-count')).toHaveTextContent('1');
   });
+
+  it('uses the first parseable receipt timestamp for both filtering and the visible date', async () => {
+    const requestedFallback = makeDoc(
+      'requested-fallback',
+      'demo_pending_schedule',
+      9_000,
+      'manual',
+      undefined,
+      3_000,
+    );
+    const originalData = requestedFallback.data();
+    const malformedReceivedAt = {
+      ...requestedFallback,
+      data: () => ({ ...originalData, receivedAt: { malformed: true } }),
+    } as unknown as TestDoc;
+
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([malformedReceivedAt]))
+      .mockResolvedValueOnce(makeSnapshot([]));
+
+    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('ids')).toHaveTextContent('requested-fallback');
+    expect(screen.getByTestId('created-at')).toHaveTextContent('3000');
+    expect(screen.getByTestId('open-count')).toHaveTextContent('1');
+  });
 });
 
 describe('usePagedLeads bounded Firestore reads', () => {

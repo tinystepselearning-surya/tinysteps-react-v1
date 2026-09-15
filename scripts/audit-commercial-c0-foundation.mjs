@@ -205,6 +205,7 @@ try {
   if (unexpected.length) {
     unexpected.forEach((file) => failures.push(`C0 scope violation: unexpected changed file ${file}`));
   }
+
   evidence.checks.changedFiles = {
     changed,
     scopeIsolationActive,
