@@ -43,6 +43,11 @@ type AttendanceEntryState = {
 
 const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];
 
+const attendanceStatusLabel = (status: AttendanceStatus): string => {
+  if (status === 'reschedule_requested') return 'Rescheduled';
+  return status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 const COURSE_ID_ALIASES: Record<string, string> = {
   'phonics-foundation': 'phonics-foundations',
   'phonics-foundations': 'phonics-foundations',
@@ -334,7 +339,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     if (hasMissingStatus) {
       toast({
         title: 'Select attendance status',
-        description: 'Please choose Present/Absent/Reschedule for each student.',
+        description: 'Please choose Present/Absent/Rescheduled for each student.',
         variant: 'destructive',
       });
       return;
@@ -454,7 +459,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
                           <SelectContent>
                             {STATUS_OPTIONS.map((status) => (
                               <SelectItem key={status} value={status}>
-                                {status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                {attendanceStatusLabel(status)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -477,7 +482,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Lesson progress is not updated for absent or reschedule-requested attendance.
+                          Lesson progress is not updated for absent or rescheduled attendance.
                         </p>
                       )}
 
