@@ -6,6 +6,7 @@ import { buildInpCandidate, describeInpTarget } from '../../lib/inpRum';
 const repoRoot = process.cwd();
 const mainSource = fs.readFileSync(path.join(repoRoot, 'src/main.tsx'), 'utf8');
 const homeSource = fs.readFileSync(path.join(repoRoot, 'src/pages/HomePage.tsx'), 'utf8');
+const routesSource = fs.readFileSync(path.join(repoRoot, 'src/app/routes.tsx'), 'utf8');
 
 describe('P0 mobile INP recovery', () => {
   it('keeps non-critical global boot off the first user interaction', () => {
@@ -26,6 +27,16 @@ describe('P0 mobile INP recovery', () => {
     expect(homeSource).not.toContain('window.addEventListener("touchstart"');
     expect(homeSource).not.toContain('window.addEventListener("keydown"');
     expect(homeSource).not.toContain('window.addEventListener("scroll"');
+  });
+
+  it('keeps shared public chrome and support-widget mounting off user input', () => {
+    expect(routesSource).toContain('scheduleDeferredActivation');
+    expect(routesSource).toContain('requestIdleCallback(activate');
+    expect(routesSource).not.toContain('onFirstInteraction');
+    expect(routesSource).not.toContain("window.addEventListener('pointerdown'");
+    expect(routesSource).not.toContain("window.addEventListener('touchstart'");
+    expect(routesSource).not.toContain("window.addEventListener('keydown'");
+    expect(routesSource).not.toContain("window.addEventListener('scroll'");
   });
 
   it('derives INP attribution without reading visible or accessible user text', () => {
