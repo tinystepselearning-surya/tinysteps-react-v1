@@ -32,6 +32,8 @@ AV1 is even narrower: it contains no Firestore writer and no exported Firebase f
 - transcript metadata listing;
 - attendance-report listing;
 - attendance-record listing;
+- raw participant attendance intervals containing join time, leave time and interval duration;
+- Microsoft-reported total attendance seconds for cross-checking;
 - transcript-content retrieval;
 - explicit fallback from speaker-attributed WebVTT to speaker-unattributed transcript text only when Microsoft reports `SpeakerAttributionNotAllowed`;
 - bounded retry of HTTP 429 and 5xx reads, honoring `Retry-After`;
@@ -40,6 +42,42 @@ AV1 is even narrower: it contains no Firestore writer and no exported Firebase f
 - ambiguous meeting-resolution rejection rather than guessing.
 
 The client never logs or persists the client secret, access token, meeting evidence, or transcript body.
+
+## Attendance evidence contract inherited by AV2–AV5
+
+The normalized evidence design is defined in:
+
+`docs/attendance-validation/attendance-evidence-model.md`
+
+That contract deliberately adopts the useful evidence concepts found in mature attendance platforms without replacing Tiny Steps attendance:
+
+```text
+scheduled Tiny Steps session
++ live Teams meeting identity
++ teacher join/leave intervals
++ learner join/leave intervals
++ teacher–learner overlap
++ participation/dwell metrics
++ optional transcript/recording evidence
+        ↓
+validation classification
+        ↓
+controlled reconciliation
+```
+
+Important rules:
+
+- raw join/leave intervals are preserved before calculating percentages;
+- multiple intervals are normalized rather than collapsed to first-join/last-leave only;
+- teacher–learner overlap **inside the scheduled Tiny Steps class window** is a primary deterministic signal for 1:1 lessons;
+- dwell percentages are derived from raw intervals and remain auditable;
+- Microsoft `totalAttendanceInSeconds` is retained as source evidence but does not replace interval-derived calculations;
+- transcript and recording availability are supplemental evidence only;
+- no transcript, no recording, Graph failure, display-name mismatch or missing artifact may independently mean `Absent`;
+- AV4, not AV1, owns threshold calibration and class-proof decisions;
+- the only operational attendance outcomes remain `Present`, `Absent`, and `Rescheduled`.
+
+AV1 therefore exposes the raw inputs required by the evidence model but does not implement attendance decisions or dwell thresholds.
 
 ## Required Microsoft Graph application permissions
 
@@ -196,7 +234,7 @@ AV1 is production-ready only after all of the following are verified with the ne
 [ ] Transcript metadata is readable
 [ ] Transcript content is readable (attributed or safe unattributed fallback)
 [ ] Attendance report is readable
-[ ] Attendance records are readable
+[ ] Attendance records are readable, including join/leave intervals
 ```
 
 Until every item is green, no scheduled collector is exported or deployed.
@@ -231,6 +269,8 @@ AV1 does **not**:
 - call `getAllTranscripts`/delta on a timer;
 - write validation evidence to Firestore;
 - persist complete transcript bodies;
+- normalize overlapping participant intervals;
+- compute teacher/learner dwell or teacher–learner overlap metrics;
 - match Teams artifacts to Tiny Steps `classSessions`;
 - classify teaching activity;
 - reconcile attendance;
