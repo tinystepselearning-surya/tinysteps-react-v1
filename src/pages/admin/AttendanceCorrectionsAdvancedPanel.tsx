@@ -29,14 +29,7 @@ import HistoricalAttendanceMissingSessionPanel from './HistoricalAttendanceMissi
 
 type AttendanceCorrectionMode = 'existing' | 'create';
 
-type AttendanceCorrectionStatus =
-  | 'present'
-  | 'absent'
-  | 'cancelled'
-  | 'rescheduled'
-  | 'no_show'
-  | 'reschedule_requested'
-  | 'late';
+type AttendanceCorrectionStatus = 'present' | 'absent' | 'rescheduled';
 
 type AttendanceCorrectionSession = {
   id: string;
@@ -70,11 +63,7 @@ type TeacherOption = {
 const ATTENDANCE_CORRECTION_STATUS_OPTIONS: AttendanceCorrectionStatus[] = [
   'present',
   'absent',
-  'cancelled',
   'rescheduled',
-  'no_show',
-  'reschedule_requested',
-  'late',
 ];
 
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -94,11 +83,12 @@ function toDateMaybe(value: unknown): Date | null {
 }
 
 function resolveAttendanceStatus(entry: unknown): string {
-  if (typeof entry === 'string') return entry.trim().toLowerCase();
+  let status = '';
+  if (typeof entry === 'string') status = entry.trim().toLowerCase();
   if (entry && typeof entry === 'object' && typeof (entry as { status?: unknown }).status === 'string') {
-    return String((entry as { status: string }).status).trim().toLowerCase();
+    status = String((entry as { status: string }).status).trim().toLowerCase();
   }
-  return '';
+  return status === 'late' ? 'present' : status;
 }
 
 function clampDuration(value: unknown): number {
@@ -210,7 +200,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [pendingSessionSelection, setPendingSessionSelection] = useState<PendingSessionSelection>(null);
 
   useEffect(() => {
-    if (newStatus === 'present' || newStatus === 'late') return;
+    if (newStatus === 'present') return;
     setTeacherPayDisposition('');
     setTeacherPayReasonCode('');
   }, [newStatus]);
@@ -627,7 +617,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     setSaving(true);
     try {
       await saveCorrection(selectedSessionId, selectedKidId, trimmedReason);
-      const financiallyNeutral = !teacherPayDecisionRequired && (newStatus === 'present' || newStatus === 'late');
+      const financiallyNeutral = !teacherPayDecisionRequired && newStatus === 'present';
       toast({
         title: 'Attendance corrected',
         description: financiallyNeutral

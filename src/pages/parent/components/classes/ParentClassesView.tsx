@@ -153,6 +153,7 @@ export function ParentClassMonthSummaryPanel({
 
   const summary = buildParentClassMonthSummaryDisplay(row);
   const attendanceAvailable = summary.attendanceMarkedSessions > 0;
+  const presentSessions = summary.presentSessions + summary.lateSessions;
   const lifecycleItems = [
     { label: "Upcoming", value: summary.upcomingSessions },
     { label: "Cancelled", value: summary.cancelledSessions },
@@ -205,14 +206,10 @@ export function ParentClassMonthSummaryPanel({
             {summary.attendanceMarkedSessions} marked · {summary.attendanceUnmarkedCompletedSessions} awaiting attendance
           </p>
         </div>
-        <dl className="mt-2 grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-700">
+        <dl className="mt-2 grid grid-cols-2 divide-x divide-slate-200 dark:divide-slate-700">
           <div className="pr-3">
             <dt className="text-xs text-slate-500">Present</dt>
-            <dd className="mt-0.5 text-base font-semibold text-slate-950 dark:text-slate-100">{summary.presentSessions}</dd>
-          </div>
-          <div className="px-3">
-            <dt className="text-xs text-slate-500">Late</dt>
-            <dd className="mt-0.5 text-base font-semibold text-slate-950 dark:text-slate-100">{summary.lateSessions}</dd>
+            <dd className="mt-0.5 text-base font-semibold text-slate-950 dark:text-slate-100">{presentSessions}</dd>
           </div>
           <div className="pl-3">
             <dt className="text-xs text-slate-500">Absent</dt>

@@ -34,14 +34,19 @@ interface AttendanceFormProps {
   attendanceOnly?: boolean;
 }
 
-type AttendanceOutcome = AttendanceStatus | 'reschedule_requested' | '';
+type AttendanceOutcome = AttendanceStatus | '';
 
 type AttendanceEntryState = {
   status: AttendanceOutcome;
   notes?: string;
 };
 
-const STATUS_OPTIONS: AttendanceOutcome[] = ['present', 'absent', 'late', 'reschedule_requested'];
+const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];
+
+const attendanceStatusLabel = (status: AttendanceStatus): string => {
+  if (status === 'reschedule_requested') return 'Rescheduled';
+  return status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 const COURSE_ID_ALIASES: Record<string, string> = {
   'phonics-foundation': 'phonics-foundations',
@@ -105,14 +110,14 @@ const mapCourseNameToId = (value?: string | null): string | null => {
 
 const normalizeAttendanceStatus = (value: unknown): AttendanceOutcome => {
   if (!value) return '';
-  if (typeof value === 'string') {
-    return STATUS_OPTIONS.includes(value as AttendanceOutcome) ? (value as AttendanceOutcome) : '';
-  }
-  if (typeof value === 'object' && value !== null && typeof (value as { status?: unknown }).status === 'string') {
-    const status = (value as { status: string }).status;
-    return STATUS_OPTIONS.includes(status as AttendanceOutcome) ? (status as AttendanceOutcome) : '';
-  }
-  return '';
+  const raw = typeof value === 'string'
+    ? value
+    : typeof value === 'object' && value !== null && typeof (value as { status?: unknown }).status === 'string'
+      ? String((value as { status: string }).status)
+      : '';
+  const status = raw.trim().toLowerCase();
+  if (status === 'late') return 'present';
+  return STATUS_OPTIONS.includes(status as AttendanceStatus) ? (status as AttendanceStatus) : '';
 };
 
 export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
@@ -334,7 +339,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     if (hasMissingStatus) {
       toast({
         title: 'Select attendance status',
-        description: 'Please choose Present/Absent/Late/Reschedule for each student.',
+        description: 'Please choose Present/Absent/Rescheduled for each student.',
         variant: 'destructive',
       });
       return;
@@ -454,7 +459,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
                           <SelectContent>
                             {STATUS_OPTIONS.map((status) => (
                               <SelectItem key={status} value={status}>
-                                {status.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+                                {attendanceStatusLabel(status)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -477,7 +482,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Lesson progress is not updated for absent or reschedule-requested attendance.
+                          Lesson progress is not updated for absent or rescheduled attendance.
                         </p>
                       )}
 

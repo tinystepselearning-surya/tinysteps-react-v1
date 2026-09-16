@@ -96,6 +96,11 @@ function normalizeAdminAttendanceStatus(value: unknown): AdminAttendanceStatus |
   return null;
 }
 
+function normalizeIncomingAdminAttendanceStatus(value: unknown): AdminAttendanceStatus | null {
+  const normalized = normalizeAdminAttendanceStatus(value);
+  return normalized === 'late' ? 'present' : normalized;
+}
+
 function resolveAdminAttendanceStatus(entry: unknown): AdminAttendanceStatus | null {
   if (typeof entry === 'string') return normalizeAdminAttendanceStatus(entry);
   if (entry && typeof entry === 'object' && typeof (entry as { status?: unknown }).status === 'string') {
@@ -223,6 +228,14 @@ function toAttendanceEntry(entry: unknown): { status: AttendanceStatus | null; n
     topics: normalizeStringArray(obj.topics),
     topicUpdates: normalizeTopicUpdates(obj.topicUpdates),
   };
+}
+
+function toIncomingAttendanceEntry(entry: unknown): ReturnType<typeof toAttendanceEntry> {
+  const normalized = toAttendanceEntry(entry);
+  if (normalized.status === 'late') {
+    return { ...normalized, status: 'present' };
+  }
+  return normalized;
 }
 
 function resolveDurationMins(session: Record<string, unknown>): number {
@@ -607,7 +620,7 @@ export const saveTeacherSessionProgress = onCall(
             `Attendance kid ${normalizedKidId} is not assigned to this session.`,
           );
         }
-        const entry = toAttendanceEntry(rawEntry);
+        const entry = toIncomingAttendanceEntry(rawEntry);
         if (!entry.status) {
           throw new HttpsError('invalid-argument', `Invalid attendance status for kid ${normalizedKidId}`);
         }
@@ -633,7 +646,7 @@ export const saveTeacherSessionProgress = onCall(
             `Attendance kid ${normalizedKidId} is not assigned to this session.`,
           );
         }
-        const entry = toAttendanceEntry(rawEntry);
+        const entry = toIncomingAttendanceEntry(rawEntry);
         if (!entry.status) {
           throw new HttpsError('invalid-argument', `Invalid attendance status for kid ${kidId}`);
         }
@@ -902,7 +915,7 @@ export const adminAttendanceCorrection = onCall(
     const sessionId = sanitizeText(payload.sessionId, 160);
     const kidId = sanitizeText(payload.kidId, 160);
     const reason = sanitizeText(payload.reason, 2000);
-    const newStatus = normalizeAdminAttendanceStatus(payload.newStatus);
+    const newStatus = normalizeIncomingAdminAttendanceStatus(payload.newStatus);
 
     if (!sessionId) {
       throw new HttpsError('invalid-argument', 'sessionId is required.');

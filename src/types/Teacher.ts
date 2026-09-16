@@ -1,7 +1,15 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type SessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'reschedule_requested';
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'reschedule_requested';
+
+/**
+ * Operational attendance choices for all new writes.
+ * Late is intentionally excluded; historical late values remain readable through
+ * LegacyAttendanceStatus and are normalized to present at user-facing boundaries.
+ */
+export type AttendanceWriteStatus = 'present' | 'absent' | 'reschedule_requested';
+export type LegacyAttendanceStatus = AttendanceWriteStatus | 'late';
+export type AttendanceStatus = LegacyAttendanceStatus;
 
 export interface TeacherSession {
   id: string;
@@ -57,7 +65,7 @@ export interface TeacherSession {
   currency?: string;
   source?: string;
 
-  attendance?: Record<string, AttendanceStatus | { status: AttendanceStatus; [key: string]: any }>;
+  attendance?: Record<string, LegacyAttendanceStatus | { status: LegacyAttendanceStatus; [key: string]: any }>;
 
   startAt?: Timestamp;
   endAt?: Timestamp;
