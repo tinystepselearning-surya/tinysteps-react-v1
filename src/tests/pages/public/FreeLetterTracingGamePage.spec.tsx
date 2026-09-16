@@ -50,9 +50,16 @@ describe('FreeLetterTracingGamePage', () => {
     expect(screen.getByRole('link', { name: 'A' })).toHaveAttribute('href', '#trace-letter-a');
     expect(screen.getByRole('link', { name: 'N' })).toHaveAttribute('href', '#trace-letter-n');
     expect(screen.getByRole('link', { name: /O 🔒/i })).toHaveAttribute('href', '#trace-letter-o');
-    expect(screen.getByRole('link', { name: /unlock o-z/i })).toHaveAttribute(
+
+    const unlockLinks = screen.getAllByRole('link', { name: /unlock o-z/i });
+    expect(unlockLinks).toHaveLength(12);
+    expect(unlockLinks[0]).toHaveAttribute(
       'href',
       '/free-letter-tracing-game-for-kids?level=1&pair=14&step=0#play',
+    );
+    expect(unlockLinks[11]).toHaveAttribute(
+      'href',
+      '/free-letter-tracing-game-for-kids?level=1&pair=25&step=0#play',
     );
   });
 
