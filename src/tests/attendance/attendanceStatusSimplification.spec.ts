@@ -9,6 +9,10 @@ const teacherFormSource = readSource('src/pages/teacher/components/today-session
 const adminCorrectionSource = readSource('src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx');
 const historicalCorrectionSource = readSource('src/pages/admin/HistoricalAttendanceMissingSessionPanel.tsx');
 const teacherPayControlSource = readSource('src/pages/admin/TeacherPayHandlingControl.tsx');
+const parentClassesSource = readSource('src/pages/parent/components/classes/ParentClassesView.tsx');
+const teacherEarningsSource = readSource('src/pages/teacher/components/earnings/EarningsSummary.tsx');
+const sessionProgressSource = readSource('functions/src/saveTeacherSessionProgress.ts');
+const sessionCompletionSource = readSource('functions/src/onSessionComplete.ts');
 const financeStatusSource = readSource('functions/src/helpers/status.ts');
 
 describe('AS0 attendance status simplification', () => {
@@ -50,6 +54,21 @@ describe('AS0 attendance status simplification', () => {
   it('removes Late from teacher-payment-facing copy', () => {
     expect(teacherPayControlSource).toContain('Required for Present attendance corrections.');
     expect(teacherPayControlSource).not.toContain('Present or Late');
+  });
+
+  it('folds historical Late into Present on parent and teacher read surfaces', () => {
+    expect(parentClassesSource).toContain('summary.presentSessions + summary.lateSessions');
+    expect(parentClassesSource).not.toContain('<dt className="text-xs text-slate-500">Late</dt>');
+    expect(teacherEarningsSource).toContain("if (token === 'late') return 'present';");
+    expect(teacherEarningsSource).not.toContain("case 'late': return 'Late';");
+  });
+
+  it('normalizes older clients that still submit Late into Present before new writes', () => {
+    expect(sessionProgressSource).toContain("if (normalized.status === 'late')");
+    expect(sessionProgressSource).toContain("return { ...normalized, status: 'present' };");
+    expect(sessionProgressSource).toContain("return normalized === 'late' ? 'present' : normalized;");
+    expect(sessionCompletionSource).toContain('normalizeIncomingAttendanceMap');
+    expect(sessionCompletionSource).toContain('status: "present" as AttendanceStatus');
   });
 
   it('preserves legacy financial compatibility for already-stored Late records', () => {
