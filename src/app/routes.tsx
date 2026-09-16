@@ -171,6 +171,34 @@ import { isAuthEntryRoute, isProtectedAppRoute, normalizePathname, shouldShowPub
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
 
+type DeferredIdleWindow = Window & {
+  requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+  cancelIdleCallback?: (id: number) => void;
+};
+
+const scheduleDeferredActivation = (
+  activate: () => void,
+  delayMs: number,
+  idleTimeoutMs: number,
+) => {
+  const idleWindow = window as DeferredIdleWindow;
+  let idleId: number | undefined;
+  const timeoutId = window.setTimeout(() => {
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      idleId = idleWindow.requestIdleCallback(activate, { timeout: idleTimeoutMs });
+      return;
+    }
+    activate();
+  }, delayMs);
+
+  return () => {
+    window.clearTimeout(timeoutId);
+    if (idleId !== undefined && typeof idleWindow.cancelIdleCallback === 'function') {
+      idleWindow.cancelIdleCallback(idleId);
+    }
+  };
+};
+
 const isNativeCapacitorRuntime = () => {
   if (typeof window === 'undefined') return false;
 
@@ -296,46 +324,21 @@ const Layout: FC = () => {
       return;
     }
 
-    const activate = () => setShowDeferredChrome(true);
     const isMobileViewport = window.matchMedia('(max-width: 767px)').matches;
     const connection = (navigator as any)?.connection;
     const effectiveType =
       typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
     const isConstrainedNetwork =
       Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
-    const fallbackDelayMs = isMobileViewport
+    const activationDelayMs = isMobileViewport
       ? isConstrainedNetwork ? 8200 : 6200
       : isConstrainedNetwork ? 14000 : 11000;
-    let timeoutId: number | undefined;
 
-    const onFirstInteraction = () => {
-      activate();
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('touchstart', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-        timeoutId = undefined;
-      }
-    };
-
-    window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
-    window.addEventListener('keydown', onFirstInteraction, { once: true });
-    window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
-    window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
-    timeoutId = window.setTimeout(onFirstInteraction, fallbackDelayMs);
-
-    return () => {
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('touchstart', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-      }
-    };
+    return scheduleDeferredActivation(
+      () => setShowDeferredChrome(true),
+      activationDelayMs,
+      2500,
+    );
   }, [hideMarketingChrome]);
 
   useEffect(() => {
@@ -344,7 +347,6 @@ const Layout: FC = () => {
       return;
     }
 
-    const activate = () => setShowDeferredSupportWidgets(true);
     const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
     const fallbackDelayMs = isDesktopViewport ? 16000 : 22000;
     const connection = (navigator as any)?.connection;
@@ -352,37 +354,13 @@ const Layout: FC = () => {
       typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
     const isConstrainedNetwork =
       Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
-    let timeoutId: number | undefined;
+    const activationDelayMs = isConstrainedNetwork ? fallbackDelayMs + 8000 : fallbackDelayMs;
 
-    const onFirstInteraction = () => {
-      activate();
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('touchstart', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-        timeoutId = undefined;
-      }
-    };
-
-    window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
-    window.addEventListener('keydown', onFirstInteraction, { once: true });
-    window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
-    window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
-    if (!isConstrainedNetwork) {
-      timeoutId = window.setTimeout(onFirstInteraction, fallbackDelayMs);
-    }
-
-    return () => {
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('touchstart', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-      }
-    };
+    return scheduleDeferredActivation(
+      () => setShowDeferredSupportWidgets(true),
+      activationDelayMs,
+      4000,
+    );
   }, [hideMarketingChrome, hideSupportWidgets]);
 
   const closeAssessmentModal = useCallback(() => {
