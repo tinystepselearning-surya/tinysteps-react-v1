@@ -104,6 +104,19 @@ function normalizeStatus(value: unknown): string {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeIncomingAttendanceMap(
+  attendance: Record<string, AttendanceEntry> | null,
+): Record<string, AttendanceEntry> | null {
+  if (!attendance) return null;
+  return Object.fromEntries(
+    Object.entries(attendance).map(([kidId, entry]) => {
+      if (!entry || typeof entry !== "object") return [kidId, entry];
+      if (normalizeStatus(entry.status) !== "late") return [kidId, entry];
+      return [kidId, { ...entry, status: "present" as AttendanceStatus }];
+    }),
+  );
+}
+
 function normalizeCallerRole(value: unknown): string {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "";
@@ -566,7 +579,7 @@ async function processSessionCompletion(
       const att = attendanceMap[kidId];
       const status = (att?.status || "unknown") as AttendanceStatus;
 
-      // Only decrement credits for present (optionally add "late" here if you want)
+      // New operational attendance writes use Present as the single attended state.
       if (status !== "present") continue;
 
       const enrollmentDoc = await resolveEnrollmentForSessionKid(
@@ -698,10 +711,11 @@ export const onSessionComplete = onCall(
     const sessionId = (request.data?.sessionId || "").toString().trim();
     if (!sessionId) throw new HttpsError("invalid-argument", "sessionId is required.");
 
-    const incomingAttendance =
+    const rawIncomingAttendance =
       request.data?.attendance && typeof request.data.attendance === "object" && !Array.isArray(request.data.attendance) ?
         (request.data.attendance as Record<string, AttendanceEntry>) :
         null;
+    const incomingAttendance = normalizeIncomingAttendanceMap(rawIncomingAttendance);
     const sessionNotesRaw = typeof request.data?.sessionNotes === "string" ? request.data.sessionNotes : "";
     const sessionNotes = sessionNotesRaw.trim();
 
