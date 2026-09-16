@@ -205,7 +205,7 @@ describe("parent class presentation", () => {
 });
 
 describe("ParentClassMonthSummaryPanel", () => {
-  it("shows explicit monthly class lifecycle and completed-class attendance", () => {
+  it("folds historical Late into Present without exposing Late as an attendance outcome", () => {
     render(
       <ParentClassMonthSummaryPanel
         state="available"
@@ -225,7 +225,8 @@ describe("ParentClassMonthSummaryPanel", () => {
     expect(screen.getByText("Needs review")).toBeInTheDocument();
     expect(screen.getByText("14 marked · 1 awaiting attendance")).toBeInTheDocument();
     expect(screen.getByText("Present")).toBeInTheDocument();
-    expect(screen.getByText("Late")).toBeInTheDocument();
+    expect(screen.getByText("13")).toBeInTheDocument();
+    expect(screen.queryByText("Late")).not.toBeInTheDocument();
     expect(screen.getByText("Absent")).toBeInTheDocument();
   });
 
