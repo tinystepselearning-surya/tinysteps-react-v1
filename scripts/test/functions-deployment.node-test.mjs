@@ -236,6 +236,27 @@ test('workflow dispatch exposes a main-only non-empty surgical recovery input', 
   assert.match(workflow, /recover-functions-manually:[\s\S]*group: firebase-deployment-tinysteps-react-v1[\s\S]*cancel-in-progress: false/);
 });
 
+test('normal Firebase deployment remains serialized and non-cancelling', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  assert.match(workflow, /deploy-to-firebase:[\s\S]*group: firebase-deployment-tinysteps-react-v1[\s\S]*cancel-in-progress: false/);
+});
+
+test('stale-main guard is checked only at the first Functions mutation boundary', () => {
+  const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  const start = source.indexOf('let mutationStarted = false;');
+  const end = source.indexOf("report.status = 'verified';");
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+  const deployLoop = source.slice(start, end);
+  const staleChecks = deployLoop.match(/await requireCurrentMain\(\);/g) ?? [];
+  assert.equal(staleChecks.length, 1);
+  assert.match(
+    deployLoop,
+    /if \(!mutationStarted\) \{\s*await requireCurrentMain\(\);\s*mutationStarted = true;\s*\}/,
+  );
+  assert.doesNotMatch(deployLoop, /requireCurrentMain\(\);[\s\S]{0,200}sleepWithJitter/);
+});
+
 test('checkpoint resume accepts matching identity and rejects stale metadata', () => {
   const targets = [{ id: 'alpha', selector: 'functions:alpha' }, { id: 'beta', selector: 'functions:beta' }];
   const expected = {
