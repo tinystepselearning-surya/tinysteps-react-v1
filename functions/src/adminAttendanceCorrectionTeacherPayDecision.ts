@@ -38,6 +38,11 @@ function normalizeStatus(value: unknown): string {
   return clean(value, 80).toLowerCase();
 }
 
+function normalizeIncomingAttendanceStatus(value: unknown): string {
+  const status = normalizeStatus(value);
+  return status === 'late' ? 'present' : status;
+}
+
 function nonNegativeMoney(value: unknown): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
@@ -117,15 +122,15 @@ export const prepareAdminAttendanceCorrectionTeacherPayDecision = onCall(
     const payload = (request.data || {}) as Record<string, unknown>;
     const sessionId = clean(payload.sessionId, 160);
     const kidId = clean(payload.kidId, 160);
-    const intendedAttendanceStatus = clean(payload.intendedAttendanceStatus, 80).toLowerCase();
+    const intendedAttendanceStatus = normalizeIncomingAttendanceStatus(payload.intendedAttendanceStatus);
     const disposition = normalizeTeacherPayDisposition(payload.teacherPayDisposition);
     const reasonCode = clean(payload.reasonCode, 120).toLowerCase();
     const reason = clean(payload.reason, 2000);
 
     if (!sessionId) throw new HttpsError('invalid-argument', 'sessionId is required.');
     if (!kidId) throw new HttpsError('invalid-argument', 'kidId is required.');
-    if (!isFinanciallyEarnedAttendanceStatus(intendedAttendanceStatus)) {
-      throw new HttpsError('invalid-argument', 'intendedAttendanceStatus must be present or late.');
+    if (intendedAttendanceStatus !== 'present') {
+      throw new HttpsError('invalid-argument', 'intendedAttendanceStatus must be present.');
     }
     if (!disposition) throw new HttpsError('invalid-argument', 'teacherPayDisposition is required.');
     if (!reason) throw new HttpsError('invalid-argument', 'reason is required.');
