@@ -74,7 +74,6 @@ try {
   }
 
   validateDeployContext();
-  await requireCurrentMain();
   if (options.resumeFrom) {
     const checkpoint = JSON.parse(await readFile(resolve(options.resumeFrom), 'utf8'));
     const ready = validateCheckpoint(checkpoint, report);
@@ -84,6 +83,13 @@ try {
   }
   const confirmedReady = new Set(report.confirmedReady);
   await waitForRegionalOperationsToSettle();
+
+  // The GitHub workflow holds the project-wide Firebase deployment concurrency lock
+  // for this entire job. Reject a stale commit immediately before the first mutation,
+  // but once a Functions mutation begins, finish this bounded plan. A newer main run
+  // will remain queued behind the lock and deploy next. Aborting after one or more
+  // batches have mutated production would leave a deliberately partial rollout.
+  let mutationStarted = false;
 
   for (let index = 0; index < groups.length; index++) {
     const group = groups[index];
@@ -102,10 +108,12 @@ try {
     }
 
     for (let attempt = 0; attempt < BACKOFF_SECONDS.length && pending.length; attempt++) {
-      await requireCurrentMain();
       await sleepWithJitter(BACKOFF_SECONDS[attempt]);
-      await requireCurrentMain();
       await waitForRegionalOperationsToSettle();
+      if (!mutationStarted) {
+        await requireCurrentMain();
+        mutationStarted = true;
+      }
       console.log(`Deploying batch ${index + 1}/${groups.length}, attempt ${attempt + 1}: ${pending.map(target => target.id).join(', ')}`);
       const result = await runBounded('npx', [
         '--yes', `firebase-tools@${FIREBASE_CLI}`, 'deploy',
