@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 export type SessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'reschedule_requested';
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'reschedule_requested';
+export type AttendanceStatus = 'present' | 'absent' | 'reschedule_requested';
 
 export interface TeacherSession {
   id: string;
