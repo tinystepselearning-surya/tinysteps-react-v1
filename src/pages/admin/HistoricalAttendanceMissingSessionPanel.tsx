@@ -20,14 +20,7 @@ import {
 } from './attendanceCorrectionTeacherPay';
 import TeacherPayHandlingControl from './TeacherPayHandlingControl';
 
-type AttendanceStatus =
-  | 'present'
-  | 'absent'
-  | 'cancelled'
-  | 'rescheduled'
-  | 'no_show'
-  | 'reschedule_requested'
-  | 'late';
+type AttendanceStatus = 'present' | 'absent' | 'rescheduled';
 
 type TeacherOption = {
   id: string;
@@ -52,15 +45,7 @@ type HistoricalCandidatesResponse = {
   kidNames: Record<string, string>;
 };
 
-const STATUS_OPTIONS: AttendanceStatus[] = [
-  'present',
-  'absent',
-  'cancelled',
-  'rescheduled',
-  'no_show',
-  'reschedule_requested',
-  'late',
-];
+const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'rescheduled'];
 
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
