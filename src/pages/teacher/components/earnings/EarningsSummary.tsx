@@ -155,6 +155,7 @@ const normalizeToken = (value: unknown): string =>
 
 const normalizeClassStatus = (value: unknown): string => {
   const token = normalizeToken(value);
+  if (token === 'late') return 'present';
   if (token === 'canceled') return 'cancelled';
   if (token === 'noshow' || token === 'no_showed') return 'no_show';
   if (token === 'reschedule_request' || token === 'rescheduled_requested') return 'reschedule_requested';
@@ -184,7 +185,6 @@ const resolveSessionClassStatus = (session: Record<string, unknown>): string => 
       })
       .filter(Boolean);
     if (statuses.includes('present')) return 'present';
-    if (statuses.includes('late')) return 'late';
     if (statuses.length > 0) return statuses[0];
   }
 
@@ -194,7 +194,6 @@ const resolveSessionClassStatus = (session: Record<string, unknown>): string => 
 const getClassStatusLabel = (value: string): string => {
   switch (normalizeClassStatus(value)) {
     case 'present': return 'Present';
-    case 'late': return 'Late';
     case 'absent': return 'Absent';
     case 'cancelled': return 'Cancelled';
     case 'rescheduled': return 'Rescheduled';
