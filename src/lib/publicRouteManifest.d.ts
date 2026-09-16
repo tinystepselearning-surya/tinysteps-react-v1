@@ -14,3 +14,5 @@ export interface PublicRouteManifestEntry {
 }
 
 export const PUBLIC_ROUTE_MANIFEST: readonly PublicRouteManifestEntry[];
+
+export function isPublicAnalyticsPath(pathname: string): boolean;
