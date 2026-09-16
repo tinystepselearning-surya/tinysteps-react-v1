@@ -1,6 +1,6 @@
 # AV1 — Microsoft Graph Foundation
 
-Status: **read-only code foundation implemented; production service-principal activation is intentionally gated.**
+Status: **complete — read-only Microsoft Graph foundation and production service-principal activation proven.**
 
 AV1 establishes the Microsoft Graph read path needed by the Attendance Validation sidecar. It does **not** create or modify attendance, sessions, finance, billing, teacher earnings, reschedule credits, or correction records.
 
@@ -165,33 +165,30 @@ Official setting reference:
 
 ## Production credential contract
 
-When the Entra app is ready, store one server-side secret object containing only:
-
-```json
-{
-  "tenantId": "<MICROSOFT_TENANT_ID>",
-  "clientId": "<APPLICATION_CLIENT_ID>",
-  "clientSecret": "<APPLICATION_CLIENT_SECRET>"
-}
-```
-
-Recommended Firebase/Google Secret Manager name:
+The production AV1 backend uses three server-side Firebase/Google Secret Manager secrets:
 
 ```text
-MICROSOFT_GRAPH_ATTENDANCE_VALIDATION
+MICROSOFT_TENANT_ID
+MICROSOFT_CLIENT_ID
+MICROSOFT_CLIENT_SECRET
 ```
+
+They correspond to:
+
+- `MICROSOFT_TENANT_ID` — Microsoft Entra Directory (tenant) ID;
+- `MICROSOFT_CLIENT_ID` — AV1 Entra Application (client) ID;
+- `MICROSOFT_CLIENT_SECRET` — AV1 client-secret value.
 
 Rules:
 
-- never expose this object to React/Vite/browser code;
-- never commit it to GitHub;
-- never place it in a Firestore document;
-- never log the secret or resulting access token;
-- bind the secret only to the backend collector/probe function that needs it;
+- never expose these values to React/Vite/browser code;
+- never commit them to GitHub;
+- never place them in Firestore;
+- never log the client secret or resulting access token;
+- bind the secrets only to backend functions that require Microsoft Graph access;
 - rotate the client secret independently of application code.
 
-AV1 intentionally does **not** bind this secret yet. Exporting a new production Firebase function before the secret exists could make deployment depend on incomplete tenant configuration. Activation therefore occurs only after the Entra application, admin consent, organizer policy and secret are all confirmed.
-
+Production secret binding was proven on 2026-09-17 using a temporary private Firebase 2nd-generation Cloud Function. The function successfully completed the Microsoft Graph read-only proof and was deleted immediately afterward.
 ## Live Tiny Steps feasibility proof completed during AV1 preparation
 
 A read-only proof using the already-authorized Tiny Steps Microsoft Teams connection successfully demonstrated the complete tenant-side evidence path:
@@ -210,34 +207,64 @@ speaker-attributed WebVTT returned
 
 The retrieved artifact contained sustained teaching activity, confirming that the transcript is usable evidence rather than empty metadata.
 
-This proof establishes **tenant/API feasibility**, including current transcript access and speaker attribution. It does **not** prove the future Firebase service principal yet, because the connected Teams tool uses an already signed-in Microsoft authorization. The production service-principal proof remains an activation gate below.
+This earlier proof established **tenant/API feasibility**, including transcript access and speaker attribution, using an already signed-in Microsoft authorization. The production service-principal proof was subsequently completed and is recorded below.
 
 No student names, meeting links, meeting codes, passcodes, tenant identifiers, organizer identifiers, or transcript bodies are stored in this repository.
 
 ## Production service-principal activation gate
 
-AV1 is production-ready only after all of the following are verified with the new Entra app:
+AV1 production activation required all of the following; all are now verified:
 
 ```text
-[ ] Entra app registration created
-[ ] Application permissions granted:
+[x] Entra app registration created
+[x] Application permissions granted:
     OnlineMeetings.Read.All
     OnlineMeetingTranscript.Read.All
     OnlineMeetingArtifact.Read.All
-[ ] Admin consent granted
-[ ] TinyStepsAttendanceValidation application-access policy created
-[ ] Policy granted only to approved organizer account(s)
-[ ] Transcript Graph access enabled
-[ ] Server-side credential secret created
-[ ] App-only token exchange succeeds
-[ ] One known meeting resolves by organizer ID + join URL
-[ ] Transcript metadata is readable
-[ ] Transcript content is readable (attributed or safe unattributed fallback)
-[ ] Attendance report is readable
-[ ] Attendance records are readable, including join/leave intervals
+[x] Admin consent granted
+[x] Existing organizer-scoped application-access policy updated to include the AV1 backend application
+[x] Approved organizer account is assigned an application-access policy containing the AV1 backend application
+[x] Transcript Graph access enabled
+[x] Server-side credential secrets created
+[x] App-only token exchange succeeds
+[x] One known meeting resolves by organizer ID + join URL
+[x] Transcript metadata is readable
+[x] Transcript content is readable (attributed or safe unattributed fallback)
+[x] Attendance report is readable
+[x] Attendance records are readable, including join/leave intervals
 ```
 
-Until every item is green, no scheduled collector is exported or deployed.
+All activation items are now green. The scheduled collector remains intentionally deferred to AV2.
+
+## Production service-principal proof completed — 2026-09-17
+
+AV1 production activation was proven from an actual deployed Firebase 2nd-generation Cloud Function using Microsoft credentials bound from Google Secret Manager.
+
+The production runtime successfully demonstrated:
+
+- Microsoft client-credentials token exchange;
+- organizer-scoped scheduled-meeting resolution;
+- transcript metadata access;
+- transcript-content access;
+- speaker-attributed transcript retrieval;
+- attendance-report access;
+- attendance-record access;
+- join/leave interval evidence.
+
+The tested recurring meeting returned:
+
+- 3 transcript artifacts;
+- 9 attendance reports;
+- 2 attendance records in the inspected report;
+- join/leave interval evidence present.
+
+The temporary Cloud Function used for the runtime proof was deleted immediately after the test.
+
+No transcript body, participant names, participant email addresses, meeting links, meeting codes, passcodes, tenant identifiers, organizer identifiers, access tokens, or secret values were committed or persisted as part of this proof.
+
+### AV2 implementation consequence
+
+Recurring Teams meetings can expose multiple transcript and attendance artifacts. AV2 must therefore select the correct meeting occurrence deterministically from session timing and artifact metadata rather than assuming the first transcript or attendance report belongs to the Tiny Steps class being validated.
 
 ## Error semantics
 
