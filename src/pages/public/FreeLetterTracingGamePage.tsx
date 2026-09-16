@@ -10,11 +10,15 @@ import { createFAQPageSchema, createWebPageSchema } from '../../lib/schemas';
 
 const PAGE_PATH = '/free-letter-tracing-game-for-kids';
 const PAGE_URL = `https://tinystepslearning.com${PAGE_PATH}`;
+const FREE_LAST_PAIR_INDEX = 13; // A-N are free; O-Z use the lifetime unlock gate.
+const UNLOCK_WHATSAPP_URL = `https://wa.me/919666095553?text=${encodeURIComponent(
+  "Hi Tiny Steps, I'd like to unlock letters O-Z in the Letter Tracing Game with lifetime access.",
+)}`;
 
 const faqItems = [
   {
     question: 'Is this ABC tracing game free?',
-    answer: 'Yes. Children can practise pre-writing strokes and English alphabet tracing online for free.',
+    answer: 'Yes. Pre-writing practice and letters A-N are free. Letters O-Z are available with a one-time lifetime unlock.',
   },
   {
     question: 'What age is this ABC tracing game for?',
@@ -61,7 +65,7 @@ const appSchema = {
   operatingSystem: 'Any',
   url: PAGE_URL,
   description:
-    'Play a free online ABC tracing game for kids. Practise pre-writing strokes, uppercase letters, lowercase letters, and English alphabet formation with Tiny Steps.',
+    'Play an online ABC tracing game for kids. Practise pre-writing strokes and letters A-N free, with an optional lifetime unlock for letters O-Z.',
   isAccessibleForFree: true,
   publisher: {
     '@type': 'EducationalOrganization',
@@ -73,6 +77,11 @@ const appSchema = {
 export default function FreeLetterTracingGamePage() {
   const [searchParams] = useSearchParams();
   const isPlayMode = searchParams.get('level') !== null;
+  const level = Number(searchParams.get('level') ?? 0);
+  const pair = Number(searchParams.get('pair') ?? 0);
+  const isLifetimeUnlockRequired =
+    isPlayMode && level === 1 && Number.isFinite(pair) && pair > FREE_LAST_PAIR_INDEX;
+
   const readyLetters = useMemo(
     () =>
       LETTER_IDS.filter((letterId) => letterId === letterId.toUpperCase() && isLetterReady(letterId) && isLetterReady(letterId.toLowerCase() as typeof letterId))
@@ -82,6 +91,7 @@ export default function FreeLetterTracingGamePage() {
             upper,
             lower,
             pairIndex: index,
+            locked: index > FREE_LAST_PAIR_INDEX,
             anchorId: `trace-letter-${lower}`,
             href: `${PAGE_PATH}?level=1&pair=${index}&step=0#play`,
           };
@@ -93,14 +103,14 @@ export default function FreeLetterTracingGamePage() {
     applySeo({
       title: 'Free ABC Tracing Game for Kids | Alphabet Letter Tracing Online',
       description:
-        'Play a free online ABC tracing game for kids. Practise pre-writing strokes, uppercase letters, lowercase letters, and English alphabet formation for preschool and kindergarten learners.',
+        'Play an online ABC tracing game for kids. Practise pre-writing strokes and letters A-N free, with uppercase and lowercase tracing for preschool and kindergarten learners.',
       canonicalPath: PAGE_PATH,
       ogType: 'website',
       jsonLd: [
         createWebPageSchema({
           name: 'Free ABC Tracing Game for Kids',
           description:
-            'Play a free online ABC tracing game for kids with pre-writing strokes, uppercase and lowercase tracing, and English alphabet practice.',
+            'Play an online ABC tracing game for kids with pre-writing strokes, free A-N uppercase and lowercase tracing, and optional lifetime access to O-Z.',
           url: PAGE_URL,
         }),
         appSchema,
@@ -109,6 +119,17 @@ export default function FreeLetterTracingGamePage() {
       ],
     });
   }, []);
+
+  useEffect(() => {
+    if (!isLifetimeUnlockRequired) return;
+    trackEvent('letter_tracing_paywall_view', {
+      page_path: PAGE_PATH,
+      game_id: 'letter-tracing',
+      requested_pair: pair,
+      free_last_pair: FREE_LAST_PAIR_INDEX,
+      offer: 'lifetime_o_to_z',
+    });
+  }, [isLifetimeUnlockRequired, pair]);
 
   const handleHeroStart = () => {
     trackFreeResourceStart('free_letter_tracing_game', PAGE_PATH);
@@ -147,12 +168,76 @@ export default function FreeLetterTracingGamePage() {
     });
   };
 
+  const handleUnlockWhatsAppClick = () => {
+    trackEvent('letter_tracing_unlock_whatsapp_click', {
+      page_path: PAGE_PATH,
+      game_id: 'letter-tracing',
+      offer: 'lifetime_o_to_z',
+      prices: 'INR_99|USD_1.99|EUR_1.99|GBP_1.49',
+    });
+  };
+
   if (isPlayMode) {
+    if (isLifetimeUnlockRequired) {
+      return (
+        <div className="min-h-[100dvh] bg-[linear-gradient(180deg,#f8fafc_0%,#fff7ed_100%)] px-4 py-8 sm:py-12">
+          <Meta
+            title="Unlock O-Z Letter Tracing | Tiny Steps"
+            description="Unlock letters O-Z in the Tiny Steps Letter Tracing Game with one-time lifetime access."
+            canonical={PAGE_URL}
+          />
+
+          <main className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-3xl items-center justify-center">
+            <section className="w-full rounded-[32px] border border-amber-200 bg-white p-6 text-center shadow-[0_24px_70px_rgba(15,23,42,0.10)] sm:p-9">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl" aria-hidden="true">
+                🔒
+              </div>
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-amber-700">A-N completed free</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Unlock letters O-Z</h1>
+              <p className="mx-auto mt-3 max-w-xl text-base leading-7 text-slate-600">
+                Continue the complete alphabet tracing game with a one-time lifetime unlock. No recurring subscription.
+              </p>
+
+              <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Introductory lifetime price</p>
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5 text-base font-black text-emerald-950 sm:text-lg">
+                  <span className="rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-emerald-200">₹99</span>
+                  <span className="rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-emerald-200">$1.99</span>
+                  <span className="rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-emerald-200">€1.99</span>
+                  <span className="rounded-full bg-white px-4 py-2 shadow-sm ring-1 ring-emerald-200">£1.49</span>
+                </div>
+                <p className="mt-3 text-sm font-semibold text-emerald-800">One-time payment · Lifetime access</p>
+              </div>
+
+              <a
+                href={UNLOCK_WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                onClick={handleUnlockWhatsAppClick}
+                className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-emerald-600 px-7 py-3 text-base font-bold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+              >
+                WhatsApp Me to Unlock
+              </a>
+
+              <div className="mt-5">
+                <Link
+                  to={PAGE_PATH}
+                  className="inline-flex rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Back to free tracing
+                </Link>
+              </div>
+            </section>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-[100dvh] overflow-hidden bg-slate-50">
         <Meta
           title="Free ABC Tracing Game for Kids | Alphabet Letter Tracing Online"
-          description="Play a free online ABC tracing game for kids. Practise pre-writing strokes, uppercase letters, lowercase letters, and English alphabet formation for preschool and kindergarten learners."
+          description="Play an online ABC tracing game for kids. Practise pre-writing strokes and letters A-N free, with uppercase and lowercase tracing for preschool and kindergarten learners."
           canonical={PAGE_URL}
         />
 
@@ -172,7 +257,7 @@ export default function FreeLetterTracingGamePage() {
     <div className="overflow-x-clip bg-[linear-gradient(180deg,#fff8ef_0%,#f7fbff_38%,#ffffff_100%)]">
       <Meta
         title="Free ABC Tracing Game for Kids | Alphabet Letter Tracing Online"
-        description="Play a free online ABC tracing game for kids. Practise pre-writing strokes, uppercase letters, lowercase letters, and English alphabet formation for preschool and kindergarten learners."
+        description="Play an online ABC tracing game for kids. Practise pre-writing strokes and letters A-N free, with uppercase and lowercase tracing for preschool and kindergarten learners."
         canonical={PAGE_URL}
       />
 
@@ -183,13 +268,13 @@ export default function FreeLetterTracingGamePage() {
             <div className="relative grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
               <div>
                 <p className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
-                  Free family-friendly ABC tracing practice
+                  Free A-N family-friendly ABC tracing practice
                 </p>
                 <h1 className="mt-4 text-[34px] font-black leading-[1.04] tracking-[-0.035em] text-slate-950 sm:text-[44px]">
                   Free ABC Tracing Game for Kids
                 </h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
-                  A free online alphabet tracing activity for preschool, kindergarten, homeschool, and early English learners. Children can practise pre-writing strokes, capital letters, and lowercase letters step by step.
+                  An online alphabet tracing activity for preschool, kindergarten, homeschool, and early English learners. Start free with pre-writing strokes and letters A-N, then unlock O-Z for lifetime access if you want to continue.
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -218,6 +303,7 @@ export default function FreeLetterTracingGamePage() {
                 <div className="mt-4 grid gap-3">
                   {[
                     'No login required',
+                    'A-N free · O-Z optional lifetime unlock',
                     'Best for preschool and kindergarten',
                     'Works on desktop, tablet, and mobile',
                     'Useful before deeper phonics and blending practice',
@@ -311,7 +397,7 @@ export default function FreeLetterTracingGamePage() {
             <section className="mt-5 rounded-[28px] border border-amber-200 bg-[linear-gradient(145deg,#fff8ef_0%,#ffffff_55%,#fef3c7_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
               <h2 className="text-2xl font-bold text-slate-900">Practice letter tracing A to Z</h2>
               <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-700">
-                Choose a letter to practise uppercase and lowercase letter formation. Children can start with pre-writing strokes first, then move to alphabet tracing and English alphabet review.
+                Choose a letter to practise uppercase and lowercase letter formation. Pre-writing and A-N are free; O-Z are available with the one-time lifetime unlock.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -319,9 +405,14 @@ export default function FreeLetterTracingGamePage() {
                   <a
                     key={`jump-${item.upper}`}
                     href={`#${item.anchorId}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:text-slate-900"
+                    className={[
+                      'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
+                      item.locked
+                        ? 'border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-300'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-slate-900',
+                    ].join(' ')}
                   >
-                    {item.upper}
+                    {item.upper}{item.locked ? ' 🔒' : ''}
                   </a>
                 ))}
               </div>
@@ -331,21 +422,31 @@ export default function FreeLetterTracingGamePage() {
                   <article
                     key={item.upper}
                     id={item.anchorId}
-                    className="scroll-mt-28 rounded-2xl border border-slate-200 bg-white/90 p-3.5 shadow-sm"
+                    className={[
+                      'scroll-mt-28 rounded-2xl border p-3.5 shadow-sm',
+                      item.locked ? 'border-amber-200 bg-amber-50/70' : 'border-slate-200 bg-white/90',
+                    ].join(' ')}
                     >
-                    <h3 className="text-base font-bold text-slate-900">Trace letter {item.upper}</h3>
+                    <h3 className="text-base font-bold text-slate-900">
+                      {item.locked ? '🔒 ' : ''}Trace letter {item.upper}
+                    </h3>
                     <p className="mt-1 text-sm font-semibold text-slate-700">
                       Trace capital {item.upper} and lowercase {item.lower}.
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Start at the red dot and follow the blue guide.
+                      {item.locked ? 'Available with the O-Z lifetime unlock.' : 'Start at the red dot and follow the blue guide.'}
                     </p>
                     <Link
                       to={item.href}
                       onClick={() => handleLetterStart(item.upper, item.lower, 'letter_section_card')}
-                      className="mt-4 inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      className={[
+                        'mt-4 inline-flex rounded-full px-4 py-2 text-sm font-semibold transition',
+                        item.locked
+                          ? 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                          : 'bg-slate-900 text-white hover:bg-slate-800',
+                      ].join(' ')}
                     >
-                      Trace letter {item.upper}
+                      {item.locked ? 'Unlock O-Z' : `Trace letter ${item.upper}`}
                     </Link>
                   </article>
                 ))}
