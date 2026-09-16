@@ -14,8 +14,8 @@ const correctionDecisionSource = readSource('functions/src/adminAttendanceCorrec
 const mainPanelSource = readSource('src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx');
 const historicalPanelSource = readSource('src/pages/admin/HistoricalAttendanceMissingSessionPanel.tsx');
 
-describe('Finance Brick 6 Present/Late policy routing', () => {
-  it('defines Present and Late as the canonical financially-earned attendance statuses', () => {
+describe('Finance Brick 6 legacy Present/Late compatibility routing', () => {
+  it('defines Present and Late as the canonical financially-earned historical statuses', () => {
     expect(statusSource).toContain('isFinanciallyEarnedAttendanceStatus');
     expect(statusSource).toContain("status === 'present' || status === 'late'");
   });
@@ -43,7 +43,7 @@ describe('Finance Brick 6 Present/Late policy routing', () => {
     expect(adminCorrectionSource).not.toContain("const isBillableNow = newStatus === 'present';");
   });
 
-  it('preserves paid parent and teacher reversal guards for Late-to-non-earned corrections', () => {
+  it('preserves paid parent and teacher reversal guards for historical Late-to-non-earned corrections', () => {
     expect(adminCorrectionSource).toContain('This charge already has payment applied. Reverse payment allocation first.');
     expect(adminCorrectionSource).toContain('This teacher earning is already paid. Reverse payout allocation first.');
   });
@@ -55,22 +55,23 @@ describe('Finance Brick 6 Present/Late policy routing', () => {
     expect(completionBridgeSource).toContain('currentAttendanceStatus !== correctionStatus');
   });
 
-  it('requires explicit teacher-pay handling when a correction newly becomes Present or Late', () => {
+  it('keeps legacy client teacher-pay routing compatible while current UI no longer offers Late', () => {
     expect(correctionWorkflowSource).toContain('requiresAttendanceCorrectionTeacherPayDecision');
     expect(correctionWorkflowSource).toContain('isFinanciallyEarnedAttendanceCorrectionStatus');
     expect(correctionWorkflowSource).toContain("intendedAttendanceStatus: 'present' | 'late'");
     expect(correctionWorkflowSource).toContain('intendedAttendanceStatus,');
   });
 
-  it('keeps Present-to-Late and Late-to-Present corrections financially neutral', () => {
+  it('keeps historical Present-to-Late and Late-to-Present corrections financially neutral', () => {
     expect(correctionWorkflowSource).toContain('isFinanciallyNeutralAttendedStatusTransition');
     expect(correctionWorkflowSource).toContain('previousStatus !== newStatus');
     expect(correctionWorkflowSource).toContain('if (!requiresDecision)');
     expect(mainPanelSource).toContain('Existing financial records remain unchanged.');
   });
 
-  it('binds prepared teacher-pay decisions to the exact Present/Late correction status', () => {
-    expect(correctionDecisionSource).toContain('isFinanciallyEarnedAttendanceStatus(intendedAttendanceStatus)');
+  it('normalizes stale Late teacher-pay decision requests to Present before binding the correction', () => {
+    expect(correctionDecisionSource).toContain("return status === 'late' ? 'present' : status;");
+    expect(correctionDecisionSource).toContain("if (intendedAttendanceStatus !== 'present')");
     expect(correctionDecisionSource).toContain('teacherPayDecisionAttendanceStatus: intendedAttendanceStatus');
     expect(correctionDecisionSource).toContain('decisionAttendanceStatus !== correctionStatus');
     expect(correctionDecisionSource).toContain('decision.intendedAttendanceStatus');
