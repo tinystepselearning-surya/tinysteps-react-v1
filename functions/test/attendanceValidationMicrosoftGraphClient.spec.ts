@@ -78,11 +78,23 @@ describe('MicrosoftGraphClient', () => {
   });
 
   it('reuses the cached token across transcript and attendance artifact reads', async () => {
+    const intervals = [
+      {
+        joinDateTime: '2026-09-16T10:00:00Z',
+        leaveDateTime: '2026-09-16T10:12:00Z',
+        durationInSeconds: 720,
+      },
+      {
+        joinDateTime: '2026-09-16T10:14:00Z',
+        leaveDateTime: '2026-09-16T10:35:00Z',
+        durationInSeconds: 1260,
+      },
+    ];
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(tokenResponse())
       .mockResolvedValueOnce(jsonResponse({ value: [{ id: 'transcript-1' }] }))
       .mockResolvedValueOnce(jsonResponse({ value: [{ id: 'report-1', totalParticipantCount: 2 }] }))
-      .mockResolvedValueOnce(jsonResponse({ value: [{ id: 'record-1', totalAttendanceInSeconds: 2100 }] }));
+      .mockResolvedValueOnce(jsonResponse({ value: [{ id: 'record-1', totalAttendanceInSeconds: 1980, attendanceIntervals: intervals }] }));
 
     const client = new MicrosoftGraphClient({
       credentials,
@@ -96,7 +108,11 @@ describe('MicrosoftGraphClient', () => {
 
     expect(transcripts.value[0].id).toBe('transcript-1');
     expect(reports.value[0].id).toBe('report-1');
-    expect(records.value[0].id).toBe('record-1');
+    expect(records.value[0]).toMatchObject({
+      id: 'record-1',
+      totalAttendanceInSeconds: 1980,
+      attendanceIntervals: intervals,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(4);
 
     expect(String(fetchMock.mock.calls[1][0])).toContain(
