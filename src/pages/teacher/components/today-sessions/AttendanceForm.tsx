@@ -34,14 +34,14 @@ interface AttendanceFormProps {
   attendanceOnly?: boolean;
 }
 
-type AttendanceOutcome = AttendanceStatus | 'reschedule_requested' | '';
+type AttendanceOutcome = AttendanceStatus | '';
 
 type AttendanceEntryState = {
   status: AttendanceOutcome;
   notes?: string;
 };
 
-const STATUS_OPTIONS: AttendanceOutcome[] = ['present', 'absent', 'late', 'reschedule_requested'];
+const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];
 
 const COURSE_ID_ALIASES: Record<string, string> = {
   'phonics-foundation': 'phonics-foundations',
@@ -105,14 +105,14 @@ const mapCourseNameToId = (value?: string | null): string | null => {
 
 const normalizeAttendanceStatus = (value: unknown): AttendanceOutcome => {
   if (!value) return '';
-  if (typeof value === 'string') {
-    return STATUS_OPTIONS.includes(value as AttendanceOutcome) ? (value as AttendanceOutcome) : '';
-  }
-  if (typeof value === 'object' && value !== null && typeof (value as { status?: unknown }).status === 'string') {
-    const status = (value as { status: string }).status;
-    return STATUS_OPTIONS.includes(status as AttendanceOutcome) ? (status as AttendanceOutcome) : '';
-  }
-  return '';
+  const raw = typeof value === 'string'
+    ? value
+    : typeof value === 'object' && value !== null && typeof (value as { status?: unknown }).status === 'string'
+      ? String((value as { status: string }).status)
+      : '';
+  const status = raw.trim().toLowerCase();
+  if (status === 'late') return 'present';
+  return STATUS_OPTIONS.includes(status as AttendanceStatus) ? (status as AttendanceStatus) : '';
 };
 
 export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
@@ -334,7 +334,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     if (hasMissingStatus) {
       toast({
         title: 'Select attendance status',
-        description: 'Please choose Present/Absent/Late/Reschedule for each student.',
+        description: 'Please choose Present/Absent/Reschedule for each student.',
         variant: 'destructive',
       });
       return;
