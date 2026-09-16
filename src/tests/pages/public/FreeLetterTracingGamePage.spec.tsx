@@ -11,6 +11,15 @@ vi.mock('../../../lib/seo', () => ({
   applySeo: vi.fn(),
 }));
 
+vi.mock('../../../lib/analytics', () => ({
+  trackEvent: vi.fn(),
+}));
+
+vi.mock('../../../lib/conversionTracking', () => ({
+  trackFreeResourceStart: vi.fn(),
+  trackFreeResourceToTrialClick: vi.fn(),
+}));
+
 vi.mock('../../../pages/kids/games/phonics/LetterTracingGame', () => ({
   default: () => <div data-testid="letter-tracing-game">Game</div>,
 }));
@@ -26,7 +35,7 @@ function renderPage(initialEntry: string) {
 }
 
 describe('FreeLetterTracingGamePage', () => {
-  it('renders the new H1, letter discovery section, CTA, and practice links on the landing view', () => {
+  it('renders A-N as free and O-Z as locked on the landing view', () => {
     renderPage('/free-letter-tracing-game-for-kids');
 
     expect(
@@ -38,35 +47,42 @@ describe('FreeLetterTracingGamePage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: /practice letter tracing a to z/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { level: 2, name: /printable worksheet option/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/choose a letter first and use the print button on the tracing screen/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/can i print this abc tracing activity as a worksheet\?/i),
-    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'A' })).toHaveAttribute('href', '#trace-letter-a');
-    expect(screen.getByRole('link', { name: /book free phonics assessment/i })).toHaveAttribute('href', '/book-demo');
-    expect(screen.getByRole('link', { name: /trace letter a/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'N' })).toHaveAttribute('href', '#trace-letter-n');
+    expect(screen.getByRole('link', { name: /O 🔒/i })).toHaveAttribute('href', '#trace-letter-o');
+    expect(screen.getByRole('link', { name: /unlock o-z/i })).toHaveAttribute(
       'href',
-      '/free-letter-tracing-game-for-kids?level=1&pair=0&step=0#play',
-    );
-    expect(screen.getByRole('link', { name: /trace letter z/i })).toHaveAttribute(
-      'href',
-      '/free-letter-tracing-game-for-kids?level=1&pair=25&step=0#play',
+      '/free-letter-tracing-game-for-kids?level=1&pair=14&step=0#play',
     );
   });
 
-  it('hides long SEO content in play mode', () => {
-    renderPage('/free-letter-tracing-game-for-kids?level=1&pair=0&step=0');
+  it('keeps free letter N in the tracing game', () => {
+    renderPage('/free-letter-tracing-game-for-kids?level=1&pair=13&step=1');
 
     expect(screen.getByTestId('letter-tracing-game')).toBeInTheDocument();
-    expect(screen.queryByText(/what children practise/i)).toBeNull();
-    expect(screen.queryByText(/practice letter tracing a to z/i)).toBeNull();
-    expect(screen.queryByText(/printable worksheet option/i)).toBeNull();
-    expect(screen.queryByRole('heading', { level: 1, name: /free abc tracing game for kids/i })).toBeNull();
-    expect(screen.queryByText(/who can use this abc tracing game/i)).toBeNull();
+    expect(screen.queryByRole('heading', { name: /unlock letters o-z/i })).toBeNull();
+  });
+
+  it('hard-stops direct O-Z public URLs at the lifetime unlock screen', () => {
+    renderPage('/free-letter-tracing-game-for-kids?level=1&pair=14&step=0');
+
+    expect(screen.queryByTestId('letter-tracing-game')).toBeNull();
+    expect(screen.getByRole('heading', { level: 1, name: /unlock letters o-z/i })).toBeInTheDocument();
+    expect(screen.getByText('₹99')).toBeInTheDocument();
+    expect(screen.getByText('$1.99')).toBeInTheDocument();
+    expect(screen.getByText('€1.99')).toBeInTheDocument();
+    expect(screen.getByText('£1.49')).toBeInTheDocument();
+
+    const whatsapp = screen.getByRole('link', { name: /whatsapp me to unlock/i });
+    expect(whatsapp).toHaveAttribute('href', expect.stringContaining('https://wa.me/919666095553'));
+    expect(whatsapp.getAttribute('href')).toContain('text=');
+    expect(screen.queryByText(/96660 95553/i)).toBeNull();
+  });
+
+  it('keeps pre-tracing unrestricted', () => {
+    renderPage('/free-letter-tracing-game-for-kids?level=0&pair=0&step=0');
+
+    expect(screen.getByTestId('letter-tracing-game')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /unlock letters o-z/i })).toBeNull();
   });
 });
