@@ -1,16 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import {
   discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, enforcePartition, filterEndpointPlan, functionsChangeDecision,
   normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
-  remainingTargets, validateCheckpoint,
+  remainingTargets, retryProvider404, validateCheckpoint,
 } from '../deployment/functions-deployment-lib.mjs';
+import { buildDependencyGraph } from '../deployment/functions-impact-lib.mjs';
 
 const execFileAsync = promisify(execFile);
+const require = createRequire(import.meta.url);
 
 const fn = (entryPoint, region = ['asia-south1'], platform = 'gcfv2') => ({ __endpoint: { entryPoint, region, platform } });
 
@@ -18,6 +21,14 @@ test('discovers and sorts compiled v2 asia-south1 exports', () => {
   const plan = discoverEndpointPlan({ z: fn('zFn'), a: fn('aFn'), helper: {} });
   assert.deepEqual(plan.map(x => x.id), ['a', 'z']);
   assert.equal(plan[0].selector, 'functions:a');
+});
+
+test('source dependency roots exactly match compiled deployed Function exports', () => {
+  const files = execFileSync('git', ['ls-files', 'functions/src'], { encoding: 'utf8' })
+    .split(/\r?\n/).filter(file => /\.[cm]?[jt]sx?$/.test(file));
+  const graph = buildDependencyGraph(new Map(files.map(file => [file, readFileSync(file, 'utf8')])));
+  const compiled = discoverEndpointPlan(require('../../functions/lib/index.js')).map(target => target.id);
+  assert.deepEqual([...graph.roots.keys()].sort(), compiled);
 });
 
 test('fails closed on unexpected region or platform', () => {
@@ -109,6 +120,31 @@ test('report stores digest metadata, not raw output', () => {
   assert.equal(d.bytes, 21);
   assert.match(d.sha256, /^[a-f0-9]{64}$/);
   assert.equal('output' in d, false);
+});
+
+test('provider reconciliation retries only bounded transient 404 reads', async () => {
+  let reads = 0;
+  const sleeps = [];
+  const result = await retryProvider404(async () => {
+    reads++;
+    if (reads < 3) throw Object.assign(new Error('not propagated yet'), { status: 404 });
+    return { state: 'ACTIVE' };
+  }, { attempts: 3, delayMs: 10, sleep: async delay => sleeps.push(delay) });
+  assert.deepEqual(result, { state: 'ACTIVE' });
+  assert.equal(reads, 3);
+  assert.deepEqual(sleeps, [10, 10]);
+});
+
+test('provider reconciliation never converts a persistent 404 or another error into success', async () => {
+  let reads = 0;
+  await assert.rejects(() => retryProvider404(async () => {
+    reads++;
+    throw Object.assign(new Error('missing'), { status: 404 });
+  }, { attempts: 2, delayMs: 0, sleep: async () => {} }), /missing/);
+  assert.equal(reads, 2);
+  await assert.rejects(() => retryProvider404(async () => {
+    throw Object.assign(new Error('denied'), { status: 403 });
+  }, { attempts: 6, sleep: async () => {} }), /denied/);
 });
 
 test('exit zero with no CLI target records reconciles a latest serving revision as ready', async () => {
@@ -239,6 +275,32 @@ test('workflow dispatch exposes a main-only non-empty surgical recovery input', 
 test('normal Firebase deployment remains serialized and non-cancelling', () => {
   const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
   assert.match(workflow, /deploy-to-firebase:[\s\S]*group: firebase-deployment-tinysteps-react-v1[\s\S]*cancel-in-progress: false/);
+});
+
+test('workflow feeds resolver targets to bounded deployment and skips zero-impact mutations', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  assert.match(workflow, /Resolve artifact and Function impact[\s\S]*resolve-deployment-impact\.mjs/);
+  assert.match(workflow, /FUNCTIONS_DEPLOY_ONLY: \$\{\{ needs\.analyze-changes\.outputs\.functions_targets \}\}/);
+  assert.match(workflow, /FUNCTIONS_DEPLOY_FULL: \$\{\{ needs\.analyze-changes\.outputs\.functions_full_deployment \}\}/);
+  assert.match(workflow, /Deploy Cloud Functions in bounded batches\n\s+if: needs\.analyze-changes\.outputs\.functions_deployment_required == 'true'/);
+  assert.match(workflow, /Deploy Firestore Security Rules\n\s+if: needs\.analyze-changes\.outputs\.firestore_rules_changed == 'true'/);
+  assert.match(workflow, /Deploy to Firebase Production\n\s+if: needs\.analyze-changes\.outputs\.hosting_changed == 'true'/);
+});
+
+test('automated full-fleet mutation requires an explicit known-global decision', () => {
+  const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  assert.match(source, /event === 'push' && !options\.only && process\.env\.FUNCTIONS_DEPLOY_FULL !== 'true'/);
+});
+
+test('Functions deployment report upload survives a failed deployment step', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  assert.match(workflow, /Upload bounded Functions deployment report\n\s+if: always\(\) && needs\.analyze-changes\.outputs\.functions_deployment_required == 'true'/);
+});
+
+test('backend-only validation does not install Playwright or build Hosting', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  assert.match(workflow, /Install Playwright browsers\n\s+if: needs\.analyze-changes\.outputs\.frontend_validation_required == 'true'/);
+  assert.match(workflow, /Build app\n\s+if: needs\.analyze-changes\.outputs\.frontend_validation_required == 'true'/);
 });
 
 test('stale-main guard is checked only at the first Functions mutation boundary', () => {

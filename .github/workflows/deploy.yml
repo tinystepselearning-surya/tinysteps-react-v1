@@ -17,7 +17,35 @@ env:
   FIREBASE_PROJECT_ID: tinysteps-react-v1
 
 jobs:
+  analyze-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      functions_validation_required: ${{ steps.impact.outputs.functions_validation_required }}
+      functions_deployment_required: ${{ steps.impact.outputs.functions_deployment_required }}
+      functions_full_deployment: ${{ steps.impact.outputs.functions_full_deployment }}
+      functions_targets: ${{ steps.impact.outputs.functions_targets }}
+      frontend_validation_required: ${{ steps.impact.outputs.frontend_validation_required }}
+      hosting_changed: ${{ steps.impact.outputs.hosting_changed }}
+      firestore_validation_required: ${{ steps.impact.outputs.firestore_validation_required }}
+      firestore_rules_changed: ${{ steps.impact.outputs.firestore_rules_changed }}
+      school_transport_required: ${{ steps.impact.outputs.school_transport_required }}
+      lead_iam_required: ${{ steps.impact.outputs.lead_iam_required }}
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Resolve artifact and Function impact
+        id: impact
+        run: >-
+          node scripts/resolve-deployment-impact.mjs
+          --before "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}"
+          --sha "${{ github.sha }}"
+
   build-and-test:
+    needs: analyze-changes
     runs-on: ubuntu-latest
     env:
       VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
@@ -45,33 +73,56 @@ jobs:
             functions/package-lock.json
 
       - name: Install dependencies
+        if: >-
+          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' ||
+          needs.analyze-changes.outputs.firestore_validation_required == 'true'
         run: npm ci
 
       - name: Install Functions dependencies
+        if: >-
+          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
+          needs.analyze-changes.outputs.firestore_validation_required == 'true' ||
+          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
         run: npm ci --prefix functions --include=dev
 
       - name: Build Cloud Functions
+        if: >-
+          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
+          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
         run: npm --prefix functions run build
 
       - name: Run Cloud Functions unit tests
+        if: needs.analyze-changes.outputs.functions_validation_required == 'true'
         run: npm --prefix functions test
 
+      - name: Run Functions impact resolver tests
+        if: needs.analyze-changes.outputs.functions_validation_required == 'true'
+        run: node --test scripts/test/functions-impact.node-test.mjs
+
       - name: Run bounded Functions deployment tests
+        if: needs.analyze-changes.outputs.functions_validation_required == 'true'
         run: node --test scripts/test/functions-deployment.node-test.mjs
 
       - name: Validate bounded Functions deployment plan (zero mutation)
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: node scripts/deploy-functions-batched.mjs --plan
+        env:
+          FUNCTIONS_DEPLOY_ONLY: ${{ needs.analyze-changes.outputs.functions_targets }}
 
       - name: Run teacher progress enrollment audit classifier tests
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
 
       - name: Setup Java for Firestore emulator
+        if: needs.analyze-changes.outputs.firestore_validation_required == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Run Firestore rules tests
+        if: needs.analyze-changes.outputs.firestore_validation_required == 'true'
         run: >-
           npx firebase-tools@15.30.0 emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
@@ -79,6 +130,7 @@ jobs:
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts src/tests/firestore/teacherProgressAuthorization.rules.spec.ts src/tests/firestore/childCourseProgress.rules.spec.ts"
 
       - name: Run website lead deduplication transaction tests
+        if: needs.analyze-changes.outputs.firestore_validation_required == 'true'
         run: >-
           npx firebase-tools@15.30.0 emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
@@ -86,6 +138,7 @@ jobs:
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --config functions/vitest.config.ts functions/test/websiteLeadDeduplication.emulator.spec.ts"
 
       - name: Cache Playwright browsers
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
@@ -94,42 +147,55 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run linter
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run lint
 
       - name: Run type check
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run typecheck
 
       - name: Run unit tests
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run test:unit -- --coverage
 
       - name: Validate Ask Tiny Steps production build configuration
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: node scripts/validate-ask-tiny-steps-build-env.mjs
 
       - name: Build app
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run build
 
       - name: Run SEO smoke test
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run seo:smoke
 
       - name: Upload coverage to Codecov
+        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         uses: codecov/codecov-action@v3
         with:
           files: ./coverage/coverage-final.json
 
   deploy-to-firebase:
-    # Only run on push to main, after build-and-test succeeds. Keeping staging and
-    # production mutations in one job makes the project-level concurrency lock atomic.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: build-and-test
+    # Only enter the project mutation lock when at least one Firebase artifact changed.
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      (needs.analyze-changes.outputs.functions_deployment_required == 'true' ||
+       needs.analyze-changes.outputs.hosting_changed == 'true' ||
+       needs.analyze-changes.outputs.firestore_rules_changed == 'true')
+    needs: [analyze-changes, build-and-test]
     runs-on: ubuntu-latest
     concurrency:
       group: firebase-deployment-tinysteps-react-v1
       # Let an active Firebase CLI operation finish; never cancel it mid-deploy.
       cancel-in-progress: false
     env:
+      FUNCTIONS_DEPLOY_ONLY: ${{ needs.analyze-changes.outputs.functions_targets }}
+      FUNCTIONS_DEPLOY_FULL: ${{ needs.analyze-changes.outputs.functions_full_deployment }}
       INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
       VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
       VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN }}
@@ -155,26 +221,9 @@ jobs:
             package-lock.json
             functions/package-lock.json
 
-      - name: Decide whether the Functions artifact changed
-        id: functions-changes
-        run: >-
-          node scripts/deploy-functions-batched.mjs --check-changes
-          --before "${{ github.event.before }}"
-          --sha "${{ github.sha }}"
-
       - name: Install dependencies
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: npm ci
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
 
       - name: Authenticate to Google Cloud
         id: gcp-auth
@@ -200,23 +249,25 @@ jobs:
           fi
 
       - name: Validate Ask Tiny Steps staging build configuration
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: node scripts/validate-ask-tiny-steps-build-env.mjs
 
       - name: Deploy to Firebase Staging Preview Channel
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: bash .github/scripts/firebase-hosting-deploy.sh channel staging
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
       - name: Clean stale functions build artifacts
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: rm -rf functions/lib functions/tsconfig.tsbuildinfo functions/.tsbuildinfo || true
 
       - name: Install Functions dependencies
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: npm ci --prefix functions --include=dev
 
       - name: Build Cloud Functions
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: npm --prefix functions run build
 
       - name: Verify deployment commit
@@ -225,14 +276,15 @@ jobs:
           git rev-parse HEAD && git log -1 --oneline
 
       - name: Verify function deployment metadata
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: node scripts/verify-function-deployment-metadata.mjs
 
       - name: Plan bounded Cloud Functions deployment
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: node scripts/deploy-functions-batched.mjs --plan
 
       - name: Setup Google Cloud CLI
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Refuse stale production deployment
@@ -252,14 +304,14 @@ jobs:
           fi
 
       - name: Deploy Cloud Functions in bounded batches
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
         run: node scripts/deploy-functions-batched.mjs --deploy
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload bounded Functions deployment report
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: always() && needs.analyze-changes.outputs.functions_deployment_required == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: functions-deployment-report-${{ github.sha }}
@@ -268,14 +320,14 @@ jobs:
           retention-days: 7
 
       - name: Enforce School callable public transport invocation
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.school_transport_required == 'true'
         run: >-
           node scripts/ensure-school-callable-public-invocation.mjs
           --project "${{ env.FIREBASE_PROJECT_ID }}"
           --region asia-south1
 
       - name: Enforce lead attribution callable public transport invocation
-        if: steps.functions-changes.outputs.functions_changed == 'true'
+        if: needs.analyze-changes.outputs.lead_iam_required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -304,6 +356,7 @@ jobs:
           echo "Verified public transport IAM for enrichPublicLeadAttribution (${service_name})"
 
       - name: Deploy Firestore Security Rules
+        if: needs.analyze-changes.outputs.firestore_rules_changed == 'true'
         run: >-
           npx firebase-tools@15.30.0 deploy
           --only firestore:rules
@@ -313,6 +366,7 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
       - name: Verify School callable transport
+        if: needs.analyze-changes.outputs.school_transport_required == 'true'
         run: >-
           node scripts/verify-school-callable-transport.mjs
           --project "${{ env.FIREBASE_PROJECT_ID }}"
@@ -321,7 +375,7 @@ jobs:
           --report artifacts/school-callable-transport-verification.md
 
       - name: Upload School callable transport report
-        if: always()
+        if: always() && needs.analyze-changes.outputs.school_transport_required == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: school-callable-transport-verification-${{ github.sha }}
@@ -329,14 +383,17 @@ jobs:
           if-no-files-found: warn
 
       - name: Validate Ask Tiny Steps production build configuration
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: node scripts/validate-ask-tiny-steps-build-env.mjs
 
       - name: Deploy to Firebase Production
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: bash .github/scripts/firebase-hosting-deploy.sh live
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
       - name: Verify live deployment integrity and build identity
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: >-
           node scripts/verify-live-deployment.mjs
           --origin https://tinystepslearning.com
@@ -344,7 +401,7 @@ jobs:
           --report artifacts/live-deployment-verification.md
 
       - name: Upload live deployment verification report
-        if: always()
+        if: always() && needs.analyze-changes.outputs.hosting_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: live-deployment-verification-${{ github.sha }}
@@ -352,11 +409,11 @@ jobs:
           if-no-files-found: warn
 
       - name: Verify live IndexNow ownership key
-        if: ${{ env.INDEXNOW_KEY != '' }}
+        if: needs.analyze-changes.outputs.hosting_changed == 'true' && env.INDEXNOW_KEY != ''
         run: npm run indexnow:verify
 
       - name: Submit canonical public URLs to IndexNow
-        if: ${{ env.INDEXNOW_KEY != '' }}
+        if: needs.analyze-changes.outputs.hosting_changed == 'true' && env.INDEXNOW_KEY != ''
         env:
           INDEXNOW_SITEMAP: dist/sitemap.xml
         run: npm run indexnow:submit

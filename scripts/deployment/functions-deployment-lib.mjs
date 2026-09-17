@@ -292,6 +292,21 @@ export function digestBoundedOutput(output) {
   return { bytes: buf.length, sha256: crypto.createHash('sha256').update(buf).digest('hex') };
 }
 
+export async function retryProvider404(read, { attempts = 6, delayMs = 5000, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+  if (!Number.isInteger(attempts) || attempts < 1) throw new Error('Provider read attempts must be a positive integer');
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await read(attempt);
+    } catch (error) {
+      lastError = error;
+      if (error?.status !== 404 || attempt === attempts) throw error;
+      await sleep(delayMs);
+    }
+  }
+  throw lastError;
+}
+
 function boundedEvidence(output, target) {
   const lines = String(output ?? '').split(/\r?\n/).filter(line => line.includes(target) || /error|failed|quota|429|resource.?exhausted/i.test(line));
   return lines.slice(-8).join('\n').slice(0, 4000);
