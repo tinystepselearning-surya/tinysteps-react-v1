@@ -1,0 +1,96 @@
+name: Technical Reliability Agent
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: technical-reliability-agent
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FIREBASE_PROJECT_ID: tinysteps-react-v1
+      FIREBASE_REGION: asia-south1
+      TRA_ORIGIN: https://tinystepslearning.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install application dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Authenticate read-only audit session to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run Technical Reliability Agent
+        id: reliability-agent
+        continue-on-error: true
+        run: node scripts/technical-reliability-agent.mjs
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Upload Technical Reliability Agent report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: technical-reliability-agent-${{ github.run_number }}-${{ github.sha }}
+          path: artifacts/technical-reliability-agent/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish report to job summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f artifacts/technical-reliability-agent/report.md ]]; then
+            cat artifacts/technical-reliability-agent/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '## Technical Reliability Agent' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Report was not generated.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Enforce critical reliability gate
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync('artifacts/technical-reliability-agent/report.json', 'utf8'));
+          if (report.summary.criticalFailures > 0) {
+            console.error(`Technical Reliability Agent found ${report.summary.criticalFailures} critical failure(s).`);
+            process.exit(1);
+          }
+          console.log(`Technical Reliability Agent status: ${report.summary.overall}`);
+          NODE
