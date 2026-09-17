@@ -1,23 +1,127 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertReadOnlyRequest} from './audit-production-schedule-brick0.mjs';
+import {
+  API_ROOT,
+  TODAY,
+  assertReadOnlyRequest,
+  auditActive,
+  classifyExpectedOccurrence,
+  currentIndiaYmd,
+  exceptionSession,
+  identityMatches,
+  indiaYmd,
+  parentVisibility,
+  scheduleMatches,
+  schedulerActive,
+  sessionDate,
+} from './audit-production-schedule-brick0.mjs';
 
-const root = '/v1/projects/tinysteps-react-v1/databases/(default)/documents';
+const enrollment = {
+  id: 'enr1',
+  status: 'active',
+  parentId: 'parent1',
+  kidId: 'kid1',
+  teacherId: 'teacher1',
+  courseId: 'course1',
+  schedule: {
+    timezone: 'Asia/Kolkata',
+    revision: 2,
+    weeklySlots: [{weekday: 5, time: '10:00', durationMinutes: 35}],
+  },
+};
+const kids = new Map([['kid1', {id: 'kid1', parentIds: ['parent1']}]]);
+const healthySession = {
+  id: 'enr1_20260918_1000',
+  enrollmentId: 'enr1',
+  status: 'scheduled',
+  parentId: 'parent1',
+  kidId: 'kid1',
+  kidIds: ['kid1'],
+  teacherId: 'teacher1',
+  courseId: 'course1',
+  date: '2026-09-18',
+  startTime: '10:00',
+  durationMinutes: 35,
+  scheduleRevision: 2,
+};
+const occurrence = {
+  date: '2026-09-18',
+  startTime: '10:00',
+  durationMinutes: 35,
+  sessionId: 'enr1_20260918_1000',
+};
 
-test('Brick 0 allows Firestore read endpoints used by the audit', () => {
-  assert.doesNotThrow(() => assertReadOnlyRequest('GET', 'firestore.googleapis.com', `${root}/enrollments?pageSize=10`));
-  assert.doesNotThrow(() => assertReadOnlyRequest('POST', 'firestore.googleapis.com', `${root}:runQuery`));
-  assert.doesNotThrow(() => assertReadOnlyRequest('POST', 'firestore.googleapis.com', `${root}:batchGet`));
+test('Brick 0 permits only Firestore read RPCs', () => {
+  assert.doesNotThrow(() => assertReadOnlyRequest('GET', 'firestore.googleapis.com', `${API_ROOT}/enrollments?pageSize=1000`));
+  assert.doesNotThrow(() => assertReadOnlyRequest('POST', 'firestore.googleapis.com', `${API_ROOT}:runQuery`));
+  assert.doesNotThrow(() => assertReadOnlyRequest('POST', 'firestore.googleapis.com', `${API_ROOT}:batchGet`));
 });
 
-test('Brick 0 blocks Firestore mutations and non-Firestore hosts', () => {
-  for (const [method, host, url] of [
-    ['POST', 'firestore.googleapis.com', `${root}:commit`],
-    ['POST', 'firestore.googleapis.com', `${root}:batchWrite`],
-    ['PATCH', 'firestore.googleapis.com', `${root}/enrollments/abc`],
-    ['DELETE', 'firestore.googleapis.com', `${root}/enrollments/abc`],
-    ['GET', 'example.com', `${root}/enrollments`],
-  ]) {
-    assert.throws(() => assertReadOnlyRequest(method, host, url), /read-only guard rejected/);
-  }
+test('Brick 0 rejects mutation RPCs, mutation verbs, and non-Firestore hosts', () => {
+  assert.throws(() => assertReadOnlyRequest('POST', 'firestore.googleapis.com', `${API_ROOT}:commit`), /read-only guard rejected/);
+  assert.throws(() => assertReadOnlyRequest('POST', 'firestore.googleapis.com', `${API_ROOT}:batchWrite`), /read-only guard rejected/);
+  assert.throws(() => assertReadOnlyRequest('PATCH', 'firestore.googleapis.com', `${API_ROOT}/enrollments/example`), /read-only guard rejected/);
+  assert.throws(() => assertReadOnlyRequest('DELETE', 'firestore.googleapis.com', `${API_ROOT}/enrollments/example`), /read-only guard rejected/);
+  assert.throws(() => assertReadOnlyRequest('GET', 'example.com', '/anything'), /read-only guard rejected/);
+});
+
+test('India date handling is correct across the UTC day boundary', () => {
+  assert.equal(currentIndiaYmd(new Date('2026-09-17T19:20:00Z')), '2026-09-18');
+  assert.equal(indiaYmd('2026-09-18T22:30:00Z'), '2026-09-19');
+  assert.equal(sessionDate({startAt: '2026-09-18T22:30:00Z'}), '2026-09-19');
+  assert.match(TODAY, /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('audit exposes the pending_lp_assignment scheduler contract mismatch', () => {
+  const pending = {status: 'pending_lp_assignment'};
+  assert.equal(auditActive(pending), true);
+  assert.equal(schedulerActive(pending), false);
+});
+
+test('canonical identity and schedule matching require exact enrollment fields', () => {
+  assert.equal(identityMatches(healthySession, enrollment), true);
+  assert.equal(scheduleMatches(healthySession, enrollment), true);
+  assert.equal(identityMatches({...healthySession, teacherId: 'wrong-teacher'}, enrollment), false);
+  assert.equal(scheduleMatches({...healthySession, startTime: '10:05'}, enrollment), false);
+});
+
+test('parent visibility reproduces ownership and canonical schedule checks', () => {
+  assert.deepEqual(parentVisibility(healthySession, enrollment, kids), {visible: true, reasons: []});
+  const mismatch = parentVisibility({...healthySession, parentId: 'wrong-parent'}, enrollment, kids);
+  assert.equal(mismatch.visible, false);
+  assert.match(mismatch.reasons.join(' | '), /session parentId mismatch\/missing/);
+});
+
+test('known makeup/reschedule records are recognized as exceptions', () => {
+  assert.equal(exceptionSession({rescheduledFromSessionId: healthySession.id}), true);
+  assert.equal(exceptionSession({isMakeup: true}), true);
+  assert.equal(exceptionSession({source: 'approved_request_reschedule'}), true);
+});
+
+test('occurrence classifier distinguishes healthy, missing, cancelled, hidden, identity, time, revision and reschedule states', () => {
+  const classify = (session, replacement = null) => classifyExpectedOccurrence({
+    occurrence,
+    session,
+    replacement,
+    enrollment,
+    kids,
+  }).classification;
+
+  assert.equal(classify(healthySession), 'HEALTHY');
+  assert.equal(classify(null), 'MISSING SESSION');
+  assert.equal(classify({...healthySession, status: 'cancelled'}), 'CANCELLED/PAUSED');
+  assert.equal(classify({...healthySession, parentId: 'wrong-parent'}), 'SESSION EXISTS BUT PARENT WOULD NOT SEE IT');
+  assert.equal(classify({...healthySession, teacherId: 'wrong-teacher'}), 'WRONG STUDENT/PARENT/TEACHER/ENROLLMENT IDENTITY');
+  assert.equal(classify({...healthySession, startTime: '10:05'}), 'WRONG DATE/TIME/DURATION');
+  assert.equal(classify({...healthySession, scheduleRevision: 1}), 'STALE SCHEDULE REVISION');
+
+  const replacement = {
+    ...healthySession,
+    id: 'replacement1',
+    date: '2026-09-19',
+    startTime: '11:00',
+    rescheduledFromSessionId: healthySession.id,
+    source: 'reschedule',
+  };
+  assert.equal(classify({...healthySession, status: 'cancelled'}, replacement), 'VALID RESCHEDULE/MAKEUP/EXCEPTION');
 });
