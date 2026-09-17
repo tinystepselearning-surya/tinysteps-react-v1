@@ -25,7 +25,11 @@ describe('Ask Tiny Steps provider retirement', () => {
     expect(deployWorkflow).toContain('- name: Deploy Cloud Functions in bounded batches');
     expect(deployWorkflow).toMatch(/workflow_dispatch:\n\s+inputs:\n\s+functions_only:/);
     expect(deployWorkflow).toMatch(
-      /Deploy Cloud Functions in bounded batches[\s\S]*?if: steps\.functions-changes\.outputs\.functions_changed == 'true'/,
+      /Deploy Cloud Functions in bounded batches[\s\S]*?if: needs\.analyze-changes\.outputs\.functions_deployment_required == 'true'/,
     );
+    expect(deployWorkflow).toContain(
+      'FUNCTIONS_DEPLOY_ONLY: ${{ needs.analyze-changes.outputs.functions_targets }}',
+    );
+    expect(deployWorkflow).not.toContain('steps.functions-changes');
   });
 });
