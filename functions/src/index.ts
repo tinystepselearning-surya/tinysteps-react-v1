@@ -287,3 +287,6 @@ export {
   registerNotificationToken,
   sendTestPushNotification,
 } from './notifications/classReminders';
+
+// Attendance Validation AV2.1 — private, manual production proof only.
+export { runAv2TeamsEvidenceProof } from './attendanceValidation/runAv2TeamsEvidenceProof';
