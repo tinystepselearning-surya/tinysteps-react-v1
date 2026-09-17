@@ -42,7 +42,7 @@ describe('Ask Tiny Steps URL Context security boundary', () => {
     expect(aiClient).toContain("mode: AskTinyStepsModelMode = 'first_party_grounded'");
     expect(router).toContain("mode: 'general_guidance'");
 
-    // The Groq-era copied-snippet / generic KB request contracts are retired.
+    // Legacy copied-snippet / generic KB request contracts must remain absent.
     expect(service).not.toContain('approvedSnippets');
     expect(hook).not.toContain('approvedSnippets');
     expect(service).not.toContain('APPROVED TINY STEPS SNIPPETS');
