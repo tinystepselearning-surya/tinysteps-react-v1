@@ -2,6 +2,7 @@ import {
   calculatePairOverlapMetrics,
   type PairOverlapMetrics,
 } from './evidenceIntervals';
+import type { GraphAttendanceInterval } from './microsoftGraphClient';
 import type {
   AttendanceParticipantEvidence,
   AttendanceValidationEvidenceDocument,
@@ -83,6 +84,14 @@ function sumScheduledSeconds(participants: readonly AttendanceParticipantEvidenc
   ) / 1000;
 }
 
+function toGraphIntervals(participant: AttendanceParticipantEvidence): GraphAttendanceInterval[] {
+  return participant.rawAttendanceIntervals.map((interval) => ({
+    joinDateTime: interval.joinDateTime ?? undefined,
+    leaveDateTime: interval.leaveDateTime ?? undefined,
+    durationInSeconds: interval.durationInSeconds ?? undefined,
+  }));
+}
+
 function evidenceComplete(evidence: AttendanceValidationEvidenceDocument): boolean {
   return evidence.collectionStatus === 'complete'
     && evidence.completeness.attendanceReportsComplete
@@ -145,8 +154,8 @@ export function buildSessionProof(
   for (const teacher of teacherParticipants) {
     for (const learner of learnerParticipants) {
       const overlap = calculatePairOverlapMetrics(
-        teacher.rawAttendanceIntervals,
-        learner.rawAttendanceIntervals,
+        toGraphIntervals(teacher),
+        toGraphIntervals(learner),
         evidence.session.scheduledStartDateTime,
         evidence.session.scheduledEndDateTime,
       );
