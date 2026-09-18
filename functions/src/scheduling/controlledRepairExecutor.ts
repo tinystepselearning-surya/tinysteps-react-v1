@@ -600,12 +600,24 @@ export function deriveControlledRepairFromCurrentState(args: {
       return;
     }
 
+    if (classification.state === 'stale_revision') {
+      actions.push({
+        type: 'PRESERVE_STALE_REVISION_SESSION',
+        enrollmentId: args.enrollmentId,
+        sessionId: occurrence.sessionId,
+        date: occurrence.date,
+        startTime: occurrence.startTime,
+        durationMinutes: occurrence.durationMinutes,
+        reason:
+          'Existing session matches enrollment/date/time/duration and is preserved; only its scheduleRevision is stale.',
+      });
+      return;
+    }
+
     const type: ControlledRepairActionType =
       classification.state === 'identity_mismatch'
         ? 'BLOCK_IDENTITY_CONFLICT'
-        : classification.state === 'schedule_mismatch'
-          ? 'BLOCK_SCHEDULE_CONFLICT'
-          : 'BLOCK_STALE_REVISION';
+        : 'BLOCK_SCHEDULE_CONFLICT';
     actions.push({
       type,
       enrollmentId: args.enrollmentId,
@@ -616,9 +628,7 @@ export function deriveControlledRepairFromCurrentState(args: {
       reason:
         classification.state === 'identity_mismatch'
           ? 'Existing session identity conflicts with enrollment identity.'
-          : classification.state === 'schedule_mismatch'
-            ? 'Existing session date/time/duration conflicts with expected recurrence.'
-            : 'Existing session belongs to a different schedule revision.',
+          : 'Existing session date/time/duration conflicts with expected recurrence.',
     });
   });
 
