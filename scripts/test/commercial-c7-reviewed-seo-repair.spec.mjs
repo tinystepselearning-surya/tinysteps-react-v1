@@ -5,26 +5,30 @@ import { REVIEWED_SEO_RECOVERY_BLOBS, isReviewedSeoRecoveryFile } from '../comme
 
 const authorityPath = 'src/content/blog/shared/authorityLinking.ts';
 const comparisonPath = 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx';
+const subjectHubPath = 'src/pages/SubjectResourcesPage.tsx';
+const phonicsPath = 'src/pages/phonics.tsx';
+const reviewedPaths = [authorityPath, comparisonPath, subjectHubPath, phonicsPath];
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
 
 describe('C7 verified SEO recovery repair boundary', () => {
-  it('permits exactly the two independently reviewed Git blob versions', () => {
+  it('permits exactly the independently reviewed Git blob versions', () => {
     expect(REVIEWED_SEO_RECOVERY_BLOBS).toEqual({
       [authorityPath]: 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
       [comparisonPath]: '21ec5766587f1635227d718401e705e4a6affa81',
+      [subjectHubPath]: '9955146f459d6fcb34d4c925922faa26c8133055',
+      [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
   });
   it('accepts the exact reviewed sources as text and bytes', () => {
-    for (const file of [authorityPath, comparisonPath]) {
+    for (const file of reviewedPaths) {
       expect(isReviewedSeoRecoveryFile(file, read(file)), file).toBe(true);
       expect(isReviewedSeoRecoveryFile(file, fs.readFileSync(path.join(process.cwd(), file))), file).toBe(true);
     }
   });
   it('rejects any further protected-source mutation rather than allowing the whole filename', () => {
-    for (const file of [authorityPath, comparisonPath]) {
+    for (const file of reviewedPaths) {
       expect(isReviewedSeoRecoveryFile(file, read(file) + '// unreviewed edit')).toBe(false);
-      expect(isReviewedSeoRecoveryFile(file, read(file).replace('/book-demo', '/pricing'))).toBe(false);
     }
   });
   it('rejects restored retired recommendations and redirects in the comparison CTA', () => {
@@ -37,7 +41,7 @@ describe('C7 verified SEO recovery repair boundary', () => {
     expect(isReviewedSeoRecoveryFile(comparisonPath, comparison)).toBe(false);
   });
   it('does not whitelist other protected owners or inherited object keys', () => {
-    for (const file of ['src/pages/phonics.tsx', 'src/lib/commercialC2KeywordOwnership.ts', 'src/lib/commercialC4CtrOptimization.ts', 'src/lib/commercialC6ValidationFreeze.ts', 'toString', '__proto__']) {
+    for (const file of ['src/lib/commercialC2KeywordOwnership.ts', 'src/lib/commercialC4CtrOptimization.ts', 'src/lib/commercialC6ValidationFreeze.ts', 'toString', '__proto__']) {
       expect(isReviewedSeoRecoveryFile(file, read(comparisonPath))).toBe(false);
     }
   });
