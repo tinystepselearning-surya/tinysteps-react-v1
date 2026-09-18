@@ -30,6 +30,9 @@ import {
   type ScheduleIntegrityStore,
 } from './scheduleIntegrityEngine';
 import {
+  assertControlledRepairLiveWriteAllowed,
+} from './controlledRepairRolloutGate';
+import {
   materializationMatchesPlan,
   runSafeRepairPlannerWithStore,
   validateSafeMissingSessionPayload,
@@ -409,6 +412,7 @@ export async function previewControlledRepair(
   input: ControlledRepairPreviewInput,
 ): Promise<ControlledRepairPreview> {
   const enrollmentId = normalizeEnrollmentId(input.enrollmentId);
+  assertControlledRepairLiveWriteAllowed(enrollmentId);
   const anchorYmd = validateYmd(
     input.anchorYmd || todayInIndiaYmd(),
   );
