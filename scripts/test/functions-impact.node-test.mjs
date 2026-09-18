@@ -116,7 +116,7 @@ test('additive index export topology change deploys only the new Function', () =
   assert.deepEqual(result.impactedFunctions, ['functionD']);
 });
 
-test('moving an existing index export root deploys only that Function', () => {
+test('moving an existing index export root remains a full deployment', () => {
   const after = sources({
     'functions/src/functionA2.ts': 'export const functionA = 2;',
   });
@@ -129,8 +129,29 @@ test('moving an existing index export root deploys only that Function', () => {
     ['functions/src/index.ts', 'functions/src/functionA2.ts'],
     {afterSources: after},
   );
-  assert.equal(result.fullDeployment, false);
-  assert.deepEqual(result.impactedFunctions, ['functionA']);
+  assert.equal(result.fullDeployment, true);
+  assert.match(result.fullDeploymentReason, /non-additive-export-topology/);
+});
+
+test('changing an export binding inside the same root module remains a full deployment', () => {
+  const before = sources({
+    'functions/src/functionA.ts': `
+      export const functionA = 1;
+      export const alternateA = 2;
+    `,
+  });
+  const after = new Map(before);
+  after.set('functions/src/index.ts', `
+    export { alternateA as functionA } from './functionA';
+    export { functionB } from './functionB';
+    export { functionC } from './nested/functionC';
+  `);
+  const result = impact(
+    ['functions/src/index.ts'],
+    {beforeSources: before, afterSources: after},
+  );
+  assert.equal(result.fullDeployment, true);
+  assert.match(result.fullDeploymentReason, /changed:functionA/);
 });
 
 test('removing an index export still requires a full deployment so the retired Function is deleted', () => {
@@ -141,7 +162,7 @@ test('removing an index export still requires a full deployment so the retired F
   `);
   const result = impact(['functions/src/index.ts'], {afterSources: after});
   assert.equal(result.fullDeployment, true);
-  assert.match(result.fullDeploymentReason, /removed-exports:functionC/);
+  assert.match(result.fullDeploymentReason, /removed:functionC/);
 });
 
 test('deleted source module finds dependents in the before graph', () => {
