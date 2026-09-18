@@ -122,15 +122,27 @@ const planner = (
 });
 
 describe('Brick 6 controlled repair rollout gate', () => {
-  it('executor is wired to the fail-closed gate before controlled apply', () => {
+  it('gates only apply, while keeping the read-only preview available', () => {
     const source = readFileSync(
       resolve(process.cwd(), 'functions/src/scheduling/controlledRepairExecutor.ts'),
       'utf8',
     );
-    expect(source).toContain("assertControlledRepairLiveWriteAllowed(enrollmentId);");
-    expect(source.indexOf("assertControlledRepairLiveWriteAllowed(enrollmentId);")).toBeLessThan(
-      source.indexOf('const preview = await previewControlledRepair('),
+    const gateCall = 'assertControlledRepairLiveWriteAllowed(enrollmentId);';
+    const executeStart = source.indexOf('export async function executeControlledRepair(');
+    const previewStart = source.indexOf('export async function previewControlledRepair(');
+    const gateIndex = source.indexOf(gateCall);
+    const applyPreviewIndex = source.indexOf(
+      'const preview = await previewControlledRepair(',
+      executeStart,
     );
+
+    expect((source.match(/assertControlledRepairLiveWriteAllowed\(enrollmentId\);/g) || []).length).toBe(1);
+    expect(gateIndex).toBeGreaterThan(executeStart);
+    expect(gateIndex).toBeGreaterThan(previewStart);
+    expect(gateIndex).toBeLessThan(applyPreviewIndex);
+
+    const previewBody = source.slice(previewStart, executeStart);
+    expect(previewBody).not.toContain(gateCall);
   });
 
   it('fails closed by default', () => {
