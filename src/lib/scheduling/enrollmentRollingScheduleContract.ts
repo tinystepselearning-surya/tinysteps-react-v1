@@ -1,4 +1,4 @@
-import {resolveEnrollmentSchedulingLifecycleState} from '../statuses';
+import {resolveEnrollmentSchedulingLifecycleState} from './enrollmentSchedulingStatus';
 import {
   ROLLING_SCHEDULE_TIME_ZONE,
   type RollingScheduleConfigInput,
