@@ -79,6 +79,7 @@ export {
   adminPreviewControlledScheduleRepair,
   adminExecuteControlledScheduleRepair,
 } from "./scheduling/controlledRepairExecutor";
+export { adminCertifyControlledScheduleRepairRollout } from "./scheduling/controlledRepairRolloutCertification";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
