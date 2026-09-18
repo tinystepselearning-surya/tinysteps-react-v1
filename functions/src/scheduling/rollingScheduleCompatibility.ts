@@ -5,7 +5,7 @@ import {ensureAdmin} from '../helpers/adminGuard';
 import {
   doesEnrollmentOccupyCourseSlot,
   normalizeEnrollmentStatus,
-} from '../helpers/status';
+} from './enrollmentSchedulingStatus';
 import {
   createEnrollment as legacyCreateEnrollment,
   setEnrollmentStatus as legacySetEnrollmentStatus,
