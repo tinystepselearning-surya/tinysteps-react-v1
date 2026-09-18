@@ -46,8 +46,8 @@ function resolveLocalImport(importer, specifier, sourceFiles) {
   return matches[0];
 }
 
-export function parseIndexRoots(indexSource, sourceFiles) {
-  const roots = new Map();
+export function parseIndexBindings(indexSource, sourceFiles) {
+  const bindings = new Map();
   const declaration = /\bexport\s*{([\s\S]*?)}\s*from\s*['"]([^'"]+)['"]/g;
   for (const match of indexSource.matchAll(declaration)) {
     if (!match[2].startsWith('.')) continue;
@@ -56,15 +56,34 @@ export function parseIndexRoots(indexSource, sourceFiles) {
       const item = raw.replace(/\/\*[\s\S]*?\*\//g, '').trim();
       if (!item || item.startsWith('type ')) continue;
       const alias = item.split(/\s+as\s+/);
+      const sourceName = alias[0].trim();
       const exportName = (alias[1] || alias[0]).trim();
-      if (!/^[A-Za-z_$][\w$]*$/.test(exportName)) throw new Error(`Unsupported index export syntax: ${item}`);
-      if (roots.has(exportName)) throw new Error(`Duplicate Functions export in index.ts: ${exportName}`);
-      roots.set(exportName, modulePath);
+      if (
+        !/^[A-Za-z_$][\w$]*$/.test(sourceName) ||
+        !/^[A-Za-z_$][\w$]*$/.test(exportName)
+      ) {
+        throw new Error(`Unsupported index export syntax: ${item}`);
+      }
+      if (bindings.has(exportName)) {
+        throw new Error(`Duplicate Functions export in index.ts: ${exportName}`);
+      }
+      bindings.set(exportName, {modulePath, sourceName});
     }
   }
-  if (/\bexport\s*\*/.test(indexSource)) throw new Error('functions/src/index.ts uses unsupported export-star topology');
-  if (!roots.size) throw new Error('No explicit Function roots found in functions/src/index.ts');
-  return roots;
+  if (/\bexport\s*\*/.test(indexSource)) {
+    throw new Error('functions/src/index.ts uses unsupported export-star topology');
+  }
+  if (!bindings.size) {
+    throw new Error('No explicit Function roots found in functions/src/index.ts');
+  }
+  return bindings;
+}
+
+export function parseIndexRoots(indexSource, sourceFiles) {
+  return new Map(
+    [...parseIndexBindings(indexSource, sourceFiles)]
+      .map(([exportName, binding]) => [exportName, binding.modulePath]),
+  );
 }
 
 export function buildDependencyGraph(sourceMap) {
@@ -90,7 +109,13 @@ export function buildDependencyGraph(sourceMap) {
   }
   const indexSource = sourceMap.get(`${SOURCE_ROOT}/index.ts`);
   if (indexSource === undefined) throw new Error('functions/src/index.ts is missing');
-  return { imports, reverse, unresolved, roots: parseIndexRoots(indexSource, files) };
+  return {
+    imports,
+    reverse,
+    unresolved,
+    roots: parseIndexRoots(indexSource, files),
+    rootBindings: parseIndexBindings(indexSource, files),
+  };
 }
 
 function rootReachability(graph) {
@@ -202,26 +227,31 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
       return result;
     }
 
-    const removedExports = [...beforeGraph.roots.keys()]
-      .filter(id => !afterGraph.roots.has(id))
-      .sort();
-    if (removedExports.length) {
+    const nonAdditiveChanges = [];
+    for (const [id, beforeBinding] of beforeGraph.rootBindings) {
+      const afterBinding = afterGraph.rootBindings.get(id);
+      if (!afterBinding) {
+        nonAdditiveChanges.push(`removed:${id}`);
+        continue;
+      }
+      if (
+        beforeBinding.modulePath !== afterBinding.modulePath ||
+        beforeBinding.sourceName !== afterBinding.sourceName
+      ) {
+        nonAdditiveChanges.push(`changed:${id}`);
+      }
+    }
+    if (nonAdditiveChanges.length) {
       result.functionsDeploymentRequired = true;
       result.fullDeployment = true;
       result.fullDeploymentReason =
-        `known-global-impact:${SOURCE_ROOT}/index.ts:removed-exports:${removedExports.join('|')}`;
+        `known-global-impact:${SOURCE_ROOT}/index.ts:non-additive-export-topology:${nonAdditiveChanges.sort().join('|')}`;
       return result;
     }
 
-    for (const [id, afterRoot] of afterGraph.roots) {
-      const beforeRoot = beforeGraph.roots.get(id);
-      if (!beforeRoot) {
+    for (const [id] of afterGraph.rootBindings) {
+      if (!beforeGraph.rootBindings.has(id)) {
         addTargetReason(id, `new Function export added by ${SOURCE_ROOT}/index.ts`);
-      } else if (beforeRoot !== afterRoot) {
-        addTargetReason(
-          id,
-          `Function export root moved from ${beforeRoot} to ${afterRoot}`,
-        );
       }
     }
   }
