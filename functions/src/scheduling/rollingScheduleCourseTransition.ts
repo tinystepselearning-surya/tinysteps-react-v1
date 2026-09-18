@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
 import {ensureAdmin} from '../helpers/adminGuard';
-import {normalizeEnrollmentStatus} from '../helpers/status';
+import {normalizeEnrollmentStatus} from './enrollmentSchedulingStatus';
 import {
   createEnrollment as legacyCreateEnrollment,
   setEnrollmentStatus as legacySetEnrollmentStatus,
