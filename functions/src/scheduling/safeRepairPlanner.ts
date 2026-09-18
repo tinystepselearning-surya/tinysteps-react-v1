@@ -53,7 +53,7 @@ export type SafeRepairActionType =
   | 'BLOCK_INVALID_SOURCE'
   | 'BLOCK_IDENTITY_CONFLICT'
   | 'BLOCK_SCHEDULE_CONFLICT'
-  | 'BLOCK_STALE_REVISION'
+  | 'PRESERVE_STALE_REVISION_SESSION'
   | 'BLOCK_UNSAFE_SESSION_PAYLOAD';
 
 export type SafeRepairPlanAction = {
@@ -164,7 +164,7 @@ const emptyActionCounts = (): Record<SafeRepairActionType, number> => ({
   BLOCK_INVALID_SOURCE: 0,
   BLOCK_IDENTITY_CONFLICT: 0,
   BLOCK_SCHEDULE_CONFLICT: 0,
-  BLOCK_STALE_REVISION: 0,
+  PRESERVE_STALE_REVISION_SESSION: 0,
   BLOCK_UNSAFE_SESSION_PAYLOAD: 0,
 });
 
@@ -193,11 +193,10 @@ export function materializationMatchesPlan(
 }
 
 const actionForOccurrenceBlocker = (
-  state: 'identity_mismatch' | 'schedule_mismatch' | 'stale_revision',
+  state: 'identity_mismatch' | 'schedule_mismatch',
 ): SafeRepairActionType => {
   if (state === 'identity_mismatch') return 'BLOCK_IDENTITY_CONFLICT';
-  if (state === 'schedule_mismatch') return 'BLOCK_SCHEDULE_CONFLICT';
-  return 'BLOCK_STALE_REVISION';
+  return 'BLOCK_SCHEDULE_CONFLICT';
 };
 
 const occurrenceFields = (
@@ -423,6 +422,19 @@ export async function runSafeRepairPlannerWithStore(
         return;
       }
 
+      if (classification.state === 'stale_revision') {
+        noActionOccurrences += 1;
+        actionCounts.PRESERVE_STALE_REVISION_SESSION += 1;
+        actions.push({
+          type: 'PRESERVE_STALE_REVISION_SESSION',
+          enrollmentId,
+          ...occurrenceFields(occurrence),
+          reason:
+            'Existing session matches enrollment/date/time/duration and is preserved; only its scheduleRevision is stale.',
+        });
+        return;
+      }
+
       blockedOccurrences += 1;
       blockers += 1;
       const type = actionForOccurrenceBlocker(classification.state);
@@ -434,9 +446,7 @@ export async function runSafeRepairPlannerWithStore(
         reason:
           classification.state === 'identity_mismatch'
             ? 'Existing session identity conflicts with enrollment identity.'
-            : classification.state === 'schedule_mismatch'
-              ? 'Existing session date/time/duration conflicts with expected recurrence.'
-              : 'Existing session belongs to a different schedule revision.',
+            : 'Existing session date/time/duration conflicts with expected recurrence.',
       });
     });
 
