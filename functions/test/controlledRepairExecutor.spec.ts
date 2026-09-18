@@ -1,3 +1,5 @@
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {describe, expect, it} from 'vitest';
 import {
   CONTROLLED_REPAIR_AUTO_EXECUTION_ENABLED,
@@ -36,6 +38,20 @@ const baseEnrollment = (
     ],
   },
   ...overrides,
+  it('has no automatic trigger surface or bulk-repair path', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'functions/src/scheduling/controlledRepairExecutor.ts'),
+      'utf8',
+    );
+    expect(source).toContain('adminPreviewControlledScheduleRepair');
+    expect(source).toContain('adminExecuteControlledScheduleRepair');
+    expect(source).not.toContain('onSchedule(');
+    expect(source).not.toContain('onDocumentCreated(');
+    expect(source).not.toContain('onDocumentWritten(');
+    expect(source).not.toContain('onDocumentUpdated(');
+    expect(source).not.toContain('for (const enrollment');
+    expect(source).not.toContain('Promise.all(enrollments');
+  });
 });
 
 const planFor = (
