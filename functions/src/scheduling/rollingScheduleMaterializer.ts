@@ -404,9 +404,7 @@ function nextOccurrenceAfter(args: {
 }
 
 function isOperationallyActive(enrollment: Record<string, unknown>): boolean {
-  if (enrollment.archivedAt || enrollment.archived === true || enrollment.isArchived === true) return false;
-  const status = String(enrollment.status || '').trim().toLowerCase();
-  return ACTIVE_STATUS_ALIASES.has(status);
+  return isEnrollmentOperationallyActive(enrollment);
 }
 
 function scheduleRevision(enrollment: Record<string, unknown>): number {
