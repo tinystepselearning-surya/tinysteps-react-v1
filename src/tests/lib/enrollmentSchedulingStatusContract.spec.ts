@@ -4,7 +4,7 @@ import {
   isEnrollmentOperationallyActive,
   normalizeEnrollmentStatus,
   resolveEnrollmentSchedulingLifecycleState,
-} from '../../lib/statuses';
+} from '../../lib/scheduling/enrollmentSchedulingStatus';
 import {
   doesEnrollmentOccupyCourseSlot as integrityDoesEnrollmentOccupyCourseSlot,
   isEnrollmentOperationallyActive as integrityIsEnrollmentOperationallyActive,
