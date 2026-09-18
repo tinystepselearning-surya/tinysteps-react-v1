@@ -66,6 +66,7 @@ const healthySession = (
 class MemoryStore implements ScheduleIntegrityStore {
   enrollments: Array<{id: string; data: Record<string, unknown>}>;
   sessions = new Map<string, Record<string, unknown>>();
+  referencedExceptions = new Map<string, Record<string, unknown>>();
 
   constructor(
     enrollments: Array<{id: string; data: Record<string, unknown>}>,
@@ -88,6 +89,10 @@ class MemoryStore implements ScheduleIntegrityStore {
 
   async listSessionsInWindow() {
     return new Map(this.sessions);
+  }
+
+  async listExceptionSessionsReferencingIds() {
+    return new Map(this.referencedExceptions);
   }
 }
 
@@ -188,7 +193,7 @@ describe('Brick 4 read-only safe repair planner', () => {
     expect(summary.plans[0].actions[0].type).toBe('PRESERVE_EXCEPTION');
   });
 
-  it('blocks identity, schedule, and stale-revision conflicts instead of planning writes over them', async () => {
+  it('blocks identity and schedule conflicts while preserving stale-revision sessions', async () => {
     const enrollment = baseEnrollment({
       schedule: {
         timezone: 'Asia/Kolkata',
@@ -230,14 +235,104 @@ describe('Brick 4 read-only safe repair planner', () => {
     });
 
     expect(summary.safeCreateSessions).toBe(0);
-    expect(summary.blockedOccurrences).toBe(3);
+    expect(summary.blockedOccurrences).toBe(2);
     expect(summary.blockedEnrollments).toBe(1);
     expect(summary.plans[0].metadataAction).toBe('BLOCKED');
     expect(actionTypes(summary.plans[0].actions)).toEqual([
       'BLOCK_IDENTITY_CONFLICT',
       'BLOCK_SCHEDULE_CONFLICT',
-      'BLOCK_STALE_REVISION',
+      'PRESERVE_STALE_REVISION_SESSION',
     ]);
+  });
+
+  it('allows safe creates and metadata initialization alongside a stale-revision legacy session', async () => {
+    const enrollment = baseEnrollment({
+      schedule: {
+        timezone: 'Asia/Kolkata',
+        revision: 2,
+        weeklySlots: [
+          {weekday: 5, time: '10:00', durationMinutes: 35},
+        ],
+      },
+    });
+    const rolling = planFor('enr-stale-safe', enrollment);
+    const store = new MemoryStore([
+      {id: 'enr-stale-safe', data: enrollment},
+    ]);
+
+    store.sessions.set(
+      rolling.occurrences[0].sessionId,
+      {
+        ...healthySession(
+          'enr-stale-safe',
+          enrollment,
+          rolling.occurrences[0],
+        ),
+        scheduleRevision: 1,
+      },
+    );
+    store.sessions.set(
+      rolling.occurrences[2].sessionId,
+      {
+        ...healthySession(
+          'enr-stale-safe',
+          enrollment,
+          rolling.occurrences[2],
+        ),
+        scheduleRevision: 2,
+      },
+    );
+
+    const summary = await runSafeRepairPlannerWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.blockedOccurrences).toBe(0);
+    expect(summary.safeCreateSessions).toBe(1);
+    expect(summary.metadataInitializations).toBe(1);
+    expect(summary.plans[0].blockers).toBe(0);
+    expect(summary.plans[0].metadataAction).toBe('INITIALIZE');
+    expect(actionTypes(summary.plans[0].actions)).toEqual([
+      'PRESERVE_STALE_REVISION_SESSION',
+      'SAFE_CREATE_MISSING_SESSION',
+      'NO_ACTION',
+      'SAFE_INITIALIZE_MATERIALIZATION',
+    ]);
+  });
+
+  it('preserves a linked replacement outside the rolling window instead of recreating the source occurrence', async () => {
+    const enrollment = baseEnrollment();
+    const rolling = planFor('enr-external', enrollment);
+    const store = new MemoryStore([{id: 'enr-external', data: enrollment}]);
+
+    rolling.occurrences.slice(1).forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-external', enrollment, occurrence),
+      );
+    });
+
+    store.referencedExceptions.set('replacement-outside-window', {
+      enrollmentId: 'enr-external',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'kid-1',
+      date: '2026-10-10',
+      startTime: '11:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      source: 'teacher_makeup_from_reschedule',
+      isMakeup: true,
+      makeupForSessionId: rolling.occurrences[0].sessionId,
+    });
+
+    const summary = await runSafeRepairPlannerWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.safeCreateSessions).toBe(0);
+    expect(summary.exceptionsPreserved).toBe(1);
+    expect(summary.plans[0].actions[0].type).toBe('PRESERVE_EXCEPTION');
   });
 
   it('blocks invalid source data and unsafe session payloads', async () => {
