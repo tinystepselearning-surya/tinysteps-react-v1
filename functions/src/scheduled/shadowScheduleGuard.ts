@@ -117,7 +117,9 @@ export function buildShadowScheduleGuardAssessment(
     invalidEnrollments: summary.invalidEnrollments,
     expectedOccurrences: summary.expectedOccurrences,
     coveredOccurrences:
-      summary.healthyOccurrences + summary.scheduleExceptions,
+      summary.healthyOccurrences +
+      summary.scheduleExceptions +
+      summary.staleRevisionOccurrences,
     missingOccurrences: summary.missingOccurrences,
     missingToday: summary.missingToday,
     identityMismatches: summary.identityMismatches,
