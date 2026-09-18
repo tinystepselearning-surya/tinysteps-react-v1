@@ -132,11 +132,13 @@ test('Firebase CLI failure diagnostics keep relevant errors and redact credentia
     'GOOGLE_APPLICATION_CREDENTIALS=/tmp/credentials.json failed to load',
     'Request failed: https://example.test/path?access_token=ya29.secret&key=AIzaabcdefghijklmnopqrstuvwxyz123456',
     '{"type":"service_account","private_key":"-----BEGIN PRIVATE KEY-----secret"} failed',
+    'Error: -----BEGIN PRIVATE KEY-----unclosed-sensitive-material',
+    `Error: opaque token ${'A'.repeat(64)}`,
   ].join('\n');
   const excerpt = firebaseCliDiagnosticExcerpt(output);
   assert.match(excerpt, /Unable to set the invoker IAM policy: PERMISSION_DENIED/);
   assert.match(excerpt, /GOOGLE_APPLICATION_CREDENTIALS=\[REDACTED\] failed to load/);
-  assert.doesNotMatch(excerpt, /eyJhbGci|super-sensitive|ya29\.secret|AIzaabcdefghijklmnopqrstuvwxyz123456|BEGIN PRIVATE KEY|credentials\.json/);
+  assert.doesNotMatch(excerpt, new RegExp(`eyJhbGci|super-sensitive|ya29\\.secret|AIzaabcdefghijklmnopqrstuvwxyz123456|BEGIN PRIVATE KEY|unclosed-sensitive|${'A'.repeat(64)}|credentials\\.json`));
   assert.doesNotMatch(excerpt, /preparing codebase/);
 });
 

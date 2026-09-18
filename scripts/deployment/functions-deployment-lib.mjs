@@ -322,8 +322,10 @@ function redactFirebaseDiagnosticLine(line) {
     return '[REDACTED CREDENTIAL JSON]';
   }
   return text
+    .replace(/-----BEGIN [^-]+-----.*|-----END [^-]+-----/gi, '[REDACTED PEM]')
     .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [REDACTED]')
     .replace(/\b(?:ya29\.[A-Za-z0-9._~-]+|AIza[A-Za-z0-9_-]{20,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)\b/g, '[REDACTED TOKEN]')
+    .replace(/\b[A-Za-z0-9+\/_=-]{48,}\b/g, '[REDACTED HIGH-ENTROPY VALUE]')
     .replace(SENSITIVE_QUERY_VALUE, '$1[REDACTED]')
     .replace(SENSITIVE_ENV_VALUE, '$1[REDACTED]')
     .replace(SENSITIVE_ASSIGNMENT, '$1[REDACTED]');
