@@ -90,11 +90,6 @@ type RepairInput = {
   maxEnrollments?: number;
 };
 
-const optionalText = (value: unknown): string => {
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return '';
-};
 
 const isRecordLike = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
