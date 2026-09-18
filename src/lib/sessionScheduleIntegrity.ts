@@ -2,7 +2,7 @@ import {
   doesEnrollmentOccupyCourseSlot as canonicalDoesEnrollmentOccupyCourseSlot,
   isEnrollmentOperationallyActive as canonicalIsEnrollmentOperationallyActive,
   normalizeEnrollmentStatus,
-} from './statuses';
+} from './scheduling/enrollmentSchedulingStatus';
 
 const IST_OFFSET_MINUTES = 330;
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
