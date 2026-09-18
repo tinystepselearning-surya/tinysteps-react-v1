@@ -2,6 +2,7 @@ import path from 'node:path';
 
 const SOURCE_ROOT = 'functions/src';
 const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
+const INTENTIONALLY_RETIRED_FUNCTION_EXPORTS = new Set(['runAv2TeamsEvidenceProof']);
 
 function posix(value) {
   return value.replaceAll('\\', '/').replace(/^\.\//, '');
@@ -162,16 +163,38 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
     fullDeployment: false,
     fullDeploymentReason: null,
     impactedFunctions: [],
+    retiredFunctions: [],
     reasons: {},
   };
   const files = [...new Set(changedFiles.map(posix))];
+  const beforeGraph = beforeSources?.size ? buildDependencyGraph(beforeSources) : null;
+  const afterGraph = afterSources?.size ? buildDependencyGraph(afterSources) : null;
+  const removedRoots = beforeGraph && afterGraph
+    ? [...beforeGraph.roots.keys()].filter(id => !afterGraph.roots.has(id)).sort()
+    : [];
+  const addedRoots = beforeGraph && afterGraph
+    ? [...afterGraph.roots.keys()].filter(id => !beforeGraph.roots.has(id)).sort()
+    : [];
+  const movedRoots = beforeGraph && afterGraph
+    ? [...beforeGraph.roots.keys()].filter(id =>
+      afterGraph.roots.has(id) && beforeGraph.roots.get(id) !== afterGraph.roots.get(id)).sort()
+    : [];
+  const retiredOnlyTopologyChange = files.includes(`${SOURCE_ROOT}/index.ts`)
+    && removedRoots.length > 0
+    && removedRoots.every(id => INTENTIONALLY_RETIRED_FUNCTION_EXPORTS.has(id))
+    && addedRoots.length === 0
+    && movedRoots.length === 0;
+  if (retiredOnlyTopologyChange) result.retiredFunctions = removedRoots;
+
   const globals = files.filter(file => file === 'functions/package.json'
     || file === 'functions/package-lock.json'
     || /^functions\/tsconfig[^/]*\.json$/.test(file));
   if (JSON.stringify(beforeFirebase?.functions ?? null) !== JSON.stringify(afterFirebase?.functions ?? null)) {
     globals.push('firebase.json:functions-config');
   }
-  if (files.includes(`${SOURCE_ROOT}/index.ts`)) globals.push(`${SOURCE_ROOT}/index.ts:export-topology`);
+  if (files.includes(`${SOURCE_ROOT}/index.ts`) && !retiredOnlyTopologyChange) {
+    globals.push(`${SOURCE_ROOT}/index.ts:export-topology`);
+  }
   if (globals.length) {
     result.functionsDeploymentRequired = true;
     result.fullDeployment = true;
@@ -182,8 +205,8 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
   const changedSource = files.filter(file => file.startsWith(`${SOURCE_ROOT}/`) && !isFunctionsTestPath(file));
   if (!changedSource.length) return result;
   const graphs = [];
-  if (beforeSources?.size) graphs.push({ label: 'before', graph: buildDependencyGraph(beforeSources) });
-  if (afterSources?.size) graphs.push({ label: 'after', graph: buildDependencyGraph(afterSources) });
+  if (beforeGraph) graphs.push({ label: 'before', graph: beforeGraph });
+  if (afterGraph) graphs.push({ label: 'after', graph: afterGraph });
   if (!graphs.length) throw new Error('No source snapshots available for dependency analysis');
 
   const targetReasons = new Map();
@@ -198,7 +221,9 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
       }
     }
   }
-  result.impactedFunctions = [...targetReasons.keys()].sort();
+  result.impactedFunctions = [...targetReasons.keys()]
+    .filter(id => !result.retiredFunctions.includes(id))
+    .sort();
   result.functionsDeploymentRequired = result.impactedFunctions.length > 0;
   result.reasons = Object.fromEntries(result.impactedFunctions.map(id => [id, [...targetReasons.get(id)].sort()]));
   return result;
