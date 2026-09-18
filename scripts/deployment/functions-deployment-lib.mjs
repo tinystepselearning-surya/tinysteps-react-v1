@@ -292,6 +292,43 @@ export function digestBoundedOutput(output) {
   return { bytes: buf.length, sha256: crypto.createHash('sha256').update(buf).digest('hex') };
 }
 
+const FIREBASE_DIAGNOSTIC_LINE = /(?:^|\b)(?:error|failed|failure|permission(?:_denied)?|denied|forbidden|unauthori[sz]ed|invoker|iam|http\s*[45]\d\d|status[=: ]+[45]\d\d|cannot|could not|unable to|functions deploy had errors)(?:\b|:)/i;
+const SENSITIVE_ASSIGNMENT = /((?:access[_-]?token|auth(?:orization)?|bearer|client[_-]?secret|credential(?:s)?|id[_-]?token|password|private[_-]?key|refresh[_-]?token|secret|token)\s*[=:]\s*)(?:"[^"]*"|'[^']*'|[^\s,}]+)/gi;
+const SENSITIVE_QUERY_VALUE = /([?&](?:access_token|api_key|auth|authorization|client_secret|credential|key|password|signature|token)=)[^&#\s]+/gi;
+const SENSITIVE_ENV_VALUE = /((?:^|\s)[A-Z0-9_]*(?:CREDENTIAL|KEY|PASSWORD|SECRET|TOKEN)[A-Z0-9_]*\s*=\s*)(?:"[^"]*"|'[^']*'|\S+)/g;
+
+/**
+ * Return only bounded, error-relevant Firebase CLI lines after aggressive
+ * credential redaction. The deployment report continues to store only the
+ * byte count and SHA-256 digest of the complete captured stream.
+ */
+export function firebaseCliDiagnosticExcerpt(output, { maxLines = 40, maxChars = 12 * 1024 } = {}) {
+  if (!Number.isInteger(maxLines) || maxLines < 1 || !Number.isInteger(maxChars) || maxChars < 1) {
+    throw new Error('Firebase diagnostic bounds must be positive integers');
+  }
+
+  const text = String(output ?? '')
+    .replace(/-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g, '[REDACTED PEM]');
+  const relevant = text.split(/\r?\n/).filter(line => FIREBASE_DIAGNOSTIC_LINE.test(line));
+  const selected = relevant.slice(-maxLines);
+  let excerpt = selected.map(redactFirebaseDiagnosticLine).join('\n');
+  if (excerpt.length > maxChars) excerpt = `${excerpt.slice(0, Math.max(0, maxChars - 14))}\n[TRUNCATED]`;
+  return excerpt;
+}
+
+function redactFirebaseDiagnosticLine(line) {
+  const text = String(line ?? '');
+  if (/\{[^\n]*(?:"private_key"|"private_key_id"|"type"\s*:\s*"service_account")[^\n]*\}/i.test(text)) {
+    return '[REDACTED CREDENTIAL JSON]';
+  }
+  return text
+    .replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [REDACTED]')
+    .replace(/\b(?:ya29\.[A-Za-z0-9._~-]+|AIza[A-Za-z0-9_-]{20,}|eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)\b/g, '[REDACTED TOKEN]')
+    .replace(SENSITIVE_QUERY_VALUE, '$1[REDACTED]')
+    .replace(SENSITIVE_ENV_VALUE, '$1[REDACTED]')
+    .replace(SENSITIVE_ASSIGNMENT, '$1[REDACTED]');
+}
+
 export async function retryProvider404(read, { attempts = 6, delayMs = 5000, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   if (!Number.isInteger(attempts) || attempts < 1) throw new Error('Provider read attempts must be a positive integer');
   let lastError;

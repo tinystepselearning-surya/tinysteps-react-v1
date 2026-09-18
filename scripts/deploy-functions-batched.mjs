@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
   EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
-  digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan,
+  digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan, firebaseCliDiagnosticExcerpt,
   functionsChangeDecision, normalizeRevisionId, parseDeploymentArgs,
   remainingTargets, retryProvider404, validateCheckpoint,
 } from './deployment/functions-deployment-lib.mjs';
@@ -122,6 +122,12 @@ try {
         '--non-interactive',
       ]);
       const outputMeta = digestBoundedOutput(result.output);
+      if (result.code !== 0) {
+        const diagnostic = firebaseCliDiagnosticExcerpt(result.output);
+        console.error(diagnostic
+          ? `Firebase CLI failure diagnostic (sanitized, bounded):\n${diagnostic}`
+          : 'Firebase CLI exited non-zero; no safe error-relevant diagnostic lines were found.');
+      }
       const classification = result.truncated
         ? await classifyTruncatedAttempt(result, pending)
         : await classifyAttempt({ exitCode: result.code, output: result.output, expectedTargets: pending, reconcileTarget });

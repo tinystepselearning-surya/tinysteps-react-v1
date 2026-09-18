@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import {
   discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, enforcePartition, filterEndpointPlan, functionsChangeDecision,
+  firebaseCliDiagnosticExcerpt,
   normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
   remainingTargets, retryProvider404, validateCheckpoint,
 } from '../deployment/functions-deployment-lib.mjs';
@@ -120,6 +121,37 @@ test('report stores digest metadata, not raw output', () => {
   assert.equal(d.bytes, 21);
   assert.match(d.sha256, /^[a-f0-9]{64}$/);
   assert.equal('output' in d, false);
+});
+
+test('Firebase CLI failure diagnostics keep relevant errors and redact credentials', () => {
+  const output = [
+    'i  functions: preparing codebase default for deployment',
+    'Authorization: Bearer eyJhbGciOi.test.signature',
+    'Error: Unable to set the invoker IAM policy: PERMISSION_DENIED',
+    'client_secret=super-sensitive-value',
+    'GOOGLE_APPLICATION_CREDENTIALS=/tmp/credentials.json failed to load',
+    'Request failed: https://example.test/path?access_token=ya29.secret&key=AIzaabcdefghijklmnopqrstuvwxyz123456',
+    '{"type":"service_account","private_key":"-----BEGIN PRIVATE KEY-----secret"} failed',
+  ].join('\n');
+  const excerpt = firebaseCliDiagnosticExcerpt(output);
+  assert.match(excerpt, /Unable to set the invoker IAM policy: PERMISSION_DENIED/);
+  assert.match(excerpt, /GOOGLE_APPLICATION_CREDENTIALS=\[REDACTED\] failed to load/);
+  assert.doesNotMatch(excerpt, /eyJhbGci|super-sensitive|ya29\.secret|AIzaabcdefghijklmnopqrstuvwxyz123456|BEGIN PRIVATE KEY|credentials\.json/);
+  assert.doesNotMatch(excerpt, /preparing codebase/);
+});
+
+test('Firebase CLI failure diagnostics are line- and character-bounded', () => {
+  const output = Array.from({ length: 100 }, (_, index) => `Error ${index}: failed ${'x'.repeat(80)}`).join('\n');
+  const excerpt = firebaseCliDiagnosticExcerpt(output, { maxLines: 5, maxChars: 160 });
+  assert.ok(excerpt.length <= 160);
+  assert.doesNotMatch(excerpt, /Error 0:/);
+  assert.match(excerpt, /\[TRUNCATED\]$/);
+});
+
+test('bounded deployer prints sanitized diagnostics only for non-zero Firebase CLI exits', () => {
+  const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  assert.match(source, /if \(result\.code !== 0\) \{[\s\S]*firebaseCliDiagnosticExcerpt\(result\.output\)/);
+  assert.doesNotMatch(source, /console\.(?:log|error)\(result\.output\)/);
 });
 
 test('provider reconciliation retries only bounded transient 404 reads', async () => {
