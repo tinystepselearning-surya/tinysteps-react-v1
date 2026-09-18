@@ -171,7 +171,6 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
   if (JSON.stringify(beforeFirebase?.functions ?? null) !== JSON.stringify(afterFirebase?.functions ?? null)) {
     globals.push('firebase.json:functions-config');
   }
-  if (files.includes(`${SOURCE_ROOT}/index.ts`)) globals.push(`${SOURCE_ROOT}/index.ts:export-topology`);
   if (globals.length) {
     result.functionsDeploymentRequired = true;
     result.fullDeployment = true;
@@ -186,15 +185,54 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
   if (afterSources?.size) graphs.push({ label: 'after', graph: buildDependencyGraph(afterSources) });
   if (!graphs.length) throw new Error('No source snapshots available for dependency analysis');
 
+  const beforeGraph = graphs.find(({ label }) => label === 'before')?.graph ?? null;
+  const afterGraph = graphs.find(({ label }) => label === 'after')?.graph ?? null;
   const targetReasons = new Map();
+  const addTargetReason = (target, reason) => {
+    if (!targetReasons.has(target)) targetReasons.set(target, new Set());
+    targetReasons.get(target).add(reason);
+  };
+
+  if (files.includes(`${SOURCE_ROOT}/index.ts`)) {
+    if (!beforeGraph || !afterGraph) {
+      result.functionsDeploymentRequired = true;
+      result.fullDeployment = true;
+      result.fullDeploymentReason =
+        `known-global-impact:${SOURCE_ROOT}/index.ts:topology-snapshot-unavailable`;
+      return result;
+    }
+
+    const removedExports = [...beforeGraph.roots.keys()]
+      .filter(id => !afterGraph.roots.has(id))
+      .sort();
+    if (removedExports.length) {
+      result.functionsDeploymentRequired = true;
+      result.fullDeployment = true;
+      result.fullDeploymentReason =
+        `known-global-impact:${SOURCE_ROOT}/index.ts:removed-exports:${removedExports.join('|')}`;
+      return result;
+    }
+
+    for (const [id, afterRoot] of afterGraph.roots) {
+      const beforeRoot = beforeGraph.roots.get(id);
+      if (!beforeRoot) {
+        addTargetReason(id, `new Function export added by ${SOURCE_ROOT}/index.ts`);
+      } else if (beforeRoot !== afterRoot) {
+        addTargetReason(
+          id,
+          `Function export root moved from ${beforeRoot} to ${afterRoot}`,
+        );
+      }
+    }
+  }
+
   for (const { label, graph } of graphs) {
     const reachability = rootReachability(graph);
     for (const changed of changedSource) {
       for (const target of reachability.get(changed) ?? []) {
-        if (!targetReasons.has(target)) targetReasons.set(target, new Set());
         const rootFile = graph.roots.get(target);
         const relation = rootFile === changed ? 'directly exports' : 'transitively imports';
-        targetReasons.get(target).add(`${relation} ${changed} (${label} graph)`);
+        addTargetReason(target, `${relation} ${changed} (${label} graph)`);
       }
     }
   }
