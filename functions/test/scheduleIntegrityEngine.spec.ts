@@ -123,6 +123,29 @@ describe('Brick 2 schedule integrity engine', () => {
     expect(summary.enrollmentsMissingMaterializationMetadata).toBe(1);
   });
 
+  it('accepts a valid legacy session even when its document ID is not the deterministic rolling ID', async () => {
+    const enrollment = baseEnrollment();
+    const plan = planFor('enr-1', enrollment);
+    const store = new MemoryStore([{id: 'enr-1', data: enrollment}]);
+
+    plan.occurrences.forEach((occurrence, index) => {
+      const sessionId = index === 0 ? 'legacy-random-session-id' : occurrence.sessionId;
+      store.sessions.set(
+        sessionId,
+        healthySession('enr-1', enrollment, occurrence),
+      );
+    });
+
+    const summary = await runScheduleIntegrityEngineWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.expectedOccurrences).toBe(3);
+    expect(summary.healthyOccurrences).toBe(3);
+    expect(summary.missingOccurrences).toBe(0);
+    expect(summary.affectedEnrollments).toBe(0);
+  });
+
   it('treats cancelled or paused deterministic occurrences as explicit schedule exceptions', async () => {
     const enrollment = baseEnrollment({
       scheduleMaterialization: {materializedThroughYmd: '2026-10-02'},
