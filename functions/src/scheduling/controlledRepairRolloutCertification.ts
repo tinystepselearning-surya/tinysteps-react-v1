@@ -46,7 +46,9 @@ export type ControlledRepairCertificationCandidate = {
 export type ControlledRepairCertificationState =
   | 'READY_FOR_EXPLICIT_PILOT_SELECTION'
   | 'NO_SAFE_PILOT_CANDIDATE'
-  | 'LIVE_WRITE_GATE_ARMED';
+  | 'LIVE_WRITE_GATE_MISCONFIGURED'
+  | 'LIVE_WRITE_GATE_ARMED_CERTIFIED'
+  | 'LIVE_WRITE_GATE_ARMED_UNCERTIFIED';
 
 export type ControlledRepairRolloutCertification = {
   mode: 'READ_ONLY_ROLLOUT_CERTIFICATION';
@@ -118,12 +120,21 @@ export function buildControlledRepairRolloutCertification(args: {
     left.enrollmentId.localeCompare(right.enrollmentId),
   );
 
+  const allowlistedPilotId = args.gate.allowedEnrollmentIds[0] || '';
+  const allowlistedPilotIsCertified = candidates.some(
+    (candidate) => candidate.enrollmentId === allowlistedPilotId,
+  );
+
   const certificationState: ControlledRepairCertificationState =
-    args.gate.enabled
-      ? 'LIVE_WRITE_GATE_ARMED'
-      : candidates.length > 0
-        ? 'READY_FOR_EXPLICIT_PILOT_SELECTION'
-        : 'NO_SAFE_PILOT_CANDIDATE';
+    !args.gate.configurationValid
+      ? 'LIVE_WRITE_GATE_MISCONFIGURED'
+      : args.gate.enabled
+        ? allowlistedPilotIsCertified
+          ? 'LIVE_WRITE_GATE_ARMED_CERTIFIED'
+          : 'LIVE_WRITE_GATE_ARMED_UNCERTIFIED'
+        : candidates.length > 0
+          ? 'READY_FOR_EXPLICIT_PILOT_SELECTION'
+          : 'NO_SAFE_PILOT_CANDIDATE';
 
   return {
     mode: 'READ_ONLY_ROLLOUT_CERTIFICATION',
