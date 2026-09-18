@@ -1,3 +1,5 @@
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
 import {describe, expect, it} from 'vitest';
 import {
   assertControlledRepairLiveWriteAllowed,
@@ -120,6 +122,17 @@ const planner = (
 });
 
 describe('Brick 6 controlled repair rollout gate', () => {
+  it('executor is wired to the fail-closed gate before controlled apply', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'functions/src/scheduling/controlledRepairExecutor.ts'),
+      'utf8',
+    );
+    expect(source).toContain("assertControlledRepairLiveWriteAllowed(enrollmentId);");
+    expect(source.indexOf("assertControlledRepairLiveWriteAllowed(enrollmentId);")).toBeLessThan(
+      source.indexOf('const preview = await previewControlledRepair('),
+    );
+  });
+
   it('fails closed by default', () => {
     const gate = resolveControlledRepairWriteGate({});
     expect(gate.enabled).toBe(false);
