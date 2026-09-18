@@ -24,6 +24,7 @@ import {
   buildScheduleIntegrityOccurrenceSessionIndex,
   classifyScheduleIntegrityEnrollmentCandidate,
   classifyScheduleIntegrityOccurrence,
+  loadScheduleIntegritySessionEvidence,
   resolveScheduleIntegrityExistingOccurrenceSession,
   type ScheduleIntegrityInvalidReason,
   type ScheduleIntegrityStore,
@@ -321,14 +322,17 @@ export async function runSafeRepairPlannerWithStore(
     ),
   ));
 
-  const [existingById, windowSessions] = await Promise.all([
-    store.getSessionsByIds(expectedSessionIds),
-    store.listSessionsInWindow(anchorYmd, horizonEndYmd),
-  ]);
+  const {existingById, evidenceSessions} =
+    await loadScheduleIntegritySessionEvidence(
+      store,
+      expectedSessionIds,
+      anchorYmd,
+      horizonEndYmd,
+    );
   const exceptionIndex =
-    buildScheduleIntegrityExceptionRelationIndex(windowSessions);
+    buildScheduleIntegrityExceptionRelationIndex(evidenceSessions);
   const occurrenceIndex =
-    buildScheduleIntegrityOccurrenceSessionIndex(windowSessions);
+    buildScheduleIntegrityOccurrenceSessionIndex(evidenceSessions);
 
   let expectedOccurrences = 0;
   let safeCreateSessions = 0;
