@@ -435,6 +435,12 @@ export const detectScheduleIntegritySurplusSessions = (args: {
       occurrence,
     ]),
   );
+  const expectedById = new Map(
+    args.occurrences.map((occurrence) => [
+      occurrence.sessionId,
+      occurrence,
+    ]),
+  );
   const candidatesBySignature = new Map<
     string,
     ScheduleIntegritySurplusSessionFinding[]
@@ -455,12 +461,30 @@ export const detectScheduleIntegritySurplusSessions = (args: {
       startTime,
       durationMinutes,
     };
-    if (!startTime || durationMinutes === null) {
+
+    const deterministicOccurrence = expectedById.get(sessionId);
+    if (deterministicOccurrence) {
+      if (!startTime || durationMinutes === null) return;
+      const actualSignature = occurrenceSignature(
+        date,
+        startTime,
+        durationMinutes,
+      );
+      const expectedSignature = occurrenceSignature(
+        deterministicOccurrence.date,
+        deterministicOccurrence.startTime,
+        deterministicOccurrence.durationMinutes,
+      );
+      // A deterministic expected document with malformed identity/schedule data
+      // is classified by the occurrence classifier. Do not double-count it as
+      // an unexpected surplus row.
+      if (actualSignature !== expectedSignature) return;
+    } else if (!startTime || durationMinutes === null) {
       unexpectedRegularSessions.push(finding);
       return;
     }
 
-    const signature = occurrenceSignature(date, startTime, durationMinutes);
+    const signature = occurrenceSignature(date, startTime, durationMinutes ?? 0);
     if (!expectedBySignature.has(signature)) {
       unexpectedRegularSessions.push(finding);
       return;
