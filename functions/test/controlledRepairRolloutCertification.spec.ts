@@ -233,8 +233,35 @@ describe('Brick 6 read-only rollout certification', () => {
       nowMs: Date.UTC(2026, 8, 18, 0, 0, 0),
     });
 
-    expect(result.certificationState).toBe('LIVE_WRITE_GATE_ARMED');
+    expect(result.certificationState).toBe('LIVE_WRITE_GATE_ARMED_CERTIFIED');
     expect(result.writesPerformed).toBe(false);
     expect(result.liveWriteGate.allowedEnrollmentIds).toEqual(['enr-safe']);
   });
+  it('marks an armed gate as uncertified when the allowlisted enrollment is not a safe pilot candidate', () => {
+    const result = buildControlledRepairRolloutCertification({
+      integrity: integrity(),
+      planner: planner(),
+      gate: resolveControlledRepairWriteGate({
+        CONTROLLED_SCHEDULE_REPAIR_LIVE_WRITES_ENABLED: 'true',
+        CONTROLLED_SCHEDULE_REPAIR_ALLOWED_ENROLLMENTS: 'enr-other',
+      }),
+      nowMs: Date.UTC(2026, 8, 18, 0, 0, 0),
+    });
+
+    expect(result.certificationState).toBe('LIVE_WRITE_GATE_ARMED_UNCERTIFIED');
+    expect(result.writesPerformed).toBe(false);
+  });
+
+  it('certification module contains no Firestore mutation primitive', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'functions/src/scheduling/controlledRepairRolloutCertification.ts'),
+      'utf8',
+    );
+    expect(source).not.toContain('runTransaction(');
+    expect(source).not.toContain('.create(');
+    expect(source).not.toContain('.update(');
+    expect(source).not.toContain('.delete(');
+    expect(source).not.toContain('FieldValue');
+  });
+
 });
