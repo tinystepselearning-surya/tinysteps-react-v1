@@ -327,6 +327,57 @@ const buildExceptionRelationIndex = (
   return related;
 };
 
+const sessionOccurrenceLookupKey = (
+  enrollmentId: string,
+  date: string,
+  startTime: string,
+): string => `${enrollmentId}|${date}|${startTime}`;
+
+const buildOccurrenceSessionIndex = (
+  sessions: Map<string, Record<string, unknown>>,
+): Map<string, Array<{sessionId: string; session: Record<string, unknown>}>> => {
+  const index = new Map<
+    string,
+    Array<{sessionId: string; session: Record<string, unknown>}>
+  >();
+  sessions.forEach((session, sessionId) => {
+    const enrollmentId = text(session.enrollmentId);
+    const date = sessionYmd(session);
+    const startTime = sessionStartTime(session);
+    if (!enrollmentId || !date || !startTime) return;
+    const key = sessionOccurrenceLookupKey(enrollmentId, date, startTime);
+    const rows = index.get(key) || [];
+    rows.push({sessionId, session});
+    index.set(key, rows);
+  });
+  return index;
+};
+
+const resolveExistingOccurrenceSession = (args: {
+  enrollmentId: string;
+  occurrence: RollingMaterializationOccurrence;
+  deterministicSession?: Record<string, unknown>;
+  occurrenceIndex: Map<
+    string,
+    Array<{sessionId: string; session: Record<string, unknown>}>
+  >;
+}): Record<string, unknown> | undefined => {
+  if (args.deterministicSession) return args.deterministicSession;
+  const key = sessionOccurrenceLookupKey(
+    args.enrollmentId,
+    args.occurrence.date,
+    args.occurrence.startTime,
+  );
+  const candidates = args.occurrenceIndex.get(key) || [];
+  if (!candidates.length) return undefined;
+
+  const exactDuration = candidates.find(
+    ({session}) =>
+      sessionDurationMinutes(session) === args.occurrence.durationMinutes,
+  );
+  return (exactDuration || candidates[0]).session;
+};
+
 export const classifyScheduleIntegrityOccurrence = (args: {
   enrollmentId: string;
   enrollment: Record<string, unknown>;
@@ -500,6 +551,7 @@ export async function runScheduleIntegrityEngineWithStore(
     store.listSessionsInWindow(anchorYmd, horizonEndYmd),
   ]);
   const exceptionRelationIndex = buildExceptionRelationIndex(windowSessions);
+  const occurrenceSessionIndex = buildOccurrenceSessionIndex(windowSessions);
 
   const summary: ScheduleIntegritySummary = {
     mode: 'READ_ONLY',
@@ -549,7 +601,12 @@ export async function runScheduleIntegrityEngineWithStore(
         enrollment: row.data,
         occurrence,
         scheduleRevision: row.scheduleRevision,
-        existingSession: existingById.get(occurrence.sessionId),
+        existingSession: resolveExistingOccurrenceSession({
+          enrollmentId: row.id,
+          occurrence,
+          deterministicSession: existingById.get(occurrence.sessionId),
+          occurrenceIndex: occurrenceSessionIndex,
+        }),
         relatedExceptionSessionId: exceptionRelationIndex.get(occurrence.sessionId),
       });
 
