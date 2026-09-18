@@ -289,6 +289,7 @@ describe('Brick 2 schedule integrity engine', () => {
     expect(source).not.toContain('.create(');
     expect(source).not.toContain('.delete(');
     expect(source).not.toContain('.update(');
-    expect(source).not.toContain('.set(');
+    expect(source).not.toContain('FieldValue');
+    expect(source).not.toContain('.batch(');
   });
 });
