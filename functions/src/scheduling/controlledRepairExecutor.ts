@@ -353,6 +353,10 @@ class SelectedEnrollmentIntegrityStore implements ScheduleIntegrityStore {
     });
     return selected;
   }
+
+  async listExceptionSessionsReferencingIds(sessionIds: string[]) {
+    return this.base.listExceptionSessionsReferencingIds(sessionIds);
+  }
 }
 
 export async function previewControlledRepairWithStore(
