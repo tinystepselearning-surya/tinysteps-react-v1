@@ -46,6 +46,8 @@ export type ShadowScheduleGuardAssessment = {
   identityMismatches: number;
   scheduleMismatches: number;
   staleRevisionOccurrences: number;
+  duplicateRegularSessions: number;
+  unexpectedRegularSessions: number;
   zeroCoveredEnrollments: number;
   enrollmentsMissingMaterializationMetadata: number;
   affectedEnrollmentIds: string[];
@@ -78,6 +80,12 @@ export function buildShadowScheduleGuardAssessment(
   if (summary.staleRevisionOccurrences > 0) {
     reasons.push('stale_revision');
   }
+  if (summary.duplicateRegularSessions > 0) {
+    reasons.push('duplicate_regular_session');
+  }
+  if (summary.unexpectedRegularSessions > 0) {
+    reasons.push('unexpected_regular_session');
+  }
   if (summary.invalidEnrollments > 0) {
     reasons.push('invalid_enrollment_source');
   }
@@ -94,6 +102,8 @@ export function buildShadowScheduleGuardAssessment(
     summary.identityMismatches > 0 ||
     summary.scheduleMismatches > 0 ||
     summary.staleRevisionOccurrences > 0 ||
+    summary.duplicateRegularSessions > 0 ||
+    summary.unexpectedRegularSessions > 0 ||
     summary.invalidEnrollments > 0 ||
     summary.enrollmentsMissingMaterializationMetadata > 0;
 
@@ -125,6 +135,8 @@ export function buildShadowScheduleGuardAssessment(
     identityMismatches: summary.identityMismatches,
     scheduleMismatches: summary.scheduleMismatches,
     staleRevisionOccurrences: summary.staleRevisionOccurrences,
+    duplicateRegularSessions: summary.duplicateRegularSessions,
+    unexpectedRegularSessions: summary.unexpectedRegularSessions,
     zeroCoveredEnrollments: summary.zeroCoveredEnrollments,
     enrollmentsMissingMaterializationMetadata:
       summary.enrollmentsMissingMaterializationMetadata,
