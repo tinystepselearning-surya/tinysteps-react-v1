@@ -23,6 +23,7 @@ import { getApprovedPhonicsEditorialReview } from '../lib/phonicsEditorialReview
 import { getEditorialReviewer } from '../lib/editorialReviewerRegistry';
 import { getCanonicalTopicOwnerPath } from '../lib/canonicalTopicOwnershipRegistry.js';
 import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
+import { getPhonicsResourceDifferentiation } from '../lib/phonicsResourceDifferentiation';
 import {
   buildBreadcrumbListSchema,
   buildSpeakableSpecification,
@@ -37,6 +38,27 @@ import {
 } from '../lib/schemas';
 
 type LearningLink = { id: string; label: string; to: string };
+
+const PHONICS_STAGE_CONTEXT: Record<PhonicsKnowledgeConcept['knowledgeStage'], { label: string; description: string }> = {
+  'pre-phonics': { label: 'Pre-phonics', description: 'This concept develops listening and sound awareness before print-based decoding.' },
+  foundations: { label: 'Foundations', description: 'This concept belongs to the first layer of letter-sound and early word-reading knowledge.' },
+  'early-decoding': { label: 'Early decoding', description: 'This concept supports the move from individual correspondences into blending and simple word reading.' },
+  'pattern-decoding': { label: 'Pattern decoding', description: 'This concept builds beyond basic CVC reading by teaching a reusable spelling or sound pattern.' },
+  'advanced-patterns': { label: 'Advanced phonics patterns', description: 'This concept belongs after core digraphs, vowel patterns and early decoding are reasonably secure.' },
+};
+
+const PHONICS_COURSE_LABEL: Record<string, string> = {
+  'phonics-foundations': 'Phonics Foundation',
+  'early-phonics': 'Early Phonics',
+  'advanced-phonics': 'Advanced Phonics',
+};
+
+const CURRICULUM_ALIGNMENT_LABEL: Record<PhonicsKnowledgeConcept['curriculumAlignment'], string> = {
+  direct: 'Direct lesson alignment',
+  'embedded-skill': 'Embedded skill alignment',
+  'prerequisite-context': 'Prerequisite context',
+  'lesson-theme': 'Lesson-theme alignment',
+};
 
 function learningLink(conceptId: string): LearningLink | null {
   const published = getPhonicsProgrammaticPilotPageByConceptId(conceptId) ?? getPublishedPhonicsResourcePageByConceptId(conceptId);
@@ -82,6 +104,8 @@ export default function PhonicsKnowledgePage() {
   const editorialReview = getApprovedPhonicsEditorialReview(page.path);
   const reviewer = editorialReview ? getEditorialReviewer(editorialReview.reviewerKey) : null;
   const c7Handoff = getCommercialC7R3Handoff(page.path);
+  const differentiation = getPhonicsResourceDifferentiation(concept.id);
+  const stageContext = PHONICS_STAGE_CONTEXT[concept.knowledgeStage];
 
   const definedTermId = `${canonicalUrl}#phonics-concept`;
   const definedTermSchema = {
@@ -119,6 +143,61 @@ export default function PhonicsKnowledgePage() {
           <div className="rounded-[1.7rem] border border-slate-200 bg-white p-5 sm:p-7"><p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Pattern to notice</p><h2 className="mt-2 text-2xl font-black tracking-[-0.025em] text-slate-950">{concept.label}</h2>{concept.standardTerm ? <p className="mt-2 text-sm leading-6 text-slate-500">Standard term: {concept.standardTerm}</p> : null}{concept.phonemeDescription ? <p className="mt-4 text-[15px] leading-7 text-slate-700">{concept.phonemeDescription}</p> : null}{concept.graphemes.length ? <div className="mt-5 flex flex-wrap gap-2">{concept.graphemes.map((grapheme) => <span key={grapheme} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-base font-black text-slate-800">{grapheme}</span>)}</div> : null}</div>
           <aside className="rounded-[1.7rem] border border-violet-100 bg-violet-50/55 p-5 sm:p-7"><p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-700">Example words</p><div className="mt-4 flex flex-wrap gap-2">{concept.exampleWords.map((word) => <span key={word} className="rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-sm">{word}</span>)}</div><p className="mt-5 text-xs leading-5 text-slate-500">Use examples only when the child already knows the other sound-spelling patterns in the word. These are teaching illustrations, not a fixed first-reading list.</p></aside>
         </section>
+
+        {differentiation ? (
+          <section className="mt-6 rounded-[1.8rem] border border-violet-100 bg-violet-50/35 p-5 sm:p-7" data-brick3b-differentiation={concept.id}>
+            <div className="max-w-3xl">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-violet-700">Where this fits in the phonics journey</p>
+              <h2 className="mt-2 text-2xl font-black tracking-[-0.025em] text-slate-950">{stageContext.label}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-700">{stageContext.description} The prerequisite and next-step links on this page show the surrounding learning sequence.</p>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <section className="rounded-[1.5rem] border border-violet-100 bg-white p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-700">What the child should be able to do</p>
+                <p className="mt-3 text-[15px] font-semibold leading-7 text-slate-800">{differentiation.learningOutcome}</p>
+              </section>
+              <section className="rounded-[1.5rem] border border-amber-100 bg-amber-50/65 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-700">When this pattern does not apply</p>
+                <p className="mt-3 text-[15px] leading-7 text-slate-700">{differentiation.boundarySummary}</p>
+              </section>
+            </div>
+
+            {(differentiation.readingUse || differentiation.spellingUse) ? (
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                {differentiation.readingUse ? (
+                  <section className="rounded-[1.5rem] border border-sky-100 bg-sky-50/55 p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-700">Reading use</p>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">{differentiation.readingUse}</p>
+                  </section>
+                ) : null}
+                {differentiation.spellingUse ? (
+                  <section className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/55 p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Spelling use</p>
+                    <p className="mt-3 text-sm leading-7 text-slate-700">{differentiation.spellingUse}</p>
+                  </section>
+                ) : null}
+              </div>
+            ) : null}
+
+            <section className="mt-4 rounded-[1.5rem] border border-slate-200 bg-white p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Tiny Steps curriculum connection</p>
+                  <h3 className="mt-2 text-lg font-black tracking-[-0.015em] text-slate-950">{CURRICULUM_ALIGNMENT_LABEL[concept.curriculumAlignment]}</h3>
+                </div>
+              </div>
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {concept.curriculumRefs.map((ref) => (
+                  <li key={ref.lessonId} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+                    <span className="font-black text-slate-900">{PHONICS_COURSE_LABEL[ref.courseId] ?? 'Tiny Steps Phonics'}</span>
+                    <span className="block">Lesson {ref.lessonNumber}: {ref.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </section>
+        ) : null}
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2"><BulletPanel title="How to teach this pattern" items={concept.teachingNotes} /><BulletPanel title="Common confusions to watch for" items={concept.commonConfusions} tone="warning" /></div>
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.72fr)]"><BulletPanel title="Simple practice ideas" items={concept.practiceIdeas} tone="practice" /><section className="rounded-[1.6rem] border border-slate-200 bg-slate-950 p-5 text-white sm:p-6"><p className="text-[11px] font-black uppercase tracking-[0.18em] text-sky-300">Learning sequence</p><div className="mt-5 space-y-6"><MiniLinkList title="Helpful first" items={prerequisiteLinks} /><MiniLinkList title="What can come next" items={nextLinks} /></div></section></div>
