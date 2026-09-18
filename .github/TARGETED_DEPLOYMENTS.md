@@ -20,6 +20,8 @@ require validation but never create a production Function target. A changed
 source module with no path from a deployed export similarly produces zero
 deployment targets.
 
+An intentionally retired Function export may bypass the full-fleet topology rule only when its export ID is explicitly allowlisted in the impact resolver, the topology change removes that export without adding or moving another Function root, and the production Function is deleted through a separate explicit cleanup mutation. This mechanism currently exists only for the temporary AV2.1 proof endpoint and must not be generalized implicitly.
+
 A full fleet deployment is limited to known global inputs:
 
 - `functions/package.json`
