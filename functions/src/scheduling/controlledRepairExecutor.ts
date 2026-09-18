@@ -662,22 +662,33 @@ export async function previewControlledRepairWithStore(
     );
   }
 
-  const rolling = buildRollingMaterializationPlan({
-    enrollmentId: args.enrollmentId,
-    enrollment: enrollmentRow.data,
-    anchorYmd: args.anchorYmd,
-  });
-  const {existingById, evidenceSessions} =
-    await loadScheduleIntegritySessionEvidence(
-      store,
-      rolling.occurrences.map((occurrence) => occurrence.sessionId),
-      args.anchorYmd,
-      rolling.horizonEndYmd,
-    );
-  const sessions = new Map(evidenceSessions);
-  existingById.forEach((session, sessionId) => {
-    sessions.set(sessionId, session);
-  });
+  const sessions = new Map<string, Record<string, unknown>>();
+  if (!classifyScheduleIntegrityEnrollmentCandidate(enrollmentRow.data)) {
+    try {
+      const rolling = buildRollingMaterializationPlan({
+        enrollmentId: args.enrollmentId,
+        enrollment: enrollmentRow.data,
+        anchorYmd: args.anchorYmd,
+      });
+      const {existingById, evidenceSessions} =
+        await loadScheduleIntegritySessionEvidence(
+          store,
+          rolling.occurrences.map((occurrence) => occurrence.sessionId),
+          args.anchorYmd,
+          rolling.horizonEndYmd,
+        );
+      evidenceSessions.forEach((session, sessionId) => {
+        sessions.set(sessionId, session);
+      });
+      existingById.forEach((session, sessionId) => {
+        sessions.set(sessionId, session);
+      });
+    } catch {
+      // The shared derivation below will convert invalid recurrence/source state
+      // into an explicit blocker. Never invent partial evidence after a failed
+      // materialization preflight.
+    }
+  }
 
   const nowMs = args.nowMs ?? Date.now();
   const derived = deriveControlledRepairFromCurrentState({
