@@ -1,3 +1,7 @@
+/**
+ * Brick 2: read-only, pointer-independent rolling schedule integrity audit.
+ * This module must never create, update, or delete enrollment/session data.
+ */
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import {Timestamp} from 'firebase-admin/firestore';
