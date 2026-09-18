@@ -6,7 +6,7 @@ import {
   isEnrollmentOperationallyActive,
   normalizeEnrollmentStatus,
   resolveEnrollmentSchedulingLifecycleState,
-} from '../src/helpers/status';
+} from '../src/scheduling/enrollmentSchedulingStatus';
 import {buildRollingMaterializationPlan} from '../src/scheduling/rollingScheduleMaterializer';
 import {isOperationalEnrollmentForRollingRepair} from '../src/scheduling/rollingScheduleRepair';
 
@@ -96,12 +96,15 @@ describe('functions canonical enrollment scheduling status contract', () => {
     expect(doesEnrollmentOccupyCourseSlot(enrollment)).toBe(true);
   });
 
-  it('has no private active-status alias set in materializer or repair', () => {
+  it('keeps scheduling aliases isolated from the globally shared status helper', () => {
     const materializer = readFileSync(resolve(process.cwd(), 'functions/src/scheduling/rollingScheduleMaterializer.ts'), 'utf8');
     const repair = readFileSync(resolve(process.cwd(), 'functions/src/scheduling/rollingScheduleRepair.ts'), 'utf8');
+    const sharedStatus = readFileSync(resolve(process.cwd(), 'functions/src/helpers/status.ts'), 'utf8');
     expect(materializer).not.toContain('ACTIVE_STATUS_ALIASES');
     expect(repair).not.toContain('ACTIVE_STATUS_ALIASES');
-    expect(materializer).toContain('isEnrollmentOperationallyActive');
-    expect(repair).toContain('isEnrollmentOperationallyActive');
+    expect(materializer).toContain('enrollmentSchedulingStatus');
+    expect(repair).toContain('enrollmentSchedulingStatus');
+    expect(sharedStatus).not.toContain('pending_lp_assignment');
+    expect(sharedStatus).not.toContain('resolveEnrollmentSchedulingLifecycleState');
   });
 });
