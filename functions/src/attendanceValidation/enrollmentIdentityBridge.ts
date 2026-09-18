@@ -19,6 +19,7 @@ export type Av3IdentityIssueKind =
   | 'expected_teacher_not_registered'
   | 'expected_teacher_identity_missing'
   | 'ambiguous_staff_match'
+  | 'identity_email_conflict'
   | 'multiple_unexpected_staff';
 
 export interface StaffIdentityRegistryEntry {
@@ -51,27 +52,38 @@ export interface Av3EnrollmentIdentityResult {
   participantClassifications: Av3ParticipantIdentityResult[];
 }
 
+interface NormalizedStaffIdentityRegistryEntry {
+  entry: StaffIdentityRegistryEntry;
+  emailAddressHash: string | null;
+  microsoftIdentityIdHashes: Set<string>;
+}
+
 function normalizeHash(value: string | null | undefined): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
   return normalized || null;
 }
 
-function registryIdentityHashes(entry: StaffIdentityRegistryEntry): Set<string> {
-  const hashes = new Set<string>();
-  const emailHash = normalizeHash(entry.emailAddressHash);
-  if (emailHash) hashes.add(emailHash);
+function normalizeRegistryEntry(
+  entry: StaffIdentityRegistryEntry,
+): NormalizedStaffIdentityRegistryEntry {
+  const microsoftIdentityIdHashes = new Set<string>();
   for (const value of entry.microsoftIdentityIdHashes) {
     const normalized = normalizeHash(value);
-    if (normalized) hashes.add(normalized);
+    if (normalized) microsoftIdentityIdHashes.add(normalized);
   }
-  return hashes;
+
+  return {
+    entry,
+    emailAddressHash: normalizeHash(entry.emailAddressHash),
+    microsoftIdentityIdHashes,
+  };
 }
 
-function participantIdentityHashes(participant: AttendanceParticipantEvidence): Set<string> {
+function participantMicrosoftIdentityIdHashes(
+  participant: AttendanceParticipantEvidence,
+): Set<string> {
   const hashes = new Set<string>();
-  const emailHash = normalizeHash(participant.emailAddressHash);
-  if (emailHash) hashes.add(emailHash);
   for (const hint of participant.identityHints) {
     const normalized = normalizeHash(hint.idHash);
     if (normalized) hashes.add(normalized);
@@ -86,6 +98,26 @@ function intersects(left: Set<string>, right: Set<string>): boolean {
   return false;
 }
 
+function uniqueStaffIds(
+  entries: readonly NormalizedStaffIdentityRegistryEntry[],
+): string[] {
+  return [...new Set(entries.map(({ entry }) => entry.staffId))];
+}
+
+function classifyKnownStaff(
+  participantRecordId: string,
+  matchedStaffId: string,
+  teacherId: string | null,
+): Av3ParticipantIdentityResult {
+  return {
+    participantRecordId,
+    classification: matchedStaffId === teacherId
+      ? 'expected_teacher'
+      : 'other_staff',
+    matchedStaffIds: [matchedStaffId],
+  };
+}
+
 function uniqueIssueList(issues: Av3IdentityIssueKind[]): Av3IdentityIssueKind[] {
   return [...new Set(issues)];
 }
@@ -93,11 +125,14 @@ function uniqueIssueList(issues: Av3IdentityIssueKind[]): Av3IdentityIssueKind[]
 /**
  * Deterministic AV3 identity bridge.
  *
- * Official Tiny Steps model:
+ * Official Tiny Steps precedence:
  * - the class session already identifies enrollment + kid + assigned teacher;
+ * - a stable Microsoft/Entra identity match is authoritative when Graph supplies one;
+ * - email hash is a secondary fallback only when Graph supplies no stable identity;
+ * - stable identity and email disagreement is never silently accepted: it requires REVIEW;
  * - recognized Tiny Steps Microsoft identities are STAFF SIDE;
- * - every attendance participant that does not match the staff registry is LEARNER SIDE;
- * - display names are never used for the primary identity decision;
+ * - every participant with no staff signal is LEARNER SIDE;
+ * - display names are never used for identity decisions;
  * - AV3 does not decide Present/Absent and does not mutate operational attendance/finance.
  */
 export function bridgeEnrollmentIdentity(
@@ -111,10 +146,7 @@ export function bridgeEnrollmentIdentity(
   if (!evidence.session.kidId) issues.push('missing_kid_id');
   if (!teacherId) issues.push('missing_teacher_id');
 
-  const normalizedRegistry = staffRegistry.map((entry) => ({
-    entry,
-    hashes: registryIdentityHashes(entry),
-  }));
+  const normalizedRegistry = staffRegistry.map(normalizeRegistryEntry);
 
   const expectedTeacherEntries = teacherId
     ? normalizedRegistry.filter(({ entry }) => entry.staffId === teacherId)
@@ -125,7 +157,8 @@ export function bridgeEnrollmentIdentity(
   }
   if (
     expectedTeacherEntries.length === 1
-    && expectedTeacherEntries[0].hashes.size === 0
+    && expectedTeacherEntries[0].microsoftIdentityIdHashes.size === 0
+    && !expectedTeacherEntries[0].emailAddressHash
   ) {
     issues.push('expected_teacher_identity_missing');
   }
@@ -139,30 +172,84 @@ export function bridgeEnrollmentIdentity(
 
   const participantClassifications: Av3ParticipantIdentityResult[] = participants.map(
     (participant) => {
-      const participantHashes = participantIdentityHashes(participant);
-      const matches = normalizedRegistry.filter(({ hashes }) =>
-        intersects(participantHashes, hashes),
-      );
-      const matchedStaffIds = [...new Set(matches.map(({ entry }) => entry.staffId))];
+      const participantStableIds = participantMicrosoftIdentityIdHashes(participant);
+      const participantEmailHash = normalizeHash(participant.emailAddressHash);
 
-      if (matchedStaffIds.length > 1) {
+      const stableMatches = participantStableIds.size > 0
+        ? normalizedRegistry.filter(({ microsoftIdentityIdHashes }) =>
+          intersects(participantStableIds, microsoftIdentityIdHashes))
+        : [];
+      const stableStaffIds = uniqueStaffIds(stableMatches);
+
+      const emailMatches = participantEmailHash
+        ? normalizedRegistry.filter(({ emailAddressHash }) =>
+          emailAddressHash === participantEmailHash)
+        : [];
+      const emailStaffIds = uniqueStaffIds(emailMatches);
+
+      if (stableStaffIds.length > 1) {
         issues.push('ambiguous_staff_match');
         return {
           participantRecordId: participant.participantRecordId,
           classification: 'ambiguous_staff' as const,
-          matchedStaffIds,
+          matchedStaffIds: stableStaffIds,
         };
       }
 
-      if (matchedStaffIds.length === 1) {
-        const matchedStaffId = matchedStaffIds[0];
+      if (stableStaffIds.length === 1) {
+        const authoritativeStaffId = stableStaffIds[0];
+
+        if (
+          emailStaffIds.length > 0
+          && (emailStaffIds.length !== 1 || emailStaffIds[0] !== authoritativeStaffId)
+        ) {
+          issues.push('identity_email_conflict');
+        }
+
+        return classifyKnownStaff(
+          participant.participantRecordId,
+          authoritativeStaffId,
+          teacherId,
+        );
+      }
+
+      if (participantStableIds.size > 0) {
+        if (emailStaffIds.length > 0) {
+          // Graph supplied a stable identity, so email cannot override it.
+          // A known staff email paired with an unknown stable identity may be
+          // a personal/guest account or stale registry record and must REVIEW.
+          issues.push('identity_email_conflict');
+          return {
+            participantRecordId: participant.participantRecordId,
+            classification: 'ambiguous_staff' as const,
+            matchedStaffIds: emailStaffIds,
+          };
+        }
+
         return {
           participantRecordId: participant.participantRecordId,
-          classification: matchedStaffId === teacherId
-            ? 'expected_teacher' as const
-            : 'other_staff' as const,
-          matchedStaffIds,
+          classification: 'learner_side' as const,
+          matchedStaffIds: [],
         };
+      }
+
+      // Stable Microsoft identity is unavailable. Email is permitted only as
+      // the secondary fallback, and only when it resolves uniquely.
+      if (emailStaffIds.length > 1) {
+        issues.push('ambiguous_staff_match');
+        return {
+          participantRecordId: participant.participantRecordId,
+          classification: 'ambiguous_staff' as const,
+          matchedStaffIds: emailStaffIds,
+        };
+      }
+
+      if (emailStaffIds.length === 1) {
+        return classifyKnownStaff(
+          participant.participantRecordId,
+          emailStaffIds[0],
+          teacherId,
+        );
       }
 
       return {
