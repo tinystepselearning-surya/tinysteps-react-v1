@@ -412,7 +412,6 @@ export async function previewControlledRepair(
   input: ControlledRepairPreviewInput,
 ): Promise<ControlledRepairPreview> {
   const enrollmentId = normalizeEnrollmentId(input.enrollmentId);
-  assertControlledRepairLiveWriteAllowed(enrollmentId);
   const anchorYmd = validateYmd(
     input.anchorYmd || todayInIndiaYmd(),
   );
@@ -881,6 +880,7 @@ export async function executeControlledRepair(
   }
 
   const enrollmentId = normalizeEnrollmentId(input.enrollmentId);
+  assertControlledRepairLiveWriteAllowed(enrollmentId);
   const anchorYmd = validateYmd(input.anchorYmd);
   const currentYmd = todayInIndiaYmd();
   if (
