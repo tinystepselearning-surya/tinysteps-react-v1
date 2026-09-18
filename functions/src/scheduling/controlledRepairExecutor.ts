@@ -11,7 +11,7 @@ import * as logger from 'firebase-functions/logger';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ensureAdmin} from '../helpers/adminGuard';
-import {isEnrollmentOperationallyActive} from '../helpers/status';
+import {isEnrollmentOperationallyActive} from './enrollmentSchedulingStatus';
 import {
   ROLLING_SCHEDULE_HORIZON_DAYS,
   addDaysYmd,
