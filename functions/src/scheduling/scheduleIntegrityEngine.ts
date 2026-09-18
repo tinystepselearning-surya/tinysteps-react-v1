@@ -27,6 +27,7 @@ export const MAX_SCHEDULE_INTEGRITY_DETAIL_ROWS = 200;
 
 const IST_OFFSET_MINUTES = 330;
 const READ_BATCH_SIZE = 300;
+const EXCEPTION_QUERY_CHUNK_SIZE = 30;
 
 const VALID_EXCEPTION_STATUSES = new Set([
   'cancelled',
@@ -129,6 +130,16 @@ export type ScheduleIntegrityStore = {
   listSessionsInWindow: (
     fromYmd: string,
     toYmd: string,
+  ) => Promise<Map<string, Record<string, unknown>>>;
+  /**
+   * Optional completeness read for approved makeup/reschedule/replacement rows
+   * whose replacement date falls outside the rolling audit window.
+   *
+   * The integrity engine must not recreate an expected occurrence merely
+   * because its linked exception lives beyond the current 14-day horizon.
+   */
+  listExceptionSessionsReferencingIds?: (
+    sessionIds: string[],
   ) => Promise<Map<string, Record<string, unknown>>>;
 };
 
@@ -353,6 +364,35 @@ export const buildScheduleIntegrityOccurrenceSessionIndex = (
   return index;
 };
 
+export async function loadScheduleIntegritySessionEvidence(
+  store: ScheduleIntegrityStore,
+  expectedSessionIds: string[],
+  fromYmd: string,
+  toYmd: string,
+): Promise<{
+  existingById: Map<string, Record<string, unknown>>;
+  evidenceSessions: Map<string, Record<string, unknown>>;
+}> {
+  const exceptionEvidencePromise =
+    typeof store.listExceptionSessionsReferencingIds === 'function'
+      ? store.listExceptionSessionsReferencingIds(expectedSessionIds)
+      : Promise.resolve(new Map<string, Record<string, unknown>>());
+
+  const [existingById, windowSessions, referencedExceptionSessions] =
+    await Promise.all([
+      store.getSessionsByIds(expectedSessionIds),
+      store.listSessionsInWindow(fromYmd, toYmd),
+      exceptionEvidencePromise,
+    ]);
+
+  const evidenceSessions = new Map(windowSessions);
+  referencedExceptionSessions.forEach((session, sessionId) => {
+    evidenceSessions.set(sessionId, session);
+  });
+
+  return {existingById, evidenceSessions};
+}
+
 export const resolveScheduleIntegrityExistingOccurrenceSession = (args: {
   enrollmentId: string;
   occurrence: RollingMaterializationOccurrence;
@@ -546,12 +586,17 @@ export async function runScheduleIntegrityEngineWithStore(
   const expectedIds = Array.from(new Set(
     prepared.flatMap((row) => row.occurrences.map((item) => item.sessionId)),
   ));
-  const [existingById, windowSessions] = await Promise.all([
-    store.getSessionsByIds(expectedIds),
-    store.listSessionsInWindow(anchorYmd, horizonEndYmd),
-  ]);
-  const exceptionRelationIndex = buildScheduleIntegrityExceptionRelationIndex(windowSessions);
-  const occurrenceSessionIndex = buildScheduleIntegrityOccurrenceSessionIndex(windowSessions);
+  const {existingById, evidenceSessions} =
+    await loadScheduleIntegritySessionEvidence(
+      store,
+      expectedIds,
+      anchorYmd,
+      horizonEndYmd,
+    );
+  const exceptionRelationIndex =
+    buildScheduleIntegrityExceptionRelationIndex(evidenceSessions);
+  const occurrenceSessionIndex =
+    buildScheduleIntegrityOccurrenceSessionIndex(evidenceSessions);
 
   const summary: ScheduleIntegritySummary = {
     mode: 'READ_ONLY',
@@ -740,6 +785,40 @@ export class FirestoreScheduleIntegrityStore implements ScheduleIntegrityStore {
     byStartAt.docs.forEach((doc) => {
       result.set(doc.id, (doc.data() || {}) as Record<string, unknown>);
     });
+
+    return result;
+  }
+
+  async listExceptionSessionsReferencingIds(
+    sessionIds: string[],
+  ): Promise<Map<string, Record<string, unknown>>> {
+    const result = new Map<string, Record<string, unknown>>();
+    const expectedIds = Array.from(new Set(
+      sessionIds.map((sessionId) => text(sessionId)).filter(Boolean),
+    ));
+
+    for (const field of EXCEPTION_BACK_REFERENCE_FIELDS) {
+      for (
+        let offset = 0;
+        offset < expectedIds.length;
+        offset += EXCEPTION_QUERY_CHUNK_SIZE
+      ) {
+        const ids = expectedIds.slice(
+          offset,
+          offset + EXCEPTION_QUERY_CHUNK_SIZE,
+        );
+        if (!ids.length) continue;
+        const snap = await this.db.collection('classSessions')
+          .where(field, 'in', ids)
+          .get();
+        snap.docs.forEach((doc) => {
+          result.set(
+            doc.id,
+            (doc.data() || {}) as Record<string, unknown>,
+          );
+        });
+      }
+    }
 
     return result;
   }
