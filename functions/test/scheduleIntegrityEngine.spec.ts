@@ -65,6 +65,7 @@ const healthySession = (
 class MemoryStore implements ScheduleIntegrityStore {
   enrollments: Array<{id: string; data: Record<string, unknown>}>;
   sessions = new Map<string, Record<string, unknown>>();
+  referencedExceptions = new Map<string, Record<string, unknown>>();
 
   constructor(
     enrollments: Array<{id: string; data: Record<string, unknown>}>,
@@ -87,6 +88,10 @@ class MemoryStore implements ScheduleIntegrityStore {
 
   async listSessionsInWindow() {
     return new Map(this.sessions);
+  }
+
+  async listExceptionSessionsReferencingIds() {
+    return new Map(this.referencedExceptions);
   }
 }
 
@@ -208,6 +213,74 @@ describe('Brick 2 schedule integrity engine', () => {
 
     expect(summary.scheduleExceptions).toBe(1);
     expect(summary.healthyOccurrences).toBe(2);
+    expect(summary.missingOccurrences).toBe(0);
+  });
+
+  it('counts structurally valid stale-revision sessions as operational coverage', async () => {
+    const enrollment = baseEnrollment({
+      schedule: {
+        timezone: 'Asia/Kolkata',
+        revision: 2,
+        weeklySlots: [
+          {weekday: 5, time: '10:00', durationMinutes: 35},
+        ],
+      },
+    });
+    const plan = planFor('enr-stale', enrollment);
+    const store = new MemoryStore([{id: 'enr-stale', data: enrollment}]);
+
+    plan.occurrences.forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        {
+          ...healthySession('enr-stale', enrollment, occurrence),
+          scheduleRevision: 1,
+        },
+      );
+    });
+
+    const summary = await runScheduleIntegrityEngineWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.staleRevisionOccurrences).toBe(plan.occurrences.length);
+    expect(summary.healthyOccurrences).toBe(0);
+    expect(summary.zeroCoveredEnrollments).toBe(0);
+    expect(summary.affectedEnrollments).toBe(1);
+  });
+
+  it('preserves a linked replacement even when the replacement date is outside the rolling window', async () => {
+    const enrollment = baseEnrollment();
+    const plan = planFor('enr-external', enrollment);
+    const store = new MemoryStore([{id: 'enr-external', data: enrollment}]);
+
+    plan.occurrences.slice(1).forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-external', enrollment, occurrence),
+      );
+    });
+
+    const original = plan.occurrences[0];
+    store.referencedExceptions.set('replacement-outside-window', {
+      enrollmentId: 'enr-external',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'kid-1',
+      date: '2026-10-10',
+      startTime: '11:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      source: 'teacher_makeup_from_reschedule',
+      isMakeup: true,
+      makeupForSessionId: original.sessionId,
+    });
+
+    const summary = await runScheduleIntegrityEngineWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.scheduleExceptions).toBe(1);
     expect(summary.missingOccurrences).toBe(0);
   });
 
