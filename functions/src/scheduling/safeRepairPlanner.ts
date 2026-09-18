@@ -23,6 +23,7 @@ import {
   buildScheduleIntegrityExceptionRelationIndex,
   buildScheduleIntegrityOccurrenceSessionIndex,
   classifyScheduleIntegrityEnrollmentCandidate,
+  detectScheduleIntegritySurplusSessions,
   classifyScheduleIntegrityOccurrence,
   loadScheduleIntegritySessionEvidence,
   resolveScheduleIntegrityExistingOccurrenceSession,
@@ -53,6 +54,8 @@ export type SafeRepairActionType =
   | 'BLOCK_INVALID_SOURCE'
   | 'BLOCK_IDENTITY_CONFLICT'
   | 'BLOCK_SCHEDULE_CONFLICT'
+  | 'BLOCK_DUPLICATE_REGULAR_SESSION'
+  | 'BLOCK_UNEXPECTED_REGULAR_SESSION'
   | 'PRESERVE_STALE_REVISION_SESSION'
   | 'BLOCK_UNSAFE_SESSION_PAYLOAD';
 
@@ -164,6 +167,8 @@ const emptyActionCounts = (): Record<SafeRepairActionType, number> => ({
   BLOCK_INVALID_SOURCE: 0,
   BLOCK_IDENTITY_CONFLICT: 0,
   BLOCK_SCHEDULE_CONFLICT: 0,
+  BLOCK_DUPLICATE_REGULAR_SESSION: 0,
+  BLOCK_UNEXPECTED_REGULAR_SESSION: 0,
   PRESERVE_STALE_REVISION_SESSION: 0,
   BLOCK_UNSAFE_SESSION_PAYLOAD: 0,
 });
@@ -347,6 +352,44 @@ export async function runSafeRepairPlannerWithStore(
     let enrollmentExceptions = 0;
     let blockers = 0;
 
+    const surplus = detectScheduleIntegritySurplusSessions({
+      enrollmentId,
+      occurrences: plan.occurrences,
+      sessions: evidenceSessions,
+      fromYmd: anchorYmd,
+      toYmd: horizonEndYmd,
+    });
+    surplus.duplicateRegularSessions.forEach((finding) => {
+      blockers += 1;
+      blockedOccurrences += 1;
+      actionCounts.BLOCK_DUPLICATE_REGULAR_SESSION += 1;
+      actions.push({
+        type: 'BLOCK_DUPLICATE_REGULAR_SESSION',
+        enrollmentId,
+        sessionId: finding.sessionId,
+        date: finding.date,
+        startTime: finding.startTime,
+        durationMinutes: finding.durationMinutes ?? undefined,
+        reason:
+          'Additional regular session duplicates an expected occurrence; controlled repair must fail closed until the duplicate is resolved.',
+      });
+    });
+    surplus.unexpectedRegularSessions.forEach((finding) => {
+      blockers += 1;
+      blockedOccurrences += 1;
+      actionCounts.BLOCK_UNEXPECTED_REGULAR_SESSION += 1;
+      actions.push({
+        type: 'BLOCK_UNEXPECTED_REGULAR_SESSION',
+        enrollmentId,
+        sessionId: finding.sessionId,
+        date: finding.date,
+        startTime: finding.startTime,
+        durationMinutes: finding.durationMinutes ?? undefined,
+        reason:
+          'Regular session exists inside the rolling horizon but does not match the current recurrence; controlled repair must fail closed until it is resolved.',
+      });
+    });
+
     plan.occurrences.forEach((occurrence) => {
       expectedOccurrences += 1;
       const existingSession = resolveScheduleIntegrityExistingOccurrenceSession({
@@ -361,7 +404,7 @@ export async function runSafeRepairPlannerWithStore(
         occurrence,
         scheduleRevision: plan.scheduleRevision,
         existingSession,
-        relatedExceptionSessionId: exceptionIndex.get(occurrence.sessionId),
+        relatedExceptionCandidates: exceptionIndex.get(occurrence.sessionId),
       });
 
       if (classification.state === 'healthy') {
