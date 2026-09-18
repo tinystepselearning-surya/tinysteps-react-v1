@@ -692,7 +692,13 @@ export async function runScheduleIntegrityEngineWithStore(
       detail.scheduleMismatches +
       detail.staleRevision;
     if (defects > 0) summary.affectedEnrollments += 1;
-    if (detail.expected > 0 && detail.healthy + detail.exceptions === 0) {
+    // A stale scheduleRevision is an integrity defect, but the physical session
+    // still covers the learner when identity + recurrence are otherwise correct.
+    // Do not escalate metadata hygiene into a false "zero coverage" outage.
+    if (
+      detail.expected > 0 &&
+      detail.healthy + detail.exceptions + detail.staleRevision === 0
+    ) {
       summary.zeroCoveredEnrollments += 1;
     }
     if (!row.materializationMetadataPresent) {
