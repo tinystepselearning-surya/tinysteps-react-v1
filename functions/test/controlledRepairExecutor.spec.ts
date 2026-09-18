@@ -167,6 +167,59 @@ describe('Brick 5 controlled repair executor', () => {
     )).toHaveLength(2);
   });
 
+  it('preserves stale-revision sessions while allowing missing future sessions to be created', () => {
+    const enrollment = baseEnrollment({
+      schedule: {
+        timezone: 'Asia/Kolkata',
+        revision: 2,
+        weeklySlots: [
+          {weekday: 5, time: '10:00', durationMinutes: 35},
+        ],
+      },
+    });
+    const rolling = planFor('enr-stale-safe', enrollment);
+    const sessions = new Map<string, Record<string, unknown>>();
+
+    sessions.set(
+      rolling.occurrences[0].sessionId,
+      {
+        ...healthySession(
+          'enr-stale-safe',
+          enrollment,
+          rolling.occurrences[0],
+        ),
+        scheduleRevision: 1,
+      },
+    );
+    sessions.set(
+      rolling.occurrences[2].sessionId,
+      {
+        ...healthySession(
+          'enr-stale-safe',
+          enrollment,
+          rolling.occurrences[2],
+        ),
+        scheduleRevision: 2,
+      },
+    );
+
+    const derived = deriveControlledRepairFromCurrentState({
+      enrollmentId: 'enr-stale-safe',
+      enrollment,
+      anchorYmd: '2026-09-18',
+      sessions,
+      nowMs: Date.UTC(2026, 8, 18, 0, 0, 0),
+    });
+
+    expect(derived.plan.blockers).toBe(0);
+    expect(derived.plan.safeCreates).toBe(1);
+    expect(derived.plan.metadataAction).toBe('INITIALIZE');
+    expect(derived.createPayloads).toHaveLength(1);
+    expect(derived.plan.actions.some(
+      (action) => action.type === 'PRESERVE_STALE_REVISION_SESSION',
+    )).toBe(true);
+  });
+
   it('blocks identity conflict and suppresses metadata write planning', () => {
     const enrollment = baseEnrollment();
     const rolling = planFor('enr-1', enrollment);
