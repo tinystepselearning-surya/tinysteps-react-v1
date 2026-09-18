@@ -140,7 +140,7 @@ type PreparedEnrollment = {
   materializationMetadataPresent: boolean;
 };
 
-type OccurrenceClassification = {
+export type ScheduleIntegrityOccurrenceClassification = {
   state: ScheduleIntegrityOccurrenceState;
   relatedExceptionSessionId?: string;
 };
@@ -311,7 +311,7 @@ const sessionHasStaleRevision = (
   return Number.isFinite(raw) && raw > 0 && Math.floor(raw) !== scheduleRevision;
 };
 
-const buildExceptionRelationIndex = (
+export const buildScheduleIntegrityExceptionRelationIndex = (
   sessions: Map<string, Record<string, unknown>>,
 ): Map<string, string> => {
   const related = new Map<string, string>();
@@ -333,7 +333,7 @@ const sessionOccurrenceLookupKey = (
   startTime: string,
 ): string => `${enrollmentId}|${date}|${startTime}`;
 
-const buildOccurrenceSessionIndex = (
+export const buildScheduleIntegrityOccurrenceSessionIndex = (
   sessions: Map<string, Record<string, unknown>>,
 ): Map<string, Array<{sessionId: string; session: Record<string, unknown>}>> => {
   const index = new Map<
@@ -353,7 +353,7 @@ const buildOccurrenceSessionIndex = (
   return index;
 };
 
-const resolveExistingOccurrenceSession = (args: {
+export const resolveScheduleIntegrityExistingOccurrenceSession = (args: {
   enrollmentId: string;
   occurrence: RollingMaterializationOccurrence;
   deterministicSession?: Record<string, unknown>;
@@ -385,7 +385,7 @@ export const classifyScheduleIntegrityOccurrence = (args: {
   scheduleRevision: number;
   existingSession?: Record<string, unknown>;
   relatedExceptionSessionId?: string;
-}): OccurrenceClassification => {
+}): ScheduleIntegrityOccurrenceClassification => {
   const {
     enrollmentId,
     enrollment,
@@ -417,7 +417,7 @@ export const classifyScheduleIntegrityOccurrence = (args: {
   return {state: 'healthy'};
 };
 
-const classifyEnrollmentCandidate = (
+export const classifyScheduleIntegrityEnrollmentCandidate = (
   enrollment: Record<string, unknown>,
 ): ScheduleIntegrityInvalidReason | null => {
   try {
@@ -510,7 +510,7 @@ export async function runScheduleIntegrityEngineWithStore(
   const invalidByReason = emptyInvalidCounts();
 
   operational.forEach((row) => {
-    const invalidReason = classifyEnrollmentCandidate(row.data);
+    const invalidReason = classifyScheduleIntegrityEnrollmentCandidate(row.data);
     if (invalidReason) {
       invalidByReason[invalidReason] += 1;
       invalidDetails.push({enrollmentId: row.id, reason: invalidReason});
@@ -550,8 +550,8 @@ export async function runScheduleIntegrityEngineWithStore(
     store.getSessionsByIds(expectedIds),
     store.listSessionsInWindow(anchorYmd, horizonEndYmd),
   ]);
-  const exceptionRelationIndex = buildExceptionRelationIndex(windowSessions);
-  const occurrenceSessionIndex = buildOccurrenceSessionIndex(windowSessions);
+  const exceptionRelationIndex = buildScheduleIntegrityExceptionRelationIndex(windowSessions);
+  const occurrenceSessionIndex = buildScheduleIntegrityOccurrenceSessionIndex(windowSessions);
 
   const summary: ScheduleIntegritySummary = {
     mode: 'READ_ONLY',
@@ -601,7 +601,7 @@ export async function runScheduleIntegrityEngineWithStore(
         enrollment: row.data,
         occurrence,
         scheduleRevision: row.scheduleRevision,
-        existingSession: resolveExistingOccurrenceSession({
+        existingSession: resolveScheduleIntegrityExistingOccurrenceSession({
           enrollmentId: row.id,
           occurrence,
           deterministicSession: existingById.get(occurrence.sessionId),
