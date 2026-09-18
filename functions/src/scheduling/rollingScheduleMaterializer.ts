@@ -5,6 +5,7 @@ import {
   resolveCanonicalTeacherIdForWrite,
 } from '../helpers/teacherIdentity';
 import {buildSessionFinancialTermsSnapshot} from '../helpers/sessionFinancialRates';
+import {isEnrollmentOperationallyActive} from '../helpers/status';
 
 export const ROLLING_SCHEDULE_TIME_ZONE = 'Asia/Kolkata';
 export const ROLLING_SCHEDULE_HORIZON_DAYS = 14;
@@ -18,17 +19,6 @@ const IST_OFFSET_MINUTES = 330;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-const ACTIVE_STATUS_ALIASES = new Set([
-  '',
-  'active',
-  'trial',
-  'enrolled',
-  'current',
-  'ongoing',
-  'pending_teacher',
-  'pending_payment',
-  'pending_lp',
-]);
 
 export type RollingMaterializerSlot = {
   weekday: number;
