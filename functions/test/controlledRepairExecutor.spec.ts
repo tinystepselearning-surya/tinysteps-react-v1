@@ -38,20 +38,6 @@ const baseEnrollment = (
     ],
   },
   ...overrides,
-  it('has no automatic trigger surface or bulk-repair path', () => {
-    const source = readFileSync(
-      resolve(process.cwd(), 'functions/src/scheduling/controlledRepairExecutor.ts'),
-      'utf8',
-    );
-    expect(source).toContain('adminPreviewControlledScheduleRepair');
-    expect(source).toContain('adminExecuteControlledScheduleRepair');
-    expect(source).not.toContain('onSchedule(');
-    expect(source).not.toContain('onDocumentCreated(');
-    expect(source).not.toContain('onDocumentWritten(');
-    expect(source).not.toContain('onDocumentUpdated(');
-    expect(source).not.toContain('for (const enrollment');
-    expect(source).not.toContain('Promise.all(enrollments');
-  });
 });
 
 const planFor = (
@@ -323,4 +309,19 @@ describe('Brick 5 controlled repair executor', () => {
       fingerprintControlledRepairPlan(changed),
     );
   });
+  it('has no automatic trigger surface or bulk-repair path', () => {
+    const source = readFileSync(
+      resolve(process.cwd(), 'functions/src/scheduling/controlledRepairExecutor.ts'),
+      'utf8',
+    );
+    expect(source).toContain('adminPreviewControlledScheduleRepair');
+    expect(source).toContain('adminExecuteControlledScheduleRepair');
+    expect(source).not.toContain('onSchedule(');
+    expect(source).not.toContain('onDocumentCreated(');
+    expect(source).not.toContain('onDocumentWritten(');
+    expect(source).not.toContain('onDocumentUpdated(');
+    expect(source).not.toContain('for (const enrollment');
+    expect(source).not.toContain('Promise.all(enrollments');
+  });
+
 });
