@@ -7,7 +7,7 @@ import {
   EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan,
   functionsChangeDecision, normalizeRevisionId, parseDeploymentArgs,
-  remainingTargets, validateCheckpoint,
+  remainingTargets, retryProvider404, validateCheckpoint,
 } from './deployment/functions-deployment-lib.mjs';
 
 const require = createRequire(import.meta.url);
@@ -186,6 +186,9 @@ function validateDeployContext() {
   const event = process.env.GITHUB_EVENT_NAME;
   if (!['push', 'workflow_dispatch'].includes(event)) throw new Error('--deploy requires a push or workflow_dispatch event');
   if (event === 'workflow_dispatch' && !options.only) throw new Error('Manual Functions recovery requires a non-empty FUNCTIONS_DEPLOY_ONLY/--only target list');
+  if (event === 'push' && !options.only && process.env.FUNCTIONS_DEPLOY_FULL !== 'true') {
+    throw new Error('Full Functions deployment requires explicit FUNCTIONS_DEPLOY_FULL=true from a known global-impact decision');
+  }
   if (process.env.GITHUB_REF !== 'refs/heads/main') throw new Error('--deploy requires refs/heads/main');
   if (process.env.GITHUB_REPOSITORY !== EXPECTED_REPOSITORY) throw new Error(`Unexpected repository: ${process.env.GITHUB_REPOSITORY}`);
   if (!/^[a-f0-9]{40}$/.test(process.env.GITHUB_SHA || '')) throw new Error('Missing/invalid GITHUB_SHA');
@@ -211,7 +214,11 @@ async function accessToken() {
 async function googleJson(url) {
   const token = await accessToken();
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error(`Google read verification failed (${res.status}) for ${new URL(url).pathname}`);
+  if (!res.ok) {
+    const error = new Error(`Google read verification failed (${res.status}) for ${new URL(url).pathname}`);
+    error.status = res.status;
+    throw error;
+  }
   return res.json();
 }
 
@@ -240,16 +247,19 @@ async function waitForRegionalOperationsToSettle() {
 }
 
 async function reconcileTarget(targetId) {
-  const fnUrl = `https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/functions/${encodeURIComponent(targetId)}`;
-  const fn = await googleJson(fnUrl);
-  if (fn.state !== 'ACTIVE') return classifyProviderState(targetId, fn);
-  const functionRevision = normalizeRevisionId(fn.serviceConfig?.revision);
-  const serviceResource = fn.serviceConfig?.service;
-  if (!functionRevision || !serviceResource) return classifyProviderState(targetId, fn);
+  return retryProvider404(async attempt => {
+    if (attempt > 1) console.log(`Provider read for ${targetId} returned 404; bounded reconciliation retry ${attempt}/6.`);
+    const fnUrl = `https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/functions/${encodeURIComponent(targetId)}`;
+    const fn = await googleJson(fnUrl);
+    if (fn.state !== 'ACTIVE') return classifyProviderState(targetId, fn);
+    const functionRevision = normalizeRevisionId(fn.serviceConfig?.revision);
+    const serviceResource = fn.serviceConfig?.service;
+    if (!functionRevision || !serviceResource) return classifyProviderState(targetId, fn);
 
-  const serviceId = serviceResource.split('/').at(-1);
-  const service = await googleJson(`https://run.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/services/${encodeURIComponent(serviceId)}`);
-  return classifyProviderState(targetId, fn, service);
+    const serviceId = serviceResource.split('/').at(-1);
+    const service = await googleJson(`https://run.googleapis.com/v2/projects/${PROJECT}/locations/${EXPECTED_REGION}/services/${encodeURIComponent(serviceId)}`);
+    return classifyProviderState(targetId, fn, service);
+  });
 }
 
 async function classifyTruncatedAttempt(result, pending) {
@@ -329,6 +339,15 @@ function formatEvidence(evidence) {
 }
 
 async function persistReport() {
+  report.completedTargets = [...new Set(report.confirmedReady)].sort();
+  const completed = new Set(report.completedTargets);
+  const lastAttempts = report.batches.map(batchReport => batchReport.attempts?.at(-1)).filter(Boolean);
+  report.failedTargets = [...new Set(lastAttempts.flatMap(attempt =>
+    attempt.failed?.map(item => item.target).filter(target => !completed.has(target)) ?? []))].sort();
+  report.uncertainTargets = [...new Set(lastAttempts.flatMap(attempt =>
+    attempt.uncertain?.map(item => item.target).filter(target => !completed.has(target)) ?? []))].sort();
+  report.batchesAttempted = report.batches.filter(batchReport => (batchReport.attempts?.length ?? 0) > 0).length;
+  report.attemptCount = report.batches.reduce((total, batchReport) => total + (batchReport.attempts?.length ?? 0), 0);
   await mkdir(resolve('artifacts'), { recursive: true });
   await writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 }

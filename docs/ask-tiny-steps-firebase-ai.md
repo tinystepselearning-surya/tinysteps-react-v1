@@ -12,7 +12,7 @@ Copy the `VITE_ASK_TINY_STEPS_*` placeholders from `.env.local.example` into an
 ignored local environment file or the hosting environment. Use the Firebase web
 configuration for **Ask Tiny Steps Web** and its reCAPTCHA Enterprise site key.
 These are browser configuration values. Do not add a Gemini API key, service
-account, App Check debug token, or Groq key.
+account, or App Check debug token.
 
 ## Local App Check workflow
 
@@ -33,8 +33,4 @@ reCAPTCHA Enterprise key.
 - Confirm Ask Tiny Steps answers a common FAQ on `tinystepslearning.com`.
 - Confirm App Check shows verified Firebase AI Logic requests.
 - Confirm the default app's Auth, Firestore, and Functions behavior is unchanged.
-- Confirm no Groq request and no App Check debug-token message appears.
-
-After the agreed rollback window, delete `groq-api-key` and `GROQ_API_KEY` in
-Secret Manager for `tinysteps-react-v1`, and remove the former secret-level
-accessor binding. Do this only after production validation.
+- Confirm no App Check debug-token message appears in production.
