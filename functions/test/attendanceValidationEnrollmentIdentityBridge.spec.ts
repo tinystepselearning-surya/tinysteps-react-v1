@@ -202,8 +202,8 @@ describe('AV3 enrollment identity bridge', () => {
     expect(result.expectedTeacherPresent).toBe(false);
   });
 
-  it('requires review when a participant matches multiple staff identities', () => {
-    const duplicatedRegistry: StaffIdentityRegistryEntry[] = [
+  it('lets a unique stable Microsoft identity override duplicate email fallback matches', () => {
+    const duplicatedEmailRegistry: StaffIdentityRegistryEntry[] = [
       ...staffRegistry,
       {
         staffId: 'other-staff',
@@ -213,7 +213,85 @@ describe('AV3 enrollment identity bridge', () => {
       },
     ];
 
-    const result = bridgeEnrollmentIdentity(evidence(), duplicatedRegistry);
+    const result = bridgeEnrollmentIdentity(evidence(), duplicatedEmailRegistry);
+
+    expect(result.expectedTeacherPresent).toBe(true);
+    expect(result.participantClassifications[0]).toEqual({
+      participantRecordId: 'teacher-record',
+      classification: 'expected_teacher',
+      matchedStaffIds: ['teacher-hansa'],
+    });
+    expect(result.issues).toContain('identity_email_conflict');
+    expect(result.identityConfidence).toBe('review');
+  });
+
+  it('uses email only as fallback when Graph supplies no stable Microsoft identity', () => {
+    const input = evidence();
+    input.attendanceReports[0].participantRecords[0].identityHints = [];
+
+    const result = bridgeEnrollmentIdentity(input, staffRegistry);
+
+    expect(result.expectedTeacherPresent).toBe(true);
+    expect(result.identityConfidence).toBe('verified');
+    expect(result.participantClassifications[0]).toEqual({
+      participantRecordId: 'teacher-record',
+      classification: 'expected_teacher',
+      matchedStaffIds: ['teacher-hansa'],
+    });
+  });
+
+  it('requires review when stable Microsoft identity and email identify different staff', () => {
+    const input = evidence();
+    input.attendanceReports[0].participantRecords[0].emailAddressHash =
+      hashAttendanceEvidenceValue('ravalipriyavannala@tinystepslearning.com');
+
+    const result = bridgeEnrollmentIdentity(input, staffRegistry);
+
+    expect(result.expectedTeacherPresent).toBe(true);
+    expect(result.participantClassifications[0]).toEqual({
+      participantRecordId: 'teacher-record',
+      classification: 'expected_teacher',
+      matchedStaffIds: ['teacher-hansa'],
+    });
+    expect(result.issues).toContain('identity_email_conflict');
+    expect(result.identityConfidence).toBe('review');
+  });
+
+  it('does not let a staff email override an unknown stable Microsoft identity', () => {
+    const input = evidence();
+    input.attendanceReports[0].participantRecords[0].identityHints = [
+      {
+        kind: 'user',
+        idHash: hashAttendanceEvidenceValue('unknown-stable-microsoft-id'),
+      },
+    ];
+
+    const result = bridgeEnrollmentIdentity(input, staffRegistry);
+
+    expect(result.expectedTeacherPresent).toBe(false);
+    expect(result.participantClassifications[0]).toEqual({
+      participantRecordId: 'teacher-record',
+      classification: 'ambiguous_staff',
+      matchedStaffIds: ['teacher-hansa'],
+    });
+    expect(result.issues).toContain('identity_email_conflict');
+    expect(result.identityConfidence).toBe('review');
+  });
+
+  it('requires review when the same stable Microsoft identity is registered to multiple staff', () => {
+    const duplicatedStableRegistry: StaffIdentityRegistryEntry[] = [
+      ...staffRegistry,
+      {
+        staffId: 'other-staff',
+        role: 'teacher',
+        emailAddressHash: null,
+        microsoftIdentityIdHashes: [
+          hashAttendanceEvidenceValue('7b27d0bc-25da-42c7-9fda-84a558112f45'),
+        ],
+      },
+    ];
+
+    const result = bridgeEnrollmentIdentity(evidence(), duplicatedStableRegistry);
 
     expect(result.identityConfidence).toBe('review');
     expect(result.issues).toContain('ambiguous_staff_match');
