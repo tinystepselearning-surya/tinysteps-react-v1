@@ -5,7 +5,7 @@ import {
   resolveCanonicalTeacherIdForWrite,
 } from '../helpers/teacherIdentity';
 import {buildSessionFinancialTermsSnapshot} from '../helpers/sessionFinancialRates';
-import {isEnrollmentOperationallyActive} from '../helpers/status';
+import {isEnrollmentOperationallyActive} from './enrollmentSchedulingStatus';
 
 export const ROLLING_SCHEDULE_TIME_ZONE = 'Asia/Kolkata';
 export const ROLLING_SCHEDULE_HORIZON_DAYS = 14;
