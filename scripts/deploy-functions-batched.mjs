@@ -13,6 +13,7 @@ import {
 const require = createRequire(import.meta.url);
 const PROJECT = process.env.FIREBASE_PROJECT_ID || 'tinysteps-react-v1';
 const EXPECTED_REPOSITORY = 'tinystepselearning-surya/tinysteps-react-v1';
+const EXPECTED_DEPLOY_PRINCIPAL = 'github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com';
 const FIREBASE_CLI = '15.30.0';
 const REPORT_PATH = resolve('artifacts/functions-deployment-report.json');
 const MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
@@ -74,6 +75,7 @@ try {
   }
 
   validateDeployContext();
+  await verifyGoogleDeployPrincipal();
   if (options.resumeFrom) {
     const checkpoint = JSON.parse(await readFile(resolve(options.resumeFrom), 'utf8'));
     const ready = validateCheckpoint(checkpoint, report);
@@ -207,6 +209,18 @@ async function requireCurrentMain() {
   if (!res.ok) throw new Error(`Unable to verify current main (${res.status})`);
   const body = await res.json();
   if (body.sha !== process.env.GITHUB_SHA) throw new Error(`Deployment commit is stale; main is now ${body.sha}`);
+}
+
+async function verifyGoogleDeployPrincipal() {
+  const result = await runBounded('gcloud', [
+    'auth', 'list', '--filter=status:ACTIVE', '--format=value(account)',
+  ], 64 * 1024);
+  if (result.code !== 0 || result.truncated) throw new Error('Unable to verify active Google deploy principal');
+  const accounts = result.output.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+  if (accounts.length !== 1 || accounts[0] !== EXPECTED_DEPLOY_PRINCIPAL) {
+    throw new Error(`Unexpected active Google deploy principal: ${accounts.join(', ') || '<none>'}`);
+  }
+  console.log(`Verified Google deploy principal: ${EXPECTED_DEPLOY_PRINCIPAL}`);
 }
 
 async function accessToken() {

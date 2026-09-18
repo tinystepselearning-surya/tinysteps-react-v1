@@ -156,6 +156,13 @@ test('bounded deployer prints sanitized diagnostics only for non-zero Firebase C
   assert.doesNotMatch(source, /console\.(?:log|error)\(result\.output\)/);
 });
 
+test('bounded deployer fails closed unless the documented Google deploy principal is active', () => {
+  const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  assert.match(source, /EXPECTED_DEPLOY_PRINCIPAL = 'github-action-1086722180@tinysteps-react-v1\.iam\.gserviceaccount\.com'/);
+  assert.match(source, /validateDeployContext\(\);\s*await verifyGoogleDeployPrincipal\(\);/);
+  assert.match(source, /accounts\.length !== 1 \|\| accounts\[0\] !== EXPECTED_DEPLOY_PRINCIPAL/);
+});
+
 test('provider reconciliation retries only bounded transient 404 reads', async () => {
   let reads = 0;
   const sleeps = [];
