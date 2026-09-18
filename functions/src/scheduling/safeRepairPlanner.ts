@@ -8,7 +8,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ensureAdmin} from '../helpers/adminGuard';
-import {isEnrollmentOperationallyActive} from '../helpers/status';
+import {isEnrollmentOperationallyActive} from './enrollmentSchedulingStatus';
 import {
   addDaysYmd,
   buildRollingMaterializationPlan,
