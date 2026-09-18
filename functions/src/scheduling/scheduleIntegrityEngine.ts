@@ -82,6 +82,8 @@ export type ScheduleIntegrityEnrollmentRow = {
   identityMismatches: number;
   scheduleMismatches: number;
   staleRevision: number;
+  duplicateRegularSessions: number;
+  unexpectedRegularSessions: number;
   missingToday: number;
   materializationMetadataPresent: boolean;
 };
@@ -107,6 +109,8 @@ export type ScheduleIntegritySummary = {
   identityMismatches: number;
   scheduleMismatches: number;
   staleRevisionOccurrences: number;
+  duplicateRegularSessions: number;
+  unexpectedRegularSessions: number;
   missingToday: number;
   affectedEnrollments: number;
   zeroCoveredEnrollments: number;
@@ -305,6 +309,23 @@ const sessionMatchesEnrollmentIdentity = (
   return sessionKidIds.every((kidId) => enrollmentKidIds.includes(kidId));
 };
 
+const sessionMatchesExceptionEnrollmentIdentity = (
+  session: Record<string, unknown>,
+  enrollmentId: string,
+  enrollment: Record<string, unknown>,
+): boolean => {
+  if (text(session.enrollmentId) !== enrollmentId) return false;
+
+  const enrollmentCourseId = text(enrollment.courseId);
+  const sessionCourseId = text(session.courseId);
+  if (enrollmentCourseId && sessionCourseId !== enrollmentCourseId) return false;
+
+  const enrollmentKidIds = collectEnrollmentKidIds(enrollment);
+  const sessionKidIds = collectSessionKidIds(session);
+  if (!enrollmentKidIds.length || !sessionKidIds.length) return false;
+  return sessionKidIds.every((kidId) => enrollmentKidIds.includes(kidId));
+};
+
 const sessionMatchesOccurrence = (
   session: Record<string, unknown>,
   occurrence: RollingMaterializationOccurrence,
@@ -322,17 +343,24 @@ const sessionHasStaleRevision = (
   return Number.isFinite(raw) && raw > 0 && Math.floor(raw) !== scheduleRevision;
 };
 
+export type ScheduleIntegrityExceptionRelation = {
+  sessionId: string;
+  session: Record<string, unknown>;
+};
+
 export const buildScheduleIntegrityExceptionRelationIndex = (
   sessions: Map<string, Record<string, unknown>>,
-): Map<string, string> => {
-  const related = new Map<string, string>();
+): Map<string, ScheduleIntegrityExceptionRelation[]> => {
+  const related = new Map<string, ScheduleIntegrityExceptionRelation[]>();
   sessions.forEach((session, sessionId) => {
     if (!isScheduleExceptionSession(session)) return;
     EXCEPTION_BACK_REFERENCE_FIELDS.forEach((field) => {
       const expectedSessionId = text(session[field]);
-      if (expectedSessionId && !related.has(expectedSessionId)) {
-        related.set(expectedSessionId, sessionId);
-      }
+      if (!expectedSessionId) return;
+      const rows = related.get(expectedSessionId) || [];
+      rows.push({sessionId, session});
+      rows.sort((left, right) => left.sessionId.localeCompare(right.sessionId));
+      related.set(expectedSessionId, rows);
     });
   });
   return related;
@@ -362,6 +390,115 @@ export const buildScheduleIntegrityOccurrenceSessionIndex = (
     index.set(key, rows);
   });
   return index;
+};
+
+export type ScheduleIntegritySurplusSessionFinding = {
+  sessionId: string;
+  date: string;
+  startTime: string;
+  durationMinutes: number | null;
+};
+
+export type ScheduleIntegritySurplusFindings = {
+  duplicateRegularSessions: ScheduleIntegritySurplusSessionFinding[];
+  unexpectedRegularSessions: ScheduleIntegritySurplusSessionFinding[];
+};
+
+const isRegularScheduleIntegritySession = (
+  session: Record<string, unknown>,
+): boolean => {
+  const status = normalizeSessionStatus(session.status);
+  return !VALID_EXCEPTION_STATUSES.has(status) &&
+    !isScheduleExceptionSession(session);
+};
+
+const occurrenceSignature = (
+  date: string,
+  startTime: string,
+  durationMinutes: number,
+): string => `${date}|${startTime}|${durationMinutes}`;
+
+export const detectScheduleIntegritySurplusSessions = (args: {
+  enrollmentId: string;
+  occurrences: RollingMaterializationOccurrence[];
+  sessions: Map<string, Record<string, unknown>>;
+  fromYmd: string;
+  toYmd: string;
+}): ScheduleIntegritySurplusFindings => {
+  const expectedBySignature = new Map(
+    args.occurrences.map((occurrence) => [
+      occurrenceSignature(
+        occurrence.date,
+        occurrence.startTime,
+        occurrence.durationMinutes,
+      ),
+      occurrence,
+    ]),
+  );
+  const candidatesBySignature = new Map<
+    string,
+    ScheduleIntegritySurplusSessionFinding[]
+  >();
+  const unexpectedRegularSessions: ScheduleIntegritySurplusSessionFinding[] = [];
+
+  args.sessions.forEach((session, sessionId) => {
+    if (text(session.enrollmentId) !== args.enrollmentId) return;
+    if (!isRegularScheduleIntegritySession(session)) return;
+
+    const date = sessionYmd(session);
+    if (!date || date < args.fromYmd || date > args.toYmd) return;
+    const startTime = sessionStartTime(session);
+    const durationMinutes = sessionDurationMinutes(session);
+    const finding: ScheduleIntegritySurplusSessionFinding = {
+      sessionId,
+      date,
+      startTime,
+      durationMinutes,
+    };
+    if (!startTime || durationMinutes === null) {
+      unexpectedRegularSessions.push(finding);
+      return;
+    }
+
+    const signature = occurrenceSignature(date, startTime, durationMinutes);
+    if (!expectedBySignature.has(signature)) {
+      unexpectedRegularSessions.push(finding);
+      return;
+    }
+
+    const rows = candidatesBySignature.get(signature) || [];
+    rows.push(finding);
+    candidatesBySignature.set(signature, rows);
+  });
+
+  const duplicateRegularSessions: ScheduleIntegritySurplusSessionFinding[] = [];
+  candidatesBySignature.forEach((rows, signature) => {
+    if (rows.length <= 1) return;
+    const occurrence = expectedBySignature.get(signature);
+    const sorted = [...rows].sort((left, right) =>
+      left.sessionId.localeCompare(right.sessionId),
+    );
+    const canonicalIndex = occurrence
+      ? sorted.findIndex((row) => row.sessionId === occurrence.sessionId)
+      : -1;
+    const keepIndex = canonicalIndex >= 0 ? canonicalIndex : 0;
+    sorted.forEach((row, index) => {
+      if (index !== keepIndex) duplicateRegularSessions.push(row);
+    });
+  });
+
+  duplicateRegularSessions.sort((left, right) =>
+    left.date.localeCompare(right.date) ||
+    left.startTime.localeCompare(right.startTime) ||
+    left.sessionId.localeCompare(right.sessionId),
+  );
+  unexpectedRegularSessions.sort((left, right) =>
+    left.date.localeCompare(right.date) ||
+    left.startTime.localeCompare(right.startTime) ||
+    left.sessionId.localeCompare(right.sessionId),
+  );
+
+  return {duplicateRegularSessions, unexpectedRegularSessions};
 };
 
 export async function loadScheduleIntegritySessionEvidence(
@@ -424,7 +561,7 @@ export const classifyScheduleIntegrityOccurrence = (args: {
   occurrence: RollingMaterializationOccurrence;
   scheduleRevision: number;
   existingSession?: Record<string, unknown>;
-  relatedExceptionSessionId?: string;
+  relatedExceptionCandidates?: ScheduleIntegrityExceptionRelation[];
 }): ScheduleIntegrityOccurrenceClassification => {
   const {
     enrollmentId,
@@ -432,17 +569,39 @@ export const classifyScheduleIntegrityOccurrence = (args: {
     occurrence,
     scheduleRevision,
     existingSession,
-    relatedExceptionSessionId,
+    relatedExceptionCandidates = [],
   } = args;
 
   if (!existingSession) {
-    return relatedExceptionSessionId ?
-      {state: 'schedule_exception', relatedExceptionSessionId} :
-      {state: 'missing'};
+    if (!relatedExceptionCandidates.length) return {state: 'missing'};
+    const validRelation = relatedExceptionCandidates.find(({session}) =>
+      sessionMatchesExceptionEnrollmentIdentity(
+        session,
+        enrollmentId,
+        enrollment,
+      ),
+    );
+    if (validRelation) {
+      return {
+        state: 'schedule_exception',
+        relatedExceptionSessionId: validRelation.sessionId,
+      };
+    }
+    return {
+      state: 'identity_mismatch',
+      relatedExceptionSessionId: relatedExceptionCandidates[0]?.sessionId,
+    };
   }
 
   const status = normalizeSessionStatus(existingSession.status);
   if (VALID_EXCEPTION_STATUSES.has(status) || isScheduleExceptionSession(existingSession)) {
+    if (!sessionMatchesExceptionEnrollmentIdentity(
+      existingSession,
+      enrollmentId,
+      enrollment,
+    )) {
+      return {state: 'identity_mismatch'};
+    }
     return {state: 'schedule_exception'};
   }
   if (!sessionMatchesEnrollmentIdentity(existingSession, enrollmentId, enrollment)) {
@@ -614,6 +773,8 @@ export async function runScheduleIntegrityEngineWithStore(
     identityMismatches: 0,
     scheduleMismatches: 0,
     staleRevisionOccurrences: 0,
+    duplicateRegularSessions: 0,
+    unexpectedRegularSessions: 0,
     missingToday: 0,
     affectedEnrollments: 0,
     zeroCoveredEnrollments: 0,
@@ -627,6 +788,13 @@ export async function runScheduleIntegrityEngineWithStore(
   };
 
   prepared.forEach((row) => {
+    const surplus = detectScheduleIntegritySurplusSessions({
+      enrollmentId: row.id,
+      occurrences: row.occurrences,
+      sessions: evidenceSessions,
+      fromYmd: anchorYmd,
+      toYmd: horizonEndYmd,
+    });
     const detail: ScheduleIntegrityEnrollmentRow = {
       enrollmentId: row.id,
       expected: row.occurrences.length,
@@ -636,6 +804,8 @@ export async function runScheduleIntegrityEngineWithStore(
       identityMismatches: 0,
       scheduleMismatches: 0,
       staleRevision: 0,
+      duplicateRegularSessions: 0,
+      unexpectedRegularSessions: 0,
       missingToday: 0,
       materializationMetadataPresent: row.materializationMetadataPresent,
     };
@@ -652,7 +822,9 @@ export async function runScheduleIntegrityEngineWithStore(
           deterministicSession: existingById.get(occurrence.sessionId),
           occurrenceIndex: occurrenceSessionIndex,
         }),
-        relatedExceptionSessionId: exceptionRelationIndex.get(occurrence.sessionId),
+        relatedExceptionCandidates: exceptionRelationIndex.get(
+          occurrence.sessionId,
+        ),
       });
 
       summary.expectedOccurrences += 1;
@@ -686,11 +858,27 @@ export async function runScheduleIntegrityEngineWithStore(
       }
     });
 
+    detail.duplicateRegularSessions =
+      surplus.duplicateRegularSessions.length;
+    detail.unexpectedRegularSessions =
+      surplus.unexpectedRegularSessions.length;
+    summary.duplicateRegularSessions += detail.duplicateRegularSessions;
+    summary.unexpectedRegularSessions += detail.unexpectedRegularSessions;
+    [
+      ...surplus.duplicateRegularSessions,
+      ...surplus.unexpectedRegularSessions,
+    ].forEach((finding) => {
+      summary.defectsByDate[finding.date] =
+        (summary.defectsByDate[finding.date] || 0) + 1;
+    });
+
     const defects =
       detail.missing +
       detail.identityMismatches +
       detail.scheduleMismatches +
-      detail.staleRevision;
+      detail.staleRevision +
+      detail.duplicateRegularSessions +
+      detail.unexpectedRegularSessions;
     if (defects > 0) summary.affectedEnrollments += 1;
     // A stale scheduleRevision is an integrity defect, but the physical session
     // still covers the learner when identity + recurrence are otherwise correct.
@@ -715,12 +903,16 @@ export async function runScheduleIntegrityEngineWithStore(
       left.missing +
       left.identityMismatches +
       left.scheduleMismatches +
-      left.staleRevision;
+      left.staleRevision +
+      left.duplicateRegularSessions +
+      left.unexpectedRegularSessions;
     const rightDefects =
       right.missing +
       right.identityMismatches +
       right.scheduleMismatches +
-      right.staleRevision;
+      right.staleRevision +
+      right.duplicateRegularSessions +
+      right.unexpectedRegularSessions;
     return rightDefects - leftDefects ||
       Number(left.materializationMetadataPresent) -
         Number(right.materializationMetadataPresent) ||
