@@ -42,11 +42,15 @@ const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   'replacement',
 ];
 
-const EXCEPTION_RELATION_FIELDS = [
+const EXCEPTION_BACK_REFERENCE_FIELDS = [
   'replacementForSessionId',
   'originalSessionId',
   'makeupForSessionId',
   'rescheduledFromSessionId',
+] as const;
+
+const EXCEPTION_MARKER_FIELDS = [
+  ...EXCEPTION_BACK_REFERENCE_FIELDS,
   'replacementSessionId',
 ] as const;
 
@@ -245,7 +249,7 @@ const sessionDurationMinutes = (session: Record<string, unknown>): number | null
 
 const isScheduleExceptionSession = (session: Record<string, unknown>): boolean => {
   if (session.isAdHoc === true || session.isMakeup === true) return true;
-  if (EXCEPTION_RELATION_FIELDS.some((field) => Boolean(text(session[field])))) {
+  if (EXCEPTION_MARKER_FIELDS.some((field) => Boolean(text(session[field])))) {
     return true;
   }
   const adHocType = text(session.adHocType).toLowerCase();
@@ -309,7 +313,7 @@ const buildExceptionRelationIndex = (
   const related = new Map<string, string>();
   sessions.forEach((session, sessionId) => {
     if (!isScheduleExceptionSession(session)) return;
-    EXCEPTION_RELATION_FIELDS.forEach((field) => {
+    EXCEPTION_BACK_REFERENCE_FIELDS.forEach((field) => {
       const expectedSessionId = text(session[field]);
       if (expectedSessionId && !related.has(expectedSessionId)) {
         related.set(expectedSessionId, sessionId);
