@@ -15,6 +15,7 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const AV2_PROOF_CONTRACT_VERSION = 1;
 const MICROSOFT_TENANT_ID = defineSecret('MICROSOFT_TENANT_ID');
 const MICROSOFT_CLIENT_ID = defineSecret('MICROSOFT_CLIENT_ID');
 const MICROSOFT_CLIENT_SECRET = defineSecret('MICROSOFT_CLIENT_SECRET');
@@ -118,7 +119,9 @@ export const runAv2TeamsEvidenceProof = onRequest({
     const result = await collectTeamsEvidence(request, { graphClient, store });
 
     res.status(200).json({
+      proofContractVersion: AV2_PROOF_CONTRACT_VERSION,
       ok: result.evidence.collectionStatus === 'complete',
+      classSessionId: request.session.classSessionId,
       runId: result.run.id,
       evidenceId: result.evidence.id,
       collectionStatus: result.evidence.collectionStatus,
