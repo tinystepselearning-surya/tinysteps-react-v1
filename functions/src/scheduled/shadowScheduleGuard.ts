@@ -24,6 +24,7 @@ export const SHADOW_SCHEDULE_GUARD_SCHEDULE = '0 */6 * * *';
 export const SHADOW_SCHEDULE_GUARD_MAX_ENROLLMENTS =
   MAX_SCHEDULE_INTEGRITY_ENROLLMENTS;
 export const SHADOW_SCHEDULE_GUARD_MAX_LOG_IDS = 25;
+export const SHADOW_SCHEDULE_GUARD_NOTIFICATIONS_ENABLED = false;
 
 export type ShadowScheduleGuardSeverity =
   | 'healthy'
