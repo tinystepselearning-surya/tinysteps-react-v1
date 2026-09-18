@@ -16,8 +16,10 @@ export const AV4_PROOF_SCHEMA_VERSION = 1;
 
 export type Av4ProofIssueKind =
   | 'session_reference_incomplete'
+  | 'identity_session_mismatch'
   | 'occurrence_not_resolved'
   | 'unexpected_attendance_report_count'
+  | 'attendance_report_window_mismatch'
   | 'expected_teacher_missing'
   | 'learner_side_missing'
   | 'identity_requires_review'
@@ -42,7 +44,9 @@ export interface Av4SessionProofResult {
   enrollmentId: string | null;
   kidId: string | null;
   teacherId: string | null;
+  identitySessionReferenceMatches: boolean;
   correctSessionReference: boolean;
+  attendanceReportMatchesScheduledWindow: boolean;
   correctOccurrenceResolved: boolean;
   expectedTeacherPresent: boolean;
   learnerSidePresent: boolean;
@@ -92,11 +96,63 @@ function toGraphIntervals(participant: AttendanceParticipantEvidence): GraphAtte
   }));
 }
 
-function evidenceComplete(evidence: AttendanceValidationEvidenceDocument): boolean {
-  return evidence.collectionStatus === 'complete'
-    && evidence.completeness.attendanceReportsComplete
+function identitySessionReferenceMatches(
+  evidence: AttendanceValidationEvidenceDocument,
+  identity: Av3EnrollmentIdentityResult,
+): boolean {
+  return identity.classSessionId === evidence.session.classSessionId
+    && identity.enrollmentId === evidence.session.enrollmentId
+    && identity.kidId === evidence.session.kidId
+    && identity.teacherId === evidence.session.teacherId;
+}
+
+function parseOptionalInstant(value: string | null): number | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function attendanceReportMatchesScheduledWindow(
+  evidence: AttendanceValidationEvidenceDocument,
+): boolean {
+  if (evidence.attendanceReports.length !== 1) return false;
+
+  const report = evidence.attendanceReports[0];
+  const reportStartMs = parseOptionalInstant(report.meetingStartDateTime);
+  const reportEndMs = parseOptionalInstant(report.meetingEndDateTime);
+  const scheduledStartMs = Date.parse(evidence.session.scheduledStartDateTime);
+  const scheduledEndMs = Date.parse(evidence.session.scheduledEndDateTime);
+
+  if (
+    reportStartMs === null
+    || reportEndMs === null
+    || !Number.isFinite(scheduledStartMs)
+    || !Number.isFinite(scheduledEndMs)
+    || reportEndMs <= reportStartMs
+    || scheduledEndMs <= scheduledStartMs
+  ) {
+    return false;
+  }
+
+  return Math.min(reportEndMs, scheduledEndMs) > Math.max(reportStartMs, scheduledStartMs);
+}
+
+function attendanceEvidenceComplete(evidence: AttendanceValidationEvidenceDocument): boolean {
+  const attendanceRelevantIssue = evidence.issues.some(
+    (issue) => issue.stage !== 'transcripts',
+  );
+  const selectedReport = evidence.attendanceReports.length === 1
+    ? evidence.attendanceReports[0]
+    : null;
+
+  return evidence.completeness.attendanceReportsComplete
+    && !evidence.completeness.nextAttendanceReportPagePresent
     && evidence.completeness.attendanceRecordsComplete
-    && evidence.issues.length === 0;
+    && selectedReport !== null
+    && selectedReport.recordsComplete
+    && !selectedReport.nextRecordsPagePresent
+    && selectedReport.recordsIssue === null
+    && !attendanceRelevantIssue;
 }
 
 /**
@@ -113,21 +169,30 @@ export function buildSessionProof(
 ): Av4SessionProofResult {
   const issues: Av4ProofIssueKind[] = [];
 
-  const correctSessionReference = Boolean(
+  const referenceComplete = Boolean(
     evidence.session.classSessionId
       && evidence.session.enrollmentId
       && evidence.session.kidId
       && evidence.session.teacherId,
   );
-  if (!correctSessionReference) issues.push('session_reference_incomplete');
+  if (!referenceComplete) issues.push('session_reference_incomplete');
 
+  const identityReferenceMatches = identitySessionReferenceMatches(evidence, identity);
+  if (!identityReferenceMatches) issues.push('identity_session_mismatch');
+
+  const correctSessionReference = referenceComplete && identityReferenceMatches;
+
+  const reportMatchesScheduledWindow = attendanceReportMatchesScheduledWindow(evidence);
   const correctOccurrenceResolved = Boolean(
     evidence.meeting
-      && evidence.attendanceReports.length === 1,
+      && evidence.attendanceReports.length === 1
+      && reportMatchesScheduledWindow,
   );
-  if (!evidence.meeting) issues.push('occurrence_not_resolved');
+  if (!correctOccurrenceResolved) issues.push('occurrence_not_resolved');
   if (evidence.attendanceReports.length !== 1) {
     issues.push('unexpected_attendance_report_count');
+  } else if (!reportMatchesScheduledWindow) {
+    issues.push('attendance_report_window_mismatch');
   }
 
   const expectedTeacherPresent = identity.expectedTeacherPresent;
@@ -136,8 +201,8 @@ export function buildSessionProof(
   if (!learnerSidePresent) issues.push('learner_side_missing');
   if (identity.identityConfidence !== 'verified') issues.push('identity_requires_review');
 
-  const attendanceEvidenceComplete = evidenceComplete(evidence);
-  if (!attendanceEvidenceComplete) issues.push('attendance_evidence_incomplete');
+  const evidenceComplete = attendanceEvidenceComplete(evidence);
+  if (!evidenceComplete) issues.push('attendance_evidence_incomplete');
 
   const teacherParticipants = participantsByClassification(
     evidence,
@@ -195,11 +260,13 @@ export function buildSessionProof(
     enrollmentId: evidence.session.enrollmentId,
     kidId: evidence.session.kidId,
     teacherId: evidence.session.teacherId,
+    identitySessionReferenceMatches: identityReferenceMatches,
     correctSessionReference,
+    attendanceReportMatchesScheduledWindow: reportMatchesScheduledWindow,
     correctOccurrenceResolved,
     expectedTeacherPresent,
     learnerSidePresent,
-    attendanceEvidenceComplete,
+    attendanceEvidenceComplete: evidenceComplete,
     teacherScheduledSeconds: sumScheduledSeconds(teacherParticipants),
     learnerSideScheduledSeconds: sumScheduledSeconds(learnerParticipants),
     maxTeacherLearnerOverlapSeconds,
