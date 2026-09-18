@@ -53,6 +53,7 @@ const output = {
   functions_deployment_required: String(result.functionsDeploymentRequired),
   functions_full_deployment: String(result.fullDeployment),
   functions_targets: targetsCsv,
+  functions_retired_targets: (result.retiredFunctions || []).join(','),
   hosting_changed: String(result.hostingChanged),
   frontend_validation_required: String(result.frontendValidationRequired),
   firestore_rules_changed: String(result.firestoreRulesChanged),
@@ -71,10 +72,15 @@ const lines = [
   `- Functions deployment required: ${result.functionsDeploymentRequired}`,
   `- Functions full deployment: ${result.fullDeployment}`,
   `- Functions impacted: ${result.fullDeployment ? 'all (known global impact)' : result.impactedFunctions.length}`,
+  `- Functions intentionally retired from source: ${(result.retiredFunctions || []).length}`,
   `- Hosting changed: ${result.hostingChanged}`,
   `- Firestore rules changed: ${result.firestoreRulesChanged}`,
 ];
 if (result.fullDeploymentReason) lines.push(`- Full deployment reason: ${result.fullDeploymentReason}`);
+if ((result.retiredFunctions || []).length) {
+  lines.push('', '### Intentionally retired Function exports', '');
+  for (const id of result.retiredFunctions) lines.push(`- \`${id}\``);
+}
 if (result.impactedFunctions.length) {
   lines.push('', '### Function targets', '');
   for (const id of result.impactedFunctions) {
