@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   API_ROOT,
   TODAY,
@@ -10,10 +11,13 @@ import {
   exceptionSession,
   identityMatches,
   indiaYmd,
+  normalizeScheduleSlots,
   parentVisibility,
   scheduleMatches,
   schedulerActive,
   sessionDate,
+  sessionDuration,
+  sessionTime,
 } from './audit-production-schedule-brick0.mjs';
 
 const enrollment = {
@@ -96,6 +100,62 @@ test('known makeup/reschedule records are recognized as exceptions', () => {
   assert.equal(exceptionSession({rescheduledFromSessionId: healthySession.id}), true);
   assert.equal(exceptionSession({isMakeup: true}), true);
   assert.equal(exceptionSession({source: 'approved_request_reschedule'}), true);
+});
+
+test('slot normalization matches the rolling materializer contract', () => {
+  assert.deepEqual(
+    normalizeScheduleSlots({weekdays: [5, 5], timeHHmm: '10:00', durationMins: 5}),
+    [{weekday: 5, time: '10:00', durationMinutes: 10}],
+  );
+  assert.deepEqual(
+    normalizeScheduleSlots({weeklySlots: [{weekday: 5, time: '10:00', durationMinutes: 999}]}),
+    [{weekday: 5, time: '10:00', durationMinutes: 180}],
+  );
+  assert.throws(
+    () => normalizeScheduleSlots({weeklySlots: [
+      {weekday: 5, time: '10:00', durationMinutes: 35},
+      {weekday: 5, time: '10:00', durationMinutes: 45},
+    ]}),
+    /Conflicting weekly slots/,
+  );
+});
+
+test('legacy startAt/endTime fallbacks use Asia/Kolkata and exact duration', () => {
+  const legacy = {
+    startAt: '2026-09-18T04:30:00Z',
+    startTime: '10:00',
+    endTime: '10:35',
+  };
+  assert.equal(sessionDate(legacy), '2026-09-18');
+  assert.equal(sessionTime({...legacy, startTime: ''}), '10:00');
+  assert.equal(sessionDuration(legacy), 35);
+});
+
+test('parent visibility requires the child ownership query to discover the child', () => {
+  const unownedKids = new Map([['kid1', {id: 'kid1', parentIds: ['different-parent']}]]);
+  const result = parentVisibility(healthySession, enrollment, unownedKids);
+  assert.equal(result.visible, false);
+  assert.match(result.reasons.join(' | '), /parentIds ownership query/);
+});
+
+test('audit source contains only guarded Firestore read request call sites', () => {
+  const source = fs.readFileSync(new URL('./audit-production-schedule-brick0.mjs', import.meta.url), 'utf8');
+  const calls = [...source.matchAll(/request\('([^']+)',\s*`([^`]+)`/g)]
+    .map((match) => `${match[1]} ${match[2]}`)
+    .sort();
+  assert.deepEqual(calls, [
+    'GET ${API_ROOT}/${name}?${query}',
+    'POST ${API_ROOT}:batchGet',
+    'POST ${API_ROOT}:runQuery',
+  ].sort());
+  assert.doesNotMatch(source, /firebase-admin|runTransaction|\.collection\(|writeBatch|bulkWriter/);
+});
+
+test('stale revision remains distinct from parent ownership visibility', () => {
+  const stale = {...healthySession, scheduleRevision: 1};
+  const result = classifyExpectedOccurrence({occurrence, session: stale, enrollment, kids});
+  assert.equal(result.classification, 'STALE SCHEDULE REVISION');
+  assert.equal(parentVisibility(stale, enrollment, kids).visible, true);
 });
 
 test('occurrence classifier distinguishes healthy, missing, cancelled, hidden, identity, time, revision and reschedule states', () => {
