@@ -3,7 +3,8 @@ import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ensureAdmin} from '../helpers/adminGuard';
-import {normalizeEnrollmentStatus, normalizeSessionStatus} from '../helpers/status';
+import {normalizeSessionStatus} from '../helpers/status';
+import {normalizeEnrollmentStatus} from './enrollmentSchedulingStatus';
 import {
   ROLLING_SCHEDULE_DELIVERY_MODE,
   ROLLING_SCHEDULE_HORIZON_DAYS,
