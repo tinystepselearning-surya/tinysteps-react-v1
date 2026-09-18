@@ -225,6 +225,19 @@ jobs:
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: npm ci
 
+      - name: Cache Playwright browsers for Hosting prerender
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Chromium for Hosting prerender
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        run: npx playwright install --with-deps chromium
+
       - name: Authenticate to Google Cloud
         id: gcp-auth
         uses: google-github-actions/auth@v2
