@@ -82,6 +82,33 @@ describe('Brick 3 shadow schedule guard', () => {
     expect(assessment.affectedEnrollmentIds).toEqual(['enr-1']);
   });
 
+  it('treats stale-revision-only coverage as warning, not zero-coverage critical', () => {
+    const assessment = buildShadowScheduleGuardAssessment(baseSummary({
+      expectedOccurrences: 3,
+      healthyOccurrences: 0,
+      staleRevisionOccurrences: 3,
+      affectedEnrollments: 1,
+      zeroCoveredEnrollments: 0,
+      details: [{
+        enrollmentId: 'enr-stale',
+        expected: 3,
+        healthy: 0,
+        exceptions: 0,
+        missing: 0,
+        identityMismatches: 0,
+        scheduleMismatches: 0,
+        staleRevision: 3,
+        missingToday: 0,
+        materializationMetadataPresent: true,
+      }],
+    }));
+
+    expect(assessment.severity).toBe('warning');
+    expect(assessment.reasons).toContain('stale_revision');
+    expect(assessment.reasons).not.toContain('zero_covered_enrollment');
+    expect(assessment.coveredOccurrences).toBe(3);
+  });
+
   it('raises critical when a class is missing today', () => {
     const assessment = buildShadowScheduleGuardAssessment(baseSummary({
       missingOccurrences: 1,
