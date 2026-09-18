@@ -216,6 +216,86 @@ describe('Brick 2 schedule integrity engine', () => {
     expect(summary.missingOccurrences).toBe(0);
   });
 
+  it('rejects a linked replacement whose enrollment or child identity does not match', async () => {
+    const enrollment = baseEnrollment();
+    const plan = planFor('enr-identity', enrollment);
+    const store = new MemoryStore([{id: 'enr-identity', data: enrollment}]);
+
+    plan.occurrences.slice(1).forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-identity', enrollment, occurrence),
+      );
+    });
+
+    store.referencedExceptions.set('wrong-replacement', {
+      enrollmentId: 'other-enrollment',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'other-kid',
+      date: '2026-10-10',
+      startTime: '11:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      source: 'teacher_makeup_from_reschedule',
+      isMakeup: true,
+      makeupForSessionId: plan.occurrences[0].sessionId,
+    });
+
+    const summary = await runScheduleIntegrityEngineWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.scheduleExceptions).toBe(0);
+    expect(summary.identityMismatches).toBe(1);
+    expect(summary.missingOccurrences).toBe(0);
+    expect(summary.affectedEnrollments).toBe(1);
+  });
+
+  it('detects duplicate and unexpected regular sessions inside the rolling horizon', async () => {
+    const enrollment = baseEnrollment();
+    const plan = planFor('enr-surplus', enrollment);
+    const store = new MemoryStore([{id: 'enr-surplus', data: enrollment}]);
+
+    plan.occurrences.forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-surplus', enrollment, occurrence),
+      );
+    });
+
+    store.sessions.set('legacy-duplicate', {
+      ...healthySession('enr-surplus', enrollment, plan.occurrences[0]),
+      scheduleRevision: 1,
+    });
+    store.sessions.set('legacy-unexpected', {
+      enrollmentId: 'enr-surplus',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'kid-1',
+      kidIds: ['kid-1'],
+      date: '2026-09-21',
+      startTime: '10:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      scheduleRevision: 1,
+    });
+
+    const summary = await runScheduleIntegrityEngineWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.healthyOccurrences).toBe(3);
+    expect(summary.duplicateRegularSessions).toBe(1);
+    expect(summary.unexpectedRegularSessions).toBe(1);
+    expect(summary.affectedEnrollments).toBe(1);
+    expect(summary.details[0]).toMatchObject({
+      enrollmentId: 'enr-surplus',
+      duplicateRegularSessions: 1,
+      unexpectedRegularSessions: 1,
+    });
+  });
+
   it('counts structurally valid stale-revision sessions as operational coverage', async () => {
     const enrollment = baseEnrollment({
       schedule: {
@@ -320,6 +400,18 @@ describe('Brick 2 schedule integrity engine', () => {
       scheduleRevision: 1,
       existingSession: valid,
     }).state).toBe('healthy');
+
+    expect(classifyScheduleIntegrityOccurrence({
+      enrollmentId: 'enr-1',
+      enrollment,
+      occurrence,
+      scheduleRevision: 1,
+      existingSession: {
+        ...valid,
+        enrollmentId: 'wrong-enrollment',
+        status: 'cancelled',
+      },
+    }).state).toBe('identity_mismatch');
   });
 
   it('reports invalid active enrollment source data separately instead of inventing sessions', async () => {
