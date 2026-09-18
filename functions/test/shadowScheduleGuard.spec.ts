@@ -26,6 +26,8 @@ const baseSummary = (
   identityMismatches: 0,
   scheduleMismatches: 0,
   staleRevisionOccurrences: 0,
+  duplicateRegularSessions: 0,
+  unexpectedRegularSessions: 0,
   missingToday: 0,
   affectedEnrollments: 0,
   zeroCoveredEnrollments: 0,
@@ -72,6 +74,8 @@ describe('Brick 3 shadow schedule guard', () => {
         identityMismatches: 0,
         scheduleMismatches: 0,
         staleRevision: 0,
+        duplicateRegularSessions: 0,
+        unexpectedRegularSessions: 0,
         missingToday: 0,
         materializationMetadataPresent: true,
       }],
@@ -98,6 +102,8 @@ describe('Brick 3 shadow schedule guard', () => {
         identityMismatches: 0,
         scheduleMismatches: 0,
         staleRevision: 3,
+        duplicateRegularSessions: 0,
+        unexpectedRegularSessions: 0,
         missingToday: 0,
         materializationMetadataPresent: true,
       }],
@@ -107,6 +113,20 @@ describe('Brick 3 shadow schedule guard', () => {
     expect(assessment.reasons).toContain('stale_revision');
     expect(assessment.reasons).not.toContain('zero_covered_enrollment');
     expect(assessment.coveredOccurrences).toBe(3);
+  });
+
+  it('raises warning for duplicate or unexpected regular sessions', () => {
+    const assessment = buildShadowScheduleGuardAssessment(baseSummary({
+      duplicateRegularSessions: 1,
+      unexpectedRegularSessions: 1,
+      affectedEnrollments: 1,
+    }));
+
+    expect(assessment.severity).toBe('warning');
+    expect(assessment.reasons).toContain('duplicate_regular_session');
+    expect(assessment.reasons).toContain('unexpected_regular_session');
+    expect(assessment.duplicateRegularSessions).toBe(1);
+    expect(assessment.unexpectedRegularSessions).toBe(1);
   });
 
   it('raises critical when a class is missing today', () => {
@@ -124,6 +144,8 @@ describe('Brick 3 shadow schedule guard', () => {
         identityMismatches: 0,
         scheduleMismatches: 0,
         staleRevision: 0,
+        duplicateRegularSessions: 0,
+        unexpectedRegularSessions: 0,
         missingToday: 1,
         materializationMetadataPresent: true,
       }],
