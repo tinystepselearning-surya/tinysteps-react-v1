@@ -193,6 +193,89 @@ describe('Brick 4 read-only safe repair planner', () => {
     expect(summary.plans[0].actions[0].type).toBe('PRESERVE_EXCEPTION');
   });
 
+  it('blocks a foreign linked replacement instead of suppressing a real missing occurrence', async () => {
+    const enrollment = baseEnrollment();
+    const rolling = planFor('enr-foreign-replacement', enrollment);
+    const store = new MemoryStore([
+      {id: 'enr-foreign-replacement', data: enrollment},
+    ]);
+
+    rolling.occurrences.slice(1).forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-foreign-replacement', enrollment, occurrence),
+      );
+    });
+    store.referencedExceptions.set('foreign-replacement', {
+      enrollmentId: 'other-enrollment',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'other-kid',
+      date: '2026-10-10',
+      startTime: '11:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      source: 'teacher_makeup_from_reschedule',
+      isMakeup: true,
+      makeupForSessionId: rolling.occurrences[0].sessionId,
+    });
+
+    const summary = await runSafeRepairPlannerWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.safeCreateSessions).toBe(0);
+    expect(summary.blockedOccurrences).toBe(1);
+    expect(summary.plans[0].blockers).toBe(1);
+    expect(summary.plans[0].metadataAction).toBe('BLOCKED');
+    expect(summary.plans[0].actions[0].type).toBe(
+      'BLOCK_IDENTITY_CONFLICT',
+    );
+  });
+
+  it('fails closed when duplicate or unexpected regular sessions exist', async () => {
+    const enrollment = baseEnrollment();
+    const rolling = planFor('enr-surplus', enrollment);
+    const store = new MemoryStore([{id: 'enr-surplus', data: enrollment}]);
+
+    rolling.occurrences.forEach((occurrence) => {
+      store.sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-surplus', enrollment, occurrence),
+      );
+    });
+    store.sessions.set('duplicate-legacy', {
+      ...healthySession('enr-surplus', enrollment, rolling.occurrences[0]),
+    });
+    store.sessions.set('unexpected-legacy', {
+      enrollmentId: 'enr-surplus',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'kid-1',
+      kidIds: ['kid-1'],
+      date: '2026-09-21',
+      startTime: '10:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      scheduleRevision: 1,
+    });
+
+    const summary = await runSafeRepairPlannerWithStore(store, {
+      anchorYmd: '2026-09-18',
+    });
+
+    expect(summary.blockedOccurrences).toBe(2);
+    expect(summary.blockedEnrollments).toBe(1);
+    expect(summary.plans[0].blockers).toBe(2);
+    expect(summary.plans[0].metadataAction).toBe('BLOCKED');
+    expect(actionTypes(summary.plans[0].actions)).toContain(
+      'BLOCK_DUPLICATE_REGULAR_SESSION',
+    );
+    expect(actionTypes(summary.plans[0].actions)).toContain(
+      'BLOCK_UNEXPECTED_REGULAR_SESSION',
+    );
+  });
+
   it('blocks identity and schedule conflicts while preserving stale-revision sessions', async () => {
     const enrollment = baseEnrollment({
       schedule: {
