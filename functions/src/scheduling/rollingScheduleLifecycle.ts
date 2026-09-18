@@ -3,11 +3,11 @@ import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ensureAdmin} from '../helpers/adminGuard';
+import {normalizeSessionStatus} from '../helpers/status';
 import {
   doesEnrollmentOccupyCourseSlot,
   normalizeEnrollmentStatus,
-  normalizeSessionStatus,
-} from '../helpers/status';
+} from './enrollmentSchedulingStatus';
 import {
   ROLLING_SCHEDULE_CONTRACT_VERSION,
   ROLLING_SCHEDULE_DELIVERY_MODE,
