@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
-import PhonicsPilotGuideGrid from '../components/resources/PhonicsPilotGuideGrid';
+import PhonicsPilotGuideGrid, { PHONICS_PILOT_RESOURCE_LINKS } from '../components/resources/PhonicsPilotGuideGrid';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { ORGANIZATION_ID, SITE_ORIGIN, WEBSITE_ID, organizationSchema, websiteSchema } from '../lib/schemas';
@@ -193,7 +193,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
   const title = seo?.title ?? config.title;
   const description = seo?.description ?? config.intro;
   const featuredLinks = subject === 'grammar' ? GRAMMAR_WRITING_FEATURED_GUIDES : [];
-  const allLinks = [...featuredLinks, ...config.sections.flatMap((section) => section.links)];
+  const focusedPhonicsLinks = subject === 'phonics' ? [...PHONICS_PILOT_RESOURCE_LINKS] : [];
+  const allLinks = [...featuredLinks, ...config.sections.flatMap((section) => section.links), ...focusedPhonicsLinks];
 
   const breadcrumbItems = getBreadcrumbTrail({ pathname: config.canonicalPath, title: config.title });
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
@@ -224,6 +225,13 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     isPartOf: { '@id': WEBSITE_ID },
     publisher: { '@id': ORGANIZATION_ID },
     mainEntity: { '@id': listId },
+    ...(subject === 'phonics' ? {
+      hasPart: PHONICS_PILOT_RESOURCE_LINKS.map((link) => ({
+        '@type': 'WebPage',
+        name: link.title,
+        url: new URL(link.to, SITE_ORIGIN).toString(),
+      })),
+    } : {}),
     breadcrumb: { '@id': breadcrumbSchema['@id'] },
     speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
   };

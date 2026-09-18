@@ -50,4 +50,11 @@ describe('Resources architecture R10 discovery infrastructure under R12 publicat
     expect(detail).toContain('getRelatedPhonicsResourcePages');
     expect(detail).toContain('data-resource-related-path');
   });
+  it('exposes the published phonics collection to crawlers and links it from the authority page', () => {
+    const hub = read('src/pages/SubjectResourcesPage.tsx');
+    expect(hub).toContain('PHONICS_PILOT_RESOURCE_LINKS');
+    expect(hub).toContain('hasPart: PHONICS_PILOT_RESOURCE_LINKS.map');
+    const authority = read('src/pages/phonics.tsx');
+    expect(authority).toContain("{ label: 'Phonics & Reading Resource Hub', href: '/resources/phonics' }");
+  });
 });
