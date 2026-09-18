@@ -37,6 +37,8 @@ export const SAFE_REPAIR_PLANNER_REGION = 'asia-south1';
 export const SAFE_REPAIR_PLANNER_MAX_ENROLLMENTS =
   MAX_SCHEDULE_INTEGRITY_ENROLLMENTS;
 export const SAFE_REPAIR_PLANNER_MAX_DETAIL_ROWS = 300;
+export const SAFE_REPAIR_PLANNER_WRITES_ALLOWED = false;
+export const SAFE_REPAIR_PLANNER_AUTO_REPAIR_ENABLED = false;
 
 const IST_OFFSET_MINUTES = 330;
 const REPAIR_PLANNER_ACTOR = 'system:schedule_safe_repair_planner';
@@ -80,8 +82,8 @@ export type SafeRepairEnrollmentPlan = {
 
 export type SafeRepairPlannerSummary = {
   mode: 'READ_ONLY_REPAIR_PLAN';
-  writesAllowed: false;
-  autoRepairEnabled: false;
+  writesAllowed: typeof SAFE_REPAIR_PLANNER_WRITES_ALLOWED;
+  autoRepairEnabled: typeof SAFE_REPAIR_PLANNER_AUTO_REPAIR_ENABLED;
   anchorYmd: string;
   horizonEndYmd: string;
   horizonDays: typeof ROLLING_SCHEDULE_HORIZON_DAYS;
@@ -488,8 +490,8 @@ export async function runSafeRepairPlannerWithStore(
 
   return {
     mode: 'READ_ONLY_REPAIR_PLAN',
-    writesAllowed: false,
-    autoRepairEnabled: false,
+    writesAllowed: SAFE_REPAIR_PLANNER_WRITES_ALLOWED,
+    autoRepairEnabled: SAFE_REPAIR_PLANNER_AUTO_REPAIR_ENABLED,
     anchorYmd,
     horizonEndYmd,
     horizonDays: ROLLING_SCHEDULE_HORIZON_DAYS,
