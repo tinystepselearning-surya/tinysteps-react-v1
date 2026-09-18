@@ -11,7 +11,7 @@ import {
   normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
   remainingTargets, retryProvider404, validateCheckpoint,
 } from '../deployment/functions-deployment-lib.mjs';
-import { buildDependencyGraph } from '../deployment/functions-impact-lib.mjs';
+import { buildDependencyGraph, resolveFunctionsImpact } from '../deployment/functions-impact-lib.mjs';
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -30,6 +30,47 @@ test('source dependency roots exactly match compiled deployed Function exports',
   const graph = buildDependencyGraph(new Map(files.map(file => [file, readFileSync(file, 'utf8')])));
   const compiled = discoverEndpointPlan(require('../../functions/lib/index.js')).map(target => target.id);
   assert.deepEqual([...graph.roots.keys()].sort(), compiled);
+});
+
+test('explicit AV2 proof retirement does not trigger a full fleet deployment', () => {
+  const beforeSources = new Map([
+    ['functions/src/index.ts', "export { keepFn } from './keep';\nexport { runAv2TeamsEvidenceProof } from './proof';\n"],
+    ['functions/src/keep.ts', 'export const keepFn = {};\n'],
+    ['functions/src/proof.ts', 'export const runAv2TeamsEvidenceProof = {};\n'],
+  ]);
+  const afterSources = new Map([
+    ['functions/src/index.ts', "export { keepFn } from './keep';\n"],
+    ['functions/src/keep.ts', 'export const keepFn = {};\n'],
+  ]);
+  const result = resolveFunctionsImpact({
+    changedFiles: ['functions/src/index.ts', 'functions/src/proof.ts'],
+    beforeSources,
+    afterSources,
+  });
+  assert.equal(result.fullDeployment, false);
+  assert.equal(result.functionsDeploymentRequired, false);
+  assert.deepEqual(result.impactedFunctions, []);
+  assert.deepEqual(result.retiredFunctions, ['runAv2TeamsEvidenceProof']);
+});
+
+test('unapproved Function export removal still requires a full fleet deployment', () => {
+  const beforeSources = new Map([
+    ['functions/src/index.ts', "export { keepFn } from './keep';\nexport { arbitraryFn } from './arbitrary';\n"],
+    ['functions/src/keep.ts', 'export const keepFn = {};\n'],
+    ['functions/src/arbitrary.ts', 'export const arbitraryFn = {};\n'],
+  ]);
+  const afterSources = new Map([
+    ['functions/src/index.ts', "export { keepFn } from './keep';\n"],
+    ['functions/src/keep.ts', 'export const keepFn = {};\n'],
+  ]);
+  const result = resolveFunctionsImpact({
+    changedFiles: ['functions/src/index.ts', 'functions/src/arbitrary.ts'],
+    beforeSources,
+    afterSources,
+  });
+  assert.equal(result.fullDeployment, true);
+  assert.equal(result.functionsDeploymentRequired, true);
+  assert.match(result.fullDeploymentReason, /index\.ts:export-topology/);
 });
 
 test('fails closed on unexpected region or platform', () => {
