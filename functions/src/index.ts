@@ -192,6 +192,7 @@ export {
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
 export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
+export { shadowScheduleGuardEverySixHours } from "./scheduled/shadowScheduleGuard";
 
 // Games: catalog management and level results
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
