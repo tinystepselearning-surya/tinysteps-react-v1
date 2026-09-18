@@ -1,6 +1,6 @@
 # AV2 — Teams Evidence Collector
 
-Status: **implemented as an evidence-only backend library; no scheduled production collector is exported or activated in this brick.**
+Status: **complete — evidence-only collector implemented and production-proven through the temporary private AV2.1 proof endpoint. No scheduled collector is exported or activated.**
 
 AV2 converts raw Microsoft Teams meeting artifacts into auditable Tiny Steps attendance-validation evidence without changing operational attendance, finance, reschedules, teacher earnings, or correction records.
 
@@ -180,6 +180,26 @@ AV2 does **not**:
 - export a scheduled Firebase collector;
 - bind the Microsoft Graph production secret.
 
+## Production proof completed — 2026-09-19
+
+AV2 was exercised against one real completed Tiny Steps recurring Teams class through the temporary private AV2.1 production-proof endpoint.
+
+The proof used the exact canonical session window from Firestore and the existing enrollment-bound recurring Teams join URL. The collector successfully:
+
+- resolved the expected Teams online meeting;
+- selected the single attendance report corresponding to the scheduled class occurrence;
+- selected one transcript artifact for the same occurrence;
+- collected two attendance records;
+- completed transcript, attendance-report and attendance-record collection with no evidence issues;
+- persisted one `attendanceValidationRuns` sidecar and one `attendanceValidationEvidence` sidecar;
+- returned `operationalMutationAllowed: false`.
+
+The persisted sidecars were read back from production Firestore and verified as `complete`. No operational attendance, enrollment, finance, teacher-earnings, reschedule-credit or correction collection was mutated by the proof.
+
+The production proof intentionally does not record student names, participant names, participant email addresses, organizer identifiers, Teams join URLs, transcript bodies, access tokens or secret values in this repository.
+
+The temporary proof endpoint was created only to establish production feasibility. AV2 remains a library/evidence layer; the endpoint is retired as part of AV2.1 closeout rather than becoming a permanent operational API.
+
 ## Brick handoff
 
 ### AV3 — Identity Bridge
@@ -198,20 +218,25 @@ AV5 will compare validation classifications with canonical Tiny Steps attendance
 
 AV2 library code may merge before Microsoft production credentials are configured because it exports no new scheduled Cloud Function.
 
-Do not deploy an active Graph collector until the AV1 service-principal gate is complete:
+The AV1 service-principal gate and AV2 production-proof gate are complete:
 
 ```text
-[ ] Entra application created
-[ ] Application permissions + admin consent complete
-[ ] organizer-scoped application access policy complete
-[ ] Graph transcript access configured
-[ ] server-side secret created
-[ ] app-only token exchange verified
-[ ] known meeting resolution verified
-[ ] transcript metadata verified
-[ ] attendance reports verified
-[ ] attendance records with join/leave intervals verified
+[x] Entra application created
+[x] Application permissions + admin consent complete
+[x] organizer-scoped application access policy complete
+[x] Graph transcript access configured
+[x] server-side secrets created
+[x] app-only token exchange verified
+[x] known meeting resolution verified
+[x] transcript metadata verified
+[x] attendance reports verified
+[x] attendance records with join/leave intervals verified
+[x] one real AV2 evidence collection completed in production
+[x] validation-only Firestore sidecars persisted and read back
+[x] operationalMutationAllowed verified false
 ```
+
+No scheduled Graph collector is enabled by this closeout.
 
 ## Core invariant
 
