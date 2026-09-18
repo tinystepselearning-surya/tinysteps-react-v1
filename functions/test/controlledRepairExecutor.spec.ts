@@ -167,6 +167,90 @@ describe('Brick 5 controlled repair executor', () => {
     )).toHaveLength(2);
   });
 
+  it('fails closed for foreign linked replacements', () => {
+    const enrollment = baseEnrollment();
+    const rolling = planFor('enr-foreign', enrollment);
+    const sessions = new Map<string, Record<string, unknown>>();
+
+    sessions.set('foreign-replacement', {
+      enrollmentId: 'other-enrollment',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'other-kid',
+      date: '2026-10-10',
+      startTime: '11:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      source: 'teacher_makeup_from_reschedule',
+      isMakeup: true,
+      makeupForSessionId: rolling.occurrences[0].sessionId,
+    });
+    rolling.occurrences.slice(1).forEach((occurrence) => {
+      sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-foreign', enrollment, occurrence),
+      );
+    });
+
+    const derived = deriveControlledRepairFromCurrentState({
+      enrollmentId: 'enr-foreign',
+      enrollment,
+      anchorYmd: '2026-09-18',
+      sessions,
+      nowMs: Date.UTC(2026, 8, 18, 0, 0, 0),
+    });
+
+    expect(derived.plan.blockers).toBe(1);
+    expect(derived.plan.metadataAction).toBe('BLOCKED');
+    expect(derived.plan.actions[0].type).toBe('BLOCK_IDENTITY_CONFLICT');
+    expect(derived.createPayloads).toHaveLength(0);
+  });
+
+  it('fails closed when duplicate or unexpected regular sessions exist', () => {
+    const enrollment = baseEnrollment();
+    const rolling = planFor('enr-surplus', enrollment);
+    const sessions = new Map<string, Record<string, unknown>>();
+
+    rolling.occurrences.forEach((occurrence) => {
+      sessions.set(
+        occurrence.sessionId,
+        healthySession('enr-surplus', enrollment, occurrence),
+      );
+    });
+    sessions.set('duplicate-legacy', {
+      ...healthySession('enr-surplus', enrollment, rolling.occurrences[0]),
+    });
+    sessions.set('unexpected-legacy', {
+      enrollmentId: 'enr-surplus',
+      courseId: 'course-1',
+      teacherId: 'teacher-1',
+      kidId: 'kid-1',
+      kidIds: ['kid-1'],
+      date: '2026-09-21',
+      startTime: '10:00',
+      durationMinutes: 35,
+      status: 'scheduled',
+      scheduleRevision: 1,
+    });
+
+    const derived = deriveControlledRepairFromCurrentState({
+      enrollmentId: 'enr-surplus',
+      enrollment,
+      anchorYmd: '2026-09-18',
+      sessions,
+      nowMs: Date.UTC(2026, 8, 18, 0, 0, 0),
+    });
+
+    expect(derived.plan.blockers).toBe(2);
+    expect(derived.plan.metadataAction).toBe('BLOCKED');
+    expect(derived.plan.actions.some(
+      (action) => action.type === 'BLOCK_DUPLICATE_REGULAR_SESSION',
+    )).toBe(true);
+    expect(derived.plan.actions.some(
+      (action) => action.type === 'BLOCK_UNEXPECTED_REGULAR_SESSION',
+    )).toBe(true);
+  });
+
   it('preserves stale-revision sessions while allowing missing future sessions to be created', () => {
     const enrollment = baseEnrollment({
       schedule: {
@@ -317,6 +401,53 @@ describe('Brick 5 controlled repair executor', () => {
     expect(hardened.actions.some(
       (action) => action.type === 'SAFE_INITIALIZE_MATERIALIZATION',
     )).toBe(false);
+  });
+
+  it('binds approval fingerprints to teacher, financial, course, and revision state even when structural actions are unchanged', () => {
+    const base = baseEnrollment();
+    const changedTeacher = baseEnrollment({teacherId: 'teacher-2'});
+    const changedRate = baseEnrollment({feePerClass: 450});
+    const changedCourse = baseEnrollment({courseId: 'course-2'});
+    const changedRevision = baseEnrollment({
+      schedule: {
+        timezone: 'Asia/Kolkata',
+        revision: 2,
+        weeklySlots: [
+          {weekday: 5, time: '10:00', durationMinutes: 35},
+        ],
+      },
+    });
+    const derive = (enrollment: Record<string, unknown>) =>
+      deriveControlledRepairFromCurrentState({
+        enrollmentId: 'enr-bind',
+        enrollment,
+        anchorYmd: '2026-09-18',
+        sessions: new Map(),
+        nowMs: Date.UTC(2026, 8, 18, 0, 0, 0),
+      });
+
+    const baseline = derive(base);
+    const teacher = derive(changedTeacher);
+    const rate = derive(changedRate);
+    const course = derive(changedCourse);
+    const revision = derive(changedRevision);
+
+    expect(baseline.plan.safeCreates).toBe(3);
+    expect(teacher.plan.safeCreates).toBe(3);
+    expect(rate.plan.safeCreates).toBe(3);
+    expect(course.plan.safeCreates).toBe(3);
+    expect(revision.plan.safeCreates).toBe(3);
+
+    const baselineFingerprint =
+      fingerprintControlledRepairPlan(baseline.plan);
+    expect(fingerprintControlledRepairPlan(teacher.plan))
+      .not.toBe(baselineFingerprint);
+    expect(fingerprintControlledRepairPlan(rate.plan))
+      .not.toBe(baselineFingerprint);
+    expect(fingerprintControlledRepairPlan(course.plan))
+      .not.toBe(baselineFingerprint);
+    expect(fingerprintControlledRepairPlan(revision.plan))
+      .not.toBe(baselineFingerprint);
   });
 
   it('produces deterministic plan fingerprints and changes them when the actionable state changes', () => {
