@@ -26,6 +26,8 @@ import {
   buildScheduleIntegrityOccurrenceSessionIndex,
   classifyScheduleIntegrityEnrollmentCandidate,
   classifyScheduleIntegrityOccurrence,
+  detectScheduleIntegritySurplusSessions,
+  loadScheduleIntegritySessionEvidence,
   resolveScheduleIntegrityExistingOccurrenceSession,
   type ScheduleIntegrityStore,
 } from './scheduleIntegrityEngine';
@@ -72,6 +74,7 @@ export type ControlledRepairPlanAction =
 export type ControlledRepairEnrollmentPlan =
   Omit<SafeRepairEnrollmentPlan, 'actions'> & {
     actions: ControlledRepairPlanAction[];
+    approvalStateDigest?: string;
   };
 
 export type ControlledRepairPreview = {
@@ -224,26 +227,284 @@ const structuralAction = (action: ControlledRepairPlanAction) => ({
   invalidReason: action.invalidReason || null,
 });
 
+const canonicalControlledRepairPlan = (
+  plan: ControlledRepairEnrollmentPlan,
+  includeApprovalState: boolean,
+) => ({
+  enrollmentId: plan.enrollmentId,
+  expectedOccurrences: plan.expectedOccurrences,
+  safeCreates: plan.safeCreates,
+  exceptionsPreserved: plan.exceptionsPreserved,
+  blockers: plan.blockers,
+  metadataAction: plan.metadataAction,
+  ...(includeApprovalState
+    ? {approvalStateDigest: plan.approvalStateDigest || null}
+    : {}),
+  actions: plan.actions
+    .map(structuralAction)
+    .sort((left, right) =>
+      JSON.stringify(left).localeCompare(JSON.stringify(right)),
+    ),
+});
+
+const fingerprintControlledRepairStructure = (
+  plan: ControlledRepairEnrollmentPlan,
+): string => createHash('sha256')
+  .update(JSON.stringify(canonicalControlledRepairPlan(plan, false)))
+  .digest('hex');
+
 export function fingerprintControlledRepairPlan(
   plan: ControlledRepairEnrollmentPlan,
 ): string {
+  return createHash('sha256')
+    .update(JSON.stringify(canonicalControlledRepairPlan(plan, true)))
+    .digest('hex');
+}
+
+const APPROVAL_ENROLLMENT_FIELDS = [
+  'status',
+  'archived',
+  'isArchived',
+  'archivedAt',
+  'kidId',
+  'kidIds',
+  'studentId',
+  'childId',
+  'parentId',
+  'parentIds',
+  'teacherId',
+  'teacherIds',
+  'assignedTeacherId',
+  'primaryTeacherId',
+  'teacherUid',
+  'teacher_id',
+  'courseId',
+  'classesStartDateYmd',
+  'startDateYmd',
+  'schedule',
+  'scheduleMaterialization',
+  'ratePerSession',
+  'feePerSession',
+  'feePerClass',
+  'parentRate',
+  'parentClassRate',
+  'classFee',
+  'feeAmount',
+  'teacherPayPerSession',
+  'teacherRatePerSession',
+  'teacherPay',
+  'teacherRate',
+  'teacherFee',
+  'teacherClassRate',
+  'rateTeacher',
+  'payoutRate',
+  'currency',
+  'joinUrl',
+  'studentName',
+  'kidName',
+  'childName',
+  'courseName',
+  'courseTitle',
+  'courseLabel',
+  'teacherName',
+  'teacherEmail',
+] as const;
+
+const APPROVAL_SESSION_FIELDS = [
+  'enrollmentId',
+  'courseId',
+  'teacherId',
+  'teacherIds',
+  'assignedTeacherId',
+  'primaryTeacherId',
+  'teacherUid',
+  'teacher_id',
+  'kidId',
+  'kidIds',
+  'studentId',
+  'childId',
+  'parentId',
+  'parentIds',
+  'date',
+  'startTime',
+  'endTime',
+  'durationMins',
+  'durationMinutes',
+  'status',
+  'attendance',
+  'source',
+  'sessionType',
+  'createdByFlow',
+  'isAdHoc',
+  'isMakeup',
+  'manualSessionState',
+  'makeupCreditId',
+  'makeupForSessionId',
+  'rescheduledFromSessionId',
+  'replacementSessionId',
+  'replacementForSessionId',
+  'originalSessionId',
+  'scheduleDeliveryMode',
+  'scheduleRevision',
+  'scheduleOccurrenceKey',
+  'scheduleMaterializationVersion',
+  'feeAmount',
+  'feePerClass',
+  'feePerSession',
+  'ratePerSession',
+  'billingRateSnapshot',
+  'teacherPayPerSession',
+  'teacherPayRateSnapshot',
+  'financialTermsSnapshotVersion',
+  'financialTermsCurrency',
+  'currency',
+  'joinUrl',
+] as const;
+
+const stableApprovalValue = (value: unknown): unknown => {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : String(value);
+  }
+  if (value === undefined) return null;
+  if (value instanceof Date) return {millis: value.getTime()};
+  if (Array.isArray(value)) return value.map(stableApprovalValue);
+  if (typeof value === 'object') {
+    const row = value as Record<string, unknown> & {
+      toMillis?: () => number;
+      path?: unknown;
+    };
+    if (typeof row.toMillis === 'function') {
+      try {
+        const millis = row.toMillis();
+        if (Number.isFinite(millis)) return {millis};
+      } catch {
+        return String(value);
+      }
+    }
+    if (typeof row.path === 'string') return {path: row.path};
+    const stable: Record<string, unknown> = {};
+    Object.keys(row).sort().forEach((key) => {
+      stable[key] = stableApprovalValue(row[key]);
+    });
+    return stable;
+  }
+  return String(value);
+};
+
+const selectApprovalFields = (
+  row: Record<string, unknown>,
+  fields: readonly string[],
+): Record<string, unknown> => {
+  const selected: Record<string, unknown> = {};
+  fields.forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(row, field)) {
+      selected[field] = stableApprovalValue(row[field]);
+    }
+  });
+  return selected;
+};
+
+const sessionYmdForApproval = (
+  session: Record<string, unknown>,
+): string => {
+  const direct = text(session.date);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(direct)) return direct;
+  const rawStart = session.startAt as {
+    toDate?: () => Date;
+  } | Date | undefined;
+  let start: Date | null = null;
+  if (rawStart instanceof Date) start = rawStart;
+  else if (rawStart && typeof rawStart.toDate === 'function') {
+    try {
+      start = rawStart.toDate();
+    } catch {
+      start = null;
+    }
+  }
+  if (!start || Number.isNaN(start.getTime())) return '';
+  const shifted = new Date(start.getTime() + IST_OFFSET_MINUTES * 60 * 1000);
+  return [
+    shifted.getUTCFullYear(),
+    String(shifted.getUTCMonth() + 1).padStart(2, '0'),
+    String(shifted.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+};
+
+const buildControlledRepairApprovalStateDigest = (args: {
+  enrollmentId: string;
+  enrollment: Record<string, unknown>;
+  anchorYmd: string;
+  horizonEndYmd: string;
+  scheduleRevision: number;
+  materialization: RollingScheduleMaterializationState;
+  occurrences: RollingMaterializationOccurrence[];
+  sessions: Map<string, Record<string, unknown>>;
+  createPayloads: Array<{
+    occurrence: RollingMaterializationOccurrence;
+    payload: Record<string, unknown>;
+  }>;
+}): string => {
+  const expectedIds = new Set(
+    args.occurrences.map((occurrence) => occurrence.sessionId),
+  );
+  const relevantSessions: Array<{
+    sessionId: string;
+    state: Record<string, unknown>;
+  }> = [];
+  args.sessions.forEach((session, sessionId) => {
+    const date = sessionYmdForApproval(session);
+    const sameEnrollmentInWindow =
+      text(session.enrollmentId) === args.enrollmentId &&
+      Boolean(date) &&
+      date >= args.anchorYmd &&
+      date <= args.horizonEndYmd;
+    const referencesExpected = EXCEPTION_BACK_REFERENCE_FIELDS.some((field) =>
+      expectedIds.has(text(session[field])),
+    );
+    if (
+      !expectedIds.has(sessionId) &&
+      !sameEnrollmentInWindow &&
+      !referencesExpected
+    ) {
+      return;
+    }
+    relevantSessions.push({
+      sessionId,
+      state: selectApprovalFields(session, APPROVAL_SESSION_FIELDS),
+    });
+  });
+  relevantSessions.sort((left, right) =>
+    left.sessionId.localeCompare(right.sessionId),
+  );
+
   const canonical = {
-    enrollmentId: plan.enrollmentId,
-    expectedOccurrences: plan.expectedOccurrences,
-    safeCreates: plan.safeCreates,
-    exceptionsPreserved: plan.exceptionsPreserved,
-    blockers: plan.blockers,
-    metadataAction: plan.metadataAction,
-    actions: plan.actions
-      .map(structuralAction)
-      .sort((left, right) =>
-        JSON.stringify(left).localeCompare(JSON.stringify(right)),
-      ),
+    enrollmentId: args.enrollmentId,
+    enrollment: selectApprovalFields(
+      args.enrollment,
+      APPROVAL_ENROLLMENT_FIELDS,
+    ),
+    scheduleRevision: args.scheduleRevision,
+    materialization: stableApprovalValue(args.materialization),
+    existingSessionState: relevantSessions,
+    createPayloads: args.createPayloads
+      .map(({occurrence, payload}) => ({
+        sessionId: occurrence.sessionId,
+        state: selectApprovalFields(payload, APPROVAL_SESSION_FIELDS),
+      }))
+      .sort((left, right) => left.sessionId.localeCompare(right.sessionId)),
   };
+
   return createHash('sha256')
     .update(JSON.stringify(canonical))
     .digest('hex');
-}
+};
 
 export function hardenSafeRepairPlanForExecution(
   plan: SafeRepairEnrollmentPlan,
@@ -387,11 +648,60 @@ export async function previewControlledRepairWithStore(
     );
   }
 
-  const plan = hardenSafeRepairPlanForExecution(
-    sourcePlan,
-    args.nowMs ?? Date.now(),
+  const enrollmentRows = await store.listEnrollments();
+  const enrollmentRow = enrollmentRows.find(
+    (row) => row.id === args.enrollmentId,
   );
+  if (
+    !enrollmentRow ||
+    !isEnrollmentOperationallyActive(enrollmentRow.data)
+  ) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Selected enrollment is missing or no longer operationally active.',
+    );
+  }
 
+  const rolling = buildRollingMaterializationPlan({
+    enrollmentId: args.enrollmentId,
+    enrollment: enrollmentRow.data,
+    anchorYmd: args.anchorYmd,
+  });
+  const {existingById, evidenceSessions} =
+    await loadScheduleIntegritySessionEvidence(
+      store,
+      rolling.occurrences.map((occurrence) => occurrence.sessionId),
+      args.anchorYmd,
+      rolling.horizonEndYmd,
+    );
+  const sessions = new Map(evidenceSessions);
+  existingById.forEach((session, sessionId) => {
+    sessions.set(sessionId, session);
+  });
+
+  const nowMs = args.nowMs ?? Date.now();
+  const derived = deriveControlledRepairFromCurrentState({
+    enrollmentId: args.enrollmentId,
+    enrollment: enrollmentRow.data,
+    anchorYmd: args.anchorYmd,
+    sessions,
+    nowMs,
+  });
+  const hardenedSource = hardenSafeRepairPlanForExecution(
+    sourcePlan,
+    nowMs,
+  );
+  if (
+    fingerprintControlledRepairStructure(hardenedSource) !==
+    fingerprintControlledRepairStructure(derived.plan)
+  ) {
+    throw new HttpsError(
+      'aborted',
+      'Brick 4 planner and controlled executor disagree on current scheduling state; no repair is allowed.',
+    );
+  }
+
+  const plan = derived.plan;
   return {
     mode: 'CONTROLLED_REPAIR_PREVIEW',
     writesAllowed: false,
@@ -493,6 +803,41 @@ export function deriveControlledRepairFromCurrentState(args: {
   const occurrenceIndex =
     buildScheduleIntegrityOccurrenceSessionIndex(args.sessions);
   const actions: ControlledRepairPlanAction[] = [];
+  const horizonEndYmd = addDaysYmd(
+    args.anchorYmd,
+    ROLLING_SCHEDULE_HORIZON_DAYS,
+  );
+  const surplus = detectScheduleIntegritySurplusSessions({
+    enrollmentId: args.enrollmentId,
+    occurrences: rolling.occurrences,
+    sessions: args.sessions,
+    fromYmd: args.anchorYmd,
+    toYmd: horizonEndYmd,
+  });
+  surplus.duplicateRegularSessions.forEach((finding) => {
+    actions.push({
+      type: 'BLOCK_DUPLICATE_REGULAR_SESSION',
+      enrollmentId: args.enrollmentId,
+      sessionId: finding.sessionId,
+      date: finding.date,
+      startTime: finding.startTime,
+      durationMinutes: finding.durationMinutes ?? undefined,
+      reason:
+        'Additional regular session duplicates an expected occurrence; controlled repair fails closed until the duplicate is resolved.',
+    });
+  });
+  surplus.unexpectedRegularSessions.forEach((finding) => {
+    actions.push({
+      type: 'BLOCK_UNEXPECTED_REGULAR_SESSION',
+      enrollmentId: args.enrollmentId,
+      sessionId: finding.sessionId,
+      date: finding.date,
+      startTime: finding.startTime,
+      durationMinutes: finding.durationMinutes ?? undefined,
+      reason:
+        'Regular session exists inside the rolling horizon but does not match the current recurrence; controlled repair fails closed until it is resolved.',
+    });
+  });
   const createOccurrences: RollingMaterializationOccurrence[] = [];
   const createPayloads: Array<{
     occurrence: RollingMaterializationOccurrence;
@@ -512,7 +857,7 @@ export function deriveControlledRepairFromCurrentState(args: {
         deterministicSession: args.sessions.get(occurrence.sessionId),
         occurrenceIndex,
       }),
-      relatedExceptionSessionId: exceptionIndex.get(occurrence.sessionId),
+      relatedExceptionCandidates: exceptionIndex.get(occurrence.sessionId),
     });
 
     if (classification.state === 'healthy') {
@@ -668,6 +1013,18 @@ export function deriveControlledRepairFromCurrentState(args: {
     });
   }
 
+  const approvalStateDigest = buildControlledRepairApprovalStateDigest({
+    enrollmentId: args.enrollmentId,
+    enrollment: args.enrollment,
+    anchorYmd: args.anchorYmd,
+    horizonEndYmd,
+    scheduleRevision: rolling.scheduleRevision,
+    materialization: rolling.materialization,
+    occurrences: rolling.occurrences,
+    sessions: args.sessions,
+    createPayloads,
+  });
+
   return {
     plan: {
       enrollmentId: args.enrollmentId,
@@ -677,6 +1034,7 @@ export function deriveControlledRepairFromCurrentState(args: {
       blockers,
       metadataAction,
       actions,
+      approvalStateDigest,
     },
     rollingMaterialization: rolling.materialization,
     scheduleRevision: rolling.scheduleRevision,
