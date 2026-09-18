@@ -73,6 +73,12 @@ export {
 } from "./scheduling/rollingScheduleLifecycle";
 export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingScheduleReconciliation";
 export { adminRepairRollingScheduleMaterialization } from "./scheduling/rollingScheduleRepair";
+export { adminAuditScheduleIntegrity } from "./scheduling/scheduleIntegrityEngine";
+export { adminPlanScheduleRepairs } from "./scheduling/safeRepairPlanner";
+export {
+  adminPreviewControlledScheduleRepair,
+  adminExecuteControlledScheduleRepair,
+} from "./scheduling/controlledRepairExecutor";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
@@ -191,6 +197,7 @@ export {
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
 export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
+export { shadowScheduleGuardEverySixHours } from "./scheduled/shadowScheduleGuard";
 
 // Games: catalog management and level results
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
