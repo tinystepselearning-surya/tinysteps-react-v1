@@ -78,6 +78,7 @@ export const ATTENDANCE_VALIDATION_COLLECTIONS = {
   evidence: 'attendanceValidationEvidence',
   cases: 'attendanceValidationCases',
   resolutions: 'attendanceValidationResolutions',
+  dirtySessions: 'attendanceValidationDirtySessions',
 } as const;
 
 /** Existing production collections are read-only from the validator. */
