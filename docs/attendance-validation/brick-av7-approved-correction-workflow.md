@@ -82,7 +82,9 @@ The server re-reads the validation case before applying the correction and rejec
 - AVS decision matches the requested status;
 - current Tiny Steps attendance still matches the attendance captured by the AVS case;
 - case is still `needs_review`;
-- the exact case revision has not already been resolved.
+- the exact case revision has not already been resolved;
+- the session document version has not changed between validation and commit;
+- the AVS case document version has not changed between validation and commit.
 
 If attendance or AVS state changed after the dashboard was loaded, the correction fails closed and the admin must refresh AVS.
 
@@ -143,7 +145,7 @@ resolvedAt
 resolvedBy*
 ```
 
-The deterministic resolution id prevents duplicate approval of the same exact AVS case revision while still permitting a later AVS revision with a new fingerprint.
+The deterministic resolution id uses create-once semantics, preventing duplicate approval of the same exact AVS case revision while still permitting a later AVS revision with a new fingerprint. Firestore last-update preconditions on both the session and AVS case make a concurrent change abort the entire write batch.
 
 ## Safety boundary
 
