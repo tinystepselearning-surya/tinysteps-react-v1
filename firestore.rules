@@ -1613,6 +1613,24 @@ function teacherProgressIdentityUnchanged() {
       allow create, update, delete: if false;
     }
 
+    // Changed-session queue is backend-only. It exists solely to avoid polling
+    // or rescanning unchanged operational sessions during AVS latest checks.
+    match /attendanceValidationDirtySessions/{sessionId} {
+      allow read, create, update, delete: if false;
+    }
+
+    // First-time baseline cursors are backend-only. They prevent repeated
+    // historical rescans/Graph collection for the same explicit date range.
+    match /attendanceValidationBaselineRanges/{rangeId} {
+      allow read, create, update, delete: if false;
+    }
+
+    // Microsoft organizer configuration is backend-only. The browser neither
+    // needs nor receives the organizer object ID used by Graph.
+    match /attendanceValidationConfig/{configId} {
+      allow read, create, update, delete: if false;
+    }
+
     // ----------------------------
     // CONFIG COLLECTION
     // ----------------------------

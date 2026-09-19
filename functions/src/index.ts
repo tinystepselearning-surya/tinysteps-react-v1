@@ -75,6 +75,9 @@ export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingSchedule
 export { adminRepairRollingScheduleMaterialization } from "./scheduling/rollingScheduleRepair";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
+export { runAttendanceValidationLatestCheck } from "./attendanceValidation/latestCheckCallable";
+export { forceRefreshAttendanceValidationEvidence } from "./attendanceValidation/forceFreshEvidenceCallable";
+export { runAttendanceValidationFirstTimeBaseline } from "./attendanceValidation/firstTimeBaselineCallable";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
 export {
   prepareAdminAttendanceCorrectionTeacherPayDecision,
