@@ -66,6 +66,40 @@ interface AvsLatestCheckResponse {
   };
 }
 
+interface AvsFirstTimeBaselineResponse {
+  ok: boolean;
+  fromDate: string;
+  toDate: string;
+  rangeId: string;
+  alreadyComplete: boolean;
+  complete: boolean;
+  hasMore?: boolean;
+  batchSessionCount: number;
+  existingCaseCount: number;
+  freshEvidenceCount: number;
+  persistedCaseCount?: number;
+  skippedCount?: number;
+  blockedCount: number;
+  blocked: Array<{ sessionId: string; reason: string }>;
+  graphLogicalCalls: number;
+  operationalMutationAllowed: false;
+  cumulative: {
+    scannedSessionCount: number;
+    existingCaseCount: number;
+    freshEvidenceCount: number;
+    blockedCount: number;
+  };
+  readBudget: {
+    baselineStateReads: number;
+    sessionQueryReads: number;
+    validationCaseReads: number;
+    teacherUserReads: number;
+    av53PointReads: number;
+    sharedStaffRegistryLoaded: boolean;
+    boundedReadsExcludingStaffRegistry: number;
+  };
+}
+
 interface AvsForceFreshResponse {
   ok: boolean;
   caseId: string;
@@ -135,6 +169,13 @@ const CLASSIFICATION_TABS: Array<{ value: 'all' | Av6Classification; label: stri
 
 function currentIstYmd(): string {
   return new Date(Date.now() + (5.5 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+}
+
+function yesterdayIstYmd(): string {
+  const today = currentIstYmd();
+  return new Date(
+    Date.parse(`${today}T00:00:00.000Z`) - 86_400_000,
+  ).toISOString().slice(0, 10);
 }
 
 function validDateRange(fromYmd: string, toYmd: string): boolean {
@@ -299,6 +340,9 @@ export default function AttendanceValidationDashboard() {
   const [latestCheckRunning, setLatestCheckRunning] = useState(false);
   const [latestCheckResult, setLatestCheckResult] = useState<AvsLatestCheckResponse | null>(null);
   const [latestCheckCompletedAt, setLatestCheckCompletedAt] = useState<Date | null>(null);
+  const [baselineRunning, setBaselineRunning] = useState(false);
+  const [baselineResult, setBaselineResult] = useState<AvsFirstTimeBaselineResponse | null>(null);
+  const [baselineCompletedAt, setBaselineCompletedAt] = useState<Date | null>(null);
   const [forceFreshCaseId, setForceFreshCaseId] = useState<string | null>(null);
   const [forceFreshResult, setForceFreshResult] = useState<AvsForceFreshResponse | null>(null);
   const [forceFreshCompletedAt, setForceFreshCompletedAt] = useState<Date | null>(null);
@@ -415,6 +459,53 @@ export default function AttendanceValidationDashboard() {
       setError('Latest attendance check failed. Saved results were not changed by the browser.');
     } finally {
       setLatestCheckRunning(false);
+    }
+  }, [fromDate, loadSavedCases, toDate]);
+
+  const runFirstTimeBaseline = useCallback(async () => {
+    if (!validDateRange(fromDate, toDate)) {
+      setError(
+        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
+      );
+      return;
+    }
+
+    const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
+    if (rangeDays === null || rangeDays > 31) {
+      setError('First-Time Baseline supports a maximum of 31 calendar days at a time.');
+      return;
+    }
+
+    if (toDate > yesterdayIstYmd()) {
+      setError('First-Time Baseline can include only completed service dates through yesterday IST.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'First-Time Baseline may make fresh Microsoft Graph reads for up to 10 class sessions that do not already have saved AVS cases. Existing AVS cases are reused. Continue?',
+    );
+    if (!confirmed) return;
+
+    setBaselineRunning(true);
+    setError(null);
+
+    try {
+      const result = await callFunction<
+        AvsFirstTimeBaselineResponse,
+        { fromDate: string; toDate: string }
+      >(
+        'runAttendanceValidationFirstTimeBaseline',
+        { fromDate, toDate },
+      );
+
+      setBaselineResult(result);
+      setBaselineCompletedAt(new Date());
+      await loadSavedCases(false, true);
+    } catch (baselineError) {
+      console.error('[AVS] First-Time Baseline failed', baselineError);
+      setError('First-Time Baseline failed. No operational attendance or finance was changed.');
+    } finally {
+      setBaselineRunning(false);
     }
   }, [fromDate, loadSavedCases, toDate]);
 
@@ -625,7 +716,7 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               onClick={() => void loadSavedCases(false, false)}
-              disabled={loading || loadingMore || latestCheckRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || baselineRunning || forceFreshCaseId !== null}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Loading saved results…' : 'Load Saved Results'}
@@ -634,13 +725,46 @@ export default function AttendanceValidationDashboard() {
               type="button"
               variant="outline"
               onClick={() => void runLatestCheck()}
-              disabled={loading || loadingMore || latestCheckRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || baselineRunning || forceFreshCaseId !== null}
               title="Revalidate only changed sessions using cached Teams evidence."
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${latestCheckRunning ? 'animate-spin' : ''}`}
               />
               {latestCheckRunning ? 'Running latest check…' : 'Run Latest Check'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void runFirstTimeBaseline()}
+              disabled={
+                loading
+                || loadingMore
+                || latestCheckRunning
+                || baselineRunning
+                || forceFreshCaseId !== null
+                || (
+                  baselineResult?.fromDate === fromDate
+                  && baselineResult?.toDate === toDate
+                  && baselineResult.complete
+                )
+              }
+              title="First-time only: collect fresh Teams evidence for up to 10 sessions without saved AVS cases."
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${baselineRunning ? 'animate-spin' : ''}`}
+              />
+              {baselineRunning
+                ? 'Running baseline…'
+                : baselineResult?.fromDate === fromDate
+                  && baselineResult?.toDate === toDate
+                  && !baselineResult.complete
+                  ? 'Continue Baseline'
+                  : baselineResult?.fromDate === fromDate
+                    && baselineResult?.toDate === toDate
+                    && baselineResult.complete
+                    ? 'Baseline Complete'
+                    : 'Run First-Time Baseline'}
             </Button>
           </div>
         </div>
@@ -651,6 +775,7 @@ export default function AttendanceValidationDashboard() {
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Latest Check is intentionally capped at 31 calendar days per run.
+          First-Time Baseline is also capped at 31 days and processes at most 10 session documents per click with fresh Teams evidence only where no saved AVS case exists.
         </p>
 
         {loadedRange && loadedAt && (
@@ -660,6 +785,56 @@ export default function AttendanceValidationDashboard() {
           </p>
         )}
       </Card>
+
+      {baselineResult && (
+        <Card className="border-blue-200 bg-blue-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="font-medium text-slate-900">
+                {baselineResult.complete ? 'First-Time Baseline complete' : 'First-Time Baseline batch complete'}
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
+                This batch scanned {baselineResult.batchSessionCount} session{baselineResult.batchSessionCount === 1 ? '' : 's'};
+                {' '}{baselineResult.existingCaseCount} already had saved AVS cases;
+                {' '}{baselineResult.freshEvidenceCount} received fresh Teams evidence;
+                {' '}{baselineResult.blockedCount} were routed safely to Missing Teams Evidence.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Microsoft Graph logical calls: {baselineResult.graphLogicalCalls}.
+                {' '}Firestore bounded reads: {baselineResult.readBudget.boundedReadsExcludingStaffRegistry}
+                {baselineResult.readBudget.sharedStaffRegistryLoaded
+                  ? ' + one shared staff-registry load'
+                  : ''}.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Range progress: {baselineResult.cumulative.scannedSessionCount} session documents scanned,
+                {' '}{baselineResult.cumulative.freshEvidenceCount} fresh evidence collections,
+                {' '}{baselineResult.cumulative.existingCaseCount} existing cases reused.
+              </p>
+              {!baselineResult.complete && (
+                <p className="mt-2 text-xs font-medium text-blue-800">
+                  More sessions remain in this range. Click Continue Baseline to process the next bounded batch.
+                </p>
+              )}
+              {baselineResult.complete && (
+                <p className="mt-2 text-xs font-medium text-emerald-800">
+                  This date range is baselined. Future attendance corrections should use Run Latest Check; repeating the same baseline will not re-fetch existing cases.
+                </p>
+              )}
+              {baselineResult.blocked.length > 0 && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  Blocked session IDs: {baselineResult.blocked.map((item) => item.sessionId).join(', ')}.
+                </p>
+              )}
+            </div>
+            {baselineCompletedAt && (
+              <div className="shrink-0 text-xs text-slate-500">
+                {formatObservedAt(baselineCompletedAt.toISOString())}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {latestCheckResult && (
         <Card className="border-emerald-200 bg-emerald-50 p-4">
@@ -905,7 +1080,8 @@ export default function AttendanceValidationDashboard() {
                           )}
                         {item.classSessionId === item.id
                           && item.evidenceId
-                          && item.inputFingerprint && (
+                          && item.inputFingerprint
+                          && !item.reasons.includes('evidence_document_missing') && (
                             <Button
                               type="button"
                               size="sm"
@@ -914,6 +1090,7 @@ export default function AttendanceValidationDashboard() {
                               onClick={() => void forceFreshEvidence(item)}
                               disabled={
                                 latestCheckRunning
+                                || baselineRunning
                                 || loading
                                 || loadingMore
                                 || forceFreshCaseId !== null
@@ -959,7 +1136,7 @@ export default function AttendanceValidationDashboard() {
             type="button"
             variant="outline"
             onClick={() => void loadSavedCases(true, true)}
-            disabled={loading || loadingMore || latestCheckRunning || forceFreshCaseId !== null}
+            disabled={loading || loadingMore || latestCheckRunning || baselineRunning || forceFreshCaseId !== null}
           >
             {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
           </Button>
