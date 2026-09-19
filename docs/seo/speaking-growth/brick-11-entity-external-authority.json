@@ -1,0 +1,73 @@
+{
+  "brick": 11,
+  "name": "Entity & External Authority",
+  "revision": "2026-09-19-b11-v1",
+  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "branch": "feature/speaking-seo-geo-growth",
+  "productionDeployment": false,
+  "canonicalCommercialOwner": "/speaking",
+  "authority": {
+    "organizationId": "https://tinystepslearning.com/#educational-organization",
+    "publicBrand": "Tiny Steps Learning",
+    "founderProfile": "/team/vannala-ravali-priya",
+    "founderIdentityType": "Person",
+    "organizationIdentityType": "EducationalOrganization",
+    "founderAndOrganizationSameAsSeparated": true
+  },
+  "externalAuthorityRules": {
+    "createNewSocialProfileForSeoOnly": false,
+    "addUnverifiedDirectoryToSameAs": false,
+    "addReviewPlatformToSameAsWithoutVerifiedIdentity": false,
+    "addAccreditationOrBoardToSameAsWithoutVerifiedRelationship": false,
+    "mergeFounderAndOrganizationSameAs": false,
+    "publishAdminOrAccountManagementUrls": false,
+    "externalProfileFactsMustMatchCanonicalRegistry": true,
+    "externalClaimsMayExceedFirstPartyEvidence": false
+  },
+  "externalSpotCheck": {
+    "date": "2026-09-19",
+    "observable": [
+      "Founder LinkedIn profile is discoverable under Ravali Priya Vannala and identifies Tiny Steps Learning.",
+      "Recent founder LinkedIn activity references founding Tiny Steps Learning and its phonics, reading, grammar and communication focus.",
+      "Tiny Steps Learning LinkedIn posts are discoverable under the same brand.",
+      "A current Tiny Steps Learning LinkedIn job listing describes live online teaching across phonics, reading, grammar and communication."
+    ],
+    "limitation": "Search-engine crawlability is corroboration only and is not used as proof of ownership for every declared platform."
+  },
+  "matrices": {
+    "sourceLevel": {
+      "contract": {
+        "passed": 10,
+        "total": 10
+      },
+      "safetyRules": {
+        "passed": 8,
+        "total": 8
+      },
+      "existingInfrastructure": {
+        "passed": 7,
+        "total": 7
+      },
+      "routeProtection": {
+        "passed": 3,
+        "total": 3
+      },
+      "regressionSpec": {
+        "passed": 6,
+        "total": 6
+      },
+      "passed": 34,
+      "total": 34
+    }
+  },
+  "implementationFiles": [
+    "src/lib/speakingEntityAuthority.ts",
+    "src/tests/seo/speakingGrowthBrick11.spec.ts"
+  ],
+  "newPublicUrls": 0,
+  "newCanonicalOwners": 0,
+  "executableLimitations": [
+    "No feature-branch GitHub Actions run attached to the Brick 11 head.",
+    "Full Vitest, typecheck, production build/prerender and browser QA remain required at the final integration gate."
+  ]
+}
