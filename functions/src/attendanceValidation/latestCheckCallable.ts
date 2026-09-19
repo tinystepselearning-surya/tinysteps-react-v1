@@ -91,13 +91,23 @@ export const runAttendanceValidationLatestCheck = onCall(
       db.collection('attendanceValidationCases').doc(docSnapshot.id),
     );
     const caseSnapshots = await db.getAll(...caseRefs);
-    const existingCases = caseSnapshots.map((caseSnapshot, index) => ({
-      sessionId: dirtyDocs[index].id,
-      caseExists: caseSnapshot.exists,
-      evidenceId: caseSnapshot.exists
-        ? String(caseSnapshot.data()?.evidenceId || '').trim() || null
-        : null,
-    }));
+    const existingCases = caseSnapshots.map((caseSnapshot, index) => {
+      const caseData = caseSnapshot.exists
+        ? (caseSnapshot.data() || {}) as Record<string, unknown>
+        : {};
+      const reasons = Array.isArray(caseData.reasons)
+        ? caseData.reasons.map((value) => String(value || '').trim())
+        : [];
+      const evidenceDocumentMissing = reasons.includes('evidence_document_missing');
+
+      return {
+        sessionId: dirtyDocs[index].id,
+        caseExists: caseSnapshot.exists,
+        evidenceId: caseSnapshot.exists && !evidenceDocumentMissing
+          ? String(caseData.evidenceId || '').trim() || null
+          : null,
+      };
+    });
 
     const plan = planAvsLatestCheck(dirtySessions, existingCases);
     const runId = `latest_${Date.now().toString(36)}_${request.auth?.uid?.slice(0, 12) || 'admin'}`;
