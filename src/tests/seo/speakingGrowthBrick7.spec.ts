@@ -201,7 +201,8 @@ describe('Speaking growth Brick 7 progress framework', () => {
   });
 
   it('keeps parent progress communication evidence-led rather than percentage-led', () => {
-    expect(parentProgressSource).toContain('Tiny Steps uses four observation bands rather than turning speaking into one percentage.');
+    expect(parentProgressSource).toContain('Tiny Steps uses four observation bands rather than turning the ten dimensions into one percentage.');
+    expect(parentProgressSource).toContain('Existing dashboard summaries remain separate operational views.');
     expect(parentProgressSource).toContain('What the child can now do independently');
     expect(parentProgressSource).toContain('Fresh-task evidence');
     expect(parentProgressSource).toContain('Next learning priority');
@@ -216,6 +217,8 @@ describe('Speaking growth Brick 7 progress framework', () => {
     expect(teacherEditorSource).not.toContain('speakingProgressFramework');
     expect(frameworkSource).not.toContain('firebase');
     expect(pageSource).not.toContain('firestore');
+    expect(pageSource).toContain('may still show broader legacy subject-level progress summaries');
+    expect(pageSource).toContain('does not silently rewrite historical progress data');
   });
 
   it('keeps Brick 7 discovery surfaces current and gives the framework exactly one sitemap URL', () => {
