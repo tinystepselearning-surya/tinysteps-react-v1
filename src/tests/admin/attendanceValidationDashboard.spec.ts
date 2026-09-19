@@ -40,9 +40,11 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('<select');
   });
 
-  it('does not use realtime listeners or operational collection lookups', () => {
+  it('uses only bounded class-session fallback reads for legacy display names', () => {
     expect(dashboard).not.toContain('onSnapshot(');
-    expect(dashboard).not.toContain("collection(db, 'classSessions')");
+    expect(dashboard).toContain("collection(db, 'classSessions')");
+    expect(dashboard).toContain("where(documentId(), 'in', chunk)");
+    expect(dashboard).toContain('index += 30');
     expect(dashboard).not.toContain("collection(db, 'users')");
     expect(dashboard).not.toContain("collection(db, 'kids')");
     expect(dashboard).not.toContain("collection(db, 'enrollments')");
@@ -83,6 +85,18 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(firestoreRules).toContain('match /attendanceValidationCases/{caseId}');
     expect(firestoreRules).toContain('allow read: if isAdmin();');
     expect(firestoreRules).toContain('allow create, update, delete: if false;');
+  });
+
+  it('shows human-readable class date, student, and teacher directly in each row', () => {
+    expect(dashboard).toContain('<TableHead>Class Date</TableHead>');
+    expect(dashboard).toContain('<TableHead>Student</TableHead>');
+    expect(dashboard).toContain('<TableHead>Teacher</TableHead>');
+    expect(dashboard).toContain('formatServiceDate(item.serviceDateYmd)');
+    expect(dashboard).toContain("item.studentName || 'Student name unavailable'");
+    expect(dashboard).toContain("item.teacherName || 'Teacher name unavailable'");
+    expect(dashboard).toContain('item.studentName');
+    expect(dashboard).toContain('item.teacherName');
+    expect(dashboard).toContain('Observed: {formatObservedAt(item.observedAt)}');
   });
 
   it('labels dashboard counts as a loaded-window view rather than global totals', () => {
