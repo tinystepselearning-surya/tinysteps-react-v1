@@ -179,11 +179,18 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
     ? [...beforeGraph.roots.keys()].filter(id =>
       afterGraph.roots.has(id) && beforeGraph.roots.get(id) !== afterGraph.roots.get(id)).sort()
     : [];
-  const retiredOnlyTopologyChange = files.includes(`${SOURCE_ROOT}/index.ts`)
+  const indexChanged = files.includes(`${SOURCE_ROOT}/index.ts`);
+  const retiredOnlyTopologyChange = indexChanged
     && removedRoots.length > 0
     && removedRoots.every(id => INTENTIONALLY_RETIRED_FUNCTION_EXPORTS.has(id))
     && addedRoots.length === 0
     && movedRoots.length === 0;
+  const additiveOnlyTopologyChange = indexChanged
+    && addedRoots.length > 0
+    && removedRoots.length === 0
+    && movedRoots.length === 0;
+  const safelyTargetableIndexTopologyChange =
+    retiredOnlyTopologyChange || additiveOnlyTopologyChange;
   if (retiredOnlyTopologyChange) result.retiredFunctions = removedRoots;
 
   const globals = files.filter(file => file === 'functions/package.json'
@@ -192,7 +199,7 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
   if (JSON.stringify(beforeFirebase?.functions ?? null) !== JSON.stringify(afterFirebase?.functions ?? null)) {
     globals.push('firebase.json:functions-config');
   }
-  if (files.includes(`${SOURCE_ROOT}/index.ts`) && !retiredOnlyTopologyChange) {
+  if (indexChanged && !safelyTargetableIndexTopologyChange) {
     globals.push(`${SOURCE_ROOT}/index.ts:export-topology`);
   }
   if (globals.length) {
@@ -221,6 +228,13 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
       }
     }
   }
+  if (additiveOnlyTopologyChange) {
+    for (const id of addedRoots) {
+      if (!targetReasons.has(id)) targetReasons.set(id, new Set());
+      targetReasons.get(id).add('newly exported from functions/src/index.ts');
+    }
+  }
+
   result.impactedFunctions = [...targetReasons.keys()]
     .filter(id => !result.retiredFunctions.includes(id))
     .sort();
