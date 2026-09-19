@@ -166,8 +166,8 @@ export default function SpeakingProgressFrameworkPage() {
             <p className="mt-5 max-w-4xl text-base leading-8 text-slate-700 md:text-lg">
               The {SPEAKING_PROGRESS_FRAMEWORK_NAME} looks at ten observable speaking dimensions.
               We compare what the child can do, how much support is needed, and whether the same skill
-              appears again on a fresh task. We do not reduce a child&apos;s speaking profile to one
-              percentage or one personality label.
+              appears again on a fresh task. This framework does not reduce a child&apos;s speaking profile
+              to one percentage or one personality label.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -347,9 +347,10 @@ export default function SpeakingProgressFrameworkPage() {
             ))}
           </div>
           <p className="mt-5 text-sm leading-6 text-slate-600">
-            Enrolled-family dashboards and existing progress records remain operational systems. Brick 7 defines
-            the educational observation language; it does not silently rewrite historical progress data or
-            manufacture a new percentage from old records.
+            Enrolled-family dashboards and existing progress records remain separate operational systems and may
+            still show broader legacy subject-level progress summaries. Brick 7 defines the educational observation
+            language; it does not silently rewrite historical progress data or manufacture a new framework score from
+            old records.
           </p>
         </div>
       </section>
