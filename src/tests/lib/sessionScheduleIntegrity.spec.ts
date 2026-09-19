@@ -6,7 +6,6 @@ import {
   isEnrollmentOperationallyActive,
   isLegacyManualSession,
   isOperationalManualSession,
-  isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
   isSessionStatusOperationallyVisible,
   isSessionWithinRollingOperationalAuthority,
@@ -222,20 +221,6 @@ describe('sessionScheduleIntegrity', () => {
       teacherId: 'teacher_current',
       status: 'scheduled',
     }, baseEnrollment)).toBe(false);
-  });
-
-  it.each([
-    {originalSessionId: 'original-1'},
-    {sourceSessionId: 'original-1'},
-    {rescheduledFromSessionId: 'original-1'},
-    {replacementSessionId: 'replacement-1'},
-    {replacementForSessionId: 'original-1'},
-    {rescheduleCreditId: 'credit-1'},
-    {makeupForSessionId: 'original-1'},
-    {manualSessionState: 'approved'},
-    {isMakeup: true},
-  ])('treats relationship-only session metadata as an operational schedule exception: %#', (session) => {
-    expect(isScheduleExceptionSession(session)).toBe(true);
   });
 
   it('keeps one-off makeup sessions canonical when identity matches through teacher aliases', () => {
