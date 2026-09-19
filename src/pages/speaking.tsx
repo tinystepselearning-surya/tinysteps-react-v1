@@ -5,7 +5,7 @@ import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
-import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
@@ -112,6 +112,33 @@ const speakingPyramidLevels = [
   'Listening and ideas',
 ];
 
+const speakingProgrammeArchitecture = [
+  {
+    name: 'Public Speaking Foundations',
+    path: speakingFacts.levels.beginner.canonicalCoursePath,
+    role: 'Core Public Speaking level 1',
+    description: `${speakingFacts.levels.beginner.ageRange.label} • ${speakingFacts.levels.beginner.lessonCount} lessons • organised responses, picture talk, show-and-tell, storytelling foundations, and short presentation readiness.`,
+  },
+  {
+    name: 'Public Speaking Excellence',
+    path: speakingFacts.levels.advanced.canonicalCoursePath,
+    role: 'Core Public Speaking level 2',
+    description: `${speakingFacts.levels.advanced.ageRange.label} • ${speakingFacts.levels.advanced.lessonCount} lessons • longer structured talks, storytelling, presentations, impromptu speaking, guided debate, and stronger delivery.`,
+  },
+  {
+    name: 'Spoken English',
+    path: '/spoken-english-classes-for-kids-online',
+    role: 'Adjacent specialist pathway',
+    description: 'Use when everyday conversation, fuller responses, vocabulary in use, or conversational fluency is the main goal.',
+  },
+  {
+    name: 'Confidence Building',
+    path: '/confidence-building-program-kids',
+    role: 'Adjacent specialist pathway',
+    description: 'Use when speaking comfort, participation, hesitation, or dependence on prompting is the primary barrier.',
+  },
+];
+
 export default function SpeakingPage() {
   const canonicalPath = '/speaking';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
@@ -159,15 +186,23 @@ export default function SpeakingPage() {
       '@id': `${canonicalUrl}#faq`,
     };
 
-    const courseSchema = createCourseSchema({
-      name: 'Public Speaking & Communication Classes for Kids',
-      description:
-        'Live 1:1 online public speaking and communication classes for kids focused on structured answers, storytelling, show-and-tell, presentations, clear expression, and communication confidence.',
-      url: canonicalUrl,
-      educationalLevel: `${speakingFacts.levels.beginner.label}: ${speakingFacts.levels.beginner.ageRange.label}; ${speakingFacts.levels.advanced.label}: ${speakingFacts.levels.advanced.ageRange.label}; assessment-first placement`,
-      teaches: ['public speaking', 'communication skills', 'structured answers', 'storytelling', 'show and tell', 'presentation skills', 'audience awareness', 'clear expression'],
-      areaServed: ['India', 'Worldwide'],
-    });
+    const programmeArchitectureSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#speaking-programme-architecture`,
+      name: 'Tiny Steps Speaking programme architecture',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      itemListElement: speakingProgrammeArchitecture.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'WebPage',
+          name: item.name,
+          url: `${PUBLIC_FACTS.primaryWebsite}${item.path}`,
+          description: item.description,
+        },
+      })),
+    };
 
     applySeo({
       title: seoTitle,
@@ -176,7 +211,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, pathwayItemListSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, programmeArchitectureSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -437,6 +472,26 @@ export default function SpeakingPage() {
               </article>
             ))}
           </div>
+
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Adjacent specialist pathways</p>
+            <h3 className="mt-2 text-xl font-bold text-slate-950">Not every speaking difficulty belongs inside the two Public Speaking levels</h3>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
+              Foundations and Excellence are the two published Public Speaking levels. If the main need is everyday conversational English or specialist speaking confidence, use the separate owner below rather than forcing the child into a Public Speaking level.
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <article className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+                <h4 className="font-bold text-slate-950">Spoken English</h4>
+                <p className="mt-2 text-sm leading-6 text-slate-700">Everyday conversation, fuller responses, vocabulary in use, and conversational fluency.</p>
+                <Link to="/spoken-english-classes-for-kids-online" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Spoken English</Link>
+              </article>
+              <article className="rounded-2xl border border-orange-200 bg-orange-50/60 p-5">
+                <h4 className="font-bold text-slate-950">Confidence Building</h4>
+                <p className="mt-2 text-sm leading-6 text-slate-700">Speaking comfort, participation, hesitation, and independence when confidence itself is the main barrier.</p>
+                <Link to="/confidence-building-program-kids" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Confidence Building</Link>
+              </article>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -551,14 +606,14 @@ export default function SpeakingPage() {
               <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">{speakingFacts.levels.beginner.ageRange.label}</span>
               <h3 className="mt-3 text-lg font-bold text-slate-950">{speakingFacts.levels.beginner.label}</h3>
               <p className="mt-2 text-sm text-slate-700">{speakingFacts.levels.beginner.lessonCount} lessons covering early structured responses, picture talk, show-and-tell, storytelling foundations, clear expression, and speaking comfort.</p>
-              <Link to="/courses/public-speaking-foundations" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">View Basic Public Speaking details</Link>
+              <Link to={speakingFacts.levels.beginner.canonicalCoursePath} className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">View Public Speaking Foundations details</Link>
             </article>
 
             <article className="flex h-full flex-col rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">{speakingFacts.levels.advanced.ageRange.label}</span>
               <h3 className="mt-3 text-lg font-bold text-slate-950">{speakingFacts.levels.advanced.label}</h3>
               <p className="mt-2 text-sm text-slate-700">{speakingFacts.levels.advanced.lessonCount} lessons building more organised answers, storytelling, opinion sharing, presentations, audience awareness, discussion confidence, and clearer communication.</p>
-              <Link to="/courses/public-speaking-excellence" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">View Advanced Public Speaking details</Link>
+              <Link to={speakingFacts.levels.advanced.canonicalCoursePath} className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">View Public Speaking Excellence details</Link>
             </article>
 
             <article className="flex h-full flex-col rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
