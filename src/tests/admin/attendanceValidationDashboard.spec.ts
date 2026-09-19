@@ -40,11 +40,11 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('<select');
   });
 
-  it('uses only bounded class-session fallback reads for legacy display names', () => {
+  it('does not use realtime listeners or operational collection lookups for display names', () => {
     expect(dashboard).not.toContain('onSnapshot(');
-    expect(dashboard).toContain("collection(db, 'classSessions')");
-    expect(dashboard).toContain("where(documentId(), 'in', chunk)");
-    expect(dashboard).toContain('index += 30');
+    expect(dashboard).not.toContain("collection(db, 'classSessions')");
+    expect(dashboard).not.toContain('documentId()');
+    expect(dashboard).not.toContain('enrichCaseDisplayNames');
     expect(dashboard).not.toContain("collection(db, 'users')");
     expect(dashboard).not.toContain("collection(db, 'kids')");
     expect(dashboard).not.toContain("collection(db, 'enrollments')");
