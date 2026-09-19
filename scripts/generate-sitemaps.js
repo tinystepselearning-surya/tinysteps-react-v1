@@ -99,6 +99,8 @@ const RETIRED_BLOG_SLUGS = new Set(
   const coursesTs = path.join(root, 'src', 'content', 'courses.ts');
   const publicCoursePagesJs = path.join(root, 'src', 'lib', 'publicCoursePages.js');
   const courseDetailTsx = path.join(root, 'src', 'pages', 'CourseDetailPage.tsx');
+  const speakingProgressFrameworkTs = path.join(root, 'src', 'lib', 'speakingProgressFramework.ts');
+  const speakingProgressFrameworkPageTsx = path.join(root, 'src', 'pages', 'public', 'SpeakingProgressFrameworkPage.tsx');
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
@@ -142,7 +144,13 @@ const RETIRED_BLOG_SLUGS = new Set(
         : route === '/' || route === '/courses' || MONEY_PAGES.has(route) || SUPPORTING_LONG_TAIL.has(route)
           ? 'weekly'
           : 'monthly';
-      return toUrl(loc, staticLastmod, priority, changefreq);
+      const routeLastmod = route === '/speaking-progress-framework'
+        ? latestLastmodFrom(
+            [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx],
+            staticLastmod,
+          )
+        : staticLastmod;
+      return toUrl(loc, routeLastmod, priority, changefreq);
     }).join('')+
   `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-static.xml'), staticXml);
