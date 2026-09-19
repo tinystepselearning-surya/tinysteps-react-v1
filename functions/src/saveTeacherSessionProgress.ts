@@ -945,6 +945,12 @@ export const adminAttendanceCorrection = onCall(
         'validationCaseId and validationCaseFingerprint must be supplied together.',
       );
     }
+    if (validationCaseId && validationCaseId.includes('/')) {
+      throw new HttpsError('invalid-argument', 'validationCaseId must be a Firestore document id.');
+    }
+    if (validationCaseFingerprint && !/^[a-f0-9]{64}$/i.test(validationCaseFingerprint)) {
+      throw new HttpsError('invalid-argument', 'validationCaseFingerprint is invalid.');
+    }
 
     if (!sessionId) {
       throw new HttpsError('invalid-argument', 'sessionId is required.');
@@ -967,6 +973,7 @@ export const adminAttendanceCorrection = onCall(
     }
 
     const session = (sessionSnap.data() || {}) as Record<string, unknown>;
+    const sessionUpdateTime = sessionSnap.updateTime;
     const sessionKidIds = Array.isArray(session.kidIds)
       ? (session.kidIds as unknown[]).map((id) => String(id || '').trim()).filter(Boolean)
       : [];
@@ -992,6 +999,7 @@ export const adminAttendanceCorrection = onCall(
       fingerprint: string;
       recommendedAction: 'correct_to_present' | 'correct_to_absent';
       expectedNewStatus: 'present' | 'absent';
+      caseUpdateTime: admin.firestore.Timestamp;
     } | null = null;
 
     if (hasValidationCaseLink) {
@@ -1002,6 +1010,13 @@ export const adminAttendanceCorrection = onCall(
       }
 
       const validationCase = (caseSnap.data() || {}) as Record<string, unknown>;
+      const caseUpdateTime = caseSnap.updateTime;
+      if (!caseUpdateTime) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance validation case version could not be verified.',
+        );
+      }
       const storedFingerprint = sanitizeText(validationCase.inputFingerprint, 160);
       if (!storedFingerprint || storedFingerprint !== validationCaseFingerprint) {
         throw new HttpsError(
@@ -1081,6 +1096,7 @@ export const adminAttendanceCorrection = onCall(
           ? 'correct_to_present'
           : 'correct_to_absent',
         expectedNewStatus,
+        caseUpdateTime,
       };
     }
 
@@ -1121,15 +1137,26 @@ export const adminAttendanceCorrection = onCall(
       reason,
     });
 
-    batch.set(
-      sessionRef,
-      {
-        attendance: nextAttendance,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedBy: uid,
-      },
-      { merge: true },
-    );
+    const sessionUpdate = {
+      attendance: nextAttendance,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: uid,
+    };
+    if (av7ValidationLink) {
+      if (!sessionUpdateTime) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Session version could not be verified for AVS correction.',
+        );
+      }
+      batch.update(
+        sessionRef,
+        sessionUpdate,
+        { lastUpdateTime: sessionUpdateTime },
+      );
+    } else {
+      batch.set(sessionRef, sessionUpdate, { merge: true });
+    }
 
     batch.set(auditRef, {
       source: 'admin-attendance-correction',
@@ -1172,7 +1199,7 @@ export const adminAttendanceCorrection = onCall(
         reason,
         resolvedAt,
       });
-      batch.set(
+      batch.update(
         av7ValidationLink.caseRef,
         {
           resolutionStatus: 'resolved',
@@ -1185,7 +1212,7 @@ export const adminAttendanceCorrection = onCall(
           resolvedByName: correctedByName,
           resolvedByEmail: correctedByEmail,
         },
-        { merge: true },
+        { lastUpdateTime: av7ValidationLink.caseUpdateTime },
       );
     }
 
