@@ -177,13 +177,13 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(sitemapGenerator).toContain('publicCoursePagesJs');
     expect(sitemapGenerator).toContain('courseDetailTsx');
     expect(sitemapCourses).toContain(
-      '<loc>https://tinystepslearning.com/courses/public-speaking-foundations</loc>\\n    <lastmod>2026-09-19</lastmod>',
+      '<loc>https://tinystepslearning.com/courses/public-speaking-foundations</loc>\n    <lastmod>2026-09-19</lastmod>',
     );
     expect(sitemapCourses).toContain(
-      '<loc>https://tinystepslearning.com/courses/public-speaking-excellence</loc>\\n    <lastmod>2026-09-19</lastmod>',
+      '<loc>https://tinystepslearning.com/courses/public-speaking-excellence</loc>\n    <lastmod>2026-09-19</lastmod>',
     );
     expect(sitemapIndex).toContain(
-      '<loc>https://tinystepslearning.com/sitemap-courses.xml</loc>\\n    <lastmod>2026-09-19</lastmod>',
+      '<loc>https://tinystepslearning.com/sitemap-courses.xml</loc>\n    <lastmod>2026-09-19</lastmod>',
     );
   });
 
