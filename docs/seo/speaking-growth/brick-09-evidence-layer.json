@@ -1,8 +1,8 @@
 {
   "brick": 9,
   "name": "Speaking Evidence Layer",
-  "revision": "2026-09-19-b9-v1",
-  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "revision": "2026-09-19-b9-v2",
+  "status": "COMPLETE — RE-AUDITED",
   "branch": "feature/speaking-seo-geo-growth",
   "productionDeployment": false,
   "evidenceSurfaces": [
@@ -104,5 +104,68 @@
   "executableLimitations": [
     "No feature-branch GitHub Actions run attached to the Brick 9 head.",
     "Full Vitest, TypeScript/build, prerender and browser QA remain required at the final Bricks 1–13 integration gate."
-  ]
+  ],
+  "reAudit": {
+    "fixes": [
+      "Evidence required C8 paths are now derived from evidence records; every non-progress record is runtime-bound to a frozen C8 trust source.",
+      "Progress-method evidence is runtime-bound specifically to the Brick 7 Speaking Progress Framework.",
+      "UI navigation may use a source fragment, but evidence structured data now uses the canonical sourcePath.",
+      "Speaking parent testimonials now have an adjacent individual-experience / no-guarantee boundary.",
+      "Strict-TypeScript risk from dynamic JS registry indexing was removed from the regression test."
+    ],
+    "sourceLevel": {
+      "contract": {
+        "passed": 16,
+        "total": 16
+      },
+      "provenance": {
+        "passed": 29,
+        "total": 29
+      },
+      "claimSafety": {
+        "passed": 9,
+        "total": 9
+      },
+      "livePage": {
+        "passed": 7,
+        "total": 7
+      },
+      "structuredData": {
+        "passed": 8,
+        "total": 8
+      },
+      "routeProtection": {
+        "passed": 3,
+        "total": 3
+      },
+      "sitemapFreshness": {
+        "passed": 2,
+        "total": 2
+      },
+      "regressionSpec": {
+        "passed": 8,
+        "total": 8
+      },
+      "passed": 82,
+      "total": 82
+    },
+    "protectedSurfaceSha": {
+      "passed": 18,
+      "total": 18
+    },
+    "implementationDelta": [
+      "src/lib/speakingEvidenceLayer.ts",
+      "src/pages/speaking.tsx",
+      "src/tests/seo/speakingGrowthBrick9.spec.ts"
+    ],
+    "canonicalEvidenceSources": [
+      "/class-samples",
+      "/speaking",
+      "/speaking-progress-framework",
+      "/team",
+      "/curriculum",
+      "/testimonials"
+    ],
+    "canonicalSourceChecks": "All six present in route SEO registry, self-canonical, indexable, and present in sitemap-static.xml."
+  }
 }
