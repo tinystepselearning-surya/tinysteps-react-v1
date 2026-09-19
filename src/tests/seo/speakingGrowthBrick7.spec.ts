@@ -203,9 +203,10 @@ describe('Speaking growth Brick 7 progress framework', () => {
   it('keeps parent progress communication evidence-led rather than percentage-led', () => {
     expect(parentProgressSource).toContain('Tiny Steps uses four observation bands rather than turning the ten dimensions into one percentage.');
     expect(parentProgressSource).toContain('Existing dashboard summaries remain separate operational views.');
-    expect(parentProgressSource).toContain('What the child can now do independently');
-    expect(parentProgressSource).toContain('Fresh-task evidence');
-    expect(parentProgressSource).toContain('Next learning priority');
+    expect(parentProgressSource).toContain('SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS.map');
+    expect(SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS).toContain('What the child can now do independently');
+    expect(SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS).toContain('Fresh-task evidence');
+    expect(SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS).toContain('Next learning priority');
   });
 
   it('keeps the existing operational progress-rating contract untouched in Brick 7', () => {
