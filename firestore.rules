@@ -1619,6 +1619,12 @@ function teacherProgressIdentityUnchanged() {
       allow read, create, update, delete: if false;
     }
 
+    // First-time baseline cursors are backend-only. They prevent repeated
+    // historical rescans/Graph collection for the same explicit date range.
+    match /attendanceValidationBaselineRanges/{rangeId} {
+      allow read, create, update, delete: if false;
+    }
+
     // Microsoft organizer configuration is backend-only. The browser neither
     // needs nor receives the organizer object ID used by Graph.
     match /attendanceValidationConfig/{configId} {
