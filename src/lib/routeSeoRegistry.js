@@ -52,6 +52,16 @@ export const ROUTE_SEO_REGISTRY = {
     keywords:
       'public speaking classes for kids online,public speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
+  '/speaking-progress-framework': {
+    title: 'How Tiny Steps Measures Speaking Progress | 10-Skill Framework',
+    description:
+      'See the Tiny Steps Speaking Progress Framework: 10 observable speaking dimensions, support-to-independence evidence, fresh-task transfer checks, and parent-friendly progress reviews.',
+    canonicalPath: '/speaking-progress-framework',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    ogType: 'website',
+    keywords:
+      'speaking progress for kids,how to measure speaking progress,public speaking progress framework,speaking assessment for children,communication skills progress for kids,public speaking rubric for kids',
+  },
   '/book-demo': {
     title: 'Free 35-Minute 1:1 English Assessment | Tiny Steps',
     description:
