@@ -708,10 +708,11 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/public-speaking-communication-kids': {
-    title: 'Public Speaking & Communication for Kids | Tiny Steps Learning',
+    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps',
     description:
-      'Explore Tiny Steps public speaking and communication programs for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
-    canonicalPath: '/public-speaking-communication-kids',
+      'This legacy URL permanently redirects to the Tiny Steps Public Speaking & Communication programme owner.',
+    canonicalPath: '/speaking',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/login': {
