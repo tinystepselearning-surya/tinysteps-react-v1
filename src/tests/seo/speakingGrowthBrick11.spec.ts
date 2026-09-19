@@ -22,6 +22,7 @@ import {
 import {
   SPEAKING_ENTITY_AUTHORITY,
   SPEAKING_ENTITY_AUTHORITY_REVISION,
+  SPEAKING_ENTITY_DISAMBIGUATION_KEYS,
   SPEAKING_EXTERNAL_AUTHORITY_RULES,
   SPEAKING_EXTERNAL_PROFILE_ALIGNMENT,
   SPEAKING_OFFICIAL_PROFILE_URLS,
@@ -39,7 +40,7 @@ const routesSource = read('src/app/routes.tsx');
 
 describe('Speaking growth Brick 11 entity and external authority', () => {
   it('binds Speaking to the existing canonical organization and founder identities', () => {
-    expect(SPEAKING_ENTITY_AUTHORITY_REVISION).toBe('2026-09-19-b11-v1');
+    expect(SPEAKING_ENTITY_AUTHORITY_REVISION).toBe('2026-09-19-b11-v2');
     expect(SPEAKING_ENTITY_AUTHORITY.commercialOwnerPath).toBe('/speaking');
     expect(SPEAKING_ENTITY_AUTHORITY.programmeLabel).toBe(
       SEMANTIC_FACTS.programmes.speaking.label,
@@ -61,7 +62,8 @@ describe('Speaking growth Brick 11 entity and external authority', () => {
 
   it('keeps founder Person identities separate from organization sameAs', () => {
     expect(SPEAKING_ENTITY_AUTHORITY.founder.sameAs).toEqual(FOUNDER_PUBLIC_PROFILE_URLS);
-    expect(FOUNDER_PUBLIC_PROFILE_URLS).toHaveLength(1);
+    expect(FOUNDER_PUBLIC_PROFILE_URLS.length).toBeGreaterThan(0);
+    expect(new Set(FOUNDER_PUBLIC_PROFILE_URLS).size).toBe(FOUNDER_PUBLIC_PROFILE_URLS.length);
     for (const founderUrl of FOUNDER_PUBLIC_PROFILE_URLS) {
       expect(organizationSchema.sameAs).not.toContain(founderUrl);
     }
@@ -80,8 +82,26 @@ describe('Speaking growth Brick 11 entity and external authority', () => {
     );
   });
 
+  it('requires multiple identity signals instead of trusting a matching brand name alone', () => {
+    expect(SPEAKING_EXTERNAL_AUTHORITY_RULES.externalNameMatchAloneIsSufficient).toBe(false);
+    expect(SPEAKING_ENTITY_DISAMBIGUATION_KEYS).toEqual(
+      expect.arrayContaining([
+        'https://tinystepslearning.com',
+        SEMANTIC_FACTS.founder.fullName,
+        SEMANTIC_FACTS.founder.profilePath,
+        'Hyderabad, Telangana, India',
+        'live online classes',
+        SEMANTIC_FACTS.programmes.speaking.label,
+      ]),
+    );
+    expect(new Set(SPEAKING_ENTITY_DISAMBIGUATION_KEYS).size).toBe(
+      SPEAKING_ENTITY_DISAMBIGUATION_KEYS.length,
+    );
+  });
+
   it('keeps external-authority expansion conservative', () => {
     expect(SPEAKING_EXTERNAL_AUTHORITY_RULES).toEqual({
+      externalNameMatchAloneIsSufficient: false,
       createNewSocialProfileForSeoOnly: false,
       addUnverifiedDirectoryToSameAs: false,
       addReviewPlatformToSameAsWithoutVerifiedIdentity: false,
