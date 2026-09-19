@@ -29,6 +29,7 @@ describe('AV7 approved attendance validation correction workflow', () => {
     expect(correctionPanel).toContain('disabled={saving || Boolean(av7Context)}');
     expect(correctionPanel).toContain('AV7 approved-correction review');
     expect(correctionPanel).toContain('Existing teacher-pay and finance safeguards still apply.');
+    expect(correctionPanel).toContain('Approve AVS Correction');
   });
 
   it('passes validation linkage through the existing adminAttendanceCorrection callable', () => {
@@ -57,6 +58,12 @@ describe('AV7 approved attendance validation correction workflow', () => {
     );
     expect(correctionFunction).toContain(
       'This exact attendance validation case revision was already resolved.',
+    );
+    expect(correctionFunction).toContain(
+      'AVS-linked correction cannot be applied to a cancelled session.',
+    );
+    expect(correctionFunction).toContain(
+      'AVS-linked correction cannot reinterpret a non-canonical attendance status.',
     );
     expect(correctionFunction).toContain('{ lastUpdateTime: sessionUpdateTime }');
     expect(correctionFunction).toContain('{ lastUpdateTime: av7ValidationLink.caseUpdateTime }');
