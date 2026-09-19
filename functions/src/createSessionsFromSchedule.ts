@@ -510,7 +510,7 @@ function hasFinancialLink(state: SessionFinancialLinkState | undefined): boolean
   return hasChargeLink || hasEarningLink || state.chargePaidAmount > 0 || state.earningPaidAmount > 0;
 }
 
-function isScheduleExceptionSession(raw: Record<string, unknown>): boolean {
+export function isScheduleExceptionSession(raw: Record<string, unknown>): boolean {
   if (
     raw.historicalCorrection === true ||
     raw.isAdHoc === true ||
