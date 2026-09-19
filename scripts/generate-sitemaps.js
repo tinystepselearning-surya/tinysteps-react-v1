@@ -101,6 +101,10 @@ const RETIRED_BLOG_SLUGS = new Set(
   const courseDetailTsx = path.join(root, 'src', 'pages', 'CourseDetailPage.tsx');
   const speakingProgressFrameworkTs = path.join(root, 'src', 'lib', 'speakingProgressFramework.ts');
   const speakingProgressFrameworkPageTsx = path.join(root, 'src', 'pages', 'public', 'SpeakingProgressFrameworkPage.tsx');
+  const speakingPageTsx = path.join(root, 'src', 'pages', 'speaking.tsx');
+  const bookDemoPageTsx = path.join(root, 'src', 'pages', 'public', 'BookDemoPage.tsx');
+  const subjectResourcesPageTsx = path.join(root, 'src', 'pages', 'SubjectResourcesPage.tsx');
+  const parentTrackingPageTsx = path.join(root, 'src', 'pages', 'parents', 'tracking-progress.tsx');
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
@@ -144,11 +148,15 @@ const RETIRED_BLOG_SLUGS = new Set(
         : route === '/' || route === '/courses' || MONEY_PAGES.has(route) || SUPPORTING_LONG_TAIL.has(route)
           ? 'weekly'
           : 'monthly';
-      const routeLastmod = route === '/speaking-progress-framework'
-        ? latestLastmodFrom(
-            [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx],
-            staticLastmod,
-          )
+      const brick7LastmodSources = {
+        '/speaking': [appRoutesTs, speakingPageTsx],
+        '/book-demo': [appRoutesTs, bookDemoPageTsx],
+        '/resources/speaking': [appRoutesTs, subjectResourcesPageTsx],
+        '/speaking-progress-framework': [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx],
+      };
+      const routeLastmodSources = brick7LastmodSources[route];
+      const routeLastmod = routeLastmodSources
+        ? latestLastmodFrom(routeLastmodSources, staticLastmod)
         : staticLastmod;
       return toUrl(loc, routeLastmod, priority, changefreq);
     }).join('')+
@@ -157,7 +165,12 @@ const RETIRED_BLOG_SLUGS = new Set(
 
   // sitemap-parents.xml (canonical parents hub pages only)
   let parentsXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  parentsXml += parentRoutes.map((route) => toUrl(`https://tinystepslearning.com${route}`, lastmodFrom(parentsMetaTs), route === '/parents' ? '0.85' : '0.7', 'weekly')).join('');
+  parentsXml += parentRoutes.map((route) => {
+    const last = route === '/parents/tracking-progress'
+      ? latestLastmodFrom([parentsMetaTs, parentTrackingPageTsx], lastmodFrom(parentsMetaTs))
+      : lastmodFrom(parentsMetaTs);
+    return toUrl(`https://tinystepslearning.com${route}`, last, route === '/parents' ? '0.85' : '0.7', 'weekly');
+  }).join('');
   parentsXml += `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-parents.xml'), parentsXml);
 
