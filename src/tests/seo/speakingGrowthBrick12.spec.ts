@@ -32,6 +32,14 @@ const routesSource = read('src/app/routes.tsx');
 const routeManifestSource = read('src/lib/publicRouteManifest.js');
 const brick9TestSource = read('src/tests/seo/speakingGrowthBrick9.spec.ts');
 const routeSeoRegistrySource = read('src/lib/routeSeoRegistry.js');
+
+function getRouteSeoBlock(routePath: string): string {
+  const marker = "'" + routePath + "':";
+  const start = routeSeoRegistrySource.indexOf(marker);
+  if (start < 0) return '';
+  const next = routeSeoRegistrySource.indexOf("\n  '/", start + marker.length);
+  return routeSeoRegistrySource.slice(start, next >= 0 ? next : routeSeoRegistrySource.length);
+}
 const publicCoursePagesSource = read('src/lib/publicCoursePages.js');
 const courseDetailSource = read('src/pages/CourseDetailPage.tsx');
 const sitemapStatic = read('public/sitemap-static.xml');
@@ -85,10 +93,8 @@ describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
         continue;
       }
 
-      const marker = "'" + owner.path + "':";
-      const start = routeSeoRegistrySource.indexOf(marker);
-      expect(start).toBeGreaterThanOrEqual(0);
-      const routeBlock = routeSeoRegistrySource.slice(start, start + 1000);
+      const routeBlock = getRouteSeoBlock(owner.path);
+      expect(routeBlock).not.toBe('');
       expect(routeBlock).toContain("canonicalPath: '" + owner.path + "'");
       expect(routeBlock).not.toMatch(/robots:\s*'[^']*noindex/i);
       expect(sitemapStatic).toContain('<loc>' + absolute + '</loc>');
