@@ -31,7 +31,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
 | 11 | Entity & external authority | COMPLETE — RE-AUDITED | NO |
 | 12 | GEO/AEO/AI visibility layer | COMPLETE — RE-AUDITED | NO |
-| 13 | Search-to-lead-to-admission attribution | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 13 | Search-to-lead-to-admission attribution | COMPLETE — RE-AUDITED | NO |
 
 ## Brick 1 completion gate
 
@@ -570,3 +570,17 @@ Brick 12 status after re-audit: **COMPLETE — RE-AUDITED**.
 - Production deployment: ZERO.
 
 Brick 13 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
+
+
+## 2026-09-19 Brick 13 full re-audit
+
+- Advanced Brick 13 revision to `2026-09-19-b13-v2`.
+- Fixed canonical stored-channel fallback for historical/incomplete raw first-touch attribution while keeping raw C0 evidence authoritative when present.
+- Stored normalized channel/source now counts as first-touch evidence instead of being mislabeled missing.
+- Independent Brick 13 re-audit matrix: **145/145 passed**.
+- Brick 13 regression suite: **14 test cases**.
+- Final-integration preflight additionally repaired Brick 6 regression syntax, protected `/speaking-progress-framework` in Commercial C7, and corrected the Public Speaking level schema to use canonical `item.path`.
+- Final cross-brick regression guard added at `src/tests/seo/speakingGrowthFinalIntegration.spec.ts`.
+- Exact-head executable validation is tracked through Draft PR #401; no production merge or deploy is authorized by this record.
+
+Brick 13 status after full re-audit: **COMPLETE — RE-AUDITED**.
