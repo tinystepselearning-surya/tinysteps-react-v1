@@ -7,10 +7,12 @@
     "schemaStrategy": {
       "webpage": true,
       "skillPathItemList": true,
-      "programmeArchitectureItemList": true,
+      "programmeArchitectureItemList": false,
       "umbrellaCourseSchema": false,
       "googleCourseListRichResultTarget": false,
-      "reason": "Tiny Steps has two published Public Speaking courses. Current Google Course list guidance requires at least three courses plus ItemList/carousel markup for that enhancement."
+      "reason": "Tiny Steps has two published Public Speaking courses. Current Google Course list guidance requires at least three courses plus ItemList/carousel markup for that enhancement.",
+      "orderedPublicSpeakingLevelsItemList": true,
+      "unorderedAdjacentSpecialistPathwaysItemList": true
     }
   },
   "publicSpeakingLevels": [
@@ -69,7 +71,10 @@
     "speakingLevelSequenceUsesGenericItemList": true,
     "hubUsesWebPageItemsNotCourseList": true,
     "videoObjectAdded": false,
-    "videoObjectReason": "No course-specific embedded video surface is established for these two detail pages; generic class samples are linked instead."
+    "videoObjectReason": "No course-specific embedded video surface is established for these two detail pages; generic class samples are linked instead.",
+    "hubCoreLevelsAndSpecialistsSeparated": true,
+    "publicSpeakingLevelsListOrder": "Ascending",
+    "adjacentSpecialistPathwaysListOrder": "Unordered"
   },
   "officialGoogleGuidanceChecked": {
     "date": "2026-09-19",
@@ -85,9 +90,78 @@
     "src/pages/CoursesPage.tsx",
     "src/pages/parents/choosing-course.tsx",
     "src/lib/seo/internalLinkMap.ts",
+    "src/lib/publicRouteManifest.js",
+    "src/lib/routeSeoRegistry.js",
+    "src/app/routes.tsx",
+    "firebase.json",
+    "scripts/generate-sitemaps.js",
+    "scripts/seo-smoke.mjs",
+    "public/sitemap-courses.xml",
+    "public/sitemap.xml",
     "public/rss.xml",
     "public/feed.xml",
-    "src/tests/seo/speakingGrowthBrick6.spec.ts"
+    "src/tests/seo/seoInfrastructure.spec.ts",
+    "src/tests/seo/speakingGrowthBrick6.spec.ts",
+    "docs/seo/speaking-growth/BRICK_06_PROGRAMME_ARCHITECTURE.md",
+    "docs/seo/speaking-growth/brick-06-programme-architecture.json",
+    "docs/seo/speaking-growth/BRICK_STATUS.md"
   ],
-  "productionDeployment": false
+  "productionDeployment": false,
+  "status": "COMPLETE — RE-AUDITED",
+  "redirectHardening": {
+    "changed": true,
+    "canonicalDestinationsUnchanged": true,
+    "aliases": [
+      "/courses/basic-public-speaking",
+      "/courses/basic-public-speaking/",
+      "/courses/advanced-public-speaking",
+      "/courses/advanced-public-speaking/"
+    ],
+    "note": "All four legacy Basic/Advanced course alias variants are direct 301 redirects, classified as redirects in the public route manifest, non-indexable in the SEO registry, excluded from sitemaps, and protected by smoke/infrastructure tests."
+  },
+  "sitemapFreshness": {
+    "urlSetChanged": false,
+    "speakingCourseLastmod": "2026-09-19",
+    "courseSitemapIndexLastmod": "2026-09-19",
+    "generatorTracks": [
+      "src/content/courses.ts",
+      "src/lib/publicCoursePages.js",
+      "src/pages/CourseDetailPage.tsx"
+    ]
+  },
+  "mainSync": {
+    "pullRequest": 390,
+    "mergedInto": "feature/speaking-seo-geo-growth",
+    "latestMainSha": "162e9060de3c6164a2301b253f37294cdc1123ac",
+    "branchBehindMainAtClose": 0,
+    "incomingFiles": [
+      "docs/attendance-validation/brick-av5-3-bounded-shadow-runner.md",
+      "functions/src/attendanceValidation/shadowRunner.ts",
+      "functions/test/attendanceValidationShadowRunner.spec.ts"
+    ],
+    "overlapWithSpeakingFiles": false
+  },
+  "reAudit": {
+    "date": "2026-09-19",
+    "status": "COMPLETE — RE-AUDITED",
+    "sourceLevelMatrix": {
+      "passed": 53,
+      "total": 53
+    },
+    "findingsFixed": [
+      "Separated the ordered two-level Public Speaking schema from unordered Spoken English and Confidence specialist alternatives.",
+      "Changed shared course-detail copy from stage to level for Speaking while preserving Phonics stage wording and schema.",
+      "Made Speaking course sitemap lastmod depend on the files that actually render/configure those course pages and refreshed current sitemap dates.",
+      "Hardened bare and trailing-slash Basic/Advanced legacy course aliases across Firebase, SPA routing, route manifest, SEO registry, smoke and infrastructure tests.",
+      "Corrected a contradictory SEO smoke contract that simultaneously treated retired Public Speaking/Spoken-English aliases as required core sitemap URLs and legacy-absent URLs.",
+      "Added Public Speaking Excellence to required canonical core sitemap coverage."
+    ],
+    "executableCi": {
+      "attachedRun": false,
+      "npmBuildClaimed": false,
+      "vitestClaimed": false,
+      "browserQaClaimed": false,
+      "note": "No feature-branch CI run was attached. A feature-to-main PR was deliberately not opened merely to trigger the repository's broad workflow fan-out."
+    }
+  }
 }
