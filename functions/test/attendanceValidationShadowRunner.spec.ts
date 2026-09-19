@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   AV53_MAX_WORK_ITEMS_PER_RUN,
+  AV53_VALIDATION_START_YMD,
   runAv53Shadow,
   type Av53LoadedWorkItem,
   type Av53ShadowStore,
@@ -141,8 +142,12 @@ function evidence(
   };
 }
 
-function session(attendance: unknown = { 'kid-1': { status: 'present' } }) {
+function session(
+  attendance: unknown = { 'kid-1': { status: 'present' } },
+  date = '2026-09-18',
+) {
   return {
+    date,
     enrollmentId: 'enrollment-1',
     teacherId: 'teacher-1',
     kidId: 'kid-1',
@@ -213,6 +218,147 @@ describe('AV5.3 bounded shadow runner', () => {
       unboundedOperationalScans: false,
       operationalMutationAllowed: false,
     });
+  });
+
+  it('hard-skips July/August sessions before the permanent September 2026 start date', async () => {
+    const augustEvidence = evidence();
+    augustEvidence.session.scheduledStartDateTime = '2026-08-31T10:00:00.000Z';
+    augustEvidence.session.scheduledEndDateTime = '2026-08-31T10:35:00.000Z';
+
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(undefined, '2026-08-31'),
+        evidence: augustEvidence,
+      },
+    ]);
+
+    const result = await runAv53Shadow(
+      {
+        runId: 'shadow-before-start',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+        meaningfulOverlapSeconds: 600,
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved).toEqual([]);
+    expect(result.validationStartYmd).toBe(AV53_VALIDATION_START_YMD);
+    expect(result.preScopeSkippedCount).toBe(1);
+    expect(result.skipped).toEqual([
+      {
+        classSessionId: 'session-1',
+        evidenceId: 'evidence-1',
+        reason: 'before_validation_start',
+      },
+    ]);
+  });
+
+  it('applies the September cutoff to session-only missing-evidence work items', async () => {
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'missing-evidence' },
+        session: session(undefined, '2026-08-15'),
+        evidence: null,
+      },
+    ]);
+
+    const result = await runAv53Shadow(
+      {
+        runId: 'shadow-old-missing-evidence',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'missing-evidence' }],
+        meaningfulOverlapSeconds: 600,
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved).toEqual([]);
+    expect(result.preScopeSkippedCount).toBe(1);
+    expect(result.skipped[0].reason).toBe('before_validation_start');
+  });
+
+  it('applies the September cutoff to evidence-only orphan work items', async () => {
+    const augustEvidence = evidence();
+    augustEvidence.session.scheduledStartDateTime = '2026-08-20T10:00:00.000Z';
+    augustEvidence.session.scheduledEndDateTime = '2026-08-20T10:35:00.000Z';
+
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: null,
+        evidence: augustEvidence,
+      },
+    ]);
+
+    const result = await runAv53Shadow(
+      {
+        runId: 'shadow-old-orphan',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+        meaningfulOverlapSeconds: 600,
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved).toEqual([]);
+    expect(result.preScopeSkippedCount).toBe(1);
+    expect(result.skipped[0].reason).toBe('before_validation_start');
+  });
+
+  it('treats the exact September 1 Tiny Steps service date as in scope', async () => {
+    const septemberEvidence = evidence();
+    septemberEvidence.session.scheduledStartDateTime = '2026-08-31T18:30:00.000Z';
+    septemberEvidence.session.scheduledEndDateTime = '2026-08-31T19:05:00.000Z';
+    septemberEvidence.attendanceReports[0].meetingStartDateTime =
+      '2026-08-31T18:30:00.000Z';
+    septemberEvidence.attendanceReports[0].meetingEndDateTime =
+      '2026-08-31T19:05:00.000Z';
+
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(undefined, '2026-09-01'),
+        evidence: septemberEvidence,
+      },
+    ]);
+
+    const result = await runAv53Shadow(
+      {
+        runId: 'shadow-september-first',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+        meaningfulOverlapSeconds: 600,
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(result.preScopeSkippedCount).toBe(0);
+    expect(result.persistedCaseCount).toBe(1);
+  });
+
+  it('fails closed when the service date cannot be resolved', async () => {
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'missing-evidence' },
+        session: {
+          enrollmentId: 'enrollment-1',
+          teacherId: 'teacher-1',
+          kidId: 'kid-1',
+          attendance: { 'kid-1': { status: 'present' } },
+        },
+        evidence: null,
+      },
+    ]);
+
+    const result = await runAv53Shadow(
+      {
+        runId: 'shadow-date-unresolved',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'missing-evidence' }],
+        meaningfulOverlapSeconds: 600,
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved).toEqual([]);
+    expect(result.skipped[0].reason).toBe('validation_scope_date_unresolved');
   });
 
   it('uses Tiny Steps nested attendance for the expected kid rather than session lifecycle status', async () => {
