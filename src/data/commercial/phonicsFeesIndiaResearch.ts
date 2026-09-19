@@ -307,21 +307,6 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     },
   },
   {
-    provider: 'Raynira Kids Academy',
-    sourceUrl: 'https://raynira.com/',
-    sourceLabel: 'Official academy home / course page',
-    checkedAt: '2026-09-19',
-    group: {
-      format: 'group',
-      publicPriceLabel: 'From ₹1,900/month beginner · ₹2,000/month advanced',
-      sessionStructureLabel: '6-month live online phonics courses',
-      groupSizeLabel: 'Small learning groups',
-      benchmarkEligible: false,
-      evidenceStatus: 'published-not-normalized',
-      evidenceNote: 'The exact number of live classes included per month is not publicly stated.',
-    },
-  },
-  {
     provider: 'WizMantra',
     sourceUrl: 'https://wizmantraenglishclasses.com/phonics-for-kids/',
     sourceLabel: 'Official phonics-for-kids pricing page',
@@ -338,6 +323,12 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
 ] as const;
 
 export const PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE: readonly PhonicsFeeReviewedWithoutBenchmark[] = [
+  {
+    provider: 'Raynira Kids Academy',
+    sourceUrl: 'https://raynira.com/',
+    reason:
+      'The official site is reachable, but the exact current phonics fee could not be independently re-verified from the public source during the final 19 September 2026 audit. No price is published here until it can be re-verified.',
+  },
   {
     provider: 'Little Genius Academy',
     sourceUrl: 'https://littlegeniusacademy.co.in/one-on-one-online-phonics-classes.php',
