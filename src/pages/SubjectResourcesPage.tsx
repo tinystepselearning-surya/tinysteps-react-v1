@@ -210,6 +210,9 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     ...focusedPhonicsLinks,
     ...speakingKnowledgeLinks,
   ];
+  const structuredLinks = Array.from(
+    new Map(allLinks.map((link) => [link.to, link] as const)).values(),
+  );
 
   const breadcrumbItems = getBreadcrumbTrail({ pathname: config.canonicalPath, title: config.title });
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
@@ -220,8 +223,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     '@type': 'ItemList',
     '@id': listId,
     name: `${config.title} — curated Tiny Steps resources`,
-    numberOfItems: allLinks.length,
-    itemListElement: allLinks.map((link, index) => ({
+    numberOfItems: structuredLinks.length,
+    itemListElement: structuredLinks.map((link, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       name: link.title,
