@@ -76,6 +76,7 @@ export { adminRepairRollingScheduleMaterialization } from "./scheduling/rollingS
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { runAttendanceValidationLatestCheck } from "./attendanceValidation/latestCheckCallable";
+export { forceRefreshAttendanceValidationEvidence } from "./attendanceValidation/forceFreshEvidenceCallable";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
 export {
   prepareAdminAttendanceCorrectionTeacherPayDecision,
