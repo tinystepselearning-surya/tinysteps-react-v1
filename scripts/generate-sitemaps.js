@@ -101,6 +101,7 @@ const RETIRED_BLOG_SLUGS = new Set(
   const courseDetailTsx = path.join(root, 'src', 'pages', 'CourseDetailPage.tsx');
   const speakingProgressFrameworkTs = path.join(root, 'src', 'lib', 'speakingProgressFramework.ts');
   const speakingKnowledgeClusterTs = path.join(root, 'src', 'lib', 'speakingKnowledgeCluster.ts');
+  const speakingEvidenceLayerTs = path.join(root, 'src', 'lib', 'speakingEvidenceLayer.ts');
   const speakingProgressFrameworkPageTsx = path.join(root, 'src', 'pages', 'public', 'SpeakingProgressFrameworkPage.tsx');
   const speakingPageTsx = path.join(root, 'src', 'pages', 'speaking.tsx');
   const bookDemoPageTsx = path.join(root, 'src', 'pages', 'public', 'BookDemoPage.tsx');
@@ -150,7 +151,7 @@ const RETIRED_BLOG_SLUGS = new Set(
           ? 'weekly'
           : 'monthly';
       const speakingGrowthLastmodSources = {
-        '/speaking': [appRoutesTs, speakingPageTsx],
+        '/speaking': [appRoutesTs, speakingPageTsx, speakingEvidenceLayerTs],
         '/book-demo': [appRoutesTs, bookDemoPageTsx],
         '/resources/speaking': [appRoutesTs, subjectResourcesPageTsx, speakingKnowledgeClusterTs],
         '/speaking-progress-framework': [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx],
