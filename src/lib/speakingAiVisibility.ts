@@ -13,7 +13,7 @@ import {
   SPEAKING_PROGRESS_FRAMEWORK_PATH,
 } from './speakingProgressFramework';
 
-export const SPEAKING_AI_VISIBILITY_REVISION = '2026-09-19-b12-v1';
+export const SPEAKING_AI_VISIBILITY_REVISION = '2026-09-19-b12-v2';
 
 const freeze = <T extends object>(value: T): Readonly<T> => Object.freeze(value);
 const freezeList = <T>(values: readonly T[]): readonly T[] => Object.freeze([...values]);
@@ -160,6 +160,24 @@ export const SPEAKING_AI_DISCOVERY_SURFACES = freezeList([
   '/feed.xml',
 ]);
 
+export const SPEAKING_AI_AGENT_POLICY = freeze({
+  searchDiscoveryCrawler: 'OAI-SearchBot',
+  openAiPotentialTrainingCrawler: 'GPTBot',
+  googleGeminiControlToken: 'Google-Extended',
+  appleFoundationModelControlToken: 'Applebot-Extended',
+  configuredPublicAgents: freezeList([
+    'OAI-SearchBot',
+    'ChatGPT-User',
+    'Claude-SearchBot',
+    'PerplexityBot',
+    'GPTBot',
+    'ClaudeBot',
+    'Google-Extended',
+    'Applebot-Extended',
+  ]),
+  privateRouteProtectionRequired: true,
+});
+
 export const SPEAKING_AI_EXPANSION_POLICY = freeze({
   newAiPromptPagesAllowed: false,
   newAiOnlyCommercialPagesAllowed: false,
@@ -196,6 +214,20 @@ if (
 
 if (SPEAKING_AI_ANSWER_OWNERS.some((item) => /(?:ai|chatgpt|gemini|perplexity)-/i.test(item.path))) {
   throw new Error('Brick 12 must not create AI-prompt or engine-specific public owner pages.');
+}
+
+if (
+  new Set(SPEAKING_AI_AGENT_POLICY.configuredPublicAgents).size
+  !== SPEAKING_AI_AGENT_POLICY.configuredPublicAgents.length
+) {
+  throw new Error('Brick 12 configured AI/search agent tokens must remain unique.');
+}
+
+if (
+  SPEAKING_AI_AGENT_POLICY.searchDiscoveryCrawler
+  === SPEAKING_AI_AGENT_POLICY.openAiPotentialTrainingCrawler
+) {
+  throw new Error('Brick 12 must keep OpenAI search discovery and potential-training crawler roles distinct.');
 }
 
 if (
