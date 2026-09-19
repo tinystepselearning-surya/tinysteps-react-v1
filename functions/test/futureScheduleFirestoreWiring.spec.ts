@@ -23,10 +23,10 @@ describe('Brick 5 production Firestore wiring', () => {
     expect(MAX_FUTURE_SCHEDULE_SWEEP_ENROLLMENTS).toBe(500);
   });
 
-  it('runs automatic reconciliation in the expected region/timezone and every two hours', () => {
+  it('runs automatic reconciliation in the expected region/timezone once daily', () => {
     expect(FUTURE_SCHEDULE_RECONCILER_REGION).toBe('asia-south1');
     expect(FUTURE_SCHEDULE_RECONCILER_TIME_ZONE).toBe('Asia/Kolkata');
-    expect(FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE).toBe('17 */2 * * *');
+    expect(FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE).toBe('47 0 * * *');
   });
 
   it('does not let a provably historical malformed date block the future window', () => {
