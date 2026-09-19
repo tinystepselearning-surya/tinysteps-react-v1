@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST  
 Branch: `feature/speaking-seo-geo-growth`  
-Status: **COMPLETE — STRUCTURALLY VERIFIED**  
+Status: **COMPLETE — RE-AUDITED**  
 Production deployment: **NO**
 
 ## Purpose
@@ -36,7 +36,7 @@ New source:
 
 Revision:
 
-`2026-09-19-b11-v1`
+`2026-09-19-b11-v2`
 
 It binds the Speaking project to:
 
@@ -173,6 +173,61 @@ No existing production page or entity schema was rewritten because the required 
 
 Brick 10 documentation and the master ledger were changed separately to record the skip decision.
 
+## Re-audit findings
+
+Brick 11 was independently re-audited before Brick 12.
+
+### 1. Brand-name ambiguity — hardened
+
+A current external search check confirmed the intended founder/brand relationship on LinkedIn, but also surfaced unrelated businesses using similar "Tiny Steps Learning" naming.
+
+Therefore a matching brand name alone is now explicitly **insufficient** authority evidence.
+
+Brick 11 now requires multiple disambiguation signals:
+
+- canonical website origin;
+- founder full name;
+- canonical founder profile path;
+- Hyderabad, Telangana, India;
+- live online delivery model;
+- Speaking & Communication programme identity.
+
+### 2. Founder-profile cardinality — corrected
+
+The initial contract required exactly one verified founder public profile.
+
+That was unnecessarily rigid. A future verified public founder profile should be addable without breaking the Speaking architecture.
+
+The revised contract requires:
+
+- at least one verified founder public profile;
+- unique founder profile URLs;
+- strict separation from organization `sameAs`.
+
+### 3. External corroboration interpretation — tightened
+
+Current external evidence supports the first-party relationship:
+
+- Ravali Priya Vannala is discoverable with Tiny Steps Learning;
+- recent founder activity describes founding Tiny Steps Learning and its English-learning focus;
+- Tiny Steps Learning branded LinkedIn content is discoverable;
+- a current Tiny Steps Learning teaching role describes live-online phonics, reading, grammar and communication delivery.
+
+These are treated as corroboration, not as permission to infer unsupported accreditation, review quality, ownership of every similarly named profile, or external endorsement.
+
+## Re-audit verification
+
+Corrected source-level matrix: **31 / 31 passed**.
+
+Protected-surface SHA comparison against the Brick 11 structural-close head: **19 / 19 unchanged**.
+
+Protected surfaces include semantic facts, shared schemas, organization/founder profile registries, `/speaking`, Team authority surfaces, founder page, Bricks 7–9 sources, route definitions, and teacher/parent operational progress code.
+
+Brick 11 re-audit implementation changes are limited to:
+
+1. `src/lib/speakingEntityAuthority.ts`
+2. `src/tests/seo/speakingGrowthBrick11.spec.ts`
+
 ## Executable-test limitation
 
 No feature-branch GitHub Actions run is claimed for this Brick 11 head.
@@ -192,4 +247,4 @@ Brick 11 is structurally complete when Speaking authority:
 
 That condition is satisfied on the isolated branch.
 
-**Brick 11 status: COMPLETE — STRUCTURALLY VERIFIED.**
+**Brick 11 status: COMPLETE — RE-AUDITED.**
