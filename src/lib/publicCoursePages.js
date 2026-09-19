@@ -19,6 +19,21 @@ const PHONICS_STAGE_SEQUENCE = [
   },
 ];
 
+const SPEAKING_LEVEL_SEQUENCE = [
+  {
+    name: 'Public Speaking Foundations',
+    routePath: '/courses/public-speaking-foundations',
+    level: 'Basic',
+    summary: 'Build organised responses, picture talk, show-and-tell, simple storytelling, clear expression, and short presentation readiness.',
+  },
+  {
+    name: 'Public Speaking Excellence',
+    routePath: '/courses/public-speaking-excellence',
+    level: 'Advanced',
+    summary: 'Extend into longer structured talks, storytelling, presentations, guided debate, audience awareness, and stronger delivery.',
+  },
+];
+
 export const PUBLIC_COURSE_PAGE_CONFIGS = [
   {
     internalSlug: 'phonics-foundation',
@@ -421,36 +436,90 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     h1: 'Public Speaking Foundations for Kids',
     title: 'Public Speaking Foundations for Kids | Tiny Steps',
     description:
-      'Help shy or early speakers build confidence through live public speaking classes focused on full sentences, show-and-tell, picture talk, and calm guided expression.',
+      'Live 1:1 Public Speaking Foundations for ages 4–7, building organised responses, picture talk, show-and-tell, simple storytelling, clear expression, and short presentation readiness.',
     educationalLevel: 'Beginner',
     track: 'speaking',
     breadcrumbName: 'Public Speaking Foundations',
+    teaches: [
+      'organised spoken responses',
+      'picture talk',
+      'show and tell',
+      'simple storytelling',
+      'clear voice and expression',
+      'short presentation structure',
+      'guided question and answer',
+    ],
+    areaServed: ['India', 'Worldwide'],
     keywords: [
       'public speaking foundations for kids',
-      'speaking confidence classes for children',
+      'basic public speaking classes for kids',
       'show and tell classes online',
+      'public speaking classes ages 4 to 7',
     ],
     legacySlugs: ['basic-public-speaking'],
+    stageAuthority: {
+      title: 'Is Public Speaking Foundations the right starting level for my child?',
+      directAnswer:
+        'Public Speaking Foundations is the first Tiny Steps Public Speaking level for children who can communicate basic ideas but need more structure, organisation, expression, and practice with picture talk, show-and-tell, storytelling, and short presentations. Placement is based on readiness as well as age.',
+      prerequisiteNote:
+        'No previous Public Speaking course is required. The child should have enough spoken language to attempt familiar responses. If everyday conversation, sentence formation, or speaking confidence itself is the main barrier, the assessment may recommend Spoken English, Grammar, or the specialist Confidence Building pathway before or alongside Public Speaking.',
+      entrySignals: [
+        'Can communicate familiar ideas in short spoken responses, with or without light prompting.',
+        'Needs help organising an answer instead of giving disconnected details.',
+        'Is ready to practise picture talk, show-and-tell, simple storytelling, and short speaking tasks.',
+        'Benefits from clear models, guided retries, and predictable presentation structure.',
+      ],
+      skillsBuilt: [
+        'Organise short responses around one clear idea.',
+        'Use picture talk and show-and-tell to add relevant detail.',
+        'Sequence simple stories with a clearer beginning, middle, and end.',
+        'Use voice, pace, posture, and eye contact more intentionally.',
+        'Deliver short prepared or guided talks and handle simple follow-up questions.',
+      ],
+      exitSignals: [
+        'Can sustain a short 30–60 second talk on a familiar topic with less prompting.',
+        'Organises familiar ideas into a simple sequence or structure.',
+        'Uses clearer delivery and can respond to simple follow-up questions.',
+        'Is ready for longer speeches, richer storytelling, presentations, impromptu speaking, and guided debate.',
+      ],
+      sequence: SPEAKING_LEVEL_SEQUENCE,
+      progressionTitle: 'Tiny Steps Public Speaking progression',
+      progressionDescription:
+        'Foundations and Excellence are readiness-based Public Speaking levels. Age is a guide, while assessment considers response organisation, storytelling, presentation readiness, delivery, and how much prompting the child needs.',
+      providerNote:
+        'Live classes are delivered by Tiny Steps teachers within the Tiny Steps academic system. Teacher assignment can vary by schedule and learning fit; the curriculum and progression stay shared.',
+      teachingMethod:
+        'Teachers model the speaking task, guide one attempt, give specific feedback, invite a retry, and gradually reduce support as the child becomes more independent.',
+    },
     relatedLinks: [
-      { label: 'Support a shy child’s confidence', to: '/shy-child-speaking-confidence' },
-      { label: 'Parents speech confidence guide', to: '/parents/speech-confidence' },
-      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
+      { label: 'See the complete Speaking & Communication programme', to: '/speaking' },
+      { label: 'Continue to Public Speaking Excellence', to: '/courses/public-speaking-excellence' },
+      { label: 'Everyday conversation support: Spoken English', to: '/spoken-english-classes-for-kids-online' },
+      { label: 'Specialist confidence support', to: '/confidence-building-program-kids' },
+      { label: 'View real class samples', to: '/class-samples' },
+      { label: 'Meet the Tiny Steps academic team', to: '/team' },
+      { label: 'Book one free 35-minute 1:1 online English assessment', to: '/book-demo' },
     ],
     faq: [
       {
-        question: 'Who should start with public speaking foundations?',
+        question: 'Who should start with Public Speaking Foundations?',
         answer:
-          'This level is ideal for children who give short answers, hesitate to speak, or need help moving into clear full-sentence expression.',
+          'This level suits children who can already communicate basic ideas but need more structure, organisation, expression, and practice with speaking tasks such as picture talk, show-and-tell, storytelling, and short presentations.',
       },
       {
-        question: 'What happens in early speaking classes?',
+        question: 'Does a child need Spoken English before Public Speaking Foundations?',
         answer:
-          'Children practise short responses, guided prompts, show-and-tell, and low-pressure speaking routines that build confidence step by step.',
+          'Not automatically. If everyday conversational fluency or sentence formation is the main gap, Spoken English or Grammar may be the better first or parallel pathway. If the child can communicate basic ideas and mainly needs public-speaking structure and delivery practice, Foundations may be appropriate.',
       },
       {
-        question: 'Can this help a shy child?',
+        question: 'What comes after Public Speaking Foundations?',
         answer:
-          'Yes. The course uses gentle structure, predictable speaking tasks, and repetition so shy children can participate without feeling forced.',
+          'Children who can sustain short organised talks, tell simple stories, respond to follow-up questions, and use clearer delivery with less prompting may be ready for Public Speaking Excellence. Placement is confirmed through assessment rather than age alone.',
+      },
+      {
+        question: 'What if confidence itself is the main barrier?',
+        answer:
+          'If the child has enough language and structure but hesitation, participation comfort, or dependence on prompting is the primary difficulty across situations, the specialist Confidence Building programme may be a clearer fit.',
       },
     ],
   },
@@ -462,31 +531,91 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     h1: 'Public Speaking Excellence for Kids',
     title: 'Public Speaking Excellence for Kids | Tiny Steps',
     description:
-      'Advanced speaking support for children ready for structured speeches, storytelling, presentation confidence, debates, and stronger stage expression.',
+      'Live 1:1 advanced Public Speaking for ages 7–12, developing longer structured talks, storytelling, presentations, impromptu speaking, guided debate, audience awareness, and stronger delivery.',
     educationalLevel: 'Advanced',
     track: 'speaking',
     breadcrumbName: 'Public Speaking Excellence',
+    teaches: [
+      'structured speeches',
+      'storytelling and retelling',
+      'presentation planning',
+      'impromptu speaking',
+      'guided debate and opinion speaking',
+      'audience awareness',
+      'voice modulation and delivery',
+      'question and answer handling',
+    ],
+    areaServed: ['India', 'Worldwide'],
     keywords: [
       'advanced public speaking classes for kids',
       'presentation skills for children',
       'storytelling and debate classes online',
+      'public speaking classes ages 7 to 12',
     ],
     legacySlugs: ['advanced-public-speaking'],
+    stageAuthority: {
+      title: 'Is Public Speaking Excellence the right level for my child?',
+      directAnswer:
+        'Public Speaking Excellence is the advanced Tiny Steps Public Speaking level for children who can already organise familiar responses and are ready for longer speeches, richer storytelling, presentations, impromptu speaking, guided debate, and stronger audience-facing delivery.',
+      prerequisiteNote:
+        'Children may arrive from Public Speaking Foundations or demonstrate equivalent readiness during assessment. The useful prerequisite is not a certificate from the earlier level; it is the ability to communicate organised ideas, sustain a short talk, and respond to feedback with growing independence.',
+      entrySignals: [
+        'Can sustain a short organised talk on a familiar topic.',
+        'Can sequence a simple story or explanation with reasonable clarity.',
+        'Can respond to basic follow-up questions without needing the full answer supplied.',
+        'Is ready for longer talks, presentations, impromptu prompts, opinion speaking, and guided debate.',
+      ],
+      skillsBuilt: [
+        'Plan and deliver longer structured speeches with clearer openings, details, and conclusions.',
+        'Use storytelling, examples, and reasons to develop ideas for an audience.',
+        'Practise presentations, impromptu speaking, opinion sharing, and guided debate.',
+        'Use voice modulation, pace, eye contact, and audience awareness more deliberately.',
+        'Handle follow-up questions and adjust a response after feedback.',
+      ],
+      exitSignals: [
+        'Can plan and deliver a structured 1–2 minute talk with less teacher prompting.',
+        'Transfers speaking structure to fresh topics, stories, presentations, and opinion prompts.',
+        'Handles short question-and-answer exchanges with clearer reasoning and delivery.',
+        'Can continue advanced practice based on individual goals rather than needing another invented Public Speaking level.',
+      ],
+      sequence: SPEAKING_LEVEL_SEQUENCE,
+      progressionTitle: 'Tiny Steps Public Speaking progression',
+      progressionDescription:
+        'Foundations and Excellence are the two published Public Speaking levels. Children can enter Excellence after completing Foundations or by demonstrating equivalent readiness during assessment.',
+      providerNote:
+        'Live classes are delivered by Tiny Steps teachers within the Tiny Steps academic system. Teacher assignment can vary by schedule and learning fit; the curriculum and progression stay shared.',
+      teachingMethod:
+        'Teachers model structure and delivery, use guided practice and feedback, ask the child to retry, and then move the skill into fresh speeches, stories, presentations, questions, or debate-style prompts.',
+    },
     relatedLinks: [
-      { label: 'Communication confidence pathway', to: '/speaking' },
-      { label: 'Speaking confidence help for shy children', to: '/shy-child-speaking-confidence' },
-      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
+      { label: 'Review Public Speaking Foundations', to: '/courses/public-speaking-foundations' },
+      { label: 'See the complete Speaking & Communication programme', to: '/speaking' },
+      { label: 'Everyday conversation support: Spoken English', to: '/spoken-english-classes-for-kids-online' },
+      { label: 'Specialist confidence support', to: '/confidence-building-program-kids' },
+      { label: 'View real class samples', to: '/class-samples' },
+      { label: 'Meet the Tiny Steps academic team', to: '/team' },
+      { label: 'Book one free 35-minute 1:1 online English assessment', to: '/book-demo' },
     ],
     faq: [
       {
-        question: 'When is a child ready for public speaking excellence?',
+        question: 'When is a child ready for Public Speaking Excellence?',
         answer:
-          'This level suits children who can already answer in sentences and are ready for longer talks, storytelling, structured speaking, and presentation practice.',
+          'This level suits children who can already organise familiar responses, sustain a short talk, tell a simple story, and use feedback, and who are ready for longer speeches, presentations, impromptu prompts, and guided debate.',
+      },
+      {
+        question: 'Must a child complete Public Speaking Foundations first?',
+        answer:
+          'No. Foundations is the normal earlier level, but placement is readiness-based. A child can enter Excellence if the assessment shows equivalent speaking structure, independence, and presentation readiness.',
       },
       {
         question: 'Does the advanced course include speeches and debate practice?',
         answer:
-          'Yes. Children work on structure, expression, presentations, and guided debate-style speaking with feedback on clarity and confidence.',
+          'Yes. Children work on structured talks, storytelling, presentations, impromptu speaking, opinion sharing, and guided debate-style tasks with feedback on organisation, reasoning, expression, and delivery.',
+      },
+      {
+        question: 'What comes after Public Speaking Excellence?',
+        answer:
+          'Tiny Steps does not publish a third Public Speaking level. After Excellence, the next priority depends on the child’s goals and observed needs, such as continued advanced speaking practice, specific presentation goals, everyday Spoken English, or specialist confidence support.',
       },
     ],
   },
