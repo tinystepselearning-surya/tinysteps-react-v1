@@ -168,7 +168,7 @@ export default function SpokenEnglishClassesForKidsPage() {
         actions={
           <CourseCTAGroup
             items={[
-              { to: '/book-demo', label: 'Book a Free Speaking Assessment', variant: 'primary' },
+              { to: '/book-demo', label: 'Book a Free English Assessment', variant: 'primary' },
               { to: '/speaking', label: 'Compare Public Speaking Support', variant: 'secondary' },
               { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
             ]}
@@ -438,7 +438,7 @@ export default function SpokenEnglishClassesForKidsPage() {
           actions={
             <CourseCTAGroup
               items={[
-                { to: '/book-demo', label: 'Book a Free Speaking Assessment', variant: 'primary' },
+                { to: '/book-demo', label: 'Book a Free English Assessment', variant: 'primary' },
                 { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
               ]}
               renderLink={(item, className) => (
