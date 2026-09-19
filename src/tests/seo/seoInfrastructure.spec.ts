@@ -123,13 +123,57 @@ describe('SEO infrastructure', () => {
       redirects.some((entry) => entry.source === '/online-phonics-reading-classes' && entry.destination === '/phonics' && entry.type === 301)
     ).toBe(true);
 
-    // These are self-canonical landing pages (not redirects)
+    // English grammar/writing remains live; the legacy Speaking landing now consolidates.
     expect(
       redirects.some((entry) => entry.source === '/english-grammar-writing-classes')
     ).toBe(false);
     expect(
-      redirects.some((entry) => entry.source === '/public-speaking-communication-kids')
-    ).toBe(false);
+      redirects.some(
+        (entry) =>
+          entry.source === '/public-speaking-communication-kids'
+          && entry.destination === '/speaking'
+          && entry.type === 301
+      )
+    ).toBe(true);
+    expect(
+      redirects.some(
+        (entry) =>
+          entry.source === '/public-speaking-communication-kids/'
+          && entry.destination === '/speaking'
+          && entry.type === 301
+      )
+    ).toBe(true);
+    expect(
+      redirects.some(
+        (entry) =>
+          entry.source === '/spoken-english-classes-for-kids'
+          && entry.destination === '/spoken-english-classes-for-kids-online'
+          && entry.type === 301
+      )
+    ).toBe(true);
+    expect(
+      redirects.some(
+        (entry) =>
+          entry.source === '/spoken-english-classes-for-kids/'
+          && entry.destination === '/spoken-english-classes-for-kids-online'
+          && entry.type === 301
+      )
+    ).toBe(true);
+    for (const [source, destination] of [
+      ['/courses/basic-public-speaking', '/courses/public-speaking-foundations'],
+      ['/courses/basic-public-speaking/', '/courses/public-speaking-foundations'],
+      ['/courses/advanced-public-speaking', '/courses/public-speaking-excellence'],
+      ['/courses/advanced-public-speaking/', '/courses/public-speaking-excellence'],
+    ] as const) {
+      expect(
+        redirects.some(
+          (entry) =>
+            entry.source === source
+            && entry.destination === destination
+            && entry.type === 301
+        )
+      ).toBe(true);
+    }
   });
 
   it('uses the public route manifest for P0 canonical redirects and static inventories', async () => {
@@ -146,6 +190,46 @@ describe('SEO infrastructure', () => {
         {
           source: '/online-english-classes-for-kids-india',
           destination: '/online-english-classes-for-kids',
+          status: 301,
+        },
+        {
+          source: '/spoken-english-classes-for-kids',
+          destination: '/spoken-english-classes-for-kids-online',
+          status: 301,
+        },
+        {
+          source: '/spoken-english-classes-for-kids/',
+          destination: '/spoken-english-classes-for-kids-online',
+          status: 301,
+        },
+        {
+          source: '/public-speaking-communication-kids',
+          destination: '/speaking',
+          status: 301,
+        },
+        {
+          source: '/public-speaking-communication-kids/',
+          destination: '/speaking',
+          status: 301,
+        },
+        {
+          source: '/courses/basic-public-speaking',
+          destination: '/courses/public-speaking-foundations',
+          status: 301,
+        },
+        {
+          source: '/courses/basic-public-speaking/',
+          destination: '/courses/public-speaking-foundations',
+          status: 301,
+        },
+        {
+          source: '/courses/advanced-public-speaking',
+          destination: '/courses/public-speaking-excellence',
+          status: 301,
+        },
+        {
+          source: '/courses/advanced-public-speaking/',
+          destination: '/courses/public-speaking-excellence',
           status: 301,
         },
       ]),
@@ -227,14 +311,14 @@ describe('SEO infrastructure', () => {
     // /online-phonics-reading-classes is now a 301 redirect to /phonics (canonical authority page)
     expect(ROUTE_SEO_REGISTRY['/online-phonics-reading-classes']?.canonicalPath).toBe('/phonics');
 
-    // These remain self-canonical independent landing pages
+    // Live long-tail pages remain self-canonical; the retired Speaking alias points to its owner.
     expect(ROUTE_SEO_REGISTRY['/english-grammar-writing-classes']?.canonicalPath).toBe('/english-grammar-writing-classes');
-    expect(ROUTE_SEO_REGISTRY['/public-speaking-communication-kids']?.canonicalPath).toBe('/public-speaking-communication-kids');
+    expect(ROUTE_SEO_REGISTRY['/public-speaking-communication-kids']?.canonicalPath).toBe('/speaking');
+    expect(ROUTE_SEO_REGISTRY['/public-speaking-communication-kids']?.robots).toContain('noindex');
     expect(ROUTE_SEO_REGISTRY['/spoken-english-classes-for-kids-online']?.canonicalPath).toBe('/spoken-english-classes-for-kids-online');
     expect(ROUTE_SEO_REGISTRY['/online-english-classes-for-kids']?.canonicalPath).toBe('/online-english-classes-for-kids');
 
     expect(indexHtml).not.toContain("'/english-grammar-writing-classes': '/grammar'");
-    expect(indexHtml).not.toContain("'/public-speaking-communication-kids': '/speaking'");
     expect(indexHtml).not.toContain("'/spoken-english-classes-for-kids-online': '/speaking'");
   });
 

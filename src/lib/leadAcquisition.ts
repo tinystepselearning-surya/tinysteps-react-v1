@@ -62,20 +62,28 @@ export function classifyLeadAcquisition(input: AcquisitionInput): AcquisitionCla
   const utmMedium = normalize(input.utmMedium);
   const referrerDomain = normalize(input.referrerDomain || deriveReferrerDomain(input.referrer));
 
+  // Explicit paid click IDs are stronger evidence than referrer/source labels.
+  if (input.gclid) {
+    return { channel: 'google_ads', source: utmSource || 'google', label: 'Google Ads' };
+  }
+  if (input.msclkid) {
+    return { channel: 'microsoft_ads', source: utmSource || 'microsoft', label: 'Microsoft Ads' };
+  }
+
   const hasChatGpt =
-    matchesSource(utmSource, ['chatgpt', 'openai']) ||
+    matchesSource(utmSource, ['chatgpt', 'chatgpt.com', 'openai', 'openai.com']) ||
     matchesDomain(referrerDomain, ['chatgpt.com', 'openai.com']);
   const hasGemini =
-    matchesSource(utmSource, ['gemini', 'google_gemini', 'google-gemini']) ||
+    matchesSource(utmSource, ['gemini', 'google_gemini', 'google-gemini', 'gemini.google.com']) ||
     matchesDomain(referrerDomain, ['gemini.google.com']);
   const hasPerplexity =
-    matchesSource(utmSource, ['perplexity', 'perplexity_ai', 'perplexity-ai']) ||
+    matchesSource(utmSource, ['perplexity', 'perplexity_ai', 'perplexity-ai', 'perplexity.ai']) ||
     matchesDomain(referrerDomain, ['perplexity.ai']);
   const hasCopilot =
-    matchesSource(utmSource, ['copilot', 'microsoft_copilot', 'microsoft-copilot']) ||
+    matchesSource(utmSource, ['copilot', 'microsoft_copilot', 'microsoft-copilot', 'copilot.microsoft.com', 'copilot.com']) ||
     matchesDomain(referrerDomain, ['copilot.microsoft.com', 'copilot.com']);
   const hasClaude =
-    matchesSource(utmSource, ['claude', 'anthropic']) ||
+    matchesSource(utmSource, ['claude', 'claude.ai', 'anthropic', 'anthropic.com']) ||
     matchesDomain(referrerDomain, ['claude.ai', 'anthropic.com']);
 
   if (hasChatGpt) {
@@ -162,6 +170,67 @@ export function classifyLeadAcquisition(input: AcquisitionInput): AcquisitionCla
   }
 
   return { channel: 'direct', source: 'direct', label: 'Direct / unknown' };
+}
+
+export type StoredLeadAcquisitionEvidence = AcquisitionInput & {
+  acquisitionChannel?: string | null;
+  acquisitionSource?: string | null;
+};
+
+const ACQUISITION_CHANNELS = new Set<AcquisitionChannel>([
+  'google_organic',
+  'google_ads',
+  'bing_organic',
+  'microsoft_ads',
+  'chatgpt',
+  'google_gemini',
+  'perplexity',
+  'microsoft_copilot',
+  'claude',
+  'instagram',
+  'facebook',
+  'linkedin',
+  'youtube',
+  'referral',
+  'direct',
+  'other',
+]);
+
+export function resolveStoredLeadAcquisition(
+  input: StoredLeadAcquisitionEvidence,
+): AcquisitionClassification {
+  const inferred = classifyLeadAcquisition(input);
+  const explicit = normalize(input.acquisitionChannel) as AcquisitionChannel;
+  const hasExplicit = ACQUISITION_CHANNELS.has(explicit);
+
+  // Explicit paid click identifiers are stronger than any previously stored channel.
+  if (input.gclid || input.msclkid) {
+    return inferred;
+  }
+
+  // Preserve specific stored channels, but do not let a historical generic "other"
+  // value hide stronger raw UTM/referrer evidence such as utm_source=chatgpt.com.
+  if (hasExplicit && explicit !== 'other') {
+    return {
+      channel: explicit,
+      source: normalize(input.acquisitionSource) || inferred.source || explicit,
+      label: acquisitionChannelLabel(explicit),
+    };
+  }
+
+  if (explicit === 'other' && inferred.channel !== 'other' && inferred.channel !== 'direct') {
+    return inferred;
+  }
+
+  if (explicit === 'other') {
+    return {
+      channel: 'other',
+      source: normalize(input.acquisitionSource) || inferred.source || 'other',
+      label: acquisitionChannelLabel('other'),
+    };
+  }
+
+  return inferred;
 }
 
 export function acquisitionChannelLabel(channel: string | null | undefined): string {

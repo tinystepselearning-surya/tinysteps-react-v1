@@ -393,6 +393,15 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     queryIntent: 'speaking confidence progression for kids',
     supportingPaths: ['/resources/speaking'],
   }),
+  topic('speaking-progress-measurement', {
+    subject: 'speaking-communication',
+    intent: 'progress-aware',
+    ownerPath: '/speaking-progress-framework',
+    ownerRole: 'editorial-pillar',
+    hubPath: '/resources/speaking',
+    queryIntent: 'how to measure speaking progress for kids',
+    supportingPaths: ['/resources/speaking', '/speaking', '/parents/tracking-progress', '/book-demo'],
+  }),
   topic('one-word-answers', {
     subject: 'speaking-communication',
     intent: 'problem-aware',

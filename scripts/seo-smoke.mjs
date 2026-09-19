@@ -27,13 +27,20 @@ const LEGACY_URLS_ABSENT = [
   'https://tinystepslearning.com/courses/basic-grammar',
   'https://tinystepslearning.com/courses/advanced-grammar',
   'https://tinystepslearning.com/courses/basic-public-speaking',
+  'https://tinystepslearning.com/courses/basic-public-speaking/',
   'https://tinystepslearning.com/courses/advanced-public-speaking',
+  'https://tinystepslearning.com/courses/advanced-public-speaking/',
+  'https://tinystepslearning.com/public-speaking-communication-kids',
+  'https://tinystepslearning.com/public-speaking-communication-kids/',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids/',
 ];
 
 const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/phonics',
   'https://tinystepslearning.com/grammar',
   'https://tinystepslearning.com/speaking',
+  'https://tinystepslearning.com/speaking-progress-framework',
   'https://tinystepslearning.com/blog',
   'https://tinystepslearning.com/pricing',
   'https://tinystepslearning.com/courses',
@@ -42,15 +49,14 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/courses/grammar',
   'https://tinystepslearning.com/courses/grammar-mastery',
   'https://tinystepslearning.com/courses/public-speaking-foundations',
+  'https://tinystepslearning.com/courses/public-speaking-excellence',
   'https://tinystepslearning.com/english-grammar-writing-classes',
-  'https://tinystepslearning.com/public-speaking-communication-kids',
   'https://tinystepslearning.com/spoken-english-classes-for-kids-online',
   'https://tinystepslearning.com/online-english-classes-for-kids',
 ];
 
 const REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS = [
   '/english-grammar-writing-classes',
-  '/public-speaking-communication-kids',
   '/spoken-english-classes-for-kids-online',
   '/online-english-classes-for-kids',
 ];
@@ -73,6 +79,31 @@ const REDIRECT_ALIASES = [
     path: '/online-phonics-reading-classes',
     destination: '/phonics',
     reason: 'Permanent redirect to canonical /phonics page',
+  },
+  {
+    path: '/public-speaking-communication-kids',
+    destination: '/speaking',
+    reason: 'Consolidate legacy public-speaking landing into the canonical Speaking owner',
+  },
+  {
+    path: '/courses/basic-public-speaking',
+    destination: '/courses/public-speaking-foundations',
+    reason: 'Consolidate legacy Basic Public Speaking course URL',
+  },
+  {
+    path: '/courses/basic-public-speaking/',
+    destination: '/courses/public-speaking-foundations',
+    reason: 'Consolidate trailing-slash Basic Public Speaking course URL',
+  },
+  {
+    path: '/courses/advanced-public-speaking',
+    destination: '/courses/public-speaking-excellence',
+    reason: 'Consolidate legacy Advanced Public Speaking course URL',
+  },
+  {
+    path: '/courses/advanced-public-speaking/',
+    destination: '/courses/public-speaking-excellence',
+    reason: 'Consolidate trailing-slash Advanced Public Speaking course URL',
   },
 ];
 

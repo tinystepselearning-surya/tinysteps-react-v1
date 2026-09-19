@@ -46,6 +46,13 @@ export const internalLinkMap: InternalLinkRule[] = [
     priority: 80,
     cluster: 'speaking',
   },
+  {
+    id: 'speaking-progress-framework',
+    href: '/speaking-progress-framework',
+    phrases: ['speaking progress framework', 'measure speaking progress', 'track speaking progress'],
+    priority: 78,
+    cluster: 'speaking',
+  },
 
   // Key informational pages
   {
@@ -124,6 +131,13 @@ export const internalLinkMap: InternalLinkRule[] = [
     id: 'course-public-speaking-foundations',
     href: '/courses/public-speaking-foundations',
     phrases: ['Public Speaking Foundations course', 'Basic Public Speaking course'],
+    priority: 85,
+    cluster: 'courses',
+  },
+  {
+    id: 'course-public-speaking-excellence',
+    href: '/courses/public-speaking-excellence',
+    phrases: ['Public Speaking Excellence course', 'Advanced Public Speaking course'],
     priority: 85,
     cluster: 'courses',
   },

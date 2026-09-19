@@ -64,7 +64,7 @@ const sourceEdges = [
   ['src/pages/speaking.tsx', ['/spoken-english-classes-for-kids-online', '/confidence-building-program-kids', '/book-demo']],
   ['src/pages/public/ConfidenceBuildingProgramKidsPage.tsx', ['/speaking', '/book-demo']],
   ['src/pages/public/OnlineEnglishClassesForKidsPage.tsx', ['/phonics', '/reading-classes-for-kids', '/grammar', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online', '/speaking', '/book-demo']],
-  ['src/pages/public/OnlineEnglishClassesHyderabadPage.tsx', ['/online-english-classes-for-kids', '/book-demo']],
+  ['src/pages/public/OnlineEnglishClassesHyderabadPage.tsx', ['/online-english-classes-for-kids', '/spoken-english-classes-for-kids-online', '/book-demo']],
   ['src/pages/PricingPage.tsx', ['/phonics', '/reading-classes-for-kids', '/grammar', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online', '/speaking', '/book-demo']],
   ['src/pages/public/BookDemoPage.tsx', ['/pricing']],
 ];

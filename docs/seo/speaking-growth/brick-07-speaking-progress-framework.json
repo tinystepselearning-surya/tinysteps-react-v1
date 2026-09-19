@@ -1,0 +1,297 @@
+{
+  "generatedAt": "2026-09-19",
+  "branch": "feature/speaking-seo-geo-growth",
+  "status": "COMPLETE — RE-AUDITED",
+  "framework": {
+    "name": "Tiny Steps Speaking Progress Framework",
+    "revision": "2026-09-19-b7-v2",
+    "canonicalPath": "/speaking-progress-framework",
+    "intent": "progress-aware informational authority",
+    "commercialOwnerPreserved": "/speaking",
+    "resourceHubPreserved": "/resources/speaking",
+    "principle": "Track a multi-dimensional speaking profile through observable evidence, support needed, independence, reasoning where relevant, and fresh-task transfer; do not average the ten dimensions into one overall framework score."
+  },
+  "dimensions": [
+    {
+      "order": 1,
+      "id": "response_expansion",
+      "label": "Response expansion"
+    },
+    {
+      "order": 2,
+      "id": "sentence_formation",
+      "label": "Sentence formation in speaking"
+    },
+    {
+      "order": 3,
+      "id": "vocabulary_in_use",
+      "label": "Vocabulary in use"
+    },
+    {
+      "order": 4,
+      "id": "idea_organisation",
+      "label": "Idea organisation"
+    },
+    {
+      "order": 5,
+      "id": "listening_response",
+      "label": "Listening & response relevance"
+    },
+    {
+      "order": 6,
+      "id": "storytelling_retelling",
+      "label": "Storytelling & retelling"
+    },
+    {
+      "order": 7,
+      "id": "delivery_intelligibility",
+      "label": "Delivery & intelligibility"
+    },
+    {
+      "order": 8,
+      "id": "prompt_independence",
+      "label": "Speaking independence"
+    },
+    {
+      "order": 9,
+      "id": "presentation_audience",
+      "label": "Presentation & audience awareness"
+    },
+    {
+      "order": 10,
+      "id": "fresh_task_transfer",
+      "label": "Transfer to fresh tasks"
+    }
+  ],
+  "observationBands": [
+    {
+      "order": 1,
+      "id": "modelled_support",
+      "label": "Modelled / supported"
+    },
+    {
+      "order": 2,
+      "id": "guided_attempt",
+      "label": "Guided attempt"
+    },
+    {
+      "order": 3,
+      "id": "independent_use",
+      "label": "Independent use"
+    },
+    {
+      "order": 4,
+      "id": "fresh_task_transfer",
+      "label": "Fresh-task transfer"
+    }
+  ],
+  "reviewLoop": [
+    "Baseline",
+    "One current target",
+    "Teach, retry, fade support",
+    "Fresh-task check",
+    "Next learning priority"
+  ],
+  "parentSummaryFields": [
+    "Current speaking target",
+    "Observation band for the target",
+    "What the child can now do independently",
+    "Support that is still useful",
+    "Fresh-task evidence",
+    "Next learning priority"
+  ],
+  "guardrails": [
+    "No overall speaking score produced by averaging the ten dimensions.",
+    "No developmental-age, IQ-style, diagnostic, clinical, medical, or standardized-language label.",
+    "No confidence judgment based on loudness, extroversion, accent, or constant eye contact.",
+    "No rehearsed familiar-task success treated as sufficient evidence of transfer.",
+    "No assumption that all ten dimensions progress evenly.",
+    "Same-child-over-time comparison preferred over child-to-child ranking.",
+    "Multilingual and setting differences may be recorded as context without being converted into diagnosis."
+  ],
+  "knowledgeArchitecture": {
+    "existingDomainCount": 9,
+    "existingArchitectureFile": "src/lib/speakingCommunicationKnowledgeArchitecture.js",
+    "relation": "The ten Brick 7 progress dimensions map onto the existing nine non-rigid speaking/communication knowledge domains; Brick 7 does not replace or renumber those domains.",
+    "representedDomainCount": 9,
+    "allExistingDomainsRepresented": true,
+    "reAuditFix": "Discussion, opinions & reasoning is now explicitly represented through the Idea organisation dimension alongside Speech & presentation organisation."
+  },
+  "userJourneys": {
+    "speakingProgramme": "/speaking",
+    "assessment": "/book-demo",
+    "parentProgressGuide": "/parents/tracking-progress",
+    "speakingResources": "/resources/speaking",
+    "frameworkAuthority": "/speaking-progress-framework"
+  },
+  "operationalIsolation": {
+    "firestoreSchemaChanged": false,
+    "historicalProgressMigrated": false,
+    "teacherProgressSaveWorkflowChanged": false,
+    "parentDashboardRatingModelChanged": false,
+    "progressSkillsFallbackChanged": false,
+    "preservedSpeakingFallback": [
+      "Confidence",
+      "Pronunciation",
+      "Fluency",
+      "Idea expression",
+      "Audience engagement"
+    ],
+    "reason": "Brick 7 defines the educational observation language without silently remapping existing stored ratings or historical dashboard data. Any future operational migration must be deliberately designed and tested.",
+    "legacySubjectSummaryCompatibility": true,
+    "publicDisclosure": "Existing dashboards may still show broader legacy subject-level progress summaries; Brick 7 does not silently reinterpret those historical operational values."
+  },
+  "discovery": {
+    "staticSitemapFrameworkUrlCount": 1,
+    "frameworkLastmod": "2026-09-19",
+    "speakingLastmod": "2026-09-19",
+    "bookDemoLastmod": "2026-09-19",
+    "speakingResourcesLastmod": "2026-09-19",
+    "parentTrackingLastmod": "2026-09-19",
+    "staticSitemapIndexLastmod": "2026-09-19",
+    "parentSitemapIndexLastmod": "2026-09-19",
+    "htmlSitemapLinked": true,
+    "internalLinkRegistryLinked": true,
+    "seoSmokeRequired": true
+  },
+  "structuredData": {
+    "webpage": true,
+    "breadcrumbs": true,
+    "dimensionItemList": true,
+    "observationBandItemList": true,
+    "definedTermItems": true,
+    "faqPage": true,
+    "aggregateRating": false,
+    "rating": false,
+    "fabricatedOutcomeScore": false
+  },
+  "verification": {
+    "sourceLevelMatrix": {
+      "passed": 132,
+      "total": 132
+    },
+    "groups": [
+      {
+        "name": "framework-semantic-contract",
+        "passed": 45,
+        "total": 45
+      },
+      {
+        "name": "ownership-routing-sitemap",
+        "passed": 36,
+        "total": 36
+      },
+      {
+        "name": "handoff-operational-isolation",
+        "passed": 30,
+        "total": 30
+      },
+      {
+        "name": "literal-regression-source-assertions",
+        "passed": 21,
+        "total": 21
+      }
+    ],
+    "postMainSyncCriticalMatrix": {
+      "passed": 59,
+      "total": 59
+    },
+    "attachedCiRun": false,
+    "npmBuildClaimed": false,
+    "vitestExecutionClaimed": false,
+    "browserQaClaimed": false
+  },
+  "sourceFilesChanged": [
+    "src/lib/speakingProgressFramework.ts",
+    "src/pages/public/SpeakingProgressFrameworkPage.tsx",
+    "src/lib/routeSeoRegistry.js",
+    "src/lib/publicRouteManifest.js",
+    "src/lib/canonicalTopicOwnershipRegistry.js",
+    "src/app/routes.tsx",
+    "src/lib/seo/internalLinkMap.ts",
+    "src/pages/SubjectResourcesPage.tsx",
+    "src/pages/speaking.tsx",
+    "src/pages/public/BookDemoPage.tsx",
+    "src/pages/parents/tracking-progress.tsx",
+    "src/pages/SitemapPage.tsx",
+    "scripts/generate-sitemaps.js",
+    "scripts/seo-smoke.mjs",
+    "public/sitemap-static.xml",
+    "public/sitemap-parents.xml",
+    "public/sitemap.xml",
+    "src/tests/seo/speakingGrowthBrick7.spec.ts"
+  ],
+  "productionDeployment": false,
+  "mergeToMain": false,
+  "reAudit": {
+    "date": "2026-09-19",
+    "status": "COMPLETE — RE-AUDITED",
+    "fixes": [
+      "Mapped the previously uncovered Discussion, opinions & reasoning knowledge domain into Idea organisation without adding an eleventh dimension.",
+      "Deep-froze framework records and nested knowledge-domain ID lists so the central framework contract is genuinely immutable at runtime.",
+      "Removed unnecessary @ts-expect-error suppressions from the Brick 7 regression spec because established TypeScript tests import the same local ESM JavaScript registries directly.",
+      "Clarified public and parent-facing language so the new framework does not falsely imply that legacy operational subject-level mastery summaries have already been migrated.",
+      "Corrected source-based Vitest assertions that would have failed because one disclosure spanned source lines and shared parent-summary labels are rendered from the central constant rather than duplicated in the page source."
+    ],
+    "independentMatrix": {
+      "passed": 132,
+      "total": 132,
+      "groups": [
+        {
+          "name": "framework-semantic-contract",
+          "passed": 45,
+          "total": 45
+        },
+        {
+          "name": "ownership-routing-sitemap",
+          "passed": 36,
+          "total": 36
+        },
+        {
+          "name": "handoff-operational-isolation",
+          "passed": 30,
+          "total": 30
+        },
+        {
+          "name": "literal-regression-source-assertions",
+          "passed": 21,
+          "total": 21
+        }
+      ]
+    },
+    "mainSynchronization": {
+      "incomingMainCommit": "eeeae461053483f1ede3718e5113eaad34eb3d90",
+      "pullRequest": 392,
+      "mergeCommit": "1915a691d4fa2805360d46a11b35c8e81c2b77bc",
+      "incomingScope": "AV6 read-only admin attendance-validation dashboard plus additive shared-router lines",
+      "speakingOverlap": "Only src/app/routes.tsx; changes were additive and non-conflicting.",
+      "branchBehindMainAfterSync": 0
+    },
+    "postSyncCriticalMatrix": {
+      "passed": 59,
+      "total": 59,
+      "groups": [
+        {
+          "name": "semantic-after-main-sync",
+          "passed": 20,
+          "total": 20
+        },
+        {
+          "name": "ownership-after-main-sync",
+          "passed": 26,
+          "total": 26
+        },
+        {
+          "name": "isolation-after-main-sync",
+          "passed": 13,
+          "total": 13
+        }
+      ]
+    },
+    "attachedCiRun": false,
+    "workflowRunCount": 0,
+    "executableBuildClaimed": false,
+    "fullVitestClaimed": false,
+    "browserQaClaimed": false
+  }
+}

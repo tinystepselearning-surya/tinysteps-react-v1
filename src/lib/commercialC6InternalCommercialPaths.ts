@@ -64,6 +64,7 @@ const decisionEdges = [
   edge('/confidence-building-program-kids', '/speaking', 'programme-fit-handoff'),
 
   edge('/online-english-classes-hyderabad', '/online-english-classes-for-kids', 'local-to-broad'),
+  edge('/online-english-classes-hyderabad', '/spoken-english-classes-for-kids-online', 'programme-fit-handoff'),
 
   edge('/pricing', '/phonics', 'price-to-programme'),
   edge('/pricing', '/reading-classes-for-kids', 'price-to-programme'),

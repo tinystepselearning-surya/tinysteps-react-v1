@@ -1,0 +1,82 @@
+{
+  "brick": 8,
+  "name": "Speaking Knowledge Cluster",
+  "revision": "2026-09-19-b8-v2",
+  "status": "COMPLETE — RE-AUDITED",
+  "branch": "feature/speaking-seo-geo-growth",
+  "productionDeployment": false,
+  "architecture": {
+    "parentFacingGroups": 5,
+    "tier1OwnerRecords": 15,
+    "uniqueKnowledgeUrls": 14,
+    "knowledgeDomainsCovered": 9,
+    "brick7ProgressDimensionsCovered": 10,
+    "newPublicUrls": 0
+  },
+  "reAuditFixes": [
+    {
+      "id": "structured-itemlist-dedup",
+      "before": {
+        "rawCandidates": 23,
+        "uniqueDestinations": 18,
+        "duplicateEntries": 5
+      },
+      "after": "ItemList numberOfItems and itemListElement are generated from unique destinations while visible cross-links remain unchanged."
+    },
+    {
+      "id": "nine-domain-runtime-guard",
+      "after": "Brick 8 derives and validates coverage of all nine established Speaking & Communication knowledge domains."
+    },
+    {
+      "id": "knowledge-destination-runtime-boundary",
+      "after": "Fifteen Tier-1 records must resolve to exactly fourteen /blog/ knowledge URLs; commercial owners remain excluded."
+    },
+    {
+      "id": "canonical-indexability-sitemap-hardening",
+      "after": "All fourteen destinations are checked for canonical ownership, indexability and sitemap inclusion."
+    },
+    {
+      "id": "sitemap-source-map-name",
+      "after": "brick7LastmodSources renamed to speakingGrowthLastmodSources."
+    }
+  ],
+  "matrices": {
+    "sourceLevel": {
+      "architecture": {
+        "passed": 11,
+        "total": 11
+      },
+      "hubAndStructuredData": {
+        "passed": 11,
+        "total": 11
+      },
+      "destinations": {
+        "passed": 42,
+        "total": 42
+      },
+      "regressionSpec": {
+        "passed": 6,
+        "total": 6
+      },
+      "passed": 70,
+      "total": 70
+    },
+    "protectedSurfaceSha": {
+      "passed": 15,
+      "total": 15
+    }
+  },
+  "canonicalResolutionNote": {
+    "dynamicR21Paths": [
+      "/blog/conversation-skills-for-kids",
+      "/blog/how-to-teach-storytelling-to-kids",
+      "/blog/public-speaking-delivery-for-kids"
+    ],
+    "chain": "R20 proposedPath -> R21 published execution -> R21 canonical owner"
+  },
+  "executableLimitations": [
+    "No feature-branch GitHub Actions run attached to the Brick 8 head.",
+    "No local clone/build execution available in the current environment.",
+    "Full Vitest, TypeScript/build, prerender and browser QA remain required at the final Bricks 1–13 integration gate."
+  ]
+}

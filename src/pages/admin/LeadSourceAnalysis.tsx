@@ -5,10 +5,14 @@ import { Card } from '@components/ui/card';
 import { db } from '../../lib/firebaseConfig';
 import { getDocsLogged } from '../../lib/firestoreReadLogging';
 import {
-  acquisitionChannelLabel,
-  classifyLeadAcquisition,
+  resolveStoredLeadAcquisition,
   type AcquisitionChannel,
 } from '../../lib/leadAcquisition';
+import {
+  buildSpeakingAttributionProjection,
+  isSpeakingInterestLead,
+  isSpeakingOriginLead,
+} from '../../lib/speakingAttribution';
 import DemoSessionsManagement from './DemoSessionsManagement';
 import {
   addDaysToDateKey,
@@ -68,6 +72,13 @@ interface LeadSourceAnalysisProps {
 }
 
 const RANGE_OPTIONS = [7, 30, 90] as const;
+type AttributionCohort = 'all' | 'speaking_origin' | 'speaking_interest';
+
+const ATTRIBUTION_COHORT_OPTIONS: Array<{ id: AttributionCohort; label: string }> = [
+  { id: 'all', label: 'All leads' },
+  { id: 'speaking_origin', label: 'Speaking origin' },
+  { id: 'speaking_interest', label: 'Speaking interest' },
+];
 
 const normalize = (value: unknown): string => String(value || '').trim();
 
@@ -103,12 +114,9 @@ const hasAttributionEvidence = (lead: LeadRow): boolean => {
 
 const resolveChannel = (lead: LeadRow): { channel: string; label: string } => {
   const a = lead.attribution || {};
-  const explicit = lead.acquisitionChannel || a.acquisitionChannel;
-  if (explicit) {
-    return { channel: explicit, label: acquisitionChannelLabel(explicit) };
-  }
-
-  const classified = classifyLeadAcquisition({
+  const resolved = resolveStoredLeadAcquisition({
+    acquisitionChannel: normalize(lead.acquisitionChannel || a.acquisitionChannel) || null,
+    acquisitionSource: normalize(lead.acquisitionSource || a.acquisitionSource) || null,
     referrer: normalize(a.referrer) || undefined,
     referrerDomain: normalize(a.referrerDomain) || undefined,
     utmSource: normalize(a.utm_source) || undefined,
@@ -120,7 +128,7 @@ const resolveChannel = (lead: LeadRow): { channel: string; label: string } => {
   });
 
   if (hasAttributionEvidence(lead)) {
-    return { channel: classified.channel, label: classified.label };
+    return { channel: resolved.channel, label: resolved.label };
   }
 
   const legacySource = normalize(lead.source).toLowerCase();
@@ -149,6 +157,7 @@ export default function LeadSourceAnalysis({
   showAttribution = true,
 }: LeadSourceAnalysisProps): JSX.Element {
   const [rangeDays, setRangeDays] = useState<(typeof RANGE_OPTIONS)[number]>(30);
+  const [attributionCohort, setAttributionCohort] = useState<AttributionCohort>('all');
   const [rows, setRows] = useState<LeadRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -218,6 +227,16 @@ export default function LeadSourceAnalysis({
     };
   }, [load, refreshKey, showAttribution]);
 
+  const cohortRows = useMemo(() => {
+    if (attributionCohort === 'speaking_origin') {
+      return rows.filter((lead) => isSpeakingOriginLead(lead));
+    }
+    if (attributionCohort === 'speaking_interest') {
+      return rows.filter((lead) => isSpeakingInterestLead(lead));
+    }
+    return rows;
+  }, [attributionCohort, rows]);
+
   const analysis = useMemo(() => {
     const byChannel = new Map<string, ChannelSummary>();
     const byLanding = new Map<string, { page: string; count: number; demoCount: number; admittedCount: number }>();
@@ -225,7 +244,7 @@ export default function LeadSourceAnalysis({
     let demoCount = 0;
     let admittedCount = 0;
 
-    rows.forEach((lead) => {
+    cohortRows.forEach((lead) => {
       const resolved = resolveChannel(lead);
       const landingPage = resolveLandingPage(lead);
       const reachedDemo = isDemoReached(lead);
@@ -264,28 +283,29 @@ export default function LeadSourceAnalysis({
       .sort((a, b) => b.count - a.count)
       .slice(0, 12);
 
-    const organicCount = channelRows
-      .filter((row) => row.channel === 'google_organic' || row.channel === 'bing_organic')
-      .reduce((sum, row) => sum + row.count, 0);
-    const paidCount = channelRows
-      .filter((row) => row.channel === 'google_ads' || row.channel === 'microsoft_ads')
-      .reduce((sum, row) => sum + row.count, 0);
-    const socialCount = channelRows
-      .filter((row) => ['instagram', 'facebook', 'linkedin', 'youtube'].includes(row.channel))
-      .reduce((sum, row) => sum + row.count, 0);
+    const businessChannelCounts = {
+      organic_search: 0,
+      organic_ai: 0,
+      paid: 0,
+      referral: 0,
+      direct_or_unknown: 0,
+    };
+
+    cohortRows.forEach((lead) => {
+      const businessChannel = buildSpeakingAttributionProjection(lead).businessChannel;
+      businessChannelCounts[businessChannel] += 1;
+    });
 
     return {
-      total: rows.length,
+      total: cohortRows.length,
       attributedCount,
       demoCount,
       admittedCount,
-      organicCount,
-      paidCount,
-      socialCount,
+      businessChannelCounts,
       channelRows,
       landingRows,
     };
-  }, [rows]);
+  }, [cohortRows]);
 
   return (
     <div className="space-y-4">
@@ -338,6 +358,23 @@ export default function LeadSourceAnalysis({
             </div>
           </div>
 
+          <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="Attribution cohort">
+            {ATTRIBUTION_COHORT_OPTIONS.map((option) => (
+              <Button
+                key={option.id}
+                type="button"
+                size="sm"
+                variant={attributionCohort === option.id ? 'default' : 'outline'}
+                onClick={() => setAttributionCohort(option.id)}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+            Speaking origin = first landing page belongs to the frozen Speaking authority territory. Speaking interest = the lead explicitly selected Speaking/public speaking. Keep these separate when evaluating SEO contribution.
+          </p>
+
           {error ? (
             <div role="status" className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               {error}
@@ -359,9 +396,11 @@ export default function LeadSourceAnalysis({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="rounded-full border px-2.5 py-1">Organic {loading ? '…' : `${analysis.organicCount} (${pct(analysis.organicCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Paid {loading ? '…' : `${analysis.paidCount} (${pct(analysis.paidCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Social {loading ? '…' : `${analysis.socialCount} (${pct(analysis.socialCount, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Organic search {loading ? '…' : `${analysis.businessChannelCounts.organic_search} (${pct(analysis.businessChannelCounts.organic_search, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Organic AI {loading ? '…' : `${analysis.businessChannelCounts.organic_ai} (${pct(analysis.businessChannelCounts.organic_ai, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Paid {loading ? '…' : `${analysis.businessChannelCounts.paid} (${pct(analysis.businessChannelCounts.paid, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Referral {loading ? '…' : `${analysis.businessChannelCounts.referral} (${pct(analysis.businessChannelCounts.referral, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Direct / unknown {loading ? '…' : `${analysis.businessChannelCounts.direct_or_unknown} (${pct(analysis.businessChannelCounts.direct_or_unknown, analysis.total)})`}</span>
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
@@ -425,7 +464,7 @@ export default function LeadSourceAnalysis({
           </div>
 
           <p className="mt-3 text-[11px] text-muted-foreground">
-            Older leads without stored first-touch data remain labelled legacy/unattributed rather than being guessed as direct traffic.
+            Older leads without stored first-touch data remain labelled legacy/unattributed rather than being guessed as organic. GSC query visibility is reviewed separately; this panel attributes business outcomes only from stored first-touch channel and landing-page evidence.
           </p>
         </Card>
       ) : null}

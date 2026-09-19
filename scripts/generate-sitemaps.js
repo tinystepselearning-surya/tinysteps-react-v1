@@ -32,6 +32,15 @@ function siteLocalDate(date = new Date()) {
   return `${byType.year}-${byType.month}-${byType.day}`;
 }
 function lastmodFrom(p,fallback){ try { return fmt(fs.statSync(p).mtime); } catch { return fallback || fmt(new Date()); } }
+function latestLastmodFrom(paths, fallback) {
+  const mtimes = paths
+    .map((p) => {
+      try { return fs.statSync(p).mtime.getTime(); } catch { return null; }
+    })
+    .filter((value) => Number.isFinite(value));
+  if (!mtimes.length) return fallback || fmt(new Date());
+  return fmt(new Date(Math.max(...mtimes)));
+}
 function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   return `\n  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod || fmt(new Date())}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
@@ -88,6 +97,16 @@ const RETIRED_BLOG_SLUGS = new Set(
   const root = path.resolve(__dirname, '..');
   const publicDir = path.join(root, 'public');
   const coursesTs = path.join(root, 'src', 'content', 'courses.ts');
+  const publicCoursePagesJs = path.join(root, 'src', 'lib', 'publicCoursePages.js');
+  const courseDetailTsx = path.join(root, 'src', 'pages', 'CourseDetailPage.tsx');
+  const speakingProgressFrameworkTs = path.join(root, 'src', 'lib', 'speakingProgressFramework.ts');
+  const speakingKnowledgeClusterTs = path.join(root, 'src', 'lib', 'speakingKnowledgeCluster.ts');
+  const speakingEvidenceLayerTs = path.join(root, 'src', 'lib', 'speakingEvidenceLayer.ts');
+  const speakingProgressFrameworkPageTsx = path.join(root, 'src', 'pages', 'public', 'SpeakingProgressFrameworkPage.tsx');
+  const speakingPageTsx = path.join(root, 'src', 'pages', 'speaking.tsx');
+  const bookDemoPageTsx = path.join(root, 'src', 'pages', 'public', 'BookDemoPage.tsx');
+  const subjectResourcesPageTsx = path.join(root, 'src', 'pages', 'SubjectResourcesPage.tsx');
+  const parentTrackingPageTsx = path.join(root, 'src', 'pages', 'parents', 'tracking-progress.tsx');
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
@@ -131,14 +150,29 @@ const RETIRED_BLOG_SLUGS = new Set(
         : route === '/' || route === '/courses' || MONEY_PAGES.has(route) || SUPPORTING_LONG_TAIL.has(route)
           ? 'weekly'
           : 'monthly';
-      return toUrl(loc, staticLastmod, priority, changefreq);
+      const speakingGrowthLastmodSources = {
+        '/speaking': [appRoutesTs, speakingPageTsx, speakingEvidenceLayerTs],
+        '/book-demo': [appRoutesTs, bookDemoPageTsx],
+        '/resources/speaking': [appRoutesTs, subjectResourcesPageTsx, speakingKnowledgeClusterTs],
+        '/speaking-progress-framework': [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx],
+      };
+      const routeLastmodSources = speakingGrowthLastmodSources[route];
+      const routeLastmod = routeLastmodSources
+        ? latestLastmodFrom(routeLastmodSources, staticLastmod)
+        : staticLastmod;
+      return toUrl(loc, routeLastmod, priority, changefreq);
     }).join('')+
   `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-static.xml'), staticXml);
 
   // sitemap-parents.xml (canonical parents hub pages only)
   let parentsXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  parentsXml += parentRoutes.map((route) => toUrl(`https://tinystepslearning.com${route}`, lastmodFrom(parentsMetaTs), route === '/parents' ? '0.85' : '0.7', 'weekly')).join('');
+  parentsXml += parentRoutes.map((route) => {
+    const last = route === '/parents/tracking-progress'
+      ? latestLastmodFrom([parentsMetaTs, parentTrackingPageTsx], lastmodFrom(parentsMetaTs))
+      : lastmodFrom(parentsMetaTs);
+    return toUrl(`https://tinystepslearning.com${route}`, last, route === '/parents' ? '0.85' : '0.7', 'weekly');
+  }).join('');
   parentsXml += `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-parents.xml'), parentsXml);
 
@@ -179,7 +213,9 @@ const RETIRED_BLOG_SLUGS = new Set(
   // sitemap-courses.xml
   let courseXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
   for (const routePath of getPublicCourseSitemapPaths()) {
-    const last = lastmodFrom(coursesTs);
+    const last = routePath.startsWith('/courses/public-speaking-')
+      ? latestLastmodFrom([coursesTs, publicCoursePagesJs, courseDetailTsx], lastmodFrom(coursesTs))
+      : lastmodFrom(coursesTs);
     courseXml += toUrl(`https://tinystepslearning.com${routePath}`, last, '0.8', 'weekly');
   }
   courseXml += `\n</urlset>`;

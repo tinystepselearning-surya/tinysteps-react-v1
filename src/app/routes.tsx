@@ -47,6 +47,7 @@ const TestimonialsPage = lazy(() => import('../pages/TestimonialsPage'));
 const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
+const SpeakingProgressFrameworkPage = lazy(() => import('../pages/public/SpeakingProgressFrameworkPage'));
 const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForKidsPage'));
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
 const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
@@ -61,7 +62,6 @@ const FreeEnglishGameLandingPage = lazy(() => import('../pages/public/FreeEnglis
 const FreeLetterTracingGamePage = lazy(() => import('../pages/public/FreeLetterTracingGamePage'));
 const LetterTracingWithSoundsGamePage = lazy(() => import('../pages/public/LetterTracingWithSoundsGamePage'));
 const FreeBalloonPopGamePage = lazy(() => import('../pages/public/FreeBalloonPopGamePage'));
-const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
 const LearningPartnerPage = lazy(() => import('../pages/public/LearningPartnerPage'));
@@ -517,7 +517,9 @@ const router = createBrowserRouter(
         { path: 'courses/basic-grammar', element: <Navigate to="/courses/grammar" replace /> },
         { path: 'courses/advanced-grammar', element: <Navigate to="/courses/grammar-mastery" replace /> },
         { path: 'courses/basic-public-speaking', element: <Navigate to="/courses/public-speaking-foundations" replace /> },
+        { path: 'courses/basic-public-speaking/', element: <Navigate to="/courses/public-speaking-foundations" replace /> },
         { path: 'courses/advanced-public-speaking', element: <Navigate to="/courses/public-speaking-excellence" replace /> },
+        { path: 'courses/advanced-public-speaking/', element: <Navigate to="/courses/public-speaking-excellence" replace /> },
         { path: 'courses/public-speaking', element: <Navigate to="/courses/public-speaking-foundations" replace /> },
         { path: 'courses/public-speaking/', element: <Navigate to="/courses/public-speaking-foundations" replace /> },
         { path: 'courses/:slug', element: <CourseDetailPage /> },
@@ -580,8 +582,8 @@ const router = createBrowserRouter(
         { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'english-grammar-writing-classes/', element: <EnglishGrammarWritingClassesPage /> },
-        { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
-        { path: 'public-speaking-communication-kids/', element: <PublicSpeakingCommunicationKidsPage /> },
+        { path: 'public-speaking-communication-kids', element: <Navigate to="/speaking" replace /> },
+        { path: 'public-speaking-communication-kids/', element: <Navigate to="/speaking" replace /> },
         { path: 'best-online-phonics-classes-india', element: <Navigate to="/best-online-phonics-classes-for-kids-in-india" replace /> },
         { path: 'best-online-phonics-classes-for-kids-in-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
@@ -612,6 +614,7 @@ const router = createBrowserRouter(
         { path: 'free-games/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
         { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
         { path: 'spoken-english-classes-for-kids', element: <Navigate to="/spoken-english-classes-for-kids-online" replace /> },
+        { path: 'spoken-english-classes-for-kids/', element: <Navigate to="/spoken-english-classes-for-kids-online" replace /> },
         { path: 'spoken-english-classes-for-kids-online', element: <SpokenEnglishClassesForKidsPage /> },
         { path: 'writing-classes-for-kids', element: <WritingClassesForKidsPage /> },
         { path: 'phonics-fees-india', element: <PhonicsFeesIndiaPage /> },
@@ -638,6 +641,7 @@ const router = createBrowserRouter(
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
+        { path: 'speaking-progress-framework', element: <SpeakingProgressFrameworkPage /> },
         { path: 'games', element: <Navigate to="/games/english-excellence" replace /> },
         // Public marketing entry for English Excellence games + subscription plans
         { path: 'games/english-excellence', element: <LearningGamesMarketingPage /> },

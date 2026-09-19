@@ -119,7 +119,7 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
     },
   },
   speaking: {
-    route: '/public-speaking-communication-kids',
+    route: '/speaking',
     breadcrumbName: 'Public Speaking & Communication Programs',
     seoTitle: 'Public Speaking & Communication Programs for Kids | Tiny Steps Learning',
     seoDescription:

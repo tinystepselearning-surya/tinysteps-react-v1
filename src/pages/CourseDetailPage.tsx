@@ -61,16 +61,16 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
     educationalLevel: 'Advanced',
   },
   'basic-public-speaking': {
-    name: 'Basic Public Speaking Program',
+    name: 'Public Speaking Foundations',
     description:
-      'Beginner public speaking program for children focused on self-introduction, full-sentence speaking, picture talk, storytelling, and confidence.',
-    educationalLevel: 'Beginner',
+      'Beginner Public Speaking level for ages 4–7 focused on organised responses, picture talk, show-and-tell, storytelling foundations, clear expression, and short presentations.',
+    educationalLevel: 'Beginner Public Speaking; ages 4–7; assessment-led placement',
   },
   'advanced-public-speaking': {
-    name: 'Advanced Public Speaking Program',
+    name: 'Public Speaking Excellence',
     description:
-      'Advanced public speaking program for children focused on structured speeches, debates, presentations, storytelling, voice modulation, and audience confidence.',
-    educationalLevel: 'Advanced',
+      'Advanced Public Speaking level for ages 7–12 focused on structured speeches, storytelling, presentations, impromptu speaking, guided debate, audience awareness, and delivery.',
+    educationalLevel: 'Advanced Public Speaking; ages 7–12; assessment-led placement',
   },
 };
 
@@ -215,6 +215,7 @@ const CourseDetailPage: FC = () => {
     url: canonicalUrl,
     educationalLevel: courseSchemaConfig.educationalLevel,
     teaches: Array.isArray(coursePageConfig?.teaches) ? coursePageConfig.teaches : undefined,
+    areaServed: Array.isArray(coursePageConfig?.areaServed) ? coursePageConfig.areaServed : undefined,
   })];
 
   if (Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 && isCanonicalSlug) {
@@ -225,18 +226,34 @@ const CourseDetailPage: FC = () => {
   }
 
   if (Array.isArray(stageAuthority?.sequence) && stageAuthority.sequence.length > 0 && isCanonicalSlug) {
-    jsonLd.push({
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      '@id': `${canonicalUrl}#phonics-program-stages`,
-      name: 'Tiny Steps phonics programme stages',
-      itemListElement: stageAuthority.sequence.map((stage, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: stage.name,
-        item: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
-      })),
-    });
+    if (courseTrack === 'speaking') {
+      jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': `${canonicalUrl}#speaking-program-levels`,
+        name: 'Tiny Steps Public Speaking programme levels',
+        itemListOrder: 'https://schema.org/ItemListOrderAscending',
+        itemListElement: stageAuthority.sequence.map((stage, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: stage.name,
+          url: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
+        })),
+      });
+    } else {
+      jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': `${canonicalUrl}#phonics-program-stages`,
+        name: 'Tiny Steps phonics programme stages',
+        itemListElement: stageAuthority.sequence.map((stage, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: stage.name,
+          item: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
+        })),
+      });
+    }
   }
 
   return (
@@ -372,17 +389,25 @@ const CourseDetailPage: FC = () => {
       </LeadSection>
 
       {stageAuthority ? (
-        <LeadSection id="phonics-stage-fit" className="scroll-mt-24">
+        <LeadSection id={courseTrack === 'speaking' ? 'speaking-level-fit' : 'phonics-stage-fit'} className="scroll-mt-24">
           <LeadCard className="bg-gradient-to-br from-white via-sky-50/35 to-orange-50/35">
             <LeadSectionHeading
-              eyebrow="Course fit · Phonics stage"
+              eyebrow={courseTrack === 'speaking' ? 'Course fit · Speaking level' : 'Course fit · Phonics stage'}
               title={stageAuthority.title}
               description={stageAuthority.directAnswer}
             />
 
+            {stageAuthority.prerequisiteNote ? (
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm leading-6 text-slate-700">
+                <strong className="text-slate-950">Prerequisite / starting-point note:</strong> {stageAuthority.prerequisiteNote}
+              </div>
+            ) : null}
+
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <LeadCard className="border-slate-100 bg-white">
-                <h3 className="text-lg font-semibold text-slate-900">Signs this may be the right starting stage</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {courseTrack === 'speaking' ? 'Signs this may be the right starting level' : 'Signs this may be the right starting stage'}
+                </h3>
                 <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
                   {stageAuthority.entrySignals.map((item) => (
                     <li key={item}>• {item}</li>
@@ -390,7 +415,9 @@ const CourseDetailPage: FC = () => {
                 </ul>
               </LeadCard>
               <LeadCard className="border-slate-100 bg-white">
-                <h3 className="text-lg font-semibold text-slate-900">Skills this stage builds</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {courseTrack === 'speaking' ? 'Skills this level builds' : 'Skills this stage builds'}
+                </h3>
                 <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
                   {stageAuthority.skillsBuilt.map((item) => (
                     <li key={item}>• {item}</li>
@@ -409,11 +436,14 @@ const CourseDetailPage: FC = () => {
 
             {Array.isArray(stageAuthority.sequence) && stageAuthority.sequence.length > 0 ? (
               <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
-                <h3 className="text-lg font-semibold text-slate-900">Tiny Steps phonics progression</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {stageAuthority.progressionTitle ?? 'Tiny Steps phonics progression'}
+                </h3>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-700">
-                  Foundation, Early, and Advanced are readiness-based stages. The assessment helps identify the most useful starting point, and children move forward when the underlying skills are secure rather than simply because of age.
+                  {stageAuthority.progressionDescription ??
+                    'Foundation, Early, and Advanced are readiness-based stages. The assessment helps identify the most useful starting point, and children move forward when the underlying skills are secure rather than simply because of age.'}
                 </p>
-                <ol className="mt-5 grid gap-4 md:grid-cols-3">
+                <ol className={`mt-5 grid gap-4 ${stageAuthority.sequence.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
                   {stageAuthority.sequence.map((stage, index) => {
                     const isCurrentStage = stage.routePath === canonicalPath;
                     return (
@@ -423,10 +453,10 @@ const CourseDetailPage: FC = () => {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            Stage {index + 1} • {stage.level}
+                            {courseTrack === 'speaking' ? 'Level' : 'Stage'} {index + 1} • {stage.level}
                           </span>
                           {isCurrentStage ? (
-                            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">Current stage</span>
+                            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">Current {courseTrack === 'speaking' ? 'level' : 'stage'}</span>
                           ) : null}
                         </div>
                         <Link
@@ -441,6 +471,29 @@ const CourseDetailPage: FC = () => {
                     );
                   })}
                 </ol>
+              </div>
+            ) : null}
+
+            {stageAuthority.providerNote || stageAuthority.teachingMethod ? (
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {stageAuthority.providerNote ? (
+                  <LeadCard className="border-emerald-100 bg-emerald-50/60">
+                    <h3 className="text-lg font-semibold text-slate-900">Provider and teacher system</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">{stageAuthority.providerNote}</p>
+                    <Link to="/team" className="mt-3 inline-block text-sm font-semibold text-slate-900 underline underline-offset-4">
+                      Meet the Tiny Steps academic team
+                    </Link>
+                  </LeadCard>
+                ) : null}
+                {stageAuthority.teachingMethod ? (
+                  <LeadCard className="border-sky-100 bg-sky-50/60">
+                    <h3 className="text-lg font-semibold text-slate-900">How the level is taught</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">{stageAuthority.teachingMethod}</p>
+                    <Link to="/class-samples" className="mt-3 inline-block text-sm font-semibold text-slate-900 underline underline-offset-4">
+                      View real class samples
+                    </Link>
+                  </LeadCard>
+                ) : null}
               </div>
             ) : null}
           </LeadCard>
@@ -541,7 +594,9 @@ const CourseDetailPage: FC = () => {
         />
         {Array.isArray(coursePageConfig?.relatedLinks) && coursePageConfig.relatedLinks.length > 0 ? (
           <div className="mx-auto mt-5 max-w-7xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Related parent resources</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {courseTrack === 'speaking' ? 'Related programme and parent resources' : 'Related parent resources'}
+            </h3>
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
               {coursePageConfig.relatedLinks.map((item) => (
                 <Link key={item.to} to={item.to} className="font-semibold text-slate-900 underline underline-offset-4">

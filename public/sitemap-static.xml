@@ -218,7 +218,7 @@
   </url>
   <url>
     <loc>https://tinystepslearning.com/resources/speaking</loc>
-    <lastmod>2026-09-11</lastmod>
+    <lastmod>2026-09-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -458,9 +458,15 @@
   </url>
   <url>
     <loc>https://tinystepslearning.com/speaking</loc>
-    <lastmod>2026-09-11</lastmod>
+    <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://tinystepslearning.com/speaking-progress-framework</loc>
+    <lastmod>2026-09-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/for-schools</loc>
@@ -470,7 +476,7 @@
   </url>
   <url>
     <loc>https://tinystepslearning.com/book-demo</loc>
-    <lastmod>2026-09-11</lastmod>
+    <lastmod>2026-09-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -572,12 +578,6 @@
   </url>
   <url>
     <loc>https://tinystepslearning.com/english-foundation-program</loc>
-    <lastmod>2026-09-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tinystepslearning.com/public-speaking-communication-kids</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

@@ -23,6 +23,10 @@ import {
   FREE_DEMO_OFFER_NAME,
 } from '../../config/publicOffer';
 import { PUBLIC_SITE_FACTS } from '../../config/publicFacts';
+import {
+  SPEAKING_PROGRESS_DIMENSIONS,
+  SPEAKING_PROGRESS_FRAMEWORK_PATH,
+} from '../../lib/speakingProgressFramework';
 
 const bookDemoSeo = getRouteConfig('/book-demo');
 const bookDemoTitle =
@@ -414,6 +418,39 @@ export default function BookDemoPage() {
                 <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#f8f7ff] py-14 sm:py-16" aria-labelledby="speaking-framework-assessment-heading">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-[32px] border border-violet-100 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+            <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-700">If speaking is the main concern</p>
+                <h2 id="speaking-framework-assessment-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950">
+                  The assessment uses the Tiny Steps speaking framework as an observation guide
+                </h2>
+                <p className="mt-4 leading-7 text-slate-600">
+                  The teacher does not force every child through a ten-part test. Instead, the child&apos;s concern and current task determine which speaking dimensions are most useful to observe. The aim is to identify a starting point, the support still needed, and one high-value next target.
+                </p>
+                <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="mt-5 inline-flex text-sm font-black text-violet-800 underline decoration-violet-200 underline-offset-4">
+                  Read how speaking progress is measured
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5">
+                {SPEAKING_PROGRESS_DIMENSIONS.map((dimension) => (
+                  <span key={dimension.id} className="rounded-full border border-violet-200 bg-violet-50/70 px-3.5 py-2 text-sm font-bold text-violet-950">
+                    {dimension.shortLabel}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <p className="mt-7 border-t border-slate-200 pt-5 text-xs leading-5 text-slate-500">
+              The speaking framework is an educational teaching and observation method. It is not a clinical, developmental-age or standardised language assessment.
+            </p>
           </div>
         </div>
       </section>

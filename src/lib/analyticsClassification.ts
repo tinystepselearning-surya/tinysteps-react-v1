@@ -88,7 +88,6 @@ const HIGH_INTENT_CLUSTERS: Record<string, MarketingPageCluster> = {
   '/reading-fluency-program': 'program',
   '/confidence-building-program-kids': 'program',
   '/english-foundation-program': 'program',
-  '/public-speaking-communication-kids': 'program',
   '/for-schools': 'program',
   '/learning-partner': 'program',
   '/summer-camps': 'seasonal',

@@ -22,9 +22,9 @@ const programs = [
   {
     title: 'Super Speakers',
     icon: '🎤',
-    age: 'Ages 4-15',
+    age: 'Ages 4-12',
     blurb: 'Confidence drills, clear speaking, and short presentations.',
-    href: '/courses/public-speaking-foundations',
+    href: '/speaking',
     accent: 'from-green-100 via-white to-sky-100'
   },
   {
