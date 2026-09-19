@@ -185,6 +185,36 @@ Brick 4 has:
 - no finance or teacher-pay writer;
 - no automatic correction.
 
+## Brick 5 — Admin Latest Check wiring
+
+The Attendance Validation page now invokes the changed-only callable only when the admin explicitly clicks **Run Latest Check**.
+
+UI behavior:
+
+1. validate the selected date range;
+2. enforce the backend's maximum 31-calendar-day Latest Check window;
+3. call `runAttendanceValidationLatestCheck` in `asia-south1`;
+4. show the returned changed-session/revalidation/read-budget summary;
+5. automatically reload **saved AVS results for the same selected range**;
+6. preserve the admin's active classification tab during that automatic reload.
+
+The result summary explicitly shows:
+
+- dirty sessions found;
+- sessions revalidated from cached Teams evidence;
+- sessions that still need first-time/fresh Teams evidence;
+- bounded Firestore reads excluding the shared staff-registry load;
+- whether the staff registry was loaded;
+- Microsoft Graph call count;
+- dirty markers cleared;
+- skipped sessions;
+- the 100-dirty-session cap condition;
+- concurrent dirty-marker retention.
+
+The Brick-5 path makes **zero Microsoft Graph calls**. It remains distinct from the future **Force Fresh Teams Evidence** action.
+
+Cached viewing remains independent: **Load Saved Results** does not invoke the latest-check callable.
+
 ## Still deferred
 
 This document does not yet activate:
