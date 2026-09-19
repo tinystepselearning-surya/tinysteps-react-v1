@@ -360,7 +360,9 @@ export default function AttendanceValidationDashboard() {
             Verified
           </p>
           <p className="mt-1 text-2xl font-semibold text-emerald-700">{summary.verified}</p>
-          <p className="text-xs text-slate-500">{summary.resolved} admin-resolved</p>
+          <p className="text-xs text-slate-500">
+            Within loaded window • {summary.resolved} admin-resolved
+          </p>
         </Card>
         <Card className="p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
