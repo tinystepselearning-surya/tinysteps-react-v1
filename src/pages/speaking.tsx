@@ -211,7 +211,7 @@ export default function SpeakingPage() {
         item: {
           '@type': 'WebPage',
           name: item.name,
-          url: `${PUBLIC_FACTS.primaryWebsite}${item.sourcePath}`,
+          url: `${PUBLIC_FACTS.primaryWebsite}${item.path}`,
           description: item.description,
         },
       })),
