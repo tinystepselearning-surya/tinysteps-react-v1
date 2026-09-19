@@ -20,7 +20,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | Brick | Scope | Status | Merge to main |
 |---|---|---|---|
 | 01 | Speaking search baseline & safety lock | COMPLETE — RE-AUDITED | NO |
-| 02 | Search intent & keyword ownership map | COMPLETE | NO |
+| 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
 | 03 | Cannibalization & technical SEO cleanup | PENDING | NO |
 | 04 | Flagship /speaking money page | PENDING | NO |
 | 05 | Spoken English territory | PENDING | NO |
@@ -76,3 +76,18 @@ Brick 2 must not modify the protected owner contracts until its query-ownership 
 - AI-style questions inherit the underlying human intent owner; no AI-prompt pages authorized.
 - Weak-evidence duplicate pages explicitly rejected.
 - Brick 2 runtime changes: ZERO.
+
+
+## 2026-09-19 Brick 2 re-audit notes
+
+Brick 2 was re-audited before Brick 3.
+
+Corrections and additions:
+- corrected the local-intent boundary: `/online-english-classes-hyderabad` owns broad Hyderabad English intent only; subject-qualified Hyderabad Spoken-English intent belongs to `/spoken-english-classes-for-kids-online`;
+- reclassified the observed 10 explicit Hyderabad Spoken-English impressions as subject-intent leakage rather than healthy local ownership;
+- separated Speaking-project execution priority from the repository's existing Commercial C2 priority so Brick 2 does not silently rewrite C2 priorities;
+- recorded that exact confidence-building commercial queries returned no GSC rows in the current 90-day window; Confidence Building remains a specialist owner because of the existing C2/C3 contract, pending Brick 3 indexability repair and later demand validation;
+- enumerated the known legacy Public-Speaking technical surfaces Brick 3 must reconcile, including route manifest, SEO registry, subject-landing registry, sitemap, RSS/feed, smoke/tests and analytics classification;
+- confirmed no new city, near-me, comparison, AI-prompt, Spoken-English or Public-Speaking fee page is authorized.
+
+Brick 2 status after re-audit: COMPLETE — RE-AUDITED.
