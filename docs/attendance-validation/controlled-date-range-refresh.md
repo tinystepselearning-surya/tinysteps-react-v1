@@ -280,11 +280,97 @@ This reuses the already-proven AV2 production evidence without exposing the orga
 
 Brick 6A performs no Graph call by itself and exports no new Cloud Function.
 
+## Brick 6A — per-case Force Fresh Teams Evidence
+
+Force Fresh is intentionally separate from cached viewing and changed-only Latest Check.
+
+It is available only for an existing session-backed AVS case that already has:
+
+- a current `classSessionId`;
+- cached Teams evidence;
+- an exact AVS `inputFingerprint`.
+
+The browser sends only:
+
+```text
+caseId
+inputFingerprint
+```
+
+The backend rereads the exact case and rejects the request if the fingerprint has changed.
+
+### Organizer identity
+
+Brick 6A does **not** introduce a new browser-visible organizer identifier and does not assume a global organizer.
+
+The Microsoft organizer object ID is reused from the case's previous AV2 evidence document.
+
+That makes Force Fresh safe for an already-known case without solving first-time organizer discovery prematurely.
+
+### Fresh evidence flow
+
+```text
+exact AVS case
+        ↓
+prior AV2 evidence
+        ↓
+current classSession
+        ↓
+current Teams join URL + scheduled window
+        ↓
+Microsoft Graph fresh read
+        ↓
+new attendanceValidationRun
+new attendanceValidationEvidence
+        ↓
+AV5.3 rerun with strict >25-minute overlap rule
+        ↓
+same AVS case rebuilt
+```
+
+The current operational session is used for the current join link, session identity, attendance and start/end timestamps.
+
+If current legacy timing fields are absent, the previous evidence window is used as a fallback.
+
+The previous evidence join URL cannot be reused because AV2 intentionally persists only its hash.
+
+### Scope and cost
+
+Force Fresh processes **one AVS case per click**.
+
+Before the shared AV3 staff-registry load, the Firestore read budget is:
+
+```text
+1 validation case
++ 1 classSession
++ 1 previous evidence document
++ 1 dirty marker
++ 2 AV5.3 point reads
+= 6 bounded reads
+```
+
+The callable also reports logical Graph method calls. A normal complete occurrence commonly requires meeting resolution, transcript listing, attendance-report listing and selected attendance-record retrieval, but the actual count is returned rather than assumed.
+
+### Safety
+
+Force Fresh:
+
+- is admin-only;
+- binds all three existing Microsoft Graph secrets server-side;
+- requires exact case fingerprint match;
+- never writes operational attendance;
+- never writes billing or teacher earnings;
+- writes only AVS run/evidence/case sidecars;
+- clears an existing dirty marker only after the case is rebuilt;
+- uses a `lastUpdateTime` precondition so a newer attendance change cannot be erased;
+- automatically reloads the selected saved-results range after completion.
+
+The Admin UI presents Force Fresh as an explicit per-case action and asks for confirmation because it makes new Microsoft Graph reads.
+
 ## Still deferred
 
 This document does not yet activate:
 
-- first-time date-range Teams evidence collection;
-- Microsoft Graph refresh for missing/partial evidence;
+- first-time date-range Teams evidence collection for sessions with no prior AVS evidence;
 - automatic corrections;
 - any scheduled job.
