@@ -106,8 +106,8 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(courseDetail).toContain("'Skills this stage builds'");
     expect(courseDetail).toContain('Provider and teacher system');
     expect(courseDetail).toContain('How the level is taught');
-    expect(courseDetail).toContain("to="/team"");
-    expect(courseDetail).toContain("to="/class-samples"");
+    expect(courseDetail).toContain('to="/team"');
+    expect(courseDetail).toContain('to="/class-samples"');
 
     expect(courseDetail).toContain("'@id': `${canonicalUrl}#phonics-program-stages`");
     expect(courseDetail).toContain("name: 'Tiny Steps phonics programme stages'");
