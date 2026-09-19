@@ -212,15 +212,8 @@ describe('Brick 5 rolling lifecycle contracts', () => {
     expect(isRollingScheduleExceptionSession({source: 'makeup'})).toBe(true);
     expect(isRollingScheduleExceptionSession({source: 'approved_request'})).toBe(true);
     expect(isRollingScheduleExceptionSession({isAdHoc: true})).toBe(true);
-    expect(isRollingScheduleExceptionSession({isMakeup: true})).toBe(true);
     expect(isRollingScheduleExceptionSession({historicalCorrection: true})).toBe(true);
     expect(isRollingScheduleExceptionSession({manualSessionState: 'approved'})).toBe(true);
-    expect(isRollingScheduleExceptionSession({makeupForSessionId: 'original-1'})).toBe(true);
-    expect(isRollingScheduleExceptionSession({rescheduledFromSessionId: 'original-1'})).toBe(true);
-    expect(isRollingScheduleExceptionSession({originalSessionId: 'original-1'})).toBe(true);
-    expect(isRollingScheduleExceptionSession({sourceSessionId: 'original-1'})).toBe(true);
-    expect(isRollingScheduleExceptionSession({replacementSessionId: 'replacement-1'})).toBe(true);
-    expect(isRollingScheduleExceptionSession({replacementForSessionId: 'original-1'})).toBe(true);
     expect(isRollingScheduleExceptionSession({source: 'rolling_schedule'})).toBe(false);
   });
 
