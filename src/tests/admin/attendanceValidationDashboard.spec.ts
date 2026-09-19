@@ -12,13 +12,32 @@ describe('AV6 admin attendance validation dashboard', () => {
   const sidebar = readRepoFile('src/pages/admin/components/Sidebar.tsx');
   const routes = readRepoFile('src/app/routes.tsx');
   const firestoreRules = readRepoFile('firestore.rules');
+  const callFunctions = readRepoFile('src/lib/callFunctions.ts');
 
-  it('uses a bounded one-shot Firestore query with a hard 100-document cap', () => {
+  it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
     expect(dashboard).toContain("collection(db, 'attendanceValidationCases')");
-    expect(dashboard).toContain("orderBy('observedAt', 'desc')");
+    expect(dashboard).toContain("where('serviceDateYmd', '>=', fromDate)");
+    expect(dashboard).toContain("where('serviceDateYmd', '<=', toDate)");
+    expect(dashboard).toContain("orderBy('serviceDateYmd', 'desc')");
     expect(dashboard).toContain('limit(AV6_CASE_READ_LIMIT)');
+    expect(dashboard).toContain('startAfter(cursor)');
     expect(dashboard).toContain('await getDocs(casesQuery)');
+  });
+
+  it('does not auto-read AVS cases merely because the admin page opens', () => {
+    expect(dashboard).not.toContain('useEffect(');
+    expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
+    expect(dashboard).toContain('Opening this page does not read them automatically.');
+    expect(dashboard).toContain('Load Saved Results');
+  });
+
+  it('uses button tabs instead of a classification select', () => {
+    expect(dashboard).toContain('const CLASSIFICATION_TABS');
+    expect(dashboard).toContain('role="tablist"');
+    expect(dashboard).toContain('role="tab"');
+    expect(dashboard).toContain('aria-selected={active}');
+    expect(dashboard).not.toContain('<select');
   });
 
   it('does not use realtime listeners or operational collection lookups', () => {
@@ -69,6 +88,113 @@ describe('AV6 admin attendance validation dashboard', () => {
   it('labels dashboard counts as a loaded-window view rather than global totals', () => {
     expect(dashboard).toContain('Loaded window');
     expect(dashboard).toContain('Within loaded window');
-    expect(dashboard).toContain('One-shot bounded read: latest {AV6_CASE_READ_LIMIT} cases maximum.');
+    expect(dashboard).toContain('Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.');
+  });
+
+  it('keeps fresh revalidation visibly separate from cached result loading', () => {
+    expect(dashboard).toContain('Load Saved Results');
+    expect(dashboard).toContain('Run Latest Check');
+    expect(dashboard).toContain(
+      'Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.',
+    );
+    expect(dashboard).toContain(
+      'Latest Check is intentionally capped at 31 calendar days per run.',
+    );
+  });
+
+  it('calls the changed-only backend with the selected range and reloads that same saved window', () => {
+    expect(dashboard).toContain(
+      "'runAttendanceValidationLatestCheck'",
+    );
+    expect(dashboard).toContain('{ fromDate, toDate }');
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+    expect(dashboard).toContain('if (!preserveCurrentTab) setClassificationFilter(\'all\')');
+    expect(callFunctions).toContain(
+      "runAttendanceValidationLatestCheck: 'asia-south1'",
+    );
+  });
+
+  it('shows an auditable latest-check result summary without implying Graph refresh', () => {
+    expect(dashboard).toContain('Latest Check completed');
+    expect(dashboard).toContain('latestCheckResult.dirtyFoundCount');
+    expect(dashboard).toContain('latestCheckResult.revalidatedCount');
+    expect(dashboard).toContain('latestCheckResult.baselineRequiredCount');
+    expect(dashboard).toContain(
+      'latestCheckResult.readBudget.boundedReadsExcludingStaffRegistry',
+    );
+    expect(dashboard).toContain('Microsoft Graph calls: {latestCheckResult.graphCalls}');
+    expect(dashboard).toContain('latestCheckResult.dirtyBatchAtLimit');
+    expect(dashboard).toContain('latestCheckResult.concurrentMarkerChangeDetected');
+  });
+
+  it('keeps latest-check range validation stricter than cached viewing', () => {
+    expect(dashboard).toContain('inclusiveDateRangeDays(fromDate, toDate)');
+    expect(dashboard).toContain(
+      'Run Latest Check supports a maximum of 31 calendar days at a time.',
+    );
+  });
+
+  it('keeps Force Fresh Teams Evidence separate, explicit, and per case', () => {
+    expect(dashboard).toContain('Force Fresh Teams Evidence');
+    expect(dashboard).toContain(
+      'Force Fresh Teams Evidence will make new Microsoft Graph reads for this one class',
+    );
+    expect(dashboard).toContain(
+      "'forceRefreshAttendanceValidationEvidence'",
+    );
+    expect(dashboard).toContain(
+      'caseId: item.id',
+    );
+    expect(dashboard).toContain(
+      'inputFingerprint: item.inputFingerprint',
+    );
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+    expect(callFunctions).toContain(
+      "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
+    );
+  });
+
+  it('shows Force Fresh Graph/read evidence after completion', () => {
+    expect(dashboard).toContain('Force Fresh Teams Evidence completed');
+    expect(dashboard).toContain('forceFreshResult.graphLogicalCalls');
+    expect(dashboard).toContain(
+      'forceFreshResult.readBudget.boundedReadsExcludingStaffRegistry',
+    );
+    expect(dashboard).toContain('forceFreshResult.collectionStatus');
+    expect(dashboard).toContain('forceFreshResult.issueKinds');
+  });
+
+  it('wires a separate first-time baseline action with a hard ten-session explanation', () => {
+    expect(dashboard).toContain('Run First-Time Baseline');
+    expect(dashboard).toContain('Continue Baseline');
+    expect(dashboard).toContain('Baseline Complete');
+    expect(dashboard).toContain(
+      "'runAttendanceValidationFirstTimeBaseline'",
+    );
+    expect(dashboard).toContain(
+      'up to 10 class sessions that do not already have saved AVS cases',
+    );
+    expect(dashboard).toContain(
+      'First-Time Baseline can include only completed service dates through yesterday IST.',
+    );
+    expect(callFunctions).toContain(
+      "runAttendanceValidationFirstTimeBaseline: 'asia-south1'",
+    );
+  });
+
+  it('automatically reloads saved results and exposes baseline read/Graph progress', () => {
+    expect(dashboard).toContain('First-Time Baseline batch complete');
+    expect(dashboard).toContain('baselineResult.graphLogicalCalls');
+    expect(dashboard).toContain(
+      'baselineResult.readBudget.boundedReadsExcludingStaffRegistry',
+    );
+    expect(dashboard).toContain('baselineResult.cumulative.scannedSessionCount');
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+  });
+
+  it('does not offer Force Fresh against placeholder evidence that does not exist', () => {
+    expect(dashboard).toContain(
+      "!item.reasons.includes('evidence_document_missing')",
+    );
   });
 });

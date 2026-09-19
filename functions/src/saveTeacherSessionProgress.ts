@@ -7,6 +7,10 @@ import {
 } from './helpers/attendanceCorrectionFreeze';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
+import {
+  hasAttendanceValidationAttendanceChange,
+  markAttendanceValidationDirtySession,
+} from './attendanceValidation/dirtySessionMarker';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -679,6 +683,10 @@ export const saveTeacherSessionProgress = onCall(
       }
     }
 
+    const attendanceChangedForAvs = hasAttendanceValidationAttendanceChange(
+      session.attendance,
+      nextAttendance,
+    );
     const sessionNotes = sanitizeText(payload.sessionNotes, 2000);
     const presentOrLate = hasPresentOrLateAttendance(nextAttendance);
     const hasReschedule = hasRescheduleAttendance(nextAttendance);
@@ -876,6 +884,25 @@ export const saveTeacherSessionProgress = onCall(
     }
 
     await batch.commit();
+
+    if (attendanceChangedForAvs) {
+      try {
+        await markAttendanceValidationDirtySession(db, {
+          sessionId,
+          session: {
+            ...session,
+            attendance: nextAttendance,
+          },
+          reason: 'teacher_attendance_changed',
+        });
+      } catch (error) {
+        logger.warn('saveTeacherSessionProgress: AVS dirty marker failed', {
+          sessionId,
+          errorName: error instanceof Error ? error.name : 'unknown',
+          errorMessage: error instanceof Error ? error.message : 'unknown',
+        });
+      }
+    }
 
     logger.info('saveTeacherSessionProgress: session updated', {
       sessionId,
@@ -1123,6 +1150,10 @@ export const adminAttendanceCorrection = onCall(
         status: newStatus,
       },
     };
+    const attendanceChangedForAvs = hasAttendanceValidationAttendanceChange(
+      attendanceRaw,
+      nextAttendance,
+    );
 
     const userSnap = await db.collection('users').doc(uid).get();
     const userData = (userSnap.data() || {}) as Record<string, unknown>;
@@ -1233,6 +1264,25 @@ export const adminAttendanceCorrection = onCall(
     }
 
     await batch.commit();
+
+    if (attendanceChangedForAvs) {
+      try {
+        await markAttendanceValidationDirtySession(db, {
+          sessionId,
+          session: {
+            ...session,
+            attendance: nextAttendance,
+          },
+          reason: 'admin_attendance_correction',
+        });
+      } catch (error) {
+        logger.warn('adminAttendanceCorrection: AVS dirty marker failed', {
+          sessionId,
+          errorName: error instanceof Error ? error.name : 'unknown',
+          errorMessage: error instanceof Error ? error.message : 'unknown',
+        });
+      }
+    }
 
     logger.info('adminAttendanceCorrection: applied', {
       sessionId,

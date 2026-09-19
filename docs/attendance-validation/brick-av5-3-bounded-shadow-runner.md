@@ -133,6 +133,7 @@ Each case contains:
     runId
     evidenceId
     observedAt
+    serviceDateYmd
     classSessionId
     enrollmentId
     kidId
@@ -149,6 +150,8 @@ Each case contains:
     staffRegistryIssues[]
     inputFingerprint
     operationalMutationAllowed = false
+
+The case also persists the already-resolved IST Tiny Steps service date as `serviceDateYmd`. This is the same date used by AV5.3's permanent September 2026 scope gate, so future admin date-range queries do not need a second date interpretation or any extra operational reads.
 
 The fingerprint allows later tooling to see whether the underlying validation state changed between runs while the case identity remains stable.
 
@@ -221,7 +224,7 @@ Production activation should be a separate reviewed brick after the case schema 
 
 ## Tests
 
-The AV5.3 regression suite covers exact work-item processing, the permanent September 2026 lower bound, August session/evidence exclusion, exact September 1 IST inclusion, unresolved-date fail-closed behavior, deterministic case IDs, nested child-attendance resolution, missing evidence, orphan evidence, reference mismatch, missing documents, production-default 25-minute threshold behavior, explicit null-threshold fail-closed behavior, staff-registry warning propagation, the 100-item hard cap, duplicate-session rejection, stable case identity across reruns, fingerprint changes, zero case pre-reads, and the no-mutation invariant.
+The AV5.3 regression suite covers canonical `serviceDateYmd` persistence, exact work-item processing, the permanent September 2026 lower bound, August session/evidence exclusion, exact September 1 IST inclusion, unresolved-date fail-closed behavior, deterministic case IDs, nested child-attendance resolution, missing evidence, orphan evidence, reference mismatch, missing documents, production-default 25-minute threshold behavior, explicit null-threshold fail-closed behavior, staff-registry warning propagation, the 100-item hard cap, duplicate-session rejection, stable case identity across reruns, fingerprint changes, zero case pre-reads, and the no-mutation invariant.
 
 ## Core invariant
 
