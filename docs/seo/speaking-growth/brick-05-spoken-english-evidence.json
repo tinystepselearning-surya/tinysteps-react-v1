@@ -1,0 +1,184 @@
+{
+  "generatedAt": "2026-09-19",
+  "settledThrough": "2026-09-16",
+  "window": {
+    "start": "2026-06-19",
+    "end": "2026-09-16",
+    "inclusiveDays": 90
+  },
+  "canonicalOwner": "/spoken-english-classes-for-kids-online",
+  "pageBaseline": {
+    "clicks": 2,
+    "impressions": 261,
+    "ctrPct": 0.7662835249042145,
+    "avgPosition": 12.24904214559387,
+    "note": "The two clicks on the owner page in the page-level aggregate are branded Tiny Steps queries in the observed owner-query export; privacy thresholds apply."
+  },
+  "observedSpokenEnglishFamily": {
+    "methodology": "Queries matching spoken English / English speaking / conversational English / English conversation / speak English / speaking English, then split into generic non-location, explicit Hyderabad, and near-me subsets. Mixed phonics, jobs and free-practice queries were excluded from the generic subset.",
+    "allThreeSubsets": {
+      "impressions": 386,
+      "canonicalOwnerImpressions": 117,
+      "canonicalOwnerSharePct": 30.31,
+      "hyderabadPageImpressions": 241,
+      "hyderabadPageSharePct": 62.44,
+      "legacyRedirectImpressions": 20,
+      "legacyRedirectSharePct": 5.18,
+      "otherImpressions": 8,
+      "note": "Near-me visibility on the Hyderabad page is treated as local discovery/support, not authority to become the canonical Spoken-English programme owner."
+    },
+    "genericNonLocation": {
+      "clicks": 2,
+      "impressions": 256,
+      "canonicalOwner": {
+        "clicks": 0,
+        "impressions": 117,
+        "sharePct": 45.7
+      },
+      "hyderabadPage": {
+        "clicks": 2,
+        "impressions": 111,
+        "sharePct": 43.36
+      },
+      "legacyRedirect": {
+        "clicks": 0,
+        "impressions": 20,
+        "sharePct": 7.81
+      },
+      "courses": {
+        "clicks": 0,
+        "impressions": 5,
+        "sharePct": 1.95
+      },
+      "agePage": {
+        "clicks": 0,
+        "impressions": 3,
+        "sharePct": 1.17
+      }
+    },
+    "explicitHyderabad": {
+      "clicks": 0,
+      "impressions": 10,
+      "canonicalOwnerImpressions": 0,
+      "hyderabadPageImpressions": 10,
+      "interpretation": "Subject-qualified Hyderabad Spoken-English intent is leakage under the Brick 2 ownership contract; the Hyderabad page remains a broad local English chooser."
+    },
+    "nearMe": {
+      "clicks": 0,
+      "impressions": 120,
+      "canonicalOwnerImpressions": 0,
+      "hyderabadPageImpressions": 120,
+      "interpretation": "Localized discovery signal. Preserve the local chooser while strengthening the handoff to the subject owner; do not create near-me or city-specific Spoken-English pages."
+    }
+  },
+  "queryExamples": [
+    {
+      "query": "english speaking classes online for kids",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "pages": [
+        {
+          "path": "/spoken-english-classes-for-kids-online",
+          "impressions": 68,
+          "avgPosition": 18.147058823529413
+        },
+        {
+          "path": "/spoken-english-classes-for-kids",
+          "impressions": 13,
+          "avgPosition": 63.76923076923077
+        },
+        {
+          "path": "/courses",
+          "impressions": 3,
+          "avgPosition": 37.666666666666664
+        }
+      ]
+    },
+    {
+      "query": "spoken english classes for kids",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "pages": [
+        {
+          "path": "/online-english-classes-hyderabad",
+          "impressions": 24,
+          "avgPosition": 8.708333333333332
+        },
+        {
+          "path": "/spoken-english-classes-for-kids-online",
+          "impressions": 5,
+          "avgPosition": 9.2
+        }
+      ]
+    },
+    {
+      "query": "online spoken english classes for kids",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "pages": [
+        {
+          "path": "/online-english-classes-hyderabad",
+          "impressions": 13,
+          "avgPosition": 15.076923076923077
+        },
+        {
+          "path": "/spoken-english-classes-for-kids-online",
+          "impressions": 8,
+          "avgPosition": 10.5
+        },
+        {
+          "path": "/spoken-english-classes-for-kids",
+          "impressions": 1,
+          "avgPosition": 48
+        }
+      ]
+    },
+    {
+      "query": "spoken english classes for kids online",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "pages": [
+        {
+          "path": "/online-english-classes-hyderabad",
+          "impressions": 5,
+          "avgPosition": 7.2
+        },
+        {
+          "path": "/spoken-english-classes-for-kids-online",
+          "impressions": 5,
+          "avgPosition": 7.2
+        }
+      ]
+    },
+    {
+      "query": "recommended online english speaking courses for kids preparing for school oral assessments",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "pages": [
+        {
+          "path": "/spoken-english-classes-for-kids-online",
+          "impressions": 1,
+          "avgPosition": 2
+        }
+      ]
+    }
+  ],
+  "implementation": {
+    "metadataChanged": false,
+    "canonicalChanged": false,
+    "redirectsChanged": false,
+    "sitemapChanged": false,
+    "newCommercialUrls": 0,
+    "pageChanges": [
+      "strengthened everyday-conversation and fuller-response positioning",
+      "added a five-step Spoken-English practice flow without inventing formal course levels",
+      "added responsive correction/retry explanation using existing Tiny Steps teaching principles",
+      "linked to class samples and free assessment",
+      "added a single-programme Hyderabad/India/worldwide boundary section",
+      "added observable parent progress signals",
+      "replaced hard-coded learner reach wording with central public facts",
+      "narrowed confidence wording so specialist confidence remains separate"
+    ],
+    "architectureChanges": [
+      "added Hyderabad broad-owner -> canonical Spoken-English programme-fit edge to commercialC6InternalCommercialPaths",
+      "updated C6 internal-path audit to require the Hyderabad Spoken-English handoff"
+    ]
+  },
+  "runtimeChangesAuthorized": true,
+  "productionDeployment": false
+}
