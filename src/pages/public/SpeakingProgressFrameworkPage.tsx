@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../../lib/seo';
+import { buildSpeakableSpecification } from '../../lib/breadcrumbAeoGeoRegistry.js';
 import {
   PUBLIC_FACTS,
   SITE_ORIGIN,
@@ -126,6 +127,10 @@ export default function SpeakingProgressFrameworkPage() {
         { '@id': `${canonicalUrl}#speaking-progress-dimensions` },
         { '@id': `${canonicalUrl}#observation-bands` },
       ],
+      speakable: buildSpeakableSpecification([
+        '.ts-speaking-progress-answer-title',
+        '.ts-speaking-progress-answer-summary',
+      ]),
     };
 
     applySeo({
@@ -211,10 +216,10 @@ export default function SpeakingProgressFrameworkPage() {
       <section className="px-4 pb-10 sm:px-6 md:pb-14 lg:px-8" aria-labelledby="framework-quick-answer">
         <div className="mx-auto max-w-6xl rounded-3xl border border-sky-100 bg-sky-50/60 p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-800">Quick answer</p>
-          <h2 id="framework-quick-answer" className="mt-2 text-2xl font-black text-slate-950">
+          <h2 id="framework-quick-answer" className="ts-speaking-progress-answer-title mt-2 text-2xl font-black text-slate-950">
             What does Tiny Steps count as real speaking progress?
           </h2>
-          <p className="mt-3 max-w-4xl leading-7 text-slate-700">
+          <p className="ts-speaking-progress-answer-summary mt-3 max-w-4xl leading-7 text-slate-700">
             Real progress means the child can communicate more clearly, relevantly and independently,
             then use the same underlying skill again when the exact prompt, topic, listener or material
             changes. More words, louder speech, a polished memorised script, or one successful familiar
