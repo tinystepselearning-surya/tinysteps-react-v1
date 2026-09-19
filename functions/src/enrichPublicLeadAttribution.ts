@@ -35,6 +35,11 @@ type AcquisitionChannel =
   | 'google_ads'
   | 'bing_organic'
   | 'microsoft_ads'
+  | 'chatgpt'
+  | 'google_gemini'
+  | 'perplexity'
+  | 'microsoft_copilot'
+  | 'claude'
   | 'instagram'
   | 'facebook'
   | 'linkedin'
@@ -95,6 +100,22 @@ function classify(input: {
   const source = normalize(input.utmSource);
   const medium = normalize(input.utmMedium);
   const referrerDomain = normalize(input.referrerDomain);
+  const hasChatGpt =
+    matchesSource(source, ['chatgpt', 'chatgpt.com', 'openai', 'openai.com']) ||
+    matchesDomain(referrerDomain, ['chatgpt.com', 'openai.com']);
+  const hasGemini =
+    matchesSource(source, ['gemini', 'google_gemini', 'google-gemini', 'gemini.google.com']) ||
+    matchesDomain(referrerDomain, ['gemini.google.com']);
+  const hasPerplexity =
+    matchesSource(source, ['perplexity', 'perplexity_ai', 'perplexity-ai', 'perplexity.ai']) ||
+    matchesDomain(referrerDomain, ['perplexity.ai']);
+  const hasCopilot =
+    matchesSource(source, ['copilot', 'microsoft_copilot', 'microsoft-copilot', 'copilot.microsoft.com', 'copilot.com']) ||
+    matchesDomain(referrerDomain, ['copilot.microsoft.com', 'copilot.com']);
+  const hasClaude =
+    matchesSource(source, ['claude', 'claude.ai', 'anthropic', 'anthropic.com']) ||
+    matchesDomain(referrerDomain, ['claude.ai', 'anthropic.com']);
+
   const hasGoogle =
     matchesSource(source, ['google', 'google_ads', 'google-ads', 'googleads', 'adwords']) ||
     isGoogleDomain(referrerDomain);
@@ -119,6 +140,21 @@ function classify(input: {
   }
   if (input.msclkid || (hasBing && isPaidMedium(medium))) {
     return { channel: 'microsoft_ads', source: source || 'microsoft' };
+  }
+  if (hasChatGpt) {
+    return { channel: 'chatgpt', source: source || referrerDomain || 'chatgpt' };
+  }
+  if (hasGemini) {
+    return { channel: 'google_gemini', source: source || referrerDomain || 'gemini' };
+  }
+  if (hasPerplexity) {
+    return { channel: 'perplexity', source: source || referrerDomain || 'perplexity' };
+  }
+  if (hasCopilot) {
+    return { channel: 'microsoft_copilot', source: source || referrerDomain || 'copilot' };
+  }
+  if (hasClaude) {
+    return { channel: 'claude', source: source || referrerDomain || 'claude' };
   }
   if (hasInstagram) {
     return { channel: 'instagram', source: source || referrerDomain || 'instagram' };
