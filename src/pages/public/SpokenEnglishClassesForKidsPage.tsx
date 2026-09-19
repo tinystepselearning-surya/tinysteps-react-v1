@@ -48,7 +48,7 @@ const faqItems = [
   {
     question: 'What if my child understands English but does not speak much?',
     answer:
-      'That usually means the child needs guided speaking turns, sentence expansion, and confidence practice, not just more listening exposure.',
+      'That usually means the child needs guided speaking turns, sentence expansion, and low-pressure response practice, not just more listening exposure.',
   },
   {
     question: 'Can spoken English classes help a child who hesitates to speak?',
