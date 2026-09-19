@@ -14,6 +14,13 @@ const coursesPage = read('src/pages/CoursesPage.tsx');
 const chooser = read('src/pages/parents/choosing-course.tsx');
 const rss = read('public/rss.xml');
 const feed = read('public/feed.xml');
+const sitemapCourses = read('public/sitemap-courses.xml');
+const sitemapIndex = read('public/sitemap.xml');
+const firebase = read('firebase.json');
+const manifest = read('src/lib/publicRouteManifest.js');
+const routes = read('src/app/routes.tsx');
+const routeSeo = read('src/lib/routeSeoRegistry.js');
+const sitemapGenerator = read('scripts/generate-sitemaps.js');
 const internalLinks = read('src/lib/seo/internalLinkMap.ts');
 
 describe('Speaking growth Brick 6 programme architecture', () => {
@@ -35,9 +42,14 @@ describe('Speaking growth Brick 6 programme architecture', () => {
 
   it('keeps /speaking as the architecture root without pretending two levels are a Google Course list', () => {
     expect(hub).toContain("const canonicalPath = '/speaking';");
-    expect(hub).toContain("name: 'Tiny Steps Speaking programme architecture'");
+    expect(hub).toContain("name: 'Tiny Steps Public Speaking levels'");
+    expect(hub).toContain("'@id': `${canonicalUrl}#public-speaking-levels`");
+    expect(hub).toContain('publicSpeakingLevelArchitecture.map');
+    expect(hub).toContain("name: 'Tiny Steps adjacent speaking specialist pathways'");
+    expect(hub).toContain("'@id': `${canonicalUrl}#speaking-specialist-pathways`");
+    expect(hub).toContain("itemListOrder: 'https://schema.org/ItemListUnordered'");
+    expect(hub).toContain('speakingSpecialistPathways.map');
     expect(hub).toContain("'@type': 'WebPage'");
-    expect(hub).toContain('speakingProgrammeArchitecture.map');
     expect(hub).toContain('speakingFacts.levels.beginner.canonicalCoursePath');
     expect(hub).toContain('speakingFacts.levels.advanced.canonicalCoursePath');
     expect(hub).toContain('to="/spoken-english-classes-for-kids-online"');
@@ -87,6 +99,10 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(courseDetail).toContain("'Course fit · Speaking level'");
     expect(courseDetail).toContain("'speaking-level-fit'");
     expect(courseDetail).toContain('Prerequisite / starting-point note:');
+    expect(courseDetail).toContain("'Signs this may be the right starting level'");
+    expect(courseDetail).toContain("'Skills this level builds'");
+    expect(courseDetail).toContain("'Signs this may be the right starting stage'");
+    expect(courseDetail).toContain("'Skills this stage builds'");
     expect(courseDetail).toContain('Provider and teacher system');
     expect(courseDetail).toContain('How the level is taught');
     expect(courseDetail).toContain("to="/team"");
@@ -121,6 +137,39 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(chooser).toContain("destination: '/speaking'");
     expect(chooser).toContain('Short answers do not automatically mean Public Speaking.');
     expect(chooser).not.toContain("destination: '/courses/public-speaking-foundations',\n    ctaLabel: 'Explore speaking foundations'");
+  });
+
+  it('keeps legacy Basic/Advanced course aliases as direct non-indexable redirects', () => {
+    for (const [source, destination] of [
+      ['/courses/basic-public-speaking', '/courses/public-speaking-foundations'],
+      ['/courses/basic-public-speaking/', '/courses/public-speaking-foundations'],
+      ['/courses/advanced-public-speaking', '/courses/public-speaking-excellence'],
+      ['/courses/advanced-public-speaking/', '/courses/public-speaking-excellence'],
+    ] as const) {
+      expect(firebase).toContain(`"source": "${source}", "destination": "${destination}", "type": 301`);
+      expect(manifest).toContain(`{ source: '${source}', destination: '${destination}', status: 301 }`);
+      expect(routeSeo).toContain(`'${source}': {`);
+      expect(routeSeo).toContain(`canonicalPath: '${destination}'`);
+    }
+
+    expect(routes).toContain("path: 'courses/basic-public-speaking/'");
+    expect(routes).toContain("path: 'courses/advanced-public-speaking/'");
+    expect(routeSeo).toContain("robots: 'noindex, follow'");
+  });
+
+  it('keeps Speaking course sitemap freshness tied to the files that actually render the course pages', () => {
+    expect(sitemapGenerator).toContain("routePath.startsWith('/courses/public-speaking-')");
+    expect(sitemapGenerator).toContain('publicCoursePagesJs');
+    expect(sitemapGenerator).toContain('courseDetailTsx');
+    expect(sitemapCourses).toContain(
+      '<loc>https://tinystepslearning.com/courses/public-speaking-foundations</loc>\\n    <lastmod>2026-09-19</lastmod>',
+    );
+    expect(sitemapCourses).toContain(
+      '<loc>https://tinystepslearning.com/courses/public-speaking-excellence</loc>\\n    <lastmod>2026-09-19</lastmod>',
+    );
+    expect(sitemapIndex).toContain(
+      '<loc>https://tinystepslearning.com/sitemap-courses.xml</loc>\\n    <lastmod>2026-09-19</lastmod>',
+    );
   });
 
   it('registers both canonical Public Speaking course pages for automatic internal linking', () => {
