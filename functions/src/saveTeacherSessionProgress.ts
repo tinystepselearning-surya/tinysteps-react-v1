@@ -1154,7 +1154,7 @@ export const adminAttendanceCorrection = onCall(
 
     if (av7ValidationLink) {
       const resolvedAt = admin.firestore.FieldValue.serverTimestamp();
-      batch.set(av7ValidationLink.resolutionRef, {
+      batch.create(av7ValidationLink.resolutionRef, {
         schemaVersion: 1,
         brick: 'AV7',
         validationCaseId: av7ValidationLink.caseId,
