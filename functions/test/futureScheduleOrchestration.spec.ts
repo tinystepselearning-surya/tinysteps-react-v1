@@ -258,6 +258,33 @@ describe('Brick 5 future schedule automatic orchestration', () => {
     expect(store.writes).toBe(0);
   });
 
+  it('runs supported legacy recurrence through the same zero-write shadow planner', async () => {
+    const store = new AutomaticStore(enrollment({
+      schedule: {
+        timezone: 'Asia/Kolkata',
+        weeklySlots: [
+          {weekday: 1, time: '17:30', durationMinutes: 35},
+          {weekday: 3, time: '17:30', durationMinutes: 35},
+          {weekday: 5, time: '17:30', durationMinutes: 35},
+        ],
+        plannedSessions: 1,
+        weeksAhead: 1,
+        endDateYmd: '2026-09-20',
+      },
+    }));
+
+    const outcome = await reconcileFutureScheduleEnrollmentAutomatically(
+      store,
+      'enrollment-1',
+      {writesEnabled: false},
+    );
+
+    expect(outcome.status).toBe('shadow');
+    expect(outcome.actions).toBe(6);
+    expect(store.sessions.size).toBe(0);
+    expect(store.writes).toBe(0);
+  });
+
   it('ignores enrollment writes that only touch operational metadata outside the scheduling contract', () => {
     const before = enrollment({
       updatedAt: 'before',
@@ -275,23 +302,31 @@ describe('Brick 5 future schedule automatic orchestration', () => {
       .toEqual(futureScheduleEnrollmentComparable(after));
   });
 
-  it('leaves unrelated legacy enrollment writes on the existing compatibility scheduler path', () => {
+  it('reacts to scheduling-relevant legacy enrollment writes while ignoring unrelated metadata', () => {
     const legacyBefore = enrollment({
       schedule: {
         weekdays: [1, 3, 5],
         timeHHmm: '17:30',
         durationMins: 35,
+        plannedSessions: 1,
       },
       teacherId: 'teacher-1',
+      updatedAt: 'before',
     });
     const legacyAfter = {
       ...legacyBefore,
       teacherId: 'teacher-2',
+      updatedAt: 'after',
     };
 
     expect(shouldReconcileFutureScheduleEnrollmentWrite({
       before: legacyBefore,
       after: legacyAfter,
+    })).toBe(true);
+
+    expect(shouldReconcileFutureScheduleEnrollmentWrite({
+      before: legacyBefore,
+      after: {...legacyBefore, updatedAt: 'after'},
     })).toBe(false);
 
     expect(shouldReconcileFutureScheduleEnrollmentWrite({

@@ -10,7 +10,7 @@ import {
   type FutureScheduleExecutorStore,
 } from './futureScheduleExecutor';
 import {createFutureScheduleFirestoreStore} from './futureScheduleFirestore';
-import {isCanonicalFutureScheduleEnrollment} from './futureScheduleReconciler';
+import {resolveFutureScheduleEligibility} from './futureScheduleReconciler';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -186,16 +186,17 @@ export function shouldReconcileFutureScheduleEnrollmentWrite(args: {
 }): boolean {
   if (!args.after) return false;
 
-  const beforeWasCanonical = args.before
-    ? isCanonicalFutureScheduleEnrollment(args.before)
+  const beforeWasOperational = args.before
+    ? resolveFutureScheduleEligibility(args.before).eligible
     : false;
-  const afterIsCanonical = isCanonicalFutureScheduleEnrollment(args.after);
+  const afterIsOperational = resolveFutureScheduleEligibility(args.after).eligible;
 
-  // Brick 5 owns canonical rolling enrollments only. A transition away from the
-  // canonical contract still triggers once so the source defect is surfaced;
-  // unrelated legacy enrollment writes stay on their existing compatibility path.
-  if (!beforeWasCanonical && !afterIsCanonical) return false;
-  if (!args.before) return true;
+  // Both canonical rolling and supported legacy recurring enrollments belong to
+  // the same future-coverage contract. Trigger immediately when an operational
+  // enrollment changes scheduling-relevant data, and once when it leaves the
+  // operational lifecycle so the resulting non-scheduling state is observable.
+  if (!beforeWasOperational && !afterIsOperational) return false;
+  if (!args.before) return afterIsOperational;
 
   return JSON.stringify(futureScheduleEnrollmentComparable(args.before)) !==
     JSON.stringify(futureScheduleEnrollmentComparable(args.after));

@@ -308,25 +308,69 @@ describe('Brick 1 future schedule reconciler contract', () => {
     });
   });
 
-  it('fails closed when required source configuration is invalid', () => {
+  it('supports legacy recurrence using exact independent slots and ignores finite-plan caps while active', () => {
+    const legacySchedule = enrollment();
+    legacySchedule.schedule = {
+      timezone: 'Asia/Kolkata',
+      weeklySlots: [
+        {weekday: 1, time: '17:00', durationMinutes: 35},
+        {weekday: 1, time: '17:35', durationMinutes: 35},
+        {weekday: 2, time: '19:00', durationMinutes: 35},
+        {weekday: 4, time: '18:15', durationMinutes: 35},
+      ],
+      plannedSessions: 1,
+      weeksAhead: 1,
+      endDateYmd: '2026-09-20',
+    };
+
+    expect(assessFutureScheduleEnrollmentSource(legacySchedule)).toEqual({
+      ready: true,
+      normalizedStatus: 'active',
+      issues: [],
+      warnings: ['legacy_schedule_format'],
+    });
+
+    const plan = buildFutureScheduleWindowPlan({
+      enrollmentId: 'legacy-schedule',
+      enrollment: legacySchedule,
+      todayYmd: '2026-09-19',
+    });
+
+    expect(plan.occurrences.map((row) => [row.date, row.startTime, row.durationMinutes])).toEqual([
+      ['2026-09-21', '17:00', 35],
+      ['2026-09-21', '17:35', 35],
+      ['2026-09-22', '19:00', 35],
+      ['2026-09-24', '18:15', 35],
+      ['2026-09-28', '17:00', 35],
+      ['2026-09-28', '17:35', 35],
+      ['2026-09-29', '19:00', 35],
+      ['2026-10-01', '18:15', 35],
+    ]);
+  });
+
+  it('accepts the legacy weekdays/time alias shape when it has a valid recurring schedule', () => {
     const legacySchedule = enrollment();
     legacySchedule.schedule = {
       weekdays: [1, 3, 5],
       timeHHmm: '17:30',
       durationMins: 35,
+      plannedSessions: 1,
     };
+
     expect(assessFutureScheduleEnrollmentSource(legacySchedule)).toEqual({
-      ready: false,
+      ready: true,
       normalizedStatus: 'active',
-      issues: ['non_canonical_rolling_schedule'],
-      warnings: [],
+      issues: [],
+      warnings: ['legacy_schedule_format'],
     });
-    expect(() => buildFutureScheduleWindowPlan({
-      enrollmentId: 'legacy-schedule',
+    expect(buildFutureScheduleWindowPlan({
+      enrollmentId: 'legacy-alias-schedule',
       enrollment: legacySchedule,
       todayYmd: '2026-09-19',
-    })).toThrow(/non_canonical_rolling_schedule/i);
+    }).occurrences).toHaveLength(6);
+  });
 
+  it('fails closed when required source configuration is invalid', () => {
     const brokenTeacher = enrollment();
     delete brokenTeacher.teacherId;
     expect(() => buildFutureScheduleWindowPlan({
