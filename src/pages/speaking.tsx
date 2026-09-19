@@ -206,7 +206,7 @@ export default function SpeakingPage() {
         item: {
           '@type': 'WebPage',
           name: item.name,
-          url: `${PUBLIC_FACTS.primaryWebsite}${item.path}`,
+          url: `${PUBLIC_FACTS.primaryWebsite}${item.sourcePath}`,
           description: item.description,
         },
       })),
@@ -859,6 +859,9 @@ export default function SpeakingPage() {
           <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Parent evidence</p>
           <h2 className="mb-4 mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">What speaking parents noticed first</h2>
           <TestimonialSnippets courseTag="speaking" title="Parent feedback from speaking families" />
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            These are curated first-party comments from individual families, not a promise that another child will have the same result. Review them together with <Link to="/class-samples" className="font-semibold underline underline-offset-2">class samples</Link>, the <Link to="/curriculum" className="font-semibold underline underline-offset-2">curriculum</Link>, the <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold underline underline-offset-2">Speaking Progress Framework</Link>, and your child&apos;s own assessment.
+          </p>
         </div>
       </section>
 
