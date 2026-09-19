@@ -9,6 +9,7 @@ import {
   type AcquisitionChannel,
 } from '../../lib/leadAcquisition';
 import {
+  buildSpeakingAttributionProjection,
   isSpeakingInterestLead,
   isSpeakingOriginLead,
 } from '../../lib/speakingAttribution';
@@ -282,28 +283,25 @@ export default function LeadSourceAnalysis({
       .sort((a, b) => b.count - a.count)
       .slice(0, 12);
 
-    const organicCount = channelRows
-      .filter((row) => row.channel === 'google_organic' || row.channel === 'bing_organic')
-      .reduce((sum, row) => sum + row.count, 0);
-    const paidCount = channelRows
-      .filter((row) => row.channel === 'google_ads' || row.channel === 'microsoft_ads')
-      .reduce((sum, row) => sum + row.count, 0);
-    const socialCount = channelRows
-      .filter((row) => ['instagram', 'facebook', 'linkedin', 'youtube'].includes(row.channel))
-      .reduce((sum, row) => sum + row.count, 0);
-    const aiCount = channelRows
-      .filter((row) => ['chatgpt', 'google_gemini', 'perplexity', 'microsoft_copilot', 'claude'].includes(row.channel))
-      .reduce((sum, row) => sum + row.count, 0);
+    const businessChannelCounts = {
+      organic_search: 0,
+      organic_ai: 0,
+      paid: 0,
+      referral: 0,
+      direct_or_unknown: 0,
+    };
+
+    cohortRows.forEach((lead) => {
+      const businessChannel = buildSpeakingAttributionProjection(lead).businessChannel;
+      businessChannelCounts[businessChannel] += 1;
+    });
 
     return {
-      total: rows.length,
+      total: cohortRows.length,
       attributedCount,
       demoCount,
       admittedCount,
-      organicCount,
-      paidCount,
-      socialCount,
-      aiCount,
+      businessChannelCounts,
       channelRows,
       landingRows,
     };
@@ -398,10 +396,11 @@ export default function LeadSourceAnalysis({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="rounded-full border px-2.5 py-1">Organic search {loading ? '…' : `${analysis.organicCount} (${pct(analysis.organicCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Organic AI {loading ? '…' : `${analysis.aiCount} (${pct(analysis.aiCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Paid {loading ? '…' : `${analysis.paidCount} (${pct(analysis.paidCount, analysis.total)})`}</span>
-            <span className="rounded-full border px-2.5 py-1">Social {loading ? '…' : `${analysis.socialCount} (${pct(analysis.socialCount, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Organic search {loading ? '…' : `${analysis.businessChannelCounts.organic_search} (${pct(analysis.businessChannelCounts.organic_search, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Organic AI {loading ? '…' : `${analysis.businessChannelCounts.organic_ai} (${pct(analysis.businessChannelCounts.organic_ai, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Paid {loading ? '…' : `${analysis.businessChannelCounts.paid} (${pct(analysis.businessChannelCounts.paid, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Referral {loading ? '…' : `${analysis.businessChannelCounts.referral} (${pct(analysis.businessChannelCounts.referral, analysis.total)})`}</span>
+            <span className="rounded-full border px-2.5 py-1">Direct / unknown {loading ? '…' : `${analysis.businessChannelCounts.direct_or_unknown} (${pct(analysis.businessChannelCounts.direct_or_unknown, analysis.total)})`}</span>
           </div>
 
           <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
