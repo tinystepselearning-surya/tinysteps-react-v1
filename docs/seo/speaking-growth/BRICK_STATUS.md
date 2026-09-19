@@ -27,7 +27,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
 | 07 | Tiny Steps Speaking Progress Framework | COMPLETE — RE-AUDITED | NO |
 | 08 | Speaking knowledge cluster | COMPLETE — RE-AUDITED | NO |
-| 09 | Evidence layer | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 09 | Evidence layer | COMPLETE — RE-AUDITED | NO |
 | 10 | Video/class demonstration engine | PENDING | NO |
 | 11 | Entity & external authority | PENDING | NO |
 | 12 | GEO/AEO/AI visibility layer | PENDING | NO |
@@ -393,3 +393,29 @@ Brick 8 status after re-audit: **COMPLETE — RE-AUDITED**.
 - Production deployment: ZERO.
 
 Brick 9 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
+
+
+## 2026-09-19 Brick 9 re-audit notes
+
+Brick 9 was fully re-audited before Brick 10.
+
+Additional fixes and findings:
+- advanced the Brick 9 evidence-layer revision from `2026-09-19-b9-v1` to `2026-09-19-b9-v2`;
+- closed a provenance-drift gap by deriving required C8 paths from the evidence records themselves;
+- every non-progress evidence record is now runtime-bound to a verified frozen Commercial C8 trust surface;
+- the progress-method evidence record is runtime-bound to the Brick 7 Speaking Progress Framework;
+- evidence navigation targets must remain on their canonical source or a fragment of that source;
+- canonical evidence source paths must remain unique;
+- evidence structured data now uses canonical `sourcePath` values while visible links can still use section fragments;
+- all six canonical evidence sources were rechecked as present in the SEO registry, self-canonical, indexable and included in `sitemap-static.xml`;
+- added an adjacent no-guarantee boundary directly below Speaking parent testimonials, rather than relying only on the earlier evidence-layer disclaimer;
+- removed a strict-TypeScript regression-test risk by auditing the JS SEO registry as source text instead of dynamically indexing it from TypeScript;
+- source-level re-audit matrix: **82/82 passed**;
+- protected upstream/operational SHA checks: **18/18 unchanged**;
+- re-audit implementation delta before documentation: exactly three files — `speakingEvidenceLayer.ts`, `speaking.tsx`, and `speakingGrowthBrick9.spec.ts`;
+- no new public URL, canonical owner, review schema or aggregate-rating schema was introduced;
+- machine-readable evidence updated at `docs/seo/speaking-growth/brick-09-evidence-layer.json`;
+- no production merge/deployment performed;
+- full executable Vitest/build/prerender/browser QA is still not claimed and remains mandatory at the final Bricks 1–13 integration gate.
+
+Brick 9 status after re-audit: **COMPLETE — RE-AUDITED**.
