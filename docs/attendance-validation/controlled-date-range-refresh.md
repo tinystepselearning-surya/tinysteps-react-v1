@@ -215,71 +215,6 @@ The Brick-5 path makes **zero Microsoft Graph calls**. It remains distinct from 
 
 Cached viewing remains independent: **Load Saved Results** does not invoke the latest-check callable.
 
-## Brick 6A — Fresh-evidence backend foundation
-
-Brick 6A prepares the Microsoft Graph path without exporting or invoking a new Graph-backed callable.
-
-### Session snapshot contract
-
-`buildAvsEvidenceSessionSnapshot` converts one already-loaded `classSessions` document into the existing AV2 `ExpectedClassSessionSnapshot` contract.
-
-It resolves:
-
-- canonical service date;
-- scheduled start/end from persisted timestamps or IST date/time fields;
-- enrollment, teacher, kid and course IDs already present on the session;
-- Teams link from `joinUrl`, then legacy `meetingLink` / `classLink`;
-- canonical current attendance.
-
-It fails closed for:
-
-- unresolved service date;
-- unresolved start/end time;
-- classes that have not ended yet;
-- cancelled/canceled/rescheduled sessions.
-
-No enrollment, kid or teacher lookup is introduced by this helper.
-
-### Stable evidence identity
-
-Fresh evidence uses a stable SHA-256-derived run ID per `classSessionId`.
-
-This is important because AV2's evidence document ID incorporates `runId`. A stable per-session run ID means repeated fresh checks for the same class overwrite that class's validation evidence instead of creating an unbounded new evidence document on every click.
-
-### Explicit Graph limits
-
-The fresh path constants are intentionally conservative:
-
-```text
-maximum selected range: 31 calendar days
-maximum initial discovery: 500 class sessions
-maximum Microsoft Graph batch: 10 class sessions
-```
-
-These are backend safety bounds, not an invitation to poll.
-
-### Organizer resolution
-
-The Microsoft organizer object ID remains server-side.
-
-The backend first checks:
-
-```text
-attendanceValidationConfig/teams
-```
-
-Browser reads and writes to this collection are denied.
-
-If config is absent, the resolver may inspect at most 25 existing AV2 evidence documents. Bootstrap is allowed only if those documents prove **exactly one** non-empty organizer ID.
-
-- zero organizer IDs → fail closed;
-- more than one organizer ID → fail closed;
-- exactly one → persist it to the backend-only config once.
-
-This reuses the already-proven AV2 production evidence without exposing the organizer ID to React code or inventing an unverified organizer.
-
-Brick 6A performs no Graph call by itself and exports no new Cloud Function.
-
 ## Brick 6A — per-case Force Fresh Teams Evidence
 
 Force Fresh is intentionally separate from cached viewing and changed-only Latest Check.
@@ -367,10 +302,99 @@ Force Fresh:
 
 The Admin UI presents Force Fresh as an explicit per-case action and asks for confirmation because it makes new Microsoft Graph reads.
 
+## Brick 6B — first-time date-range Teams evidence collection
+
+First-Time Baseline is the explicit Graph-backed path for a date range that has never been validated before.
+
+It remains separate from:
+
+- **Load Saved Results** — cached case reads only;
+- **Run Latest Check** — changed-only reconciliation against cached evidence;
+- **Force Fresh Teams Evidence** — one existing case, explicitly re-read from Graph.
+
+### Range gate
+
+The callable accepts `fromDate` / `toDate` with these hard limits:
+
+- permanent lower bound: **2026-09-01**;
+- maximum range: **31 calendar days**;
+- `toDate` must be **yesterday IST or earlier**.
+
+The completed-date rule prevents the first-time cursor from stepping past a class that has not finished yet.
+
+### Bounded cursor
+
+Each explicit click scans at most **10 session documents plus one lookahead session**.
+
+The cursor is persisted in the backend-only collection `attendanceValidationBaselineRanges/{rangeId}` using the selected from/to dates, last service date, last session document id, cumulative scanned/existing/fresh/blocked counts, and completion status.
+
+The browser cannot read or write this cursor collection.
+
+When the same exact range is already complete, the callable returns after only the baseline-state check: **0 Graph calls, 0 session scan, 0 AV5.3 run**.
+
+### Existing cases are never fresh-refetched
+
+For every baseline batch, AVS point-reads the corresponding deterministic validation-case ids. If a case already exists, baseline reuses it and performs no Teams collection for that session. Only sessions without a saved AVS case enter first-time evidence collection.
+
+### Organizer resolution
+
+Organizer identity stays server-side. For a session without prior case evidence, the resolver uses this precedence:
+
+1. explicit `teamsOrganizerUserId` / `organizerUserId` stored on the session;
+2. organizer from an existing AV2 evidence document with the **same SHA-256 Teams join-URL hash**;
+3. session `teacherEmail`, used as the Microsoft Graph user/UPN candidate;
+4. point-read `users/{teacherId}.email` fallback.
+
+The same-join-link evidence lookup is cached within the ten-session batch.
+
+If no organizer can be resolved, the session is not dropped. It is routed through AV5.3 as **MISSING_TEAMS_EVIDENCE / REVIEW** using a deterministic missing-evidence placeholder id. Missing Graph evidence never becomes Absent.
+
+### Session snapshot
+
+First-time collection needs no prior AV2 document. The baseline snapshot reconstructs enrollment id, canonical teacher id (including supported legacy aliases), kid id, course id, current Tiny Steps attendance, current Teams join URL, and scheduled start/end.
+
+Timing precedence is persisted `startAt/endAt`, then IST `date + startTime/endTime`, then duration fallback from `durationMinutes/durationMins`. Malformed or unresolved timing fails closed and becomes a visible Missing Teams Evidence case.
+
+### Graph and AVS flow
+
+`classSession -> organizer resolution -> AV1 Graph client -> AV2/AV2.1 occurrence-safe Teams evidence -> attendanceValidationRuns/evidence -> one shared AV5.3 batch -> attendanceValidationCases`
+
+The AV5.3 batch uses the adopted strict production rule: **teacher + learner simultaneous scheduled overlap must be greater than 25:00**. All identity, occurrence and evidence-completeness gates still apply.
+
+### Read budget
+
+For one maximum ten-session batch, the explicit upper bound before the shared staff-registry load is:
+
+- 1 baseline-state read;
+- up to 11 session-query documents (10 + one lookahead);
+- up to 10 validation-case point reads;
+- up to 10 organizer-evidence lookup queries;
+- up to 10 teacher-user point reads;
+- up to 20 AV5.3 point reads.
+
+That is a conservative ceiling of **62 bounded reads/queries plus one shared staff-registry load**. Most batches are lower because organizer and teacher fallbacks are conditional and existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
+
+### Graph budget
+
+At most ten sessions enter fresh collection per click. A normal complete Teams occurrence uses up to four logical Graph operations: meeting resolution, transcript metadata list, attendance-report list, and selected attendance-record list. The normal logical-call ceiling is therefore approximately **40 logical Graph calls** per batch. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
+
+### Writes and safety
+
+Brick 6B writes only AVS-owned baseline cursor/progress, AV2 run/evidence sidecars, and AV5.3 validation cases. It does **not** write operational attendance, class-session scheduling fields, billing, payments, teacher earnings, reschedule credits, or correction records.
+
+### Admin UI
+
+The Attendance Validation page exposes a separate **Run First-Time Baseline** button. It asks for confirmation because Graph calls may occur, shows batch and cumulative progress plus Firestore/Graph counts, changes to **Continue Baseline** while more cursor batches remain, changes to **Baseline Complete** for the same completed range, and automatically reloads the selected saved-results range after every batch.
+
+### Firestore index
+
+The repository explicitly declares the cursor query index `classSessions: date ASC, __name__ ASC` so first production use does not depend on an implicit index assumption.
+
 ## Still deferred
 
-This document does not yet activate:
+Brick 6B still does **not** introduce:
 
-- first-time date-range Teams evidence collection for sessions with no prior AVS evidence;
-- automatic corrections;
-- any scheduled job.
+- any scheduler or polling;
+- automatic attendance correction;
+- automatic finance mutation;
+- an unbounded Graph scan.
