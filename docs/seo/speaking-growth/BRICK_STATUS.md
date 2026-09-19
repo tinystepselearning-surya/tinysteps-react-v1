@@ -22,7 +22,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 01 | Speaking search baseline & safety lock | COMPLETE — RE-AUDITED | NO |
 | 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
 | 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
-| 04 | Flagship /speaking money page | PENDING | NO |
+| 04 | Flagship /speaking money page | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 05 | Spoken English territory | PENDING | NO |
 | 06 | Programme architecture | PENDING | NO |
 | 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
@@ -121,3 +121,20 @@ Additional fixes:
 - confirmed main remains fully synchronized into the feature branch at the re-audit gate.
 
 Brick 3 status after re-audit: COMPLETE — RE-AUDITED.
+
+
+## Brick 4 completion gate
+
+- `/speaking` retained as the sole generic Public Speaking + Communication owner.
+- Frozen SEO title/meta description and canonical retained unchanged.
+- Parent diagnostic rebuilt around six observable child needs with canonical handoffs.
+- Speaking progression separated from optional Grammar/Spoken-English foundations.
+- Real class-experience section added using existing `/class-samples` evidence surface.
+- Existing responsive-teaching model retained and repositioned later in the parent journey.
+- Academic/teacher-quality evidence links added through `/team` and `/why-tiny-steps`.
+- Approved parent feedback moved into a dedicated evidence section before FAQ.
+- Class-sample FAQ added.
+- New regression guard: `src/tests/seo/speakingGrowthBrick4.spec.ts`.
+- New commercial URLs: ZERO.
+- Metadata/canonical/redirect/sitemap changes in Brick 4: ZERO.
+- Production deployment: ZERO.
