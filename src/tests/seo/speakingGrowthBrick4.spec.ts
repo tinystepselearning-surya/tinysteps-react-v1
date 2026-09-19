@@ -37,6 +37,9 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('to="/confidence-building-program-kids"');
     expect(speaking).toContain('to="/courses/public-speaking-excellence"');
     expect(speaking).toContain('Best fit: this Speaking programme');
+    expect(speaking).toContain('children who can already communicate at a basic level');
+    expect(speaking).toContain('one-word everyday answers or sentence formation itself');
+    expect(speaking).not.toContain('move from short answers and hesitation to complete sentences');
   });
 
   it('separates optional language foundations from the speaking progression', () => {
