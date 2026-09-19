@@ -161,11 +161,11 @@ export const SPEAKING_AI_DISCOVERY_SURFACES = freezeList([
 ]);
 
 export const SPEAKING_AI_AGENT_POLICY = freeze({
-  searchDiscoveryCrawler: 'OAI-SearchBot',
+  openAiSearchDiscoveryCrawler: 'OAI-SearchBot',
   openAiPotentialTrainingCrawler: 'GPTBot',
-  googleGeminiControlToken: 'Google-Extended',
-  appleFoundationModelControlToken: 'Applebot-Extended',
-  configuredPublicAgents: freezeList([
+  googleGeminiProductControlToken: 'Google-Extended',
+  appleFoundationModelProductControlToken: 'Applebot-Extended',
+  configuredRobotsTokens: freezeList([
     'OAI-SearchBot',
     'ChatGPT-User',
     'Claude-SearchBot',
@@ -217,14 +217,14 @@ if (SPEAKING_AI_ANSWER_OWNERS.some((item) => /(?:ai|chatgpt|gemini|perplexity)-/
 }
 
 if (
-  new Set(SPEAKING_AI_AGENT_POLICY.configuredPublicAgents).size
-  !== SPEAKING_AI_AGENT_POLICY.configuredPublicAgents.length
+  new Set(SPEAKING_AI_AGENT_POLICY.configuredRobotsTokens).size
+  !== SPEAKING_AI_AGENT_POLICY.configuredRobotsTokens.length
 ) {
   throw new Error('Brick 12 configured AI/search agent tokens must remain unique.');
 }
 
 if (
-  SPEAKING_AI_AGENT_POLICY.searchDiscoveryCrawler
+  SPEAKING_AI_AGENT_POLICY.openAiSearchDiscoveryCrawler
   === SPEAKING_AI_AGENT_POLICY.openAiPotentialTrainingCrawler
 ) {
   throw new Error('Brick 12 must keep OpenAI search discovery and potential-training crawler roles distinct.');
