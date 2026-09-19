@@ -34,6 +34,9 @@ describe('enrollment lifecycle future-session reconciliation', () => {
     { status: 'scheduled', isMakeup: true, makeupCreditId: 'credit-1' },
     { status: 'scheduled', source: 'approved_request_reschedule' },
     { status: 'scheduled', source: 'replacement_session' },
+    { status: 'scheduled', originalSessionId: 'original-1' },
+    { status: 'scheduled', sourceSessionId: 'original-1' },
+    { status: 'scheduled', replacementForSessionId: 'original-1' },
   ])('protects completed, attended, financial, locked and exception sessions: %#', (session) => {
     expect(isLifecycleSessionProtected(session)).toBe(true);
     expect(isEligibleFutureSessionForLifecycleCancellation({
