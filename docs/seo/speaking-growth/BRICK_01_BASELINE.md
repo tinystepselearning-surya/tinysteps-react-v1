@@ -2,21 +2,24 @@
 
 Baseline date: 2026-09-19 IST  
 GSC settled through: 2026-09-16  
-Current comparison window: 2026-06-18 through 2026-09-16  
-Prior comparison window: 2026-03-20 through 2026-06-17  
-Branch base commit: e2946a436f1c9dd9694b034ebfd166947c01700a
+Exact current comparison window: 2026-06-19 through 2026-09-16 (90 inclusive days)  
+Exact prior comparison window: 2026-03-21 through 2026-06-18 (90 inclusive days)  
+Original branch base commit: e2946a436f1c9dd9694b034ebfd166947c01700a  
+Main synchronized before Brick 2: 3b11fee88ff21e928d2ed8af555afcb64695c815
 
-## 1. Purpose
+## 1. Purpose and audit correction
 
-Brick 1 is intentionally non-destructive. It records the exact Speaking search architecture and organic-performance baseline that later bricks must protect.
+Brick 1 is intentionally non-destructive. It records the exact Speaking search architecture, public-fact contracts, Google index state and organic-performance baseline that later bricks must protect.
 
-No production-facing source, route, redirect, sitemap, schema, pricing, curriculum, dashboard, attendance, scheduling, payment, lead or game behavior is changed by this brick.
+The initial Brick 1 draft used 2026-06-18 through 2026-09-16 for the current window. That range is 91 inclusive calendar days. The re-audit corrected the baseline to two exact adjacent 90-day windows: 2026-06-19 through 2026-09-16 and 2026-03-21 through 2026-06-18. All metrics below use those corrected windows.
+
+No production-facing source, route, redirect, sitemap, schema, pricing, curriculum, dashboard, attendance, scheduling, payment, lead or game behavior is changed by Brick 1.
 
 ## 2. Existing commercial ownership contract found in main
 
 The repository already contains a commercial keyword-ownership system. The Speaking growth project must extend it rather than create a second conflicting system.
 
-| Intent | Existing owner | Current repository decision |
+| Intent | Existing owner | Repository decision |
 |---|---|---|
 | Public speaking | /speaking | KEEP_OWNER / STRENGTHEN |
 | General communication skills | /speaking | same canonical owner as public speaking |
@@ -36,12 +39,12 @@ Protected repository sources include:
 
 ## 3. Protected public facts at baseline
 
-Later bricks must not silently contradict these current public facts:
+Later bricks must not silently contradict these current source-of-truth facts:
 
 - Brand-level audience: ages 3–12.
 - Standard live 1:1 class duration: 35 minutes.
 - Free demo assessment: one free 35-minute 1:1 online demo assessment before enrolment.
-- Standard 1:1 public price currently rendered: ₹400/class.
+- Standard 1:1 public price: ₹400/class.
 - Basic Public Speaking: ages 4–7, 36 lessons.
 - Advanced Public Speaking: ages 7–12, 36 lessons.
 - Public Speaking and Spoken English are intentionally separate commercial intents.
@@ -49,15 +52,23 @@ Later bricks must not silently contradict these current public facts:
 
 Any later change to these facts requires a source-of-truth update, not a page-local copy edit.
 
+### Public-fact inconsistency discovered during re-audit
+
+src/components/Home/PopularPrograms.tsx currently labels the "Super Speakers" card as "Ages 4-15" while linking to /courses/public-speaking-foundations. This conflicts with the protected brand maximum age of 12 and the published Speaking levels of ages 4–7 and 7–12.
+
+Brick 1 records the inconsistency only. It does not alter the home page. The correction belongs to a later implementation brick after the final Speaking architecture is locked.
+
 ## 4. Speaking URL inventory
 
 ### A. Primary commercial owners
 
-| URL | Role | Current state |
+| URL | Role | Repository intent |
 |---|---|---|
-| /speaking | Public Speaking + Communication commercial owner | indexable, self-canonical, sitemap, strong current owner |
+| /speaking | Public Speaking + Communication commercial owner | indexable, self-canonical, sitemap |
 | /spoken-english-classes-for-kids-online | Spoken English commercial owner | indexable, self-canonical, sitemap |
-| /confidence-building-program-kids | specialist confidence programme | indexable, self-canonical, sitemap |
+| /confidence-building-program-kids | specialist confidence programme | intended indexable, self-canonical, sitemap |
+
+Important: Google URL Inspection currently reports /confidence-building-program-kids as excluded by a noindex tag even though the present repository intends index,follow. That mismatch is frozen as a separate risk below.
 
 ### B. Programme/course pages
 
@@ -86,45 +97,48 @@ Any later change to these facts requires a source-of-truth update, not a page-lo
 
 ### E. Legacy/consolidation candidates and aliases
 
-| URL | Current behavior | Baseline action |
+| URL | Current contract/state | Baseline action |
 |---|---|---|
-| /public-speaking-communication-kids | still live, indexable, self-canonical and in sitemap | HOLD in Brick 1; repository C2 contract already says CONSOLIDATE_TO_OWNER → /speaking |
-| /spoken-english-classes-for-kids | redirects to /spoken-english-classes-for-kids-online | preserve and monitor legacy index signals |
-| /courses/basic-public-speaking | 301 to /courses/public-speaking-foundations | preserve |
-| /courses/advanced-public-speaking | 301 to /courses/public-speaking-excellence | preserve |
-| /courses/public-speaking | 301 to /courses/public-speaking-foundations | preserve |
+| /public-speaking-communication-kids | indexable, self-canonical, sitemap; C2 says consolidate to /speaking | HOLD in Brick 1 |
+| /spoken-english-classes-for-kids | Google sees Page with redirect | preserve redirect and monitor legacy signals |
+| /courses/basic-public-speaking | Google sees Page with redirect | preserve redirect to Foundations |
+| /courses/advanced-public-speaking | Google sees Page with redirect | preserve redirect to Excellence |
+| /courses/public-speaking | repository/Firebase 301 to Foundations | preserve |
 
 ## 5. Primary structural inconsistency frozen for later repair
 
 The repository already states that /public-speaking-communication-kids should consolidate to /speaking, but the legacy URL is still:
-- present in the public route manifest,
-- self-canonical in the SEO registry,
-- present in sitemap-static.xml,
-- publicly reachable,
+- present in the public route manifest;
+- self-canonical in the SEO registry;
+- present in sitemap-static.xml;
+- present in RSS/feed discovery;
+- submitted and indexed in Google;
 - earning Google impressions and clicks.
 
-This is therefore a real, evidence-backed consolidation issue. Brick 1 does not change it. Brick 3 must decide and execute the safe signal-transfer plan after Brick 2 freezes query ownership.
+This is a real, evidence-backed consolidation issue. Brick 1 does not change it. Brick 2 must map query overlap; Brick 3 may then execute a controlled signal transfer.
 
-## 6. Site-wide GSC context
+## 6. Site-wide GSC context — exact 90-day windows
 
-Latest 90-day site performance at baseline:
+Direct Search Analytics aggregate:
 
-| Metric | Latest 90 days | Change vs prior comparable period |
-|---|---:|---:|
-| Clicks | 7,660 | +5,691 |
-| Impressions | 122,034 | +81,446 |
-| CTR | 6.28% | +1.43 percentage points |
-| Average position | 7.47 | improved by about 1.44 positions |
+| Metric | Current 90d | Prior 90d | Change |
+|---|---:|---:|---:|
+| Clicks | 7,660 | 1,969 | +5,691 |
+| Impressions | 122,034 | 40,588 | +81,446 |
+| CTR | 6.28% | 4.85% | +1.43 percentage points |
+| Average position | 7.57 | 8.63 | improved by ~1.05 positions |
 
-Interpretation: Tiny Steps has strong and improving overall organic visibility. The Speaking project is a category-specific growth problem, not a site-wide discoverability failure.
+The average-position value here is the reproducible direct Search Analytics aggregate for the exact dates above. This replaces the earlier summary-derived 7.47 figure.
+
+Interpretation: Tiny Steps has strongly improved overall organic visibility. Speaking is a category-specific growth/conversion problem rather than a site-wide discoverability failure.
 
 ## 7. Speaking-family GSC page baseline
 
-Latest 90 days, 2026-06-18 through 2026-09-16:
+Current exact 90 days, 2026-06-19 through 2026-09-16:
 
 | URL | Clicks | Impressions | CTR | Avg position |
 |---|---:|---:|---:|---:|
-| /speaking | 66 | 2,917 | 2.26% | 8.85 |
+| /speaking | 66 | 2,911 | 2.27% | 8.84 |
 | /public-speaking-communication-kids | 11 | 701 | 1.57% | 25.49 |
 | /spoken-english-classes-for-kids-online | 2 | 261 | 0.77% | 12.25 |
 | /courses/public-speaking-foundations | 1 | 29 | 3.45% | 13.52 |
@@ -138,27 +152,28 @@ Latest 90 days, 2026-06-18 through 2026-09-16:
 | legacy /spoken-english-classes-for-kids | 0 | 39 | 0% | 57.51 |
 | legacy /courses/advanced-public-speaking | 0 | 2 | 0% | 9.00 |
 
-Prior 90-day comparison highlights:
+Prior exact 90-day comparison, 2026-03-21 through 2026-06-18:
 
 | URL | Prior clicks | Prior impressions | Prior avg position |
 |---|---:|---:|---:|
-| /speaking | 17 | 892 | 32.99 |
-| /public-speaking-communication-kids | 0 | 341 | 28.86 |
+| /speaking | 17 | 898 | 32.85 |
+| /public-speaking-communication-kids | 0 | 311 | 28.18 |
 | /spoken-english-classes-for-kids | 2 | 209 | 4.33 |
+| /courses/basic-public-speaking | 0 | 10 | 4.00 |
 | /courses/public-speaking-foundations | 0 | 5 | 7.60 |
-| /courses/advanced-public-speaking | 1 | 8 | 6.13 |
+| /courses/advanced-public-speaking | 1 | 7 | 6.57 |
 | /shy-child-speaking-confidence | 0 | 79 | 16.19 |
 
-Key baseline conclusion: /speaking has become materially stronger, but the legacy public-speaking URL still carries search equity and must not be deleted or redirected casually.
+Key conclusion: /speaking has become materially stronger, but the legacy public-speaking URL still carries measurable search equity and must not be removed casually.
 
 ## 8. Main commercial-query baseline for /speaking
 
 | Query | Clicks | Impressions | Avg position |
 |---|---:|---:|---:|
-| public speaking classes for kids | 1 | 75 | 21.65 |
+| public speaking classes for kids | 1 | 74 | 21.93 |
 | public speaking for kids | 1 | 56 | 20.14 |
 | live online public speaking training for kids | 0 | 51 | 37.08 |
-| public speaking courses for kids | 0 | 27 | 34.96 |
+| public speaking courses for kids | 0 | 26 | 34.31 |
 | public speaking course for kids | 0 | 19 | 22.37 |
 | public speaking classes for kids online india | 0 | 18 | 12.89 |
 | online public speaking classes for kids | 0 | 15 | 19.13 |
@@ -166,7 +181,7 @@ Key baseline conclusion: /speaking has become materially stronger, but the legac
 | best public speaking classes for kids | 0 | 12 | 17.50 |
 | public speaking for 5 year olds | 0 | 11 | 11.09 |
 
-This freezes the primary commercial opportunity: the owner page has page-one authority overall, but several high-intent head terms remain around positions 12–35.
+The owner page's overall average position is much stronger than several high-intent head queries. Brick 2 must therefore work at query-family level rather than relying on page-average position alone.
 
 ## 9. Main commercial-query baseline for Spoken English owner
 
@@ -180,65 +195,99 @@ This freezes the primary commercial opportunity: the owner page has page-one aut
 | english speaking course online for kids | 0 | 5 | 18.60 |
 | spoken english for kids online | 0 | 4 | 10.75 |
 
-This owner has useful near-page-one visibility but extremely low non-brand click volume.
+The owner has useful near-page-one visibility but almost no non-brand click volume in this period.
 
-## 10. Live public-page verification at baseline
+## 10. Fresh Google URL Inspection baseline
 
-Verified live on 2026-09-19:
+Inspected on 2026-09-19 against sc-domain:tinystepslearning.com:
 
-- /speaking renders the Public Speaking & Communication owner page with the correct public-speaking vs Spoken-English vs Grammar vs confidence boundaries.
-- /spoken-english-classes-for-kids-online renders the dedicated Spoken English owner page and links back to public speaking.
-- /public-speaking-communication-kids remains live as a separate legacy page.
-- /confidence-building-program-kids remains a specialist programme.
-- /courses/public-speaking-foundations is live.
-- /courses/public-speaking-excellence is live.
-- /spoken-english-classes-for-kids redirects to the current Spoken English owner.
-- /courses/basic-public-speaking redirects to the Foundations course.
-- /courses/advanced-public-speaking redirects to the Excellence course.
+| URL | Google verdict/state | Last crawl |
+|---|---|---|
+| /speaking | PASS — Submitted and indexed | 2026-09-16 |
+| /public-speaking-communication-kids | PASS — Submitted and indexed | 2026-09-16 |
+| /spoken-english-classes-for-kids-online | PASS — Submitted and indexed | 2026-08-19 |
+| /confidence-building-program-kids | NEUTRAL — Excluded by noindex tag / blocked by meta tag | 2026-08-27 |
+| /courses/public-speaking-foundations | PASS — Submitted and indexed | 2026-08-16 |
+| /courses/public-speaking-excellence | PASS — Submitted and indexed | 2026-09-15 |
+| /spoken-english-classes-for-kids | NEUTRAL — Page with redirect | 2026-07-31 |
+| /courses/basic-public-speaking | NEUTRAL — Page with redirect | 2026-08-16 |
+| /courses/advanced-public-speaking | NEUTRAL — Page with redirect | 2026-07-01 |
 
-## 11. Existing SEO safety infrastructure that later bricks must preserve
+All inspected fetches were successful and crawled as mobile.
 
-The repository already runs substantial SEO validation, including:
-- sitemap generation,
-- SEO smoke checks,
-- rendered HTML checks,
-- route integrity,
-- indexation/indexability checks,
-- GSC recovery/index-target audits,
-- public-facts consistency,
-- commercial owner-page audits,
-- buyer-intent/internal-path audits,
-- public bundle checks.
+The confidence-programme result is particularly important: current source code explicitly applies robots index,follow and the route manifest intends it to be indexable, but Google's last inspected state records a noindex exclusion. Brick 3 must determine whether this is stale crawl history, a deployment mismatch, or another rendered/header source of noindex before any architectural decision is made.
 
-The 13-brick project should add only Speaking-specific safeguards where existing generic checks do not cover a new invariant.
+## 11. Existing SEO and AI-discovery infrastructure to preserve
+
+Existing repository infrastructure includes:
+- sitemap generation;
+- SEO smoke checks;
+- rendered HTML checks;
+- route integrity;
+- indexation/indexability checks;
+- GSC recovery/index-target audits;
+- public-facts consistency;
+- commercial owner-page audits;
+- buyer-intent/internal-path audits;
+- public bundle checks;
+- public/llms.txt with commercial owner descriptions;
+- RSS/feed discovery;
+- existing LLM discovery hardening and commercial-search evidence documents.
+
+The legacy /public-speaking-communication-kids URL is still represented in RSS/feed discovery while the commercial ownership system says it should ultimately consolidate to /speaking. Later GEO work must extend this infrastructure rather than creating duplicate mechanisms.
 
 ## 12. Brick 1 risk register
 
 ### R1 — Legacy public-speaking self-competition
-Severity: HIGH for this project.  
-Evidence: /public-speaking-communication-kids has 701 impressions and 11 clicks while /speaking is the declared owner.  
-Action: Brick 2 maps query overlap; Brick 3 performs safe consolidation if confirmed.
-
-### R2 — Redirected URLs still visible in GSC
-Severity: MEDIUM.  
-Evidence: old Spoken English and old course slugs still show impressions after redirects.  
-Action: monitor; do not create new internal links to legacy paths; verify all current internal references use canonical destinations.
-
-### R3 — Strong owner-page average can hide weak money-query positions
 Severity: HIGH.  
-Evidence: /speaking averages position 8.85, while key head terms remain around positions 13–35.  
+Evidence: /public-speaking-communication-kids has 701 impressions and 11 clicks while /speaking is the declared owner and both are currently indexed.  
+Action: Brick 2 maps query overlap; Brick 3 performs controlled consolidation only if the evidence remains consistent.
+
+### R2 — Redirected legacy URLs remain visible in GSC
+Severity: MEDIUM.  
+Evidence: old Spoken English and course slugs still have historical/current impressions; URL Inspection confirms Page with redirect.  
+Action: preserve direct redirects, eliminate any unintended internal legacy links, and monitor consolidation.
+
+### R3 — Strong page average masks weak money-query positions
+Severity: HIGH.  
+Evidence: /speaking averages position 8.84 while important head terms remain roughly positions 13–37.  
 Action: Brick 2 separates query families; Bricks 4–8 improve relevance/evidence without spawning duplicate owners.
 
 ### R4 — Content expansion could re-create cannibalization
 Severity: HIGH.  
-Action: every later resource must have a declared funnel role and one commercial owner before publication.
+Action: every later resource must have a declared informational role and one commercial owner before publication.
 
 ### R5 — Parallel-development collision
 Severity: HIGH operationally.  
-Action: periodically merge latest main into this branch, resolve conflicts here, and run the complete final regression suite before any merge to main.
+Action: latest main was synchronized into this branch before Brick 2. Continue periodic main → feature synchronization and full regression before final merge.
 
-## 13. Brick 1 exit decision
+### R6 — Confidence programme indexability mismatch
+Severity: HIGH for search architecture.  
+Evidence: repository intends index,follow, but Google URL Inspection reports Excluded by noindex tag from the last crawl.  
+Action: Brick 3 investigates rendered meta/header/deployment history and resolves the mismatch deliberately.
 
-Brick 1 is complete when this baseline and the project ledger are committed on the dedicated branch and a branch-vs-main comparison confirms that only Brick 1 documentation/evidence files changed.
+### R7 — Public age-range drift
+Severity: MEDIUM/HIGH for factual consistency.  
+Evidence: Home PopularPrograms labels Super Speakers as Ages 4-15, conflicting with brand ages 3–12 and Speaking programme ages 4–7 / 7–12.  
+Action: later implementation brick must normalize this to the semantic facts source of truth; Brick 1 makes no runtime change.
+
+## 13. Parallel-development synchronization
+
+During the re-audit, main advanced from the original branch base to commit:
+
+3b11fee88ff21e928d2ed8af555afcb64695c815
+
+Those changes implement the separate AV5 attendance-validation classification engine. They were merged from main into the Speaking branch only. No Speaking commit was merged into main.
+
+The Speaking branch therefore starts Brick 2 from current main plus the Brick 1 evidence files rather than from a stale repository state.
+
+## 14. Brick 1 exit decision
+
+Brick 1 is complete only if:
+1. the corrected baseline and project ledger are committed;
+2. latest main is incorporated into the dedicated branch;
+3. branch-vs-main comparison shows only Brick 1 documentation/evidence differences;
+4. the branch is zero commits behind main at the closing check;
+5. no production-facing runtime behavior has changed due to Brick 1.
 
 No production behavior is authorized to change in Brick 1.
