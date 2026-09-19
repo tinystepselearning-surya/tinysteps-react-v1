@@ -3,7 +3,7 @@
 Project branch: feature/speaking-seo-geo-growth  
 Base branch: main  
 Brick 1 original base commit: e2946a436f1c9dd9694b034ebfd166947c01700a  
-Latest main synchronized before Brick 7: 162e9060de3c6164a2301b253f37294cdc1123ac  
+Latest main synchronized through Brick 8: d0b46a251f33c0b15015d3b516993a0a0f44cb65  
 Production merge policy: no merge to main until Bricks 1–13 and final integration audit are complete.
 
 ## Governing safety rules
@@ -26,7 +26,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
 | 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
 | 07 | Tiny Steps Speaking Progress Framework | COMPLETE — RE-AUDITED | NO |
-| 08 | Speaking knowledge cluster | PENDING | NO |
+| 08 | Speaking knowledge cluster | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 09 | Evidence layer | PENDING | NO |
 | 10 | Video/class demonstration engine | PENDING | NO |
 | 11 | Entity & external authority | PENDING | NO |
@@ -311,3 +311,31 @@ Additional fixes and findings:
 - production merge/deployment remains ZERO.
 
 Brick 7 status after re-audit: **COMPLETE — RE-AUDITED**.
+
+
+## Brick 8 completion gate
+
+- Existing Speaking & Communication corpus reused; no duplicate content wave created.
+- Five parent-facing knowledge groups added to the existing `/resources/speaking` hub.
+- All 15 established SP6 Tier-1 cluster records represented exactly once.
+- Those records resolve to 14 unique existing knowledge URLs.
+- All 10 Brick 7 Speaking Progress dimensions represented across the five groups.
+- New central source: `src/lib/speakingKnowledgeCluster.ts`, revision `2026-09-19-b8-v1`.
+- Existing SP6 semantic journey engine remains authoritative for blog-to-blog pathways.
+- `/resources/speaking` remains the informational hub.
+- `/speaking` remains the high-commercial Public Speaking owner.
+- `/spoken-english-classes-for-kids-online` remains the Spoken English commercial owner.
+- `/speaking-progress-framework` remains the progress-measurement informational owner.
+- New public/canonical URLs in Brick 8: ZERO.
+- Sitemap freshness for `/resources/speaking` now tracks the Brick 8 cluster source.
+- Dedicated regression guard: `src/tests/seo/speakingGrowthBrick8.spec.ts`.
+- Main advanced during the build with AV8 + future-scheduling backend work; synchronized one-way through PR #397.
+- PR #397 merge commit: `7a8eeaf83f919acb71b4fffdbd033fbffac34a97`.
+- Synchronized main SHA: `d0b46a251f33c0b15015d3b516993a0a0f44cb65`.
+- Branch behind main after sync: **0**.
+- No Speaking/Brick-8 overlap in the incoming main changes.
+- Full executable build/Vitest/browser run is not claimed and remains a final integration requirement.
+- Production merge: ZERO.
+- Production deployment: ZERO.
+
+Brick 8 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
