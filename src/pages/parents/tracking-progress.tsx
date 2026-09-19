@@ -4,6 +4,11 @@ import { applySeo } from '../../lib/seo';
 import { createFAQPageSchema, createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
+import {
+  SPEAKING_PROGRESS_FRAMEWORK_PATH,
+  SPEAKING_PROGRESS_OBSERVATION_BANDS,
+  SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS,
+} from '../../lib/speakingProgressFramework';
 
 const progressFramework = [
   {
@@ -189,6 +194,34 @@ const TrackingProgress: React.FC = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="mt-12 rounded-3xl border border-violet-100 bg-violet-50/60 p-6 md:p-8">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Speaking-specific progress</p>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">For Speaking: use the Tiny Steps Speaking Progress Framework</h2>
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700 md:text-base">
+          Speaking progress is easier to understand when the update shows the current skill, the support still needed, what the child can now do independently, and whether that skill transfers to a fresh task. Tiny Steps uses four observation bands rather than turning speaking into one percentage.
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {SPEAKING_PROGRESS_OBSERVATION_BANDS.map((band) => (
+            <span key={band.id} className="rounded-full border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-950 sm:text-sm">
+              {band.order}. {band.shortLabel}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS.map((field) => (
+            <div key={field} className="rounded-2xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold leading-6 text-slate-800">
+              {field}
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-5 text-sm leading-6 text-slate-700">
+          <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold text-slate-950 underline underline-offset-2">Open the full speaking progress framework</Link> for the ten dimensions, evidence examples and guardrails. This does not replace the broader progress guide for phonics, reading, grammar or writing.
+        </p>
       </section>
 
       <section className="mt-12">
