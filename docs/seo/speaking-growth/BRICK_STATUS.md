@@ -30,7 +30,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 09 | Evidence layer | COMPLETE — RE-AUDITED | NO |
 | 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
 | 11 | Entity & external authority | COMPLETE — RE-AUDITED | NO |
-| 12 | GEO/AEO/AI visibility layer | PENDING | NO |
+| 12 | GEO/AEO/AI visibility layer | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 13 | Search-to-lead-to-admission attribution | PENDING | NO |
 
 ## Brick 1 completion gate
@@ -483,3 +483,32 @@ Brick 11 was fully re-audited before Brick 12.
 - Executable Vitest/typecheck/build/prerender/browser QA remains part of the final integration gate.
 
 Brick 11 status after re-audit: **COMPLETE — RE-AUDITED**.
+
+
+## Brick 12 completion gate
+
+- Existing site-wide GEO/AEO infrastructure was extended rather than duplicated.
+- New central Speaking AI visibility contract: `src/lib/speakingAiVisibility.ts`, revision `2026-09-19-b12-v1`.
+- Exactly 13 primary answer owners are frozen across commercial, course, progress, resource, assessment, pricing and evidence intent.
+- All 14 frozen Brick 8 Speaking knowledge URLs now appear in both `llms.txt` and `llms-full.txt`.
+- All 14 frozen Speaking knowledge URLs now have explicit `Speaking & Communication` BlogPosting technical-authority topics.
+- Brick 9 canonical evidence sources and Brick 11 entity-disambiguation signals are reused directly.
+- `/speaking` and `/speaking-progress-framework` now expose their visible Quick Answers through `SpeakableSpecification`.
+- Existing `/resources/speaking` speakable/AEO implementation remains unchanged.
+- Protected intent boundaries explicitly distinguish Public Speaking vs Spoken English, hesitation vs one-word answers, language/grammar vs speaking structure, confidence vs language, educational progress vs diagnosis, editorial vs commercial intent, and evidence vs guaranteed outcomes.
+- AI/search crawler access remains compatible with public discovery while private admin/teacher/parent/kids/private routes remain blocked.
+- No ChatGPT/Gemini/Perplexity/AI-prompt landing pages were created.
+- No new public URL or canonical owner was introduced.
+- No FAQ rich-result treatment is assumed.
+- No synthetic video evidence or fabricated authority is authorized.
+- Brick 12 preflight found and restored the Brick 9 evidence-schema invariant: structured evidence URLs use canonical `sourcePath`, while visible navigation may use section-fragment `path`.
+- Current OpenAI publisher guidance was rechecked: OAI-SearchBot should not be blocked for content intended for ChatGPT Search discovery, but placement is not guaranteed.
+- Brick 13 handoff recorded: current OpenAI publisher guidance documents `utm_source=chatgpt.com` on ChatGPT search referral URLs.
+- Source-level Brick 12 matrix: **110/110 passed**.
+- Protected upstream/operational SHA checks: **13/13 unchanged**.
+- Machine-readable evidence: `docs/seo/speaking-growth/brick-12-geo-aeo-ai-visibility.json`.
+- Full executable Vitest/typecheck/build/prerender/browser QA is not claimed and remains a final integration requirement.
+- Production merge: ZERO.
+- Production deployment: ZERO.
+
+Brick 12 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
