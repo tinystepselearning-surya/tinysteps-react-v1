@@ -28,7 +28,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 07 | Tiny Steps Speaking Progress Framework | COMPLETE — RE-AUDITED | NO |
 | 08 | Speaking knowledge cluster | COMPLETE — RE-AUDITED | NO |
 | 09 | Evidence layer | COMPLETE — RE-AUDITED | NO |
-| 10 | Video/class demonstration engine | PENDING | NO |
+| 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
 | 11 | Entity & external authority | PENDING | NO |
 | 12 | GEO/AEO/AI visibility layer | PENDING | NO |
 | 13 | Search-to-lead-to-admission attribution | PENDING | NO |
@@ -419,3 +419,20 @@ Additional fixes and findings:
 - full executable Vitest/build/prerender/browser QA is still not claimed and remains mandatory at the final Bricks 1–13 integration gate.
 
 Brick 9 status after re-audit: **COMPLETE — RE-AUDITED**.
+
+
+## Brick 10 skip decision
+
+Brick 10 was intentionally skipped on 2026-09-19.
+
+Reason:
+- `/class-samples` is already the shared class-demonstration owner for Phonics, Grammar and Public Speaking.
+- `/speaking` already hands off to that existing evidence surface.
+- Brick 9 already treats `/class-samples` as the observable-classroom evidence source.
+- A separate Speaking video/class-demonstration destination would duplicate ownership and increase maintenance/cannibalization risk.
+- No synthetic course-specific `VideoObject` is authorized. Video schema remains valid only for real published media with real metadata.
+
+Decision record:
+`docs/seo/speaking-growth/BRICK_10_SKIP_CLASS_DEMONSTRATION.md`
+
+Brick 10 status: **SKIPPED — COVERED BY EXISTING /class-samples ARCHITECTURE**.
