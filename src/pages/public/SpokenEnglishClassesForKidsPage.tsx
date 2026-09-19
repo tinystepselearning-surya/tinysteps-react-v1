@@ -46,7 +46,7 @@ const painPoints = [
 
 const faqItems = [
   {
-    question: 'What if my child understands English but does not speak much?',
+    question: 'When is Spoken English support a good fit if my child understands English but speaks very little?',
     answer:
       'That usually means the child needs guided speaking turns, sentence expansion, and low-pressure response practice, not just more listening exposure.',
   },
@@ -56,7 +56,7 @@ const faqItems = [
       'Yes, when the hesitation is mainly linked to limited sentence-building, response practice, or conversational fluency. If confidence itself is the main difficulty across different situations, the dedicated Tiny Steps confidence-building programme may be a better fit.',
   },
   {
-    question: 'Why do some children give only one-word answers?',
+    question: 'Can Spoken English classes help a child who gives only one-word answers?',
     answer:
       'Children often need sentence-building support, more response structure, and guided follow-up questions to move beyond one-word answers.',
   },
@@ -157,7 +157,7 @@ export default function SpokenEnglishClassesForKidsPage() {
           { label: PUBLIC_SITE_FACTS.learnerReach.learnersLabel, tone: 'warm' as const },
           { label: PUBLIC_SITE_FACTS.learnerReach.countriesLabel, tone: 'cool' as const },
           { label: `Live 1:1 • ${PUBLIC_SESSION_DURATION_LABEL}`, tone: 'neutral' as const },
-          { label: 'Free speaking assessment', tone: 'mint' as const },
+          { label: 'Free English assessment', tone: 'mint' as const },
         ]}
         stats={[
           { label: 'Per class', value: formatINR(PER_CLASS_PRICE), helper: 'current approved pricing' },
@@ -208,6 +208,16 @@ export default function SpokenEnglishClassesForKidsPage() {
               <p>Some children hesitate because they are unsure of sentence structure.</p>
               <p>Some stay brief because one-word answers feel safer than trying a full response.</p>
               <p>Some need repeated live conversation practice before spoken English becomes more automatic.</p>
+            </div>
+            <div className="mt-5 border-t border-white/15 pt-4 text-sm leading-6 text-slate-200">
+              Need to understand the learning problem before choosing classes? Read{' '}
+              <Link to="/blog/child-understands-english-but-does-not-speak" className="font-semibold text-white underline underline-offset-4">
+                why a child may understand English but not respond independently
+              </Link>{' '}
+              or{' '}
+              <Link to="/blog/child-gives-one-word-answers" className="font-semibold text-white underline underline-offset-4">
+                why a child may stay with one-word answers
+              </Link>.
             </div>
           </LeadCard>
 
