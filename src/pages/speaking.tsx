@@ -244,7 +244,7 @@ export default function SpeakingPage() {
         item: {
           '@type': 'WebPage',
           name: item.title,
-          url: `${PUBLIC_FACTS.primaryWebsite}${item.path}`,
+          url: `${PUBLIC_FACTS.primaryWebsite}${item.sourcePath}`,
           description: `${item.summary} Evidence boundary: ${item.doesNotProve[0]}.`,
         },
       })),
