@@ -292,13 +292,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     return () => {
       cancelled = true;
     };
-  }, [
-    av7Context?.caseId,
-    av7Context?.fingerprint,
-    av7Context?.kidId,
-    av7Context?.newStatus,
-    av7Context?.sessionId,
-  ]);
+  }, [av7Context]);
 
   useEffect(() => {
     if (!av7SessionSeed || teacherOptions.length === 0) return;
