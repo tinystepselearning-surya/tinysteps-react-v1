@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { db } from '../../lib/firebaseConfig';
+import { callFunction } from '../../lib/callFunctions';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -40,6 +41,30 @@ type Av6Classification =
 
 type Av6ValidationDecision = 'present' | 'absent' | 'review' | null;
 type Av6ResolutionStatus = 'verified' | 'needs_review' | 'resolved';
+
+interface AvsLatestCheckResponse {
+  ok: boolean;
+  fromDate: string;
+  toDate: string;
+  runId?: string | null;
+  dirtyFoundCount: number;
+  revalidatedCount: number;
+  baselineRequiredCount: number;
+  baselineRequiredSessionIds: string[];
+  skippedCount: number;
+  dirtyMarkersClearedCount: number;
+  concurrentMarkerChangeDetected?: boolean;
+  dirtyBatchAtLimit: boolean;
+  graphCalls: number;
+  operationalMutationAllowed: false;
+  readBudget: {
+    dirtyMarkerReads: number;
+    validationCaseReads: number;
+    av53PointReads: number;
+    sharedStaffRegistryLoaded: boolean;
+    boundedReadsExcludingStaffRegistry: number;
+  };
+}
 
 interface Av6ValidationCase {
   id: string;
@@ -93,6 +118,13 @@ function validDateRange(fromYmd: string, toYmd: string): boolean {
     && ymd.test(toYmd)
     && fromYmd >= AV6_VALIDATION_START_YMD
     && toYmd >= fromYmd;
+}
+
+function inclusiveDateRangeDays(fromYmd: string, toYmd: string): number | null {
+  if (!validDateRange(fromYmd, toYmd)) return null;
+  const fromMs = Date.parse(`${fromYmd}T00:00:00.000Z`);
+  const toMs = Date.parse(`${toYmd}T00:00:00.000Z`);
+  return Math.round((toMs - fromMs) / 86_400_000) + 1;
 }
 
 function asText(value: unknown): string | null {
@@ -239,10 +271,16 @@ export default function AttendanceValidationDashboard() {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [latestCheckRunning, setLatestCheckRunning] = useState(false);
+  const [latestCheckResult, setLatestCheckResult] = useState<AvsLatestCheckResponse | null>(null);
+  const [latestCheckCompletedAt, setLatestCheckCompletedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
-  const loadSavedCases = useCallback(async (append = false) => {
+  const loadSavedCases = useCallback(async (
+    append = false,
+    preserveCurrentTab = false,
+  ) => {
     if (!validDateRange(fromDate, toDate)) {
       setError(
         `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
@@ -299,7 +337,7 @@ export default function AttendanceValidationDashboard() {
       setHasMore(snapshot.docs.length === AV6_CASE_READ_LIMIT);
       if (!append) {
         setLoadedRange({ from: fromDate, to: toDate });
-        setClassificationFilter('all');
+        if (!preserveCurrentTab) setClassificationFilter('all');
         setExpandedCaseId(null);
       }
       setLoadedAt(new Date());
@@ -311,6 +349,46 @@ export default function AttendanceValidationDashboard() {
       setLoadingMore(false);
     }
   }, [cursor, fromDate, loadedRange, toDate]);
+
+  const runLatestCheck = useCallback(async () => {
+    if (!validDateRange(fromDate, toDate)) {
+      setError(
+        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
+      );
+      return;
+    }
+
+    const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
+    if (rangeDays === null || rangeDays > 31) {
+      setError('Run Latest Check supports a maximum of 31 calendar days at a time.');
+      return;
+    }
+
+    setLatestCheckRunning(true);
+    setError(null);
+
+    try {
+      const result = await callFunction<
+        AvsLatestCheckResponse,
+        { fromDate: string; toDate: string }
+      >(
+        'runAttendanceValidationLatestCheck',
+        { fromDate, toDate },
+      );
+
+      setLatestCheckResult(result);
+      setLatestCheckCompletedAt(new Date());
+
+      // Reload exactly the same cached range after server-side reconciliation,
+      // while preserving the admin's active classification tab.
+      await loadSavedCases(false, true);
+    } catch (latestCheckError) {
+      console.error('[AVS] Latest attendance validation check failed', latestCheckError);
+      setError('Latest attendance check failed. Saved results were not changed by the browser.');
+    } finally {
+      setLatestCheckRunning(false);
+    }
+  }, [fromDate, loadSavedCases, toDate]);
 
   const summary = useMemo(() => {
     const verified = cases.filter((item) => item.resolutionStatus === 'verified').length;
@@ -476,8 +554,8 @@ export default function AttendanceValidationDashboard() {
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              onClick={() => void loadSavedCases(false)}
-              disabled={loading || loadingMore}
+              onClick={() => void loadSavedCases(false, false)}
+              disabled={loading || loadingMore || latestCheckRunning}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Loading saved results…' : 'Load Saved Results'}
@@ -485,17 +563,24 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               variant="outline"
-              disabled
-              title="Changed-only revalidation is added in the next AVS brick."
+              onClick={() => void runLatestCheck()}
+              disabled={loading || loadingMore || latestCheckRunning}
+              title="Revalidate only changed sessions using cached Teams evidence."
             >
-              Run Latest Check
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${latestCheckRunning ? 'animate-spin' : ''}`}
+              />
+              {latestCheckRunning ? 'Running latest check…' : 'Run Latest Check'}
             </Button>
           </div>
         </div>
 
         <p className="mt-2 text-xs text-slate-500">
           Loading saved results reads only cached AVS cases for the selected service-date range.
-          It does not call Microsoft Teams or rerun validation.
+          Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Latest Check is intentionally capped at 31 calendar days per run.
         </p>
 
         {loadedRange && loadedAt && (
@@ -505,6 +590,52 @@ export default function AttendanceValidationDashboard() {
           </p>
         )}
       </Card>
+
+      {latestCheckResult && (
+        <Card className="border-emerald-200 bg-emerald-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="font-medium text-slate-900">Latest Check completed</p>
+              <p className="mt-1 text-sm text-slate-700">
+                {latestCheckResult.dirtyFoundCount} changed session{latestCheckResult.dirtyFoundCount === 1 ? '' : 's'} found;
+                {' '}{latestCheckResult.revalidatedCount} revalidated from cached Teams evidence;
+                {' '}{latestCheckResult.baselineRequiredCount} need first-time or fresh Teams evidence.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Firestore bounded reads: {latestCheckResult.readBudget.boundedReadsExcludingStaffRegistry}
+                {latestCheckResult.readBudget.sharedStaffRegistryLoaded
+                  ? ' + one shared staff-registry load'
+                  : ''}.
+                {' '}Microsoft Graph calls: {latestCheckResult.graphCalls}.
+                {' '}Dirty markers cleared: {latestCheckResult.dirtyMarkersClearedCount}.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Saved results for {latestCheckResult.fromDate} to {latestCheckResult.toDate} were automatically reloaded.
+              </p>
+              {latestCheckResult.skippedCount > 0 && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  {latestCheckResult.skippedCount} changed session{latestCheckResult.skippedCount === 1 ? '' : 's'} were skipped safely and remain available for a later check.
+                </p>
+              )}
+              {latestCheckResult.dirtyBatchAtLimit && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  The 100-session changed-work cap was reached. Run Latest Check again for the same range to process any remaining dirty sessions.
+                </p>
+              )}
+              {latestCheckResult.concurrentMarkerChangeDetected && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  Attendance changed again while this check was running. The newer dirty marker was retained; run Latest Check again.
+                </p>
+              )}
+            </div>
+            {latestCheckCompletedAt && (
+              <div className="shrink-0 text-xs text-slate-500">
+                {formatObservedAt(latestCheckCompletedAt.toISOString())}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4">
         <Input
@@ -693,8 +824,8 @@ export default function AttendanceValidationDashboard() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => void loadSavedCases(true)}
-            disabled={loading || loadingMore}
+            onClick={() => void loadSavedCases(true, true)}
+            disabled={loading || loadingMore || latestCheckRunning}
           >
             {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
           </Button>
