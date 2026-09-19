@@ -13,12 +13,30 @@ describe('AV6 admin attendance validation dashboard', () => {
   const routes = readRepoFile('src/app/routes.tsx');
   const firestoreRules = readRepoFile('firestore.rules');
 
-  it('uses a bounded one-shot Firestore query with a hard 100-document cap', () => {
+  it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
     expect(dashboard).toContain("collection(db, 'attendanceValidationCases')");
-    expect(dashboard).toContain("orderBy('observedAt', 'desc')");
+    expect(dashboard).toContain("where('serviceDateYmd', '>=', fromDate)");
+    expect(dashboard).toContain("where('serviceDateYmd', '<=', toDate)");
+    expect(dashboard).toContain("orderBy('serviceDateYmd', 'desc')");
     expect(dashboard).toContain('limit(AV6_CASE_READ_LIMIT)');
+    expect(dashboard).toContain('startAfter(cursor)');
     expect(dashboard).toContain('await getDocs(casesQuery)');
+  });
+
+  it('does not auto-read AVS cases merely because the admin page opens', () => {
+    expect(dashboard).not.toContain('useEffect(');
+    expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
+    expect(dashboard).toContain('Opening this page does not read them automatically.');
+    expect(dashboard).toContain('Load Saved Results');
+  });
+
+  it('uses button tabs instead of a classification select', () => {
+    expect(dashboard).toContain('const CLASSIFICATION_TABS');
+    expect(dashboard).toContain('role="tablist"');
+    expect(dashboard).toContain('role="tab"');
+    expect(dashboard).toContain('aria-selected={active}');
+    expect(dashboard).not.toContain('<select');
   });
 
   it('does not use realtime listeners or operational collection lookups', () => {
@@ -69,6 +87,12 @@ describe('AV6 admin attendance validation dashboard', () => {
   it('labels dashboard counts as a loaded-window view rather than global totals', () => {
     expect(dashboard).toContain('Loaded window');
     expect(dashboard).toContain('Within loaded window');
-    expect(dashboard).toContain('One-shot bounded read: latest {AV6_CASE_READ_LIMIT} cases maximum.');
+    expect(dashboard).toContain('Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.');
+  });
+
+  it('keeps fresh revalidation visibly separate from cached result loading', () => {
+    expect(dashboard).toContain('Run Latest Check');
+    expect(dashboard).toContain('Changed-only revalidation is added in the next AVS brick.');
+    expect(dashboard).toContain('It does not call Microsoft Teams or rerun validation.');
   });
 });

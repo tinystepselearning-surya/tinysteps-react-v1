@@ -33,7 +33,7 @@ import {
   type Av3StaffRegistrySnapshot,
 } from './staffIdentityRegistry';
 
-export const AV53_CASE_SCHEMA_VERSION = 1;
+export const AV53_CASE_SCHEMA_VERSION = 2;
 export const AV53_MAX_WORK_ITEMS_PER_RUN = 100;
 export const AV53_VALIDATION_START_YMD = '2026-09-01' as const;
 export const ATTENDANCE_VALIDATION_CASES_COLLECTION = 'attendanceValidationCases';
@@ -90,6 +90,7 @@ export interface Av53ValidationCaseDocument {
   runId: string;
   evidenceId: string | null;
   observedAt: string;
+  serviceDateYmd: string;
   classSessionId: string | null;
   enrollmentId: string | null;
   kidId: string | null;
@@ -377,6 +378,7 @@ function baseCase(params: {
   runId: string;
   evidenceId: string | null;
   observedAt: string;
+  serviceDateYmd: string;
   classSessionId: string | null;
   enrollmentId: string | null;
   kidId: string | null;
@@ -394,6 +396,7 @@ function baseCase(params: {
 }): Av53ValidationCaseDocument {
   const fingerprintSource = {
     evidenceId: params.evidenceId,
+    serviceDateYmd: params.serviceDateYmd,
     classSessionId: params.classSessionId,
     enrollmentId: params.enrollmentId,
     kidId: params.kidId,
@@ -417,6 +420,7 @@ function baseCase(params: {
     runId: params.runId,
     evidenceId: params.evidenceId,
     observedAt: params.observedAt,
+    serviceDateYmd: params.serviceDateYmd,
     classSessionId: params.classSessionId,
     enrollmentId: params.enrollmentId,
     kidId: params.kidId,
@@ -447,6 +451,7 @@ function registryIssueKinds(
 function caseFromMissingEvidence(params: {
   runId: string;
   observedAt: string;
+  serviceDateYmd: string;
   item: Av53ShadowWorkItem;
   session: Record<string, unknown>;
   registryIssues: Av3StaffRegistryIssueKind[];
@@ -461,6 +466,7 @@ function caseFromMissingEvidence(params: {
     runId: params.runId,
     evidenceId: params.item.evidenceId,
     observedAt: params.observedAt,
+    serviceDateYmd: params.serviceDateYmd,
     classSessionId: params.item.classSessionId,
     enrollmentId: text(params.session.enrollmentId),
     kidId,
@@ -478,6 +484,7 @@ function caseFromMissingEvidence(params: {
 function caseFromOrphanEvidence(params: {
   runId: string;
   observedAt: string;
+  serviceDateYmd: string;
   item: Av53ShadowWorkItem;
   evidence: AttendanceValidationEvidenceDocument;
   registryIssues: Av3StaffRegistryIssueKind[];
@@ -487,6 +494,7 @@ function caseFromOrphanEvidence(params: {
     runId: params.runId,
     evidenceId: params.item.evidenceId,
     observedAt: params.observedAt,
+    serviceDateYmd: params.serviceDateYmd,
     classSessionId: params.item.classSessionId,
     enrollmentId: params.evidence.session.enrollmentId,
     kidId: params.evidence.session.kidId,
@@ -504,6 +512,7 @@ function caseFromOrphanEvidence(params: {
 function caseFromReferenceMismatch(params: {
   runId: string;
   observedAt: string;
+  serviceDateYmd: string;
   item: Av53ShadowWorkItem;
   session: Record<string, unknown>;
   evidence: AttendanceValidationEvidenceDocument;
@@ -518,6 +527,7 @@ function caseFromReferenceMismatch(params: {
     runId: params.runId,
     evidenceId: params.item.evidenceId,
     observedAt: params.observedAt,
+    serviceDateYmd: params.serviceDateYmd,
     classSessionId: params.item.classSessionId,
     enrollmentId: text(params.session.enrollmentId),
     kidId,
@@ -537,6 +547,7 @@ function caseFromReferenceMismatch(params: {
 function caseFromEvidence(params: {
   runId: string;
   observedAt: string;
+  serviceDateYmd: string;
   item: Av53ShadowWorkItem;
   session: Record<string, unknown>;
   evidence: AttendanceValidationEvidenceDocument;
@@ -567,6 +578,7 @@ function caseFromEvidence(params: {
     runId: params.runId,
     evidenceId: params.item.evidenceId,
     observedAt: params.observedAt,
+    serviceDateYmd: params.serviceDateYmd,
     classSessionId: params.item.classSessionId,
     enrollmentId: params.evidence.session.enrollmentId,
     kidId,
@@ -639,6 +651,7 @@ export async function runAv53Shadow(
       cases.push(caseFromOrphanEvidence({
         runId,
         observedAt,
+        serviceDateYmd: scope.serviceDateYmd,
         item,
         evidence,
         registryIssues: staffRegistryIssues,
@@ -650,6 +663,7 @@ export async function runAv53Shadow(
       cases.push(caseFromMissingEvidence({
         runId,
         observedAt,
+        serviceDateYmd: scope.serviceDateYmd,
         item,
         session,
         registryIssues: staffRegistryIssues,
@@ -663,6 +677,7 @@ export async function runAv53Shadow(
       cases.push(caseFromReferenceMismatch({
         runId,
         observedAt,
+        serviceDateYmd: scope.serviceDateYmd,
         item,
         session,
         evidence,
@@ -676,6 +691,7 @@ export async function runAv53Shadow(
       cases.push(caseFromReferenceMismatch({
         runId,
         observedAt,
+        serviceDateYmd: scope.serviceDateYmd,
         item,
         session,
         evidence,
@@ -688,6 +704,7 @@ export async function runAv53Shadow(
     cases.push(caseFromEvidence({
       runId,
       observedAt,
+      serviceDateYmd: scope.serviceDateYmd,
       item,
       session,
       evidence,

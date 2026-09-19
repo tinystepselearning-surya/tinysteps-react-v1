@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   collection,
@@ -6,6 +6,10 @@ import {
   limit,
   orderBy,
   query,
+  startAfter,
+  where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { db } from '../../lib/firebaseConfig';
@@ -42,6 +46,7 @@ interface Av6ValidationCase {
   runId: string | null;
   evidenceId: string | null;
   observedAt: string | null;
+  serviceDateYmd: string | null;
   classSessionId: string | null;
   enrollmentId: string | null;
   kidId: string | null;
@@ -67,16 +72,28 @@ interface Av6ValidationCase {
   resolvedByName: string | null;
 }
 
-const CLASSIFICATION_OPTIONS: Array<{ value: 'all' | Av6Classification; label: string }> = [
-  { value: 'all', label: 'All classifications' },
+const CLASSIFICATION_TABS: Array<{ value: 'all' | Av6Classification; label: string }> = [
+  { value: 'all', label: 'All' },
   { value: 'VERIFIED', label: 'Verified' },
   { value: 'MISSING_ATTENDANCE', label: 'Missing attendance' },
-  { value: 'ATTENDANCE_CONFLICT', label: 'Attendance conflict' },
-  { value: 'POSSIBLE_FALSE_PRESENT', label: 'Possible false present' },
-  { value: 'MISSING_TEAMS_EVIDENCE', label: 'Missing Teams evidence' },
-  { value: 'ORPHAN_TEAMS_CLASS', label: 'Orphan Teams class' },
+  { value: 'ATTENDANCE_CONFLICT', label: 'Conflict' },
+  { value: 'POSSIBLE_FALSE_PRESENT', label: 'False present' },
+  { value: 'MISSING_TEAMS_EVIDENCE', label: 'Missing Teams' },
+  { value: 'ORPHAN_TEAMS_CLASS', label: 'Orphan' },
   { value: 'AMBIGUOUS', label: 'Ambiguous' },
 ];
+
+function currentIstYmd(): string {
+  return new Date(Date.now() + (5.5 * 60 * 60 * 1000)).toISOString().slice(0, 10);
+}
+
+function validDateRange(fromYmd: string, toYmd: string): boolean {
+  const ymd = /^\d{4}-\d{2}-\d{2}$/;
+  return ymd.test(fromYmd)
+    && ymd.test(toYmd)
+    && fromYmd >= AV6_VALIDATION_START_YMD
+    && toYmd >= fromYmd;
+}
 
 function asText(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -119,6 +136,7 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     runId: asText(raw.runId),
     evidenceId: asText(raw.evidenceId),
     observedAt: asText(raw.observedAt),
+    serviceDateYmd: asText(raw.serviceDateYmd),
     classSessionId: asText(raw.classSessionId),
     enrollmentId: asText(raw.enrollmentId),
     kidId: asText(raw.kidId),
@@ -214,43 +232,85 @@ export default function AttendanceValidationDashboard() {
   const [classificationFilter, setClassificationFilter] = useState<'all' | Av6Classification>('all');
   const [search, setSearch] = useState('');
   const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
+  const [toDate, setToDate] = useState(currentIstYmd);
+  const [loadedRange, setLoadedRange] = useState<{ from: string; to: string } | null>(null);
+  const [cursor, setCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
-  const loadCases = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
+  const loadSavedCases = useCallback(async (append = false) => {
+    if (!validDateRange(fromDate, toDate)) {
+      setError(
+        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
+      );
+      return;
+    }
+
+    if (
+      append
+      && (
+        !cursor
+        || !loadedRange
+        || loadedRange.from !== fromDate
+        || loadedRange.to !== toDate
+      )
+    ) return;
+
+    if (append) setLoadingMore(true);
     else setLoading(true);
     setError(null);
 
     try {
-      const casesQuery = query(
-        collection(db, 'attendanceValidationCases'),
-        orderBy('observedAt', 'desc'),
-        limit(AV6_CASE_READ_LIMIT),
-      );
+      const baseCollection = collection(db, 'attendanceValidationCases');
+      const casesQuery = append && cursor
+        ? query(
+            baseCollection,
+            where('serviceDateYmd', '>=', fromDate),
+            where('serviceDateYmd', '<=', toDate),
+            orderBy('serviceDateYmd', 'desc'),
+            startAfter(cursor),
+            limit(AV6_CASE_READ_LIMIT),
+          )
+        : query(
+            baseCollection,
+            where('serviceDateYmd', '>=', fromDate),
+            where('serviceDateYmd', '<=', toDate),
+            orderBy('serviceDateYmd', 'desc'),
+            limit(AV6_CASE_READ_LIMIT),
+          );
+
       const snapshot = await getDocs(casesQuery);
-      setCases(
-        snapshot.docs.map((docSnapshot) =>
-          normalizeCase(
-            docSnapshot.id,
-            docSnapshot.data() as Record<string, unknown>,
-          )),
+      const nextCases = snapshot.docs.map((docSnapshot) =>
+        normalizeCase(
+          docSnapshot.id,
+          docSnapshot.data() as Record<string, unknown>,
+        ));
+
+      setCases((current) => append ? [...current, ...nextCases] : nextCases);
+      setCursor(
+        snapshot.docs.length > 0
+          ? snapshot.docs[snapshot.docs.length - 1]
+          : null,
       );
+      setHasMore(snapshot.docs.length === AV6_CASE_READ_LIMIT);
+      if (!append) {
+        setLoadedRange({ from: fromDate, to: toDate });
+        setClassificationFilter('all');
+        setExpandedCaseId(null);
+      }
       setLoadedAt(new Date());
     } catch (loadError) {
-      console.error('[AV6] Failed to load attendance validation cases', loadError);
-      setError('Unable to load attendance validation cases. Please try again.');
+      console.error('[AV6] Failed to load saved attendance validation cases', loadError);
+      setError('Unable to load saved attendance validation results. Please try again.');
     } finally {
       setLoading(false);
-      setRefreshing(false);
+      setLoadingMore(false);
     }
-  }, []);
-
-  useEffect(() => {
-    void loadCases(false);
-  }, [loadCases]);
+  }, [cursor, fromDate, loadedRange, toDate]);
 
   const summary = useMemo(() => {
     const verified = cases.filter((item) => item.resolutionStatus === 'verified').length;
@@ -264,6 +324,21 @@ export default function AttendanceValidationDashboard() {
     ).length;
 
     return { verified, resolved, needsReview, possibleFalsePresent, conflicts };
+  }, [cases]);
+
+  const classificationCounts = useMemo(() => {
+    const counts: Record<'all' | Av6Classification, number> = {
+      all: cases.length,
+      VERIFIED: 0,
+      MISSING_ATTENDANCE: 0,
+      ATTENDANCE_CONFLICT: 0,
+      POSSIBLE_FALSE_PRESENT: 0,
+      MISSING_TEAMS_EVIDENCE: 0,
+      ORPHAN_TEAMS_CLASS: 0,
+      AMBIGUOUS: 0,
+    };
+    for (const item of cases) counts[item.classification] += 1;
+    return counts;
   }, [cases]);
 
   const openApprovedCorrection = useCallback((item: Av6ValidationCase) => {
@@ -329,21 +404,15 @@ export default function AttendanceValidationDashboard() {
                 No attendance or financial correction can be made from this screen.
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                One-shot bounded read: latest {AV6_CASE_READ_LIMIT} cases maximum.
+                Saved results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
                 No realtime listener and no user, student, enrollment, billing, or earnings lookups.
               </p>
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void loadCases(true)}
-            disabled={loading || refreshing}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Refreshing…' : 'Refresh'}
-          </Button>
+          <div className="text-xs text-slate-500">
+            Nothing refreshes automatically. Choose a range below.
+          </div>
         </div>
       </Card>
 
@@ -385,33 +454,83 @@ export default function AttendanceValidationDashboard() {
       </div>
 
       <Card className="p-4">
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_240px]">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by session, enrollment, kid, teacher, evidence, or run ID"
-          />
-          <select
-            value={classificationFilter}
-            onChange={(event) =>
-              setClassificationFilter(event.target.value as 'all' | Av6Classification)
-            }
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-            aria-label="Filter by validation classification"
-          >
-            {CLASSIFICATION_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-3 lg:grid-cols-[180px_180px_auto] lg:items-end">
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            <span>From</span>
+            <Input
+              type="date"
+              min={AV6_VALIDATION_START_YMD}
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+            />
+          </label>
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            <span>To</span>
+            <Input
+              type="date"
+              min={AV6_VALIDATION_START_YMD}
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => void loadSavedCases(false)}
+              disabled={loading || loadingMore}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Loading saved results…' : 'Load Saved Results'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              title="Changed-only revalidation is added in the next AVS brick."
+            >
+              Run Latest Check
+            </Button>
+          </div>
         </div>
 
-        {loadedAt && (
-          <p className="mt-2 text-xs text-slate-500">
-            Last loaded {formatObservedAt(loadedAt.toISOString())}. Refresh is manual to control Firestore reads.
+        <p className="mt-2 text-xs text-slate-500">
+          Loading saved results reads only cached AVS cases for the selected service-date range.
+          It does not call Microsoft Teams or rerun validation.
+        </p>
+
+        {loadedRange && loadedAt && (
+          <p className="mt-1 text-xs text-slate-500">
+            Loaded {loadedRange.from} to {loadedRange.to} at {formatObservedAt(loadedAt.toISOString())}.
+            Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.
           </p>
         )}
+      </Card>
+
+      <Card className="p-4">
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search loaded results by session, enrollment, kid, teacher, evidence, or run ID"
+        />
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Validation classifications">
+          {CLASSIFICATION_TABS.map((tab) => {
+            const active = classificationFilter === tab.value;
+            return (
+              <Button
+                key={tab.value}
+                type="button"
+                size="sm"
+                variant={active ? 'default' : 'outline'}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setClassificationFilter(tab.value)}
+                className="shrink-0"
+              >
+                {tab.label} ({classificationCounts[tab.value]})
+              </Button>
+            );
+          })}
+        </div>
       </Card>
 
       {error && (
@@ -426,19 +545,27 @@ export default function AttendanceValidationDashboard() {
       <Card className="overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            Loading attendance validation cases…
+            Loading saved attendance validation results…
+          </div>
+        ) : !loadedRange ? (
+          <div className="p-8 text-center">
+            <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
+            <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Click Load Saved Results to read cached AVS cases. Opening this page does not read them automatically.
+            </p>
           </div>
         ) : cases.length === 0 ? (
           <div className="p-8 text-center">
             <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
-            <p className="mt-2 font-medium text-slate-700">No validation cases loaded</p>
+            <p className="mt-2 font-medium text-slate-700">No saved results in this range</p>
             <p className="mt-1 text-sm text-slate-500">
-              AV5.3 is available in the codebase, but a production shadow workload is not activated yet.
+              No cached AVS cases were found for {loadedRange.from} to {loadedRange.to}.
             </p>
           </div>
         ) : visibleCases.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            No cases match the current filters.
+            No loaded cases match the current tab or search.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -470,6 +597,7 @@ export default function AttendanceValidationDashboard() {
                         </div>
                         {expanded && (
                           <div className="mt-2 space-y-1 text-xs text-slate-500">
+                            <div>Service date: {item.serviceDateYmd || '—'}</div>
                             <div>Enrollment: {item.enrollmentId || '—'}</div>
                             <div>Kid: {item.kidId || '—'}</div>
                             <div>Teacher: {item.teacherId || '—'}</div>
@@ -556,6 +684,22 @@ export default function AttendanceValidationDashboard() {
           </div>
         )}
       </Card>
+
+      {loadedRange
+        && loadedRange.from === fromDate
+        && loadedRange.to === toDate
+        && hasMore && (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => void loadSavedCases(true)}
+            disabled={loading || loadingMore}
+          >
+            {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
