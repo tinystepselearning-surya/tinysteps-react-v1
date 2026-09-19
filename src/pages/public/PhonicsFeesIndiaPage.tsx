@@ -307,7 +307,7 @@ export default function PhonicsFeesIndiaPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-sky-800 shadow-sm">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              2026 India phonics pricing research
+              Monthly India phonics price tracker · September 2026
             </div>
             <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-[3.2rem] lg:leading-[1.04]">
               Phonics Class Fees in India
@@ -388,8 +388,8 @@ export default function PhonicsFeesIndiaPage() {
 
         <div id="provider-prices" className="mt-7 scroll-mt-28">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-            <span>Sorted by exact comparable live 1:1 per-class rate: highest → lowest.</span>
-            <span>Non-normalized monthly / “from” prices follow and are not used for the ordering.</span>
+            <span>Ordered only by provider-level exact live 1:1 benchmark rate: highest → lowest.</span>
+            <span>This is a price order, not a quality/value ranking. Non-normalized monthly / “from” prices follow.</span>
           </div>
           <ProviderMatrix />
         </div>
@@ -434,9 +434,14 @@ export default function PhonicsFeesIndiaPage() {
           </details>
         </div>
 
-        <p className="mt-4 text-xs leading-5 text-slate-500">
-          Tiny Steps publishes this research and is not an independent comparison service. Provider names and public prices are reported for factual market research only; no quality or value ranking is assigned.
-        </p>
+        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-600">
+          <p>
+            <strong className="text-slate-900">Research disclosure:</strong> Tiny Steps Learning publishes this page and is not an independent comparison service. We are not affiliated with the other providers listed. Provider names and prices are reported from publicly available official sources for factual market research only. Prices, packages, promotions and availability can change, so parents should confirm the latest offer directly with the provider before paying.
+          </p>
+          <p className="mt-2">
+            The benchmark is not a nationwide census and not a quality ranking. Tiny Steps is excluded from the external-provider benchmark statistics. If a listed provider identifies an outdated price, we will review a correction when supported by its current official source.
+          </p>
+        </div>
       </section>
 
       <section className="border-y border-slate-200 bg-slate-50">
