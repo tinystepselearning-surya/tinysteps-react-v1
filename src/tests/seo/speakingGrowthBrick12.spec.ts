@@ -173,12 +173,18 @@ describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
       SPEAKING_AI_AGENT_POLICY.configuredPublicAgents.length,
     );
 
-    for (const agent of SPEAKING_AI_AGENT_POLICY.configuredPublicAgents) {
-      expect(robots).toContain('User-agent: ' + agent);
-    }
+    const privatePaths = ['/admin/', '/teacher/', '/parent/', '/kids/', '/private/'];
 
-    for (const privatePath of ['/admin/', '/teacher/', '/parent/', '/kids/', '/private/']) {
-      expect(robots).toContain('Disallow: ' + privatePath);
+    for (const agent of SPEAKING_AI_AGENT_POLICY.configuredPublicAgents) {
+      const marker = 'User-agent: ' + agent;
+      const start = robots.indexOf(marker);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const groupEnd = robots.indexOf('\n\n', start);
+      const group = robots.slice(start, groupEnd >= 0 ? groupEnd : robots.length);
+      expect(group).toContain('Allow: /');
+      for (const privatePath of privatePaths) {
+        expect(group).toContain('Disallow: ' + privatePath);
+      }
     }
   });
 
