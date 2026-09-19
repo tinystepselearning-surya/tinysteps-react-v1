@@ -1,0 +1,108 @@
+{
+  "brick": 9,
+  "name": "Speaking Evidence Layer",
+  "revision": "2026-09-19-b9-v1",
+  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "branch": "feature/speaking-seo-geo-growth",
+  "productionDeployment": false,
+  "evidenceSurfaces": [
+    {
+      "id": "observable-classroom",
+      "path": "/class-samples",
+      "kind": "observable-classroom"
+    },
+    {
+      "id": "programme-delivery",
+      "path": "/speaking#teacher-delivery",
+      "kind": "programme-delivery"
+    },
+    {
+      "id": "progress-method",
+      "path": "/speaking-progress-framework",
+      "kind": "progress-method"
+    },
+    {
+      "id": "academic-ownership",
+      "path": "/team",
+      "kind": "academic-ownership"
+    },
+    {
+      "id": "programme-architecture",
+      "path": "/curriculum",
+      "kind": "programme-architecture"
+    },
+    {
+      "id": "parent-feedback",
+      "path": "/testimonials",
+      "kind": "parent-feedback"
+    }
+  ],
+  "claimSafety": {
+    "generatedFallbackTestimonialsAllowed": false,
+    "unsupportedSatisfactionPercentagesAllowed": false,
+    "universalGuaranteedTimelineAllowed": false,
+    "parentFeedbackRepresentsUniversalOutcome": false,
+    "fabricatedReviewClaimsAllowed": false,
+    "reviewSchemaAdded": false,
+    "aggregateRatingSchemaAdded": false
+  },
+  "architecture": {
+    "newPublicUrls": 0,
+    "newCanonicalOwners": 0,
+    "canonicalCommercialOwner": "/speaking",
+    "upstreamCommercialEvidenceGovernance": "Commercial C8 frozen",
+    "progressEvidenceMethod": "Brick 7 Speaking Progress Framework"
+  },
+  "matrices": {
+    "sourceLevel": {
+      "evidenceContract": {
+        "passed": 12,
+        "total": 12
+      },
+      "claimSafety": {
+        "passed": 6,
+        "total": 6
+      },
+      "existingEvidenceSources": {
+        "passed": 9,
+        "total": 9
+      },
+      "livePageIntegration": {
+        "passed": 7,
+        "total": 7
+      },
+      "structuredData": {
+        "passed": 5,
+        "total": 5
+      },
+      "routeProtection": {
+        "passed": 2,
+        "total": 2
+      },
+      "sitemapFreshness": {
+        "passed": 2,
+        "total": 2
+      },
+      "regressionSpecStructure": {
+        "passed": 10,
+        "total": 10
+      },
+      "passed": 53,
+      "total": 53
+    },
+    "protectedSurfaceSha": {
+      "passed": 18,
+      "total": 18
+    }
+  },
+  "implementationFiles": [
+    "src/lib/speakingEvidenceLayer.ts",
+    "src/pages/speaking.tsx",
+    "scripts/generate-sitemaps.js",
+    "src/tests/seo/speakingGrowthBrick9.spec.ts"
+  ],
+  "executableLimitations": [
+    "No feature-branch GitHub Actions run attached to the Brick 9 head.",
+    "Full Vitest, TypeScript/build, prerender and browser QA remain required at the final Bricks 1–13 integration gate."
+  ]
+}
