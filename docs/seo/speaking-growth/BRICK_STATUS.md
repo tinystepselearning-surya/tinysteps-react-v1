@@ -23,7 +23,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
 | 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
 | 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
-| 05 | Spoken English territory | PENDING | NO |
+| 05 | Spoken English territory | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 06 | Programme architecture | PENDING | NO |
 | 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
 | 08 | Speaking knowledge cluster | PENDING | NO |
@@ -159,3 +159,25 @@ Additional fixes and findings:
 - confirmed no attached GitHub Actions run exists for the latest Brick 4 commit, so executable build/test remains a final-integration requirement.
 
 Brick 4 status after re-audit: COMPLETE — RE-AUDITED.
+
+
+## Brick 5 completion gate
+
+- Canonical Spoken-English owner remains `/spoken-english-classes-for-kids-online`.
+- SEO title, description and canonical preserved unchanged.
+- Exact 90-day GSC leakage baseline frozen in `brick-05-spoken-english-evidence.json`.
+- Everyday conversation, fuller responses and conversational fluency strengthened as the primary territory.
+- Five-step Spoken-English practice flow added without inventing formal course levels.
+- Live correction/retry explained using existing Tiny Steps responsive-teaching principles.
+- Class-samples and free-assessment handoffs added.
+- Public Speaking, Grammar and Confidence boundaries kept explicit.
+- Hyderabad subject-qualified Spoken-English intent points to the canonical owner; broad Hyderabad English remains the local chooser.
+- Commercial C6 internal-link map now codifies Hyderabad → Spoken English programme-fit handoff.
+- C6 audit now requires that handoff.
+- Near-me leakage explicitly held as local discovery; no thin location pages created.
+- Observable parent progress signals added as a preview; formal framework deferred to Brick 7.
+- Learner-reach claims now come from central semantic facts.
+- New regression guard: `src/tests/seo/speakingGrowthBrick5.spec.ts`.
+- New commercial URLs: ZERO.
+- Metadata/canonical/redirect/sitemap changes in Brick 5: ZERO.
+- Production deployment: ZERO.
