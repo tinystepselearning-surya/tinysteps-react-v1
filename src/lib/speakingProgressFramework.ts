@@ -1,4 +1,4 @@
-export const SPEAKING_PROGRESS_FRAMEWORK_REVISION = '2026-09-19-b7-v1';
+export const SPEAKING_PROGRESS_FRAMEWORK_REVISION = '2026-09-19-b7-v2';
 export const SPEAKING_PROGRESS_FRAMEWORK_PATH = '/speaking-progress-framework';
 export const SPEAKING_PROGRESS_FRAMEWORK_NAME = 'Tiny Steps Speaking Progress Framework';
 
@@ -21,29 +21,44 @@ export type SpeakingProgressDimensionId =
   | 'fresh_task_transfer';
 
 export type SpeakingProgressObservationBand = {
-  id: SpeakingProgressBandId;
-  order: number;
-  label: string;
-  shortLabel: string;
-  description: string;
-  evidenceQuestion: string;
+  readonly id: SpeakingProgressBandId;
+  readonly order: number;
+  readonly label: string;
+  readonly shortLabel: string;
+  readonly description: string;
+  readonly evidenceQuestion: string;
 };
 
 export type SpeakingProgressDimension = {
-  id: SpeakingProgressDimensionId;
-  order: number;
-  label: string;
-  shortLabel: string;
-  parentQuestion: string;
-  description: string;
-  baselineEvidence: string;
-  progressEvidence: string;
-  avoidJudgingBy: string;
-  knowledgeDomainIds: string[];
+  readonly id: SpeakingProgressDimensionId;
+  readonly order: number;
+  readonly label: string;
+  readonly shortLabel: string;
+  readonly parentQuestion: string;
+  readonly description: string;
+  readonly baselineEvidence: string;
+  readonly progressEvidence: string;
+  readonly avoidJudgingBy: string;
+  readonly knowledgeDomainIds: readonly string[];
 };
 
-export const SPEAKING_PROGRESS_OBSERVATION_BANDS: readonly SpeakingProgressObservationBand[] = Object.freeze([
-  {
+const freezeRecord = <T extends object>(value: T): Readonly<T> => Object.freeze(value);
+const freezeList = <T>(values: readonly T[]): readonly T[] => Object.freeze([...values]);
+
+const defineObservationBand = (
+  band: SpeakingProgressObservationBand,
+): SpeakingProgressObservationBand => freezeRecord({ ...band });
+
+const defineDimension = (
+  dimension: SpeakingProgressDimension,
+): SpeakingProgressDimension =>
+  freezeRecord({
+    ...dimension,
+    knowledgeDomainIds: freezeList(dimension.knowledgeDomainIds),
+  });
+
+export const SPEAKING_PROGRESS_OBSERVATION_BANDS: readonly SpeakingProgressObservationBand[] = freezeList([
+  defineObservationBand({
     id: 'modelled_support',
     order: 1,
     label: 'Modelled / supported',
@@ -51,8 +66,8 @@ export const SPEAKING_PROGRESS_OBSERVATION_BANDS: readonly SpeakingProgressObser
     description:
       'The child can participate when the teacher supplies a model, sentence starter, repeated prompt, or substantial planning support.',
     evidenceQuestion: 'What did the adult have to supply before the child could respond?',
-  },
-  {
+  }),
+  defineObservationBand({
     id: 'guided_attempt',
     order: 2,
     label: 'Guided attempt',
@@ -60,8 +75,8 @@ export const SPEAKING_PROGRESS_OBSERVATION_BANDS: readonly SpeakingProgressObser
     description:
       'The child attempts the skill with lighter support such as a cue, question, visual organiser, keyword, or targeted follow-up.',
     evidenceQuestion: 'Which small cue still helps the child complete the task?',
-  },
-  {
+  }),
+  defineObservationBand({
     id: 'independent_use',
     order: 3,
     label: 'Independent use',
@@ -69,8 +84,8 @@ export const SPEAKING_PROGRESS_OBSERVATION_BANDS: readonly SpeakingProgressObser
     description:
       'The child completes a comparable task with little or no direct prompting, while normal thinking time and self-correction remain allowed.',
     evidenceQuestion: 'What can the child now do without the adult building the answer for them?',
-  },
-  {
+  }),
+  defineObservationBand({
     id: 'fresh_task_transfer',
     order: 4,
     label: 'Fresh-task transfer',
@@ -78,11 +93,11 @@ export const SPEAKING_PROGRESS_OBSERVATION_BANDS: readonly SpeakingProgressObser
     description:
       'The child applies the same skill to a new prompt, topic, listener, story, or presentation task with little or no direct prompting.',
     evidenceQuestion: 'Does the skill still appear when the exact practice material changes?',
-  },
+  }),
 ]);
 
-export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] = Object.freeze([
-  {
+export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] = freezeList([
+  defineDimension({
     id: 'response_expansion',
     order: 1,
     label: 'Response expansion',
@@ -97,8 +112,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Word count alone. A longer answer is not automatically clearer, more relevant, or more independent.',
     knowledgeDomainIds: ['response-expansion-language'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'sentence_formation',
     order: 2,
     label: 'Sentence formation in speaking',
@@ -113,8 +128,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Perfect grammar in every spontaneous sentence. The useful question is whether sentence control supports communication and is becoming more independent.',
     knowledgeDomainIds: ['response-expansion-language'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'vocabulary_in_use',
     order: 3,
     label: 'Vocabulary in use',
@@ -129,24 +144,24 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Rare or difficult vocabulary for its own sake. Appropriate, usable language is more valuable than impressive isolated words.',
     knowledgeDomainIds: ['response-expansion-language'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'idea_organisation',
     order: 4,
     label: 'Idea organisation',
     shortLabel: 'Organisation',
-    parentQuestion: 'Can my child organise ideas so the listener can follow the message?',
+    parentQuestion: 'Can my child organise ideas and support an opinion so the listener can follow the message?',
     description:
-      'Looks at choosing relevant ideas, sequencing them, linking points, and keeping a response or short talk focused on its purpose.',
+      'Looks at choosing relevant ideas, sequencing and linking points, keeping a response focused, and—when the task involves opinion or discussion—supporting a position with reasons or examples.',
     baselineEvidence:
-      'Record whether the child needs the adult to choose the order, provide a structure, or repeatedly bring the response back to the topic.',
+      'Record whether the child needs the adult to choose the order, provide the structure, supply reasons or examples, or repeatedly bring the response back to the topic.',
     progressEvidence:
-      'Ideas follow a clearer sequence with fewer structural prompts, and the child can use a simple plan on a fresh topic.',
+      'Ideas follow a clearer sequence with fewer structural prompts; on opinion or discussion tasks, reasons and examples become more connected and independent on a fresh topic.',
     avoidJudgingBy:
       'Memorising one fixed script. Organisation should survive reasonable changes in wording or topic.',
-    knowledgeDomainIds: ['speech-organisation'],
-  },
-  {
+    knowledgeDomainIds: ['speech-organisation', 'discussion-reasoning'],
+  }),
+  defineDimension({
     id: 'listening_response',
     order: 5,
     label: 'Listening & response relevance',
@@ -161,8 +176,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Silent compliance or eye contact. Listening evidence comes from the child’s relevant response and interaction.',
     knowledgeDomainIds: ['conversation-listening'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'storytelling_retelling',
     order: 6,
     label: 'Storytelling & retelling',
@@ -177,8 +192,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Memorising a teacher-written story word for word. Flexible retelling is stronger evidence of ownership.',
     knowledgeDomainIds: ['storytelling-retelling'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'delivery_intelligibility',
     order: 7,
     label: 'Delivery & intelligibility',
@@ -193,8 +208,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Accent conformity, constant eye contact, loudness, theatrical performance, or copying one “ideal” speaking style.',
     knowledgeDomainIds: ['delivery-audience-connection'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'prompt_independence',
     order: 8,
     label: 'Speaking independence',
@@ -209,8 +224,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Speed alone. A child may need normal planning time and still be speaking independently.',
     knowledgeDomainIds: ['response-initiation-independence', 'confidence-context-transfer'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'presentation_audience',
     order: 9,
     label: 'Presentation & audience awareness',
@@ -225,8 +240,8 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'A polished memorised script alone. Presentation skill includes organisation, communication and response to the audience.',
     knowledgeDomainIds: ['speech-organisation', 'delivery-audience-connection'],
-  },
-  {
+  }),
+  defineDimension({
     id: 'fresh_task_transfer',
     order: 10,
     label: 'Transfer to fresh tasks',
@@ -241,43 +256,43 @@ export const SPEAKING_PROGRESS_DIMENSIONS: readonly SpeakingProgressDimension[] 
     avoidJudgingBy:
       'Success only on the rehearsed item. Familiar-task performance is useful practice but not sufficient evidence of transfer.',
     knowledgeDomainIds: ['rehearsal-feedback-transfer', 'confidence-context-transfer'],
-  },
+  }),
 ]);
 
-export const SPEAKING_PROGRESS_REVIEW_LOOP = Object.freeze([
-  {
+export const SPEAKING_PROGRESS_REVIEW_LOOP = freezeList([
+  freezeRecord({
     id: 'baseline',
     order: 1,
     label: 'Baseline',
     description: 'Capture what the child can do now, the task used, and the support needed.',
-  },
-  {
+  }),
+  freezeRecord({
     id: 'focus',
     order: 2,
     label: 'One current target',
     description: 'Choose one high-value dimension or closely related pair instead of trying to improve everything at once.',
-  },
-  {
+  }),
+  freezeRecord({
     id: 'guided-practice',
     order: 3,
     label: 'Teach, retry, fade support',
     description: 'Model when needed, give specific feedback, retry, and reduce prompting as the skill becomes usable.',
-  },
-  {
+  }),
+  freezeRecord({
     id: 'fresh-check',
     order: 4,
     label: 'Fresh-task check',
     description: 'Use a comparable but unfamiliar speaking task to see what transfers.',
-  },
-  {
+  }),
+  freezeRecord({
     id: 'next-step',
     order: 5,
     label: 'Next learning priority',
     description: 'Record what is now more independent, what still needs support, and the next useful teaching target.',
-  },
+  }),
 ]);
 
-export const SPEAKING_PROGRESS_FRAMEWORK_GUARDRAILS = Object.freeze([
+export const SPEAKING_PROGRESS_FRAMEWORK_GUARDRAILS = freezeList([
   'Do not average the ten dimensions into one overall speaking score.',
   'Do not convert the framework into a developmental age, IQ-style result, diagnosis, or clinical label.',
   'Do not judge confidence by loudness, extroversion, accent, or constant eye contact.',
@@ -288,7 +303,7 @@ export const SPEAKING_PROGRESS_FRAMEWORK_GUARDRAILS = Object.freeze([
   'Do choose one useful next target rather than reporting broad labels such as “good” or “weak”.',
 ]);
 
-export const SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS = Object.freeze([
+export const SPEAKING_PROGRESS_PARENT_SUMMARY_FIELDS = freezeList([
   'Current speaking target',
   'Observation band for the target',
   'What the child can now do independently',
