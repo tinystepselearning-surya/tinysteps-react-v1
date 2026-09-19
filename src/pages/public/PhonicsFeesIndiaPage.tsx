@@ -2,17 +2,13 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  Calculator,
-  CheckCircle2,
-  ClipboardCheck,
+  ExternalLink,
   IndianRupee,
   Search,
   ShieldCheck,
   Sparkles,
-  Users,
 } from 'lucide-react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
-import { PUBLIC_SITE_FACTS } from '../../config/publicFacts';
 import {
   GROUP_MONTHLY_FEES,
   ONE_TO_ONE_MONTHLY_PACKAGES,
@@ -23,12 +19,22 @@ import {
   PHONICS_FEES_INDIA_PROVIDERS,
   PHONICS_FEES_INDIA_RESEARCH,
   PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE,
-  type PhonicsFeeFormat,
+  type PhonicsFeeOffer,
 } from '../../data/commercial/phonicsFeesIndiaResearch';
 import { applySeo, getRouteConfig } from '../../lib/seo';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 
 const research = PHONICS_FEES_INDIA_RESEARCH;
+const reviewedProviderCount =
+  PHONICS_FEES_INDIA_PROVIDERS.length + PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE.length;
+const publishedPriceProviderCount = PHONICS_FEES_INDIA_PROVIDERS.length;
+
+const tinyStepsGroupRows = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1');
+const tinyStepsGroupRates = tinyStepsGroupRows.map((row) => Math.round(row.monthlyFee / row.classes));
+const tinyStepsGroupMin = Math.min(...tinyStepsGroupRates);
+const tinyStepsGroupMax = Math.max(...tinyStepsGroupRates);
+const tinyStepsGroupDurationMin = Math.min(...tinyStepsGroupRows.map((row) => row.durationMinutes));
+const tinyStepsGroupDurationMax = Math.max(...tinyStepsGroupRows.map((row) => row.durationMinutes));
 
 const feeKeywords = [
   'phonics classes fees in India',
@@ -44,142 +50,200 @@ const feeKeywords = [
 ];
 
 const comparisonChecks = [
-  'Compare the effective fee per live class, not only the package total.',
-  'Check whether the format is 1:1, small group, or mainly self-practice.',
-  'Compare class duration as well as price.',
-  'Ask whether placement is based on the child’s current reading stage.',
-  'Check how much live reading, correction and retry time the child receives.',
-  'Confirm group size, package terms and rescheduling rules before paying.',
-];
-
-const assessmentChecks = [
-  'Letter–sound knowledge',
-  'Oral blending and segmenting',
-  'Word blending and decoding',
-  'Spelling / encoding',
-  'Sentence reading and transfer',
-  'Fluency and comprehension when appropriate',
+  'Normalize the package to an effective fee per live class.',
+  'Keep 1:1 and group prices separate.',
+  'Compare live class duration and group size.',
+  'Check materials, rescheduling and package terms before paying.',
 ];
 
 const faqItems = [
   {
     question: 'How much do live 1:1 phonics classes cost in India?',
-    answer: `In the Tiny Steps provider research checked on ${research.reviewedLabel}, ${research.oneToOne.providerCount} external providers had exact enough public 1:1 pricing to enter the benchmark. Exact published rates in those source rows ran from about ${formatINR(research.oneToOne.minExactPublishedRate)} to ${formatINR(research.oneToOne.maxExactPublishedRate)} per live class. The provider-level median was about ${formatINR(research.oneToOne.median)} and the average was about ${formatINR(research.oneToOne.average)}. Tiny Steps is excluded from those external-provider statistics.`,
+    answer:
+      'In the external-provider research checked on ' +
+      research.reviewedLabel +
+      ', ' +
+      research.oneToOne.providerCount +
+      ' providers had exact enough public 1:1 pricing to enter the benchmark. The provider-level median was about ' +
+      formatINR(Math.round(research.oneToOne.median)) +
+      ' per live class. Exact published rates observed in those source rows ranged from about ' +
+      formatINR(Math.round(research.oneToOne.minExactPublishedRate)) +
+      ' to ' +
+      formatINR(Math.round(research.oneToOne.maxExactPublishedRate)) +
+      '. Tiny Steps is excluded from the external-provider statistics.',
   },
   {
-    question: 'How much do group phonics classes cost in India?',
-    answer: `In the same research, ${research.group.providerCount} external providers had exact enough public group pricing to enter the benchmark. Exact published rates in those source rows ran from about ${formatINR(research.group.minExactPublishedRate)} to ${formatINR(research.group.maxExactPublishedRate)} per child per live class. The provider-level median was about ${formatINR(research.group.median)} and the average was about ${formatINR(research.group.average)}. Tiny Steps is excluded from those external-provider statistics.`,
+    question: 'How much do live group phonics classes cost in India?',
+    answer:
+      'In the same research, ' +
+      research.group.providerCount +
+      ' external providers had exact enough public group pricing to enter the benchmark. The provider-level median was about ' +
+      formatINR(Math.round(research.group.median)) +
+      ' per child per live class. Exact published rates observed ranged from about ' +
+      formatINR(Math.round(research.group.minExactPublishedRate)) +
+      ' to ' +
+      formatINR(Math.round(research.group.maxExactPublishedRate)) +
+      '.',
   },
   {
-    question: 'How much are Tiny Steps phonics classes in India?',
-    answer: 'The current standard Tiny Steps rate with an Indian teacher is ₹400 per live 1:1 class. Each standard 1:1 class is 35 minutes. A 12-class package is ₹4,800.',
-  },
-  {
-    question: 'How much is a 12-class phonics package at Tiny Steps?',
-    answer: 'At the standard ₹400 per-class rate, 12 live 1:1 phonics classes cost ₹4,800. Tiny Steps also maintains 16-class and 24-class package options at the same standard ₹400 per-class rate.',
-  },
-  {
-    question: 'How much do Tiny Steps small-group phonics classes cost?',
-    answer: 'Current small-group pricing ranges from ₹180 to ₹300 per child per class depending on group size. Group session duration increases with the number of children, so parents should compare both price and live teaching time.',
-  },
-  {
-    question: 'Is the phonics demo assessment free?',
-    answer: 'Yes. Tiny Steps offers one free 35-minute live 1:1 online demo assessment class per child before enrolment so the recommended starting point can be based on the child’s current reading behaviour.',
-  },
-  {
-    question: 'Does a higher phonics fee mean better teaching?',
-    answer: 'No. A higher price does not automatically establish stronger teaching. Parents should also compare curriculum sequence, live correction, individual response time, placement, reading transfer, progress visibility and policies.',
+    question: 'Why are some public prices not converted to a per-class fee?',
+    answer:
+      'Tiny Steps does not estimate a class count when a provider publishes only a monthly fee, a starting price, an enquiry-led quote or a package with conflicting session information. Those public prices can still be shown, but they are excluded from the benchmark median and average.',
   },
   {
     question: 'How were the phonics fee benchmarks calculated?',
-    answer: 'Tiny Steps reviewed official provider websites and official provider brochures, analysed 1:1 and group formats separately, and normalized package totals only when the live-session count was explicit. Starting-price-only offers, monthly prices without a fixed class count, conflicting package structures and enquiry-only prices are shown for transparency but excluded from the benchmark statistics. Named provider rows and their official source links are published on this page.',
+    answer:
+      'Tiny Steps reviewed official provider websites and official provider brochures, kept 1:1 and group formats separate, and normalized package totals only when the live-session count was explicit. When a provider published several exact package rates in the same format, that provider contributes one provider-level benchmark observation so one company cannot dominate the sample.',
+  },
+  {
+    question: 'How much are Tiny Steps phonics classes?',
+    answer:
+      'The current standard Tiny Steps rate is ₹400 per 35-minute live 1:1 class. A 12-class package is ₹4,800, 16 classes are ₹6,400 and 24 classes are ₹9,600. Tiny Steps is not included in the external-provider benchmark statistics.',
+  },
+  {
+    question: 'How current are the provider prices on this page?',
+    answer:
+      'The named provider sources were checked on ' +
+      research.reviewedLabel +
+      '. Prices can change, so each provider name links to the official source used for the research and parents should confirm the latest offer before paying.',
   },
 ];
 
+function benchmarkMoney(value: number) {
+  return formatINR(Math.round(value));
+}
+
 function MoneyCard({ title, amount, detail }: { title: string; amount: string; detail: string }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{title}</p>
-      <p className="mt-2 text-3xl font-black tracking-tight text-slate-950">{amount}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{detail}</p>
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">{title}</p>
+      <p className="mt-1.5 text-2xl font-black tracking-tight text-slate-950">{amount}</p>
+      <p className="mt-1.5 text-xs leading-5 text-slate-600">{detail}</p>
     </article>
   );
 }
 
-function ProviderPriceTable({ format }: { format: PhonicsFeeFormat }) {
-  const rows = PHONICS_FEES_INDIA_PROVIDERS.flatMap((provider) => {
-    const offer = format === 'one-to-one' ? provider.oneToOne : provider.group;
-    return offer ? [{ provider, offer }] : [];
-  });
+function OfferSummary({ offer }: { offer?: PhonicsFeeOffer }) {
+  if (!offer) return <span className="text-slate-400">Not publicly listed</span>;
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-      <table className="min-w-[760px] w-full text-left text-sm">
-        <thead className="bg-slate-950 text-xs uppercase tracking-[0.12em] text-slate-200">
-          <tr>
-            <th className="px-4 py-3">Provider</th>
-            <th className="px-4 py-3">Published fee</th>
-            <th className="px-4 py-3">Live structure</th>
-            <th className="px-4 py-3">Normalized fee</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.map(({ provider, offer }) => (
-            <tr key={provider.provider} className="align-top">
-              <td className="px-4 py-4">
-                <a
-                  href={provider.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-bold text-sky-700 underline decoration-sky-200 underline-offset-4 hover:text-sky-900"
-                >
-                  {provider.provider}
-                </a>
-                <p className="mt-1 max-w-[220px] text-xs leading-5 text-slate-500">{provider.sourceLabel}</p>
-              </td>
-              <td className="px-4 py-4 font-semibold text-slate-950">{offer.publicPriceLabel}</td>
-              <td className="px-4 py-4 text-slate-600">
-                <div>{offer.sessionStructureLabel}</div>
-                {offer.durationLabel && <div className="mt-1 text-xs">{offer.durationLabel}</div>}
-                {offer.groupSizeLabel && <div className="mt-1 text-xs">{offer.groupSizeLabel}</div>}
-              </td>
-              <td className="px-4 py-4">
-                {offer.normalizedPerClassLabel ? (
-                  <strong className="text-slate-950">{offer.normalizedPerClassLabel}</strong>
-                ) : (
-                  <span className="font-semibold text-amber-700">Not normalized</span>
-                )}
-                <p className="mt-1 max-w-[260px] text-xs leading-5 text-slate-500">{offer.evidenceNote}</p>
-                <span
-                  className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                    offer.benchmarkEligible ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
-                  }`}
-                >
-                  {offer.benchmarkEligible ? 'Included in benchmark' : 'Published, excluded from benchmark'}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="min-w-0">
+      <p className="font-bold leading-5 text-slate-950">
+        {offer.normalizedPerClassLabel ?? offer.publicPriceLabel}
+      </p>
+      {offer.normalizedPerClassLabel && (
+        <p className="mt-1 text-xs leading-5 text-slate-500">{offer.publicPriceLabel}</p>
+      )}
+      <p className="mt-1 text-xs leading-5 text-slate-600">{offer.sessionStructureLabel}</p>
+      {(offer.durationLabel || offer.groupSizeLabel) && (
+        <p className="mt-1 text-xs leading-5 text-slate-500">
+          {[offer.durationLabel, offer.groupSizeLabel].filter(Boolean).join(' · ')}
+        </p>
+      )}
+      <span
+        className={
+          'mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ' +
+          (offer.benchmarkEligible
+            ? 'bg-emerald-50 text-emerald-700'
+            : 'bg-amber-50 text-amber-800')
+        }
+      >
+        {offer.benchmarkEligible ? 'Exact public rate' : 'Public price · not normalized'}
+      </span>
     </div>
+  );
+}
+
+function ProviderMatrix() {
+  return (
+    <>
+      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
+        <table className="w-full table-fixed text-left text-sm">
+          <thead className="bg-slate-950 text-[11px] uppercase tracking-[0.12em] text-slate-200">
+            <tr>
+              <th className="w-[19%] px-4 py-3">Provider</th>
+              <th className="w-[31%] px-4 py-3">Live 1:1</th>
+              <th className="w-[31%] px-4 py-3">Live group</th>
+              <th className="w-[19%] px-4 py-3">Source</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {PHONICS_FEES_INDIA_PROVIDERS.map((provider) => (
+              <tr key={provider.provider} className="align-top">
+                <td className="px-4 py-3.5">
+                  <p className="font-bold leading-5 text-slate-950">{provider.provider}</p>
+                  {provider.note && <p className="mt-1 text-[11px] leading-4 text-amber-800">{provider.note}</p>}
+                </td>
+                <td className="px-4 py-3.5"><OfferSummary offer={provider.oneToOne} /></td>
+                <td className="px-4 py-3.5"><OfferSummary offer={provider.group} /></td>
+                <td className="px-4 py-3.5">
+                  <a
+                    href={provider.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 font-bold text-sky-700 hover:text-sky-900"
+                  >
+                    Official source <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  </a>
+                  <p className="mt-1 text-[11px] leading-4 text-slate-500">Checked {research.reviewedLabel}</p>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="grid gap-3 lg:hidden">
+        {PHONICS_FEES_INDIA_PROVIDERS.map((provider) => (
+          <article key={provider.provider} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-black text-slate-950">{provider.provider}</h3>
+                {provider.note && <p className="mt-1 text-xs leading-5 text-amber-800">{provider.note}</p>}
+              </div>
+              <a
+                href={provider.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={'Open official source for ' + provider.provider}
+                className="shrink-0 rounded-lg border border-slate-200 p-2 text-sky-700"
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-sky-700">Live 1:1</p>
+                <OfferSummary offer={provider.oneToOne} />
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">Live group</p>
+                <OfferSummary offer={provider.group} />
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
   );
 }
 
 export default function PhonicsFeesIndiaPage() {
   const routeConfig = getRouteConfig('/phonics-fees-india');
   const canonicalPath = routeConfig?.canonicalPath ?? '/phonics-fees-india';
-  const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+  const canonicalUrl = PUBLIC_FACTS.primaryWebsite + canonicalPath;
   const seoTitle = routeConfig?.title ?? 'Phonics Class Fees in India 2026 | 1:1 & Group Price Guide';
-  const seoDescription = routeConfig?.description ?? 'Compare 2026 phonics class fees in India for live 1:1 and group classes, including market fee bands, package costs and Tiny Steps ₹400 live 1:1 pricing.';
+  const seoDescription =
+    routeConfig?.description ??
+    'Compare 2026 phonics class fees in India for live 1:1 and group classes, including market fee bands, package costs and Tiny Steps ₹400 live 1:1 pricing.';
 
   useEffect(() => {
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: `${PUBLIC_FACTS.primaryWebsite}/` },
-        { '@type': 'ListItem', position: 2, name: 'Phonics', item: `${PUBLIC_FACTS.primaryWebsite}/phonics` },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: PUBLIC_FACTS.primaryWebsite + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Phonics', item: PUBLIC_FACTS.primaryWebsite + '/phonics' },
         { '@type': 'ListItem', position: 3, name: 'Phonics Class Fees in India', item: canonicalUrl },
       ],
     };
@@ -190,7 +254,7 @@ export default function PhonicsFeesIndiaPage() {
         description: seoDescription,
         url: canonicalUrl,
       }),
-      '@id': `${canonicalUrl}#webpage`,
+      '@id': canonicalUrl + '#webpage',
       dateModified: research.reviewedAt,
       about: [
         { '@type': 'Thing', name: 'Phonics class fees in India' },
@@ -206,272 +270,237 @@ export default function PhonicsFeesIndiaPage() {
       canonicalPath,
       ogType: routeConfig?.ogType ?? 'website',
       keywords: feeKeywords,
-      jsonLd: [breadcrumbSchema, webpageSchema, { ...createFAQPageSchema(faqItems), '@id': `${canonicalUrl}#faq` }],
+      jsonLd: [
+        breadcrumbSchema,
+        webpageSchema,
+        { ...createFAQPageSchema(faqItems), '@id': canonicalUrl + '#faq' },
+      ],
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
-
-  const starter = ONE_TO_ONE_MONTHLY_PACKAGES.find((pkg) => pkg.id === 'starter');
 
   return (
     <main className="overflow-hidden bg-white text-slate-900">
       <section className="relative border-b border-slate-200 bg-gradient-to-br from-sky-50 via-white to-amber-50/60">
         <div className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-sky-200/25 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-amber-200/25 blur-3xl" aria-hidden="true" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-9 px-6 py-11 lg:grid-cols-[1.08fr_.92fr] lg:px-8 lg:py-14">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-7 px-6 py-9 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-11">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/90 px-3.5 py-1.5 text-sm font-semibold text-sky-800 shadow-sm">
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              2026 India phonics pricing guide
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-sky-800 shadow-sm">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              2026 India phonics pricing research
             </div>
-            <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.03]">
+            <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-[3.2rem] lg:leading-[1.04]">
               Phonics Class Fees in India
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-              Compare researched live 1:1 and group fee ranges, understand effective per-class pricing, and see Tiny Steps’ current transparent phonics fees.
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+              We checked public prices from India-facing phonics providers and separated live 1:1 from group classes so parents can compare like with like.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="#market-pricing" className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-300/40 transition hover:-translate-y-0.5 hover:bg-slate-800">
-                Compare market fees <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </a>
-              <Link to="/book-demo" className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:-translate-y-0.5 hover:border-slate-400">
-                Book free 35-minute assessment
-              </Link>
+            <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+              <span><strong className="text-slate-950">{reviewedProviderCount}</strong> providers checked</span>
+              <span className="text-slate-300">•</span>
+              <span><strong className="text-slate-950">{publishedPriceProviderCount}</strong> public-price providers shown</span>
+              <span className="text-slate-300">•</span>
+              <span>Verified {research.reviewedLabel}</span>
             </div>
-            <p className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
-              Publicly advertised prices reviewed · 1:1 and groups analysed separately · research reviewed {research.reviewedLabel}
-            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href="#provider-prices"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-slate-300/40 transition hover:-translate-y-0.5 hover:bg-slate-800"
+              >
+                See provider prices <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </a>
+              <a
+                href="#methodology"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400"
+              >
+                How we verified them
+              </a>
+            </div>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white/95 p-5 shadow-2xl shadow-slate-200/50">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Quick market snapshot</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white/95 p-4 shadow-xl shadow-slate-200/40">
+            <p className="px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700">Quick answer</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <MoneyCard
-                title="Published live 1:1 range"
-                amount={`${formatINR(research.oneToOne.minExactPublishedRate)}–${formatINR(research.oneToOne.maxExactPublishedRate)}`}
-                detail={`${research.oneToOne.providerCount} external providers in the exact benchmark`}
+                title="Live 1:1 median"
+                amount={'~' + benchmarkMoney(research.oneToOne.median)}
+                detail={
+                  'Observed exact rates ' +
+                  benchmarkMoney(research.oneToOne.minExactPublishedRate) +
+                  '–' +
+                  benchmarkMoney(research.oneToOne.maxExactPublishedRate)
+                }
               />
               <MoneyCard
-                title="Published live group range"
-                amount={`${formatINR(research.group.minExactPublishedRate)}–${formatINR(research.group.maxExactPublishedRate)}`}
-                detail={`${research.group.providerCount} external providers in the exact benchmark`}
+                title="Live group median"
+                amount={'~' + benchmarkMoney(research.group.median)}
+                detail={
+                  'Observed exact rates ' +
+                  benchmarkMoney(research.group.minExactPublishedRate) +
+                  '–' +
+                  benchmarkMoney(research.group.maxExactPublishedRate) +
+                  ' / child'
+                }
               />
             </div>
-            <div className="mt-3 rounded-2xl bg-slate-950 p-5 text-white">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-sky-200">Tiny Steps standard 1:1</p>
-                  <p className="mt-2 text-3xl font-black">{formatINR(PER_CLASS_PRICE)}</p>
-                  <p className="mt-1 text-sm text-slate-300">per child · per 35-minute live class</p>
-                </div>
-                <ShieldCheck className="mt-1 h-6 w-6 shrink-0 text-sky-200" aria-hidden="true" />
+            <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl bg-slate-950 px-4 py-4 text-white">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-sky-200">Tiny Steps standard 1:1</p>
+                <p className="mt-1 text-2xl font-black">{formatINR(PER_CLASS_PRICE)} <span className="text-sm font-semibold text-slate-300">/ 35 min</span></p>
+                <p className="mt-1 text-xs text-slate-400">Shown for context · excluded from the external benchmark</p>
               </div>
+              <ShieldCheck className="h-6 w-6 shrink-0 text-sky-200" aria-hidden="true" />
             </div>
           </div>
         </div>
       </section>
 
-      <section id="market-pricing" className="mx-auto max-w-7xl scroll-mt-28 px-6 py-11 lg:px-8 lg:py-14">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-sky-700">Market pricing research</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Compare 1:1 and group phonics fees separately</h2>
-          <p className="mt-3 text-base leading-7 text-slate-600">Teacher attention, group size and session duration change the economics significantly, so combining live 1:1 and group prices would be misleading.</p>
+      <section id="market-pricing" className="mx-auto max-w-7xl scroll-mt-28 px-6 py-10 lg:px-8 lg:py-12">
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Market pricing research</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            Compare 1:1 and group phonics fees separately
+          </h2>
+          <p className="mt-3 text-base leading-7 text-slate-600">
+            The matrix below shows the public price exactly as we found it. Green rows are precise enough to enter the benchmark; amber prices are published but not converted when the session count is unclear.
+          </p>
         </div>
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-2">
-          <article className="rounded-[2rem] border border-slate-200 bg-slate-50/60 p-5 sm:p-6">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Live 1:1 online phonics</p>
-                <h3 className="mt-1 text-2xl font-black text-slate-950">One child, one teacher</h3>
-              </div>
-              <div className="text-right text-xs text-slate-500">
-                <div>Median <strong className="text-slate-900">~{formatINR(research.oneToOne.median)}</strong></div>
-                <div className="mt-1">Average <strong className="text-slate-900">~{formatINR(research.oneToOne.average)}</strong></div>
-              </div>
-            </div>
-            <ProviderPriceTable format="one-to-one" />
-          </article>
-
-          <article className="rounded-[2rem] border border-slate-200 bg-slate-50/60 p-5 sm:p-6">
-            <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-700">Live group online phonics</p>
-                <h3 className="mt-1 text-2xl font-black text-slate-950">Price per child</h3>
-              </div>
-              <div className="text-right text-xs text-slate-500">
-                <div>Median <strong className="text-slate-900">~{formatINR(research.group.median)}</strong></div>
-                <div className="mt-1">Average <strong className="text-slate-900">~{formatINR(research.group.average)}</strong></div>
-              </div>
-            </div>
-            <ProviderPriceTable format="group" />
-          </article>
+        <div id="provider-prices" className="mt-7 scroll-mt-28">
+          <ProviderMatrix />
         </div>
 
-        <div className="mt-8 rounded-[1.75rem] border border-slate-200 bg-white p-5 sm:p-6">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Reviewed but not used in the exact benchmark</p>
-          <h3 className="mt-2 text-xl font-black text-slate-950">Providers where a current comparable public fee was not clear enough</h3>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE.map((item) => (
-              <article key={item.provider} className="rounded-xl bg-slate-50 p-4">
-                <a
-                  href={item.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-bold text-sky-700 underline decoration-sky-200 underline-offset-4 hover:text-sky-900"
-                >
-                  {item.provider}
-                </a>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.reason}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 text-sm leading-7 text-slate-700">
-            <strong className="text-slate-950">How to read these figures:</strong> every named row links to the official provider source reviewed on {research.reviewedLabel}. The median and average use only external providers with exact enough public live-class pricing; Tiny Steps is excluded from those benchmark statistics. These are market observations, not a quality ranking or nationwide census.
-          </div>
-          <details className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div id="methodology" className="mt-5 grid gap-3 lg:grid-cols-2">
+          <details className="group rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-slate-950">
-              <span className="flex items-center gap-2"><Search className="h-4 w-4 text-sky-700" aria-hidden="true" />How we calculated the benchmark</span>
+              <span className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-sky-700" aria-hidden="true" />
+                How we calculated the benchmark
+              </span>
               <span className="text-slate-400 transition group-open:rotate-45">+</span>
             </summary>
-            <div className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+            <div className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
               {research.methodology.map((item) => <p key={item}>{item}</p>)}
-              <p className="font-semibold text-slate-800">Source-of-truth note: provider names, source URLs, published fee structures, inclusion decisions and the research date are retained in the site data file so future refreshes can be audited row by row.</p>
+              <p className="font-semibold text-slate-800">
+                Prices can change. Every displayed provider links to the official source checked on {research.reviewedLabel}.
+              </p>
+            </div>
+          </details>
+
+          <details className="group rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-slate-950">
+              <span>Providers checked without a comparable public fee</span>
+              <span className="text-slate-400 transition group-open:rotate-45">+</span>
+            </summary>
+            <div className="mt-3 space-y-3 text-sm leading-6 text-slate-600">
+              {PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE.map((item) => (
+                <div key={item.provider}>
+                  <a
+                    href={item.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-sky-700 underline decoration-sky-200 underline-offset-4"
+                  >
+                    {item.provider}
+                  </a>
+                  <p className="mt-0.5">{item.reason}</p>
+                </div>
+              ))}
             </div>
           </details>
         </div>
+
+        <p className="mt-4 text-xs leading-5 text-slate-500">
+          Tiny Steps publishes this research and is not an independent comparison service. Provider names and public prices are reported for factual market research only; no quality or value ranking is assigned.
+        </p>
       </section>
 
-      <section id="tiny-steps-pricing" className="border-y border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-11 lg:px-8 lg:py-14">
-          <div className="grid gap-7 lg:grid-cols-[.72fr_1.28fr] lg:items-start">
+      <section className="border-y border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-7xl px-6 py-9 lg:px-8 lg:py-10">
+          <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Tiny Steps pricing</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">{formatINR(PER_CLASS_PRICE)} per standard live 1:1 phonics class</h2>
-              <p className="mt-3 text-base leading-7 text-slate-600">Each standard Indian-teacher 1:1 class is 35 minutes. For context, the external-provider 1:1 benchmark above has a provider-level median of about {formatINR(research.oneToOne.median)} per live class. Tiny Steps is not included in that market median.</p>
-              <div className="mt-5 rounded-2xl bg-slate-950 p-5 text-white">
-                <p className="text-sm leading-6 text-slate-200"><strong className="text-white">One free 35-minute 1:1 demo assessment comes first.</strong> The child’s starting point should guide placement before a package is selected.</p>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                <IndianRupee className="h-5 w-5" aria-hidden="true" />
               </div>
+              <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Tiny Steps price, for reference</p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                {formatINR(PER_CLASS_PRICE)} per 35-minute live 1:1 class
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                Tiny Steps is intentionally excluded from the external-provider median. The current standard packages below use the same {formatINR(PER_CLASS_PRICE)} per-class rate.
+              </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => (
-                <article key={pkg.id} className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">{pkg.classes} live classes</p>
-                  <p className="mt-3 text-3xl font-black text-slate-950">{formatINR(pkg.monthlyFee)}</p>
-                  <p className="mt-2 text-sm text-slate-600">{formatINR(Math.round(pkg.monthlyFee / pkg.classes))} per class · {pkg.durationMinutes} minutes · 1 child : 1 teacher</p>
+                <article key={pkg.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-700">{pkg.classes} live classes</p>
+                  <p className="mt-1.5 text-2xl font-black text-slate-950">{formatINR(pkg.monthlyFee)}</p>
+                  <p className="mt-1 text-xs text-slate-500">{pkg.durationMinutes} minutes · 1:1</p>
                 </article>
               ))}
+              <article className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-700">Small groups</p>
+                <p className="mt-1.5 text-2xl font-black text-slate-950">
+                  {formatINR(tinyStepsGroupMin)}–{formatINR(tinyStepsGroupMax)}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  per child / class · {tinyStepsGroupDurationMin}–{tinyStepsGroupDurationMax} min
+                </p>
+              </article>
             </div>
+          </div>
+          <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
+            <Link to="/pricing" className="inline-flex items-center gap-2 font-bold text-sky-700 hover:text-sky-900">
+              View full Tiny Steps pricing <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-600">12 classes: ₹4,800 · 16: ₹6,400 · 24: ₹9,600</span>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-11 lg:px-8 lg:py-14">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-700">Tiny Steps small groups</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Current per-child group fees</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">These are Tiny Steps’ current group prices, separate from the market-research benchmark above.</p>
-          </div>
-          <Link to="/pricing" className="inline-flex items-center gap-2 text-sm font-bold text-sky-700 hover:text-sky-900">View all Tiny Steps pricing <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-        </div>
-
-        <div className="mt-7 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm">
-          <div className="grid grid-cols-[.7fr_1fr_1fr] gap-3 border-b border-slate-200 bg-slate-950 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-slate-200 sm:px-6">
-            <span>Format</span><span>Fee / child</span><span>Duration</span>
-          </div>
-          {GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1').map((row) => (
-            <div key={row.ratio} className="grid grid-cols-[.7fr_1fr_1fr] gap-3 border-b border-slate-100 px-4 py-4 text-sm last:border-b-0 sm:px-6">
-              <strong className="text-slate-950">{row.ratio}</strong>
-              <span className="text-slate-700">{formatINR(Math.round(row.monthlyFee / row.classes))} / class</span>
-              <span className="text-slate-700">{row.durationMinutes} minutes</span>
+      <section className="bg-slate-950 text-white">
+        <div className="mx-auto max-w-7xl px-6 py-9 lg:px-8 lg:py-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-200">Compare packages fairly</p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight">Use effective fee per live class</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Package total alone is not enough. Compare the live format, teaching time and terms behind the number.
+              </p>
             </div>
-          ))}
-        </div>
-        <p className="mt-3 text-xs leading-5 text-slate-500">All group fees above are per child. Group placement depends on a suitable learning and schedule fit.</p>
-      </section>
-
-      <section className="border-y border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-11 lg:px-8 lg:py-14">
-          <div className="grid gap-8 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700"><Calculator className="h-5 w-5" aria-hidden="true" /></div>
-              <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Compare packages fairly</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Use effective fee per live class</h2>
-              <p className="mt-3 leading-7 text-slate-600">A large package can look cheaper or more expensive until you normalize it to the number of actual live classes.</p>
-              <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm font-semibold text-slate-900">Total package fee ÷ clearly stated number of live classes = effective fee per live class</div>
+            <div className="rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-semibold text-slate-100">
+              Total package fee ÷ stated live classes = effective fee per class
             </div>
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">Do not compare price alone</p>
-              <div className="mt-4 space-y-3">
-                {comparisonChecks.map((item, index) => (
-                  <div key={item} className="flex gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-sky-700 ring-1 ring-slate-200">{index + 1}</span>
-                    <span>{item}</span>
-                  </div>
-                ))}
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {comparisonChecks.map((item, index) => (
+              <div key={item} className="flex gap-3 rounded-xl border border-white/10 bg-white/[0.05] p-4 text-sm leading-6 text-slate-200">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-slate-950">{index + 1}</span>
+                <span>{item}</span>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
-        <div className="mx-auto max-w-7xl px-6 py-11 lg:px-8 lg:py-14">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-sky-200 ring-1 ring-white/10"><ClipboardCheck className="h-4 w-4" aria-hidden="true" /> Assessment before enrolment</div>
-              <h2 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">What should the free phonics assessment check?</h2>
-              <p className="mt-3 text-base leading-8 text-slate-300">Two children of the same age can need different starting points. The first commercial decision should therefore be level fit—not package size.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {assessmentChecks.map((item) => (
-                <div key={item} className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-semibold text-slate-200">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />{item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 py-11 lg:px-8 lg:py-14">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <IndianRupee className="h-5 w-5 text-sky-700" aria-hidden="true" />
-            <h2 className="mt-4 text-xl font-black text-slate-950">Need the phonics programme itself?</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">This page owns fees. The main phonics page explains levels, teaching sequence, blending, decoding and placement.</p>
-            <Link to="/phonics" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-sky-700">Explore phonics classes <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-          </article>
-          <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <Users className="h-5 w-5 text-indigo-700" aria-hidden="true" />
-            <h2 className="mt-4 text-xl font-black text-slate-950">Comparing providers?</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Use the buyer guide for child fit, 1:1 vs group format, teaching quality, progress evidence and provider comparison.</p>
-            <Link to="/best-online-phonics-classes-for-kids-in-india" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-sky-700">Compare phonics options <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-          </article>
-          <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
-            <Sparkles className="h-5 w-5 text-amber-600" aria-hidden="true" />
-            <h2 className="mt-4 text-xl font-black text-slate-950">Ready to check your child’s level?</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">The demo owner handles the free 35-minute 1:1 assessment and the next-step recommendation.</p>
-            <Link to="/book-demo" className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-sky-700">Book free assessment <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
-          </article>
-        </div>
-      </section>
-
-      <section className="border-y border-slate-200 bg-slate-50">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-11 lg:grid-cols-[.7fr_1.3fr] lg:px-8 lg:py-14">
+      <section className="mx-auto max-w-7xl px-6 py-9 lg:px-8 lg:py-10">
+        <div className="grid gap-7 lg:grid-cols-[.65fr_1.35fr]">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Parent questions</p>
             <h2 className="mt-2 text-3xl font-black text-slate-950">Phonics fees FAQs</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">Research benchmarks and Tiny Steps’ own current fees are kept distinct so parents can compare the market without confusing it with our pricing.</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Short answers to the pricing questions parents usually need before comparing programmes.
+            </p>
           </div>
           <div className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             {faqItems.map((item) => (
-              <details key={item.question} className="group p-5 open:bg-slate-50/60">
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 font-bold text-slate-950"><span>{item.question}</span><span className="mt-0.5 text-xl font-light text-slate-400 transition group-open:rotate-45">+</span></summary>
+              <details key={item.question} className="group p-4 open:bg-slate-50/60">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 font-bold text-slate-950">
+                  <span>{item.question}</span>
+                  <span className="mt-0.5 text-xl font-light text-slate-400 transition group-open:rotate-45">+</span>
+                </summary>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{item.answer}</p>
               </details>
             ))}
@@ -479,17 +508,28 @@ export default function PhonicsFeesIndiaPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
-        <div className="rounded-[2rem] bg-gradient-to-r from-sky-700 via-indigo-700 to-slate-950 px-6 py-7 text-white shadow-xl shadow-indigo-200/30 sm:px-8 lg:flex lg:items-center lg:justify-between lg:gap-8">
-          <div>
-            <h2 className="text-2xl font-black">Start with the child’s level before choosing a package</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200">Book one free 35-minute live 1:1 online demo assessment and get a starting-point recommendation before enrolment.</p>
+      <section className="border-t border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link to="/phonics" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sky-700">Programme</p>
+              <p className="mt-1 font-black text-slate-950">See the Tiny Steps phonics pathway</p>
+            </Link>
+            <Link to="/best-online-phonics-classes-for-kids-in-india" className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-indigo-700">Comparison guide</p>
+              <p className="mt-1 font-black text-slate-950">Compare programme fit and teaching quality</p>
+            </Link>
+            <Link to="/book-demo" className="rounded-2xl border border-slate-900 bg-slate-950 p-4 text-white transition hover:-translate-y-0.5 hover:bg-slate-800">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-sky-200">Next step</p>
+              <p className="mt-1 flex items-center justify-between gap-3 font-black">
+                Book the free 35-minute assessment <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+              </p>
+            </Link>
           </div>
-          <Link to="/book-demo" className="mt-5 inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-slate-100 lg:mt-0">Book Free 35-Minute Demo <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
         </div>
       </section>
 
-      <div className="pb-24 sm:pb-20"><ClusterSeoNav cluster="phonics" compact /></div>
+      <div className="pb-20"><ClusterSeoNav cluster="phonics" compact /></div>
     </main>
   );
 }
