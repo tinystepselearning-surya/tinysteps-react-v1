@@ -31,6 +31,7 @@ const routesSource = read('src/app/routes.tsx');
 const internalLinksSource = read('src/lib/seo/internalLinkMap.ts');
 const sitemapGeneratorSource = read('scripts/generate-sitemaps.js');
 const sitemapStatic = read('public/sitemap-static.xml');
+const sitemapParents = read('public/sitemap-parents.xml');
 const sitemapIndex = read('public/sitemap.xml');
 const seoSmoke = read('scripts/seo-smoke.mjs');
 const htmlSitemap = read('src/pages/SitemapPage.tsx');
@@ -198,19 +199,38 @@ describe('Speaking growth Brick 7 progress framework', () => {
     expect(pageSource).not.toContain('firestore');
   });
 
-  it('places the framework exactly once in static sitemap discovery with current freshness', () => {
+  it('keeps Brick 7 discovery surfaces current and gives the framework exactly one sitemap URL', () => {
     expect(
       (sitemapStatic.match(/<loc>https:\/\/tinystepslearning\.com\/speaking-progress-framework<\/loc>/g) ?? []),
     ).toHaveLength(1);
-    expect(sitemapStatic).toContain(
-      '<loc>https://tinystepslearning.com/speaking-progress-framework</loc>\n    <lastmod>2026-09-19</lastmod>',
+
+    for (const route of [
+      '/speaking-progress-framework',
+      '/speaking',
+      '/book-demo',
+      '/resources/speaking',
+    ]) {
+      expect(sitemapStatic).toContain(
+        `<loc>https://tinystepslearning.com${route}</loc>\n    <lastmod>2026-09-19</lastmod>`,
+      );
+    }
+
+    expect(sitemapParents).toContain(
+      '<loc>https://tinystepslearning.com/parents/tracking-progress</loc>\n    <lastmod>2026-09-19</lastmod>',
     );
     expect(sitemapIndex).toContain(
       '<loc>https://tinystepslearning.com/sitemap-static.xml</loc>\n    <lastmod>2026-09-19</lastmod>',
     );
-    expect(sitemapGeneratorSource).toContain("route === '/speaking-progress-framework'");
-    expect(sitemapGeneratorSource).toContain('speakingProgressFrameworkTs');
-    expect(sitemapGeneratorSource).toContain('speakingProgressFrameworkPageTsx');
+    expect(sitemapIndex).toContain(
+      '<loc>https://tinystepslearning.com/sitemap-parents.xml</loc>\n    <lastmod>2026-09-19</lastmod>',
+    );
+
+    expect(sitemapGeneratorSource).toContain("'/speaking': [appRoutesTs, speakingPageTsx]");
+    expect(sitemapGeneratorSource).toContain("'/book-demo': [appRoutesTs, bookDemoPageTsx]");
+    expect(sitemapGeneratorSource).toContain("'/resources/speaking': [appRoutesTs, subjectResourcesPageTsx]");
+    expect(sitemapGeneratorSource).toContain("'/speaking-progress-framework': [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx]");
+    expect(sitemapGeneratorSource).toContain("route === '/parents/tracking-progress'");
+    expect(sitemapGeneratorSource).toContain('parentTrackingPageTsx');
     expect(seoSmoke).toContain("'https://tinystepslearning.com/speaking-progress-framework'");
   });
 });
