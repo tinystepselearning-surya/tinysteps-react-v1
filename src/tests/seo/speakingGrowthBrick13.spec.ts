@@ -29,7 +29,7 @@ const routeManifestSource = read('src/lib/publicRouteManifest.js');
 
 describe('Speaking growth Brick 13 search-to-lead-to-admission attribution', () => {
   it('freezes a bounded Speaking attribution territory without generic decision pages', () => {
-    expect(SPEAKING_ATTRIBUTION_REVISION).toBe('2026-09-19-b13-v1');
+    expect(SPEAKING_ATTRIBUTION_REVISION).toBe('2026-09-19-b13-v2');
     expect(SPEAKING_ATTRIBUTION_ORIGIN_PATHS).toHaveLength(22);
     expect(new Set(SPEAKING_ATTRIBUTION_ORIGIN_PATHS).size).toBe(22);
 
