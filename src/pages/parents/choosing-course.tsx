@@ -30,7 +30,7 @@ const faqItems = [
   {
     question: 'Should my child start with phonics, reading, grammar, or communication?',
     answer:
-      'If reading basics are weak, phonics or reading support usually comes first. If reading is stable but sentence or writing accuracy is weak, grammar and writing support is often the better first step. If ideas are clear but spoken responses are hesitant, communication confidence support is usually the right start.',
+      'If reading basics are weak, phonics or reading support usually comes first. If sentence or writing accuracy is weak, grammar and writing support may be the better first step. Everyday conversational-fluency gaps point toward Spoken English, confidence as the primary barrier points toward Confidence Building, and storytelling, presentation, or audience-facing structure points toward Public Speaking.',
   },
   {
     question: 'What if my child reads but still makes grammar mistakes?',
@@ -40,7 +40,7 @@ const faqItems = [
   {
     question: 'What if my child understands English but gives short answers?',
     answer:
-      'Short answers often point to confidence or sentence-formation gaps. A guided communication pathway usually helps more than general reading practice alone.',
+      'Short answers do not automatically mean Public Speaking. If the child mainly needs fuller everyday conversation, Spoken English may fit; if sentence construction is the barrier, Grammar may fit; if the child knows what to say but hesitates across situations, Confidence Building may fit. The assessment separates these needs before placement.',
   },
   {
     question: 'Can Tiny Steps suggest a course after assessing my child?',
@@ -101,8 +101,8 @@ const decisionCards = [
     helper: 'Best when the child can communicate basic ideas but needs stronger organisation, storytelling, presentation, or audience-facing delivery.',
     bullets: [
       'Ideas are present but answers are difficult to organise.',
-      'The child avoids oral answers despite understanding the question.',
-      'Confidence drops during speaking tasks or presentations.',
+      'The child needs stronger storytelling, show-and-tell, or presentation structure.',
+      'The child is ready to practise clearer audience-facing delivery and follow-up questions.',
     ],
     program: 'speaking' as const,
   },
@@ -203,7 +203,7 @@ const ChoosingCourse: React.FC = () => {
           <>
             Choose the first course based on your child&apos;s real learning gap, not only age or what sounds
             popular. This page helps parents decide whether phonics, reading, grammar, writing, or speaking
-            confidence should come first.
+            or communication support should come first.
           </>
         }
         trustChips={[
