@@ -974,6 +974,16 @@ export const adminAttendanceCorrection = onCall(
 
     const session = (sessionSnap.data() || {}) as Record<string, unknown>;
     const sessionUpdateTime = sessionSnap.updateTime;
+    const sessionLifecycleStatus = String(session.status || '').trim().toLowerCase();
+    if (
+      hasValidationCaseLink
+      && (sessionLifecycleStatus === 'cancelled' || sessionLifecycleStatus === 'canceled')
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'AVS-linked correction cannot be applied to a cancelled session.',
+      );
+    }
     const sessionKidIds = Array.isArray(session.kidIds)
       ? (session.kidIds as unknown[]).map((id) => String(id || '').trim()).filter(Boolean)
       : [];
@@ -1062,6 +1072,12 @@ export const adminAttendanceCorrection = onCall(
         validationCase.tinyStepsAttendance,
       );
       const currentTinyStepsAttendance = canonicalizeAv7AttendanceStatus(previousStatus);
+      if (previousStatus !== null && currentTinyStepsAttendance === null) {
+        throw new HttpsError(
+          'failed-precondition',
+          'AVS-linked correction cannot reinterpret a non-canonical attendance status.',
+        );
+      }
       if (recordedTinyStepsAttendance !== currentTinyStepsAttendance) {
         throw new HttpsError(
           'failed-precondition',
