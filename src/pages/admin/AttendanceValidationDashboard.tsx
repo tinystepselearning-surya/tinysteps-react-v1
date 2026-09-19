@@ -94,6 +94,7 @@ interface AvsFirstTimeBaselineResponse {
     sessionQueryReads: number;
     validationCaseReads: number;
     teacherUserReads: number;
+    organizerEvidenceLookupQueries: number;
     av53PointReads: number;
     sharedStaffRegistryLoaded: boolean;
     boundedReadsExcludingStaffRegistry: number;
@@ -802,6 +803,7 @@ export default function AttendanceValidationDashboard() {
               <p className="mt-1 text-xs text-slate-600">
                 Microsoft Graph logical calls: {baselineResult.graphLogicalCalls}.
                 {' '}Firestore bounded reads: {baselineResult.readBudget.boundedReadsExcludingStaffRegistry}
+                {' '}({baselineResult.readBudget.organizerEvidenceLookupQueries} organizer-evidence lookup queries included)
                 {baselineResult.readBudget.sharedStaffRegistryLoaded
                   ? ' + one shared staff-registry load'
                   : ''}.
