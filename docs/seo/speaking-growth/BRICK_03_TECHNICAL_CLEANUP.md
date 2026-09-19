@@ -191,3 +191,71 @@ Brick 3 is closed on the feature branch when:
 10. feature branch remains current with main.
 
 All ten conditions are satisfied at the structural verification gate.
+
+
+## 12. 2026-09-19 pre-Brick-4 re-audit
+
+Brick 3 was fully re-audited before opening Brick 4.
+
+Two additional hardening issues were found and corrected:
+
+### A. Trailing-slash redirect variant
+
+The first Brick 3 implementation had an explicit production 301 for:
+
+`/public-speaking-communication-kids -> /speaking`
+
+but did not explicitly list the slash variant in Firebase/redirect manifest, even though the SPA fallback already handled both forms.
+
+To remove ambiguity and avoid any avoidable normalization hop, Brick 3 now explicitly guarantees both:
+
+- `/public-speaking-communication-kids -> /speaking (301)`
+- `/public-speaking-communication-kids/ -> /speaking (301)`
+
+The SEO infrastructure regression test now asserts both production redirect contracts.
+
+### B. Generic homepage Speaking card ownership
+
+The first Brick 3 pass corrected the "Super Speakers" age label from Ages 4-15 to Ages 4-12, but the card still linked to:
+
+`/courses/public-speaking-foundations`
+
+That destination represents the named Foundations detail level (ages 4-7), while the homepage card is a generic ages 4-12 Speaking programme entry point.
+
+Brick 2 requires generic Public Speaking / Communication intent to resolve to:
+
+`/speaking`
+
+The homepage card now links to `/speaking`. Named course-detail links elsewhere (for example "Speaking Foundations" or explicit Basic/Advanced course cards) remain correctly pointed to their course-detail pages.
+
+### Expanded structural audit
+
+The re-audit verified all of the following after the fixes:
+
+- bare legacy production 301 exists;
+- trailing-slash legacy production 301 exists;
+- both redirect variants exist in the public redirect manifest;
+- legacy URL is absent from the indexable public route manifest;
+- both SPA fallback routes point to `/speaking`;
+- retired duplicate component import is absent;
+- legacy SEO alias canonicalizes to `/speaking`;
+- legacy SEO alias is `noindex, follow`;
+- Speaking subject data points to `/speaking`;
+- analytics no longer classifies the retired URL as a live programme page;
+- legacy URL is absent from static sitemap;
+- `/speaking` occurs exactly once in the static sitemap;
+- legacy URL is absent from RSS and Atom/feed output;
+- sitemap generation derives static discovery from the public route manifest, so regeneration will preserve removal;
+- RSS generation filters noindex route-registry entries, so regeneration will preserve legacy-feed removal;
+- tests assert both redirect variants;
+- generic homepage Speaking entry now points to `/speaking`;
+- confidence programme current source remains `index,follow`;
+- Hyderabad page remains a broad local chooser and links specialist Spoken-English and Public-Speaking needs to their canonical programme owners.
+
+### Remaining verification condition
+
+The executable npm/Vitest/build suite still has not run in this execution environment because repository checkout from GitHub was unavailable and no automatic branch CI run was attached. This remains an explicit final integration requirement and is not treated as silently passed.
+
+### Re-audit decision
+
+Brick 3 is **COMPLETE — RE-AUDITED** on the isolated feature branch and is ready to hand off to Brick 4. It remains undeployed and unmerged to main.
