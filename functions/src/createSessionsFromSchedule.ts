@@ -511,8 +511,23 @@ function hasFinancialLink(state: SessionFinancialLinkState | undefined): boolean
 }
 
 function isScheduleExceptionSession(raw: Record<string, unknown>): boolean {
-  if (raw.isAdHoc === true || raw.isMakeup === true) return true;
-  if (raw.makeupCreditId || raw.makeupForSessionId) return true;
+  if (
+    raw.historicalCorrection === true ||
+    raw.isAdHoc === true ||
+    raw.isManual === true ||
+    raw.isMakeup === true
+  ) return true;
+  if (
+    raw.manualSessionState != null ||
+    raw.makeupCreditId ||
+    raw.makeupForSessionId ||
+    raw.rescheduleCreditId ||
+    raw.rescheduledFromSessionId ||
+    raw.originalSessionId ||
+    raw.sourceSessionId ||
+    raw.replacementSessionId ||
+    raw.replacementForSessionId
+  ) return true;
 
   const adHocType = String(raw.adHocType || "").trim().toLowerCase();
   if (adHocType && (adHocType.includes("one_off") || adHocType.includes("adhoc") || adHocType.includes("ad_hoc"))) {
