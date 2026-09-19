@@ -204,7 +204,7 @@ The existing C6 audit was also strengthened to require the Hyderabad → Spoken 
 - near-me pages: ZERO;
 - metadata changes: ZERO;
 - canonical changes: ZERO;
-- redirect changes: ZERO;
+- canonical-owner redirect destination changes: ZERO; an explicit trailing-slash legacy alias was added during re-audit;
 - sitemap changes: ZERO;
 - pricing changes: ZERO;
 - formal Spoken-English course levels: ZERO;
@@ -225,3 +225,87 @@ Brick 5 is complete on the isolated feature branch when:
 10. dedicated regression guards are committed.
 
 All ten conditions are satisfied structurally on the feature branch.
+
+
+## 17. 2026-09-19 pre-Brick-6 re-audit
+
+Brick 5 was fully re-audited before opening Brick 6.
+
+### A. Assessment CTA wording corrected
+
+The first Brick 5 pass used `Book a Free Speaking Assessment` and a `Free speaking assessment` trust chip.
+
+That wording was too ambiguous on a Spoken-English owner because the destination `/book-demo` is the cross-programme English assessment owner and may recommend Spoken English, Grammar, Public Speaking or another path.
+
+The page now uses:
+- `Book a Free English Assessment`;
+- `Free English assessment`.
+
+The destination remains `/book-demo`; no conversion-owner change was made.
+
+### B. Protected diagnostic intents separated from commercial intent
+
+The page previously used two FAQ questions that closely echoed protected informational owners:
+
+- `child understands English but does not speak`;
+- `child gives one-word answers`.
+
+Those editorial intents remain owned by:
+- `/blog/child-understands-english-but-does-not-speak`;
+- `/blog/child-gives-one-word-answers`.
+
+Brick 5 now frames the FAQ questions as commercial-fit questions instead of broad diagnostic questions, and the page directly links parents to both diagnostic articles when they need to understand the learning problem before choosing classes.
+
+This preserves:
+- commercial programme intent on `/spoken-english-classes-for-kids-online`;
+- problem-diagnosis intent on the protected editorial owners.
+
+### C. Legacy Spoken-English redirect hardened
+
+The existing legacy alias already had:
+
+`/spoken-english-classes-for-kids -> /spoken-english-classes-for-kids-online (301)`
+
+The re-audit found that the trailing-slash variant was not explicitly represented across the same layers.
+
+Brick 5 now guarantees both:
+
+- `/spoken-english-classes-for-kids -> /spoken-english-classes-for-kids-online (301)`;
+- `/spoken-english-classes-for-kids/ -> /spoken-english-classes-for-kids-online (301)`.
+
+Both SPA fallback variants also resolve to the canonical owner.
+
+The SEO smoke now forbids both retired variants from sitemap discovery, and central SEO infrastructure tests assert both 301 contracts.
+
+### D. C6 compatibility verified
+
+The added Hyderabad → Spoken-English programme-fit edge stays inside the existing 14-owner commercial architecture.
+
+The pre-existing C6 test does not assert an exact total edge count; it asserts:
+- 14 owners remain frozen;
+- 13 direct assessment edges remain intact;
+- every edge stays inside existing commercial owners;
+- source links actually exist.
+
+Therefore the added programme-fit edge does not violate the C6 owner or conversion contract.
+
+### E. Structured-data handoff remains Brick 6
+
+The Spoken-English page continues to emit semantic `Course` markup through the existing shared schema helper.
+
+Current Google Course-list eligibility requires at least three courses plus the relevant list/carousel structure. Brick 5 does not invent a three-level Spoken-English programme simply to target that enhancement.
+
+Brick 6 must review the wider programme architecture and schema deliberately.
+
+### F. Re-audit decision
+
+Brick 5 is **COMPLETE — RE-AUDITED** on the isolated feature branch.
+
+The re-audit strengthened:
+- conversion wording;
+- commercial-vs-diagnostic intent separation;
+- legacy redirect completeness;
+- sitemap regression protection;
+- central SEO infrastructure coverage.
+
+No new commercial URL, city page, near-me page, canonical owner or production deployment was introduced.
