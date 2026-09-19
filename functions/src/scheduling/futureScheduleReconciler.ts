@@ -52,13 +52,13 @@ export type FutureScheduleSourceIssueCode =
   | 'ambiguous_legacy_child_identity'
   | 'invalid_classes_start_date'
   | 'missing_or_ambiguous_teacher'
-  | 'non_canonical_rolling_schedule'
   | 'invalid_recurring_schedule';
 
 export type FutureScheduleSourceWarningCode =
   | 'missing_parent_identity'
   | 'missing_course_identity'
   | 'missing_classes_start_date'
+  | 'legacy_schedule_format'
   | 'missing_billing_rate';
 
 export type FutureScheduleSourceAssessment = {
@@ -286,15 +286,18 @@ export function assessFutureScheduleEnrollmentSource(
     issues.push('missing_or_ambiguous_teacher');
   }
 
-  if (!isCanonicalFutureScheduleEnrollment(enrollment)) {
-    issues.push('non_canonical_rolling_schedule');
-  } else {
-    try {
-      const slots = normalizeRollingMaterializerSlots(enrollment.schedule);
-      if (!slots.length) issues.push('invalid_recurring_schedule');
-    } catch {
+  try {
+    const slots = normalizeRollingMaterializerSlots(enrollment.schedule);
+    if (!slots.length) {
       issues.push('invalid_recurring_schedule');
+    } else if (!isCanonicalFutureScheduleEnrollment(enrollment)) {
+      // Existing active enrollments may still use the legacy recurrence shape.
+      // The future reconciler normalizes that shape read-only and lets lifecycle
+      // status, not legacy finite-plan metadata, control continued scheduling.
+      warnings.push('legacy_schedule_format');
     }
+  } catch {
+    issues.push('invalid_recurring_schedule');
   }
 
   if (!buildSessionFinancialTermsSnapshot({}, enrollment)) {
@@ -318,8 +321,13 @@ export function assessFutureScheduleEnrollmentSource(
  *
  * The existing rolling materializer remains the recurrence/identity source so
  * deterministic session IDs and recurrence semantics stay compatible with
- * production. Its native window is one date wider when anchored on tomorrow,
- * so the final occurrence set is explicitly clipped to managedThroughYmd.
+ * production. It already normalizes canonical rolling schedules and supported
+ * legacy recurrence shapes into the same exact weekday/time/duration slots.
+ * Legacy finite-plan fields do not cap this contract: an operationally active
+ * enrollment keeps tomorrow-through-+14 coverage until its lifecycle status
+ * becomes paused or terminal. The materializer's native window is one date
+ * wider when anchored on tomorrow, so the final occurrence set is explicitly
+ * clipped to managedThroughYmd.
  */
 export function buildFutureScheduleWindowPlan(args: {
   enrollmentId: string;
