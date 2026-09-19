@@ -387,8 +387,8 @@ function buildSegment(format: PhonicsFeeFormat, unitLabel: string): PhonicsFeeMa
     exactRateObservationCount: exactRates.length,
     median: median(providerValues),
     average: average(providerValues),
-    minExactPublishedRate: Math.min(...exactRates),
-    maxExactPublishedRate: Math.max(...exactRates),
+    minExactPublishedRate: exactRates.length ? Math.min(...exactRates) : 0,
+    maxExactPublishedRate: exactRates.length ? Math.max(...exactRates) : 0,
   };
 }
 
