@@ -21,6 +21,7 @@ import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
 import {
   collectTeamsEvidence,
+  hashAttendanceEvidenceValue,
   type TeamsEvidenceGraphClient,
 } from './teamsEvidenceCollector';
 import { runAv53ShadowWithFirestore } from './shadowRunner';
@@ -182,6 +183,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           sessionQueryReads: 0,
           validationCaseReads: 0,
           teacherUserReads: 0,
+          organizerEvidenceLookupQueries: 0,
           av53PointReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry: 1,
@@ -248,6 +250,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           sessionQueryReads: sessionQuerySnapshot.docs.length,
           validationCaseReads: 0,
           teacherUserReads: 0,
+          organizerEvidenceLookupQueries: 0,
           av53PointReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry:
@@ -293,6 +296,34 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       }
     }
 
+    const knownOrganizerByJoinUrlHash = new Map<string, string | null>();
+    let organizerEvidenceLookupQueries = 0;
+
+    for (const item of missingCaseRows) {
+      const expectedSession = snapshots.get(item.id);
+      if (!expectedSession?.joinUrl) continue;
+      if (
+        text(item.data.teamsOrganizerUserId)
+        || text(item.data.organizerUserId)
+      ) {
+        continue;
+      }
+
+      const joinUrlHash = hashAttendanceEvidenceValue(expectedSession.joinUrl);
+      if (knownOrganizerByJoinUrlHash.has(joinUrlHash)) continue;
+
+      organizerEvidenceLookupQueries += 1;
+      const knownEvidence = await db
+        .collection('attendanceValidationEvidence')
+        .where('session.joinUrlHash', '==', joinUrlHash)
+        .limit(1)
+        .get();
+      const organizerUserId = knownEvidence.empty
+        ? null
+        : text(knownEvidence.docs[0].data().organizerUserId) || null;
+      knownOrganizerByJoinUrlHash.set(joinUrlHash, organizerUserId);
+    }
+
     const teacherIds = [...missingTeacherIds].sort();
     const teacherSnapshots = teacherIds.length > 0
       ? await db.getAll(
@@ -333,12 +364,23 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       const expectedSession = snapshots.get(item.id);
       if (!expectedSession) continue;
 
-      const organizerUserId = resolveBaselineOrganizerCandidate(
-        item.data,
-        expectedSession.teacherId
-          ? teacherById.get(expectedSession.teacherId) ?? null
-          : null,
-      );
+      const explicitOrganizer =
+        text(item.data.teamsOrganizerUserId)
+        || text(item.data.organizerUserId)
+        || null;
+      const knownOrganizer = expectedSession.joinUrl
+        ? knownOrganizerByJoinUrlHash.get(
+            hashAttendanceEvidenceValue(expectedSession.joinUrl),
+          ) ?? null
+        : null;
+      const organizerUserId = explicitOrganizer
+        || knownOrganizer
+        || resolveBaselineOrganizerCandidate(
+          item.data,
+          expectedSession.teacherId
+            ? teacherById.get(expectedSession.teacherId) ?? null
+            : null,
+        );
       if (!organizerUserId) {
         blocked.push({
           sessionId: item.id,
@@ -445,6 +487,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         sessionQueryReads,
         validationCaseReads,
         teacherUserReads,
+        organizerEvidenceLookupQueries,
         av53PointReads,
         sharedStaffRegistryLoaded: workItems.length > 0,
         boundedReadsExcludingStaffRegistry:
@@ -452,6 +495,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           + sessionQueryReads
           + validationCaseReads
           + teacherUserReads
+          + organizerEvidenceLookupQueries
           + av53PointReads,
       },
     };
