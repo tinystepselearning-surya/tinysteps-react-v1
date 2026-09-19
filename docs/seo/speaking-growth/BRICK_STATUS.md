@@ -22,7 +22,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 01 | Speaking search baseline & safety lock | COMPLETE — RE-AUDITED | NO |
 | 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
 | 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
-| 04 | Flagship /speaking money page | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
 | 05 | Spoken English territory | PENDING | NO |
 | 06 | Programme architecture | PENDING | NO |
 | 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
@@ -132,9 +132,30 @@ Brick 3 status after re-audit: COMPLETE — RE-AUDITED.
 - Real class-experience section added using existing `/class-samples` evidence surface.
 - Existing responsive-teaching model retained and repositioned later in the parent journey.
 - Academic/teacher-quality evidence links added through `/team` and `/why-tiny-steps`.
-- Approved parent feedback moved into a dedicated evidence section before FAQ.
+- Source-supported parent feedback moved into a dedicated evidence section before FAQ.
 - Class-sample FAQ added.
 - New regression guard: `src/tests/seo/speakingGrowthBrick4.spec.ts`.
 - New commercial URLs: ZERO.
 - Metadata/canonical/redirect/sitemap changes in Brick 4: ZERO.
 - Production deployment: ZERO.
+
+## 2026-09-19 Brick 4 re-audit notes
+
+Brick 4 was re-audited before Brick 5.
+
+Additional fixes and findings:
+- tightened the Quick Answer so Public Speaking no longer claims generic one-word/short-answer or sentence-formation problems that may belong to Spoken English or Grammar;
+- changed `Sentence expansion practice` to `Idea organisation practice` and `Reading aloud expression` to `Voice clarity and expression`;
+- corrected testimonial wording from `Approved parent feedback` to `Parent feedback` because the rendered TestimonialSnippets path uses the static `Tiny Steps parent feedback` catalogue rather than the Firestore approval-state query;
+- added named links from the Basic and Advanced level cards to the existing Foundations and Excellence detail pages while preserving `/speaking` as generic owner;
+- added an accessible caption and column scopes to the comparison table;
+- verified all 14 internal destinations resolve;
+- verified responsive/mobile layout guards and minimum CTA touch sizes;
+- re-ran the expanded source-level invariant matrix: all checks passed;
+- recorded Brick 6 schema handoff: do not invent a third Speaking course merely to satisfy Google Course-list rich-result eligibility;
+- recorded Brick 12 markup handoff: visible FAQ/schema can support semantics, but no Google FAQ rich-result expectation is assumed;
+- confirmed Brick 4 still changes only the flagship page, its dedicated regression test, and Speaking-growth documentation;
+- confirmed feature branch remains 0 commits behind main;
+- confirmed no attached GitHub Actions run exists for the latest Brick 4 commit, so executable build/test remains a final-integration requirement.
+
+Brick 4 status after re-audit: COMPLETE — RE-AUDITED.
