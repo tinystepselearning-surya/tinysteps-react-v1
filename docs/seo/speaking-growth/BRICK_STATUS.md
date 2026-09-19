@@ -21,7 +21,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 |---|---|---|---|
 | 01 | Speaking search baseline & safety lock | COMPLETE — RE-AUDITED | NO |
 | 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
-| 03 | Cannibalization & technical SEO cleanup | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
 | 04 | Flagship /speaking money page | PENDING | NO |
 | 05 | Spoken English territory | PENDING | NO |
 | 06 | Programme architecture | PENDING | NO |
@@ -107,3 +107,17 @@ Brick 2 status after re-audit: COMPLETE — RE-AUDITED.
 - Structural invariants all passed.
 - Executable npm/Vitest/build run remains required at the final integration gate because this environment could not clone GitHub and no branch CI run was available.
 - Brick 3 production deployment: ZERO.
+
+
+## 2026-09-19 Brick 3 re-audit notes
+
+Brick 3 was re-audited before Brick 4.
+
+Additional fixes:
+- added explicit `/public-speaking-communication-kids/` → `/speaking` 301 alongside the bare-path 301, with regression assertions for both variants;
+- corrected the generic homepage "Super Speakers" card to link to the canonical `/speaking` programme owner rather than the ages 4-7 Foundations detail page;
+- re-ran the expanded structural invariant matrix after both fixes;
+- verified sitemap generation is manifest-driven and RSS/feed generation excludes the noindex legacy alias, so future regeneration preserves the cleanup;
+- confirmed main remains fully synchronized into the feature branch at the re-audit gate.
+
+Brick 3 status after re-audit: COMPLETE — RE-AUDITED.
