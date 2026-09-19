@@ -1,0 +1,281 @@
+{
+  "generatedAt": "2026-09-19",
+  "settledThrough": "2026-09-16",
+  "window": {
+    "start": "2026-06-19",
+    "end": "2026-09-16",
+    "inclusiveDays": 90
+  },
+  "methodology": {
+    "gscRowUniverse": 199,
+    "note": "Privacy-thresholded GSC query/page rows were grouped heuristically by intent. Totals are directional evidence, not total market demand."
+  },
+  "ownership": [
+    {
+      "id": "public_speaking_commercial",
+      "owner": "/speaking",
+      "impressions": 760,
+      "ownerImpressions": 382,
+      "ownerSharePct": 50.3,
+      "priority": "P1",
+      "action": "STRENGTHEN_OWNER"
+    },
+    {
+      "id": "public_speaking_comparison",
+      "owner": "/speaking",
+      "impressions": 24,
+      "ownerImpressions": 24,
+      "ownerSharePct": 100,
+      "priority": "P2",
+      "action": "KEEP_ON_OWNER_NO_NEW_PAGE"
+    },
+    {
+      "id": "public_speaking_geo",
+      "owner": "/speaking",
+      "impressions": 92,
+      "ownerImpressions": 56,
+      "ownerSharePct": 60.9,
+      "priority": "P2",
+      "action": "KEEP_GLOBAL_OWNER_NO_CITY_PAGES"
+    },
+    {
+      "id": "communication_commercial",
+      "owner": "/speaking",
+      "impressions": 21,
+      "ownerImpressions": 10,
+      "ownerSharePct": 47.6,
+      "priority": "P1",
+      "action": "STRENGTHEN_OWNER"
+    },
+    {
+      "id": "spoken_english",
+      "owner": "/spoken-english-classes-for-kids-online",
+      "impressions": 380,
+      "ownerImpressions": 117,
+      "ownerSharePct": 30.8,
+      "priority": "P1",
+      "action": "RECLAIM_GLOBAL_RELEVANCE"
+    },
+    {
+      "id": "spoken_local_hyderabad",
+      "owner": "/online-english-classes-hyderabad",
+      "impressions": 10,
+      "ownerImpressions": 10,
+      "ownerSharePct": 100,
+      "priority": "P2",
+      "action": "KEEP_NARROW_LOCAL_OWNER"
+    },
+    {
+      "id": "mixed_english",
+      "owner": "/online-english-classes-for-kids",
+      "impressions": 141,
+      "ownerImpressions": 9,
+      "ownerSharePct": 6.4,
+      "priority": "P2",
+      "action": "BROAD_CHOOSER_HANDOFF"
+    },
+    {
+      "id": "confidence_program",
+      "owner": "/confidence-building-program-kids",
+      "priority": "P3",
+      "action": "KEEP_SPECIALIST_PENDING_INDEX_REPAIR"
+    },
+    {
+      "id": "shy_diagnostic",
+      "owner": "/shy-child-speaking-confidence",
+      "priority": "P3",
+      "action": "INFORMATIONAL_SUPPORT_ONLY"
+    },
+    {
+      "id": "price",
+      "owner": "/pricing",
+      "priority": "P2",
+      "action": "CROSS_PROGRAMME_OWNER"
+    },
+    {
+      "id": "demo",
+      "owner": "/book-demo",
+      "priority": "P1",
+      "action": "CONVERSION_OWNER"
+    },
+    {
+      "id": "free_class_intent",
+      "owner": null,
+      "priority": "P3",
+      "action": "HOLD_ROUTE_TO_FREE_RESOURCES_OR_DEMO"
+    },
+    {
+      "id": "speaking_informational_skill",
+      "owner": "existing editorial/resource owner",
+      "priority": "P3",
+      "action": "SUPPORT_ONLY"
+    },
+    {
+      "id": "ai_style",
+      "owner": "underlying human-intent owner",
+      "priority": "P2",
+      "action": "NO_AI_PROMPT_PAGES"
+    }
+  ],
+  "highRiskCollisions": [
+    {
+      "query": "public speaking classes for kids",
+      "intendedOwner": "/speaking",
+      "pages": [
+        {
+          "path": "/speaking",
+          "clicks": 1,
+          "impressions": 74,
+          "avgPosition": 21.93243243243243
+        },
+        {
+          "path": "/public-speaking-communication-kids",
+          "clicks": 0,
+          "impressions": 3,
+          "avgPosition": 8
+        }
+      ]
+    },
+    {
+      "query": "online public speaking courses for kids",
+      "intendedOwner": "/speaking",
+      "pages": [
+        {
+          "path": "/public-speaking-communication-kids",
+          "clicks": 0,
+          "impressions": 73,
+          "avgPosition": 48.93150684931507
+        },
+        {
+          "path": "/speaking",
+          "clicks": 0,
+          "impressions": 9,
+          "avgPosition": 29.555555555555557
+        }
+      ]
+    },
+    {
+      "query": "public speaking online course for beginners (kids focus)",
+      "intendedOwner": "/speaking",
+      "pages": [
+        {
+          "path": "/public-speaking-communication-kids",
+          "clicks": 0,
+          "impressions": 230,
+          "avgPosition": 32.34782608695652
+        },
+        {
+          "path": "/speaking",
+          "clicks": 0,
+          "impressions": 25,
+          "avgPosition": 66.48
+        }
+      ]
+    },
+    {
+      "query": "communication classes for kids",
+      "intendedOwner": "/speaking",
+      "pages": [
+        {
+          "path": "/public-speaking-communication-kids",
+          "clicks": 1,
+          "impressions": 9,
+          "avgPosition": 17.22222222222222
+        },
+        {
+          "path": "/speaking",
+          "clicks": 0,
+          "impressions": 2,
+          "avgPosition": 4
+        }
+      ]
+    },
+    {
+      "query": "online spoken english classes for kids",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "pages": [
+        {
+          "path": "/online-english-classes-hyderabad",
+          "clicks": 0,
+          "impressions": 13,
+          "avgPosition": 15.076923076923077
+        },
+        {
+          "path": "/spoken-english-classes-for-kids-online",
+          "clicks": 0,
+          "impressions": 8,
+          "avgPosition": 10.5
+        },
+        {
+          "path": "/spoken-english-classes-for-kids",
+          "clicks": 0,
+          "impressions": 1,
+          "avgPosition": 48
+        }
+      ]
+    },
+    {
+      "query": "spoken english classes for kids near me",
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "localizedSupport": "/online-english-classes-hyderabad",
+      "pages": [
+        {
+          "path": "/online-english-classes-hyderabad",
+          "clicks": 0,
+          "impressions": 33,
+          "avgPosition": 10.151515151515152
+        }
+      ],
+      "note": "Near-me is treated as localized discovery evidence, not authorization for new thin location pages."
+    }
+  ],
+  "courseDetailBoundaries": {
+    "foundationsOwner": "/courses/public-speaking-foundations",
+    "excellenceOwner": "/courses/public-speaking-excellence",
+    "explicitNamedCurriculumQueriesObserved": 0,
+    "rule": "Course pages own named programme/detail intent and support /speaking; age wording alone does not transfer generic provider intent."
+  },
+  "aiStyleExamples": [
+    {
+      "query": "what online course helps a 6-year-old in jeddah move from memorizing english words to speaking complete sentences?",
+      "observedPages": [
+        {
+          "path": "/courses",
+          "impressions": 6,
+          "avgPosition": 4.666666666666666
+        }
+      ],
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "supportingOwner": "/grammar"
+    },
+    {
+      "query": "which online english class gives a child real-time pronunciation and sentence correction during speaking practice?",
+      "observedPages": [
+        {
+          "path": "/class-samples",
+          "impressions": 1,
+          "avgPosition": 1
+        },
+        {
+          "path": "/courses",
+          "impressions": 4,
+          "avgPosition": 5.75
+        }
+      ],
+      "intendedOwner": "/spoken-english-classes-for-kids-online",
+      "supportingOwner": "/class-samples"
+    }
+  ],
+  "forbiddenNewPages": [
+    "/best-public-speaking-classes-for-kids",
+    "/public-speaking-classes-india",
+    "city-by-city public-speaking landing pages",
+    "near-me query pages",
+    "AI-prompt-shaped landing pages",
+    "a second communication-skills commercial page",
+    "another Spoken-English page",
+    "a generic free-public-speaking-classes page",
+    "a Public Speaking fees page"
+  ],
+  "runtimeChangesAuthorized": false
+}
