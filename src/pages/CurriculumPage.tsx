@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { getRouteConfig } from '../lib/seo';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
@@ -38,6 +39,7 @@ const curriculumSeoDescription =
   'See the complete Tiny Steps learning roadmap for ages 3–12 across phonics, reading, grammar, sentence building, speaking, and communication.';
 const curriculumCanonicalPath = curriculumSeo?.canonicalPath ?? '/curriculum';
 const curriculumCanonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${curriculumCanonicalPath}`;
+const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 
 const curriculumFaqItems = [
   {
@@ -208,29 +210,29 @@ const programs: Record<Tab, RoadmapProgram> = {
     label: 'Speaking & Communication',
     programPath: '/speaking',
     summary:
-      'Build complete responses, organised ideas, storytelling, presentation structure, clear expression, and confidence through guided speaking practice.',
-    sequence: 'Listen and form an idea → answer in a complete sentence → add detail → organise → deliver and reflect',
+      'Build organised ideas, storytelling, presentation structure, clear expression, audience awareness, and stronger delivery through guided speaking practice.',
+    sequence: 'Understand the prompt → choose and organise an idea → add useful detail → shape for the audience → deliver, retry, and reflect',
     steps: [
-      'Listen to the prompt and form a clear idea.',
-      'Answer in a complete sentence.',
-      'Add detail, sequence, reason, or example.',
-      'Organise the response for the task or audience.',
-      'Deliver, receive feedback, and reflect on the next improvement.',
+      'Understand the speaking task and choose a relevant idea.',
+      'Organise the response so the listener can follow it.',
+      'Add useful detail, sequence, reason, example, or story structure.',
+      'Shape the response for the task, presentation, or audience.',
+      'Deliver, receive feedback, retry, and reduce support over time.',
     ],
     courses: [
       {
         name: 'Public Speaking Foundations',
-        path: '/courses/public-speaking-foundations',
-        lessons: '36 lessons',
-        bestFor: 'Children who give short answers, hesitate, or need guided full-sentence speaking practice.',
-        focus: 'Build comfort, response length, and predictable speaking structure.',
+        path: speakingFacts.levels.beginner.canonicalCoursePath,
+        lessons: `${speakingFacts.levels.beginner.lessonCount} lessons`,
+        bestFor: `${speakingFacts.levels.beginner.ageRange.label}; children who can communicate basic ideas but need more organisation, picture talk, show-and-tell, storytelling foundations, and short presentation structure.`,
+        focus: 'Build organised short responses, clear expression, storytelling foundations, and readiness for guided presentations.',
       },
       {
         name: 'Public Speaking Excellence',
-        path: '/courses/public-speaking-excellence',
-        lessons: '36 lessons',
-        bestFor: 'Children ready for longer talks, storytelling, presentations, structured speeches, and guided debate.',
-        focus: 'Strengthen organisation, expression, delivery, and audience confidence.',
+        path: speakingFacts.levels.advanced.canonicalCoursePath,
+        lessons: `${speakingFacts.levels.advanced.lessonCount} lessons`,
+        bestFor: `${speakingFacts.levels.advanced.ageRange.label}; children ready for longer talks, richer storytelling, presentations, impromptu speaking, opinion sharing, and guided debate.`,
+        focus: 'Strengthen speech organisation, audience awareness, reasoning, expression, delivery, and independent presentation skills.',
       },
     ],
   },
