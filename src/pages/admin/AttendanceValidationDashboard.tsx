@@ -136,6 +136,8 @@ interface Av6ValidationCase {
   enrollmentId: string | null;
   kidId: string | null;
   teacherId: string | null;
+  studentName: string | null;
+  teacherName: string | null;
   tinyStepsAttendance: 'present' | 'absent' | 'rescheduled' | null;
   validationDecision: Av6ValidationDecision;
   classification: Av6Classification;
@@ -240,6 +242,8 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     enrollmentId: asText(raw.enrollmentId),
     kidId: asText(raw.kidId),
     teacherId: asText(raw.teacherId),
+    studentName: asText(raw.studentName),
+    teacherName: asText(raw.teacherName),
     tinyStepsAttendance:
       tinyStepsAttendance === 'present'
       || tinyStepsAttendance === 'absent'
@@ -275,6 +279,18 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     resolvedAt: asText(raw.resolvedAt),
     resolvedByName: asText(raw.resolvedByName),
   };
+}
+
+function formatServiceDate(value: string | null): string {
+  if (!value) return 'Unknown date';
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'UTC',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(parsed);
 }
 
 function formatObservedAt(value: string | null): string {
@@ -400,7 +416,6 @@ export default function AttendanceValidationDashboard() {
           docSnapshot.id,
           docSnapshot.data() as Record<string, unknown>,
         ));
-
       setCases((current) => append ? [...current, ...nextCases] : nextCases);
       setCursor(
         snapshot.docs.length > 0
@@ -623,6 +638,8 @@ export default function AttendanceValidationDashboard() {
         item.enrollmentId,
         item.kidId,
         item.teacherId,
+        item.studentName,
+        item.teacherName,
         item.evidenceId,
         item.runId,
       ].some((value) => value?.toLowerCase().includes(normalizedSearch));
@@ -645,7 +662,7 @@ export default function AttendanceValidationDashboard() {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Saved results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
-                No realtime listener and no user, student, enrollment, billing, or earnings lookups.
+                No realtime listener and no user, student, enrollment, billing, earnings, or class-session fallback lookups.
               </p>
             </div>
           </div>
@@ -927,7 +944,7 @@ export default function AttendanceValidationDashboard() {
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search loaded results by session, enrollment, kid, teacher, evidence, or run ID"
+          placeholder="Search by student, teacher, date, session, enrollment, evidence, or run ID"
         />
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Validation classifications">
           {CLASSIFICATION_TABS.map((tab) => {
@@ -989,7 +1006,9 @@ export default function AttendanceValidationDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Observed</TableHead>
+                  <TableHead>Class Date</TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Teacher</TableHead>
                   <TableHead>Session</TableHead>
                   <TableHead>Tiny Steps</TableHead>
                   <TableHead>AVS</TableHead>
@@ -1005,8 +1024,26 @@ export default function AttendanceValidationDashboard() {
 
                   return (
                     <TableRow key={item.id} className="align-top">
-                      <TableCell className="min-w-[150px] text-xs text-slate-600">
-                        {formatObservedAt(item.observedAt)}
+                      <TableCell className="min-w-[130px]">
+                        <div className="font-medium text-slate-900">
+                          {formatServiceDate(item.serviceDateYmd)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[180px]">
+                        <div className="font-medium text-slate-900">
+                          {item.studentName || 'Student name unavailable'}
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {item.kidId || 'No kid ID'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[180px]">
+                        <div className="font-medium text-slate-900">
+                          {item.teacherName || 'Teacher name unavailable'}
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {item.teacherId || 'No teacher ID'}
+                        </div>
                       </TableCell>
                       <TableCell className="min-w-[220px]">
                         <div className="font-mono text-xs text-slate-800">
@@ -1014,10 +1051,11 @@ export default function AttendanceValidationDashboard() {
                         </div>
                         {expanded && (
                           <div className="mt-2 space-y-1 text-xs text-slate-500">
+                            <div>Observed: {formatObservedAt(item.observedAt)}</div>
                             <div>Service date: {item.serviceDateYmd || '—'}</div>
+                            <div>Student: {item.studentName || '—'} ({item.kidId || 'no ID'})</div>
+                            <div>Teacher: {item.teacherName || '—'} ({item.teacherId || 'no ID'})</div>
                             <div>Enrollment: {item.enrollmentId || '—'}</div>
-                            <div>Kid: {item.kidId || '—'}</div>
-                            <div>Teacher: {item.teacherId || '—'}</div>
                             <div>Evidence: {item.evidenceId || '—'}</div>
                             <div>Run: {item.runId || '—'}</div>
                             <div>
