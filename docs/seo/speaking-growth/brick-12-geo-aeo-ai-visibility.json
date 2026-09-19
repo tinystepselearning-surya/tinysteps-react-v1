@@ -1,8 +1,8 @@
 {
   "brick": 12,
   "name": "GEO / AEO / AI Visibility Layer",
-  "revision": "2026-09-19-b12-v1",
-  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "revision": "2026-09-19-b12-v2",
+  "status": "COMPLETE — RE-AUDITED",
   "branch": "feature/speaking-seo-geo-growth",
   "productionDeployment": false,
   "architecture": {
@@ -38,7 +38,11 @@
     "Restored the Brick 9 evidence-schema canonical sourcePath invariant found during Brick 12 preflight."
   ],
   "crawlerPolicy": {
-    "publicDiscoveryAllowed": [
+    "openAiSearchDiscoveryCrawler": "OAI-SearchBot",
+    "openAiPotentialTrainingCrawler": "GPTBot",
+    "googleGeminiProductControlToken": "Google-Extended",
+    "appleFoundationModelProductControlToken": "Applebot-Extended",
+    "configuredRobotsTokens": [
       "OAI-SearchBot",
       "ChatGPT-User",
       "Claude-SearchBot",
@@ -49,6 +53,7 @@
       "Applebot-Extended"
     ],
     "privateRouteProtectionPreserved": true,
+    "privateRouteProtectionCheckedPerToken": true,
     "openAiPublisherGuidanceChecked": "2026-09-19",
     "openAiSearchPlacementGuaranteed": false,
     "brick13AttributionHandoff": "ChatGPT search referral URLs may include utm_source=chatgpt.com per current OpenAI publisher guidance."
@@ -111,5 +116,80 @@
   "executableLimitations": [
     "No feature-branch GitHub Actions run is claimed for the Brick 12 structural-close head.",
     "Full Vitest, strict typecheck, production build/prerender and browser QA remain required at the final integration gate."
-  ]
+  ],
+  "reAudit": {
+    "findings": [
+      "Separated search crawler, potential-training crawler, and robots product-control token semantics.",
+      "Added canonical/indexable/sitemap validation for all 13 primary answer owners.",
+      "Added indexability and sitemap eligibility validation for all 14 Speaking knowledge owners.",
+      "Scoped private-route protection checks to each configured robots group instead of relying on wildcard/global presence.",
+      "Fixed a false-positive registry test that accidentally read /pricing together with the following route block."
+    ],
+    "vendorSemantics": {
+      "openAi": "OAI-SearchBot is the ChatGPT Search discovery crawler; GPTBot controls potential training use.",
+      "google": "Google-Extended is a robots product token with no separate HTTP user-agent string and does not control Google Search inclusion/ranking.",
+      "apple": "Applebot-Extended does not crawl webpages; it controls foundation-model use of data crawled by Applebot."
+    },
+    "sourceLevel": {
+      "contract": {
+        "passed": 13,
+        "total": 13
+      },
+      "primaryOwnerLlmParity": {
+        "passed": 26,
+        "total": 26
+      },
+      "primaryOwnerValidity": {
+        "passed": 50,
+        "total": 50
+      },
+      "knowledgeLlmParity": {
+        "passed": 28,
+        "total": 28
+      },
+      "knowledgeAuthority": {
+        "passed": 42,
+        "total": 42
+      },
+      "knowledgeIndexing": {
+        "passed": 23,
+        "total": 23
+      },
+      "robotsPerToken": {
+        "passed": 56,
+        "total": 56
+      },
+      "aeoSpeakable": {
+        "passed": 13,
+        "total": 13
+      },
+      "brick9CrossBrickInvariant": {
+        "passed": 2,
+        "total": 2
+      },
+      "llmGuidanceIntegrity": {
+        "passed": 7,
+        "total": 7
+      },
+      "routeProtection": {
+        "passed": 5,
+        "total": 5
+      },
+      "regressionSpec": {
+        "passed": 5,
+        "total": 5
+      },
+      "passed": 270,
+      "total": 270
+    },
+    "protectedSurfaceSha": {
+      "passed": 19,
+      "total": 19
+    },
+    "runtimeTestDelta": [
+      "src/lib/speakingAiVisibility.ts",
+      "src/tests/seo/speakingGrowthBrick12.spec.ts"
+    ],
+    "structuralCloseHead": "868d1264b8fed753100dd3a33bbd2309ebf1a0c3"
+  }
 }
