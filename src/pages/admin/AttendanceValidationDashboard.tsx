@@ -66,6 +66,31 @@ interface AvsLatestCheckResponse {
   };
 }
 
+interface AvsForceFreshResponse {
+  ok: boolean;
+  caseId: string;
+  classSessionId: string;
+  evidenceId: string;
+  collectionStatus: string;
+  issueKinds: string[];
+  selectedTranscriptCount: number;
+  selectedAttendanceReportCount: number;
+  selectedAttendanceRecordCount: number;
+  graphLogicalCalls: number;
+  operationalMutationAllowed: false;
+  dirtyMarkerCleared: boolean;
+  concurrentMarkerChangeDetected: boolean;
+  readBudget: {
+    validationCaseReads: number;
+    sessionReads: number;
+    previousEvidenceReads: number;
+    dirtyMarkerReads: number;
+    av53PointReads: number;
+    sharedStaffRegistryLoaded: boolean;
+    boundedReadsExcludingStaffRegistry: number;
+  };
+}
+
 interface Av6ValidationCase {
   id: string;
   runId: string | null;
@@ -274,6 +299,9 @@ export default function AttendanceValidationDashboard() {
   const [latestCheckRunning, setLatestCheckRunning] = useState(false);
   const [latestCheckResult, setLatestCheckResult] = useState<AvsLatestCheckResponse | null>(null);
   const [latestCheckCompletedAt, setLatestCheckCompletedAt] = useState<Date | null>(null);
+  const [forceFreshCaseId, setForceFreshCaseId] = useState<string | null>(null);
+  const [forceFreshResult, setForceFreshResult] = useState<AvsForceFreshResponse | null>(null);
+  const [forceFreshCompletedAt, setForceFreshCompletedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
@@ -389,6 +417,48 @@ export default function AttendanceValidationDashboard() {
       setLatestCheckRunning(false);
     }
   }, [fromDate, loadSavedCases, toDate]);
+
+  const forceFreshEvidence = useCallback(async (item: Av6ValidationCase) => {
+    if (
+      !item.inputFingerprint
+      || !item.evidenceId
+      || !item.classSessionId
+      || item.classSessionId !== item.id
+    ) {
+      setError('Force Fresh Teams Evidence is available only for an existing session-backed AVS case with cached evidence.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Force Fresh Teams Evidence will make new Microsoft Graph reads for this one class and rebuild its AVS case. Continue?',
+    );
+    if (!confirmed) return;
+
+    setForceFreshCaseId(item.id);
+    setError(null);
+
+    try {
+      const result = await callFunction<
+        AvsForceFreshResponse,
+        { caseId: string; inputFingerprint: string }
+      >(
+        'forceRefreshAttendanceValidationEvidence',
+        {
+          caseId: item.id,
+          inputFingerprint: item.inputFingerprint,
+        },
+      );
+
+      setForceFreshResult(result);
+      setForceFreshCompletedAt(new Date());
+      await loadSavedCases(false, true);
+    } catch (forceFreshError) {
+      console.error('[AVS] Force Fresh Teams Evidence failed', forceFreshError);
+      setError('Force Fresh Teams Evidence failed. No operational attendance or finance was changed.');
+    } finally {
+      setForceFreshCaseId(null);
+    }
+  }, [loadSavedCases]);
 
   const summary = useMemo(() => {
     const verified = cases.filter((item) => item.resolutionStatus === 'verified').length;
@@ -555,7 +625,7 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               onClick={() => void loadSavedCases(false, false)}
-              disabled={loading || loadingMore || latestCheckRunning}
+              disabled={loading || loadingMore || latestCheckRunning || forceFreshCaseId !== null}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Loading saved results…' : 'Load Saved Results'}
@@ -564,7 +634,7 @@ export default function AttendanceValidationDashboard() {
               type="button"
               variant="outline"
               onClick={() => void runLatestCheck()}
-              disabled={loading || loadingMore || latestCheckRunning}
+              disabled={loading || loadingMore || latestCheckRunning || forceFreshCaseId !== null}
               title="Revalidate only changed sessions using cached Teams evidence."
             >
               <RefreshCw
@@ -631,6 +701,45 @@ export default function AttendanceValidationDashboard() {
             {latestCheckCompletedAt && (
               <div className="shrink-0 text-xs text-slate-500">
                 {formatObservedAt(latestCheckCompletedAt.toISOString())}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {forceFreshResult && (
+        <Card className="border-violet-200 bg-violet-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="font-medium text-slate-900">Force Fresh Teams Evidence completed</p>
+              <p className="mt-1 text-sm text-slate-700">
+                Session {forceFreshResult.classSessionId} received new Teams evidence and its AVS case was rebuilt.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Evidence status: {humanize(forceFreshResult.collectionStatus)}.
+                {' '}Microsoft Graph logical calls: {forceFreshResult.graphLogicalCalls}.
+                {' '}Firestore bounded reads: {forceFreshResult.readBudget.boundedReadsExcludingStaffRegistry}
+                {' '}+ one shared staff-registry load.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Selected artifacts: {forceFreshResult.selectedAttendanceReportCount} attendance report,
+                {' '}{forceFreshResult.selectedAttendanceRecordCount} attendance records,
+                {' '}{forceFreshResult.selectedTranscriptCount} transcript metadata record.
+              </p>
+              {forceFreshResult.issueKinds.length > 0 && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  Teams evidence reported: {forceFreshResult.issueKinds.map(humanize).join(', ')}.
+                </p>
+              )}
+              {forceFreshResult.concurrentMarkerChangeDetected && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  Attendance changed again during the fresh check. The newer dirty marker was retained.
+                </p>
+              )}
+            </div>
+            {forceFreshCompletedAt && (
+              <div className="shrink-0 text-xs text-slate-500">
+                {formatObservedAt(forceFreshCompletedAt.toISOString())}
               </div>
             )}
           </div>
@@ -794,6 +903,31 @@ export default function AttendanceValidationDashboard() {
                               Review correction
                             </Button>
                           )}
+                        {item.classSessionId === item.id
+                          && item.evidenceId
+                          && item.inputFingerprint && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="mt-2 w-full"
+                              onClick={() => void forceFreshEvidence(item)}
+                              disabled={
+                                latestCheckRunning
+                                || loading
+                                || loadingMore
+                                || forceFreshCaseId !== null
+                              }
+                              title="Exceptional action: make fresh Microsoft Graph reads for this one class."
+                            >
+                              <RefreshCw
+                                className={`mr-2 h-4 w-4 ${forceFreshCaseId === item.id ? 'animate-spin' : ''}`}
+                              />
+                              {forceFreshCaseId === item.id
+                                ? 'Refreshing Teams…'
+                                : 'Force Fresh Teams Evidence'}
+                            </Button>
+                          )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -825,7 +959,7 @@ export default function AttendanceValidationDashboard() {
             type="button"
             variant="outline"
             onClick={() => void loadSavedCases(true, true)}
-            disabled={loading || loadingMore || latestCheckRunning}
+            disabled={loading || loadingMore || latestCheckRunning || forceFreshCaseId !== null}
           >
             {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
           </Button>
