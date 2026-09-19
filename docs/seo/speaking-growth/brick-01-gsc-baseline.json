@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-09-19",
+  "settledThrough": "2026-09-16",
+  "windows": {
+    "current": {
+      "start": "2026-06-18",
+      "end": "2026-09-16"
+    },
+    "prior": {
+      "start": "2026-03-20",
+      "end": "2026-06-17"
+    }
+  },
+  "siteCurrent90d": {
+    "clicks": 7660,
+    "impressions": 122034,
+    "ctrPct": 6.276939213661767,
+    "avgPosition": 7.46745064413248
+  },
+  "primaryPages": {
+    "speaking": {
+      "url": "https://tinystepslearning.com/speaking",
+      "current": {
+        "clicks": 66,
+        "impressions": 2917,
+        "ctrPct": 2.2625985601645526,
+        "avgPosition": 8.84950291395269
+      },
+      "prior": {
+        "clicks": 17,
+        "impressions": 892,
+        "ctrPct": 1.905829596412556,
+        "avgPosition": 32.99439461883408
+      }
+    },
+    "legacyPublicSpeaking": {
+      "url": "https://tinystepslearning.com/public-speaking-communication-kids",
+      "current": {
+        "clicks": 11,
+        "impressions": 701,
+        "ctrPct": 1.5691868758915835,
+        "avgPosition": 25.489300998573466
+      },
+      "prior": {
+        "clicks": 0,
+        "impressions": 341,
+        "ctrPct": 0,
+        "avgPosition": 28.856304985337243
+      }
+    },
+    "spokenEnglish": {
+      "url": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+      "current": {
+        "clicks": 2,
+        "impressions": 261,
+        "ctrPct": 0.7662835249042145,
+        "avgPosition": 12.24904214559387
+      }
+    },
+    "speakingFoundations": {
+      "url": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "current": {
+        "clicks": 1,
+        "impressions": 29,
+        "ctrPct": 3.4482758620689653,
+        "avgPosition": 13.517241379310345
+      },
+      "prior": {
+        "clicks": 0,
+        "impressions": 5,
+        "ctrPct": 0,
+        "avgPosition": 7.6
+      }
+    },
+    "speakingExcellence": {
+      "url": "https://tinystepslearning.com/courses/public-speaking-excellence",
+      "current": {
+        "clicks": 0,
+        "impressions": 22,
+        "ctrPct": 0,
+        "avgPosition": 9.318181818181818
+      }
+    },
+    "confidenceProgram": {
+      "url": "https://tinystepslearning.com/confidence-building-program-kids",
+      "current": {
+        "clicks": 0,
+        "impressions": 3,
+        "ctrPct": 0,
+        "avgPosition": 13.333333333333334
+      }
+    },
+    "shyChildHelp": {
+      "url": "https://tinystepslearning.com/shy-child-speaking-confidence",
+      "current": {
+        "clicks": 0,
+        "impressions": 27,
+        "ctrPct": 0,
+        "avgPosition": 13.481481481481481
+      },
+      "prior": {
+        "clicks": 0,
+        "impressions": 79,
+        "ctrPct": 0,
+        "avgPosition": 16.189873417721518
+      }
+    }
+  },
+  "notes": [
+    "Search Console metrics are aggregate, privacy-thresholded performance data; rows absent from a period are not assumed to equal zero unless GSC returned them.",
+    "Legacy redirected URLs may continue to appear in GSC while Google consolidates historical signals.",
+    "This snapshot is evidence only and does not authorize production SEO changes."
+  ]
+}
