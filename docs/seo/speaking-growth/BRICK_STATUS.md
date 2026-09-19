@@ -20,7 +20,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | Brick | Scope | Status | Merge to main |
 |---|---|---|---|
 | 01 | Speaking search baseline & safety lock | COMPLETE — RE-AUDITED | NO |
-| 02 | Search intent & keyword ownership map | PENDING | NO |
+| 02 | Search intent & keyword ownership map | COMPLETE | NO |
 | 03 | Cannibalization & technical SEO cleanup | PENDING | NO |
 | 04 | Flagship /speaking money page | PENDING | NO |
 | 05 | Spoken English territory | PENDING | NO |
@@ -62,3 +62,17 @@ Corrections and additions:
 - synchronized main commit 3b11fee88ff21e928d2ed8af555afcb64695c815 into this branch. Those incoming changes are AV5 attendance-validation work and are not part of the Speaking project.
 
 Brick 2 must not modify the protected owner contracts until its query-ownership evidence is complete.
+
+
+## Brick 2 completion gate
+
+- Exact 90-day GSC query/page evidence grouped into Speaking admission intent families.
+- Generic Public Speaking and Communication ownership frozen to `/speaking`.
+- Generic Spoken English ownership frozen to `/spoken-english-classes-for-kids-online`.
+- Explicit Hyderabad Spoken-English intent preserved on `/online-english-classes-hyderabad` without granting it global ownership.
+- Confidence Building kept as a narrow specialist intent.
+- Course-detail pages restricted to named programme/detail intent.
+- Price and demo intent kept on existing cross-programme owners.
+- AI-style questions inherit the underlying human intent owner; no AI-prompt pages authorized.
+- Weak-evidence duplicate pages explicitly rejected.
+- Brick 2 runtime changes: ZERO.
