@@ -95,6 +95,8 @@ export interface Av53ValidationCaseDocument {
   enrollmentId: string | null;
   kidId: string | null;
   teacherId: string | null;
+  studentName?: string | null;
+  teacherName?: string | null;
   tinyStepsAttendance: CanonicalTinyStepsAttendance | null;
   validationDecision: Av5ClassificationDecision | null;
   classification: Av53CaseClassification;
@@ -338,6 +340,17 @@ function sessionKidId(session: Record<string, unknown>): string | null {
     || text(session.childId);
 }
 
+function sessionStudentName(session: Record<string, unknown>): string | null {
+  return text(session.studentName)
+    || text(session.kidName)
+    || text(session.childName);
+}
+
+function sessionTeacherName(session: Record<string, unknown>): string | null {
+  return text(session.teacherName)
+    || text(session.teacherDisplayName);
+}
+
 function attendanceEntryForKid(
   session: Record<string, unknown>,
   kidId: string | null,
@@ -383,6 +396,8 @@ function baseCase(params: {
   enrollmentId: string | null;
   kidId: string | null;
   teacherId: string | null;
+  studentName?: string | null;
+  teacherName?: string | null;
   tinyStepsAttendance: CanonicalTinyStepsAttendance | null;
   validationDecision: Av5ClassificationDecision | null;
   classification: Av53CaseClassification;
@@ -401,6 +416,8 @@ function baseCase(params: {
     enrollmentId: params.enrollmentId,
     kidId: params.kidId,
     teacherId: params.teacherId,
+    studentName: params.studentName ?? null,
+    teacherName: params.teacherName ?? null,
     tinyStepsAttendance: params.tinyStepsAttendance,
     validationDecision: params.validationDecision,
     classification: params.classification,
@@ -471,6 +488,8 @@ function caseFromMissingEvidence(params: {
     enrollmentId: text(params.session.enrollmentId),
     kidId,
     teacherId: text(params.session.teacherId),
+    studentName: sessionStudentName(params.session),
+    teacherName: sessionTeacherName(params.session),
     tinyStepsAttendance: attendance,
     validationDecision: null,
     classification: 'MISSING_TEAMS_EVIDENCE',
@@ -499,6 +518,8 @@ function caseFromOrphanEvidence(params: {
     enrollmentId: params.evidence.session.enrollmentId,
     kidId: params.evidence.session.kidId,
     teacherId: params.evidence.session.teacherId,
+    studentName: null,
+    teacherName: null,
     tinyStepsAttendance: null,
     validationDecision: null,
     classification: 'ORPHAN_TEAMS_CLASS',
@@ -532,6 +553,8 @@ function caseFromReferenceMismatch(params: {
     enrollmentId: text(params.session.enrollmentId),
     kidId,
     teacherId: text(params.session.teacherId),
+    studentName: sessionStudentName(params.session),
+    teacherName: sessionTeacherName(params.session),
     tinyStepsAttendance: normalizeTinyStepsAttendance(
       attendanceEntryForKid(params.session, kidId),
     ),
@@ -583,6 +606,8 @@ function caseFromEvidence(params: {
     enrollmentId: params.evidence.session.enrollmentId,
     kidId,
     teacherId: params.evidence.session.teacherId,
+    studentName: sessionStudentName(params.session),
+    teacherName: sessionTeacherName(params.session),
     tinyStepsAttendance: reconciliation.tinyStepsAttendance,
     validationDecision: classification.decision,
     classification:
