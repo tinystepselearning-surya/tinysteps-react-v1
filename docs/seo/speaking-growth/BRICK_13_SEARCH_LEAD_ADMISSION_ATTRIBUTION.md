@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST
 Branch: feature/speaking-seo-geo-growth
-Status: **COMPLETE — STRUCTURALLY VERIFIED**
+Status: **COMPLETE — RE-AUDITED**
 Production deployment: **NO**
 
 ## Purpose
@@ -39,7 +39,7 @@ A valid report can say that Google Organic first-touch leads landing on /speakin
 
 New source: `src/lib/speakingAttribution.ts`
 
-Revision: `2026-09-19-b13-v1`
+Revision: `2026-09-19-b13-v2`
 
 Brick 13 freezes two separate cohorts.
 
@@ -209,3 +209,24 @@ That condition is satisfied on the isolated feature branch.
 **Brick 13 status: COMPLETE — STRUCTURALLY VERIFIED.**
 
 Next checkpoint: **full thorough Brick 13 re-audit → final Bricks 1–13 integration gate.**
+
+
+## 2026-09-19 full Brick 13 re-audit
+
+Brick 13 was independently re-audited before the final Bricks 1–13 integration gate.
+
+Additional findings and fixes:
+- advanced the attribution contract from `2026-09-19-b13-v1` to `2026-09-19-b13-v2`;
+- found a legacy/canonical fallback gap: the broad C0 KPI projection used raw UTM/referrer evidence only, so a trustworthy stored normalized `acquisitionChannel` with incomplete raw fields could be reported as Direct/unknown;
+- hardened `buildSpeakingAttributionProjection` so raw C0 evidence still wins, while a canonical stored granular channel is used only when raw evidence resolves to `direct_or_unknown`;
+- stored normalized Google/Bing organic maps to `organic_search`, approved AI channels map to `organic_ai`, Google/Microsoft Ads map to `paid`, and supported social/referral channels map to `referral`;
+- stored `acquisitionChannel` / `acquisitionSource` now count as first-touch evidence when raw legacy fields are incomplete;
+- added regression coverage for stored ChatGPT, Google Organic and Instagram fallback cases;
+- rechecked the session-scoped first-touch capture path, server enrichment window/ID guards, redirect promotion, website-only enforcement, lead-save ordering, dedupe preservation and admission propagation;
+- confirmed the separate localStorage funnel tracker remains diagnostic only; canonical business attribution continues to use the canonical lead first-touch system;
+- independent re-audit matrix: **145/145 passed** across capture, taxonomy, enrichment, submission, dedupe, C0, cohorts, fallback, lifecycle, admin reporting, routes and regression coverage;
+- Brick 13 regression suite now contains **14 test cases**;
+- the final integration preflight also found and fixed two cross-brick blockers outside the Brick 13 contract: malformed Brick 6 regression-test quoting and missing Commercial C7 protection for `/speaking-progress-framework`;
+- a later typecheck diagnostic found and fixed the Public Speaking level-schema URL reference from `item.sourcePath` to the actual canonical `item.path`; Brick 9 evidence schema correctly continues using `sourcePath`.
+
+Brick 13 status after full re-audit: **COMPLETE — RE-AUDITED**.
