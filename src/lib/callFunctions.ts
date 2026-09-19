@@ -43,6 +43,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   adminCreateDemoSession: 'asia-south1',
   runAttendanceValidationLatestCheck: 'asia-south1',
   forceRefreshAttendanceValidationEvidence: 'asia-south1',
+  runAttendanceValidationFirstTimeBaseline: 'asia-south1',
   adminCheckDemoPhoneConflicts: 'asia-south1',
   adminUpdateDemoSessionDetails: 'asia-south1',
   createOrSyncMessageThread: 'asia-south1',
