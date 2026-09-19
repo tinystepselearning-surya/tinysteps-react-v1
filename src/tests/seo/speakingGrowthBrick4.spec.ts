@@ -48,6 +48,8 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('Everyday conversation & fluency');
     expect(speaking).toContain('1 Complete responses');
     expect(speaking).toContain('6 Advanced public speaking');
+    expect(speaking).toContain('to="/courses/public-speaking-foundations"');
+    expect(speaking).toContain('to="/courses/public-speaking-excellence"');
   });
 
   it('adds class-sample, teacher-system, progress and parent-evidence proof surfaces', () => {
@@ -61,6 +63,8 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).not.toContain('Approved parent feedback from speaking families');
     expect((speaking.match(/<TestimonialSnippets/g) ?? [])).toHaveLength(1);
     expect((speaking.match(/<ResponsiveTeachingSection/g) ?? [])).toHaveLength(1);
+    expect(speaking).toContain('<caption className="sr-only">What parents should compare when evaluating public speaking classes for kids</caption>');
+    expect((speaking.match(/scope="col"/g) ?? [])).toHaveLength(2);
   });
 
   it('keeps the assessment as the decision mechanism instead of promising automatic placement', () => {
