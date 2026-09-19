@@ -2,8 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BLOG_TECHNICAL_AUTHORITY } from '../../content/blog/shared/technicalAuthority';
+import {
+  shouldIncludeBlogSlugInSitemap,
+  shouldNoindexBlogSlug,
+} from '../../lib/blogIndexingPolicy.js';
 import { SITE_ORIGIN } from '../../lib/schemas';
 import {
+  SPEAKING_AI_AGENT_POLICY,
   SPEAKING_AI_ANSWER_OWNERS,
   SPEAKING_AI_DISCOVERY_SURFACES,
   SPEAKING_AI_ENTITY_DISAMBIGUATION_KEYS,
@@ -26,10 +31,16 @@ const subjectResourcesSource = read('src/pages/SubjectResourcesPage.tsx');
 const routesSource = read('src/app/routes.tsx');
 const routeManifestSource = read('src/lib/publicRouteManifest.js');
 const brick9TestSource = read('src/tests/seo/speakingGrowthBrick9.spec.ts');
+const routeSeoRegistrySource = read('src/lib/routeSeoRegistry.js');
+const publicCoursePagesSource = read('src/lib/publicCoursePages.js');
+const courseDetailSource = read('src/pages/CourseDetailPage.tsx');
+const sitemapStatic = read('public/sitemap-static.xml');
+const sitemapCourses = read('public/sitemap-courses.xml');
+const sitemapBlog = read('public/sitemap-blog.xml');
 
 describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
   it('defines one bounded AI visibility contract without creating AI-specific owners', () => {
-    expect(SPEAKING_AI_VISIBILITY_REVISION).toBe('2026-09-19-b12-v1');
+    expect(SPEAKING_AI_VISIBILITY_REVISION).toBe('2026-09-19-b12-v2');
     expect(SPEAKING_AI_ANSWER_OWNERS).toHaveLength(13);
     expect(new Set(SPEAKING_AI_ANSWER_OWNERS.map((item) => item.id)).size).toBe(13);
     expect(new Set(SPEAKING_AI_ANSWER_OWNERS.map((item) => item.path)).size).toBe(13);
@@ -54,6 +65,34 @@ describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
     expect(byId.get('speaking-resource-discovery')?.path).toBe('/resources/speaking');
     expect(byId.get('free-assessment')?.path).toBe('/book-demo');
     expect(byId.get('pricing')?.path).toBe('/pricing');
+  });
+
+  it('requires every primary answer owner to remain canonical, indexable and sitemap-discoverable', () => {
+    const coursePaths = new Set([
+      '/courses/public-speaking-foundations',
+      '/courses/public-speaking-excellence',
+    ]);
+
+    for (const owner of SPEAKING_AI_ANSWER_OWNERS) {
+      const absolute = SITE_ORIGIN + owner.path;
+
+      if (coursePaths.has(owner.path)) {
+        expect(publicCoursePagesSource).toContain(`routePath: '${owner.path}'`);
+        expect(courseDetailSource).toContain(
+          'coursePageConfig?.routePath ?? getPublicCoursePathForSlug(rawSlug)',
+        );
+        expect(sitemapCourses).toContain('<loc>' + absolute + '</loc>');
+        continue;
+      }
+
+      const marker = "'" + owner.path + "':";
+      const start = routeSeoRegistrySource.indexOf(marker);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const routeBlock = routeSeoRegistrySource.slice(start, start + 1000);
+      expect(routeBlock).toContain("canonicalPath: '" + owner.path + "'");
+      expect(routeBlock).not.toMatch(/robots:\s*'[^']*noindex/i);
+      expect(sitemapStatic).toContain('<loc>' + absolute + '</loc>');
+    }
   });
 
   it('exports the complete knowledge, evidence and entity-disambiguation layers', () => {
@@ -89,6 +128,17 @@ describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
     }
   });
 
+  it('requires all fourteen Speaking knowledge owners to remain indexable and sitemap-eligible', () => {
+    for (const knowledgePath of SPEAKING_AI_KNOWLEDGE_PATHS) {
+      const slug = knowledgePath.replace(/^\/blog\//, '');
+      expect(shouldNoindexBlogSlug(slug)).toBe(false);
+      expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(true);
+      expect(sitemapBlog).toContain(
+        '<loc>' + SITE_ORIGIN + knowledgePath + '</loc>',
+      );
+    }
+  });
+
   it('upgrades the BlogPosting authority graph to all fourteen Speaking knowledge URLs', () => {
     const speakingSlugs = SPEAKING_AI_KNOWLEDGE_PATHS.map((item) =>
       item.replace(/^\/blog\//, ''),
@@ -114,18 +164,17 @@ describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
     expect(llmsFull).toContain('Do not treat a class sample, testimonial or progress observation as a guaranteed outcome.');
   });
 
-  it('preserves AI/search crawler access while repeating private-route protection', () => {
-    for (const crawler of [
-      'OAI-SearchBot',
-      'ChatGPT-User',
-      'Claude-SearchBot',
-      'PerplexityBot',
-      'GPTBot',
-      'ClaudeBot',
-      'Google-Extended',
-      'Applebot-Extended',
-    ]) {
-      expect(robots).toContain('User-agent: ' + crawler);
+  it('keeps crawler, training-crawler and product-control roles explicit while preserving private routes', () => {
+    expect(SPEAKING_AI_AGENT_POLICY.searchDiscoveryCrawler).toBe('OAI-SearchBot');
+    expect(SPEAKING_AI_AGENT_POLICY.openAiPotentialTrainingCrawler).toBe('GPTBot');
+    expect(SPEAKING_AI_AGENT_POLICY.googleGeminiControlToken).toBe('Google-Extended');
+    expect(SPEAKING_AI_AGENT_POLICY.appleFoundationModelControlToken).toBe('Applebot-Extended');
+    expect(new Set(SPEAKING_AI_AGENT_POLICY.configuredPublicAgents).size).toBe(
+      SPEAKING_AI_AGENT_POLICY.configuredPublicAgents.length,
+    );
+
+    for (const agent of SPEAKING_AI_AGENT_POLICY.configuredPublicAgents) {
+      expect(robots).toContain('User-agent: ' + agent);
     }
 
     for (const privatePath of ['/admin/', '/teacher/', '/parent/', '/kids/', '/private/']) {
