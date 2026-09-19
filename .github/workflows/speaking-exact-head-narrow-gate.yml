@@ -3,7 +3,7 @@ name: Speaking Bricks 1-13 Exact-Head Narrow Gate
 on:
   push:
     branches:
-      - ci/speaking-exact-head-1e4a4364
+      - ci/speaking-exact-head-47883186
     paths:
       - '.github/workflows/speaking-exact-head-narrow-gate.yml'
 
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: speaking-exact-head-1e4a4364
+  group: speaking-exact-head-47883186
   cancel-in-progress: true
 
 jobs:
@@ -19,14 +19,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      TARGET_SHA: 1e4a4364c3801b936463357e70c5e0f029a8d81c
+      TARGET_SHA: 47883186a7aeee8593a8650ec535d8bf4871c443
       CI: true
 
     steps:
       - name: Checkout exact Speaking head
         uses: actions/checkout@v4
         with:
-          ref: 1e4a4364c3801b936463357e70c5e0f029a8d81c
+          ref: 47883186a7aeee8593a8650ec535d8bf4871c443
           fetch-depth: 1
 
       - name: Prove exact SHA
