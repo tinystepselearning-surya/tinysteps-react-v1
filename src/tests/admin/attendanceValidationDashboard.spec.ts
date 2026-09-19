@@ -56,7 +56,7 @@ describe('AV6 admin attendance validation dashboard', () => {
       "{ id: 'attendance-validation', label: 'Attendance Validation', icon: ShieldCheck }",
     );
     expect(routes).toContain(
-      "{ path: 'attendance-validation', element: <Navigate to="/surya?tab=attendance-validation" replace /> }",
+      `{ path: 'attendance-validation', element: <Navigate to="/surya?tab=attendance-validation" replace /> }`,
     );
   });
 
