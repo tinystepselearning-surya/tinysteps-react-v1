@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST  
 Branch: `feature/speaking-seo-geo-growth`  
-Status: **COMPLETE — STRUCTURALLY VERIFIED**  
+Status: **COMPLETE — RE-AUDITED**  
 Production deployment: **NO**
 
 ## Purpose
@@ -104,17 +104,21 @@ New central source:
 
 Revision:
 
-`2026-09-19-b8-v1`
+`2026-09-19-b8-v2`
 
 The source:
 
 - imports the established SP6 Tier-1 owners rather than redefining them;
 - imports Brick 7 dimensions rather than inventing another assessment taxonomy;
+- verifies the established nine-domain Speaking & Communication architecture remains fully represented;
 - freezes groups, links, dimension lists and owner-ID lists;
 - fails closed if an unknown Tier-1 owner or progress dimension is referenced;
 - fails if grouped owner IDs resolve to different established URLs;
 - fails if all fifteen Tier-1 records are not represented exactly once;
 - fails if all ten Brick 7 dimensions are not represented;
+- fails if all nine established Speaking & Communication knowledge domains are not represented;
+- fails unless the 15 Tier-1 records still resolve to exactly 14 established knowledge URLs;
+- fails if a Brick 8 knowledge destination stops being an established `/blog/` resource;
 - rejects protected commercial destinations from the knowledge corpus.
 
 ## Speaking resources hub
@@ -186,7 +190,11 @@ It protects:
 - visible hub integration;
 - existing SP6 semantic adapter preservation;
 - absence of a new Brick 8 public route;
-- sitemap freshness tracking.
+- sitemap freshness tracking;
+- all nine established knowledge domains;
+- canonical-owner uniqueness for all fourteen destinations;
+- indexability and blog-sitemap discovery for all fourteen destinations;
+- structured ItemList destination deduplication.
 
 ## Main synchronization during build
 
@@ -219,6 +227,116 @@ Source-level checks confirm:
 - branch is **0 commits behind main** after PR #397;
 - production merge/deployment remains **ZERO**.
 
+## Re-audit findings
+
+Brick 8 was independently re-audited before Brick 9.
+
+The re-audit found and fixed one concrete structured-data defect and hardened four architectural boundaries.
+
+### 1. Structured ItemList duplication — fixed
+
+The Speaking hub intentionally repeats some useful destinations in different visible contexts. Before the re-audit, those repeated links were passed directly into the structured `ItemList`.
+
+Mechanical count before the fix:
+
+- existing Speaking hub link entries: **9**;
+- Brick 8 knowledge destinations: **14**;
+- raw structured candidates: **23**;
+- unique destinations: **18**;
+- duplicate structured entries: **5**.
+
+Visible navigation remains unchanged, because repeated links can be useful in different parent pathways.
+
+Only the schema list is deduplicated by destination. It now uses `structuredLinks`, so `numberOfItems` and `itemListElement` describe unique resource URLs rather than repeated cards.
+
+### 2. Nine-domain architecture coverage — hardened
+
+The initial Brick 8 build implicitly inherited all nine Speaking & Communication domains because it consumed all fifteen SP6 Tier-1 records.
+
+Revision `2026-09-19-b8-v2` now makes that contract explicit at runtime.
+
+The module derives `SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS` and fails if any established knowledge domain is missing.
+
+### 3. Destination boundary — hardened
+
+Brick 8 now fails closed unless:
+
+- all fifteen Tier-1 records still resolve to exactly fourteen unique knowledge URLs;
+- every Brick 8 knowledge URL remains an established `/blog/` resource;
+- protected commercial owners remain outside the knowledge cluster.
+
+This prevents a future architecture change from silently moving a commercial/programme route into the informational knowledge corpus.
+
+### 4. Canonical/indexability verification — deepened
+
+All fourteen knowledge destinations were rechecked.
+
+For every destination:
+
+- the article is represented by the established content architecture;
+- canonical ownership resolves through the frozen SP6/R20→R22 chain;
+- the article is indexable under `blogIndexingPolicy`;
+- the clean public URL is present in `sitemap-blog.xml`.
+
+Three R21 guides use dynamic canonical resolution rather than literal `ownerPath` declarations:
+
+- `/blog/conversation-skills-for-kids`;
+- `/blog/how-to-teach-storytelling-to-kids`;
+- `/blog/public-speaking-delivery-for-kids`.
+
+Their ownership chain was explicitly traced as:
+
+**R20 proposedPath → R21 published execution → R21 canonical owner**
+
+No canonical collision was found.
+
+### 5. Sitemap source naming — cleaned
+
+The sitemap generator map was still named `brick7LastmodSources` even though Brick 8 now contributes to `/resources/speaking` freshness.
+
+It is now named `speakingGrowthLastmodSources`.
+
+Behavior is unchanged; the name now matches the cross-brick responsibility.
+
+## Independent re-audit matrix
+
+Source-level re-audit:
+
+- Architecture contracts: **11 / 11**
+- Hub & structured-data contracts: **11 / 11**
+- Fourteen destination checks — canonical/indexability/sitemap: **42 / 42**
+- Brick 8 regression-spec hardening: **6 / 6**
+
+**Source-level total: 70 / 70 passed.**
+
+Protected-surface SHA comparison against the pre-Brick-8 checkpoint:
+
+- Brick 7 framework source/page;
+- `/speaking`;
+- `/book-demo`;
+- parent tracking guide;
+- canonical topic registry;
+- application routes;
+- SP6 BlogSemanticPathway;
+- SP6 completion semantic graph;
+- SP6 completion architecture;
+- operational progress skills;
+- parent dashboard;
+- teacher progress editor;
+- teacher progress save backend;
+- Brick 7 regression test.
+
+**Protection total: 15 / 15 unchanged.**
+
+The re-audit implementation delta contains exactly four intended runtime/test files:
+
+1. `src/lib/speakingKnowledgeCluster.ts`
+2. `src/pages/SubjectResourcesPage.tsx`
+3. `scripts/generate-sitemaps.js`
+4. `src/tests/seo/speakingGrowthBrick8.spec.ts`
+
+No operational attendance, scheduling, finance, teacher-progress or parent-progress implementation was changed by the Brick 8 re-audit.
+
 ## Executable-test limitation
 
 No feature-branch CI run is claimed here.
@@ -245,4 +363,4 @@ Brick 8 is structurally complete when the existing Speaking knowledge corpus is:
 
 That condition is satisfied on the isolated feature branch.
 
-**Brick 8 status: COMPLETE — STRUCTURALLY VERIFIED.**
+**Brick 8 status: COMPLETE — RE-AUDITED.**
