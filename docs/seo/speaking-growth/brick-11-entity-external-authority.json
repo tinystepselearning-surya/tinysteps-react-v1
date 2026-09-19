@@ -1,8 +1,8 @@
 {
   "brick": 11,
   "name": "Entity & External Authority",
-  "revision": "2026-09-19-b11-v1",
-  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "revision": "2026-09-19-b11-v2",
+  "status": "COMPLETE — RE-AUDITED",
   "branch": "feature/speaking-seo-geo-growth",
   "productionDeployment": false,
   "canonicalCommercialOwner": "/speaking",
@@ -22,7 +22,8 @@
     "mergeFounderAndOrganizationSameAs": false,
     "publishAdminOrAccountManagementUrls": false,
     "externalProfileFactsMustMatchCanonicalRegistry": true,
-    "externalClaimsMayExceedFirstPartyEvidence": false
+    "externalClaimsMayExceedFirstPartyEvidence": false,
+    "externalNameMatchAloneIsSufficient": false
   },
   "externalSpotCheck": {
     "date": "2026-09-19",
@@ -69,5 +70,34 @@
   "executableLimitations": [
     "No feature-branch GitHub Actions run attached to the Brick 11 head.",
     "Full Vitest, typecheck, production build/prerender and browser QA remain required at the final integration gate."
-  ]
+  ],
+  "reAudit": {
+    "findings": [
+      "External brand-name search can surface unrelated similarly named entities; name match alone is insufficient.",
+      "Entity corroboration must use multiple canonical disambiguation signals: website, founder, founder profile, Hyderabad/India context, live-online delivery, and Speaking programme identity.",
+      "The initial exactly-one-founder-profile guard was too rigid; the contract now requires at least one verified unique founder profile while preserving organization/founder separation."
+    ],
+    "liveCorroboration": {
+      "date": "2026-09-19",
+      "supported": [
+        "Ravali Priya Vannala LinkedIn is discoverable with Tiny Steps Learning.",
+        "Recent founder activity identifies founding Tiny Steps Learning and its English-learning focus.",
+        "Tiny Steps Learning branded LinkedIn content is discoverable.",
+        "A current Tiny Steps Learning teaching role describes live-online phonics, reading, grammar and communication."
+      ],
+      "ambiguity": "Search results also surface unrelated similarly named learning-center entities, so identity matching must use canonical disambiguation signals."
+    },
+    "matrix": {
+      "passed": 31,
+      "total": 31
+    },
+    "protectedSurfaceSha": {
+      "passed": 19,
+      "total": 19
+    },
+    "runtimeTestDelta": [
+      "src/lib/speakingEntityAuthority.ts",
+      "src/tests/seo/speakingGrowthBrick11.spec.ts"
+    ]
+  }
 }
