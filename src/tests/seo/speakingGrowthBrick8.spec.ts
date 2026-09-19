@@ -3,12 +3,16 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
+import { shouldNoindexBlogSlug } from '../../lib/blogIndexingPolicy.js';
+import { SP6_CANONICAL_TOPIC_OWNERSHIP } from '../../lib/speakingCommunicationCompletionCanonicalOwnership.js';
+import { SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS } from '../../lib/speakingCommunicationKnowledgeArchitecture.js';
 import {
   SPEAKING_COMMUNICATION_FREEZE,
   SPEAKING_COMMUNICATION_TIER1_CLUSTER_OWNERS,
 } from '../../lib/speakingCommunicationCompletionArchitecture.js';
 import {
   SPEAKING_KNOWLEDGE_CLUSTER_DIMENSION_IDS,
+  SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS,
   SPEAKING_KNOWLEDGE_CLUSTER_GROUPS,
   SPEAKING_KNOWLEDGE_CLUSTER_OWNER_IDS,
   SPEAKING_KNOWLEDGE_CLUSTER_PATHS,
@@ -22,13 +26,14 @@ const read = (relative: string) => fs.readFileSync(path.join(root, relative), 'u
 const hubSource = read('src/pages/SubjectResourcesPage.tsx');
 const sitemapGeneratorSource = read('scripts/generate-sitemaps.js');
 const sitemapStatic = read('public/sitemap-static.xml');
+const sitemapBlog = read('public/sitemap-blog.xml');
 const routeManifestSource = read('src/lib/publicRouteManifest.js');
 const routesSource = read('src/app/routes.tsx');
 const pathwaySource = read('src/components/blog/BlogSemanticPathway.tsx');
 
 describe('Speaking growth Brick 8 knowledge cluster', () => {
   it('curates exactly five parent-facing groups without creating a second speaking taxonomy', () => {
-    expect(SPEAKING_KNOWLEDGE_CLUSTER_REVISION).toBe('2026-09-19-b8-v1');
+    expect(SPEAKING_KNOWLEDGE_CLUSTER_REVISION).toBe('2026-09-19-b8-v2');
     expect(SPEAKING_KNOWLEDGE_CLUSTER_GROUPS).toHaveLength(5);
     expect(SPEAKING_KNOWLEDGE_CLUSTER_GROUPS.map((group) => group.id)).toEqual([
       'everyday-speaking-foundations',
@@ -70,11 +75,19 @@ describe('Speaking growth Brick 8 knowledge cluster', () => {
     }
   });
 
+  it('preserves all nine established Speaking & Communication knowledge domains', () => {
+    expect([...SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS].sort()).toEqual(
+      SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS.map((domain) => domain.id).sort(),
+    );
+    expect(new Set(SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS).size).toBe(9);
+  });
+
   it('deep-freezes the Brick 8 grouping contract', () => {
     expect(Object.isFrozen(SPEAKING_KNOWLEDGE_CLUSTER_GROUPS)).toBe(true);
     expect(Object.isFrozen(SPEAKING_KNOWLEDGE_CLUSTER_OWNER_IDS)).toBe(true);
     expect(Object.isFrozen(SPEAKING_KNOWLEDGE_CLUSTER_PATHS)).toBe(true);
     expect(Object.isFrozen(SPEAKING_KNOWLEDGE_CLUSTER_DIMENSION_IDS)).toBe(true);
+    expect(Object.isFrozen(SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS)).toBe(true);
 
     for (const group of SPEAKING_KNOWLEDGE_CLUSTER_GROUPS) {
       expect(Object.isFrozen(group)).toBe(true);
@@ -88,11 +101,19 @@ describe('Speaking growth Brick 8 knowledge cluster', () => {
     }
   });
 
-  it('uses only already-published blog destinations for the knowledge corpus', () => {
+  it('uses only published, canonical, indexable and sitemap-discoverable blog destinations', () => {
     const publishedPaths = new Set(blogPosts.map((post) => `/blog/${post.slug}`));
     for (const clusterPath of SPEAKING_KNOWLEDGE_CLUSTER_PATHS) {
+      const slug = clusterPath.slice('/blog/'.length);
       expect(clusterPath.startsWith('/blog/')).toBe(true);
       expect(publishedPaths.has(clusterPath)).toBe(true);
+      expect(shouldNoindexBlogSlug(slug)).toBe(false);
+      expect(sitemapBlog).toContain(
+        `<loc>https://tinystepslearning.com${clusterPath}</loc>`,
+      );
+      expect(
+        SP6_CANONICAL_TOPIC_OWNERSHIP.filter((owner) => owner.ownerPath === clusterPath),
+      ).toHaveLength(1);
     }
   });
 
@@ -122,6 +143,10 @@ describe('Speaking growth Brick 8 knowledge cluster', () => {
     expect(hubSource).toContain('They are not a rigid ladder');
     expect(hubSource).toContain('to="/speaking-progress-framework"');
     expect(hubSource).toContain('group.dimensionLabels.map');
+    expect(hubSource).toContain('const structuredLinks = Array.from(');
+    expect(hubSource).toContain('new Map(allLinks.map((link) => [link.to, link] as const)).values()');
+    expect(hubSource).toContain('numberOfItems: structuredLinks.length');
+    expect(hubSource).toContain('itemListElement: structuredLinks.map');
   });
 
   it('keeps the existing SP6 semantic pathway engine authoritative for blog-to-blog journeys', () => {
@@ -144,6 +169,7 @@ describe('Speaking growth Brick 8 knowledge cluster', () => {
     expect(sitemapGeneratorSource).toContain(
       "const speakingKnowledgeClusterTs = path.join(root, 'src', 'lib', 'speakingKnowledgeCluster.ts')",
     );
+    expect(sitemapGeneratorSource).toContain('const speakingGrowthLastmodSources = {');
     expect(sitemapGeneratorSource).toContain(
       "'/resources/speaking': [appRoutesTs, subjectResourcesPageTsx, speakingKnowledgeClusterTs]",
     );
