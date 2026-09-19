@@ -1,36 +1,53 @@
 {
   "generatedAt": "2026-09-19",
   "settledThrough": "2026-09-16",
+  "measurementSource": "Google Search Console Search Analytics + URL Inspection",
   "windows": {
     "current": {
-      "start": "2026-06-18",
-      "end": "2026-09-16"
+      "start": "2026-06-19",
+      "end": "2026-09-16",
+      "inclusiveDays": 90
     },
     "prior": {
-      "start": "2026-03-20",
-      "end": "2026-06-17"
+      "start": "2026-03-21",
+      "end": "2026-06-18",
+      "inclusiveDays": 90
     }
   },
-  "siteCurrent90d": {
-    "clicks": 7660,
-    "impressions": 122034,
-    "ctrPct": 6.276939213661767,
-    "avgPosition": 7.46745064413248
+  "site": {
+    "current": {
+      "clicks": 7660,
+      "impressions": 122034,
+      "ctrPct": 6.276939213661767,
+      "avgPosition": 7.570226330366947
+    },
+    "prior": {
+      "clicks": 1969,
+      "impressions": 40588,
+      "ctrPct": 4.851187543116192,
+      "avgPosition": 8.62506159455997
+    },
+    "delta": {
+      "clicks": 5691,
+      "impressions": 81446,
+      "ctrPercentagePoints": 1.425751670545575,
+      "avgPositionImprovement": 1.054835264193023
+    }
   },
   "primaryPages": {
     "speaking": {
       "url": "https://tinystepslearning.com/speaking",
       "current": {
         "clicks": 66,
-        "impressions": 2917,
-        "ctrPct": 2.2625985601645526,
-        "avgPosition": 8.84950291395269
+        "impressions": 2911,
+        "ctrPct": 2.2672621092408107,
+        "avgPosition": 8.843696324287187
       },
       "prior": {
         "clicks": 17,
-        "impressions": 892,
-        "ctrPct": 1.905829596412556,
-        "avgPosition": 32.99439461883408
+        "impressions": 898,
+        "ctrPct": 1.8930957683741647,
+        "avgPosition": 32.85189309576838
       }
     },
     "legacyPublicSpeaking": {
@@ -43,9 +60,9 @@
       },
       "prior": {
         "clicks": 0,
-        "impressions": 341,
+        "impressions": 311,
         "ctrPct": 0,
-        "avgPosition": 28.856304985337243
+        "avgPosition": 28.180064308681672
       }
     },
     "spokenEnglish": {
@@ -106,9 +123,202 @@
       }
     }
   },
+  "ownerQueryHighlights": {
+    "speaking": [
+      {
+        "query": "public speaking classes for kids",
+        "clicks": 1,
+        "impressions": 74,
+        "avgPosition": 21.93243243243243
+      },
+      {
+        "query": "public speaking for kids",
+        "clicks": 1,
+        "impressions": 56,
+        "avgPosition": 20.142857142857142
+      },
+      {
+        "query": "live online public speaking training for kids",
+        "clicks": 0,
+        "impressions": 51,
+        "avgPosition": 37.07843137254902
+      },
+      {
+        "query": "public speaking courses for kids",
+        "clicks": 0,
+        "impressions": 26,
+        "avgPosition": 34.30769230769231
+      },
+      {
+        "query": "public speaking course for kids",
+        "clicks": 0,
+        "impressions": 19,
+        "avgPosition": 22.36842105263158
+      },
+      {
+        "query": "public speaking classes for kids online india",
+        "clicks": 0,
+        "impressions": 18,
+        "avgPosition": 12.88888888888889
+      },
+      {
+        "query": "online public speaking classes for kids",
+        "clicks": 0,
+        "impressions": 15,
+        "avgPosition": 19.133333333333333
+      },
+      {
+        "query": "public speaking for children",
+        "clicks": 0,
+        "impressions": 14,
+        "avgPosition": 8.071428571428571
+      },
+      {
+        "query": "best public speaking classes for kids",
+        "clicks": 0,
+        "impressions": 12,
+        "avgPosition": 17.5
+      },
+      {
+        "query": "public speaking for 5 year olds",
+        "clicks": 0,
+        "impressions": 11,
+        "avgPosition": 11.090909090909092
+      }
+    ],
+    "spokenEnglish": [
+      {
+        "query": "english speaking classes online for kids",
+        "clicks": 0,
+        "impressions": 68,
+        "avgPosition": 18.147058823529413
+      },
+      {
+        "query": "online spoken english classes for kids",
+        "clicks": 0,
+        "impressions": 8,
+        "avgPosition": 10.5
+      },
+      {
+        "query": "online english speaking course for kids",
+        "clicks": 0,
+        "impressions": 7,
+        "avgPosition": 20.142857142857142
+      },
+      {
+        "query": "spoken english classes for kids",
+        "clicks": 0,
+        "impressions": 5,
+        "avgPosition": 9.2
+      },
+      {
+        "query": "spoken english classes for kids online",
+        "clicks": 0,
+        "impressions": 5,
+        "avgPosition": 7.2
+      },
+      {
+        "query": "english speaking course online for kids",
+        "clicks": 0,
+        "impressions": 5,
+        "avgPosition": 18.6
+      },
+      {
+        "query": "spoken english for kids online",
+        "clicks": 0,
+        "impressions": 4,
+        "avgPosition": 10.75
+      }
+    ]
+  },
+  "urlInspection": {
+    "speaking": {
+      "coverageState": "Submitted and indexed",
+      "verdict": "PASS",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-16T21:17:30Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "legacyPublicSpeaking": {
+      "coverageState": "Submitted and indexed",
+      "verdict": "PASS",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-16T23:27:14Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "spokenEnglish": {
+      "coverageState": "Submitted and indexed",
+      "verdict": "PASS",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-08-19T23:01:48Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "confidenceProgram": {
+      "coverageState": "Excluded by ‘noindex’ tag",
+      "verdict": "NEUTRAL",
+      "indexingState": "BLOCKED_BY_META_TAG",
+      "lastCrawlTime": "2026-08-27T06:47:32Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "speakingFoundations": {
+      "coverageState": "Submitted and indexed",
+      "verdict": "PASS",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-08-16T13:18:18Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "speakingExcellence": {
+      "coverageState": "Submitted and indexed",
+      "verdict": "PASS",
+      "indexingState": "INDEXING_ALLOWED",
+      "lastCrawlTime": "2026-09-15T01:52:32Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "legacySpokenEnglish": {
+      "coverageState": "Page with redirect",
+      "verdict": "NEUTRAL",
+      "lastCrawlTime": "2026-07-31T06:48:32Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "legacyBasicPublicSpeaking": {
+      "coverageState": "Page with redirect",
+      "verdict": "NEUTRAL",
+      "lastCrawlTime": "2026-08-16T13:18:18Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    },
+    "legacyAdvancedPublicSpeaking": {
+      "coverageState": "Page with redirect",
+      "verdict": "NEUTRAL",
+      "lastCrawlTime": "2026-07-01T18:17:48Z",
+      "crawledAs": "MOBILE",
+      "pageFetchState": "SUCCESSFUL"
+    }
+  },
+  "repositoryAudit": {
+    "originalBaseCommit": "e2946a436f1c9dd9694b034ebfd166947c01700a",
+    "synchronizedMainCommit": "3b11fee88ff21e928d2ed8af555afcb64695c815",
+    "confidenceRouteRepositoryIntent": "index,follow",
+    "publicFactMismatch": "src/components/Home/PopularPrograms.tsx labels Super Speakers Ages 4-15 while protected brand/programme facts stop at age 12",
+    "aiDiscoverySurfaces": [
+      "public/llms.txt",
+      "public/rss.xml",
+      "public/feed.xml",
+      "existing commercial/LLM discovery audit documents"
+    ]
+  },
   "notes": [
-    "Search Console metrics are aggregate, privacy-thresholded performance data; rows absent from a period are not assumed to equal zero unless GSC returned them.",
-    "Legacy redirected URLs may continue to appear in GSC while Google consolidates historical signals.",
-    "This snapshot is evidence only and does not authorize production SEO changes."
+    "The initial Brick 1 current window started on 2026-06-18 and therefore covered 91 inclusive calendar days. The re-audit corrected it to 2026-06-19 through 2026-09-16.",
+    "Search Console rows are aggregate and privacy-thresholded; absence of a row is not automatically interpreted as zero.",
+    "Google URL Inspection state reflects Google's last inspected/crawled state and can lag current repository intent.",
+    "The confidence programme has an observed Google noindex state that conflicts with current source intent; Brick 1 records but does not repair it.",
+    "Brick 1 changes documentation/evidence only and authorizes no production SEO change."
   ]
 }
