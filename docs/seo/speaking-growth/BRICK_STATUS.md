@@ -3,7 +3,7 @@
 Project branch: feature/speaking-seo-geo-growth  
 Base branch: main  
 Brick 1 original base commit: e2946a436f1c9dd9694b034ebfd166947c01700a  
-Latest main synchronized after Brick 3: e42d1cd07ba9b919c0948261b6705f91b80b27c5  
+Latest main synchronized before Brick 7: 162e9060de3c6164a2301b253f37294cdc1123ac  
 Production merge policy: no merge to main until Bricks 1–13 and final integration audit are complete.
 
 ## Governing safety rules
@@ -24,7 +24,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
 | 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
 | 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
-| 06 | Programme architecture | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
 | 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
 | 08 | Speaking knowledge cluster | PENDING | NO |
 | 09 | Evidence layer | PENDING | NO |
@@ -217,14 +217,39 @@ Brick 5 status after re-audit: COMPLETE — RE-AUDITED.
 - Course detail renderer now supports Speaking-specific level architecture while preserving the existing Phonics stage contract.
 - Public Speaking detail pages expose provider/teacher-system and teaching-method evidence, with links to team and class samples.
 - Canonical public course names are used in Course schema; Tiny Steps remains the EducationalOrganization provider through the shared schema helper.
-- `/speaking` no longer emits an umbrella Course entity; it uses WebPage plus generic ItemList programme architecture.
+- `/speaking` no longer emits an umbrella Course entity; it uses WebPage plus an ordered two-level Public Speaking ItemList and a separate unordered specialist-pathway ItemList.
 - Google Course-list enhancement is not targeted because Tiny Steps currently publishes two Public Speaking courses and current guidance requires at least three.
 - No third or Intermediate Public Speaking level invented.
 - No course-specific VideoObject invented; generic class samples remain linked evidence only.
 - Curriculum roadmap, Courses page, parent chooser, RSS/feed, and internal-link registry aligned to the same architecture.
 - Generic Speaking fit now routes through `/speaking`; named course pages remain detail owners.
-- Final source-level architecture matrix: 41/41 passed.
+- Initial build matrix: 41/41 passed; final pre-Brick-7 re-audit matrix: 53/53 passed.
 - New regression guard: `src/tests/seo/speakingGrowthBrick6.spec.ts`.
 - New commercial URLs: ZERO.
-- Redirect/canonical/sitemap URL-set changes in Brick 6: ZERO.
+- Canonical destination and sitemap URL-set changes in Brick 6: ZERO; re-audit hardened four legacy course alias redirect variants and refreshed Speaking sitemap lastmod values.
 - Production deployment: ZERO.
+
+
+## 2026-09-19 Brick 6 re-audit notes
+
+Brick 6 was fully re-audited before Brick 7.
+
+Additional fixes and findings:
+- synchronized latest main `162e9060de3c6164a2301b253f37294cdc1123ac` into the Speaking branch through PR #390; the incoming diff was only three AV5.3 attendance-validation files with no Speaking overlap;
+- split the hub schema so Foundations and Excellence are the only ordered Public Speaking levels while Spoken English and Confidence are separate unordered specialist alternatives;
+- corrected shared detail-page wording from “stage” to “level” for Speaking while retaining the existing Phonics stage contract;
+- added direct bare and trailing-slash 301 coverage for both legacy Basic and Advanced Public Speaking course aliases;
+- classified those course aliases as redirects in the central route manifest and as `noindex, follow` canonical aliases in the route SEO registry;
+- extended sitemap smoke and central SEO infrastructure tests to protect those aliases;
+- verified the route-indexability reporter classifies explicit redirects before applying the generic `/courses/**` dynamic route rule;
+- corrected Speaking-course sitemap freshness so `lastmod` reflects course-registry/detail-renderer changes, not only `courses.ts`;
+- refreshed both canonical Speaking course sitemap dates and the course sitemap index date to 2026-09-19;
+- corrected a contradictory SEO-smoke contract that had retired Public-Speaking/Spoken-English aliases in both “legacy absent” and “required core” sets;
+- added Public Speaking Excellence to required canonical core sitemap coverage;
+- rechecked current Google Course-list guidance and retained the no-fake-third-course decision;
+- final source-level matrix: 53/53 passed;
+- current branch behind main: 0;
+- no feature-branch CI run attached; full build/Vitest/browser execution remains a final integration gate;
+- production merge/deployment remains ZERO.
+
+Brick 6 status after re-audit: COMPLETE — RE-AUDITED.
