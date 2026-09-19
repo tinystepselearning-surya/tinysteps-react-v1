@@ -135,6 +135,14 @@ describe('SEO infrastructure', () => {
           && entry.type === 301
       )
     ).toBe(true);
+    expect(
+      redirects.some(
+        (entry) =>
+          entry.source === '/public-speaking-communication-kids/'
+          && entry.destination === '/speaking'
+          && entry.type === 301
+      )
+    ).toBe(true);
   });
 
   it('uses the public route manifest for P0 canonical redirects and static inventories', async () => {
@@ -155,6 +163,11 @@ describe('SEO infrastructure', () => {
         },
         {
           source: '/public-speaking-communication-kids',
+          destination: '/speaking',
+          status: 301,
+        },
+        {
+          source: '/public-speaking-communication-kids/',
           destination: '/speaking',
           status: 301,
         },
