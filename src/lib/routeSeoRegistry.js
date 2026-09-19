@@ -715,6 +715,38 @@ export const ROUTE_SEO_REGISTRY = {
     robots: 'noindex, follow',
     ogType: 'website',
   },
+  '/courses/basic-public-speaking': {
+    title: 'Public Speaking Foundations for Kids | Tiny Steps',
+    description:
+      'This legacy course URL permanently redirects to the canonical Public Speaking Foundations course page.',
+    canonicalPath: '/courses/public-speaking-foundations',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
+  '/courses/basic-public-speaking/': {
+    title: 'Public Speaking Foundations for Kids | Tiny Steps',
+    description:
+      'This legacy course URL permanently redirects to the canonical Public Speaking Foundations course page.',
+    canonicalPath: '/courses/public-speaking-foundations',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
+  '/courses/advanced-public-speaking': {
+    title: 'Public Speaking Excellence for Kids | Tiny Steps',
+    description:
+      'This legacy course URL permanently redirects to the canonical Public Speaking Excellence course page.',
+    canonicalPath: '/courses/public-speaking-excellence',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
+  '/courses/advanced-public-speaking/': {
+    title: 'Public Speaking Excellence for Kids | Tiny Steps',
+    description:
+      'This legacy course URL permanently redirects to the canonical Public Speaking Excellence course page.',
+    canonicalPath: '/courses/public-speaking-excellence',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
   '/login': {
     title: 'Sign In | Tiny Steps Learning',
     description: 'Sign in to your Tiny Steps Learning account.',
