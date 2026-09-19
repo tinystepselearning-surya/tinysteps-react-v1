@@ -27,7 +27,9 @@ const LEGACY_URLS_ABSENT = [
   'https://tinystepslearning.com/courses/basic-grammar',
   'https://tinystepslearning.com/courses/advanced-grammar',
   'https://tinystepslearning.com/courses/basic-public-speaking',
+  'https://tinystepslearning.com/courses/basic-public-speaking/',
   'https://tinystepslearning.com/courses/advanced-public-speaking',
+  'https://tinystepslearning.com/courses/advanced-public-speaking/',
 ];
 
 const REQUIRED_CORE_URLS = [
@@ -79,6 +81,26 @@ const REDIRECT_ALIASES = [
     path: '/public-speaking-communication-kids',
     destination: '/speaking',
     reason: 'Consolidate legacy public-speaking landing into the canonical Speaking owner',
+  },
+  {
+    path: '/courses/basic-public-speaking',
+    destination: '/courses/public-speaking-foundations',
+    reason: 'Consolidate legacy Basic Public Speaking course URL',
+  },
+  {
+    path: '/courses/basic-public-speaking/',
+    destination: '/courses/public-speaking-foundations',
+    reason: 'Consolidate trailing-slash Basic Public Speaking course URL',
+  },
+  {
+    path: '/courses/advanced-public-speaking',
+    destination: '/courses/public-speaking-excellence',
+    reason: 'Consolidate legacy Advanced Public Speaking course URL',
+  },
+  {
+    path: '/courses/advanced-public-speaking/',
+    destination: '/courses/public-speaking-excellence',
+    reason: 'Consolidate trailing-slash Advanced Public Speaking course URL',
   },
 ];
 
