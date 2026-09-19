@@ -21,6 +21,7 @@ const manifest = read('src/lib/publicRouteManifest.js');
 const routes = read('src/app/routes.tsx');
 const routeSeo = read('src/lib/routeSeoRegistry.js');
 const sitemapGenerator = read('scripts/generate-sitemaps.js');
+const seoSmoke = read('scripts/seo-smoke.mjs');
 const internalLinks = read('src/lib/seo/internalLinkMap.ts');
 
 describe('Speaking growth Brick 6 programme architecture', () => {
@@ -155,6 +156,20 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(routes).toContain("path: 'courses/basic-public-speaking/'");
     expect(routes).toContain("path: 'courses/advanced-public-speaking/'");
     expect(routeSeo).toContain("robots: 'noindex, follow'");
+  });
+
+  it('keeps sitemap smoke consistent: canonicals required, retired aliases absent', () => {
+    expect(seoSmoke).toContain("'https://tinystepslearning.com/courses/public-speaking-foundations'");
+    expect(seoSmoke).toContain("'https://tinystepslearning.com/courses/public-speaking-excellence'");
+    expect(seoSmoke).toContain("'https://tinystepslearning.com/public-speaking-communication-kids'");
+    expect(seoSmoke).toContain("'https://tinystepslearning.com/spoken-english-classes-for-kids'");
+
+    const requiredCoreBlock = seoSmoke.slice(
+      seoSmoke.indexOf('const REQUIRED_CORE_URLS = ['),
+      seoSmoke.indexOf('const REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS'),
+    );
+    expect(requiredCoreBlock).not.toContain('public-speaking-communication-kids');
+    expect(requiredCoreBlock).not.toContain("'https://tinystepslearning.com/spoken-english-classes-for-kids'");
   });
 
   it('keeps Speaking course sitemap freshness tied to the files that actually render the course pages', () => {
