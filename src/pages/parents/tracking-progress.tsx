@@ -200,7 +200,7 @@ const TrackingProgress: React.FC = () => {
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Speaking-specific progress</p>
         <h2 className="mt-2 text-2xl font-bold text-slate-900">For Speaking: use the Tiny Steps Speaking Progress Framework</h2>
         <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700 md:text-base">
-          Speaking progress is easier to understand when the update shows the current skill, the support still needed, what the child can now do independently, and whether that skill transfers to a fresh task. Tiny Steps uses four observation bands rather than turning speaking into one percentage.
+          Speaking progress is easier to understand when the update shows the current skill, the support still needed, what the child can now do independently, and whether that skill transfers to a fresh task. In this speaking framework, Tiny Steps uses four observation bands rather than turning the ten dimensions into one percentage. Existing dashboard summaries remain separate operational views.
         </p>
 
         <div className="mt-5 flex flex-wrap gap-2">
