@@ -215,6 +215,71 @@ The Brick-5 path makes **zero Microsoft Graph calls**. It remains distinct from 
 
 Cached viewing remains independent: **Load Saved Results** does not invoke the latest-check callable.
 
+## Brick 6A — Fresh-evidence backend foundation
+
+Brick 6A prepares the Microsoft Graph path without exporting or invoking a new Graph-backed callable.
+
+### Session snapshot contract
+
+`buildAvsEvidenceSessionSnapshot` converts one already-loaded `classSessions` document into the existing AV2 `ExpectedClassSessionSnapshot` contract.
+
+It resolves:
+
+- canonical service date;
+- scheduled start/end from persisted timestamps or IST date/time fields;
+- enrollment, teacher, kid and course IDs already present on the session;
+- Teams link from `joinUrl`, then legacy `meetingLink` / `classLink`;
+- canonical current attendance.
+
+It fails closed for:
+
+- unresolved service date;
+- unresolved start/end time;
+- classes that have not ended yet;
+- cancelled/canceled/rescheduled sessions.
+
+No enrollment, kid or teacher lookup is introduced by this helper.
+
+### Stable evidence identity
+
+Fresh evidence uses a stable SHA-256-derived run ID per `classSessionId`.
+
+This is important because AV2's evidence document ID incorporates `runId`. A stable per-session run ID means repeated fresh checks for the same class overwrite that class's validation evidence instead of creating an unbounded new evidence document on every click.
+
+### Explicit Graph limits
+
+The fresh path constants are intentionally conservative:
+
+```text
+maximum selected range: 31 calendar days
+maximum initial discovery: 500 class sessions
+maximum Microsoft Graph batch: 10 class sessions
+```
+
+These are backend safety bounds, not an invitation to poll.
+
+### Organizer resolution
+
+The Microsoft organizer object ID remains server-side.
+
+The backend first checks:
+
+```text
+attendanceValidationConfig/teams
+```
+
+Browser reads and writes to this collection are denied.
+
+If config is absent, the resolver may inspect at most 25 existing AV2 evidence documents. Bootstrap is allowed only if those documents prove **exactly one** non-empty organizer ID.
+
+- zero organizer IDs → fail closed;
+- more than one organizer ID → fail closed;
+- exactly one → persist it to the backend-only config once.
+
+This reuses the already-proven AV2 production evidence without exposing the organizer ID to React code or inventing an unverified organizer.
+
+Brick 6A performs no Graph call by itself and exports no new Cloud Function.
+
 ## Still deferred
 
 This document does not yet activate:
