@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildSessionProof } from '../src/attendanceValidation/sessionProofEngine';
+import {
+  AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS,
+  buildSessionProof,
+} from '../src/attendanceValidation/sessionProofEngine';
 import type { AttendanceValidationEvidenceDocument } from '../src/attendanceValidation/teamsEvidenceCollector';
 import type { Av3EnrollmentIdentityResult } from '../src/attendanceValidation/enrollmentIdentityBridge';
 
@@ -268,30 +271,61 @@ describe('AV4 session proof engine', () => {
     expect(result.issues).toContain('identity_requires_review');
   });
 
-  it('leaves meaningful overlap undecided until calibration supplies a threshold', () => {
+  it('uses the contract-v2 25-minute production threshold by default', () => {
     const result = buildSessionProof(evidence(), identity());
 
-    expect(result.meaningfulOverlapThresholdSeconds).toBeNull();
-    expect(result.meaningfulTeacherLearnerOverlap).toBeNull();
-    expect(result.issues).toContain('overlap_threshold_not_configured');
+    expect(result.meaningfulOverlapThresholdSeconds).toBe(
+      AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS,
+    );
+    expect(result.maxTeacherLearnerOverlapSeconds).toBe(1500);
+    expect(result.meaningfulTeacherLearnerOverlap).toBe(false);
+    expect(result.issues).toContain('meaningful_overlap_not_met');
+    expect(result.issues).not.toContain('overlap_threshold_not_configured');
   });
 
-  it('flags too-short teacher learner overlap against an injected threshold', () => {
-    const shortEvidence = evidence();
-    shortEvidence.attendanceReports[0].participantRecords[1] = participant(
+  it('keeps 24:59 and exactly 25:00 below the strict Present threshold', () => {
+    const twentyFourFiftyNine = evidence();
+    twentyFourFiftyNine.attendanceReports[0].participantRecords[1] = participant(
       'learner-record',
-      '2026-09-17T09:34:00.000Z',
-      '2026-09-17T09:35:00.000Z',
-      60,
+      '2026-09-17T09:05:01.000Z',
+      '2026-09-17T09:30:00.000Z',
+      1499,
+    );
+    const exactTwentyFive = evidence();
+
+    const shortResult = buildSessionProof(twentyFourFiftyNine, identity());
+    const exactResult = buildSessionProof(exactTwentyFive, identity());
+
+    expect(shortResult.maxTeacherLearnerOverlapSeconds).toBe(1499);
+    expect(shortResult.meaningfulTeacherLearnerOverlap).toBe(false);
+    expect(exactResult.maxTeacherLearnerOverlapSeconds).toBe(1500);
+    expect(exactResult.meaningfulTeacherLearnerOverlap).toBe(false);
+  });
+
+  it('accepts 25:01 as meaningful simultaneous scheduled overlap', () => {
+    const aboveTwentyFive = evidence();
+    aboveTwentyFive.attendanceReports[0].participantRecords[1] = participant(
+      'learner-record',
+      '2026-09-17T09:04:59.000Z',
+      '2026-09-17T09:30:00.000Z',
+      1501,
     );
 
-    const result = buildSessionProof(shortEvidence, identity(), {
+    const result = buildSessionProof(aboveTwentyFive, identity());
+
+    expect(result.maxTeacherLearnerOverlapSeconds).toBe(1501);
+    expect(result.meaningfulTeacherLearnerOverlap).toBe(true);
+    expect(result.issues).not.toContain('meaningful_overlap_not_met');
+  });
+
+  it('still allows an explicit diagnostic/calibration threshold override', () => {
+    const result = buildSessionProof(evidence(), identity(), {
       meaningfulOverlapSeconds: 600,
     });
 
-    expect(result.maxTeacherLearnerOverlapSeconds).toBe(60);
-    expect(result.meaningfulTeacherLearnerOverlap).toBe(false);
-    expect(result.issues).toContain('meaningful_overlap_not_met');
+    expect(result.meaningfulOverlapThresholdSeconds).toBe(600);
+    expect(result.maxTeacherLearnerOverlapSeconds).toBe(1500);
+    expect(result.meaningfulTeacherLearnerOverlap).toBe(true);
   });
 
   it('rejects an invalid calibrated overlap threshold', () => {

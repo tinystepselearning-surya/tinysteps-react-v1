@@ -13,6 +13,8 @@ import type {
 } from './enrollmentIdentityBridge';
 
 export const AV4_PROOF_SCHEMA_VERSION = 1;
+export const AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS = 25 * 60;
+export const AV4_PRODUCTION_OVERLAP_COMPARISON = 'strictly_greater_than' as const;
 
 export type Av4ProofIssueKind =
   | 'session_reference_incomplete'
@@ -158,14 +160,19 @@ function attendanceEvidenceComplete(evidence: AttendanceValidationEvidenceDocume
 /**
  * AV4 computes session proof from AV2/AV2.1 evidence plus the deterministic AV3 identity bridge.
  *
- * It does not decide Present/Absent. The overlap threshold is explicitly injected so AV8 can
- * calibrate it using real classes before AV5 relies on it. A null threshold intentionally leaves
- * meaningfulTeacherLearnerOverlap undecided instead of guessing.
+ * It does not decide Present/Absent. Contract v2 adopts the business-approved
+ * production rule of strictly more than 25 minutes (1,500 seconds) of simultaneous
+ * expected-teacher + learner-side overlap inside the scheduled class window.
+ *
+ * Callers may still inject a different threshold for deterministic tests/calibration,
+ * and may explicitly pass null to force a fail-closed diagnostic REVIEW path.
  */
 export function buildSessionProof(
   evidence: AttendanceValidationEvidenceDocument,
   identity: Av3EnrollmentIdentityResult,
-  config: Av4SessionProofConfig = { meaningfulOverlapSeconds: null },
+  config: Av4SessionProofConfig = {
+    meaningfulOverlapSeconds: AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS,
+  },
 ): Av4SessionProofResult {
   const issues: Av4ProofIssueKind[] = [];
 
@@ -249,7 +256,7 @@ export function buildSessionProof(
     if (!Number.isFinite(threshold) || threshold < 0) {
       throw new RangeError('meaningfulOverlapSeconds must be null or a finite non-negative number.');
     }
-    meaningfulTeacherLearnerOverlap = maxTeacherLearnerOverlapSeconds >= threshold;
+    meaningfulTeacherLearnerOverlap = maxTeacherLearnerOverlapSeconds > threshold;
     if (!meaningfulTeacherLearnerOverlap) issues.push('meaningful_overlap_not_met');
   }
 

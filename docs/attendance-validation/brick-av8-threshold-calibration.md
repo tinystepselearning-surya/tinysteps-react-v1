@@ -1,6 +1,6 @@
 # AV8 — Meaningful-Overlap Threshold Calibration
 
-Status: **implemented as a pure, offline calibration engine. AV8 does not set or deploy a production overlap threshold, does not read or write Firestore, does not export a Cloud Function, and cannot invoke AV7.**
+Status: **implemented as a pure, offline calibration engine. The engine itself still does not deploy or operationally adopt thresholds. A later contract-v2 business decision adopted a strict >25-minute production overlap rule; see `contract-v2-25-minute-overlap.md`.**
 
 ## Purpose
 
@@ -96,30 +96,33 @@ But only **definitive** human decisions are allowed to influence threshold metri
 
 This does **not** mean AV8 converts a below-threshold class to Absent.
 
-The runtime AV5 rule remains:
+The runtime AV5 rule now uses contract-v2 strict semantics:
 
 ```text
-overlap >= threshold  -> eligible for PRESENT recommendation
-overlap < threshold   -> REVIEW
+overlap > threshold   -> eligible for PRESENT recommendation
+overlap <= threshold  -> REVIEW
 ```
+
+For the adopted 1,500-second threshold, exactly 25:00 remains REVIEW and 25:01+ becomes eligible for PRESENT, assuming every upstream safety gate passes.
 
 Absence continues to require the separate AV5 deterministic no-learner-side pathway.
 
-## No invented production number
+## Production-threshold adoption happened separately
 
-AV0 says a threshold may be tuned only after shadow-mode comparison against human review.
+At the time AV8 was originally implemented, the repository did not contain an approved calibration cohort and AV8 therefore did not invent a production number.
 
-At the time AV8 is implemented, the repository does not contain an approved calibration cohort large enough to justify a production number.
+After that implementation, Tiny Steps explicitly approved a **strictly greater than 25-minute** business rule for teacher/learner simultaneous scheduled overlap.
 
-Therefore AV8 intentionally does **not** change:
+That adoption is intentionally separate from the AV8 analyzer:
 
-- `ATTENDANCE_VALIDATION_CONTRACT_VERSION`;
-- AV4's default `meaningfulOverlapSeconds = null`;
-- AV5 decision order;
-- AV5.3's explicit threshold input;
-- any deployed Cloud Function configuration.
+- contract version increased to 2;
+- AV4 production default became 1,500 seconds;
+- runtime comparison became strict `>`;
+- AV5 decision order remained unchanged;
+- AV5.3 production omission now inherits the versioned default;
+- AV7 correction approval remains unchanged.
 
-There is no hard-coded "10 minutes", "15 minutes", "50% of class", or similar production assumption in AV8.
+AV8 remains useful for future evidence-based recalibration, but it does not itself authorize changing the versioned production contract.
 
 ## Candidate selection is not threshold adoption
 

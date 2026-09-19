@@ -106,7 +106,7 @@ describe('AV8 meaningful-overlap threshold calibration', () => {
         thresholdSeconds: 900,
         falsePositiveCount: 0,
         falsePositiveRate: 0,
-        presentRecall: 0.666667,
+        presentRecall: 0.333333,
         meetsPolicy: false,
       }),
     ]);
@@ -150,6 +150,32 @@ describe('AV8 meaningful-overlap threshold calibration', () => {
     expect(report.selection).toEqual({
       status: 'candidate_available',
       bestCandidateSeconds: 700,
+    });
+  });
+
+  it('uses a strict greater-than comparator at the 25-minute boundary', () => {
+    const report = analyzeMeaningfulOverlapCalibration({
+      samples: [
+        sample('present-exact', 'present', 1500),
+        sample('present-above', 'present', 1501),
+        sample('absent-1', 'absent', 0),
+      ],
+      candidateThresholdSeconds: [1500],
+      policy: {
+        minEligibleSamples: 3,
+        minHumanPresentSamples: 2,
+        minHumanAbsentSamples: 1,
+        maxFalsePositiveRate: 1,
+        minPresentRecall: 0,
+      },
+    });
+
+    expect(report.candidates[0]).toMatchObject({
+      thresholdSeconds: 1500,
+      predictedPresentCount: 1,
+      truePositiveCount: 1,
+      falseNegativeCount: 1,
+      presentRecall: 0.5,
     });
   });
 

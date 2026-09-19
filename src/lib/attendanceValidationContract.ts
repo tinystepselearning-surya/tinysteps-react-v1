@@ -1,4 +1,8 @@
-export const ATTENDANCE_VALIDATION_CONTRACT_VERSION = 1 as const;
+export const ATTENDANCE_VALIDATION_CONTRACT_VERSION = 2 as const;
+
+export const ATTENDANCE_VALIDATION_PRESENT_OVERLAP_SECONDS = 25 * 60;
+export const ATTENDANCE_VALIDATION_PRESENT_OVERLAP_COMPARISON =
+  'strictly_greater_than' as const;
 
 /**
  * Tiny Steps remains the operational attendance system of record.
@@ -59,9 +63,9 @@ export type AttendanceValidationConfidenceBand =
   | 'unmatched';
 
 /**
- * Initial deterministic matching bands. These are calibration inputs, not
- * permission to mutate attendance. AV8 may tune the numeric thresholds by
- * increasing the contract version after shadow-mode evidence is reviewed.
+ * Initial deterministic matching bands. These remain diagnostic inputs only.
+ * Contract v2 separately adopts the business-approved teacher/learner overlap
+ * rule: strictly more than 25 minutes inside the scheduled class window.
  */
 export const ATTENDANCE_VALIDATION_CONFIDENCE_THRESHOLDS = {
   verified: 90,

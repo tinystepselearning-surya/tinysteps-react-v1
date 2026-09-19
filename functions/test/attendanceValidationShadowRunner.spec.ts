@@ -187,7 +187,6 @@ describe('AV5.3 bounded shadow runner', () => {
       {
         runId: 'shadow-1',
         workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
-        meaningfulOverlapSeconds: 600,
       },
       {
         store,
@@ -218,6 +217,42 @@ describe('AV5.3 bounded shadow runner', () => {
       unboundedOperationalScans: false,
       operationalMutationAllowed: false,
     });
+  });
+
+  it('uses the contract-v2 strict 25-minute threshold when production input omits an override', async () => {
+    const exactTwentyFiveEvidence = evidence();
+    exactTwentyFiveEvidence.attendanceReports[0].participantRecords[1].rawAttendanceIntervals = [
+      {
+        joinDateTime: '2026-09-18T10:07:00.000Z',
+        leaveDateTime: '2026-09-18T10:32:00.000Z',
+        durationInSeconds: 1500,
+      },
+    ];
+
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(),
+        evidence: exactTwentyFiveEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-contract-v2-boundary',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      validationDecision: 'review',
+      classification: 'POSSIBLE_FALSE_PRESENT',
+      recommendedAction: 'review',
+    });
+    expect(store.saved[0].sourceClassificationReasons).toContain(
+      'meaningful_overlap_not_met',
+    );
   });
 
   it('hard-skips July/August sessions before the permanent September 2026 start date', async () => {

@@ -6,6 +6,7 @@ import {
   type StaffIdentityRegistryEntry,
 } from './enrollmentIdentityBridge';
 import {
+  AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS,
   buildSessionProof,
   type Av4ProofIssueKind,
 } from './sessionProofEngine';
@@ -68,7 +69,12 @@ export interface Av53ShadowWorkItem {
 export interface Av53ShadowRunInput {
   runId: string;
   workItems: Av53ShadowWorkItem[];
-  meaningfulOverlapSeconds: number | null;
+  /**
+   * Optional diagnostic/calibration override.
+   * Production callers should omit this field and use the contract-v2 default.
+   * Explicit null remains a fail-closed test/diagnostic path.
+   */
+  meaningfulOverlapSeconds?: number | null;
 }
 
 export interface Av53LoadedWorkItem {
@@ -152,7 +158,8 @@ function cleanRunId(value: unknown): string {
   return normalized;
 }
 
-function validateThreshold(value: number | null): number | null {
+function validateThreshold(value: number | null | undefined): number | null {
+  if (value === undefined) return AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS;
   if (value === null) return null;
   if (!Number.isFinite(value) || value < 0) {
     throw new RangeError(
