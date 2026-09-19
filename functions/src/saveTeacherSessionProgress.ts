@@ -61,6 +61,8 @@ interface AdminAttendanceCorrectionRequest {
   kidId?: unknown;
   newStatus?: unknown;
   reason?: unknown;
+  validationCaseId?: unknown;
+  validationCaseFingerprint?: unknown;
 }
 
 function normalizeRole(value: unknown): string {
@@ -106,6 +108,23 @@ function resolveAdminAttendanceStatus(entry: unknown): AdminAttendanceStatus | n
   if (entry && typeof entry === 'object' && typeof (entry as { status?: unknown }).status === 'string') {
     return normalizeAdminAttendanceStatus((entry as { status: string }).status);
   }
+  return null;
+}
+
+type Av7CanonicalCorrectionStatus = 'present' | 'absent' | 'rescheduled';
+
+function canonicalizeAv7AttendanceStatus(value: unknown): Av7CanonicalCorrectionStatus | null {
+  const normalized = normalizeAdminAttendanceStatus(value);
+  if (normalized === 'present' || normalized === 'late') return 'present';
+  if (normalized === 'absent' || normalized === 'no_show') return 'absent';
+  if (normalized === 'rescheduled' || normalized === 'reschedule_requested') return 'rescheduled';
+  return null;
+}
+
+function expectedAv7StatusForAction(value: unknown): 'present' | 'absent' | null {
+  const action = String(value || '').trim().toLowerCase();
+  if (action === 'correct_to_present') return 'present';
+  if (action === 'correct_to_absent') return 'absent';
   return null;
 }
 
@@ -916,6 +935,16 @@ export const adminAttendanceCorrection = onCall(
     const kidId = sanitizeText(payload.kidId, 160);
     const reason = sanitizeText(payload.reason, 2000);
     const newStatus = normalizeIncomingAdminAttendanceStatus(payload.newStatus);
+    const validationCaseId = sanitizeText(payload.validationCaseId, 240);
+    const validationCaseFingerprint = sanitizeText(payload.validationCaseFingerprint, 160);
+    const hasValidationCaseLink = Boolean(validationCaseId || validationCaseFingerprint);
+
+    if (hasValidationCaseLink && (!validationCaseId || !validationCaseFingerprint)) {
+      throw new HttpsError(
+        'invalid-argument',
+        'validationCaseId and validationCaseFingerprint must be supplied together.',
+      );
+    }
 
     if (!sessionId) {
       throw new HttpsError('invalid-argument', 'sessionId is required.');
@@ -955,6 +984,105 @@ export const adminAttendanceCorrection = onCall(
       previousRawEntry && typeof previousRawEntry === 'object' && !Array.isArray(previousRawEntry)
         ? { ...(previousRawEntry as Record<string, unknown>) }
         : {};
+
+    let av7ValidationLink: {
+      caseRef: admin.firestore.DocumentReference;
+      resolutionRef: admin.firestore.DocumentReference;
+      caseId: string;
+      fingerprint: string;
+      recommendedAction: 'correct_to_present' | 'correct_to_absent';
+      expectedNewStatus: 'present' | 'absent';
+    } | null = null;
+
+    if (hasValidationCaseLink) {
+      const caseRef = db.collection('attendanceValidationCases').doc(validationCaseId);
+      const caseSnap = await caseRef.get();
+      if (!caseSnap.exists) {
+        throw new HttpsError('not-found', 'Attendance validation case not found.');
+      }
+
+      const validationCase = (caseSnap.data() || {}) as Record<string, unknown>;
+      const storedFingerprint = sanitizeText(validationCase.inputFingerprint, 160);
+      if (!storedFingerprint || storedFingerprint !== validationCaseFingerprint) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance validation case changed. Refresh AVS before approving a correction.',
+        );
+      }
+
+      if (sanitizeText(validationCase.classSessionId, 160) !== sessionId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance validation case no longer points to this session.',
+        );
+      }
+      if (sanitizeText(validationCase.kidId, 160) !== kidId) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance validation case no longer points to this student.',
+        );
+      }
+
+      const expectedNewStatus = expectedAv7StatusForAction(validationCase.recommendedAction);
+      if (!expectedNewStatus) {
+        throw new HttpsError(
+          'failed-precondition',
+          'This attendance validation case does not recommend an approvable correction.',
+        );
+      }
+      if (canonicalizeAv7AttendanceStatus(newStatus) !== expectedNewStatus) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Requested attendance status does not match the AVS recommendation.',
+        );
+      }
+      if (String(validationCase.validationDecision || '').trim().toLowerCase() !== expectedNewStatus) {
+        throw new HttpsError(
+          'failed-precondition',
+          'AVS decision and recommended correction are inconsistent.',
+        );
+      }
+
+      const recordedTinyStepsAttendance = canonicalizeAv7AttendanceStatus(
+        validationCase.tinyStepsAttendance,
+      );
+      const currentTinyStepsAttendance = canonicalizeAv7AttendanceStatus(previousStatus);
+      if (recordedTinyStepsAttendance !== currentTinyStepsAttendance) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance changed after this AVS case was produced. Refresh validation before correcting.',
+        );
+      }
+
+      const resolutionStatus = String(validationCase.resolutionStatus || '').trim().toLowerCase();
+      if (resolutionStatus !== 'needs_review') {
+        throw new HttpsError(
+          'failed-precondition',
+          'This attendance validation case is no longer awaiting correction approval.',
+        );
+      }
+
+      const resolutionId = `${validationCaseId}__${validationCaseFingerprint.slice(0, 48)}`;
+      const resolutionRef = db.collection('attendanceValidationResolutions').doc(resolutionId);
+      const resolutionSnap = await resolutionRef.get();
+      if (resolutionSnap.exists) {
+        throw new HttpsError(
+          'already-exists',
+          'This exact attendance validation case revision was already resolved.',
+        );
+      }
+
+      av7ValidationLink = {
+        caseRef,
+        resolutionRef,
+        caseId: validationCaseId,
+        fingerprint: validationCaseFingerprint,
+        recommendedAction: expectedNewStatus === 'present'
+          ? 'correct_to_present'
+          : 'correct_to_absent',
+        expectedNewStatus,
+      };
+    }
 
     const nextAttendance: Record<string, unknown> = {
       ...attendanceRaw,
@@ -1016,7 +1144,50 @@ export const adminAttendanceCorrection = onCall(
       correctedByEmail,
       correctedAt: admin.firestore.FieldValue.serverTimestamp(),
       financeReconciliation,
+      ...(av7ValidationLink
+        ? {
+            attendanceValidationCaseId: av7ValidationLink.caseId,
+            attendanceValidationInputFingerprint: av7ValidationLink.fingerprint,
+          }
+        : {}),
     });
+
+    if (av7ValidationLink) {
+      const resolvedAt = admin.firestore.FieldValue.serverTimestamp();
+      batch.set(av7ValidationLink.resolutionRef, {
+        schemaVersion: 1,
+        brick: 'AV7',
+        validationCaseId: av7ValidationLink.caseId,
+        inputFingerprint: av7ValidationLink.fingerprint,
+        decision: 'approved_correction',
+        recommendedAction: av7ValidationLink.recommendedAction,
+        sessionId,
+        kidId,
+        previousAttendance: canonicalizeAv7AttendanceStatus(previousStatus),
+        correctedAttendance: av7ValidationLink.expectedNewStatus,
+        attendanceCorrectionId: auditRef.id,
+        actorUid: uid,
+        actorName: correctedByName,
+        actorEmail: correctedByEmail,
+        reason,
+        resolvedAt,
+      });
+      batch.set(
+        av7ValidationLink.caseRef,
+        {
+          resolutionStatus: 'resolved',
+          resolutionDecision: 'approved_correction',
+          resolutionId: av7ValidationLink.resolutionRef.id,
+          attendanceCorrectionId: auditRef.id,
+          resolvedAction: av7ValidationLink.recommendedAction,
+          resolvedAt,
+          resolvedByUid: uid,
+          resolvedByName: correctedByName,
+          resolvedByEmail: correctedByEmail,
+        },
+        { merge: true },
+      );
+    }
 
     await batch.commit();
 
@@ -1036,6 +1207,12 @@ export const adminAttendanceCorrection = onCall(
       previousStatus,
       newStatus,
       correctionId: auditRef.id,
+      ...(av7ValidationLink
+        ? {
+            validationCaseId: av7ValidationLink.caseId,
+            validationResolutionId: av7ValidationLink.resolutionRef.id,
+          }
+        : {}),
     };
   },
 );
