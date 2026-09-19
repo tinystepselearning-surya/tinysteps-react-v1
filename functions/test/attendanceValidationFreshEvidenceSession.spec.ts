@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildBaselineEvidenceSessionSnapshot,
   buildFreshEvidenceSessionSnapshot,
+  resolveBaselineOrganizerCandidate,
 } from '../src/attendanceValidation/freshEvidenceSession';
 import type {
   AttendanceValidationEvidenceDocument,
@@ -95,4 +97,63 @@ describe('AVS force-fresh session snapshot', () => {
     expect(result.joinUrl).toBe('https://teams.example/legacy');
     expect(result.existingAttendanceStatus).toBe('absent');
   });
+
+
+describe('AVS first-time baseline session snapshot', () => {
+  it('reconstructs a legacy IST schedule window and canonical aliases without prior evidence', () => {
+    const result = buildBaselineEvidenceSessionSnapshot(
+      'session-legacy',
+      {
+        enrollmentId: 'enrollment-1',
+        assignedTeacherId: 'teacher-1',
+        kidIds: ['kid-1'],
+        courseId: 'course-1',
+        date: '2026-09-18',
+        startTime: '20:00',
+        durationMins: 35,
+        joinUrl: 'https://teams.example/legacy',
+        attendance: { 'kid-1': { status: 'present' } },
+      },
+    );
+
+    expect(result).toMatchObject({
+      classSessionId: 'session-legacy',
+      enrollmentId: 'enrollment-1',
+      teacherId: 'teacher-1',
+      kidId: 'kid-1',
+      courseId: 'course-1',
+      scheduledStartDateTime: '2026-09-18T14:30:00.000Z',
+      scheduledEndDateTime: '2026-09-18T15:05:00.000Z',
+      joinUrl: 'https://teams.example/legacy',
+      existingAttendanceStatus: 'present',
+    });
+  });
+
+  it('uses session organizer identity first, then teacher email/user email as fail-closed candidates', () => {
+    expect(resolveBaselineOrganizerCandidate({
+      teamsOrganizerUserId: 'organizer-object-id',
+      teacherEmail: 'teacher@tinysteps.example',
+    })).toBe('organizer-object-id');
+
+    expect(resolveBaselineOrganizerCandidate({
+      teacherEmail: 'teacher@tinysteps.example',
+    })).toBe('teacher@tinysteps.example');
+
+    expect(resolveBaselineOrganizerCandidate(
+      {},
+      { email: 'directory-teacher@tinysteps.example' },
+    )).toBe('directory-teacher@tinysteps.example');
+
+    expect(resolveBaselineOrganizerCandidate({}, null)).toBeNull();
+  });
+
+  it('fails closed when no valid class window can be reconstructed', () => {
+    expect(() =>
+      buildBaselineEvidenceSessionSnapshot('session-bad', {
+        date: '2026-09-18',
+        startTime: '20:00',
+      }),
+    ).toThrow('valid scheduled start/end window');
+  });
+});
 });
