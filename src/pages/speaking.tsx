@@ -12,6 +12,9 @@ import {
   SPEAKING_PROGRESS_FRAMEWORK_PATH,
   SPEAKING_PROGRESS_OBSERVATION_BANDS,
 } from '../lib/speakingProgressFramework';
+import {
+  SPEAKING_EVIDENCE_SURFACES,
+} from '../lib/speakingEvidenceLayer';
 
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
@@ -228,6 +231,25 @@ export default function SpeakingPage() {
       })),
     };
 
+    const speakingEvidenceSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#evidence-sources`,
+      name: 'Tiny Steps Speaking evidence sources',
+      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      numberOfItems: SPEAKING_EVIDENCE_SURFACES.length,
+      itemListElement: SPEAKING_EVIDENCE_SURFACES.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'WebPage',
+          name: item.title,
+          url: `${PUBLIC_FACTS.primaryWebsite}${item.path}`,
+          description: `${item.summary} Evidence boundary: ${item.doesNotProve[0]}.`,
+        },
+      })),
+    };
+
     applySeo({
       title: seoTitle,
       description: seoDescription,
@@ -235,7 +257,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -728,25 +750,34 @@ export default function SpeakingPage() {
         observation="sentence completeness, idea organisation, clarity, response to feedback and how much prompting the child needs before speaking independently."
       />
 
-      <section className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
-        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2">
-          <article className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm md:p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800">Academic quality</p>
-            <h2 className="mt-2 text-xl font-bold text-slate-950">Teachers work inside a structured academic system</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              Tiny Steps documents curriculum design, teacher development, quality support, and the founder-led academic system so parents can understand how teaching consistency is supported beyond one individual class.
-            </p>
-            <Link to="/team" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">Meet the academic team and teaching system</Link>
-          </article>
+      <section data-speaking-evidence-layer className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm md:p-8">
+          <p className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Evidence before enrolment</p>
+          <h2 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">What you can verify — and what each source does not prove</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 md:text-base md:leading-7">
+            Tiny Steps separates observable teaching evidence, academic-method documentation, progress methodology, and first-party parent experience. No single source is treated as proof of a guaranteed result for every child.
+          </p>
 
-          <article className="rounded-2xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm md:p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">What parents can verify</p>
-            <h2 className="mt-2 text-xl font-bold text-slate-950">Look for participation, correction, and visible next steps</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              A useful speaking class gives the child repeated chances to respond, makes corrections specific and manageable, and gives parents a clearer picture of what is improving and what should come next.
-            </p>
-            <Link to="/why-tiny-steps" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">See the Tiny Steps learning approach</Link>
-          </article>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {SPEAKING_EVIDENCE_SURFACES.map((item) => (
+              <article key={item.id} data-speaking-evidence-kind={item.kind} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">{item.sourceLabel}</p>
+                <h3 className="mt-2 text-lg font-bold text-slate-950">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.summary}</p>
+                <div className="mt-4 space-y-2 text-xs leading-5 text-slate-600">
+                  <p><strong className="text-slate-800">Supports:</strong> {item.supports.slice(0, 2).join('; ')}.</p>
+                  <p><strong className="text-slate-800">Does not prove:</strong> {item.doesNotProve[0]}.</p>
+                </div>
+                <Link to={item.path} className="mt-auto pt-4 text-sm font-semibold text-slate-950 underline underline-offset-2">
+                  Review this evidence source
+                </Link>
+              </article>
+            ))}
+          </div>
+
+          <p className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-950 sm:text-sm">
+            Parent feedback describes individual family experience. Class samples show teaching approach. Progress bands are educational observation tools. None of these is a clinical assessment, a universal outcome guarantee, or an independently verified aggregate rating.
+          </p>
         </div>
       </section>
 
