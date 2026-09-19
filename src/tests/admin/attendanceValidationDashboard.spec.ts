@@ -12,6 +12,7 @@ describe('AV6 admin attendance validation dashboard', () => {
   const sidebar = readRepoFile('src/pages/admin/components/Sidebar.tsx');
   const routes = readRepoFile('src/app/routes.tsx');
   const firestoreRules = readRepoFile('firestore.rules');
+  const callFunctions = readRepoFile('src/lib/callFunctions.ts');
 
   it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
@@ -91,8 +92,45 @@ describe('AV6 admin attendance validation dashboard', () => {
   });
 
   it('keeps fresh revalidation visibly separate from cached result loading', () => {
+    expect(dashboard).toContain('Load Saved Results');
     expect(dashboard).toContain('Run Latest Check');
-    expect(dashboard).toContain('Changed-only revalidation is added in the next AVS brick.');
-    expect(dashboard).toContain('It does not call Microsoft Teams or rerun validation.');
+    expect(dashboard).toContain(
+      'Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.',
+    );
+    expect(dashboard).toContain(
+      'Latest Check is intentionally capped at 31 calendar days per run.',
+    );
+  });
+
+  it('calls the changed-only backend with the selected range and reloads that same saved window', () => {
+    expect(dashboard).toContain(
+      "'runAttendanceValidationLatestCheck'",
+    );
+    expect(dashboard).toContain('{ fromDate, toDate }');
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+    expect(dashboard).toContain('if (!preserveCurrentTab) setClassificationFilter(\'all\')');
+    expect(callFunctions).toContain(
+      "runAttendanceValidationLatestCheck: 'asia-south1'",
+    );
+  });
+
+  it('shows an auditable latest-check result summary without implying Graph refresh', () => {
+    expect(dashboard).toContain('Latest Check completed');
+    expect(dashboard).toContain('latestCheckResult.dirtyFoundCount');
+    expect(dashboard).toContain('latestCheckResult.revalidatedCount');
+    expect(dashboard).toContain('latestCheckResult.baselineRequiredCount');
+    expect(dashboard).toContain(
+      'latestCheckResult.readBudget.boundedReadsExcludingStaffRegistry',
+    );
+    expect(dashboard).toContain('Microsoft Graph calls: {latestCheckResult.graphCalls}');
+    expect(dashboard).toContain('latestCheckResult.dirtyBatchAtLimit');
+    expect(dashboard).toContain('latestCheckResult.concurrentMarkerChangeDetected');
+  });
+
+  it('keeps latest-check range validation stricter than cached viewing', () => {
+    expect(dashboard).toContain('inclusiveDateRangeDays(fromDate, toDate)');
+    expect(dashboard).toContain(
+      'Run Latest Check supports a maximum of 31 calendar days at a time.',
+    );
   });
 });
