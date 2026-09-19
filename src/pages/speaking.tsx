@@ -112,29 +112,28 @@ const speakingPyramidLevels = [
   'Listening and ideas',
 ];
 
-const speakingProgrammeArchitecture = [
+const publicSpeakingLevelArchitecture = [
   {
     name: 'Public Speaking Foundations',
     path: speakingFacts.levels.beginner.canonicalCoursePath,
-    role: 'Core Public Speaking level 1',
     description: `${speakingFacts.levels.beginner.ageRange.label} • ${speakingFacts.levels.beginner.lessonCount} lessons • organised responses, picture talk, show-and-tell, storytelling foundations, and short presentation readiness.`,
   },
   {
     name: 'Public Speaking Excellence',
     path: speakingFacts.levels.advanced.canonicalCoursePath,
-    role: 'Core Public Speaking level 2',
     description: `${speakingFacts.levels.advanced.ageRange.label} • ${speakingFacts.levels.advanced.lessonCount} lessons • longer structured talks, storytelling, presentations, impromptu speaking, guided debate, and stronger delivery.`,
   },
+];
+
+const speakingSpecialistPathways = [
   {
     name: 'Spoken English',
     path: '/spoken-english-classes-for-kids-online',
-    role: 'Adjacent specialist pathway',
     description: 'Use when everyday conversation, fuller responses, vocabulary in use, or conversational fluency is the main goal.',
   },
   {
     name: 'Confidence Building',
     path: '/confidence-building-program-kids',
-    role: 'Adjacent specialist pathway',
     description: 'Use when speaking comfort, participation, hesitation, or dependence on prompting is the primary barrier.',
   },
 ];
@@ -186,13 +185,33 @@ export default function SpeakingPage() {
       '@id': `${canonicalUrl}#faq`,
     };
 
-    const programmeArchitectureSchema = {
+    const publicSpeakingLevelsSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      '@id': `${canonicalUrl}#speaking-programme-architecture`,
-      name: 'Tiny Steps Speaking programme architecture',
+      '@id': `${canonicalUrl}#public-speaking-levels`,
+      name: 'Tiny Steps Public Speaking levels',
       itemListOrder: 'https://schema.org/ItemListOrderAscending',
-      itemListElement: speakingProgrammeArchitecture.map((item, index) => ({
+      numberOfItems: publicSpeakingLevelArchitecture.length,
+      itemListElement: publicSpeakingLevelArchitecture.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'WebPage',
+          name: item.name,
+          url: `${PUBLIC_FACTS.primaryWebsite}${item.path}`,
+          description: item.description,
+        },
+      })),
+    };
+
+    const speakingSpecialistPathwaysSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#speaking-specialist-pathways`,
+      name: 'Tiny Steps adjacent speaking specialist pathways',
+      itemListOrder: 'https://schema.org/ItemListUnordered',
+      numberOfItems: speakingSpecialistPathways.length,
+      itemListElement: speakingSpecialistPathways.map((item, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -211,7 +230,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, programmeArchitectureSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
