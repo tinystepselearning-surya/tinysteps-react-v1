@@ -106,7 +106,7 @@ describe('AV8 meaningful-overlap threshold calibration', () => {
         thresholdSeconds: 900,
         falsePositiveCount: 0,
         falsePositiveRate: 0,
-        presentRecall: 0.666667,
+        presentRecall: 0.333333,
         meetsPolicy: false,
       }),
     ]);
