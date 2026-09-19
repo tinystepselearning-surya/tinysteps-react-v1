@@ -1,8 +1,8 @@
 {
   "brick": 13,
   "name": "Search → Lead → Admission Attribution",
-  "revision": "2026-09-19-b13-v1",
-  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "revision": "2026-09-19-b13-v2",
+  "status": "COMPLETE — RE-AUDITED",
   "branch": "feature/speaking-seo-geo-growth",
   "productionDeployment": false,
   "measurementHierarchy": [
@@ -126,7 +126,11 @@
       "total": 9
     },
     "passed": 87,
-    "total": 87
+    "total": 87,
+    "postReAudit": {
+      "passed": 145,
+      "total": 145
+    }
   },
   "protectedSurfaceSha": {
     "passed": 20,
@@ -147,5 +151,23 @@
   "executableLimitations": [
     "No exact-head GitHub Actions result is claimed at structural close.",
     "Full Vitest, strict typecheck, Functions tests, production build/prerender and browser QA remain required at the final integration gate."
-  ]
+  ],
+  "reAudit": {
+    "completedAt": "2026-09-19",
+    "independentMatrix": {
+      "passed": 145,
+      "total": 145
+    },
+    "regressionTestCases": 14,
+    "fixes": [
+      "Fallback to canonical stored normalized acquisition channel only when raw C0 first-touch evidence resolves to direct_or_unknown.",
+      "Count stored acquisitionChannel/acquisitionSource as first-touch evidence for incomplete legacy rows.",
+      "Added regression coverage for stored ChatGPT, Google Organic and Instagram channel fallback."
+    ],
+    "crossBrickIntegrationFixes": [
+      "Repaired malformed quoting in speakingGrowthBrick6.spec.ts.",
+      "Protected /speaking-progress-framework in Commercial C7 contextual handoffs because the page already owns its Speaking and assessment handoffs.",
+      "Corrected Public Speaking level structured-data URLs to use item.path rather than item.sourcePath."
+    ]
+  }
 }
