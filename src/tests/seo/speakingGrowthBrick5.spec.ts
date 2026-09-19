@@ -7,11 +7,17 @@ const pagePath = path.join(repoRoot, 'src/pages/public/SpokenEnglishClassesForKi
 const routeSeoPath = path.join(repoRoot, 'src/lib/routeSeoRegistry.js');
 const c6Path = path.join(repoRoot, 'src/lib/commercialC6InternalCommercialPaths.ts');
 const hyderabadPath = path.join(repoRoot, 'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx');
+const firebasePath = path.join(repoRoot, 'firebase.json');
+const manifestPath = path.join(repoRoot, 'src/lib/publicRouteManifest.js');
+const routesPath = path.join(repoRoot, 'src/app/routes.tsx');
 
 const page = fs.readFileSync(pagePath, 'utf8');
 const routeSeo = fs.readFileSync(routeSeoPath, 'utf8');
 const c6 = fs.readFileSync(c6Path, 'utf8');
 const hyderabad = fs.readFileSync(hyderabadPath, 'utf8');
+const firebase = fs.readFileSync(firebasePath, 'utf8');
+const manifest = fs.readFileSync(manifestPath, 'utf8');
+const routes = fs.readFileSync(routesPath, 'utf8');
 
 describe('Speaking growth Brick 5 Spoken English territory', () => {
   it('preserves the canonical Spoken English SEO control', () => {
@@ -44,6 +50,10 @@ describe('Speaking growth Brick 5 Spoken English territory', () => {
     expect(page).toContain('to="/confidence-building-program-kids"');
     expect(page).toContain('low-pressure response practice');
     expect(page).not.toContain('confidence practice, not just more listening exposure');
+    expect(page).toContain('to="/blog/child-understands-english-but-does-not-speak"');
+    expect(page).toContain('to="/blog/child-gives-one-word-answers"');
+    expect(page).not.toContain("question: 'What if my child understands English but does not speak much?'");
+    expect(page).not.toContain("question: 'Why do some children give only one-word answers?'");
     expect(page).not.toContain('to="/spoken-english-classes-for-kids"');
   });
 
@@ -80,6 +90,29 @@ describe('Speaking growth Brick 5 Spoken English territory', () => {
     expect(page).toContain('How the spoken English assessment works');
     expect(page).toContain('Parents receive a practical recommendation before enrolment');
     expect(page).toContain('Book a Free English Assessment');
+    expect(page).toContain("{ label: 'Free English assessment', tone: 'mint' as const }");
     expect(page).not.toContain('Book a Free Speaking Assessment');
+    expect(page).not.toContain("{ label: 'Free speaking assessment', tone: 'mint' as const }");
+  });
+
+  it('hardens both legacy Spoken English redirect variants to the canonical owner', () => {
+    expect(firebase).toContain(
+      '{ "source": "/spoken-english-classes-for-kids", "destination": "/spoken-english-classes-for-kids-online", "type": 301 }',
+    );
+    expect(firebase).toContain(
+      '{ "source": "/spoken-english-classes-for-kids/", "destination": "/spoken-english-classes-for-kids-online", "type": 301 }',
+    );
+    expect(manifest).toContain(
+      "{ source: '/spoken-english-classes-for-kids', destination: '/spoken-english-classes-for-kids-online', status: 301 }",
+    );
+    expect(manifest).toContain(
+      "{ source: '/spoken-english-classes-for-kids/', destination: '/spoken-english-classes-for-kids-online', status: 301 }",
+    );
+    expect(routes).toContain(
+      'path: \'spoken-english-classes-for-kids\', element: <Navigate to="/spoken-english-classes-for-kids-online" replace />',
+    );
+    expect(routes).toContain(
+      'path: \'spoken-english-classes-for-kids/\', element: <Navigate to="/spoken-english-classes-for-kids-online" replace />',
+    );
   });
 });
