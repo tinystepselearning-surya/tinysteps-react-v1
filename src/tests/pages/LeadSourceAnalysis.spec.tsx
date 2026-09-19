@@ -36,8 +36,7 @@ vi.mock('@components/ui/card', () => ({
 }));
 
 vi.mock('../../lib/leadAcquisition', () => ({
-  acquisitionChannelLabel: (channel: string) => channel,
-  classifyLeadAcquisition: () => ({ channel: 'direct', label: 'Direct' }),
+  resolveStoredLeadAcquisition: () => ({ channel: 'direct', source: 'direct', label: 'Direct' }),
 }));
 
 vi.mock('../../pages/admin/DemoSessionsManagement', () => ({
