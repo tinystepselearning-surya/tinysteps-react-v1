@@ -22,6 +22,29 @@ AV5.3 connects the already-built AVS logic into one shadow-mode pipeline:
 
 The output is still observational. Tiny Steps attendance remains the operational system of record.
 
+## Permanent validation start date
+
+AVS scope begins on **2026-09-01** in the Tiny Steps service date (IST) and never backfills July or August 2026.
+
+The runner enforces this lower bound after loading the exact requested session/evidence pair and before any case is created:
+
+    service date < 2026-09-01
+            ↓
+    skip permanently
+            ↓
+    no attendanceValidationCase write
+
+The service date is resolved conservatively from the operational session date/start time and the captured Teams scheduled start time. UTC evidence timestamps are converted to IST before the date comparison, so a class at 00:00 IST on September 1 is treated as September 1 even though its UTC timestamp is August 31.
+
+If the operational and evidence dates disagree, or no reliable service date can be resolved, AV5.3 fails closed and skips the item rather than risking validation of pre-September history.
+
+This rule means:
+
+- July 2026: permanently out of scope;
+- August 2026: permanently out of scope;
+- September 1, 2026 onward: eligible;
+- no historical backfill job is planned.
+
 ## Firestore read-efficiency contract
 
 AV5.3 is deliberately designed to prevent the read-amplification problem discussed before implementation.
@@ -34,6 +57,7 @@ The runner:
 - does **not** read `enrollments`, `kids`, billing, teacher earnings, reschedule credits, or finance collections;
 - accepts only an explicit list of `classSessionId + evidenceId` pairs;
 - caps one run at **100 work items**;
+- hard-skips any service date before **2026-09-01**;
 - reads exactly the requested `classSessions/{id}` and `attendanceValidationEvidence/{id}` documents;
 - loads the AV3 staff registry once per run, not once per session;
 - performs **zero pre-reads** of `attendanceValidationCases` before writing;
@@ -187,7 +211,7 @@ Production activation should be a separate reviewed brick after the case schema 
 
 ## Tests
 
-The AV5.3 regression suite covers exact work-item processing, deterministic case IDs, nested child-attendance resolution, missing evidence, orphan evidence, reference mismatch, missing documents, null-threshold fail-closed behavior, staff-registry warning propagation, the 100-item hard cap, duplicate-session rejection, stable case identity across reruns, fingerprint changes, zero case pre-reads, and the no-mutation invariant.
+The AV5.3 regression suite covers exact work-item processing, the permanent September 2026 lower bound, August session/evidence exclusion, exact September 1 IST inclusion, unresolved-date fail-closed behavior, deterministic case IDs, nested child-attendance resolution, missing evidence, orphan evidence, reference mismatch, missing documents, null-threshold fail-closed behavior, staff-registry warning propagation, the 100-item hard cap, duplicate-session rejection, stable case identity across reruns, fingerprint changes, zero case pre-reads, and the no-mutation invariant.
 
 ## Core invariant
 
