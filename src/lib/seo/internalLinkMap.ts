@@ -46,6 +46,13 @@ export const internalLinkMap: InternalLinkRule[] = [
     priority: 80,
     cluster: 'speaking',
   },
+  {
+    id: 'speaking-progress-framework',
+    href: '/speaking-progress-framework',
+    phrases: ['speaking progress framework', 'measure speaking progress', 'track speaking progress'],
+    priority: 78,
+    cluster: 'speaking',
+  },
 
   // Key informational pages
   {
