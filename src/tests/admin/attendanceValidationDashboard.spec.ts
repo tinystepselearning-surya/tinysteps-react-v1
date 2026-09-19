@@ -163,4 +163,38 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('forceFreshResult.collectionStatus');
     expect(dashboard).toContain('forceFreshResult.issueKinds');
   });
+
+  it('wires a separate first-time baseline action with a hard ten-session explanation', () => {
+    expect(dashboard).toContain('Run First-Time Baseline');
+    expect(dashboard).toContain('Continue Baseline');
+    expect(dashboard).toContain('Baseline Complete');
+    expect(dashboard).toContain(
+      "'runAttendanceValidationFirstTimeBaseline'",
+    );
+    expect(dashboard).toContain(
+      'up to 10 class sessions that do not already have saved AVS cases',
+    );
+    expect(dashboard).toContain(
+      'First-Time Baseline can include only completed service dates through yesterday IST.',
+    );
+    expect(callFunctions).toContain(
+      "runAttendanceValidationFirstTimeBaseline: 'asia-south1'",
+    );
+  });
+
+  it('automatically reloads saved results and exposes baseline read/Graph progress', () => {
+    expect(dashboard).toContain('First-Time Baseline batch complete');
+    expect(dashboard).toContain('baselineResult.graphLogicalCalls');
+    expect(dashboard).toContain(
+      'baselineResult.readBudget.boundedReadsExcludingStaffRegistry',
+    );
+    expect(dashboard).toContain('baselineResult.cumulative.scannedSessionCount');
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+  });
+
+  it('does not offer Force Fresh against placeholder evidence that does not exist', () => {
+    expect(dashboard).toContain(
+      "!item.reasons.includes('evidence_document_missing')",
+    );
+  });
 });
