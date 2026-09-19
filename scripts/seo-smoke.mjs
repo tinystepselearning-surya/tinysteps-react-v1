@@ -40,6 +40,7 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/phonics',
   'https://tinystepslearning.com/grammar',
   'https://tinystepslearning.com/speaking',
+  'https://tinystepslearning.com/speaking-progress-framework',
   'https://tinystepslearning.com/blog',
   'https://tinystepslearning.com/pricing',
   'https://tinystepslearning.com/courses',
