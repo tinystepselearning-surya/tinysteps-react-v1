@@ -1155,12 +1155,16 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           }
         >
           {saving
-            ? mode === 'existing'
-              ? 'Saving...'
-              : 'Creating & Saving...'
-            : mode === 'existing'
-              ? 'Save Correction'
-              : 'Create Session & Save Attendance'}
+            ? av7Context
+              ? 'Approving...'
+              : mode === 'existing'
+                ? 'Saving...'
+                : 'Creating & Saving...'
+            : av7Context
+              ? 'Approve AVS Correction'
+              : mode === 'existing'
+                ? 'Save Correction'
+                : 'Create Session & Save Attendance'}
         </Button>
       </div>
 
