@@ -367,7 +367,10 @@ export const isFutureScheduleExceptionSession = (
     session.makeupForSessionId != null ||
     session.rescheduleCreditId != null ||
     session.rescheduledFromSessionId != null ||
-    session.replacementSessionId != null
+    session.originalSessionId != null ||
+    session.sourceSessionId != null ||
+    session.replacementSessionId != null ||
+    session.replacementForSessionId != null
   ) {
     return true;
   }
