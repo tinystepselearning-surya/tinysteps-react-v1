@@ -21,6 +21,7 @@ import {
   LineChart,
   MessageSquareQuote,
   Settings,
+  ShieldCheck,
   UserCog,
   Users,
   Wallet,
@@ -59,6 +60,7 @@ import ParentWorksheetLibraryManagement from './ParentWorksheetLibraryManagement
 import FinanceReconciliationRunsCard from './FinanceReconciliationRunsCard';
 import EnrollmentCanonicalMigrationCard from './EnrollmentCanonicalMigrationCard';
 import AttendanceCorrectionsAdvancedPanel from './AttendanceCorrectionsAdvancedPanel';
+import AttendanceValidationDashboard from './AttendanceValidationDashboard';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
@@ -89,6 +91,7 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'leads', label: 'Leads', icon: ContactRound },
   { id: 'enrollments', label: 'Enroll', icon: ClipboardList },
   { id: 'attendance-corrections', label: 'Attendance', icon: ClipboardList },
+  { id: 'attendance-validation', label: 'AVS', icon: ShieldCheck },
   { id: 'relationships', label: 'Relations', icon: Handshake },
   { id: 'courses', label: 'Courses', icon: BookCopy },
   { id: 'today-notifications', label: 'Sessions', icon: BellDot },
@@ -536,6 +539,7 @@ export default function AdminDashboard() {
       'leads',
       'enrollments',
       'attendance-corrections',
+      'attendance-validation',
       'relationships',
       'courses',
       'today-notifications',
@@ -659,6 +663,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="attendance-corrections" className="mt-0">
               <AttendanceCorrectionsAdvancedPanel />
+            </TabsContent>
+
+            <TabsContent value="attendance-validation" className="mt-0">
+              <AttendanceValidationDashboard />
             </TabsContent>
 
             <TabsContent value="relationships" className="mt-0">
