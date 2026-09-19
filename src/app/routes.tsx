@@ -61,7 +61,6 @@ const FreeEnglishGameLandingPage = lazy(() => import('../pages/public/FreeEnglis
 const FreeLetterTracingGamePage = lazy(() => import('../pages/public/FreeLetterTracingGamePage'));
 const LetterTracingWithSoundsGamePage = lazy(() => import('../pages/public/LetterTracingWithSoundsGamePage'));
 const FreeBalloonPopGamePage = lazy(() => import('../pages/public/FreeBalloonPopGamePage'));
-const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
 const LearningPartnerPage = lazy(() => import('../pages/public/LearningPartnerPage'));
@@ -580,8 +579,8 @@ const router = createBrowserRouter(
         { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'english-grammar-writing-classes/', element: <EnglishGrammarWritingClassesPage /> },
-        { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
-        { path: 'public-speaking-communication-kids/', element: <PublicSpeakingCommunicationKidsPage /> },
+        { path: 'public-speaking-communication-kids', element: <Navigate to="/speaking" replace /> },
+        { path: 'public-speaking-communication-kids/', element: <Navigate to="/speaking" replace /> },
         { path: 'best-online-phonics-classes-india', element: <Navigate to="/best-online-phonics-classes-for-kids-in-india" replace /> },
         { path: 'best-online-phonics-classes-for-kids-in-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
