@@ -7,6 +7,11 @@ import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
+import {
+  SPEAKING_PROGRESS_DIMENSIONS,
+  SPEAKING_PROGRESS_FRAMEWORK_PATH,
+  SPEAKING_PROGRESS_OBSERVATION_BANDS,
+} from '../lib/speakingProgressFramework';
 
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
@@ -520,6 +525,38 @@ export default function SpeakingPage() {
           </div>
           <p className="mt-4 text-slate-700">
             Tiny Steps connects sentence formation, thinking structure, storytelling, and confidence so children do not only memorise lines; they learn to express ideas clearly. Speaking progress is stronger when combined with <Link to="/grammar" className="font-semibold underline underline-offset-2">grammar and sentence formation support</Link>.
+          </p>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-[30px] border border-violet-100 bg-gradient-to-br from-violet-50/80 via-white to-sky-50/70 p-5 shadow-sm md:p-8">
+          <p className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-800">Progress evidence</p>
+          <h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">How Tiny Steps measures speaking progress</h2>
+          <p className="mt-3 max-w-4xl text-base leading-7 text-slate-700">
+            Tiny Steps tracks a speaking profile rather than one total score. We look across {SPEAKING_PROGRESS_DIMENSIONS.length} observable dimensions and record how much support the child needs, what is becoming independent, and whether the skill appears again on a fresh task.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {SPEAKING_PROGRESS_DIMENSIONS.map((dimension) => (
+              <span key={dimension.id} className="rounded-full border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 sm:text-sm">
+                {dimension.shortLabel}
+              </span>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {SPEAKING_PROGRESS_OBSERVATION_BANDS.map((band) => (
+              <div key={band.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-xs font-bold uppercase tracking-[0.14em] text-violet-700">Band {band.order}</div>
+                <div className="mt-1 font-bold text-slate-950">{band.shortLabel}</div>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{band.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 text-sm leading-6 text-slate-700">
+            These are educational observation bands, not grades or developmental-age labels. <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold text-slate-950 underline underline-offset-2">Read the full Tiny Steps Speaking Progress Framework</Link> to see all ten dimensions, evidence rules, parent-review fields, and guardrails.
           </p>
         </div>
       </section>
