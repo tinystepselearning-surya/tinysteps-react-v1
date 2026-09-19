@@ -5,9 +5,11 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = process.cwd();
 const speakingPath = path.join(repoRoot, 'src/pages/speaking.tsx');
 const c4Path = path.join(repoRoot, 'src/lib/commercialC4CtrOptimization.ts');
+const speakingEvidencePath = path.join(repoRoot, 'src/lib/speakingEvidenceLayer.ts');
 
 const speaking = fs.readFileSync(speakingPath, 'utf8');
 const c4 = fs.readFileSync(c4Path, 'utf8');
+const speakingEvidence = fs.readFileSync(speakingEvidencePath, 'utf8');
 
 describe('Speaking growth Brick 4 flagship page', () => {
   it('preserves the frozen /speaking SEO control while rebuilding the body journey', () => {
@@ -48,15 +50,17 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('Everyday conversation & fluency');
     expect(speaking).toContain('1 Complete responses');
     expect(speaking).toContain('6 Advanced public speaking');
-    expect(speaking).toContain('to="/courses/public-speaking-foundations"');
-    expect(speaking).toContain('to="/courses/public-speaking-excellence"');
+    expect(speaking).toContain('speakingFacts.levels.beginner.canonicalCoursePath');
+    expect(speaking).toContain('speakingFacts.levels.advanced.canonicalCoursePath');
   });
 
   it('adds class-sample, teacher-system, progress and parent-evidence proof surfaces', () => {
     expect(speaking).toContain('What a Tiny Steps speaking class looks like');
     expect(speaking).toContain('to="/class-samples"');
-    expect(speaking).toContain('Teachers work inside a structured academic system');
-    expect(speaking).toContain('to="/team"');
+    expect(speaking).toContain('SPEAKING_EVIDENCE_SURFACES.map');
+    expect(speakingEvidence).toContain("id: 'academic-ownership'");
+    expect(speakingEvidence).toContain("path: '/team'");
+    expect(speakingEvidence).toContain('founder-led academic direction');
     expect(speaking).toContain('How parents see speaking progress');
     expect(speaking).toContain('Parent evidence');
     expect(speaking).toContain('Parent feedback from speaking families');
