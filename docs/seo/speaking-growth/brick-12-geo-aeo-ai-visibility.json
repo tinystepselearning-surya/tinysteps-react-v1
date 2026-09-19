@@ -1,0 +1,115 @@
+{
+  "brick": 12,
+  "name": "GEO / AEO / AI Visibility Layer",
+  "revision": "2026-09-19-b12-v1",
+  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "branch": "feature/speaking-seo-geo-growth",
+  "productionDeployment": false,
+  "architecture": {
+    "primaryAnswerOwners": 13,
+    "frozenSpeakingKnowledgeUrls": 14,
+    "canonicalEvidenceSources": 6,
+    "intentBoundaries": 7,
+    "newPublicUrls": 0,
+    "newCanonicalOwners": 0,
+    "aiPromptPagesCreated": 0
+  },
+  "primaryAnswerOwners": [
+    "/speaking",
+    "/spoken-english-classes-for-kids-online",
+    "/confidence-building-program-kids",
+    "/courses/public-speaking-foundations",
+    "/courses/public-speaking-excellence",
+    "/speaking-progress-framework",
+    "/resources/speaking",
+    "/book-demo",
+    "/pricing",
+    "/class-samples",
+    "/team",
+    "/curriculum",
+    "/testimonials"
+  ],
+  "upgrades": [
+    "Expanded both llms.txt and llms-full.txt to the current Speaking authority architecture.",
+    "Expanded explicit BlogPosting technical authority from 3 to all 14 frozen Speaking knowledge URLs.",
+    "Added SpeakableSpecification to the visible Quick Answer on /speaking.",
+    "Added SpeakableSpecification to the visible Quick Answer on /speaking-progress-framework.",
+    "Preserved the existing /resources/speaking AEO implementation.",
+    "Restored the Brick 9 evidence-schema canonical sourcePath invariant found during Brick 12 preflight."
+  ],
+  "crawlerPolicy": {
+    "publicDiscoveryAllowed": [
+      "OAI-SearchBot",
+      "ChatGPT-User",
+      "Claude-SearchBot",
+      "PerplexityBot",
+      "GPTBot",
+      "ClaudeBot",
+      "Google-Extended",
+      "Applebot-Extended"
+    ],
+    "privateRouteProtectionPreserved": true,
+    "openAiPublisherGuidanceChecked": "2026-09-19",
+    "openAiSearchPlacementGuaranteed": false,
+    "brick13AttributionHandoff": "ChatGPT search referral URLs may include utm_source=chatgpt.com per current OpenAI publisher guidance."
+  },
+  "matrices": {
+    "sourceLevel": {
+      "contract": {
+        "passed": 8,
+        "total": 8
+      },
+      "primaryOwnerLlmParity": {
+        "passed": 26,
+        "total": 26
+      },
+      "knowledgeAuthority": {
+        "passed": 42,
+        "total": 42
+      },
+      "crawlerPrivateRouteRules": {
+        "passed": 13,
+        "total": 13
+      },
+      "aeoSpeakable": {
+        "passed": 7,
+        "total": 7
+      },
+      "brick9CrossBrickInvariant": {
+        "passed": 2,
+        "total": 2
+      },
+      "routeProtection": {
+        "passed": 5,
+        "total": 5
+      },
+      "llmGuidance": {
+        "passed": 6,
+        "total": 6
+      },
+      "regressionSpecStructure": {
+        "passed": 1,
+        "total": 1
+      },
+      "passed": 110,
+      "total": 110
+    },
+    "protectedSurfaceSha": {
+      "passed": 13,
+      "total": 13
+    }
+  },
+  "implementationFiles": [
+    "src/lib/speakingAiVisibility.ts",
+    "src/content/blog/shared/technicalAuthority.ts",
+    "public/llms.txt",
+    "public/llms-full.txt",
+    "src/pages/speaking.tsx",
+    "src/pages/public/SpeakingProgressFrameworkPage.tsx",
+    "src/tests/seo/speakingGrowthBrick12.spec.ts"
+  ],
+  "executableLimitations": [
+    "No feature-branch GitHub Actions run is claimed for the Brick 12 structural-close head.",
+    "Full Vitest, strict typecheck, production build/prerender and browser QA remain required at the final integration gate."
+  ]
+}
