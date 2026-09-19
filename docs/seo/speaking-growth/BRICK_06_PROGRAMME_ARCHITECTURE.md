@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST  
 Branch: feature/speaking-seo-geo-growth  
-Status: COMPLETE — structurally verified on branch; not deployed.
+Status: COMPLETE — RE-AUDITED on branch; not deployed.
 
 ## 1. Purpose
 
@@ -161,7 +161,7 @@ The specialist-pathway explanation is placed after the two Public Speaking level
 
 Brick 6 removes the umbrella `Course` entity from `/speaking`.
 
-The hub remains a WebPage and now has a generic `ItemList` describing the programme architecture as linked WebPages.
+The hub remains a WebPage. Its machine-readable architecture is now split into an ordered `ItemList` containing only the two Public Speaking levels and a separate unordered `ItemList` containing the adjacent Spoken English and Confidence specialist pathways. This prevents those specialist programmes from looking like levels 3 and 4.
 
 The two canonical course-detail pages retain `Course` schema.
 
@@ -216,7 +216,7 @@ The internal-link registry now includes both named course targets:
 
 RSS and feed descriptions for both canonical Speaking courses were synchronized to the updated public course descriptions.
 
-`sitemap-courses.xml` remains unchanged in structure and contains each canonical Speaking course exactly once.
+`sitemap-courses.xml` remains unchanged in URL structure and contains each canonical Speaking course exactly once. Re-audit refreshed both Speaking course `lastmod` values to 2026-09-19 and updated the generator so those dates consider `courses.ts`, `publicCoursePages.js`, and `CourseDetailPage.tsx` rather than only `courses.ts`.
 
 ## 16. Regression protection
 
@@ -242,7 +242,7 @@ It protects:
 
 ## 17. Structural verification
 
-Final source-level architecture matrix: 41 / 41 invariants passed.
+Initial build matrix: 41 / 41 invariants passed. Final pre-Brick-7 re-audit matrix: 53 / 53 source-level invariants passed.
 
 Verified:
 - no unresolved internal link;
@@ -258,9 +258,9 @@ Verified:
 - operational course IDs: unchanged;
 - new Public Speaking levels: ZERO;
 - new commercial URLs: ZERO;
-- redirects: ZERO;
+- canonical destination changes: ZERO; re-audit hardened four legacy Basic/Advanced course alias variants as direct 301 redirects;
 - canonical URLs: ZERO;
-- sitemap URL set: unchanged;
+- sitemap URL set: unchanged; Speaking-course and course-sitemap `lastmod` values refreshed to 2026-09-19;
 - pricing: unchanged;
 - attendance/payments/scheduling/dashboard logic: unchanged;
 - production deployment: ZERO.
@@ -270,3 +270,134 @@ Verified:
 Brick 6 is complete on the isolated branch when the programme hub, two Public Speaking levels, specialist handoffs, course-detail readiness logic, provider/teaching evidence, curriculum roadmap, chooser pages, schema strategy and discovery surfaces all describe the same architecture.
 
 That condition is structurally satisfied.
+
+
+## 20. 2026-09-19 pre-Brick-7 re-audit
+
+Brick 6 was fully re-audited before opening Brick 7.
+
+### A. Latest main synchronized first
+
+During the re-audit, `main` had advanced by seven commits to:
+
+`162e9060de3c6164a2301b253f37294cdc1123ac`
+
+A controlled main → feature sync was performed through PR #390.
+
+Incoming main-only files were exactly:
+- `docs/attendance-validation/brick-av5-3-bounded-shadow-runner.md`;
+- `functions/src/attendanceValidation/shadowRunner.ts`;
+- `functions/test/attendanceValidationShadowRunner.spec.ts`.
+
+They are AV5.3 attendance-validation work and do not overlap Brick 6 Speaking files.
+
+The Speaking branch returned to **0 commits behind main** before the final audit.
+
+### B. Ordered levels separated from specialist alternatives
+
+The first Brick 6 schema placed Foundations, Excellence, Spoken English and Confidence in one ordered ItemList.
+
+That could imply Spoken English and Confidence were Public Speaking levels 3 and 4.
+
+The hub now emits:
+- ordered `#public-speaking-levels` → Foundations, Excellence only;
+- unordered `#speaking-specialist-pathways` → Spoken English, Confidence Building.
+
+No third Public Speaking level is implied.
+
+### C. Speaking level wording corrected without disturbing Phonics
+
+The shared detail renderer still used “stage” in two inner headings on Speaking pages.
+
+Speaking now renders:
+- “Signs this may be the right starting level”;
+- “Skills this level builds”.
+
+Phonics keeps:
+- “Signs this may be the right starting stage”;
+- “Skills this stage builds”;
+- `#phonics-program-stages`;
+- “Tiny Steps phonics progression”.
+
+### D. Legacy course aliases fully canonicalized
+
+The re-audit found that the Basic/Advanced legacy course URLs were redirected by Firebase but were not fully represented across the central route-policy layers.
+
+All four variants are now direct 301 aliases:
+
+- `/courses/basic-public-speaking` → `/courses/public-speaking-foundations`;
+- `/courses/basic-public-speaking/` → `/courses/public-speaking-foundations`;
+- `/courses/advanced-public-speaking` → `/courses/public-speaking-excellence`;
+- `/courses/advanced-public-speaking/` → `/courses/public-speaking-excellence`.
+
+They are now protected across:
+- Firebase;
+- SPA fallback routing;
+- `PUBLIC_REDIRECT_MANIFEST`;
+- route SEO registry with `noindex, follow`;
+- sitemap-absence smoke;
+- central SEO infrastructure tests.
+
+The route-indexability report processes explicit redirects before the generic `/courses/**` dynamic rule, so these aliases cannot be classified as self-canonical course pages.
+
+### E. Sitemap freshness corrected
+
+The two Speaking course pages changed materially in Brick 6, but `sitemap-courses.xml` still showed 2026-09-11 because the generator derived every course date only from `src/content/courses.ts`.
+
+The generator now derives Speaking-course freshness from the latest modification among:
+- `src/content/courses.ts`;
+- `src/lib/publicCoursePages.js`;
+- `src/pages/CourseDetailPage.tsx`.
+
+Current sitemap values for both canonical Speaking courses are 2026-09-19, and the course sitemap entry in `sitemap.xml` is also 2026-09-19.
+
+### F. SEO smoke contradiction corrected
+
+The re-audit found that retired aliases were simultaneously listed as legacy URLs that must be absent and as required core URLs that must be present in sitemap discovery.
+
+Removed from `REQUIRED_CORE_URLS`:
+- `/public-speaking-communication-kids`;
+- `/spoken-english-classes-for-kids`;
+- `/spoken-english-classes-for-kids/`.
+
+They remain protected as legacy-absent/redirect URLs.
+
+Added to required canonical core coverage:
+- `/courses/public-speaking-excellence`.
+
+### G. Structured-data restraint reconfirmed
+
+Current Google Search Central Course-list guidance was rechecked on 2026-09-19. Tiny Steps still has two published Public Speaking courses, so Brick 6 does not fabricate a third course or Course-list markup merely to pursue the enhancement.
+
+The course detail pages retain valid Course semantics; the hub uses programme relationship ItemLists rather than pretending to be a three-course catalogue.
+
+### H. Final re-audit result
+
+Source-level re-audit groups:
+- architecture/UI: 23 / 23;
+- routing/discovery policy: 14 / 14;
+- sitemap/feed/schema/regression guards: 16 / 16.
+
+**Final: 53 / 53 passed.**
+
+No unresolved Brick 6 source-level invariant remains.
+
+### I. Executable-test limitation
+
+No feature-branch GitHub Actions run is attached to the current head.
+
+The repository does contain PR-based build/test/SEO workflows, but a feature → main PR was deliberately not opened merely to trigger their broad workflow fan-out.
+
+Therefore this re-audit does **not** claim:
+- full `npm run build` pass;
+- full Vitest pass;
+- browser/prerender QA pass.
+
+Those executable gates remain mandatory before the final 13-brick production merge.
+
+### J. Re-audit decision
+
+Brick 6 is **COMPLETE — RE-AUDITED** on the isolated feature branch.
+
+Production merge: ZERO.  
+Production deployment: ZERO.
