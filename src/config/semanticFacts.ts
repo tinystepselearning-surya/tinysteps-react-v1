@@ -134,6 +134,8 @@ export const SEMANTIC_FACTS = {
         beginner: {
           courseId: 'basic-public-speaking',
           publicSlug: 'basic-public-speaking',
+          canonicalPublicSlug: 'public-speaking-foundations',
+          canonicalCoursePath: '/courses/public-speaking-foundations',
           label: 'Public Speaking (Basic)',
           ageRange: { min: 4, max: 7, label: 'Ages 4–7' },
           lessonCount: 36,
@@ -141,6 +143,8 @@ export const SEMANTIC_FACTS = {
         advanced: {
           courseId: 'advanced-public-speaking',
           publicSlug: 'advanced-public-speaking',
+          canonicalPublicSlug: 'public-speaking-excellence',
+          canonicalCoursePath: '/courses/public-speaking-excellence',
           label: 'Public Speaking (Advanced)',
           ageRange: { min: 7, max: 12, label: 'Ages 7–12' },
           lessonCount: 36,
