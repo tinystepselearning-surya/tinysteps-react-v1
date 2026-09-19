@@ -19,7 +19,7 @@ The dashboard is available only inside the existing admin area.
 
 ## What the dashboard shows
 
-The page reads the latest validation-side case documents and displays:
+The page reads saved validation-side case documents only after the admin selects a service-date range and clicks **Load Saved Results**. It displays:
 
 - observed time;
 - class session ID;
@@ -35,15 +35,19 @@ No additional child, parent, teacher, enrollment, billing or finance lookup is p
 
 ## Firestore read budget
 
-AV6 deliberately does not use a realtime listener.
+AV6 deliberately does not use a realtime listener and no longer auto-loads AVS cases merely because the admin opens the page.
 
-Every initial page load or manual refresh performs one bounded query:
+A saved-result request performs a service-date-bounded query:
 
     attendanceValidationCases
-    orderBy observedAt desc
+    where serviceDateYmd >= selectedFrom
+    where serviceDateYmd <= selectedTo
+    orderBy serviceDateYmd desc
     limit 100
 
-Therefore the dashboard reads at most **100 case documents per refresh**.
+The first page therefore reads at most **100 saved case documents**. Additional pages are loaded only when the admin explicitly clicks **Load next 100 saved results**.
+
+Changing the date inputs, search text, or classification tab causes **zero Firestore reads** until a load action is clicked.
 
 There are no reads from:
 
@@ -96,26 +100,41 @@ It does not resolve IDs into names by reading users/kids/enrollments. This avoid
 
 If richer human-readable snapshots are needed later, they should be added to the validation case at production-run time rather than causing N+1 dashboard lookups.
 
-## Filters
+## Date range and result tabs
 
-Filtering is client-side over the already-loaded bounded window:
+The dashboard now separates cached viewing from future revalidation work:
 
-- classification filter;
-- ID search across session, enrollment, kid, teacher, evidence and run IDs.
+- **From / To** choose the Tiny Steps service-date range;
+- **Load Saved Results** reads cached AVS cases only;
+- **Run Latest Check** is a separate control reserved for the later changed-only backend brick;
+- classification navigation is presented as horizontal button tabs rather than a select menu;
+- ID search remains client-side across the already-loaded cases.
 
-Changing a filter causes **zero additional Firestore reads**.
+Tabs include:
+
+- All;
+- Verified;
+- Missing attendance;
+- Conflict;
+- False present;
+- Missing Teams;
+- Orphan;
+- Ambiguous.
+
+Switching tabs or search terms causes **zero additional Firestore reads**.
 
 ## Empty state
 
-Until a production shadow workload is activated, the dashboard may legitimately show no cases.
+Opening the page performs no case query. The initial state asks the admin to choose a date range and load saved results.
 
-That is not an error. AV6 is the visibility layer; it does not itself run AV5.3.
+If the selected range has no saved AVS cases, the dashboard says so explicitly. This remains a valid state until a production validation run has created cases for that range.
 
 ## Explicitly deferred
 
 AV6 does not:
 
 - activate AV5.3 in production;
+- execute the disabled **Run Latest Check** control;
 - schedule Teams/Firestore validation;
 - mutate attendance;
 - approve corrections;
