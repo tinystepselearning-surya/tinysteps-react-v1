@@ -94,13 +94,13 @@ const decisionCards = [
     program: 'grammar' as const,
   },
   {
-    title: 'Start with communication confidence',
-    destination: '/courses/public-speaking-foundations',
-    ctaLabel: 'Explore speaking foundations',
+    title: 'Start with speaking structure',
+    destination: '/speaking',
+    ctaLabel: 'Explore Speaking & Communication',
     ctaLocation: 'decision_ladder',
-    helper: 'Best when the child understands but hesitates to express.',
+    helper: 'Best when the child can communicate basic ideas but needs stronger organisation, storytelling, presentation, or audience-facing delivery.',
     bullets: [
-      'Responses stay too short in class or at home.',
+      'Ideas are present but answers are difficult to organise.',
       'The child avoids oral answers despite understanding the question.',
       'Confidence drops during speaking tasks or presentations.',
     ],
@@ -128,10 +128,10 @@ const comparisonCards = [
     points: ['Sentence formation', 'Grammar basics', 'Punctuation', 'Writing clarity'],
   },
   {
-    title: 'Speaking Foundations',
+    title: 'Public Speaking Foundations',
     path: '/courses/public-speaking-foundations',
-    helper: 'For children who need stronger spoken response confidence.',
-    points: ['Longer answers', 'Guided speaking', 'Confidence routines', 'Clearer expression'],
+    helper: 'For children ready to build organised responses, picture talk, show-and-tell, storytelling foundations, and short presentation structure.',
+    points: ['Organised responses', 'Picture talk', 'Show-and-tell', 'Storytelling foundations'],
   },
 ];
 
