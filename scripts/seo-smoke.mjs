@@ -44,6 +44,7 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/courses/public-speaking-foundations',
   'https://tinystepslearning.com/english-grammar-writing-classes',
   'https://tinystepslearning.com/public-speaking-communication-kids',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids',
   'https://tinystepslearning.com/spoken-english-classes-for-kids-online',
   'https://tinystepslearning.com/online-english-classes-for-kids',
 ];
