@@ -70,6 +70,27 @@ const text = (value: unknown): string => {
   return '';
 };
 
+export function shouldWrapFutureScheduleSweep(
+  cursorBefore: string | null,
+  snapshotEmpty: boolean,
+): boolean {
+  return Boolean(cursorBefore && snapshotEmpty);
+}
+
+export function resolveFutureScheduleSweepCursor(args: {
+  batchSize: number;
+  lastDocumentId: string | null;
+}): {cycleCompleted: boolean; cursorAfter: string | null} {
+  if (!Number.isInteger(args.batchSize) || args.batchSize < 0) {
+    throw new Error('batchSize must be a non-negative integer');
+  }
+  const cycleCompleted = args.batchSize < MAX_FUTURE_SCHEDULE_SWEEP_ENROLLMENTS;
+  return {
+    cycleCompleted,
+    cursorAfter: cycleCompleted ? null : text(args.lastDocumentId) || null,
+  };
+}
+
 const stringList = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
   return Array.from(new Set(value.map((entry) => text(entry)).filter(Boolean))).sort();
@@ -433,7 +454,7 @@ export async function runFutureSchedulePeriodicSweep(
   // If a prior run ended exactly on the final page, the next run observes an
   // empty tail. Wrap immediately so that this scheduled invocation still does
   // useful work instead of burning a two-hour cycle.
-  if (snapshot.empty && cursorBefore) {
+  if (shouldWrapFutureScheduleSweep(cursorBefore, snapshot.empty)) {
     effectiveCursorBefore = null;
     snapshot = await buildQuery(null).get();
   }
@@ -452,12 +473,12 @@ export async function runFutureSchedulePeriodicSweep(
       }),
   });
 
-  const cycleCompleted =
-    snapshot.size < MAX_FUTURE_SCHEDULE_SWEEP_ENROLLMENTS;
-  const cursorAfter =
-    cycleCompleted || snapshot.empty
+  const {cycleCompleted, cursorAfter} = resolveFutureScheduleSweepCursor({
+    batchSize: snapshot.size,
+    lastDocumentId: snapshot.empty
       ? null
-      : snapshot.docs[snapshot.docs.length - 1].id;
+      : snapshot.docs[snapshot.docs.length - 1].id,
+  });
 
   await stateRef.set(
     {
