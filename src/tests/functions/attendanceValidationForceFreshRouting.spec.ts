@@ -57,7 +57,8 @@ describe('AVS force-fresh Teams evidence routing', () => {
   });
 
   it('uses guarded dirty-marker cleanup and exposes read/Graph costs', () => {
-    expect(source).toContain('{ lastUpdateTime: dirtySnapshot.updateTime }');
+    expect(source).toContain('await dirtyRef.delete({');
+    expect(source).toContain('lastUpdateTime: dirtySnapshot.updateTime');
     expect(source).toContain('graphLogicalCalls: counted.count()');
     expect(source).toContain('boundedReadsExcludingStaffRegistry');
     expect(source).toContain('concurrentMarkerChangeDetected');
