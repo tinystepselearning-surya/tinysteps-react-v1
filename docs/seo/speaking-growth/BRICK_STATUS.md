@@ -27,7 +27,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
 | 07 | Tiny Steps Speaking Progress Framework | COMPLETE — RE-AUDITED | NO |
 | 08 | Speaking knowledge cluster | COMPLETE — RE-AUDITED | NO |
-| 09 | Evidence layer | PENDING | NO |
+| 09 | Evidence layer | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 10 | Video/class demonstration engine | PENDING | NO |
 | 11 | Entity & external authority | PENDING | NO |
 | 12 | GEO/AEO/AI visibility layer | PENDING | NO |
@@ -365,3 +365,31 @@ Additional fixes and findings:
 - full executable Vitest/build/prerender/browser QA is still not claimed and remains mandatory at the final Bricks 1–13 integration gate.
 
 Brick 8 status after re-audit: **COMPLETE — RE-AUDITED**.
+
+
+## Brick 9 completion gate
+
+- Evidence work reuses the frozen Commercial C8 trust/evidence system; no second trust architecture was created.
+- New central source: `src/lib/speakingEvidenceLayer.ts`, revision `2026-09-19-b9-v1`.
+- Six bounded evidence categories are defined: observable classroom, programme delivery, progress method, academic ownership, programme architecture and parent feedback.
+- Every evidence source states both what it supports and what it does not prove.
+- Existing sources remain authoritative: `/class-samples`, `/speaking`, `/speaking-progress-framework`, `/team`, `/curriculum`, and `/testimonials`.
+- Brick 7 remains the Speaking progress-evidence method; Commercial C8 remains the trust-governance layer.
+- Parent feedback remains first-party individual experience, not universal outcome evidence.
+- Generated fallback testimonials, unsupported satisfaction percentages, fabricated reviews and universal guaranteed timelines remain prohibited.
+- `/speaking` now contains one compact evidence section titled **What you can verify — and what each source does not prove**.
+- Evidence-source structured data is an `ItemList`; no `Review` or `AggregateRating` schema was added.
+- New public URLs: ZERO.
+- New canonical owners: ZERO.
+- `/speaking` remains the high-commercial Public Speaking & Communication owner.
+- Sitemap freshness for `/speaking` now tracks `speakingEvidenceLayer.ts`.
+- Dedicated regression guard: `src/tests/seo/speakingGrowthBrick9.spec.ts` with 11 test cases.
+- Corrected source-level structural matrix: **53/53 passed**.
+- Protected upstream/operational SHA checks: **18/18 unchanged**.
+- Machine-readable evidence: `docs/seo/speaking-growth/brick-09-evidence-layer.json`.
+- Branch was **0 commits behind main** at the initial Brick 9 structural checkpoint.
+- Full executable build/Vitest/prerender/browser QA is not claimed and remains a final integration requirement.
+- Production merge: ZERO.
+- Production deployment: ZERO.
+
+Brick 9 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
