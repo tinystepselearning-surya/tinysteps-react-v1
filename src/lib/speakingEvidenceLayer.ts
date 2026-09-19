@@ -10,7 +10,7 @@ import {
   SPEAKING_PROGRESS_FRAMEWORK_PATH,
 } from './speakingProgressFramework';
 
-export const SPEAKING_EVIDENCE_LAYER_REVISION = '2026-09-19-b9-v1';
+export const SPEAKING_EVIDENCE_LAYER_REVISION = '2026-09-19-b9-v2';
 
 export type SpeakingEvidenceKind =
   | 'observable-classroom'
@@ -169,13 +169,19 @@ export const SPEAKING_EVIDENCE_SURFACES: readonly Readonly<SpeakingEvidenceSurfa
   }),
 ]);
 
-export const SPEAKING_EVIDENCE_REQUIRED_C8_PATHS = freezeList([
-  '/class-samples',
-  '/speaking',
-  '/team',
-  '/curriculum',
-  '/testimonials',
-]);
+export const SPEAKING_EVIDENCE_REQUIRED_C8_PATHS = freezeList(
+  Array.from(
+    new Set(
+      SPEAKING_EVIDENCE_SURFACES
+        .filter((item) => item.kind !== 'progress-method')
+        .map((item) => item.sourcePath),
+    ),
+  ),
+);
+
+export const SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS = freezeList(
+  SPEAKING_EVIDENCE_SURFACES.map((item) => item.sourcePath),
+);
 
 export const SPEAKING_EVIDENCE_CLAIM_BOUNDARIES = freeze({
   aggregateRatingsRequireApprovedTestimonials:
@@ -197,10 +203,30 @@ if (COMMERCIAL_C8_STATUS !== 'frozen') {
   throw new Error('Brick 9 requires the frozen Commercial C8 evidence governance layer.');
 }
 
-for (const path of SPEAKING_EVIDENCE_REQUIRED_C8_PATHS) {
-  if (!COMMERCIAL_C8_TRUST_SURFACES.some((surface) => surface.path === path)) {
-    throw new Error(`Brick 9 evidence source is not part of the frozen C8 trust system: ${path}.`);
+const verifiedC8PathSet = new Set(COMMERCIAL_C8_TRUST_SURFACES.map((surface) => surface.path));
+
+for (const item of SPEAKING_EVIDENCE_SURFACES) {
+  if (item.path !== item.sourcePath && !item.path.startsWith(`${item.sourcePath}#`)) {
+    throw new Error(`Brick 9 navigation target must stay on its canonical evidence source: ${item.id}.`);
   }
+
+  if (item.kind === 'progress-method') {
+    if (item.sourcePath !== SPEAKING_PROGRESS_FRAMEWORK_PATH) {
+      throw new Error('Brick 9 progress evidence must remain bound to the Brick 7 Speaking Progress Framework.');
+    }
+    continue;
+  }
+
+  if (!verifiedC8PathSet.has(item.sourcePath)) {
+    throw new Error(`Brick 9 evidence record points outside the frozen C8 trust system: ${item.id} -> ${item.sourcePath}.`);
+  }
+}
+
+if (
+  new Set(SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS).size
+  !== SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS.length
+) {
+  throw new Error('Brick 9 canonical evidence source paths must be unique.');
 }
 
 if (
