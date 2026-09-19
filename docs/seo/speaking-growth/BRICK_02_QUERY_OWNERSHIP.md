@@ -27,6 +27,8 @@ The GSC intent analysis used 199 privacy-thresholded query/page rows matching Sp
 
 The cluster totals below are heuristic groupings of those observed rows. They are directional evidence, not an estimate of all possible search demand.
 
+Brick 2 does **not** rewrite the repository's C2 priority levels. Where this Speaking-growth project calls an item P1 for execution, that means "high priority inside this 13-brick project"; the canonical C2 priority remains whatever is defined in `commercialC2KeywordOwnership.ts` (for example, Public Speaking, Communication and Spoken English remain C2 P2 clusters).
+
 ## 3. Non-negotiable ownership principles
 
 1. One commercial intent = one primary commercial owner.
@@ -51,7 +53,7 @@ The cluster totals below are heuristic groupings of those observed rows. They ar
 | Public Speaking geo/local variants | /speaking | 92 | 56 | 60.9% |
 | Communication classes/skills | /speaking | 21 | 10 | 47.6% |
 | Generic Spoken English | /spoken-english-classes-for-kids-online | 380 | 117 | 30.8% |
-| Explicit Hyderabad Spoken English | /online-english-classes-hyderabad | 10 | 10 | 100% |
+| Subject-qualified Hyderabad Spoken English | /spoken-english-classes-for-kids-online | 10 | 0 | 0% |
 | Mixed phonics + speaking English | /online-english-classes-for-kids | 141 | 9 | 6.4% |
 
 The low owner-share values are not interpreted as evidence that Tiny Steps needs more commercial pages. They show that existing pages are splitting or misrouting relevance.
@@ -219,24 +221,31 @@ Observed problem:
 
 This is a major Brick 5 relevance-reclamation problem, not justification for another Spoken-English page.
 
-### S8 — Explicit Hyderabad Spoken English
+### S8 — Subject-qualified Hyderabad Spoken English
 
-Primary owner: **/online-english-classes-hyderabad**
+Primary owner: **/spoken-english-classes-for-kids-online**  
+Localized support/chooser: **/online-english-classes-hyderabad**
 
-Owns:
-- spoken English classes in Hyderabad
-- online spoken English classes in Hyderabad
-- Hyderabad English classes for kids
+This correction is required by the existing C2/C3 ownership contract:
+
+- `/online-english-classes-hyderabad` owns **broad Hyderabad English** intent such as "online English classes for kids in Hyderabad";
+- subject-qualified Hyderabad intent belongs to the relevant subject owner;
+- therefore "spoken English classes in Hyderabad" remains a Spoken-English query and belongs to `/spoken-english-classes-for-kids-online`.
 
 Observed evidence:
-- 10 classified explicit-Hyderabad Spoken-English impressions
-- all 10 on the Hyderabad page
+- 10 classified explicit-Hyderabad Spoken-English impressions;
+- all 10 currently landed on `/online-english-classes-hyderabad`;
+- 0 of those 10 landed on the intended Spoken-English owner.
+
+Interpretation: this is **subject-intent leakage**, not healthy ownership.
 
 Boundary:
-- the Hyderabad page is not allowed to become the global Spoken-English owner;
-- it must not claim physical-centre/offline proximity if that is not the service offered.
+- keep the Hyderabad page as the broad local English discovery/chooser surface;
+- preserve its local visibility;
+- route subject-qualified users to the corresponding programme owner;
+- do not imply a physical centre/offline service where the offer is online.
 
-Generic "near me" queries are treated as localized discovery signals rather than authorization for new location pages. The underlying global Spoken-English service remains /spoken-english-classes-for-kids-online, while Google may localize Hyderabad users to the Hyderabad support page.
+Generic "near me" queries are also treated as localized discovery signals, not as authorization for a new location owner. The relevant subject page remains the canonical programme owner, while the Hyderabad page can support local discovery and programme handoff.
 
 ### S9 — Explicit Confidence Building programme/classes
 
@@ -257,6 +266,8 @@ Boundary:
 - diagnostic "my child is shy/hesitant" questions stay informational until the underlying need is identified.
 
 Brick 1 already recorded a Google noindex mismatch for this page. Brick 2 preserves ownership but does not assume the page is currently indexable in Google.
+
+GSC evidence caution: exact checks for "confidence building classes for kids", "confidence building program for kids", and "speaking confidence classes for kids" returned no rows in the current 90-day window. The specialist ownership is therefore inherited from the existing C2/C3 contract and supported by current SERP differentiation, not by measurable Tiny Steps GSC demand in this period.
 
 ### S10 — Shy / hesitant child diagnostic intent
 
@@ -408,7 +419,7 @@ Query: "communication classes for kids"
 
 Conclusion: the two pages are not cleanly differentiated by user intent. Brick 3 should consolidate signals only after preserving the query evidence recorded here.
 
-### C2 — Hyderabad page leaks into global Spoken-English intent
+### C2 — Hyderabad page leaks into subject-qualified and generic Spoken-English intent
 
 Query: "online spoken english classes for kids"
 - /online-english-classes-hyderabad: 13 impressions, avg position 15.08
@@ -418,7 +429,12 @@ Query: "online spoken english classes for kids"
 Query: "spoken english classes for kids near me"
 - Hyderabad page: 33 impressions, avg position 10.15
 
-Conclusion: explicit Hyderabad intent is healthy, but the Hyderabad page is also collecting non-Hyderabad generic Spoken-English demand. Brick 5 must sharpen global-vs-local ownership without destroying useful local visibility.
+Explicit subject-qualified Hyderabad checks:
+- "online spoken english classes in hyderabad": 7 impressions on the Hyderabad page
+- "spoken english classes online in hyderabad": 2 impressions on the Hyderabad page
+- "spoken english classes online hyderabad": 1 impression on the Hyderabad page
+
+Conclusion: the Hyderabad page is collecting both generic and subject-qualified Spoken-English demand. Existing C2/C3 policy says it should own only **broad local English**; Spoken-English-qualified searches belong to the Spoken-English programme owner. Brick 5 must reclaim that subject relevance while preserving the Hyderabad page's broad local visibility.
 
 ### C3 — Course-detail leakage is currently small
 
@@ -461,7 +477,8 @@ When later bricks edit content:
 - commercial Public Speaking anchors → /speaking
 - general Communication Skills anchors → /speaking
 - generic Spoken English / English speaking anchors → /spoken-english-classes-for-kids-online
-- explicit Hyderabad online-English anchors → /online-english-classes-hyderabad
+- explicit **broad** Hyderabad online-English anchors → /online-english-classes-hyderabad
+- subject-qualified Hyderabad Spoken-English anchors → /spoken-english-classes-for-kids-online
 - explicit confidence-building programme anchors → /confidence-building-program-kids
 - price/fees anchors → /pricing
 - free demo/assessment anchors → /book-demo
@@ -479,8 +496,10 @@ Legacy /public-speaking-communication-kids must not receive new primary commerci
 - the frozen rule that /public-speaking-communication-kids cannot remain a second generic commercial owner;
 - exact high-risk overlap queries to protect during consolidation;
 - the confidence-programme Google noindex mismatch from Brick 1;
-- the generic Spoken-English leakage into the Hyderabad page;
-- legacy redirect/internal-link cleanup targets.
+- the generic and subject-qualified Spoken-English leakage into the Hyderabad page;
+- the rule that Hyderabad owns broad local English only, while subject-qualified queries return to their programme owner;
+- legacy redirect/internal-link cleanup targets;
+- known legacy Public-Speaking technical surfaces to reconcile: public route manifest, SEO registry, subject-landing content registry, sitemap-static.xml, RSS/feed, SEO smoke expectations/tests, analytics classification and any remaining internal links.
 
 ### Brick 4 receives
 - /speaking keyword territory:
@@ -513,7 +532,7 @@ Brick 2 is complete when:
 1. every material observed Speaking-admission query family has one frozen primary owner or an explicit HOLD;
 2. generic Public Speaking and Communication both resolve to /speaking;
 3. generic Spoken English resolves to /spoken-english-classes-for-kids-online;
-4. explicit Hyderabad intent is separated from global Spoken-English intent;
+4. broad Hyderabad English intent is separated from subject-qualified Spoken-English intent;
 5. explicit Confidence Building remains narrow and specialist;
 6. course-detail pages are prevented from becoming generic acquisition owners;
 7. price and demo intent route to their existing cross-programme owners;
