@@ -25,7 +25,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
 | 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
 | 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
-| 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
+| 07 | Tiny Steps Speaking Progress Framework | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 08 | Speaking knowledge cluster | PENDING | NO |
 | 09 | Evidence layer | PENDING | NO |
 | 10 | Video/class demonstration engine | PENDING | NO |
@@ -253,3 +253,36 @@ Additional fixes and findings:
 - production merge/deployment remains ZERO.
 
 Brick 6 status after re-audit: COMPLETE — RE-AUDITED.
+
+
+## Brick 7 completion gate
+
+- One central framework source now defines the Tiny Steps Speaking Progress Framework.
+- Framework revision: `2026-09-19-b7-v1`.
+- Canonical informational owner: `/speaking-progress-framework`.
+- Exactly 10 observable speaking dimensions are defined and kept separate rather than averaged into one score.
+- Exactly 4 support-to-independence observation bands are defined:
+  - Modelled / supported;
+  - Guided attempt;
+  - Independent use;
+  - Fresh-task transfer.
+- Review loop is frozen as baseline → one current target → teach/retry/fade support → fresh-task check → next learning priority.
+- Parent progress summary fields are frozen around current target, band, independent evidence, useful support, fresh-task evidence and next priority.
+- Every Brick 7 dimension maps to at least one established Speaking & Communication knowledge domain; the existing nine-domain knowledge architecture is preserved.
+- Framework guardrails explicitly reject developmental-age, IQ-style, clinical/diagnostic, accent-conformity, extroversion/loudness and one-total-score interpretations.
+- The public framework page publishes all dimensions, bands, assessment-use boundaries, parent-summary fields and FAQs.
+- `/speaking` remains the high-commercial Public Speaking owner.
+- `/resources/speaking` remains the Speaking resource-discovery owner.
+- `/speaking-progress-framework` owns only the progress-measurement informational intent.
+- Framework handoffs are present from `/speaking`, `/book-demo`, `/parents/tracking-progress` and `/resources/speaking`.
+- Internal-link and HTML-sitemap discovery are present.
+- Static sitemap contains the framework exactly once.
+- Brick 7 changed-page sitemap freshness is protected for `/speaking`, `/book-demo`, `/resources/speaking`, `/speaking-progress-framework` and `/parents/tracking-progress`.
+- Existing operational Speaking progress fallback remains `Confidence / Pronunciation / Fluency / Idea expression / Audience engagement`.
+- Firestore schema, historical progress records, teacher progress-save workflow and parent dashboard rating/calculation logic are untouched.
+- New dedicated regression guard: `src/tests/seo/speakingGrowthBrick7.spec.ts`.
+- Final source-level structural matrix: 77/77 passed.
+- Branch was 0 commits behind main at the pre-documentation closure gate.
+- Full executable build/Vitest/browser run is not claimed and remains a final integration requirement.
+- Production merge: ZERO.
+- Production deployment: ZERO.
