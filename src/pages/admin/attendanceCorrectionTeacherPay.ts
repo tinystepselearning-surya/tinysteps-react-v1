@@ -17,6 +17,8 @@ export type AttendanceCorrectionTeacherPayInput = {
   reason: string;
   teacherPayDisposition: AttendanceCorrectionTeacherPayDisposition;
   teacherPayReasonCode: AttendanceCorrectionTeacherPayReasonCode;
+  validationCaseId?: string;
+  validationCaseFingerprint?: string;
 };
 
 export const TEACHER_PAY_RETENTION_REASON_OPTIONS: Array<{
@@ -77,9 +79,29 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
   input: AttendanceCorrectionTeacherPayInput,
 ): Promise<{ ok: boolean; correctionId?: string }> {
   const correctionFn = httpsCallable<
-    { sessionId: string; kidId: string; newStatus: string; reason: string },
-    { ok: boolean; correctionId?: string }
+    {
+      sessionId: string;
+      kidId: string;
+      newStatus: string;
+      reason: string;
+      validationCaseId?: string;
+      validationCaseFingerprint?: string;
+    },
+    {
+      ok: boolean;
+      correctionId?: string;
+      validationCaseId?: string;
+      validationResolutionId?: string;
+    }
   >(functions, 'adminAttendanceCorrection');
+
+  const validationLink =
+    input.validationCaseId && input.validationCaseFingerprint
+      ? {
+          validationCaseId: input.validationCaseId,
+          validationCaseFingerprint: input.validationCaseFingerprint,
+        }
+      : {};
 
   const normalizedStatus = String(input.newStatus || '').trim().toLowerCase();
   const requiresDecision = requiresAttendanceCorrectionTeacherPayDecision({
@@ -92,6 +114,7 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
       kidId: input.kidId,
       newStatus: input.newStatus,
       reason: input.reason,
+      ...validationLink,
     });
     return result.data;
   }
@@ -137,6 +160,7 @@ export async function saveAdminAttendanceCorrectionWithTeacherPayDecision(
       kidId: input.kidId,
       newStatus: input.newStatus,
       reason: input.reason,
+      ...validationLink,
     });
     return result.data;
   } catch (error) {
