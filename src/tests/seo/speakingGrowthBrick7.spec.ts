@@ -217,7 +217,8 @@ describe('Speaking growth Brick 7 progress framework', () => {
     expect(teacherEditorSource).not.toContain('speakingProgressFramework');
     expect(frameworkSource).not.toContain('firebase');
     expect(pageSource).not.toContain('firestore');
-    expect(pageSource).toContain('may still show broader legacy subject-level progress summaries');
+    expect(pageSource).toContain('remain separate operational systems and may');
+    expect(pageSource).toContain('still show broader legacy subject-level progress summaries');
     expect(pageSource).toContain('does not silently rewrite historical progress data');
   });
 
