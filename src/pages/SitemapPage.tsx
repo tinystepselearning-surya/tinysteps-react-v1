@@ -84,6 +84,11 @@ const sections = [
         description: 'Simple framework to pick phonics, grammar, or speaking tracks.',
       },
       {
+        to: '/speaking-progress-framework',
+        label: 'Speaking Progress Framework',
+        description: 'See the 10 observable speaking dimensions, support bands, fresh-task checks, and parent review fields.',
+      },
+      {
         to: '/parents/reading-at-home',
         label: 'Reading at Home',
         description: 'Practical routines to support fluency and reading consistency.',
