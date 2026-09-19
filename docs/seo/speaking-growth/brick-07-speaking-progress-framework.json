@@ -1,0 +1,212 @@
+{
+  "generatedAt": "2026-09-19",
+  "branch": "feature/speaking-seo-geo-growth",
+  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "framework": {
+    "name": "Tiny Steps Speaking Progress Framework",
+    "revision": "2026-09-19-b7-v1",
+    "canonicalPath": "/speaking-progress-framework",
+    "intent": "progress-aware informational authority",
+    "commercialOwnerPreserved": "/speaking",
+    "resourceHubPreserved": "/resources/speaking",
+    "principle": "Track a multi-dimensional speaking profile through observable evidence, support needed, independence, and fresh-task transfer; do not average the child into one overall speaking score."
+  },
+  "dimensions": [
+    {
+      "order": 1,
+      "id": "response_expansion",
+      "label": "Response expansion"
+    },
+    {
+      "order": 2,
+      "id": "sentence_formation",
+      "label": "Sentence formation in speaking"
+    },
+    {
+      "order": 3,
+      "id": "vocabulary_in_use",
+      "label": "Vocabulary in use"
+    },
+    {
+      "order": 4,
+      "id": "idea_organisation",
+      "label": "Idea organisation"
+    },
+    {
+      "order": 5,
+      "id": "listening_response",
+      "label": "Listening & response relevance"
+    },
+    {
+      "order": 6,
+      "id": "storytelling_retelling",
+      "label": "Storytelling & retelling"
+    },
+    {
+      "order": 7,
+      "id": "delivery_intelligibility",
+      "label": "Delivery & intelligibility"
+    },
+    {
+      "order": 8,
+      "id": "prompt_independence",
+      "label": "Speaking independence"
+    },
+    {
+      "order": 9,
+      "id": "presentation_audience",
+      "label": "Presentation & audience awareness"
+    },
+    {
+      "order": 10,
+      "id": "fresh_task_transfer",
+      "label": "Transfer to fresh tasks"
+    }
+  ],
+  "observationBands": [
+    {
+      "order": 1,
+      "id": "modelled_support",
+      "label": "Modelled / supported"
+    },
+    {
+      "order": 2,
+      "id": "guided_attempt",
+      "label": "Guided attempt"
+    },
+    {
+      "order": 3,
+      "id": "independent_use",
+      "label": "Independent use"
+    },
+    {
+      "order": 4,
+      "id": "fresh_task_transfer",
+      "label": "Fresh-task transfer"
+    }
+  ],
+  "reviewLoop": [
+    "Baseline",
+    "One current target",
+    "Teach, retry, fade support",
+    "Fresh-task check",
+    "Next learning priority"
+  ],
+  "parentSummaryFields": [
+    "Current speaking target",
+    "Observation band for the target",
+    "What the child can now do independently",
+    "Support that is still useful",
+    "Fresh-task evidence",
+    "Next learning priority"
+  ],
+  "guardrails": [
+    "No overall speaking score produced by averaging the ten dimensions.",
+    "No developmental-age, IQ-style, diagnostic, clinical, medical, or standardized-language label.",
+    "No confidence judgment based on loudness, extroversion, accent, or constant eye contact.",
+    "No rehearsed familiar-task success treated as sufficient evidence of transfer.",
+    "No assumption that all ten dimensions progress evenly.",
+    "Same-child-over-time comparison preferred over child-to-child ranking.",
+    "Multilingual and setting differences may be recorded as context without being converted into diagnosis."
+  ],
+  "knowledgeArchitecture": {
+    "existingDomainCount": 9,
+    "existingArchitectureFile": "src/lib/speakingCommunicationKnowledgeArchitecture.js",
+    "relation": "The ten Brick 7 progress dimensions map onto the existing nine non-rigid speaking/communication knowledge domains; Brick 7 does not replace or renumber those domains."
+  },
+  "userJourneys": {
+    "speakingProgramme": "/speaking",
+    "assessment": "/book-demo",
+    "parentProgressGuide": "/parents/tracking-progress",
+    "speakingResources": "/resources/speaking",
+    "frameworkAuthority": "/speaking-progress-framework"
+  },
+  "operationalIsolation": {
+    "firestoreSchemaChanged": false,
+    "historicalProgressMigrated": false,
+    "teacherProgressSaveWorkflowChanged": false,
+    "parentDashboardRatingModelChanged": false,
+    "progressSkillsFallbackChanged": false,
+    "preservedSpeakingFallback": [
+      "Confidence",
+      "Pronunciation",
+      "Fluency",
+      "Idea expression",
+      "Audience engagement"
+    ],
+    "reason": "Brick 7 defines the educational observation language without silently remapping existing stored ratings or historical dashboard data. Any future operational migration must be deliberately designed and tested."
+  },
+  "discovery": {
+    "staticSitemapFrameworkUrlCount": 1,
+    "frameworkLastmod": "2026-09-19",
+    "speakingLastmod": "2026-09-19",
+    "bookDemoLastmod": "2026-09-19",
+    "speakingResourcesLastmod": "2026-09-19",
+    "parentTrackingLastmod": "2026-09-19",
+    "staticSitemapIndexLastmod": "2026-09-19",
+    "parentSitemapIndexLastmod": "2026-09-19",
+    "htmlSitemapLinked": true,
+    "internalLinkRegistryLinked": true,
+    "seoSmokeRequired": true
+  },
+  "structuredData": {
+    "webpage": true,
+    "breadcrumbs": true,
+    "dimensionItemList": true,
+    "observationBandItemList": true,
+    "definedTermItems": true,
+    "faqPage": true,
+    "aggregateRating": false,
+    "rating": false,
+    "fabricatedOutcomeScore": false
+  },
+  "verification": {
+    "sourceLevelMatrix": {
+      "passed": 77,
+      "total": 77
+    },
+    "groups": [
+      {
+        "name": "framework-contract",
+        "passed": 26,
+        "total": 26
+      },
+      {
+        "name": "ownership-routing-discovery",
+        "passed": 28,
+        "total": 28
+      },
+      {
+        "name": "handoffs-operational-isolation",
+        "passed": 23,
+        "total": 23
+      }
+    ],
+    "attachedCiRun": false,
+    "npmBuildClaimed": false,
+    "vitestExecutionClaimed": false,
+    "browserQaClaimed": false
+  },
+  "sourceFilesChanged": [
+    "src/lib/speakingProgressFramework.ts",
+    "src/pages/public/SpeakingProgressFrameworkPage.tsx",
+    "src/lib/routeSeoRegistry.js",
+    "src/lib/publicRouteManifest.js",
+    "src/lib/canonicalTopicOwnershipRegistry.js",
+    "src/app/routes.tsx",
+    "src/lib/seo/internalLinkMap.ts",
+    "src/pages/SubjectResourcesPage.tsx",
+    "src/pages/speaking.tsx",
+    "src/pages/public/BookDemoPage.tsx",
+    "src/pages/parents/tracking-progress.tsx",
+    "src/pages/SitemapPage.tsx",
+    "scripts/generate-sitemaps.js",
+    "scripts/seo-smoke.mjs",
+    "public/sitemap-static.xml",
+    "public/sitemap-parents.xml",
+    "public/sitemap.xml",
+    "src/tests/seo/speakingGrowthBrick7.spec.ts"
+  ],
+  "productionDeployment": false,
+  "mergeToMain": false
+}
