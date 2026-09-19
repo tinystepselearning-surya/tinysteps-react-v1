@@ -160,6 +160,36 @@ export function isSpeakingLeadAdmitted(lead: SpeakingAttributionLeadLike): boole
   return text(lead.status).toLowerCase() === 'admitted_confirmed';
 }
 
+function broadChannelFromDiagnostic(
+  diagnostic: AcquisitionClassification,
+): CommercialAcquisitionChannel {
+  if (diagnostic.channel === 'google_organic' || diagnostic.channel === 'bing_organic') {
+    return 'organic_search';
+  }
+  if (
+    diagnostic.channel === 'chatgpt'
+    || diagnostic.channel === 'google_gemini'
+    || diagnostic.channel === 'perplexity'
+    || diagnostic.channel === 'microsoft_copilot'
+    || diagnostic.channel === 'claude'
+  ) {
+    return 'organic_ai';
+  }
+  if (diagnostic.channel === 'google_ads' || diagnostic.channel === 'microsoft_ads') {
+    return 'paid';
+  }
+  if (
+    diagnostic.channel === 'instagram'
+    || diagnostic.channel === 'facebook'
+    || diagnostic.channel === 'linkedin'
+    || diagnostic.channel === 'youtube'
+    || diagnostic.channel === 'referral'
+  ) {
+    return 'referral';
+  }
+  return 'direct_or_unknown';
+}
+
 export function buildSpeakingAttributionProjection(
   lead: SpeakingAttributionLeadLike,
 ): SpeakingAttributionProjection {
@@ -183,6 +213,12 @@ export function buildSpeakingAttributionProjection(
     || normalizedPath(attribution.conversionPage)
     || '';
 
+  const rawBusinessChannel = classifyCommercialAcquisitionChannel(firstTouch);
+  const businessChannel =
+    rawBusinessChannel !== 'direct_or_unknown'
+      ? rawBusinessChannel
+      : broadChannelFromDiagnostic(diagnosticAcquisition);
+
   const hasEvidence = Boolean(
     firstTouch.landingPage
     || firstTouch.referrerDomain
@@ -190,13 +226,15 @@ export function buildSpeakingAttributionProjection(
     || firstTouch.utmMedium
     || firstTouch.gclid
     || firstTouch.fbclid
-    || firstTouch.msclkid,
+    || firstTouch.msclkid
+    || text(lead.acquisitionChannel)
+    || text(lead.acquisitionSource),
   );
 
   return freeze({
     landingPage: normalizedPath(firstTouch.landingPage),
     conversionPage,
-    businessChannel: classifyCommercialAcquisitionChannel(firstTouch),
+    businessChannel,
     diagnosticAcquisition,
     speakingOrigin: isSpeakingOriginLead(lead),
     speakingInterest: isSpeakingInterestLead(lead),
