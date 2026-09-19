@@ -161,7 +161,7 @@
   "implementation": {
     "metadataChanged": false,
     "canonicalChanged": false,
-    "redirectsChanged": false,
+    "redirectsChanged": true,
     "sitemapChanged": false,
     "newCommercialUrls": 0,
     "pageChanges": [
@@ -172,13 +172,32 @@
       "added a single-programme Hyderabad/India/worldwide boundary section",
       "added observable parent progress signals",
       "replaced hard-coded learner reach wording with central public facts",
-      "narrowed confidence wording so specialist confidence remains separate"
+      "narrowed confidence wording so specialist confidence remains separate",
+      "changed generic assessment CTA wording from Speaking Assessment to English Assessment to match the cross-programme conversion owner",
+      "converted two near-exact diagnostic FAQs into commercial-fit questions and linked to the protected diagnostic articles"
     ],
     "architectureChanges": [
       "added Hyderabad broad-owner -> canonical Spoken-English programme-fit edge to commercialC6InternalCommercialPaths",
       "updated C6 internal-path audit to require the Hyderabad Spoken-English handoff"
+    ],
+    "redirectHardening": [
+      "/spoken-english-classes-for-kids -> /spoken-english-classes-for-kids-online remains direct 301",
+      "/spoken-english-classes-for-kids/ -> /spoken-english-classes-for-kids-online added as explicit direct 301",
+      "both SPA fallback variants now resolve to the canonical owner",
+      "SEO smoke forbids both retired variants from sitemap discovery"
     ]
   },
   "runtimeChangesAuthorized": true,
-  "productionDeployment": false
+  "productionDeployment": false,
+  "reAudit": {
+    "date": "2026-09-19",
+    "status": "COMPLETE — RE-AUDITED",
+    "findings": [
+      "primary CTA/trust-chip wording could blur Spoken English with Public Speaking; changed to Free English Assessment",
+      "legacy Spoken-English trailing-slash redirect was not explicitly hardened; direct 301 and SPA fallback added",
+      "commercial page echoed protected diagnostic-owner questions too closely; questions reframed as programme-fit and diagnostic handoffs added",
+      "central SEO infrastructure and sitemap smoke now guard the legacy redirect/discovery contract",
+      "Course schema expansion deferred to Brick 6; no fabricated Spoken-English levels or Course-list rich-result claim"
+    ]
+  }
 }
