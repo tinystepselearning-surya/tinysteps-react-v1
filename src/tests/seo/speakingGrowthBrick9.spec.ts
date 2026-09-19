@@ -180,7 +180,7 @@ describe('Speaking growth Brick 9 evidence layer', () => {
     expect(speakingSource).toContain('SPEAKING_EVIDENCE_SURFACES.map');
     expect(speakingSource).toContain('data-speaking-evidence-kind={item.kind}');
     expect(speakingSource).toContain('Does not prove:');
-    expect(speakingSource).toContain('No single source is treated as proof of a guaranteed result for every child.');
+    expect(speakingSource).toContain('No single source is treated as proof that every child will achieve the same outcome.');
   });
 
   it('adds bounded evidence-source structured data without review or rating schema', () => {
