@@ -12,7 +12,7 @@ import {
   SPEAKING_AI_KNOWLEDGE_PATHS,
 } from './speakingAiVisibility';
 
-export const SPEAKING_ATTRIBUTION_REVISION = '2026-09-19-b13-v1';
+export const SPEAKING_ATTRIBUTION_REVISION = '2026-09-19-b13-v2';
 
 const freeze = <T extends object>(value: T): Readonly<T> => Object.freeze(value);
 const freezeList = <T>(values: readonly T[]): readonly T[] => Object.freeze([...values]);
