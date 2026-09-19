@@ -30,6 +30,10 @@ const LEGACY_URLS_ABSENT = [
   'https://tinystepslearning.com/courses/basic-public-speaking/',
   'https://tinystepslearning.com/courses/advanced-public-speaking',
   'https://tinystepslearning.com/courses/advanced-public-speaking/',
+  'https://tinystepslearning.com/public-speaking-communication-kids',
+  'https://tinystepslearning.com/public-speaking-communication-kids/',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids/',
 ];
 
 const REQUIRED_CORE_URLS = [
@@ -44,10 +48,8 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/courses/grammar',
   'https://tinystepslearning.com/courses/grammar-mastery',
   'https://tinystepslearning.com/courses/public-speaking-foundations',
+  'https://tinystepslearning.com/courses/public-speaking-excellence',
   'https://tinystepslearning.com/english-grammar-writing-classes',
-  'https://tinystepslearning.com/public-speaking-communication-kids',
-  'https://tinystepslearning.com/spoken-english-classes-for-kids',
-  'https://tinystepslearning.com/spoken-english-classes-for-kids/',
   'https://tinystepslearning.com/spoken-english-classes-for-kids-online',
   'https://tinystepslearning.com/online-english-classes-for-kids',
 ];
