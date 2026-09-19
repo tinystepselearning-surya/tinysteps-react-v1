@@ -75,6 +75,7 @@ export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingSchedule
 export { adminRepairRollingScheduleMaterialization } from "./scheduling/rollingScheduleRepair";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
+export { runAttendanceValidationLatestCheck } from "./attendanceValidation/latestCheckCallable";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
 export {
   prepareAdminAttendanceCorrectionTeacherPayDecision,
