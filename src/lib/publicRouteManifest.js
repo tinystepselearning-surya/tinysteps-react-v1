@@ -68,6 +68,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/phonics', 'static'),
   route('/grammar', 'static'),
   route('/speaking', 'static'),
+  route('/speaking-progress-framework', 'static'),
   route('/for-schools', 'static'),
   route('/book-demo', 'static'),
   route('/reading-classes-for-kids', 'static'),
