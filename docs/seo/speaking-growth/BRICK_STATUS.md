@@ -26,7 +26,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
 | 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
 | 07 | Tiny Steps Speaking Progress Framework | COMPLETE — RE-AUDITED | NO |
-| 08 | Speaking knowledge cluster | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 08 | Speaking knowledge cluster | COMPLETE — RE-AUDITED | NO |
 | 09 | Evidence layer | PENDING | NO |
 | 10 | Video/class demonstration engine | PENDING | NO |
 | 11 | Entity & external authority | PENDING | NO |
@@ -339,3 +339,29 @@ Brick 7 status after re-audit: **COMPLETE — RE-AUDITED**.
 - Production deployment: ZERO.
 
 Brick 8 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
+
+
+## 2026-09-19 Brick 8 re-audit notes
+
+Brick 8 was fully re-audited before Brick 9.
+
+Additional fixes and findings:
+- advanced the Brick 8 knowledge-cluster revision from `2026-09-19-b8-v1` to `2026-09-19-b8-v2`;
+- found that the Speaking hub structured `ItemList` had 23 raw candidate entries but only 18 unique destinations because useful visible parent pathways repeat some resources;
+- deduplicated structured-data destinations while preserving visible cross-links;
+- added an explicit runtime guard that all nine established Speaking & Communication knowledge domains remain represented;
+- added an explicit runtime guard that all fifteen Tier-1 records continue to resolve to exactly fourteen established knowledge URLs;
+- added a blog-only runtime boundary for the knowledge corpus, preventing future commercial/programme routes from silently entering Brick 8;
+- rechecked all fourteen knowledge destinations for canonical ownership, indexability and blog-sitemap inclusion;
+- traced the three R21 dynamic owners through the full `R20 proposedPath → R21 published execution → R21 canonical owner` chain;
+- renamed the stale sitemap source map from `brick7LastmodSources` to `speakingGrowthLastmodSources`;
+- expanded `speakingGrowthBrick8.spec.ts` to protect nine-domain coverage, canonical uniqueness, indexability, sitemap discovery and structured-data deduplication;
+- source-level re-audit matrix: **70/70 passed**;
+- protected-surface SHA comparison against the pre-Brick-8 checkpoint: **15/15 unchanged**;
+- protected unchanged surfaces include Brick 7 framework/page, `/speaking`, `/book-demo`, parent tracking, canonical ownership, app routes, SP6 semantic engine/architecture, operational progress skills, parent dashboard, teacher progress editor/save backend and Brick 7 regression test;
+- Brick 8 re-audit runtime/test delta was limited to four intended files: `speakingKnowledgeCluster.ts`, `SubjectResourcesPage.tsx`, `generate-sitemaps.js`, and `speakingGrowthBrick8.spec.ts`;
+- machine-readable evidence: `docs/seo/speaking-growth/brick-08-speaking-knowledge-cluster.json`;
+- no production merge/deployment performed;
+- full executable Vitest/build/prerender/browser QA is still not claimed and remains mandatory at the final Bricks 1–13 integration gate.
+
+Brick 8 status after re-audit: **COMPLETE — RE-AUDITED**.
