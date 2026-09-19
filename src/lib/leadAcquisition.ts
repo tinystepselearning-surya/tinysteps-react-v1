@@ -203,6 +203,11 @@ export function resolveStoredLeadAcquisition(
   const explicit = normalize(input.acquisitionChannel) as AcquisitionChannel;
   const hasExplicit = ACQUISITION_CHANNELS.has(explicit);
 
+  // Explicit paid click identifiers are stronger than any previously stored channel.
+  if (input.gclid || input.msclkid) {
+    return inferred;
+  }
+
   // Preserve specific stored channels, but do not let a historical generic "other"
   // value hide stronger raw UTM/referrer evidence such as utm_source=chatgpt.com.
   if (hasExplicit && explicit !== 'other') {
