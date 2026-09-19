@@ -199,7 +199,9 @@ describe('AV5.3 bounded shadow runner', () => {
     expect(store.saveCalls).toBe(1);
     expect(store.saved).toHaveLength(1);
     expect(store.saved[0]).toMatchObject({
+      schemaVersion: 2,
       id: 'session-1',
+      serviceDateYmd: '2026-09-18',
       classSessionId: 'session-1',
       classification: 'VERIFIED',
       validationDecision: 'present',
@@ -367,6 +369,7 @@ describe('AV5.3 bounded shadow runner', () => {
 
     expect(result.preScopeSkippedCount).toBe(0);
     expect(result.persistedCaseCount).toBe(1);
+    expect(store.saved[0].serviceDateYmd).toBe('2026-09-01');
   });
 
   it('fails closed when the service date cannot be resolved', async () => {
@@ -442,6 +445,7 @@ describe('AV5.3 bounded shadow runner', () => {
 
     expect(store.saved[0]).toMatchObject({
       id: 'session-1',
+      serviceDateYmd: '2026-09-18',
       classification: 'MISSING_TEAMS_EVIDENCE',
       recommendedAction: 'review',
       reasons: ['evidence_document_missing'],
@@ -468,6 +472,7 @@ describe('AV5.3 bounded shadow runner', () => {
 
     expect(store.saved[0]).toMatchObject({
       id: 'orphan_evidence-1',
+      serviceDateYmd: '2026-09-18',
       classification: 'ORPHAN_TEAMS_CLASS',
       recommendedAction: 'review',
       reasons: ['operational_session_missing'],
