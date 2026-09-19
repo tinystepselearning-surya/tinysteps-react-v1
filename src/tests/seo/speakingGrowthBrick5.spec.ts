@@ -79,6 +79,7 @@ describe('Speaking growth Brick 5 Spoken English territory', () => {
   it('keeps the assessment as the decision mechanism', () => {
     expect(page).toContain('How the spoken English assessment works');
     expect(page).toContain('Parents receive a practical recommendation before enrolment');
-    expect(page).toContain('Book a Free Speaking Assessment');
+    expect(page).toContain('Book a Free English Assessment');
+    expect(page).not.toContain('Book a Free Speaking Assessment');
   });
 });
