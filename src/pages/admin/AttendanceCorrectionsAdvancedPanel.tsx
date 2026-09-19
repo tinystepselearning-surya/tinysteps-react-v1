@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Timestamp, collection, documentId, getDocs, query, where } from 'firebase/firestore';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Timestamp, collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { type FunctionsError, httpsCallable } from 'firebase/functions';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -59,6 +60,30 @@ type TeacherOption = {
   label: string;
   identityIds: string[];
 };
+
+type Av7CorrectionContext = {
+  caseId: string;
+  fingerprint: string;
+  sessionId: string;
+  kidId: string;
+  newStatus: 'present' | 'absent';
+};
+
+type Av7SessionSeed = {
+  teacherId: string;
+  date: string;
+};
+
+function parseAv7CorrectionContext(searchParams: URLSearchParams): Av7CorrectionContext | null {
+  const caseId = String(searchParams.get('avsCaseId') || '').trim();
+  const fingerprint = String(searchParams.get('avsFingerprint') || '').trim();
+  const sessionId = String(searchParams.get('sessionId') || '').trim();
+  const kidId = String(searchParams.get('kidId') || '').trim();
+  const newStatus = String(searchParams.get('newStatus') || '').trim().toLowerCase();
+  if (!caseId || !fingerprint || !sessionId || !kidId) return null;
+  if (newStatus !== 'present' && newStatus !== 'absent') return null;
+  return { caseId, fingerprint, sessionId, kidId, newStatus };
+}
 
 const ATTENDANCE_CORRECTION_STATUS_OPTIONS: AttendanceCorrectionStatus[] = [
   'present',
@@ -170,6 +195,12 @@ function formatFunctionsError(err: unknown): { code: string; message: string; de
 export default function AttendanceCorrectionsAdvancedPanel() {
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const av7Context = useMemo(
+    () => parseAv7CorrectionContext(searchParams),
+    [searchParams],
+  );
   const saveInFlightRef = useRef(false);
   const [mode, setMode] = useState<AttendanceCorrectionMode>('existing');
   const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
@@ -198,6 +229,82 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [saving, setSaving] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [pendingSessionSelection, setPendingSessionSelection] = useState<PendingSessionSelection>(null);
+  const [av7SessionSeed, setAv7SessionSeed] = useState<Av7SessionSeed | null>(null);
+  const [av7PrefillError, setAv7PrefillError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!av7Context) {
+      setAv7SessionSeed(null);
+      setAv7PrefillError(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setMode('existing');
+    setNewStatus(av7Context.newStatus);
+    setReason((current) => current || `AVS approved correction for case ${av7Context.caseId}`);
+    setAv7PrefillError(null);
+
+    const loadAv7Session = async () => {
+      try {
+        const sessionSnap = await getDoc(doc(db, 'classSessions', av7Context.sessionId));
+        if (cancelled) return;
+        if (!sessionSnap.exists()) {
+          setAv7PrefillError('The AVS-linked session no longer exists.');
+          return;
+        }
+        const data = (sessionSnap.data() || {}) as Record<string, unknown>;
+        const kidIds = collectKidIds(data);
+        if (kidIds.length > 0 && !kidIds.includes(av7Context.kidId)) {
+          setAv7PrefillError('The AVS-linked student is no longer assigned to this session.');
+          return;
+        }
+        const startAt = toDateMaybe(data.startAt);
+        const date =
+          (typeof data.date === 'string' && data.date.trim())
+          || (startAt ? toIstDateLabel(startAt) : '');
+        const teacherId =
+          typeof data.teacherId === 'string' ? data.teacherId.trim() : '';
+        if (!date || !teacherId) {
+          setAv7PrefillError('The AVS-linked session is missing its date or teacher identity.');
+          return;
+        }
+
+        setSelectedDate(date);
+        setAv7SessionSeed({ teacherId, date });
+        setPendingSessionSelection({
+          sessionId: av7Context.sessionId,
+          kidId: av7Context.kidId,
+        });
+      } catch (err) {
+        console.error('Failed to prepare AV7 attendance correction', err);
+        if (!cancelled) {
+          setAv7PrefillError(
+            err instanceof Error ? err.message : 'Unable to load the AVS-linked session.',
+          );
+        }
+      }
+    };
+
+    void loadAv7Session();
+    return () => {
+      cancelled = true;
+    };
+  }, [av7Context]);
+
+  useEffect(() => {
+    if (!av7SessionSeed || teacherOptions.length === 0) return;
+    const matchingTeacher = teacherOptions.find((option) =>
+      option.identityIds.includes(av7SessionSeed.teacherId),
+    );
+    if (!matchingTeacher) {
+      setAv7PrefillError('The AVS-linked teacher could not be resolved in the correction workflow.');
+      return;
+    }
+    setSelectedTeacherId(matchingTeacher.id);
+  }, [av7SessionSeed, teacherOptions]);
 
   useEffect(() => {
     if (newStatus === 'present') return;
@@ -563,6 +670,13 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     newStatus,
   });
 
+  const av7LinkMatchesSelection = !av7Context || (
+    mode === 'existing'
+    && selectedSessionId === av7Context.sessionId
+    && selectedKidId === av7Context.kidId
+    && newStatus === av7Context.newStatus
+  );
+
   const validateTeacherPayHandling = () => {
     const error = validateAttendanceCorrectionTeacherPay({
       previousStatus: teacherPayPreviousStatus,
@@ -584,6 +698,12 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       reason: trimmedReason,
       teacherPayDisposition,
       teacherPayReasonCode,
+      ...(av7Context && av7LinkMatchesSelection
+        ? {
+            validationCaseId: av7Context.caseId,
+            validationCaseFingerprint: av7Context.fingerprint,
+          }
+        : {}),
     });
   };
 
@@ -598,6 +718,22 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       toast({
         title: 'Incomplete selection',
         description: 'Choose teacher, student, and session before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (av7Context && !av7LinkMatchesSelection) {
+      toast({
+        title: 'AVS case changed',
+        description: 'The selected session, student, or status no longer matches the AVS approval target.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (av7PrefillError) {
+      toast({
+        title: 'AVS correction unavailable',
+        description: av7PrefillError,
         variant: 'destructive',
       });
       return;
@@ -631,6 +767,9 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       setReason('');
       resetTeacherPayHandling();
       setReloadKey((value) => value + 1);
+      if (av7Context) {
+        navigate('/surya?tab=attendance-validation', { replace: true });
+      }
     } catch (err) {
       const error = formatFunctionsError(err);
       console.error('Failed to save attendance correction', error);
@@ -758,6 +897,29 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         </p>
       </div>
 
+      {av7Context && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+          <div className="font-semibold">AV7 approved-correction review</div>
+          <div className="mt-1 text-xs">
+            Case {av7Context.caseId} is linked to this correction. Session, student, and target status
+            are locked to the validated recommendation. Existing teacher-pay and finance safeguards still apply.
+          </div>
+          {av7PrefillError && (
+            <div className="mt-2 font-medium text-red-700">{av7PrefillError}</div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => navigate('/surya?tab=attendance-validation')}
+            disabled={saving}
+          >
+            Back to Attendance Validation
+          </Button>
+        </div>
+      )}
+
       <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
         <Button
           type="button"
@@ -773,7 +935,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           size="sm"
           variant={mode === 'create' ? 'default' : 'ghost'}
           onClick={() => setMode('create')}
-          disabled={saving}
+          disabled={saving || Boolean(av7Context)}
         >
           Create Missing Session
         </Button>
@@ -786,7 +948,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
             value={selectedTeacherId}
             onChange={(event) => setSelectedTeacherId(event.target.value)}
-            disabled={loadingTeachers || saving}
+            disabled={loadingTeachers || saving || Boolean(av7Context)}
           >
             {teacherOptions.length === 0 ? (
               <option value="">{loadingTeachers ? 'Loading teachers...' : 'No teachers found'}</option>
@@ -804,7 +966,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             type="date"
             value={selectedDate}
             onChange={(event) => setSelectedDate(event.target.value)}
-            disabled={saving}
+            disabled={saving || Boolean(av7Context)}
           />
         </div>
       </div>
@@ -818,7 +980,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
                 value={selectedKidId}
                 onChange={(event) => setSelectedKidId(event.target.value)}
-                disabled={loadingSessions || saving || kidOptions.length === 0}
+                disabled={loadingSessions || saving || kidOptions.length === 0 || Boolean(av7Context)}
               >
                 {kidOptions.length === 0 ? (
                   <option value="">{loadingSessions ? 'Loading students...' : 'No students for selected filters'}</option>
@@ -836,7 +998,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
                 value={selectedSessionId}
                 onChange={(event) => setSelectedSessionId(event.target.value)}
-                disabled={loadingSessions || saving || sessionOptions.length === 0}
+                disabled={loadingSessions || saving || sessionOptions.length === 0 || Boolean(av7Context)}
               >
                 {sessionOptions.length === 0 ? (
                   <option value="">{loadingSessions ? 'Loading sessions...' : 'No sessions found'}</option>
@@ -863,7 +1025,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
                 value={newStatus}
                 onChange={(event) => setNewStatus(event.target.value as AttendanceCorrectionStatus)}
-                disabled={saving}
+                disabled={saving || Boolean(av7Context)}
               >
                 {ATTENDANCE_CORRECTION_STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>{status}</option>
@@ -985,15 +1147,24 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       <div className="flex justify-end">
         <Button
           onClick={mode === 'existing' ? handleSaveExisting : handleCreateAndSave}
-          disabled={saving || !isAdmin}
+          disabled={
+            saving
+            || !isAdmin
+            || Boolean(av7PrefillError)
+            || Boolean(av7Context && !av7LinkMatchesSelection)
+          }
         >
           {saving
-            ? mode === 'existing'
-              ? 'Saving...'
-              : 'Creating & Saving...'
-            : mode === 'existing'
-              ? 'Save Correction'
-              : 'Create Session & Save Attendance'}
+            ? av7Context
+              ? 'Approving...'
+              : mode === 'existing'
+                ? 'Saving...'
+                : 'Creating & Saving...'
+            : av7Context
+              ? 'Approve AVS Correction'
+              : mode === 'existing'
+                ? 'Save Correction'
+                : 'Create Session & Save Attendance'}
         </Button>
       </div>
 

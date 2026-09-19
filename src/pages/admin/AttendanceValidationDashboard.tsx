@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   collection,
   getDocs,
@@ -34,7 +35,7 @@ type Av6Classification =
   | 'AMBIGUOUS';
 
 type Av6ValidationDecision = 'present' | 'absent' | 'review' | null;
-type Av6ResolutionStatus = 'verified' | 'needs_review';
+type Av6ResolutionStatus = 'verified' | 'needs_review' | 'resolved';
 
 interface Av6ValidationCase {
   id: string;
@@ -60,6 +61,10 @@ interface Av6ValidationCase {
   identityIssues: string[];
   staffRegistryIssues: string[];
   inputFingerprint: string | null;
+  resolutionId: string | null;
+  attendanceCorrectionId: string | null;
+  resolvedAt: string | null;
+  resolvedByName: string | null;
 }
 
 const CLASSIFICATION_OPTIONS: Array<{ value: 'all' | Av6Classification; label: string }> = [
@@ -138,13 +143,20 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
       || recommendedAction === 'correct_to_absent'
         ? recommendedAction
         : 'review',
-    resolutionStatus: resolutionStatus === 'verified' ? 'verified' : 'needs_review',
+    resolutionStatus:
+      resolutionStatus === 'verified' || resolutionStatus === 'resolved'
+        ? resolutionStatus
+        : 'needs_review',
     reasons: asTextArray(raw.reasons),
     sourceClassificationReasons: asTextArray(raw.sourceClassificationReasons),
     proofIssues: asTextArray(raw.proofIssues),
     identityIssues: asTextArray(raw.identityIssues),
     staffRegistryIssues: asTextArray(raw.staffRegistryIssues),
     inputFingerprint: asText(raw.inputFingerprint),
+    resolutionId: asText(raw.resolutionId),
+    attendanceCorrectionId: asText(raw.attendanceCorrectionId),
+    resolvedAt: asText(raw.resolvedAt),
+    resolvedByName: asText(raw.resolvedByName),
   };
 }
 
@@ -197,6 +209,7 @@ function issueSummary(item: Av6ValidationCase): string[] {
 }
 
 export default function AttendanceValidationDashboard() {
+  const navigate = useNavigate();
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
   const [classificationFilter, setClassificationFilter] = useState<'all' | Av6Classification>('all');
   const [search, setSearch] = useState('');
@@ -240,8 +253,9 @@ export default function AttendanceValidationDashboard() {
   }, [loadCases]);
 
   const summary = useMemo(() => {
-    const verified = cases.filter((item) => item.classification === 'VERIFIED').length;
-    const needsReview = cases.length - verified;
+    const verified = cases.filter((item) => item.resolutionStatus === 'verified').length;
+    const resolved = cases.filter((item) => item.resolutionStatus === 'resolved').length;
+    const needsReview = cases.filter((item) => item.resolutionStatus === 'needs_review').length;
     const possibleFalsePresent = cases.filter(
       (item) => item.classification === 'POSSIBLE_FALSE_PRESENT',
     ).length;
@@ -249,8 +263,33 @@ export default function AttendanceValidationDashboard() {
       (item) => item.classification === 'ATTENDANCE_CONFLICT',
     ).length;
 
-    return { verified, needsReview, possibleFalsePresent, conflicts };
+    return { verified, resolved, needsReview, possibleFalsePresent, conflicts };
   }, [cases]);
+
+  const openApprovedCorrection = useCallback((item: Av6ValidationCase) => {
+    if (
+      !item.classSessionId
+      || !item.kidId
+      || !item.inputFingerprint
+      || item.resolutionStatus !== 'needs_review'
+      || (item.recommendedAction !== 'correct_to_present'
+        && item.recommendedAction !== 'correct_to_absent')
+    ) {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('tab', 'attendance-corrections');
+    params.set('avsCaseId', item.id);
+    params.set('avsFingerprint', item.inputFingerprint);
+    params.set('sessionId', item.classSessionId);
+    params.set('kidId', item.kidId);
+    params.set(
+      'newStatus',
+      item.recommendedAction === 'correct_to_present' ? 'present' : 'absent',
+    );
+    navigate(`/surya?${params.toString()}`);
+  }, [navigate]);
 
   const visibleCases = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -321,7 +360,9 @@ export default function AttendanceValidationDashboard() {
             Verified
           </p>
           <p className="mt-1 text-2xl font-semibold text-emerald-700">{summary.verified}</p>
-          <p className="text-xs text-slate-500">Within loaded window</p>
+          <p className="text-xs text-slate-500">
+            Within loaded window • {summary.resolved} admin-resolved
+          </p>
         </Card>
         <Card className="p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -437,6 +478,16 @@ export default function AttendanceValidationDashboard() {
                             <div>
                               Fingerprint: {item.inputFingerprint?.slice(0, 16) || '—'}
                             </div>
+                            {item.resolutionId && <div>Resolution: {item.resolutionId}</div>}
+                            {item.attendanceCorrectionId && (
+                              <div>Correction: {item.attendanceCorrectionId}</div>
+                            )}
+                            {item.resolvedAt && (
+                              <div>
+                                Resolved: {formatObservedAt(item.resolvedAt)}
+                                {item.resolvedByName ? ` by ${item.resolvedByName}` : ''}
+                              </div>
+                            )}
                             {issues.length > 0 && (
                               <div className="pt-1">
                                 <div className="font-medium text-slate-700">Signals</div>
@@ -469,6 +520,21 @@ export default function AttendanceValidationDashboard() {
                         <div className="text-xs text-slate-500">
                           {humanize(item.resolutionStatus)}
                         </div>
+                        {item.resolutionStatus === 'needs_review'
+                          && (item.recommendedAction === 'correct_to_present'
+                            || item.recommendedAction === 'correct_to_absent')
+                          && item.classSessionId
+                          && item.kidId
+                          && item.inputFingerprint && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => openApprovedCorrection(item)}
+                            >
+                              Review correction
+                            </Button>
+                          )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
