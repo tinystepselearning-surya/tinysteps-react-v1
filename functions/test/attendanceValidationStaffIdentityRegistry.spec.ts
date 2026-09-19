@@ -41,6 +41,23 @@ describe('AV3 production staff identity registry', () => {
     expect(JSON.stringify(snapshot)).not.toContain('parent@example.com');
   });
 
+  it('keeps customer-side schoolAdmin identities out of Tiny Steps staff-side matching', () => {
+    const snapshot = buildStaffIdentityRegistrySnapshot(
+      [
+        {
+          docId: 'school-admin-1',
+          uid: 'school-admin-1',
+          email: 'school.admin@example.com',
+          role: 'schoolAdmin',
+          status: 'active',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.entries).toEqual([]);
+  });
+
   it('excludes suspended, archived, deleted and inactive staff accounts', () => {
     const snapshot = buildStaffIdentityRegistrySnapshot(
       [
