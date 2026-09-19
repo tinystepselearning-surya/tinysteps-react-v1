@@ -169,13 +169,13 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
       'The page contains a 60-versus-66 total-class inconsistency, so the benchmark uses only its directly published per-class prices and does not infer a package total.',
     oneToOne: {
       format: 'one-to-one',
-      publicPriceLabel: '₹400 personal coaching per class',
+      publicPriceLabel: '₹480 personal coaching per class',
       sessionStructureLabel: 'Customized 1:1 teaching available',
-      normalizedPerClassLabel: '₹400 / class',
-      benchmarkRates: [400],
+      normalizedPerClassLabel: '₹480 / class',
+      benchmarkRates: [480],
       benchmarkEligible: true,
       evidenceStatus: 'exact-normalized',
-      evidenceNote: 'The provider publishes the personal-coaching per-class rate directly.',
+      evidenceNote: 'The provider publishes the ₹480 personal-coaching per-class rate directly.',
     },
     group: {
       format: 'group',
