@@ -95,12 +95,101 @@ A real attendance status change adds at most **one validation-owned Firestore wr
 
 The browser is denied all access to the dirty-session collection. A later admin-only backend callable will consume these markers.
 
+## Brick 4 — changed-only latest check with cached Teams evidence
+
+The admin-only callable:
+
+```text
+runAttendanceValidationLatestCheck
+```
+
+accepts one explicit `fromDate / toDate` range and supports at most **31 calendar days** per request.
+
+It does not scan `classSessions`.
+
+Instead it queries only:
+
+```text
+attendanceValidationDirtySessions
+where serviceDateYmd >= fromDate
+where serviceDateYmd <= toDate
+orderBy serviceDateYmd
+limit 100
+```
+
+For each returned dirty session it performs one exact read of:
+
+```text
+attendanceValidationCases/{sessionId}
+```
+
+If that case already has an `evidenceId`, the callable feeds the explicit session/evidence pair back through the existing AV5.3 runner. AV5.3 then performs its existing two exact point reads:
+
+```text
+classSessions/{sessionId}
+attendanceValidationEvidence/{evidenceId}
+```
+
+and reruns identity, session proof, the strict >25-minute overlap rule, classification and reconciliation against the **current** Tiny Steps attendance.
+
+### Read formula
+
+For:
+
+- `N` dirty markers found in the selected range;
+- `M` of those already having cached evidence;
+
+the bounded read budget before the shared staff-registry load is:
+
+```text
+N dirty-marker reads
++ N validation-case point reads
++ 2M AV5.3 point reads
+= 2N + 2M
+```
+
+The staff registry is still loaded once for the AV5.3 batch, never once per session.
+
+The callable returns these read counters to the admin client so the operation remains auditable.
+
+### Baseline-required sessions
+
+If a dirty session has no existing case or no cached `evidenceId`, Brick 4 does **not** call Graph and does not guess.
+
+It returns that session under:
+
+```text
+baselineRequiredSessionIds
+```
+
+and keeps its dirty marker for the later first-time/fresh-evidence brick.
+
+### Safe marker clearing
+
+Only sessions that AV5.3 successfully reprocessed are eligible for dirty-marker deletion.
+
+Deletion uses the marker's Firestore `lastUpdateTime` precondition.
+
+If attendance changes again while validation is running, the marker update makes the guarded delete fail. The callable then keeps the marker so the newer change is picked up next time.
+
+A guarded-delete failure does not undo the newly written AVS case and does not touch operational attendance.
+
+### Explicit non-features
+
+Brick 4 has:
+
+- **0 Microsoft Graph calls**;
+- no scheduler;
+- no `classSessions` date-range scan;
+- no attendance writer;
+- no finance or teacher-pay writer;
+- no automatic correction.
+
 ## Still deferred
 
 This document does not yet activate:
 
-- first-time date-range evidence collection;
-- dirty-marker consumption;
-- Microsoft Graph refresh;
+- first-time date-range Teams evidence collection;
+- Microsoft Graph refresh for missing/partial evidence;
 - automatic corrections;
 - any scheduled job.
