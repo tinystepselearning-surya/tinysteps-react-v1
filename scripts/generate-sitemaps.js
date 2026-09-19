@@ -32,6 +32,15 @@ function siteLocalDate(date = new Date()) {
   return `${byType.year}-${byType.month}-${byType.day}`;
 }
 function lastmodFrom(p,fallback){ try { return fmt(fs.statSync(p).mtime); } catch { return fallback || fmt(new Date()); } }
+function latestLastmodFrom(paths, fallback) {
+  const mtimes = paths
+    .map((p) => {
+      try { return fs.statSync(p).mtime.getTime(); } catch { return null; }
+    })
+    .filter((value) => Number.isFinite(value));
+  if (!mtimes.length) return fallback || fmt(new Date());
+  return fmt(new Date(Math.max(...mtimes)));
+}
 function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   return `\n  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod || fmt(new Date())}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
@@ -88,6 +97,8 @@ const RETIRED_BLOG_SLUGS = new Set(
   const root = path.resolve(__dirname, '..');
   const publicDir = path.join(root, 'public');
   const coursesTs = path.join(root, 'src', 'content', 'courses.ts');
+  const publicCoursePagesJs = path.join(root, 'src', 'lib', 'publicCoursePages.js');
+  const courseDetailTsx = path.join(root, 'src', 'pages', 'CourseDetailPage.tsx');
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
@@ -179,7 +190,9 @@ const RETIRED_BLOG_SLUGS = new Set(
   // sitemap-courses.xml
   let courseXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
   for (const routePath of getPublicCourseSitemapPaths()) {
-    const last = lastmodFrom(coursesTs);
+    const last = routePath.startsWith('/courses/public-speaking-')
+      ? latestLastmodFrom([coursesTs, publicCoursePagesJs, courseDetailTsx], lastmodFrom(coursesTs))
+      : lastmodFrom(coursesTs);
     courseXml += toUrl(`https://tinystepslearning.com${routePath}`, last, '0.8', 'weekly');
   }
   courseXml += `\n</urlset>`;
