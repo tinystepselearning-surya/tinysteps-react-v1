@@ -1613,6 +1613,12 @@ function teacherProgressIdentityUnchanged() {
       allow create, update, delete: if false;
     }
 
+    // Changed-session queue is backend-only. It exists solely to avoid polling
+    // or rescanning unchanged operational sessions during AVS latest checks.
+    match /attendanceValidationDirtySessions/{sessionId} {
+      allow read, create, update, delete: if false;
+    }
+
     // ----------------------------
     // CONFIG COLLECTION
     // ----------------------------
