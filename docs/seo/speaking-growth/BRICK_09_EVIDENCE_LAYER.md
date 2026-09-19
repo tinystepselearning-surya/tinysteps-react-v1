@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST  
 Branch: `feature/speaking-seo-geo-growth`  
-Status: **COMPLETE — STRUCTURALLY VERIFIED**  
+Status: **COMPLETE — RE-AUDITED**  
 Production deployment: **NO**
 
 ## Purpose
@@ -46,7 +46,7 @@ New source:
 
 Revision:
 
-`2026-09-19-b9-v1`
+`2026-09-19-b9-v2`
 
 The contract contains six evidence categories.
 
@@ -322,6 +322,126 @@ At the initial Brick 9 verification checkpoint:
 - production merge: **NO**
 - production deployment: **NO**
 
+## Re-audit findings
+
+Brick 9 was independently re-audited before Brick 10.
+
+The re-audit found three concrete hardening opportunities and one test-design risk.
+
+### 1. Evidence-record → verified-source binding — fixed
+
+The initial Brick 9 contract checked that the expected Commercial C8 paths existed, but the list of expected paths was separate from the individual evidence records.
+
+That allowed a theoretical future drift where an evidence record could point to a different source while the independent required-path list still passed.
+
+Revision `2026-09-19-b9-v2` now:
+
+- derives the required C8 paths directly from non-progress evidence records;
+- verifies every non-progress evidence record's `sourcePath` against the frozen C8 trust-surface set;
+- binds the progress-method record specifically to the Brick 7 Speaking Progress Framework;
+- requires UI navigation targets to remain on the canonical source or a fragment of that source;
+- requires canonical evidence source paths to remain unique.
+
+This converts provenance from a documentation convention into a runtime contract.
+
+### 2. Evidence structured-data canonicalization — fixed
+
+The initial evidence `ItemList` used each card's UI navigation target.
+
+For programme-delivery evidence that target is:
+
+`/speaking#teacher-delivery`
+
+The re-audit separated navigation from canonical evidence identity:
+
+- visible card navigation still uses `item.path`, so parents land on the exact section;
+- structured data now uses `item.sourcePath`, so the evidence item resolves to the canonical `/speaking` WebPage rather than treating an anchor fragment as a separate page identity.
+
+All six canonical evidence sources were independently verified as:
+
+- present in the SEO registry;
+- self-canonical;
+- indexable;
+- present in `sitemap-static.xml`.
+
+### 3. Local testimonial outcome boundary — fixed
+
+The existing Speaking page had a later **Parent evidence** testimonial section with no adjacent outcome disclaimer.
+
+Although Brick 9's main evidence section already explained testimonial limitations, the re-audit judged that relying on a distant disclaimer was weaker than keeping the boundary next to the quoted parent feedback.
+
+The Speaking testimonial block now states that:
+
+- the comments are curated first-party comments from individual families;
+- they are not a promise that another child will have the same result;
+- parents should review them together with class samples, curriculum, the Speaking Progress Framework and their child's own assessment.
+
+No testimonial text, testimonial dataset or upstream testimonials page was modified.
+
+### 4. Strict-TypeScript regression-test risk — removed
+
+The first re-audit draft imported `ROUTE_SEO_REGISTRY` and dynamically indexed it by a string path.
+
+The project `tsconfig.json` uses `"strict": true`, and there was no existing precedent for that dynamic registry-index pattern.
+
+To avoid introducing a possible TypeScript-only CI failure, the test now reads `routeSeoRegistry.js` as source text and verifies each route block's canonical and robots contract directly.
+
+This keeps the re-audit assertion strong without widening type assumptions.
+
+## Independent re-audit matrix
+
+Corrected source-level re-audit:
+
+- Evidence contract & runtime provenance guards: **16 / 16**
+- Evidence-source provenance, canonical/indexability/sitemap checks: **29 / 29**
+- Claim-safety boundaries: **9 / 9**
+- Live page evidence presentation: **7 / 7**
+- Structured-data boundaries: **8 / 8**
+- Route protection: **3 / 3**
+- Sitemap freshness: **2 / 2**
+- Regression-spec hardening: **8 / 8**
+
+**Source-level total: 82 / 82 passed.**
+
+## Protected-surface SHA verification
+
+Compared with the Brick 9 structural-close head:
+
+`075896a2d076f6925b105094f2533d1ace278e0e`
+
+The following eighteen upstream/operational files remain byte-for-byte unchanged:
+
+- Brick 7 progress framework source;
+- Brick 7 progress framework page;
+- Brick 8 knowledge-cluster source;
+- Brick 8 Speaking resources hub;
+- Brick 8 regression test;
+- demo assessment page;
+- parent progress guide;
+- Commercial C8 trust/evidence source;
+- class samples page;
+- testimonials page;
+- team academic-system sections;
+- curriculum page;
+- application routes;
+- public route manifest;
+- operational progress skills;
+- parent dashboard;
+- teacher progress editor;
+- teacher progress save backend.
+
+**Protection total: 18 / 18 unchanged.**
+
+## Re-audit implementation delta
+
+Before documentation updates, the Brick 9 re-audit changed exactly three files:
+
+1. `src/lib/speakingEvidenceLayer.ts`
+2. `src/pages/speaking.tsx`
+3. `src/tests/seo/speakingGrowthBrick9.spec.ts`
+
+No attendance, scheduling, finance, authentication, Firestore mutation, teacher-dashboard or parent-dashboard implementation changed.
+
 ## Executable-test limitation
 
 No feature-branch GitHub Actions run is claimed for this Brick 9 head.
@@ -348,4 +468,4 @@ Brick 9 is structurally complete when Speaking evidence is:
 
 That condition is satisfied on the isolated feature branch.
 
-**Brick 9 status: COMPLETE — STRUCTURALLY VERIFIED.**
+**Brick 9 status: COMPLETE — RE-AUDITED.**
