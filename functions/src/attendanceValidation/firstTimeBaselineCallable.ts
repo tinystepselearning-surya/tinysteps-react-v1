@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { createHash } from 'crypto';
 import { FieldPath } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
@@ -61,6 +62,11 @@ function currentIstYmd(now = new Date()): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Invalid baseline request.';
+}
+
+function missingEvidenceId(sessionId: string): string {
+  const digest = createHash('sha256').update(sessionId).digest('hex').slice(0, 40);
+  return `baseline_missing_${digest}`;
 }
 
 function countingGraphClient(base: TeamsEvidenceGraphClient): {
@@ -315,7 +321,12 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
     });
     const counted = countingGraphClient(baseGraphClient);
     const evidenceStore = new FirestoreAttendanceValidationEvidenceStore(db);
-    const workItems: Array<{ classSessionId: string; evidenceId: string }> = [];
+    const workItems: Array<{ classSessionId: string; evidenceId: string }> = blocked.map(
+      (item) => ({
+        classSessionId: item.sessionId,
+        evidenceId: missingEvidenceId(item.sessionId),
+      }),
+    );
     let freshEvidenceCount = 0;
 
     for (const item of missingCaseRows) {
@@ -332,6 +343,10 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         blocked.push({
           sessionId: item.id,
           reason: 'organizer_identity_unresolved',
+        });
+        workItems.push({
+          classSessionId: item.id,
+          evidenceId: missingEvidenceId(item.id),
         });
         continue;
       }
