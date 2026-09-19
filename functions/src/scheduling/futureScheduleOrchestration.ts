@@ -22,6 +22,7 @@ export const FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE = '17 */2 * * *';
 export const MAX_FUTURE_SCHEDULE_SWEEP_ENROLLMENTS = 500;
 export const FUTURE_SCHEDULE_SWEEP_CONCURRENCY = 6;
 export const MAX_FUTURE_SCHEDULE_STALE_RETRIES = 2;
+// Deployment recovery marker: keep rollout fail-closed; this comment intentionally changes no runtime behavior.
 export const FUTURE_SCHEDULE_WRITES_ENV = 'FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED';
 
 const SWEEP_STATE_COLLECTION = 'futureScheduleReconcilerState';
