@@ -31,7 +31,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
 | 11 | Entity & external authority | COMPLETE — RE-AUDITED | NO |
 | 12 | GEO/AEO/AI visibility layer | COMPLETE — RE-AUDITED | NO |
-| 13 | Search-to-lead-to-admission attribution | PENDING | NO |
+| 13 | Search-to-lead-to-admission attribution | COMPLETE — STRUCTURALLY VERIFIED | NO |
 
 ## Brick 1 completion gate
 
@@ -537,3 +537,36 @@ Brick 12 was fully re-audited before Brick 13.
 - Full executable Vitest/typecheck/build/prerender/browser QA remains part of the final integration gate.
 
 Brick 12 status after re-audit: **COMPLETE — RE-AUDITED**.
+
+
+## Brick 13 completion gate
+
+- Reused the frozen Commercial C0 measurement hierarchy instead of creating a second attribution system.
+- New Speaking attribution contract: `src/lib/speakingAttribution.ts`, revision `2026-09-19-b13-v1`.
+- Measurement chain is GSC visibility → canonical lead first touch → demo lifecycle → `admitted_confirmed`.
+- Query-level lead/admission attribution remains prohibited because GSC query data is not stored per canonical lead.
+- Exactly 22 existing URLs form the bounded Speaking-origin first-touch territory; generic decision/evidence pages such as `/book-demo`, `/pricing`, `/class-samples`, and `/team` are excluded from Speaking-origin SEO attribution.
+- Speaking-origin and Speaking-interest are separate cohorts and must not be conflated.
+- Admission truth is `lead.status = admitted_confirmed`, already propagated by the existing backend from `demo.conversionStatus = enrolled`.
+- Fixed a real client/server acquisition mismatch: server-side public-lead enrichment now recognizes ChatGPT/OpenAI, Gemini, Perplexity, Copilot, and Claude instead of potentially persisting them as `other`.
+- Current AI source aliases include `chatgpt.com`, `gemini.google.com`, `perplexity.ai`, `copilot.microsoft.com`, and `claude.ai`.
+- Historical `other` rows can be reclassified for display only when their stored raw UTM/referrer evidence supports a stronger source. Missing attribution is never guessed or rewritten.
+- Explicit paid click IDs preserve precedence over source labels.
+- Admin Marketing Attribution now offers **All leads / Speaking origin / Speaking interest** cohort controls using the existing bounded lead reads; no new Firestore query or analytics collection was added.
+- Admin broad KPI chips now use C0 channels: Organic search, Organic AI, Paid, Referral, Direct/unknown; the existing granular channel table remains.
+- Main advanced during Brick 13 by one Attendance Validation-only commit. Sync PR #400 merged it into this branch with zero Speaking/attribution overlap.
+- Post-sync branch behind main: **0** at the Brick 13 verification checkpoint.
+- Post-sync critical gate: **18/18 passed**.
+- Source-level Brick 13 structural matrix: **87/87 passed**.
+- Protected upstream/operational SHA checks: **20/20 unchanged**.
+- Dedicated regression guard: `src/tests/seo/speakingGrowthBrick13.spec.ts` with **13 test cases**.
+- Machine-readable evidence: `docs/seo/speaking-growth/brick-13-search-lead-admission-attribution.json`.
+- New public URLs: ZERO.
+- New canonical SEO owners: ZERO.
+- New analytics collections: ZERO.
+- Query-level admission claims: ZERO.
+- Full executable Vitest/typecheck/Functions/build/prerender/browser QA is not claimed and remains a final integration requirement.
+- Production merge: ZERO.
+- Production deployment: ZERO.
+
+Brick 13 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
