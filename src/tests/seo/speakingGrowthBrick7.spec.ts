@@ -187,9 +187,11 @@ describe('Speaking growth Brick 7 progress framework', () => {
   it('connects the framework from the four natural user journeys and internal-link system', () => {
     expect(speakingSource).toContain('SPEAKING_PROGRESS_FRAMEWORK_PATH');
     expect(speakingSource).toContain('to={SPEAKING_PROGRESS_FRAMEWORK_PATH}');
-    for (const source of [assessmentSource, parentProgressSource, subjectResourcesSource]) {
-      expect(source).toContain('/speaking-progress-framework');
+    for (const source of [assessmentSource, parentProgressSource]) {
+      expect(source).toContain('SPEAKING_PROGRESS_FRAMEWORK_PATH');
+      expect(source).toContain('to={SPEAKING_PROGRESS_FRAMEWORK_PATH}');
     }
+    expect(subjectResourcesSource).toContain('/speaking-progress-framework');
     expect(internalLinksSource).toContain("id: 'speaking-progress-framework'");
     expect(internalLinksSource).toContain("href: '/speaking-progress-framework'");
     expect(htmlSitemap).toContain("to: '/speaking-progress-framework'");
