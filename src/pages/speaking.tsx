@@ -5,6 +5,7 @@ import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
+import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 import {
@@ -168,6 +169,10 @@ export default function SpeakingPage() {
         url: canonicalUrl,
       }),
       '@id': `${canonicalUrl}#webpage`,
+      speakable: buildSpeakableSpecification([
+        '.ts-speaking-answer-title',
+        '.ts-speaking-answer-summary',
+      ]),
     };
 
     const pathwayItemListSchema = {
@@ -407,8 +412,8 @@ export default function SpeakingPage() {
             <p className="inline-flex rounded-full bg-[#FFF2C7] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A4A10] md:text-[11px] md:tracking-[0.18em]">
               Parent clarity
             </p>
-            <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
-            <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
+            <h2 className="ts-speaking-answer-title mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
+            <p className="ts-speaking-answer-summary max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
               Public speaking classes for kids should help children who can already communicate at a basic level build structured responses, organise ideas, tell stories, handle show-and-tell, and become more ready for presentations and audience-facing speaking. If the main difficulty is one-word everyday answers or sentence formation itself, the free {demoMinutes}-minute 1:1 online demo assessment class may instead point to Spoken English or Grammar support before or alongside Speaking.
             </p>
           </article>
