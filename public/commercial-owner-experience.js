@@ -365,7 +365,7 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${progressValue})`;
 
     const cta = ensureCta();
-    const shouldShow = currentPath !== '/book-demo' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
+    const shouldShow = currentPath !== '/book-demo' && currentPath !== '/phonics-fees-india' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
     cta.classList.toggle('is-visible', shouldShow);
 
     const title = cta.querySelector('.ts-commercial-cta-title');
