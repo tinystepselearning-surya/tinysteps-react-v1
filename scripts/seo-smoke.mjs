@@ -50,7 +50,6 @@ const REQUIRED_CORE_URLS = [
 
 const REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS = [
   '/english-grammar-writing-classes',
-  '/public-speaking-communication-kids',
   '/spoken-english-classes-for-kids-online',
   '/online-english-classes-for-kids',
 ];
@@ -73,6 +72,11 @@ const REDIRECT_ALIASES = [
     path: '/online-phonics-reading-classes',
     destination: '/phonics',
     reason: 'Permanent redirect to canonical /phonics page',
+  },
+  {
+    path: '/public-speaking-communication-kids',
+    destination: '/speaking',
+    reason: 'Consolidate legacy public-speaking landing into the canonical Speaking owner',
   },
 ];
 
