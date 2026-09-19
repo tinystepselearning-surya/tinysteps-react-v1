@@ -61,16 +61,16 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
     educationalLevel: 'Advanced',
   },
   'basic-public-speaking': {
-    name: 'Basic Public Speaking Program',
+    name: 'Public Speaking Foundations',
     description:
-      'Beginner public speaking program for children focused on self-introduction, full-sentence speaking, picture talk, storytelling, and confidence.',
-    educationalLevel: 'Beginner',
+      'Beginner Public Speaking level for ages 4–7 focused on organised responses, picture talk, show-and-tell, storytelling foundations, clear expression, and short presentations.',
+    educationalLevel: 'Beginner Public Speaking; ages 4–7; assessment-led placement',
   },
   'advanced-public-speaking': {
-    name: 'Advanced Public Speaking Program',
+    name: 'Public Speaking Excellence',
     description:
-      'Advanced public speaking program for children focused on structured speeches, debates, presentations, storytelling, voice modulation, and audience confidence.',
-    educationalLevel: 'Advanced',
+      'Advanced Public Speaking level for ages 7–12 focused on structured speeches, storytelling, presentations, impromptu speaking, guided debate, audience awareness, and delivery.',
+    educationalLevel: 'Advanced Public Speaking; ages 7–12; assessment-led placement',
   },
 };
 
@@ -590,7 +590,9 @@ const CourseDetailPage: FC = () => {
         />
         {Array.isArray(coursePageConfig?.relatedLinks) && coursePageConfig.relatedLinks.length > 0 ? (
           <div className="mx-auto mt-5 max-w-7xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Related parent resources</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {courseTrack === 'speaking' ? 'Related programme and parent resources' : 'Related parent resources'}
+            </h3>
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
               {coursePageConfig.relatedLinks.map((item) => (
                 <Link key={item.to} to={item.to} className="font-semibold text-slate-900 underline underline-offset-4">
