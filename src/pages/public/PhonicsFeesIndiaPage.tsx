@@ -348,7 +348,8 @@ export default function PhonicsFeesIndiaPage() {
                   'Observed exact rates ' +
                   benchmarkMoney(research.oneToOne.minExactPublishedRate) +
                   '–' +
-                  benchmarkMoney(research.oneToOne.maxExactPublishedRate)
+                  benchmarkMoney(research.oneToOne.maxExactPublishedRate) +
+                  ' · class lengths vary'
                 }
               />
               <MoneyCard
@@ -359,7 +360,7 @@ export default function PhonicsFeesIndiaPage() {
                   benchmarkMoney(research.group.minExactPublishedRate) +
                   '–' +
                   benchmarkMoney(research.group.maxExactPublishedRate) +
-                  ' / child'
+                  ' / child · class lengths vary'
                 }
               />
             </div>
@@ -439,7 +440,7 @@ export default function PhonicsFeesIndiaPage() {
             <strong className="text-slate-900">Research disclosure:</strong> Tiny Steps Learning publishes this page and is not an independent comparison service. We are not affiliated with the other providers listed. Provider names and prices are reported from publicly available official sources for factual market research only. Prices, packages, promotions and availability can change, so parents should confirm the latest offer directly with the provider before paying.
           </p>
           <p className="mt-2">
-            The benchmark is not a nationwide census and not a quality ranking. Tiny Steps is excluded from the external-provider benchmark statistics. If a listed provider identifies an outdated price, we will review a correction when supported by its current official source.
+            The benchmark is not a nationwide census and not a quality ranking. It compares advertised price per live class, not standardized teaching-minute cost; session length, tax treatment, materials and package terms can differ by provider. Tiny Steps is excluded from the external-provider benchmark statistics. If a listed provider identifies an outdated price, we will review a correction when supported by its current official source.
           </p>
         </div>
       </section>
