@@ -29,7 +29,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 08 | Speaking knowledge cluster | COMPLETE — RE-AUDITED | NO |
 | 09 | Evidence layer | COMPLETE — RE-AUDITED | NO |
 | 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
-| 11 | Entity & external authority | PENDING | NO |
+| 11 | Entity & external authority | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 12 | GEO/AEO/AI visibility layer | PENDING | NO |
 | 13 | Search-to-lead-to-admission attribution | PENDING | NO |
 
@@ -436,3 +436,32 @@ Decision record:
 `docs/seo/speaking-growth/BRICK_10_SKIP_CLASS_DEMONSTRATION.md`
 
 Brick 10 status: **SKIPPED — COVERED BY EXISTING /class-samples ARCHITECTURE**.
+
+
+## Brick 11 completion gate
+
+- Speaking authority reuses the existing Tiny Steps organization/founder/off-site identity system; no second entity architecture was created.
+- New central Speaking authority contract: `src/lib/speakingEntityAuthority.ts`, revision `2026-09-19-b11-v1`.
+- `/speaking` remains the canonical Public Speaking & Communication commercial owner.
+- Canonical `EducationalOrganization` ID and founder Person ID are reused unchanged.
+- Public Speaking remains inside the canonical Tiny Steps core programme set.
+- Organization `sameAs` remains aligned to verified organization-level public profiles.
+- Founder Person `sameAs` remains separate from organization `sameAs`.
+- New social accounts purely for SEO are prohibited.
+- Unverified directories, review platforms, accreditations and education-board identities are prohibited from authority markup.
+- Admin/account-management profile URLs are prohibited from public identity contracts.
+- External profile facts must match the semantic-facts registry and may not exceed first-party evidence.
+- Existing `/team` authority surface continues to expose crawlable organization and founder profile links.
+- Existing `/speaking` WebPage schema already binds the page to the canonical Tiny Steps organization through publisher/about; no duplicate Organization node was introduced.
+- Current external spot-check found discoverable LinkedIn corroboration for the founder and Tiny Steps Learning brand; crawler visibility is treated as corroboration, not proof of control for every platform.
+- New public URLs: ZERO.
+- New canonical owners: ZERO.
+- Dedicated regression guard: `src/tests/seo/speakingGrowthBrick11.spec.ts`.
+- Initial source-level structural matrix: **34/34 passed**.
+- Machine-readable evidence: `docs/seo/speaking-growth/brick-11-entity-external-authority.json`.
+- No existing production page or entity schema required rewriting for Brick 11.
+- Full executable build/Vitest/typecheck/prerender/browser QA is not claimed and remains a final integration requirement.
+- Production merge: ZERO.
+- Production deployment: ZERO.
+
+Brick 11 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
