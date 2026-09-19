@@ -1,4 +1,4 @@
-import { acquisitionChannelLabel } from './leadAcquisition';
+import { acquisitionChannelLabel, resolveStoredLeadAcquisition } from './leadAcquisition';
 import { parseBlogLeadSourceDetail } from './blogLeadAttribution';
 
 export type LeadAttributionLike = {
@@ -12,7 +12,11 @@ export type LeadAttributionLike = {
     utm_source?: unknown;
     utm_medium?: unknown;
     utm_campaign?: unknown;
+    referrer?: unknown;
     referrerDomain?: unknown;
+    gclid?: unknown;
+    fbclid?: unknown;
+    msclkid?: unknown;
   } | null;
 };
 
@@ -30,6 +34,11 @@ const KNOWN_ACQUISITION_CHANNELS = new Set([
   'google_ads',
   'bing_organic',
   'microsoft_ads',
+  'chatgpt',
+  'google_gemini',
+  'perplexity',
+  'microsoft_copilot',
+  'claude',
   'instagram',
   'facebook',
   'linkedin',
@@ -58,16 +67,29 @@ const humanizeToken = (value: string): string =>
 
 function resolveAcquisitionLabel(lead: LeadAttributionLike): string {
   const channel = normalizeText(lead.acquisitionChannel).toLowerCase();
-  if (KNOWN_ACQUISITION_CHANNELS.has(channel)) return acquisitionChannelLabel(channel);
+  const attribution = lead.attribution || {};
 
-  const utmSource = normalizeText(lead.attribution?.utm_source);
-  if (utmSource) return humanizeToken(utmSource);
+  if (KNOWN_ACQUISITION_CHANNELS.has(channel) && channel !== 'other') {
+    return acquisitionChannelLabel(channel);
+  }
+
+  const resolved = resolveStoredLeadAcquisition({
+    acquisitionChannel: channel || null,
+    acquisitionSource: normalizeText(lead.acquisitionSource) || null,
+    referrer: normalizeText(attribution.referrer) || undefined,
+    referrerDomain: normalizeText(attribution.referrerDomain) || undefined,
+    utmSource: normalizeText(attribution.utm_source) || undefined,
+    utmMedium: normalizeText(attribution.utm_medium) || undefined,
+    utmCampaign: normalizeText(attribution.utm_campaign) || undefined,
+    gclid: normalizeText(attribution.gclid) || undefined,
+    fbclid: normalizeText(attribution.fbclid) || undefined,
+    msclkid: normalizeText(attribution.msclkid) || undefined,
+  });
+
+  if (resolved.channel !== 'direct' || channel === 'other') return resolved.label;
 
   const acquisitionSource = normalizeText(lead.acquisitionSource);
   if (acquisitionSource) return humanizeToken(acquisitionSource);
-
-  const referrerDomain = normalizeText(lead.attribution?.referrerDomain);
-  if (referrerDomain) return referrerDomain;
 
   const source = normalizeText(lead.source);
   return source ? humanizeToken(source) : 'Source unavailable';
