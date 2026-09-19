@@ -6,8 +6,11 @@ import {
   SPEAKING_COMMUNICATION_FREEZE,
   SPEAKING_COMMUNICATION_TIER1_CLUSTER_OWNERS,
 } from './speakingCommunicationCompletionArchitecture.js';
+import {
+  SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS,
+} from './speakingCommunicationKnowledgeArchitecture.js';
 
-export const SPEAKING_KNOWLEDGE_CLUSTER_REVISION = '2026-09-19-b8-v1';
+export const SPEAKING_KNOWLEDGE_CLUSTER_REVISION = '2026-09-19-b8-v2';
 
 export type SpeakingKnowledgeClusterLink = {
   readonly ownerIds: readonly string[];
@@ -271,6 +274,14 @@ export const SPEAKING_KNOWLEDGE_CLUSTER_DIMENSION_IDS: readonly SpeakingProgress
   ),
 );
 
+export const SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS: readonly string[] = freezeList(
+  Array.from(
+    new Set(
+      SPEAKING_COMMUNICATION_TIER1_CLUSTER_OWNERS.map((item) => item.domainId),
+    ),
+  ),
+);
+
 if (SPEAKING_COMMUNICATION_FREEZE.state !== 'frozen' || SPEAKING_COMMUNICATION_FREEZE.contentExpansionAllowed) {
   throw new Error('Brick 8 requires the frozen SP6 Speaking knowledge architecture.');
 }
@@ -289,7 +300,22 @@ if (
   throw new Error('Brick 8 must connect the knowledge cluster to all Brick 7 speaking progress dimensions.');
 }
 
+if (
+  SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS.length !== SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS.length
+  || !SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS.every((domain) =>
+    SPEAKING_KNOWLEDGE_CLUSTER_DOMAIN_IDS.includes(domain.id))
+) {
+  throw new Error('Brick 8 must preserve coverage of all established Speaking & Communication knowledge domains.');
+}
+
+if (SPEAKING_KNOWLEDGE_CLUSTER_PATHS.length !== 14) {
+  throw new Error('Brick 8 expects fifteen Tier-1 records to resolve to fourteen established knowledge URLs.');
+}
+
 for (const path of SPEAKING_KNOWLEDGE_CLUSTER_PATHS) {
+  if (!path.startsWith('/blog/')) {
+    throw new Error(`Brick 8 knowledge destinations must remain established blog resources: ${path}.`);
+  }
   if (
     path === SPEAKING_COMMUNICATION_FREEZE.protectedCommercialOwner
     || path === SPEAKING_COMMUNICATION_FREEZE.protectedSpokenEnglishCommercialOwner
