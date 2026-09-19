@@ -1,0 +1,151 @@
+{
+  "brick": 13,
+  "name": "Search → Lead → Admission Attribution",
+  "revision": "2026-09-19-b13-v1",
+  "status": "COMPLETE — STRUCTURALLY VERIFIED",
+  "branch": "feature/speaking-seo-geo-growth",
+  "productionDeployment": false,
+  "measurementHierarchy": [
+    "Google Search Console aggregate query/page visibility",
+    "canonical lead record with stored first-touch attribution",
+    "demo lifecycle progression",
+    "lead status admitted_confirmed propagated from demo conversionStatus enrolled"
+  ],
+  "speakingCohorts": {
+    "speakingOrigin": {
+      "definition": "Stored first landing page is in the frozen Speaking authority territory.",
+      "originPathCount": 22,
+      "excludes": [
+        "/book-demo",
+        "/pricing",
+        "/class-samples",
+        "/team"
+      ],
+      "firstTouchOnly": true
+    },
+    "speakingInterest": {
+      "definition": "Canonical lead explicitly records Speaking/Public Speaking/Communication interest or interestTrack=public_speaking."
+    },
+    "mustRemainSeparate": true
+  },
+  "causality": {
+    "queryToLeadJoinAvailable": false,
+    "queryToAdmissionJoinAllowed": false,
+    "landingPageToLeadJoinAvailable": true,
+    "landingPageToAdmissionJoinAvailable": true,
+    "rule": "Do not claim that a specific search query caused a lead or admission without query-level evidence stored on that lead."
+  },
+  "acquisitionIntegrity": {
+    "aiChannels": [
+      "chatgpt",
+      "google_gemini",
+      "perplexity",
+      "microsoft_copilot",
+      "claude"
+    ],
+    "currentAiAliases": [
+      "chatgpt.com",
+      "openai.com",
+      "gemini.google.com",
+      "perplexity.ai",
+      "copilot.microsoft.com",
+      "copilot.com",
+      "claude.ai",
+      "anthropic.com"
+    ],
+    "historicalOtherReclassification": "Allowed only when stored raw UTM/referrer evidence supports a more specific source; no Firestore rewrite.",
+    "paidClickIdPrecedence": [
+      "gclid -> google_ads",
+      "msclkid -> microsoft_ads"
+    ],
+    "broadBusinessChannels": [
+      "organic_search",
+      "organic_ai",
+      "paid",
+      "referral",
+      "direct_or_unknown"
+    ]
+  },
+  "admissionTruth": {
+    "canonicalStatus": "admitted_confirmed",
+    "upstreamRule": "demo conversionStatus=enrolled -> lead status=admitted_confirmed",
+    "cohortMaturityDays": 28
+  },
+  "adminIntegration": {
+    "surface": "src/pages/admin/LeadSourceAnalysis.tsx",
+    "newFirestoreQueries": 0,
+    "newAnalyticsCollections": 0,
+    "localCohorts": [
+      "all",
+      "speaking_origin",
+      "speaking_interest"
+    ],
+    "broadSummary": [
+      "Organic search",
+      "Organic AI",
+      "Paid",
+      "Referral",
+      "Direct / unknown"
+    ],
+    "granularChannelTablePreserved": true
+  },
+  "mainSync": {
+    "pr": 400,
+    "incomingScope": "Attendance Validation 25-minute overlap/calibration only",
+    "overlapWithBrick13": false,
+    "mergeCommit": "b454baa4bafb2b3307315f35e47cb1143234584e",
+    "postSyncBehindMain": 0,
+    "postSyncCriticalGate": {
+      "passed": 18,
+      "total": 18
+    }
+  },
+  "structuralVerification": {
+    "contract": {
+      "passed": 16,
+      "total": 16
+    },
+    "acquisitionIntegrity": {
+      "passed": 30,
+      "total": 30
+    },
+    "leadAdmissionTruth": {
+      "passed": 10,
+      "total": 10
+    },
+    "adminIntegration": {
+      "passed": 17,
+      "total": 17
+    },
+    "routeProtection": {
+      "passed": 5,
+      "total": 5
+    },
+    "regressionSpec": {
+      "passed": 9,
+      "total": 9
+    },
+    "passed": 87,
+    "total": 87
+  },
+  "protectedSurfaceSha": {
+    "passed": 20,
+    "total": 20
+  },
+  "implementationFiles": [
+    "src/lib/leadAcquisition.ts",
+    "functions/src/enrichPublicLeadAttribution.ts",
+    "src/lib/leadAttributionDisplay.ts",
+    "src/lib/speakingAttribution.ts",
+    "src/pages/admin/LeadSourceAnalysis.tsx",
+    "src/tests/pages/LeadSourceAnalysis.spec.tsx",
+    "src/tests/seo/speakingGrowthBrick13.spec.ts"
+  ],
+  "newPublicUrls": 0,
+  "newCanonicalOwners": 0,
+  "queryLevelAdmissionClaims": 0,
+  "executableLimitations": [
+    "No exact-head GitHub Actions result is claimed at structural close.",
+    "Full Vitest, strict typecheck, Functions tests, production build/prerender and browser QA remain required at the final integration gate."
+  ]
+}
