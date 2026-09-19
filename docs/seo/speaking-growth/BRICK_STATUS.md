@@ -25,7 +25,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
 | 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
 | 06 | Programme architecture | COMPLETE — RE-AUDITED | NO |
-| 07 | Tiny Steps Speaking Progress Framework | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 07 | Tiny Steps Speaking Progress Framework | COMPLETE — RE-AUDITED | NO |
 | 08 | Speaking knowledge cluster | PENDING | NO |
 | 09 | Evidence layer | PENDING | NO |
 | 10 | Video/class demonstration engine | PENDING | NO |
@@ -258,7 +258,7 @@ Brick 6 status after re-audit: COMPLETE — RE-AUDITED.
 ## Brick 7 completion gate
 
 - One central framework source now defines the Tiny Steps Speaking Progress Framework.
-- Framework revision: `2026-09-19-b7-v1`.
+- Framework revision: `2026-09-19-b7-v2`.
 - Canonical informational owner: `/speaking-progress-framework`.
 - Exactly 10 observable speaking dimensions are defined and kept separate rather than averaged into one score.
 - Exactly 4 support-to-independence observation bands are defined:
@@ -281,8 +281,33 @@ Brick 6 status after re-audit: COMPLETE — RE-AUDITED.
 - Existing operational Speaking progress fallback remains `Confidence / Pronunciation / Fluency / Idea expression / Audience engagement`.
 - Firestore schema, historical progress records, teacher progress-save workflow and parent dashboard rating/calculation logic are untouched.
 - New dedicated regression guard: `src/tests/seo/speakingGrowthBrick7.spec.ts`.
-- Final source-level structural matrix: 77/77 passed.
-- Branch was 0 commits behind main at the pre-documentation closure gate.
+- Initial source-level structural matrix: 77/77 passed; independent re-audit matrix: 132/132 passed; post-main-sync critical matrix: 59/59 passed.
+- Branch is 0 commits behind main after re-audit synchronization through PR #392.
 - Full executable build/Vitest/browser run is not claimed and remains a final integration requirement.
 - Production merge: ZERO.
 - Production deployment: ZERO.
+
+
+## 2026-09-19 Brick 7 re-audit notes
+
+Brick 7 was fully re-audited before Brick 8.
+
+Additional fixes and findings:
+- mapped the previously uncovered `discussion-reasoning` knowledge domain into `Idea organisation`, preserving exactly ten framework dimensions while representing all nine established Speaking knowledge domains;
+- upgraded the framework from shallow array freezing to immutable dimension/band/review records with frozen nested knowledge-domain ID lists;
+- advanced the framework revision to `2026-09-19-b7-v2`;
+- removed two unnecessary `@ts-expect-error` suppressions from the regression spec;
+- clarified public, Speaking-page and parent-guide wording so the framework does not falsely imply that existing legacy subject-level `speakingMastery` summaries have already been migrated;
+- corrected four source-based regression assertions that would otherwise fail despite correct runtime rendering;
+- mechanically verified all 21 literal source assertions in the Brick 7 regression spec against their actual source files;
+- independent re-audit matrix: **132/132 passed**;
+- during the re-audit, main advanced by nine commits to `eeeae461053483f1ede3718e5113eaad34eb3d90`;
+- reviewed the incoming seven-file AV6 diff; only `src/app/routes.tsx` overlapped and both route changes were additive;
+- synchronized latest main into the Speaking branch through PR #392, merge commit `1915a691d4fa2805360d46a11b35c8e81c2b77bc`;
+- verified both AV6 admin attendance-validation routes and the Brick 7 public framework route coexist after the merge;
+- reran post-sync critical matrices: **59/59 passed**;
+- current branch behind main: **0**;
+- no feature-branch CI/workflow run attached; full build/Vitest/browser execution remains a final integration gate;
+- production merge/deployment remains ZERO.
+
+Brick 7 status after re-audit: **COMPLETE — RE-AUDITED**.
