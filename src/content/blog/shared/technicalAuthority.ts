@@ -96,6 +96,61 @@ export const BLOG_TECHNICAL_AUTHORITY = Object.freeze({
     role: 'diagnostic-owner',
     topics: ['one-word answers', 'spoken sentence expansion', 'connected thinking', 'oral language development'],
   },
+  'conversation-skills-for-kids': {
+    cluster: 'Speaking & Communication',
+    role: 'pillar',
+    topics: ['conversation skills', 'listening and response', 'spoken vocabulary transfer', 'turn-taking'],
+  },
+  'back-to-school-english-confidence-plan': {
+    cluster: 'Speaking & Communication',
+    role: 'skill-guide',
+    topics: ['classroom communication', 'classroom participation', 'speaking confidence across contexts', 'school speaking routines'],
+  },
+  'how-to-teach-storytelling-to-kids': {
+    cluster: 'Speaking & Communication',
+    role: 'skill-guide',
+    topics: ['oral storytelling', 'retelling', 'story sequencing', 'oral summarising'],
+  },
+  'speaking-structure': {
+    cluster: 'Speaking & Communication',
+    role: 'skill-guide',
+    topics: ['speech organisation', 'structured speaking', 'openings and conclusions', 'presentation structure'],
+  },
+  'speaking-debate-starters': {
+    cluster: 'Speaking & Communication',
+    role: 'skill-guide',
+    topics: ['discussion and reasoning', 'supporting opinions', 'reasons and examples', 'respectful response'],
+  },
+  'public-speaking-delivery-for-kids': {
+    cluster: 'Speaking & Communication',
+    role: 'skill-guide',
+    topics: ['public speaking delivery', 'pace and pausing', 'audible volume', 'intelligibility and emphasis'],
+  },
+  'speaking-visual-aids': {
+    cluster: 'Speaking & Communication',
+    role: 'skill-guide',
+    topics: ['visual aids in public speaking', 'presentation visuals', 'props and slides', 'audience clarity'],
+  },
+  'speaking-video-feedback': {
+    cluster: 'Speaking & Communication',
+    role: 'activity-guide',
+    topics: ['speaking rehearsal', 'video feedback', 'focused retry', 'self-review'],
+  },
+  'speaking-competition-prep': {
+    cluster: 'Speaking & Communication',
+    role: 'activity-guide',
+    topics: ['public speaking competition preparation', 'event rehearsal', 'speech preparation', 'delivery practice'],
+  },
+  'speaking-family-showcase': {
+    cluster: 'Speaking & Communication',
+    role: 'activity-guide',
+    topics: ['familiar-audience speaking practice', 'family speaking showcase', 'low-stakes presentation practice', 'speaking independence'],
+  },
+  'grammar-speaking-bridge': {
+    cluster: 'Speaking & Communication',
+    role: 'activity-guide',
+    topics: ['story cards', 'oral sentence practice', 'story sequencing', 'grammar to speaking transfer'],
+  },
   'phonics-teacher-training-for-schools-implementation': {
     cluster: 'Schools & Research',
     role: 'school-authority',
