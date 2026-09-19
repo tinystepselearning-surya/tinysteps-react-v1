@@ -30,7 +30,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 09 | Evidence layer | COMPLETE — RE-AUDITED | NO |
 | 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
 | 11 | Entity & external authority | COMPLETE — RE-AUDITED | NO |
-| 12 | GEO/AEO/AI visibility layer | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 12 | GEO/AEO/AI visibility layer | COMPLETE — RE-AUDITED | NO |
 | 13 | Search-to-lead-to-admission attribution | PENDING | NO |
 
 ## Brick 1 completion gate
@@ -512,3 +512,28 @@ Brick 11 status after re-audit: **COMPLETE — RE-AUDITED**.
 - Production deployment: ZERO.
 
 Brick 12 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
+
+
+## 2026-09-19 Brick 12 re-audit notes
+
+Brick 12 was fully re-audited before Brick 13.
+
+- Advanced Brick 12 revision from `2026-09-19-b12-v1` to `2026-09-19-b12-v2`.
+- Corrected the AI robots taxonomy: `OAI-SearchBot` is treated as OpenAI search discovery; `GPTBot` as OpenAI potential-training crawler; `Google-Extended` and `Applebot-Extended` as robots product/control tokens rather than ordinary independent crawlers.
+- Added canonical/indexability/sitemap guards for all 13 primary Speaking answer owners.
+- Added indexability and sitemap-eligibility guards for all 14 frozen Speaking knowledge URLs.
+- Hardened robots testing so every configured token's own group must preserve public allow + private-route disallows; wildcard/global presence is no longer considered sufficient.
+- Confirmed all 13 primary owners remain canonical/indexable/discoverable. The two named Public Speaking course pages remain under the shared public-course canonical contract and `sitemap-courses.xml`.
+- Confirmed all 14 knowledge owners remain indexable, sitemap-eligible and present in `sitemap-blog.xml`.
+- Found and fixed a regression-test false positive where a fixed-length SEO-registry slice for `/pricing` captured the following route's `noindex`. The test now isolates each exact route object.
+- Independent post-fix source-level re-audit matrix: **270/270 passed**.
+- Protected-surface SHA verification against Brick 12 structural-close head `868d1264b8fed753100dd3a33bbd2309ebf1a0c3`: **19/19 unchanged**.
+- Runtime/test re-audit delta before documentation: exactly `src/lib/speakingAiVisibility.ts` and `src/tests/seo/speakingGrowthBrick12.spec.ts`.
+- Current OpenAI publisher guidance was rechecked: content intended for ChatGPT Search should not block OAI-SearchBot, placement is not guaranteed, and referral URLs may include `utm_source=chatgpt.com`.
+- Current Google documentation was rechecked: Google-Extended is a robots product token with no separate HTTP user-agent string and does not affect Google Search inclusion or ranking.
+- Current Apple documentation was rechecked: Applebot-Extended does not crawl webpages; it controls how Applebot-crawled content may be used for foundation-model training.
+- No new AI/ChatGPT/Gemini/Perplexity landing page, canonical owner or public route was created.
+- Production merge/deployment: ZERO.
+- Full executable Vitest/typecheck/build/prerender/browser QA remains part of the final integration gate.
+
+Brick 12 status after re-audit: **COMPLETE — RE-AUDITED**.
