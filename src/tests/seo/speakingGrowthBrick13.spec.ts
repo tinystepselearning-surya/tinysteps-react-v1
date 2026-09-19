@@ -242,6 +242,41 @@ describe('Speaking growth Brick 13 search-to-lead-to-admission attribution', () 
     });
   });
 
+  it('falls back to a stored normalized first-touch channel when raw legacy fields are incomplete', () => {
+    expect(
+      buildSpeakingAttributionProjection({
+        status: 'admitted_confirmed',
+        acquisitionChannel: 'chatgpt',
+        acquisitionSource: 'chatgpt.com',
+        programInterest: 'Speaking',
+      }),
+    ).toMatchObject({
+      businessChannel: 'organic_ai',
+      admitted: true,
+      attributionEvidence: 'stored_first_touch',
+    });
+
+    expect(
+      buildSpeakingAttributionProjection({
+        acquisitionChannel: 'google_organic',
+        acquisitionSource: 'google.co.in',
+      }),
+    ).toMatchObject({
+      businessChannel: 'organic_search',
+      attributionEvidence: 'stored_first_touch',
+    });
+
+    expect(
+      buildSpeakingAttributionProjection({
+        acquisitionChannel: 'instagram',
+        acquisitionSource: 'instagram.com',
+      }),
+    ).toMatchObject({
+      businessChannel: 'referral',
+      attributionEvidence: 'stored_first_touch',
+    });
+  });
+
   it('prohibits query-level admission claims and keeps cohort maturity explicit', () => {
     expect(SPEAKING_ATTRIBUTION_MEASUREMENT.causalityPolicy).toMatchObject({
       queryToLeadJoinAvailable: false,
