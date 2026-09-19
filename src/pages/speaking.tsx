@@ -500,10 +500,11 @@ export default function SpeakingPage() {
 
           <div className="overflow-x-auto rounded-2xl border border-slate-200">
             <table className="min-w-[620px] border-collapse text-left text-sm md:min-w-full md:text-base">
+              <caption className="sr-only">What parents should compare when evaluating public speaking classes for kids</caption>
               <thead>
                 <tr>
-                  <th className="border border-slate-200 bg-emerald-100 px-4 py-3 font-semibold text-slate-900">Better choice</th>
-                  <th className="border border-slate-200 bg-orange-100 px-4 py-3 font-semibold text-slate-900">Avoid this</th>
+                  <th scope="col" className="border border-slate-200 bg-emerald-100 px-4 py-3 font-semibold text-slate-900">Better choice</th>
+                  <th scope="col" className="border border-slate-200 bg-orange-100 px-4 py-3 font-semibold text-slate-900">Avoid this</th>
                 </tr>
               </thead>
               <tbody>
@@ -550,12 +551,14 @@ export default function SpeakingPage() {
               <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">{speakingFacts.levels.beginner.ageRange.label}</span>
               <h3 className="mt-3 text-lg font-bold text-slate-950">{speakingFacts.levels.beginner.label}</h3>
               <p className="mt-2 text-sm text-slate-700">{speakingFacts.levels.beginner.lessonCount} lessons covering early structured responses, picture talk, show-and-tell, storytelling foundations, clear expression, and speaking comfort.</p>
+              <Link to="/courses/public-speaking-foundations" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">View Basic Public Speaking details</Link>
             </article>
 
             <article className="flex h-full flex-col rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">{speakingFacts.levels.advanced.ageRange.label}</span>
               <h3 className="mt-3 text-lg font-bold text-slate-950">{speakingFacts.levels.advanced.label}</h3>
               <p className="mt-2 text-sm text-slate-700">{speakingFacts.levels.advanced.lessonCount} lessons building more organised answers, storytelling, opinion sharing, presentations, audience awareness, discussion confidence, and clearer communication.</p>
+              <Link to="/courses/public-speaking-excellence" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">View Advanced Public Speaking details</Link>
             </article>
 
             <article className="flex h-full flex-col rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
