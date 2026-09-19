@@ -3,7 +3,7 @@ name: Speaking Bricks 1-13 Exact-Head Narrow Gate
 on:
   push:
     branches:
-      - ci/speaking-exact-head-47883186
+      - ci/speaking-exact-head-1e4a4364
     paths:
       - '.github/workflows/speaking-exact-head-narrow-gate.yml'
 
