@@ -106,7 +106,7 @@ Deterministic matching uses initial calibration bands:
 
 These scores are **diagnostic only**. They do not grant permission to alter attendance or finance.
 
-AV8 may tune the thresholds after shadow-mode comparison against human review. Any threshold change must increase the contract version and remain covered by tests.
+Contract v2 adopts a separate business-approved meaningful-overlap rule: the expected teacher and learner side must overlap for strictly more than 25 minutes inside the scheduled class window before AVS may recommend Present. Future threshold changes must increase the contract version and remain covered by tests. AV8 remains available for future calibration analysis.
 
 ## Validation-owned data
 
