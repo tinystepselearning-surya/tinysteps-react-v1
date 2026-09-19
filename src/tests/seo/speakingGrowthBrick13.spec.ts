@@ -95,6 +95,18 @@ describe('Speaking growth Brick 13 search-to-lead-to-admission attribution', () 
     });
 
     expect(
+      resolveStoredLeadAcquisition({
+        acquisitionChannel: 'chatgpt',
+        acquisitionSource: 'chatgpt.com',
+        utmSource: 'chatgpt.com',
+        gclid: 'test-google-click',
+      }),
+    ).toMatchObject({
+      channel: 'google_ads',
+      label: 'Google Ads',
+    });
+
+    expect(
       buildSpeakingAttributionProjection({
         landingPage: '/speaking',
         attribution: {
