@@ -35,7 +35,7 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     expect(page).toContain('The complete Tiny Steps learning roadmap');
     expect(page).toContain('Hear → identify → connect sound to grapheme → blend → decode → apply in connected reading');
     expect(page).toContain('Notice the pattern → build a complete sentence → apply in context → correct errors → expand');
-    expect(page).toContain('Listen and form an idea → answer in a complete sentence → add detail → organise → deliver and reflect');
+    expect(page).toContain('Understand the prompt → choose and organise an idea → add useful detail → shape for the audience → deliver, retry, and reflect');
 
     expect(page).not.toContain('WeekAccordion');
     expect(page).not.toContain('loadCurriculumOverrides');
