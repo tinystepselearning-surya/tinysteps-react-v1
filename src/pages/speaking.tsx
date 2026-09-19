@@ -534,7 +534,7 @@ export default function SpeakingPage() {
           <p className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-800">Progress evidence</p>
           <h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">How Tiny Steps measures speaking progress</h2>
           <p className="mt-3 max-w-4xl text-base leading-7 text-slate-700">
-            Tiny Steps tracks a speaking profile rather than one total score. We look across {SPEAKING_PROGRESS_DIMENSIONS.length} observable dimensions and record how much support the child needs, what is becoming independent, and whether the skill appears again on a fresh task.
+            The Tiny Steps Speaking Progress Framework tracks a speaking profile rather than one total framework score. It looks across {SPEAKING_PROGRESS_DIMENSIONS.length} observable dimensions and records how much support the child needs, what is becoming independent, and whether the skill appears again on a fresh task.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
