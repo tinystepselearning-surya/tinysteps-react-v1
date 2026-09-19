@@ -3,7 +3,7 @@
 Project branch: feature/speaking-seo-geo-growth  
 Base branch: main  
 Brick 1 original base commit: e2946a436f1c9dd9694b034ebfd166947c01700a  
-Latest main synchronized before Brick 2: 3b11fee88ff21e928d2ed8af555afcb64695c815  
+Latest main synchronized after Brick 3: e42d1cd07ba9b919c0948261b6705f91b80b27c5  
 Production merge policy: no merge to main until Bricks 1–13 and final integration audit are complete.
 
 ## Governing safety rules
@@ -69,7 +69,7 @@ Brick 2 must not modify the protected owner contracts until its query-ownership 
 - Exact 90-day GSC query/page evidence grouped into Speaking admission intent families.
 - Generic Public Speaking and Communication ownership frozen to `/speaking`.
 - Generic Spoken English ownership frozen to `/spoken-english-classes-for-kids-online`.
-- Explicit Hyderabad Spoken-English intent preserved on `/online-english-classes-hyderabad` without granting it global ownership.
+- Broad Hyderabad English remains on `/online-english-classes-hyderabad`; subject-qualified Hyderabad Spoken-English intent belongs to `/spoken-english-classes-for-kids-online`.
 - Confidence Building kept as a narrow specialist intent.
 - Course-detail pages restricted to named programme/detail intent.
 - Price and demo intent kept on existing cross-programme owners.
