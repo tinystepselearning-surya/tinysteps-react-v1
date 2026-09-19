@@ -62,6 +62,14 @@ export function classifyLeadAcquisition(input: AcquisitionInput): AcquisitionCla
   const utmMedium = normalize(input.utmMedium);
   const referrerDomain = normalize(input.referrerDomain || deriveReferrerDomain(input.referrer));
 
+  // Explicit paid click IDs are stronger evidence than referrer/source labels.
+  if (input.gclid) {
+    return { channel: 'google_ads', source: utmSource || 'google', label: 'Google Ads' };
+  }
+  if (input.msclkid) {
+    return { channel: 'microsoft_ads', source: utmSource || 'microsoft', label: 'Microsoft Ads' };
+  }
+
   const hasChatGpt =
     matchesSource(utmSource, ['chatgpt', 'chatgpt.com', 'openai', 'openai.com']) ||
     matchesDomain(referrerDomain, ['chatgpt.com', 'openai.com']);
