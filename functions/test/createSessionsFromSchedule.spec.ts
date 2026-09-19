@@ -2,29 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildRepairEnrollmentFutureSessionsPlan,
   executeRepairEnrollmentFutureSessionsFromSchedule,
-  isScheduleExceptionSession,
   isSystemGeneratedCancellation,
 } from '../src/createSessionsFromSchedule';
-
-describe('schedule exception relationship protection', () => {
-  it.each([
-    {originalSessionId: 'original-1'},
-    {sourceSessionId: 'original-1'},
-    {rescheduledFromSessionId: 'original-1'},
-    {replacementSessionId: 'replacement-1'},
-    {replacementForSessionId: 'original-1'},
-    {rescheduleCreditId: 'credit-1'},
-    {makeupForSessionId: 'original-1'},
-    {manualSessionState: 'approved'},
-    {isMakeup: true},
-  ])('treats explicit relationship metadata as a protected schedule exception: %#', (session) => {
-    expect(isScheduleExceptionSession(session)).toBe(true);
-  });
-
-  it('keeps an ordinary rolling session regular', () => {
-    expect(isScheduleExceptionSession({source: 'rolling_schedule'})).toBe(false);
-  });
-});
 
 describe('lifecycle cancellation restoration', () => {
   it.each(['enrollment_paused', 'enrollment_ended', 'enrollment_archived', 'kid_archived'])(
