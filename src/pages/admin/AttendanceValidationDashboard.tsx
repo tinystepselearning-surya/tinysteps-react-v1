@@ -250,7 +250,15 @@ export default function AttendanceValidationDashboard() {
       return;
     }
 
-    if (append && !cursor) return;
+    if (
+      append
+      && (
+        !cursor
+        || !loadedRange
+        || loadedRange.from !== fromDate
+        || loadedRange.to !== toDate
+      )
+    ) return;
 
     if (append) setLoadingMore(true);
     else setLoading(true);
@@ -283,7 +291,11 @@ export default function AttendanceValidationDashboard() {
         ));
 
       setCases((current) => append ? [...current, ...nextCases] : nextCases);
-      setCursor(snapshot.docs.at(-1) ?? null);
+      setCursor(
+        snapshot.docs.length > 0
+          ? snapshot.docs[snapshot.docs.length - 1]
+          : null,
+      );
       setHasMore(snapshot.docs.length === AV6_CASE_READ_LIMIT);
       if (!append) {
         setLoadedRange({ from: fromDate, to: toDate });
@@ -298,7 +310,7 @@ export default function AttendanceValidationDashboard() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [cursor, fromDate, toDate]);
+  }, [cursor, fromDate, loadedRange, toDate]);
 
   const summary = useMemo(() => {
     const verified = cases.filter((item) => item.resolutionStatus === 'verified').length;
@@ -673,7 +685,10 @@ export default function AttendanceValidationDashboard() {
         )}
       </Card>
 
-      {loadedRange && hasMore && (
+      {loadedRange
+        && loadedRange.from === fromDate
+        && loadedRange.to === toDate
+        && hasMore && (
         <div className="flex justify-center">
           <Button
             type="button"
