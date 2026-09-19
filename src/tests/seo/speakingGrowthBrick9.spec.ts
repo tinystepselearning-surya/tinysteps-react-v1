@@ -6,13 +6,16 @@ import {
   COMMERCIAL_C8_TRUST_SURFACES,
 } from '../../lib/commercialC8TrustEvidenceDifferentiation';
 import {
+  SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS,
   SPEAKING_EVIDENCE_CLAIM_BOUNDARIES,
   SPEAKING_EVIDENCE_LAYER_REVISION,
   SPEAKING_EVIDENCE_REQUIRED_C8_PATHS,
   SPEAKING_EVIDENCE_SURFACES,
 } from '../../lib/speakingEvidenceLayer';
+import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import {
   SPEAKING_PROGRESS_DIMENSIONS,
+  SPEAKING_PROGRESS_FRAMEWORK_PATH,
   SPEAKING_PROGRESS_OBSERVATION_BANDS,
 } from '../../lib/speakingProgressFramework';
 
@@ -27,10 +30,11 @@ const curriculumSource = read('src/pages/CurriculumPage.tsx');
 const sitemapGeneratorSource = read('scripts/generate-sitemaps.js');
 const routeManifestSource = read('src/lib/publicRouteManifest.js');
 const routesSource = read('src/app/routes.tsx');
+const sitemapStatic = read('public/sitemap-static.xml');
 
 describe('Speaking growth Brick 9 evidence layer', () => {
   it('builds on the frozen Commercial C8 evidence system instead of creating another trust architecture', () => {
-    expect(SPEAKING_EVIDENCE_LAYER_REVISION).toBe('2026-09-19-b9-v1');
+    expect(SPEAKING_EVIDENCE_LAYER_REVISION).toBe('2026-09-19-b9-v2');
     expect(COMMERCIAL_C8_STATUS).toBe('frozen');
     expect(SPEAKING_EVIDENCE_SURFACES).toHaveLength(6);
     expect(SPEAKING_EVIDENCE_SURFACES.map((item) => item.kind)).toEqual([
@@ -43,8 +47,34 @@ describe('Speaking growth Brick 9 evidence layer', () => {
     ]);
 
     const c8Paths = new Set(COMMERCIAL_C8_TRUST_SURFACES.map((surface) => surface.path));
-    for (const evidencePath of SPEAKING_EVIDENCE_REQUIRED_C8_PATHS) {
-      expect(c8Paths.has(evidencePath)).toBe(true);
+    const nonProgressSources = SPEAKING_EVIDENCE_SURFACES
+      .filter((item) => item.kind !== 'progress-method')
+      .map((item) => item.sourcePath);
+    expect([...SPEAKING_EVIDENCE_REQUIRED_C8_PATHS].sort()).toEqual([...nonProgressSources].sort());
+
+    for (const item of SPEAKING_EVIDENCE_SURFACES) {
+      if (item.kind === 'progress-method') {
+        expect(item.sourcePath).toBe(SPEAKING_PROGRESS_FRAMEWORK_PATH);
+      } else {
+        expect(c8Paths.has(item.sourcePath)).toBe(true);
+      }
+      expect(item.path === item.sourcePath || item.path.startsWith(`${item.sourcePath}#`)).toBe(true);
+    }
+
+    expect(new Set(SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS).size).toBe(
+      SPEAKING_EVIDENCE_SURFACES.length,
+    );
+  });
+
+  it('requires every canonical evidence source to remain self-canonical, indexable and sitemap-discoverable', () => {
+    for (const sourcePath of SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS) {
+      const config = ROUTE_SEO_REGISTRY[sourcePath];
+      expect(config).toBeTruthy();
+      expect(config.canonicalPath || sourcePath).toBe(sourcePath);
+      expect(String(config.robots || '')).not.toMatch(/noindex/i);
+      expect(sitemapStatic).toContain(
+        `<loc>https://tinystepslearning.com${sourcePath}</loc>`,
+      );
     }
   });
 
@@ -127,6 +157,13 @@ describe('Speaking growth Brick 9 evidence layer', () => {
     );
     expect(parentEvidence?.doesNotProve).toContain('an aggregate satisfaction percentage');
 
+    expect(speakingSource).toContain(
+      'These are curated first-party comments from individual families, not a promise that another child will have the same result.',
+    );
+    expect(speakingSource).toContain('Review them together with');
+    expect(speakingSource).toContain('class samples');
+    expect(speakingSource).toContain('Speaking Progress Framework');
+
     expect(speakingSource).not.toContain('AggregateRating');
     expect(speakingSource).not.toContain('createTestimonialsStructuredData');
     expect(speakingSource).not.toContain('ratingValue');
@@ -148,6 +185,7 @@ describe('Speaking growth Brick 9 evidence layer', () => {
     expect(speakingSource).toContain("name: 'Tiny Steps Speaking evidence sources'");
     expect(speakingSource).toContain("`${canonicalUrl}#evidence-sources`");
     expect(speakingSource).toContain('numberOfItems: SPEAKING_EVIDENCE_SURFACES.length');
+    expect(speakingSource).toContain('url: `${PUBLIC_FACTS.primaryWebsite}${item.sourcePath}`');
     expect(speakingSource).toContain('Evidence boundary: ${item.doesNotProve[0]}.');
     expect(speakingSource).toContain('speakingEvidenceSchema');
     expect(speakingSource).not.toContain("'@type': 'Review'");
