@@ -29,7 +29,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 08 | Speaking knowledge cluster | COMPLETE — RE-AUDITED | NO |
 | 09 | Evidence layer | COMPLETE — RE-AUDITED | NO |
 | 10 | Video/class demonstration engine | SKIPPED — COVERED BY /class-samples | NO |
-| 11 | Entity & external authority | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 11 | Entity & external authority | COMPLETE — RE-AUDITED | NO |
 | 12 | GEO/AEO/AI visibility layer | PENDING | NO |
 | 13 | Search-to-lead-to-admission attribution | PENDING | NO |
 
@@ -465,3 +465,21 @@ Brick 10 status: **SKIPPED — COVERED BY EXISTING /class-samples ARCHITECTURE**
 - Production deployment: ZERO.
 
 Brick 11 status after initial build: **COMPLETE — STRUCTURALLY VERIFIED**.
+
+
+## 2026-09-19 Brick 11 re-audit notes
+
+Brick 11 was fully re-audited before Brick 12.
+
+- Advanced revision to `2026-09-19-b11-v2`.
+- External search confirmed the intended founder/brand relationship but also surfaced unrelated similarly named entities; a name match alone is now explicitly insufficient authority evidence.
+- Added multiple entity-disambiguation keys: canonical website, founder identity, founder profile path, Hyderabad/Telangana/India, live-online delivery and Speaking & Communication programme identity.
+- Replaced the unnecessarily rigid exactly-one-founder-profile rule with: at least one verified founder profile, unique founder URLs, and strict separation from organization `sameAs`.
+- Current external corroboration remains evidence only and does not authorize unsupported reviews, accreditations, endorsements or similarly named profiles.
+- Corrected Brick 11 source-level re-audit matrix: **31/31 passed**.
+- Protected-surface SHA comparison: **19/19 unchanged**.
+- Runtime/test re-audit delta: exactly `speakingEntityAuthority.ts` and `speakingGrowthBrick11.spec.ts`.
+- Production merge/deployment: ZERO.
+- Executable Vitest/typecheck/build/prerender/browser QA remains part of the final integration gate.
+
+Brick 11 status after re-audit: **COMPLETE — RE-AUDITED**.
