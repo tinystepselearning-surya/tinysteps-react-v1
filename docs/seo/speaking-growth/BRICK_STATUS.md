@@ -24,7 +24,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
 | 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
 | 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
-| 06 | Programme architecture | PENDING | NO |
+| 06 | Programme architecture | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
 | 08 | Speaking knowledge cluster | PENDING | NO |
 | 09 | Evidence layer | PENDING | NO |
@@ -202,3 +202,29 @@ Additional fixes and findings:
 - production deployment remains ZERO.
 
 Brick 5 status after re-audit: COMPLETE — RE-AUDITED.
+
+
+## Brick 6 completion gate
+
+- `/speaking` remains the generic Public Speaking + Communication architecture root.
+- Existing internal course IDs `basic-public-speaking` and `advanced-public-speaking` preserved.
+- Semantic facts now distinguish compatibility/internal slugs from canonical public course slugs and paths.
+- Exactly two published Public Speaking levels retained:
+  - Public Speaking Foundations — Ages 4–7 — 36 lessons;
+  - Public Speaking Excellence — Ages 7–12 — 36 lessons.
+- Foundations and Excellence now have explicit prerequisite/entry signals, skills built, readiness-to-progress, and previous/next architecture.
+- Spoken English and Confidence Building remain adjacent specialist owners rather than Public Speaking levels.
+- Course detail renderer now supports Speaking-specific level architecture while preserving the existing Phonics stage contract.
+- Public Speaking detail pages expose provider/teacher-system and teaching-method evidence, with links to team and class samples.
+- Canonical public course names are used in Course schema; Tiny Steps remains the EducationalOrganization provider through the shared schema helper.
+- `/speaking` no longer emits an umbrella Course entity; it uses WebPage plus generic ItemList programme architecture.
+- Google Course-list enhancement is not targeted because Tiny Steps currently publishes two Public Speaking courses and current guidance requires at least three.
+- No third or Intermediate Public Speaking level invented.
+- No course-specific VideoObject invented; generic class samples remain linked evidence only.
+- Curriculum roadmap, Courses page, parent chooser, RSS/feed, and internal-link registry aligned to the same architecture.
+- Generic Speaking fit now routes through `/speaking`; named course pages remain detail owners.
+- Final source-level architecture matrix: 41/41 passed.
+- New regression guard: `src/tests/seo/speakingGrowthBrick6.spec.ts`.
+- New commercial URLs: ZERO.
+- Redirect/canonical/sitemap URL-set changes in Brick 6: ZERO.
+- Production deployment: ZERO.
