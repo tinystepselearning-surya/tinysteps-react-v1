@@ -127,4 +127,11 @@ export const internalLinkMap: InternalLinkRule[] = [
     priority: 85,
     cluster: 'courses',
   },
+  {
+    id: 'course-public-speaking-excellence',
+    href: '/courses/public-speaking-excellence',
+    phrases: ['Public Speaking Excellence course', 'Advanced Public Speaking course'],
+    priority: 85,
+    cluster: 'courses',
+  },
 ];
