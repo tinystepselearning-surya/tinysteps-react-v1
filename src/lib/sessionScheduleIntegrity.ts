@@ -280,27 +280,17 @@ const resolveSessionDuration = (sessionLike: Record<string, unknown>): number | 
 };
 
 export const isScheduleExceptionSession = (sessionLike: Record<string, unknown>): boolean => {
-  if (
-    sessionLike.historicalCorrection === true ||
-    sessionLike.isAdHoc === true ||
-    sessionLike.isManual === true ||
-    sessionLike.isMakeup === true
-  ) return true;
-  if (
-    sessionLike.manualSessionState != null ||
-    sessionLike.makeupCreditId ||
-    sessionLike.makeupForSessionId ||
-    sessionLike.rescheduleCreditId ||
-    sessionLike.rescheduledFromSessionId ||
-    sessionLike.originalSessionId ||
-    sessionLike.sourceSessionId ||
-    sessionLike.replacementSessionId ||
-    sessionLike.replacementForSessionId
-  ) {
-    return true;
-  }
+  if (sessionLike.isAdHoc === true || sessionLike.isMakeup === true) return true;
   const adHocType = normalizeText(sessionLike.adHocType).toLowerCase();
   if (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc')) {
+    return true;
+  }
+  if (
+    sessionLike.makeupCreditId ||
+    sessionLike.makeupForSessionId ||
+    sessionLike.rescheduledFromSessionId ||
+    sessionLike.replacementSessionId
+  ) {
     return true;
   }
   const exceptionSignals = [sessionLike.source, sessionLike.sessionType, sessionLike.createdByFlow]
