@@ -611,6 +611,7 @@ const router = createBrowserRouter(
         { path: 'free-games/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
         { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
         { path: 'spoken-english-classes-for-kids', element: <Navigate to="/spoken-english-classes-for-kids-online" replace /> },
+        { path: 'spoken-english-classes-for-kids/', element: <Navigate to="/spoken-english-classes-for-kids-online" replace /> },
         { path: 'spoken-english-classes-for-kids-online', element: <SpokenEnglishClassesForKidsPage /> },
         { path: 'writing-classes-for-kids', element: <WritingClassesForKidsPage /> },
         { path: 'phonics-fees-india', element: <PhonicsFeesIndiaPage /> },
