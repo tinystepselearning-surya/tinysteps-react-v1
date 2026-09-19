@@ -12,7 +12,6 @@ import {
   SPEAKING_EVIDENCE_REQUIRED_C8_PATHS,
   SPEAKING_EVIDENCE_SURFACES,
 } from '../../lib/speakingEvidenceLayer';
-import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import {
   SPEAKING_PROGRESS_DIMENSIONS,
   SPEAKING_PROGRESS_FRAMEWORK_PATH,
@@ -31,6 +30,7 @@ const sitemapGeneratorSource = read('scripts/generate-sitemaps.js');
 const routeManifestSource = read('src/lib/publicRouteManifest.js');
 const routesSource = read('src/app/routes.tsx');
 const sitemapStatic = read('public/sitemap-static.xml');
+const routeSeoRegistrySource = read('src/lib/routeSeoRegistry.js');
 
 describe('Speaking growth Brick 9 evidence layer', () => {
   it('builds on the frozen Commercial C8 evidence system instead of creating another trust architecture', () => {
@@ -68,10 +68,12 @@ describe('Speaking growth Brick 9 evidence layer', () => {
 
   it('requires every canonical evidence source to remain self-canonical, indexable and sitemap-discoverable', () => {
     for (const sourcePath of SPEAKING_EVIDENCE_CANONICAL_SOURCE_PATHS) {
-      const config = ROUTE_SEO_REGISTRY[sourcePath];
-      expect(config).toBeTruthy();
-      expect(config.canonicalPath || sourcePath).toBe(sourcePath);
-      expect(String(config.robots || '')).not.toMatch(/noindex/i);
+      const marker = `'${sourcePath}':`;
+      const start = routeSeoRegistrySource.indexOf(marker);
+      expect(start).toBeGreaterThanOrEqual(0);
+      const routeBlock = routeSeoRegistrySource.slice(start, start + 900);
+      expect(routeBlock).toContain(`canonicalPath: '${sourcePath}'`);
+      expect(routeBlock).not.toMatch(/robots:\s*'[^']*noindex/i);
       expect(sitemapStatic).toContain(
         `<loc>https://tinystepslearning.com${sourcePath}</loc>`,
       );
