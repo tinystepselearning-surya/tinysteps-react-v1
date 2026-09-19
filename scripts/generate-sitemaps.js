@@ -149,13 +149,13 @@ const RETIRED_BLOG_SLUGS = new Set(
         : route === '/' || route === '/courses' || MONEY_PAGES.has(route) || SUPPORTING_LONG_TAIL.has(route)
           ? 'weekly'
           : 'monthly';
-      const brick7LastmodSources = {
+      const speakingGrowthLastmodSources = {
         '/speaking': [appRoutesTs, speakingPageTsx],
         '/book-demo': [appRoutesTs, bookDemoPageTsx],
         '/resources/speaking': [appRoutesTs, subjectResourcesPageTsx, speakingKnowledgeClusterTs],
         '/speaking-progress-framework': [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx],
       };
-      const routeLastmodSources = brick7LastmodSources[route];
+      const routeLastmodSources = speakingGrowthLastmodSources[route];
       const routeLastmod = routeLastmodSources
         ? latestLastmodFrom(routeLastmodSources, staticLastmod)
         : staticLastmod;
