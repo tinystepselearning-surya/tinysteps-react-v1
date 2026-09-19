@@ -1,9 +1,12 @@
 import {describe, expect, it} from 'vitest';
 import {
   futureScheduleEnrollmentComparable,
+  futureScheduleWritesEnabled,
   reconcileFutureScheduleEnrollmentAutomatically,
+  resolveFutureScheduleSweepCursor,
   runFutureScheduleSweepBatch,
   shouldReconcileFutureScheduleEnrollmentWrite,
+  shouldWrapFutureScheduleSweep,
 } from '../src/scheduling/futureScheduleOrchestration';
 import type {
   FutureScheduleExecutionTransaction,
@@ -210,6 +213,51 @@ class AutomaticStore implements FutureScheduleExecutorStore {
 }
 
 describe('Brick 5 future schedule automatic orchestration', () => {
+  it('defaults production writes off unless the rollout flag is explicitly true', () => {
+    expect(futureScheduleWritesEnabled({})).toBe(false);
+    expect(futureScheduleWritesEnabled({
+      FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED: 'false',
+    })).toBe(false);
+    expect(futureScheduleWritesEnabled({
+      FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED: 'TRUE',
+    })).toBe(true);
+  });
+
+  it('keeps the 500-row cursor boundary deterministic and wraps an empty tail', () => {
+    expect(resolveFutureScheduleSweepCursor({
+      batchSize: 500,
+      lastDocumentId: 'enrollment-500',
+    })).toEqual({
+      cycleCompleted: false,
+      cursorAfter: 'enrollment-500',
+    });
+    expect(resolveFutureScheduleSweepCursor({
+      batchSize: 499,
+      lastDocumentId: 'enrollment-499',
+    })).toEqual({
+      cycleCompleted: true,
+      cursorAfter: null,
+    });
+    expect(shouldWrapFutureScheduleSweep('enrollment-500', true)).toBe(true);
+    expect(shouldWrapFutureScheduleSweep('enrollment-500', false)).toBe(false);
+    expect(shouldWrapFutureScheduleSweep(null, true)).toBe(false);
+  });
+
+  it('runs shadow planning with zero session mutations when writes are disabled', async () => {
+    const store = new AutomaticStore(enrollment());
+
+    const outcome = await reconcileFutureScheduleEnrollmentAutomatically(
+      store,
+      'enrollment-1',
+      {writesEnabled: false},
+    );
+
+    expect(outcome.status).toBe('shadow');
+    expect(outcome.actions).toBe(6);
+    expect(store.sessions.size).toBe(0);
+    expect(store.writes).toBe(0);
+  });
+
   it('ignores enrollment writes that only touch operational metadata outside the scheduling contract', () => {
     const before = enrollment({
       updatedAt: 'before',
@@ -325,6 +373,33 @@ describe('Brick 5 future schedule automatic orchestration', () => {
     expect(store.sessions.has('enrollment-1_20260923_1730')).toBe(true);
   });
 
+  it('coexists with a concurrent daily edge-worker create without duplicating the deterministic session', async () => {
+    const store = new AutomaticStore(enrollment());
+    store.mutateBeforeFirstTransaction = () => {
+      const row = correctRegular(
+        'enrollment-1_20260921_1730',
+        '2026-09-21',
+      );
+      store.sessions.set(row.id, {
+        ...row.data,
+        updatedBy: 'system:rolling_schedule_edge_worker',
+      });
+    };
+
+    const outcome = await reconcileFutureScheduleEnrollmentAutomatically(
+      store,
+      'enrollment-1',
+    );
+
+    expect(outcome.status).toBe('applied');
+    expect(outcome.attempts).toBe(2);
+    expect(store.sessions.size).toBe(6);
+    expect(
+      Array.from(store.sessions.keys())
+        .filter((id) => id === 'enrollment-1_20260921_1730'),
+    ).toHaveLength(1);
+  });
+
   it('transactionally re-confirms a no-op preview and repairs a race that appeared before commit', async () => {
     const store = new AutomaticStore(enrollment());
     seedConvergedWindow(store);
@@ -431,6 +506,7 @@ describe('Brick 5 future schedule automatic orchestration', () => {
       blockedSource: 0,
       blockedPlan: 1,
       skippedNonOperational: 0,
+      shadow: 0,
       failed: 1,
       failedEnrollmentIds: ['b'],
     });
