@@ -5,6 +5,7 @@ import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import PhonicsPilotGuideGrid, { PHONICS_PILOT_RESOURCE_LINKS } from '../components/resources/PhonicsPilotGuideGrid';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
+import { SPEAKING_KNOWLEDGE_CLUSTER_GROUPS } from '../lib/speakingKnowledgeCluster';
 import { ORGANIZATION_ID, SITE_ORIGIN, WEBSITE_ID, organizationSchema, websiteSchema } from '../lib/schemas';
 
 export type ResourceSubject = 'phonics' | 'grammar' | 'speaking';
@@ -195,7 +196,20 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
   const description = seo?.description ?? config.intro;
   const featuredLinks = subject === 'grammar' ? GRAMMAR_WRITING_FEATURED_GUIDES : [];
   const focusedPhonicsLinks = subject === 'phonics' ? [...PHONICS_PILOT_RESOURCE_LINKS] : [];
-  const allLinks = [...featuredLinks, ...config.sections.flatMap((section) => section.links), ...focusedPhonicsLinks];
+  const speakingKnowledgeLinks: ResourceLink[] = subject === 'speaking'
+    ? SPEAKING_KNOWLEDGE_CLUSTER_GROUPS.flatMap((group) => group.links.map((link) => ({
+        title: link.title,
+        description: link.description,
+        to: link.to,
+        label: link.label,
+      })))
+    : [];
+  const allLinks = [
+    ...featuredLinks,
+    ...config.sections.flatMap((section) => section.links),
+    ...focusedPhonicsLinks,
+    ...speakingKnowledgeLinks,
+  ];
 
   const breadcrumbItems = getBreadcrumbTrail({ pathname: config.canonicalPath, title: config.title });
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
@@ -428,6 +442,60 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
             </div>
           </section>
         ))}
+
+        {subject === 'speaking' ? (
+          <section data-speaking-knowledge-cluster aria-labelledby="speaking-knowledge-cluster">
+            <div className="max-w-4xl">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Connected knowledge cluster</p>
+              <h2 id="speaking-knowledge-cluster" className="mt-3 text-3xl font-black tracking-[-0.025em] text-slate-950 sm:text-4xl">
+                Explore speaking skills by the need you can observe
+              </h2>
+              <p className="mt-4 text-base leading-8 text-slate-600">
+                These five groups organise the established Tiny Steps Speaking & Communication library. They are not a rigid ladder: start with the communication need you can see, then use the progress framework to track support, independence and transfer.
+              </p>
+              <Link to="/speaking-progress-framework" className="mt-5 inline-flex rounded-full border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-black text-amber-900 transition hover:bg-amber-100">
+                See the 10-dimension progress framework →
+              </Link>
+            </div>
+
+            <div className="mt-8 grid gap-5 lg:grid-cols-2">
+              {SPEAKING_KNOWLEDGE_CLUSTER_GROUPS.map((group) => (
+                <section
+                  key={group.id}
+                  data-speaking-knowledge-group={group.id}
+                  aria-labelledby={`speaking-cluster-${group.id}`}
+                  className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-6"
+                >
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-700">{group.eyebrow}</p>
+                  <h3 id={`speaking-cluster-${group.id}`} className="mt-2 text-2xl font-black tracking-tight text-slate-950">{group.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{group.description}</p>
+
+                  <div className="mt-4 flex flex-wrap gap-2" aria-label="Related speaking progress dimensions">
+                    {group.dimensionLabels.map((label) => (
+                      <span key={label} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {group.links.map((link) => (
+                      <Link
+                        key={`${group.id}-${link.ownerIds.join('-')}`}
+                        to={link.to}
+                        className="group block rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition hover:border-slate-300 hover:bg-white hover:shadow-sm"
+                      >
+                        <span className="block text-base font-black text-slate-950">{link.title}</span>
+                        <span className="mt-1.5 block text-xs leading-5 text-slate-600">{link.description}</span>
+                        <span className="mt-3 block text-sm font-black text-amber-800">{link.label} <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span></span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </section>
 
       <section className="border-y border-slate-200 bg-white">
