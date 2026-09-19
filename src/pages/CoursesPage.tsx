@@ -78,17 +78,17 @@ const grammarCards = [
 
 const speakingCards = [
   {
-    title: 'Basic Public Speaking',
+    title: 'Public Speaking Foundations',
     age: 'Age: 4–7',
-    focus: ['Speak in simple sentences', 'Picture talk', 'Show and tell'],
-    outcome: 'Learning focus: build complete responses and speaking comfort step by step',
+    focus: ['Organised responses', 'Picture talk + show-and-tell', 'Storytelling foundations + short presentations'],
+    outcome: 'Learning focus: build speaking structure, clear expression, and short presentation readiness',
     href: '/courses/public-speaking-foundations',
   },
   {
-    title: 'Advanced Public Speaking',
+    title: 'Public Speaking Excellence',
     age: 'Age: 7–12',
-    focus: ['Structured speaking', 'Storytelling', 'Presentations and debates'],
-    outcome: 'Learning focus: strengthen structured speaking, expression, and presentation confidence',
+    focus: ['Longer structured talks', 'Storytelling + impromptu speaking', 'Presentations + guided debate'],
+    outcome: 'Learning focus: strengthen organisation, audience awareness, reasoning, delivery, and presentation skill',
     href: '/courses/public-speaking-excellence',
   },
 ];
@@ -97,7 +97,7 @@ const quickAnswerFaqItems = [
   {
     question: 'Which Tiny Steps course is right for my child?',
     answer:
-      'The right course depends on the child’s current level. Children who struggle with reading may need phonics or reading support, while children who make sentence mistakes may need grammar. Children who are shy or give short answers may benefit from public speaking and communication practice.',
+      'The right course depends on the child’s current need. Children who struggle with reading may need phonics or reading support, children with sentence accuracy gaps may need grammar, children with everyday conversational-fluency gaps may need Spoken English, and children who can communicate basic ideas but need storytelling, presentation, or audience-facing structure may need Public Speaking.',
   },
   {
     question: 'Should my child start with phonics or grammar?',
@@ -107,7 +107,7 @@ const quickAnswerFaqItems = [
   {
     question: 'Does Tiny Steps offer public speaking classes for kids?',
     answer:
-      'Yes. Tiny Steps offers online public speaking and communication classes that help children speak in full sentences, explain ideas, tell stories, and build confidence.',
+      'Yes. Tiny Steps offers online public speaking and communication classes that help children organise ideas, tell stories, handle show-and-tell, build presentations, and communicate more clearly for an audience.',
   },
   {
     question: 'Can one child take more than one course?',
@@ -256,7 +256,7 @@ function CoursesPage() {
               },
               {
                 title: 'Public Speaking',
-                bestFor: 'Children who give one-word answers, feel shy, speak unclearly, or need confidence while expressing ideas.',
+                bestFor: 'Children who can communicate basic ideas but need stronger organisation, storytelling, presentation structure, audience awareness, or clearer delivery.',
                 ctaLabel: 'Explore Public Speaking',
                 href: '/speaking',
               },
