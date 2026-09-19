@@ -143,6 +143,22 @@ describe('SEO infrastructure', () => {
           && entry.type === 301
       )
     ).toBe(true);
+    expect(
+      redirects.some(
+        (entry) =>
+          entry.source === '/spoken-english-classes-for-kids'
+          && entry.destination === '/spoken-english-classes-for-kids-online'
+          && entry.type === 301
+      )
+    ).toBe(true);
+    expect(
+      redirects.some(
+        (entry) =>
+          entry.source === '/spoken-english-classes-for-kids/'
+          && entry.destination === '/spoken-english-classes-for-kids-online'
+          && entry.type === 301
+      )
+    ).toBe(true);
   });
 
   it('uses the public route manifest for P0 canonical redirects and static inventories', async () => {
@@ -159,6 +175,16 @@ describe('SEO infrastructure', () => {
         {
           source: '/online-english-classes-for-kids-india',
           destination: '/online-english-classes-for-kids',
+          status: 301,
+        },
+        {
+          source: '/spoken-english-classes-for-kids',
+          destination: '/spoken-english-classes-for-kids-online',
+          status: 301,
+        },
+        {
+          source: '/spoken-english-classes-for-kids/',
+          destination: '/spoken-english-classes-for-kids-online',
           status: 301,
         },
         {
