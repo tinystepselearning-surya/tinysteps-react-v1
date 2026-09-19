@@ -249,9 +249,9 @@ describe('Speaking growth Brick 7 progress framework', () => {
       '<loc>https://tinystepslearning.com/sitemap-parents.xml</loc>\n    <lastmod>2026-09-19</lastmod>',
     );
 
-    expect(sitemapGeneratorSource).toContain("'/speaking': [appRoutesTs, speakingPageTsx]");
+    expect(sitemapGeneratorSource).toContain("'/speaking': [appRoutesTs, speakingPageTsx, speakingEvidenceLayerTs]");
     expect(sitemapGeneratorSource).toContain("'/book-demo': [appRoutesTs, bookDemoPageTsx]");
-    expect(sitemapGeneratorSource).toContain("'/resources/speaking': [appRoutesTs, subjectResourcesPageTsx]");
+    expect(sitemapGeneratorSource).toContain("'/resources/speaking': [appRoutesTs, subjectResourcesPageTsx, speakingKnowledgeClusterTs]");
     expect(sitemapGeneratorSource).toContain("'/speaking-progress-framework': [appRoutesTs, speakingProgressFrameworkTs, speakingProgressFrameworkPageTsx]");
     expect(sitemapGeneratorSource).toContain("route === '/parents/tracking-progress'");
     expect(sitemapGeneratorSource).toContain('parentTrackingPageTsx');
