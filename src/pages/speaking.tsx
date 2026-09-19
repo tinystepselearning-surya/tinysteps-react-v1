@@ -70,6 +70,11 @@ const faqItems = [
     answer:
       'Compare fresh speaking tasks over time. Look for longer and clearer responses, better idea organisation, stronger storytelling or presentation structure, less prompting, more confident delivery, and the ability to transfer the same skill to a new speaking task.',
   },
+  {
+    question: 'Can parents see a Tiny Steps class sample before enrolling?',
+    answer:
+      'Yes. The class samples page shows how Tiny Steps live classes are structured and how teachers guide children through speaking, reading, grammar, and other learning tasks. A sample helps parents understand the teaching style, while the free 1:1 assessment is used to understand the individual child.',
+  },
 ];
 
 const speakingPathwayCards = [
@@ -329,42 +334,54 @@ export default function SpeakingPage() {
         </div>
       </section>
 
-      <ResponsiveTeachingSection
-        id="teacher-delivery"
-        program="Public Speaking & Communication"
-        introduction="Teachers provide a predictable speaking routine: model a clear response, offer guided prompts, listen to the child’s attempt and help them retry. Prompts are reduced gradually so confidence grows alongside independent expression."
-        steps={[
-          { title: 'Model and organise', detail: 'The teacher shows how to form a complete answer, add relevant detail and organise ideas for the task.' },
-          { title: 'Prompt and retry', detail: 'The child speaks in short, age-appropriate turns with encouraging, specific feedback and guided retries.' },
-          { title: 'Reduce support', detail: 'Topics, examples, wait time and prompts adjust to readiness, then fade as the child speaks more independently.' },
-        ]}
-        observation="sentence completeness, idea organisation, clarity, response to feedback and how much prompting the child needs before speaking independently."
-      />
-
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl">Which speaking programme does your child need?</h2>
-          <p className="max-w-4xl text-base leading-7 text-slate-700">The right page depends on the child&apos;s main goal. These programme boundaries keep public speaking, everyday English fluency, grammar accuracy, and specialist confidence support clear.</p>
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <article className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">Public speaking & general communication</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-700">Choose this page for structured answers, storytelling, show-and-tell, classroom participation, presentations, audience awareness, and general communication skills.</p>
-            </article>
+          <p className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">Start with the real difficulty</p>
+          <h2 className="mb-3 mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">What is your child struggling with?</h2>
+          <p className="max-w-4xl text-base leading-7 text-slate-700">
+            Similar-looking speaking problems can need different support. Use these signs as a starting point, then let the free 1:1 assessment confirm the best pathway.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <article className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">Everyday spoken English & conversational fluency</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-700">Choose Spoken English when the main goal is fuller everyday answers, sentence expansion, comfortable conversation, and English fluency.</p>
-              <Link to="/spoken-english-classes-for-kids-online" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Spoken English Classes</Link>
+              <h3 className="text-lg font-bold text-slate-950">Mostly one-word or very short everyday answers</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">If the child understands but needs fuller everyday conversation and sentence expansion, Spoken English may be the better first route.</p>
+              <Link to="/spoken-english-classes-for-kids-online" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Check Spoken English</Link>
             </article>
+
             <article className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">Grammar accuracy</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-700">Choose Grammar when tense control, sentence structure, punctuation, articles, prepositions, or correction accuracy is the primary difficulty.</p>
-              <Link to="/grammar" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Grammar Classes</Link>
+              <h3 className="text-lg font-bold text-slate-950">Sentence formation is inaccurate or incomplete</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">If tense, word order, articles, prepositions, or sentence control are the main barrier, Grammar may need to support speaking progress.</p>
+              <Link to="/grammar" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Check Grammar support</Link>
             </article>
+
             <article className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-950">Specialist confidence-building support</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-700">Choose the specialist programme when hesitation, participation confidence, or speaking comfort across situations is the main need rather than communication structure alone.</p>
-              <Link to="/confidence-building-program-kids" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Confidence Building</Link>
+              <h3 className="text-lg font-bold text-slate-950">Speaks well one-to-one but hesitates in class or groups</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">If language is already adequate and the main difficulty is participation comfort or hesitation across situations, specialist confidence support may fit better.</p>
+              <Link to="/confidence-building-program-kids" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Check Confidence Building</Link>
             </article>
+
+            <article className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-950">Has ideas but cannot organise a clear answer</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">This is core Speaking & Communication territory: complete responses, idea organisation, clear explanation, and structured answers.</p>
+              <span className="mt-3 inline-block text-sm font-semibold text-sky-800">Best fit: this Speaking programme</span>
+            </article>
+
+            <article className="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-950">Needs storytelling, show-and-tell, or presentation practice</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">The Speaking pathway develops sequencing, relevant detail, expression, audience awareness, and short presentation structure.</p>
+              <span className="mt-3 inline-block text-sm font-semibold text-rose-800">Best fit: Public Speaking & Communication</span>
+            </article>
+
+            <article className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-950">Ready for longer speeches, opinions, presentations, or guided debate</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Children with stronger speaking foundations may be placed into the Advanced Public Speaking level after assessment.</p>
+              <Link to="/courses/public-speaking-excellence" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">View Advanced level</Link>
+            </article>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700 shadow-sm">
+            <strong className="text-slate-950">Not sure which description fits?</strong> The assessment separates language-production gaps, grammar gaps, speaking structure, and confidence so parents do not have to guess.
           </div>
         </div>
       </section>
@@ -385,8 +402,16 @@ export default function SpeakingPage() {
         <div className="mx-auto max-w-6xl rounded-2xl border border-sky-100 bg-gradient-to-br from-[#F5FBFF] via-white to-[#FFF8EF] p-5 shadow-sm md:rounded-3xl md:p-8">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Tiny Steps speaking pathway</h2>
 
-          <div className="flex flex-wrap gap-2">
-            {['1 Ideas and listening', '2 Complete sentences', '3 Structured answers', '4 Storytelling', '5 Clear expression', '6 Presentation confidence'].map((step) => (
+          <div className="rounded-2xl border border-sky-100 bg-white/90 p-4 md:p-5">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">Supporting foundations — only when the assessment shows they are needed</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link to="/grammar" className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-violet-100">Grammar & sentence formation</Link>
+              <Link to="/spoken-english-classes-for-kids-online" className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-slate-800 hover:bg-emerald-100">Everyday conversation & fluency</Link>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['1 Complete responses', '2 Organise ideas', '3 Storytelling', '4 Clear expression', '5 Presentations', '6 Advanced public speaking'].map((step) => (
               <span key={step} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
                 {step}
               </span>
@@ -394,13 +419,13 @@ export default function SpeakingPage() {
           </div>
 
           <p className="mt-4 text-sm leading-6 text-slate-700 md:text-base md:leading-7">
-            Listening and ideas -&gt; Complete sentences -&gt; Structured answers -&gt; Storytelling -&gt; Clear expression -&gt; Presentation confidence
+            When language foundations are secure, the Speaking pathway moves from complete responses -&gt; organised ideas -&gt; storytelling -&gt; clear expression -&gt; presentations -&gt; more advanced public speaking.
           </p>
           <p className="mt-3 text-slate-700">
-            Children do not all struggle with speaking at the same stage. Some need help forming full sentences, while others need support with structured answers, storytelling, reading aloud, vocabulary, or confidence during school activities.
+            Children do not all enter at the same point. Some need sentence or conversation support first; others already speak comfortably and need help organising ideas, presenting, storytelling, or handling audience-facing tasks.
           </p>
           <p className="mt-3 text-slate-700">
-            Tiny Steps uses assessment-first placement to find the exact speaking gap and then helps the child move forward step by step.
+            Tiny Steps uses assessment-first placement so the child starts at the useful stage instead of repeating skills that are already secure.
           </p>
 
           <div className="mt-6 grid gap-4 md:gap-5 md:grid-cols-2">
@@ -544,6 +569,73 @@ export default function SpeakingPage() {
       </section>
 
       <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200 bg-gradient-to-br from-white via-sky-50/40 to-orange-50/40 p-5 shadow-sm md:p-8">
+          <p className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-800">See the teaching before you decide</p>
+          <h2 className="mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">What a Tiny Steps speaking class looks like</h2>
+          <p className="mt-3 max-w-4xl text-base leading-7 text-slate-700">
+            Speaking classes are active, teacher-guided practice rather than passive watching. A child gets a focused prompt or task, attempts a response, receives clear guidance, and tries again with gradually less support.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {[
+              ['1', 'Focused speaking task', 'Picture talk, a short question, storytelling, show-and-tell, or another age-appropriate speaking task.'],
+              ['2', 'Guided attempt and feedback', 'The teacher listens for sentence completeness, idea order, clarity, expression, and the amount of prompting needed.'],
+              ['3', 'Retry with less support', 'The child applies the feedback to a fresh attempt so improvement is practised, not only explained.'],
+            ].map(([step, title, detail]) => (
+              <article key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">{step}</span>
+                <h3 className="mt-3 text-lg font-bold text-slate-950">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{detail}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link to="/class-samples" className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+              View real class samples
+            </Link>
+            <Link to="/book-demo" className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+              Book the free assessment
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <ResponsiveTeachingSection
+        id="teacher-delivery"
+        program="Public Speaking & Communication"
+        introduction="Teachers provide a predictable speaking routine: model a clear response, offer guided prompts, listen to the child’s attempt and help them retry. Prompts are reduced gradually so confidence grows alongside independent expression."
+        steps={[
+          { title: 'Model and organise', detail: 'The teacher shows how to form a complete answer, add relevant detail and organise ideas for the task.' },
+          { title: 'Prompt and retry', detail: 'The child speaks in short, age-appropriate turns with encouraging, specific feedback and guided retries.' },
+          { title: 'Reduce support', detail: 'Topics, examples, wait time and prompts adjust to readiness, then fade as the child speaks more independently.' },
+        ]}
+        observation="sentence completeness, idea organisation, clarity, response to feedback and how much prompting the child needs before speaking independently."
+      />
+
+      <section className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
+        <div className="mx-auto grid max-w-6xl gap-4 md:grid-cols-2">
+          <article className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm md:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800">Academic quality</p>
+            <h2 className="mt-2 text-xl font-bold text-slate-950">Teachers work inside a structured academic system</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              Tiny Steps documents curriculum design, teacher development, quality support, and the founder-led academic system so parents can understand how teaching consistency is supported beyond one individual class.
+            </p>
+            <Link to="/team" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">Meet the academic team and teaching system</Link>
+          </article>
+
+          <article className="rounded-2xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm md:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-800">What parents can verify</p>
+            <h2 className="mt-2 text-xl font-bold text-slate-950">Look for participation, correction, and visible next steps</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              A useful speaking class gives the child repeated chances to respond, makes corrections specific and manageable, and gives parents a clearer picture of what is improving and what should come next.
+            </p>
+            <Link to="/why-tiny-steps" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">See the Tiny Steps learning approach</Link>
+          </article>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">What happens in the free speaking assessment?</h2>
           <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -616,6 +708,14 @@ export default function SpeakingPage() {
         </div>
       </section>
 
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl">
+          <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Parent evidence</p>
+          <h2 className="mb-4 mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">What speaking parents noticed first</h2>
+          <TestimonialSnippets courseTag="speaking" title="Verified parent feedback from speaking families" />
+        </div>
+      </section>
+
       <section id="faq" className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Frequently asked questions</h2>
@@ -636,9 +736,6 @@ export default function SpeakingPage() {
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
             Book one free {demoMinutes}-minute 1:1 online demo assessment class and let Tiny Steps identify whether the best next step is public speaking and communication, everyday spoken English, grammar support, or specialist confidence-building support.
           </p>
-          <div className="mt-6 text-left">
-            <TestimonialSnippets courseTag="speaking" title="What speaking parents noticed first" />
-          </div>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"
