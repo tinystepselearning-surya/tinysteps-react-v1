@@ -712,7 +712,7 @@ export default function SpeakingPage() {
         <div className="mx-auto max-w-6xl">
           <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">Parent evidence</p>
           <h2 className="mb-4 mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">What speaking parents noticed first</h2>
-          <TestimonialSnippets courseTag="speaking" title="Approved parent feedback from speaking families" />
+          <TestimonialSnippets courseTag="speaking" title="Parent feedback from speaking families" />
         </div>
       </section>
 
