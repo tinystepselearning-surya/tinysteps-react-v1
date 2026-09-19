@@ -473,25 +473,6 @@ export default function SpeakingPage() {
             ))}
           </div>
 
-          <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Adjacent specialist pathways</p>
-            <h3 className="mt-2 text-xl font-bold text-slate-950">Not every speaking difficulty belongs inside the two Public Speaking levels</h3>
-            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
-              Foundations and Excellence are the two published Public Speaking levels. If the main need is everyday conversational English or specialist speaking confidence, use the separate owner below rather than forcing the child into a Public Speaking level.
-            </p>
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <article className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
-                <h4 className="font-bold text-slate-950">Spoken English</h4>
-                <p className="mt-2 text-sm leading-6 text-slate-700">Everyday conversation, fuller responses, vocabulary in use, and conversational fluency.</p>
-                <Link to="/spoken-english-classes-for-kids-online" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Spoken English</Link>
-              </article>
-              <article className="rounded-2xl border border-orange-200 bg-orange-50/60 p-5">
-                <h4 className="font-bold text-slate-950">Confidence Building</h4>
-                <p className="mt-2 text-sm leading-6 text-slate-700">Speaking comfort, participation, hesitation, and independence when confidence itself is the main barrier.</p>
-                <Link to="/confidence-building-program-kids" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Confidence Building</Link>
-              </article>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -622,6 +603,26 @@ export default function SpeakingPage() {
               <p className="mt-2 text-sm text-slate-700">Placement considers current response length, organisation, storytelling, presentation readiness, confidence, and how much prompting the child needs—not age alone.</p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">Book the free speaking assessment</Link>
             </article>
+          </div>
+
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Adjacent specialist pathways</p>
+            <h3 className="mt-2 text-xl font-bold text-slate-950">Not every speaking difficulty belongs inside the two Public Speaking levels</h3>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-700">
+              Foundations and Excellence are the two published Public Speaking levels. If the main need is everyday conversational English or specialist speaking confidence, use the separate owner below rather than forcing the child into a Public Speaking level.
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <article className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+                <h4 className="font-bold text-slate-950">Spoken English</h4>
+                <p className="mt-2 text-sm leading-6 text-slate-700">Everyday conversation, fuller responses, vocabulary in use, and conversational fluency.</p>
+                <Link to="/spoken-english-classes-for-kids-online" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Spoken English</Link>
+              </article>
+              <article className="rounded-2xl border border-orange-200 bg-orange-50/60 p-5">
+                <h4 className="font-bold text-slate-950">Confidence Building</h4>
+                <p className="mt-2 text-sm leading-6 text-slate-700">Speaking comfort, participation, hesitation, and independence when confidence itself is the main barrier.</p>
+                <Link to="/confidence-building-program-kids" className="mt-3 inline-block text-sm font-semibold underline underline-offset-2">Explore Confidence Building</Link>
+              </article>
+            </div>
           </div>
         </div>
       </section>
