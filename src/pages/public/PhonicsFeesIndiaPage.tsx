@@ -154,7 +154,27 @@ function OfferSummary({ offer }: { offer?: PhonicsFeeOffer }) {
   );
 }
 
+function providerOneToOneSortValue(provider: (typeof PHONICS_FEES_INDIA_PROVIDERS)[number]) {
+  const offer = provider.oneToOne;
+  if (!offer?.benchmarkEligible || !offer.benchmarkRates?.length) return null;
+  const ordered = [...offer.benchmarkRates].sort((a, b) => a - b);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2 === 1
+    ? ordered[middle]
+    : (ordered[middle - 1] + ordered[middle]) / 2;
+}
+
 function ProviderMatrix() {
+  const sortedProviders = [...PHONICS_FEES_INDIA_PROVIDERS].sort((a, b) => {
+    const aValue = providerOneToOneSortValue(a);
+    const bValue = providerOneToOneSortValue(b);
+
+    if (aValue !== null && bValue !== null) return bValue - aValue;
+    if (aValue !== null) return -1;
+    if (bValue !== null) return 1;
+    return a.provider.localeCompare(b.provider);
+  });
+
   return (
     <>
       <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
@@ -168,7 +188,7 @@ function ProviderMatrix() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {PHONICS_FEES_INDIA_PROVIDERS.map((provider) => (
+            {sortedProviders.map((provider) => (
               <tr key={provider.provider} className="align-top">
                 <td className="px-4 py-3.5">
                   <p className="font-bold leading-5 text-slate-950">{provider.provider}</p>
@@ -194,7 +214,7 @@ function ProviderMatrix() {
       </div>
 
       <div className="grid gap-3 lg:hidden">
-        {PHONICS_FEES_INDIA_PROVIDERS.map((provider) => (
+        {sortedProviders.map((provider) => (
           <article key={provider.provider} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -367,6 +387,10 @@ export default function PhonicsFeesIndiaPage() {
         </div>
 
         <div id="provider-prices" className="mt-7 scroll-mt-28">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>Sorted by exact comparable live 1:1 per-class rate: highest → lowest.</span>
+            <span>Non-normalized monthly / “from” prices follow and are not used for the ordering.</span>
+          </div>
           <ProviderMatrix />
         </div>
 
