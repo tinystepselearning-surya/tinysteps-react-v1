@@ -376,8 +376,23 @@ function hasInlineFinanceOrLockMarkers(session: Record<string, unknown>): boolea
 }
 
 export function isRollingScheduleExceptionSession(session: Record<string, unknown>): boolean {
-  if (session.historicalCorrection === true || session.isAdHoc === true || session.isManual === true) return true;
-  if (session.manualSessionState != null || session.makeupCreditId != null || session.rescheduleCreditId != null) return true;
+  if (
+    session.historicalCorrection === true ||
+    session.isAdHoc === true ||
+    session.isManual === true ||
+    session.isMakeup === true
+  ) return true;
+  if (
+    session.manualSessionState != null ||
+    session.makeupCreditId != null ||
+    session.makeupForSessionId != null ||
+    session.rescheduleCreditId != null ||
+    session.rescheduledFromSessionId != null ||
+    session.originalSessionId != null ||
+    session.sourceSessionId != null ||
+    session.replacementSessionId != null ||
+    session.replacementForSessionId != null
+  ) return true;
   const haystack = [
     session.source,
     session.adHocType,
