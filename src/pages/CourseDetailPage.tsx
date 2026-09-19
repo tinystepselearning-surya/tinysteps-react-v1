@@ -405,7 +405,9 @@ const CourseDetailPage: FC = () => {
 
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <LeadCard className="border-slate-100 bg-white">
-                <h3 className="text-lg font-semibold text-slate-900">Signs this may be the right starting stage</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {courseTrack === 'speaking' ? 'Signs this may be the right starting level' : 'Signs this may be the right starting stage'}
+                </h3>
                 <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
                   {stageAuthority.entrySignals.map((item) => (
                     <li key={item}>• {item}</li>
@@ -413,7 +415,9 @@ const CourseDetailPage: FC = () => {
                 </ul>
               </LeadCard>
               <LeadCard className="border-slate-100 bg-white">
-                <h3 className="text-lg font-semibold text-slate-900">Skills this stage builds</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {courseTrack === 'speaking' ? 'Skills this level builds' : 'Skills this stage builds'}
+                </h3>
                 <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
                   {stageAuthority.skillsBuilt.map((item) => (
                     <li key={item}>• {item}</li>
