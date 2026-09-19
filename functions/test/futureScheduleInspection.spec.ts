@@ -364,6 +364,41 @@ describe('Brick 2 future schedule inspection', () => {
     }]);
   });
 
+  it('protects an MWF Friday occurrence when a Saturday replacement is linked only by sourceSessionId', () => {
+    const saturdayReplacement: FutureScheduleSessionEvidence = {
+      id: 'replacement-saturday',
+      data: {
+        enrollmentId: 'enrollment-1',
+        kidId: 'kid-1',
+        kidIds: ['kid-1'],
+        parentId: 'parent-1',
+        parentIds: ['parent-1'],
+        teacherId: 'teacher-1',
+        courseId: 'course-1',
+        date: '2026-09-26',
+        startTime: '11:00',
+        durationMinutes: 35,
+        status: 'scheduled',
+        sourceSessionId: 'enrollment-1_20260925_1730',
+      },
+    };
+
+    const result = inspectFutureSchedule({
+      enrollmentId: 'enrollment-1',
+      enrollment: enrollment(),
+      todayYmd: '2026-09-19',
+      sessions: [saturdayReplacement],
+    });
+
+    expect(result.occurrences.find((row) => row.occurrence.date === '2026-09-25')).toMatchObject({
+      state: 'protected_exception',
+      relatedSessionIds: ['replacement-saturday'],
+      reasons: ['linked_schedule_exception'],
+    });
+    expect(result.unexpectedRegularSessions).toEqual([]);
+    expect(isFutureScheduleExceptionSession(saturdayReplacement.data)).toBe(true);
+  });
+
   it('preserves a valid linked makeup/reschedule exception even when it is outside the managed window', () => {
     const makeup: FutureScheduleSessionEvidence = {
       id: 'makeup-outside-window',
@@ -943,6 +978,15 @@ describe('Brick 2 future schedule inspection', () => {
     })).toBe(true);
     expect(isFutureScheduleExceptionSession({
       replacementSessionId: 'replacement-1',
+    })).toBe(true);
+    expect(isFutureScheduleExceptionSession({
+      originalSessionId: 'original-1',
+    })).toBe(true);
+    expect(isFutureScheduleExceptionSession({
+      sourceSessionId: 'original-1',
+    })).toBe(true);
+    expect(isFutureScheduleExceptionSession({
+      replacementForSessionId: 'original-1',
     })).toBe(true);
     expect(isFutureScheduleRegularSession({source: 'rolling_schedule'})).toBe(true);
     expect(isFutureScheduleRegularSession({source: 'enrollmentScheduleRepair'})).toBe(true);
