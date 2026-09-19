@@ -11,9 +11,7 @@ import {
   SPEAKING_PROGRESS_REVIEW_LOOP,
   createSpeakingProgressObservationTemplate,
 } from '../../lib/speakingProgressFramework';
-// @ts-expect-error Shared knowledge architecture is intentionally authored as ESM JavaScript.
 import { SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS } from '../../lib/speakingCommunicationKnowledgeArchitecture.js';
-// @ts-expect-error Shared canonical ownership registry is intentionally authored as ESM JavaScript.
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
 
 const root = process.cwd();
@@ -41,7 +39,7 @@ const teacherEditorSource = read('src/components/teacher/StudentTopicProgressEdi
 
 describe('Speaking growth Brick 7 progress framework', () => {
   it('defines the frozen 10-dimension speaking progress profile in the intended order', () => {
-    expect(SPEAKING_PROGRESS_FRAMEWORK_REVISION).toBe('2026-09-19-b7-v1');
+    expect(SPEAKING_PROGRESS_FRAMEWORK_REVISION).toBe('2026-09-19-b7-v2');
     expect(SPEAKING_PROGRESS_FRAMEWORK_PATH).toBe('/speaking-progress-framework');
     expect(SPEAKING_PROGRESS_DIMENSIONS).toHaveLength(10);
     expect(SPEAKING_PROGRESS_DIMENSIONS.map((item) => item.order)).toEqual([1,2,3,4,5,6,7,8,9,10]);
@@ -71,12 +69,33 @@ describe('Speaking growth Brick 7 progress framework', () => {
     expect(pageSource).toContain('These are teaching observations—not grades, age levels or standardised scores.');
   });
 
-  it('maps every dimension back to an established speaking knowledge domain', () => {
+  it('maps every dimension to established knowledge and represents all nine speaking domains', () => {
     const domainIds = new Set(SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS.map((item: { id: string }) => item.id));
+    const representedDomainIds = new Set<string>();
     for (const dimension of SPEAKING_PROGRESS_DIMENSIONS) {
       expect(dimension.knowledgeDomainIds.length).toBeGreaterThan(0);
-      for (const domainId of dimension.knowledgeDomainIds) expect(domainIds.has(domainId)).toBe(true);
+      for (const domainId of dimension.knowledgeDomainIds) {
+        expect(domainIds.has(domainId)).toBe(true);
+        representedDomainIds.add(domainId);
+      }
     }
+    expect(representedDomainIds).toEqual(domainIds);
+    expect(
+      SPEAKING_PROGRESS_DIMENSIONS.find((item) => item.id === 'idea_organisation')?.knowledgeDomainIds,
+    ).toContain('discussion-reasoning');
+  });
+
+  it('freezes the shared framework contract deeply enough to prevent accidental runtime mutation', () => {
+    expect(Object.isFrozen(SPEAKING_PROGRESS_DIMENSIONS)).toBe(true);
+    expect(Object.isFrozen(SPEAKING_PROGRESS_OBSERVATION_BANDS)).toBe(true);
+    expect(Object.isFrozen(SPEAKING_PROGRESS_REVIEW_LOOP)).toBe(true);
+
+    for (const dimension of SPEAKING_PROGRESS_DIMENSIONS) {
+      expect(Object.isFrozen(dimension)).toBe(true);
+      expect(Object.isFrozen(dimension.knowledgeDomainIds)).toBe(true);
+    }
+    for (const band of SPEAKING_PROGRESS_OBSERVATION_BANDS) expect(Object.isFrozen(band)).toBe(true);
+    for (const step of SPEAKING_PROGRESS_REVIEW_LOOP) expect(Object.isFrozen(step)).toBe(true);
   });
 
   it('creates an empty observation template instead of fabricating scores from historical data', () => {
