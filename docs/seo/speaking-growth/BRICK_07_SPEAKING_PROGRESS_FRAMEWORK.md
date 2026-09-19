@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST  
 Branch: `feature/speaking-seo-geo-growth`  
-Status: **COMPLETE — STRUCTURALLY VERIFIED**  
+Status: **COMPLETE — RE-AUDITED**  
 Production deployment: **NO**
 
 ## 1. Purpose
@@ -54,7 +54,7 @@ Name:
 
 Revision:
 
-`2026-09-19-b7-v1`
+`2026-09-19-b7-v2`
 
 Central source:
 
@@ -76,7 +76,7 @@ Brick 7 keeps the dimensions separate.
    Can the child retrieve and use useful words while speaking?
 
 4. **Idea organisation**  
-   Can the child order ideas so the listener can follow the message?
+   Can the child organise ideas and support an opinion so the listener can follow the message?
 
 5. **Listening & response relevance**  
    Does the child respond to the prompt or speaker that was actually heard?
@@ -204,7 +204,7 @@ Tiny Steps already has nine non-rigid Speaking & Communication knowledge domains
 
 Brick 7 does not replace those domains.
 
-Each of the ten progress dimensions references one or more existing domains so:
+Each of the ten progress dimensions references one or more existing domains, and after re-audit all nine established Speaking & Communication domains are represented at least once, so:
 
 - content architecture remains stable;
 - progress evidence and teaching knowledge stay connected;
@@ -310,7 +310,7 @@ The existing operational Speaking fallback remains:
 - Idea expression;
 - Audience engagement.
 
-That fallback is intentionally not silently replaced by the new ten dimensions.
+That fallback is intentionally not silently replaced by the new ten dimensions. Existing dashboards may therefore continue to show broader legacy subject-level Speaking mastery summaries; the public framework now states this boundary explicitly rather than implying those summaries have already been migrated.
 
 Reason:
 
@@ -400,13 +400,24 @@ It protects:
 
 ## 18. Structural verification
 
-Final source-level matrix:
+Initial Brick 7 structural close: **77 / 77 passed.**
 
-- Framework contract: **26 / 26**
-- Ownership, routing & discovery: **28 / 28**
-- Handoffs & operational isolation: **23 / 23**
+Independent re-audit matrix:
 
-**Total: 77 / 77 passed.**
+- Framework semantic contract: **45 / 45**
+- Ownership, routing & sitemap: **36 / 36**
+- Handoffs & operational isolation: **30 / 30**
+- Literal regression source assertions: **21 / 21**
+
+**Independent re-audit total: 132 / 132 passed.**
+
+After synchronizing the latest `main` through PR #392, the critical post-sync matrix was rerun:
+
+- Semantic contract: **20 / 20**
+- Ownership/routing: **26 / 26**
+- Operational isolation: **13 / 13**
+
+**Post-sync critical total: 59 / 59 passed.**
 
 ## 19. Executable test limitation
 
@@ -433,4 +444,54 @@ Brick 7 is structurally complete when Tiny Steps has one documented, non-clinica
 
 That condition is satisfied on the isolated branch.
 
-**Brick 7 status: COMPLETE — STRUCTURALLY VERIFIED.**
+**Brick 7 status: COMPLETE — RE-AUDITED.**
+
+
+## 21. Re-audit findings
+
+Brick 7 was independently re-audited before Brick 8.
+
+The re-audit found and fixed five issues:
+
+1. **Advanced reasoning coverage gap**  
+   The existing nine-domain Speaking knowledge architecture includes `discussion-reasoning`, but the initial ten-dimension framework did not reference it. The dimension count remains exactly ten; `Idea organisation` now also covers opinion/reason/example structure and maps to `discussion-reasoning`.
+
+2. **Shallow freeze versus documented frozen contract**  
+   The initial arrays were frozen, but their object records were mutable. Revision `2026-09-19-b7-v2` makes dimension records, observation-band records, review-loop records and nested knowledge-domain ID lists immutable at runtime.
+
+3. **Unnecessary TypeScript suppression comments**  
+   Two `@ts-expect-error` comments were removed from the Brick 7 test because established TypeScript tests already import the same local ESM JavaScript registries directly.
+
+4. **Legacy dashboard wording mismatch**  
+   Existing operational dashboards still contain broader subject-level `speakingMastery` summaries. Brick 7 intentionally does not migrate those values. Public copy now says **this framework** does not average its ten dimensions into one framework score and explicitly notes that legacy subject summaries remain separate operational views.
+
+5. **Regression-spec source assertions**  
+   Four source-string checks were corrected: one disclosure was split across source lines, and three parent-summary labels come from the shared framework constant rather than being duplicated literally in the parent page. A mechanical verifier then confirmed all 21 literal source assertions resolve correctly.
+
+### Latest-main synchronization
+
+During the re-audit, `main` advanced to:
+
+`eeeae461053483f1ede3718e5113eaad34eb3d90`
+
+The incoming work was AV6 read-only attendance-validation dashboard work. It changed seven files; the only overlap with Brick 7 was `src/app/routes.tsx`, where both changes were additive.
+
+One-way sync:
+
+- PR: **#392**
+- Direction: **main → feature/speaking-seo-geo-growth**
+- Merge commit: `1915a691d4fa2805360d46a11b35c8e81c2b77bc`
+- Branch behind main after sync: **0**
+- Speaking → main merge: **NO**
+
+### Executable-test limitation remains
+
+No GitHub Actions run or combined commit status is attached to the synchronized feature-branch head.
+
+Therefore this re-audit does **not** claim:
+
+- `npm run build` passed;
+- full Vitest passed;
+- browser/prerender QA passed.
+
+Those remain mandatory at the final Bricks 1–13 integration gate.
