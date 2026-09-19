@@ -760,7 +760,7 @@ export default function SpeakingPage() {
           <p className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Evidence before enrolment</p>
           <h2 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">What you can verify — and what each source does not prove</h2>
           <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 md:text-base md:leading-7">
-            Tiny Steps separates observable teaching evidence, academic-method documentation, progress methodology, and first-party parent experience. No single source is treated as proof of a guaranteed result for every child.
+            Tiny Steps separates observable teaching evidence, academic-method documentation, progress methodology, and first-party parent experience. No single source is treated as proof that every child will achieve the same outcome.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">

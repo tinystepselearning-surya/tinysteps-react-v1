@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SEMANTIC_FACTS } from '../../config/semanticFacts';
 
 const repoRoot = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -14,6 +15,8 @@ const canonicalCoursePaths = [
   '/courses/public-speaking-foundations',
   '/courses/public-speaking-excellence',
 ];
+
+const literalCurriculumCoursePaths = canonicalCoursePaths.slice(0, 5);
 
 describe('B13 curriculum, program and course authority guardrails', () => {
   it('keeps the existing canonical course URL set unchanged', () => {
@@ -35,7 +38,7 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     expect(page).toContain('The complete Tiny Steps learning roadmap');
     expect(page).toContain('Hear → identify → connect sound to grapheme → blend → decode → apply in connected reading');
     expect(page).toContain('Notice the pattern → build a complete sentence → apply in context → correct errors → expand');
-    expect(page).toContain('Listen and form an idea → answer in a complete sentence → add detail → organise → deliver and reflect');
+    expect(page).toContain('Understand the prompt → choose and organise an idea → add useful detail → shape for the audience → deliver, retry, and reflect');
 
     expect(page).not.toContain('WeekAccordion');
     expect(page).not.toContain('loadCurriculumOverrides');
@@ -44,9 +47,18 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     expect(page).not.toContain('IB Primary Years Programme lens');
     expect(page).not.toContain('How Tiny Steps aligns with IB English scopes');
 
-    for (const coursePath of canonicalCoursePaths) {
+    for (const coursePath of literalCurriculumCoursePaths) {
       expect(page, coursePath).toContain(`path: '${coursePath}'`);
     }
+
+    expect(page).toContain('path: speakingFacts.levels.beginner.canonicalCoursePath');
+    expect(page).toContain('path: speakingFacts.levels.advanced.canonicalCoursePath');
+    expect(SEMANTIC_FACTS.programmes.speaking.levels.beginner.canonicalCoursePath).toBe(
+      '/courses/public-speaking-foundations',
+    );
+    expect(SEMANTIC_FACTS.programmes.speaking.levels.advanced.canonicalCoursePath).toBe(
+      '/courses/public-speaking-excellence',
+    );
 
     for (const programPath of ['/phonics', '/grammar', '/speaking']) {
       expect(page, programPath).toContain(`programPath: '${programPath}'`);

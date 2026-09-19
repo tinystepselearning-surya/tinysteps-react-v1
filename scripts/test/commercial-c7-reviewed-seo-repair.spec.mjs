@@ -15,7 +15,7 @@ describe('C7 verified SEO recovery repair boundary', () => {
     expect(REVIEWED_SEO_RECOVERY_BLOBS).toEqual({
       [authorityPath]: 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
       [comparisonPath]: '21ec5766587f1635227d718401e705e4a6affa81',
-      [subjectHubPath]: '9955146f459d6fcb34d4c925922faa26c8133055',
+      [subjectHubPath]: '8041c125b53dd5bb94cc5a91ae7fa705c520f093',
       [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
