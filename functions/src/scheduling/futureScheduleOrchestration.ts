@@ -550,7 +550,10 @@ export const futureScheduleReconcilerEveryTwoHours = onSchedule(
     timeoutSeconds: 540,
   },
   async () => {
-    const summary = await runFutureSchedulePeriodicSweep(admin.firestore());
+    const writesEnabled = futureScheduleWritesEnabled();
+    const summary = await runFutureSchedulePeriodicSweep(admin.firestore(), {
+      writesEnabled,
+    });
     const payload = {
       ...summary,
       schedule: FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE,
