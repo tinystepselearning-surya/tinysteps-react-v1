@@ -23,7 +23,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 | 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
 | 03 | Cannibalization & technical SEO cleanup | COMPLETE — RE-AUDITED | NO |
 | 04 | Flagship /speaking money page | COMPLETE — RE-AUDITED | NO |
-| 05 | Spoken English territory | COMPLETE — STRUCTURALLY VERIFIED | NO |
+| 05 | Spoken English territory | COMPLETE — RE-AUDITED | NO |
 | 06 | Programme architecture | PENDING | NO |
 | 07 | Tiny Steps Speaking Progress Framework | PENDING | NO |
 | 08 | Speaking knowledge cluster | PENDING | NO |
@@ -179,5 +179,26 @@ Brick 4 status after re-audit: COMPLETE — RE-AUDITED.
 - Learner-reach claims now come from central semantic facts.
 - New regression guard: `src/tests/seo/speakingGrowthBrick5.spec.ts`.
 - New commercial URLs: ZERO.
-- Metadata/canonical/redirect/sitemap changes in Brick 5: ZERO.
+- Metadata/canonical/sitemap changes in Brick 5: ZERO; re-audit added one explicit trailing-slash legacy redirect to the existing canonical owner.
 - Production deployment: ZERO.
+
+
+## 2026-09-19 Brick 5 re-audit notes
+
+Brick 5 was re-audited before Brick 6.
+
+Additional fixes and findings:
+- changed `Book a Free Speaking Assessment` to `Book a Free English Assessment` so the CTA matches the cross-programme `/book-demo` assessment owner rather than sounding like Public Speaking;
+- changed the Spoken-English hero trust chip from `Free speaking assessment` to `Free English assessment`;
+- reframed two FAQ questions that closely echoed the protected diagnostic owners for `child understands English but does not speak` and `child gives one-word answers`;
+- added explicit links from the commercial Spoken-English page to both protected diagnostic articles;
+- added explicit `/spoken-english-classes-for-kids/` → `/spoken-english-classes-for-kids-online` 301 alongside the existing bare-path 301;
+- added matching SPA fallback for the trailing-slash legacy path;
+- added both retired Spoken-English URL variants to sitemap-absence smoke protection;
+- added central SEO infrastructure assertions for both Spoken-English 301 variants;
+- verified the Hyderabad → Spoken-English programme-fit edge remains inside the frozen 14-owner C6 architecture and does not alter the 13 direct-assessment edges;
+- confirmed no exact total C6 edge-count assertion is violated;
+- confirmed the formal Course-list/schema decision remains a Brick 6 handoff; no artificial Spoken-English levels were added;
+- production deployment remains ZERO.
+
+Brick 5 status after re-audit: COMPLETE — RE-AUDITED.
