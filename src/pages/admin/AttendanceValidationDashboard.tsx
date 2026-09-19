@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   collection,
-  documentId,
   getDocs,
   limit,
   orderBy,
@@ -332,71 +331,6 @@ function humanize(value: string | null): string {
     .join(' ');
 }
 
-function sessionStudentDisplayName(raw: Record<string, unknown>): string | null {
-  return asText(raw.studentName)
-    || asText(raw.kidName)
-    || asText(raw.childName);
-}
-
-function sessionTeacherDisplayName(raw: Record<string, unknown>): string | null {
-  return asText(raw.teacherName)
-    || asText(raw.teacherDisplayName);
-}
-
-async function enrichCaseDisplayNames(
-  items: Av6ValidationCase[],
-): Promise<Av6ValidationCase[]> {
-  const missingIds = [...new Set(
-    items
-      .filter((item) =>
-        item.classSessionId
-        && (!item.studentName || !item.teacherName))
-      .map((item) => item.classSessionId as string),
-  )];
-
-  if (missingIds.length === 0) return items;
-
-  const displayBySessionId = new Map<
-    string,
-    { studentName: string | null; teacherName: string | null }
-  >();
-
-  try {
-    for (let index = 0; index < missingIds.length; index += 30) {
-      const chunk = missingIds.slice(index, index + 30);
-      const snapshot = await getDocs(query(
-        collection(db, 'classSessions'),
-        where(documentId(), 'in', chunk),
-      ));
-      for (const docSnapshot of snapshot.docs) {
-        const raw = docSnapshot.data() as Record<string, unknown>;
-        displayBySessionId.set(docSnapshot.id, {
-          studentName: sessionStudentDisplayName(raw),
-          teacherName: sessionTeacherDisplayName(raw),
-        });
-      }
-    }
-  } catch (nameLookupError) {
-    console.warn(
-      '[AVS] Display-name enrichment failed; keeping validation cases usable with IDs.',
-      nameLookupError,
-    );
-    return items;
-  }
-
-  return items.map((item) => {
-    const names = item.classSessionId
-      ? displayBySessionId.get(item.classSessionId)
-      : null;
-    if (!names) return item;
-    return {
-      ...item,
-      studentName: item.studentName || names.studentName,
-      teacherName: item.teacherName || names.teacherName,
-    };
-  });
-}
-
 function issueSummary(item: Av6ValidationCase): string[] {
   return [
     ...item.reasons,
@@ -482,9 +416,7 @@ export default function AttendanceValidationDashboard() {
           docSnapshot.id,
           docSnapshot.data() as Record<string, unknown>,
         ));
-      const enrichedCases = await enrichCaseDisplayNames(nextCases);
-
-      setCases((current) => append ? [...current, ...enrichedCases] : enrichedCases);
+      setCases((current) => append ? [...current, ...nextCases] : nextCases);
       setCursor(
         snapshot.docs.length > 0
           ? snapshot.docs[snapshot.docs.length - 1]
@@ -730,8 +662,7 @@ export default function AttendanceValidationDashboard() {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Saved results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
-                No realtime listener and no user, student, enrollment, billing, or earnings lookups.
-                Legacy AVS cases may read their matching class-session snapshot only to show student and teacher names.
+                No realtime listener and no user, student, enrollment, billing, earnings, or class-session fallback lookups.
               </p>
             </div>
           </div>
