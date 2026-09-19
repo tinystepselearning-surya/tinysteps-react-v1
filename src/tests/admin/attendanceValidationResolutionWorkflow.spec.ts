@@ -58,6 +58,8 @@ describe('AV7 approved attendance validation correction workflow', () => {
     expect(correctionFunction).toContain(
       'This exact attendance validation case revision was already resolved.',
     );
+    expect(correctionFunction).toContain('{ lastUpdateTime: sessionUpdateTime }');
+    expect(correctionFunction).toContain('{ lastUpdateTime: av7ValidationLink.caseUpdateTime }');
   });
 
   it('writes resolution history and case linkage in the same existing correction batch', () => {
@@ -67,7 +69,7 @@ describe('AV7 approved attendance validation correction workflow', () => {
     expect(correctionFunction).toContain("resolutionStatus: 'resolved'");
     expect(correctionFunction).toContain('attendanceCorrectionId: auditRef.id');
     expect(correctionFunction).toContain('batch.create(av7ValidationLink.resolutionRef');
-    expect(correctionFunction).toContain('batch.set(\n        av7ValidationLink.caseRef');
+    expect(correctionFunction).toContain('batch.update(\n        av7ValidationLink.caseRef');
   });
 
   it('keeps browser AVS mutation out of the correction UI', () => {
