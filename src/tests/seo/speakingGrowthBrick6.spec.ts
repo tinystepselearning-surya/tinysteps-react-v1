@@ -14,6 +14,7 @@ const coursesPage = read('src/pages/CoursesPage.tsx');
 const chooser = read('src/pages/parents/choosing-course.tsx');
 const rss = read('public/rss.xml');
 const feed = read('public/feed.xml');
+const internalLinks = read('src/lib/seo/internalLinkMap.ts');
 
 describe('Speaking growth Brick 6 programme architecture', () => {
   it('keeps internal course IDs stable while declaring canonical public course routes', () => {
@@ -120,6 +121,15 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(chooser).toContain("destination: '/speaking'");
     expect(chooser).toContain('Short answers do not automatically mean Public Speaking.');
     expect(chooser).not.toContain("destination: '/courses/public-speaking-foundations',\n    ctaLabel: 'Explore speaking foundations'");
+  });
+
+  it('registers both canonical Public Speaking course pages for automatic internal linking', () => {
+    expect(internalLinks).toContain("id: 'course-public-speaking-foundations'");
+    expect(internalLinks).toContain("href: '/courses/public-speaking-foundations'");
+    expect(internalLinks).toContain("id: 'course-public-speaking-excellence'");
+    expect(internalLinks).toContain("href: '/courses/public-speaking-excellence'");
+    expect(internalLinks).toContain("'Public Speaking Excellence course'");
+    expect(internalLinks).toContain("'Advanced Public Speaking course'");
   });
 
   it('keeps discovery descriptions synchronized with the canonical public course descriptions', () => {
