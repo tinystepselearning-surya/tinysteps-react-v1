@@ -66,7 +66,7 @@ describe('AV7 approved attendance validation correction workflow', () => {
     expect(correctionFunction).toContain("decision: 'approved_correction'");
     expect(correctionFunction).toContain("resolutionStatus: 'resolved'");
     expect(correctionFunction).toContain('attendanceCorrectionId: auditRef.id');
-    expect(correctionFunction).toContain('batch.set(av7ValidationLink.resolutionRef');
+    expect(correctionFunction).toContain('batch.create(av7ValidationLink.resolutionRef');
     expect(correctionFunction).toContain('batch.set(\n        av7ValidationLink.caseRef');
   });
 
