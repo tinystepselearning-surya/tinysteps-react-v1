@@ -226,7 +226,7 @@ function candidateMetrics(
   let falseNegativeCount = 0;
 
   for (const sample of samples) {
-    const predictsPresent = sample.overlapSeconds >= thresholdSeconds;
+    const predictsPresent = sample.overlapSeconds > thresholdSeconds;
     const humanPresent = sample.humanDecision === 'present';
 
     if (predictsPresent && humanPresent) truePositiveCount += 1;
