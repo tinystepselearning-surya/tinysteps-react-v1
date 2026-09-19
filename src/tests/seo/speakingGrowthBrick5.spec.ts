@@ -42,6 +42,8 @@ describe('Speaking growth Brick 5 Spoken English territory', () => {
     expect(page).toContain('to="/grammar"');
     expect(page).toContain('Choose confidence-building support');
     expect(page).toContain('to="/confidence-building-program-kids"');
+    expect(page).toContain('low-pressure response practice');
+    expect(page).not.toContain('confidence practice, not just more listening exposure');
     expect(page).not.toContain('to="/spoken-english-classes-for-kids"');
   });
 
