@@ -150,7 +150,9 @@ function session(
     date,
     enrollmentId: 'enrollment-1',
     teacherId: 'teacher-1',
+    teacherName: 'Teacher One',
     kidId: 'kid-1',
+    studentName: 'Student One',
     attendance,
   };
 }
@@ -203,6 +205,8 @@ describe('AV5.3 bounded shadow runner', () => {
       id: 'session-1',
       serviceDateYmd: '2026-09-18',
       classSessionId: 'session-1',
+      studentName: 'Student One',
+      teacherName: 'Teacher One',
       classification: 'VERIFIED',
       validationDecision: 'present',
       tinyStepsAttendance: 'present',
