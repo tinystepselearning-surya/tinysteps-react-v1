@@ -122,6 +122,7 @@ export const PUBLIC_REDIRECT_MANIFEST = [
   { source: '/how-it-works', destination: '/curriculum', status: 301 },
   { source: '/spoken-english-classes-for-kids', destination: '/spoken-english-classes-for-kids-online', status: 301 },
   { source: '/public-speaking-communication-kids', destination: '/speaking', status: 301 },
+  { source: '/public-speaking-communication-kids/', destination: '/speaking', status: 301 },
   { source: '/games', destination: '/phonics-learning-games', status: 301 },
   { source: '/games/english-excellence', destination: '/phonics-learning-games', status: 301 },
 ];
