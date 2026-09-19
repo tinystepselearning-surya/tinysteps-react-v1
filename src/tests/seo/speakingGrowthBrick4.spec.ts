@@ -57,6 +57,8 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('to="/team"');
     expect(speaking).toContain('How parents see speaking progress');
     expect(speaking).toContain('Parent evidence');
+    expect(speaking).toContain('Parent feedback from speaking families');
+    expect(speaking).not.toContain('Approved parent feedback from speaking families');
     expect((speaking.match(/<TestimonialSnippets/g) ?? [])).toHaveLength(1);
     expect((speaking.match(/<ResponsiveTeachingSection/g) ?? [])).toHaveLength(1);
   });
