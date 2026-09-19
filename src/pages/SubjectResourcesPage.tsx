@@ -161,6 +161,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
           { title: 'Speaking confidence progression', description: 'Understand how confidence grows through repeated, structured speaking opportunities.', to: '/blog/speaking-confidence-seeds', label: 'Build speaking confidence' },
           { title: 'Child gives one-word answers', description: 'See how to move from minimal responses into fuller spoken sentences.', to: '/blog/child-gives-one-word-answers', label: 'Expand spoken answers' },
           { title: 'Understands English but does not speak', description: 'Separate language knowledge, retrieval and confidence before choosing the next step.', to: '/blog/child-understands-english-but-does-not-speak', label: 'Understand the speaking gap' },
+          { title: 'How Tiny Steps measures speaking progress', description: 'Use the 10-dimension framework to compare support, independence and fresh-task transfer without reducing speaking to one score.', to: '/speaking-progress-framework', label: 'See the progress framework' },
         ],
       },
       {
