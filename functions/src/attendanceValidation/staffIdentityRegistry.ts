@@ -13,11 +13,7 @@ const STAFF_ROLE_VALUES = [
   'teacher',
   'learningPartner',
   'learning-partner',
-  'schoolAdmin',
-  'school-admin',
   'rm',
-  'relationshipManager',
-  'relationship_manager',
 ] as const;
 
 const STAFF_ROLE_SET = new Set<string>(
@@ -135,7 +131,9 @@ function duplicateOwnershipIssues(
 /**
  * Builds the privacy-minimized AV3 staff registry used by participant identity matching.
  *
- * Production Tiny Steps user documents are the authority for staff membership and staffId.
+ * Production Tiny Steps user documents are the authority for internal staff membership and staffId.
+ * School-admin/customer-side roles are deliberately excluded so a school/customer account cannot
+ * be silently removed from learner-side evidence.
  * Their email address is read transiently, normalized, SHA-256 hashed, and never returned.
  *
  * The validation-owned override collection may replace the email hash and add verified
