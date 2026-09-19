@@ -83,12 +83,13 @@ describe('Phonics Brick 4 course-stage authority guardrails', () => {
   it('exposes entry signals, skills built, and exit readiness on every phonics stage', () => {
     const config = read(publicCourseConfigPath);
     const page = read(courseDetailPath);
+    const phonicsConfig = config.slice(0, config.indexOf("internalSlug: 'basic-grammar'"));
 
-    expect(config.match(/stageAuthority: \{/g)).toHaveLength(3);
-    expect(config.match(/entrySignals: \[/g)).toHaveLength(3);
-    expect(config.match(/skillsBuilt: \[/g)).toHaveLength(3);
-    expect(config.match(/exitSignals: \[/g)).toHaveLength(3);
-    expect(config.match(/sequence: PHONICS_STAGE_SEQUENCE/g)).toHaveLength(3);
+    expect(phonicsConfig.match(/stageAuthority: \{/g)).toHaveLength(3);
+    expect(phonicsConfig.match(/entrySignals: \[/g)).toHaveLength(3);
+    expect(phonicsConfig.match(/skillsBuilt: \[/g)).toHaveLength(3);
+    expect(phonicsConfig.match(/exitSignals: \[/g)).toHaveLength(3);
+    expect(phonicsConfig.match(/sequence: PHONICS_STAGE_SEQUENCE/g)).toHaveLength(3);
 
     expect(page).toContain('Signs this may be the right starting stage');
     expect(page).toContain('Skills this stage builds');
