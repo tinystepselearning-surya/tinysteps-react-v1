@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-09-19",
+  "branch": "feature/speaking-seo-geo-growth",
+  "root": {
+    "programmeOwner": "/speaking",
+    "role": "Public Speaking & general Communication commercial programme hub",
+    "schemaStrategy": {
+      "webpage": true,
+      "skillPathItemList": true,
+      "programmeArchitectureItemList": true,
+      "umbrellaCourseSchema": false,
+      "googleCourseListRichResultTarget": false,
+      "reason": "Tiny Steps has two published Public Speaking courses. Current Google Course list guidance requires at least three courses plus ItemList/carousel markup for that enhancement."
+    }
+  },
+  "publicSpeakingLevels": [
+    {
+      "order": 1,
+      "internalCourseId": "basic-public-speaking",
+      "compatibilitySlug": "basic-public-speaking",
+      "canonicalPublicSlug": "public-speaking-foundations",
+      "canonicalPath": "/courses/public-speaking-foundations",
+      "publicName": "Public Speaking Foundations",
+      "ageRange": "Ages 4–7",
+      "lessonCount": 36,
+      "entryModel": "No previous Public Speaking course required; readiness and language fit assessed.",
+      "next": "/courses/public-speaking-excellence"
+    },
+    {
+      "order": 2,
+      "internalCourseId": "advanced-public-speaking",
+      "compatibilitySlug": "advanced-public-speaking",
+      "canonicalPublicSlug": "public-speaking-excellence",
+      "canonicalPath": "/courses/public-speaking-excellence",
+      "publicName": "Public Speaking Excellence",
+      "ageRange": "Ages 7–12",
+      "lessonCount": 36,
+      "entryModel": "Completion of Foundations or equivalent readiness demonstrated during assessment.",
+      "next": null,
+      "terminalRule": "No third Public Speaking level is published; next practice depends on the child's goals and observed needs."
+    }
+  ],
+  "adjacentSpecialistOwners": [
+    {
+      "path": "/spoken-english-classes-for-kids-online",
+      "role": "Everyday Spoken English / conversational fluency owner"
+    },
+    {
+      "path": "/confidence-building-program-kids",
+      "role": "Specialist speaking-confidence / participation owner"
+    }
+  ],
+  "courseDetailRequirements": {
+    "whoItIsFor": true,
+    "prerequisiteStartingPoint": true,
+    "learningOutcomes": true,
+    "lessonSequence": true,
+    "progressionReadiness": true,
+    "teachingMethod": true,
+    "providerSystem": true,
+    "previousNextLinks": true,
+    "specialistHandoffs": true,
+    "classSamplesLink": true,
+    "assessmentLink": true
+  },
+  "structuredData": {
+    "courseDetailsUseCourseSchema": true,
+    "provider": "Tiny Steps Learning EducationalOrganization via shared createCourseSchema helper",
+    "speakingLevelSequenceUsesGenericItemList": true,
+    "hubUsesWebPageItemsNotCourseList": true,
+    "videoObjectAdded": false,
+    "videoObjectReason": "No course-specific embedded video surface is established for these two detail pages; generic class samples are linked instead."
+  },
+  "officialGoogleGuidanceChecked": {
+    "date": "2026-09-19",
+    "url": "https://developers.google.com/search/docs/appearance/structured-data/course",
+    "note": "Course list enhancement requires at least three courses and list/carousel markup. Brick 6 therefore does not claim Course-list eligibility for the two-level Public Speaking architecture."
+  },
+  "sourceFilesChanged": [
+    "src/config/semanticFacts.ts",
+    "src/lib/publicCoursePages.js",
+    "src/pages/CourseDetailPage.tsx",
+    "src/pages/speaking.tsx",
+    "src/pages/CurriculumPage.tsx",
+    "src/pages/CoursesPage.tsx",
+    "src/pages/parents/choosing-course.tsx",
+    "src/lib/seo/internalLinkMap.ts",
+    "public/rss.xml",
+    "public/feed.xml",
+    "src/tests/seo/speakingGrowthBrick6.spec.ts"
+  ],
+  "productionDeployment": false
+}
