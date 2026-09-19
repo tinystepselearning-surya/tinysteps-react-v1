@@ -133,4 +133,34 @@ describe('AV6 admin attendance validation dashboard', () => {
       'Run Latest Check supports a maximum of 31 calendar days at a time.',
     );
   });
+
+  it('keeps Force Fresh Teams Evidence separate, explicit, and per case', () => {
+    expect(dashboard).toContain('Force Fresh Teams Evidence');
+    expect(dashboard).toContain(
+      'Force Fresh Teams Evidence will make new Microsoft Graph reads for this one class',
+    );
+    expect(dashboard).toContain(
+      "'forceRefreshAttendanceValidationEvidence'",
+    );
+    expect(dashboard).toContain(
+      'caseId: item.id',
+    );
+    expect(dashboard).toContain(
+      'inputFingerprint: item.inputFingerprint',
+    );
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+    expect(callFunctions).toContain(
+      "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
+    );
+  });
+
+  it('shows Force Fresh Graph/read evidence after completion', () => {
+    expect(dashboard).toContain('Force Fresh Teams Evidence completed');
+    expect(dashboard).toContain('forceFreshResult.graphLogicalCalls');
+    expect(dashboard).toContain(
+      'forceFreshResult.readBudget.boundedReadsExcludingStaffRegistry',
+    );
+    expect(dashboard).toContain('forceFreshResult.collectionStatus');
+    expect(dashboard).toContain('forceFreshResult.issueKinds');
+  });
 });
