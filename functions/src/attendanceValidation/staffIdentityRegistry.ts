@@ -266,13 +266,13 @@ export async function loadProductionStaffIdentityRegistry(
   ]);
 
   const users: OperationalStaffUserSource[] = usersSnapshot.docs.map((doc) => ({
-    docId: doc.id,
     ...(doc.data() as Record<string, unknown>),
+    docId: doc.id,
   }));
 
   const overrides: StaffIdentityOverrideSource[] = overridesSnapshot.docs.map((doc) => ({
-    docId: doc.id,
     ...(doc.data() as Record<string, unknown>),
+    docId: doc.id,
   }));
 
   return buildStaffIdentityRegistrySnapshot(
