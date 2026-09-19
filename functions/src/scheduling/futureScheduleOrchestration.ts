@@ -10,7 +10,7 @@ import {
   type FutureScheduleExecutorStore,
 } from './futureScheduleExecutor';
 import {createFutureScheduleFirestoreStore} from './futureScheduleFirestore';
-import {isCanonicalFutureScheduleEnrollment} from './futureScheduleReconciler';
+import {resolveFutureScheduleEligibility} from './futureScheduleReconciler';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -18,12 +18,15 @@ if (!admin.apps.length) {
 
 export const FUTURE_SCHEDULE_RECONCILER_REGION = 'asia-south1';
 export const FUTURE_SCHEDULE_RECONCILER_TIME_ZONE = 'Asia/Kolkata';
-export const FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE = '17 */2 * * *';
+export const FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE = '47 0 * * *';
 export const MAX_FUTURE_SCHEDULE_SWEEP_ENROLLMENTS = 500;
 export const FUTURE_SCHEDULE_SWEEP_CONCURRENCY = 6;
 export const MAX_FUTURE_SCHEDULE_STALE_RETRIES = 2;
 // Deployment recovery marker: keep rollout fail-closed; this comment intentionally changes no runtime behavior.
 export const FUTURE_SCHEDULE_WRITES_ENV = 'FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED';
+export const FUTURE_SCHEDULE_CANARY_ENROLLMENTS_ENV =
+  'FUTURE_SCHEDULE_RECONCILER_CANARY_ENROLLMENT_IDS';
+export const MAX_FUTURE_SCHEDULE_CANARY_ENROLLMENTS = 25;
 
 const SWEEP_STATE_COLLECTION = 'futureScheduleReconcilerState';
 const SWEEP_STATE_DOCUMENT = 'periodicSweep';
@@ -70,6 +73,52 @@ const text = (value: unknown): string => {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   return '';
 };
+
+export function futureScheduleCanaryEnrollmentIds(
+  env: Record<string, string | undefined> = process.env,
+): string[] {
+  const raw = String(env[FUTURE_SCHEDULE_CANARY_ENROLLMENTS_ENV] || '').trim();
+  if (!raw) return [];
+
+  const ids = Array.from(new Set(
+    raw.split(',').map((value) => text(value)).filter(Boolean),
+  )).sort();
+
+  if (
+    ids.length > MAX_FUTURE_SCHEDULE_CANARY_ENROLLMENTS ||
+    ids.some((id) => !/^[A-Za-z0-9_-]{6,128}$/.test(id))
+  ) {
+    return [];
+  }
+
+  return ids;
+}
+
+export function resolveFutureScheduleEnrollmentWritesEnabled(args: {
+  enrollmentId: string;
+  globalWritesEnabled: boolean;
+  canaryEnrollmentIds: readonly string[];
+}): boolean {
+  if (args.globalWritesEnabled) return true;
+
+  const enrollmentId = text(args.enrollmentId);
+  if (!enrollmentId) return false;
+
+  return args.canaryEnrollmentIds.some(
+    (candidate) => text(candidate) === enrollmentId,
+  );
+}
+
+export function futureScheduleWritesEnabledForEnrollment(
+  enrollmentId: string,
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  return resolveFutureScheduleEnrollmentWritesEnabled({
+    enrollmentId,
+    globalWritesEnabled: futureScheduleWritesEnabled(env),
+    canaryEnrollmentIds: futureScheduleCanaryEnrollmentIds(env),
+  });
+}
 
 export function shouldWrapFutureScheduleSweep(
   cursorBefore: string | null,
@@ -186,16 +235,17 @@ export function shouldReconcileFutureScheduleEnrollmentWrite(args: {
 }): boolean {
   if (!args.after) return false;
 
-  const beforeWasCanonical = args.before
-    ? isCanonicalFutureScheduleEnrollment(args.before)
+  const beforeWasOperational = args.before
+    ? resolveFutureScheduleEligibility(args.before).eligible
     : false;
-  const afterIsCanonical = isCanonicalFutureScheduleEnrollment(args.after);
+  const afterIsOperational = resolveFutureScheduleEligibility(args.after).eligible;
 
-  // Brick 5 owns canonical rolling enrollments only. A transition away from the
-  // canonical contract still triggers once so the source defect is surfaced;
-  // unrelated legacy enrollment writes stay on their existing compatibility path.
-  if (!beforeWasCanonical && !afterIsCanonical) return false;
-  if (!args.before) return true;
+  // Both canonical rolling and supported legacy recurring enrollments belong to
+  // the same future-coverage contract. Trigger immediately when an operational
+  // enrollment changes scheduling-relevant data, and once when it leaves the
+  // operational lifecycle so the resulting non-scheduling state is observable.
+  if (!beforeWasOperational && !afterIsOperational) return false;
+  if (!args.before) return afterIsOperational;
 
   return JSON.stringify(futureScheduleEnrollmentComparable(args.before)) !==
     JSON.stringify(futureScheduleEnrollmentComparable(args.after));
@@ -432,7 +482,10 @@ export async function runFutureScheduleSweepBatch(args: {
 
 export async function runFutureSchedulePeriodicSweep(
   db: admin.firestore.Firestore,
-  options: {writesEnabled?: boolean} = {},
+  options: {
+    writesEnabled?: boolean;
+    canaryEnrollmentIds?: readonly string[];
+  } = {},
 ): Promise<FutureScheduleSweepSummary> {
   const stateRef = db.collection(SWEEP_STATE_COLLECTION).doc(SWEEP_STATE_DOCUMENT);
   const stateSnap = await stateRef.get();
@@ -464,13 +517,19 @@ export async function runFutureSchedulePeriodicSweep(
   // non-canonical rows are surfaced as blocked_source instead of disappearing.
   const enrollmentIds = snapshot.docs.map((doc) => doc.id);
   const store = createFutureScheduleFirestoreStore(db);
+  const globalWritesEnabled = options.writesEnabled !== false;
+  const canaryEnrollmentIds = options.canaryEnrollmentIds ?? [];
   const batch = await runFutureScheduleSweepBatch({
     enrollmentIds,
     concurrency: FUTURE_SCHEDULE_SWEEP_CONCURRENCY,
     reconcile: (enrollmentId) =>
       reconcileFutureScheduleEnrollmentAutomatically(store, enrollmentId, {
         actorId: AUTOMATION_ACTOR,
-        writesEnabled: options.writesEnabled !== false,
+        writesEnabled: resolveFutureScheduleEnrollmentWritesEnabled({
+          enrollmentId,
+          globalWritesEnabled,
+          canaryEnrollmentIds,
+        }),
       }),
   });
 
@@ -527,7 +586,7 @@ export const onFutureScheduleEnrollmentWrite = onDocumentWritten(
 
     const enrollmentId = event.params.enrollmentId;
     const store = createFutureScheduleFirestoreStore(admin.firestore());
-    const writesEnabled = futureScheduleWritesEnabled();
+    const writesEnabled = futureScheduleWritesEnabledForEnrollment(enrollmentId);
 
     try {
       const outcome = await reconcileFutureScheduleEnrollmentAutomatically(
@@ -573,14 +632,17 @@ export const futureScheduleReconcilerEveryTwoHours = onSchedule(
   },
   async () => {
     const writesEnabled = futureScheduleWritesEnabled();
+    const canaryEnrollmentIds = futureScheduleCanaryEnrollmentIds();
     const summary = await runFutureSchedulePeriodicSweep(admin.firestore(), {
       writesEnabled,
+      canaryEnrollmentIds,
     });
     const payload = {
       ...summary,
       schedule: FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE,
       timeZone: FUTURE_SCHEDULE_RECONCILER_TIME_ZONE,
       writesEnabled,
+      canaryEnrollmentCount: canaryEnrollmentIds.length,
     };
 
     if (
