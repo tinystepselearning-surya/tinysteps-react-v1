@@ -215,6 +215,7 @@ const CourseDetailPage: FC = () => {
     url: canonicalUrl,
     educationalLevel: courseSchemaConfig.educationalLevel,
     teaches: Array.isArray(coursePageConfig?.teaches) ? coursePageConfig.teaches : undefined,
+    areaServed: Array.isArray(coursePageConfig?.areaServed) ? coursePageConfig.areaServed : undefined,
   })];
 
   if (Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 && isCanonicalSlug) {
@@ -225,18 +226,34 @@ const CourseDetailPage: FC = () => {
   }
 
   if (Array.isArray(stageAuthority?.sequence) && stageAuthority.sequence.length > 0 && isCanonicalSlug) {
-    jsonLd.push({
-      '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      '@id': `${canonicalUrl}#phonics-program-stages`,
-      name: 'Tiny Steps phonics programme stages',
-      itemListElement: stageAuthority.sequence.map((stage, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: stage.name,
-        item: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
-      })),
-    });
+    if (courseTrack === 'speaking') {
+      jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': `${canonicalUrl}#speaking-program-levels`,
+        name: 'Tiny Steps Public Speaking programme levels',
+        itemListOrder: 'https://schema.org/ItemListOrderAscending',
+        itemListElement: stageAuthority.sequence.map((stage, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: stage.name,
+          url: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
+        })),
+      });
+    } else {
+      jsonLd.push({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': `${canonicalUrl}#phonics-program-stages`,
+        name: 'Tiny Steps phonics programme stages',
+        itemListElement: stageAuthority.sequence.map((stage, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: stage.name,
+          item: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
+        })),
+      });
+    }
   }
 
   return (
