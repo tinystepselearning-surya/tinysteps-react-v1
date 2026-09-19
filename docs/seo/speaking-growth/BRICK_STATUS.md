@@ -21,7 +21,7 @@ Production merge policy: no merge to main until Bricks 1–13 and final integrat
 |---|---|---|---|
 | 01 | Speaking search baseline & safety lock | COMPLETE — RE-AUDITED | NO |
 | 02 | Search intent & keyword ownership map | COMPLETE — RE-AUDITED | NO |
-| 03 | Cannibalization & technical SEO cleanup | PENDING | NO |
+| 03 | Cannibalization & technical SEO cleanup | COMPLETE — STRUCTURALLY VERIFIED | NO |
 | 04 | Flagship /speaking money page | PENDING | NO |
 | 05 | Spoken English territory | PENDING | NO |
 | 06 | Programme architecture | PENDING | NO |
@@ -91,3 +91,19 @@ Corrections and additions:
 - confirmed no new city, near-me, comparison, AI-prompt, Spoken-English or Public-Speaking fee page is authorized.
 
 Brick 2 status after re-audit: COMPLETE — RE-AUDITED.
+
+
+## Brick 3 completion gate
+
+- Legacy `/public-speaking-communication-kids` converted from an indexable duplicate page into a direct 301 alias to `/speaking`.
+- Legacy route removed from static sitemap, RSS and feed discovery.
+- Legacy SEO alias canonicalizes to `/speaking` and is `noindex, follow`.
+- Obsolete legacy page component retired.
+- Client router includes a safe local/development fallback redirect.
+- SEO smoke and infrastructure test expectations updated to prevent accidental resurrection.
+- Confidence-programme noindex mismatch traced to a Google crawl dated 2026-08-27 that predates the current 2026-09-10 indexable implementation; no redundant robots patch added.
+- Hyderabad page verified as broad-local chooser with programme-owner handoffs; no new local subject page created.
+- Home "Super Speakers" age label corrected from 4-15 to 4-12.
+- Structural invariants all passed.
+- Executable npm/Vitest/build run remains required at the final integration gate because this environment could not clone GitHub and no branch CI run was available.
+- Brick 3 production deployment: ZERO.
