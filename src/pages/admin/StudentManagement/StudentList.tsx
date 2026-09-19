@@ -3823,7 +3823,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               Add Ad Hoc Session {adHocFor?.fullName ? `— ${adHocFor.fullName}` : ''}
             </DialogTitle>
             <DialogDescription>
-              Create a one-time extra class without changing the recurring weekly schedule.
+              Create a one-time extra class without changing the recurring weekly schedule. This does not replace a scheduled class; use the reschedule-credit flow when moving an existing class.
             </DialogDescription>
           </DialogHeader>
 
