@@ -96,6 +96,7 @@ export const COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES = freezeList([
   freeze({ path: '/resources/phonics', reason: 'Subject hub already exposes the phonics programme and assessment.' }),
   freeze({ path: '/resources/grammar', reason: 'Subject hub already exposes the grammar programme and assessment.' }),
   freeze({ path: '/resources/speaking', reason: 'Subject hub already exposes the speaking programme and assessment.' }),
+  freeze({ path: '/speaking-progress-framework', reason: 'Standalone speaking-progress framework already exposes the canonical speaking programme and assessment without requiring a duplicate shared handoff renderer.' }),
   freeze({ path: '/child-not-reading-properly', reason: 'Standalone reading-gap page already exposes phonics/reading support and assessment.' }),
   freeze({ path: '/slow-reader-child-help', reason: 'Standalone problem page already contains the specialist fluency owner and assessment.' }),
   freeze({ path: '/shy-child-speaking-confidence', reason: 'Standalone problem page already contains the confidence owner and assessment.' }),
