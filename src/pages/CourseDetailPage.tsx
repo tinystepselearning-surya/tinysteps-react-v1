@@ -389,13 +389,19 @@ const CourseDetailPage: FC = () => {
       </LeadSection>
 
       {stageAuthority ? (
-        <LeadSection id="phonics-stage-fit" className="scroll-mt-24">
+        <LeadSection id={courseTrack === 'speaking' ? 'speaking-level-fit' : 'phonics-stage-fit'} className="scroll-mt-24">
           <LeadCard className="bg-gradient-to-br from-white via-sky-50/35 to-orange-50/35">
             <LeadSectionHeading
-              eyebrow="Course fit · Phonics stage"
+              eyebrow={courseTrack === 'speaking' ? 'Course fit · Speaking level' : 'Course fit · Phonics stage'}
               title={stageAuthority.title}
               description={stageAuthority.directAnswer}
             />
+
+            {stageAuthority.prerequisiteNote ? (
+              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm leading-6 text-slate-700">
+                <strong className="text-slate-950">Prerequisite / starting-point note:</strong> {stageAuthority.prerequisiteNote}
+              </div>
+            ) : null}
 
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <LeadCard className="border-slate-100 bg-white">
@@ -426,11 +432,14 @@ const CourseDetailPage: FC = () => {
 
             {Array.isArray(stageAuthority.sequence) && stageAuthority.sequence.length > 0 ? (
               <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
-                <h3 className="text-lg font-semibold text-slate-900">Tiny Steps phonics progression</h3>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {stageAuthority.progressionTitle ?? 'Tiny Steps phonics progression'}
+                </h3>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-700">
-                  Foundation, Early, and Advanced are readiness-based stages. The assessment helps identify the most useful starting point, and children move forward when the underlying skills are secure rather than simply because of age.
+                  {stageAuthority.progressionDescription ??
+                    'Foundation, Early, and Advanced are readiness-based stages. The assessment helps identify the most useful starting point, and children move forward when the underlying skills are secure rather than simply because of age.'}
                 </p>
-                <ol className="mt-5 grid gap-4 md:grid-cols-3">
+                <ol className={`mt-5 grid gap-4 ${stageAuthority.sequence.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
                   {stageAuthority.sequence.map((stage, index) => {
                     const isCurrentStage = stage.routePath === canonicalPath;
                     return (
@@ -440,10 +449,10 @@ const CourseDetailPage: FC = () => {
                       >
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                            Stage {index + 1} • {stage.level}
+                            {courseTrack === 'speaking' ? 'Level' : 'Stage'} {index + 1} • {stage.level}
                           </span>
                           {isCurrentStage ? (
-                            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">Current stage</span>
+                            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">Current {courseTrack === 'speaking' ? 'level' : 'stage'}</span>
                           ) : null}
                         </div>
                         <Link
@@ -458,6 +467,29 @@ const CourseDetailPage: FC = () => {
                     );
                   })}
                 </ol>
+              </div>
+            ) : null}
+
+            {stageAuthority.providerNote || stageAuthority.teachingMethod ? (
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                {stageAuthority.providerNote ? (
+                  <LeadCard className="border-emerald-100 bg-emerald-50/60">
+                    <h3 className="text-lg font-semibold text-slate-900">Provider and teacher system</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">{stageAuthority.providerNote}</p>
+                    <Link to="/team" className="mt-3 inline-block text-sm font-semibold text-slate-900 underline underline-offset-4">
+                      Meet the Tiny Steps academic team
+                    </Link>
+                  </LeadCard>
+                ) : null}
+                {stageAuthority.teachingMethod ? (
+                  <LeadCard className="border-sky-100 bg-sky-50/60">
+                    <h3 className="text-lg font-semibold text-slate-900">How the level is taught</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">{stageAuthority.teachingMethod}</p>
+                    <Link to="/class-samples" className="mt-3 inline-block text-sm font-semibold text-slate-900 underline underline-offset-4">
+                      View real class samples
+                    </Link>
+                  </LeadCard>
+                ) : null}
               </div>
             ) : null}
           </LeadCard>
