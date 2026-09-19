@@ -1604,6 +1604,16 @@ function teacherProgressIdentityUnchanged() {
     }
 
     // ----------------------------
+    // ATTENDANCE VALIDATION SIDECAR
+    // ----------------------------
+    // AV6 dashboard is read-only. Production AVS writes continue through
+    // trusted Admin SDK code; browser clients can never create/update/delete.
+    match /attendanceValidationCases/{caseId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // ----------------------------
     // CONFIG COLLECTION
     // ----------------------------
     // config/gamesCatalog: readable by authenticated users (especially parents for dashboard)
