@@ -79,6 +79,7 @@ export const ATTENDANCE_VALIDATION_COLLECTIONS = {
   cases: 'attendanceValidationCases',
   resolutions: 'attendanceValidationResolutions',
   dirtySessions: 'attendanceValidationDirtySessions',
+  baselineRanges: 'attendanceValidationBaselineRanges',
   config: 'attendanceValidationConfig',
 } as const;
 
