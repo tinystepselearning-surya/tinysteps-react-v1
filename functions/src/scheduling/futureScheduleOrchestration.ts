@@ -22,6 +22,7 @@ export const FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE = '17 */2 * * *';
 export const MAX_FUTURE_SCHEDULE_SWEEP_ENROLLMENTS = 500;
 export const FUTURE_SCHEDULE_SWEEP_CONCURRENCY = 6;
 export const MAX_FUTURE_SCHEDULE_STALE_RETRIES = 2;
+export const FUTURE_SCHEDULE_WRITES_ENV = 'FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED';
 
 const SWEEP_STATE_COLLECTION = 'futureScheduleReconcilerState';
 const SWEEP_STATE_DOCUMENT = 'periodicSweep';
@@ -34,7 +35,8 @@ export type FutureScheduleAutomaticOutcome = {
     | 'noop'
     | 'blocked_source'
     | 'blocked_plan'
-    | 'skipped_non_operational';
+    | 'skipped_non_operational'
+    | 'shadow';
   attempts: number;
   actions: number;
   planFingerprint: string;
@@ -48,12 +50,19 @@ export type FutureScheduleSweepSummary = {
   blockedSource: number;
   blockedPlan: number;
   skippedNonOperational: number;
+  shadow: number;
   failed: number;
   failedEnrollmentIds: string[];
   cursorBefore: string | null;
   cursorAfter: string | null;
   cycleCompleted: boolean;
 };
+
+export function futureScheduleWritesEnabled(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  return String(env[FUTURE_SCHEDULE_WRITES_ENV] || '').trim().toLowerCase() === 'true';
+}
 
 const text = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();
@@ -188,6 +197,7 @@ export async function reconcileFutureScheduleEnrollmentAutomatically(
   options: {
     actorId?: string;
     staleRetries?: number;
+    writesEnabled?: boolean;
   } = {},
 ): Promise<FutureScheduleAutomaticOutcome> {
   const id = text(enrollmentId);
@@ -197,6 +207,7 @@ export async function reconcileFutureScheduleEnrollmentAutomatically(
   const staleRetries = Number.isInteger(options.staleRetries)
     ? Math.max(0, Number(options.staleRetries))
     : MAX_FUTURE_SCHEDULE_STALE_RETRIES;
+  const writesEnabled = options.writesEnabled !== false;
 
   for (let attempt = 1; attempt <= staleRetries + 1; attempt += 1) {
     const preview = await prepareFutureScheduleExecution(store, {
@@ -210,6 +221,39 @@ export async function reconcileFutureScheduleEnrollmentAutomatically(
       ...blockerReasons(preview.plan.blockers),
       ...preview.executorBlockers,
     ])).sort();
+
+    if (!writesEnabled) {
+      if (preview.inspection.kind === 'blocked_source') {
+        return {
+          enrollmentId: id,
+          status: isLifecycleOnlyBlocked(sourceIssues)
+            ? 'skipped_non_operational'
+            : 'blocked_source',
+          attempts: attempt,
+          actions: 0,
+          planFingerprint: preview.plan.planFingerprint,
+          blockers: sourceIssues.map((issue) => `source:${issue}`).sort(),
+        };
+      }
+      if (previewBlockers.length > 0) {
+        return {
+          enrollmentId: id,
+          status: 'blocked_plan',
+          attempts: attempt,
+          actions: 0,
+          planFingerprint: preview.plan.planFingerprint,
+          blockers: previewBlockers,
+        };
+      }
+      return {
+        enrollmentId: id,
+        status: 'shadow',
+        attempts: attempt,
+        actions: preview.plan.actions.length,
+        planFingerprint: preview.plan.planFingerprint,
+        blockers: [],
+      };
+    }
 
     // Every automatic decision, including no-op and blocked outcomes, is
     // transactionally re-read by Brick 4. This turns a concurrent source/session
@@ -327,6 +371,7 @@ export async function runFutureScheduleSweepBatch(args: {
     blockedSource: 0,
     blockedPlan: 0,
     skippedNonOperational: 0,
+    shadow: 0,
     failed: 0,
     failedEnrollmentIds: [] as string[],
   };
@@ -353,6 +398,9 @@ export async function runFutureScheduleSweepBatch(args: {
       case 'skipped_non_operational':
         summary.skippedNonOperational += 1;
         break;
+      case 'shadow':
+        summary.shadow += 1;
+        break;
     }
   });
 
@@ -362,6 +410,7 @@ export async function runFutureScheduleSweepBatch(args: {
 
 export async function runFutureSchedulePeriodicSweep(
   db: admin.firestore.Firestore,
+  options: {writesEnabled?: boolean} = {},
 ): Promise<FutureScheduleSweepSummary> {
   const stateRef = db.collection(SWEEP_STATE_COLLECTION).doc(SWEEP_STATE_DOCUMENT);
   const stateSnap = await stateRef.get();
@@ -389,13 +438,9 @@ export async function runFutureSchedulePeriodicSweep(
     snapshot = await buildQuery(null).get();
   }
 
-  const enrollmentIds = snapshot.docs
-    .filter((doc) =>
-      isCanonicalFutureScheduleEnrollment(
-        (doc.data() || {}) as Record<string, unknown>,
-      ),
-    )
-    .map((doc) => doc.id);
+  // Inspect every bounded enrollment row. Canonical rows may reconcile; active
+  // non-canonical rows are surfaced as blocked_source instead of disappearing.
+  const enrollmentIds = snapshot.docs.map((doc) => doc.id);
   const store = createFutureScheduleFirestoreStore(db);
   const batch = await runFutureScheduleSweepBatch({
     enrollmentIds,
@@ -403,6 +448,7 @@ export async function runFutureSchedulePeriodicSweep(
     reconcile: (enrollmentId) =>
       reconcileFutureScheduleEnrollmentAutomatically(store, enrollmentId, {
         actorId: AUTOMATION_ACTOR,
+        writesEnabled: options.writesEnabled !== false,
       }),
   });
 
@@ -423,6 +469,7 @@ export async function runFutureSchedulePeriodicSweep(
       lastBlockedSource: batch.blockedSource,
       lastBlockedPlan: batch.blockedPlan,
       lastSkippedNonOperational: batch.skippedNonOperational,
+      lastShadow: batch.shadow,
       lastFailed: batch.failed,
       lastFailedEnrollmentIds: batch.failedEnrollmentIds.slice(0, 100),
       lastCycleCompleted: cycleCompleted,
@@ -458,12 +505,13 @@ export const onFutureScheduleEnrollmentWrite = onDocumentWritten(
 
     const enrollmentId = event.params.enrollmentId;
     const store = createFutureScheduleFirestoreStore(admin.firestore());
+    const writesEnabled = futureScheduleWritesEnabled();
 
     try {
       const outcome = await reconcileFutureScheduleEnrollmentAutomatically(
         store,
         enrollmentId,
-        {actorId: AUTOMATION_ACTOR},
+        {actorId: AUTOMATION_ACTOR, writesEnabled},
       );
 
       const payload = {
@@ -472,6 +520,7 @@ export const onFutureScheduleEnrollmentWrite = onDocumentWritten(
         attempts: outcome.attempts,
         actions: outcome.actions,
         blockers: outcome.blockers,
+        writesEnabled,
       };
 
       if (
@@ -506,6 +555,7 @@ export const futureScheduleReconcilerEveryTwoHours = onSchedule(
       ...summary,
       schedule: FUTURE_SCHEDULE_RECONCILER_SWEEP_SCHEDULE,
       timeZone: FUTURE_SCHEDULE_RECONCILER_TIME_ZONE,
+      writesEnabled,
     };
 
     if (
