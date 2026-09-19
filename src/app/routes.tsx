@@ -47,6 +47,7 @@ const TestimonialsPage = lazy(() => import('../pages/TestimonialsPage'));
 const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
+const SpeakingProgressFrameworkPage = lazy(() => import('../pages/public/SpeakingProgressFrameworkPage'));
 const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForKidsPage'));
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
 const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
@@ -640,6 +641,7 @@ const router = createBrowserRouter(
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
+        { path: 'speaking-progress-framework', element: <SpeakingProgressFrameworkPage /> },
         { path: 'games', element: <Navigate to="/games/english-excellence" replace /> },
         // Public marketing entry for English Excellence games + subscription plans
         { path: 'games/english-excellence', element: <LearningGamesMarketingPage /> },
