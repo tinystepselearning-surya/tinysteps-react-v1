@@ -83,6 +83,8 @@ The server re-reads the validation case before applying the correction and rejec
 - current Tiny Steps attendance still matches the attendance captured by the AVS case;
 - case is still `needs_review`;
 - the exact case revision has not already been resolved;
+- the session is not operationally cancelled;
+- a non-canonical attendance state is not being silently treated as missing attendance;
 - the session document version has not changed between validation and commit;
 - the AVS case document version has not changed between validation and commit.
 
