@@ -159,6 +159,21 @@ describe('SEO infrastructure', () => {
           && entry.type === 301
       )
     ).toBe(true);
+    for (const [source, destination] of [
+      ['/courses/basic-public-speaking', '/courses/public-speaking-foundations'],
+      ['/courses/basic-public-speaking/', '/courses/public-speaking-foundations'],
+      ['/courses/advanced-public-speaking', '/courses/public-speaking-excellence'],
+      ['/courses/advanced-public-speaking/', '/courses/public-speaking-excellence'],
+    ] as const) {
+      expect(
+        redirects.some(
+          (entry) =>
+            entry.source === source
+            && entry.destination === destination
+            && entry.type === 301
+        )
+      ).toBe(true);
+    }
   });
 
   it('uses the public route manifest for P0 canonical redirects and static inventories', async () => {
@@ -195,6 +210,26 @@ describe('SEO infrastructure', () => {
         {
           source: '/public-speaking-communication-kids/',
           destination: '/speaking',
+          status: 301,
+        },
+        {
+          source: '/courses/basic-public-speaking',
+          destination: '/courses/public-speaking-foundations',
+          status: 301,
+        },
+        {
+          source: '/courses/basic-public-speaking/',
+          destination: '/courses/public-speaking-foundations',
+          status: 301,
+        },
+        {
+          source: '/courses/advanced-public-speaking',
+          destination: '/courses/public-speaking-excellence',
+          status: 301,
+        },
+        {
+          source: '/courses/advanced-public-speaking/',
+          destination: '/courses/public-speaking-excellence',
           status: 301,
         },
       ]),
