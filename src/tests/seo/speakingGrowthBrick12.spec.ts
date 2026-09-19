@@ -165,17 +165,17 @@ describe('Speaking growth Brick 12 GEO/AEO/AI visibility layer', () => {
   });
 
   it('keeps crawler, training-crawler and product-control roles explicit while preserving private routes', () => {
-    expect(SPEAKING_AI_AGENT_POLICY.searchDiscoveryCrawler).toBe('OAI-SearchBot');
+    expect(SPEAKING_AI_AGENT_POLICY.openAiSearchDiscoveryCrawler).toBe('OAI-SearchBot');
     expect(SPEAKING_AI_AGENT_POLICY.openAiPotentialTrainingCrawler).toBe('GPTBot');
-    expect(SPEAKING_AI_AGENT_POLICY.googleGeminiControlToken).toBe('Google-Extended');
-    expect(SPEAKING_AI_AGENT_POLICY.appleFoundationModelControlToken).toBe('Applebot-Extended');
-    expect(new Set(SPEAKING_AI_AGENT_POLICY.configuredPublicAgents).size).toBe(
-      SPEAKING_AI_AGENT_POLICY.configuredPublicAgents.length,
+    expect(SPEAKING_AI_AGENT_POLICY.googleGeminiProductControlToken).toBe('Google-Extended');
+    expect(SPEAKING_AI_AGENT_POLICY.appleFoundationModelProductControlToken).toBe('Applebot-Extended');
+    expect(new Set(SPEAKING_AI_AGENT_POLICY.configuredRobotsTokens).size).toBe(
+      SPEAKING_AI_AGENT_POLICY.configuredRobotsTokens.length,
     );
 
     const privatePaths = ['/admin/', '/teacher/', '/parent/', '/kids/', '/private/'];
 
-    for (const agent of SPEAKING_AI_AGENT_POLICY.configuredPublicAgents) {
+    for (const agent of SPEAKING_AI_AGENT_POLICY.configuredRobotsTokens) {
       const marker = 'User-agent: ' + agent;
       const start = robots.indexOf(marker);
       expect(start).toBeGreaterThanOrEqual(0);
