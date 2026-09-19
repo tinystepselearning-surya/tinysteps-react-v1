@@ -102,6 +102,53 @@ test('index export topology change requires a full deployment', () => {
   assert.equal(impact(['functions/src/index.ts']).fullDeployment, true);
 });
 
+test('pure additive index export deploys only the new Function target', () => {
+  const before = sources();
+  const after = sources({
+    'functions/src/newFunction.ts': 'export const newFunction = 1;',
+  });
+  after.set('functions/src/index.ts', `
+    export { functionA } from './functionA';
+    export { functionB } from './functionB';
+    export { functionC } from './nested/functionC';
+    export { newFunction } from './newFunction';
+  `);
+
+  const result = impact(
+    ['functions/src/index.ts', 'functions/src/newFunction.ts'],
+    {beforeSources: before, afterSources: after},
+  );
+
+  assert.equal(result.fullDeployment, false);
+  assert.equal(result.functionsDeploymentRequired, true);
+  assert.deepEqual(result.impactedFunctions, ['newFunction']);
+  assert.match(result.reasons.newFunction.join(' '), /newly exported|directly exports/);
+});
+
+test('additive export of an existing unchanged module still deploys the new Function target', () => {
+  const before = sources({
+    'functions/src/newFunction.ts': 'export const newFunction = 1;',
+  });
+  const after = new Map(before);
+  after.set('functions/src/index.ts', `
+    export { functionA } from './functionA';
+    export { functionB } from './functionB';
+    export { functionC } from './nested/functionC';
+    export { newFunction } from './newFunction';
+  `);
+
+  const result = resolveFunctionsImpact({
+    changedFiles: ['functions/src/index.ts'],
+    beforeSources: before,
+    afterSources: after,
+    beforeFirebase: firebase,
+    afterFirebase: firebase,
+  });
+
+  assert.equal(result.fullDeployment, false);
+  assert.deepEqual(result.impactedFunctions, ['newFunction']);
+});
+
 test('deleted source module finds dependents in the before graph', () => {
   const after = sources();
   after.delete('functions/src/leaf.ts');
