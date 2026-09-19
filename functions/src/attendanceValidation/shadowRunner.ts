@@ -34,7 +34,11 @@ import {
 
 export const AV53_CASE_SCHEMA_VERSION = 1;
 export const AV53_MAX_WORK_ITEMS_PER_RUN = 100;
+export const AV53_VALIDATION_START_YMD = '2026-09-01' as const;
 export const ATTENDANCE_VALIDATION_CASES_COLLECTION = 'attendanceValidationCases';
+
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export const AV53_CASE_CLASSIFICATIONS = [
   'VERIFIED',
@@ -106,6 +110,8 @@ export interface Av53ShadowRunResult {
   processedCount: number;
   persistedCaseCount: number;
   skippedCount: number;
+  preScopeSkippedCount: number;
+  validationStartYmd: typeof AV53_VALIDATION_START_YMD;
   pointReadDocumentBudget: number;
   staffRegistryLoadedOnce: true;
   casePreReads: 0;
@@ -114,7 +120,11 @@ export interface Av53ShadowRunResult {
   skipped: Array<{
     classSessionId: string;
     evidenceId: string;
-    reason: 'both_session_and_evidence_missing';
+    reason:
+      | 'both_session_and_evidence_missing'
+      | 'before_validation_start'
+      | 'validation_scope_date_unresolved'
+      | 'validation_scope_date_conflict';
   }>;
   operationalMutationAllowed: false;
 }
@@ -196,6 +206,121 @@ function firstText(values: unknown): string | null {
     if (normalized) return normalized;
   }
   return null;
+}
+
+function validYmd(value: unknown): string | null {
+  const normalized = text(value);
+  if (!normalized || !YMD_RE.test(normalized)) return null;
+  const parsed = Date.parse(`${normalized}T00:00:00.000Z`);
+  if (!Number.isFinite(parsed)) return null;
+  return new Date(parsed).toISOString().slice(0, 10) === normalized
+    ? normalized
+    : null;
+}
+
+function dateFromUnknown(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const candidate = value as {
+    toDate?: () => Date;
+    seconds?: number;
+    _seconds?: number;
+  };
+
+  if (typeof candidate.toDate === 'function') {
+    const date = candidate.toDate();
+    return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
+  }
+
+  const seconds = typeof candidate.seconds === 'number'
+    ? candidate.seconds
+    : candidate._seconds;
+  if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+    const date = new Date(seconds * 1000);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  return null;
+}
+
+function istYmdFromDate(value: unknown): string | null {
+  const date = dateFromUnknown(value);
+  if (!date) return null;
+  return new Date(date.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
+}
+
+function evidenceServiceYmd(
+  evidence: AttendanceValidationEvidenceDocument | null,
+): string | null {
+  if (!evidence) return null;
+  return istYmdFromDate(evidence.session.scheduledStartDateTime);
+}
+
+function sessionServiceYmd(
+  session: Record<string, unknown> | null,
+): string | null {
+  if (!session) return null;
+  return validYmd(session.date)
+    || validYmd(session.serviceDateYmd)
+    || istYmdFromDate(session.startAt);
+}
+
+function scopeDecision(
+  session: Record<string, unknown> | null,
+  evidence: AttendanceValidationEvidenceDocument | null,
+):
+  | { kind: 'in_scope'; serviceDateYmd: string }
+  | {
+    kind:
+      | 'before_validation_start'
+      | 'validation_scope_date_unresolved'
+      | 'validation_scope_date_conflict';
+    serviceDateYmd: string | null;
+  } {
+  const dates = [
+    sessionServiceYmd(session),
+    evidenceServiceYmd(evidence),
+  ].filter((value): value is string => Boolean(value));
+
+  if (dates.length === 0) {
+    return {
+      kind: 'validation_scope_date_unresolved',
+      serviceDateYmd: null,
+    };
+  }
+
+  const uniqueDates = [...new Set(dates)];
+  if (uniqueDates.length > 1) {
+    if (uniqueDates.some((value) => value < AV53_VALIDATION_START_YMD)) {
+      return {
+        kind: 'before_validation_start',
+        serviceDateYmd: uniqueDates.sort()[0],
+      };
+    }
+    return {
+      kind: 'validation_scope_date_conflict',
+      serviceDateYmd: null,
+    };
+  }
+
+  const serviceDateYmd = uniqueDates[0];
+  if (serviceDateYmd < AV53_VALIDATION_START_YMD) {
+    return {
+      kind: 'before_validation_start',
+      serviceDateYmd,
+    };
+  }
+
+  return { kind: 'in_scope', serviceDateYmd };
 }
 
 function sessionKidId(session: Record<string, unknown>): string | null {
@@ -458,8 +583,9 @@ function caseFromEvidence(params: {
  *
  * It accepts an explicit work list only. It never discovers sessions by scanning
  * classSessions and never reads enrollments, kids, billing, earnings, credits or
- * reschedule collections. Case persistence uses deterministic document ids and
- * performs no case pre-read.
+ * reschedule collections. A hard 2026-09-01 Tiny Steps service-date lower bound
+ * permanently excludes July/August history. Case persistence uses deterministic
+ * document ids and performs no case pre-read.
  */
 export async function runAv53Shadow(
   input: Av53ShadowRunInput,
@@ -488,6 +614,16 @@ export async function runAv53Shadow(
         classSessionId: item.classSessionId,
         evidenceId: item.evidenceId,
         reason: 'both_session_and_evidence_missing',
+      });
+      continue;
+    }
+
+    const scope = scopeDecision(session, evidence);
+    if (scope.kind !== 'in_scope') {
+      skipped.push({
+        classSessionId: item.classSessionId,
+        evidenceId: item.evidenceId,
+        reason: scope.kind,
       });
       continue;
     }
@@ -564,6 +700,9 @@ export async function runAv53Shadow(
     processedCount: loaded.length,
     persistedCaseCount: cases.length,
     skippedCount: skipped.length,
+    preScopeSkippedCount: skipped.filter((item) =>
+      item.reason === 'before_validation_start').length,
+    validationStartYmd: AV53_VALIDATION_START_YMD,
     pointReadDocumentBudget: workItems.length * 2,
     staffRegistryLoadedOnce: true,
     casePreReads: 0,
