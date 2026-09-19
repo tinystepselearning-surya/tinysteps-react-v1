@@ -118,9 +118,9 @@ Brick 4 does not invent teacher certifications, guaranteed outcomes or unsupport
 The Speaking testimonials component now appears in its own evidence section before the FAQ, instead of being buried inside the final CTA.
 
 Wording is deliberately:
-`Approved parent feedback from speaking families`
+`Parent feedback from speaking families`
 
-not "verified" or otherwise stronger than the repository's testimonial approval policy.
+This wording matches the actual static testimonial catalogue used by TestimonialSnippets, whose source is `Tiny Steps parent feedback`. The component does not itself prove Firestore approval status, so Brick 4 does not label this static evidence as "approved" or "verified".
 
 The final CTA is now cleaner and assessment-focused.
 
@@ -205,8 +205,162 @@ Brick 4 is complete on the feature branch when:
 5. parents can inspect class experience;
 6. teacher/academic-quality evidence is linked;
 7. course levels remain clear;
-8. progress and approved parent evidence appear before FAQ/final CTA;
+8. progress and source-supported parent feedback appear before FAQ/final CTA;
 9. no new competing commercial page is created;
 10. regression guard is committed.
 
 All ten conditions are satisfied structurally on the isolated branch.
+
+## 16. 2026-09-19 pre-Brick-5 re-audit
+
+Brick 4 was re-audited before opening Brick 5.
+
+### A. Commercial-intent boundary correction
+
+The first Brick 4 pass retained an older Quick Answer sentence that said Public Speaking should move children from short answers/hesitation to complete sentences.
+
+That wording blurred the Brick 2 boundary because one-word / very short everyday-answer and sentence-formation problems can belong primarily to Spoken English or Grammar.
+
+The Quick Answer now states that Public Speaking is for children who can already communicate at a basic level and need:
+- structured responses;
+- idea organisation;
+- storytelling;
+- show-and-tell;
+- presentations;
+- audience-facing speaking.
+
+It explicitly says that one-word everyday answers or sentence-formation difficulty may route to Spoken English or Grammar before or alongside Speaking.
+
+Two supporting bullets were also narrowed:
+- `Sentence expansion practice` → `Idea organisation practice`;
+- `Reading aloud expression` → `Voice clarity and expression`.
+
+### B. Parent-proof wording correction
+
+`TestimonialSnippets` renders the static testimonial catalogue in `src/lib/staticTestimonials.ts`.
+
+That catalogue is labelled:
+`Tiny Steps parent feedback`
+
+It does not expose an approval-state field in the component path used by `/speaking`.
+
+Therefore the Brick 4 heading was corrected from:
+`Approved parent feedback from speaking families`
+
+to:
+`Parent feedback from speaking families`
+
+The regression test now blocks the stronger unsupported wording.
+
+### C. Named course-detail navigation
+
+The flagship page now links the named level cards directly to:
+- `/courses/public-speaking-foundations`;
+- `/courses/public-speaking-excellence`.
+
+This does not give those pages generic acquisition ownership. It is a named-detail handoff from the canonical `/speaking` owner.
+
+### D. Comparison-table accessibility
+
+The "What parents should compare" table now has:
+- an `sr-only` caption describing the table;
+- `scope="col"` on both column headers;
+- the existing horizontal-overflow wrapper retained for small screens.
+
+### E. Mobile/layout re-audit
+
+Static responsive review confirmed:
+- diagnostic grid collapses to one column before `md`;
+- class-experience cards collapse to one column before `md`;
+- academic-quality cards collapse to one column before `md`;
+- primary CTA controls use 44–48px minimum heights;
+- the wide comparison table is intentionally wrapped in horizontal overflow;
+- no Brick 4 addition introduces an unprotected fixed-width mobile surface.
+
+### F. Internal-link integrity
+
+All unique Brick 4 destinations were checked against the route manifest/router and resolved:
+
+- `/`
+- `/curriculum`
+- `/book-demo`
+- `/spoken-english-classes-for-kids-online`
+- `/confidence-building-program-kids`
+- `/grammar`
+- `/courses/public-speaking-foundations`
+- `/courses/public-speaking-excellence`
+- `/pricing`
+- `/class-samples`
+- `/team`
+- `/why-tiny-steps`
+- `/parents/tracking-progress`
+- `/resources/speaking`
+
+### G. Structured-data handoff — Brick 6
+
+Current `/speaking` emits a schema.org `Course` entity plus a pathway `ItemList`.
+
+Current Google Search Central Course-list documentation requires a course-list implementation with at least three courses for Course-list rich-result eligibility.
+
+Tiny Steps currently has two named Public Speaking levels.
+
+Brick 4 therefore does **not** invent a third course or restructure programme schema simply to target a rich result. Brick 6 must review the programme-architecture schema deliberately and distinguish:
+- semantic entity markup;
+- named course-detail entities;
+- Google Course-list enhancement eligibility.
+
+No Course-list rich-result eligibility is claimed by Brick 4.
+
+### H. Structured-data handoff — Brick 12
+
+The FAQ remains visible on-page and continues to use the existing schema.org FAQ generator for semantic consistency.
+
+Brick 4 does not treat FAQ markup as a guaranteed Google rich-result mechanism. Brick 12 should review current answer-engine / supported-search-markup behavior when implementing AEO/GEO extraction.
+
+### I. Expanded invariant gate
+
+The final re-audit matrix passed all tested invariants, including:
+- one H1;
+- canonical `/speaking`;
+- frozen title/meta and Commercial C4 control;
+- zero retired legacy URL references;
+- diagnostic ownership boundaries;
+- correct Spoken-English / Grammar / Confidence handoffs;
+- named Basic and Advanced detail links;
+- class-sample and team evidence;
+- source-supported parent feedback wording;
+- exactly one testimonial component;
+- exactly one ResponsiveTeachingSection;
+- assessment-first language;
+- comparison-table accessibility;
+- mobile overflow protection;
+- FAQ/sample evidence;
+- final assessment CTA;
+- every internal link resolving.
+
+### J. Branch scope and executable-test state
+
+Brick 4 differs from the Brick 3 endpoint only in:
+- `src/pages/speaking.tsx`;
+- `src/tests/seo/speakingGrowthBrick4.spec.ts`;
+- `docs/seo/speaking-growth/BRICK_04_FLAGSHIP_SPEAKING_PAGE.md`;
+- `docs/seo/speaking-growth/BRICK_STATUS.md`.
+
+At the re-audit gate, the feature branch is 0 commits behind `main`.
+
+No GitHub Actions workflow run is attached to the latest Brick 4 commit, so the executable npm/Vitest/build suite is still not claimed as passed. That remains mandatory at final integration.
+
+## 17. Re-audit decision
+
+Brick 4 is **COMPLETE — RE-AUDITED** on the isolated branch.
+
+The page now has:
+- tighter commercial-intent boundaries;
+- evidence wording matched to the actual source;
+- named level-detail navigation;
+- improved table accessibility;
+- clean mobile structure;
+- preserved SEO control;
+- explicit schema handoffs instead of speculative markup expansion.
+
+It remains undeployed and unmerged to main.
