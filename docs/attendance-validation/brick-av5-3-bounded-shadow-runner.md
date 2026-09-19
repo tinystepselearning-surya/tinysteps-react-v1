@@ -178,9 +178,19 @@ The runner never trusts mismatched enrollment, teacher, child, or session refere
 
 ## Threshold behavior
 
-The meaningful teacher/learner overlap threshold remains an explicit runner input.
+Contract v2 adopts a production meaningful-overlap threshold of **1,500 seconds (25 minutes)** using a **strictly greater than** comparison.
 
-If it is `null`, the existing fail-closed AV4/AV5 behavior remains REVIEW and then AMBIGUOUS/review. AV5.3 does not invent a production threshold.
+Production AV5.3 callers should omit `meaningfulOverlapSeconds`; omission resolves to the versioned 1,500-second default.
+
+Boundary behavior:
+
+```text
+24:59 -> REVIEW
+25:00 -> REVIEW
+25:01+ -> eligible for PRESENT
+```
+
+An explicit threshold override remains available for deterministic tests and future calibration analysis. An explicit `null` still forces the prior fail-closed REVIEW path and is not the production default.
 
 ## Safety boundary
 
@@ -211,7 +221,7 @@ Production activation should be a separate reviewed brick after the case schema 
 
 ## Tests
 
-The AV5.3 regression suite covers exact work-item processing, the permanent September 2026 lower bound, August session/evidence exclusion, exact September 1 IST inclusion, unresolved-date fail-closed behavior, deterministic case IDs, nested child-attendance resolution, missing evidence, orphan evidence, reference mismatch, missing documents, null-threshold fail-closed behavior, staff-registry warning propagation, the 100-item hard cap, duplicate-session rejection, stable case identity across reruns, fingerprint changes, zero case pre-reads, and the no-mutation invariant.
+The AV5.3 regression suite covers exact work-item processing, the permanent September 2026 lower bound, August session/evidence exclusion, exact September 1 IST inclusion, unresolved-date fail-closed behavior, deterministic case IDs, nested child-attendance resolution, missing evidence, orphan evidence, reference mismatch, missing documents, production-default 25-minute threshold behavior, explicit null-threshold fail-closed behavior, staff-registry warning propagation, the 100-item hard cap, duplicate-session rejection, stable case identity across reruns, fingerprint changes, zero case pre-reads, and the no-mutation invariant.
 
 ## Core invariant
 
