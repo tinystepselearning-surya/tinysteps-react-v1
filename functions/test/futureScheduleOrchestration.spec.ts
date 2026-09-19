@@ -1,7 +1,10 @@
 import {describe, expect, it} from 'vitest';
 import {
+  futureScheduleCanaryEnrollmentIds,
   futureScheduleEnrollmentComparable,
   futureScheduleWritesEnabled,
+  futureScheduleWritesEnabledForEnrollment,
+  resolveFutureScheduleEnrollmentWritesEnabled,
   reconcileFutureScheduleEnrollmentAutomatically,
   resolveFutureScheduleSweepCursor,
   runFutureScheduleSweepBatch,
@@ -221,6 +224,96 @@ describe('Brick 5 future schedule automatic orchestration', () => {
     expect(futureScheduleWritesEnabled({
       FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED: 'TRUE',
     })).toBe(true);
+  });
+
+  it('parses the canary enrollment allowlist deterministically and fails closed', () => {
+    expect(futureScheduleCanaryEnrollmentIds({})).toEqual([]);
+
+    expect(futureScheduleCanaryEnrollmentIds({
+      FUTURE_SCHEDULE_RECONCILER_CANARY_ENROLLMENT_IDS:
+        ' enrollment-b, enrollment-a, enrollment-b ',
+    })).toEqual(['enrollment-a', 'enrollment-b']);
+
+    expect(futureScheduleCanaryEnrollmentIds({
+      FUTURE_SCHEDULE_RECONCILER_CANARY_ENROLLMENT_IDS:
+        'enrollment-a,bad enrollment',
+    })).toEqual([]);
+
+    expect(futureScheduleCanaryEnrollmentIds({
+      FUTURE_SCHEDULE_RECONCILER_CANARY_ENROLLMENT_IDS:
+        Array.from({length: 26}, (_, index) => `enrollment-${index}`).join(','),
+    })).toEqual([]);
+  });
+
+  it('keeps global writes authoritative and otherwise allows only exact canary enrollment ids', () => {
+    expect(resolveFutureScheduleEnrollmentWritesEnabled({
+      enrollmentId: 'enrollment-a',
+      globalWritesEnabled: true,
+      canaryEnrollmentIds: [],
+    })).toBe(true);
+
+    expect(resolveFutureScheduleEnrollmentWritesEnabled({
+      enrollmentId: 'enrollment-a',
+      globalWritesEnabled: false,
+      canaryEnrollmentIds: ['enrollment-a'],
+    })).toBe(true);
+
+    expect(resolveFutureScheduleEnrollmentWritesEnabled({
+      enrollmentId: 'enrollment-b',
+      globalWritesEnabled: false,
+      canaryEnrollmentIds: ['enrollment-a'],
+    })).toBe(false);
+
+    expect(futureScheduleWritesEnabledForEnrollment('enrollment-a', {
+      FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED: 'false',
+      FUTURE_SCHEDULE_RECONCILER_CANARY_ENROLLMENT_IDS: 'enrollment-a',
+    })).toBe(true);
+
+    expect(futureScheduleWritesEnabledForEnrollment('enrollment-b', {
+      FUTURE_SCHEDULE_RECONCILER_WRITES_ENABLED: 'false',
+      FUTURE_SCHEDULE_RECONCILER_CANARY_ENROLLMENT_IDS: 'enrollment-a',
+    })).toBe(false);
+  });
+
+  it('applies only the allowlisted enrollment while other sweep enrollments remain shadow', async () => {
+    const stores = new Map([
+      ['enrollment-a', new AutomaticStore(enrollment())],
+      ['enrollment-b', new AutomaticStore(enrollment())],
+    ]);
+
+    const globalWritesEnabled = false;
+    const canaryEnrollmentIds = ['enrollment-a'];
+
+    const summary = await runFutureScheduleSweepBatch({
+      enrollmentIds: ['enrollment-a', 'enrollment-b'],
+      concurrency: 2,
+      reconcile: async (enrollmentId) => {
+        const store = stores.get(enrollmentId);
+        if (!store) throw new Error(`Missing store for ${enrollmentId}`);
+
+        return reconcileFutureScheduleEnrollmentAutomatically(
+          store,
+          enrollmentId,
+          {
+            writesEnabled: resolveFutureScheduleEnrollmentWritesEnabled({
+              enrollmentId,
+              globalWritesEnabled,
+              canaryEnrollmentIds,
+            }),
+          },
+        );
+      },
+    });
+
+    expect(summary.applied).toBe(1);
+    expect(summary.shadow).toBe(1);
+    expect(summary.failed).toBe(0);
+
+    expect(stores.get('enrollment-a')?.sessions.size).toBe(6);
+    expect(stores.get('enrollment-a')?.writes).toBe(6);
+
+    expect(stores.get('enrollment-b')?.sessions.size).toBe(0);
+    expect(stores.get('enrollment-b')?.writes).toBe(0);
   });
 
   it('keeps the 500-row cursor boundary deterministic and wraps an empty tail', () => {
