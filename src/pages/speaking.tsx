@@ -328,7 +328,7 @@ export default function SpeakingPage() {
             </p>
             <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
             <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Public speaking classes for kids should help children move from short answers and hesitation to complete sentences, structured responses, storytelling, show-and-tell confidence, reading aloud expression, and presentation readiness. Tiny Steps begins with a free {demoMinutes}-minute 1:1 online demo assessment class to identify whether the child needs public-speaking structure, communication practice, everyday spoken-English support, grammar support, or specialist confidence-building support.
+              Public speaking classes for kids should help children who can already communicate at a basic level build structured responses, organise ideas, tell stories, handle show-and-tell, and become more ready for presentations and audience-facing speaking. If the main difficulty is one-word everyday answers or sentence formation itself, the free {demoMinutes}-minute 1:1 online demo assessment class may instead point to Spoken English or Grammar support before or alongside Speaking.
             </p>
           </article>
         </div>
@@ -476,9 +476,9 @@ export default function SpeakingPage() {
             {[
               'Assessment-first speaking placement',
               'Guided low-pressure speaking turns',
-              'Sentence expansion practice',
+              'Idea organisation practice',
               'Storytelling and answer structure',
-              'Reading aloud expression',
+              'Voice clarity and expression',
               'Show-and-tell and school communication practice',
               '1:1 attention',
               'Parent progress visibility',
