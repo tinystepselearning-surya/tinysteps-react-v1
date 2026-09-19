@@ -2,7 +2,7 @@
 
 Build date: 2026-09-19 IST  
 Branch: `feature/speaking-seo-geo-growth`  
-Status: **COMPLETE — STRUCTURALLY VERIFIED**  
+Status: **COMPLETE — RE-AUDITED**  
 Production deployment: **NO**
 
 ## Purpose
@@ -48,7 +48,7 @@ New source:
 
 Revision:
 
-`2026-09-19-b12-v1`
+`2026-09-19-b12-v2`
 
 The contract freezes **13 primary answer owners** covering:
 
@@ -162,22 +162,22 @@ The existing resource-hub speakable implementation remains unchanged and protect
 
 Brick 12 does not claim that speakable markup guarantees any search or AI treatment.
 
-## AI crawler verification
+## AI crawler / robots-token verification
 
-Existing `robots.txt` continues to allow public content for major discovery/search user agents while repeating private-route disallows.
+Existing `robots.txt` continues to allow public content for the configured search, fetch, training-crawler and product-control tokens while repeating private-route disallows.
 
-The Brick 12 guard checks:
+The re-audited contract deliberately distinguishes:
 
-- OAI-SearchBot;
-- ChatGPT-User;
-- Claude-SearchBot;
-- PerplexityBot;
-- GPTBot;
-- ClaudeBot;
-- Google-Extended;
-- Applebot-Extended.
+- OpenAI search discovery crawler: `OAI-SearchBot`;
+- OpenAI potential-training crawler: `GPTBot`;
+- Google Gemini robots product-control token: `Google-Extended`;
+- Apple foundation-model robots product-control token: `Applebot-Extended`.
 
-It also protects private paths including admin, teacher, parent, kids and private routes.
+The configured robots tokens also include `ChatGPT-User`, `Claude-SearchBot`, `PerplexityBot`, and `ClaudeBot`.
+
+This distinction matters because not every robots token represents an independent HTTP crawler. Google documents that Google-Extended has no separate HTTP user-agent string; it controls whether Google-crawled content can be used for Gemini training/grounding. Apple documents that Applebot-Extended does not crawl webpages and controls how Applebot-crawled content may be used for foundation-model training.
+
+The regression guard now validates each configured token's **own robots group**, including `Allow: /` and private-route disallows. This avoids a false-positive where private disallows exist only in the wildcard group even though bot-specific groups do not inherit them.
 
 OpenAI publisher guidance rechecked on 2026-09-19 states that sites intended for ChatGPT Search inclusion should not block OAI-SearchBot. Search placement is not guaranteed.
 
@@ -252,6 +252,125 @@ At structural verification:
 - production merge: **NO**
 - production deployment: **NO**
 
+## Full re-audit findings
+
+Brick 12 was independently re-audited before Brick 13.
+
+### 1. Robots-role taxonomy — corrected
+
+The structural build grouped search crawlers, user-triggered fetchers, training crawlers and robots control tokens under one broad discovery label.
+
+That was technically imprecise.
+
+Revision `2026-09-19-b12-v2` now distinguishes the key roles listed above and calls the combined configured set **robots tokens**, not generic crawlers.
+
+### 2. Primary answer-owner validity — hardened
+
+The initial Brick 12 regression guard proved that all thirteen answer-owner URLs appeared in the LLM directories, but did not prove that those URLs still remained valid search owners.
+
+The re-audit now requires every primary answer owner to remain:
+
+- canonical;
+- indexable;
+- present in the correct sitemap.
+
+Eleven standard owners are checked against the route SEO registry plus `sitemap-static.xml`.
+
+The two named Public Speaking course pages are checked against the shared public-course configuration, shared CourseDetail canonical-path contract, and `sitemap-courses.xml`.
+
+### 3. Fourteen knowledge-owner indexability — hardened
+
+All fourteen Brick 8 Speaking knowledge URLs are now additionally required to:
+
+- remain indexable under the blog indexing policy;
+- remain sitemap-eligible;
+- appear in `sitemap-blog.xml`.
+
+This prevents the AI authority map from silently pointing to a future noindex/demoted knowledge URL.
+
+### 4. Bot-specific private-route protection — hardened
+
+The original regression check only proved that private-route `Disallow` lines existed somewhere in `robots.txt`.
+
+That was insufficient because bot-specific robots groups do not inherit rules from the wildcard group.
+
+The re-audit now scopes each configured robots token to its own group and requires:
+
+- `Allow: /`;
+- `Disallow: /admin/`;
+- `Disallow: /teacher/`;
+- `Disallow: /parent/`;
+- `Disallow: /kids/`;
+- `Disallow: /private/`.
+
+### 5. Registry test false-positive — found and fixed
+
+The first deep re-audit matrix reported `/pricing` as non-indexable.
+
+The page was not defective. The new audit test used a fixed-length source slice that extended into the next SEO-registry object and accidentally captured that next route's `noindex`.
+
+The test now isolates each registry object by the next route key before checking canonical and robots state.
+
+The exact `/pricing` registry object is self-canonical and contains no `noindex`.
+
+## Re-audit verification
+
+Independent post-fix matrix:
+
+- Brick 12 contract and role semantics: **13 / 13**
+- Primary-owner LLM parity: **26 / 26**
+- Primary-owner canonical/indexability/sitemap checks: **50 / 50**
+- Knowledge-owner LLM parity: **28 / 28**
+- Knowledge BlogPosting authority checks: **42 / 42**
+- Knowledge indexability/sitemap checks: **23 / 23**
+- Per-token robots/private-route checks: **56 / 56**
+- AEO/speakable checks: **13 / 13**
+- Brick 9 cross-brick protection: **2 / 2**
+- LLM guidance / original 51-list integrity: **7 / 7**
+- Duplicate-route protection: **5 / 5**
+- Re-audit regression-test structure: **5 / 5**
+
+**Total: 270 / 270 passed.**
+
+## Protected-surface SHA verification
+
+Compared with the Brick 12 structural-close head:
+
+`868d1264b8fed753100dd3a33bbd2309ebf1a0c3`
+
+The following nineteen surfaces remain byte-for-byte unchanged:
+
+- `public/llms.txt`;
+- `public/llms-full.txt`;
+- `public/robots.txt`;
+- Blog technical authority;
+- `/speaking`;
+- Speaking Progress Framework page;
+- Speaking resource hub;
+- Brick 11 entity authority;
+- Brick 9 evidence contract;
+- Brick 8 knowledge contract;
+- Brick 7 progress contract;
+- semantic facts;
+- shared schemas;
+- application routes;
+- public route manifest;
+- operational progress skills;
+- parent dashboard;
+- teacher progress editor;
+- teacher progress-save backend.
+
+**Protection result: 19 / 19 unchanged.**
+
+## Re-audit implementation delta
+
+Before documentation updates, the Brick 12 re-audit changed exactly two files:
+
+1. `src/lib/speakingAiVisibility.ts`
+2. `src/tests/seo/speakingGrowthBrick12.spec.ts`
+
+No LLM directory content, visible page, route, sitemap, operational dashboard or backend mutation logic was changed during the re-audit.
+
 ## Executable-test limitation
 
 No feature-branch GitHub Actions run is claimed for this exact head.
@@ -272,4 +391,4 @@ Brick 12 is structurally complete when the Speaking system:
 
 That condition is satisfied on the isolated feature branch.
 
-**Brick 12 status: COMPLETE — STRUCTURALLY VERIFIED.**
+**Brick 12 status: COMPLETE — RE-AUDITED.**
