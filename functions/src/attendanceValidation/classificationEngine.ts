@@ -9,6 +9,7 @@ export const AV5_CLASSIFICATION_SCHEMA_VERSION = 1;
 export const AV5_CLASSIFICATION_DECISIONS = [
   'present',
   'absent',
+  'not_occurred',
   'review',
 ] as const;
 
@@ -18,6 +19,7 @@ export type Av5ClassificationDecision =
 export type Av5ClassificationReason =
   | 'verified_teacher_learner_overlap'
   | 'verified_no_learner_side_participant'
+  | 'verified_no_teams_occurrence'
   | 'session_reference_not_verified'
   | 'occurrence_not_verified'
   | 'identity_requires_review'
@@ -57,7 +59,8 @@ function result(
     kidId: proof.kidId,
     teacherId: proof.teacherId,
     decision,
-    recommendedAttendanceOutcome: decision === 'review' ? null : decision,
+    recommendedAttendanceOutcome:
+      decision === 'present' || decision === 'absent' ? decision : null,
     requiresHumanReview: decision === 'review',
     reasons: [...new Set(reasons)],
     proofIssues: [...proof.issues],
@@ -91,6 +94,10 @@ export function classifySessionProof(
 
   if (!proof.correctSessionReference || !proof.identitySessionReferenceMatches) {
     return result(proof, 'review', ['session_reference_not_verified']);
+  }
+
+  if (proof.confirmedNoTeamsOccurrence) {
+    return result(proof, 'not_occurred', ['verified_no_teams_occurrence']);
   }
 
   if (
