@@ -45,6 +45,7 @@ describe('AV0 attendance validation contract', () => {
       'MISSING_ATTENDANCE',
       'ATTENDANCE_CONFLICT',
       'POSSIBLE_FALSE_PRESENT',
+      'NO_CLASS_OCCURRED',
       'MISSING_TEAMS_EVIDENCE',
       'ORPHAN_TEAMS_CLASS',
       'AMBIGUOUS',

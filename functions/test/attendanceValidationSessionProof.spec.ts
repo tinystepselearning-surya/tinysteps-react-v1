@@ -164,6 +164,7 @@ describe('AV4 session proof engine', () => {
     expect(result.correctSessionReference).toBe(true);
     expect(result.attendanceReportMatchesScheduledWindow).toBe(true);
     expect(result.correctOccurrenceResolved).toBe(true);
+    expect(result.confirmedNoTeamsOccurrence).toBe(false);
     expect(result.expectedTeacherPresent).toBe(true);
     expect(result.learnerSidePresent).toBe(true);
     expect(result.attendanceEvidenceComplete).toBe(true);
@@ -207,16 +208,45 @@ describe('AV4 session proof engine', () => {
     expect(result.issues).toContain('occurrence_not_resolved');
   });
 
-  it('requires exactly one selected attendance report and treats missing selection as incomplete', () => {
+  it('confirms no Teams occurrence when the complete attendance-report lookup has no overlapping report', () => {
     const noReportEvidence = evidence();
     noReportEvidence.attendanceReports = [];
+    noReportEvidence.collectionStatus = 'partial';
+    noReportEvidence.completeness.transcriptsComplete = false;
+    noReportEvidence.completeness.nextTranscriptPagePresent = true;
+
+    const noOccurrenceIdentity = identity();
+    noOccurrenceIdentity.expectedTeacherPresent = false;
+    noOccurrenceIdentity.learnerSidePresent = false;
+    noOccurrenceIdentity.learnerSideParticipantCount = 0;
+    noOccurrenceIdentity.participantClassifications = [];
+
+    const result = buildSessionProof(noReportEvidence, noOccurrenceIdentity, {
+      meaningfulOverlapSeconds: 600,
+    });
+
+    expect(result.correctOccurrenceResolved).toBe(false);
+    expect(result.confirmedNoTeamsOccurrence).toBe(true);
+    expect(result.attendanceEvidenceComplete).toBe(false);
+    expect(result.meaningfulTeacherLearnerOverlap).toBeNull();
+    expect(result.issues).toEqual(['no_teams_occurrence_confirmed']);
+  });
+
+  it('keeps zero-report evidence unresolved when the attendance-report lookup is incomplete', () => {
+    const noReportEvidence = evidence();
+    noReportEvidence.attendanceReports = [];
+    noReportEvidence.collectionStatus = 'partial';
+    noReportEvidence.completeness.attendanceReportsComplete = false;
+    noReportEvidence.completeness.nextAttendanceReportPagePresent = true;
 
     const result = buildSessionProof(noReportEvidence, identity(), {
       meaningfulOverlapSeconds: 600,
     });
 
     expect(result.correctOccurrenceResolved).toBe(false);
+    expect(result.confirmedNoTeamsOccurrence).toBe(false);
     expect(result.attendanceEvidenceComplete).toBe(false);
+    expect(result.issues).toContain('occurrence_not_resolved');
     expect(result.issues).toContain('unexpected_attendance_report_count');
     expect(result.issues).toContain('attendance_evidence_incomplete');
   });

@@ -225,6 +225,44 @@ describe('AV5.3 bounded shadow runner', () => {
     });
   });
 
+  it('persists NO_CLASS_OCCURRED without review when a complete report lookup proves no occurrence and Tiny Steps is unmarked', async () => {
+    const noOccurrenceEvidence = evidence();
+    noOccurrenceEvidence.collectionStatus = 'partial';
+    noOccurrenceEvidence.attendanceReports = [];
+    noOccurrenceEvidence.completeness.transcriptsComplete = false;
+    noOccurrenceEvidence.completeness.nextTranscriptPagePresent = true;
+    noOccurrenceEvidence.artifactAvailability.attendanceReportAvailable = false;
+
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session({}),
+        evidence: noOccurrenceEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-no-class',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      validationDecision: 'not_occurred',
+      tinyStepsAttendance: null,
+      classification: 'NO_CLASS_OCCURRED',
+      recommendedAction: 'none',
+      resolutionStatus: 'verified',
+    });
+    expect(store.saved[0].reasons).toContain('verified_no_class_occurrence');
+    expect(store.saved[0].sourceClassificationReasons).toContain(
+      'verified_no_teams_occurrence',
+    );
+    expect(store.saved[0].proofIssues).toEqual(['no_teams_occurrence_confirmed']);
+  });
+
   it('uses the contract-v2 strict 25-minute threshold when production input omits an override', async () => {
     const exactTwentyFiveEvidence = evidence();
     exactTwentyFiveEvidence.attendanceReports[0].participantRecords[1].rawAttendanceIntervals = [

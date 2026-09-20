@@ -7,6 +7,7 @@ export const AV5_RECONCILIATION_CLASSIFICATIONS = [
   'MISSING_ATTENDANCE',
   'ATTENDANCE_CONFLICT',
   'POSSIBLE_FALSE_PRESENT',
+  'NO_CLASS_OCCURRED',
   'MISSING_TEAMS_EVIDENCE',
   'AMBIGUOUS',
 ] as const;
@@ -35,6 +36,8 @@ export type Av5ReconciliationReason =
   | 'stored_attendance_conflicts_with_validation'
   | 'stored_reschedule_requires_review'
   | 'stored_present_not_supported_by_verified_evidence'
+  | 'verified_no_class_occurrence'
+  | 'stored_reschedule_consistent_with_no_occurrence'
   | 'teams_attendance_evidence_incomplete'
   | 'classification_requires_review';
 
@@ -147,8 +150,9 @@ function reviewIsMissingTeamsEvidence(
  * from a matched Tiny Steps classSession. Orphan detection belongs to the batch
  * matching stage that compares Teams artifacts against the expected-session set.
  *
- * Rescheduled is treated conservatively: a Present/Absent validation recommendation
- * against a stored Rescheduled value is a conflict requiring review. AV5.2 never
+ * Rescheduled is treated conservatively for Present/Absent recommendations. A
+ * verified no-occurrence result is consistent with either an unmarked slot or a
+ * stored Rescheduled slot and requires no attendance correction. AV5.2 never
  * rewrites reschedule state or credits.
  */
 export function reconcileAttendanceClassification(
@@ -199,6 +203,50 @@ export function reconcileAttendanceClassification(
       tinyStepsAttendance,
       'ATTENDANCE_CONFLICT',
       'correct_to_present',
+      'needs_review',
+      ['stored_attendance_conflicts_with_validation'],
+    );
+  }
+
+  if (classification.decision === 'not_occurred') {
+    if (tinyStepsAttendance === null) {
+      return buildResult(
+        classification,
+        null,
+        'NO_CLASS_OCCURRED',
+        'none',
+        'verified',
+        ['verified_no_class_occurrence'],
+      );
+    }
+
+    if (tinyStepsAttendance === 'rescheduled') {
+      return buildResult(
+        classification,
+        tinyStepsAttendance,
+        'NO_CLASS_OCCURRED',
+        'none',
+        'verified',
+        ['stored_reschedule_consistent_with_no_occurrence'],
+      );
+    }
+
+    if (tinyStepsAttendance === 'present') {
+      return buildResult(
+        classification,
+        tinyStepsAttendance,
+        'POSSIBLE_FALSE_PRESENT',
+        'review',
+        'needs_review',
+        ['stored_present_not_supported_by_verified_evidence'],
+      );
+    }
+
+    return buildResult(
+      classification,
+      tinyStepsAttendance,
+      'ATTENDANCE_CONFLICT',
+      'review',
       'needs_review',
       ['stored_attendance_conflicts_with_validation'],
     );

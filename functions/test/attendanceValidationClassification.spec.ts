@@ -17,6 +17,7 @@ function proof(overrides: Partial<Av4SessionProofResult> = {}): Av4SessionProofR
     correctSessionReference: true,
     attendanceReportMatchesScheduledWindow: true,
     correctOccurrenceResolved: true,
+    confirmedNoTeamsOccurrence: false,
     expectedTeacherPresent: true,
     learnerSidePresent: true,
     attendanceEvidenceComplete: true,
@@ -43,7 +44,7 @@ function expectDecision(
   expect(result.reasons).toContain(reason);
   expect(result.operationalMutationAllowed).toBe(false);
   expect(result.recommendedAttendanceOutcome).toBe(
-    decision === 'review' ? null : decision,
+    decision === 'present' || decision === 'absent' ? decision : null,
   );
   expect(result.requiresHumanReview).toBe(decision === 'review');
 }
@@ -103,6 +104,27 @@ describe('AV5 classification engine', () => {
       }),
       'review',
       'session_reference_not_verified',
+    );
+  });
+
+  it('classifies NOT_OCCURRED when Graph completely proves no matching Teams occurrence', () => {
+    expectDecision(
+      proof({
+        attendanceReportMatchesScheduledWindow: false,
+        correctOccurrenceResolved: false,
+        confirmedNoTeamsOccurrence: true,
+        expectedTeacherPresent: false,
+        learnerSidePresent: false,
+        attendanceEvidenceComplete: false,
+        teacherScheduledSeconds: 0,
+        learnerSideScheduledSeconds: 0,
+        maxTeacherLearnerOverlapSeconds: 0,
+        maxTeacherLearnerScheduledOverlapPercentage: 0,
+        meaningfulTeacherLearnerOverlap: null,
+        issues: ['no_teams_occurrence_confirmed'],
+      }),
+      'not_occurred',
+      'verified_no_teams_occurrence',
     );
   });
 

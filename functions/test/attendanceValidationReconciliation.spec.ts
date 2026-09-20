@@ -18,7 +18,8 @@ function classification(
     kidId: 'kid-1',
     teacherId: 'teacher-1',
     decision,
-    recommendedAttendanceOutcome: decision === 'review' ? null : decision,
+    recommendedAttendanceOutcome:
+      decision === 'present' || decision === 'absent' ? decision : null,
     requiresHumanReview: decision === 'review',
     reasons: [reason],
     proofIssues: [],
@@ -91,6 +92,52 @@ describe('AV5.2 reconciliation engine', () => {
     expect(result.classification).toBe('ATTENDANCE_CONFLICT');
     expect(result.recommendedAction).toBe('review');
     expect(result.reasons).toContain('stored_reschedule_requires_review');
+  });
+
+  it('NO_CLASS_OCCURRED without review when no Teams occurrence is verified and Tiny Steps is unmarked', () => {
+    const result = reconcileAttendanceClassification(
+      classification('not_occurred', 'verified_no_teams_occurrence'),
+      null,
+    );
+
+    expect(result.classification).toBe('NO_CLASS_OCCURRED');
+    expect(result.recommendedAction).toBe('none');
+    expect(result.resolutionStatus).toBe('verified');
+    expect(result.reasons).toContain('verified_no_class_occurrence');
+  });
+
+  it('NO_CLASS_OCCURRED without review when a rescheduled slot has no Teams occurrence', () => {
+    const result = reconcileAttendanceClassification(
+      classification('not_occurred', 'verified_no_teams_occurrence'),
+      'rescheduled',
+    );
+
+    expect(result.classification).toBe('NO_CLASS_OCCURRED');
+    expect(result.recommendedAction).toBe('none');
+    expect(result.resolutionStatus).toBe('verified');
+    expect(result.reasons).toContain('stored_reschedule_consistent_with_no_occurrence');
+  });
+
+  it('POSSIBLE_FALSE_PRESENT when Tiny Steps says Present but Graph proves no Teams occurrence', () => {
+    const result = reconcileAttendanceClassification(
+      classification('not_occurred', 'verified_no_teams_occurrence'),
+      'present',
+    );
+
+    expect(result.classification).toBe('POSSIBLE_FALSE_PRESENT');
+    expect(result.recommendedAction).toBe('review');
+    expect(result.resolutionStatus).toBe('needs_review');
+  });
+
+  it('keeps stored Absent under review when Graph proves the class itself did not occur', () => {
+    const result = reconcileAttendanceClassification(
+      classification('not_occurred', 'verified_no_teams_occurrence'),
+      'absent',
+    );
+
+    expect(result.classification).toBe('ATTENDANCE_CONFLICT');
+    expect(result.recommendedAction).toBe('review');
+    expect(result.resolutionStatus).toBe('needs_review');
   });
 
   it('VERIFIED when stored Absent matches verified AV5 Absent', () => {

@@ -115,7 +115,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
   {
     region: REGION,
     memory: '512MiB',
-    timeoutSeconds: 300,
+    timeoutSeconds: 540,
     maxInstances: 1,
     secrets: [
       MICROSOFT_TENANT_ID,
