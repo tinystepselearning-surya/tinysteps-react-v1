@@ -116,6 +116,14 @@ interface AvsForceFreshResponse {
   evidenceId: string;
   collectionStatus: string;
   issueKinds: string[];
+  issueDetails?: Array<{
+    stage: string;
+    kind: string;
+    httpStatus: number | null;
+    graphCode: string | null;
+    innerCode: string | null;
+    reportId: string | null;
+  }>;
   selectedTranscriptCount: number;
   selectedAttendanceReportCount: number;
   selectedAttendanceRecordCount: number;
@@ -1093,6 +1101,18 @@ export default function AttendanceValidationDashboard() {
                 <p className="mt-2 text-xs font-medium text-amber-800">
                   Teams evidence reported: {forceFreshResult.issueKinds.map(humanize).join(', ')}.
                 </p>
+              )}
+              {(forceFreshResult.issueDetails?.length ?? 0) > 0 && (
+                <div className="mt-1 space-y-0.5 text-xs text-amber-800">
+                  {forceFreshResult.issueDetails?.map((issue, index) => (
+                    <div key={`${issue.stage}-${issue.reportId ?? index}`}>
+                      Stage: {humanize(issue.stage)}
+                      {issue.httpStatus !== null ? ` · HTTP ${issue.httpStatus}` : ''}
+                      {issue.graphCode ? ` · Graph ${issue.graphCode}` : ''}
+                      {issue.innerCode ? ` · Inner ${issue.innerCode}` : ''}
+                    </div>
+                  ))}
+                </div>
               )}
               {forceFreshResult.concurrentMarkerChangeDetected && (
                 <p className="mt-2 text-xs font-medium text-amber-800">
