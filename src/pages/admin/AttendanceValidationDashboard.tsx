@@ -226,6 +226,31 @@ function asTextArray(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function safeForceFreshFailureMessage(error: unknown): string {
+  const candidate = error && typeof error === 'object'
+    ? error as Record<string, unknown>
+    : {};
+  const diagnosticText = [
+    candidate.code,
+    candidate.message,
+    candidate.details,
+  ]
+    .map((value) => String(value ?? ''))
+    .join(' ');
+
+  if (diagnosticText.includes('organizer_config_invalid')) {
+    return 'Force Fresh stopped before Microsoft Graph: the canonical Teams organizer configuration is invalid.';
+  }
+  if (diagnosticText.includes('organizer_identity_ambiguous')) {
+    return 'Force Fresh stopped before Microsoft Graph: multiple Teams organizer identities were found. Configure one canonical organizer and retry.';
+  }
+  if (diagnosticText.includes('organizer_identity_unresolved')) {
+    return 'Force Fresh stopped before Microsoft Graph: the canonical Teams organizer is not configured yet.';
+  }
+
+  return 'Force Fresh Teams Evidence failed. No operational attendance or finance was changed.';
+}
+
 function normalizeClassification(value: unknown): Av6Classification {
   const normalized = asText(value);
   const allowed: Av6Classification[] = [
@@ -699,7 +724,7 @@ export default function AttendanceValidationDashboard() {
       await loadSavedCases(false, true);
     } catch (forceFreshError) {
       console.error('[AVS] Force Fresh Teams Evidence failed', forceFreshError);
-      setError('Force Fresh Teams Evidence failed. No operational attendance or finance was changed.');
+      setError(safeForceFreshFailureMessage(forceFreshError));
     } finally {
       setForceFreshCaseId(null);
     }

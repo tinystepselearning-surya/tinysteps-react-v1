@@ -8,6 +8,7 @@
   },
   "scripts": {
     "backfill:parent-payment-sort": "node scripts/backfillParentPaymentSortFields.js",
+    "configure:avs-organizer": "node scripts/setAttendanceValidationOrganizerConfig.js",
     "lint": "eslint \"src/**/*.{ts,js}\" \"scripts/**/*.{ts,js}\"",
     "build": "tsc",
     "build:watch": "tsc --watch",
