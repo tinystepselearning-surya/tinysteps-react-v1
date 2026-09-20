@@ -20,6 +20,7 @@ export type Av4ProofIssueKind =
   | 'session_reference_incomplete'
   | 'identity_session_mismatch'
   | 'occurrence_not_resolved'
+  | 'no_teams_occurrence_confirmed'
   | 'unexpected_attendance_report_count'
   | 'attendance_report_window_mismatch'
   | 'expected_teacher_missing'
@@ -50,6 +51,7 @@ export interface Av4SessionProofResult {
   correctSessionReference: boolean;
   attendanceReportMatchesScheduledWindow: boolean;
   correctOccurrenceResolved: boolean;
+  confirmedNoTeamsOccurrence: boolean;
   expectedTeacherPresent: boolean;
   learnerSidePresent: boolean;
   attendanceEvidenceComplete: boolean;
@@ -157,6 +159,23 @@ function attendanceEvidenceComplete(evidence: AttendanceValidationEvidenceDocume
     && !attendanceRelevantIssue;
 }
 
+function confirmedNoTeamsOccurrence(
+  evidence: AttendanceValidationEvidenceDocument,
+): boolean {
+  const attendanceLookupIssue = evidence.issues.some(
+    (issue) =>
+      issue.stage === 'meeting_resolution'
+      || issue.stage === 'attendance_reports'
+      || issue.stage === 'attendance_records',
+  );
+
+  return evidence.meeting !== null
+    && evidence.attendanceReports.length === 0
+    && evidence.completeness.attendanceReportsComplete
+    && !evidence.completeness.nextAttendanceReportPagePresent
+    && !attendanceLookupIssue;
+}
+
 /**
  * AV4 computes session proof from AV2/AV2.1 evidence plus the deterministic AV3 identity bridge.
  *
@@ -195,21 +214,31 @@ export function buildSessionProof(
       && evidence.attendanceReports.length === 1
       && reportMatchesScheduledWindow,
   );
-  if (!correctOccurrenceResolved) issues.push('occurrence_not_resolved');
-  if (evidence.attendanceReports.length !== 1) {
-    issues.push('unexpected_attendance_report_count');
-  } else if (!reportMatchesScheduledWindow) {
-    issues.push('attendance_report_window_mismatch');
+  const noTeamsOccurrenceConfirmed = confirmedNoTeamsOccurrence(evidence);
+
+  if (noTeamsOccurrenceConfirmed) {
+    issues.push('no_teams_occurrence_confirmed');
+  } else {
+    if (!correctOccurrenceResolved) issues.push('occurrence_not_resolved');
+    if (evidence.attendanceReports.length !== 1) {
+      issues.push('unexpected_attendance_report_count');
+    } else if (!reportMatchesScheduledWindow) {
+      issues.push('attendance_report_window_mismatch');
+    }
   }
 
   const expectedTeacherPresent = identity.expectedTeacherPresent;
   const learnerSidePresent = identity.learnerSidePresent;
-  if (!expectedTeacherPresent) issues.push('expected_teacher_missing');
-  if (!learnerSidePresent) issues.push('learner_side_missing');
-  if (identity.identityConfidence !== 'verified') issues.push('identity_requires_review');
+  if (!noTeamsOccurrenceConfirmed) {
+    if (!expectedTeacherPresent) issues.push('expected_teacher_missing');
+    if (!learnerSidePresent) issues.push('learner_side_missing');
+    if (identity.identityConfidence !== 'verified') issues.push('identity_requires_review');
+  }
 
   const evidenceComplete = attendanceEvidenceComplete(evidence);
-  if (!evidenceComplete) issues.push('attendance_evidence_incomplete');
+  if (!evidenceComplete && !noTeamsOccurrenceConfirmed) {
+    issues.push('attendance_evidence_incomplete');
+  }
 
   const teacherParticipants = participantsByClassification(
     evidence,
@@ -250,14 +279,16 @@ export function buildSessionProof(
 
   let meaningfulTeacherLearnerOverlap: boolean | null = null;
   const threshold = config.meaningfulOverlapSeconds;
-  if (threshold === null) {
-    issues.push('overlap_threshold_not_configured');
-  } else {
-    if (!Number.isFinite(threshold) || threshold < 0) {
-      throw new RangeError('meaningfulOverlapSeconds must be null or a finite non-negative number.');
+  if (!noTeamsOccurrenceConfirmed) {
+    if (threshold === null) {
+      issues.push('overlap_threshold_not_configured');
+    } else {
+      if (!Number.isFinite(threshold) || threshold < 0) {
+        throw new RangeError('meaningfulOverlapSeconds must be null or a finite non-negative number.');
+      }
+      meaningfulTeacherLearnerOverlap = maxTeacherLearnerOverlapSeconds > threshold;
+      if (!meaningfulTeacherLearnerOverlap) issues.push('meaningful_overlap_not_met');
     }
-    meaningfulTeacherLearnerOverlap = maxTeacherLearnerOverlapSeconds > threshold;
-    if (!meaningfulTeacherLearnerOverlap) issues.push('meaningful_overlap_not_met');
   }
 
   return {
@@ -271,6 +302,7 @@ export function buildSessionProof(
     correctSessionReference,
     attendanceReportMatchesScheduledWindow: reportMatchesScheduledWindow,
     correctOccurrenceResolved,
+    confirmedNoTeamsOccurrence: noTeamsOccurrenceConfirmed,
     expectedTeacherPresent,
     learnerSidePresent,
     attendanceEvidenceComplete: evidenceComplete,
