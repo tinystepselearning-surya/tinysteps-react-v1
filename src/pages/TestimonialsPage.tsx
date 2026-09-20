@@ -108,7 +108,7 @@ const reviewDecisionSchema = {
 
 function ReviewCard({ item }: { item: StaticTestimonial }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="rounded-[24px] border border-slate-200/90 bg-white p-5 shadow-[0_12px_34px_rgba(15,23,42,0.045)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.07)]">
       <p className="mb-2 text-sm font-semibold text-amber-600" aria-label="5 out of 5 stars">
         {'★'.repeat(item.rating)}
       </p>
@@ -128,7 +128,7 @@ function ReviewCard({ item }: { item: StaticTestimonial }) {
 
 export default function TestimonialsPage() {
   return (
-    <main className="min-h-screen bg-white text-slate-900">
+    <main className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_58%,#f8fbff_100%)] text-slate-950">
       <Meta
         title="Tiny Steps Learning Reviews and Parent Feedback"
         description="Read curated first-party parent feedback across Tiny Steps phonics, grammar and public speaking programs, then compare class samples, curriculum and pricing before deciding."
@@ -136,10 +136,11 @@ export default function TestimonialsPage() {
         jsonLd={[breadcrumbSchema, webpageSchema, reviewDecisionSchema, faqSchema]}
       />
 
-      <section className="mx-auto max-w-6xl px-6 py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Feedback</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Parent Feedback and Tiny Steps Learning Reviews</h1>
-        <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
+        <div className="rounded-[32px] border border-orange-100/80 bg-white/95 p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:p-8 md:p-10">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-700">Parent Feedback</p>
+        <h1 className="mt-3 max-w-4xl font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl">Parent Feedback and Tiny Steps Learning Reviews</h1>
+        <p className="mt-4 max-w-4xl text-base leading-7 text-slate-700 sm:text-lg">
           Read curated first-party feedback excerpts from Tiny Steps families across phonics, grammar, and public speaking programs. Use these experiences as one part of your decision—not as a guarantee of the result another child will have.
         </p>
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm leading-6 text-slate-700">
@@ -149,25 +150,26 @@ export default function TestimonialsPage() {
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
             to="/class-samples"
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
           >
             Watch Class Samples
           </Link>
           <Link
             to="/pricing"
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950"
           >
             Check Pricing
           </Link>
           <Link
             to="/book-demo"
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950"
           >
             Book Free 35-Minute Demo
           </Link>
         </div>
+        </div>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+        <section className="mt-8 rounded-[28px] border border-slate-200/90 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.045)] sm:p-7">
           <h2 className="text-2xl font-bold text-slate-900">Themes parents describe in these reviews</h2>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
             <li>• Greater willingness to participate in guided learning.</li>
@@ -181,11 +183,11 @@ export default function TestimonialsPage() {
           </p>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+        <section className="mt-6 rounded-[28px] border border-slate-200/90 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.045)] sm:p-7">
           <h2 className="text-2xl font-bold text-slate-900">How to use parent feedback before you decide</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {reviewDecisionSignals.map((item, index) => (
-              <article key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <article key={item.title} className="rounded-[22px] border border-slate-200 bg-slate-50/80 p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Step {index + 1}</p>
                 <h3 className="mt-2 text-base font-semibold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{item.description}</p>
@@ -217,11 +219,11 @@ export default function TestimonialsPage() {
           })}
         </div>
 
-        <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+        <section className="mt-10 rounded-[28px] border border-slate-200/90 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.045)] sm:p-7">
           <h2 className="text-2xl font-bold text-slate-900">Frequently Asked Questions</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {faqItems.map((item) => (
-              <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-4">
+              <article key={item.question} className="rounded-[20px] border border-slate-200 bg-slate-50/60 p-5">
                 <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{item.answer}</p>
               </article>
@@ -229,7 +231,7 @@ export default function TestimonialsPage() {
           </div>
         </section>
 
-        <section className="mt-10 rounded-2xl bg-slate-900 p-8 text-center text-white">
+        <section className="mt-10 rounded-[32px] bg-slate-950 p-8 text-center text-white shadow-[0_24px_64px_rgba(15,23,42,0.18)] sm:p-10">
           <h2 className="text-2xl font-bold">Verify the fit with your own child</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-slate-200 sm:text-base">
             Parent feedback can help you understand recurring experiences, but the strongest decision evidence is your child’s own response. Start with a free 35-minute 1:1 online demo assessment class, then review the recommended path, class format, and current pricing before enrolling.
