@@ -29,6 +29,7 @@ function enrollment(overrides: Record<string, unknown> = {}): Record<string, unk
     parentId: 'parent-1',
     parentIds: ['parent-1'],
     teacherId: 'teacher-1',
+    teacherName: 'Teacher One',
     courseId: 'course-1',
     feePerClass: 400,
     currency: 'INR',
@@ -72,6 +73,7 @@ function correctRegular(
       parentId: 'parent-1',
       parentIds: ['parent-1'],
       teacherId: 'teacher-1',
+      teacherName: 'Teacher One',
       courseId: 'course-1',
       date,
       startTime: '17:30',
@@ -466,6 +468,24 @@ describe('Brick 5 future schedule automatic orchestration', () => {
     expect(outcome.attempts).toBe(1);
     expect(store.sessions.has('enrollment-1_20260921_1730')).toBe(true);
     expect(store.sessions.has('enrollment-1_20261002_1730')).toBe(true);
+  });
+
+  it('reports a missing teacherName CREATE plan as blocked without writes', async () => {
+    const store = new AutomaticStore(enrollment({teacherName: undefined}));
+
+    const outcome = await reconcileFutureScheduleEnrollmentAutomatically(
+      store,
+      'enrollment-1',
+    );
+
+    expect(outcome.status).toBe('blocked_plan');
+    expect(outcome.actions).toBe(0);
+    expect(outcome.attempts).toBe(1);
+    expect(outcome.blockers).toEqual([
+      'missing_teacher_name_for_create',
+    ]);
+    expect(store.sessions.size).toBe(0);
+    expect(store.writes).toBe(0);
   });
 
   it('retries a stale preview and then converges against the new live state', async () => {
