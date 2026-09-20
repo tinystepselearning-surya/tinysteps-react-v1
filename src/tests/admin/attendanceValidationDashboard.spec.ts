@@ -213,7 +213,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('Graph ${issue.graphCode}');
   });
 
-  it('wires a separate first-time baseline action with a hard ten-session explanation', () => {
+  it('wires a separate first-time baseline action with a hard 100-session explanation', () => {
     expect(dashboard).toContain('Run First-Time Baseline');
     expect(dashboard).toContain('Continue Baseline');
     expect(dashboard).toContain('Baseline Complete');
@@ -221,7 +221,7 @@ describe('AV6 admin attendance validation dashboard', () => {
       "'runAttendanceValidationFirstTimeBaseline'",
     );
     expect(dashboard).toContain(
-      'up to 10 class sessions that do not already have saved AVS cases',
+      'up to 100 class sessions that do not already have saved AVS cases',
     );
     expect(dashboard).toContain(
       'First-Time Baseline can include only completed service dates through yesterday IST.',
@@ -229,6 +229,12 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(callFunctions).toContain(
       "runAttendanceValidationFirstTimeBaseline: 'asia-south1'",
     );
+  });
+
+  it('shows No Class Occurred as a first-class no-review classification', () => {
+    expect(dashboard).toContain("'NO_CLASS_OCCURRED'");
+    expect(dashboard).toContain("{ value: 'NO_CLASS_OCCURRED', label: 'No class' }");
+    expect(dashboard).toContain("validationDecision === 'not_occurred'");
   });
 
   it('automatically reloads saved results and exposes baseline read/Graph progress', () => {
