@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import * as logger from 'firebase-functions/logger';
 import { createHash } from 'crypto';
 import { FieldPath } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
@@ -300,6 +301,10 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           await resolveAttendanceValidationOrganizerUserId(db);
         organizerUserId = organizerResolution.organizerUserId;
         organizerConfigReads = organizerResolution.firestoreReadCount;
+        logger.info('AVS baseline canonical organizer resolved', {
+          rangeId,
+          organizerSource: organizerResolution.source,
+        });
       } catch (error) {
         if (error instanceof AvsOrganizerResolutionError) {
           organizerResolutionFailure = error.reason;
