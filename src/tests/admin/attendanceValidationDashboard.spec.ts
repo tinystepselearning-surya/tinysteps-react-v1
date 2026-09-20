@@ -137,7 +137,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
     expect(dashboard).toContain('{ fromDate, toDate }');
     expect(dashboard).toContain('await loadSavedCases(false, true)');
-    expect(dashboard).toContain('if (!preserveCurrentTab) setClassificationFilter(\'all\')');
+    expect(dashboard).toContain('if (!preserveCurrentTab) {');
+    expect(dashboard).toContain("setClassificationFilter('all')");
+    expect(dashboard).toContain("setTeacherFilter('all')");
     expect(callFunctions).toContain(
       "runAttendanceValidationLatestCheck: 'asia-south1'",
     );
