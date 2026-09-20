@@ -492,6 +492,44 @@ describe('Brick 4 transactional future schedule executor', () => {
       .toBe('https://new.example/class');
   });
 
+  it('synchronizes missing teacher name without rewriting financial terms', async () => {
+    const row = regular({
+      id: 'enrollment-1_20260921_1730',
+      date: '2026-09-21',
+      feePerClass: 350,
+    });
+    row.data.teacherName = null;
+
+    const store = new InMemoryFutureScheduleStore(
+      enrollment({teacherName: 'Teacher One'}),
+      [row],
+    );
+
+    const approved = await preview(store);
+
+    expect(approved.plan.actions).toContainEqual({
+      kind: 'SYNC_REGULAR_METADATA',
+      actionId: 'sync:enrollment-1_20260921_1730',
+      sessionId: 'enrollment-1_20260921_1730',
+      reasons: ['teacher_name_drift'],
+    });
+
+    await executeFutureScheduleReconciliation(store, {
+      enrollmentId: 'enrollment-1',
+      expectedApprovalFingerprint: approved.approvalFingerprint,
+      actorId: 'test',
+    });
+
+    expect(store.sessions.get('enrollment-1_20260921_1730')).toMatchObject({
+      teacherId: 'teacher-1',
+      teacherName: 'Teacher One',
+      feePerClass: 350,
+      financialTermsSnapshot: {
+        billingRateSnapshot: 350,
+      },
+    });
+  });
+
   it('synchronizes schedule revision and parent metadata without rewriting financial terms', async () => {
     const stale = regular({
       id: 'enrollment-1_20260921_1730',

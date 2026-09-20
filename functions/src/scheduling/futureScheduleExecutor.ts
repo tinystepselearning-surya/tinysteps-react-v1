@@ -491,6 +491,17 @@ const metadataPatch = (args: {
     patch.joinUrl = text(args.enrollment.joinUrl) || null;
   }
 
+  if (args.reasons.includes('teacher_name_drift')) {
+    const teacherName = text(args.enrollment.teacherName);
+    if (!teacherName) {
+      throw new FutureScheduleExecutionError(
+        'SOURCE_BLOCKED',
+        'Teacher name is required before teacher metadata synchronization',
+      );
+    }
+    patch.teacherName = teacherName;
+  }
+
   return patch;
 };
 

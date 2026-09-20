@@ -1076,6 +1076,13 @@ export function inspectFutureSchedule(args: {
       if (text(row.data.joinUrl) !== identity.joinUrl) {
         driftReasons.push('join_url_drift');
       }
+      const enrollmentTeacherName = text(args.enrollment.teacherName);
+      if (
+        enrollmentTeacherName &&
+        text(row.data.teacherName) !== enrollmentTeacherName
+      ) {
+        driftReasons.push('teacher_name_drift');
+      }
       if (driftReasons.length) {
         metadataDrift.push({sessionId: row.id, reasons: driftReasons});
       }

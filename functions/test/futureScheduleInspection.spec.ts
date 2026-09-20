@@ -860,6 +860,61 @@ describe('Brick 2 future schedule inspection', () => {
     expect(result.converged).toBe(false);
   });
 
+  it('tracks missing teacher name as safe metadata drift when the enrollment has one', () => {
+    const activeEnrollment = enrollment();
+    activeEnrollment.teacherName = 'Teacher One';
+
+    const session = regularSession({
+      id: 'enrollment-1_20260921_1730',
+      date: '2026-09-21',
+    });
+    session.data.teacherName = null;
+
+    const result = inspectFutureSchedule({
+      enrollmentId: 'enrollment-1',
+      enrollment: activeEnrollment,
+      todayYmd: '2026-09-19',
+      sessions: [session],
+    });
+
+    const row = result.occurrences.find(
+      (item) => item.occurrence.date === '2026-09-21',
+    );
+
+    expect(row?.state).toBe('correct');
+    expect(row?.reasons).toEqual(['teacher_name_drift']);
+    expect(result.metadataDrift).toEqual([{
+      sessionId: 'enrollment-1_20260921_1730',
+      reasons: ['teacher_name_drift'],
+    }]);
+    expect(result.converged).toBe(false);
+  });
+
+  it('does not create teacher name drift when the enrollment has no teacher name', () => {
+    const activeEnrollment = enrollment();
+
+    const session = regularSession({
+      id: 'enrollment-1_20260921_1730',
+      date: '2026-09-21',
+    });
+    session.data.teacherName = null;
+
+    const result = inspectFutureSchedule({
+      enrollmentId: 'enrollment-1',
+      enrollment: activeEnrollment,
+      todayYmd: '2026-09-19',
+      sessions: [session],
+    });
+
+    const row = result.occurrences.find(
+      (item) => item.occurrence.date === '2026-09-21',
+    );
+
+    expect(row?.state).toBe('correct');
+    expect(row?.reasons).toEqual([]);
+    expect(result.metadataDrift).toEqual([]);
+  });
+
   it('blocks a row whose future date/time fields conflict with a today timestamp', () => {
     const conflicting = regularSession({
       id: 'conflicting-clock-row',
