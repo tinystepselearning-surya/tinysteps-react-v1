@@ -190,6 +190,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
+  it('surfaces safe organizer failures without exposing organizer IDs', () => {
+    expect(dashboard).toContain('safeForceFreshFailureMessage');
+    expect(dashboard).toContain('organizer_config_invalid');
+    expect(dashboard).toContain('organizer_identity_ambiguous');
+    expect(dashboard).toContain('organizer_identity_unresolved');
+    expect(dashboard).toContain('stopped before Microsoft Graph');
+    expect(dashboard).not.toContain('f0f84eef-5cc2-4ece-8356-df08c2f113bb');
+  });
+
   it('shows Force Fresh Graph/read evidence after completion', () => {
     expect(dashboard).toContain('Force Fresh Teams Evidence completed');
     expect(dashboard).toContain('forceFreshResult.graphLogicalCalls');
