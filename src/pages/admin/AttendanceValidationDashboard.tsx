@@ -20,6 +20,13 @@ import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -390,6 +397,12 @@ function humanize(value: string | null): string {
     .join(' ');
 }
 
+function teacherFilterKey(item: Av6ValidationCase): string | null {
+  if (item.teacherId) return `id:${item.teacherId}`;
+  if (item.teacherName) return `name:${item.teacherName.toLowerCase()}`;
+  return null;
+}
+
 function issueSummary(item: Av6ValidationCase): string[] {
   return [
     ...item.reasons,
@@ -405,6 +418,7 @@ export default function AttendanceValidationDashboard() {
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
   const [classificationFilter, setClassificationFilter] = useState<'all' | Av6Classification>('all');
   const [search, setSearch] = useState('');
+  const [teacherFilter, setTeacherFilter] = useState('all');
   const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
   const [toDate, setToDate] = useState(currentIstYmd);
@@ -486,7 +500,10 @@ export default function AttendanceValidationDashboard() {
       setHasMore(snapshot.docs.length === AV6_CASE_READ_LIMIT);
       if (!append) {
         setLoadedRange({ from: fromDate, to: toDate });
-        if (!preserveCurrentTab) setClassificationFilter('all');
+        if (!preserveCurrentTab) {
+          setClassificationFilter('all');
+          setTeacherFilter('all');
+        }
         setExpandedCaseId(null);
       }
       setLoadedAt(new Date());
@@ -628,23 +645,46 @@ export default function AttendanceValidationDashboard() {
     }
   }, [loadSavedCases]);
 
+  const teacherOptions = useMemo(() => {
+    const byTeacher = new Map<string, { label: string; count: number }>();
+    for (const item of cases) {
+      const key = teacherFilterKey(item);
+      if (!key) continue;
+      const label = item.teacherName || item.teacherId || 'Teacher unavailable';
+      const current = byTeacher.get(key);
+      byTeacher.set(key, {
+        label,
+        count: (current?.count ?? 0) + 1,
+      });
+    }
+
+    return [...byTeacher.entries()]
+      .map(([value, meta]) => ({ value, ...meta }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [cases]);
+
+  const teacherScopedCases = useMemo(() => {
+    if (teacherFilter === 'all') return cases;
+    return cases.filter((item) => teacherFilterKey(item) === teacherFilter);
+  }, [cases, teacherFilter]);
+
   const summary = useMemo(() => {
-    const verified = cases.filter((item) => item.resolutionStatus === 'verified').length;
-    const resolved = cases.filter((item) => item.resolutionStatus === 'resolved').length;
-    const needsReview = cases.filter((item) => item.resolutionStatus === 'needs_review').length;
-    const possibleFalsePresent = cases.filter(
+    const verified = teacherScopedCases.filter((item) => item.resolutionStatus === 'verified').length;
+    const resolved = teacherScopedCases.filter((item) => item.resolutionStatus === 'resolved').length;
+    const needsReview = teacherScopedCases.filter((item) => item.resolutionStatus === 'needs_review').length;
+    const possibleFalsePresent = teacherScopedCases.filter(
       (item) => item.classification === 'POSSIBLE_FALSE_PRESENT',
     ).length;
-    const conflicts = cases.filter(
+    const conflicts = teacherScopedCases.filter(
       (item) => item.classification === 'ATTENDANCE_CONFLICT',
     ).length;
 
     return { verified, resolved, needsReview, possibleFalsePresent, conflicts };
-  }, [cases]);
+  }, [teacherScopedCases]);
 
   const classificationCounts = useMemo(() => {
     const counts: Record<'all' | Av6Classification, number> = {
-      all: cases.length,
+      all: teacherScopedCases.length,
       VERIFIED: 0,
       MISSING_ATTENDANCE: 0,
       ATTENDANCE_CONFLICT: 0,
@@ -653,9 +693,9 @@ export default function AttendanceValidationDashboard() {
       ORPHAN_TEAMS_CLASS: 0,
       AMBIGUOUS: 0,
     };
-    for (const item of cases) counts[item.classification] += 1;
+    for (const item of teacherScopedCases) counts[item.classification] += 1;
     return counts;
-  }, [cases]);
+  }, [teacherScopedCases]);
 
   const openApprovedCorrection = useCallback((item: Av6ValidationCase) => {
     if (
@@ -684,7 +724,7 @@ export default function AttendanceValidationDashboard() {
 
   const visibleCases = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    return cases.filter((item) => {
+    return teacherScopedCases.filter((item) => {
       if (
         classificationFilter !== 'all'
         && item.classification !== classificationFilter
@@ -705,7 +745,7 @@ export default function AttendanceValidationDashboard() {
         item.runId,
       ].some((value) => value?.toLowerCase().includes(normalizedSearch));
     });
-  }, [cases, classificationFilter, search]);
+  }, [classificationFilter, search, teacherScopedCases]);
 
   return (
     <div className="space-y-4">
@@ -739,8 +779,10 @@ export default function AttendanceValidationDashboard() {
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Loaded window
           </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{cases.length}</p>
-          <p className="text-xs text-slate-500">Max {AV6_CASE_READ_LIMIT}</p>
+          <p className="mt-1 text-2xl font-semibold text-slate-900">{teacherScopedCases.length}</p>
+          <p className="text-xs text-slate-500">
+            {teacherFilter === 'all' ? `Max ${AV6_CASE_READ_LIMIT}` : `of ${cases.length} loaded cases`}
+          </p>
         </Card>
         <Card className="p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -1002,11 +1044,32 @@ export default function AttendanceValidationDashboard() {
       )}
 
       <Card className="p-4">
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by student, teacher, date, session, enrollment, evidence, or run ID"
-        />
+        <div className="grid gap-3 md:grid-cols-[280px_1fr]">
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-slate-600">Teacher</div>
+            <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+              <SelectTrigger aria-label="Filter attendance validation by teacher">
+                <SelectValue placeholder="All teachers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All teachers ({cases.length})</SelectItem>
+                {teacherOptions.map((teacher) => (
+                  <SelectItem key={teacher.value} value={teacher.value}>
+                    {teacher.label} ({teacher.count})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-slate-600">Search loaded cases</div>
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by student, teacher, date, session, enrollment, evidence, or run ID"
+            />
+          </div>
+        </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Validation classifications">
           {CLASSIFICATION_TABS.map((tab) => {
             const active = classificationFilter === tab.value;
@@ -1060,7 +1123,7 @@ export default function AttendanceValidationDashboard() {
           </div>
         ) : visibleCases.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
-            No loaded cases match the current tab or search.
+            No loaded cases match the selected teacher, tab, or search.
           </div>
         ) : (
           <div className="overflow-x-auto">

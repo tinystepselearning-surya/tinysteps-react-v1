@@ -41,6 +41,18 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('<select');
   });
 
+  it('filters the already-loaded AVS window by teacher without extra audit reads', () => {
+    expect(dashboard).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
+    expect(dashboard).toContain('const teacherOptions = useMemo');
+    expect(dashboard).toContain('const teacherScopedCases = useMemo');
+    expect(dashboard).toContain('teacherFilterKey(item)');
+    expect(dashboard).toContain('Filter attendance validation by teacher');
+    expect(dashboard).toContain('All teachers ({cases.length})');
+    expect(dashboard).toContain('teacherScopedCases.filter');
+    expect(dashboard).not.toContain("collection(db, 'users')");
+    expect(dashboard).not.toContain("collection(db, 'kids')");
+  });
+
   it('uses only a bounded enrollment fallback for missing display names', () => {
     expect(dashboard).not.toContain('onSnapshot(');
     expect(dashboard).not.toContain("collection(db, 'classSessions')");
