@@ -145,13 +145,13 @@ export default function ConfidenceBuildingProgramKidsPage() {
   }, []);
 
   return (
-    <div className="bg-gradient-to-b from-[#fff9f1] via-white to-[#eef8ff] pb-16">
-      <main className="container mx-auto max-w-5xl px-4 py-10 sm:px-6 md:py-14">
-        <section className="rounded-[28px] border border-orange-100 bg-white/95 p-6 text-center shadow-sm md:p-10">
+    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_58%,#f8fbff_100%)] pb-20 text-slate-950">
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
+        <section className="relative overflow-hidden rounded-[32px] border border-orange-100/80 bg-white/95 p-6 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] md:p-10 lg:p-12">
           <p className="mx-auto inline-flex rounded-full bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-orange-700">
             Specialist speaking-confidence pathway
           </p>
-          <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-bold tracking-[-0.03em] text-slate-900 md:text-5xl">
+          <h1 className="mx-auto mt-4 max-w-4xl font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 md:text-5xl lg:text-[3.5rem]">
             Confidence Building Classes for Kids
           </h1>
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-700">
@@ -176,14 +176,14 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-sky-100 bg-sky-50 p-6 md:p-7">
+        <section className="mt-8 rounded-[28px] border border-sky-100 bg-sky-50/80 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.035)] md:p-7">
           <h2 className="text-2xl font-bold text-slate-900">Quick answer: when is Confidence Building the right programme?</h2>
           <p className="mt-3 leading-7 text-slate-700">
             Choose this specialist programme when the child&apos;s confidence itself is the main barrier: they hesitate to start, avoid participating, become much quieter under speaking pressure, or rely heavily on adult prompting despite having something to say. If the main goal is broader communication, everyday English fluency, or grammar accuracy, another Tiny Steps programme is the clearer owner.
           </p>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+        <section className="mt-8 rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.045)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">Signs that confidence may be the main barrier</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {[
@@ -201,7 +201,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-6 md:p-8">
+        <section className="mt-8 rounded-[28px] border border-emerald-100 bg-emerald-50/70 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.035)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">How Tiny Steps builds speaking confidence</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {confidenceSteps.map((step) => (
@@ -216,7 +216,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </p>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+        <section className="mt-8 rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.045)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">Confidence Building vs other Tiny Steps programmes</h2>
           <p className="mt-3 max-w-4xl leading-7 text-slate-700">
             Similar symptoms can come from different learning needs. The free assessment helps identify the primary barrier before placement.
@@ -244,7 +244,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-amber-100 bg-amber-50/70 p-6 md:p-8">
+        <section className="mt-8 rounded-[28px] border border-amber-100 bg-amber-50/70 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.035)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">Searching about a shy child, or looking for classes?</h2>
           <p className="mt-3 leading-7 text-slate-700">
             If you are still trying to understand why your child hesitates or appears shy while speaking, use our parent diagnostic guide first. If you already want structured live confidence-building classes, this page is the programme owner.
@@ -254,7 +254,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </Link>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 md:p-8">
+        <section className="mt-8 rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.045)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">What we check before recommending this pathway</h2>
           <ul className="mt-5 space-y-3 text-slate-700">
             <li>• How readily the child starts a response without repeated prompting.</li>
@@ -265,14 +265,14 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </ul>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-sky-100 bg-white p-6 md:p-8">
+        <section className="mt-8 rounded-[28px] border border-sky-100 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.045)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900">How parents can measure confidence progress</h2>
           <p className="mt-3 leading-7 text-slate-700">
             Confidence should be judged through behaviour on fresh speaking tasks rather than promises about a fixed number of classes. Useful signs include faster response initiation, fewer prompts, more consistent participation, calmer retries after mistakes, steadier delivery, and greater willingness to attempt unfamiliar topics.
           </p>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 md:p-8" id="faq">
+        <section className="mt-8 rounded-[28px] border border-slate-200 bg-slate-50/80 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.035)] md:p-8" id="faq">
           <h2 className="text-2xl font-bold text-slate-900">Frequently asked questions</h2>
           <div className="mt-5 space-y-4">
             {faqItems.map((item) => (
@@ -284,7 +284,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[28px] bg-slate-900 p-7 text-center text-white md:p-9">
+        <section className="mt-10 rounded-[32px] bg-slate-950 p-7 text-center text-white shadow-[0_24px_64px_rgba(15,23,42,0.18)] md:p-10">
           <h2 className="text-2xl font-bold md:text-3xl">Start with a free confidence assessment</h2>
           <p className="mx-auto mt-3 max-w-3xl leading-7 text-slate-200">
             The free {demoMinutes}-minute 1:1 online assessment helps determine whether your child primarily needs Confidence Building, Spoken English, Grammar, or the broader Speaking & Communication programme.
