@@ -19,6 +19,7 @@ function enrollment(overrides: Record<string, unknown> = {}): Record<string, unk
     parentId: 'parent-1',
     parentIds: ['parent-1'],
     teacherId: 'teacher-1',
+    teacherName: 'Teacher One',
     courseId: 'course-1',
     feePerClass: 400,
     currency: 'INR',
@@ -60,6 +61,7 @@ function regular(args: {
       parentId: 'parent-1',
       parentIds: ['parent-1'],
       teacherId: args.teacherId ?? 'teacher-1',
+      teacherName: 'Teacher One',
       courseId: 'course-1',
       date: args.date,
       startTime: args.startTime ?? '17:30',
@@ -73,6 +75,21 @@ function regular(args: {
       },
     },
   };
+}
+
+function otherConvergedRegulars(
+  excludedSessionId: string,
+): FutureScheduleSessionEvidence[] {
+  return [
+    ['enrollment-1_20260921_1730', '2026-09-21'],
+    ['enrollment-1_20260923_1730', '2026-09-23'],
+    ['enrollment-1_20260925_1730', '2026-09-25'],
+    ['enrollment-1_20260928_1730', '2026-09-28'],
+    ['enrollment-1_20260930_1730', '2026-09-30'],
+    ['enrollment-1_20261002_1730', '2026-10-02'],
+  ]
+    .filter(([id]) => id !== excludedSessionId)
+    .map(([id, date]) => regular({id, date}));
 }
 
 const linkFields = [
@@ -232,6 +249,10 @@ describe('Brick 4 transactional future schedule executor', () => {
     const store = new InMemoryFutureScheduleStore(enrollment());
     const approved = await preview(store);
 
+    expect(approved.executorBlockers).not.toContain(
+      'missing_teacher_name_for_create',
+    );
+
     const result = await executeFutureScheduleReconciliation(store, {
       enrollmentId: 'enrollment-1',
       expectedApprovalFingerprint: approved.approvalFingerprint,
@@ -245,6 +266,7 @@ describe('Brick 4 transactional future schedule executor', () => {
     expect(store.sessions.get('enrollment-1_20260921_1730')).toMatchObject({
       enrollmentId: 'enrollment-1',
       teacherId: 'teacher-1',
+      teacherName: 'Teacher One',
       date: '2026-09-21',
       startTime: '17:30',
       durationMinutes: 35,
@@ -253,6 +275,35 @@ describe('Brick 4 transactional future schedule executor', () => {
       scheduleRevision: 7,
       feePerClass: 400,
     });
+  });
+
+  it.each([
+    ['absent', undefined],
+    ['null', null],
+    ['empty string', ''],
+    ['whitespace-only string', '   '],
+    ['numeric value', 123],
+    ['object value', {displayName: 'Teacher One'}],
+  ])('blocks creation when enrollment teacherName is %s', async (_, teacherName) => {
+    const enrollmentDoc = enrollment({teacherName});
+    if (teacherName === undefined) delete enrollmentDoc.teacherName;
+    const store = new InMemoryFutureScheduleStore(enrollmentDoc);
+    const approved = await preview(store);
+
+    expect(approved.plan.actions).toContainEqual(expect.objectContaining({
+      kind: 'CREATE_EXPECTED_REGULAR',
+    }));
+    expect(approved.executorBlockers).toContain(
+      'missing_teacher_name_for_create',
+    );
+
+    await expect(executeFutureScheduleReconciliation(store, {
+      enrollmentId: 'enrollment-1',
+      expectedApprovalFingerprint: approved.approvalFingerprint,
+      actorId: 'test',
+    })).rejects.toMatchObject({code: 'PLAN_BLOCKED'});
+    expect(store.sessions.size).toBe(0);
+    expect(store.writeCount).toBe(0);
   });
 
   it('recomputes the IST day boundary at execution and rejects an approval that crossed midnight', async () => {
@@ -388,7 +439,10 @@ describe('Brick 4 transactional future schedule executor', () => {
     wrongTeacher.data.teacherName = 'Existing Teacher';
     wrongTeacher.data.teacherEmail = 'existing.teacher@example.com';
 
-    const store = new InMemoryFutureScheduleStore(enrollment(), [wrongTeacher]);
+    const store = new InMemoryFutureScheduleStore(
+      enrollment({teacherName: undefined}),
+      [wrongTeacher, ...otherConvergedRegulars(wrongTeacher.id)],
+    );
     const approved = await preview(store);
 
     expect(approved.plan.actions).toContainEqual({
@@ -461,8 +515,19 @@ describe('Brick 4 transactional future schedule executor', () => {
     cancelled.data.teacherName = 'Existing Teacher';
     cancelled.data.teacherEmail = 'existing.teacher@example.com';
 
-    const store = new InMemoryFutureScheduleStore(enrollment(), [cancelled]);
+    const store = new InMemoryFutureScheduleStore(
+      enrollment({teacherName: undefined}),
+      [cancelled, ...otherConvergedRegulars(cancelled.id)],
+    );
     const approved = await preview(store);
+
+    expect(approved.plan.actions).toEqual([expect.objectContaining({
+      kind: 'RESTORE_EXPECTED_REGULAR',
+      sessionId: 'enrollment-1_20260921_1730',
+    })]);
+    expect(approved.executorBlockers).not.toContain(
+      'missing_teacher_name_for_create',
+    );
 
     await executeFutureScheduleReconciliation(store, {
       enrollmentId: 'enrollment-1',

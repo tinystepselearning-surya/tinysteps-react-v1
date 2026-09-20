@@ -215,10 +215,16 @@ export function buildFutureScheduleExecutionPreview(args: {
   });
   const plan = buildFutureScheduleReconciliationPlan(inspection);
   const evidenceIds = new Set(evidence.map((row) => row.id));
-  const executorBlockers = externallyFinanceLinkedSessionIds
-    .filter((sessionId) => !evidenceIds.has(sessionId))
-    .map((sessionId) => `external_finance_without_session:${sessionId}`)
-    .sort();
+  const executorBlockers = [
+    ...(plan.actions.some((action) => action.kind === 'CREATE_EXPECTED_REGULAR') &&
+      (typeof args.enrollment.teacherName !== 'string' ||
+        !args.enrollment.teacherName.trim())
+      ? ['missing_teacher_name_for_create']
+      : []),
+    ...externallyFinanceLinkedSessionIds
+      .filter((sessionId) => !evidenceIds.has(sessionId))
+      .map((sessionId) => `external_finance_without_session:${sessionId}`),
+  ].sort();
 
   const approvalFingerprint = fingerprintExecutionState({
     enrollmentId,
