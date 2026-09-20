@@ -40,14 +40,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('<select');
   });
 
-  it('does not use realtime listeners or operational collection lookups for display names', () => {
+  it('uses only a bounded enrollment fallback for missing display names', () => {
     expect(dashboard).not.toContain('onSnapshot(');
     expect(dashboard).not.toContain("collection(db, 'classSessions')");
-    expect(dashboard).not.toContain('documentId()');
-    expect(dashboard).not.toContain('enrichCaseDisplayNames');
+    expect(dashboard).toContain('enrichCaseDisplayNames');
+    expect(dashboard).toContain("collection(db, 'enrollments')");
+    expect(dashboard).toContain("where(documentId(), 'in', chunk)");
+    expect(dashboard).toContain('index += 30');
     expect(dashboard).not.toContain("collection(db, 'users')");
     expect(dashboard).not.toContain("collection(db, 'kids')");
-    expect(dashboard).not.toContain("collection(db, 'enrollments')");
     expect(dashboard).not.toContain("collection(db, 'billingCharges')");
     expect(dashboard).not.toContain("collection(db, 'teacherEarnings')");
   });
