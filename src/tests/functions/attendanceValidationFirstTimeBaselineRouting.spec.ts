@@ -25,10 +25,11 @@ describe('AVS first-time date-range baseline routing', () => {
     );
   });
 
-  it('uses a persisted cursor and a hard ten-session batch with one lookahead row', () => {
+  it('uses a persisted cursor and a hard 100-session batch with one lookahead row', () => {
     expect(source).toContain('ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION');
     expect(source).toContain('.limit(AVS_BASELINE_QUERY_LIMIT)');
     expect(source).toContain('baselineBatchFromQueryRows(rows)');
+    expect(source).toContain('timeoutSeconds: 540');
     expect(source).toContain('cursorDate: batchPlan.nextCursor?.serviceDateYmd');
     expect(source).toContain('cursorSessionId: batchPlan.nextCursor?.sessionId');
   });
