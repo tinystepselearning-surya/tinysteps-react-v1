@@ -77,6 +77,31 @@ describe('MicrosoftGraphClient', () => {
     expect(graphHeaders.get('Authorization')).toBe('Bearer token-123');
   });
 
+  it('resolves a short Teams meeting link by numeric meeting ID', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(jsonResponse({
+        value: [{ id: 'meeting-short', subject: 'Kabir Jindal-early Phonics' }],
+      }));
+
+    const client = new MicrosoftGraphClient({
+      credentials,
+      fetchImpl: asFetch(fetchMock),
+      now: () => 1_000,
+    });
+
+    const meeting = await client.resolveOnlineMeetingByJoinUrl(
+      'organizer',
+      'https://teams.microsoft.com/meet/48543659205152?p=example',
+    );
+
+    expect(meeting?.id).toBe('meeting-short');
+    const graphUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(graphUrl.searchParams.get('$filter')).toBe(
+      "joinMeetingIdSettings/joinMeetingId eq '48543659205152'",
+    );
+  });
+
   it('reuses the cached token across transcript and attendance artifact reads', async () => {
     const intervals = [
       {
