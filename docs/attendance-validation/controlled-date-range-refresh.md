@@ -338,16 +338,11 @@ For every baseline batch, AVS point-reads the corresponding deterministic valida
 
 ### Organizer resolution
 
-Organizer identity stays server-side. For a session without prior case evidence, the resolver uses this precedence:
+Organizer identity stays server-side and is resolved once per invocation from the canonical AVS Teams organizer configuration.
 
-1. explicit `teamsOrganizerUserId` / `organizerUserId` stored on the session;
-2. organizer from an existing AV2 evidence document with the **same SHA-256 Teams join-URL hash**;
-3. session `teacherEmail`, used as the Microsoft Graph user/UPN candidate;
-4. point-read `users/{teacherId}.email` fallback.
+Teacher email, teacher UPN, display name, session organizer fields, and stale evidence are not used as Microsoft Graph organizer fallbacks.
 
-The same-join-link evidence lookup is cached within the 100-session batch.
-
-If no organizer can be resolved, the session is not dropped. It is routed through AV5.3 as **MISSING_TEAMS_EVIDENCE / REVIEW** using a deterministic missing-evidence placeholder id. Missing Graph evidence never becomes Absent.
+If the canonical organizer cannot be resolved, the session is not dropped. It is routed through AV5.3 as **MISSING_TEAMS_EVIDENCE / REVIEW** using a deterministic missing-evidence placeholder id. Missing or failed Graph evidence never becomes Absent.
 
 ### Session snapshot
 
@@ -368,11 +363,10 @@ For one maximum 100-session batch, the explicit upper bound before the shared st
 - 1 baseline-state read;
 - up to 101 session-query documents (100 + one lookahead);
 - up to 100 validation-case point reads;
-- up to 100 organizer-evidence lookup queries;
-- up to 100 teacher-user point reads;
+- up to 1 canonical organizer-config read when fresh evidence is needed;
 - up to 200 AV5.3 point reads.
 
-That is a conservative ceiling of **602 bounded reads/queries plus one shared staff-registry load**. Most batches are lower because organizer and teacher fallbacks are conditional and existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
+That is a conservative ceiling of **403 bounded reads plus one shared staff-registry load**. Most batches are lower because existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
 
 ### Graph budget
 
