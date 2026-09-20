@@ -289,6 +289,23 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
   };
 }
 
+function readableDisplayName(value: unknown): string | null {
+  const normalized = asText(value);
+  if (!normalized) return null;
+  const lower = normalized.toLowerCase();
+  if (lower === 'unknown' || lower === 'name not found' || lower === 'n/a' || lower === 'na') {
+    return null;
+  }
+
+  const hasWhitespace = /\s/.test(normalized);
+  const looksLikeLongId = !hasWhitespace
+    && (
+      /^[a-f0-9]{16,}$/i.test(normalized)
+      || /^[A-Za-z0-9_-]{20,}$/.test(normalized)
+    );
+  return looksLikeLongId ? null : normalized;
+}
+
 async function enrichCaseDisplayNames(
   items: Av6ValidationCase[],
 ): Promise<Av6ValidationCase[]> {
@@ -299,15 +316,21 @@ async function enrichCaseDisplayNames(
         && (!item.studentName || !item.teacherName))
       .map((item) => item.enrollmentId as string),
   )];
+  const teacherIds = [...new Set(
+    items
+      .map((item) => item.teacherId)
+      .filter((teacherId): teacherId is string => Boolean(teacherId)),
+  )];
 
-  if (enrollmentIds.length === 0) return items;
+  if (enrollmentIds.length === 0 && teacherIds.length === 0) return items;
+
+  const namesByEnrollment = new Map<
+    string,
+    { studentName: string | null; teacherName: string | null }
+  >();
+  const canonicalTeacherNames = new Map<string, string>();
 
   try {
-    const namesByEnrollment = new Map<
-      string,
-      { studentName: string | null; teacherName: string | null }
-    >();
-
     for (let index = 0; index < enrollmentIds.length; index += 30) {
       const chunk = enrollmentIds.slice(index, index + 30);
       const snapshot = await getDocs(
@@ -325,26 +348,55 @@ async function enrichCaseDisplayNames(
             || asText(data.kidName)
             || asText(data.childName),
           teacherName:
-            asText(data.teacherName)
-            || asText(data.teacherDisplayName),
+            readableDisplayName(data.teacherName)
+            || readableDisplayName(data.teacherDisplayName),
         });
       });
     }
-
-    return items.map((item) => {
-      const fallback = item.enrollmentId
-        ? namesByEnrollment.get(item.enrollmentId)
-        : null;
-      return {
-        ...item,
-        studentName: item.studentName || fallback?.studentName || null,
-        teacherName: item.teacherName || fallback?.teacherName || null,
-      };
-    });
   } catch (error) {
     console.warn('[AV6] Enrollment display-name fallback failed', error);
-    return items;
   }
+
+  try {
+    for (let index = 0; index < teacherIds.length; index += 30) {
+      const chunk = teacherIds.slice(index, index + 30);
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'users'),
+          where(documentId(), 'in', chunk),
+        ),
+      );
+
+      snapshot.docs.forEach((docSnapshot) => {
+        const data = docSnapshot.data() as Record<string, unknown>;
+        const canonicalName =
+          readableDisplayName(data.displayName)
+          || readableDisplayName(data.name)
+          || readableDisplayName(data.email);
+        if (canonicalName) canonicalTeacherNames.set(docSnapshot.id, canonicalName);
+      });
+    }
+  } catch (error) {
+    console.warn('[AV6] Canonical teacher-name lookup failed', error);
+  }
+
+  return items.map((item) => {
+    const enrollmentFallback = item.enrollmentId
+      ? namesByEnrollment.get(item.enrollmentId)
+      : null;
+    const canonicalTeacherName = item.teacherId
+      ? canonicalTeacherNames.get(item.teacherId)
+      : null;
+    return {
+      ...item,
+      studentName: item.studentName || enrollmentFallback?.studentName || null,
+      teacherName:
+        canonicalTeacherName
+        || readableDisplayName(item.teacherName)
+        || enrollmentFallback?.teacherName
+        || null,
+    };
+  });
 }
 
 function formatServiceDate(value: string | null): string {
@@ -646,20 +698,34 @@ export default function AttendanceValidationDashboard() {
   }, [loadSavedCases]);
 
   const teacherOptions = useMemo(() => {
-    const byTeacher = new Map<string, { label: string; count: number }>();
+    const byTeacher = new Map<
+      string,
+      { teacherName: string | null; teacherId: string | null; count: number }
+    >();
+
     for (const item of cases) {
       const key = teacherFilterKey(item);
       if (!key) continue;
-      const label = item.teacherName || item.teacherId || 'Teacher unavailable';
       const current = byTeacher.get(key);
       byTeacher.set(key, {
-        label,
+        teacherName:
+          current?.teacherName
+          || readableDisplayName(item.teacherName),
+        teacherId: current?.teacherId || item.teacherId,
         count: (current?.count ?? 0) + 1,
       });
     }
 
     return [...byTeacher.entries()]
-      .map(([value, meta]) => ({ value, ...meta }))
+      .map(([value, meta]) => ({
+        value,
+        count: meta.count,
+        label:
+          meta.teacherName
+          || (meta.teacherId
+            ? `Teacher name unavailable · ${meta.teacherId.slice(0, 8)}…`
+            : 'Teacher name unavailable'),
+      }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [cases]);
 
@@ -763,7 +829,7 @@ export default function AttendanceValidationDashboard() {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Saved results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
-                No realtime listener. Missing names may use bounded enrollment reads only; no user, student, billing, earnings, or class-session fallback lookups.
+                No realtime listener. Display names may use bounded enrollment and teacher-user reads only; no student, billing, earnings, or class-session fallback lookups.
               </p>
             </div>
           </div>
@@ -1061,7 +1127,7 @@ export default function AttendanceValidationDashboard() {
               </SelectContent>
             </Select>
             <p className="text-[11px] text-slate-500">
-              Filters the AVS cases already loaded for this date range.
+              Filters the AVS cases already loaded for this date range. Counts are session cases, not unique students.
             </p>
           </div>
           <div className="space-y-1">

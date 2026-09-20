@@ -29,7 +29,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('useEffect(');
     expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
     expect(dashboard).toContain('Opening this page does not read them automatically.');
-    expect(dashboard).toContain('Missing names may use bounded enrollment reads only');
+    expect(dashboard).toContain('Display names may use bounded enrollment and teacher-user reads only');
     expect(dashboard).toContain('Load Saved Results');
   });
 
@@ -41,28 +41,32 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('<select');
   });
 
-  it('filters the already-loaded AVS window by teacher without extra audit reads', () => {
+  it('filters the already-loaded AVS window by canonical teacher ID without collapsing sessions', () => {
     expect(dashboard).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
     expect(dashboard).toContain('const teacherOptions = useMemo');
     expect(dashboard).toContain('const teacherScopedCases = useMemo');
     expect(dashboard).toContain('teacherFilterKey(item)');
     expect(dashboard).toContain('Filter attendance validation by teacher');
-    expect(dashboard).toContain('Filters the AVS cases already loaded for this date range.');
+    expect(dashboard).toContain('Counts are session cases, not unique students.');
     expect(dashboard).toContain('All teachers ({cases.length})');
     expect(dashboard).toContain('teacherScopedCases.filter');
-    expect(dashboard).not.toContain("collection(db, 'users')");
+    expect(dashboard).not.toContain('item.teacherName || item.teacherId');
     expect(dashboard).not.toContain("collection(db, 'kids')");
   });
 
-  it('uses only a bounded enrollment fallback for missing display names', () => {
+  it('uses bounded enrollment and canonical teacher-user reads for display names', () => {
     expect(dashboard).not.toContain('onSnapshot(');
     expect(dashboard).not.toContain("collection(db, 'classSessions')");
     expect(dashboard).toContain('enrichCaseDisplayNames');
     expect(dashboard).toContain("collection(db, 'enrollments')");
-    expect(dashboard).toContain('asText(data.teacherDisplayName)');
+    expect(dashboard).toContain("collection(db, 'users')");
+    expect(dashboard).toContain('readableDisplayName(data.displayName)');
+    expect(dashboard).toContain('readableDisplayName(data.name)');
+    expect(dashboard).toContain('readableDisplayName(data.email)');
+    expect(dashboard).toContain('canonicalTeacherNames.set(docSnapshot.id, canonicalName)');
+    expect(dashboard).toContain('canonicalTeacherName');
     expect(dashboard).toContain("where(documentId(), 'in', chunk)");
     expect(dashboard).toContain('index += 30');
-    expect(dashboard).not.toContain("collection(db, 'users')");
     expect(dashboard).not.toContain("collection(db, 'kids')");
     expect(dashboard).not.toContain("collection(db, 'billingCharges')");
     expect(dashboard).not.toContain("collection(db, 'teacherEarnings')");
