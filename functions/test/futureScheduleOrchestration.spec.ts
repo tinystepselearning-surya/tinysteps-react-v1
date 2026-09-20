@@ -480,7 +480,10 @@ describe('Brick 5 future schedule automatic orchestration', () => {
 
     expect(outcome.status).toBe('blocked_plan');
     expect(outcome.actions).toBe(0);
-    expect(outcome.blockers).toContain('missing_teacher_name_for_create');
+    expect(outcome.attempts).toBe(1);
+    expect(outcome.blockers).toEqual([
+      'missing_teacher_name_for_create',
+    ]);
     expect(store.sessions.size).toBe(0);
     expect(store.writes).toBe(0);
   });
