@@ -89,6 +89,7 @@ Every reconciliation case must resolve to one of:
 - `MISSING_ATTENDANCE` — Teams evidence supports a class but Tiny Steps attendance is not marked;
 - `ATTENDANCE_CONFLICT` — Teams evidence conflicts with the stored Tiny Steps attendance outcome;
 - `POSSIBLE_FALSE_PRESENT` — Tiny Steps says Present but Teams evidence is materially inconsistent or missing;
+- `NO_CLASS_OCCURRED` — a complete Graph attendance-report lookup proves there was no Teams occurrence for the exact scheduled slot and the Tiny Steps slot is unmarked or rescheduled;
 - `MISSING_TEAMS_EVIDENCE` — expected Tiny Steps class exists but required Teams evidence cannot be found;
 - `ORPHAN_TEAMS_CLASS` — Teams class evidence exists without a safe Tiny Steps session match;
 - `AMBIGUOUS` — more than one plausible match or evidence is insufficient for a safe conclusion.
