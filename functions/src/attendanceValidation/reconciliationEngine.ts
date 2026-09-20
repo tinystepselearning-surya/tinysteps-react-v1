@@ -122,17 +122,21 @@ function buildResult(
 function reviewHasPresentConcern(
   classification: Av5ClassificationResult,
 ): boolean {
+  const unresolvedEvidence =
+    classification.reasons.includes('occurrence_not_verified')
+    || classification.reasons.includes('attendance_evidence_incomplete');
+  if (unresolvedEvidence) return false;
+
   return classification.reasons.some((reason) =>
-    reason === 'occurrence_not_verified'
-    || reason === 'expected_teacher_not_verified'
-    || reason === 'attendance_evidence_incomplete'
+    reason === 'expected_teacher_not_verified'
     || reason === 'meaningful_overlap_not_met');
 }
 
 function reviewIsMissingTeamsEvidence(
   classification: Av5ClassificationResult,
 ): boolean {
-  return classification.reasons.includes('attendance_evidence_incomplete');
+  return classification.reasons.includes('occurrence_not_verified')
+    || classification.reasons.includes('attendance_evidence_incomplete');
 }
 
 /**

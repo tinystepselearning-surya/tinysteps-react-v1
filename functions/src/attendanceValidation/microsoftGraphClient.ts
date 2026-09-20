@@ -158,6 +158,20 @@ function odataString(value: string): string {
   return String(value).replace(/'/g, "''");
 }
 
+function teamsMeetingIdFromJoinUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname !== 'teams.microsoft.com' && !hostname.endsWith('.teams.microsoft.com')) {
+      return null;
+    }
+    const match = /^\/meet\/(\d+)\/?$/i.exec(url.pathname);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function boundedTop(value: number | undefined, fallback: number): number {
   if (!Number.isFinite(value)) return fallback;
   return Math.min(100, Math.max(1, Math.trunc(value as number)));
@@ -378,9 +392,11 @@ export class MicrosoftGraphClient {
   ): Promise<GraphOnlineMeeting | null> {
     const organizer = pathSegment(organizerUserId);
     const joinUrl = requiredString(joinWebUrl, 'joinWebUrl');
-    const query = new URLSearchParams({
-      '$filter': `JoinWebUrl eq '${odataString(joinUrl)}'`,
-    });
+    const meetingId = teamsMeetingIdFromJoinUrl(joinUrl);
+    const filter = meetingId
+      ? `joinMeetingIdSettings/joinMeetingId eq '${odataString(meetingId)}'`
+      : `JoinWebUrl eq '${odataString(joinUrl)}'`;
+    const query = new URLSearchParams({ '$filter': filter });
     const page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
       `/users/${organizer}/onlineMeetings?${query.toString()}`,
     );
@@ -390,7 +406,7 @@ export class MicrosoftGraphClient {
       throw new MicrosoftGraphError({
         kind: 'ambiguous_result',
         status: 409,
-        message: 'Microsoft Graph returned multiple online meetings for one join URL.',
+        message: 'Microsoft Graph returned multiple online meetings for one meeting reference.',
       });
     }
     return page.value[0];

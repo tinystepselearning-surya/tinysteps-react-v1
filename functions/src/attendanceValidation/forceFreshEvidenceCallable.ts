@@ -237,6 +237,14 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
       evidenceId: evidenceResult.evidence.id,
       collectionStatus: evidenceResult.evidence.collectionStatus,
       issueKinds: evidenceResult.evidence.issues.map((issue) => issue.kind),
+      issueDetails: evidenceResult.evidence.issues.map((issue) => ({
+        stage: issue.stage,
+        kind: issue.kind,
+        httpStatus: issue.httpStatus,
+        graphCode: issue.graphCode,
+        innerCode: issue.innerCode,
+        reportId: issue.reportId,
+      })),
       selectedTranscriptCount: evidenceResult.evidence.transcripts.length,
       selectedAttendanceReportCount:
         evidenceResult.evidence.attendanceReports.length,

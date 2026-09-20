@@ -198,6 +198,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
     expect(dashboard).toContain('forceFreshResult.collectionStatus');
     expect(dashboard).toContain('forceFreshResult.issueKinds');
+    expect(dashboard).toContain('forceFreshResult.issueDetails');
+    expect(dashboard).toContain('Stage: {humanize(issue.stage)}');
+    expect(dashboard).toContain('HTTP ${issue.httpStatus}');
+    expect(dashboard).toContain('Graph ${issue.graphCode}');
   });
 
   it('wires a separate first-time baseline action with a hard ten-session explanation', () => {

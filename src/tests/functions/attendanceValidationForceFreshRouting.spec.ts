@@ -60,6 +60,9 @@ describe('AVS force-fresh Teams evidence routing', () => {
     expect(source).toContain('await dirtyRef.delete({');
     expect(source).toContain('lastUpdateTime: dirtySnapshot.updateTime');
     expect(source).toContain('graphLogicalCalls: counted.count()');
+    expect(source).toContain('issueDetails: evidenceResult.evidence.issues.map');
+    expect(source).toContain('httpStatus: issue.httpStatus');
+    expect(source).toContain('graphCode: issue.graphCode');
     expect(source).toContain('boundedReadsExcludingStaffRegistry');
     expect(source).toContain('concurrentMarkerChangeDetected');
   });
