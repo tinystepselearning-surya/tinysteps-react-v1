@@ -3,7 +3,7 @@ import {
   normalizeAvsLatestCheckRange,
 } from './latestCheckPlanner';
 
-export const AVS_BASELINE_MAX_SESSIONS_PER_RUN = 10;
+export const AVS_BASELINE_MAX_SESSIONS_PER_RUN = 100;
 export const AVS_BASELINE_QUERY_LIMIT =
   AVS_BASELINE_MAX_SESSIONS_PER_RUN + 1;
 export const ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION =
