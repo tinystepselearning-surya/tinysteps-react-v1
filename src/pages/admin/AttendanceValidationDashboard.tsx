@@ -1060,6 +1060,9 @@ export default function AttendanceValidationDashboard() {
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-[11px] text-slate-500">
+              Filters the AVS cases already loaded for this date range.
+            </p>
           </div>
           <div className="space-y-1">
             <div className="text-xs font-medium text-slate-600">Search loaded cases</div>
