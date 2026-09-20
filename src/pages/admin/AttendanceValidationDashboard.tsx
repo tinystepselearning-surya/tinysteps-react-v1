@@ -317,7 +317,9 @@ async function enrichCaseDisplayNames(
             asText(data.studentName)
             || asText(data.kidName)
             || asText(data.childName),
-          teacherName: asText(data.teacherName),
+          teacherName:
+            asText(data.teacherName)
+            || asText(data.teacherDisplayName),
         });
       });
     }
@@ -721,7 +723,7 @@ export default function AttendanceValidationDashboard() {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Saved results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
-                No realtime listener and no user, student, enrollment, billing, earnings, or class-session fallback lookups.
+                No realtime listener. Missing names may use bounded enrollment reads only; no user, student, billing, earnings, or class-session fallback lookups.
               </p>
             </div>
           </div>
