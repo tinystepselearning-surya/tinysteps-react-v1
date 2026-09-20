@@ -47,6 +47,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('const teacherScopedCases = useMemo');
     expect(dashboard).toContain('teacherFilterKey(item)');
     expect(dashboard).toContain('Filter attendance validation by teacher');
+    expect(dashboard).toContain('Filters the AVS cases already loaded for this date range.');
     expect(dashboard).toContain('All teachers ({cases.length})');
     expect(dashboard).toContain('teacherScopedCases.filter');
     expect(dashboard).not.toContain("collection(db, 'users')");
