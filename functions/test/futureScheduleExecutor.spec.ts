@@ -378,6 +378,46 @@ describe('Brick 4 transactional future schedule executor', () => {
     });
   });
 
+  it('preserves existing teacher metadata when rewriting without enrollment teacher metadata', async () => {
+    const wrongTeacher = regular({
+      id: 'enrollment-1_20260921_1730',
+      date: '2026-09-21',
+      teacherId: 'teacher-2',
+      feePerClass: 350,
+    });
+    wrongTeacher.data.teacherName = 'Existing Teacher';
+    wrongTeacher.data.teacherEmail = 'existing.teacher@example.com';
+
+    const store = new InMemoryFutureScheduleStore(enrollment(), [wrongTeacher]);
+    const approved = await preview(store);
+
+    expect(approved.plan.actions).toContainEqual({
+      kind: 'REWRITE_EXPECTED_REGULAR',
+      actionId: 'rewrite:enrollment-1_20260921_1730',
+      sessionId: 'enrollment-1_20260921_1730',
+      occurrenceSessionId: 'enrollment-1_20260921_1730',
+      reasons: ['teacher_identity_mismatch'],
+    });
+
+    await executeFutureScheduleReconciliation(store, {
+      enrollmentId: 'enrollment-1',
+      expectedApprovalFingerprint: approved.approvalFingerprint,
+      actorId: 'test',
+    });
+
+    expect(store.sessions.get('enrollment-1_20260921_1730')).toMatchObject({
+      teacherId: 'teacher-1',
+      teacherName: 'Existing Teacher',
+      teacherEmail: 'existing.teacher@example.com',
+      date: '2026-09-21',
+      durationMinutes: 35,
+      feePerClass: 350,
+      financialTermsSnapshot: {
+        billingRateSnapshot: 350,
+      },
+    });
+  });
+
   it('refuses to resurrect a session cancelled by terminal enrollment discontinuation', async () => {
     const discontinued = regular({
       id: 'enrollment-1_20260921_1730',
@@ -418,6 +458,8 @@ describe('Brick 4 transactional future schedule executor', () => {
     cancelled.data.rollingScheduleReconciliationCancellation = {
       source: 'rolling_schedule_reconciliation',
     };
+    cancelled.data.teacherName = 'Existing Teacher';
+    cancelled.data.teacherEmail = 'existing.teacher@example.com';
 
     const store = new InMemoryFutureScheduleStore(enrollment(), [cancelled]);
     const approved = await preview(store);
@@ -433,6 +475,8 @@ describe('Brick 4 transactional future schedule executor', () => {
       cancelledReason: null,
       cancelledBy: null,
       rollingScheduleReconciliationCancellation: null,
+      teacherName: 'Existing Teacher',
+      teacherEmail: 'existing.teacher@example.com',
     });
   });
 

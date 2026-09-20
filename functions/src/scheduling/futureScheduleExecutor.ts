@@ -424,8 +424,8 @@ const schedulingPatchForOccurrence = (args: {
 
   const patch: Record<string, unknown> = {
     teacherId: teacher.teacherId,
-    teacherName: teacherName || FieldValue.delete(),
-    teacherEmail: teacherEmail || FieldValue.delete(),
+    ...(teacherName ? {teacherName} : {}),
+    ...(teacherEmail ? {teacherEmail} : {}),
     ...(parentId ? {parentId, parentIds} : {}),
     startAt: Timestamp.fromMillis(args.occurrence.startAtUtcMs),
     endAt: Timestamp.fromMillis(args.occurrence.endAtUtcMs),
