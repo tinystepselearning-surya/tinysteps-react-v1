@@ -163,6 +163,11 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
       throw error;
     }
     const organizerUserId = organizerResolution.organizerUserId;
+    logger.info('AVS force-fresh canonical organizer resolved', {
+      caseId,
+      classSessionId,
+      organizerSource: organizerResolution.source,
+    });
 
     const currentSession =
       (sessionSnapshot.data() || {}) as Record<string, unknown>;
