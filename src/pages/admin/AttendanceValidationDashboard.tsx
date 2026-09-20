@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   collection,
+  documentId,
   getDocs,
   limit,
   orderBy,
@@ -281,6 +282,62 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
   };
 }
 
+async function enrichCaseDisplayNames(
+  items: Av6ValidationCase[],
+): Promise<Av6ValidationCase[]> {
+  const enrollmentIds = [...new Set(
+    items
+      .filter((item) =>
+        item.enrollmentId
+        && (!item.studentName || !item.teacherName))
+      .map((item) => item.enrollmentId as string),
+  )];
+
+  if (enrollmentIds.length === 0) return items;
+
+  try {
+    const namesByEnrollment = new Map<
+      string,
+      { studentName: string | null; teacherName: string | null }
+    >();
+
+    for (let index = 0; index < enrollmentIds.length; index += 30) {
+      const chunk = enrollmentIds.slice(index, index + 30);
+      const snapshot = await getDocs(
+        query(
+          collection(db, 'enrollments'),
+          where(documentId(), 'in', chunk),
+        ),
+      );
+
+      snapshot.docs.forEach((docSnapshot) => {
+        const data = docSnapshot.data() as Record<string, unknown>;
+        namesByEnrollment.set(docSnapshot.id, {
+          studentName:
+            asText(data.studentName)
+            || asText(data.kidName)
+            || asText(data.childName),
+          teacherName: asText(data.teacherName),
+        });
+      });
+    }
+
+    return items.map((item) => {
+      const fallback = item.enrollmentId
+        ? namesByEnrollment.get(item.enrollmentId)
+        : null;
+      return {
+        ...item,
+        studentName: item.studentName || fallback?.studentName || null,
+        teacherName: item.teacherName || fallback?.teacherName || null,
+      };
+    });
+  } catch (error) {
+    console.warn('[AV6] Enrollment display-name fallback failed', error);
+    return items;
+  }
+}
+
 function formatServiceDate(value: string | null): string {
   if (!value) return 'Unknown date';
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -416,7 +473,9 @@ export default function AttendanceValidationDashboard() {
           docSnapshot.id,
           docSnapshot.data() as Record<string, unknown>,
         ));
-      setCases((current) => append ? [...current, ...nextCases] : nextCases);
+      const enrichedCases = await enrichCaseDisplayNames(nextCases);
+      setCases((current) =>
+        append ? [...current, ...enrichedCases] : enrichedCases);
       setCursor(
         snapshot.docs.length > 0
           ? snapshot.docs[snapshot.docs.length - 1]
