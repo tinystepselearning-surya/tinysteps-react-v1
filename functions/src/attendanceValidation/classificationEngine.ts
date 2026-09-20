@@ -73,7 +73,8 @@ function result(
  *
  * Decision order intentionally fails closed:
  * - unsafe/mismatched session identity -> REVIEW
- * - unresolved recurring occurrence -> REVIEW
+ * - complete recurring-meeting lookup with no exact occurrence -> NOT_OCCURRED
+ * - unresolved/incomplete recurring occurrence -> REVIEW
  * - identity uncertainty -> REVIEW
  * - expected teacher missing -> REVIEW
  * - incomplete attendance evidence -> REVIEW
@@ -82,7 +83,7 @@ function result(
  * - learner-side participant present but meaningful overlap not met -> REVIEW
  * - verified teacher + learner-side meaningful overlap -> PRESENT
  *
- * PRESENT/ABSENT are validation recommendations only. This function never writes
+ * PRESENT/ABSENT/NOT_OCCURRED are validation recommendations only. This function never writes
  * operational attendance, finance, teacher earnings, credits, or reschedule data.
  */
 export function classifySessionProof(
