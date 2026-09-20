@@ -324,7 +324,7 @@ The completed-date rule prevents the first-time cursor from stepping past a clas
 
 ### Bounded cursor
 
-Each explicit click scans at most **10 session documents plus one lookahead session**.
+Each explicit click scans at most **100 session documents plus one lookahead session**.
 
 The cursor is persisted in the backend-only collection `attendanceValidationBaselineRanges/{rangeId}` using the selected from/to dates, last service date, last session document id, cumulative scanned/existing/fresh/blocked counts, and completion status.
 
@@ -345,7 +345,7 @@ Organizer identity stays server-side. For a session without prior case evidence,
 3. session `teacherEmail`, used as the Microsoft Graph user/UPN candidate;
 4. point-read `users/{teacherId}.email` fallback.
 
-The same-join-link evidence lookup is cached within the ten-session batch.
+The same-join-link evidence lookup is cached within the 100-session batch.
 
 If no organizer can be resolved, the session is not dropped. It is routed through AV5.3 as **MISSING_TEAMS_EVIDENCE / REVIEW** using a deterministic missing-evidence placeholder id. Missing Graph evidence never becomes Absent.
 
@@ -363,20 +363,20 @@ The AV5.3 batch uses the adopted strict production rule: **teacher + learner sim
 
 ### Read budget
 
-For one maximum ten-session batch, the explicit upper bound before the shared staff-registry load is:
+For one maximum 100-session batch, the explicit upper bound before the shared staff-registry load is:
 
 - 1 baseline-state read;
-- up to 11 session-query documents (10 + one lookahead);
-- up to 10 validation-case point reads;
-- up to 10 organizer-evidence lookup queries;
-- up to 10 teacher-user point reads;
-- up to 20 AV5.3 point reads.
+- up to 101 session-query documents (100 + one lookahead);
+- up to 100 validation-case point reads;
+- up to 100 organizer-evidence lookup queries;
+- up to 100 teacher-user point reads;
+- up to 200 AV5.3 point reads.
 
-That is a conservative ceiling of **62 bounded reads/queries plus one shared staff-registry load**. Most batches are lower because organizer and teacher fallbacks are conditional and existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
+That is a conservative ceiling of **602 bounded reads/queries plus one shared staff-registry load**. Most batches are lower because organizer and teacher fallbacks are conditional and existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
 
 ### Graph budget
 
-At most ten sessions enter fresh collection per click. A normal complete Teams occurrence uses up to four logical Graph operations: meeting resolution, transcript metadata list, attendance-report list, and selected attendance-record list. The normal logical-call ceiling is therefore approximately **40 logical Graph calls** per batch. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
+At most 100 sessions enter fresh collection per click. A normal complete Teams occurrence uses up to four logical Graph operations: meeting resolution, transcript metadata list, attendance-report list, and selected attendance-record list. The normal logical-call ceiling is therefore approximately **400 logical Graph calls** per batch. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
 
 ### Writes and safety
 
