@@ -236,7 +236,7 @@ const PricingPage: FC = () => {
   };
 
   return (
-    <div className="page-gradient min-h-screen pb-20">
+    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_56%,#f8fbff_100%)] pb-20 text-slate-950">
       <Meta
         title={pricingSeoTitle}
         description={pricingSeoDescription}
@@ -246,23 +246,23 @@ const PricingPage: FC = () => {
         jsonLd={[breadcrumbSchema, webpageSchema, offerCatalog, faqSchema]}
       />
 
-      <section className="relative px-6 pb-10 pt-24">
-        <div className="glass-panel mx-auto max-w-5xl px-7 py-10 text-center sm:px-10">
-          <div className="gradient-chip mx-auto w-max">Fees, packages & value comparison</div>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 md:text-5xl">
+      <section className="relative px-4 pb-12 pt-10 sm:px-6 md:pt-14 lg:px-8">
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-orange-100/80 bg-white/95 px-6 py-10 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-10 md:py-12">
+          <div className="mx-auto inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">Fees, packages & value comparison</div>
+          <h1 className="mt-5 font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[3.75rem]">
             Online English Classes for Kids: Fees & Pricing
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
             Standard live 1:1 classes are <strong>{formatINR(PER_CLASS_PRICE)} per class</strong>, with 12, 16 and 24-class options. Small groups range from <strong>{formatINR(smallGroupMin)}–{formatINR(smallGroupMax)} per child per class</strong>. Start with one free {FREE_DEMO_DURATION_MINUTES}-minute 1:1 assessment before choosing the programme and package.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/book-demo" className="rounded-2xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
+            <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-slate-800">
               {FREE_DEMO_CTA_LABEL}
             </Link>
-            <a href="#standard-pricing" className="rounded-2xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-900">
+            <a href="#standard-pricing" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50">
               See Standard Pricing
             </a>
-            <a href="#compare-value" className="rounded-2xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-900">
+            <a href="#compare-value" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50">
               Compare Value
             </a>
           </div>
