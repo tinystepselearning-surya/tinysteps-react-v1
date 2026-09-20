@@ -33,6 +33,7 @@ function proof(
     correctSessionReference: true,
     attendanceReportMatchesScheduledWindow: true,
     correctOccurrenceResolved: true,
+    confirmedNoTeamsOccurrence: false,
     expectedTeacherPresent: true,
     learnerSidePresent: true,
     attendanceEvidenceComplete: true,
