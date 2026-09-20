@@ -218,6 +218,9 @@ export function futureScheduleEnrollmentComparable(
     primaryTeacherId: text(enrollment.primaryTeacherId),
     teacherUid: text(enrollment.teacherUid),
     teacher_id: text(enrollment.teacher_id),
+    teacherName: typeof enrollment.teacherName === 'string'
+      ? enrollment.teacherName.trim()
+      : enrollment.teacherName ?? null,
     courseId: text(enrollment.courseId),
     classesStartDateYmd: enrollment.classesStartDateYmd ?? null,
     classesStartDate: enrollment.classesStartDate ?? null,
