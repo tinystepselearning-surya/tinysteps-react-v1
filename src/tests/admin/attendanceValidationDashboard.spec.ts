@@ -29,6 +29,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('useEffect(');
     expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
     expect(dashboard).toContain('Opening this page does not read them automatically.');
+    expect(dashboard).toContain('Missing names may use bounded enrollment reads only');
     expect(dashboard).toContain('Load Saved Results');
   });
 
@@ -45,6 +46,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain("collection(db, 'classSessions')");
     expect(dashboard).toContain('enrichCaseDisplayNames');
     expect(dashboard).toContain("collection(db, 'enrollments')");
+    expect(dashboard).toContain('asText(data.teacherDisplayName)');
     expect(dashboard).toContain("where(documentId(), 'in', chunk)");
     expect(dashboard).toContain('index += 30');
     expect(dashboard).not.toContain("collection(db, 'users')");
