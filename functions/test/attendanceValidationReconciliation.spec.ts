@@ -135,13 +135,13 @@ describe('AV5.2 reconciliation engine', () => {
     expect(result.recommendedAction).toBe('review');
   });
 
-  it('POSSIBLE_FALSE_PRESENT when stored Present exists but evidence is incomplete', () => {
+  it('MISSING_TEAMS_EVIDENCE when stored Present exists but Teams evidence is incomplete', () => {
     const result = reconcileAttendanceClassification(
       classification('review', 'attendance_evidence_incomplete'),
       'present',
     );
 
-    expect(result.classification).toBe('POSSIBLE_FALSE_PRESENT');
+    expect(result.classification).toBe('MISSING_TEAMS_EVIDENCE');
     expect(result.recommendedAction).toBe('review');
   });
 
@@ -149,6 +149,16 @@ describe('AV5.2 reconciliation engine', () => {
     const result = reconcileAttendanceClassification(
       classification('review', 'attendance_evidence_incomplete'),
       'absent',
+    );
+
+    expect(result.classification).toBe('MISSING_TEAMS_EVIDENCE');
+    expect(result.recommendedAction).toBe('review');
+  });
+
+  it('MISSING_TEAMS_EVIDENCE when the Teams occurrence is unresolved even if Tiny Steps says Present', () => {
+    const result = reconcileAttendanceClassification(
+      classification('review', 'occurrence_not_verified'),
+      'present',
     );
 
     expect(result.classification).toBe('MISSING_TEAMS_EVIDENCE');
