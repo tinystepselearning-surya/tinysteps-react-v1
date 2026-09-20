@@ -397,6 +397,24 @@ describe('Brick 5 future schedule automatic orchestration', () => {
       .toEqual(futureScheduleEnrollmentComparable(after));
   });
 
+  it.each([
+    ['missing to valid', undefined, 'Teacher One'],
+    ['null to valid', null, 'Teacher One'],
+    ['empty to valid', '', 'Teacher One'],
+    ['whitespace-only to valid', '   ', 'Teacher One'],
+    ['numeric to equivalent string', 123, '123'],
+    ['object to valid', {displayName: 'Teacher One'}, 'Teacher One'],
+    ['valid to different valid', 'Teacher One', 'Teacher Two'],
+    ['valid to whitespace-only', 'Teacher One', '   '],
+  ])('reacts to teacherName changing from %s', (_, beforeName, afterName) => {
+    const before = enrollment({teacherName: beforeName});
+    if (beforeName === undefined) delete before.teacherName;
+    const after = enrollment({teacherName: afterName});
+
+    expect(shouldReconcileFutureScheduleEnrollmentWrite({before, after}))
+      .toBe(true);
+  });
+
   it('reacts to scheduling-relevant legacy enrollment writes while ignoring unrelated metadata', () => {
     const legacyBefore = enrollment({
       schedule: {
