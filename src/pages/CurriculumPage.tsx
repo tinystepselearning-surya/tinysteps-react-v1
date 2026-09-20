@@ -311,7 +311,7 @@ const CurriculumPage: FC = () => {
   };
 
   return (
-    <div className="page-gradient relative overflow-hidden pb-24">
+    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_58%,#f8fbff_100%)] pb-24 text-slate-950">
       <Meta
         title={curriculumSeoTitle}
         description={curriculumSeoDescription}
@@ -319,18 +319,18 @@ const CurriculumPage: FC = () => {
         jsonLd={[breadcrumbSchema, webpageSchema, roadmapSchema, teachingMethodSchema, faqSchema]}
       />
 
-      <section className="mx-auto max-w-6xl px-4 pb-8 pt-8 sm:px-6">
-        <div className="glass-panel soft-grid overflow-hidden px-5 py-8 text-center sm:px-8 sm:py-11">
-          <div className="gradient-chip mx-auto mb-4 w-max">Ages 3–12 • Assessment-led placement</div>
-          <h1 className="font-heading text-3xl md:text-5xl">The complete Tiny Steps learning roadmap</h1>
+      <section className="mx-auto max-w-7xl px-4 pb-10 pt-10 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[32px] border border-orange-100/80 bg-white/95 px-5 py-9 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-8 sm:py-12">
+          <div className="mx-auto mb-4 inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">Ages 3–12 • Assessment-led placement</div>
+          <h1 className="font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[3.6rem]">The complete Tiny Steps learning roadmap</h1>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
             See how Phonics & Reading, Grammar & Sentence Building, and Speaking & Communication connect, how skills progress, and which detailed course fits the next level of learning.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link to="/courses" className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2">
+            <Link to="/courses" className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
               Compare All Courses
             </Link>
-            <Link to="/book-demo" className="rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2">
+            <Link to="/book-demo" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
               Book Free 35-Minute Demo
             </Link>
           </div>
@@ -338,7 +338,7 @@ const CurriculumPage: FC = () => {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
-        <div className="glass-panel p-6 md:p-8">
+        <div className="rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.045)] md:p-8">
           <h2 className="text-2xl font-semibold text-gray-900">Quick answers before you explore</h2>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-700">
             This page shows the relationship between programs and levels. Use the detailed course pages when you want the exact lesson-by-lesson sequence.
@@ -507,7 +507,7 @@ const CurriculumPage: FC = () => {
         <p className="mt-5 text-sm leading-6 text-gray-700">
           If you are unsure which pathway fits, use the free assessment to identify the current learning gap before choosing a course.
         </p>
-        <Link to="/book-demo" className="mt-4 inline-flex rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2">
+        <Link to="/book-demo" className="mt-4 inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
           Book Free 35-Minute Demo
         </Link>
       </section>
@@ -525,8 +525,8 @@ const CurriculumPage: FC = () => {
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white p-4 md:hidden">
-        <Link to="/book-demo" className="block w-full rounded bg-primary-500 py-3 text-center font-semibold text-white">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
+        <Link to="/book-demo" className="mx-auto block min-h-[48px] w-full max-w-md rounded-full bg-slate-950 py-3 text-center font-bold text-white">
           Book Free 35-Minute Demo
         </Link>
       </div>
