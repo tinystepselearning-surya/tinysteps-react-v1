@@ -43,11 +43,12 @@ type Av6Classification =
   | 'MISSING_ATTENDANCE'
   | 'ATTENDANCE_CONFLICT'
   | 'POSSIBLE_FALSE_PRESENT'
+  | 'NO_CLASS_OCCURRED'
   | 'MISSING_TEAMS_EVIDENCE'
   | 'ORPHAN_TEAMS_CLASS'
   | 'AMBIGUOUS';
 
-type Av6ValidationDecision = 'present' | 'absent' | 'review' | null;
+type Av6ValidationDecision = 'present' | 'absent' | 'not_occurred' | 'review' | null;
 type Av6ResolutionStatus = 'verified' | 'needs_review' | 'resolved';
 
 interface AvsLatestCheckResponse {
@@ -181,6 +182,7 @@ const CLASSIFICATION_TABS: Array<{ value: 'all' | Av6Classification; label: stri
   { value: 'MISSING_ATTENDANCE', label: 'Missing attendance' },
   { value: 'ATTENDANCE_CONFLICT', label: 'Conflict' },
   { value: 'POSSIBLE_FALSE_PRESENT', label: 'False present' },
+  { value: 'NO_CLASS_OCCURRED', label: 'No class' },
   { value: 'MISSING_TEAMS_EVIDENCE', label: 'Missing Teams' },
   { value: 'ORPHAN_TEAMS_CLASS', label: 'Orphan' },
   { value: 'AMBIGUOUS', label: 'Ambiguous' },
@@ -258,6 +260,7 @@ function normalizeClassification(value: unknown): Av6Classification {
     'MISSING_ATTENDANCE',
     'ATTENDANCE_CONFLICT',
     'POSSIBLE_FALSE_PRESENT',
+    'NO_CLASS_OCCURRED',
     'MISSING_TEAMS_EVIDENCE',
     'ORPHAN_TEAMS_CLASS',
     'AMBIGUOUS',
@@ -294,6 +297,7 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     validationDecision:
       validationDecision === 'present'
       || validationDecision === 'absent'
+      || validationDecision === 'not_occurred'
       || validationDecision === 'review'
         ? validationDecision
         : null,
@@ -468,6 +472,8 @@ function classificationTone(classification: Av6Classification): string {
       return 'border-amber-200 bg-amber-50 text-amber-700';
     case 'MISSING_ATTENDANCE':
       return 'border-orange-200 bg-orange-50 text-orange-700';
+    case 'NO_CLASS_OCCURRED':
+      return 'border-sky-200 bg-sky-50 text-sky-700';
     default:
       return 'border-slate-200 bg-slate-50 text-slate-700';
   }
@@ -661,7 +667,7 @@ export default function AttendanceValidationDashboard() {
     }
 
     const confirmed = window.confirm(
-      'First-Time Baseline may make fresh Microsoft Graph reads for up to 10 class sessions that do not already have saved AVS cases. Existing AVS cases are reused. Continue?',
+      'First-Time Baseline may make fresh Microsoft Graph reads for up to 100 class sessions that do not already have saved AVS cases. Existing AVS cases are reused. Continue?',
     );
     if (!confirmed) return;
 
@@ -788,6 +794,7 @@ export default function AttendanceValidationDashboard() {
       MISSING_ATTENDANCE: 0,
       ATTENDANCE_CONFLICT: 0,
       POSSIBLE_FALSE_PRESENT: 0,
+      NO_CLASS_OCCURRED: 0,
       MISSING_TEAMS_EVIDENCE: 0,
       ORPHAN_TEAMS_CLASS: 0,
       AMBIGUOUS: 0,
@@ -995,7 +1002,7 @@ export default function AttendanceValidationDashboard() {
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Latest Check is intentionally capped at 31 calendar days per run.
-          First-Time Baseline is also capped at 31 days and processes at most 10 session documents per click with fresh Teams evidence only where no saved AVS case exists.
+          First-Time Baseline is also capped at 31 days and processes at most 100 session documents per click with fresh Teams evidence only where no saved AVS case exists.
         </p>
 
         {loadedRange && loadedAt && (
