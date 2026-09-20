@@ -212,14 +212,3 @@ export function buildBaselineEvidenceSessionSnapshot(
     ) as CanonicalAttendanceStatus | null,
   };
 }
-
-export function resolveBaselineOrganizerCandidate(
-  session: Record<string, unknown>,
-  teacherUser?: Record<string, unknown> | null,
-): string | null {
-  return text(session.teamsOrganizerUserId)
-    || text(session.organizerUserId)
-    || text(session.teacherEmail)
-    || text(teacherUser?.email);
-}
-

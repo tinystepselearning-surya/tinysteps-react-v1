@@ -28,12 +28,13 @@ describe('AVS force-fresh Teams evidence routing', () => {
     );
   });
 
-  it('supports one session-backed case only and reuses the prior organizer identity', () => {
+  it('supports one session-backed case and resolves the canonical backend organizer', () => {
     expect(source).toContain('classSessionId !== caseId');
     expect(source).toContain(
       'Force Fresh Teams Evidence supports session-backed AVS cases only.',
     );
-    expect(source).toContain('previousEvidence.organizerUserId');
+    expect(source).toContain('resolveAttendanceValidationOrganizerUserId(db)');
+    expect(source).not.toContain('previousEvidence.organizerUserId');
     expect(source).toContain('buildFreshEvidenceSessionSnapshot');
   });
 

@@ -13,10 +13,29 @@ export interface AvsOrganizerResolution {
   configWriteCount: number;
 }
 
-function text(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized || null;
+export type AvsOrganizerResolutionFailureReason =
+  | 'organizer_config_invalid'
+  | 'organizer_identity_unresolved'
+  | 'organizer_identity_ambiguous';
+
+export class AvsOrganizerResolutionError extends Error {
+  constructor(
+    readonly reason: AvsOrganizerResolutionFailureReason,
+    readonly firestoreReadCount: number,
+  ) {
+    super(reason);
+    this.name = 'AvsOrganizerResolutionError';
+  }
+}
+
+export function isMicrosoftEntraObjectId(value: unknown): value is string {
+  return typeof value === 'string'
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      .test(value.trim());
+}
+
+function canonicalObjectId(value: unknown): string | null {
+  return isMicrosoftEntraObjectId(value) ? value.trim().toLowerCase() : null;
 }
 
 /**
@@ -24,7 +43,7 @@ function text(value: unknown): string | null {
  *
  * Existing AV2 evidence already stores organizerUserId. If the dedicated
  * backend-only config is absent, we may bootstrap it only when a bounded
- * evidence sample proves exactly one non-empty organizer ID.
+ * evidence sample proves exactly one valid Entra object ID.
  */
 export async function resolveAttendanceValidationOrganizerUserId(
   db: Firestore,
@@ -34,7 +53,7 @@ export async function resolveAttendanceValidationOrganizerUserId(
     .doc(ATTENDANCE_VALIDATION_TEAMS_CONFIG_DOC);
   const configSnap = await configRef.get();
   const configured = configSnap.exists
-    ? text(configSnap.data()?.organizerUserId)
+    ? canonicalObjectId(configSnap.data()?.organizerUserId)
     : null;
 
   if (configured) {
@@ -46,6 +65,10 @@ export async function resolveAttendanceValidationOrganizerUserId(
     };
   }
 
+  if (configSnap.exists) {
+    throw new AvsOrganizerResolutionError('organizer_config_invalid', 1);
+  }
+
   const evidenceSnap = await db
     .collection('attendanceValidationEvidence')
     .orderBy('collectedAt', 'desc')
@@ -55,20 +78,24 @@ export async function resolveAttendanceValidationOrganizerUserId(
   const organizerIds = [
     ...new Set(
       evidenceSnap.docs
-        .map((docSnapshot) => text(docSnapshot.data().organizerUserId))
+        .map((docSnapshot) =>
+          canonicalObjectId(docSnapshot.data().organizerUserId),
+        )
         .filter((value): value is string => Boolean(value)),
     ),
   ];
 
   if (organizerIds.length === 0) {
-    throw new Error(
-      'AVS Teams organizer is not configured and no prior evidence can bootstrap it.',
+    throw new AvsOrganizerResolutionError(
+      'organizer_identity_unresolved',
+      1 + evidenceSnap.size,
     );
   }
 
   if (organizerIds.length > 1) {
-    throw new Error(
-      'AVS Teams organizer is ambiguous across prior evidence; configure it explicitly.',
+    throw new AvsOrganizerResolutionError(
+      'organizer_identity_ambiguous',
+      1 + evidenceSnap.size,
     );
   }
 

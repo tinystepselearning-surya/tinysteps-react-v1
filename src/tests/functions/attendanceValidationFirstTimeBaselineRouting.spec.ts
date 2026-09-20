@@ -49,9 +49,13 @@ describe('AVS first-time date-range baseline routing', () => {
     expect(source).toContain('runAv53ShadowWithFirestore');
   });
 
-  it('resolves organizer candidate from session/teacher data without browser input', () => {
-    expect(source).toContain('resolveBaselineOrganizerCandidate');
-    expect(source).toContain("db.collection('users').doc(teacherId)");
+  it('resolves one canonical backend organizer without teacher/session fallbacks', () => {
+    expect(source).toContain('resolveAttendanceValidationOrganizerUserId(db)');
+    expect(source).not.toContain('resolveBaselineOrganizerCandidate');
+    expect(source).not.toContain("db.collection('users').doc(teacherId)");
+    expect(source).not.toContain('item.data.teamsOrganizerUserId');
+    expect(source).not.toContain('item.data.organizerUserId');
+    expect(source).not.toContain('item.data.teacherEmail');
     expect(source).not.toContain('request.data?.organizerUserId');
   });
 

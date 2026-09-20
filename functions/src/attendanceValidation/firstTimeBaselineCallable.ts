@@ -13,15 +13,15 @@ import {
   type AvsBaselineCursor,
 } from './baselinePlanner';
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
-import {
-  buildBaselineEvidenceSessionSnapshot,
-  resolveBaselineOrganizerCandidate,
-} from './freshEvidenceSession';
+import { buildBaselineEvidenceSessionSnapshot } from './freshEvidenceSession';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
 import {
+  AvsOrganizerResolutionError,
+  resolveAttendanceValidationOrganizerUserId,
+} from './organizerConfig';
+import {
   collectTeamsEvidence,
-  hashAttendanceEvidenceValue,
   type TeamsEvidenceGraphClient,
 } from './teamsEvidenceCollector';
 import { runAv53ShadowWithFirestore } from './shadowRunner';
@@ -184,6 +184,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           validationCaseReads: 0,
           teacherUserReads: 0,
           organizerEvidenceLookupQueries: 0,
+          organizerConfigReads: 0,
           av53PointReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry: 1,
@@ -251,6 +252,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           validationCaseReads: 0,
           teacherUserReads: 0,
           organizerEvidenceLookupQueries: 0,
+          organizerConfigReads: 0,
           av53PointReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry:
@@ -269,7 +271,6 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
     );
     const existingCaseCount = batchPlan.batch.length - missingCaseRows.length;
 
-    const missingTeacherIds = new Set<string>();
     const snapshots = new Map<string, ReturnType<typeof buildBaselineEvidenceSessionSnapshot>>();
     const blocked: Array<{ sessionId: string; reason: string }> = [];
 
@@ -280,12 +281,6 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           item.data,
         );
         snapshots.set(item.id, sessionSnapshot);
-        if (
-          !resolveBaselineOrganizerCandidate(item.data)
-          && sessionSnapshot.teacherId
-        ) {
-          missingTeacherIds.add(sessionSnapshot.teacherId);
-        }
       } catch (error) {
         blocked.push({
           sessionId: item.id,
@@ -296,52 +291,24 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       }
     }
 
-    const knownOrganizerByJoinUrlHash = new Map<string, string | null>();
-    let organizerEvidenceLookupQueries = 0;
-
-    for (const item of missingCaseRows) {
-      const expectedSession = snapshots.get(item.id);
-      if (!expectedSession?.joinUrl) continue;
-      if (
-        text(item.data.teamsOrganizerUserId)
-        || text(item.data.organizerUserId)
-      ) {
-        continue;
+    let organizerUserId: string | null = null;
+    let organizerResolutionFailure = 'organizer_identity_unresolved';
+    let organizerConfigReads = 0;
+    if (snapshots.size > 0) {
+      try {
+        const organizerResolution =
+          await resolveAttendanceValidationOrganizerUserId(db);
+        organizerUserId = organizerResolution.organizerUserId;
+        organizerConfigReads = organizerResolution.firestoreReadCount;
+      } catch (error) {
+        if (error instanceof AvsOrganizerResolutionError) {
+          organizerResolutionFailure = error.reason;
+          organizerConfigReads = error.firestoreReadCount;
+        } else {
+          throw error;
+        }
       }
-
-      const joinUrlHash = hashAttendanceEvidenceValue(expectedSession.joinUrl);
-      if (knownOrganizerByJoinUrlHash.has(joinUrlHash)) continue;
-
-      organizerEvidenceLookupQueries += 1;
-      const knownEvidence = await db
-        .collection('attendanceValidationEvidence')
-        .where('session.joinUrlHash', '==', joinUrlHash)
-        .limit(1)
-        .get();
-      const organizerUserId = knownEvidence.empty
-        ? null
-        : text(knownEvidence.docs[0].data().organizerUserId) || null;
-      knownOrganizerByJoinUrlHash.set(joinUrlHash, organizerUserId);
     }
-
-    const teacherIds = [...missingTeacherIds].sort();
-    const teacherSnapshots = teacherIds.length > 0
-      ? await db.getAll(
-          ...teacherIds.map((teacherId) =>
-            db.collection('users').doc(teacherId),
-          ),
-        )
-      : [];
-    const teacherById = new Map<string, Record<string, unknown> | null>();
-    teacherIds.forEach((teacherId, index) => {
-      const snapshot = teacherSnapshots[index];
-      teacherById.set(
-        teacherId,
-        snapshot?.exists
-          ? (snapshot.data() || {}) as Record<string, unknown>
-          : null,
-      );
-    });
 
     const baseGraphClient = new MicrosoftGraphClient({
       credentials: {
@@ -364,27 +331,10 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       const expectedSession = snapshots.get(item.id);
       if (!expectedSession) continue;
 
-      const explicitOrganizer =
-        text(item.data.teamsOrganizerUserId)
-        || text(item.data.organizerUserId)
-        || null;
-      const knownOrganizer = expectedSession.joinUrl
-        ? knownOrganizerByJoinUrlHash.get(
-            hashAttendanceEvidenceValue(expectedSession.joinUrl),
-          ) ?? null
-        : null;
-      const organizerUserId = explicitOrganizer
-        || knownOrganizer
-        || resolveBaselineOrganizerCandidate(
-          item.data,
-          expectedSession.teacherId
-            ? teacherById.get(expectedSession.teacherId) ?? null
-            : null,
-        );
       if (!organizerUserId) {
         blocked.push({
           sessionId: item.id,
-          reason: 'organizer_identity_unresolved',
+          reason: organizerResolutionFailure,
         });
         workItems.push({
           classSessionId: item.id,
@@ -462,7 +412,6 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
     const baselineStateReads = 1;
     const sessionQueryReads = sessionQuerySnapshot.docs.length;
     const validationCaseReads = caseRefs.length;
-    const teacherUserReads = teacherIds.length;
     const av53PointReads = av53Result?.pointReadDocumentBudget ?? 0;
 
     return {
@@ -486,16 +435,16 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         baselineStateReads,
         sessionQueryReads,
         validationCaseReads,
-        teacherUserReads,
-        organizerEvidenceLookupQueries,
+        teacherUserReads: 0,
+        organizerEvidenceLookupQueries: 0,
+        organizerConfigReads,
         av53PointReads,
         sharedStaffRegistryLoaded: workItems.length > 0,
         boundedReadsExcludingStaffRegistry:
           baselineStateReads
           + sessionQueryReads
           + validationCaseReads
-          + teacherUserReads
-          + organizerEvidenceLookupQueries
+          + organizerConfigReads
           + av53PointReads,
       },
     };

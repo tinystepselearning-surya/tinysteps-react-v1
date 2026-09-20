@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   buildBaselineEvidenceSessionSnapshot,
   buildFreshEvidenceSessionSnapshot,
-  resolveBaselineOrganizerCandidate,
 } from '../src/attendanceValidation/freshEvidenceSession';
 import type {
   AttendanceValidationEvidenceDocument,
@@ -127,24 +126,6 @@ describe('AVS first-time baseline session snapshot', () => {
       joinUrl: 'https://teams.example/legacy',
       existingAttendanceStatus: 'present',
     });
-  });
-
-  it('uses session organizer identity first, then teacher email/user email as fail-closed candidates', () => {
-    expect(resolveBaselineOrganizerCandidate({
-      teamsOrganizerUserId: 'organizer-object-id',
-      teacherEmail: 'teacher@tinysteps.example',
-    })).toBe('organizer-object-id');
-
-    expect(resolveBaselineOrganizerCandidate({
-      teacherEmail: 'teacher@tinysteps.example',
-    })).toBe('teacher@tinysteps.example');
-
-    expect(resolveBaselineOrganizerCandidate(
-      {},
-      { email: 'directory-teacher@tinysteps.example' },
-    )).toBe('directory-teacher@tinysteps.example');
-
-    expect(resolveBaselineOrganizerCandidate({}, null)).toBeNull();
   });
 
   it('fails closed when no valid class window can be reconstructed', () => {

@@ -8,6 +8,10 @@ import { buildFreshEvidenceSessionSnapshot } from './freshEvidenceSession';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
 import {
+  AvsOrganizerResolutionError,
+  resolveAttendanceValidationOrganizerUserId,
+} from './organizerConfig';
+import {
   collectTeamsEvidence,
   type AttendanceValidationEvidenceDocument,
   type TeamsEvidenceGraphClient,
@@ -149,15 +153,16 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
 
     const previousEvidence =
       previousEvidenceSnapshot.data() as AttendanceValidationEvidenceDocument;
-    const organizerUserId = String(
-      previousEvidence.organizerUserId || '',
-    ).trim();
-    if (!organizerUserId) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Previous evidence does not contain a Microsoft organizer identity.',
-      );
+    let organizerResolution;
+    try {
+      organizerResolution = await resolveAttendanceValidationOrganizerUserId(db);
+    } catch (error) {
+      if (error instanceof AvsOrganizerResolutionError) {
+        throw new HttpsError('failed-precondition', error.reason);
+      }
+      throw error;
     }
+    const organizerUserId = organizerResolution.organizerUserId;
 
     const currentSession =
       (sessionSnapshot.data() || {}) as Record<string, unknown>;
@@ -262,10 +267,13 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
         sessionReads: 1,
         previousEvidenceReads: 1,
         dirtyMarkerReads: 1,
+        organizerConfigReads: organizerResolution.firestoreReadCount,
         av53PointReads: av53Result.pointReadDocumentBudget,
         sharedStaffRegistryLoaded: true,
         boundedReadsExcludingStaffRegistry:
-          4 + av53Result.pointReadDocumentBudget,
+          4
+          + organizerResolution.firestoreReadCount
+          + av53Result.pointReadDocumentBudget,
       },
     };
   },
