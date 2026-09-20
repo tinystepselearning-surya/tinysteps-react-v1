@@ -29,7 +29,7 @@ describe('AVS first-time baseline planner', () => {
     expect(avsBaselineRangeId(range)).toBe(avsBaselineRangeId(range));
   });
 
-  it('processes at most ten sessions while keeping one lookahead row', () => {
+  it('processes at most 100 sessions while keeping one lookahead row', () => {
     const rows = Array.from({ length: AVS_BASELINE_QUERY_LIMIT }, (_, index) => ({
       id: `session-${String(index + 1).padStart(2, '0')}`,
       serviceDateYmd: '2026-09-10',
@@ -37,13 +37,13 @@ describe('AVS first-time baseline planner', () => {
 
     const plan = baselineBatchFromQueryRows(rows);
 
-    expect(AVS_BASELINE_MAX_SESSIONS_PER_RUN).toBe(10);
-    expect(AVS_BASELINE_QUERY_LIMIT).toBe(11);
-    expect(plan.batch).toHaveLength(10);
+    expect(AVS_BASELINE_MAX_SESSIONS_PER_RUN).toBe(100);
+    expect(AVS_BASELINE_QUERY_LIMIT).toBe(101);
+    expect(plan.batch).toHaveLength(100);
     expect(plan.hasMore).toBe(true);
     expect(plan.nextCursor).toEqual({
       serviceDateYmd: '2026-09-10',
-      sessionId: 'session-10',
+      sessionId: 'session-100',
     });
   });
 
