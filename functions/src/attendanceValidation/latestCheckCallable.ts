@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import type { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
@@ -102,7 +103,7 @@ function errorMessage(error: unknown): string {
 
 
 async function runCachedTeacherIdentityRollout(
-  db: FirebaseFirestore.Firestore,
+  db: Firestore,
   range: { fromDate: string; toDate: string },
   actorUid: string,
 ) {
