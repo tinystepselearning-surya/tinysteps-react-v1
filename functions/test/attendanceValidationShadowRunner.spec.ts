@@ -157,6 +157,41 @@ function session(
   };
 }
 
+function shiftedSameDayEvidence(
+  classSessionId: string,
+  evidenceId: string,
+  durationSeconds: number,
+): AttendanceValidationEvidenceDocument {
+  const input = JSON.parse(JSON.stringify(evidence()))
+    as AttendanceValidationEvidenceDocument;
+  const actualStartMs = Date.parse('2026-09-18T15:00:00.000Z');
+  const actualEnd = new Date(actualStartMs + durationSeconds * 1000).toISOString();
+
+  input.id = evidenceId;
+  input.calculationVersion = 2;
+  input.session.classSessionId = classSessionId;
+  input.meeting = {
+    ...input.meeting!,
+    onlineMeetingId: 'meeting-same-day',
+    startDateTime: '2026-09-18T15:00:00.000Z',
+    endDateTime: actualEnd,
+  };
+  input.attendanceReports[0].reportId = 'report-same-day';
+  input.attendanceReports[0].meetingStartDateTime =
+    '2026-09-18T15:00:00.000Z';
+  input.attendanceReports[0].meetingEndDateTime = actualEnd;
+
+  for (const participant of input.attendanceReports[0].participantRecords) {
+    participant.rawAttendanceIntervals = [{
+      joinDateTime: '2026-09-18T15:00:00.000Z',
+      leaveDateTime: actualEnd,
+      durationInSeconds: durationSeconds,
+    }];
+  }
+
+  return input;
+}
+
 class FakeStore implements Av53ShadowStore {
   public saved: Av53ValidationCaseDocument[] = [];
   public loadCalls = 0;
@@ -222,6 +257,226 @@ describe('AV5.3 bounded shadow runner', () => {
       casePreReads: 0,
       unboundedOperationalScans: false,
       operationalMutationAllowed: false,
+    });
+  });
+
+  it('verifies Present from more than 25 minutes anywhere on the same IST service date even when the clock time shifts', async () => {
+    const shiftedEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-shifted',
+      35 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: {
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-shifted',
+        },
+        session: session(),
+        evidence: shiftedEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-same-day-shift',
+        workItems: [{
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-shifted',
+        }],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      validationDecision: 'present',
+      tinyStepsAttendance: 'present',
+      classification: 'VERIFIED',
+      recommendedAction: 'none',
+      resolutionStatus: 'verified',
+      sameDayCoverageSeconds: 2100,
+      sameDayPresentSessionCount: 1,
+      sameDayRequiredOverlapSeconds: 1500,
+      sameDayOccurrenceCount: 1,
+    });
+    expect(store.saved[0].reasons).toContain(
+      'same_day_coverage_verified',
+    );
+  });
+
+  it('verifies two Present sessions only when pooled same-day teacher-learner overlap is more than 50 minutes', async () => {
+    const firstEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-1',
+      65 * 60,
+    );
+    const secondEvidence = shiftedSameDayEvidence(
+      'session-2',
+      'evidence-2',
+      65 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(),
+        evidence: firstEvidence,
+      },
+      {
+        item: { classSessionId: 'session-2', evidenceId: 'evidence-2' },
+        session: session(),
+        evidence: secondEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-two-present-sessions',
+        workItems: [
+          { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+          { classSessionId: 'session-2', evidenceId: 'evidence-2' },
+        ],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved).toHaveLength(2);
+    for (const saved of store.saved) {
+      expect(saved).toMatchObject({
+        validationDecision: 'present',
+        classification: 'VERIFIED',
+        resolutionStatus: 'verified',
+        sameDayCoverageSeconds: 3900,
+        sameDayPresentSessionCount: 2,
+        sameDayRequiredOverlapSeconds: 3000,
+        sameDayOccurrenceCount: 1,
+      });
+      expect(saved.reasons).toContain(
+        'same_day_multi_session_coverage_verified',
+      );
+    }
+  });
+
+  it('does not let one normal 35-minute Teams class verify two Tiny Steps Present attendances', async () => {
+    const firstEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-1',
+      35 * 60,
+    );
+    const secondEvidence = shiftedSameDayEvidence(
+      'session-2',
+      'evidence-2',
+      35 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(),
+        evidence: firstEvidence,
+      },
+      {
+        item: { classSessionId: 'session-2', evidenceId: 'evidence-2' },
+        session: session(),
+        evidence: secondEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-two-present-insufficient',
+        workItems: [
+          { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+          { classSessionId: 'session-2', evidenceId: 'evidence-2' },
+        ],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    for (const saved of store.saved) {
+      expect(saved).toMatchObject({
+        validationDecision: 'review',
+        classification: 'POSSIBLE_FALSE_PRESENT',
+        recommendedAction: 'review',
+        sameDayCoverageSeconds: 2100,
+        sameDayPresentSessionCount: 2,
+        sameDayRequiredOverlapSeconds: 3000,
+      });
+      expect(saved.reasons).toContain('same_day_coverage_insufficient');
+    }
+  });
+
+  it('keeps the multi-session boundary strict: exactly 50 minutes does not verify two Present sessions', async () => {
+    const firstEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-1',
+      50 * 60,
+    );
+    const secondEvidence = shiftedSameDayEvidence(
+      'session-2',
+      'evidence-2',
+      50 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(),
+        evidence: firstEvidence,
+      },
+      {
+        item: { classSessionId: 'session-2', evidenceId: 'evidence-2' },
+        session: session(),
+        evidence: secondEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-two-present-exact-50',
+        workItems: [
+          { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+          { classSessionId: 'session-2', evidenceId: 'evidence-2' },
+        ],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved.every((saved) =>
+      saved.classification === 'POSSIBLE_FALSE_PRESENT')).toBe(true);
+  });
+
+  it('does not assign a shifted same-day occurrence to an unmarked scheduled slot', async () => {
+    const shiftedEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-shifted-unmarked',
+      35 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: {
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-shifted-unmarked',
+        },
+        session: session({}),
+        evidence: shiftedEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-same-day-unmarked',
+        workItems: [{
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-shifted-unmarked',
+        }],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      tinyStepsAttendance: null,
+      validationDecision: 'not_occurred',
+      classification: 'NO_CLASS_OCCURRED',
+      recommendedAction: 'none',
+      resolutionStatus: 'verified',
     });
   });
 
