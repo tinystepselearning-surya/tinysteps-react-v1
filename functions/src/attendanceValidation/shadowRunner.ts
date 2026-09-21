@@ -163,6 +163,7 @@ interface Av53SameDayCoverageContext {
   aggregate: SameDayCoverageAggregate;
   presentSessionCount: number;
   contextIncomplete: boolean;
+  hasSameDayV2Evidence: boolean;
 }
 
 interface Av53ShadowDependencies {
@@ -698,6 +699,7 @@ function caseFromEvidence(params: {
   if (
     tinyStepsAttendance === 'present'
     && params.sameDayCoverage
+    && params.sameDayCoverage.hasSameDayV2Evidence
     && params.meaningfulOverlapSeconds !== null
   ) {
     const sameDay = params.sameDayCoverage;
@@ -949,6 +951,9 @@ export async function runAv53Shadow(
       presentSessionCount: Math.max(1, inferredCount, externalCount),
       contextIncomplete:
         deps.sameDayContextIncompleteGroups?.has(groupKey) ?? false,
+      hasSameDayV2Evidence: observations.some(
+        (observation) => observation.calculationVersion >= 2,
+      ),
     });
   }
 
