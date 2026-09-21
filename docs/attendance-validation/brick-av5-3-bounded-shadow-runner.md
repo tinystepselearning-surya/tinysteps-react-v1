@@ -69,7 +69,7 @@ For N work items:
 
     operational/evidence point-read budget = 2 × N documents
 
-plus one shared staff-registry load for the entire run.
+plus one shared staff-registry load for the entire run, plus the explicitly reported bounded same-day context reads described below.
 
 For example:
 
@@ -181,6 +181,10 @@ Each case contains:
     proofIssues[]
     identityIssues[]
     staffRegistryIssues[]
+    sameDayCoverageSeconds
+    sameDayPresentSessionCount
+    sameDayRequiredOverlapSeconds
+    sameDayOccurrenceCount
     inputFingerprint
     operationalMutationAllowed = false
 
