@@ -15,7 +15,7 @@ import {
 } from './evidenceIntervals';
 
 export const AV2_EVIDENCE_SCHEMA_VERSION = 1;
-export const AV2_CALCULATION_VERSION = 1;
+export const AV2_CALCULATION_VERSION = 2;
 export const AV2_EVIDENCE_SOURCE = 'microsoft_teams_graph' as const;
 
 export type CanonicalAttendanceStatus = 'present' | 'absent' | 'rescheduled';
