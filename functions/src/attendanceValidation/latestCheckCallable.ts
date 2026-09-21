@@ -375,6 +375,7 @@ export const runAttendanceValidationLatestCheck = onCall(
           dirtyMarkerReads: 0,
           validationCaseReads: 0,
           av53PointReads: 0,
+          sameDayContextReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry: 0,
         },
@@ -460,6 +461,8 @@ export const runAttendanceValidationLatestCheck = onCall(
     const dirtyMarkerReads = dirtyDocs.length;
     const validationCaseReads = caseRefs.length;
     const av53PointReads = av53Result?.pointReadDocumentBudget ?? 0;
+    const sameDayContextReads =
+      av53Result?.sameDayContextReadDocumentBudget ?? 0;
 
     return {
       ok: true,
@@ -481,9 +484,13 @@ export const runAttendanceValidationLatestCheck = onCall(
         dirtyMarkerReads,
         validationCaseReads,
         av53PointReads,
+        sameDayContextReads,
         sharedStaffRegistryLoaded: plan.workItems.length > 0,
         boundedReadsExcludingStaffRegistry:
-          dirtyMarkerReads + validationCaseReads + av53PointReads,
+          dirtyMarkerReads
+          + validationCaseReads
+          + av53PointReads
+          + sameDayContextReads,
       },
     };
   },
