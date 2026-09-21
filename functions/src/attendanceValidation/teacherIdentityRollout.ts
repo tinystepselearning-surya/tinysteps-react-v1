@@ -134,6 +134,7 @@ export function planCachedTeacherIdentityRollout(
 
   const candidatesByTeacher = new Map<string, Set<string>>();
   const supportingCasesByTeacher = new Map<string, Set<string>>();
+  const ambiguousEvidenceTeachers = new Set<string>();
 
   for (const item of cases) {
     const teacherId = item.teacherId?.trim() || '';
@@ -169,6 +170,10 @@ export function planCachedTeacherIdentityRollout(
           .filter((value): value is string => Boolean(value)),
       )];
 
+      if (stableHashes.length > 1) {
+        ambiguousEvidenceTeachers.add(teacherId);
+        continue;
+      }
       if (stableHashes.length !== 1) continue;
 
       if (!candidatesByTeacher.has(teacherId)) {
@@ -223,20 +228,20 @@ export function planCachedTeacherIdentityRollout(
       continue;
     }
 
-    if (candidates.length === 0) {
+    if (ambiguousEvidenceTeachers.has(teacherId) || candidates.length > 1) {
       decisions.push({
         teacherId,
-        status: 'no_cached_identity_candidate',
+        status: 'multiple_cached_identity_candidates',
         supportingCaseCount,
         candidateHash: null,
       });
       continue;
     }
 
-    if (candidates.length > 1) {
+    if (candidates.length === 0) {
       decisions.push({
         teacherId,
-        status: 'multiple_cached_identity_candidates',
+        status: 'no_cached_identity_candidate',
         supportingCaseCount,
         candidateHash: null,
       });
