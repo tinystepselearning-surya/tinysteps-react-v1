@@ -278,7 +278,7 @@ export function getCachedSessionsManagementRowsForReadLabel(
 
   if (label === 'TodaysNotifications:overall-admissions') {
     const count = Math.max(0, Number(snapshot.counts.overallEnrollments || 0));
-    return snapshot.enrollments.slice(0, count || snapshot.enrollments.length);
+    return snapshot.enrollments.slice(0, count);
   }
   if (label === 'TodaysNotifications:users-by-doc-id' || label === 'TodaysNotifications:users-by-uid') {
     return mergeRows(snapshot.users, extraPayloads.map((payload) => payload.users));
