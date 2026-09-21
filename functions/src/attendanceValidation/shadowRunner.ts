@@ -409,8 +409,6 @@ function sameDayGroupKey(
 function scheduledWindowEvidence(
   evidence: AttendanceValidationEvidenceDocument,
 ): AttendanceValidationEvidenceDocument {
-  if (evidence.attendanceReports.length <= 1) return evidence;
-
   const startMs = Date.parse(evidence.session.scheduledStartDateTime);
   const endMs = Date.parse(evidence.session.scheduledEndDateTime);
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
