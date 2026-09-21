@@ -15,6 +15,7 @@ const SNAPSHOT_COLLECTION = 'adminSessionsManagementSnapshots';
 const CURRENT_DOC = 'current';
 const LEASE_DOC = 'refreshLease';
 const SCHEMA_VERSION = 2;
+const SNAPSHOT_BASELINE_REFRESH_HOUR = 4;
 const SESSION_LIMIT_PER_DATE = 200;
 const SHARD_SIZE = 75;
 const LOOKUP_CHUNK_SIZE = 100;
@@ -104,6 +105,11 @@ const getKolkataDateKey = (date: Date = new Date()): string => {
   const day = parts.find((part) => part.type === 'day')?.value || '01';
   return `${year}-${month}-${day}`;
 };
+
+const getKolkataBaselineDateKey = (date: Date = new Date()): string =>
+  getKolkataDateKey(
+    new Date(date.getTime() - SNAPSHOT_BASELINE_REFRESH_HOUR * 60 * 60 * 1000),
+  );
 
 const shiftDateKey = (dateKey: string, days: number): string => {
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -436,7 +442,7 @@ async function buildSnapshotPayload(
   reason: SnapshotBuildReason,
   generatedByUid: string | null,
 ): Promise<SnapshotPayload> {
-  const baseDateKey = getKolkataDateKey();
+  const baseDateKey = getKolkataBaselineDateKey();
   // Sessions Management has a deliberately narrow daily baseline: Today, Tomorrow,
   // and the complete operational-admissions set. The rolling scheduler may materialize
   // a wider horizon, but this read model must not preload it.
