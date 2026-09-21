@@ -786,10 +786,13 @@ async function fetchDocsByIds(
       if (!requestedIds.has(row.id)) return;
       out[row.id] = { id: row.id, ...(row.data || {}) };
     });
+    // A loaded Sessions Management snapshot is authoritative for this screen.
+    // Missing optional profile rows render with fallbacks instead of spawning
+    // repeated pseudo-queries against the same browser cache.
+    return out;
   }
 
-  const unresolved = unique.filter((id) => !out[id]);
-  for (const idChunk of chunkIds(unresolved, 10)) {
+  for (const idChunk of chunkIds(unique, 10)) {
     const q = query(collection(db, collectionName), where(documentId(), 'in', idChunk));
     const snap = await getDocsLogged(
       cacheLabel,
@@ -838,10 +841,10 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
       if (!requestedRefs.has(row.id) && !requestedRefs.has(uid)) return;
       addResolvedUserToMap(map, row.id, rawData);
     });
+    return map;
   }
 
-  const unresolvedByDocId = normalized.filter((value) => !map[value]);
-  for (const idChunk of chunkIds(unresolvedByDocId, 10)) {
+  for (const idChunk of chunkIds(normalized, 10)) {
     const byDocIdQuery = query(collection(db, 'users'), where(documentId(), 'in', idChunk));
     const byDocIdSnap = await getDocsLogged(
       'TodaysNotifications:users-by-doc-id',
