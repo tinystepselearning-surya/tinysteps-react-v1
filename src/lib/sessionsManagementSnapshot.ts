@@ -40,7 +40,7 @@ type BrowserSnapshotCache = {
   extraDates: Record<string, SessionsManagementDatePayload>;
 };
 
-const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v1';
+const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v2';
 let memoryCache: BrowserSnapshotCache | null = null;
 let loadPromise: Promise<SessionsManagementSnapshotPayload> | null = null;
 let refreshPromise: Promise<SessionsManagementSnapshotPayload> | null = null;
