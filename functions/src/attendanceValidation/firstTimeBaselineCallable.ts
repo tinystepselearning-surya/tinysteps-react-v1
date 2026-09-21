@@ -448,13 +448,15 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         organizerEvidenceLookupQueries: 0,
         organizerConfigReads,
         av53PointReads,
+        sameDayContextReads,
         sharedStaffRegistryLoaded: workItems.length > 0,
         boundedReadsExcludingStaffRegistry:
           baselineStateReads
           + sessionQueryReads
           + validationCaseReads
           + organizerConfigReads
-          + av53PointReads,
+          + av53PointReads
+          + sameDayContextReads,
       },
     };
   },
