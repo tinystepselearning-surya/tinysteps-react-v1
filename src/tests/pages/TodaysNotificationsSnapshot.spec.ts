@@ -256,6 +256,13 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(pageSource).toContain('setProjectionRefreshNonce');
   });
 
+  it('rolls the default Tomorrow selection forward when the 04:00 baseline advances', () => {
+    expect(pageSource).toContain('const todayDateKeyRef = useRef(todayDateKey);');
+    expect(pageSource).toContain('previousTomorrowDateKey');
+    expect(pageSource).toContain('nextTomorrowDateKey');
+    expect(pageSource).toContain('selected === previousTomorrowDateKey');
+  });
+
   it('allows only admins to read the projection signal from the browser', () => {
     expect(firestoreRulesSource).toContain(
       'match /adminSessionsManagement/projectionState',
