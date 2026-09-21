@@ -1,6 +1,6 @@
 # AV3.2 — Production Staff Identity Registry Wiring
 
-Status: **implemented as a read-only production registry adapter and deterministic registry builder. No Cloud Function export, scheduler, operational attendance write, or production identity migration is introduced in this brick.**
+Status: **implemented as a privacy-minimized production registry plus an explicit admin-triggered cached-evidence rollout path. There is no scheduler, no Graph directory lookup, and no operational attendance or finance write.**
 
 ## Purpose
 
@@ -127,13 +127,31 @@ It does **not** write:
 - reschedule credits;
 - correction records.
 
-It also does not populate `attendanceValidationStaffIdentities` automatically. Verified stable Microsoft identities must be provisioned separately through an explicit reviewed process.
+It does not populate `attendanceValidationStaffIdentities` in the background. Provisioning is allowed only through an explicit admin-triggered rollout that proves a unique mapping from cached AVS attendance evidence using the canonical Tiny Steps teacher email hash plus exactly one stable Microsoft identity hash. Ambiguous, conflicting, incomplete, duplicate-owned, disabled, or mismatched identities remain unchanged and route to review.
 
 ## Runtime use
 
 `loadProductionStaffIdentityRegistry(db)` should be loaded once per AVS validation run and the returned `entries` passed into `bridgeEnrollmentIdentity(...)`.
 
 It should not be reloaded separately for every class session.
+
+## Explicit multi-teacher rollout
+
+The Admin Attendance Validation screen can invoke `runAttendanceValidationLatestCheck` with `mode = identity_rollout`.
+
+This mode:
+
+1. reads only cached `attendanceValidationCases` and their referenced `attendanceValidationEvidence`;
+2. considers active Tiny Steps users whose canonical role is `teacher`;
+3. matches a teacher only when the cached attendance participant email hash equals that teacher's canonical Tiny Steps email hash;
+4. requires complete attendance-record evidence and exactly one stable Microsoft identity hash;
+5. rejects duplicate email ownership, multiple observed identities, an identity already owned by another staff member, a different existing identity, or a disabled override;
+6. stores hashes only in `attendanceValidationStaffIdentities/{teacherId}`;
+7. revalidates cached AVS cases against the updated in-memory staff registry;
+8. makes **zero Microsoft Graph calls** during rollout/revalidation;
+9. preserves AV7 admin-resolved cases.
+
+No raw Microsoft object ID or raw email is returned to the browser or written into the override collection.
 
 ## Test coverage
 
@@ -164,7 +182,7 @@ Before AV5 reconciliation runs against real classes, confirm:
 [ ] AV3 identity conflicts continue to route to REVIEW
 ```
 
-The current brick supplies the wiring and integrity checks; it deliberately does not auto-enroll or auto-correct identity records.
+The registry wiring remains fail-closed. The explicit rollout may add a validation-owned identity hash only when all mapping gates pass; it never auto-corrects attendance, never reassigns an existing identity, and never uses display names.
 
 ## Core invariant
 

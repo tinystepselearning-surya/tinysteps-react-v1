@@ -75,6 +75,43 @@ interface AvsLatestCheckResponse {
   };
 }
 
+interface AvsIdentityRolloutResponse {
+  ok: boolean;
+  mode: 'identity_rollout';
+  fromDate: string;
+  toDate: string;
+  caseCountScanned: number;
+  evidenceDocumentCount: number;
+  teacherCount: number;
+  identityConfigWrites: number;
+  disabledOverrideCount: number;
+  existingOverrideConflictCount: number;
+  decisionCounts: {
+    ready: number;
+    already_mapped: number;
+    teacher_not_registered: number;
+    teacher_email_missing: number;
+    teacher_email_ambiguous: number;
+    no_cached_identity_candidate: number;
+    multiple_cached_identity_candidates: number;
+    existing_identity_differs: number;
+    identity_owned_by_other_staff: number;
+  };
+  revalidatedCount: number;
+  skippedCount: number;
+  resolvedCasesSkippedCount: number;
+  graphCalls: 0;
+  operationalMutationAllowed: false;
+  readBudget: {
+    validationCaseReads: number;
+    evidenceDocumentReads: number;
+    identityOverrideReads: number;
+    av53PointReads: number;
+    sharedStaffRegistryLoaded: boolean;
+    boundedReadsExcludingStaffRegistry: number;
+  };
+}
+
 interface AvsFirstTimeBaselineResponse {
   ok: boolean;
   fromDate: string;
@@ -521,6 +558,9 @@ export default function AttendanceValidationDashboard() {
   const [latestCheckRunning, setLatestCheckRunning] = useState(false);
   const [latestCheckResult, setLatestCheckResult] = useState<AvsLatestCheckResponse | null>(null);
   const [latestCheckCompletedAt, setLatestCheckCompletedAt] = useState<Date | null>(null);
+  const [identityRolloutRunning, setIdentityRolloutRunning] = useState(false);
+  const [identityRolloutResult, setIdentityRolloutResult] = useState<AvsIdentityRolloutResponse | null>(null);
+  const [identityRolloutCompletedAt, setIdentityRolloutCompletedAt] = useState<Date | null>(null);
   const [baselineRunning, setBaselineRunning] = useState(false);
   const [baselineResult, setBaselineResult] = useState<AvsFirstTimeBaselineResponse | null>(null);
   const [baselineCompletedAt, setBaselineCompletedAt] = useState<Date | null>(null);
@@ -647,6 +687,50 @@ export default function AttendanceValidationDashboard() {
     }
   }, [fromDate, loadSavedCases, toDate]);
 
+  const runTeacherIdentityRollout = useCallback(async () => {
+    if (!validDateRange(fromDate, toDate)) {
+      setError(
+        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
+      );
+      return;
+    }
+
+    const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
+    if (rangeDays === null || rangeDays > 31) {
+      setError('Teacher Identity Rollout supports a maximum of 31 calendar days at a time.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Teacher Identity Rollout uses only cached AVS evidence and makes zero Microsoft Graph calls. It will add only unique email-bound Microsoft identity hashes for teachers, never use display names, and revalidate cached AVS cases. Continue?',
+    );
+    if (!confirmed) return;
+
+    setIdentityRolloutRunning(true);
+    setError(null);
+
+    try {
+      const result = await callFunction<
+        AvsIdentityRolloutResponse,
+        { fromDate: string; toDate: string; mode: 'identity_rollout' }
+      >(
+        'runAttendanceValidationLatestCheck',
+        { fromDate, toDate, mode: 'identity_rollout' },
+      );
+
+      setIdentityRolloutResult(result);
+      setIdentityRolloutCompletedAt(new Date());
+      await loadSavedCases(false, true);
+    } catch (identityRolloutError) {
+      console.error('[AVS] Teacher Identity Rollout failed', identityRolloutError);
+      setError(
+        'Teacher Identity Rollout failed safely. No attendance, finance, or Microsoft Graph data was changed.',
+      );
+    } finally {
+      setIdentityRolloutRunning(false);
+    }
+  }, [fromDate, loadSavedCases, toDate]);
+
   const runFirstTimeBaseline = useCallback(async () => {
     if (!validDateRange(fromDate, toDate)) {
       setError(
@@ -735,6 +819,13 @@ export default function AttendanceValidationDashboard() {
       setForceFreshCaseId(null);
     }
   }, [loadSavedCases]);
+
+  const handleTeacherFilterChange = useCallback((value: string) => {
+    setTeacherFilter(value);
+    setClassificationFilter('all');
+    setSearch('');
+    setExpandedCaseId(null);
+  }, []);
 
   const teacherOptions = useMemo(() => {
     const byTeacher = new Map<
@@ -943,7 +1034,7 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               onClick={() => void loadSavedCases(false, false)}
-              disabled={loading || loadingMore || latestCheckRunning || baselineRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Loading saved results…' : 'Load Saved Results'}
@@ -952,7 +1043,7 @@ export default function AttendanceValidationDashboard() {
               type="button"
               variant="outline"
               onClick={() => void runLatestCheck()}
-              disabled={loading || loadingMore || latestCheckRunning || baselineRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
               title="Revalidate only changed sessions using cached Teams evidence."
             >
               <RefreshCw
@@ -963,11 +1054,26 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               variant="outline"
+              onClick={() => void runTeacherIdentityRollout()}
+              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
+              title="Safely bind teacher Microsoft identities from cached AVS attendance evidence and revalidate cached cases with zero Graph calls."
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${identityRolloutRunning ? 'animate-spin' : ''}`}
+              />
+              {identityRolloutRunning
+                ? 'Syncing teacher identities…'
+                : 'Sync Teacher Identities'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => void runFirstTimeBaseline()}
               disabled={
                 loading
                 || loadingMore
                 || latestCheckRunning
+                || identityRolloutRunning
                 || baselineRunning
                 || forceFreshCaseId !== null
                 || (
@@ -976,7 +1082,7 @@ export default function AttendanceValidationDashboard() {
                   && baselineResult.complete
                 )
               }
-              title="First-time only: collect fresh Teams evidence for up to 10 sessions without saved AVS cases."
+              title="First-time only: collect fresh Teams evidence for up to 100 sessions without saved AVS cases."
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${baselineRunning ? 'animate-spin' : ''}`}
@@ -999,6 +1105,7 @@ export default function AttendanceValidationDashboard() {
         <p className="mt-2 text-xs text-slate-500">
           Loading saved results reads only cached AVS cases for the selected service-date range.
           Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.
+          Sync Teacher Identities safely binds unique teacher identities from cached evidence and revalidates cached cases with zero Microsoft Graph calls.
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Latest Check is intentionally capped at 31 calendar days per run.
@@ -1058,6 +1165,52 @@ export default function AttendanceValidationDashboard() {
             {baselineCompletedAt && (
               <div className="shrink-0 text-xs text-slate-500">
                 {formatObservedAt(baselineCompletedAt.toISOString())}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {identityRolloutResult && (
+        <Card className="border-cyan-200 bg-cyan-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="font-medium text-slate-900">Teacher Identity Rollout completed</p>
+              <p className="mt-1 text-sm text-slate-700">
+                Scanned {identityRolloutResult.caseCountScanned} cached AVS case{identityRolloutResult.caseCountScanned === 1 ? '' : 's'}
+                {' '}across {identityRolloutResult.teacherCount} teacher{identityRolloutResult.teacherCount === 1 ? '' : 's'};
+                {' '}{identityRolloutResult.identityConfigWrites} new safe teacher identity mapping{identityRolloutResult.identityConfigWrites === 1 ? '' : 's'} added;
+                {' '}{identityRolloutResult.decisionCounts.already_mapped} already mapped.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Cached cases revalidated: {identityRolloutResult.revalidatedCount}.
+                {' '}Admin-resolved cases preserved: {identityRolloutResult.resolvedCasesSkippedCount}.
+                {' '}Microsoft Graph calls: {identityRolloutResult.graphCalls}.
+                {' '}Firestore bounded reads: {identityRolloutResult.readBudget.boundedReadsExcludingStaffRegistry}
+                {' '}+ one shared staff-registry load.
+              </p>
+              {(identityRolloutResult.decisionCounts.no_cached_identity_candidate > 0
+                || identityRolloutResult.decisionCounts.teacher_email_missing > 0
+                || identityRolloutResult.decisionCounts.teacher_email_ambiguous > 0
+                || identityRolloutResult.decisionCounts.multiple_cached_identity_candidates > 0
+                || identityRolloutResult.decisionCounts.existing_identity_differs > 0
+                || identityRolloutResult.decisionCounts.identity_owned_by_other_staff > 0
+                || identityRolloutResult.disabledOverrideCount > 0
+                || identityRolloutResult.existingOverrideConflictCount > 0) && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  Some teachers remain review-only because a unique safe identity could not be proven from cached evidence.
+                  No identity was guessed or reassigned.
+                </p>
+              )}
+              {identityRolloutResult.skippedCount > 0 && (
+                <p className="mt-1 text-xs font-medium text-amber-800">
+                  {identityRolloutResult.skippedCount} cached case{identityRolloutResult.skippedCount === 1 ? '' : 's'} were skipped safely during revalidation.
+                </p>
+              )}
+            </div>
+            {identityRolloutCompletedAt && (
+              <div className="shrink-0 text-xs text-slate-500">
+                {formatObservedAt(identityRolloutCompletedAt.toISOString())}
               </div>
             )}
           </div>
@@ -1165,7 +1318,7 @@ export default function AttendanceValidationDashboard() {
         <div className="grid gap-3 md:grid-cols-[280px_1fr]">
           <div className="space-y-1">
             <div className="text-xs font-medium text-slate-600">Teacher</div>
-            <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+            <Select value={teacherFilter} onValueChange={handleTeacherFilterChange}>
               <SelectTrigger aria-label="Filter attendance validation by teacher">
                 <SelectValue placeholder="All teachers" />
               </SelectTrigger>
@@ -1375,6 +1528,7 @@ export default function AttendanceValidationDashboard() {
                               onClick={() => void forceFreshEvidence(item)}
                               disabled={
                                 latestCheckRunning
+                                || identityRolloutRunning
                                 || baselineRunning
                                 || loading
                                 || loadingMore
@@ -1421,7 +1575,7 @@ export default function AttendanceValidationDashboard() {
             type="button"
             variant="outline"
             onClick={() => void loadSavedCases(true, true)}
-            disabled={loading || loadingMore || latestCheckRunning || baselineRunning || forceFreshCaseId !== null}
+            disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
           >
             {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
           </Button>

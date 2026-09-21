@@ -384,6 +384,55 @@ The Attendance Validation page exposes a separate **Run First-Time Baseline** bu
 
 The repository explicitly declares the cursor query index `classSessions: date ASC, __name__ ASC` so first production use does not depend on an implicit index assumption.
 
+## Brick 6C — cached multi-teacher identity rollout
+
+After the production Riya calibration established the correct stable-identity behavior, AVS generalizes that identity binding without adding another Cloud Function export.
+
+The existing admin-only callable `runAttendanceValidationLatestCheck` accepts an explicit `identity_rollout` mode. Reusing the existing export avoids a global `functions/src/index.ts` topology change and therefore keeps deployment impact bounded to the existing latest-check function plus Hosting.
+
+### Identity proof
+
+For every cached AVS case in the selected range, the rollout considers the referenced cached AV2 evidence only when:
+
+- the case teacher id matches the evidence-session teacher id;
+- the active Tiny Steps user is a canonical `teacher`;
+- the teacher has one unique canonical Tiny Steps email hash;
+- exactly one attendance report is selected;
+- attendance-report and attendance-record collection is complete;
+- a participant email hash equals that teacher email hash;
+- that participant exposes exactly one stable Microsoft identity hash.
+
+Display names never participate.
+
+The mapping is rejected when:
+
+- the teacher is missing from the active staff registry;
+- the teacher email is missing or shared;
+- cached evidence yields zero or multiple stable identities;
+- the teacher already has a different stable identity;
+- the candidate identity belongs to another staff member;
+- an existing identity override is disabled or conflicts.
+
+Only hashes are stored.
+
+### Cached revalidation
+
+After safe identity mappings are written, cached AVS cases are rerun through AV3/AV4/AV5 from their existing evidence documents. This path makes **0 Microsoft Graph calls**.
+
+Cases already resolved through AV7 admin correction are deliberately skipped so the rollout cannot erase an approved resolution audit link.
+
+The selected date range remains capped at 31 days, and a single rollout run accepts at most 500 cached AVS cases. Larger ranges must be narrowed explicitly.
+
+### Teacher filter reset
+
+Changing the teacher filter now also resets:
+
+- classification tab -> All;
+- local search -> empty;
+- expanded case -> closed.
+
+This prevents a teacher from appearing to have no classes merely because a classification/search filter from the previously selected teacher is still active.
+
 ## Still deferred
 
 Brick 6B still does **not** introduce:

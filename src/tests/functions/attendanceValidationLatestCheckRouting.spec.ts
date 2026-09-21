@@ -33,6 +33,20 @@ describe('AVS changed-only latest-check callable routing', () => {
     expect(source).not.toContain(".collection('classSessions').orderBy");
   });
 
+  it('supports a bounded cached teacher-identity rollout mode without a new Cloud Function export', () => {
+    expect(source).toContain("mode === 'identity_rollout'");
+    expect(source).toContain('AVS_IDENTITY_ROLLOUT_CASE_LIMIT');
+    expect(source).toContain("collection('attendanceValidationCases')");
+    expect(source).toContain("collection('attendanceValidationEvidence')");
+    expect(source).toContain('planCachedTeacherIdentityRollout');
+    expect(source).toContain('ATTENDANCE_VALIDATION_STAFF_IDENTITIES_COLLECTION');
+    expect(source).toContain('runAv53Shadow(');
+    expect(source).toContain('graphCalls: 0');
+    expect(source).toContain("source: 'cached_avs_evidence_email_bound'");
+    expect(functionsIndex.match(/runAttendanceValidationLatestCheck/g)?.length).toBeGreaterThan(0);
+    expect(functionsIndex).not.toContain('runAttendanceValidationTeacherIdentityRollout');
+  });
+
   it('reuses cached evidence through AV5.3 and never calls Microsoft Graph', () => {
     expect(source).toContain('runAv53ShadowWithFirestore');
     expect(source).not.toContain('MicrosoftGraphClient');
