@@ -12,6 +12,9 @@ export type SessionsManagementSnapshotPayload = {
   generatedAt: string;
   generatedBy: 'scheduled' | 'manual' | 'bootstrap';
   generatedByUid?: string | null;
+  buildStartedAtMs?: number;
+  projectionRevision: number;
+  deltaDocumentsApplied?: number;
   dateKeys: string[];
   counts: Record<string, number>;
   sourceStats?: Record<string, number>;
@@ -40,7 +43,7 @@ type BrowserSnapshotCache = {
   extraDates: Record<string, SessionsManagementDatePayload>;
 };
 
-const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v2';
+const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v3';
 let memoryCache: BrowserSnapshotCache | null = null;
 let loadPromise: Promise<SessionsManagementSnapshotPayload> | null = null;
 let refreshPromise: Promise<SessionsManagementSnapshotPayload> | null = null;
@@ -81,6 +84,15 @@ const normalizeSnapshot = (value: unknown): SessionsManagementSnapshotPayload | 
     generatedAt: String(data.generatedAt || ''),
     generatedBy: (String(data.generatedBy || 'scheduled') as SessionsManagementSnapshotPayload['generatedBy']),
     generatedByUid: data.generatedByUid ? String(data.generatedByUid) : null,
+    buildStartedAtMs: Number.isFinite(Number(data.buildStartedAtMs))
+      ? Math.max(0, Number(data.buildStartedAtMs))
+      : undefined,
+    projectionRevision: Number.isFinite(Number(data.projectionRevision))
+      ? Math.max(0, Number(data.projectionRevision))
+      : 0,
+    deltaDocumentsApplied: Number.isFinite(Number(data.deltaDocumentsApplied))
+      ? Math.max(0, Number(data.deltaDocumentsApplied))
+      : undefined,
     dateKeys: Array.isArray(data.dateKeys) ? data.dateKeys.map(String) : [],
     counts: data.counts && typeof data.counts === 'object'
       ? data.counts as Record<string, number>
@@ -178,7 +190,10 @@ export async function loadSessionsManagementSnapshot(): Promise<SessionsManageme
   loadPromise = (async () => {
     const cached = readStoredCache();
     const callable = httpsCallable(functions, 'getSessionsManagementSnapshot');
-    const response = await callable({ knownSnapshotId: cached?.snapshot.snapshotId || '' });
+    const response = await callable({
+      knownSnapshotId: cached?.snapshot.snapshotId || '',
+      knownProjectionRevision: cached?.snapshot.projectionRevision ?? -1,
+    });
     const result = response.data as Record<string, unknown>;
 
     if (result?.unchanged === true && cached?.snapshot) {
