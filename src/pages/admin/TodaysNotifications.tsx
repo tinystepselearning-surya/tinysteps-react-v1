@@ -1290,7 +1290,7 @@ export default function TodaysNotifications() {
       try {
         const admissionsSnap = await getDocsLogged(
           'TodaysNotifications:overall-admissions',
-          query(collection(db, 'enrollments'), limit(250)),
+          query(collection(db, 'enrollments')),
           { source: 'src/pages/admin/TodaysNotifications.tsx' },
         );
 
@@ -2112,7 +2112,7 @@ export default function TodaysNotifications() {
               Overall Admissions
               {mode === 'overall-admissions' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
-                  {sortedAdmissionsRows.length}
+                  {admissionsRows.length}
                 </span>
               )}
             </Button>
