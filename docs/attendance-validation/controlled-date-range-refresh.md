@@ -140,8 +140,11 @@ the bounded read budget before the shared staff-registry load is:
 N dirty-marker reads
 + N validation-case point reads
 + 2M AV5.3 point reads
-= 2N + 2M
++ C same-day operational context documents
+= 2N + 2M + C
 ```
+
+`C` is reported explicitly and comes only from enrollment-bounded same-day context queries. Each represented group query is capped at 50 documents plus one lookahead.
 
 The staff registry is still loaded once for the AV5.3 batch, never once per session.
 
@@ -276,8 +279,11 @@ Before the shared AV3 staff-registry load, the Firestore read budget is:
 + 1 previous evidence document
 + 1 dirty marker
 + 2 AV5.3 point reads
-= 6 bounded reads
++ C same-day operational context documents
+= 6 + C bounded reads
 ```
+
+For Force Fresh, `C` is normally the small number of class-session documents returned for that service-date + enrollment group and is capped at 51.
 
 The callable also reports logical Graph method calls. A normal complete occurrence commonly requires meeting resolution, transcript listing, attendance-report listing and selected attendance-record retrieval, but the actual count is returned rather than assumed.
 
@@ -361,11 +367,11 @@ For one maximum 100-session batch, the explicit upper bound before the shared st
 - up to 1 canonical organizer-config read when fresh evidence is needed;
 - up to 200 AV5.3 point reads.
 
-That is a conservative ceiling of **403 bounded reads plus one shared staff-registry load**. Most batches are lower because existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
+The pre-existing baseline ceiling remains **403 bounded reads plus one shared staff-registry load**, plus `C` same-day operational context documents used by AV5.3. Each represented service-date + enrollment group query is capped at 51 documents, and the callable returns the actual `C` count rather than assuming the worst case.
 
 ### Graph budget
 
-At most 100 sessions enter fresh collection per click. A normal complete Teams occurrence uses up to four logical Graph operations: meeting resolution, transcript metadata list, attendance-report list, and selected attendance-record list. The normal logical-call ceiling is therefore approximately **400 logical Graph calls** per batch. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
+At most 100 sessions enter fresh collection per click. Each session uses meeting resolution, transcript metadata listing, attendance-report listing, and one attendance-record request **per selected same-day report**. Because multiple legitimate same-day reports may now be retained, there is no fixed four-call-per-session assumption; the callable reports the actual logical Graph count. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
 
 ### Writes and safety
 
