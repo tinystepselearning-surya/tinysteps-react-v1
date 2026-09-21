@@ -1148,6 +1148,7 @@ export default function TodaysNotifications() {
   const [todayDateKey, setTodayDateKey] = useState(() =>
     getSessionsManagementBaselineDateKey(),
   );
+  const todayDateKeyRef = useRef(todayDateKey);
   const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
   const todayLabel = useMemo(() => {
     const baselineDate = dateFromYmdKey(todayDateKey);
@@ -1187,9 +1188,18 @@ export default function TodaysNotifications() {
           : '';
 
         const nextBaselineDateKey = getSessionsManagementBaselineDateKey();
-        setTodayDateKey((current) =>
-          current === nextBaselineDateKey ? current : nextBaselineDateKey,
-        );
+        const previousBaselineDateKey = todayDateKeyRef.current;
+        if (previousBaselineDateKey !== nextBaselineDateKey) {
+          const previousTomorrowDateKey = shiftDateKeyByDays(previousBaselineDateKey, 1);
+          const nextTomorrowDateKey = shiftDateKeyByDays(nextBaselineDateKey, 1);
+          todayDateKeyRef.current = nextBaselineDateKey;
+          setTodayDateKey(nextBaselineDateKey);
+          setUpcomingSpecificDate((selected) =>
+            !selected || selected === previousTomorrowDateKey
+              ? nextTomorrowDateKey
+              : selected,
+          );
+        }
 
         if (!previousSignal && (!cachedSignal || cachedSignal === signal)) return;
         if (previousSignal === signal && cachedSignal === signal) return;
