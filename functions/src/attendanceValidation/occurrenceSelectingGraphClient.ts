@@ -9,7 +9,8 @@ import type {
   TeamsEvidenceGraphClient,
 } from './teamsEvidenceCollector';
 
-const TRANSCRIPT_BOUNDARY_TOLERANCE_MS = 15 * 60 * 1000;
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 type SessionWindow = Pick<
   ExpectedClassSessionSnapshot,
@@ -39,6 +40,16 @@ function normalizeWindow(session: SessionWindow): { startMs: number; endMs: numb
   return { startMs, endMs };
 }
 
+function serviceDayWindow(session: SessionWindow): { startMs: number; endMs: number } {
+  const scheduled = normalizeWindow(session);
+  const istDate = new Date(scheduled.startMs + IST_OFFSET_MS)
+    .toISOString()
+    .slice(0, 10);
+  const utcMidnightMs = Date.parse(`${istDate}T00:00:00.000Z`);
+  const startMs = utcMidnightMs - IST_OFFSET_MS;
+  return { startMs, endMs: startMs + DAY_MS };
+}
+
 function overlapMs(
   leftStartMs: number,
   leftEndMs: number,
@@ -57,12 +68,15 @@ function ambiguous(message: string): MicrosoftGraphError {
 }
 
 /**
- * Selects exactly one attendance report for the scheduled Tiny Steps class.
+ * Selects all attendance reports belonging to the Tiny Steps service date in IST.
  *
- * Attendance reports are the authoritative occurrence discriminator because they expose
- * meetingStartDateTime/meetingEndDateTime for each recurring-meeting occurrence.
- * The selector never guesses when pagination, malformed timing metadata, or an exact
- * overlap tie means another occurrence could be authoritative.
+ * Tiny Steps permits same-day reschedules, so the scheduled clock time is not an
+ * occurrence discriminator. A class scheduled at 3pm may legitimately run at 5pm
+ * or 6pm on the same service date. Multiple same-day reports are retained because
+ * one student may take more than one class on the same day.
+ *
+ * Pagination and malformed timing metadata still fail closed because another page
+ * or an un-timed report could contain additional same-day attendance.
  */
 export function selectAttendanceReportForSession(
   page: GraphCollection<GraphMeetingAttendanceReport>,
@@ -70,67 +84,49 @@ export function selectAttendanceReportForSession(
 ): GraphCollection<GraphMeetingAttendanceReport> {
   if (page['@odata.nextLink']) {
     throw ambiguous(
-      'Attendance-report pagination prevents deterministic recurring-meeting occurrence selection.',
+      'Attendance-report pagination prevents deterministic same-day occurrence selection.',
     );
   }
 
-  const { startMs, endMs } = normalizeWindow(session);
-  const scored = page.value.map((report) => {
+  const { startMs, endMs } = serviceDayWindow(session);
+  const selected = page.value.filter((report) => {
     const reportStartMs = parseOptionalInstant(report.meetingStartDateTime);
     const reportEndMs = parseOptionalInstant(report.meetingEndDateTime);
     if (reportStartMs === null || reportEndMs === null || !(reportEndMs > reportStartMs)) {
       throw ambiguous(
-        'Attendance-report timing metadata is incomplete; recurring-meeting occurrence selection would require guessing.',
+        'Attendance-report timing metadata is incomplete; same-day occurrence selection would require guessing.',
       );
     }
-    return {
-      report,
-      overlapMs: overlapMs(startMs, endMs, reportStartMs, reportEndMs),
-    };
+    return overlapMs(startMs, endMs, reportStartMs, reportEndMs) > 0;
   });
 
-  const overlapping = scored.filter((candidate) => candidate.overlapMs > 0);
-  if (overlapping.length === 0) {
-    return { ...page, value: [] };
-  }
-
-  const maxOverlapMs = Math.max(...overlapping.map((candidate) => candidate.overlapMs));
-  const winners = overlapping.filter((candidate) => candidate.overlapMs === maxOverlapMs);
-  if (winners.length !== 1) {
-    throw ambiguous(
-      'Multiple attendance reports overlap the scheduled Tiny Steps class equally; the authoritative occurrence is ambiguous.',
-    );
-  }
-
-  return { ...page, value: [winners[0].report] };
+  return { ...page, value: selected };
 }
 
 /**
- * Keeps only transcript artifacts whose timing metadata belongs to the scheduled class.
- * A small boundary tolerance covers Graph artifact finalization immediately after class end.
- * Invalid/missing transcript timestamps are not guessed; pagination is preserved so AV2
- * continues to mark the evidence partial when another page may contain relevant artifacts.
+ * Keeps transcript metadata from the same IST service date as the Tiny Steps class.
+ *
+ * Transcript pagination is preserved so evidence remains partial whenever another
+ * page may contain additional same-day artifacts.
  */
 export function selectTranscriptsForSession(
   page: GraphCollection<GraphCallTranscript>,
   session: SessionWindow,
 ): GraphCollection<GraphCallTranscript> {
-  const { startMs, endMs } = normalizeWindow(session);
-  const expandedStartMs = startMs - TRANSCRIPT_BOUNDARY_TOLERANCE_MS;
-  const expandedEndMs = endMs + TRANSCRIPT_BOUNDARY_TOLERANCE_MS;
+  const { startMs, endMs } = serviceDayWindow(session);
 
   const value = page.value.filter((transcript) => {
     const createdMs = parseOptionalInstant(transcript.createdDateTime);
     const transcriptEndMs = parseOptionalInstant(transcript.endDateTime);
 
     if (createdMs !== null && transcriptEndMs !== null && transcriptEndMs >= createdMs) {
-      return overlapMs(expandedStartMs, expandedEndMs, createdMs, transcriptEndMs) > 0;
+      return overlapMs(startMs, endMs, createdMs, transcriptEndMs) > 0;
     }
     if (createdMs !== null) {
-      return createdMs >= expandedStartMs && createdMs <= expandedEndMs;
+      return createdMs >= startMs && createdMs < endMs;
     }
     if (transcriptEndMs !== null) {
-      return transcriptEndMs >= expandedStartMs && transcriptEndMs <= expandedEndMs;
+      return transcriptEndMs > startMs && transcriptEndMs <= endMs;
     }
     return false;
   });
@@ -140,8 +136,8 @@ export function selectTranscriptsForSession(
 
 /**
  * Decorates the AV1 Graph client with AV2.1 occurrence selection while preserving the
- * existing collector contract. Only the selected attendance report can reach the
- * attendance-record fetch path.
+ * existing collector contract. Every selected same-day attendance report reaches
+ * the attendance-record fetch path.
  */
 export function createOccurrenceSelectingTeamsEvidenceGraphClient(
   baseClient: TeamsEvidenceGraphClient,

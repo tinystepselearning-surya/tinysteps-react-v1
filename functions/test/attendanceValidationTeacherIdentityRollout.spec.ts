@@ -168,6 +168,29 @@ describe('AVS multi-teacher cached identity rollout', () => {
     ]);
   });
 
+  it('accepts the same unique teacher identity across multiple complete same-day attendance reports', () => {
+    const multiReportEvidence = evidence();
+    multiReportEvidence.calculationVersion = 2;
+    multiReportEvidence.attendanceReports.push({
+      ...JSON.parse(JSON.stringify(multiReportEvidence.attendanceReports[0])),
+      reportId: 'report-2',
+      meetingStartDateTime: '2026-09-01T10:30:00.000Z',
+      meetingEndDateTime: '2026-09-01T11:05:00.000Z',
+    });
+
+    const plan = planCachedTeacherIdentityRollout(
+      [cachedCase()],
+      new Map([['evidence-1', multiReportEvidence]]),
+      registry(),
+    );
+
+    expect(plan.decisions[0]).toMatchObject({
+      teacherId: 'teacher-1',
+      status: 'ready',
+      candidateHash: teacherMicrosoftHash,
+    });
+  });
+
   it('never uses display names or mismatched session teacher references as identity evidence', () => {
     const plan = planCachedTeacherIdentityRollout(
       [cachedCase()],

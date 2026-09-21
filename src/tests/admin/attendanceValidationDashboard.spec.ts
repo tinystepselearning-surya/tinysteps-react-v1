@@ -257,6 +257,17 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
+  it('surfaces auditable same-day coverage allocation in case details', () => {
+    expect(dashboard).toContain('sameDayCoverageSeconds');
+    expect(dashboard).toContain('sameDayPresentSessionCount');
+    expect(dashboard).toContain('sameDayRequiredOverlapSeconds');
+    expect(dashboard).toContain('sameDayOccurrenceCount');
+    expect(dashboard).toContain('Same-day Teams overlap:');
+    expect(dashboard).toContain('Present sessions:');
+    expect(dashboard).toContain('Required: &gt;');
+    expect(dashboard).toContain('Teams occurrences:');
+  });
+
   it('shows No Class Occurred as a first-class no-review classification', () => {
     expect(dashboard).toContain("'NO_CLASS_OCCURRED'");
     expect(dashboard).toContain("{ value: 'NO_CLASS_OCCURRED', label: 'No class' }");

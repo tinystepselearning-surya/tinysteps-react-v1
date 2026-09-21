@@ -28,6 +28,11 @@ import type {
   AttendanceValidationEvidenceDocument,
 } from './teamsEvidenceCollector';
 import {
+  aggregateSameDayCoverage,
+  buildSameDayCoverageObservation,
+  type SameDayCoverageAggregate,
+} from './sameDayCoverageEngine';
+import {
   loadProductionStaffIdentityRegistry,
   type Av3StaffRegistryIssueKind,
   type Av3StaffRegistrySnapshot,
@@ -60,7 +65,12 @@ export type Av53CaseReason =
   | 'operational_session_missing'
   | 'evidence_document_missing'
   | 'evidence_session_id_mismatch'
-  | 'operational_session_reference_mismatch';
+  | 'operational_session_reference_mismatch'
+  | 'same_day_coverage_verified'
+  | 'same_day_multi_session_coverage_verified'
+  | 'same_day_coverage_insufficient'
+  | 'same_day_identity_requires_review'
+  | 'same_day_evidence_incomplete';
 
 export interface Av53ShadowWorkItem {
   classSessionId: string;
@@ -108,6 +118,10 @@ export interface Av53ValidationCaseDocument {
   proofIssues: Av4ProofIssueKind[];
   identityIssues: Av3IdentityIssueKind[];
   staffRegistryIssues: Av3StaffRegistryIssueKind[];
+  sameDayCoverageSeconds: number | null;
+  sameDayPresentSessionCount: number | null;
+  sameDayRequiredOverlapSeconds: number | null;
+  sameDayOccurrenceCount: number | null;
   inputFingerprint: string;
   operationalMutationAllowed: false;
 }
@@ -123,6 +137,7 @@ export interface Av53ShadowRunResult {
   preScopeSkippedCount: number;
   validationStartYmd: typeof AV53_VALIDATION_START_YMD;
   pointReadDocumentBudget: number;
+  sameDayContextReadDocumentBudget: number;
   staffRegistryLoadedOnce: true;
   casePreReads: 0;
   unboundedOperationalScans: false;
@@ -142,6 +157,21 @@ export interface Av53ShadowRunResult {
 export interface Av53ShadowStore {
   loadWorkItems(items: readonly Av53ShadowWorkItem[]): Promise<Av53LoadedWorkItem[]>;
   saveCases(cases: readonly Av53ValidationCaseDocument[]): Promise<void>;
+}
+
+interface Av53SameDayCoverageContext {
+  aggregate: SameDayCoverageAggregate;
+  presentSessionCount: number;
+  contextIncomplete: boolean;
+  hasSameDayV2Evidence: boolean;
+}
+
+interface Av53ShadowDependencies {
+  store: Av53ShadowStore;
+  staffRegistry: Av3StaffRegistrySnapshot;
+  now?: () => Date;
+  sameDayPresentCountByGroup?: ReadonlyMap<string, number>;
+  sameDayContextIncompleteGroups?: ReadonlySet<string>;
 }
 
 function cleanId(value: unknown, name: string): string {
@@ -352,6 +382,98 @@ function sessionTeacherName(session: Record<string, unknown>): string | null {
     || text(session.teacherDisplayName);
 }
 
+function sessionTeacherId(session: Record<string, unknown>): string | null {
+  return text(session.teacherId)
+    || firstText(session.teacherIds)
+    || text(session.assignedTeacherId)
+    || text(session.primaryTeacherId)
+    || text(session.teacherUid)
+    || text(session.teacher_id);
+}
+
+interface SameDayGroupDescriptor {
+  key: string;
+  serviceDateYmd: string;
+  enrollmentId: string;
+  kidId: string;
+  teacherId: string;
+}
+
+function sameDayGroupDescriptor(
+  serviceDateYmd: string,
+  session: Record<string, unknown> | null,
+  evidence: AttendanceValidationEvidenceDocument | null,
+): SameDayGroupDescriptor | null {
+  const enrollmentId = evidence?.session.enrollmentId
+    || text(session?.enrollmentId);
+  const kidId = evidence?.session.kidId
+    || (session ? sessionKidId(session) : null);
+  const teacherId = evidence?.session.teacherId
+    || (session ? sessionTeacherId(session) : null);
+
+  if (!enrollmentId || !kidId || !teacherId) return null;
+  return {
+    key: [serviceDateYmd, enrollmentId, kidId, teacherId].join('|'),
+    serviceDateYmd,
+    enrollmentId,
+    kidId,
+    teacherId,
+  };
+}
+
+function sameDayGroupKey(
+  serviceDateYmd: string,
+  session: Record<string, unknown> | null,
+  evidence: AttendanceValidationEvidenceDocument | null,
+): string | null {
+  return sameDayGroupDescriptor(serviceDateYmd, session, evidence)?.key ?? null;
+}
+
+function scheduledWindowEvidence(
+  evidence: AttendanceValidationEvidenceDocument,
+): AttendanceValidationEvidenceDocument {
+  const startMs = Date.parse(evidence.session.scheduledStartDateTime);
+  const endMs = Date.parse(evidence.session.scheduledEndDateTime);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
+    return evidence;
+  }
+
+  const scored = evidence.attendanceReports.map((report) => {
+    const reportStartMs = report.meetingStartDateTime
+      ? Date.parse(report.meetingStartDateTime)
+      : Number.NaN;
+    const reportEndMs = report.meetingEndDateTime
+      ? Date.parse(report.meetingEndDateTime)
+      : Number.NaN;
+    const overlapMs = Number.isFinite(reportStartMs)
+      && Number.isFinite(reportEndMs)
+      && reportEndMs > reportStartMs
+      ? Math.max(
+        0,
+        Math.min(endMs, reportEndMs) - Math.max(startMs, reportStartMs),
+      )
+      : 0;
+    return { report, overlapMs };
+  });
+
+  const overlapping = scored.filter((item) => item.overlapMs > 0);
+  let selected = overlapping;
+  if (overlapping.length > 1) {
+    const maxOverlapMs = Math.max(...overlapping.map((item) => item.overlapMs));
+    selected = overlapping.filter((item) => item.overlapMs === maxOverlapMs);
+  }
+
+  const attendanceReports = selected.map((item) => item.report);
+  return {
+    ...evidence,
+    attendanceReports,
+    artifactAvailability: {
+      ...evidence.artifactAvailability,
+      attendanceReportAvailable: attendanceReports.length > 0,
+    },
+  };
+}
+
 function attendanceEntryForKid(
   session: Record<string, unknown>,
   kidId: string | null,
@@ -409,6 +531,10 @@ function baseCase(params: {
   proofIssues?: Av4ProofIssueKind[];
   identityIssues?: Av3IdentityIssueKind[];
   staffRegistryIssues: Av3StaffRegistryIssueKind[];
+  sameDayCoverageSeconds?: number | null;
+  sameDayPresentSessionCount?: number | null;
+  sameDayRequiredOverlapSeconds?: number | null;
+  sameDayOccurrenceCount?: number | null;
 }): Av53ValidationCaseDocument {
   const fingerprintSource = {
     evidenceId: params.evidenceId,
@@ -427,6 +553,10 @@ function baseCase(params: {
     proofIssues: params.proofIssues ?? [],
     identityIssues: params.identityIssues ?? [],
     staffRegistryIssues: params.staffRegistryIssues,
+    sameDayCoverageSeconds: params.sameDayCoverageSeconds ?? null,
+    sameDayPresentSessionCount: params.sameDayPresentSessionCount ?? null,
+    sameDayRequiredOverlapSeconds: params.sameDayRequiredOverlapSeconds ?? null,
+    sameDayOccurrenceCount: params.sameDayOccurrenceCount ?? null,
   };
 
   return {
@@ -455,6 +585,10 @@ function baseCase(params: {
     proofIssues: [...new Set(params.proofIssues ?? [])],
     identityIssues: [...new Set(params.identityIssues ?? [])],
     staffRegistryIssues: [...new Set(params.staffRegistryIssues)],
+    sameDayCoverageSeconds: params.sameDayCoverageSeconds ?? null,
+    sameDayPresentSessionCount: params.sameDayPresentSessionCount ?? null,
+    sameDayRequiredOverlapSeconds: params.sameDayRequiredOverlapSeconds ?? null,
+    sameDayOccurrenceCount: params.sameDayOccurrenceCount ?? null,
     inputFingerprint: stableCaseFingerprint(fingerprintSource),
     operationalMutationAllowed: false,
   };
@@ -578,20 +712,155 @@ function caseFromEvidence(params: {
   staffRegistry: readonly StaffIdentityRegistryEntry[];
   registryIssues: Av3StaffRegistryIssueKind[];
   meaningfulOverlapSeconds: number | null;
+  sameDayCoverage: Av53SameDayCoverageContext | null;
 }): Av53ValidationCaseDocument {
+  const kidId = params.evidence.session.kidId || sessionKidId(params.session);
+  const rawAttendance = attendanceEntryForKid(params.session, kidId);
+  const tinyStepsAttendance = normalizeTinyStepsAttendance(rawAttendance);
+
+  if (
+    tinyStepsAttendance === 'present'
+    && params.sameDayCoverage
+    && params.sameDayCoverage.hasSameDayV2Evidence
+    && params.meaningfulOverlapSeconds !== null
+  ) {
+    const sameDay = params.sameDayCoverage;
+    const requiredSeconds =
+      sameDay.presentSessionCount * params.meaningfulOverlapSeconds;
+
+    if (sameDay.contextIncomplete) {
+      return baseCase({
+        id: params.item.classSessionId,
+        runId: params.runId,
+        evidenceId: params.item.evidenceId,
+        observedAt: params.observedAt,
+        serviceDateYmd: params.serviceDateYmd,
+        classSessionId: params.item.classSessionId,
+        enrollmentId: params.evidence.session.enrollmentId,
+        kidId,
+        teacherId: params.evidence.session.teacherId,
+        studentName: sessionStudentName(params.session),
+        teacherName: sessionTeacherName(params.session),
+        tinyStepsAttendance,
+        validationDecision: 'review',
+        classification: 'MISSING_TEAMS_EVIDENCE',
+        recommendedAction: 'review',
+        resolutionStatus: 'needs_review',
+        reasons: ['same_day_evidence_incomplete'],
+        staffRegistryIssues: params.registryIssues,
+        sameDayCoverageSeconds: sameDay.aggregate.totalOverlapSeconds,
+        sameDayPresentSessionCount: sameDay.presentSessionCount,
+        sameDayRequiredOverlapSeconds: requiredSeconds,
+        sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
+      });
+    }
+
+    if (sameDay.aggregate.status === 'measured') {
+      if (sameDay.aggregate.totalOverlapSeconds > requiredSeconds) {
+        return baseCase({
+          id: params.item.classSessionId,
+          runId: params.runId,
+          evidenceId: params.item.evidenceId,
+          observedAt: params.observedAt,
+          serviceDateYmd: params.serviceDateYmd,
+          classSessionId: params.item.classSessionId,
+          enrollmentId: params.evidence.session.enrollmentId,
+          kidId,
+          teacherId: params.evidence.session.teacherId,
+          studentName: sessionStudentName(params.session),
+          teacherName: sessionTeacherName(params.session),
+          tinyStepsAttendance,
+          validationDecision: 'present',
+          classification: 'VERIFIED',
+          recommendedAction: 'none',
+          resolutionStatus: 'verified',
+          reasons: [
+            sameDay.presentSessionCount > 1
+              ? 'same_day_multi_session_coverage_verified'
+              : 'same_day_coverage_verified',
+          ],
+          staffRegistryIssues: params.registryIssues,
+          sameDayCoverageSeconds: sameDay.aggregate.totalOverlapSeconds,
+          sameDayPresentSessionCount: sameDay.presentSessionCount,
+          sameDayRequiredOverlapSeconds: requiredSeconds,
+          sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
+        });
+      }
+
+      return baseCase({
+        id: params.item.classSessionId,
+        runId: params.runId,
+        evidenceId: params.item.evidenceId,
+        observedAt: params.observedAt,
+        serviceDateYmd: params.serviceDateYmd,
+        classSessionId: params.item.classSessionId,
+        enrollmentId: params.evidence.session.enrollmentId,
+        kidId,
+        teacherId: params.evidence.session.teacherId,
+        studentName: sessionStudentName(params.session),
+        teacherName: sessionTeacherName(params.session),
+        tinyStepsAttendance,
+        validationDecision: 'review',
+        classification: 'POSSIBLE_FALSE_PRESENT',
+        recommendedAction: 'review',
+        resolutionStatus: 'needs_review',
+        reasons: ['same_day_coverage_insufficient'],
+        staffRegistryIssues: params.registryIssues,
+        sameDayCoverageSeconds: sameDay.aggregate.totalOverlapSeconds,
+        sameDayPresentSessionCount: sameDay.presentSessionCount,
+        sameDayRequiredOverlapSeconds: requiredSeconds,
+        sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
+      });
+    }
+
+    if (sameDay.aggregate.status === 'review') {
+      const evidenceIncomplete = sameDay.aggregate.issues.includes(
+        'same_day_attendance_evidence_incomplete',
+      );
+      return baseCase({
+        id: params.item.classSessionId,
+        runId: params.runId,
+        evidenceId: params.item.evidenceId,
+        observedAt: params.observedAt,
+        serviceDateYmd: params.serviceDateYmd,
+        classSessionId: params.item.classSessionId,
+        enrollmentId: params.evidence.session.enrollmentId,
+        kidId,
+        teacherId: params.evidence.session.teacherId,
+        studentName: sessionStudentName(params.session),
+        teacherName: sessionTeacherName(params.session),
+        tinyStepsAttendance,
+        validationDecision: 'review',
+        classification: evidenceIncomplete
+          ? 'MISSING_TEAMS_EVIDENCE'
+          : 'AMBIGUOUS',
+        recommendedAction: 'review',
+        resolutionStatus: 'needs_review',
+        reasons: [
+          evidenceIncomplete
+            ? 'same_day_evidence_incomplete'
+            : 'same_day_identity_requires_review',
+        ],
+        staffRegistryIssues: params.registryIssues,
+        sameDayCoverageSeconds: 0,
+        sameDayPresentSessionCount: sameDay.presentSessionCount,
+        sameDayRequiredOverlapSeconds: requiredSeconds,
+        sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
+      });
+    }
+  }
+
+  const exactEvidence = scheduledWindowEvidence(params.evidence);
   const identity = bridgeEnrollmentIdentity(
-    params.evidence,
+    exactEvidence,
     params.staffRegistry,
   );
   const proof = buildSessionProof(
-    params.evidence,
+    exactEvidence,
     identity,
     { meaningfulOverlapSeconds: params.meaningfulOverlapSeconds },
   );
   const classification = classifySessionProof(proof);
-
-  const kidId = params.evidence.session.kidId || sessionKidId(params.session);
-  const rawAttendance = attendanceEntryForKid(params.session, kidId);
   const reconciliation = reconcileAttendanceClassification(
     classification,
     rawAttendance,
@@ -626,19 +895,17 @@ function caseFromEvidence(params: {
 /**
  * Bounded AV5.3 shadow runner.
  *
- * It accepts an explicit work list only. It never discovers sessions by scanning
- * classSessions and never reads enrollments, kids, billing, earnings, credits or
- * reschedule collections. A hard 2026-09-01 Tiny Steps service-date lower bound
- * permanently excludes July/August history. Case persistence uses deterministic
- * document ids and performs no case pre-read.
+ * It accepts an explicit work list only. The pure runner never discovers work by
+ * scanning operational collections. The Firestore adapter may additionally perform
+ * one bounded classSessions query per represented same-day enrollment group
+ * (date + enrollmentId equality filters, hard cap 50 + one lookahead) only to
+ * count how many Tiny Steps Present sessions belong to the same learner + teacher. It never reads enrollments, kids,
+ * billing, earnings, credits or reschedule collections. A hard 2026-09-01 Tiny Steps
+ * service-date lower bound permanently excludes July/August history.
  */
 export async function runAv53Shadow(
   input: Av53ShadowRunInput,
-  deps: {
-    store: Av53ShadowStore;
-    staffRegistry: Av3StaffRegistrySnapshot;
-    now?: () => Date;
-  },
+  deps: Av53ShadowDependencies,
 ): Promise<Av53ShadowRunResult> {
   const runId = cleanRunId(input.runId);
   const workItems = normalizeWorkItems(input.workItems);
@@ -650,6 +917,69 @@ export async function runAv53Shadow(
   const staffRegistryIssues = registryIssueKinds(deps.staffRegistry);
   const cases: Av53ValidationCaseDocument[] = [];
   const skipped: Av53ShadowRunResult['skipped'] = [];
+
+  const inferredPresentCountByGroup = new Map<string, number>();
+  const observationsByGroup = new Map<string, ReturnType<typeof buildSameDayCoverageObservation>[]>();
+
+  for (const loadedItem of loaded) {
+    const { session, evidence } = loadedItem;
+    if (!session) continue;
+
+    const scope = scopeDecision(session, evidence);
+    if (scope.kind !== 'in_scope') continue;
+    const groupKey = sameDayGroupKey(scope.serviceDateYmd, session, evidence);
+    if (!groupKey) continue;
+
+    const kidId = evidence?.session.kidId || sessionKidId(session);
+    const attendance = normalizeTinyStepsAttendance(
+      attendanceEntryForKid(session, kidId),
+    );
+    if (attendance === 'present') {
+      inferredPresentCountByGroup.set(
+        groupKey,
+        (inferredPresentCountByGroup.get(groupKey) ?? 0) + 1,
+      );
+    }
+
+    if (
+      evidence
+      && evidence.session.classSessionId === loadedItem.item.classSessionId
+      && sessionReferencesMatchEvidence(
+        loadedItem.item.classSessionId,
+        session,
+        evidence,
+      )
+    ) {
+      const identity = bridgeEnrollmentIdentity(
+        evidence,
+        deps.staffRegistry.entries,
+      );
+      const observation = buildSameDayCoverageObservation(
+        evidence,
+        identity,
+        scope.serviceDateYmd,
+      );
+      const existing = observationsByGroup.get(groupKey) ?? [];
+      existing.push(observation);
+      observationsByGroup.set(groupKey, existing);
+    }
+  }
+
+  const sameDayCoverageByGroup = new Map<string, Av53SameDayCoverageContext>();
+  for (const [groupKey, observations] of observationsByGroup) {
+    const aggregate = aggregateSameDayCoverage(observations);
+    const inferredCount = inferredPresentCountByGroup.get(groupKey) ?? 0;
+    const externalCount = deps.sameDayPresentCountByGroup?.get(groupKey) ?? 0;
+    sameDayCoverageByGroup.set(groupKey, {
+      aggregate,
+      presentSessionCount: Math.max(1, inferredCount, externalCount),
+      contextIncomplete:
+        deps.sameDayContextIncompleteGroups?.has(groupKey) ?? false,
+      hasSameDayV2Evidence: observations.some(
+        (observation) => observation.calculationVersion >= 2,
+      ),
+    });
+  }
 
   for (const loadedItem of loaded) {
     const { item, session, evidence } = loadedItem;
@@ -737,6 +1067,9 @@ export async function runAv53Shadow(
       staffRegistry: deps.staffRegistry.entries,
       registryIssues: staffRegistryIssues,
       meaningfulOverlapSeconds,
+      sameDayCoverage: sameDayCoverageByGroup.get(
+        sameDayGroupKey(scope.serviceDateYmd, session, evidence) ?? '',
+      ) ?? null,
     }));
   }
 
@@ -754,6 +1087,7 @@ export async function runAv53Shadow(
       item.reason === 'before_validation_start').length,
     validationStartYmd: AV53_VALIDATION_START_YMD,
     pointReadDocumentBudget: workItems.length * 2,
+    sameDayContextReadDocumentBudget: 0,
     staffRegistryLoadedOnce: true,
     casePreReads: 0,
     unboundedOperationalScans: false,
@@ -761,6 +1095,36 @@ export async function runAv53Shadow(
     skipped,
     operationalMutationAllowed: false,
   };
+}
+
+class PreloadedAv53ShadowStore implements Av53ShadowStore {
+  private readonly loadedByKey = new Map<string, Av53LoadedWorkItem>();
+
+  constructor(
+    private readonly delegate: FirestoreAv53ShadowStore,
+    loaded: readonly Av53LoadedWorkItem[],
+  ) {
+    for (const item of loaded) {
+      this.loadedByKey.set(
+        `${item.item.classSessionId}|${item.item.evidenceId}`,
+        item,
+      );
+    }
+  }
+
+  async loadWorkItems(
+    items: readonly Av53ShadowWorkItem[],
+  ): Promise<Av53LoadedWorkItem[]> {
+    return items.map((item) =>
+      this.loadedByKey.get(`${item.classSessionId}|${item.evidenceId}`))
+      .filter((item): item is Av53LoadedWorkItem => Boolean(item));
+  }
+
+  async saveCases(
+    cases: readonly Av53ValidationCaseDocument[],
+  ): Promise<void> {
+    return this.delegate.saveCases(cases);
+  }
 }
 
 export class FirestoreAv53ShadowStore implements Av53ShadowStore {
@@ -816,18 +1180,85 @@ export class FirestoreAv53ShadowStore implements Av53ShadowStore {
  * Production adapter for later activation. There is intentionally no exported
  * Cloud Function or scheduler in AV5.3.
  *
- * The staff registry is loaded once per run; work-item reads remain exact point
- * reads and case writes do not pre-read existing case documents.
+ * The staff registry is loaded once per run. Work-item session/evidence reads remain
+ * exact point reads. Same-day multi-session validation adds bounded date+enrollment
+ * context queries to count operational Present rows, reported separately as
+ * sameDayContextReadDocumentBudget.
+ * Case writes do not pre-read existing case documents.
  */
 export async function runAv53ShadowWithFirestore(
   db: Firestore,
   input: Av53ShadowRunInput,
   now: () => Date = () => new Date(),
+  staffRegistryOverride?: Av3StaffRegistrySnapshot,
 ): Promise<Av53ShadowRunResult> {
-  const staffRegistry = await loadProductionStaffIdentityRegistry(db, now);
-  return runAv53Shadow(input, {
-    store: new FirestoreAv53ShadowStore(db),
+  const staffRegistry = staffRegistryOverride
+    ?? await loadProductionStaffIdentityRegistry(db, now);
+  const baseStore = new FirestoreAv53ShadowStore(db);
+  const normalizedItems = normalizeWorkItems(input.workItems);
+  const preloaded = await baseStore.loadWorkItems(normalizedItems);
+
+  const sameDayGroups = new Map<string, SameDayGroupDescriptor>();
+  for (const loadedItem of preloaded) {
+    if (!loadedItem.session) continue;
+    const scope = scopeDecision(loadedItem.session, loadedItem.evidence);
+    if (scope.kind !== 'in_scope') continue;
+    const group = sameDayGroupDescriptor(
+      scope.serviceDateYmd,
+      loadedItem.session,
+      loadedItem.evidence,
+    );
+    if (group) sameDayGroups.set(group.key, group);
+  }
+
+  const sameDayPresentCountByGroup = new Map<string, number>();
+  const sameDayContextIncompleteGroups = new Set<string>();
+  let sameDayContextReadDocumentBudget = 0;
+  const GROUP_SESSION_CONTEXT_LIMIT = 50;
+
+  for (const group of sameDayGroups.values()) {
+    const snapshot = await db
+      .collection('classSessions')
+      .where('date', '==', group.serviceDateYmd)
+      .where('enrollmentId', '==', group.enrollmentId)
+      .limit(GROUP_SESSION_CONTEXT_LIMIT + 1)
+      .get();
+    sameDayContextReadDocumentBudget += snapshot.size;
+
+    if (snapshot.size > GROUP_SESSION_CONTEXT_LIMIT) {
+      sameDayContextIncompleteGroups.add(group.key);
+      continue;
+    }
+
+    for (const docSnapshot of snapshot.docs) {
+      const session = (docSnapshot.data() || {}) as Record<string, unknown>;
+      const sessionGroup = sameDayGroupDescriptor(
+        group.serviceDateYmd,
+        session,
+        null,
+      );
+      if (!sessionGroup || sessionGroup.key !== group.key) continue;
+      const attendance = normalizeTinyStepsAttendance(
+        attendanceEntryForKid(session, group.kidId),
+      );
+      if (attendance !== 'present') continue;
+      sameDayPresentCountByGroup.set(
+        group.key,
+        (sameDayPresentCountByGroup.get(group.key) ?? 0) + 1,
+      );
+    }
+  }
+
+  const result = await runAv53Shadow(input, {
+    store: new PreloadedAv53ShadowStore(baseStore, preloaded),
     staffRegistry,
     now,
+    sameDayPresentCountByGroup,
+    sameDayContextIncompleteGroups,
   });
+
+  return {
+    ...result,
+    sameDayContextReadDocumentBudget,
+  };
 }

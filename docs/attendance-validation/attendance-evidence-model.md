@@ -41,15 +41,17 @@ There is no future `Late` outcome. Historical `late` data remains backward-compa
 
 These are the strongest inputs for AV2/AV4:
 
-1. a canonical Tiny Steps scheduled `classSession` exists;
+1. a canonical Tiny Steps `classSession` exists with a resolved IST service date;
 2. the Teams meeting can be resolved to the expected live-session identity;
 3. the expected teacher participated;
 4. the expected learner, or an identity linked to that learner, participated;
 5. raw participant join/leave intervals are available;
 6. teacher and learner participation overlap is measurable;
-7. the overlap occurs within the expected Tiny Steps scheduled class window.
+7. the overlap belongs to the same Tiny Steps IST service date.
 
-For a 1:1 class, **teacher–learner overlap within the scheduled window** is more useful than total meeting duration alone.
+For a Tiny Steps row already marked **Present**, the service date is authoritative and the scheduled clock time is not. A class scheduled at 3pm may legitimately run at 5pm or 6pm after a same-day reschedule.
+
+For non-Present rows, AVS still uses scheduled-window occurrence matching before attaching evidence to that individual row. This prevents one real same-day class from being borrowed by unrelated unmarked or rescheduled rows.
 
 ### Tier 2 — supplemental class-proof evidence
 
@@ -178,6 +180,33 @@ teacherLearnerScheduledOverlapPercentage = 91.4%
 ```
 
 The validator stores the evidence and calculation, not merely `91.4%`.
+
+## Same-day Present coverage rule
+
+For Tiny Steps rows whose current operational attendance is **Present**, AVS evaluates verified expected-teacher + learner overlap across the full IST service date.
+
+The production threshold remains strictly greater than 25 minutes per Present attendance:
+
+```text
+requiredSameDayOverlapSeconds =
+  numberOfTinyStepsPresentSessionsForGroup × 1,500
+```
+
+Examples:
+
+- 1 Present session -> same-day verified overlap must be **>25:00**;
+- 2 Present sessions -> overlap must be **>50:00**;
+- 3 Present sessions -> overlap must be **>75:00**.
+
+The group key is service date + enrollment + learner + teacher. Different enrollments or teachers are never pooled.
+
+Multiple same-day Teams attendance reports may contribute evidence. AVS unions teacher/learner overlap intervals across reports and deduplicates repeated copies of the same Teams report before summing, so overlapping or repeated evidence cannot inflate attendance time.
+
+One 35-minute class therefore cannot verify two Tiny Steps Present rows. Conversely, one continuous 65-minute Teams class can verify two Present rows for the same group on that service date.
+
+Same-day coverage requires complete attendance-report/attendance-record evidence plus verified teacher and learner identity. Transcript or recording metadata remains supplemental and cannot independently satisfy the attendance-duration threshold.
+
+Evidence collected before calculation version 2 is not silently reinterpreted as full-day evidence. It continues through the prior exact-window path until refreshed.
 
 ## Decision boundary
 

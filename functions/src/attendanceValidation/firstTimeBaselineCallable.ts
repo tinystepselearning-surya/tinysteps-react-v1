@@ -187,6 +187,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           organizerEvidenceLookupQueries: 0,
           organizerConfigReads: 0,
           av53PointReads: 0,
+          sameDayContextReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry: 1,
         },
@@ -255,6 +256,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           organizerEvidenceLookupQueries: 0,
           organizerConfigReads: 0,
           av53PointReads: 0,
+          sameDayContextReads: 0,
           sharedStaffRegistryLoaded: false,
           boundedReadsExcludingStaffRegistry:
             1 + sessionQuerySnapshot.docs.length,
@@ -418,6 +420,8 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
     const sessionQueryReads = sessionQuerySnapshot.docs.length;
     const validationCaseReads = caseRefs.length;
     const av53PointReads = av53Result?.pointReadDocumentBudget ?? 0;
+    const sameDayContextReads =
+      av53Result?.sameDayContextReadDocumentBudget ?? 0;
 
     return {
       ok: true,
@@ -444,13 +448,15 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         organizerEvidenceLookupQueries: 0,
         organizerConfigReads,
         av53PointReads,
+        sameDayContextReads,
         sharedStaffRegistryLoaded: workItems.length > 0,
         boundedReadsExcludingStaffRegistry:
           baselineStateReads
           + sessionQueryReads
           + validationCaseReads
           + organizerConfigReads
-          + av53PointReads,
+          + av53PointReads
+          + sameDayContextReads,
       },
     };
   },
