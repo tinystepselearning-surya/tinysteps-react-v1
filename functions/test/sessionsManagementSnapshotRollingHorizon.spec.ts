@@ -8,9 +8,12 @@ const source = readFileSync(
 );
 
 describe('Sessions Management daily baseline snapshot', () => {
-  it('publishes only Today and Tomorrow at 04:00 IST', () => {
+  it('publishes only Today and Tomorrow at the 04:00 IST operational-day boundary', () => {
     expect(source).toContain("const SCHEMA_VERSION = 2;");
+    expect(source).toContain('const SNAPSHOT_BASELINE_REFRESH_HOUR = 4;');
     expect(source).toContain("schedule: '0 4 * * *'");
+    expect(source).toContain('getKolkataBaselineDateKey()');
+    expect(source).toContain('SNAPSHOT_BASELINE_REFRESH_HOUR * 60 * 60 * 1000');
     expect(source).toContain(
       'const dateKeys = [baseDateKey, shiftDateKey(baseDateKey, 1)];',
     );
