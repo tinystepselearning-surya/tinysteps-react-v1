@@ -143,6 +143,7 @@ interface AvsFirstTimeBaselineResponse {
     teacherUserReads: number;
     organizerEvidenceLookupQueries: number;
     av53PointReads: number;
+    sameDayContextReads: number;
     sharedStaffRegistryLoaded: boolean;
     boundedReadsExcludingStaffRegistry: number;
   };
@@ -176,6 +177,7 @@ interface AvsForceFreshResponse {
     previousEvidenceReads: number;
     dirtyMarkerReads: number;
     av53PointReads: number;
+    sameDayContextReads: number;
     sharedStaffRegistryLoaded: boolean;
     boundedReadsExcludingStaffRegistry: number;
   };
