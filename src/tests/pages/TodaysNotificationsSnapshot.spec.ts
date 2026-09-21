@@ -12,11 +12,11 @@ import type {
 const makeSnapshot = (
   overrides: Partial<SessionsManagementSnapshotPayload> = {},
 ): SessionsManagementSnapshotPayload => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   snapshotId: 'snapshot-a',
   generatedAt: '2026-08-27T04:00:00.000+05:30',
   generatedBy: 'scheduled',
-  dateKeys: ['2026-08-27', '2026-08-28', '2026-08-29'],
+  dateKeys: ['2026-08-27', '2026-08-28'],
   counts: { overallEnrollments: 1 },
   sessions: [
     {
@@ -126,11 +126,11 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
   });
 
-  it('selects Today and Tomorrow by requested dates so the pre-4am midnight rollover stays correct', async () => {
+  it('selects Today and Tomorrow from the two-date daily baseline', async () => {
     const deps = makeDeps();
     const rolloverSnapshot = makeSnapshot({
       snapshotId: 'snapshot-before-midnight',
-      dateKeys: ['2026-08-26', '2026-08-27', '2026-08-28'],
+      dateKeys: ['2026-08-27', '2026-08-28'],
       sessions: [
         { id: 'new-today', data: { enrollmentId: 'enrollment-1', date: '2026-08-27', status: 'scheduled' } },
         { id: 'new-tomorrow', data: { enrollmentId: 'enrollment-1', date: '2026-08-28', status: 'scheduled' } },
