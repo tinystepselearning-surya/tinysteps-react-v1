@@ -873,11 +873,13 @@ function caseFromEvidence(params: {
 /**
  * Bounded AV5.3 shadow runner.
  *
- * It accepts an explicit work list only. It never discovers sessions by scanning
- * classSessions and never reads enrollments, kids, billing, earnings, credits or
- * reschedule collections. A hard 2026-09-01 Tiny Steps service-date lower bound
- * permanently excludes July/August history. Case persistence uses deterministic
- * document ids and performs no case pre-read.
+ * It accepts an explicit work list only. The pure runner never discovers work by
+ * scanning operational collections. The Firestore adapter may additionally perform
+ * one bounded same-service-date classSessions query per represented date (hard cap
+ * 500 + one lookahead) only to count how many Tiny Steps Present sessions belong to
+ * the same enrollment + learner + teacher group. It never reads enrollments, kids,
+ * billing, earnings, credits or reschedule collections. A hard 2026-09-01 Tiny Steps
+ * service-date lower bound permanently excludes July/August history.
  */
 export async function runAv53Shadow(
   input: Av53ShadowRunInput,
@@ -1156,8 +1158,10 @@ export class FirestoreAv53ShadowStore implements Av53ShadowStore {
  * Production adapter for later activation. There is intentionally no exported
  * Cloud Function or scheduler in AV5.3.
  *
- * The staff registry is loaded once per run; work-item reads remain exact point
- * reads and case writes do not pre-read existing case documents.
+ * The staff registry is loaded once per run. Work-item session/evidence reads remain
+ * exact point reads. Same-day multi-session validation adds a bounded date query to
+ * count operational Present rows, reported separately as sameDayContextReadDocumentBudget.
+ * Case writes do not pre-read existing case documents.
  */
 export async function runAv53ShadowWithFirestore(
   db: Firestore,
