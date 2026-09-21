@@ -65,6 +65,7 @@ import { removeExpiredManualReminderCaches } from './manualReminderCache';
 import PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';
 import { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';
 import {
+  getCachedSessionsManagementRowsForReadLabel,
   getCachedSessionsManagementSnapshot,
   loadSessionsManagementSnapshot,
 } from '../../lib/sessionsManagementSnapshot';
@@ -777,14 +778,30 @@ async function fetchDocsByIds(
   const unique = Array.from(new Set(ids.map((id) => String(id || '').trim()).filter(Boolean)));
   if (!unique.length) return out;
 
+  const cacheLabel = `TodaysNotifications:fetchDocsByIds:${collectionName}`;
+  const cachedRows = getCachedSessionsManagementRowsForReadLabel(cacheLabel);
+  if (cachedRows !== null) {
+    const requestedIds = new Set(unique);
+    cachedRows.forEach((row) => {
+      if (!requestedIds.has(row.id)) return;
+      out[row.id] = { id: row.id, ...(row.data || {}) };
+    });
+    // A loaded Sessions Management snapshot is authoritative for this screen.
+    // Missing optional profile rows render with fallbacks instead of spawning
+    // repeated pseudo-queries against the same browser cache.
+    return out;
+  }
+
   for (const idChunk of chunkIds(unique, 10)) {
     const q = query(collection(db, collectionName), where(documentId(), 'in', idChunk));
     const snap = await getDocsLogged(
-      `TodaysNotifications:fetchDocsByIds:${collectionName}`,
+      cacheLabel,
       q,
       { source: 'src/pages/admin/TodaysNotifications.tsx' },
     );
+    const requestedChunkIds = new Set(idChunk);
     snap.docs.forEach((docSnap) => {
+      if (!requestedChunkIds.has(docSnap.id)) return;
       out[docSnap.id] = { id: docSnap.id, ...(docSnap.data() as Record<string, any>) };
     });
   }
@@ -813,6 +830,20 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
   );
   if (!normalized.length) return map;
 
+  const cachedRows = getCachedSessionsManagementRowsForReadLabel(
+    'TodaysNotifications:users-by-doc-id',
+  );
+  if (cachedRows !== null) {
+    const requestedRefs = new Set(normalized);
+    cachedRows.forEach((row) => {
+      const rawData = row.data as UserDoc;
+      const uid = normalizeLookupId(rawData?.uid);
+      if (!requestedRefs.has(row.id) && !requestedRefs.has(uid)) return;
+      addResolvedUserToMap(map, row.id, rawData);
+    });
+    return map;
+  }
+
   for (const idChunk of chunkIds(normalized, 10)) {
     const byDocIdQuery = query(collection(db, 'users'), where(documentId(), 'in', idChunk));
     const byDocIdSnap = await getDocsLogged(
@@ -820,23 +851,28 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
       byDocIdQuery,
       { source: 'src/pages/admin/TodaysNotifications.tsx' },
     );
+    const requestedChunkIds = new Set(idChunk);
     byDocIdSnap.docs.forEach((docSnap) => {
+      if (!requestedChunkIds.has(docSnap.id)) return;
       addResolvedUserToMap(map, docSnap.id, docSnap.data() as UserDoc);
     });
   }
 
-  const unresolved = normalized.filter((value) => !map[value]);
-  if (!unresolved.length) return map;
+  const unresolvedByUid = normalized.filter((value) => !map[value]);
+  if (!unresolvedByUid.length) return map;
 
-  for (const idChunk of chunkIds(unresolved, 10)) {
+  for (const idChunk of chunkIds(unresolvedByUid, 10)) {
     const byUidQuery = query(collection(db, 'users'), where('uid', 'in', idChunk));
     const byUidSnap = await getDocsLogged(
       'TodaysNotifications:users-by-uid',
       byUidQuery,
       { source: 'src/pages/admin/TodaysNotifications.tsx' },
     );
+    const requestedChunkUids = new Set(idChunk);
     byUidSnap.docs.forEach((docSnap) => {
-      addResolvedUserToMap(map, docSnap.id, docSnap.data() as UserDoc);
+      const rawData = docSnap.data() as UserDoc;
+      if (!requestedChunkUids.has(normalizeLookupId(rawData?.uid))) return;
+      addResolvedUserToMap(map, docSnap.id, rawData);
     });
   }
 
@@ -1295,6 +1331,9 @@ export default function TodaysNotifications() {
         if (!active) return;
         setSessions(nextSessions);
         setEnrollmentMap(result.enrollmentMap);
+        // The authoritative snapshot is enough to render the session rows. Do not keep
+        // the whole screen blocked while optional profile details are enriched.
+        setIsLoading(false);
 
         const parentIds = new Set<string>();
         const teacherIds = new Set<string>();
@@ -1307,14 +1346,22 @@ export default function TodaysNotifications() {
           });
         });
 
-        const nextUsersMap = await fetchUsersByRefs(Array.from(new Set([...parentIds, ...teacherIds])));
+        try {
+          const nextUsersMap = await fetchUsersByRefs(
+            Array.from(new Set([...parentIds, ...teacherIds])),
+          );
 
-        if (!active) return;
-        setUsersMap(nextUsersMap);
-        setKidMap({});
-        setEnrollmentMap(result.enrollmentMap);
-        setCourseMap({});
-        setIsLoading(false);
+          if (!active) return;
+          setUsersMap(nextUsersMap);
+          setKidMap({});
+          setEnrollmentMap(result.enrollmentMap);
+          setCourseMap({});
+        } catch (enrichmentError) {
+          console.warn(
+            '[TodaysNotifications] session profile enrichment failed; keeping snapshot rows visible',
+            enrichmentError,
+          );
+        }
 
         if (import.meta.env.DEV) {
           console.info('[TodaysNotifications] manualReminderLoad', {
@@ -1396,6 +1443,9 @@ export default function TodaysNotifications() {
 
         if (!active) return;
         setEnrollments(nextEnrollments);
+        // Overall Admissions can render from enrollment snapshot rows immediately.
+        // Profile/course hydration is secondary and must never hold the screen in Loading.
+        setIsLoading(false);
 
         const nextEnrollmentMap: Record<string, Record<string, any>> = {};
         const kidIds = new Set<string>();
@@ -1414,27 +1464,34 @@ export default function TodaysNotifications() {
           if (courseId) courseIds.add(courseId);
         });
 
-        const userRefs = Array.from(new Set([...parentRefs, ...teacherRefs]));
-        const [nextUsersMap, nextKidMap, nextCourseMap] = await Promise.all([
-          fetchUsersByRefs(userRefs),
-          fetchDocsByIds('kids', Array.from(kidIds)),
-          fetchDocsByIds('courses', Array.from(courseIds)),
-        ]);
-
-        const missingKidIds = Array.from(kidIds).filter((kidId) => !nextKidMap[kidId]);
-        if (missingKidIds.length) {
-          const studentsFallback = await fetchDocsByIds('students', missingKidIds);
-          Object.keys(studentsFallback).forEach((kidId) => {
-            nextKidMap[kidId] = studentsFallback[kidId];
-          });
-        }
-
-        if (!active) return;
-        setUsersMap(nextUsersMap);
-        setKidMap(nextKidMap);
-        setCourseMap(nextCourseMap);
         setEnrollmentMap(nextEnrollmentMap);
-        setIsLoading(false);
+
+        const userRefs = Array.from(new Set([...parentRefs, ...teacherRefs]));
+        try {
+          const [nextUsersMap, nextKidMap, nextCourseMap] = await Promise.all([
+            fetchUsersByRefs(userRefs),
+            fetchDocsByIds('kids', Array.from(kidIds)),
+            fetchDocsByIds('courses', Array.from(courseIds)),
+          ]);
+
+          const missingKidIds = Array.from(kidIds).filter((kidId) => !nextKidMap[kidId]);
+          if (missingKidIds.length) {
+            const studentsFallback = await fetchDocsByIds('students', missingKidIds);
+            Object.keys(studentsFallback).forEach((kidId) => {
+              nextKidMap[kidId] = studentsFallback[kidId];
+            });
+          }
+
+          if (!active) return;
+          setUsersMap(nextUsersMap);
+          setKidMap(nextKidMap);
+          setCourseMap(nextCourseMap);
+        } catch (enrichmentError) {
+          console.warn(
+            '[TodaysNotifications] admissions profile enrichment failed; keeping snapshot rows visible',
+            enrichmentError,
+          );
+        }
       } catch (error: any) {
         console.error('[TodaysNotifications] Failed to load admissions', error);
         if (!active) return;
