@@ -162,8 +162,9 @@ function shiftedSameDayEvidence(
   evidenceId: string,
   durationSeconds: number,
 ): AttendanceValidationEvidenceDocument {
-  const input = JSON.parse(JSON.stringify(evidence()))
-    as AttendanceValidationEvidenceDocument;
+  const input = JSON.parse(
+    JSON.stringify(evidence()),
+  ) as AttendanceValidationEvidenceDocument;
   const actualStartMs = Date.parse('2026-09-18T15:00:00.000Z');
   const actualEnd = new Date(actualStartMs + durationSeconds * 1000).toISOString();
 
