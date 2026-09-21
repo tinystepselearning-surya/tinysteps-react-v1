@@ -54,6 +54,14 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain("collection(db, 'kids')");
   });
 
+  it('resets classification and search when switching teachers so another teacher never appears blank because of prior filters', () => {
+    expect(dashboard).toContain('const handleTeacherFilterChange = useCallback');
+    expect(dashboard).toContain('setTeacherFilter(value)');
+    expect(dashboard).toContain("setClassificationFilter('all')");
+    expect(dashboard).toContain("setSearch('')");
+    expect(dashboard).toContain('onValueChange={handleTeacherFilterChange}');
+  });
+
   it('uses bounded enrollment and canonical teacher-user reads for display names', () => {
     expect(dashboard).not.toContain('onSnapshot(');
     expect(dashboard).not.toContain("collection(db, 'classSessions')");
@@ -145,6 +153,24 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('if (!preserveCurrentTab) {');
     expect(dashboard).toContain("setClassificationFilter('all')");
     expect(dashboard).toContain("setTeacherFilter('all')");
+    expect(callFunctions).toContain(
+      "runAttendanceValidationLatestCheck: 'asia-south1'",
+    );
+  });
+
+  it('exposes a separate cached multi-teacher identity rollout using the existing latest-check callable', () => {
+    expect(dashboard).toContain('Sync Teacher Identities');
+    expect(dashboard).toContain('runTeacherIdentityRollout');
+    expect(dashboard).toContain("mode: 'identity_rollout'");
+    expect(dashboard).toContain(
+      'Teacher Identity Rollout uses only cached AVS evidence and makes zero Microsoft Graph calls',
+    );
+    expect(dashboard).toContain('Teacher Identity Rollout completed');
+    expect(dashboard).toContain('identityRolloutResult.identityConfigWrites');
+    expect(dashboard).toContain('identityRolloutResult.revalidatedCount');
+    expect(dashboard).toContain('identityRolloutResult.graphCalls');
+    expect(dashboard).toContain('No identity was guessed or reassigned.');
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
     expect(callFunctions).toContain(
       "runAttendanceValidationLatestCheck: 'asia-south1'",
     );
