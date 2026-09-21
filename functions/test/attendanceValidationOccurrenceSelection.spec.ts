@@ -16,7 +16,7 @@ const session = {
 };
 
 describe('AV2.1 recurring Teams occurrence selection', () => {
-  it('selects the unique attendance report with the strongest scheduled-window overlap', () => {
+  it('selects every attendance report on the same IST service date even when class time shifts', () => {
     const selected = selectAttendanceReportForSession({
       value: [
         {
@@ -25,7 +25,12 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
           meetingEndDateTime: '2026-09-15T16:35:00Z',
         },
         {
-          id: 'report-target',
+          id: 'report-morning-shift',
+          meetingStartDateTime: '2026-09-16T05:00:00Z',
+          meetingEndDateTime: '2026-09-16T05:40:00Z',
+        },
+        {
+          id: 'report-evening',
           meetingStartDateTime: '2026-09-16T15:59:00Z',
           meetingEndDateTime: '2026-09-16T16:36:00Z',
         },
@@ -37,10 +42,13 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
       ],
     }, session);
 
-    expect(selected.value.map((report) => report.id)).toEqual(['report-target']);
+    expect(selected.value.map((report) => report.id)).toEqual([
+      'report-morning-shift',
+      'report-evening',
+    ]);
   });
 
-  it('returns no attendance report when no occurrence overlaps the scheduled class', () => {
+  it('returns no attendance report when no occurrence belongs to the IST service date', () => {
     const selected = selectAttendanceReportForSession({
       value: [{
         id: 'report-other-day',
@@ -52,24 +60,26 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
     expect(selected.value).toEqual([]);
   });
 
-  it('refuses to guess when two reports tie for strongest overlap', () => {
-    expect(() => selectAttendanceReportForSession({
+  it('retains multiple same-day reports for multi-session attendance coverage', () => {
+    const selected = selectAttendanceReportForSession({
       value: [
         {
           id: 'report-a',
-          meetingStartDateTime: '2026-09-16T15:55:00Z',
-          meetingEndDateTime: '2026-09-16T16:30:00Z',
+          meetingStartDateTime: '2026-09-16T08:00:00Z',
+          meetingEndDateTime: '2026-09-16T08:35:00Z',
         },
         {
           id: 'report-b',
-          meetingStartDateTime: '2026-09-16T16:05:00Z',
-          meetingEndDateTime: '2026-09-16T16:40:00Z',
+          meetingStartDateTime: '2026-09-16T12:00:00Z',
+          meetingEndDateTime: '2026-09-16T12:35:00Z',
         },
       ],
-    }, session)).toThrow(expect.objectContaining({
-      kind: 'ambiguous_result',
-      status: 409,
-    }));
+    }, session);
+
+    expect(selected.value.map((report) => report.id)).toEqual([
+      'report-a',
+      'report-b',
+    ]);
   });
 
   it('refuses to select from an incomplete attendance-report page', () => {
@@ -86,13 +96,18 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
     }));
   });
 
-  it('keeps only transcript metadata belonging to the scheduled occurrence', () => {
+  it('keeps transcript metadata belonging to the same IST service date', () => {
     const selected = selectTranscriptsForSession({
       value: [
         {
           id: 'transcript-previous',
           createdDateTime: '2026-09-15T16:00:00Z',
           endDateTime: '2026-09-15T16:35:00Z',
+        },
+        {
+          id: 'transcript-morning-shift',
+          createdDateTime: '2026-09-16T05:01:00Z',
+          endDateTime: '2026-09-16T05:36:00Z',
         },
         {
           id: 'transcript-target',
@@ -107,10 +122,13 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
       ],
     }, session);
 
-    expect(selected.value.map((transcript) => transcript.id)).toEqual(['transcript-target']);
+    expect(selected.value.map((transcript) => transcript.id)).toEqual([
+      'transcript-morning-shift',
+      'transcript-target',
+    ]);
   });
 
-  it('fetches attendance records only for the selected recurring-meeting report', async () => {
+  it('fetches attendance records for every selected same-day recurring-meeting report', async () => {
     const listAttendanceRecords = vi.fn().mockResolvedValue({ value: [] });
     const baseClient: TeamsEvidenceGraphClient = {
       resolveOnlineMeetingByJoinUrl: vi.fn().mockResolvedValue({
@@ -129,6 +147,11 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
             id: 'report-previous',
             meetingStartDateTime: '2026-09-15T16:00:00Z',
             meetingEndDateTime: '2026-09-15T16:35:00Z',
+          },
+          {
+            id: 'report-morning-shift',
+            meetingStartDateTime: '2026-09-16T05:00:00Z',
+            meetingEndDateTime: '2026-09-16T05:40:00Z',
           },
           {
             id: 'report-target',
@@ -168,11 +191,20 @@ describe('AV2.1 recurring Teams occurrence selection', () => {
     });
 
     expect(result.evidence.collectionStatus).toBe('complete');
+    expect(result.evidence.calculationVersion).toBe(2);
     expect(result.evidence.attendanceReports.map((report) => report.reportId)).toEqual([
+      'report-morning-shift',
       'report-target',
     ]);
-    expect(listAttendanceRecords).toHaveBeenCalledTimes(1);
-    expect(listAttendanceRecords).toHaveBeenCalledWith(
+    expect(listAttendanceRecords).toHaveBeenCalledTimes(2);
+    expect(listAttendanceRecords).toHaveBeenNthCalledWith(
+      1,
+      'organizer-1',
+      'meeting-recurring',
+      'report-morning-shift',
+    );
+    expect(listAttendanceRecords).toHaveBeenNthCalledWith(
+      2,
       'organizer-1',
       'meeting-recurring',
       'report-target',
