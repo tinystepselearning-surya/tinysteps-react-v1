@@ -136,6 +136,23 @@ attendanceValidationEvidence/{evidenceId}
 
 Documents are merge-written to make retries idempotent for the same deterministic run/evidence identifiers.
 
+## AV2 calculation version 2 — service-date occurrence collection
+
+Fresh AV2 evidence selects **all attendance reports on the same IST service date** as the Tiny Steps session, rather than requiring report time to overlap the stored scheduled clock window.
+
+This supports legitimate same-day reschedules. If a 3pm class is actually taken at 5pm, its attendance report remains eligible evidence for a Tiny Steps Present row on that service date.
+
+Safety remains fail-closed:
+
+- attendance-report pagination prevents deterministic same-day completeness;
+- malformed report timing prevents selection;
+- reports from other IST dates are excluded;
+- attendance records are fetched for every selected same-day report;
+- raw join/leave intervals remain the authoritative duration input;
+- evidence calculation version is **2**, so older exact-window evidence is never silently treated as full-day evidence.
+
+Multiple same-day reports are preserved because one enrollment may legitimately have multiple classes on one service date.
+
 ## Evidence schema highlights
 
 Evidence documents include:
