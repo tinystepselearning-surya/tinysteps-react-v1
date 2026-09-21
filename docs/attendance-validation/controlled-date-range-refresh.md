@@ -105,9 +105,9 @@ runAttendanceValidationLatestCheck
 
 accepts one explicit `fromDate / toDate` range and supports at most **31 calendar days** per request.
 
-It does not scan `classSessions`.
+It does not use `classSessions` to discover changed work.
 
-Instead it queries only:
+Instead it discovers changed work only from:
 
 ```text
 attendanceValidationDirtySessions
@@ -123,14 +123,9 @@ For each returned dirty session it performs one exact read of:
 attendanceValidationCases/{sessionId}
 ```
 
-If that case already has an `evidenceId`, the callable feeds the explicit session/evidence pair back through the existing AV5.3 runner. AV5.3 then performs its existing two exact point reads:
+If that case already has an `evidenceId`, the callable feeds the explicit session/evidence pair back through AV5.3. AV5.3 keeps the two exact point reads for each work item and may additionally perform bounded same-day `classSessions` context queries keyed by service date + enrollment. That bounded query is used only to count same enrollment + learner + teacher rows currently marked Present so the >25-minute-per-Present rule can be applied safely to multi-session days.
 
-```text
-classSessions/{sessionId}
-attendanceValidationEvidence/{evidenceId}
-```
-
-and reruns identity, session proof, the strict >25-minute overlap rule, classification and reconciliation against the **current** Tiny Steps attendance.
+The same-day context query never discovers new AVS work and never mutates operational attendance.
 
 ### Read formula
 
@@ -145,8 +140,11 @@ the bounded read budget before the shared staff-registry load is:
 N dirty-marker reads
 + N validation-case point reads
 + 2M AV5.3 point reads
-= 2N + 2M
++ C same-day operational context documents
+= 2N + 2M + C
 ```
+
+`C` is reported explicitly and comes only from enrollment-bounded same-day context queries. Each represented group query is capped at 50 documents plus one lookahead.
 
 The staff registry is still loaded once for the AV5.3 batch, never once per session.
 
@@ -281,8 +279,11 @@ Before the shared AV3 staff-registry load, the Firestore read budget is:
 + 1 previous evidence document
 + 1 dirty marker
 + 2 AV5.3 point reads
-= 6 bounded reads
++ C same-day operational context documents
+= 6 + C bounded reads
 ```
+
+For Force Fresh, `C` is normally the small number of class-session documents returned for that service-date + enrollment group and is capped at 51.
 
 The callable also reports logical Graph method calls. A normal complete occurrence commonly requires meeting resolution, transcript listing, attendance-report listing and selected attendance-record retrieval, but the actual count is returned rather than assumed.
 
@@ -354,7 +355,7 @@ Timing precedence is persisted `startAt/endAt`, then IST `date + startTime/endTi
 
 `classSession -> organizer resolution -> AV1 Graph client -> AV2/AV2.1 occurrence-safe Teams evidence -> attendanceValidationRuns/evidence -> one shared AV5.3 batch -> attendanceValidationCases`
 
-The AV5.3 batch uses the adopted strict production rule: **teacher + learner simultaneous scheduled overlap must be greater than 25:00**. All identity, occurrence and evidence-completeness gates still apply.
+For operational Present rows, the AV5.3 batch uses the adopted strict production rule on the **IST service date**: verified expected-teacher + learner overlap must be greater than 25:00 per Tiny Steps Present row. Two Present rows therefore require >50:00 total same-day overlap. Non-Present rows retain scheduled-window occurrence matching. All identity and evidence-completeness gates still apply.
 
 ### Read budget
 
@@ -366,11 +367,11 @@ For one maximum 100-session batch, the explicit upper bound before the shared st
 - up to 1 canonical organizer-config read when fresh evidence is needed;
 - up to 200 AV5.3 point reads.
 
-That is a conservative ceiling of **403 bounded reads plus one shared staff-registry load**. Most batches are lower because existing AVS cases do not enter fresh collection. The callable returns actual counters for every batch.
+The pre-existing baseline ceiling remains **403 bounded reads plus one shared staff-registry load**, plus `C` same-day operational context documents used by AV5.3. Each represented service-date + enrollment group query is capped at 51 documents, and the callable returns the actual `C` count rather than assuming the worst case.
 
 ### Graph budget
 
-At most 100 sessions enter fresh collection per click. A normal complete Teams occurrence uses up to four logical Graph operations: meeting resolution, transcript metadata list, attendance-report list, and selected attendance-record list. The normal logical-call ceiling is therefore approximately **400 logical Graph calls** per batch. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
+At most 100 sessions enter fresh collection per click. Each session uses meeting resolution, transcript metadata listing, attendance-report listing, and one attendance-record request **per selected same-day report**. Because multiple legitimate same-day reports may now be retained, there is no fixed four-call-per-session assumption; the callable reports the actual logical Graph count. Transport retries inside `MicrosoftGraphClient` are not counted as additional logical operations.
 
 ### Writes and safety
 
@@ -432,6 +433,38 @@ Changing the teacher filter now also resets:
 - expanded case -> closed.
 
 This prevents a teacher from appearing to have no classes merely because a classification/search filter from the previously selected teacher is still active.
+
+## Brick 6D — same-day coverage and multi-session duration allocation
+
+Fresh Teams collection now treats the Tiny Steps IST service date as authoritative for **Present** attendance. The stored scheduled clock time may differ from the actual meeting time because a class can be rescheduled within the same day.
+
+AV2 calculation version 2 retains every complete attendance report from the same IST service date and fetches attendance records for each selected report.
+
+AV5.3 then evaluates one group at a time:
+
+```text
+serviceDateYmd + enrollmentId + kidId + teacherId
+```
+
+and applies:
+
+```text
+required overlap = Present session count × 1,500 seconds
+comparison       = strictly greater than
+```
+
+Examples:
+
+- one Present row + 35 minutes verified overlap -> Verified;
+- two Present rows + one 35-minute Teams class -> Review;
+- two Present rows + 50:00 exactly -> Review;
+- two Present rows + 65 minutes verified overlap -> both Verified.
+
+Raw teacher/learner overlap intervals are unioned and repeated Teams report ids are deduplicated, preventing double counting.
+
+Non-Present rows do not inherit pooled shifted evidence. They continue through scheduled-window matching so a real class elsewhere on the same date cannot validate an unrelated unmarked slot.
+
+Older calculation-version-1 cached evidence continues through legacy exact-window logic until Force Fresh or a new baseline produces version-2 evidence.
 
 ## Still deferred
 

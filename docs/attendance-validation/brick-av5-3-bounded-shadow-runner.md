@@ -69,7 +69,7 @@ For N work items:
 
     operational/evidence point-read budget = 2 × N documents
 
-plus one shared staff-registry load for the entire run.
+plus one shared staff-registry load for the entire run, plus the explicitly reported bounded same-day context reads described below.
 
 For example:
 
@@ -78,6 +78,39 @@ For example:
     100 sessions -> 200 exact point reads + one shared registry load
 
 The runner never performs an unbounded operational collection query.
+
+## Same-day coverage and multi-session allocation
+
+AV5.3 has a dedicated Present-validation path for AV2 calculation-version-2 evidence.
+
+For the same:
+
+```text
+IST service date
++ enrollmentId
++ kidId
++ teacherId
+```
+
+AVS counts current Tiny Steps rows marked Present and requires strictly more than 25 minutes of verified expected-teacher + learner overlap per Present row.
+
+```text
+1 Present -> > 1,500 seconds
+2 Present -> > 3,000 seconds
+3 Present -> > 4,500 seconds
+```
+
+The overlap is computed from raw Teams join/leave intervals across all selected same-day attendance reports. Repeated copies of the same Teams report are deduplicated and overlapping intervals are unioned before summing.
+
+This rule applies only to operational **Present** rows. Non-Present rows continue through the scheduled-window proof path so one shifted same-day class cannot make unrelated unmarked rows appear attended.
+
+### Bounded operational context read
+
+The Firestore production adapter still accepts only an explicit AVS work list. To know whether a learner has one or multiple Present rows that day, it additionally performs at most one bounded `classSessions where date == serviceDateYmd AND enrollmentId == groupEnrollmentId` query for each represented same-day enrollment group.
+
+Each group query is hard-capped at 50 documents plus one lookahead. If that cap is exceeded, affected groups fail closed to review. The actual document count is returned separately as `sameDayContextReadDocumentBudget`.
+
+No enrollment, billing, earnings, payment, credit, or correction collection is scanned or mutated.
 
 ## Staff-registry behavior
 
@@ -148,6 +181,10 @@ Each case contains:
     proofIssues[]
     identityIssues[]
     staffRegistryIssues[]
+    sameDayCoverageSeconds
+    sameDayPresentSessionCount
+    sameDayRequiredOverlapSeconds
+    sameDayOccurrenceCount
     inputFingerprint
     operationalMutationAllowed = false
 

@@ -274,11 +274,13 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
         dirtyMarkerReads: 1,
         organizerConfigReads: organizerResolution.firestoreReadCount,
         av53PointReads: av53Result.pointReadDocumentBudget,
+        sameDayContextReads: av53Result.sameDayContextReadDocumentBudget,
         sharedStaffRegistryLoaded: true,
         boundedReadsExcludingStaffRegistry:
           4
           + organizerResolution.firestoreReadCount
-          + av53Result.pointReadDocumentBudget,
+          + av53Result.pointReadDocumentBudget
+          + av53Result.sameDayContextReadDocumentBudget,
       },
     };
   },

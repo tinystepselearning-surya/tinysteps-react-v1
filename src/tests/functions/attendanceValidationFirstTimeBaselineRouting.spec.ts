@@ -76,6 +76,12 @@ describe('AVS first-time date-range baseline routing', () => {
     expect(source).toContain('operationalMutationAllowed: false');
   });
 
+  it('includes bounded same-day context reads in the returned budget', () => {
+    expect(source).toContain('sameDayContextReads');
+    expect(source).toContain('sameDayContextReadDocumentBudget');
+    expect(source).toContain('boundedReadsExcludingStaffRegistry');
+  });
+
   it('keeps the cursor collection backend-only and exports the callable', () => {
     expect(contract).toContain(
       "baselineRanges: 'attendanceValidationBaselineRanges'",

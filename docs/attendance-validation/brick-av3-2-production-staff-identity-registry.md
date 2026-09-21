@@ -144,12 +144,13 @@ This mode:
 1. reads only cached `attendanceValidationCases` and their referenced `attendanceValidationEvidence`;
 2. considers active Tiny Steps users whose canonical role is `teacher`;
 3. matches a teacher only when the cached attendance participant email hash equals that teacher's canonical Tiny Steps email hash;
-4. requires complete attendance-record evidence and exactly one stable Microsoft identity hash;
-5. rejects duplicate email ownership, multiple observed identities, an identity already owned by another staff member, a different existing identity, or a disabled override;
-6. stores hashes only in `attendanceValidationStaffIdentities/{teacherId}`;
-7. revalidates cached AVS cases against the updated in-memory staff registry;
-8. makes **zero Microsoft Graph calls** during rollout/revalidation;
-9. preserves AV7 admin-resolved cases.
+4. permits one or more complete same-day attendance reports to contribute identity evidence;
+5. requires exactly one stable Microsoft identity hash across all eligible cached evidence;
+6. rejects duplicate email ownership, multiple observed identities, an identity already owned by another staff member, a different existing identity, or a disabled override;
+7. stores hashes only in `attendanceValidationStaffIdentities/{teacherId}`;
+8. revalidates cached AVS cases against the updated in-memory staff registry;
+9. makes **zero Microsoft Graph calls** during rollout/revalidation;
+10. preserves AV7 admin-resolved cases.
 
 No raw Microsoft object ID or raw email is returned to the browser or written into the override collection.
 
