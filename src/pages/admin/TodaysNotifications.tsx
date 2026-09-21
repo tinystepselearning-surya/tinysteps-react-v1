@@ -1145,7 +1145,9 @@ export default function TodaysNotifications() {
   const lastProjectionSignalRef = useRef('');
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
-  const todayDateKey = useMemo(() => getSessionsManagementBaselineDateKey(), []);
+  const [todayDateKey, setTodayDateKey] = useState(() =>
+    getSessionsManagementBaselineDateKey(),
+  );
   const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
   const todayLabel = useMemo(() => {
     const baselineDate = dateFromYmdKey(todayDateKey);
@@ -1184,19 +1186,32 @@ export default function TodaysNotifications() {
           ? `${cached.snapshotId}:${cached.projectionRevision}`
           : '';
 
+        const nextBaselineDateKey = getSessionsManagementBaselineDateKey();
+        setTodayDateKey((current) =>
+          current === nextBaselineDateKey ? current : nextBaselineDateKey,
+        );
+
         if (!previousSignal && (!cachedSignal || cachedSignal === signal)) return;
         if (previousSignal === signal && cachedSignal === signal) return;
 
-        void loadSessionsManagementSnapshot()
-          .then(() => {
+        void (async () => {
+          try {
+            await loadSessionsManagementSnapshot();
+            const refreshed = getCachedSessionsManagementSnapshot();
+            const refreshedSignal = refreshed
+              ? `${refreshed.snapshotId}:${refreshed.projectionRevision}`
+              : '';
+            if (refreshedSignal !== signal) {
+              await loadSessionsManagementSnapshot();
+            }
             setProjectionRefreshNonce((value) => value + 1);
-          })
-          .catch((error) => {
+          } catch (error) {
             console.warn(
               '[TodaysNotifications] live Sessions Management projection reload failed',
               error,
             );
-          });
+          }
+        })();
       },
       (error) => {
         console.warn(
