@@ -303,10 +303,12 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(pageSource).toContain(
       '`TodaysNotifications:fetchDocsByIds:${collectionName}`',
     );
-    expect(pageSource).toContain('const unresolved = unique.filter((id) => !out[id]);');
     expect(pageSource).toContain(
-      'const unresolvedByDocId = normalized.filter((value) => !map[value]);',
+      '// A loaded Sessions Management snapshot is authoritative for this screen.',
     );
+    expect(pageSource).toContain('if (cachedRows !== null) {');
+    expect(pageSource).toContain('return out;');
+    expect(pageSource).toContain('return map;');
   });
 
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {
