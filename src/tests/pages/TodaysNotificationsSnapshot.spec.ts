@@ -273,6 +273,42 @@ describe('Sessions Management authoritative snapshot loading', () => {
     );
   });
 
+  it('renders authoritative rows before secondary profile hydration completes', () => {
+    const sessionMarker = pageSource.indexOf('setSessions(nextSessions);');
+    const sessionLoadingDone = pageSource.indexOf('setIsLoading(false);', sessionMarker);
+    const sessionEnrichment = pageSource.indexOf(
+      'const nextUsersMap = await fetchUsersByRefs(',
+      sessionMarker,
+    );
+    expect(sessionMarker).toBeGreaterThan(-1);
+    expect(sessionLoadingDone).toBeGreaterThan(sessionMarker);
+    expect(sessionEnrichment).toBeGreaterThan(sessionLoadingDone);
+
+    const admissionsMarker = pageSource.indexOf('setEnrollments(nextEnrollments);');
+    const admissionsLoadingDone = pageSource.indexOf('setIsLoading(false);', admissionsMarker);
+    const admissionsEnrichment = pageSource.indexOf(
+      'const [nextUsersMap, nextKidMap, nextCourseMap] = await Promise.all([',
+      admissionsMarker,
+    );
+    expect(admissionsMarker).toBeGreaterThan(-1);
+    expect(admissionsLoadingDone).toBeGreaterThan(admissionsMarker);
+    expect(admissionsEnrichment).toBeGreaterThan(admissionsLoadingDone);
+  });
+
+  it('uses snapshot rows directly for profile lookups before Firestore fallback', () => {
+    expect(pageSource).toContain('getCachedSessionsManagementRowsForReadLabel');
+    expect(pageSource).toContain(
+      "'TodaysNotifications:users-by-doc-id',",
+    );
+    expect(pageSource).toContain(
+      '`TodaysNotifications:fetchDocsByIds:${collectionName}`',
+    );
+    expect(pageSource).toContain('const unresolved = unique.filter((id) => !out[id]);');
+    expect(pageSource).toContain(
+      'const unresolvedByDocId = normalized.filter((value) => !map[value]);',
+    );
+  });
+
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {
     const deps = makeDeps();
     deps.fetchSessionsForDate.mockImplementation(async (dateKey: string) => [
