@@ -108,6 +108,7 @@ interface AvsIdentityRolloutResponse {
     evidenceDocumentReads: number;
     identityOverrideReads: number;
     av53PointReads: number;
+    sameDayContextReads: number;
     sharedStaffRegistryLoaded: boolean;
     boundedReadsExcludingStaffRegistry: number;
   };
