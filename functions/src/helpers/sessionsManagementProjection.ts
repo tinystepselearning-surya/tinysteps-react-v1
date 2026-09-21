@@ -29,7 +29,7 @@ export type SessionsManagementProjectionDelta = {
 export type SessionsManagementProjectionSnapshot = SessionsManagementProjectionRows & {
   dateKeys: string[];
   counts: Record<string, number>;
-  sourceStats?: Record<string, number>;
+  sourceStats?: Record<string, number | undefined>;
   projectionRevision?: number;
   deltaDocumentsApplied?: number;
 };
