@@ -123,7 +123,7 @@ For each returned dirty session it performs one exact read of:
 attendanceValidationCases/{sessionId}
 ```
 
-If that case already has an `evidenceId`, the callable feeds the explicit session/evidence pair back through AV5.3. AV5.3 keeps the two exact point reads for each work item and may additionally perform one bounded same-service-date `classSessions` context query per represented date. That bounded query is used only to count same enrollment + learner + teacher rows currently marked Present so the >25-minute-per-Present rule can be applied safely to multi-session days.
+If that case already has an `evidenceId`, the callable feeds the explicit session/evidence pair back through AV5.3. AV5.3 keeps the two exact point reads for each work item and may additionally perform bounded same-day `classSessions` context queries keyed by service date + enrollment. That bounded query is used only to count same enrollment + learner + teacher rows currently marked Present so the >25-minute-per-Present rule can be applied safely to multi-session days.
 
 The same-day context query never discovers new AVS work and never mutates operational attendance.
 
