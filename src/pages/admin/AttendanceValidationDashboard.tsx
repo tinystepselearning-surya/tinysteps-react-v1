@@ -70,6 +70,7 @@ interface AvsLatestCheckResponse {
     dirtyMarkerReads: number;
     validationCaseReads: number;
     av53PointReads: number;
+    sameDayContextReads: number;
     sharedStaffRegistryLoaded: boolean;
     boundedReadsExcludingStaffRegistry: number;
   };
@@ -206,6 +207,10 @@ interface Av6ValidationCase {
   proofIssues: string[];
   identityIssues: string[];
   staffRegistryIssues: string[];
+  sameDayCoverageSeconds: number | null;
+  sameDayPresentSessionCount: number | null;
+  sameDayRequiredOverlapSeconds: number | null;
+  sameDayOccurrenceCount: number | null;
   inputFingerprint: string | null;
   resolutionId: string | null;
   attendanceCorrectionId: string | null;
@@ -263,6 +268,20 @@ function asTextArray(value: unknown): string[] {
     .filter((item): item is string => typeof item === 'string')
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function asFiniteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : null;
+}
+
+function formatDurationSeconds(value: number | null): string {
+  if (value === null) return '—';
+  const totalSeconds = Math.max(0, Math.round(value));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
 }
 
 function safeForceFreshFailureMessage(error: unknown): string {
@@ -355,6 +374,10 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     proofIssues: asTextArray(raw.proofIssues),
     identityIssues: asTextArray(raw.identityIssues),
     staffRegistryIssues: asTextArray(raw.staffRegistryIssues),
+    sameDayCoverageSeconds: asFiniteNumber(raw.sameDayCoverageSeconds),
+    sameDayPresentSessionCount: asFiniteNumber(raw.sameDayPresentSessionCount),
+    sameDayRequiredOverlapSeconds: asFiniteNumber(raw.sameDayRequiredOverlapSeconds),
+    sameDayOccurrenceCount: asFiniteNumber(raw.sameDayOccurrenceCount),
     inputFingerprint: asText(raw.inputFingerprint),
     resolutionId: asText(raw.resolutionId),
     attendanceCorrectionId: asText(raw.attendanceCorrectionId),
@@ -1459,6 +1482,14 @@ export default function AttendanceValidationDashboard() {
                             <div>
                               Fingerprint: {item.inputFingerprint?.slice(0, 16) || '—'}
                             </div>
+                            {item.sameDayPresentSessionCount !== null && (
+                              <div>
+                                Same-day Teams overlap: {formatDurationSeconds(item.sameDayCoverageSeconds)}
+                                {' '}· Present sessions: {item.sameDayPresentSessionCount}
+                                {' '}· Required: &gt;{formatDurationSeconds(item.sameDayRequiredOverlapSeconds)}
+                                {' '}· Teams occurrences: {item.sameDayOccurrenceCount ?? 0}
+                              </div>
+                            )}
                             {item.resolutionId && <div>Resolution: {item.resolutionId}</div>}
                             {item.attendanceCorrectionId && (
                               <div>Correction: {item.attendanceCorrectionId}</div>
