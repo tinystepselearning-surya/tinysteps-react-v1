@@ -391,11 +391,19 @@ function sessionTeacherId(session: Record<string, unknown>): string | null {
     || text(session.teacher_id);
 }
 
-function sameDayGroupKey(
+interface SameDayGroupDescriptor {
+  key: string;
+  serviceDateYmd: string;
+  enrollmentId: string;
+  kidId: string;
+  teacherId: string;
+}
+
+function sameDayGroupDescriptor(
   serviceDateYmd: string,
   session: Record<string, unknown> | null,
   evidence: AttendanceValidationEvidenceDocument | null,
-): string | null {
+): SameDayGroupDescriptor | null {
   const enrollmentId = evidence?.session.enrollmentId
     || text(session?.enrollmentId);
   const kidId = evidence?.session.kidId
@@ -404,7 +412,21 @@ function sameDayGroupKey(
     || (session ? sessionTeacherId(session) : null);
 
   if (!enrollmentId || !kidId || !teacherId) return null;
-  return [serviceDateYmd, enrollmentId, kidId, teacherId].join('|');
+  return {
+    key: [serviceDateYmd, enrollmentId, kidId, teacherId].join('|'),
+    serviceDateYmd,
+    enrollmentId,
+    kidId,
+    teacherId,
+  };
+}
+
+function sameDayGroupKey(
+  serviceDateYmd: string,
+  session: Record<string, unknown> | null,
+  evidence: AttendanceValidationEvidenceDocument | null,
+): string | null {
+  return sameDayGroupDescriptor(serviceDateYmd, session, evidence)?.key ?? null;
 }
 
 function scheduledWindowEvidence(
@@ -875,9 +897,9 @@ function caseFromEvidence(params: {
  *
  * It accepts an explicit work list only. The pure runner never discovers work by
  * scanning operational collections. The Firestore adapter may additionally perform
- * one bounded same-service-date classSessions query per represented date (hard cap
- * 500 + one lookahead) only to count how many Tiny Steps Present sessions belong to
- * the same enrollment + learner + teacher group. It never reads enrollments, kids,
+ * one bounded classSessions query per represented same-day enrollment group
+ * (date + enrollmentId equality filters, hard cap 50 + one lookahead) only to
+ * count how many Tiny Steps Present sessions belong to the same learner + teacher. It never reads enrollments, kids,
  * billing, earnings, credits or reschedule collections. A hard 2026-09-01 Tiny Steps
  * service-date lower bound permanently excludes July/August history.
  */
@@ -1159,8 +1181,9 @@ export class FirestoreAv53ShadowStore implements Av53ShadowStore {
  * Cloud Function or scheduler in AV5.3.
  *
  * The staff registry is loaded once per run. Work-item session/evidence reads remain
- * exact point reads. Same-day multi-session validation adds a bounded date query to
- * count operational Present rows, reported separately as sameDayContextReadDocumentBudget.
+ * exact point reads. Same-day multi-session validation adds bounded date+enrollment
+ * context queries to count operational Present rows, reported separately as
+ * sameDayContextReadDocumentBudget.
  * Case writes do not pre-read existing case documents.
  */
 export async function runAv53ShadowWithFirestore(
@@ -1175,55 +1198,53 @@ export async function runAv53ShadowWithFirestore(
   const normalizedItems = normalizeWorkItems(input.workItems);
   const preloaded = await baseStore.loadWorkItems(normalizedItems);
 
-  const groupKeysByDate = new Map<string, Set<string>>();
+  const sameDayGroups = new Map<string, SameDayGroupDescriptor>();
   for (const loadedItem of preloaded) {
     if (!loadedItem.session) continue;
     const scope = scopeDecision(loadedItem.session, loadedItem.evidence);
     if (scope.kind !== 'in_scope') continue;
-    const key = sameDayGroupKey(
+    const group = sameDayGroupDescriptor(
       scope.serviceDateYmd,
       loadedItem.session,
       loadedItem.evidence,
     );
-    if (!key) continue;
-    if (!groupKeysByDate.has(scope.serviceDateYmd)) {
-      groupKeysByDate.set(scope.serviceDateYmd, new Set());
-    }
-    groupKeysByDate.get(scope.serviceDateYmd)!.add(key);
+    if (group) sameDayGroups.set(group.key, group);
   }
 
   const sameDayPresentCountByGroup = new Map<string, number>();
   const sameDayContextIncompleteGroups = new Set<string>();
   let sameDayContextReadDocumentBudget = 0;
-  const DAILY_SESSION_CONTEXT_LIMIT = 500;
+  const GROUP_SESSION_CONTEXT_LIMIT = 50;
 
-  for (const [serviceDateYmd, wantedGroups] of groupKeysByDate) {
+  for (const group of sameDayGroups.values()) {
     const snapshot = await db
       .collection('classSessions')
-      .where('date', '==', serviceDateYmd)
-      .limit(DAILY_SESSION_CONTEXT_LIMIT + 1)
+      .where('date', '==', group.serviceDateYmd)
+      .where('enrollmentId', '==', group.enrollmentId)
+      .limit(GROUP_SESSION_CONTEXT_LIMIT + 1)
       .get();
     sameDayContextReadDocumentBudget += snapshot.size;
 
-    if (snapshot.size > DAILY_SESSION_CONTEXT_LIMIT) {
-      for (const groupKey of wantedGroups) {
-        sameDayContextIncompleteGroups.add(groupKey);
-      }
+    if (snapshot.size > GROUP_SESSION_CONTEXT_LIMIT) {
+      sameDayContextIncompleteGroups.add(group.key);
       continue;
     }
 
     for (const docSnapshot of snapshot.docs) {
       const session = (docSnapshot.data() || {}) as Record<string, unknown>;
-      const groupKey = sameDayGroupKey(serviceDateYmd, session, null);
-      if (!groupKey || !wantedGroups.has(groupKey)) continue;
-      const kidId = sessionKidId(session);
+      const sessionGroup = sameDayGroupDescriptor(
+        group.serviceDateYmd,
+        session,
+        null,
+      );
+      if (!sessionGroup || sessionGroup.key !== group.key) continue;
       const attendance = normalizeTinyStepsAttendance(
-        attendanceEntryForKid(session, kidId),
+        attendanceEntryForKid(session, group.kidId),
       );
       if (attendance !== 'present') continue;
       sameDayPresentCountByGroup.set(
-        groupKey,
-        (sameDayPresentCountByGroup.get(groupKey) ?? 0) + 1,
+        group.key,
+        (sameDayPresentCountByGroup.get(group.key) ?? 0) + 1,
       );
     }
   }
