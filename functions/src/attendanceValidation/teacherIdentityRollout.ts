@@ -76,28 +76,24 @@ function microsoftIdentityOwners(
   return owners;
 }
 
-function completeSingleAttendanceReport(
+function completeAttendanceReports(
   evidence: AttendanceValidationEvidenceDocument,
 ) {
   if (
     !evidence.completeness.attendanceReportsComplete
     || evidence.completeness.nextAttendanceReportPagePresent
     || !evidence.completeness.attendanceRecordsComplete
-    || evidence.attendanceReports.length !== 1
+    || evidence.attendanceReports.length === 0
   ) {
     return null;
   }
 
-  const report = evidence.attendanceReports[0];
-  if (
-    !report.recordsComplete
-    || report.nextRecordsPagePresent
-    || report.recordsIssue !== null
-  ) {
-    return null;
-  }
+  const complete = evidence.attendanceReports.every((report) =>
+    report.recordsComplete
+    && !report.nextRecordsPagePresent
+    && report.recordsIssue === null);
 
-  return report;
+  return complete ? evidence.attendanceReports : null;
 }
 
 /**
@@ -109,6 +105,7 @@ function completeSingleAttendanceReport(
  * - the teacher email is used only as its existing SHA-256 registry hash;
  * - display names are never used;
  * - only complete attendance-record evidence is eligible;
+ * - one or more same-day attendance reports may contribute evidence;
  * - exactly one stable Microsoft identity hash must be observed for the teacher;
  * - an identity hash already owned by another staff member is never reassigned;
  * - an existing different stable identity is never silently expanded/replaced.
@@ -155,10 +152,10 @@ export function planCachedTeacherIdentityRollout(
       continue;
     }
 
-    const report = completeSingleAttendanceReport(evidence);
-    if (!report) continue;
+    const reports = completeAttendanceReports(evidence);
+    if (!reports) continue;
 
-    for (const participant of report.participantRecords) {
+    for (const participant of reports.flatMap((report) => report.participantRecords)) {
       const participantEmailHash = normalizedHash(participant.emailAddressHash);
       if (!participantEmailHash || participantEmailHash !== teacherEmailHash) {
         continue;
