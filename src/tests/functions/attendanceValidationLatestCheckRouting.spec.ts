@@ -72,6 +72,8 @@ describe('AVS changed-only latest-check callable routing', () => {
     expect(source).toContain('dirtyMarkerReads');
     expect(source).toContain('validationCaseReads');
     expect(source).toContain('av53PointReads');
+    expect(source).toContain('sameDayContextReads');
+    expect(source).toContain('sameDayContextReadDocumentBudget');
     expect(source).toContain('boundedReadsExcludingStaffRegistry');
     expect(source).toContain('operationalMutationAllowed: false');
   });
