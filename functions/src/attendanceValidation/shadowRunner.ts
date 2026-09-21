@@ -1167,8 +1167,10 @@ export async function runAv53ShadowWithFirestore(
   db: Firestore,
   input: Av53ShadowRunInput,
   now: () => Date = () => new Date(),
+  staffRegistryOverride?: Av3StaffRegistrySnapshot,
 ): Promise<Av53ShadowRunResult> {
-  const staffRegistry = await loadProductionStaffIdentityRegistry(db, now);
+  const staffRegistry = staffRegistryOverride
+    ?? await loadProductionStaffIdentityRegistry(db, now);
   const baseStore = new FirestoreAv53ShadowStore(db);
   const normalizedItems = normalizeWorkItems(input.workItems);
   const preloaded = await baseStore.loadWorkItems(normalizedItems);
