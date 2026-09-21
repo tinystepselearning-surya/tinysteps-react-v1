@@ -213,7 +213,6 @@ async function runCachedTeacherIdentityRollout(
         .doc(mapping.teacherId);
       writeBatch.set(ref, {
         staffId: mapping.teacherId,
-        status: 'active',
         microsoftIdentityIdHashes: [mapping.microsoftIdentityIdHash],
         source: 'cached_avs_evidence_email_bound',
         supportingCaseCount: mapping.supportingCaseCount,
