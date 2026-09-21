@@ -106,9 +106,9 @@ This rule applies only to operational **Present** rows. Non-Present rows continu
 
 ### Bounded operational context read
 
-The Firestore production adapter still accepts only an explicit AVS work list. To know whether a learner has one or multiple Present rows that day, it additionally performs at most one bounded `classSessions where date == serviceDateYmd` query for each represented date.
+The Firestore production adapter still accepts only an explicit AVS work list. To know whether a learner has one or multiple Present rows that day, it additionally performs at most one bounded `classSessions where date == serviceDateYmd AND enrollmentId == groupEnrollmentId` query for each represented same-day enrollment group.
 
-Each date query is hard-capped at 500 documents plus one lookahead. If that cap is exceeded, affected groups fail closed to review. The actual document count is returned separately as `sameDayContextReadDocumentBudget`.
+Each group query is hard-capped at 50 documents plus one lookahead. If that cap is exceeded, affected groups fail closed to review. The actual document count is returned separately as `sameDayContextReadDocumentBudget`.
 
 No enrollment, billing, earnings, payment, credit, or correction collection is scanned or mutated.
 
