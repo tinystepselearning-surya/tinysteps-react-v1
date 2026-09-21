@@ -123,6 +123,8 @@ export {
   adminRefreshSessionsManagementSnapshot,
   getSessionsManagementDateSnapshot,
   refreshSessionsManagementSnapshot4am,
+  onSessionsManagementEnrollmentWrite,
+  onSessionsManagementClassSessionWrite,
 } from './sessionsManagementSnapshot';
 
 // Admin / school management
