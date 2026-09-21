@@ -122,6 +122,11 @@ interface EnrollmentDoc {
   kidIds?: string[];
   studentId?: string;
   childId?: string;
+  kidName?: string;
+  studentName?: string;
+  childName?: string;
+  parentName?: string;
+  teacherName?: string;
   schedule?: {
     weeklySlots?: Array<{
       weekday?: number;
@@ -148,6 +153,7 @@ interface ResolvedUserDoc {
 }
 
 const TIMEZONE = 'Asia/Kolkata';
+const SESSIONS_MANAGEMENT_REFRESH_HOUR = 4;
 const USER_PHONE_FIELDS: UserPhoneField[] = ['phone', 'mobile', 'contactNumber', 'whatsappPhone'];
 const COUNTRY_OPTIONS = [
   { id: 'IN', code: '+91', label: 'India (+91)' },
@@ -293,6 +299,11 @@ const getKolkataDateKey = (date: Date = new Date()): string => {
   const day = parts.find((part) => part.type === 'day')?.value || '01';
   return `${year}-${month}-${day}`;
 };
+
+const getSessionsManagementBaselineDateKey = (date: Date = new Date()): string =>
+  getKolkataDateKey(
+    new Date(date.getTime() - SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000),
+  );
 
 const shiftDateKeyByDays = (dateKey: string, dayDelta: number): string => {
   const [year, month, day] = String(dateKey)
@@ -1127,16 +1138,16 @@ export default function TodaysNotifications() {
   const handledReminderRefreshNonceRef = useRef(0);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
-  const todayDateKey = useMemo(() => getKolkataDateKey(), []);
+  const todayDateKey = useMemo(() => getSessionsManagementBaselineDateKey(), []);
   const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
-  const todayLabel = useMemo(
-    () =>
-      new Intl.DateTimeFormat('en-IN', {
-        timeZone: TIMEZONE,
-        dateStyle: 'full',
-      }).format(new Date()),
-    [],
-  );
+  const todayLabel = useMemo(() => {
+    const baselineDate = dateFromYmdKey(todayDateKey);
+    if (!baselineDate) return todayDateKey;
+    return new Intl.DateTimeFormat('en-IN', {
+      timeZone: TIMEZONE,
+      dateStyle: 'full',
+    }).format(baselineDate);
+  }, [todayDateKey]);
 
   useEffect(() => {
     removeExpiredManualReminderCaches();
@@ -1290,7 +1301,7 @@ export default function TodaysNotifications() {
       try {
         const admissionsSnap = await getDocsLogged(
           'TodaysNotifications:overall-admissions',
-          query(collection(db, 'enrollments'), limit(250)),
+          query(collection(db, 'enrollments')),
           { source: 'src/pages/admin/TodaysNotifications.tsx' },
         );
 
@@ -1475,13 +1486,20 @@ export default function TodaysNotifications() {
       .filter((row): row is any => Boolean(row));
   }, [sessions, usersMap]);
 
+  const operationalAdmissionsCount = useMemo(
+    () =>
+      enrollments.filter((enrollment) =>
+        isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>),
+      ).length,
+    [enrollments],
+  );
+
   const admissionsRows = useMemo(() => {
     return enrollments
       .map((enrollment) => {
         if (!isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>)) return null;
 
         const enrollmentKidIds = getEnrollmentKidIds(enrollment);
-        if (!enrollmentKidIds.length) return null;
 
         const activeKidNames = enrollmentKidIds
           .map((kidId) => {
@@ -1494,10 +1512,18 @@ export default function TodaysNotifications() {
             return kidName;
           })
           .filter(Boolean);
-        if (!activeKidNames.length) return null;
 
-        const studentLabel = activeKidNames.join(', ');
-        if (!studentLabel || looksLikeLegacyIdToken(studentLabel)) return null;
+        const enrollmentStudentFallback = String(
+          enrollment.kidName || enrollment.studentName || enrollment.childName || '',
+        ).trim();
+        const studentLabel =
+          activeKidNames.join(', ') ||
+          (
+            enrollmentStudentFallback &&
+            !looksLikeLegacyIdToken(enrollmentStudentFallback)
+              ? enrollmentStudentFallback
+              : 'Student unavailable'
+          );
 
         const kidParentRefs = enrollmentKidIds
           .map((kidId) => normalizeLookupId(kidMap[kidId]?.parentId))
@@ -1505,7 +1531,6 @@ export default function TodaysNotifications() {
         const parentRefs = Array.from(
           new Set([...getEnrollmentParentRefs(enrollment), ...kidParentRefs]),
         );
-        if (!parentRefs.length) return null;
 
         let resolvedParentRef = '';
         let resolvedParentDocId = '';
@@ -1527,7 +1552,13 @@ export default function TodaysNotifications() {
           resolvedParentName = parentName;
           break;
         }
-        if (!resolvedParentName || !resolvedParentDocId || !resolvedParentRef) return null;
+        if (!resolvedParentName) {
+          const fallbackParentName = String(enrollment.parentName || '').trim();
+          resolvedParentName =
+            fallbackParentName && !looksLikeLegacyIdToken(fallbackParentName)
+              ? fallbackParentName
+              : 'Parent unavailable';
+        }
 
         const teacherRefs = getEnrollmentTeacherRefs(enrollment);
         let resolvedTeacherName = '';
@@ -1553,7 +1584,14 @@ export default function TodaysNotifications() {
           break;
         }
 
-        const teacherLabel = resolvedTeacherName || 'Unassigned';
+        const fallbackTeacherName = String(enrollment.teacherName || '').trim();
+        const teacherLabel =
+          resolvedTeacherName ||
+          (
+            fallbackTeacherName && !looksLikeLegacyIdToken(fallbackTeacherName)
+              ? fallbackTeacherName
+              : 'Unassigned'
+          );
 
         const courseRef = normalizeLookupId(enrollment.courseId);
         const courseDoc = courseRef ? courseMap[courseRef] : undefined;
@@ -2112,7 +2150,7 @@ export default function TodaysNotifications() {
               Overall Admissions
               {mode === 'overall-admissions' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
-                  {sortedAdmissionsRows.length}
+                  {operationalAdmissionsCount}
                 </span>
               )}
             </Button>

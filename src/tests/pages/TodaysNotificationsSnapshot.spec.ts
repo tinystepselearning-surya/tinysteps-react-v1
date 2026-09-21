@@ -1,22 +1,33 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import {
   loadManualReminderDayBuckets,
   loadManualReminderSelectedDate,
 } from '../../pages/admin/todaysNotificationsManualData';
 import type { ManualReminderSessionDoc } from '../../pages/admin/todaysNotificationsManualData';
+import {
+  clearSessionsManagementSnapshotCacheForTests,
+  getCachedSessionsManagementRowsForReadLabel,
+} from '../../lib/sessionsManagementSnapshot';
 import type {
   SessionsManagementDatePayload,
   SessionsManagementSnapshotPayload,
 } from '../../lib/sessionsManagementSnapshot';
 
+const pageSource = readFileSync(
+  resolve(process.cwd(), 'src/pages/admin/TodaysNotifications.tsx'),
+  'utf8',
+);
+
 const makeSnapshot = (
   overrides: Partial<SessionsManagementSnapshotPayload> = {},
 ): SessionsManagementSnapshotPayload => ({
-  schemaVersion: 1,
+  schemaVersion: 2,
   snapshotId: 'snapshot-a',
   generatedAt: '2026-08-27T04:00:00.000+05:30',
   generatedBy: 'scheduled',
-  dateKeys: ['2026-08-27', '2026-08-28', '2026-08-29'],
+  dateKeys: ['2026-08-27', '2026-08-28'],
   counts: { overallEnrollments: 1 },
   sessions: [
     {
@@ -126,11 +137,11 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
   });
 
-  it('selects Today and Tomorrow by requested dates so the pre-4am midnight rollover stays correct', async () => {
+  it('selects Today and Tomorrow from the two-date daily baseline', async () => {
     const deps = makeDeps();
     const rolloverSnapshot = makeSnapshot({
       snapshotId: 'snapshot-before-midnight',
-      dateKeys: ['2026-08-26', '2026-08-27', '2026-08-28'],
+      dateKeys: ['2026-08-27', '2026-08-28'],
       sessions: [
         { id: 'new-today', data: { enrollmentId: 'enrollment-1', date: '2026-08-27', status: 'scheduled' } },
         { id: 'new-tomorrow', data: { enrollmentId: 'enrollment-1', date: '2026-08-28', status: 'scheduled' } },
@@ -173,6 +184,48 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(result.sessions.map((session) => session.id)).toEqual(['selected-1']);
     expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
     expect(deps.fetchEnrollmentsByIds).not.toHaveBeenCalled();
+  });
+
+  it('keeps the UI on the same 04:00 IST operational-day boundary as the backend snapshot', () => {
+    expect(pageSource).toContain('const SESSIONS_MANAGEMENT_REFRESH_HOUR = 4;');
+    expect(pageSource).toContain('getSessionsManagementBaselineDateKey()');
+    expect(pageSource).toContain(
+      'SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000',
+    );
+  });
+
+  it('counts every operational admission even when profile lookups are incomplete', () => {
+    expect(pageSource).toContain('const operationalAdmissionsCount = useMemo(');
+    expect(pageSource).toContain('{operationalAdmissionsCount}');
+    expect(pageSource).toContain("'Student unavailable'");
+    expect(pageSource).toContain("'Parent unavailable'");
+  });
+
+  it('keeps zero Overall Admissions authoritative instead of exposing session-only enrollment rows', () => {
+    clearSessionsManagementSnapshotCacheForTests();
+    window.sessionStorage.setItem(
+      'tinysteps:sessions-management-snapshot:v2',
+      JSON.stringify({
+        snapshot: makeSnapshot({
+          counts: { overallEnrollments: 0 },
+          enrollments: [
+            {
+              id: 'session-only-enrollment',
+              data: { status: 'completed' },
+            },
+          ],
+        }),
+        extraDates: {},
+      }),
+    );
+
+    expect(
+      getCachedSessionsManagementRowsForReadLabel(
+        'TodaysNotifications:overall-admissions',
+      ),
+    ).toEqual([]);
+
+    clearSessionsManagementSnapshotCacheForTests();
   });
 
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {

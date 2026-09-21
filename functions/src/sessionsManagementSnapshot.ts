@@ -14,10 +14,9 @@ const ROOT_COLLECTION = 'adminSessionsManagement';
 const SNAPSHOT_COLLECTION = 'adminSessionsManagementSnapshots';
 const CURRENT_DOC = 'current';
 const LEASE_DOC = 'refreshLease';
-const SCHEMA_VERSION = 1;
-const SNAPSHOT_HORIZON_DAYS = 14;
+const SCHEMA_VERSION = 2;
+const SNAPSHOT_BASELINE_REFRESH_HOUR = 4;
 const SESSION_LIMIT_PER_DATE = 200;
-const OVERALL_ENROLLMENT_LIMIT = 250;
 const SHARD_SIZE = 75;
 const LOOKUP_CHUNK_SIZE = 100;
 const UID_QUERY_CHUNK_SIZE = 10;
@@ -52,6 +51,7 @@ type SnapshotMeta = {
   sourceStats: {
     sessionDocumentsReturned: number;
     overallEnrollmentDocumentsReturned: number;
+    overallOperationalEnrollmentDocumentsReturned: number;
     directLookupRequests: number;
     uidFallbackDocumentsReturned: number;
     sourceDocumentsReturned: number;
@@ -106,6 +106,11 @@ const getKolkataDateKey = (date: Date = new Date()): string => {
   return `${year}-${month}-${day}`;
 };
 
+const getKolkataBaselineDateKey = (date: Date = new Date()): string =>
+  getKolkataDateKey(
+    new Date(date.getTime() - SNAPSHOT_BASELINE_REFRESH_HOUR * 60 * 60 * 1000),
+  );
+
 const shiftDateKey = (dateKey: string, days: number): string => {
   const [year, month, day] = dateKey.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -115,6 +120,39 @@ const shiftDateKey = (dateKey: string, days: number): string => {
     String(date.getUTCMonth() + 1).padStart(2, '0'),
     String(date.getUTCDate()).padStart(2, '0'),
   ].join('-');
+};
+
+const normalizeEnrollmentStatusForSnapshot = (value: unknown): string => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'active';
+  if (raw === 'pending_teacher') return 'trial';
+  if (
+    raw === 'pending_payment' ||
+    raw === 'pending_lp' ||
+    raw === 'pending_lp_assignment' ||
+    raw === 'enrolled' ||
+    raw === 'current' ||
+    raw === 'ongoing'
+  ) {
+    return 'active';
+  }
+  if (raw === 'canceled') return 'cancelled';
+  return raw;
+};
+
+export const isOperationalEnrollmentForSnapshot = (
+  enrollmentLike: Record<string, unknown> | undefined,
+): boolean => {
+  if (!enrollmentLike) return false;
+  if (
+    enrollmentLike.archivedAt ||
+    enrollmentLike.archived === true ||
+    enrollmentLike.isArchived === true
+  ) {
+    return false;
+  }
+  const normalized = normalizeEnrollmentStatusForSnapshot(enrollmentLike.status);
+  return normalized === 'active' || normalized === 'trial';
 };
 
 const toJsonSafe = (value: unknown): unknown => {
@@ -404,19 +442,17 @@ async function buildSnapshotPayload(
   reason: SnapshotBuildReason,
   generatedByUid: string | null,
 ): Promise<SnapshotPayload> {
-  const baseDateKey = getKolkataDateKey();
-  // Publish the same authoritative today-through-14-days horizon used by the rolling
-  // materializer and parent upcoming-session policy. No client-side recurrence or live
-  // Tomorrow/Date read is required for this operational window.
-  const dateKeys = Array.from({ length: SNAPSHOT_HORIZON_DAYS + 1 }, (_, index) =>
-    shiftDateKey(baseDateKey, index),
-  );
+  const baseDateKey = getKolkataBaselineDateKey();
+  // Sessions Management has a deliberately narrow daily baseline: Today, Tomorrow,
+  // and the complete operational-admissions set. The rolling scheduler may materialize
+  // a wider horizon, but this read model must not preload it.
+  const dateKeys = [baseDateKey, shiftDateKey(baseDateKey, 1)];
   const sessionQueries = dateKeys.map((dateKey) =>
     db().collection('classSessions').where('date', '==', dateKey).limit(SESSION_LIMIT_PER_DATE).get(),
   );
-  const [sessionSnapshots, overallEnrollmentSnap] = await Promise.all([
+  const [sessionSnapshots, allEnrollmentSnap] = await Promise.all([
     Promise.all(sessionQueries),
-    db().collection('enrollments').limit(OVERALL_ENROLLMENT_LIMIT).get(),
+    db().collection('enrollments').get(),
   ]);
 
   const saturatedDateIndex = sessionSnapshots.findIndex(
@@ -429,11 +465,15 @@ async function buildSnapshotPayload(
   }
 
   const sessions = sessionSnapshots.flatMap((snap) => snap.docs.map(rowFromSnapshot));
-  const baseEnrollments = overallEnrollmentSnap.docs.map(rowFromSnapshot);
+  const baseEnrollments = allEnrollmentSnap.docs
+    .filter((docSnap) =>
+      isOperationalEnrollmentForSnapshot((docSnap.data() || {}) as Record<string, unknown>),
+    )
+    .map(rowFromSnapshot);
   const related = await collectRelatedRows(sessions, baseEnrollments);
   const sourceDocumentsReturned =
     sessions.length +
-    overallEnrollmentSnap.size +
+    allEnrollmentSnap.size +
     related.enrollments.length - baseEnrollments.length +
     related.users.length +
     related.kids.length +
@@ -446,7 +486,6 @@ async function buildSnapshotPayload(
     sessions: sessions.length,
     todaySessions: sessions.filter((row) => String(row.data.date || '') === dateKeys[0]).length,
     tomorrowSessions: sessions.filter((row) => String(row.data.date || '') === dateKeys[1]).length,
-    rolloverSessions: sessions.filter((row) => String(row.data.date || '') === dateKeys[2]).length,
     enrollments: related.enrollments.length,
     overallEnrollments: baseEnrollments.length,
     users: related.users.length,
@@ -473,7 +512,8 @@ async function buildSnapshotPayload(
     },
     sourceStats: {
       sessionDocumentsReturned: sessions.length,
-      overallEnrollmentDocumentsReturned: overallEnrollmentSnap.size,
+      overallEnrollmentDocumentsReturned: allEnrollmentSnap.size,
+      overallOperationalEnrollmentDocumentsReturned: baseEnrollments.length,
       directLookupRequests: related.directLookupRequests,
       uidFallbackDocumentsReturned: related.uidFallbackDocumentsReturned,
       sourceDocumentsReturned,
@@ -623,6 +663,7 @@ async function buildDatePayload(dateKey: string, snapshotId: string): Promise<Da
     sourceStats: {
       sessionDocumentsReturned: sessions.length,
       overallEnrollmentDocumentsReturned: 0,
+      overallOperationalEnrollmentDocumentsReturned: 0,
       directLookupRequests: related.directLookupRequests,
       uidFallbackDocumentsReturned: related.uidFallbackDocumentsReturned,
       sourceDocumentsReturned:
@@ -639,7 +680,7 @@ export const getSessionsManagementSnapshot = onCall(
     const knownSnapshotId = String((request.data as { knownSnapshotId?: unknown } | undefined)?.knownSnapshotId || '').trim();
 
     const meta = await readCurrentMeta();
-    if (!meta) {
+    if (!meta || meta.schemaVersion !== SCHEMA_VERSION) {
       const rebuilt = await rebuildSnapshot('bootstrap', request.auth?.uid || null);
       return { unchanged: false, snapshot: rebuilt };
     }
