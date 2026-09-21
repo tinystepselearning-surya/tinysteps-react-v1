@@ -40,7 +40,8 @@ describe('AVS changed-only latest-check callable routing', () => {
     expect(source).toContain("collection('attendanceValidationEvidence')");
     expect(source).toContain('planCachedTeacherIdentityRollout');
     expect(source).toContain('ATTENDANCE_VALIDATION_STAFF_IDENTITIES_COLLECTION');
-    expect(source).toContain('runAv53Shadow(');
+    expect(source).toContain('runAv53ShadowWithFirestore(');
+    expect(source).toContain('sameDayContextReads');
     expect(source).toContain('graphCalls: 0');
     expect(source).toContain("source: 'cached_avs_evidence_email_bound'");
     expect(functionsIndex.match(/runAttendanceValidationLatestCheck/g)?.length).toBeGreaterThan(0);
