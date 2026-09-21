@@ -16,8 +16,6 @@ import {
   loadProductionStaffIdentityRegistry,
 } from './staffIdentityRegistry';
 import {
-  FirestoreAv53ShadowStore,
-  runAv53Shadow,
   runAv53ShadowWithFirestore,
 } from './shadowRunner';
 import type {
@@ -246,26 +244,26 @@ async function runCachedTeacherIdentityRollout(
       evidenceId: item.evidenceId!,
     }));
 
-  const store = new FirestoreAv53ShadowStore(db);
   let revalidatedCount = 0;
   let skippedCount = 0;
   let av53PointReads = 0;
+  let sameDayContextReads = 0;
   const nowToken = Date.now().toString(36);
 
   for (const [index, batch] of chunks(workItems, AV53_CHUNK_SIZE).entries()) {
-    const result = await runAv53Shadow(
+    const result = await runAv53ShadowWithFirestore(
+      db,
       {
         runId: `identity_${nowToken}_${actorUid.slice(0, 12)}_${index + 1}`,
         workItems: batch,
       },
-      {
-        store,
-        staffRegistry: updatedRegistry,
-      },
+      () => new Date(),
+      updatedRegistry,
     );
     revalidatedCount += result.persistedCaseCount;
     skippedCount += result.skippedCount;
     av53PointReads += result.pointReadDocumentBudget;
+    sameDayContextReads += result.sameDayContextReadDocumentBudget;
   }
 
   const decisionCounts = rolloutDecisionCounts(plan.decisions);
@@ -304,12 +302,14 @@ async function runCachedTeacherIdentityRollout(
       evidenceDocumentReads: evidenceSnapshots.length,
       identityOverrideReads: overrideSnapshots.length,
       av53PointReads,
+      sameDayContextReads,
       sharedStaffRegistryLoaded: true,
       boundedReadsExcludingStaffRegistry:
         caseSnapshot.size
         + evidenceSnapshots.length
         + overrideSnapshots.length
-        + av53PointReads,
+        + av53PointReads
+        + sameDayContextReads,
     },
   };
 }
