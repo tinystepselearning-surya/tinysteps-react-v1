@@ -4,6 +4,7 @@ import {
   doc,
   documentId,
   limit,
+  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -63,6 +64,10 @@ import {
 import { removeExpiredManualReminderCaches } from './manualReminderCache';
 import PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';
 import { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';
+import {
+  getCachedSessionsManagementSnapshot,
+  loadSessionsManagementSnapshot,
+} from '../../lib/sessionsManagementSnapshot';
 
 interface ClassSessionDoc {
   id: string;
@@ -1135,10 +1140,15 @@ export default function TodaysNotifications() {
   const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
   const [cancellingManualSessionId, setCancellingManualSessionId] = useState('');
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
+  const [projectionRefreshNonce, setProjectionRefreshNonce] = useState(0);
   const handledReminderRefreshNonceRef = useRef(0);
+  const lastProjectionSignalRef = useRef('');
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
-  const todayDateKey = useMemo(() => getSessionsManagementBaselineDateKey(), []);
+  const [todayDateKey, setTodayDateKey] = useState(() =>
+    getSessionsManagementBaselineDateKey(),
+  );
+  const todayDateKeyRef = useRef(todayDateKey);
   const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
   const todayLabel = useMemo(() => {
     const baselineDate = dateFromYmdKey(todayDateKey);
@@ -1158,6 +1168,71 @@ export default function TodaysNotifications() {
     if (upcomingSpecificDate) return;
     setUpcomingSpecificDate(tomorrowDateKey);
   }, [mode, upcomingSpecificDate, tomorrowDateKey]);
+
+  useEffect(() => {
+    const projectionStateRef = doc(db, 'adminSessionsManagement', 'projectionState');
+    const unsubscribe = onSnapshot(
+      projectionStateRef,
+      (snapshot) => {
+        if (!snapshot.exists()) return;
+        const data = snapshot.data() || {};
+        const revision = Math.max(0, Number(data.revision || 0));
+        const snapshotId = String(data.snapshotId || '').trim();
+        const signal = `${snapshotId}:${revision}`;
+        const previousSignal = lastProjectionSignalRef.current;
+        lastProjectionSignalRef.current = signal;
+
+        const cached = getCachedSessionsManagementSnapshot();
+        const cachedSignal = cached
+          ? `${cached.snapshotId}:${cached.projectionRevision}`
+          : '';
+
+        const nextBaselineDateKey = getSessionsManagementBaselineDateKey();
+        const previousBaselineDateKey = todayDateKeyRef.current;
+        if (previousBaselineDateKey !== nextBaselineDateKey) {
+          const previousTomorrowDateKey = shiftDateKeyByDays(previousBaselineDateKey, 1);
+          const nextTomorrowDateKey = shiftDateKeyByDays(nextBaselineDateKey, 1);
+          todayDateKeyRef.current = nextBaselineDateKey;
+          setTodayDateKey(nextBaselineDateKey);
+          setUpcomingSpecificDate((selected) =>
+            !selected || selected === previousTomorrowDateKey
+              ? nextTomorrowDateKey
+              : selected,
+          );
+        }
+
+        if (!previousSignal && (!cachedSignal || cachedSignal === signal)) return;
+        if (previousSignal === signal && cachedSignal === signal) return;
+
+        void (async () => {
+          try {
+            await loadSessionsManagementSnapshot();
+            const refreshed = getCachedSessionsManagementSnapshot();
+            const refreshedSignal = refreshed
+              ? `${refreshed.snapshotId}:${refreshed.projectionRevision}`
+              : '';
+            if (refreshedSignal !== signal) {
+              await loadSessionsManagementSnapshot();
+            }
+            setProjectionRefreshNonce((value) => value + 1);
+          } catch (error) {
+            console.warn(
+              '[TodaysNotifications] live Sessions Management projection reload failed',
+              error,
+            );
+          }
+        })();
+      },
+      (error) => {
+        console.warn(
+          '[TodaysNotifications] Sessions Management projection listener failed',
+          error,
+        );
+      },
+    );
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (isNotificationActionsEnabled) return;
@@ -1269,7 +1344,15 @@ export default function TodaysNotifications() {
     return () => {
       active = false;
     };
-  }, [mode, reminderRefreshNonce, todayDateKey, tomorrowDateKey, upcomingSpecificDate, toast]);
+  }, [
+    mode,
+    reminderRefreshNonce,
+    projectionRefreshNonce,
+    todayDateKey,
+    tomorrowDateKey,
+    upcomingSpecificDate,
+    toast,
+  ]);
 
   const handleCancelManualSession = async (session: ClassSessionDoc) => {
     const reason = window.prompt('Reason for cancelling or withdrawing this manual session?')?.trim() || '';
@@ -1369,7 +1452,7 @@ export default function TodaysNotifications() {
     return () => {
       active = false;
     };
-  }, [admissionsRefreshNonce, mode, toast]);
+  }, [admissionsRefreshNonce, mode, projectionRefreshNonce, toast]);
 
   const rows = useMemo(() => {
     return sessions

@@ -1247,6 +1247,12 @@ function teacherProgressIdentityUnchanged() {
       }
     }
 
+    // Sessions Management live projection signal. Payload/delta writes remain Admin SDK only.
+    match /adminSessionsManagement/projectionState {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
     // ----------------------------
     // ADMIN STATS (ROLLUPS)
     // ----------------------------

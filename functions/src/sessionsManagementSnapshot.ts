@@ -1,8 +1,15 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { ensureAdmin } from './helpers/adminGuard';
+import {
+  applySessionsManagementProjectionDeltas,
+  isOperationalSessionsManagementEnrollment,
+  type SessionsManagementProjectionDelta,
+  type SessionsManagementProjectionRows,
+} from './helpers/sessionsManagementProjection';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -14,9 +21,12 @@ const ROOT_COLLECTION = 'adminSessionsManagement';
 const SNAPSHOT_COLLECTION = 'adminSessionsManagementSnapshots';
 const CURRENT_DOC = 'current';
 const LEASE_DOC = 'refreshLease';
-const SCHEMA_VERSION = 2;
+const PROJECTION_STATE_DOC = 'projectionState';
+const DELTA_COLLECTION = 'adminSessionsManagementDeltas';
+const SCHEMA_VERSION = 3;
 const SNAPSHOT_BASELINE_REFRESH_HOUR = 4;
 const SESSION_LIMIT_PER_DATE = 200;
+const DELTA_PRUNE_BATCH_SIZE = 400;
 const SHARD_SIZE = 75;
 const LOOKUP_CHUNK_SIZE = 100;
 const UID_QUERY_CHUNK_SIZE = 10;
@@ -45,6 +55,7 @@ type SnapshotMeta = {
   generatedAt: string;
   generatedBy: SnapshotBuildReason;
   generatedByUid: string | null;
+  buildStartedAtMs: number;
   dateKeys: string[];
   counts: Record<string, number>;
   shardIds: Record<SnapshotKind, string[]>;
@@ -55,10 +66,24 @@ type SnapshotMeta = {
     directLookupRequests: number;
     uidFallbackDocumentsReturned: number;
     sourceDocumentsReturned: number;
+    deltaDocumentsApplied?: number;
   };
 };
 
-type SnapshotPayload = SnapshotMeta & SnapshotRowsByKind;
+type SnapshotPayload = SnapshotMeta & SnapshotRowsByKind & {
+  projectionRevision?: number;
+  deltaDocumentsApplied?: number;
+};
+
+type ProjectionState = {
+  revision: number;
+  snapshotId: string;
+};
+
+type PendingProjectionDelta = Omit<SessionsManagementProjectionDelta, 'revision'> & {
+  eventId: string;
+  eventKey: string;
+};
 
 type DatePayload = {
   snapshotId: string;
@@ -122,38 +147,8 @@ const shiftDateKey = (dateKey: string, days: number): string => {
   ].join('-');
 };
 
-const normalizeEnrollmentStatusForSnapshot = (value: unknown): string => {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return 'active';
-  if (raw === 'pending_teacher') return 'trial';
-  if (
-    raw === 'pending_payment' ||
-    raw === 'pending_lp' ||
-    raw === 'pending_lp_assignment' ||
-    raw === 'enrolled' ||
-    raw === 'current' ||
-    raw === 'ongoing'
-  ) {
-    return 'active';
-  }
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
-};
-
-export const isOperationalEnrollmentForSnapshot = (
-  enrollmentLike: Record<string, unknown> | undefined,
-): boolean => {
-  if (!enrollmentLike) return false;
-  if (
-    enrollmentLike.archivedAt ||
-    enrollmentLike.archived === true ||
-    enrollmentLike.isArchived === true
-  ) {
-    return false;
-  }
-  const normalized = normalizeEnrollmentStatusForSnapshot(enrollmentLike.status);
-  return normalized === 'active' || normalized === 'trial';
-};
+export const isOperationalEnrollmentForSnapshot =
+  isOperationalSessionsManagementEnrollment;
 
 const toJsonSafe = (value: unknown): unknown => {
   if (value === undefined) return null;
@@ -368,6 +363,153 @@ async function collectRelatedRows(
   };
 }
 
+const projectionEventTimeMs = (value: unknown): number => {
+  const parsed = Date.parse(String(value || ''));
+  return Number.isFinite(parsed) ? parsed : Date.now();
+};
+
+const projectionEventKey = (eventTimeMs: number, eventId: string): string =>
+  `${String(Math.max(0, Math.floor(eventTimeMs))).padStart(16, '0')}:${eventId}`;
+
+const projectionBaselineDateKeys = (eventTimeMs: number): string[] => {
+  const baseDateKey = getKolkataBaselineDateKey(new Date(eventTimeMs));
+  return [baseDateKey, shiftDateKey(baseDateKey, 1)];
+};
+
+const projectionRelatedRows = (
+  related: Awaited<ReturnType<typeof collectRelatedRows>>,
+): Partial<SessionsManagementProjectionRows> => ({
+  enrollments: related.enrollments,
+  users: related.users,
+  kids: related.kids,
+  students: related.students,
+  courses: related.courses,
+});
+
+async function readProjectionState(): Promise<ProjectionState> {
+  const snap = await db().collection(ROOT_COLLECTION).doc(PROJECTION_STATE_DOC).get();
+  const data = snap.data() || {};
+  return {
+    revision: Math.max(0, Number(data.revision || 0)),
+    snapshotId: String(data.snapshotId || '').trim(),
+  };
+}
+
+async function persistProjectionDelta(delta: PendingProjectionDelta): Promise<boolean> {
+  const deltaId = `${delta.entityType}__${delta.entityId}`;
+  const deltaRef = db().collection(DELTA_COLLECTION).doc(deltaId);
+  const stateRef = db().collection(ROOT_COLLECTION).doc(PROJECTION_STATE_DOC);
+
+  return db().runTransaction(async (tx) => {
+    const [existingSnap, stateSnap] = await Promise.all([
+      tx.get(deltaRef),
+      tx.get(stateRef),
+    ]);
+    const existing = existingSnap.data() || {};
+    const existingEventKey = String(existing.eventKey || '');
+    if (existingEventKey && existingEventKey >= delta.eventKey) {
+      return false;
+    }
+
+    const state = stateSnap.data() || {};
+    const nextRevision = Math.max(0, Number(state.revision || 0)) + 1;
+    tx.set(deltaRef, {
+      schemaVersion: SCHEMA_VERSION,
+      ...delta,
+      revision: nextRevision,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    tx.set(stateRef, {
+      schemaVersion: SCHEMA_VERSION,
+      revision: nextRevision,
+      updatedAtMs: delta.eventTimeMs,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return true;
+  });
+}
+
+const normalizeProjectionDelta = (
+  data: Record<string, unknown>,
+): SessionsManagementProjectionDelta | null => {
+  const entityType = data.entityType === 'enrollment' || data.entityType === 'session'
+    ? data.entityType
+    : null;
+  const operation = data.operation === 'upsert' || data.operation === 'remove'
+    ? data.operation
+    : null;
+  const entityId = String(data.entityId || '').trim();
+  if (!entityType || !operation || !entityId) return null;
+
+  const rowLike = data.row && typeof data.row === 'object'
+    ? data.row as SnapshotRow
+    : undefined;
+  const relatedLike = data.related && typeof data.related === 'object'
+    ? data.related as Partial<SessionsManagementProjectionRows>
+    : undefined;
+
+  return {
+    entityType,
+    entityId,
+    operation,
+    revision: Math.max(0, Number(data.revision || 0)),
+    eventTimeMs: Math.max(0, Number(data.eventTimeMs || 0)),
+    row: rowLike,
+    related: relatedLike,
+  };
+};
+
+async function readProjectionDeltas(
+  buildStartedAtMs: number,
+): Promise<SessionsManagementProjectionDelta[]> {
+  const snap = await db()
+    .collection(DELTA_COLLECTION)
+    .where('eventTimeMs', '>=', buildStartedAtMs)
+    .get();
+  return snap.docs
+    .map((docSnap) =>
+      normalizeProjectionDelta((docSnap.data() || {}) as Record<string, unknown>),
+    )
+    .filter((delta): delta is SessionsManagementProjectionDelta => Boolean(delta));
+}
+
+async function pruneProjectionDeltasBefore(buildStartedAtMs: number): Promise<void> {
+  while (true) {
+    const snap = await db()
+      .collection(DELTA_COLLECTION)
+      .where('eventTimeMs', '<', buildStartedAtMs)
+      .limit(DELTA_PRUNE_BATCH_SIZE)
+      .get();
+    if (snap.empty) return;
+
+    const batch = db().batch();
+    snap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
+    await batch.commit();
+    if (snap.size < DELTA_PRUNE_BATCH_SIZE) return;
+  }
+}
+
+async function readProjectedSnapshot(
+  meta: SnapshotMeta,
+  initialState?: ProjectionState,
+): Promise<SnapshotPayload> {
+  const baseline = await readSnapshotPayload(meta);
+  let state = initialState || await readProjectionState();
+  let deltas = await readProjectionDeltas(meta.buildStartedAtMs);
+  const stateAfterRead = await readProjectionState();
+
+  if (stateAfterRead.revision !== state.revision) {
+    state = stateAfterRead;
+    deltas = await readProjectionDeltas(meta.buildStartedAtMs);
+  }
+
+  return applySessionsManagementProjectionDeltas(
+    baseline,
+    deltas,
+    state.revision,
+  ) as SnapshotPayload;
+}
+
 async function acquireLease(actor: string): Promise<string | null> {
   const leaseRef = db().collection(ROOT_COLLECTION).doc(LEASE_DOC);
   const now = Date.now();
@@ -441,6 +583,7 @@ async function writeSnapshotShards(
 async function buildSnapshotPayload(
   reason: SnapshotBuildReason,
   generatedByUid: string | null,
+  buildStartedAtMs: number,
 ): Promise<SnapshotPayload> {
   const baseDateKey = getKolkataBaselineDateKey();
   // Sessions Management has a deliberately narrow daily baseline: Today, Tomorrow,
@@ -500,6 +643,7 @@ async function buildSnapshotPayload(
     generatedAt,
     generatedBy: reason,
     generatedByUid,
+    buildStartedAtMs,
     dateKeys,
     counts,
     shardIds: {
@@ -524,6 +668,8 @@ async function buildSnapshotPayload(
     kids: related.kids,
     students: related.students,
     courses: related.courses,
+    projectionRevision: 0,
+    deltaDocumentsApplied: 0,
   };
 }
 
@@ -538,7 +684,8 @@ async function rebuildSnapshot(
   }
 
   try {
-    const payload = await buildSnapshotPayload(reason, generatedByUid);
+    const buildStartedAtMs = Date.now();
+    const payload = await buildSnapshotPayload(reason, generatedByUid, buildStartedAtMs);
     const rowsByKind: SnapshotRowsByKind = {
       sessions: payload.sessions,
       enrollments: payload.enrollments,
@@ -557,6 +704,7 @@ async function rebuildSnapshot(
       generatedAt: payload.generatedAt,
       generatedBy: payload.generatedBy,
       generatedByUid: payload.generatedByUid,
+      buildStartedAtMs: payload.buildStartedAtMs,
       dateKeys: payload.dateKeys,
       counts: payload.counts,
       shardIds,
@@ -565,21 +713,35 @@ async function rebuildSnapshot(
     await snapshotRef.set(meta);
 
     const currentRef = db().collection(ROOT_COLLECTION).doc(CURRENT_DOC);
-    await currentRef.set({
+    const projectionStateRef = db().collection(ROOT_COLLECTION).doc(PROJECTION_STATE_DOC);
+    const publishBatch = db().batch();
+    publishBatch.set(currentRef, {
       ...meta,
       snapshotPath: `${SNAPSHOT_COLLECTION}/${payload.snapshotId}`,
       publishedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    publishBatch.set(projectionStateRef, {
+      schemaVersion: SCHEMA_VERSION,
+      snapshotId: payload.snapshotId,
+      baselineBuildStartedAtMs: payload.buildStartedAtMs,
+      snapshotPublishedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await publishBatch.commit();
 
+    await pruneProjectionDeltasBefore(payload.buildStartedAtMs);
+
+    const projected = await readProjectedSnapshot(meta);
     logger.info('sessionsManagementSnapshot:published', {
       reason,
       generatedByUid,
       snapshotId: payload.snapshotId,
       dateKeys: payload.dateKeys,
-      counts: payload.counts,
-      sourceStats: payload.sourceStats,
+      counts: projected.counts,
+      projectionRevision: projected.projectionRevision || 0,
+      deltaDocumentsApplied: projected.deltaDocumentsApplied || 0,
+      sourceStats: projected.sourceStats,
     });
-    return payload;
+    return projected;
   } finally {
     await releaseLease(leaseToken).catch((error) => {
       logger.warn('sessionsManagementSnapshot:lease_release_failed', {
@@ -636,6 +798,7 @@ async function readCurrentMeta(): Promise<SnapshotMeta | null> {
     generatedAt: String(data.generatedAt || ''),
     generatedBy: String(data.generatedBy || 'scheduled') as SnapshotBuildReason,
     generatedByUid: data.generatedByUid ? String(data.generatedByUid) : null,
+    buildStartedAtMs: Math.max(0, Number(data.buildStartedAtMs || 0)),
     dateKeys: Array.isArray(data.dateKeys) ? data.dateKeys.map(String) : [],
     counts: (data.counts || {}) as Record<string, number>,
     shardIds: data.shardIds as Record<SnapshotKind, string[]>,
@@ -677,7 +840,12 @@ export const getSessionsManagementSnapshot = onCall(
   { region: REGION, timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
     await ensureAdmin(request.auth);
-    const knownSnapshotId = String((request.data as { knownSnapshotId?: unknown } | undefined)?.knownSnapshotId || '').trim();
+    const requestData = request.data as {
+      knownSnapshotId?: unknown;
+      knownProjectionRevision?: unknown;
+    } | undefined;
+    const knownSnapshotId = String(requestData?.knownSnapshotId || '').trim();
+    const knownProjectionRevision = Number(requestData?.knownProjectionRevision ?? -1);
 
     const meta = await readCurrentMeta();
     if (!meta || meta.schemaVersion !== SCHEMA_VERSION) {
@@ -685,7 +853,13 @@ export const getSessionsManagementSnapshot = onCall(
       return { unchanged: false, snapshot: rebuilt };
     }
 
-    if (knownSnapshotId && knownSnapshotId === meta.snapshotId) {
+    const projectionState = await readProjectionState();
+    if (
+      knownSnapshotId &&
+      knownSnapshotId === meta.snapshotId &&
+      Number.isFinite(knownProjectionRevision) &&
+      knownProjectionRevision === projectionState.revision
+    ) {
       return {
         unchanged: true,
         snapshotId: meta.snapshotId,
@@ -693,10 +867,11 @@ export const getSessionsManagementSnapshot = onCall(
         generatedBy: meta.generatedBy,
         dateKeys: meta.dateKeys,
         counts: meta.counts,
+        projectionRevision: projectionState.revision,
       };
     }
 
-    const snapshot = await readSnapshotPayload(meta);
+    const snapshot = await readProjectedSnapshot(meta, projectionState);
     return { unchanged: false, snapshot };
   },
 );
@@ -724,6 +899,125 @@ export const getSessionsManagementDateSnapshot = onCall(
     }
     const payload = await buildDatePayload(dateKey, meta.snapshotId);
     return { ok: true, payload };
+  },
+);
+
+export const onSessionsManagementEnrollmentWrite = onDocumentWritten(
+  {
+    document: 'enrollments/{enrollmentId}',
+    region: REGION,
+  },
+  async (event) => {
+    const change = event.data;
+    if (!change) return;
+
+    const entityId = String(event.params.enrollmentId || '').trim();
+    if (!entityId) return;
+    const eventTimeMs = projectionEventTimeMs(event.time);
+    const eventId = String(event.id || `enrollment:${entityId}:${eventTimeMs}`);
+    const afterExists = change.after.exists;
+    const afterData = afterExists
+      ? (change.after.data() || {}) as Record<string, unknown>
+      : null;
+
+    let delta: PendingProjectionDelta;
+    if (afterExists && afterData && isOperationalEnrollmentForSnapshot(afterData)) {
+      const row = rowFromSnapshot(change.after);
+      const related = await collectRelatedRows([], [row]);
+      delta = {
+        entityType: 'enrollment',
+        entityId,
+        operation: 'upsert',
+        eventTimeMs,
+        eventId,
+        eventKey: projectionEventKey(eventTimeMs, eventId),
+        row,
+        related: projectionRelatedRows(related),
+      };
+    } else {
+      delta = {
+        entityType: 'enrollment',
+        entityId,
+        operation: 'remove',
+        eventTimeMs,
+        eventId,
+        eventKey: projectionEventKey(eventTimeMs, eventId),
+      };
+    }
+
+    const persisted = await persistProjectionDelta(delta);
+    if (persisted) {
+      logger.info('sessionsManagementProjection:enrollment_delta', {
+        entityId,
+        operation: delta.operation,
+        eventTimeMs,
+      });
+    }
+  },
+);
+
+export const onSessionsManagementClassSessionWrite = onDocumentWritten(
+  {
+    document: 'classSessions/{sessionId}',
+    region: REGION,
+  },
+  async (event) => {
+    const change = event.data;
+    if (!change) return;
+
+    const entityId = String(event.params.sessionId || '').trim();
+    if (!entityId) return;
+    const eventTimeMs = projectionEventTimeMs(event.time);
+    const eventId = String(event.id || `session:${entityId}:${eventTimeMs}`);
+    const dateKeys = new Set(projectionBaselineDateKeys(eventTimeMs));
+    const beforeData = change.before.exists
+      ? (change.before.data() || {}) as Record<string, unknown>
+      : null;
+    const afterData = change.after.exists
+      ? (change.after.data() || {}) as Record<string, unknown>
+      : null;
+    const beforeRelevant = Boolean(
+      beforeData && dateKeys.has(String(beforeData.date || '').trim()),
+    );
+    const afterRelevant = Boolean(
+      afterData && dateKeys.has(String(afterData.date || '').trim()),
+    );
+
+    if (!beforeRelevant && !afterRelevant) return;
+
+    let delta: PendingProjectionDelta;
+    if (afterRelevant && change.after.exists) {
+      const row = rowFromSnapshot(change.after);
+      const related = await collectRelatedRows([row], []);
+      delta = {
+        entityType: 'session',
+        entityId,
+        operation: 'upsert',
+        eventTimeMs,
+        eventId,
+        eventKey: projectionEventKey(eventTimeMs, eventId),
+        row,
+        related: projectionRelatedRows(related),
+      };
+    } else {
+      delta = {
+        entityType: 'session',
+        entityId,
+        operation: 'remove',
+        eventTimeMs,
+        eventId,
+        eventKey: projectionEventKey(eventTimeMs, eventId),
+      };
+    }
+
+    const persisted = await persistProjectionDelta(delta);
+    if (persisted) {
+      logger.info('sessionsManagementProjection:session_delta', {
+        entityId,
+        operation: delta.operation,
+        eventTimeMs,
+      });
+    }
   },
 );
 

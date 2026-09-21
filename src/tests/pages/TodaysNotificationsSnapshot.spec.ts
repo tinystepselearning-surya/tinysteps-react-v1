@@ -19,12 +19,21 @@ const pageSource = readFileSync(
   resolve(process.cwd(), 'src/pages/admin/TodaysNotifications.tsx'),
   'utf8',
 );
+const snapshotClientSource = readFileSync(
+  resolve(process.cwd(), 'src/lib/sessionsManagementSnapshot.ts'),
+  'utf8',
+);
+const firestoreRulesSource = readFileSync(
+  resolve(process.cwd(), 'firestore.rules'),
+  'utf8',
+);
 
 const makeSnapshot = (
   overrides: Partial<SessionsManagementSnapshotPayload> = {},
 ): SessionsManagementSnapshotPayload => ({
-  schemaVersion: 2,
+  schemaVersion: 3,
   snapshotId: 'snapshot-a',
+  projectionRevision: 0,
   generatedAt: '2026-08-27T04:00:00.000+05:30',
   generatedBy: 'scheduled',
   dateKeys: ['2026-08-27', '2026-08-28'],
@@ -204,7 +213,7 @@ describe('Sessions Management authoritative snapshot loading', () => {
   it('keeps zero Overall Admissions authoritative instead of exposing session-only enrollment rows', () => {
     clearSessionsManagementSnapshotCacheForTests();
     window.sessionStorage.setItem(
-      'tinysteps:sessions-management-snapshot:v2',
+      'tinysteps:sessions-management-snapshot:v3',
       JSON.stringify({
         snapshot: makeSnapshot({
           counts: { overallEnrollments: 0 },
@@ -226,6 +235,42 @@ describe('Sessions Management authoritative snapshot loading', () => {
     ).toEqual([]);
 
     clearSessionsManagementSnapshotCacheForTests();
+  });
+
+  it('revalidates the browser snapshot with the live projection revision', () => {
+    expect(snapshotClientSource).toContain(
+      "const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v3';",
+    );
+    expect(snapshotClientSource).toContain('knownProjectionRevision');
+    expect(snapshotClientSource).toContain(
+      'cached?.snapshot.projectionRevision ?? -1',
+    );
+  });
+
+  it('listens to the single admin projection signal and reloads the cached read model', () => {
+    expect(pageSource).toContain(
+      "doc(db, 'adminSessionsManagement', 'projectionState')",
+    );
+    expect(pageSource).toContain('onSnapshot(');
+    expect(pageSource).toContain('loadSessionsManagementSnapshot()');
+    expect(pageSource).toContain('setProjectionRefreshNonce');
+  });
+
+  it('rolls the default Tomorrow selection forward when the 04:00 baseline advances', () => {
+    expect(pageSource).toContain('const todayDateKeyRef = useRef(todayDateKey);');
+    expect(pageSource).toContain('previousTomorrowDateKey');
+    expect(pageSource).toContain('nextTomorrowDateKey');
+    expect(pageSource).toContain('selected === previousTomorrowDateKey');
+  });
+
+  it('allows only admins to read the projection signal from the browser', () => {
+    expect(firestoreRulesSource).toContain(
+      'match /adminSessionsManagement/projectionState',
+    );
+    expect(firestoreRulesSource).toContain('allow read: if isAdmin();');
+    expect(firestoreRulesSource).toContain(
+      'allow create, update, delete: if false;',
+    );
   });
 
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {

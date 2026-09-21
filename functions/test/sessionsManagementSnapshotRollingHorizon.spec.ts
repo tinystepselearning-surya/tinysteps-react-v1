@@ -6,10 +6,14 @@ const source = readFileSync(
   resolve(process.cwd(), 'functions/src/sessionsManagementSnapshot.ts'),
   'utf8',
 );
+const projectionSource = readFileSync(
+  resolve(process.cwd(), 'functions/src/helpers/sessionsManagementProjection.ts'),
+  'utf8',
+);
 
 describe('Sessions Management daily baseline snapshot', () => {
   it('publishes only Today and Tomorrow at the 04:00 IST operational-day boundary', () => {
-    expect(source).toContain("const SCHEMA_VERSION = 2;");
+    expect(source).toContain("const SCHEMA_VERSION = 3;");
     expect(source).toContain('const SNAPSHOT_BASELINE_REFRESH_HOUR = 4;');
     expect(source).toContain("schedule: '0 4 * * *'");
     expect(source).toContain('getKolkataBaselineDateKey()');
@@ -30,14 +34,16 @@ describe('Sessions Management daily baseline snapshot', () => {
   });
 
   it('keeps the operational enrollment aliases aligned with the admin read model', () => {
-    expect(source).toContain("raw === 'pending_teacher'");
-    expect(source).toContain("raw === 'pending_payment'");
-    expect(source).toContain("raw === 'pending_lp'");
-    expect(source).toContain("raw === 'pending_lp_assignment'");
-    expect(source).toContain("raw === 'enrolled'");
-    expect(source).toContain("raw === 'current'");
-    expect(source).toContain("raw === 'ongoing'");
-    expect(source).toContain("return normalized === 'active' || normalized === 'trial';");
+    expect(projectionSource).toContain("raw === 'pending_teacher'");
+    expect(projectionSource).toContain("raw === 'pending_payment'");
+    expect(projectionSource).toContain("raw === 'pending_lp'");
+    expect(projectionSource).toContain("raw === 'pending_lp_assignment'");
+    expect(projectionSource).toContain("raw === 'enrolled'");
+    expect(projectionSource).toContain("raw === 'current'");
+    expect(projectionSource).toContain("raw === 'ongoing'");
+    expect(projectionSource).toContain(
+      "return normalized === 'active' || normalized === 'trial';",
+    );
   });
 
   it('fails closed rather than publishing a potentially truncated per-date session snapshot', () => {
@@ -51,12 +57,38 @@ describe('Sessions Management daily baseline snapshot', () => {
     expect(source).toContain("rebuildSnapshot('bootstrap'");
   });
 
-  it('publishes current only after all snapshot shards and metadata are written', () => {
+  it('publishes current and the projection signal only after shards and metadata are written', () => {
     const writeShardsIndex = source.indexOf('const shardIds = await writeSnapshotShards');
     const metaWriteIndex = source.indexOf('await snapshotRef.set(meta)');
-    const currentWriteIndex = source.indexOf('await currentRef.set({');
+    const publishBatchIndex = source.indexOf('const publishBatch = db().batch()');
+    const publishCommitIndex = source.indexOf('await publishBatch.commit()');
     expect(writeShardsIndex).toBeGreaterThan(-1);
     expect(metaWriteIndex).toBeGreaterThan(writeShardsIndex);
-    expect(currentWriteIndex).toBeGreaterThan(metaWriteIndex);
+    expect(publishBatchIndex).toBeGreaterThan(metaWriteIndex);
+    expect(publishCommitIndex).toBeGreaterThan(publishBatchIndex);
+  });
+
+  it('projects post-baseline changes and protects rebuild races with buildStartedAtMs', () => {
+    expect(source).toContain('buildStartedAtMs');
+    expect(source).toContain(".where('eventTimeMs', '>=', buildStartedAtMs)");
+    expect(source).toContain('readProjectedSnapshot(meta');
+    expect(source).toContain('knownProjectionRevision');
+    expect(source).toContain('projectionRevision: projectionState.revision');
+    expect(source).toContain('await pruneProjectionDeltasBefore(payload.buildStartedAtMs)');
+  });
+
+  it('installs bounded enrollment and Today/Tomorrow session delta triggers', () => {
+    expect(source).toContain('onSessionsManagementEnrollmentWrite');
+    expect(source).toContain("document: 'enrollments/{enrollmentId}'");
+    expect(source).toContain('onSessionsManagementClassSessionWrite');
+    expect(source).toContain("document: 'classSessions/{sessionId}'");
+    expect(source).toContain('projectionBaselineDateKeys(eventTimeMs)');
+    expect(source).toContain('if (!beforeRelevant && !afterRelevant) return;');
+  });
+
+  it('serializes delta writes through a monotonic projection revision transaction', () => {
+    expect(source).toContain('const nextRevision = Math.max(0, Number(state.revision || 0)) + 1');
+    expect(source).toContain('existingEventKey >= delta.eventKey');
+    expect(source).toContain("doc(PROJECTION_STATE_DOC)");
   });
 });
