@@ -510,6 +510,37 @@ async function readProjectedSnapshot(
   ) as SnapshotPayload;
 }
 
+async function readProjectedSnapshotWithBaselineFallback(
+  meta: SnapshotMeta,
+  initialState?: ProjectionState,
+): Promise<SnapshotPayload> {
+  try {
+    return await readProjectedSnapshot(meta, initialState);
+  } catch (error) {
+    logger.error('sessionsManagementSnapshot:projection_read_failed_using_baseline', {
+      snapshotId: meta.snapshotId,
+      buildStartedAtMs: meta.buildStartedAtMs,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const baseline = await readSnapshotPayload(meta);
+    const state = initialState || await readProjectionState().catch(() => ({
+      revision: 0,
+      snapshotId: meta.snapshotId,
+    }));
+    return {
+      ...baseline,
+      projectionRevision: Math.max(0, Number(state.revision || 0)),
+      deltaDocumentsApplied: 0,
+      sourceStats: baseline.sourceStats
+        ? {
+            ...baseline.sourceStats,
+            deltaDocumentsApplied: 0,
+          }
+        : baseline.sourceStats,
+    };
+  }
+}
+
 async function acquireLease(actor: string): Promise<string | null> {
   const leaseRef = db().collection(ROOT_COLLECTION).doc(LEASE_DOC);
   const now = Date.now();
@@ -728,9 +759,15 @@ async function rebuildSnapshot(
     }, { merge: true });
     await publishBatch.commit();
 
-    await pruneProjectionDeltasBefore(payload.buildStartedAtMs);
+    await pruneProjectionDeltasBefore(payload.buildStartedAtMs).catch((error) => {
+      logger.warn('sessionsManagementSnapshot:delta_prune_failed_after_publish', {
+        snapshotId: payload.snapshotId,
+        buildStartedAtMs: payload.buildStartedAtMs,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
 
-    const projected = await readProjectedSnapshot(meta);
+    const projected = await readProjectedSnapshotWithBaselineFallback(meta);
     logger.info('sessionsManagementSnapshot:published', {
       reason,
       generatedByUid,
@@ -871,7 +908,7 @@ export const getSessionsManagementSnapshot = onCall(
       };
     }
 
-    const snapshot = await readProjectedSnapshot(meta, projectionState);
+    const snapshot = await readProjectedSnapshotWithBaselineFallback(meta, projectionState);
     return { unchanged: false, snapshot };
   },
 );
