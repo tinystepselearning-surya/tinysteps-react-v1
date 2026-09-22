@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
-import { getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
+import { getSessionStartDate } from '../../../../lib/sessionTime';
 import {
   ATTENDANCE_FINALISED_MESSAGE,
   getTeacherAttendanceCorrectionCutoffMillis,
@@ -19,6 +19,11 @@ import {
   cleanStudentDisplayName,
   resolveTeacherSessionCourseLabel,
 } from '../../utils/resolveTeacherSessionStudentName';
+import {
+  classifyTodaySession,
+  summarizeTodaySessions,
+  TEACHER_ATTENDANCE_OPEN_DELAY_MS,
+} from './todaySessionViewState';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -27,14 +32,20 @@ interface TodaySessionsListProps {
 type SessionViewFilter = 'all' | 'soon' | 'pending' | 'completed';
 
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
-  const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
+  const ATTENDANCE_OPEN_DELAY_MS = TEACHER_ATTENDANCE_OPEN_DELAY_MS;
   const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
   const { students } = useTeacherFilteredStudents();
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<SessionViewFilter>('all');
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const studentNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -128,13 +139,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     return getSessionStartDate(session);
   };
 
-  const getSessionEnd = (session: TeacherSession, start: Date): Date => {
-    const resolved = getSessionEndDate(session);
-    if (resolved) return resolved;
-    const durationMins = Number((session as any).durationMins) || Number((session as any).durationMinutes) || 30;
-    return new Date(start.getTime() + Math.max(durationMins, 30) * 60 * 1000);
-  };
-
   const normalizeStartTime = (value: unknown): string | null => {
     const raw = typeof value === 'string' ? value.trim() : '';
     if (!raw) return null;
@@ -194,40 +198,10 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
-  const summary = useMemo(() => {
-    const nowMs = Date.now();
-    let soon = 0;
-    let pending = 0;
-    let completed = 0;
-
-    sortedSessions.forEach((session) => {
-      const start = getSessionStart(session);
-      const end = start ? getSessionEnd(session, start) : null;
-      const attendanceCount = Object.keys(session.attendance || {}).length;
-      const isCompleted =
-        session.status === 'completed' ||
-        session.status === 'reschedule_requested' ||
-        (end ? end.getTime() < nowMs : false);
-
-      if (isCompleted) {
-        completed += 1;
-      } else {
-        if (attendanceCount === 0) pending += 1;
-        if (start) {
-          const deltaMins = Math.floor((start.getTime() - nowMs) / 60000);
-          const isInProgress = start.getTime() <= nowMs && end && end.getTime() >= nowMs;
-          if (isInProgress || (deltaMins >= 0 && deltaMins <= 60)) soon += 1;
-        }
-      }
-    });
-
-    return {
-      total: sortedSessions.length,
-      soon,
-      pending,
-      completed,
-    };
-  }, [sortedSessions]);
+  const summary = useMemo(
+    () => summarizeTodaySessions(sortedSessions, nowMs),
+    [nowMs, sortedSessions],
+  );
 
   const filteredSessions = useMemo(() => {
     const nowMs = Date.now();
@@ -246,25 +220,14 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
       if (normalizedSearch && !haystack.includes(normalizedSearch)) return false;
 
-      const start = getSessionStart(session);
-      const end = start ? getSessionEnd(session, start) : null;
-      const attendanceCount = Object.keys(session.attendance || {}).length;
-      const isCompleted =
-        session.status === 'completed' ||
-        session.status === 'reschedule_requested' ||
-        (end ? end.getTime() < nowMs : false);
+      const state = classifyTodaySession(session, nowMs);
 
-      if (viewFilter === 'completed') return isCompleted;
-      if (viewFilter === 'pending') return !isCompleted && attendanceCount === 0;
-      if (viewFilter === 'soon') {
-        if (!start) return false;
-        const deltaMins = Math.floor((start.getTime() - nowMs) / 60000);
-        const isInProgress = start.getTime() <= nowMs && end && end.getTime() >= nowMs;
-        return !isCompleted && (isInProgress || (deltaMins >= 0 && deltaMins <= 60));
-      }
+      if (viewFilter === 'completed') return state.completed;
+      if (viewFilter === 'pending') return state.pending;
+      if (viewFilter === 'soon') return state.soon;
       return true;
     });
-  }, [normalizedSearch, sortedSessions, viewFilter]);
+  }, [normalizedSearch, nowMs, sortedSessions, viewFilter]);
 
   if (isLoading) {
     return (
