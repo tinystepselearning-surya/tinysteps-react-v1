@@ -190,24 +190,36 @@ export async function loadSessionsManagementSnapshot(): Promise<SessionsManageme
   loadPromise = (async () => {
     const cached = readStoredCache();
     const callable = httpsCallable(functions, 'getSessionsManagementSnapshot');
-    const response = await callable({
-      knownSnapshotId: cached?.snapshot.snapshotId || '',
-      knownProjectionRevision: cached?.snapshot.projectionRevision ?? -1,
-    });
-    const result = response.data as Record<string, unknown>;
 
-    if (result?.unchanged === true && cached?.snapshot) {
-      return cached.snapshot;
+    try {
+      const response = await callable({
+        knownSnapshotId: cached?.snapshot.snapshotId || '',
+        knownProjectionRevision: cached?.snapshot.projectionRevision ?? -1,
+      });
+      const result = response.data as Record<string, unknown>;
+
+      if (result?.unchanged === true && cached?.snapshot) {
+        return cached.snapshot;
+      }
+
+      const snapshot = normalizeSnapshot(result?.snapshot);
+      if (snapshot) return replaceSnapshotCache(snapshot);
+
+      const retry = await callable({ knownSnapshotId: '' });
+      const retryResult = retry.data as Record<string, unknown>;
+      const retrySnapshot = normalizeSnapshot(retryResult?.snapshot);
+      if (!retrySnapshot) throw new Error('Sessions Management snapshot response was invalid.');
+      return replaceSnapshotCache(retrySnapshot);
+    } catch (error) {
+      if (cached?.snapshot) {
+        console.warn(
+          '[SessionsManagementSnapshot] live snapshot revalidation failed; using cached snapshot',
+          error,
+        );
+        return cached.snapshot;
+      }
+      throw error;
     }
-
-    const snapshot = normalizeSnapshot(result?.snapshot);
-    if (snapshot) return replaceSnapshotCache(snapshot);
-
-    const retry = await callable({ knownSnapshotId: '' });
-    const retryResult = retry.data as Record<string, unknown>;
-    const retrySnapshot = normalizeSnapshot(retryResult?.snapshot);
-    if (!retrySnapshot) throw new Error('Sessions Management snapshot response was invalid.');
-    return replaceSnapshotCache(retrySnapshot);
   })().finally(() => {
     loadPromise = null;
   });
@@ -220,12 +232,24 @@ export async function refreshSessionsManagementSnapshot(): Promise<SessionsManag
   rejectUninjectedTestNetwork();
 
   refreshPromise = (async () => {
+    const cached = readStoredCache();
     const callable = httpsCallable(functions, 'adminRefreshSessionsManagementSnapshot');
-    const response = await callable({});
-    const result = response.data as Record<string, unknown>;
-    const snapshot = normalizeSnapshot(result?.snapshot);
-    if (!snapshot) throw new Error('Manual Sessions Management refresh returned an invalid snapshot.');
-    return replaceSnapshotCache(snapshot);
+    try {
+      const response = await callable({});
+      const result = response.data as Record<string, unknown>;
+      const snapshot = normalizeSnapshot(result?.snapshot);
+      if (!snapshot) throw new Error('Manual Sessions Management refresh returned an invalid snapshot.');
+      return replaceSnapshotCache(snapshot);
+    } catch (error) {
+      if (cached?.snapshot) {
+        console.warn(
+          '[SessionsManagementSnapshot] manual refresh failed; keeping cached snapshot',
+          error,
+        );
+        return cached.snapshot;
+      }
+      throw error;
+    }
   })().finally(() => {
     refreshPromise = null;
   });
