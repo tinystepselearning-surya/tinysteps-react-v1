@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import type { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
@@ -10,6 +11,7 @@ import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceS
 import {
   AvsOrganizerResolutionError,
   resolveAttendanceValidationOrganizerUserId,
+  type AvsOrganizerResolution,
 } from './organizerConfig';
 import {
   collectTeamsEvidence,
@@ -24,9 +26,9 @@ import { runAv53ShadowWithFirestore } from './shadowRunner';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
-const MICROSOFT_TENANT_ID = defineSecret('MICROSOFT_TENANT_ID');
-const MICROSOFT_CLIENT_ID = defineSecret('MICROSOFT_CLIENT_ID');
-const MICROSOFT_CLIENT_SECRET = defineSecret('MICROSOFT_CLIENT_SECRET');
+export const MICROSOFT_TENANT_ID = defineSecret('MICROSOFT_TENANT_ID');
+export const MICROSOFT_CLIENT_ID = defineSecret('MICROSOFT_CLIENT_ID');
+export const MICROSOFT_CLIENT_SECRET = defineSecret('MICROSOFT_CLIENT_SECRET');
 
 function cleanId(value: unknown, field: string): string {
   const normalized = String(value ?? '').trim();
@@ -76,25 +78,40 @@ function countingGraphClient(base: TeamsEvidenceGraphClient): {
   };
 }
 
-export const forceRefreshAttendanceValidationEvidence = onCall(
-  {
-    region: REGION,
-    memory: '256MiB',
-    timeoutSeconds: 120,
-    maxInstances: 2,
-    secrets: [
-      MICROSOFT_TENANT_ID,
-      MICROSOFT_CLIENT_ID,
-      MICROSOFT_CLIENT_SECRET,
-    ],
-  },
-  async (request) => {
-    await ensureAdmin(request.auth);
+export class ForceFreshCaseRefreshError extends Error {
+  constructor(
+    readonly causeError: unknown,
+    readonly graphLogicalCalls: number,
+  ) {
+    super(
+      causeError instanceof Error
+        ? causeError.message
+        : 'Force Fresh Teams Evidence failed.',
+    );
+    this.name = 'ForceFreshCaseRefreshError';
+  }
+}
 
-    const caseId = cleanId(request.data?.caseId, 'caseId');
-    const inputFingerprint = cleanFingerprint(request.data?.inputFingerprint);
-    const db = admin.firestore();
+export interface ForceFreshCaseRefreshDependencies {
+  db: Firestore;
+  caseId: string;
+  inputFingerprint?: string;
+  organizerResolution?: AvsOrganizerResolution;
+  graphClient: TeamsEvidenceGraphClient;
+}
 
+/**
+ * The one canonical Force Fresh pipeline used by both single-case and range actions.
+ * It writes only AVS evidence/case sidecars plus guarded AVS dirty-marker cleanup.
+ */
+export async function refreshAttendanceValidationCaseEvidence(
+  deps: ForceFreshCaseRefreshDependencies,
+) {
+  const counted = countingGraphClient(deps.graphClient);
+
+  try {
+    const { db } = deps;
+    const caseId = cleanId(deps.caseId, 'caseId');
     const caseRef = db.collection('attendanceValidationCases').doc(caseId);
     const caseSnapshot = await caseRef.get();
     if (!caseSnapshot.exists) {
@@ -102,14 +119,17 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
     }
 
     const validationCase = (caseSnapshot.data() || {}) as Record<string, unknown>;
-    const storedFingerprint = String(
-      validationCase.inputFingerprint || '',
-    ).trim().toLowerCase();
-    if (!storedFingerprint || storedFingerprint !== inputFingerprint) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Attendance validation case changed. Reload saved results before forcing fresh evidence.',
-      );
+    if (deps.inputFingerprint) {
+      const inputFingerprint = cleanFingerprint(deps.inputFingerprint);
+      const storedFingerprint = String(
+        validationCase.inputFingerprint || '',
+      ).trim().toLowerCase();
+      if (!storedFingerprint || storedFingerprint !== inputFingerprint) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance validation case changed. Reload saved results before forcing fresh evidence.',
+        );
+      }
     }
 
     const classSessionId = cleanId(
@@ -153,14 +173,17 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
 
     const previousEvidence =
       previousEvidenceSnapshot.data() as AttendanceValidationEvidenceDocument;
-    let organizerResolution;
-    try {
-      organizerResolution = await resolveAttendanceValidationOrganizerUserId(db);
-    } catch (error) {
-      if (error instanceof AvsOrganizerResolutionError) {
-        throw new HttpsError('failed-precondition', error.reason);
+    let organizerResolution = deps.organizerResolution;
+    if (!organizerResolution) {
+      try {
+        organizerResolution =
+          await resolveAttendanceValidationOrganizerUserId(db);
+      } catch (error) {
+        if (error instanceof AvsOrganizerResolutionError) {
+          throw new HttpsError('failed-precondition', error.reason);
+        }
+        throw error;
       }
-      throw error;
     }
     const organizerUserId = organizerResolution.organizerUserId;
     logger.info('AVS force-fresh canonical organizer resolved', {
@@ -178,19 +201,10 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
     );
 
     const runId = `fresh_${Date.now().toString(36)}_${caseId.slice(0, 24)}`;
-    const baseGraphClient = new MicrosoftGraphClient({
-      credentials: {
-        tenantId: MICROSOFT_TENANT_ID.value(),
-        clientId: MICROSOFT_CLIENT_ID.value(),
-        clientSecret: MICROSOFT_CLIENT_SECRET.value(),
-      },
-    });
-    const counted = countingGraphClient(baseGraphClient);
     const graphClient = createOccurrenceSelectingTeamsEvidenceGraphClient(
       counted.client,
       expectedSession,
     );
-
     const evidenceResult = await collectTeamsEvidence(
       {
         runId,
@@ -264,7 +278,7 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
           0,
         ),
       graphLogicalCalls: counted.count(),
-      operationalMutationAllowed: false,
+      operationalMutationAllowed: false as const,
       dirtyMarkerCleared,
       concurrentMarkerChangeDetected,
       readBudget: {
@@ -283,5 +297,51 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
           + av53Result.sameDayContextReadDocumentBudget,
       },
     };
+  } catch (error) {
+    throw new ForceFreshCaseRefreshError(error, counted.count());
+  }
+}
+
+function graphClientFromSecrets(): MicrosoftGraphClient {
+  return new MicrosoftGraphClient({
+    credentials: {
+      tenantId: MICROSOFT_TENANT_ID.value(),
+      clientId: MICROSOFT_CLIENT_ID.value(),
+      clientSecret: MICROSOFT_CLIENT_SECRET.value(),
+    },
+  });
+}
+
+export const forceRefreshAttendanceValidationEvidence = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 120,
+    maxInstances: 2,
+    secrets: [
+      MICROSOFT_TENANT_ID,
+      MICROSOFT_CLIENT_ID,
+      MICROSOFT_CLIENT_SECRET,
+    ],
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const caseId = cleanId(request.data?.caseId, 'caseId');
+    const inputFingerprint = cleanFingerprint(request.data?.inputFingerprint);
+    const db = admin.firestore();
+    try {
+      return await refreshAttendanceValidationCaseEvidence({
+        db,
+        caseId,
+        inputFingerprint,
+        graphClient: graphClientFromSecrets(),
+      });
+    } catch (error) {
+      if (error instanceof ForceFreshCaseRefreshError) {
+        throw error.causeError;
+      }
+      throw error;
+    }
   },
 );

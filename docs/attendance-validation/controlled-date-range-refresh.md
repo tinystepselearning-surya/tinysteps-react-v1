@@ -303,6 +303,33 @@ Force Fresh:
 
 The Admin UI presents Force Fresh as an explicit per-case action and asks for confirmation because it makes new Microsoft Graph reads.
 
+### Force Fresh Selected Range
+
+The admin dashboard also exposes **Force Fresh Selected Range** for an explicit
+From/To service-date range. It discovers work only from
+`attendanceValidationCases` ordered by `serviceDateYmd` and document id; it does
+not scan `classSessions` to discover work. Each click attempts at most 100
+existing cases and invokes the same single-case Force Fresh evidence pipeline
+with internal concurrency **5**.
+
+Progress is checkpointed after every attempted case in the backend-only
+`attendanceValidationForceFreshRanges/{rangeId}` document. The cursor advances
+after the bounded batch settles, so completed cases survive a callable timeout
+and are not unnecessarily repeated. Ranges with more work expose **Continue
+Fresh Refresh** and return processed, refreshed, skipped, failed, logical Graph
+call, and remaining-case counts. The selected saved-results range reloads after
+each successful batch response.
+
+The range coordinator writes only AVS progress, evidence, run and case
+sidecars. It preserves the per-case pipeline's guarded dirty-marker cleanup and
+does not mutate operational attendance, scheduling, billing, payments, teacher
+earnings or finance. AV5.3 remains the only revalidation path, so strict
+`>1500` seconds for one Present, strict `>3000` seconds for two Presents,
+same-day shifted coverage, and conservative non-Present behavior are unchanged.
+
+The cursor query uses the declared
+`attendanceValidationCases: serviceDateYmd ASC, __name__ ASC` index.
+
 ## Brick 6B — first-time date-range Teams evidence collection
 
 First-Time Baseline is the explicit Graph-backed path for a date range that has never been validated before.

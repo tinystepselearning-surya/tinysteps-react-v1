@@ -1631,6 +1631,12 @@ function teacherProgressIdentityUnchanged() {
       allow read, create, update, delete: if false;
     }
 
+    // Force Fresh range cursors/checkpoints are backend-only. The callable
+    // returns bounded progress without exposing mutable coordinator state.
+    match /attendanceValidationForceFreshRanges/{rangeId} {
+      allow read, create, update, delete: if false;
+    }
+
     // Microsoft organizer configuration is backend-only. The browser neither
     // needs nor receives the organizer object ID used by Graph.
     match /attendanceValidationConfig/{configId} {

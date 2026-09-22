@@ -216,6 +216,23 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
+  it('wires selected-range Force Fresh with confirmation, continuation, and auto reload', () => {
+    expect(dashboard).toContain('Force Fresh Selected Range');
+    expect(dashboard).toContain('Continue Fresh Refresh');
+    expect(dashboard).toContain(
+      'up to 100 existing AVS cases and rebuild their saved results',
+    );
+    expect(dashboard).toContain(
+      "'forceRefreshAttendanceValidationRange'",
+    );
+    expect(dashboard).toContain('await loadSavedCases(false, true)');
+    expect(dashboard).toContain('forceFreshRangeResult.casesProcessed');
+    expect(dashboard).toContain('forceFreshRangeResult.remainingCases');
+    expect(callFunctions).toContain(
+      "forceRefreshAttendanceValidationRange: 'asia-south1'",
+    );
+  });
+
   it('surfaces safe organizer failures without exposing organizer IDs', () => {
     expect(dashboard).toContain('safeForceFreshFailureMessage');
     expect(dashboard).toContain('organizer_config_invalid');
