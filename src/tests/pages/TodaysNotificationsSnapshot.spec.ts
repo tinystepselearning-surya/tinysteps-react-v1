@@ -247,6 +247,17 @@ describe('Sessions Management authoritative snapshot loading', () => {
     );
   });
 
+  it('keeps the cached snapshot when live callable revalidation is temporarily unhealthy', () => {
+    expect(snapshotClientSource).toContain(
+      '[SessionsManagementSnapshot] live snapshot revalidation failed; using cached snapshot',
+    );
+    expect(snapshotClientSource).toContain(
+      '[SessionsManagementSnapshot] manual refresh failed; keeping cached snapshot',
+    );
+    expect(snapshotClientSource).toContain('if (cached?.snapshot) {');
+    expect(snapshotClientSource).toContain('return cached.snapshot;');
+  });
+
   it('listens to the single admin projection signal and reloads the cached read model', () => {
     expect(pageSource).toContain(
       "doc(db, 'adminSessionsManagement', 'projectionState')",
