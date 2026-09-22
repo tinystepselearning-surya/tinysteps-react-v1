@@ -7,7 +7,7 @@ import {
   where,
   type Query,
 } from 'firebase/firestore';
-import { addDays, format } from 'date-fns';
+import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
 import { getSessionStartDate } from '../../../lib/sessionTime';
@@ -40,7 +40,7 @@ interface UseUpcomingSessionsResult {
   deniedLookups: Array<{ collection: string; code?: string | null; error: string }>;
 }
 
-export const getDefaultUpcomingSelectedDate = (): string => format(addDays(new Date(), 1), 'yyyy-MM-dd');
+export const getDefaultUpcomingSelectedDate = (): string => format(new Date(), 'yyyy-MM-dd');
 
 const cleanString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';

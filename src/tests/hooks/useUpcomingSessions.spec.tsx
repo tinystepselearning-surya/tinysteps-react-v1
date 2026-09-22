@@ -90,7 +90,7 @@ const getTeacherField = (queryRef: { args: Array<{ kind?: string; args?: unknown
   return String(teacherClause?.[0] || '');
 };
 
-const tomorrowDate = () => format(addDays(new Date(), 1), 'yyyy-MM-dd');
+const todayDate = () => format(new Date(), 'yyyy-MM-dd');
 const specificDate = () => format(addDays(new Date(), 4), 'yyyy-MM-dd');
 
 const canonicalSession = (
@@ -147,12 +147,12 @@ describe('useUpcomingSessions B4 canonical read cutover', () => {
     });
   });
 
-  it('defaults to tomorrow and uses one canonical teacherId listener with no classSessions getDocs fallbacks', async () => {
+  it('defaults to today and uses one canonical teacherId listener with no classSessions getDocs fallbacks', async () => {
     render(<TestComponent teacherId="teacher-1" />);
 
     await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
-    expect(screen.getByText(`session-${tomorrowDate()}:${tomorrowDate()}:teacher-1`)).toBeTruthy();
-    expect(getDefaultUpcomingSelectedDate()).toBe(tomorrowDate());
+    expect(screen.getByText(`session-${todayDate()}:${todayDate()}:teacher-1`)).toBeTruthy();
+    expect(getDefaultUpcomingSelectedDate()).toBe(todayDate());
 
     expect(mockOnSnapshot).toHaveBeenCalledTimes(1);
     const [listenerQuery] = mockOnSnapshot.mock.calls[0];
@@ -160,7 +160,7 @@ describe('useUpcomingSessions B4 canonical read cutover', () => {
     expect(extractWhereClauses(listenerQuery as any)).toEqual(
       expect.arrayContaining([
         expect.arrayContaining(['teacherId', '==', 'teacher-1']),
-        expect.arrayContaining(['date', '==', tomorrowDate()]),
+        expect.arrayContaining(['date', '==', todayDate()]),
       ]),
     );
 
