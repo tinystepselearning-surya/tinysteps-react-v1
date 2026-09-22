@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   collection,
+  doc,
   documentId,
   orderBy,
   query,
@@ -9,7 +10,7 @@ import {
 } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
-import { getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
+import { getDocLogged, getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
 import { getSessionStartDate } from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
@@ -108,19 +109,62 @@ const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<
 
   for (const chunk of chunkIds(ids, 10)) {
     if (!chunk.length) continue;
-    const enrollmentQuery = query(collection(db, 'enrollments'), where(documentId(), 'in', chunk));
-    const snap = await getDocsLogged(
-      'useUpcomingSessions:enrollments-by-id',
-      enrollmentQuery,
-      { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
-    );
 
-    snap.docs.forEach((docSnap) => {
-      map.set(docSnap.id, {
-        id: docSnap.id,
-        ...(docSnap.data() as Record<string, unknown>),
+    try {
+      const enrollmentQuery = query(collection(db, 'enrollments'), where(documentId(), 'in', chunk));
+      const snap = await getDocsLogged(
+        'useUpcomingSessions:enrollments-by-id',
+        enrollmentQuery,
+        { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
+      );
+
+      snap.docs.forEach((docSnap) => {
+        map.set(docSnap.id, {
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        });
       });
-    });
+      continue;
+    } catch (batchError) {
+      devLogTeacherQuery('useUpcomingSessions', 'error', {
+        queryName: 'enrollmentLookupsBatch',
+        collection: 'enrollments',
+        aliasField: 'documentId',
+        enrollmentIds: chunk,
+        error: batchError instanceof Error ? batchError.message : String(batchError),
+        code: (batchError as any)?.code || null,
+      });
+    }
+
+    // A single stale session can reference an enrollment the current teacher no
+    // longer owns. Firestore correctly denies a mixed documentId "in" query in
+    // that case. Retry each enrollment independently so one inaccessible stale
+    // row cannot hide every valid recurring session for the teacher.
+    await Promise.all(
+      chunk.map(async (enrollmentId) => {
+        try {
+          const snap = await getDocLogged(
+            'useUpcomingSessions:enrollment-by-id-fallback',
+            doc(db, 'enrollments', enrollmentId),
+            { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
+          );
+          if (!snap.exists()) return;
+
+          map.set(snap.id, {
+            id: snap.id,
+            ...(snap.data() as Record<string, unknown>),
+          });
+        } catch (error) {
+          devLogTeacherQuery('useUpcomingSessions', 'error', {
+            queryName: 'enrollmentLookupByIdFallback',
+            collection: 'enrollments',
+            enrollmentId,
+            error: error instanceof Error ? error.message : String(error),
+            code: (error as any)?.code || null,
+          });
+        }
+      }),
+    );
   }
 
   return map;
