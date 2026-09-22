@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  mockGetDoc,
   mockGetDocs,
   mockOnSnapshot,
   mockQuery,
@@ -12,6 +13,7 @@ const {
   mockIsScheduleExceptionSession,
   mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } = vi.hoisted(() => ({
+  mockGetDoc: vi.fn(),
   mockGetDocs: vi.fn(),
   mockOnSnapshot: vi.fn(),
   mockQuery: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
@@ -24,7 +26,9 @@ const {
 
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db: unknown, name: string) => ({ kind: 'collection', name })),
+  doc: vi.fn((_db: unknown, collectionName: string, id: string) => ({ kind: 'doc', collectionName, id })),
   documentId: vi.fn(() => '__name__'),
+  getDoc: mockGetDoc,
   getDocs: mockGetDocs,
   onSnapshot: mockOnSnapshot,
   orderBy: mockOrderBy,
@@ -119,6 +123,8 @@ const getClassSessionGetDocsCalls = () =>
 
 describe('useTeacherSessions', () => {
   beforeEach(() => {
+    mockGetDoc.mockReset();
+    mockGetDoc.mockRejectedValue(Object.assign(new Error('enrollment get denied'), { code: 'permission-denied' }));
     mockGetDocs.mockReset();
     mockOnSnapshot.mockReset();
     mockQuery.mockClear();
@@ -305,6 +311,64 @@ describe('useTeacherSessions', () => {
       expect(screen.getByText('session-transferred:Student Three:Foundation Phonics')).toBeTruthy(),
     );
     expect(getClassSessionGetDocsCalls()).toHaveLength(0);
+  });
+
+  it('keeps accessible recurring sessions when one stale enrollment denies the batch lookup', async () => {
+    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
+      if (getCollectionName(queryRef as any) === 'enrollments') {
+        throw Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
+      }
+      return { docs: [] };
+    });
+
+    mockGetDoc.mockImplementation(async (docRef: any) => {
+      if (docRef?.id === 'enr-visible') {
+        return {
+          ...makeDoc('enr-visible', {
+            teacherId: 'teacher-1',
+            kidId: 'kid-visible',
+            courseId: 'course-1',
+            status: 'active',
+          }),
+          exists: () => true,
+        };
+      }
+
+      throw Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
+    });
+
+    mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
+      onNext({
+        docs: [
+          makeDoc('session-visible', {
+            teacherId: 'teacher-1',
+            enrollmentId: 'enr-visible',
+            courseId: 'course-1',
+            date: '2026-06-08',
+            startTime: '16:00',
+            kidId: 'kid-visible',
+            status: 'scheduled',
+          }),
+          makeDoc('session-stale', {
+            teacherId: 'teacher-1',
+            enrollmentId: 'enr-stale',
+            courseId: 'course-2',
+            date: '2026-06-08',
+            startTime: '17:00',
+            kidId: 'kid-stale',
+            status: 'scheduled',
+          }),
+        ],
+      });
+      return vi.fn();
+    });
+
+    render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
+
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
+    expect(screen.getByText('session-visible:2026-06-08:teacher-1')).toBeTruthy();
+    expect(screen.queryByText(/session-stale/)).toBeNull();
+    expect(mockGetDoc).toHaveBeenCalledTimes(2);
   });
 
   it('prefers canonical teacherId when stale alias fields disagree', async () => {
