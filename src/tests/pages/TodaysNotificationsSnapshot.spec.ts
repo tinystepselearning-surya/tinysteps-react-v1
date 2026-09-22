@@ -311,6 +311,21 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(pageSource).toContain('return map;');
   });
 
+  it('does not retry the snapshot callable inside the Firestore fallback helpers', () => {
+    expect(pageSource).toContain(
+      '// We are already on the explicit Firestore fallback path here.',
+    );
+    expect(pageSource).toContain('const snap = await getDocs(q);');
+    expect(pageSource).toContain('const byDocIdSnap = await getDocs(byDocIdQuery);');
+    expect(pageSource).toContain('const byUidSnap = await getDocs(byUidQuery);');
+    expect(pageSource).toContain(
+      "cachedAdmissionRows !== null",
+    );
+    expect(pageSource).toContain(
+      "await getDocs(query(collection(db, 'enrollments')))",
+    );
+  });
+
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {
     const deps = makeDeps();
     deps.fetchSessionsForDate.mockImplementation(async (dateKey: string) => [
