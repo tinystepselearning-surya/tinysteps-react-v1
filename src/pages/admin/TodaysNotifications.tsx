@@ -3,6 +3,7 @@ import {
   collection,
   doc,
   documentId,
+  getDocs,
   limit,
   onSnapshot,
   query,
@@ -794,11 +795,9 @@ async function fetchDocsByIds(
 
   for (const idChunk of chunkIds(unique, 10)) {
     const q = query(collection(db, collectionName), where(documentId(), 'in', idChunk));
-    const snap = await getDocsLogged(
-      cacheLabel,
-      q,
-      { source: 'src/pages/admin/TodaysNotifications.tsx' },
-    );
+    // We are already on the explicit Firestore fallback path here. Calling
+    // getDocsLogged would retry the broken snapshot callable before every chunk.
+    const snap = await getDocs(q);
     const requestedChunkIds = new Set(idChunk);
     snap.docs.forEach((docSnap) => {
       if (!requestedChunkIds.has(docSnap.id)) return;
@@ -846,11 +845,7 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
 
   for (const idChunk of chunkIds(normalized, 10)) {
     const byDocIdQuery = query(collection(db, 'users'), where(documentId(), 'in', idChunk));
-    const byDocIdSnap = await getDocsLogged(
-      'TodaysNotifications:users-by-doc-id',
-      byDocIdQuery,
-      { source: 'src/pages/admin/TodaysNotifications.tsx' },
-    );
+    const byDocIdSnap = await getDocs(byDocIdQuery);
     const requestedChunkIds = new Set(idChunk);
     byDocIdSnap.docs.forEach((docSnap) => {
       if (!requestedChunkIds.has(docSnap.id)) return;
@@ -863,11 +858,7 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
 
   for (const idChunk of chunkIds(unresolvedByUid, 10)) {
     const byUidQuery = query(collection(db, 'users'), where('uid', 'in', idChunk));
-    const byUidSnap = await getDocsLogged(
-      'TodaysNotifications:users-by-uid',
-      byUidQuery,
-      { source: 'src/pages/admin/TodaysNotifications.tsx' },
-    );
+    const byUidSnap = await getDocs(byUidQuery);
     const requestedChunkUids = new Set(idChunk);
     byUidSnap.docs.forEach((docSnap) => {
       const rawData = docSnap.data() as UserDoc;
@@ -1429,17 +1420,19 @@ export default function TodaysNotifications() {
 
     const loadAdmissions = async () => {
       try {
-        const admissionsSnap = await getDocsLogged(
+        const cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
           'TodaysNotifications:overall-admissions',
-          query(collection(db, 'enrollments')),
-          { source: 'src/pages/admin/TodaysNotifications.tsx' },
         );
-
-        const nextEnrollments = admissionsSnap.docs
-          .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
-          .sort((a: EnrollmentDoc, b: EnrollmentDoc) =>
-            String(a.id || '').localeCompare(String(b.id || ''), undefined, { sensitivity: 'base' }),
-          );
+        const nextEnrollments = (
+          cachedAdmissionRows !== null
+            ? cachedAdmissionRows.map((row) => ({ id: row.id, ...(row.data as any) }))
+            : (await getDocs(query(collection(db, 'enrollments')))).docs.map((docSnap) => ({
+                id: docSnap.id,
+                ...(docSnap.data() as any),
+              }))
+        ).sort((a: EnrollmentDoc, b: EnrollmentDoc) =>
+          String(a.id || '').localeCompare(String(b.id || ''), undefined, { sensitivity: 'base' }),
+        );
 
         if (!active) return;
         setEnrollments(nextEnrollments);

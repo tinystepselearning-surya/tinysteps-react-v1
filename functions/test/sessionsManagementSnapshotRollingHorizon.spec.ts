@@ -71,10 +71,12 @@ describe('Sessions Management daily baseline snapshot', () => {
   it('projects post-baseline changes and protects rebuild races with buildStartedAtMs', () => {
     expect(source).toContain('buildStartedAtMs');
     expect(source).toContain(".where('eventTimeMs', '>=', buildStartedAtMs)");
-    expect(source).toContain('readProjectedSnapshot(meta');
+    expect(source).toContain('readProjectedSnapshotWithBaselineFallback(meta');
     expect(source).toContain('knownProjectionRevision');
     expect(source).toContain('projectionRevision: projectionState.revision');
-    expect(source).toContain('await pruneProjectionDeltasBefore(payload.buildStartedAtMs)');
+    expect(source).toContain('await pruneProjectionDeltasBefore(payload.buildStartedAtMs).catch');
+    expect(source).toContain('projection_read_failed_using_baseline');
+    expect(source).toContain('delta_prune_failed_after_publish');
   });
 
   it('installs bounded enrollment and Today/Tomorrow session delta triggers', () => {
