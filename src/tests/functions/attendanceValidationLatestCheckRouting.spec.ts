@@ -39,11 +39,13 @@ describe('AVS changed-only latest-check callable routing', () => {
     expect(source).toContain("collection('attendanceValidationCases')");
     expect(source).toContain("collection('attendanceValidationEvidence')");
     expect(source).toContain('planCachedTeacherIdentityRollout');
-    expect(source).toContain('ATTENDANCE_VALIDATION_STAFF_IDENTITIES_COLLECTION');
+    expect(source).toContain('claimAndBindTeacherIdentityMapping');
+    expect(source).toContain('backfillMicrosoftIdentityClaimsFromRegistry');
     expect(source).toContain('runAv53ShadowWithFirestore(');
     expect(source).toContain('sameDayContextReads');
     expect(source).toContain('graphCalls: 0');
     expect(source).toContain("source: 'cached_avs_evidence_email_bound'");
+    expect(source).toContain('identityClaimConflictCount');
     expect(functionsIndex.match(/runAttendanceValidationLatestCheck/g)?.length).toBeGreaterThan(0);
     expect(functionsIndex).not.toContain('runAttendanceValidationTeacherIdentityRollout');
   });

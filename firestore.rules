@@ -1637,6 +1637,17 @@ function teacherProgressIdentityUnchanged() {
       allow read, create, update, delete: if false;
     }
 
+    // Staff identity mappings and stable Microsoft identity ownership claims
+    // are backend-only. Claims make identity ownership transactional and prevent
+    // two concurrent AVS jobs from assigning one Microsoft identity to two staff.
+    match /attendanceValidationStaffIdentities/{staffId} {
+      allow read, create, update, delete: if false;
+    }
+
+    match /attendanceValidationMicrosoftIdentityClaims/{identityHash} {
+      allow read, create, update, delete: if false;
+    }
+
     // Microsoft organizer configuration is backend-only. The browser neither
     // needs nor receives the organizer object ID used by Graph.
     match /attendanceValidationConfig/{configId} {

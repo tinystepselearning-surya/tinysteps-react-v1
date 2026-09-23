@@ -43,6 +43,8 @@ describe('AVS force-fresh Teams evidence routing', () => {
     expect(source).toContain(
       'createOccurrenceSelectingTeamsEvidenceGraphClient',
     );
+    expect(source).toContain('bindTeacherIdentityFromFreshEvidence');
+    expect(source).toContain('identityBinding.staffRegistry');
     expect(source).toContain('runAv53ShadowWithFirestore');
     expect(source).toContain('classSessionId,');
     expect(source).toContain('evidenceId: evidenceResult.evidence.id');
