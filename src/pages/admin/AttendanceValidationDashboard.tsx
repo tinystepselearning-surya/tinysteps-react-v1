@@ -184,6 +184,30 @@ interface AvsForceFreshResponse {
   };
 }
 
+interface AvsForceFreshRangeResponse {
+  ok: boolean;
+  fromDate: string;
+  toDate: string;
+  rangeId: string;
+  alreadyComplete: boolean;
+  complete: boolean;
+  casesProcessed: number;
+  refreshed: number;
+  skipped: number;
+  failed: number;
+  graphLogicalCalls: number;
+  remainingCases: number;
+  concurrency: number;
+  cumulative: {
+    casesProcessed: number;
+    refreshed: number;
+    skipped: number;
+    failed: number;
+    graphLogicalCalls: number;
+  };
+  operationalMutationAllowed: false;
+}
+
 interface Av6ValidationCase {
   id: string;
   runId: string | null;
@@ -593,6 +617,11 @@ export default function AttendanceValidationDashboard() {
   const [forceFreshCaseId, setForceFreshCaseId] = useState<string | null>(null);
   const [forceFreshResult, setForceFreshResult] = useState<AvsForceFreshResponse | null>(null);
   const [forceFreshCompletedAt, setForceFreshCompletedAt] = useState<Date | null>(null);
+  const [forceFreshRangeRunning, setForceFreshRangeRunning] = useState(false);
+  const [forceFreshRangeResult, setForceFreshRangeResult] =
+    useState<AvsForceFreshRangeResponse | null>(null);
+  const [forceFreshRangeCompletedAt, setForceFreshRangeCompletedAt] =
+    useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
@@ -846,6 +875,48 @@ export default function AttendanceValidationDashboard() {
     }
   }, [loadSavedCases]);
 
+  const forceFreshSelectedRange = useCallback(async () => {
+    if (!validDateRange(fromDate, toDate)) {
+      setError(
+        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
+      );
+      return;
+    }
+
+    const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
+    if (rangeDays === null || rangeDays > 31) {
+      setError('Force Fresh Selected Range supports a maximum of 31 calendar days at a time.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Force Fresh Selected Range will make new Microsoft Graph reads for up to 100 existing AVS cases and rebuild their saved results. Continue?',
+    );
+    if (!confirmed) return;
+
+    setForceFreshRangeRunning(true);
+    setError(null);
+
+    try {
+      const result = await callFunction<
+        AvsForceFreshRangeResponse,
+        { fromDate: string; toDate: string }
+      >(
+        'forceRefreshAttendanceValidationRange',
+        { fromDate, toDate },
+      );
+
+      setForceFreshRangeResult(result);
+      setForceFreshRangeCompletedAt(new Date());
+      await loadSavedCases(false, true);
+    } catch (forceFreshRangeError) {
+      console.error('[AVS] Force Fresh Selected Range failed', forceFreshRangeError);
+      setError(safeForceFreshFailureMessage(forceFreshRangeError));
+    } finally {
+      setForceFreshRangeRunning(false);
+    }
+  }, [fromDate, loadSavedCases, toDate]);
+
   const handleTeacherFilterChange = useCallback((value: string) => {
     setTeacherFilter(value);
     setClassificationFilter('all');
@@ -1060,7 +1131,7 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               onClick={() => void loadSavedCases(false, false)}
-              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               {loading ? 'Loading saved results…' : 'Load Saved Results'}
@@ -1069,7 +1140,7 @@ export default function AttendanceValidationDashboard() {
               type="button"
               variant="outline"
               onClick={() => void runLatestCheck()}
-              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
               title="Revalidate only changed sessions using cached Teams evidence."
             >
               <RefreshCw
@@ -1081,7 +1152,7 @@ export default function AttendanceValidationDashboard() {
               type="button"
               variant="outline"
               onClick={() => void runTeacherIdentityRollout()}
-              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
+              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
               title="Safely bind teacher Microsoft identities from cached AVS attendance evidence and revalidate cached cases with zero Graph calls."
             >
               <RefreshCw
@@ -1101,6 +1172,7 @@ export default function AttendanceValidationDashboard() {
                 || latestCheckRunning
                 || identityRolloutRunning
                 || baselineRunning
+                || forceFreshRangeRunning
                 || forceFreshCaseId !== null
                 || (
                   baselineResult?.fromDate === fromDate
@@ -1125,6 +1197,41 @@ export default function AttendanceValidationDashboard() {
                     ? 'Baseline Complete'
                     : 'Run First-Time Baseline'}
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void forceFreshSelectedRange()}
+              disabled={
+                loading
+                || loadingMore
+                || latestCheckRunning
+                || identityRolloutRunning
+                || baselineRunning
+                || forceFreshRangeRunning
+                || forceFreshCaseId !== null
+                || (
+                  forceFreshRangeResult?.fromDate === fromDate
+                  && forceFreshRangeResult?.toDate === toDate
+                  && forceFreshRangeResult.complete
+                )
+              }
+              title="Exceptional action: fresh-refresh up to 100 existing AVS cases in the selected service-date range."
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${forceFreshRangeRunning ? 'animate-spin' : ''}`}
+              />
+              {forceFreshRangeRunning
+                ? 'Refreshing selected range…'
+                : forceFreshRangeResult?.fromDate === fromDate
+                  && forceFreshRangeResult?.toDate === toDate
+                  && !forceFreshRangeResult.complete
+                  ? 'Continue Fresh Refresh'
+                  : forceFreshRangeResult?.fromDate === fromDate
+                    && forceFreshRangeResult?.toDate === toDate
+                    && forceFreshRangeResult.complete
+                    ? 'Fresh Refresh Complete'
+                    : 'Force Fresh Selected Range'}
+            </Button>
           </div>
         </div>
 
@@ -1132,10 +1239,12 @@ export default function AttendanceValidationDashboard() {
           Loading saved results reads only cached AVS cases for the selected service-date range.
           Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.
           Sync Teacher Identities safely binds unique teacher identities from cached evidence and revalidates cached cases with zero Microsoft Graph calls.
+          Force Fresh Selected Range makes new Graph reads for at most 100 existing AVS cases per click.
         </p>
         <p className="mt-1 text-xs text-slate-500">
           Latest Check is intentionally capped at 31 calendar days per run.
           First-Time Baseline is also capped at 31 days and processes at most 100 session documents per click with fresh Teams evidence only where no saved AVS case exists.
+          Selected-range Force Fresh uses five concurrent case refreshes and resumes from persisted progress.
         </p>
 
         {loadedRange && loadedAt && (
@@ -1334,6 +1443,44 @@ export default function AttendanceValidationDashboard() {
             {forceFreshCompletedAt && (
               <div className="shrink-0 text-xs text-slate-500">
                 {formatObservedAt(forceFreshCompletedAt.toISOString())}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {forceFreshRangeResult && (
+        <Card className="border-violet-200 bg-violet-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="font-medium text-slate-900">
+                {forceFreshRangeResult.complete
+                  ? 'Force Fresh Selected Range complete'
+                  : 'Force Fresh Selected Range batch complete'}
+              </p>
+              <p className="mt-1 text-sm text-slate-700">
+                Cases processed: {forceFreshRangeResult.casesProcessed}.
+                {' '}Refreshed: {forceFreshRangeResult.refreshed}.
+                {' '}Skipped: {forceFreshRangeResult.skipped}.
+                {' '}Failed: {forceFreshRangeResult.failed}.
+                {' '}Remaining cases: {forceFreshRangeResult.remainingCases}.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Microsoft Graph logical calls: {forceFreshRangeResult.graphLogicalCalls}.
+                {' '}Internal concurrency: {forceFreshRangeResult.concurrency}.
+                {' '}Saved results for {forceFreshRangeResult.fromDate} to {forceFreshRangeResult.toDate} were automatically reloaded.
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Cumulative: {forceFreshRangeResult.cumulative.casesProcessed} processed,
+                {' '}{forceFreshRangeResult.cumulative.refreshed} refreshed,
+                {' '}{forceFreshRangeResult.cumulative.skipped} skipped,
+                {' '}{forceFreshRangeResult.cumulative.failed} failed,
+                {' '}{forceFreshRangeResult.cumulative.graphLogicalCalls} Graph logical calls.
+              </p>
+            </div>
+            {forceFreshRangeCompletedAt && (
+              <div className="shrink-0 text-xs text-slate-500">
+                {formatObservedAt(forceFreshRangeCompletedAt.toISOString())}
               </div>
             )}
           </div>
@@ -1564,6 +1711,7 @@ export default function AttendanceValidationDashboard() {
                                 latestCheckRunning
                                 || identityRolloutRunning
                                 || baselineRunning
+                                || forceFreshRangeRunning
                                 || loading
                                 || loadingMore
                                 || forceFreshCaseId !== null
@@ -1609,7 +1757,7 @@ export default function AttendanceValidationDashboard() {
             type="button"
             variant="outline"
             onClick={() => void loadSavedCases(true, true)}
-            disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshCaseId !== null}
+            disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
           >
             {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
           </Button>

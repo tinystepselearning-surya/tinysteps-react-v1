@@ -77,6 +77,7 @@ export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { runAttendanceValidationLatestCheck } from "./attendanceValidation/latestCheckCallable";
 export { forceRefreshAttendanceValidationEvidence } from "./attendanceValidation/forceFreshEvidenceCallable";
+export { forceRefreshAttendanceValidationRange } from "./attendanceValidation/forceFreshRangeCallable";
 export { runAttendanceValidationFirstTimeBaseline } from "./attendanceValidation/firstTimeBaselineCallable";
 export { onAdminAttendanceCorrectionCompletionBridge } from "./adminAttendanceCorrectionCompletionBridge";
 export {
@@ -296,4 +297,3 @@ export {
   registerNotificationToken,
   sendTestPushNotification,
 } from './notifications/classReminders';
-
