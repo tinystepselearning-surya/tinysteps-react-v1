@@ -3,6 +3,7 @@ import { appendFile, readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { resolveFunctionsImpact } from './deployment/functions-impact-lib.mjs';
 import { SCHOOL_BROWSER_CALLABLES } from './school-callable-contract.mjs';
+import { AVS_BROWSER_CALLABLES } from './avs-callable-contract.mjs';
 
 const args = new Map();
 for (let index = 2; index < process.argv.length; index += 2) args.set(process.argv[index], process.argv[index + 1]);
@@ -47,6 +48,7 @@ const result = resolveFunctionsImpact({
 });
 const targetsCsv = result.impactedFunctions.join(',');
 const schoolCallables = new Set(SCHOOL_BROWSER_CALLABLES);
+const avsCallables = new Set(AVS_BROWSER_CALLABLES);
 const output = {
   functions_source_changed: String(result.functionsSourceChanged),
   functions_validation_required: String(result.functionsValidationRequired),
@@ -59,6 +61,7 @@ const output = {
   firestore_rules_changed: String(result.firestoreRulesChanged),
   firestore_validation_required: String(result.firestoreValidationRequired),
   school_transport_required: String(result.fullDeployment || result.impactedFunctions.some(id => schoolCallables.has(id))),
+  avs_transport_required: String(result.fullDeployment || result.impactedFunctions.some(id => avsCallables.has(id))),
   lead_iam_required: String(result.fullDeployment || result.impactedFunctions.includes('enrichPublicLeadAttribution')),
 };
 if (process.env.GITHUB_OUTPUT) {
@@ -75,6 +78,7 @@ const lines = [
   `- Functions intentionally retired from source: ${(result.retiredFunctions || []).length}`,
   `- Hosting changed: ${result.hostingChanged}`,
   `- Firestore rules changed: ${result.firestoreRulesChanged}`,
+  `- AVS callable transport verification required: ${result.fullDeployment || result.impactedFunctions.some(id => avsCallables.has(id))}`,
 ];
 if (result.fullDeploymentReason) lines.push(`- Full deployment reason: ${result.fullDeploymentReason}`);
 if ((result.retiredFunctions || []).length) {

@@ -4,6 +4,17 @@ Status: **in progress on Draft PR #403.**
 
 This work adds the admin workflow approved after AV8 without introducing scheduled polling.
 
+## Brick 0 — browser-callable transport hardening
+
+All AVS callables invoked from the Admin browser use the same two-layer boundary:
+
+- Cloud Run transport is explicitly public so browser CORS preflight can reach the Firebase callable framework;
+- application execution remains admin-only through `ensureAdmin(request.auth)`.
+
+The deployment pipeline independently enforces `allUsers -> roles/run.invoker` on the underlying Gen-2 Cloud Run services and then issues real OPTIONS preflight requests from the production Tiny Steps origin. A deployment is not considered healthy when an AVS endpoint is deployed but browser transport is blocked.
+
+This brick changes no AVS classification, attendance, same-day coverage, billing, scheduling, or Microsoft Graph decision logic.
+
 ## Architecture
 
 The admin screen separates three concepts:

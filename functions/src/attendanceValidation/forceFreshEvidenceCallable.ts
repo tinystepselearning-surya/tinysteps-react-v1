@@ -316,6 +316,8 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
   {
     region: REGION,
     memory: '256MiB',
+    invoker: 'public',
+    labels: { 'avs-public-invoker': 'true' },
     timeoutSeconds: 120,
     maxInstances: 2,
     secrets: [
