@@ -21,6 +21,7 @@ import {
   type AvsForceFreshRangeCursor,
 } from './forceFreshRangePlanner';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
+import { loadProductionStaffIdentityRegistry } from './staffIdentityRegistry';
 import {
   AvsOrganizerResolutionError,
   resolveAttendanceValidationOrganizerUserId,
@@ -48,6 +49,8 @@ type RangeOutcome = {
   caseId: string;
   status: 'refreshed' | 'skipped' | 'failed';
   graphLogicalCalls: number;
+  identityMappingWritten: boolean;
+  identityClaimWritten: boolean;
 };
 
 function text(value: unknown): string {
@@ -207,6 +210,9 @@ export const forceRefreshAttendanceValidationRange = onCall(
       }
     }
     const graphClient = hasEligibleCase ? graphClientFromSecrets() : null;
+    const staffRegistry = hasEligibleCase
+      ? await loadProductionStaffIdentityRegistry(db)
+      : null;
 
     const outcomes = await mapWithConcurrency(
       plan.batch,
@@ -221,6 +227,8 @@ export const forceRefreshAttendanceValidationRange = onCall(
             caseId: item.id,
             status: 'skipped',
             graphLogicalCalls: 0,
+            identityMappingWritten: false,
+            identityClaimWritten: false,
           };
         } else {
           try {
@@ -229,11 +237,14 @@ export const forceRefreshAttendanceValidationRange = onCall(
               caseId: item.id,
               organizerResolution: organizerResolution!,
               graphClient: graphClient!,
+              staffRegistry: staffRegistry!,
             });
             outcome = {
               caseId: item.id,
               status: 'refreshed',
               graphLogicalCalls: result.graphLogicalCalls,
+              identityMappingWritten: result.teacherIdentityMappingWritten,
+              identityClaimWritten: result.teacherIdentityClaimWritten,
             };
           } catch (error) {
             outcome = {
@@ -242,6 +253,8 @@ export const forceRefreshAttendanceValidationRange = onCall(
               graphLogicalCalls: error instanceof ForceFreshCaseRefreshError
                 ? error.graphLogicalCalls
                 : 0,
+              identityMappingWritten: false,
+              identityClaimWritten: false,
             };
             logger.error('AVS Force Fresh selected-range case failed', {
               rangeId,
@@ -303,6 +316,12 @@ export const forceRefreshAttendanceValidationRange = onCall(
       (sum, item) => sum + item.graphLogicalCalls,
       0,
     );
+    const identityMappingsWritten = outcomes.filter(
+      (item) => item.identityMappingWritten,
+    ).length;
+    const identityClaimsWritten = outcomes.filter(
+      (item) => item.identityClaimWritten,
+    ).length;
 
     return {
       ok: true,
@@ -315,6 +334,8 @@ export const forceRefreshAttendanceValidationRange = onCall(
       skipped,
       failed,
       graphLogicalCalls,
+      identityMappingsWritten,
+      identityClaimsWritten,
       remainingCases,
       concurrency: AVS_FORCE_FRESH_RANGE_CONCURRENCY,
       cumulative: {

@@ -31,6 +31,8 @@ describe('AVS Force Fresh selected-range routing', () => {
       'refreshAttendanceValidationCaseEvidence({',
     );
     expect(singleCaseSource).toContain('inputFingerprint,');
+    expect(source).toContain('loadProductionStaffIdentityRegistry(db)');
+    expect(source).toContain('staffRegistry: staffRegistry!');
   });
 
   it('persists per-case completion before advancing the cursor', () => {

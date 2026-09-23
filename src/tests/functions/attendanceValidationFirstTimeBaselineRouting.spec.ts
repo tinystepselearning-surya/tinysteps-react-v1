@@ -47,6 +47,8 @@ describe('AVS first-time date-range baseline routing', () => {
     expect(source).toContain("db.collection('attendanceValidationCases').doc(item.id)");
     expect(source).toContain('!caseSnapshots[index].exists');
     expect(source).toContain('collectTeamsEvidence(');
+    expect(source).toContain('bindTeacherIdentityFromFreshEvidence');
+    expect(source).toContain('identityBinding.staffRegistry');
     expect(source).toContain('runAv53ShadowWithFirestore');
   });
 

@@ -4,6 +4,7 @@ import * as logger from 'firebase-functions/logger';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
+import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
 import { buildFreshEvidenceSessionSnapshot } from './freshEvidenceSession';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
@@ -22,6 +23,7 @@ import {
   ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION,
 } from './dirtySessionMarker';
 import { runAv53ShadowWithFirestore } from './shadowRunner';
+import type { Av3StaffRegistrySnapshot } from './staffIdentityRegistry';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -98,6 +100,7 @@ export interface ForceFreshCaseRefreshDependencies {
   inputFingerprint?: string;
   organizerResolution?: AvsOrganizerResolution;
   graphClient: TeamsEvidenceGraphClient;
+  staffRegistry?: Av3StaffRegistrySnapshot;
 }
 
 /**
@@ -217,13 +220,24 @@ export async function refreshAttendanceValidationCaseEvidence(
       },
     );
 
-    const av53Result = await runAv53ShadowWithFirestore(db, {
-      runId: `${runId}_case`,
-      workItems: [{
-        classSessionId,
-        evidenceId: evidenceResult.evidence.id,
-      }],
+    const identityBinding = await bindTeacherIdentityFromFreshEvidence({
+      db,
+      evidence: evidenceResult.evidence,
+      staffRegistry: deps.staffRegistry,
     });
+
+    const av53Result = await runAv53ShadowWithFirestore(
+      db,
+      {
+        runId: `${runId}_case`,
+        workItems: [{
+          classSessionId,
+          evidenceId: evidenceResult.evidence.id,
+        }],
+      },
+      () => new Date(),
+      identityBinding.staffRegistry,
+    );
 
     if (
       av53Result.persistedCaseCount !== 1
@@ -278,6 +292,10 @@ export async function refreshAttendanceValidationCaseEvidence(
           0,
         ),
       graphLogicalCalls: counted.count(),
+      teacherIdentityDecision: identityBinding.decision?.status ?? null,
+      teacherIdentityBinding: identityBinding.bindingStatus,
+      teacherIdentityMappingWritten: identityBinding.overrideWrite,
+      teacherIdentityClaimWritten: identityBinding.claimWrite,
       operationalMutationAllowed: false as const,
       dirtyMarkerCleared,
       concurrentMarkerChangeDetected,
@@ -289,10 +307,12 @@ export async function refreshAttendanceValidationCaseEvidence(
         organizerConfigReads: organizerResolution.firestoreReadCount,
         av53PointReads: av53Result.pointReadDocumentBudget,
         sameDayContextReads: av53Result.sameDayContextReadDocumentBudget,
+        teacherIdentityTransactionReads: identityBinding.transactionReadCount,
         sharedStaffRegistryLoaded: true,
         boundedReadsExcludingStaffRegistry:
           4
           + organizerResolution.firestoreReadCount
+          + identityBinding.transactionReadCount
           + av53Result.pointReadDocumentBudget
           + av53Result.sameDayContextReadDocumentBudget,
       },

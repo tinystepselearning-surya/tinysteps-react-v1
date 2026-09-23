@@ -1,6 +1,6 @@
 # AV3.2 — Production Staff Identity Registry Wiring
 
-Status: **implemented as a privacy-minimized production registry plus an explicit admin-triggered cached-evidence rollout path. There is no scheduler, no Graph directory lookup, and no operational attendance or finance write.**
+Status: **implemented as a privacy-minimized production registry with automatic safe binding from fresh AVS evidence plus the existing admin-triggered cached-evidence maintenance path. There is no scheduler, no Graph directory lookup, and no operational attendance or finance write.**
 
 ## Purpose
 
@@ -188,3 +188,39 @@ The registry wiring remains fail-closed. The explicit rollout may add a validati
 ## Core invariant
 
 > Tiny Steps operational users define who is internal staff. AVS may use only privacy-minimized deterministic identity signals to exclude those staff from learner-side evidence.
+
+
+## Brick 1 — automatic teacher identity binding
+
+Fresh AVS evidence now attempts the same existing hashed-email + stable-Microsoft-identity proof automatically before AV5.3 evaluates the case.
+
+The proof rules are unchanged:
+
+- active Tiny Steps teacher only;
+- exact canonical teacher id/session binding;
+- complete attendance-record evidence;
+- teacher email hash must be uniquely owned;
+- exactly one stable Microsoft identity hash;
+- display names are never used;
+- existing different identity or duplicate ownership fails closed.
+
+Successful ownership is persisted transactionally across:
+
+```text
+attendanceValidationStaffIdentities/{teacherId}
+attendanceValidationMicrosoftIdentityClaims/{microsoftIdentityHash}
+```
+
+The claim document contains only the SHA-256 identity hash in its document id plus the owning Tiny Steps staff id and validation metadata. Raw Microsoft object IDs and raw emails are never stored.
+
+The claim transaction guarantees that two concurrent AVS refreshes cannot assign the same Microsoft identity to different staff. Existing verified registry mappings can be backfilled into the claim collection by the existing cached identity maintenance path with zero Microsoft Graph calls.
+
+Fresh evidence paths covered:
+
+- first-time baseline;
+- single-case Force Fresh;
+- selected-range Force Fresh.
+
+Selected-range Force Fresh loads the staff registry once per invocation and shares that immutable snapshot across its bounded workers. Each worker applies only its own transactionally accepted mapping to the AV5.3 registry passed for that case.
+
+The existing cached identity rollout remains temporarily available as a maintenance/backfill fallback. Future fresh cases do not depend on an admin clicking Sync Teacher Identities.

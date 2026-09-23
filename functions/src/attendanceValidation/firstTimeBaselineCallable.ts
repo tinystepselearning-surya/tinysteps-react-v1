@@ -5,6 +5,7 @@ import { FieldPath } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
+import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import {
   ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION,
   AVS_BASELINE_QUERY_LIMIT,
@@ -26,6 +27,10 @@ import {
   type TeamsEvidenceGraphClient,
 } from './teamsEvidenceCollector';
 import { runAv53ShadowWithFirestore } from './shadowRunner';
+import {
+  loadProductionStaffIdentityRegistry,
+  type Av3StaffRegistrySnapshot,
+} from './staffIdentityRegistry';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -335,6 +340,17 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       }),
     );
     let freshEvidenceCount = 0;
+    let staffRegistry: Av3StaffRegistrySnapshot | null = null;
+    let identityMappingsWritten = 0;
+    let identityClaimsWritten = 0;
+    let teacherIdentityTransactionReads = 0;
+
+    const ensureStaffRegistry = async () => {
+      if (!staffRegistry) {
+        staffRegistry = await loadProductionStaffIdentityRegistry(db);
+      }
+      return staffRegistry;
+    };
 
     for (const item of missingCaseRows) {
       const expectedSession = snapshots.get(item.id);
@@ -370,6 +386,16 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         },
       );
 
+      const identityBinding = await bindTeacherIdentityFromFreshEvidence({
+        db,
+        evidence: evidenceResult.evidence,
+        staffRegistry: await ensureStaffRegistry(),
+      });
+      staffRegistry = identityBinding.staffRegistry;
+      if (identityBinding.overrideWrite) identityMappingsWritten += 1;
+      if (identityBinding.claimWrite) identityClaimsWritten += 1;
+      teacherIdentityTransactionReads += identityBinding.transactionReadCount;
+
       freshEvidenceCount += 1;
       workItems.push({
         classSessionId: item.id,
@@ -379,11 +405,19 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
 
     const caseRunId =
       `baseline_cases_${Date.now().toString(36)}_${rangeId.slice(-12)}`;
+    const av53Registry = workItems.length > 0
+      ? await ensureStaffRegistry()
+      : null;
     const av53Result = workItems.length > 0
-      ? await runAv53ShadowWithFirestore(db, {
-          runId: caseRunId,
-          workItems,
-        })
+      ? await runAv53ShadowWithFirestore(
+          db,
+          {
+            runId: caseRunId,
+            workItems,
+          },
+          () => new Date(),
+          av53Registry!,
+        )
       : null;
 
     const complete = !batchPlan.hasMore;
@@ -440,6 +474,8 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       blockedCount: blocked.length,
       blocked,
       graphLogicalCalls: counted.count(),
+      identityMappingsWritten,
+      identityClaimsWritten,
       operationalMutationAllowed: false,
       cumulative,
       readBudget: {
@@ -451,12 +487,14 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
         organizerConfigReads,
         av53PointReads,
         sameDayContextReads,
-        sharedStaffRegistryLoaded: workItems.length > 0,
+        teacherIdentityTransactionReads,
+        sharedStaffRegistryLoaded: Boolean(av53Registry),
         boundedReadsExcludingStaffRegistry:
           baselineStateReads
           + sessionQueryReads
           + validationCaseReads
           + organizerConfigReads
+          + teacherIdentityTransactionReads
           + av53PointReads
           + sameDayContextReads,
       },

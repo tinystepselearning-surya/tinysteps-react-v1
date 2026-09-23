@@ -11,10 +11,12 @@ import {
   normalizeAvsLatestCheckRange,
   planAvsLatestCheck,
 } from './latestCheckPlanner';
+import { loadProductionStaffIdentityRegistry } from './staffIdentityRegistry';
 import {
-  ATTENDANCE_VALIDATION_STAFF_IDENTITIES_COLLECTION,
-  loadProductionStaffIdentityRegistry,
-} from './staffIdentityRegistry';
+  backfillMicrosoftIdentityClaimsFromRegistry,
+  claimAndBindTeacherIdentityMapping,
+  registryWithoutMicrosoftIdentities,
+} from './automaticTeacherIdentity';
 import {
   runAv53ShadowWithFirestore,
 } from './shadowRunner';
@@ -41,7 +43,6 @@ interface LatestCheckRequest {
 
 type LatestCheckMode = 'dirty' | 'identity_rollout';
 
-const SHA256_HEX = /^[a-f0-9]{64}$/;
 const AV53_CHUNK_SIZE = 100;
 
 function text(value: unknown): string {
@@ -53,20 +54,6 @@ function latestCheckMode(value: unknown): LatestCheckMode {
   if (!normalized || normalized === 'dirty') return 'dirty';
   if (normalized === 'identity_rollout') return 'identity_rollout';
   throw new TypeError('mode must be dirty or identity_rollout.');
-}
-
-function normalizedHashArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return [...new Set(
-    value
-      .map((item) => text(item).toLowerCase())
-      .filter((item) => SHA256_HEX.test(item)),
-  )].sort();
-}
-
-function disabledOverrideStatus(value: unknown): boolean {
-  return ['inactive', 'disabled', 'archived', 'deleted']
-    .includes(text(value).toLowerCase());
 }
 
 function rolloutDecisionCounts(
@@ -153,77 +140,58 @@ async function runCachedTeacherIdentityRollout(
     );
   });
 
-  const registry = await loadProductionStaffIdentityRegistry(db);
+  const loadedRegistry = await loadProductionStaffIdentityRegistry(db);
+  const claimBackfill = await backfillMicrosoftIdentityClaimsFromRegistry(
+    db,
+    loadedRegistry,
+  );
+  const registry = registryWithoutMicrosoftIdentities(
+    loadedRegistry,
+    claimBackfill.conflictingStaffIds,
+  );
   const plan = planCachedTeacherIdentityRollout(
     cachedCases,
     evidenceById,
     registry,
   );
 
-  const overrideRefs = plan.readyMappings.map((mapping) =>
-    db
-      .collection(ATTENDANCE_VALIDATION_STAFF_IDENTITIES_COLLECTION)
-      .doc(mapping.teacherId),
-  );
-  const overrideSnapshots = overrideRefs.length > 0
-    ? await db.getAll(...overrideRefs)
-    : [];
-
-  const acceptedMappings: typeof plan.readyMappings = [];
+  const appliedMappings: typeof plan.readyMappings = [];
+  let identityConfigWrites = 0;
+  let identityClaimWrites = 0;
   let disabledOverrideCount = 0;
   let existingOverrideConflictCount = 0;
+  let identityClaimConflictCount = 0;
+  let identityBindingReads = 0;
 
-  plan.readyMappings.forEach((mapping, index) => {
-    const snapshot = overrideSnapshots[index];
-    if (!snapshot?.exists) {
-      acceptedMappings.push(mapping);
-      return;
-    }
+  for (const mapping of plan.readyMappings) {
+    const binding = await claimAndBindTeacherIdentityMapping({
+      db,
+      teacherId: mapping.teacherId,
+      microsoftIdentityIdHash: mapping.microsoftIdentityIdHash,
+      source: 'cached_avs_evidence_email_bound',
+      supportingCaseCount: mapping.supportingCaseCount,
+    });
+    identityBindingReads += binding.transactionReadCount;
 
-    const data = (snapshot.data() || {}) as Record<string, unknown>;
-    if (disabledOverrideStatus(data.status)) {
-      disabledOverrideCount += 1;
-      return;
-    }
-
-    const existingHashes = normalizedHashArray(
-      data.microsoftIdentityIdHashes,
-    );
     if (
-      existingHashes.length === 0
-      || (
-        existingHashes.length === 1
-        && existingHashes[0] === mapping.microsoftIdentityIdHash
-      )
+      binding.status === 'bound'
+      || binding.status === 'already_bound'
     ) {
-      acceptedMappings.push(mapping);
-      return;
+      appliedMappings.push(mapping);
+      if (binding.overrideWrite) identityConfigWrites += 1;
+      if (binding.claimWrite) identityClaimWrites += 1;
+    } else if (binding.status === 'override_disabled') {
+      disabledOverrideCount += 1;
+    } else if (binding.status === 'override_conflict') {
+      existingOverrideConflictCount += 1;
+    } else {
+      identityClaimConflictCount += 1;
     }
-
-    existingOverrideConflictCount += 1;
-  });
-
-  if (acceptedMappings.length > 0) {
-    const writeBatch = db.batch();
-    for (const mapping of acceptedMappings) {
-      const ref = db
-        .collection(ATTENDANCE_VALIDATION_STAFF_IDENTITIES_COLLECTION)
-        .doc(mapping.teacherId);
-      writeBatch.set(ref, {
-        staffId: mapping.teacherId,
-        microsoftIdentityIdHashes: [mapping.microsoftIdentityIdHash],
-        source: 'cached_avs_evidence_email_bound',
-        supportingCaseCount: mapping.supportingCaseCount,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        operationalMutationAllowed: false,
-      }, { merge: true });
-    }
-    await writeBatch.commit();
   }
 
   const updatedRegistry = registryWithAppliedIdentityMappings(
     registry,
-    acceptedMappings.map((mapping) => ({
+    appliedMappings.map((mapping) => ({
       teacherId: mapping.teacherId,
       microsoftIdentityIdHash: mapping.microsoftIdentityIdHash,
     })),
@@ -273,9 +241,13 @@ async function runCachedTeacherIdentityRollout(
     cachedCaseCount: cachedCases.length,
     evidenceDocumentCount: evidenceById.size,
     teacherCount: plan.decisions.length,
-    identityConfigWrites: acceptedMappings.length,
+    identityConfigWrites: identityConfigWrites,
     disabledOverrideCount,
     existingOverrideConflictCount,
+    identityClaimConflictCount,
+    identityClaimWrites,
+    claimBackfillWrites: claimBackfill.claimWrites,
+    claimBackfillConflicts: claimBackfill.conflictCount,
     revalidatedCount,
     resolvedCasesSkippedCount,
     graphCalls: 0,
@@ -288,7 +260,7 @@ async function runCachedTeacherIdentityRollout(
     caseCountScanned: cachedCases.length,
     evidenceDocumentCount: evidenceById.size,
     teacherCount: plan.decisions.length,
-    identityConfigWrites: acceptedMappings.length,
+    identityConfigWrites: identityConfigWrites,
     disabledOverrideCount,
     existingOverrideConflictCount,
     decisionCounts,
@@ -300,14 +272,17 @@ async function runCachedTeacherIdentityRollout(
     readBudget: {
       validationCaseReads: caseSnapshot.size,
       evidenceDocumentReads: evidenceSnapshots.length,
-      identityOverrideReads: overrideSnapshots.length,
+      identityOverrideReads: plan.readyMappings.length,
+      identityClaimReads: identityBindingReads / 2,
+      identityClaimBackfillReads: claimBackfill.readCount,
       av53PointReads,
       sameDayContextReads,
       sharedStaffRegistryLoaded: true,
       boundedReadsExcludingStaffRegistry:
         caseSnapshot.size
         + evidenceSnapshots.length
-        + overrideSnapshots.length
+        + identityBindingReads
+        + claimBackfill.readCount
         + av53PointReads
         + sameDayContextReads,
     },
