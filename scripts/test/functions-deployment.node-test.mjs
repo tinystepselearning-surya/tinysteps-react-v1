@@ -359,6 +359,16 @@ test('normal Firebase deployment remains serialized and non-cancelling', () => {
   assert.match(workflow, /deploy-to-firebase:[\s\S]*group: firebase-deployment-tinysteps-react-v1[\s\S]*cancel-in-progress: false/);
 });
 
+test('workflow hardens browser transport for AVS callables after deployment', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const resolver = readFileSync('scripts/resolve-deployment-impact.mjs', 'utf8');
+  assert.match(resolver, /avs_transport_required/);
+  assert.match(workflow, /avs_transport_required: \$\{\{ steps\.impact\.outputs\.avs_transport_required \}\}/);
+  assert.match(workflow, /Enforce AVS callable public transport invocation[\s\S]*ensure-avs-callable-public-invocation\.mjs/);
+  assert.match(workflow, /Verify AVS callable transport[\s\S]*verify-avs-callable-transport\.mjs/);
+  assert.match(workflow, /Upload AVS callable transport report/);
+});
+
 test('workflow feeds resolver targets to bounded deployment and skips zero-impact mutations', () => {
   const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
   assert.match(workflow, /Resolve artifact and Function impact[\s\S]*resolve-deployment-impact\.mjs/);

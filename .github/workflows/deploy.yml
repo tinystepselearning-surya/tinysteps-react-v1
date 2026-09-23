@@ -29,6 +29,7 @@ jobs:
       firestore_validation_required: ${{ steps.impact.outputs.firestore_validation_required }}
       firestore_rules_changed: ${{ steps.impact.outputs.firestore_rules_changed }}
       school_transport_required: ${{ steps.impact.outputs.school_transport_required }}
+      avs_transport_required: ${{ steps.impact.outputs.avs_transport_required }}
       lead_iam_required: ${{ steps.impact.outputs.lead_iam_required }}
     steps:
       - name: Checkout repository history
@@ -339,6 +340,13 @@ jobs:
           --project "${{ env.FIREBASE_PROJECT_ID }}"
           --region asia-south1
 
+      - name: Enforce AVS callable public transport invocation
+        if: needs.analyze-changes.outputs.avs_transport_required == 'true'
+        run: >-
+          node scripts/ensure-avs-callable-public-invocation.mjs
+          --project "${{ env.FIREBASE_PROJECT_ID }}"
+          --region asia-south1
+
       - name: Enforce lead attribution callable public transport invocation
         if: needs.analyze-changes.outputs.lead_iam_required == 'true'
         shell: bash
@@ -393,6 +401,23 @@ jobs:
         with:
           name: school-callable-transport-verification-${{ github.sha }}
           path: artifacts/school-callable-transport-verification.md
+          if-no-files-found: warn
+
+      - name: Verify AVS callable transport
+        if: needs.analyze-changes.outputs.avs_transport_required == 'true'
+        run: >-
+          node scripts/verify-avs-callable-transport.mjs
+          --project "${{ env.FIREBASE_PROJECT_ID }}"
+          --region asia-south1
+          --origin https://tinystepslearning.com
+          --report artifacts/avs-callable-transport-verification.md
+
+      - name: Upload AVS callable transport report
+        if: always() && needs.analyze-changes.outputs.avs_transport_required == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: avs-callable-transport-verification-${{ github.sha }}
+          path: artifacts/avs-callable-transport-verification.md
           if-no-files-found: warn
 
       - name: Validate Ask Tiny Steps production build configuration

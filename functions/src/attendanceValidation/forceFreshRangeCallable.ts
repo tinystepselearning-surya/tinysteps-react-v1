@@ -92,6 +92,8 @@ export const forceRefreshAttendanceValidationRange = onCall(
   {
     region: REGION,
     memory: '1GiB',
+    invoker: 'public',
+    labels: { 'avs-public-invoker': 'true' },
     timeoutSeconds: 540,
     maxInstances: 1,
     secrets: [
