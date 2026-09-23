@@ -61,6 +61,8 @@ describe('AVS changed-only latest-check callable routing', () => {
   it('keeps sessions without cached evidence in the baseline-required queue', () => {
     expect(source).toContain('baselineRequiredSessionIds');
     expect(source).toContain('baselineRequiredCount');
+    expect(source).toContain('freshEvidenceRequiredCount');
+    expect(source).toContain('freshnessUnsafeCount');
   });
 
   it('clears successful dirty markers with last-update preconditions', () => {
