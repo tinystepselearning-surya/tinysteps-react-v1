@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { createHash } from 'crypto';
-import { FieldPath } from 'firebase-admin/firestore';
+import { FieldPath, type Firestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
@@ -119,7 +119,7 @@ function cursorFromState(state: BaselineRangeState): AvsBaselineCursor | null {
 
 
 export async function runAttendanceValidationFirstTimeBaselineBatch(
-  db: FirebaseFirestore.Firestore,
+  db: Firestore,
   range: { fromDate: string; toDate: string },
   options: { maxSessions?: number } = {},
 ) {
@@ -155,12 +155,15 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         rangeId,
         alreadyComplete: true,
         complete: true,
+        hasMore: false,
         batchSessionCount: 0,
         existingCaseCount: 0,
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
         graphLogicalCalls: 0,
+        identityMappingsWritten: 0,
+        identityClaimsWritten: 0,
         operationalMutationAllowed: false,
         cumulative: {
           scannedSessionCount: count(state.scannedSessionCount),
@@ -228,12 +231,15 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         rangeId,
         alreadyComplete: false,
         complete: true,
+        hasMore: false,
         batchSessionCount: 0,
         existingCaseCount: 0,
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
         graphLogicalCalls: 0,
+        identityMappingsWritten: 0,
+        identityClaimsWritten: 0,
         operationalMutationAllowed: false,
         cumulative: {
           scannedSessionCount: count(state.scannedSessionCount),

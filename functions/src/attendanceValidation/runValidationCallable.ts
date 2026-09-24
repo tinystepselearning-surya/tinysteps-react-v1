@@ -144,6 +144,7 @@ export const runAttendanceValidationRange = onCall(
             organizerBlockedReason || 'organizer_identity_unresolved',
         }));
       } else {
+        const resolvedOrganizer = organizerResolution;
         const graphClient = new MicrosoftGraphClient({
           credentials: {
             tenantId: MICROSOFT_TENANT_ID.value(),
@@ -163,7 +164,7 @@ export const runAttendanceValidationRange = onCall(
                   await refreshAttendanceValidationCaseEvidence({
                     db,
                     caseId: target.sessionId,
-                    organizerResolution,
+                    organizerResolution: resolvedOrganizer,
                     graphClient,
                     staffRegistry,
                   });
@@ -186,7 +187,7 @@ export const runAttendanceValidationRange = onCall(
               const result = await collectMissingAttendanceValidationCase({
                 db,
                 classSessionId: target.sessionId,
-                organizerResolution,
+                organizerResolution: resolvedOrganizer,
                 graphClient,
                 staffRegistry,
               });
