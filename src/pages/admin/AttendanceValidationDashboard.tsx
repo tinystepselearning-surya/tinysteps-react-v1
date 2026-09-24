@@ -51,6 +51,22 @@ type Av6Classification =
 type Av6ValidationDecision = 'present' | 'absent' | 'not_occurred' | 'review' | null;
 type Av6ResolutionStatus = 'verified' | 'needs_review' | 'resolved';
 
+interface AvsFailureSummary {
+  totalCount: number;
+  businessReviewCount: number;
+  retryableInfrastructureCount: number;
+  configurationCount: number;
+  authorizationCount: number;
+  requestCount: number;
+  unknownInfrastructureCount: number;
+  retryableCount: number;
+  adminActionRequiredCount: number;
+  infrastructureFailureCount: number;
+  blockingInfrastructureCount: number;
+  supplementalIssueCount: number;
+  codeCounts: Record<string, number>;
+}
+
 interface AvsUnifiedValidationResponse {
   ok: boolean;
   fromDate: string;
@@ -66,6 +82,10 @@ interface AvsUnifiedValidationResponse {
   freshRefreshedCount: number;
   firstEvidenceCollectedCount: number;
   freshFailedCount: number;
+  retryableInfrastructureCount: number;
+  adminActionRequiredCount: number;
+  failureSummary: AvsFailureSummary;
+  evidenceIssueSummary: AvsFailureSummary;
   baselineAttempted: boolean;
   baselineComplete: boolean;
   baselineBatchSessionCount: number;
@@ -99,6 +119,7 @@ interface AvsForceFreshResponse {
   selectedAttendanceReportCount: number;
   selectedAttendanceRecordCount: number;
   graphLogicalCalls: number;
+  evidenceIssueSummary: AvsFailureSummary;
   operationalMutationAllowed: false;
   dirtyMarkerCleared: boolean;
   concurrentMarkerChangeDetected: boolean;
@@ -128,6 +149,10 @@ interface AvsForceFreshRangeResponse {
   completeWithFailures: boolean;
   hasMore: boolean;
   retryableFailures: boolean;
+  actionRequiredFailures: boolean;
+  retryableFailureCount: number;
+  actionRequiredFailureCount: number;
+  failureSummary: AvsFailureSummary;
   casesProcessed: number;
   attempted: number;
   refreshed: number;
@@ -144,6 +169,8 @@ interface AvsForceFreshRangeResponse {
     refreshed: number;
     skipped: number;
     failed: number;
+    retryableFailures: number;
+    actionRequiredFailures: number;
     graphLogicalCalls: number;
     identityMappingsWritten: number;
     identityClaimsWritten: number;
@@ -258,10 +285,33 @@ function safeForceFreshFailureMessage(error: unknown): string {
   const candidate = error && typeof error === 'object'
     ? error as Record<string, unknown>
     : {};
+  const details =
+    candidate.details && typeof candidate.details === 'object'
+      ? candidate.details as Record<string, unknown>
+      : {};
+  const failure =
+    details.failure && typeof details.failure === 'object'
+      ? details.failure as Record<string, unknown>
+      : {};
+  const failureCategory = String(failure.category ?? '');
+
+  if (failure.retryable === true || failureCategory === 'retryable_infrastructure') {
+    return 'Temporary Microsoft/AVS infrastructure problem. Retry this action.';
+  }
+  if (failureCategory === 'configuration') {
+    return 'AVS configuration needs attention before this action can succeed.';
+  }
+  if (failureCategory === 'authorization') {
+    return 'Microsoft Graph permissions or access policy need attention before retrying.';
+  }
+  if (failureCategory === 'request') {
+    return 'The AVS case or request state changed. Reload Results and try again.';
+  }
+
   const diagnosticText = [
     candidate.code,
     candidate.message,
-    candidate.details,
+    JSON.stringify(candidate.details ?? ''),
   ]
     .map((value) => String(value ?? ''))
     .join(' ');
@@ -751,7 +801,8 @@ export default function AttendanceValidationDashboard() {
     const retryFailures =
       Boolean(sameGeneration)
       && forceFreshRangeResult?.runId === sameGeneration?.runId
-      && forceFreshRangeResult?.status === 'complete_with_failures';
+      && forceFreshRangeResult?.status === 'complete_with_failures'
+      && forceFreshRangeResult.retryableFailures;
     const runId = sameGeneration?.runId
       ?? `ffr_${Date.now().toString(36)}_${crypto.randomUUID().replace(/-/g, '')}`;
 
@@ -786,7 +837,10 @@ export default function AttendanceValidationDashboard() {
 
       setForceFreshRangeResult(result);
       setForceFreshRangeCompletedAt(new Date());
-      if (result.complete) {
+      if (
+        result.complete
+        || (result.completeWithFailures && !result.retryableFailures)
+      ) {
         setForceFreshRangeGeneration(null);
       } else {
         setForceFreshRangeGeneration({
@@ -1097,6 +1151,7 @@ export default function AttendanceValidationDashboard() {
                 : forceFreshRangeResult?.fromDate === fromDate
                   && forceFreshRangeResult?.toDate === toDate
                   && forceFreshRangeResult.status === 'complete_with_failures'
+                  && forceFreshRangeResult.retryableFailures
                   ? 'Retry Failed Re-fetches'
                   : forceFreshRangeGeneration?.fromDate === fromDate
                     && forceFreshRangeGeneration?.toDate === toDate
@@ -1142,6 +1197,23 @@ export default function AttendanceValidationDashboard() {
                   More work remains in this range. Click Continue Validation to process the next bounded batch or retry unresolved fresh work.
                 </p>
               )}
+              {validationResult.failureSummary.retryableInfrastructureCount > 0 && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  Temporary infrastructure failures: {validationResult.failureSummary.retryableInfrastructureCount}. Retry Run Validation after the temporary issue clears.
+                </p>
+              )}
+              {(validationResult.failureSummary.configurationCount > 0
+                || validationResult.failureSummary.authorizationCount > 0
+                || validationResult.failureSummary.unknownInfrastructureCount > 0) && (
+                <p className="mt-2 text-xs font-medium text-red-800">
+                  Admin action required: {validationResult.failureSummary.adminActionRequiredCount} infrastructure failure{validationResult.failureSummary.adminActionRequiredCount === 1 ? '' : 's'} need configuration, permission, or diagnostic attention before retrying.
+                </p>
+              )}
+              {validationResult.evidenceIssueSummary.businessReviewCount > 0 && (
+                <p className="mt-2 text-xs text-slate-700">
+                  Business-review evidence issues: {validationResult.evidenceIssueSummary.businessReviewCount}. These are review outcomes, not infrastructure failures.
+                </p>
+              )}
               {validationResult.concurrentMarkerChangeDetected && (
                 <p className="mt-2 text-xs font-medium text-amber-800">
                   Attendance changed again while validation was running. The newer dirty marker was retained safely.
@@ -1176,6 +1248,16 @@ export default function AttendanceValidationDashboard() {
                 {' '}{forceFreshResult.selectedAttendanceRecordCount} attendance records,
                 {' '}{forceFreshResult.selectedTranscriptCount} transcript metadata record.
               </p>
+              {forceFreshResult.evidenceIssueSummary.businessReviewCount > 0 && (
+                <p className="mt-2 text-xs text-slate-700">
+                  Business-review evidence issues: {forceFreshResult.evidenceIssueSummary.businessReviewCount}. These are evidence outcomes, not infrastructure failures.
+                </p>
+              )}
+              {forceFreshResult.evidenceIssueSummary.supplementalIssueCount > 0 && (
+                <p className="mt-1 text-xs text-slate-600">
+                  Supplemental transcript issues: {forceFreshResult.evidenceIssueSummary.supplementalIssueCount}. Attendance-report evidence remains primary.
+                </p>
+              )}
               {forceFreshResult.issueKinds.length > 0 && (
                 <p className="mt-2 text-xs font-medium text-amber-800">
                   Teams evidence reported: {forceFreshResult.issueKinds.map(humanize).join(', ')}.
