@@ -51,103 +51,33 @@ type Av6Classification =
 type Av6ValidationDecision = 'present' | 'absent' | 'not_occurred' | 'review' | null;
 type Av6ResolutionStatus = 'verified' | 'needs_review' | 'resolved';
 
-interface AvsLatestCheckResponse {
+interface AvsUnifiedValidationResponse {
   ok: boolean;
   fromDate: string;
   toDate: string;
-  runId?: string | null;
+  maxSessionsPerInvocation: number;
+  processedSessionCount: number;
   dirtyFoundCount: number;
-  revalidatedCount: number;
-  baselineRequiredCount: number;
-  baselineRequiredSessionIds: string[];
-  skippedCount: number;
-  dirtyMarkersClearedCount: number;
-  concurrentMarkerChangeDetected?: boolean;
-  dirtyBatchAtLimit: boolean;
-  graphCalls: number;
-  operationalMutationAllowed: false;
-  readBudget: {
-    dirtyMarkerReads: number;
-    validationCaseReads: number;
-    av53PointReads: number;
-    sameDayContextReads: number;
-    sharedStaffRegistryLoaded: boolean;
-    boundedReadsExcludingStaffRegistry: number;
-  };
-}
-
-interface AvsIdentityRolloutResponse {
-  ok: boolean;
-  mode: 'identity_rollout';
-  fromDate: string;
-  toDate: string;
-  caseCountScanned: number;
-  evidenceDocumentCount: number;
-  teacherCount: number;
-  identityConfigWrites: number;
-  disabledOverrideCount: number;
-  existingOverrideConflictCount: number;
-  decisionCounts: {
-    ready: number;
-    already_mapped: number;
-    teacher_not_registered: number;
-    teacher_email_missing: number;
-    teacher_email_ambiguous: number;
-    no_cached_identity_candidate: number;
-    multiple_cached_identity_candidates: number;
-    existing_identity_differs: number;
-    identity_owned_by_other_staff: number;
-  };
-  revalidatedCount: number;
-  skippedCount: number;
-  resolvedCasesSkippedCount: number;
-  graphCalls: 0;
-  operationalMutationAllowed: false;
-  readBudget: {
-    validationCaseReads: number;
-    evidenceDocumentReads: number;
-    identityOverrideReads: number;
-    av53PointReads: number;
-    sameDayContextReads: number;
-    sharedStaffRegistryLoaded: boolean;
-    boundedReadsExcludingStaffRegistry: number;
-  };
-}
-
-interface AvsFirstTimeBaselineResponse {
-  ok: boolean;
-  fromDate: string;
-  toDate: string;
-  rangeId: string;
-  alreadyComplete: boolean;
-  complete: boolean;
-  hasMore?: boolean;
-  batchSessionCount: number;
-  existingCaseCount: number;
-  freshEvidenceCount: number;
-  persistedCaseCount?: number;
-  skippedCount?: number;
-  blockedCount: number;
-  blocked: Array<{ sessionId: string; reason: string }>;
+  cachedRevalidatedCount: number;
+  staleEvidenceCount: number;
+  missingEvidenceCaseCount: number;
+  freshnessUnsafeCount: number;
+  freshWorkCount: number;
+  freshRefreshedCount: number;
+  firstEvidenceCollectedCount: number;
+  freshFailedCount: number;
+  baselineAttempted: boolean;
+  baselineComplete: boolean;
+  baselineBatchSessionCount: number;
+  baselineFreshEvidenceCount: number;
+  baselineBlockedCount: number;
   graphLogicalCalls: number;
+  identityMappingsWritten: number;
+  identityClaimsWritten: number;
+  concurrentMarkerChangeDetected: boolean;
+  hasMore: boolean;
+  continueValidation: boolean;
   operationalMutationAllowed: false;
-  cumulative: {
-    scannedSessionCount: number;
-    existingCaseCount: number;
-    freshEvidenceCount: number;
-    blockedCount: number;
-  };
-  readBudget: {
-    baselineStateReads: number;
-    sessionQueryReads: number;
-    validationCaseReads: number;
-    teacherUserReads: number;
-    organizerEvidenceLookupQueries: number;
-    av53PointReads: number;
-    sameDayContextReads: number;
-    sharedStaffRegistryLoaded: boolean;
-    boundedReadsExcludingStaffRegistry: number;
-  };
 }
 
 interface AvsForceFreshResponse {
@@ -337,16 +267,16 @@ function safeForceFreshFailureMessage(error: unknown): string {
     .join(' ');
 
   if (diagnosticText.includes('organizer_config_invalid')) {
-    return 'Force Fresh stopped before Microsoft Graph: the canonical Teams organizer configuration is invalid.';
+    return 'Re-fetch stopped before Microsoft Graph: the canonical Teams organizer configuration is invalid.';
   }
   if (diagnosticText.includes('organizer_identity_ambiguous')) {
-    return 'Force Fresh stopped before Microsoft Graph: multiple Teams organizer identities were found. Configure one canonical organizer and retry.';
+    return 'Re-fetch stopped before Microsoft Graph: multiple Teams organizer identities were found. Configure one canonical organizer and retry.';
   }
   if (diagnosticText.includes('organizer_identity_unresolved')) {
-    return 'Force Fresh stopped before Microsoft Graph: the canonical Teams organizer is not configured yet.';
+    return 'Re-fetch stopped before Microsoft Graph: the canonical Teams organizer is not configured yet.';
   }
 
-  return 'Force Fresh Teams Evidence failed. No operational attendance or finance was changed.';
+  return 'Re-fetch this case failed. No operational attendance or finance was changed.';
 }
 
 function normalizeClassification(value: unknown): Av6Classification {
@@ -612,21 +542,17 @@ export default function AttendanceValidationDashboard() {
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
-  const [toDate, setToDate] = useState(currentIstYmd);
+  const [toDate, setToDate] = useState(yesterdayIstYmd);
   const [loadedRange, setLoadedRange] = useState<{ from: string; to: string } | null>(null);
   const [cursor, setCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [latestCheckRunning, setLatestCheckRunning] = useState(false);
-  const [latestCheckResult, setLatestCheckResult] = useState<AvsLatestCheckResponse | null>(null);
-  const [latestCheckCompletedAt, setLatestCheckCompletedAt] = useState<Date | null>(null);
-  const [identityRolloutRunning, setIdentityRolloutRunning] = useState(false);
-  const [identityRolloutResult, setIdentityRolloutResult] = useState<AvsIdentityRolloutResponse | null>(null);
-  const [identityRolloutCompletedAt, setIdentityRolloutCompletedAt] = useState<Date | null>(null);
-  const [baselineRunning, setBaselineRunning] = useState(false);
-  const [baselineResult, setBaselineResult] = useState<AvsFirstTimeBaselineResponse | null>(null);
-  const [baselineCompletedAt, setBaselineCompletedAt] = useState<Date | null>(null);
+  const [validationRunning, setValidationRunning] = useState(false);
+  const [validationResult, setValidationResult] =
+    useState<AvsUnifiedValidationResponse | null>(null);
+  const [validationCompletedAt, setValidationCompletedAt] =
+    useState<Date | null>(null);
   const [forceFreshCaseId, setForceFreshCaseId] = useState<string | null>(null);
   const [forceFreshResult, setForceFreshResult] = useState<AvsForceFreshResponse | null>(null);
   const [forceFreshCompletedAt, setForceFreshCompletedAt] = useState<Date | null>(null);
@@ -717,7 +643,7 @@ export default function AttendanceValidationDashboard() {
     }
   }, [cursor, fromDate, loadedRange, toDate]);
 
-  const runLatestCheck = useCallback(async () => {
+  const runValidation = useCallback(async () => {
     if (!validDateRange(fromDate, toDate)) {
       setError(
         `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
@@ -727,124 +653,37 @@ export default function AttendanceValidationDashboard() {
 
     const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
     if (rangeDays === null || rangeDays > 31) {
-      setError('Run Latest Check supports a maximum of 31 calendar days at a time.');
-      return;
-    }
-
-    setLatestCheckRunning(true);
-    setError(null);
-
-    try {
-      const result = await callFunction<
-        AvsLatestCheckResponse,
-        { fromDate: string; toDate: string }
-      >(
-        'runAttendanceValidationLatestCheck',
-        { fromDate, toDate },
-      );
-
-      setLatestCheckResult(result);
-      setLatestCheckCompletedAt(new Date());
-
-      // Reload exactly the same cached range after server-side reconciliation,
-      // while preserving the admin's active classification tab.
-      await loadSavedCases(false, true);
-    } catch (latestCheckError) {
-      console.error('[AVS] Latest attendance validation check failed', latestCheckError);
-      setError('Latest attendance check failed. Saved results were not changed by the browser.');
-    } finally {
-      setLatestCheckRunning(false);
-    }
-  }, [fromDate, loadSavedCases, toDate]);
-
-  const runTeacherIdentityRollout = useCallback(async () => {
-    if (!validDateRange(fromDate, toDate)) {
-      setError(
-        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
-      );
-      return;
-    }
-
-    const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
-    if (rangeDays === null || rangeDays > 31) {
-      setError('Teacher Identity Rollout supports a maximum of 31 calendar days at a time.');
-      return;
-    }
-
-    const confirmed = window.confirm(
-      'Teacher Identity Rollout uses only cached AVS evidence and makes zero Microsoft Graph calls. It will add only unique email-bound Microsoft identity hashes for teachers, never use display names, and revalidate cached AVS cases. Continue?',
-    );
-    if (!confirmed) return;
-
-    setIdentityRolloutRunning(true);
-    setError(null);
-
-    try {
-      const result = await callFunction<
-        AvsIdentityRolloutResponse,
-        { fromDate: string; toDate: string; mode: 'identity_rollout' }
-      >(
-        'runAttendanceValidationLatestCheck',
-        { fromDate, toDate, mode: 'identity_rollout' },
-      );
-
-      setIdentityRolloutResult(result);
-      setIdentityRolloutCompletedAt(new Date());
-      await loadSavedCases(false, true);
-    } catch (identityRolloutError) {
-      console.error('[AVS] Teacher Identity Rollout failed', identityRolloutError);
-      setError(
-        'Teacher Identity Rollout failed safely. No attendance, finance, or Microsoft Graph data was changed.',
-      );
-    } finally {
-      setIdentityRolloutRunning(false);
-    }
-  }, [fromDate, loadSavedCases, toDate]);
-
-  const runFirstTimeBaseline = useCallback(async () => {
-    if (!validDateRange(fromDate, toDate)) {
-      setError(
-        `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
-      );
-      return;
-    }
-
-    const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
-    if (rangeDays === null || rangeDays > 31) {
-      setError('First-Time Baseline supports a maximum of 31 calendar days at a time.');
+      setError('Run Validation supports a maximum of 31 calendar days at a time.');
       return;
     }
 
     if (toDate > yesterdayIstYmd()) {
-      setError('First-Time Baseline can include only completed service dates through yesterday IST.');
+      setError('Run Validation can include only completed service dates through yesterday IST.');
       return;
     }
 
-    const confirmed = window.confirm(
-      'First-Time Baseline may make fresh Microsoft Graph reads for up to 100 class sessions that do not already have saved AVS cases. Existing AVS cases are reused. Continue?',
-    );
-    if (!confirmed) return;
-
-    setBaselineRunning(true);
+    setValidationRunning(true);
     setError(null);
 
     try {
       const result = await callFunction<
-        AvsFirstTimeBaselineResponse,
+        AvsUnifiedValidationResponse,
         { fromDate: string; toDate: string }
       >(
-        'runAttendanceValidationFirstTimeBaseline',
+        'runAttendanceValidationRange',
         { fromDate, toDate },
       );
 
-      setBaselineResult(result);
-      setBaselineCompletedAt(new Date());
+      setValidationResult(result);
+      setValidationCompletedAt(new Date());
       await loadSavedCases(false, true);
-    } catch (baselineError) {
-      console.error('[AVS] First-Time Baseline failed', baselineError);
-      setError('First-Time Baseline failed. No operational attendance or finance was changed.');
+    } catch (validationError) {
+      console.error('[AVS] Run Validation failed', validationError);
+      setError(
+        'Run Validation failed safely. No operational attendance or finance was changed.',
+      );
     } finally {
-      setBaselineRunning(false);
+      setValidationRunning(false);
     }
   }, [fromDate, loadSavedCases, toDate]);
 
@@ -855,12 +694,12 @@ export default function AttendanceValidationDashboard() {
       || !item.classSessionId
       || item.classSessionId !== item.id
     ) {
-      setError('Force Fresh Teams Evidence is available only for an existing session-backed AVS case with cached evidence.');
+      setError('Re-fetch this case is available only for an existing session-backed AVS case with cached evidence.');
       return;
     }
 
     const confirmed = window.confirm(
-      'Force Fresh Teams Evidence will make new Microsoft Graph reads for this one class and rebuild its AVS case. Continue?',
+      'Re-fetch this case will make new Microsoft Graph reads for this class and rebuild its AVS result. Continue?',
     );
     if (!confirmed) return;
 
@@ -883,7 +722,7 @@ export default function AttendanceValidationDashboard() {
       setForceFreshCompletedAt(new Date());
       await loadSavedCases(false, true);
     } catch (forceFreshError) {
-      console.error('[AVS] Force Fresh Teams Evidence failed', forceFreshError);
+      console.error('[AVS] Re-fetch this case failed', forceFreshError);
       setError(safeForceFreshFailureMessage(forceFreshError));
     } finally {
       setForceFreshCaseId(null);
@@ -900,7 +739,7 @@ export default function AttendanceValidationDashboard() {
 
     const rangeDays = inclusiveDateRangeDays(fromDate, toDate);
     if (rangeDays === null || rangeDays > 31) {
-      setError('Force Fresh Selected Range supports a maximum of 31 calendar days at a time.');
+      setError('Re-fetch Teams Data supports a maximum of 31 calendar days at a time.');
       return;
     }
 
@@ -921,7 +760,7 @@ export default function AttendanceValidationDashboard() {
         ? 'Retry only the failed Teams re-fetch cases in this generation? Completed cases will not be repeated.'
         : sameGeneration
           ? 'Continue this Teams re-fetch generation? Completed cases are checkpointed and will not be repeated.'
-          : 'Start a new Teams re-fetch generation for this selected range? It will make fresh Microsoft Graph reads for up to 100 existing AVS cases in this invocation.',
+          : 'Start a new Teams re-fetch generation for this range? Cached Teams evidence will be ignored and up to 100 existing AVS cases will be re-fetched in this invocation.',
     );
     if (!confirmed) return;
 
@@ -958,7 +797,7 @@ export default function AttendanceValidationDashboard() {
       }
       await loadSavedCases(false, true);
     } catch (forceFreshRangeError) {
-      console.error('[AVS] Force Fresh Selected Range failed', forceFreshRangeError);
+      console.error('[AVS] Re-fetch Teams Data failed', forceFreshRangeError);
       // Keep the explicit generation id after a timeout/error so a retry resumes
       // the same server-side checkpoints instead of starting duplicate work.
       setForceFreshRangeGeneration({ runId, fromDate, toDate });
@@ -1109,11 +948,11 @@ export default function AttendanceValidationDashboard() {
                 Attendance Validation
               </h2>
               <p className="mt-1 text-sm text-slate-700">
-                Read-only AVS shadow cases from {AV6_VALIDATION_START_YMD} onward.
+                Review saved AVS results and validate completed sessions from {AV6_VALIDATION_START_YMD} onward.
                 No attendance or financial correction can be made from this screen.
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                Saved results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
+                Results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
                 No realtime listener. Display names may use bounded enrollment and teacher-user reads only; no student, billing, earnings, or class-session fallback lookups.
               </p>
             </div>
@@ -1125,44 +964,37 @@ export default function AttendanceValidationDashboard() {
         </div>
       </Card>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Loaded window
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{teacherScopedCases.length}</p>
-          <p className="text-xs text-slate-500">
-            {teacherFilter === 'all' ? `Max ${AV6_CASE_READ_LIMIT}` : `of ${cases.length} loaded cases`}
-          </p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Verified
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-700">{summary.verified}</p>
-          <p className="text-xs text-slate-500">
-            Within loaded window • {summary.resolved} admin-resolved
-          </p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Needs review
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-amber-700">{summary.needsReview}</p>
-          <p className="text-xs text-slate-500">
-            {summary.conflicts} attendance conflicts
-          </p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            Possible false present
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-red-700">
-            {summary.possibleFalsePresent}
-          </p>
-          <p className="text-xs text-slate-500">Review only</p>
-        </Card>
-      </div>
+      <Card className="p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Loaded window
+            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {teacherScopedCases.length} session{teacherScopedCases.length === 1 ? '' : 's'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <span>
+              <strong className="text-emerald-700">{summary.verified}</strong>
+              {' '}verified
+            </span>
+            <span>
+              <strong className="text-amber-700">{summary.needsReview}</strong>
+              {' '}need review
+            </span>
+            <span>
+              <strong className="text-red-700">{summary.possibleFalsePresent}</strong>
+              {' '}possible false present
+            </span>
+            {teacherFilter !== 'all' && (
+              <span className="text-slate-500">
+                of {cases.length} loaded cases
+              </span>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <Card className="p-4">
         <div className="grid gap-3 lg:grid-cols-[180px_180px_auto] lg:items-end">
@@ -1171,6 +1003,7 @@ export default function AttendanceValidationDashboard() {
             <Input
               type="date"
               min={AV6_VALIDATION_START_YMD}
+              max={yesterdayIstYmd()}
               value={fromDate}
               onChange={(event) => setFromDate(event.target.value)}
             />
@@ -1180,6 +1013,7 @@ export default function AttendanceValidationDashboard() {
             <Input
               type="date"
               min={AV6_VALIDATION_START_YMD}
+              max={yesterdayIstYmd()}
               value={toDate}
               onChange={(event) => setToDate(event.target.value)}
             />
@@ -1188,72 +1022,59 @@ export default function AttendanceValidationDashboard() {
             <Button
               type="button"
               onClick={() => void loadSavedCases(false, false)}
-              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Loading saved results…' : 'Load Saved Results'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void runLatestCheck()}
-              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
-              title="Revalidate only changed sessions using cached Teams evidence."
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${latestCheckRunning ? 'animate-spin' : ''}`}
-              />
-              {latestCheckRunning ? 'Running latest check…' : 'Run Latest Check'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void runTeacherIdentityRollout()}
-              disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
-              title="Safely bind teacher Microsoft identities from cached AVS attendance evidence and revalidate cached cases with zero Graph calls."
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${identityRolloutRunning ? 'animate-spin' : ''}`}
-              />
-              {identityRolloutRunning
-                ? 'Syncing teacher identities…'
-                : 'Sync Teacher Identities'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void runFirstTimeBaseline()}
               disabled={
                 loading
                 || loadingMore
-                || latestCheckRunning
-                || identityRolloutRunning
-                || baselineRunning
+                || validationRunning
                 || forceFreshRangeRunning
                 || forceFreshCaseId !== null
-                || (
-                  baselineResult?.fromDate === fromDate
-                  && baselineResult?.toDate === toDate
-                  && baselineResult.complete
-                )
               }
-              title="First-time only: collect fresh Teams evidence for up to 100 sessions without saved AVS cases."
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Loading results…' : 'Load Results'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void runValidation()}
+              disabled={
+                loading
+                || loadingMore
+                || validationRunning
+                || forceFreshRangeRunning
+                || forceFreshCaseId !== null
+              }
+              title="Validate the selected completed range using cached Teams evidence when safe and fresh Teams reads only when required."
             >
               <RefreshCw
-                className={`mr-2 h-4 w-4 ${baselineRunning ? 'animate-spin' : ''}`}
+                className={`mr-2 h-4 w-4 ${validationRunning ? 'animate-spin' : ''}`}
               />
-              {baselineRunning
-                ? 'Running baseline…'
-                : baselineResult?.fromDate === fromDate
-                  && baselineResult?.toDate === toDate
-                  && !baselineResult.complete
-                  ? 'Continue Baseline'
-                  : baselineResult?.fromDate === fromDate
-                    && baselineResult?.toDate === toDate
-                    && baselineResult.complete
-                    ? 'Baseline Complete'
-                    : 'Run First-Time Baseline'}
+              {validationRunning
+                ? 'Running validation…'
+                : validationResult?.fromDate === fromDate
+                  && validationResult?.toDate === toDate
+                  && validationResult.continueValidation
+                  ? 'Continue Validation'
+                  : 'Run Validation'}
             </Button>
+          </div>
+        </div>
+
+        <p className="mt-2 text-xs text-slate-500">
+          Load Results reads cached AVS cases only. Run Validation automatically decides whether each session needs cached revalidation, first-time Teams evidence, or a fresh Teams re-fetch. Nothing runs automatically.
+        </p>
+        <p className="mt-1 text-xs text-slate-500">
+          Run Validation is capped at 31 completed service days and 100 sessions per invocation. Fresh Microsoft Graph reads occur only when the unified backend determines they are required.
+        </p>
+
+        <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <summary className="cursor-pointer text-sm font-medium text-slate-700">
+            Advanced
+          </summary>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-500">
+              Re-fetch Teams Data intentionally ignores cached Teams evidence for existing AVS cases. Use it only when you explicitly want new Microsoft Graph evidence for this range.
+            </p>
             <Button
               type="button"
               variant="outline"
@@ -1261,192 +1082,75 @@ export default function AttendanceValidationDashboard() {
               disabled={
                 loading
                 || loadingMore
-                || latestCheckRunning
-                || identityRolloutRunning
-                || baselineRunning
+                || validationRunning
                 || forceFreshRangeRunning
                 || forceFreshCaseId !== null
               }
-              title="Exceptional action: fresh-refresh up to 100 existing AVS cases in the selected service-date range."
+              title="Advanced: start or continue a fresh Teams evidence generation for the selected range."
+              className="shrink-0"
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${forceFreshRangeRunning ? 'animate-spin' : ''}`}
               />
               {forceFreshRangeRunning
-                ? 'Refreshing selected range…'
+                ? 'Re-fetching Teams data…'
                 : forceFreshRangeResult?.fromDate === fromDate
                   && forceFreshRangeResult?.toDate === toDate
                   && forceFreshRangeResult.status === 'complete_with_failures'
-                  ? 'Retry Failed Refreshes'
+                  ? 'Retry Failed Re-fetches'
                   : forceFreshRangeGeneration?.fromDate === fromDate
                     && forceFreshRangeGeneration?.toDate === toDate
-                    ? 'Continue Fresh Refresh'
-                    : forceFreshRangeResult?.fromDate === fromDate
-                      && forceFreshRangeResult?.toDate === toDate
-                      && forceFreshRangeResult.complete
-                      ? 'Re-fetch This Range Again'
-                      : 'Force Fresh Selected Range'}
+                    ? 'Continue Re-fetch'
+                    : 'Re-fetch Teams Data'}
             </Button>
           </div>
-        </div>
-
-        <p className="mt-2 text-xs text-slate-500">
-          Loading saved results reads only cached AVS cases for the selected service-date range.
-          Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.
-          Sync Teacher Identities safely binds unique teacher identities from cached evidence and revalidates cached cases with zero Microsoft Graph calls.
-          Force Fresh Selected Range makes new Graph reads for at most 100 existing AVS cases per click.
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Latest Check is intentionally capped at 31 calendar days per run.
-          First-Time Baseline is also capped at 31 days and processes at most 100 session documents per click with fresh Teams evidence only where no saved AVS case exists.
-          Selected-range Force Fresh uses five concurrent case refreshes, explicit generation IDs, and per-case checkpoints so retries resume safely.
-        </p>
+        </details>
 
         {loadedRange && loadedAt && (
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500">
             Loaded {loadedRange.from} to {loadedRange.to} at {formatObservedAt(loadedAt.toISOString())}.
             Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.
           </p>
         )}
       </Card>
 
-      {baselineResult && (
-        <Card className="border-blue-200 bg-blue-50 p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="font-medium text-slate-900">
-                {baselineResult.complete ? 'First-Time Baseline complete' : 'First-Time Baseline batch complete'}
-              </p>
-              <p className="mt-1 text-sm text-slate-700">
-                This batch scanned {baselineResult.batchSessionCount} session{baselineResult.batchSessionCount === 1 ? '' : 's'};
-                {' '}{baselineResult.existingCaseCount} already had saved AVS cases;
-                {' '}{baselineResult.freshEvidenceCount} received fresh Teams evidence;
-                {' '}{baselineResult.blockedCount} were routed safely to Missing Teams Evidence.
-              </p>
-              <p className="mt-1 text-xs text-slate-600">
-                Microsoft Graph logical calls: {baselineResult.graphLogicalCalls}.
-                {' '}Firestore bounded reads: {baselineResult.readBudget.boundedReadsExcludingStaffRegistry}
-                {' '}({baselineResult.readBudget.organizerEvidenceLookupQueries} organizer-evidence lookup queries included)
-                {baselineResult.readBudget.sharedStaffRegistryLoaded
-                  ? ' + one shared staff-registry load'
-                  : ''}.
-              </p>
-              <p className="mt-1 text-xs text-slate-600">
-                Range progress: {baselineResult.cumulative.scannedSessionCount} session documents scanned,
-                {' '}{baselineResult.cumulative.freshEvidenceCount} fresh evidence collections,
-                {' '}{baselineResult.cumulative.existingCaseCount} existing cases reused.
-              </p>
-              {!baselineResult.complete && (
-                <p className="mt-2 text-xs font-medium text-blue-800">
-                  More sessions remain in this range. Click Continue Baseline to process the next bounded batch.
-                </p>
-              )}
-              {baselineResult.complete && (
-                <p className="mt-2 text-xs font-medium text-emerald-800">
-                  This date range is baselined. Future attendance corrections should use Run Latest Check; repeating the same baseline will not re-fetch existing cases.
-                </p>
-              )}
-              {baselineResult.blocked.length > 0 && (
-                <p className="mt-2 text-xs font-medium text-amber-800">
-                  Blocked session IDs: {baselineResult.blocked.map((item) => item.sessionId).join(', ')}.
-                </p>
-              )}
-            </div>
-            {baselineCompletedAt && (
-              <div className="shrink-0 text-xs text-slate-500">
-                {formatObservedAt(baselineCompletedAt.toISOString())}
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {identityRolloutResult && (
-        <Card className="border-cyan-200 bg-cyan-50 p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <p className="font-medium text-slate-900">Teacher Identity Rollout completed</p>
-              <p className="mt-1 text-sm text-slate-700">
-                Scanned {identityRolloutResult.caseCountScanned} cached AVS case{identityRolloutResult.caseCountScanned === 1 ? '' : 's'}
-                {' '}across {identityRolloutResult.teacherCount} teacher{identityRolloutResult.teacherCount === 1 ? '' : 's'};
-                {' '}{identityRolloutResult.identityConfigWrites} new safe teacher identity mapping{identityRolloutResult.identityConfigWrites === 1 ? '' : 's'} added;
-                {' '}{identityRolloutResult.decisionCounts.already_mapped} already mapped.
-              </p>
-              <p className="mt-1 text-xs text-slate-600">
-                Cached cases revalidated: {identityRolloutResult.revalidatedCount}.
-                {' '}Admin-resolved cases preserved: {identityRolloutResult.resolvedCasesSkippedCount}.
-                {' '}Microsoft Graph calls: {identityRolloutResult.graphCalls}.
-                {' '}Firestore bounded reads: {identityRolloutResult.readBudget.boundedReadsExcludingStaffRegistry}
-                {' '}+ one shared staff-registry load.
-              </p>
-              {(identityRolloutResult.decisionCounts.no_cached_identity_candidate > 0
-                || identityRolloutResult.decisionCounts.teacher_email_missing > 0
-                || identityRolloutResult.decisionCounts.teacher_email_ambiguous > 0
-                || identityRolloutResult.decisionCounts.multiple_cached_identity_candidates > 0
-                || identityRolloutResult.decisionCounts.existing_identity_differs > 0
-                || identityRolloutResult.decisionCounts.identity_owned_by_other_staff > 0
-                || identityRolloutResult.disabledOverrideCount > 0
-                || identityRolloutResult.existingOverrideConflictCount > 0) && (
-                <p className="mt-2 text-xs font-medium text-amber-800">
-                  Some teachers remain review-only because a unique safe identity could not be proven from cached evidence.
-                  No identity was guessed or reassigned.
-                </p>
-              )}
-              {identityRolloutResult.skippedCount > 0 && (
-                <p className="mt-1 text-xs font-medium text-amber-800">
-                  {identityRolloutResult.skippedCount} cached case{identityRolloutResult.skippedCount === 1 ? '' : 's'} were skipped safely during revalidation.
-                </p>
-              )}
-            </div>
-            {identityRolloutCompletedAt && (
-              <div className="shrink-0 text-xs text-slate-500">
-                {formatObservedAt(identityRolloutCompletedAt.toISOString())}
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {latestCheckResult && (
+      {validationResult && (
         <Card className="border-emerald-200 bg-emerald-50 p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="font-medium text-slate-900">Latest Check completed</p>
+              <p className="font-medium text-slate-900">
+                {validationResult.continueValidation
+                  ? 'Validation batch complete'
+                  : 'Validation complete'}
+              </p>
               <p className="mt-1 text-sm text-slate-700">
-                {latestCheckResult.dirtyFoundCount} changed session{latestCheckResult.dirtyFoundCount === 1 ? '' : 's'} found;
-                {' '}{latestCheckResult.revalidatedCount} revalidated from cached Teams evidence;
-                {' '}{latestCheckResult.baselineRequiredCount} need first-time or fresh Teams evidence.
+                {validationResult.processedSessionCount} session{validationResult.processedSessionCount === 1 ? '' : 's'} processed.
+                {' '}{validationResult.cachedRevalidatedCount} reused compatible cached evidence.
+                {' '}{validationResult.freshRefreshedCount
+                  + validationResult.firstEvidenceCollectedCount
+                  + validationResult.baselineFreshEvidenceCount} received fresh Teams evidence.
+                {' '}{validationResult.freshFailedCount
+                  + validationResult.baselineBlockedCount} need another validation attempt or review.
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Firestore bounded reads: {latestCheckResult.readBudget.boundedReadsExcludingStaffRegistry}
-                {latestCheckResult.readBudget.sharedStaffRegistryLoaded
-                  ? ' + one shared staff-registry load'
-                  : ''}.
-                {' '}Microsoft Graph calls: {latestCheckResult.graphCalls}.
-                {' '}Dirty markers cleared: {latestCheckResult.dirtyMarkersClearedCount}.
+                Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
+                {' '}Automatic teacher identity mappings: {validationResult.identityMappingsWritten}.
+                {' '}Unsafe evidence references left for review: {validationResult.freshnessUnsafeCount}.
               </p>
-              <p className="mt-1 text-xs text-slate-600">
-                Saved results for {latestCheckResult.fromDate} to {latestCheckResult.toDate} were automatically reloaded.
-              </p>
-              {latestCheckResult.skippedCount > 0 && (
-                <p className="mt-2 text-xs font-medium text-amber-800">
-                  {latestCheckResult.skippedCount} changed session{latestCheckResult.skippedCount === 1 ? '' : 's'} were skipped safely and remain available for a later check.
+              {validationResult.continueValidation && (
+                <p className="mt-2 text-xs font-medium text-blue-800">
+                  More work remains in this range. Click Continue Validation to process the next bounded batch or retry unresolved fresh work.
                 </p>
               )}
-              {latestCheckResult.dirtyBatchAtLimit && (
+              {validationResult.concurrentMarkerChangeDetected && (
                 <p className="mt-2 text-xs font-medium text-amber-800">
-                  The 100-session changed-work cap was reached. Run Latest Check again for the same range to process any remaining dirty sessions.
-                </p>
-              )}
-              {latestCheckResult.concurrentMarkerChangeDetected && (
-                <p className="mt-2 text-xs font-medium text-amber-800">
-                  Attendance changed again while this check was running. The newer dirty marker was retained; run Latest Check again.
+                  Attendance changed again while validation was running. The newer dirty marker was retained safely.
                 </p>
               )}
             </div>
-            {latestCheckCompletedAt && (
+            {validationCompletedAt && (
               <div className="shrink-0 text-xs text-slate-500">
-                {formatObservedAt(latestCheckCompletedAt.toISOString())}
+                Checked {formatObservedAt(validationCompletedAt.toISOString())}
               </div>
             )}
           </div>
@@ -1457,7 +1161,7 @@ export default function AttendanceValidationDashboard() {
         <Card className="border-violet-200 bg-violet-50 p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="font-medium text-slate-900">Force Fresh Teams Evidence completed</p>
+              <p className="font-medium text-slate-900">Case re-fetch completed</p>
               <p className="mt-1 text-sm text-slate-700">
                 Session {forceFreshResult.classSessionId} received new Teams evidence and its AVS case was rebuilt.
               </p>
@@ -1510,10 +1214,10 @@ export default function AttendanceValidationDashboard() {
             <div>
               <p className="font-medium text-slate-900">
                 {forceFreshRangeResult.status === 'complete_with_failures'
-                  ? 'Force Fresh generation complete with failures'
+                  ? 'Teams re-fetch generation complete with failures'
                   : forceFreshRangeResult.complete
-                    ? 'Force Fresh generation complete'
-                    : 'Force Fresh generation batch complete'}
+                    ? 'Teams re-fetch generation complete'
+                    : 'Teams re-fetch generation batch complete'}
               </p>
               <p className="mt-1 text-sm text-slate-700">
                 Generation: {forceFreshRangeResult.runId.slice(0, 18)}….
@@ -1622,7 +1326,7 @@ export default function AttendanceValidationDashboard() {
             <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
             <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
             <p className="mt-1 text-sm text-slate-500">
-              Click Load Saved Results to read cached AVS cases. Opening this page does not read them automatically.
+              Click Load Results to read cached AVS cases. Opening this page does not read them automatically.
             </p>
           </div>
         ) : cases.length === 0 ? (
@@ -1773,22 +1477,20 @@ export default function AttendanceValidationDashboard() {
                               className="mt-2 w-full"
                               onClick={() => void forceFreshEvidence(item)}
                               disabled={
-                                latestCheckRunning
-                                || identityRolloutRunning
-                                || baselineRunning
+                                validationRunning
                                 || forceFreshRangeRunning
                                 || loading
                                 || loadingMore
                                 || forceFreshCaseId !== null
                               }
-                              title="Exceptional action: make fresh Microsoft Graph reads for this one class."
+                              title="Advanced: make fresh Microsoft Graph reads for this one class."
                             >
                               <RefreshCw
                                 className={`mr-2 h-4 w-4 ${forceFreshCaseId === item.id ? 'animate-spin' : ''}`}
                               />
                               {forceFreshCaseId === item.id
-                                ? 'Refreshing Teams…'
-                                : 'Force Fresh Teams Evidence'}
+                                ? 'Re-fetching…'
+                                : 'Re-fetch this case'}
                             </Button>
                           )}
                       </TableCell>
@@ -1822,7 +1524,7 @@ export default function AttendanceValidationDashboard() {
             type="button"
             variant="outline"
             onClick={() => void loadSavedCases(true, true)}
-            disabled={loading || loadingMore || latestCheckRunning || identityRolloutRunning || baselineRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
+            disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
           >
             {loadingMore ? 'Loading more…' : `Load next ${AV6_CASE_READ_LIMIT} saved results`}
           </Button>
