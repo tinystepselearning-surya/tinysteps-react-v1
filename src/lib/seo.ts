@@ -32,7 +32,8 @@ const PRIVATE_PATH_PREFIXES = [
   '/parent',
   '/kids',
   '/learning-partner/dashboard',
-  '/surya'
+  '/surya',
+  '/founder'
 ];
 
 function upsertMeta(selector: string, attrs: Record<string, string | undefined>) {
