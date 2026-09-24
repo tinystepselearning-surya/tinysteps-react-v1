@@ -34,6 +34,14 @@ import {
 } from './forceFreshRangePlanner';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import {
+  avsFailureHttpsError,
+  avsFailureLogFields,
+  classifyAvsFailure,
+  classifyAvsReason,
+  summarizeAvsFailures,
+  type AvsFailureDescriptor,
+} from './errorTaxonomy';
+import {
   AvsOrganizerResolutionError,
   resolveAttendanceValidationOrganizerUserId,
 } from './organizerConfig';
@@ -64,6 +72,8 @@ interface ForceFreshRunState {
   identityMappingsWritten?: unknown;
   identityClaimsWritten?: unknown;
   remainingCases?: unknown;
+  retryableFailureCount?: unknown;
+  actionRequiredFailureCount?: unknown;
 }
 
 type RangeOutcome = {
@@ -73,7 +83,7 @@ type RangeOutcome = {
   graphLogicalCalls: number;
   identityMappingWritten: boolean;
   identityClaimWritten: boolean;
-  errorKind: string | null;
+  failure: AvsFailureDescriptor | null;
 };
 
 type RangeItem = {
@@ -113,19 +123,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : 'Invalid Force Fresh selected-range request.';
-}
-
-function safeErrorKind(error: unknown): string {
-  if (error instanceof ForceFreshCaseRefreshError) {
-    const cause = error.causeError as { code?: unknown; name?: unknown } | null;
-    const causeCode = text(cause?.code);
-    if (causeCode) return causeCode.slice(0, 80);
-    const causeName = text(cause?.name);
-    if (causeName) return causeName.slice(0, 80);
-    return 'force_fresh_case_refresh_error';
-  }
-  if (error instanceof Error && error.name) return error.name.slice(0, 80);
-  return 'unknown_error';
 }
 
 function runCasesCollection(
@@ -195,6 +192,8 @@ async function loadOrCreateRun(params: {
     identityMappingsWritten: 0,
     identityClaimsWritten: 0,
     remainingCases: 0,
+    retryableFailureCount: 0,
+    actionRequiredFailureCount: 0,
   };
 
   try {
@@ -263,6 +262,17 @@ async function persistOutcome(params: {
       params.outcome.status,
     );
     const previousAttempts = count(checkpointData.attemptCount);
+    const previousFailed = previousStatus === 'failed';
+    const previousRetryable =
+      previousFailed && checkpointData.retryable === true;
+    const nextFailed = params.outcome.status === 'failed';
+    const nextRetryable =
+      nextFailed && params.outcome.failure?.retryable === true;
+    const retryableFailureDelta =
+      Number(nextRetryable) - Number(previousRetryable);
+    const actionRequiredFailureDelta =
+      Number(nextFailed && !nextRetryable)
+      - Number(previousFailed && !previousRetryable);
 
     transaction.set(checkpointRef, {
       schemaVersion: CHECKPOINT_SCHEMA_VERSION,
@@ -272,7 +282,12 @@ async function persistOutcome(params: {
       status: params.outcome.status,
       attemptCount: previousAttempts + 1,
       lastGraphLogicalCalls: params.outcome.graphLogicalCalls,
-      lastErrorKind: params.outcome.errorKind,
+      lastErrorKind: params.outcome.failure?.code ?? null,
+      failureCode: params.outcome.failure?.code ?? null,
+      failureCategory: params.outcome.failure?.category ?? null,
+      retryDisposition: params.outcome.failure?.retryDisposition ?? null,
+      retryable: params.outcome.failure?.retryable ?? false,
+      operatorAction: params.outcome.failure?.operatorAction ?? null,
       identityMappingWritten: params.outcome.identityMappingWritten,
       identityClaimWritten: params.outcome.identityClaimWritten,
       ...(checkpointSnapshot.exists
@@ -288,6 +303,10 @@ async function persistOutcome(params: {
       refreshedCount: FieldValue.increment(delta.refreshedCount),
       skippedCount: FieldValue.increment(delta.skippedCount),
       failedCount: FieldValue.increment(delta.failedCount),
+      retryableFailureCount:
+        FieldValue.increment(retryableFailureDelta),
+      actionRequiredFailureCount:
+        FieldValue.increment(actionRequiredFailureDelta),
       graphLogicalCalls:
         FieldValue.increment(params.outcome.graphLogicalCalls),
       identityMappingsWritten: FieldValue.increment(
@@ -317,7 +336,7 @@ async function processItems(params: {
         await resolveAttendanceValidationOrganizerUserId(params.db);
     } catch (error) {
       if (error instanceof AvsOrganizerResolutionError) {
-        throw new HttpsError('failed-precondition', error.reason);
+        throw avsFailureHttpsError(classifyAvsReason(error.reason));
       }
       throw error;
     }
@@ -345,7 +364,7 @@ async function processItems(params: {
           graphLogicalCalls: 0,
           identityMappingWritten: false,
           identityClaimWritten: false,
-          errorKind: null,
+          failure: null,
         };
       } else {
         try {
@@ -365,9 +384,10 @@ async function processItems(params: {
               result.teacherIdentityMappingWritten,
             identityClaimWritten:
               result.teacherIdentityClaimWritten,
-            errorKind: null,
+            failure: null,
           };
         } catch (error) {
+          const failure = classifyAvsFailure(error);
           outcome = {
             caseId: item.id,
             serviceDateYmd: item.serviceDateYmd,
@@ -378,12 +398,12 @@ async function processItems(params: {
                 : 0,
             identityMappingWritten: false,
             identityClaimWritten: false,
-            errorKind: safeErrorKind(error),
+            failure,
           };
-          logger.error('AVS Force Fresh generation case failed', {
+          logger.error('AVS Teams re-fetch generation case failed', {
             runId: params.runRef.id,
             caseId: item.id,
-            errorKind: outcome.errorKind,
+            ...avsFailureLogFields(failure),
           });
         }
       }
@@ -435,7 +455,7 @@ async function retryFailedItems(params: {
 
   const baseQuery = () =>
     failedCases
-      .where('status', '==', 'failed')
+      .where('retryable', '==', true)
       .orderBy(FieldPath.documentId(), 'asc')
       .limit(AVS_FORCE_FRESH_RANGE_MAX_CASES);
 
@@ -509,6 +529,15 @@ function responseFromState(params: {
     0,
   );
   const currentFailedCases = count(params.state.failedCount);
+  const retryableFailureCount =
+    count(params.state.retryableFailureCount);
+  const actionRequiredFailureCount =
+    count(params.state.actionRequiredFailureCount);
+  const failureSummary = summarizeAvsFailures(
+    params.outcomes
+      .map((item) => item.failure)
+      .filter((failure): failure is AvsFailureDescriptor => Boolean(failure)),
+  );
 
   return {
     ok: true,
@@ -524,10 +553,16 @@ function responseFromState(params: {
     completeWithFailures: status === 'complete_with_failures',
     hasMore:
       params.remainingCases > 0
-      || currentFailedCases > 0,
+      || retryableFailureCount > 0,
     retryableFailures:
       status === 'complete_with_failures'
-      && currentFailedCases > 0,
+      && retryableFailureCount > 0,
+    actionRequiredFailures:
+      status === 'complete_with_failures'
+      && actionRequiredFailureCount > 0,
+    retryableFailureCount,
+    actionRequiredFailureCount,
+    failureSummary,
     casesProcessed: params.outcomes.length,
     attempted: params.outcomes.length,
     refreshed,
@@ -544,6 +579,8 @@ function responseFromState(params: {
       refreshed: count(params.state.refreshedCount),
       skipped: count(params.state.skippedCount),
       failed: currentFailedCases,
+      retryableFailures: retryableFailureCount,
+      actionRequiredFailures: actionRequiredFailureCount,
       graphLogicalCalls: count(params.state.graphLogicalCalls),
       identityMappingsWritten:
         count(params.state.identityMappingsWritten),

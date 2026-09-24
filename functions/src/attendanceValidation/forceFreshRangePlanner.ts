@@ -12,13 +12,6 @@ export const ATTENDANCE_VALIDATION_FORCE_FRESH_RUNS_COLLECTION =
 export const ATTENDANCE_VALIDATION_FORCE_FRESH_RUN_CASES_SUBCOLLECTION =
   'cases';
 
-/**
- * Retained only so old backend-only progress documents stay inside the AVS
- * write boundary until Brick 6 cleanup. Brick 4 no longer reads or writes it.
- */
-export const ATTENDANCE_VALIDATION_FORCE_FRESH_RANGES_COLLECTION =
-  'attendanceValidationForceFreshRanges';
-
 export interface AvsForceFreshRangeCursor {
   serviceDateYmd: string;
   caseId: string;

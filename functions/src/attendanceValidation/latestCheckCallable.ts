@@ -490,8 +490,7 @@ export const runAttendanceValidationLatestCheck = onCall(
   {
     region: REGION,
     memory: '512MiB',
-    invoker: 'public',
-    labels: { 'avs-public-invoker': 'true' },
+    invoker: 'private',
     timeoutSeconds: 540,
   },
   async (request) => {
