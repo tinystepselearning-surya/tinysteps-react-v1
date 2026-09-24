@@ -56,23 +56,23 @@ const comparisonChecks = [
 const deliveryComparisonRows = [
   {
     factor: 'Teacher choice',
-    online: 'Families can compare teachers beyond their neighbourhood and city.',
-    offline: 'Choice is naturally limited to centres and tutors within practical travelling distance.',
+    online: 'Location is less restrictive, so families can consider teachers beyond their neighbourhood or city.',
+    offline: 'Practical choice is limited by which centres or tutors a family can reasonably travel to.',
   },
   {
     factor: 'Phonics specialisation',
-    online: 'A wider teacher pool can make it easier to look specifically for phonics-focused experience.',
-    offline: 'A nearby centre may use a general English or preschool teacher; ask what phonics-specific training, method and experience the teacher has.',
+    online: 'A wider geographic pool can make it easier to search specifically for phonics-focused training and experience.',
+    offline: 'Proximity does not establish phonics expertise; ask about the teacher’s phonics-specific training, method and experience.',
   },
   {
     factor: 'Travel',
-    online: 'No pickup, drop-off, fuel, parking or travel time for the class itself.',
-    offline: 'Outbound travel, return travel, parking and waiting can add to the family commitment.',
+    online: 'When the child attends from home, there is no commute to a class centre.',
+    offline: 'Travel both ways, and sometimes parking or waiting, can add time and cost beyond the lesson fee.',
   },
   {
     factor: 'Schedule',
-    online: 'Often easier to compare slots across a wider teacher pool.',
-    offline: 'Usually tied to centre batches, local tutor availability and travel timing.',
+    online: 'Location is less restrictive, so available teacher and time-slot options may be broader.',
+    offline: 'Availability depends on local centre or tutor schedules as well as feasible travel times.',
   },
   {
     factor: 'Environment',
@@ -103,64 +103,76 @@ const groupBudgetExamples = [175, 225, 300] as const;
 
 const faqItems = [
   {
-    question: 'How much do live 1:1 phonics classes cost in India?',
+    question: 'How much do live 1:1 phonics classes cost in this benchmark?',
     answer:
-      'In the external-provider research checked on ' +
-      research.reviewedLabel +
-      ', ' +
+      'Among the ' +
       research.oneToOne.providerCount +
-      ' providers had exact enough public 1:1 pricing to enter the benchmark. The provider-level median was about ' +
+      ' external providers with comparable public 1:1 pricing checked on ' +
+      research.reviewedLabel +
+      ', the provider-level median is about ' +
       formatINR(Math.round(research.oneToOne.median)) +
-      ' per live class. Exact published rates observed in those source rows ranged from about ' +
+      ' per live class. Exact published rates used in the underlying source rows range from about ' +
       formatINR(Math.round(research.oneToOne.minExactPublishedRate)) +
       ' to ' +
       formatINR(Math.round(research.oneToOne.maxExactPublishedRate)) +
-      '. Tiny Steps is excluded from the external-provider statistics.',
+      '. This is a benchmark of the sampled public live-online providers, not a nationwide average for India.',
   },
   {
-    question: 'How much do live group phonics classes cost in India?',
+    question: 'How much do live group phonics classes cost in this benchmark?',
     answer:
-      'In the same research, ' +
+      'Among the ' +
       research.group.providerCount +
-      ' external providers had exact enough public group pricing to enter the benchmark. The provider-level median was about ' +
+      ' external providers with comparable public group pricing checked on ' +
+      research.reviewedLabel +
+      ', the provider-level median is about ' +
       formatINR(Math.round(research.group.median)) +
-      ' per child per live class. Exact published rates observed ranged from about ' +
+      ' per child per live class. Exact published rates used in the source rows range from about ' +
       formatINR(Math.round(research.group.minExactPublishedRate)) +
       ' to ' +
       formatINR(Math.round(research.group.maxExactPublishedRate)) +
-      '.',
+      ' per child per class. This is not a nationwide offline-or-online average.',
   },
   {
-    question: 'Are online phonics classes always more expensive than offline classes?',
+    question: 'Can this page say whether online phonics is cheaper than offline phonics?',
     answer:
-      'No. Delivery format alone does not determine value or total cost. Offline fees vary by city, centre, teacher and batch size, while online fees vary by teacher, class format and package. Parents should compare the advertised fee together with teacher specialisation, class duration, travel, waiting time, materials and rescheduling terms.',
+      'No. The price benchmark on this page covers India-facing live online providers with public pricing. It does not contain a comparable national sample of offline-centre fees, so it would be misleading to claim that one format is generally cheaper. For an offline option, compare its actual quoted fee with travel, materials and other applicable costs; for an online option, compare the actual fee with class duration, teacher, group size and included support.',
   },
   {
-    question: 'What hidden costs should parents include when comparing offline phonics classes?',
+    question: 'What extra costs should I count for an offline phonics class?',
     answer:
-      'For an offline centre, include the class fee plus pickup and drop-off time, fuel or transport, parking, waiting time, materials and the child’s travel time. A useful comparison is total family time per class: live lesson time plus outbound travel, return travel and waiting.',
+      'Count only the costs that actually apply to your family: transport or fuel, parking, paid materials and any other centre charges. Also count time separately: outbound travel + lesson + return travel + waiting. Time is not a cash fee, but it is part of the weekly family commitment.',
   },
   {
-    question: 'How can parents check a teacher’s phonics-specific experience?',
+    question: 'How should I compare a 30-minute class with a 45- or 60-minute class?',
     answer:
-      'Ask what phonics approach or scope and sequence the teacher follows, how blending and segmenting are taught, how reading errors are corrected, how progress is assessed and what phonics-specific training or experience the teacher has. This check is useful for both online and offline classes.',
+      'Do not compare the headline class fee alone. First note the live minutes, then compare whether the class is 1:1 or group and how many children share the teacher. A lower per-class price can reflect a shorter session or a larger batch. Price per minute can be a useful secondary calculation, but it does not measure individual teacher attention or teaching quality.',
+  },
+  {
+    question: 'How can I check a teacher’s phonics-specific experience?',
+    answer:
+      'Ask for concrete details: what phonics training or certification the teacher has, which scope and sequence is followed, how blending and segmenting are taught, how pronunciation or decoding errors are corrected, and how reading progress is assessed. A demo class can help you observe these practices directly. Use the same questions for online and offline teachers.',
+  },
+  {
+    question: 'Does a lower phonics fee mean lower teaching quality?',
+    answer:
+      'Not by itself. This page does not use price as a quality score. To judge value, compare teacher expertise, class size, live teaching time, curriculum sequence, correction and feedback, progress tracking, missed-class policy, materials and whether you can observe a real demo or sample class before paying.',
   },
   {
     question: 'Why are some public prices not converted to a per-class fee?',
     answer:
-      'Tiny Steps does not estimate a class count when a provider publishes only a monthly fee, a starting price, an enquiry-led quote or a package with conflicting session information. Those public prices can still be shown, but they are excluded from the benchmark median and average.',
+      'A monthly fee cannot be converted reliably when the provider does not state a fixed number of live sessions, and a “from” price does not identify the exact package rate. We therefore show those public prices for context but exclude them from the benchmark median and average rather than guessing a session count.',
   },
   {
-    question: 'How were the phonics fee benchmarks calculated?',
+    question: 'How is the benchmark calculated when one provider lists several package rates?',
     answer:
-      'Tiny Steps reviewed official provider websites and official provider brochures, kept 1:1 and group formats separate, and normalized package totals only when the live-session count was explicit. When a provider published several exact package rates in the same format, that provider contributes one provider-level benchmark observation so one company cannot dominate the sample.',
+      'A provider contributes one value per format. When that provider publishes several exact per-class rates for the same format, we use the median of that provider’s own exact rates as its single benchmark value. This prevents a provider with many package sizes from having more influence on the overall benchmark than a provider with one package.',
   },
   {
     question: 'How current are the provider prices on this page?',
     answer:
-      'The named provider sources were checked on ' +
+      'The named provider sources in the benchmark were checked on ' +
       research.reviewedLabel +
-      '. Prices can change, so each provider name links to the official source used for the research and parents should confirm the latest offer before paying.',
+      '. Prices and packages can change after that date, so each provider row links to the official source used for the research and parents should confirm the current offer directly before paying.',
   },
 ]
 
@@ -368,7 +380,7 @@ export default function PhonicsFeesIndiaPage() {
               Phonics Class Fees in India
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              Compare verified public phonics prices first, then look beyond the fee: teacher specialisation, class format, travel and total family time can materially change the decision.
+              Compare verified public live-online phonics prices first, then look beyond the fee: teacher specialisation, class format, travel and total family time can materially change the decision.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-600">
               <span><strong className="text-slate-950">{reviewedProviderCount}</strong> providers checked</span>
@@ -438,13 +450,13 @@ export default function PhonicsFeesIndiaPage() {
       </section>
 
       <section id="market-pricing" className="mx-auto max-w-7xl scroll-mt-28 px-6 py-10 lg:px-8 lg:py-12">
-        <div className="max-w-3xl">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Market pricing research</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+        <div className="max-w-5xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Market pricing research · live online providers</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:whitespace-nowrap">
             Compare 1:1 and group phonics fees separately
           </h2>
-          <p className="mt-3 text-base leading-7 text-slate-600">
-            The matrix below shows the public price exactly as we found it. Green rows are precise enough to enter the benchmark; amber prices are published but not converted when the session count is unclear.
+          <p className="mt-3 max-w-4xl text-base leading-7 text-slate-600">
+            This benchmark covers India-facing live online child phonics providers with public pricing. It does not estimate a nationwide offline fee. The matrix shows the public price exactly as we found it: green rates are precise enough to enter the benchmark, while amber prices are published but cannot be converted reliably to a per-class rate.
           </p>
         </div>
 
@@ -514,7 +526,7 @@ export default function PhonicsFeesIndiaPage() {
               What might 12 live phonics classes cost?
             </h2>
             <p className="mt-3 text-base leading-7 text-slate-600">
-              Parents often search for a monthly figure even when providers charge per class or by package. These are simple arithmetic examples using 12 live classes — not quoted package prices or market averages.
+              To convert a per-class price into a simple 12-class budget, multiply the effective live-class rate by 12. These are arithmetic examples only — not quoted package prices, monthly market averages or recommendations.
             </p>
           </div>
 
@@ -567,13 +579,13 @@ export default function PhonicsFeesIndiaPage() {
 
       <section className="border-y border-slate-200 bg-gradient-to-b from-white to-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
-          <div className="max-w-3xl">
+          <div className="max-w-6xl">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Online vs offline</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:whitespace-nowrap lg:text-[2.1rem]">
               The lowest class fee is not always the lowest total cost
             </h2>
-            <p className="mt-3 text-base leading-7 text-slate-600">
-              For young children, parents are also choosing a teacher, a weekly routine and a time commitment. A nearby offline centre can be convenient, but proximity does not by itself confirm phonics specialisation. Online classes remove the commute and widen the teacher pool, while still requiring parents to verify teaching quality and home-learning fit.
+            <p className="mt-3 max-w-4xl text-base leading-7 text-slate-600">
+              The advertised fee is only one part of the decision. For an offline centre, parents may also need to account for travel and waiting; for an online class, they should consider the device, internet setup and home learning environment. In both formats, teacher expertise, class size, teaching time, curriculum and progress checks should be compared directly.
             </p>
           </div>
 
@@ -603,7 +615,7 @@ export default function PhonicsFeesIndiaPage() {
                 </div>
                 <h3 className="mt-2 text-xl font-black text-slate-950">Ask for phonics-specific evidence</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  General English or preschool teaching experience does not by itself establish phonics-specific expertise. Ask about phonics training, scope and sequence, blending, segmenting, correction and progress checks. Apply the same standard to online teachers.
+                  General English or preschool teaching experience does not by itself establish phonics-specific expertise. Ask what phonics training the teacher has, which scope and sequence is followed, how blending and segmenting are taught, how errors are corrected and how reading progress is checked. Apply the same standard to online and offline teachers.
                 </p>
               </article>
 
@@ -614,7 +626,7 @@ export default function PhonicsFeesIndiaPage() {
                 </div>
                 <h3 className="mt-2 text-xl font-black text-slate-950">Count pickup, drop-off and waiting</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Offline class time is only part of the commitment. Add the return journey, parking or waiting, and the child’s travel routine before comparing two programmes with similar fees.
+                  If an offline class requires travel, compare the full routine: outbound journey + lesson + return journey + any waiting or parking time. That gives a more useful picture than comparing the lesson fee alone.
                 </p>
               </article>
             </div>
