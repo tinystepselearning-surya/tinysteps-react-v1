@@ -90,6 +90,12 @@ export interface Av53ShadowRunInput {
    * Explicit null remains a fail-closed test/diagnostic path.
    */
   meaningfulOverlapSeconds?: number | null;
+  /**
+   * Unified/Latest Check only: a case that references a missing evidence
+   * document must be routed to fresh collection instead of persisted as a
+   * successful cached revalidation.
+   */
+  missingEvidenceRequiresFresh?: boolean;
 }
 
 export interface Av53LoadedWorkItem {
@@ -1213,6 +1219,20 @@ export async function runAv53ShadowWithFirestore(
   const compatibleLoaded: Av53LoadedWorkItem[] = [];
 
   for (const loadedItem of preloaded) {
+    if (
+      loadedItem.session
+      && !loadedItem.evidence
+      && input.missingEvidenceRequiresFresh
+    ) {
+      freshnessSkipped.push({
+        classSessionId: loadedItem.item.classSessionId,
+        evidenceId: loadedItem.item.evidenceId,
+        reason: 'fresh_evidence_required',
+        freshnessReasons: ['evidence_document_missing'],
+      });
+      continue;
+    }
+
     if (!loadedItem.session || !loadedItem.evidence) {
       compatibleLoaded.push(loadedItem);
       continue;

@@ -46,6 +46,16 @@ describe('AVS cached evidence freshness routing', () => {
     );
   });
 
+  it('routes a missing referenced evidence document to fresh collection for Latest Check', () => {
+    expect(shadow).toContain('input.missingEvidenceRequiresFresh');
+    expect(shadow).toContain("freshnessReasons: ['evidence_document_missing']");
+    expect(latest).toContain('missingEvidenceRequiresFresh: true');
+    expect(latest).toContain('missingReferencedEvidenceSessionIds');
+    expect(latest).toContain(
+      "...missingReferencedEvidenceSessionIds",
+    );
+  });
+
   it('keeps stale/unsafe sessions dirty and exposes them to the caller', () => {
     expect(latest).toContain('freshEvidenceRequiredSessionIds');
     expect(latest).toContain('freshnessUnsafeSessionIds');

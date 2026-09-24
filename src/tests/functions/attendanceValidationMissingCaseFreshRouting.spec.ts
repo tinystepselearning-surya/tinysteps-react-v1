@@ -21,9 +21,26 @@ describe('AVS targeted missing-case fresh collection', () => {
     expect(source).toContain('runAv53ShadowWithFirestore');
   });
 
-  it('avoids duplicate Graph work if a case appeared concurrently', () => {
+  it('avoids duplicate Graph work only when the referenced evidence really exists', () => {
+    expect(source).toContain(
+      ".collection('attendanceValidationEvidence')",
+    );
+    expect(source).toContain('referencedEvidenceSnapshot.exists');
     expect(source).toContain("status: 'existing_case' as const");
     expect(source).toContain('graphLogicalCalls: 0');
+  });
+
+  it('continues to first-evidence collection when an existing case points to a missing evidence document', () => {
+    const evidenceCheck = source.indexOf(
+      'referencedEvidenceSnapshot.exists',
+    );
+    const sessionBuild = source.indexOf(
+      'buildBaselineEvidenceSessionSnapshot',
+      evidenceCheck,
+    );
+    expect(evidenceCheck).toBeGreaterThan(-1);
+    expect(sessionBuild).toBeGreaterThan(evidenceCheck);
+    expect(source).toContain('referencedEvidenceReads');
   });
 
   it('clears only the dirty marker with an update-time precondition after success', () => {
