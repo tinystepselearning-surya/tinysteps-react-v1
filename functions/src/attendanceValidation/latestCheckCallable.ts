@@ -296,36 +296,12 @@ async function runCachedTeacherIdentityRollout(
  * It consumes only backend-created dirty markers, reuses each session's cached
  * attendanceValidationEvidence document, and reruns AV3/AV4/AV5 through AV5.3.
  */
-export const runAttendanceValidationLatestCheck = onCall(
-  {
-    region: REGION,
-    memory: '512MiB',
-    invoker: 'public',
-    labels: { 'avs-public-invoker': 'true' },
-    timeoutSeconds: 540,
-  },
-  async (request) => {
-    await ensureAdmin(request.auth);
 
-    let range: { fromDate: string; toDate: string };
-    let mode: LatestCheckMode;
-    try {
-      const data = (request.data || {}) as LatestCheckRequest;
-      range = normalizeAvsLatestCheckRange(data.fromDate, data.toDate);
-      mode = latestCheckMode(data.mode);
-    } catch (error) {
-      throw new HttpsError('invalid-argument', errorMessage(error));
-    }
-
-    const db = admin.firestore();
-
-    if (mode === 'identity_rollout') {
-      return runCachedTeacherIdentityRollout(
-        db,
-        range,
-        request.auth?.uid || 'admin',
-      );
-    }
+export async function runAttendanceValidationLatestCheckBatch(
+  db: Firestore,
+  range: { fromDate: string; toDate: string },
+  actorUid = 'admin',
+) {
     const dirtySnapshot = await db
       .collection(ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION)
       .where('serviceDateYmd', '>=', range.fromDate)
@@ -349,6 +325,7 @@ export const runAttendanceValidationLatestCheck = onCall(
         freshnessUnsafeSessionIds: [],
         skippedCount: 0,
         dirtyMarkersClearedCount: 0,
+        concurrentMarkerChangeDetected: false,
         dirtyBatchAtLimit: false,
         graphCalls: 0,
         operationalMutationAllowed: false,
@@ -391,7 +368,7 @@ export const runAttendanceValidationLatestCheck = onCall(
     });
 
     const plan = planAvsLatestCheck(dirtySessions, existingCases);
-    const runId = `latest_${Date.now().toString(36)}_${request.auth?.uid?.slice(0, 12) || 'admin'}`;
+    const runId = `latest_${Date.now().toString(36)}_${actorUid.slice(0, 12) || 'admin'}`;
 
     const av53Result = plan.workItems.length > 0
       ? await runAv53ShadowWithFirestore(db, {
@@ -487,5 +464,42 @@ export const runAttendanceValidationLatestCheck = onCall(
           + sameDayContextReads,
       },
     };
+}
+
+export const runAttendanceValidationLatestCheck = onCall(
+  {
+    region: REGION,
+    memory: '512MiB',
+    invoker: 'public',
+    labels: { 'avs-public-invoker': 'true' },
+    timeoutSeconds: 540,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    let range: { fromDate: string; toDate: string };
+    let mode: LatestCheckMode;
+    try {
+      const data = (request.data || {}) as LatestCheckRequest;
+      range = normalizeAvsLatestCheckRange(data.fromDate, data.toDate);
+      mode = latestCheckMode(data.mode);
+    } catch (error) {
+      throw new HttpsError('invalid-argument', errorMessage(error));
+    }
+
+    const db = admin.firestore();
+
+    if (mode === 'identity_rollout') {
+      return runCachedTeacherIdentityRollout(
+        db,
+        range,
+        request.auth?.uid || 'admin',
+      );
+    }
+    return runAttendanceValidationLatestCheckBatch(
+      db,
+      range,
+      request.auth?.uid || 'admin',
+    );
   },
 );
