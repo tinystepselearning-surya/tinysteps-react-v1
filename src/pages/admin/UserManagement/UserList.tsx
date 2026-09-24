@@ -108,6 +108,7 @@ const isHardDeleteProtectedRole = (
 
   return (
     canonical === 'parent' ||
+    canonical === 'founder' ||
     canonical === 'kid' ||
     canonical === 'schoolAdmin' ||
     raw === 'student' ||
