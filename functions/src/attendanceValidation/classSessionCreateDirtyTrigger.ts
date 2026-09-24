@@ -18,6 +18,11 @@ function currentIstYmd(now: Date): string {
     .slice(0, 10);
 }
 
+function eventDate(value: unknown): Date {
+  const parsed = new Date(String(value || ''));
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
 export function shouldMarkCreatedClassSessionDirty(
   session: Record<string, unknown>,
   now: Date = new Date(),
@@ -50,7 +55,12 @@ export const onAttendanceValidationHistoricalSessionCreated =
 
       const session =
         (snapshot.data() || {}) as Record<string, unknown>;
-      if (!shouldMarkCreatedClassSessionDirty(session)) return;
+      if (
+        !shouldMarkCreatedClassSessionDirty(
+          session,
+          eventDate(event.time),
+        )
+      ) return;
 
       const sessionId = String(event.params.sessionId || '').trim();
       if (!sessionId) return;
