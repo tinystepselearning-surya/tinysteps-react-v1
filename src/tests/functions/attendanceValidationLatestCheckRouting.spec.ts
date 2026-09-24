@@ -12,6 +12,15 @@ describe('AVS changed-only latest-check callable routing', () => {
   );
   const functionsIndex = read('functions/src/index.ts');
 
+  it('exposes the dirty-mode engine for the unified orchestrator without changing the callable contract', () => {
+    expect(source).toContain(
+      'export async function runAttendanceValidationLatestCheckBatch',
+    );
+    expect(source).toContain(
+      'return runAttendanceValidationLatestCheckBatch(',
+    );
+  });
+
   it('is admin-only, date-bounded, and capped at 100 dirty sessions', () => {
     expect(source).toContain('await ensureAdmin(request.auth)');
     expect(source).toContain(

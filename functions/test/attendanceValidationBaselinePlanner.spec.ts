@@ -47,6 +47,21 @@ describe('AVS first-time baseline planner', () => {
     });
   });
 
+  it('supports a smaller caller-supplied capacity while preserving one lookahead row', () => {
+    const rows = Array.from({ length: 4 }, (_, index) => ({
+      id: `session-${index + 1}`,
+      serviceDateYmd: '2026-09-10',
+    }));
+
+    const plan = baselineBatchFromQueryRows(rows, 3);
+    expect(plan.batch).toHaveLength(3);
+    expect(plan.hasMore).toBe(true);
+    expect(plan.nextCursor?.sessionId).toBe('session-3');
+    expect(() => baselineBatchFromQueryRows(rows, 0)).toThrow(
+      'maxSessions must be an integer from 1 to 100',
+    );
+  });
+
   it('marks the range terminal when the query has no lookahead row', () => {
     const plan = baselineBatchFromQueryRows([
       { id: 'session-1', serviceDateYmd: '2026-09-10' },

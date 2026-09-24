@@ -8,6 +8,7 @@ import { ensureAdmin } from '../helpers/adminGuard';
 import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import {
   ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION,
+  AVS_BASELINE_MAX_SESSIONS_PER_RUN,
   AVS_BASELINE_QUERY_LIMIT,
   avsBaselineRangeId,
   baselineBatchFromQueryRows,
@@ -116,42 +117,23 @@ function cursorFromState(state: BaselineRangeState): AvsBaselineCursor | null {
     : null;
 }
 
-export const runAttendanceValidationFirstTimeBaseline = onCall(
-  {
-    region: REGION,
-    memory: '512MiB',
-    invoker: 'public',
-    labels: { 'avs-public-invoker': 'true' },
-    timeoutSeconds: 540,
-    maxInstances: 1,
-    secrets: [
-      MICROSOFT_TENANT_ID,
-      MICROSOFT_CLIENT_ID,
-      MICROSOFT_CLIENT_SECRET,
-    ],
-  },
-  async (request) => {
-    await ensureAdmin(request.auth);
 
-    let range: { fromDate: string; toDate: string };
-    try {
-      range = normalizeAvsBaselineRange(
-        request.data?.fromDate,
-        request.data?.toDate,
-      );
-    } catch (error) {
-      throw new HttpsError('invalid-argument', errorMessage(error));
-    }
-
-    const todayIst = currentIstYmd();
-    if (range.toDate >= todayIst) {
-      throw new HttpsError(
-        'failed-precondition',
-        'First-time baseline can include only completed service dates through yesterday IST.',
-      );
-    }
-
-    const db = admin.firestore();
+export async function runAttendanceValidationFirstTimeBaselineBatch(
+  db: FirebaseFirestore.Firestore,
+  range: { fromDate: string; toDate: string },
+  options: { maxSessions?: number } = {},
+) {
+  const maxSessions =
+    options.maxSessions ?? AVS_BASELINE_MAX_SESSIONS_PER_RUN;
+  if (
+    !Number.isInteger(maxSessions)
+    || maxSessions < 1
+    || maxSessions > AVS_BASELINE_MAX_SESSIONS_PER_RUN
+  ) {
+    throw new RangeError(
+      `maxSessions must be an integer from 1 to ${AVS_BASELINE_MAX_SESSIONS_PER_RUN}.`,
+    );
+  }
     const rangeId = avsBaselineRangeId(range);
     const rangeRef = db
       .collection(ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION)
@@ -208,7 +190,11 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       .where('date', '<=', range.toDate)
       .orderBy('date', 'asc')
       .orderBy(FieldPath.documentId(), 'asc')
-      .limit(AVS_BASELINE_QUERY_LIMIT);
+      .limit(
+        maxSessions === AVS_BASELINE_MAX_SESSIONS_PER_RUN
+          ? AVS_BASELINE_QUERY_LIMIT
+          : maxSessions + 1,
+      );
 
     if (cursor) {
       sessionsQuery = sessionsQuery.startAfter(
@@ -223,7 +209,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
       serviceDateYmd: text(docSnapshot.data().date),
       data: (docSnapshot.data() || {}) as Record<string, unknown>,
     }));
-    const batchPlan = baselineBatchFromQueryRows(rows);
+    const batchPlan = baselineBatchFromQueryRows(rows, maxSessions);
 
     if (batchPlan.batch.length === 0) {
       await rangeRef.set({
@@ -499,5 +485,44 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
           + sameDayContextReads,
       },
     };
+}
+
+export const runAttendanceValidationFirstTimeBaseline = onCall(
+  {
+    region: REGION,
+    memory: '512MiB',
+    invoker: 'public',
+    labels: { 'avs-public-invoker': 'true' },
+    timeoutSeconds: 540,
+    maxInstances: 1,
+    secrets: [
+      MICROSOFT_TENANT_ID,
+      MICROSOFT_CLIENT_ID,
+      MICROSOFT_CLIENT_SECRET,
+    ],
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    let range: { fromDate: string; toDate: string };
+    try {
+      range = normalizeAvsBaselineRange(
+        request.data?.fromDate,
+        request.data?.toDate,
+      );
+    } catch (error) {
+      throw new HttpsError('invalid-argument', errorMessage(error));
+    }
+
+    const todayIst = currentIstYmd();
+    if (range.toDate >= todayIst) {
+      throw new HttpsError(
+        'failed-precondition',
+        'First-time baseline can include only completed service dates through yesterday IST.',
+      );
+    }
+
+    const db = admin.firestore();
+    return runAttendanceValidationFirstTimeBaselineBatch(db, range);
   },
 );
