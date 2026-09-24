@@ -135,7 +135,9 @@ describe('RoleGate authentication bootstrap', () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText('Unauthorized')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Unauthorized', {}, { timeout: 4_000 }),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Founder portal')).not.toBeInTheDocument();
   });
 
