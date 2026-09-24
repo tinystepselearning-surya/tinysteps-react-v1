@@ -325,6 +325,7 @@ export async function runAttendanceValidationLatestCheckBatch(
         freshnessUnsafeSessionIds: [],
         skippedCount: 0,
         dirtyMarkersClearedCount: 0,
+        concurrentMarkerChangeDetected: false,
         dirtyBatchAtLimit: false,
         graphCalls: 0,
         operationalMutationAllowed: false,
