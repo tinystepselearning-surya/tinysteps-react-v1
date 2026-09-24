@@ -15,6 +15,7 @@ describe('Tiny Steps role contract', () => {
   it('contains all canonical roles', () => {
     expect(AUTH_ROLES).toEqual([
       'admin',
+      'founder',
       'teacher',
       'parent',
       'kid',
@@ -79,6 +80,12 @@ describe('Tiny Steps role contract', () => {
     expect(
       normalizeAuthRole(null),
     ).toBeNull();
+  });
+
+  it('redirects Founder to the founder workspace', () => {
+    expect(
+      getRoleRedirectPath('founder'),
+    ).toBe('/founder');
   });
 
   it('redirects School Admin to the school workspace', () => {
