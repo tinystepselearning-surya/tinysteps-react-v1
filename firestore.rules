@@ -75,6 +75,16 @@ service cloud.firestore {
         || tokenRole() == 'school-admin';
     }
 
+    function isFounder() {
+      return isSignedIn() && (
+        tokenRole() == 'founder'
+        || (
+          userDocExists(request.auth.uid)
+          && userRole(request.auth.uid) == 'founder'
+        )
+      );
+    }
+
     function isSchoolAdmin() {
       return isSignedIn() && (
         isSchoolAdminToken()
@@ -597,7 +607,10 @@ function teacherProgressIdentityUnchanged() {
       // Brick 1 introduces the dedicated school tenant collections.
       allow read: if isSignedIn()
         && (
-          !isSchoolAdmin()
+          (
+            !isSchoolAdmin()
+            && !isFounder()
+          )
           || request.auth.uid == uid
         );
 
