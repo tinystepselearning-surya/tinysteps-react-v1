@@ -86,6 +86,7 @@ export default function LoginPage() {
   // Map URL segment → AuthRole
   const pathToRoleMap: Record<string, AuthRole> = {
     admin: 'admin',
+    founder: 'founder',
     surya: 'admin', // not actually used here (Surya has its own Login.tsx), but safe
     teacher: 'teacher',
     parent: 'parent',
