@@ -63,10 +63,11 @@ describe('AVS first-time date-range baseline routing', () => {
     expect(source).not.toContain('request.data?.organizerUserId');
   });
 
-  it('routes unresolved baseline sessions to visible Missing Teams Evidence cases', () => {
-    expect(source).toContain('missingEvidenceId(item.sessionId)');
+  it('keeps organizer/infrastructure-blocked baseline sessions retryable instead of creating placeholder review cases', () => {
     expect(source).toContain("'organizer_identity_unresolved'");
-    expect(source).toContain('evidenceId: missingEvidenceId(item.id)');
+    expect(source).toContain("reason: 'validation_infrastructure_retry'");
+    expect(source).toContain('markAttendanceValidationDirtySession(db, {');
+    expect(source).not.toContain('evidenceId: missingEvidenceId(item.id)');
   });
 
   it('writes only validation-owned sidecars and never operational attendance/finance', () => {
