@@ -136,11 +136,13 @@ export const PUBLIC_REDIRECT_MANIFEST = [
 export const APPLICATION_ROUTE_INTENT_MANIFEST = [
   { path: '/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
   { path: '/surya/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/founder/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
   { path: '/teacher/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
   { path: '/parent/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
   { path: '/learning-partner/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
   { path: '/unauthorized', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
   { path: '/surya/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
+  { path: '/founder/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
   { path: '/teacher/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
   { path: '/parent/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
   { path: '/kids/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
