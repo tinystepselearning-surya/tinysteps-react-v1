@@ -297,6 +297,26 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // Founder editorial review governance
+    // ----------------------------
+    // Public pages read one compact aggregate document. All writes remain
+    // server-only through the founder-authenticated callable workflow.
+    match /publicEditorialReviewState/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Private founder decisions and immutable audit events are never exposed
+    // directly to browser clients.
+    match /editorialReviewState/{docId} {
+      allow read, write: if false;
+    }
+
+    match /editorialReviewAudit/{docId} {
+      allow read, write: if false;
+    }
+
+    // ----------------------------
     // Kids helper functions (NO "let" usage)
     // ----------------------------
     function kidDocPath(kidId) {
