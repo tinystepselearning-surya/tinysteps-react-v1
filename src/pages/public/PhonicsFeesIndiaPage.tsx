@@ -62,7 +62,7 @@ const deliveryComparisonRows = [
   {
     factor: 'Phonics specialisation',
     online: 'A wider teacher pool can make it easier to look specifically for phonics-focused experience.',
-    offline: 'A nearby centre may use a general English or preschool teacher; ask about phonics-specific training and method.',
+    offline: 'A nearby centre may use a general English or preschool teacher; ask what phonics-specific training, method and experience the teacher has.',
   },
   {
     factor: 'Travel',
@@ -82,7 +82,7 @@ const deliveryComparisonRows = [
 ] as const;
 
 const parentDecisionChecks = [
-  'Is the teacher specifically trained or experienced in phonics, not only general English?',
+  'What phonics-specific training or experience does the teacher have?',
   'What phonics scope and sequence is followed, and how are blending and segmenting taught?',
   'How many children are in the class and how much individual correction does each child receive?',
   'What is the actual live teaching time per session?',
@@ -97,6 +97,9 @@ const commuteExamples = [
   { travelEachWay: 30, classMinutes: 45, totalMinutes: 105 },
   { travelEachWay: 45, classMinutes: 45, totalMinutes: 135 },
 ] as const;
+
+const oneToOneBudgetExamples = [300, 400, 500, 700] as const;
+const groupBudgetExamples = [175, 225, 300] as const;
 
 const faqItems = [
   {
@@ -138,7 +141,7 @@ const faqItems = [
       'For an offline centre, include the class fee plus pickup and drop-off time, fuel or transport, parking, waiting time, materials and the child’s travel time. A useful comparison is total family time per class: live lesson time plus outbound travel, return travel and waiting.',
   },
   {
-    question: 'How can parents check whether a phonics teacher is actually specialised?',
+    question: 'How can parents check a teacher’s phonics-specific experience?',
     answer:
       'Ask what phonics approach or scope and sequence the teacher follows, how blending and segmenting are taught, how reading errors are corrected, how progress is assessed and what phonics-specific training or experience the teacher has. This check is useful for both online and offline classes.',
   },
@@ -394,10 +397,12 @@ export default function PhonicsFeesIndiaPage() {
             <p className="px-1 text-[11px] font-bold uppercase tracking-[0.18em] text-sky-700">Quick answer</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <MoneyCard
-                title="Live 1:1 median"
+                title="Benchmark median · live 1:1"
                 amount={'~' + benchmarkMoney(research.oneToOne.median)}
                 detail={
-                  'Observed exact rates ' +
+                  'Based on ' +
+                  research.oneToOne.providerCount +
+                  ' providers · observed exact rates ' +
                   benchmarkMoney(research.oneToOne.minExactPublishedRate) +
                   '–' +
                   benchmarkMoney(research.oneToOne.maxExactPublishedRate) +
@@ -405,10 +410,12 @@ export default function PhonicsFeesIndiaPage() {
                 }
               />
               <MoneyCard
-                title="Live group median"
+                title="Benchmark median · live group"
                 amount={'~' + benchmarkMoney(research.group.median)}
                 detail={
-                  'Observed exact rates ' +
+                  'Based on ' +
+                  research.group.providerCount +
+                  ' providers · observed exact rates ' +
                   benchmarkMoney(research.group.minExactPublishedRate) +
                   '–' +
                   benchmarkMoney(research.group.maxExactPublishedRate) +
@@ -442,9 +449,8 @@ export default function PhonicsFeesIndiaPage() {
         </div>
 
         <div id="provider-prices" className="mt-7 scroll-mt-28">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-            <span>Ordered only by provider-level exact live 1:1 benchmark rate: highest → lowest.</span>
-            <span>This is a price order, not a quality/value ranking. Non-normalized monthly / “from” prices follow.</span>
+          <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+            Providers with comparable 1:1 rates are shown by published per-class price for easier comparison. This is not a quality or recommendation ranking; monthly and “from” prices that cannot be normalized are shown separately.
           </div>
           <ProviderMatrix />
         </div>
@@ -500,6 +506,65 @@ export default function PhonicsFeesIndiaPage() {
       </section>
 
 
+      <section className="border-t border-slate-200 bg-slate-50/70">
+        <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Monthly budget examples</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              What might 12 live phonics classes cost?
+            </h2>
+            <p className="mt-3 text-base leading-7 text-slate-600">
+              Parents often search for a monthly figure even when providers charge per class or by package. These are simple arithmetic examples using 12 live classes — not quoted package prices or market averages.
+            </p>
+          </div>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-sky-700">1:1 example</p>
+                  <h3 className="mt-1 text-xl font-black text-slate-950">12 private live classes</h3>
+                </div>
+                <IndianRupee className="h-5 w-5 text-sky-700" aria-hidden="true" />
+              </div>
+              <div className="divide-y divide-slate-100">
+                {oneToOneBudgetExamples.map((rate) => (
+                  <div key={rate} className="flex items-center justify-between gap-4 px-5 py-3.5">
+                    <span className="text-sm text-slate-600">{formatINR(rate)} per class</span>
+                    <span className="text-lg font-black text-slate-950">{formatINR(rate * 12)}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-indigo-700">Group example</p>
+                  <h3 className="mt-1 text-xl font-black text-slate-950">12 live group classes</h3>
+                </div>
+                <UsersRound className="h-5 w-5 text-indigo-700" aria-hidden="true" />
+              </div>
+              <div className="divide-y divide-slate-100">
+                {groupBudgetExamples.map((rate) => (
+                  <div key={rate} className="flex items-center justify-between gap-4 px-5 py-3.5">
+                    <span className="text-sm text-slate-600">{formatINR(rate)} per child / class</span>
+                    <span className="text-lg font-black text-slate-950">{formatINR(rate * 12)}</span>
+                  </div>
+                ))}
+                <div className="px-5 py-3 text-xs leading-5 text-slate-500">
+                  Group size, session length and included materials can vary, so compare the structure behind the fee.
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs leading-5 text-slate-600">
+            <strong className="text-slate-900">How to use this:</strong> multiply the provider’s effective per-class rate by the number of live classes you expect in a month or package, then add any materials, transport or other charges.
+          </div>
+        </div>
+      </section>
+
       <section className="border-y border-slate-200 bg-gradient-to-b from-white to-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
           <div className="max-w-3xl">
@@ -538,7 +603,7 @@ export default function PhonicsFeesIndiaPage() {
                 </div>
                 <h3 className="mt-2 text-xl font-black text-slate-950">Ask for phonics-specific evidence</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  A conventional English or preschool teaching background is not the same as demonstrated phonics expertise. Ask about phonics training, scope and sequence, blending, segmenting, correction and progress checks. Apply the same standard to online teachers.
+                  General English or preschool teaching experience does not by itself establish phonics-specific expertise. Ask about phonics training, scope and sequence, blending, segmenting, correction and progress checks. Apply the same standard to online teachers.
                 </p>
               </article>
 
