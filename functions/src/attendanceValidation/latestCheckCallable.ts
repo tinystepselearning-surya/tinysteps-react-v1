@@ -437,7 +437,6 @@ export async function runAttendanceValidationLatestCheckBatch(
           toDate: range.toDate,
           attemptedDeleteCount: successfullyRevalidatedSessionIds.length,
           errorName: error instanceof Error ? error.name : 'unknown',
-          errorMessage: error instanceof Error ? error.message : 'unknown',
         });
       }
     }

@@ -8,6 +8,7 @@ import {
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
 import {
   AvsEvidenceInfrastructureError,
+  emptyAvsFailureSummary,
   firstBlockingEvidenceFailure,
   summarizeAvsEvidenceIssues,
 } from './errorTaxonomy';
@@ -122,6 +123,7 @@ export async function collectMissingAttendanceValidationCase(params: {
           classSessionId,
           evidenceId,
           graphLogicalCalls: 0,
+          evidenceIssueSummary: emptyAvsFailureSummary(),
           dirtyMarkerCleared: false,
           concurrentMarkerChangeDetected: false,
           teacherIdentityMappingWritten: false,
