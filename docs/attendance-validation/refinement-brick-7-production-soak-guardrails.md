@@ -19,7 +19,8 @@ node scripts/avs-production-soak-audit.mjs \
 ```
 
 The date range is optional. By default the script audits the latest seven
-completed IST service dates through yesterday.
+completed IST service dates through yesterday. Explicit ranges are also
+restricted to yesterday IST or earlier.
 
 Optional aggregate JSON output:
 

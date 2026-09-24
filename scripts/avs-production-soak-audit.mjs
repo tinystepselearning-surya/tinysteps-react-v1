@@ -34,7 +34,14 @@ function resolveRange() {
   const defaultTo = shiftYmd(today, -1);
   const toDate = readArg('--to') || defaultTo;
   const fromDate = readArg('--from') || shiftYmd(toDate, -6);
-  return normalizeAvsSoakRange(fromDate, toDate);
+  const range = normalizeAvsSoakRange(fromDate, toDate);
+  if (range.toDate >= today) {
+    throw Object.assign(
+      new Error('AVS soak audit supports completed service dates through yesterday IST only.'),
+      { code: 'avs-soak-incomplete-date-refused' },
+    );
+  }
+  return range;
 }
 
 async function boundedQuery(label, query, cap) {

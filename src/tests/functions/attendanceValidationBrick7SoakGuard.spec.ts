@@ -18,6 +18,8 @@ describe('AVS Brick 7 production soak guardrails', () => {
     expect(audit).toContain('.limit(cap + 1).get()');
     expect(audit).toContain('graphCalls: 0');
     expect(audit).toContain('operationalWrites: 0');
+    expect(audit).toContain('range.toDate >= today');
+    expect(audit).toContain('completed service dates through yesterday IST only');
 
     for (const forbidden of [
       'MicrosoftGraphClient',
