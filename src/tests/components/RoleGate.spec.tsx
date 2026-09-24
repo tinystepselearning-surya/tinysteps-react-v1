@@ -103,6 +103,39 @@ describe('RoleGate authentication bootstrap', () => {
     expect(screen.queryByText('Verifying your access…')).not.toBeInTheDocument();
   });
 
+  it('fails closed for Founder until the database role is verified', async () => {
+    useAuthStore.setState({
+      user: {
+        uid: 'founder-1',
+        email: 'founder@example.com',
+        displayName: 'Priya',
+        role: 'founder',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/founder']}>
+          <Routes>
+            <Route element={<RoleGate allowedRoles={['founder']} loginPath="/founder/login" />}>
+              <Route path="/founder" element={<div>Founder portal</div>} />
+            </Route>
+            <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText('Verifying your access…')).toBeInTheDocument();
+    expect(screen.queryByText('Founder portal')).not.toBeInTheDocument();
+    await vi.waitFor(() => expect(getDocMock).toHaveBeenCalledTimes(1));
+  });
+
   it('does not render a School Admin route while database role verification is pending', async () => {
     useAuthStore.setState({
       user: {
