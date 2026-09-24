@@ -2,16 +2,20 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
+  CarFront,
+  Clock3,
   ExternalLink,
+  GraduationCap,
   IndianRupee,
+  Laptop2,
+  MapPin,
   Search,
   ShieldCheck,
   Sparkles,
+  UsersRound,
 } from 'lucide-react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import {
-  GROUP_MONTHLY_FEES,
-  ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
   formatINR,
 } from '../../config/pricing';
@@ -29,13 +33,6 @@ const reviewedProviderCount =
   PHONICS_FEES_INDIA_PROVIDERS.length + PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE.length;
 const publishedPriceProviderCount = PHONICS_FEES_INDIA_PROVIDERS.length;
 
-const tinyStepsGroupRows = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1');
-const tinyStepsGroupRates = tinyStepsGroupRows.map((row) => Math.round(row.monthlyFee / row.classes));
-const tinyStepsGroupMin = Math.min(...tinyStepsGroupRates);
-const tinyStepsGroupMax = Math.max(...tinyStepsGroupRates);
-const tinyStepsGroupDurationMin = Math.min(...tinyStepsGroupRows.map((row) => row.durationMinutes));
-const tinyStepsGroupDurationMax = Math.max(...tinyStepsGroupRows.map((row) => row.durationMinutes));
-
 const feeKeywords = [
   'phonics classes fees in India',
   'phonics class fees India',
@@ -52,9 +49,54 @@ const feeKeywords = [
 const comparisonChecks = [
   'Normalize the package to an effective fee per live class.',
   'Keep 1:1 and group prices separate.',
-  'Compare live class duration and group size.',
-  'Check materials, rescheduling and package terms before paying.',
+  'Compare teacher specialisation, live class duration and group size.',
+  'Add travel, waiting, materials and rescheduling costs before deciding.',
 ];
+
+const deliveryComparisonRows = [
+  {
+    factor: 'Teacher choice',
+    online: 'Families can compare teachers beyond their neighbourhood and city.',
+    offline: 'Choice is naturally limited to centres and tutors within practical travelling distance.',
+  },
+  {
+    factor: 'Phonics specialisation',
+    online: 'A wider teacher pool can make it easier to look specifically for phonics-focused experience.',
+    offline: 'A nearby centre may use a general English or preschool teacher; ask about phonics-specific training and method.',
+  },
+  {
+    factor: 'Travel',
+    online: 'No pickup, drop-off, fuel, parking or travel time for the class itself.',
+    offline: 'Outbound travel, return travel, parking and waiting can add to the family commitment.',
+  },
+  {
+    factor: 'Schedule',
+    online: 'Often easier to compare slots across a wider teacher pool.',
+    offline: 'Usually tied to centre batches, local tutor availability and travel timing.',
+  },
+  {
+    factor: 'Environment',
+    online: 'Requires a suitable device, internet connection and a reasonably quiet home setup.',
+    offline: 'Provides an in-person setting, but requires the child and parent to reach the location.',
+  },
+] as const;
+
+const parentDecisionChecks = [
+  'Is the teacher specifically trained or experienced in phonics, not only general English?',
+  'What phonics scope and sequence is followed, and how are blending and segmenting taught?',
+  'How many children are in the class and how much individual correction does each child receive?',
+  'What is the actual live teaching time per session?',
+  'How is reading progress checked and shared with parents?',
+  'What happens when a class is missed or needs to be rescheduled?',
+  'What is the full monthly spend after materials, transport and other charges?',
+  'How much weekly family time will the class require including travel and waiting?',
+] as const;
+
+const commuteExamples = [
+  { travelEachWay: 15, classMinutes: 45, totalMinutes: 75 },
+  { travelEachWay: 30, classMinutes: 45, totalMinutes: 105 },
+  { travelEachWay: 45, classMinutes: 45, totalMinutes: 135 },
+] as const;
 
 const faqItems = [
   {
@@ -86,6 +128,21 @@ const faqItems = [
       '.',
   },
   {
+    question: 'Are online phonics classes always more expensive than offline classes?',
+    answer:
+      'No. Delivery format alone does not determine value or total cost. Offline fees vary by city, centre, teacher and batch size, while online fees vary by teacher, class format and package. Parents should compare the advertised fee together with teacher specialisation, class duration, travel, waiting time, materials and rescheduling terms.',
+  },
+  {
+    question: 'What hidden costs should parents include when comparing offline phonics classes?',
+    answer:
+      'For an offline centre, include the class fee plus pickup and drop-off time, fuel or transport, parking, waiting time, materials and the child’s travel time. A useful comparison is total family time per class: live lesson time plus outbound travel, return travel and waiting.',
+  },
+  {
+    question: 'How can parents check whether a phonics teacher is actually specialised?',
+    answer:
+      'Ask what phonics approach or scope and sequence the teacher follows, how blending and segmenting are taught, how reading errors are corrected, how progress is assessed and what phonics-specific training or experience the teacher has. This check is useful for both online and offline classes.',
+  },
+  {
     question: 'Why are some public prices not converted to a per-class fee?',
     answer:
       'Tiny Steps does not estimate a class count when a provider publishes only a monthly fee, a starting price, an enquiry-led quote or a package with conflicting session information. Those public prices can still be shown, but they are excluded from the benchmark median and average.',
@@ -96,18 +153,13 @@ const faqItems = [
       'Tiny Steps reviewed official provider websites and official provider brochures, kept 1:1 and group formats separate, and normalized package totals only when the live-session count was explicit. When a provider published several exact package rates in the same format, that provider contributes one provider-level benchmark observation so one company cannot dominate the sample.',
   },
   {
-    question: 'How much are Tiny Steps phonics classes?',
-    answer:
-      'The current standard Tiny Steps rate is ₹400 per 35-minute live 1:1 class. A 12-class package is ₹4,800, 16 classes are ₹6,400 and 24 classes are ₹9,600. Tiny Steps is not included in the external-provider benchmark statistics.',
-  },
-  {
     question: 'How current are the provider prices on this page?',
     answer:
       'The named provider sources were checked on ' +
       research.reviewedLabel +
       '. Prices can change, so each provider name links to the official source used for the research and parents should confirm the latest offer before paying.',
   },
-];
+]
 
 function benchmarkMoney(value: number) {
   return formatINR(Math.round(value));
@@ -255,7 +307,7 @@ export default function PhonicsFeesIndiaPage() {
   const seoTitle = routeConfig?.title ?? 'Phonics Class Fees in India 2026 | 1:1 & Group Price Guide';
   const seoDescription =
     routeConfig?.description ??
-    'Compare 2026 phonics class fees in India for live 1:1 and group classes, including market fee bands, package costs and Tiny Steps ₹400 live 1:1 pricing.';
+    'Compare 2026 phonics class fees in India with verified public 1:1 and group prices, provider sources, and online-vs-offline cost and time factors.';
 
   useEffect(() => {
     const breadcrumbSchema = {
@@ -307,13 +359,13 @@ export default function PhonicsFeesIndiaPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-sky-800 shadow-sm">
               <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              Monthly India phonics price tracker · September 2026
+              Parent fee guide · verified September 2026
             </div>
             <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-[3.2rem] lg:leading-[1.04]">
               Phonics Class Fees in India
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              We checked public prices from India-facing phonics providers and separated live 1:1 from group classes so parents can compare like with like.
+              Compare verified public phonics prices first, then look beyond the fee: teacher specialisation, class format, travel and total family time can materially change the decision.
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-600">
               <span><strong className="text-slate-950">{reviewedProviderCount}</strong> providers checked</span>
@@ -364,13 +416,15 @@ export default function PhonicsFeesIndiaPage() {
                 }
               />
             </div>
-            <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl bg-slate-950 px-4 py-4 text-white">
+            <div className="mt-3 flex items-start justify-between gap-4 rounded-2xl bg-slate-950 px-4 py-4 text-white">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-sky-200">Tiny Steps standard 1:1</p>
-                <p className="mt-1 text-2xl font-black">{formatINR(PER_CLASS_PRICE)} <span className="text-sm font-semibold text-slate-300">/ 35 min</span></p>
-                <p className="mt-1 text-xs text-slate-400">Shown for context · excluded from the external benchmark</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-sky-200">Look beyond the advertised fee</p>
+                <p className="mt-1 text-lg font-black">Teacher fit + total family time matter too</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  The benchmark compares public live-class prices. Travel, waiting, materials and teacher specialisation should be assessed separately.
+                </p>
               </div>
-              <ShieldCheck className="h-6 w-6 shrink-0 text-sky-200" aria-hidden="true" />
+              <ShieldCheck className="mt-1 h-6 w-6 shrink-0 text-sky-200" aria-hidden="true" />
             </div>
           </div>
         </div>
@@ -445,47 +499,105 @@ export default function PhonicsFeesIndiaPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 py-9 lg:px-8 lg:py-10">
-          <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
-                <IndianRupee className="h-5 w-5" aria-hidden="true" />
+
+      <section className="border-y border-slate-200 bg-gradient-to-b from-white to-slate-50">
+        <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8 lg:py-12">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-700">Online vs offline</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              The lowest class fee is not always the lowest total cost
+            </h2>
+            <p className="mt-3 text-base leading-7 text-slate-600">
+              For young children, parents are also choosing a teacher, a weekly routine and a time commitment. A nearby offline centre can be convenient, but proximity does not by itself confirm phonics specialisation. Online classes remove the commute and widen the teacher pool, while still requiring parents to verify teaching quality and home-learning fit.
+            </p>
+          </div>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="grid grid-cols-[.8fr_1.1fr_1.1fr] bg-slate-950 px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-200">
+                <span>Factor</span>
+                <span className="flex items-center gap-1.5"><Laptop2 className="h-3.5 w-3.5" aria-hidden="true" /> Online</span>
+                <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Offline centre</span>
               </div>
-              <p className="mt-4 text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Tiny Steps price, for reference</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
-                {formatINR(PER_CLASS_PRICE)} per 35-minute live 1:1 class
-              </h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
-                Tiny Steps is intentionally excluded from the external-provider median. The current standard packages below use the same {formatINR(PER_CLASS_PRICE)} per-class rate.
-              </p>
+              <div className="divide-y divide-slate-100">
+                {deliveryComparisonRows.map((row) => (
+                  <div key={row.factor} className="grid grid-cols-1 gap-2 px-4 py-4 text-sm sm:grid-cols-[.8fr_1.1fr_1.1fr]">
+                    <p className="font-black text-slate-950">{row.factor}</p>
+                    <p className="leading-6 text-slate-600">{row.online}</p>
+                    <p className="leading-6 text-slate-600">{row.offline}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => (
-                <article key={pkg.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-sky-700">{pkg.classes} live classes</p>
-                  <p className="mt-1.5 text-2xl font-black text-slate-950">{formatINR(pkg.monthlyFee)}</p>
-                  <p className="mt-1 text-xs text-slate-500">{pkg.durationMinutes} minutes · 1:1</p>
-                </article>
-              ))}
-              <article className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-700">Small groups</p>
-                <p className="mt-1.5 text-2xl font-black text-slate-950">
-                  {formatINR(tinyStepsGroupMin)}–{formatINR(tinyStepsGroupMax)}
+            <div className="grid gap-4">
+              <article className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5">
+                <div className="flex items-center gap-2 text-sky-800">
+                  <GraduationCap className="h-5 w-5" aria-hidden="true" />
+                  <p className="text-xs font-bold uppercase tracking-[0.14em]">Teacher check</p>
+                </div>
+                <h3 className="mt-2 text-xl font-black text-slate-950">Ask for phonics-specific evidence</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  A conventional English or preschool teaching background is not the same as demonstrated phonics expertise. Ask about phonics training, scope and sequence, blending, segmenting, correction and progress checks. Apply the same standard to online teachers.
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  per child / class · {tinyStepsGroupDurationMin}–{tinyStepsGroupDurationMax} min
+              </article>
+
+              <article className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <CarFront className="h-5 w-5" aria-hidden="true" />
+                  <p className="text-xs font-bold uppercase tracking-[0.14em]">Travel check</p>
+                </div>
+                <h3 className="mt-2 text-xl font-black text-slate-950">Count pickup, drop-off and waiting</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Offline class time is only part of the commitment. Add the return journey, parking or waiting, and the child’s travel routine before comparing two programmes with similar fees.
                 </p>
               </article>
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-4 text-sm">
-            <Link to="/pricing" className="inline-flex items-center gap-2 font-bold text-sky-700 hover:text-sky-900">
-              View full Tiny Steps pricing <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <span className="text-slate-300">•</span>
-            <span className="text-slate-600">12 classes: ₹4,800 · 16: ₹6,400 · 24: ₹9,600</span>
+
+          <div className="mt-7 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sky-700">
+                  <Clock3 className="h-5 w-5" aria-hidden="true" />
+                  <p className="text-xs font-bold uppercase tracking-[0.14em]">Illustrative time math</p>
+                </div>
+                <h3 className="mt-2 text-2xl font-black text-slate-950">What can a 45-minute offline class require?</h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  These are simple examples, not market averages: class time + travel both ways. Waiting time would be additional.
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white">
+                Total family time = class + outbound travel + return travel + waiting
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {commuteExamples.map((example) => (
+                <article key={example.travelEachWay} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{example.travelEachWay} min each way</p>
+                  <p className="mt-1.5 text-2xl font-black text-slate-950">{example.totalMinutes} min</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    {example.classMinutes} min class + {example.travelEachWay * 2} min travel
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-7">
+            <div className="flex items-center gap-2 text-indigo-700">
+              <UsersRound className="h-5 w-5" aria-hidden="true" />
+              <p className="text-xs font-bold uppercase tracking-[0.14em]">Parent checklist</p>
+            </div>
+            <h3 className="mt-2 text-2xl font-black text-slate-950">Eight questions before paying for phonics classes</h3>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {parentDecisionChecks.map((item, index) => (
+                <div key={item} className="flex gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white">{index + 1}</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -495,9 +607,9 @@ export default function PhonicsFeesIndiaPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-200">Compare packages fairly</p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight">Use effective fee per live class</h2>
+              <h2 className="mt-2 text-3xl font-black tracking-tight">Compare the real cost, not only the package total</h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Package total alone is not enough. Compare the live format, teaching time and terms behind the number.
+                Package total alone is not enough. Compare live format, teaching time, teacher specialisation, travel and terms behind the number.
               </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-semibold text-slate-100">
@@ -534,6 +646,27 @@ export default function PhonicsFeesIndiaPage() {
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{item.answer}</p>
               </details>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+          <div className="grid gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:grid-cols-[1.25fr_.75fr] md:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-sky-700">Publisher disclosure</p>
+              <h2 className="mt-2 text-2xl font-black text-slate-950">Tiny Steps pricing is kept separate from the market benchmark</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Tiny Steps Learning publishes this guide. Our own price is excluded from the external-provider median and average so the market benchmark does not include the publisher’s offer.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Tiny Steps standard 1:1</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">{formatINR(PER_CLASS_PRICE)} <span className="text-sm font-semibold text-slate-500">/ 35 min</span></p>
+              <Link to="/pricing" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-sky-700 hover:text-sky-900">
+                View Tiny Steps pricing <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
