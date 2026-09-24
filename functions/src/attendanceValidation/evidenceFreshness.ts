@@ -15,6 +15,7 @@ export type EvidenceFreshnessDecision =
 
 export type EvidenceFreshnessReason =
   | 'compatible'
+  | 'evidence_document_missing'
   | 'evidence_session_id_mismatch'
   | 'operational_enrollment_unresolved'
   | 'evidence_enrollment_unresolved'

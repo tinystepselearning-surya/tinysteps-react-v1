@@ -35,12 +35,15 @@ describe('AVS unified Run Validation backend routing', () => {
     expect(targets).toBeGreaterThan(latest);
   });
 
-  it('automatically refreshes stale cases and collects first evidence for missing cases', () => {
+  it('automatically refreshes stale cases and collects first evidence for missing cases or missing referenced evidence', () => {
     expect(source).toContain(
       'refreshAttendanceValidationCaseEvidence({',
     );
     expect(source).toContain(
       'collectMissingAttendanceValidationCase({',
+    );
+    expect(source).toContain(
+      'missingCaseSessionIds: latest.baselineRequiredSessionIds',
     );
     expect(source).toContain(
       'AVS_FORCE_FRESH_RANGE_CONCURRENCY',

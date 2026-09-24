@@ -319,6 +319,8 @@ export async function runAttendanceValidationLatestCheckBatch(
         revalidatedCount: 0,
         baselineRequiredCount: 0,
         baselineRequiredSessionIds: [],
+        missingReferencedEvidenceCount: 0,
+        missingReferencedEvidenceSessionIds: [],
         freshEvidenceRequiredCount: 0,
         freshEvidenceRequiredSessionIds: [],
         freshnessUnsafeCount: 0,
@@ -374,6 +376,7 @@ export async function runAttendanceValidationLatestCheckBatch(
       ? await runAv53ShadowWithFirestore(db, {
           runId,
           workItems: plan.workItems,
+          missingEvidenceRequiresFresh: true,
         })
       : null;
 
@@ -381,9 +384,23 @@ export async function runAttendanceValidationLatestCheckBatch(
     const skippedSessionIds = new Set(
       skippedRows.map((item) => item.classSessionId),
     );
-    const freshEvidenceRequiredSessionIds = skippedRows
-      .filter((item) => item.reason === 'fresh_evidence_required')
+    const missingReferencedEvidenceSessionIds = skippedRows
+      .filter((item) =>
+        item.reason === 'fresh_evidence_required'
+        && item.freshnessReasons?.includes('evidence_document_missing'))
       .map((item) => item.classSessionId);
+    const missingReferencedEvidenceSet = new Set(
+      missingReferencedEvidenceSessionIds,
+    );
+    const freshEvidenceRequiredSessionIds = skippedRows
+      .filter((item) =>
+        item.reason === 'fresh_evidence_required'
+        && !missingReferencedEvidenceSet.has(item.classSessionId))
+      .map((item) => item.classSessionId);
+    const baselineRequiredSessionIds = [...new Set([
+      ...plan.baselineRequiredSessionIds,
+      ...missingReferencedEvidenceSessionIds,
+    ])];
     const freshnessUnsafeSessionIds = skippedRows
       .filter(
         (item) => item.reason === 'cached_evidence_compatibility_unresolved',
@@ -437,8 +454,11 @@ export async function runAttendanceValidationLatestCheckBatch(
       runId: av53Result?.runId ?? null,
       dirtyFoundCount: dirtyDocs.length,
       revalidatedCount: successfullyRevalidatedSessionIds.length,
-      baselineRequiredCount: plan.baselineRequiredSessionIds.length,
-      baselineRequiredSessionIds: plan.baselineRequiredSessionIds,
+      baselineRequiredCount: baselineRequiredSessionIds.length,
+      baselineRequiredSessionIds,
+      missingReferencedEvidenceCount:
+        missingReferencedEvidenceSessionIds.length,
+      missingReferencedEvidenceSessionIds,
       freshEvidenceRequiredCount: freshEvidenceRequiredSessionIds.length,
       freshEvidenceRequiredSessionIds,
       freshnessUnsafeCount: freshnessUnsafeSessionIds.length,

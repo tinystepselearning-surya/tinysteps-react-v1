@@ -99,11 +99,19 @@ export async function collectMissingAttendanceValidationCase(params: {
     const [caseSnapshot, sessionSnapshot, dirtySnapshot] =
       await params.db.getAll(caseRef, sessionRef, dirtyRef);
 
+    let referencedEvidenceReadCount = 0;
     if (caseSnapshot.exists) {
       const data = (caseSnapshot.data() || {}) as Record<string, unknown>;
       const evidenceId = String(data.evidenceId || '').trim();
       if (evidenceId) {
-        return {
+        const referencedEvidenceSnapshot = await params.db
+          .collection('attendanceValidationEvidence')
+          .doc(cleanId(evidenceId, 'evidenceId'))
+          .get();
+        referencedEvidenceReadCount = 1;
+
+        if (referencedEvidenceSnapshot.exists) {
+          return {
           ok: true,
           status: 'existing_case' as const,
           classSessionId,
@@ -118,12 +126,15 @@ export async function collectMissingAttendanceValidationCase(params: {
             validationCaseReads: 1,
             sessionReads: 1,
             dirtyMarkerReads: 1,
+            referencedEvidenceReads: referencedEvidenceReadCount,
             av53PointReads: 0,
             sameDayContextReads: 0,
             teacherIdentityTransactionReads: 0,
-            boundedReadsExcludingStaffRegistry: 3,
+            boundedReadsExcludingStaffRegistry:
+              3 + referencedEvidenceReadCount,
           },
         };
+        }
       }
     }
 
@@ -221,12 +232,14 @@ export async function collectMissingAttendanceValidationCase(params: {
         validationCaseReads: 1,
         sessionReads: 1,
         dirtyMarkerReads: 1,
+        referencedEvidenceReads: referencedEvidenceReadCount,
         av53PointReads: av53Result.pointReadDocumentBudget,
         sameDayContextReads: av53Result.sameDayContextReadDocumentBudget,
         teacherIdentityTransactionReads:
           identityBinding.transactionReadCount,
         boundedReadsExcludingStaffRegistry:
           3
+          + referencedEvidenceReadCount
           + identityBinding.transactionReadCount
           + av53Result.pointReadDocumentBudget
           + av53Result.sameDayContextReadDocumentBudget,
