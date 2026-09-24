@@ -91,6 +91,10 @@ export default function PhonicsKnowledgePage() {
   const { slug = '' } = useParams();
   const pilotPage = getPhonicsProgrammaticPilotPageBySlug(slug);
   const page = pilotPage ?? getPublishedPhonicsResourcePageBySlug(slug);
+  const publicEditorialApproval = usePublicEditorialApproval(
+    page ? String(page.conceptId) : '',
+    page ? String(page.publicationRevision) : '',
+  );
   if (!page) return <NotFoundPage />;
 
   const { concept } = page;
@@ -103,7 +107,6 @@ export default function PhonicsKnowledgePage() {
   const discoveryCluster = getPhonicsResourceDiscoveryClusterForPath(page.path);
   const relatedGuides = getRelatedPhonicsResourcePages(page.path, 4);
   const staticEditorialReview = getApprovedPhonicsEditorialReview(page.path);
-  const publicEditorialApproval = usePublicEditorialApproval(concept.id, page.publicationRevision);
   const editorialReview = publicEditorialApproval
     ? {
         editorialReviewStatus: 'approved' as const,
