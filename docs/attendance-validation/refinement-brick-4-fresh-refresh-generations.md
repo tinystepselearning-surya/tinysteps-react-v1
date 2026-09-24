@@ -48,7 +48,8 @@ Unchanged:
 - selected range max: 31 days;
 - fresh work max: 100 cases per invocation;
 - Microsoft Graph concurrency: 5;
-- one callable instance at a time.
+- one callable instance with request concurrency **1**;
+- internal Microsoft Graph case concurrency remains **5**.
 
 ## Failures and retries
 

@@ -562,6 +562,7 @@ export const forceRefreshAttendanceValidationRange = onCall(
     labels: { 'avs-public-invoker': 'true' },
     timeoutSeconds: 540,
     maxInstances: 1,
+    concurrency: 1,
     secrets: [
       MICROSOFT_TENANT_ID,
       MICROSOFT_CLIENT_ID,

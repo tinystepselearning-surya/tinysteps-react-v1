@@ -62,6 +62,12 @@ describe('AVS Force Fresh generation routing', () => {
     );
   });
 
+  it('serializes coordinator requests while keeping internal case concurrency at five', () => {
+    expect(source).toContain('maxInstances: 1');
+    expect(source).toContain('concurrency: 1');
+    expect(source).toContain('AVS_FORCE_FRESH_RANGE_CONCURRENCY');
+  });
+
   it('supports complete-with-failures and bounded failed-case retries', () => {
     expect(source).toContain("status !== 'complete_with_failures'");
     expect(source).toContain(".where('status', '==', 'failed')");
