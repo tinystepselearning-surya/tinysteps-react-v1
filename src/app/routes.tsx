@@ -103,6 +103,7 @@ const ParentCommonMistakes = lazy(() => import('../pages/parents/common-mistakes
 
 // Dashboards
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
+const FounderDashboard = lazy(() => import('../pages/founder/FounderDashboard'));
 const TeacherStudentTopicProgressPage = lazy(() => import('../pages/teacher/TeacherStudentTopicProgressPage'));
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const LessonLibraryPage = lazy(() => import('../pages/teacher/LessonLibraryPage'));
@@ -651,6 +652,7 @@ const router = createBrowserRouter(
         // ---------- Public auth routes ----------
         { path: 'login', element: <LoginPage /> },
         { path: 'surya/login', element: <Login /> },
+        { path: 'founder/login', element: <LoginPage /> },
         { path: 'admin/login', element: <Navigate to="/surya/login" replace /> },
         { path: 'Surya/login', element: <Navigate to="/surya/login" replace /> },
 
@@ -686,6 +688,15 @@ const router = createBrowserRouter(
         { path: 'admin/attendance-validation', element: <Navigate to="/surya?tab=attendance-validation" replace /> },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },
         { path: 'Surya', element: <Navigate to="/surya" replace /> },
+
+        // ---------- Founder portal ----------
+        {
+          path: 'founder',
+          element: withRoleGate(['founder'], '/founder/login'),
+          children: [
+            { index: true, element: <FounderDashboard /> },
+          ],
+        },
 
         // ---------- Internal messaging ----------
         {
