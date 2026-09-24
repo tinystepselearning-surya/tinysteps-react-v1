@@ -30,7 +30,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
     expect(dashboard).toContain('Opening this page does not read them automatically.');
     expect(dashboard).toContain('Display names may use bounded enrollment and teacher-user reads only');
-    expect(dashboard).toContain('Load Saved Results');
+    expect(dashboard).toContain('Load Results');
   });
 
   it('uses button tabs instead of a classification select', () => {
@@ -91,7 +91,7 @@ describe('AV6 admin attendance validation dashboard', () => {
 
   it('shows the permanent September 2026 validation scope', () => {
     expect(dashboard).toContain("export const AV6_VALIDATION_START_YMD = '2026-09-01'");
-    expect(dashboard).toContain('Read-only AVS shadow cases from {AV6_VALIDATION_START_YMD} onward');
+    expect(dashboard).toContain('Review saved AVS results and validate completed sessions from {AV6_VALIDATION_START_YMD} onward');
   });
 
   it('is wired into desktop, mobile, tab and route navigation', () => {
@@ -129,7 +129,7 @@ describe('AV6 admin attendance validation dashboard', () => {
 
   it('labels dashboard counts as a loaded-window view rather than global totals', () => {
     expect(dashboard).toContain('Loaded window');
-    expect(dashboard).toContain('Within loaded window');
+    expect(dashboard).toContain("{' '}verified");
     expect(dashboard).toContain('Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.');
   });
 

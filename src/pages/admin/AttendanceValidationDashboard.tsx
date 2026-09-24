@@ -276,7 +276,7 @@ function safeForceFreshFailureMessage(error: unknown): string {
     return 'Re-fetch stopped before Microsoft Graph: the canonical Teams organizer is not configured yet.';
   }
 
-  return 'Re-fetch this case failed. No operational attendance or finance was changed.';
+  return 'Teams re-fetch failed safely. No operational attendance or finance was changed.';
 }
 
 function normalizeClassification(value: unknown): Av6Classification {
