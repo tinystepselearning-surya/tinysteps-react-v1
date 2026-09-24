@@ -69,9 +69,11 @@ const RoleGate: React.FC<RoleGateProps> = ({
           ? 'error'
           : 'success';
   const requiresAuthoritativeRoleVerification =
-    allowedRoles.includes('schoolAdmin') &&
+    (allowedRoles.includes('schoolAdmin') || allowedRoles.includes('founder')) &&
     shouldResolveRoleFromDb &&
     authStatus === 'authenticated';
+  const authoritativeRoleIsAllowed =
+    !!latestRole && allowedRoles.includes(latestRole);
   const decision: 'verify' | 'allow' | 'login' | 'unauthorized' =
     authStatus === 'initializing'
       ? 'verify'
@@ -80,7 +82,7 @@ const RoleGate: React.FC<RoleGateProps> = ({
         : requiresAuthoritativeRoleVerification && roleLoading
           ? 'verify'
           : requiresAuthoritativeRoleVerification &&
-              (roleError || latestRole !== 'schoolAdmin')
+              (roleError || !authoritativeRoleIsAllowed)
             ? 'unauthorized'
             : !claimedRoleIsAllowed && !isAllowed && roleLoading
               ? 'verify'
