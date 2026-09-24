@@ -31,7 +31,9 @@ describe('AVS Force Fresh generation routing', () => {
       'refreshAttendanceValidationCaseEvidence({',
     );
     expect(singleCaseSource).toContain('inputFingerprint,');
-    expect(source).toContain('loadProductionStaffIdentityRegistry(db)');
+    expect(source).toContain(
+      'loadProductionStaffIdentityRegistry(params.db)',
+    );
     expect(source).toContain('staffRegistry: staffRegistry!');
   });
 
