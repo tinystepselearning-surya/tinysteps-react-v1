@@ -103,6 +103,42 @@ describe('RoleGate authentication bootstrap', () => {
     expect(screen.queryByText('Verifying your access…')).not.toBeInTheDocument();
   });
 
+  it('does not let the admin superuser bypass the Founder gate', async () => {
+    getDocMock.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ role: 'admin' }),
+    });
+    useAuthStore.setState({
+      user: {
+        uid: 'admin-1',
+        email: 'suryaz@tinysteps.com',
+        displayName: 'Admin',
+        role: 'admin',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/founder']}>
+          <Routes>
+            <Route element={<RoleGate allowedRoles={['founder']} loginPath="/founder/login" />}>
+              <Route path="/founder" element={<div>Founder portal</div>} />
+            </Route>
+            <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Unauthorized')).toBeInTheDocument();
+    expect(screen.queryByText('Founder portal')).not.toBeInTheDocument();
+  });
+
   it('fails closed for Founder until the database role is verified', async () => {
     useAuthStore.setState({
       user: {
