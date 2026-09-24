@@ -46,6 +46,12 @@ export function usePublicEditorialApproval(
 
   useEffect(() => {
     let active = true;
+    if (!conceptId || !publicationRevision) {
+      setApproval(null);
+      return () => {
+        active = false;
+      };
+    }
     void loadPublicApprovals().then((approvals) => {
       if (!active) return;
       const candidate = approvals[conceptId];
