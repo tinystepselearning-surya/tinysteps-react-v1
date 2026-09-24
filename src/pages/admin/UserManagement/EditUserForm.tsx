@@ -171,6 +171,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="founder">Founder</SelectItem>
                         <SelectItem value="teacher">Teacher</SelectItem>
                         <SelectItem value="parent">Parent</SelectItem>
                         <SelectItem value="learningPartner">Learning Partner</SelectItem>
