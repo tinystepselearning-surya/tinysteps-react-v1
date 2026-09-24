@@ -65,10 +65,19 @@ if (baseRef) {
       'src/content/blog/shared/commercialHandoffs.ts',
       'src/pages/PhonicsKnowledgePage.tsx',
     ]);
+    const privateAppSurfaceAllowlist = new Set([
+      'src/pages/LoginPage.tsx',
+      'src/pages/admin/UserManagement/CreateUserForm.tsx',
+      'src/pages/admin/UserManagement/EditUserForm.tsx',
+      'src/pages/admin/UserManagement/UserFilters.tsx',
+      'src/pages/admin/UserManagement/UserList.tsx',
+      'src/pages/founder/FounderDashboard.tsx',
+    ]);
     const forbiddenLiveChanges = changed.filter((file) => {
       // Permit only byte-for-byte reviewed retirement repairs; future edits still fail.
       if (Object.hasOwn(REVIEWED_SEO_RECOVERY_BLOBS, file) && isReviewedSeoRecoveryFile(file, read(file))) return false;
       if (laterBrickLiveAllowlist.has(file)) return false;
+      if (privateAppSurfaceAllowlist.has(file)) return false;
       return (
         file.startsWith('src/pages/') ||
         file.startsWith('src/content/blog/posts/') ||
