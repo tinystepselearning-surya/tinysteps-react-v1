@@ -32,7 +32,9 @@ const RoleGate: React.FC<RoleGateProps> = ({
     [user?.email],
   );
 
-  const shouldResolveRoleFromDb = Boolean(user?.uid) && !superUser;
+  const founderRoute = allowedRoles.includes('founder');
+  const superUserMayBypass = superUser && !founderRoute;
+  const shouldResolveRoleFromDb = Boolean(user?.uid) && !superUserMayBypass;
   const {
     data: latestRole,
     isLoading: roleLoading,
@@ -57,9 +59,10 @@ const RoleGate: React.FC<RoleGateProps> = ({
 
   const claimedRole = normalizeAuthRole(user?.role);
   const effectiveRole = latestRole ?? claimedRole;
-  const isAllowed = superUser || (!!effectiveRole && allowedRoles.includes(effectiveRole));
+  const isAllowed =
+    superUserMayBypass || (!!effectiveRole && allowedRoles.includes(effectiveRole));
   const claimedRoleIsAllowed =
-    superUser || (!!claimedRole && allowedRoles.includes(claimedRole));
+    superUserMayBypass || (!!claimedRole && allowedRoles.includes(claimedRole));
   const roleQueryStatus: 'idle' | 'loading' | 'success' | 'error' =
     !shouldResolveRoleFromDb || authStatus !== 'authenticated'
       ? 'idle'
