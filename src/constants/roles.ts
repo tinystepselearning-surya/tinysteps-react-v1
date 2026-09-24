@@ -10,6 +10,7 @@
  */
 export const AUTH_ROLES = [
   'admin',
+  'founder',
   'teacher',
   'parent',
   'kid',
@@ -24,6 +25,7 @@ const AUTH_ROLE_SET =
 
 export const ROLE_LABELS: Record<AuthRole, string> = {
   admin: 'Administrator',
+  founder: 'Founder',
   teacher: 'Teacher',
   parent: 'Parent',
   kid: 'Kid',
@@ -33,6 +35,7 @@ export const ROLE_LABELS: Record<AuthRole, string> = {
 
 export const ROLE_REDIRECT_PATHS: Record<AuthRole, string> = {
   admin: '/surya',
+  founder: '/founder',
   teacher: '/teacher',
   parent: '/parent',
   kid: '/parent/kids',
@@ -42,6 +45,7 @@ export const ROLE_REDIRECT_PATHS: Record<AuthRole, string> = {
 
 const NORMALIZED_ROLE_MAP: Record<string, AuthRole> = {
   admin: 'admin',
+  founder: 'founder',
   teacher: 'teacher',
   parent: 'parent',
   kid: 'kid',
