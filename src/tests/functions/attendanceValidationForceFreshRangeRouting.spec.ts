@@ -70,9 +70,11 @@ describe('AVS Force Fresh generation routing', () => {
     expect(source).toContain('AVS_FORCE_FRESH_RANGE_CONCURRENCY');
   });
 
-  it('supports complete-with-failures and bounded failed-case retries', () => {
+  it('retries only taxonomy-approved retryable failures', () => {
     expect(source).toContain("status !== 'complete_with_failures'");
-    expect(source).toContain(".where('status', '==', 'failed')");
+    expect(source).toContain(".where('retryable', '==', true)");
+    expect(source).toContain('retryableFailureCount');
+    expect(source).toContain('actionRequiredFailureCount');
     expect(source).toContain('retryCursorCaseId');
     expect(source).toContain('retryFailures');
     expect(source).toContain('AVS_FORCE_FRESH_RANGE_MAX_CASES');

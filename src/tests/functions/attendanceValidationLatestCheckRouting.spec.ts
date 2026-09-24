@@ -92,9 +92,11 @@ describe('AVS changed-only latest-check callable routing', () => {
     expect(source).toContain('operationalMutationAllowed: false');
   });
 
-  it('is explicitly exported as a deployable callable', () => {
+  it('keeps the legacy callable as a private compatibility shim only', () => {
     expect(functionsIndex).toContain(
       'export { runAttendanceValidationLatestCheck } from "./attendanceValidation/latestCheckCallable";',
     );
+    expect(source).toContain("invoker: 'private'");
+    expect(source).not.toContain("'avs-public-invoker': 'true'");
   });
 });

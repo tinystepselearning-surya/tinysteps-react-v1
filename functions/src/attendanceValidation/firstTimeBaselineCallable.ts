@@ -16,7 +16,18 @@ import {
   type AvsBaselineCursor,
 } from './baselinePlanner';
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
+import {
+  classifyAvsFailure,
+  classifyAvsReason,
+  emptyAvsFailureSummary,
+  firstBlockingEvidenceFailure,
+  mergeAvsFailureSummaries,
+  summarizeAvsEvidenceIssues,
+  summarizeAvsFailures,
+  type AvsFailureDescriptor,
+} from './errorTaxonomy';
 import { buildBaselineEvidenceSessionSnapshot } from './freshEvidenceSession';
+import { markAttendanceValidationDirtySession } from './dirtySessionMarker';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
 import {
@@ -161,6 +172,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
+        failureSummary: emptyAvsFailureSummary(),
         graphLogicalCalls: 0,
         identityMappingsWritten: 0,
         identityClaimsWritten: 0,
@@ -237,6 +249,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
+        failureSummary: emptyAvsFailureSummary(),
         graphLogicalCalls: 0,
         identityMappingsWritten: 0,
         identityClaimsWritten: 0,
@@ -274,7 +287,12 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     const existingCaseCount = batchPlan.batch.length - missingCaseRows.length;
 
     const snapshots = new Map<string, ReturnType<typeof buildBaselineEvidenceSessionSnapshot>>();
-    const blocked: Array<{ sessionId: string; reason: string }> = [];
+    const blocked: Array<{
+      sessionId: string;
+      reason: string;
+      failure: AvsFailureDescriptor;
+    }> = [];
+    const failureSummaries = [];
 
     for (const item of missingCaseRows) {
       try {
@@ -284,12 +302,13 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         );
         snapshots.set(item.id, sessionSnapshot);
       } catch (error) {
+        const failure = classifyAvsFailure(error);
         blocked.push({
           sessionId: item.id,
-          reason: error instanceof Error
-            ? error.message
-            : 'session_snapshot_invalid',
+          reason: failure.code,
+          failure,
         });
+        failureSummaries.push(summarizeAvsFailures([failure]));
       }
     }
 
@@ -349,13 +368,17 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       if (!expectedSession) continue;
 
       if (!organizerUserId) {
+        const failure = classifyAvsReason(organizerResolutionFailure);
         blocked.push({
           sessionId: item.id,
-          reason: organizerResolutionFailure,
+          reason: failure.code,
+          failure,
         });
-        workItems.push({
-          classSessionId: item.id,
-          evidenceId: missingEvidenceId(item.id),
+        failureSummaries.push(summarizeAvsFailures([failure]));
+        await markAttendanceValidationDirtySession(db, {
+          sessionId: item.id,
+          session: item.data,
+          reason: 'validation_infrastructure_retry',
         });
         continue;
       }
@@ -377,6 +400,25 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
           store: evidenceStore,
         },
       );
+
+      const evidenceIssueSummary =
+        summarizeAvsEvidenceIssues(evidenceResult.evidence.issues);
+      const blockingEvidenceFailure =
+        firstBlockingEvidenceFailure(evidenceResult.evidence.issues);
+      if (blockingEvidenceFailure) {
+        blocked.push({
+          sessionId: item.id,
+          reason: blockingEvidenceFailure.code,
+          failure: blockingEvidenceFailure,
+        });
+        failureSummaries.push(evidenceIssueSummary);
+        await markAttendanceValidationDirtySession(db, {
+          sessionId: item.id,
+          session: item.data,
+          reason: 'validation_infrastructure_retry',
+        });
+        continue;
+      }
 
       const identityBinding = await bindTeacherIdentityFromFreshEvidence({
         db,
@@ -465,6 +507,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       skippedCount: av53Result?.skippedCount ?? 0,
       blockedCount: blocked.length,
       blocked,
+      failureSummary: mergeAvsFailureSummaries(...failureSummaries),
       graphLogicalCalls: counted.count(),
       identityMappingsWritten,
       identityClaimsWritten,
@@ -497,8 +540,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
   {
     region: REGION,
     memory: '512MiB',
-    invoker: 'public',
-    labels: { 'avs-public-invoker': 'true' },
+    invoker: 'private',
     timeoutSeconds: 540,
     maxInstances: 1,
     secrets: [

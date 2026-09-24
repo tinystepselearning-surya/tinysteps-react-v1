@@ -6,6 +6,12 @@ import {
   ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION,
 } from './dirtySessionMarker';
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
+import {
+  AvsEvidenceInfrastructureError,
+  emptyAvsFailureSummary,
+  firstBlockingEvidenceFailure,
+  summarizeAvsEvidenceIssues,
+} from './errorTaxonomy';
 import { buildBaselineEvidenceSessionSnapshot } from './freshEvidenceSession';
 import {
   createOccurrenceSelectingTeamsEvidenceGraphClient,
@@ -117,6 +123,7 @@ export async function collectMissingAttendanceValidationCase(params: {
           classSessionId,
           evidenceId,
           graphLogicalCalls: 0,
+          evidenceIssueSummary: emptyAvsFailureSummary(),
           dirtyMarkerCleared: false,
           concurrentMarkerChangeDetected: false,
           teacherIdentityMappingWritten: false,
@@ -170,6 +177,17 @@ export async function collectMissingAttendanceValidationCase(params: {
       },
     );
 
+    const evidenceIssueSummary =
+      summarizeAvsEvidenceIssues(evidenceResult.evidence.issues);
+    const blockingEvidenceFailure =
+      firstBlockingEvidenceFailure(evidenceResult.evidence.issues);
+    if (blockingEvidenceFailure) {
+      throw new AvsEvidenceInfrastructureError(
+        blockingEvidenceFailure,
+        evidenceIssueSummary,
+      );
+    }
+
     const identityBinding = await bindTeacherIdentityFromFreshEvidence({
       db: params.db,
       evidence: evidenceResult.evidence,
@@ -212,7 +230,6 @@ export async function collectMissingAttendanceValidationCase(params: {
         logger.warn('AVS unified validation kept a newer dirty marker', {
           classSessionId,
           errorName: error instanceof Error ? error.name : 'unknown',
-          errorMessage: error instanceof Error ? error.message : 'unknown',
         });
       }
     }
@@ -223,6 +240,7 @@ export async function collectMissingAttendanceValidationCase(params: {
       classSessionId,
       evidenceId: evidenceResult.evidence.id,
       graphLogicalCalls: counted.count(),
+      evidenceIssueSummary,
       dirtyMarkerCleared,
       concurrentMarkerChangeDetected,
       teacherIdentityMappingWritten: identityBinding.overrideWrite,
