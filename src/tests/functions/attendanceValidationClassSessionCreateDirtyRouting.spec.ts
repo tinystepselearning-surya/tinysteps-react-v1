@@ -24,7 +24,10 @@ describe('AVS historical class-session creation trigger routing', () => {
 
   it('queues only already-completed historical service dates', () => {
     expect(source).toContain(
-      'shouldMarkCreatedClassSessionDirty(session)',
+      'shouldMarkCreatedClassSessionDirty(',
+    );
+    expect(source).toContain(
+      'eventDate(event.time)',
     );
     expect(source).toContain(
       "reason: 'historical_session_created'",
