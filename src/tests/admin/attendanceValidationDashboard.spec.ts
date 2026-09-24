@@ -30,7 +30,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
     expect(dashboard).toContain('Opening this page does not read them automatically.');
     expect(dashboard).toContain('Display names may use bounded enrollment and teacher-user reads only');
-    expect(dashboard).toContain('Load Saved Results');
+    expect(dashboard).toContain('Load Results');
   });
 
   it('uses button tabs instead of a classification select', () => {
@@ -91,7 +91,7 @@ describe('AV6 admin attendance validation dashboard', () => {
 
   it('shows the permanent September 2026 validation scope', () => {
     expect(dashboard).toContain("export const AV6_VALIDATION_START_YMD = '2026-09-01'");
-    expect(dashboard).toContain('Read-only AVS shadow cases from {AV6_VALIDATION_START_YMD} onward');
+    expect(dashboard).toContain('Review saved AVS results and validate completed sessions from {AV6_VALIDATION_START_YMD} onward');
   });
 
   it('is wired into desktop, mobile, tab and route navigation', () => {
@@ -129,155 +129,102 @@ describe('AV6 admin attendance validation dashboard', () => {
 
   it('labels dashboard counts as a loaded-window view rather than global totals', () => {
     expect(dashboard).toContain('Loaded window');
-    expect(dashboard).toContain('Within loaded window');
+    expect(dashboard).toContain("{' '}verified");
     expect(dashboard).toContain('Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.');
   });
 
-  it('keeps fresh revalidation visibly separate from cached result loading', () => {
-    expect(dashboard).toContain('Load Saved Results');
-    expect(dashboard).toContain('Run Latest Check');
+  it('shows the refined normal operator surface with only Load Results and Run Validation', () => {
+    expect(dashboard).toContain('Load Results');
+    expect(dashboard).toContain('Run Validation');
+    expect(dashboard).toContain('Continue Validation');
     expect(dashboard).toContain(
-      'Run Latest Check revalidates only changed sessions with cached evidence and makes zero Microsoft Graph calls.',
-    );
-    expect(dashboard).toContain(
-      'Latest Check is intentionally capped at 31 calendar days per run.',
-    );
-  });
-
-  it('calls the changed-only backend with the selected range and reloads that same saved window', () => {
-    expect(dashboard).toContain(
-      "'runAttendanceValidationLatestCheck'",
+      "'runAttendanceValidationRange'",
     );
     expect(dashboard).toContain('{ fromDate, toDate }');
     expect(dashboard).toContain('await loadSavedCases(false, true)');
-    expect(dashboard).toContain('if (!preserveCurrentTab) {');
-    expect(dashboard).toContain("setClassificationFilter('all')");
-    expect(dashboard).toContain("setTeacherFilter('all')");
     expect(callFunctions).toContain(
-      "runAttendanceValidationLatestCheck: 'asia-south1'",
+      "runAttendanceValidationRange: 'asia-south1'",
     );
   });
 
-  it('exposes a separate cached multi-teacher identity rollout using the existing latest-check callable', () => {
-    expect(dashboard).toContain('Sync Teacher Identities');
-    expect(dashboard).toContain('runTeacherIdentityRollout');
-    expect(dashboard).toContain("mode: 'identity_rollout'");
+  it('hides legacy pipeline stages from the normal admin UI', () => {
+    expect(dashboard).not.toContain('Run Latest Check');
+    expect(dashboard).not.toContain('Sync Teacher Identities');
+    expect(dashboard).not.toContain('Run First-Time Baseline');
+    expect(dashboard).not.toContain('Force Fresh Selected Range');
+    expect(dashboard).not.toContain('Teacher Identity Rollout completed');
+    expect(dashboard).not.toContain('First-Time Baseline batch complete');
+    expect(dashboard).not.toContain('Latest Check completed');
+  });
+
+  it('keeps validation bounded to completed ranges and lets the backend choose cached versus fresh work', () => {
     expect(dashboard).toContain(
-      'Teacher Identity Rollout uses only cached AVS evidence and makes zero Microsoft Graph calls',
+      'Run Validation supports a maximum of 31 calendar days at a time.',
     );
-    expect(dashboard).toContain('Teacher Identity Rollout completed');
-    expect(dashboard).toContain('identityRolloutResult.identityConfigWrites');
-    expect(dashboard).toContain('identityRolloutResult.revalidatedCount');
-    expect(dashboard).toContain('identityRolloutResult.graphCalls');
-    expect(dashboard).toContain('No identity was guessed or reassigned.');
-    expect(dashboard).toContain('await loadSavedCases(false, true)');
-    expect(callFunctions).toContain(
-      "runAttendanceValidationLatestCheck: 'asia-south1'",
+    expect(dashboard).toContain(
+      'Run Validation can include only completed service dates through yesterday IST.',
+    );
+    expect(dashboard).toContain('max={yesterdayIstYmd()}');
+    expect(dashboard).toContain(
+      'cached revalidation, first-time Teams evidence, or a fresh Teams re-fetch',
+    );
+    expect(dashboard).toContain(
+      'Fresh Microsoft Graph reads occur only when the unified backend determines they are required.',
     );
   });
 
-  it('shows an auditable latest-check result summary without implying Graph refresh', () => {
-    expect(dashboard).toContain('Latest Check completed');
-    expect(dashboard).toContain('latestCheckResult.dirtyFoundCount');
-    expect(dashboard).toContain('latestCheckResult.revalidatedCount');
-    expect(dashboard).toContain('latestCheckResult.baselineRequiredCount');
+  it('shows a compact Run Validation result with continuation instead of pipeline-stage cards', () => {
+    expect(dashboard).toContain('Validation batch complete');
+    expect(dashboard).toContain('validationResult.processedSessionCount');
+    expect(dashboard).toContain('validationResult.cachedRevalidatedCount');
+    expect(dashboard).toContain('validationResult.freshRefreshedCount');
+    expect(dashboard).toContain('validationResult.firstEvidenceCollectedCount');
+    expect(dashboard).toContain('validationResult.graphLogicalCalls');
+    expect(dashboard).toContain('validationResult.continueValidation');
     expect(dashboard).toContain(
-      'latestCheckResult.readBudget.boundedReadsExcludingStaffRegistry',
-    );
-    expect(dashboard).toContain('Microsoft Graph calls: {latestCheckResult.graphCalls}');
-    expect(dashboard).toContain('latestCheckResult.dirtyBatchAtLimit');
-    expect(dashboard).toContain('latestCheckResult.concurrentMarkerChangeDetected');
-  });
-
-  it('keeps latest-check range validation stricter than cached viewing', () => {
-    expect(dashboard).toContain('inclusiveDateRangeDays(fromDate, toDate)');
-    expect(dashboard).toContain(
-      'Run Latest Check supports a maximum of 31 calendar days at a time.',
+      'Click Continue Validation to process the next bounded batch',
     );
   });
 
-  it('keeps Force Fresh Teams Evidence separate, explicit, and per case', () => {
-    expect(dashboard).toContain('Force Fresh Teams Evidence');
-    expect(dashboard).toContain(
-      'Force Fresh Teams Evidence will make new Microsoft Graph reads for this one class',
-    );
-    expect(dashboard).toContain(
-      "'forceRefreshAttendanceValidationEvidence'",
-    );
-    expect(dashboard).toContain(
-      'caseId: item.id',
-    );
-    expect(dashboard).toContain(
-      'inputFingerprint: item.inputFingerprint',
-    );
-    expect(dashboard).toContain('await loadSavedCases(false, true)');
-    expect(callFunctions).toContain(
-      "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
-    );
-  });
-
-  it('wires selected-range Force Fresh generations with confirmation, continuation, retry, rerun, and auto reload', () => {
-    expect(dashboard).toContain('Force Fresh Selected Range');
-    expect(dashboard).toContain('Continue Fresh Refresh');
-    expect(dashboard).toContain('Retry Failed Refreshes');
-    expect(dashboard).toContain('Re-fetch This Range Again');
-    expect(dashboard).toContain(
-      'up to 100 existing AVS cases in this invocation',
-    );
+  it('moves selected-range fresh Graph collection under Advanced and preserves Brick 4 generations', () => {
+    expect(dashboard).toContain('<summary className="cursor-pointer text-sm font-medium text-slate-700">');
+    expect(dashboard).toContain('Advanced');
+    expect(dashboard).toContain('Re-fetch Teams Data');
+    expect(dashboard).toContain('Continue Re-fetch');
+    expect(dashboard).toContain('Retry Failed Re-fetches');
     expect(dashboard).toContain(
       "'forceRefreshAttendanceValidationRange'",
     );
     expect(dashboard).toContain(
       '{ fromDate, toDate, runId, retryFailures }',
     );
-    expect(dashboard).toContain('await loadSavedCases(false, true)');
-    expect(dashboard).toContain('forceFreshRangeResult.attempted');
-    expect(dashboard).toContain('forceFreshRangeResult.currentFailedCases');
-    expect(dashboard).toContain('forceFreshRangeResult.remainingCases');
+    expect(dashboard).toContain('forceFreshRangeGeneration');
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationRange: 'asia-south1'",
     );
   });
 
-  it('surfaces safe organizer failures without exposing organizer IDs', () => {
+  it('keeps the row-level exceptional fresh action as Re-fetch this case', () => {
+    expect(dashboard).toContain('Re-fetch this case');
+    expect(dashboard).toContain(
+      "'forceRefreshAttendanceValidationEvidence'",
+    );
+    expect(dashboard).toContain('caseId: item.id');
+    expect(dashboard).toContain(
+      'inputFingerprint: item.inputFingerprint',
+    );
+    expect(callFunctions).toContain(
+      "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
+    );
+  });
+
+  it('surfaces safe re-fetch organizer failures without exposing organizer IDs', () => {
     expect(dashboard).toContain('safeForceFreshFailureMessage');
     expect(dashboard).toContain('organizer_config_invalid');
     expect(dashboard).toContain('organizer_identity_ambiguous');
     expect(dashboard).toContain('organizer_identity_unresolved');
-    expect(dashboard).toContain('stopped before Microsoft Graph');
+    expect(dashboard).toContain('Re-fetch stopped before Microsoft Graph');
     expect(dashboard).not.toContain('f0f84eef-5cc2-4ece-8356-df08c2f113bb');
-  });
-
-  it('shows Force Fresh Graph/read evidence after completion', () => {
-    expect(dashboard).toContain('Force Fresh Teams Evidence completed');
-    expect(dashboard).toContain('forceFreshResult.graphLogicalCalls');
-    expect(dashboard).toContain(
-      'forceFreshResult.readBudget.boundedReadsExcludingStaffRegistry',
-    );
-    expect(dashboard).toContain('forceFreshResult.collectionStatus');
-    expect(dashboard).toContain('forceFreshResult.issueKinds');
-    expect(dashboard).toContain('forceFreshResult.issueDetails');
-    expect(dashboard).toContain('Stage: {humanize(issue.stage)}');
-    expect(dashboard).toContain('HTTP ${issue.httpStatus}');
-    expect(dashboard).toContain('Graph ${issue.graphCode}');
-  });
-
-  it('wires a separate first-time baseline action with a hard 100-session explanation', () => {
-    expect(dashboard).toContain('Run First-Time Baseline');
-    expect(dashboard).toContain('Continue Baseline');
-    expect(dashboard).toContain('Baseline Complete');
-    expect(dashboard).toContain(
-      "'runAttendanceValidationFirstTimeBaseline'",
-    );
-    expect(dashboard).toContain(
-      'up to 100 class sessions that do not already have saved AVS cases',
-    );
-    expect(dashboard).toContain(
-      'First-Time Baseline can include only completed service dates through yesterday IST.',
-    );
-    expect(callFunctions).toContain(
-      "runAttendanceValidationFirstTimeBaseline: 'asia-south1'",
-    );
   });
 
   it('surfaces auditable same-day coverage allocation in case details', () => {
@@ -297,17 +244,13 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain("validationDecision === 'not_occurred'");
   });
 
-  it('automatically reloads saved results and exposes baseline read/Graph progress', () => {
-    expect(dashboard).toContain('First-Time Baseline batch complete');
-    expect(dashboard).toContain('baselineResult.graphLogicalCalls');
-    expect(dashboard).toContain(
-      'baselineResult.readBudget.boundedReadsExcludingStaffRegistry',
-    );
-    expect(dashboard).toContain('baselineResult.cumulative.scannedSessionCount');
+  it('automatically reloads saved results after unified validation', () => {
+    expect(dashboard).toContain('setValidationResult(result)');
+    expect(dashboard).toContain('setValidationCompletedAt(new Date())');
     expect(dashboard).toContain('await loadSavedCases(false, true)');
   });
 
-  it('does not offer Force Fresh against placeholder evidence that does not exist', () => {
+  it('does not offer Re-fetch this case against placeholder evidence that does not exist', () => {
     expect(dashboard).toContain(
       "!item.reasons.includes('evidence_document_missing')",
     );

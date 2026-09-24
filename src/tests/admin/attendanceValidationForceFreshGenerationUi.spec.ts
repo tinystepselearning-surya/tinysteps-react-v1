@@ -27,8 +27,8 @@ describe('AVS Brick 4 Force Fresh generation UI compatibility', () => {
   });
 
   it('supports retrying failures and rerunning a completed date range as a new generation', () => {
-    expect(dashboard).toContain("'Retry Failed Refreshes'");
-    expect(dashboard).toContain("'Re-fetch This Range Again'");
+    expect(dashboard).toContain("'Retry Failed Re-fetches'");
+    expect(dashboard).toContain("'Re-fetch Teams Data'");
     expect(dashboard).not.toContain(
       '&& forceFreshRangeResult.complete\n                )',
     );
