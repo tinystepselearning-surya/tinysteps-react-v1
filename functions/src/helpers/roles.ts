@@ -2,6 +2,7 @@ import type * as admin from 'firebase-admin';
 
 export const CANONICAL_ROLES = [
   'admin',
+  'founder',
   'teacher',
   'parent',
   'kid',
@@ -20,6 +21,7 @@ const CANONICAL_ROLE_SET =
 const NORMALIZED_ROLE_MAP:
   Record<string, CanonicalRole> = {
     admin: 'admin',
+    founder: 'founder',
     teacher: 'teacher',
     parent: 'parent',
     kid: 'kid',
@@ -33,6 +35,7 @@ const NORMALIZED_ROLE_MAP:
 
 const ROLE_CLAIM_FLAGS = [
   'admin',
+  'founder',
   'teacher',
   'parent',
   'kid',
