@@ -391,13 +391,13 @@ export function summarizeAttendanceValidationSoak(input) {
     operationalMutationTrueCount(caseRows)
     + operationalMutationTrueCount(dirtyRows)
     + operationalMutationTrueCount(runRows)
-    + operationalMutationTrueCount(checkpointRows);
+    + operationalMutationTrueCount(forceFreshCheckpoints);
 
   const missingOperationalMutationFlagCount =
     operationalMutationMissingCount(caseRows)
     + operationalMutationMissingCount(dirtyRows)
     + operationalMutationMissingCount(runRows)
-    + operationalMutationMissingCount(checkpointRows);
+    + operationalMutationMissingCount(forceFreshCheckpoints);
 
   const invalidCaseDateCount = cases.filter(
     (row) => !validYmd(row?.serviceDateYmd),
