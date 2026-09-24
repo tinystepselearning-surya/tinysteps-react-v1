@@ -41,16 +41,27 @@ export function baselineBatchFromQueryRows<T extends {
   serviceDateYmd: string;
 }>(
   rows: readonly T[],
+  maxSessions = AVS_BASELINE_MAX_SESSIONS_PER_RUN,
 ): {
   batch: T[];
   hasMore: boolean;
   nextCursor: AvsBaselineCursor | null;
 } {
-  const batch = rows.slice(0, AVS_BASELINE_MAX_SESSIONS_PER_RUN);
+  if (
+    !Number.isInteger(maxSessions)
+    || maxSessions < 1
+    || maxSessions > AVS_BASELINE_MAX_SESSIONS_PER_RUN
+  ) {
+    throw new RangeError(
+      `maxSessions must be an integer from 1 to ${AVS_BASELINE_MAX_SESSIONS_PER_RUN}.`,
+    );
+  }
+
+  const batch = rows.slice(0, maxSessions);
   const last = batch.at(-1) ?? null;
   return {
     batch,
-    hasMore: rows.length > AVS_BASELINE_MAX_SESSIONS_PER_RUN,
+    hasMore: rows.length > maxSessions,
     nextCursor: last
       ? {
           serviceDateYmd: last.serviceDateYmd,
