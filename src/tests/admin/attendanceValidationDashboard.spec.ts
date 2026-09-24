@@ -216,17 +216,23 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
-  it('wires selected-range Force Fresh with confirmation, continuation, and auto reload', () => {
+  it('wires selected-range Force Fresh generations with confirmation, continuation, retry, rerun, and auto reload', () => {
     expect(dashboard).toContain('Force Fresh Selected Range');
     expect(dashboard).toContain('Continue Fresh Refresh');
+    expect(dashboard).toContain('Retry Failed Refreshes');
+    expect(dashboard).toContain('Re-fetch This Range Again');
     expect(dashboard).toContain(
-      'up to 100 existing AVS cases and rebuild their saved results',
+      'up to 100 existing AVS cases in this invocation',
     );
     expect(dashboard).toContain(
       "'forceRefreshAttendanceValidationRange'",
     );
+    expect(dashboard).toContain(
+      '{ fromDate, toDate, runId, retryFailures }',
+    );
     expect(dashboard).toContain('await loadSavedCases(false, true)');
-    expect(dashboard).toContain('forceFreshRangeResult.casesProcessed');
+    expect(dashboard).toContain('forceFreshRangeResult.attempted');
+    expect(dashboard).toContain('forceFreshRangeResult.currentFailedCases');
     expect(dashboard).toContain('forceFreshRangeResult.remainingCases');
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationRange: 'asia-south1'",

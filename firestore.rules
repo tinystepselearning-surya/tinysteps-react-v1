@@ -1631,10 +1631,20 @@ function teacherProgressIdentityUnchanged() {
       allow read, create, update, delete: if false;
     }
 
-    // Force Fresh range cursors/checkpoints are backend-only. The callable
-    // returns bounded progress without exposing mutable coordinator state.
+    // Legacy deterministic Force Fresh range progress is retained backend-only
+    // until cleanup. Brick 4 no longer reads or writes these documents.
     match /attendanceValidationForceFreshRanges/{rangeId} {
       allow read, create, update, delete: if false;
+    }
+
+    // Brick 4 Force Fresh generations and per-case terminal checkpoints are
+    // backend-only. The browser receives only the callable's bounded summary.
+    match /attendanceValidationForceFreshRuns/{runId} {
+      allow read, create, update, delete: if false;
+
+      match /cases/{caseId} {
+        allow read, create, update, delete: if false;
+      }
     }
 
     // Staff identity mappings and stable Microsoft identity ownership claims

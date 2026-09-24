@@ -3,8 +3,10 @@ import {
   AVS_FORCE_FRESH_RANGE_CONCURRENCY,
   AVS_FORCE_FRESH_RANGE_MAX_CASES,
   AVS_FORCE_FRESH_RANGE_QUERY_LIMIT,
-  avsForceFreshRangeId,
+  cleanAvsForceFreshRunId,
+  forceFreshCounterDelta,
   forceFreshRangeBatchFromQueryRows,
+  forceFreshRunStatus,
   mapWithConcurrency,
   normalizeAvsForceFreshRange,
 } from '../src/attendanceValidation/forceFreshRangePlanner';
@@ -16,13 +18,20 @@ function rows(count: number) {
   }));
 }
 
-describe('AVS Force Fresh selected-range planner', () => {
+describe('AVS Force Fresh generation planner', () => {
   it('uses the permanent validation start and 31-day range cap', () => {
     expect(normalizeAvsForceFreshRange('2026-09-01', '2026-09-30'))
       .toEqual({ fromDate: '2026-09-01', toDate: '2026-09-30' });
     expect(() =>
       normalizeAvsForceFreshRange('2026-08-31', '2026-09-01'))
       .toThrow('cannot be before 2026-09-01');
+  });
+
+  it('accepts explicit generation ids and rejects unsafe document ids', () => {
+    expect(cleanAvsForceFreshRunId('ffr_abc12345')).toBe('ffr_abc12345');
+    expect(cleanAvsForceFreshRunId(undefined)).toBeNull();
+    expect(() => cleanAvsForceFreshRunId('bad/run'))
+      .toThrow('runId must be 8-120 characters');
   });
 
   it('finishes ranges with at most 100 cases in one batch', () => {
@@ -35,7 +44,7 @@ describe('AVS Force Fresh selected-range planner', () => {
     });
   });
 
-  it('caps a click at 100 and exposes continuation for larger ranges', () => {
+  it('caps one invocation at 100 and exposes continuation for larger ranges', () => {
     const plan = forceFreshRangeBatchFromQueryRows(
       rows(AVS_FORCE_FRESH_RANGE_QUERY_LIMIT),
     );
@@ -45,7 +54,7 @@ describe('AVS Force Fresh selected-range planner', () => {
     expect(plan.nextCursor?.caseId).toBe('case-100');
   });
 
-  it('skips checkpointed cases after a partial timeout without repeating them', () => {
+  it('skips terminal checkpoints after a timeout without repeating completed work', () => {
     const plan = forceFreshRangeBatchFromQueryRows(
       rows(8),
       new Set(['case-001', 'case-003']),
@@ -58,6 +67,37 @@ describe('AVS Force Fresh selected-range planner', () => {
       'case-007',
       'case-008',
     ]);
+    expect(plan.checkpointedCaseCount).toBe(2);
+  });
+
+  it('keeps current terminal counters correct when a failed case later succeeds', () => {
+    expect(forceFreshCounterDelta(null, 'failed')).toEqual({
+      processedCount: 1,
+      refreshedCount: 0,
+      skippedCount: 0,
+      failedCount: 1,
+    });
+    expect(forceFreshCounterDelta('failed', 'refreshed')).toEqual({
+      processedCount: 0,
+      refreshedCount: 1,
+      skippedCount: 0,
+      failedCount: -1,
+    });
+    expect(forceFreshCounterDelta('failed', 'failed')).toEqual({
+      processedCount: 0,
+      refreshedCount: 0,
+      skippedCount: 0,
+      failedCount: 0,
+    });
+  });
+
+  it('distinguishes incomplete, complete, and complete-with-failures generations', () => {
+    expect(forceFreshRunStatus({ remainingCases: 1, failedCases: 0 }))
+      .toBe('in_progress');
+    expect(forceFreshRunStatus({ remainingCases: 0, failedCases: 0 }))
+      .toBe('complete');
+    expect(forceFreshRunStatus({ remainingCases: 0, failedCases: 2 }))
+      .toBe('complete_with_failures');
   });
 
   it('never exceeds the configured internal concurrency', async () => {
@@ -78,13 +118,5 @@ describe('AVS Force Fresh selected-range planner', () => {
     expect(AVS_FORCE_FRESH_RANGE_CONCURRENCY).toBe(5);
     expect(peak).toBe(5);
     expect(result).toHaveLength(20);
-  });
-
-  it('uses a stable range progress id', () => {
-    const range = { fromDate: '2026-09-01', toDate: '2026-09-01' };
-    expect(avsForceFreshRangeId(range)).toBe(avsForceFreshRangeId(range));
-    expect(avsForceFreshRangeId(range)).toMatch(
-      /^range_20260901_20260901_[a-f0-9]{20}$/,
-    );
   });
 });

@@ -323,11 +323,15 @@ not scan `classSessions` to discover work. Each click attempts at most 100
 existing cases and invokes the same single-case Force Fresh evidence pipeline
 with internal concurrency **5**.
 
-Progress is checkpointed after every attempted case in the backend-only
-`attendanceValidationForceFreshRanges/{rangeId}` document. The cursor advances
-after the bounded batch settles, so completed cases survive a callable timeout
-and are not unnecessarily repeated. Ranges with more work expose **Continue
-Fresh Refresh** and return processed, refreshed, skipped, failed, logical Graph
+Brick 4 replaces the permanent date-range checkpoint with an explicit
+generation document at `attendanceValidationForceFreshRuns/{runId}` plus
+backend-only per-case terminal checkpoints under `cases/{caseId}`. The cursor
+advances only after terminal checkpoints are written, so a retry after timeout
+skips completed work. A completed generation with failures enters
+`complete_with_failures` and retries only failed checkpoints. Starting the
+same date range without the previous `runId` creates a new generation, so the
+range can be deliberately re-fetched again. Ranges with more work expose
+**Continue Fresh Refresh** and return processed, refreshed, skipped, failed, logical Graph
 call, and remaining-case counts. The selected saved-results range reloads after
 each successful batch response.
 
