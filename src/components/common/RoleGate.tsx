@@ -82,8 +82,10 @@ const RoleGate: React.FC<RoleGateProps> = ({
       ? 'verify'
       : authStatus === 'unauthenticated' || !user
         ? 'login'
-        : requiresAuthoritativeRoleVerification && roleLoading
-          ? 'verify'
+        : founderRoute && claimedRole !== 'founder'
+          ? 'unauthorized'
+          : requiresAuthoritativeRoleVerification && roleLoading
+            ? 'verify'
           : requiresAuthoritativeRoleVerification &&
               (roleError || !authoritativeRoleIsAllowed)
             ? 'unauthorized'
