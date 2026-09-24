@@ -17,6 +17,16 @@ import {
   mapWithConcurrency,
 } from './forceFreshRangePlanner';
 import {
+  avsFailureLogFields,
+  classifyAvsFailure,
+  classifyAvsReason,
+  emptyAvsFailureSummary,
+  mergeAvsFailureSummaries,
+  summarizeAvsFailures,
+  type AvsFailureDescriptor,
+  type AvsFailureSummary,
+} from './errorTaxonomy';
+import {
   runAttendanceValidationLatestCheckBatch,
 } from './latestCheckCallable';
 import {
@@ -63,7 +73,8 @@ type FreshOutcome = {
   identityClaimWritten: boolean;
   dirtyMarkerCleared: boolean;
   concurrentMarkerChangeDetected: boolean;
-  errorMessage: string | null;
+  failure: AvsFailureDescriptor | null;
+  evidenceIssueSummary: AvsFailureSummary;
 };
 
 export const runAttendanceValidationRange = onCall(
@@ -140,8 +151,10 @@ export const runAttendanceValidationRange = onCall(
           identityClaimWritten: false,
           dirtyMarkerCleared: false,
           concurrentMarkerChangeDetected: false,
-          errorMessage:
+          failure: classifyAvsReason(
             organizerBlockedReason || 'organizer_identity_unresolved',
+          ),
+          evidenceIssueSummary: emptyAvsFailureSummary(),
         }));
       } else {
         const resolvedOrganizer = organizerResolution;
@@ -180,7 +193,8 @@ export const runAttendanceValidationRange = onCall(
                   dirtyMarkerCleared: result.dirtyMarkerCleared,
                   concurrentMarkerChangeDetected:
                     result.concurrentMarkerChangeDetected,
-                  errorMessage: null,
+                  failure: null,
+                  evidenceIssueSummary: result.evidenceIssueSummary,
                 };
               }
 
@@ -203,7 +217,8 @@ export const runAttendanceValidationRange = onCall(
                 dirtyMarkerCleared: result.dirtyMarkerCleared,
                 concurrentMarkerChangeDetected:
                   result.concurrentMarkerChangeDetected,
-                errorMessage: null,
+                failure: null,
+                evidenceIssueSummary: result.evidenceIssueSummary,
               };
             } catch (error) {
               const graphLogicalCalls =
@@ -211,12 +226,11 @@ export const runAttendanceValidationRange = onCall(
                   || error instanceof MissingCaseFreshCollectionError
                   ? error.graphLogicalCalls
                   : 0;
+              const failure = classifyAvsFailure(error);
               logger.error('AVS unified validation fresh work failed', {
                 sessionId: target.sessionId,
                 kind: target.kind,
-                errorName: error instanceof Error ? error.name : 'unknown',
-                errorMessage:
-                  error instanceof Error ? error.message : 'unknown',
+                ...avsFailureLogFields(failure),
               });
               return {
                 sessionId: target.sessionId,
@@ -227,8 +241,8 @@ export const runAttendanceValidationRange = onCall(
                 identityClaimWritten: false,
                 dirtyMarkerCleared: false,
                 concurrentMarkerChangeDetected: false,
-                errorMessage:
-                  error instanceof Error ? error.message : 'unknown',
+                failure,
+                evidenceIssueSummary: emptyAvsFailureSummary(),
               };
             }
           },
@@ -239,6 +253,14 @@ export const runAttendanceValidationRange = onCall(
     const freshFailedCount = freshOutcomes.filter(
       (item) => item.status === 'failed' || item.status === 'blocked',
     ).length;
+    const freshFailureSummary = summarizeAvsFailures(
+      freshOutcomes
+        .map((item) => item.failure)
+        .filter((failure): failure is AvsFailureDescriptor => Boolean(failure)),
+    );
+    const freshEvidenceIssueSummary = mergeAvsFailureSummaries(
+      ...freshOutcomes.map((item) => item.evidenceIssueSummary),
+    );
     const remainingCapacity = remainingUnifiedValidationCapacity(
       latest.dirtyFoundCount,
     );
@@ -265,6 +287,15 @@ export const runAttendanceValidationRange = onCall(
       latest.dirtyFoundCount + (baseline?.batchSessionCount ?? 0);
     const baselineDeferred =
       remainingCapacity === 0 || freshFailedCount > 0;
+    const baselineFailureSummary =
+      baseline?.failureSummary ?? emptyAvsFailureSummary();
+    const failureSummary = mergeAvsFailureSummaries(
+      freshFailureSummary,
+      baselineFailureSummary,
+    );
+    const evidenceIssueSummary = mergeAvsFailureSummaries(
+      freshEvidenceIssueSummary,
+    );
     const hasMore =
       latest.dirtyBatchAtLimit
       || Boolean(baseline?.hasMore)
@@ -273,7 +304,8 @@ export const runAttendanceValidationRange = onCall(
         && !baseline?.complete
         && latest.dirtyFoundCount > 0
       )
-      || freshFailedCount > 0;
+      || freshFailedCount > 0
+      || baselineFailureSummary.infrastructureFailureCount > 0;
 
     const response = {
       ok: true,
@@ -301,6 +333,8 @@ export const runAttendanceValidationRange = onCall(
       ).length,
       freshFailedCount,
       freshOutcomes,
+      failureSummary,
+      evidenceIssueSummary,
       organizerBlockedReason,
       baselineAttempted: Boolean(baseline),
       baselineComplete: baseline?.complete ?? false,
@@ -337,6 +371,10 @@ export const runAttendanceValidationRange = onCall(
       dirtyFoundCount: latest.dirtyFoundCount,
       freshWorkCount: freshOutcomes.length,
       freshFailedCount,
+      retryableInfrastructureCount:
+        failureSummary.retryableInfrastructureCount,
+      adminActionRequiredCount:
+        failureSummary.adminActionRequiredCount,
       baselineBatchSessionCount:
         baseline?.batchSessionCount ?? 0,
       graphLogicalCalls,
