@@ -6,6 +6,14 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
 import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
+import {
+  AvsEvidenceInfrastructureError,
+  avsFailureHttpsError,
+  avsFailureLogFields,
+  classifyAvsFailure,
+  firstBlockingEvidenceFailure,
+  summarizeAvsEvidenceIssues,
+} from './errorTaxonomy';
 import { buildFreshEvidenceSessionSnapshot } from './freshEvidenceSession';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
@@ -220,6 +228,17 @@ export async function refreshAttendanceValidationCaseEvidence(
       },
     );
 
+    const evidenceIssueSummary =
+      summarizeAvsEvidenceIssues(evidenceResult.evidence.issues);
+    const blockingEvidenceFailure =
+      firstBlockingEvidenceFailure(evidenceResult.evidence.issues);
+    if (blockingEvidenceFailure) {
+      throw new AvsEvidenceInfrastructureError(
+        blockingEvidenceFailure,
+        evidenceIssueSummary,
+      );
+    }
+
     const identityBinding = await bindTeacherIdentityFromFreshEvidence({
       db,
       evidence: evidenceResult.evidence,
@@ -263,7 +282,6 @@ export async function refreshAttendanceValidationCaseEvidence(
           caseId,
           classSessionId,
           errorName: error instanceof Error ? error.name : 'unknown',
-          errorMessage: error instanceof Error ? error.message : 'unknown',
         });
       }
     }
@@ -292,6 +310,7 @@ export async function refreshAttendanceValidationCaseEvidence(
           0,
         ),
       graphLogicalCalls: counted.count(),
+      evidenceIssueSummary,
       teacherIdentityDecision: identityBinding.decision?.status ?? null,
       teacherIdentityBinding: identityBinding.bindingStatus,
       teacherIdentityMappingWritten: identityBinding.overrideWrite,
@@ -360,10 +379,17 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
         graphClient: graphClientFromSecrets(),
       });
     } catch (error) {
-      if (error instanceof ForceFreshCaseRefreshError) {
-        throw error.causeError;
-      }
-      throw error;
+      const graphLogicalCalls =
+        error instanceof ForceFreshCaseRefreshError
+          ? error.graphLogicalCalls
+          : 0;
+      const failure = classifyAvsFailure(error);
+      logger.error('AVS case re-fetch failed', {
+        caseId,
+        graphLogicalCalls,
+        ...avsFailureLogFields(failure),
+      });
+      throw avsFailureHttpsError(failure, { graphLogicalCalls });
     }
   },
 );

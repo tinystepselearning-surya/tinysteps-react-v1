@@ -9,7 +9,8 @@ export const ATTENDANCE_VALIDATION_DIRTY_START_YMD = '2026-09-01';
 export type AttendanceValidationDirtyReason =
   | 'teacher_attendance_changed'
   | 'admin_attendance_correction'
-  | 'historical_session_created';
+  | 'historical_session_created'
+  | 'validation_infrastructure_retry';
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
