@@ -343,6 +343,10 @@ export const runAttendanceValidationLatestCheck = onCall(
         revalidatedCount: 0,
         baselineRequiredCount: 0,
         baselineRequiredSessionIds: [],
+        freshEvidenceRequiredCount: 0,
+        freshEvidenceRequiredSessionIds: [],
+        freshnessUnsafeCount: 0,
+        freshnessUnsafeSessionIds: [],
         skippedCount: 0,
         dirtyMarkersClearedCount: 0,
         dirtyBatchAtLimit: false,
@@ -396,9 +400,18 @@ export const runAttendanceValidationLatestCheck = onCall(
         })
       : null;
 
+    const skippedRows = av53Result?.skipped ?? [];
     const skippedSessionIds = new Set(
-      (av53Result?.skipped ?? []).map((item) => item.classSessionId),
+      skippedRows.map((item) => item.classSessionId),
     );
+    const freshEvidenceRequiredSessionIds = skippedRows
+      .filter((item) => item.reason === 'fresh_evidence_required')
+      .map((item) => item.classSessionId);
+    const freshnessUnsafeSessionIds = skippedRows
+      .filter(
+        (item) => item.reason === 'cached_evidence_compatibility_unresolved',
+      )
+      .map((item) => item.classSessionId);
     const successfullyRevalidatedSessionIds = plan.workItems
       .map((item) => item.classSessionId)
       .filter((sessionId) => !skippedSessionIds.has(sessionId));
@@ -449,6 +462,10 @@ export const runAttendanceValidationLatestCheck = onCall(
       revalidatedCount: successfullyRevalidatedSessionIds.length,
       baselineRequiredCount: plan.baselineRequiredSessionIds.length,
       baselineRequiredSessionIds: plan.baselineRequiredSessionIds,
+      freshEvidenceRequiredCount: freshEvidenceRequiredSessionIds.length,
+      freshEvidenceRequiredSessionIds,
+      freshnessUnsafeCount: freshnessUnsafeSessionIds.length,
+      freshnessUnsafeSessionIds,
       skippedCount: av53Result?.skippedCount ?? 0,
       skipped: av53Result?.skipped ?? [],
       dirtyMarkersClearedCount,

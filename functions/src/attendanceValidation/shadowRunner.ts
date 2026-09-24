@@ -1,4 +1,8 @@
 import { createHash } from 'crypto';
+import {
+  classifyCachedEvidenceFreshness,
+  type EvidenceFreshnessReason,
+} from './evidenceFreshness';
 import type { Firestore } from 'firebase-admin/firestore';
 import {
   bridgeEnrollmentIdentity,
@@ -138,6 +142,8 @@ export interface Av53ShadowRunResult {
   validationStartYmd: typeof AV53_VALIDATION_START_YMD;
   pointReadDocumentBudget: number;
   sameDayContextReadDocumentBudget: number;
+  freshEvidenceRequiredCount: number;
+  freshnessUnsafeCount: number;
   staffRegistryLoadedOnce: true;
   casePreReads: 0;
   unboundedOperationalScans: false;
@@ -149,7 +155,10 @@ export interface Av53ShadowRunResult {
       | 'both_session_and_evidence_missing'
       | 'before_validation_start'
       | 'validation_scope_date_unresolved'
-      | 'validation_scope_date_conflict';
+      | 'validation_scope_date_conflict'
+      | 'fresh_evidence_required'
+      | 'cached_evidence_compatibility_unresolved';
+    freshnessReasons?: EvidenceFreshnessReason[];
   }>;
   operationalMutationAllowed: false;
 }
@@ -1088,6 +1097,8 @@ export async function runAv53Shadow(
     validationStartYmd: AV53_VALIDATION_START_YMD,
     pointReadDocumentBudget: workItems.length * 2,
     sameDayContextReadDocumentBudget: 0,
+    freshEvidenceRequiredCount: 0,
+    freshnessUnsafeCount: 0,
     staffRegistryLoadedOnce: true,
     casePreReads: 0,
     unboundedOperationalScans: false,
@@ -1198,8 +1209,45 @@ export async function runAv53ShadowWithFirestore(
   const normalizedItems = normalizeWorkItems(input.workItems);
   const preloaded = await baseStore.loadWorkItems(normalizedItems);
 
-  const sameDayGroups = new Map<string, SameDayGroupDescriptor>();
+  const freshnessSkipped: Av53ShadowRunResult['skipped'] = [];
+  const compatibleLoaded: Av53LoadedWorkItem[] = [];
+
   for (const loadedItem of preloaded) {
+    if (!loadedItem.session || !loadedItem.evidence) {
+      compatibleLoaded.push(loadedItem);
+      continue;
+    }
+
+    const freshness = classifyCachedEvidenceFreshness({
+      classSessionId: loadedItem.item.classSessionId,
+      session: loadedItem.session,
+      evidence: loadedItem.evidence,
+    });
+
+    if (freshness.decision === 'reuse_cached') {
+      compatibleLoaded.push(loadedItem);
+      continue;
+    }
+
+    freshnessSkipped.push({
+      classSessionId: loadedItem.item.classSessionId,
+      evidenceId: loadedItem.item.evidenceId,
+      reason: freshness.decision === 'fresh_required'
+        ? 'fresh_evidence_required'
+        : 'cached_evidence_compatibility_unresolved',
+      freshnessReasons: freshness.reasons,
+    });
+  }
+
+  const compatibleKeys = new Set(
+    compatibleLoaded.map((loadedItem) =>
+      `${loadedItem.item.classSessionId}|${loadedItem.item.evidenceId}`),
+  );
+  const compatibleWorkItems = normalizedItems.filter((item) =>
+    compatibleKeys.has(`${item.classSessionId}|${item.evidenceId}`));
+
+  const sameDayGroups = new Map<string, SameDayGroupDescriptor>();
+  for (const loadedItem of compatibleLoaded) {
     if (!loadedItem.session) continue;
     const scope = scopeDecision(loadedItem.session, loadedItem.evidence);
     if (scope.kind !== 'in_scope') continue;
@@ -1249,16 +1297,36 @@ export async function runAv53ShadowWithFirestore(
     }
   }
 
-  const result = await runAv53Shadow(input, {
-    store: new PreloadedAv53ShadowStore(baseStore, preloaded),
-    staffRegistry,
-    now,
-    sameDayPresentCountByGroup,
-    sameDayContextIncompleteGroups,
-  });
+  const result = await runAv53Shadow(
+    {
+      ...input,
+      workItems: compatibleWorkItems,
+    },
+    {
+      store: new PreloadedAv53ShadowStore(baseStore, compatibleLoaded),
+      staffRegistry,
+      now,
+      sameDayPresentCountByGroup,
+      sameDayContextIncompleteGroups,
+    },
+  );
+
+  const freshEvidenceRequiredCount = freshnessSkipped.filter(
+    (item) => item.reason === 'fresh_evidence_required',
+  ).length;
+  const freshnessUnsafeCount = freshnessSkipped.filter(
+    (item) => item.reason === 'cached_evidence_compatibility_unresolved',
+  ).length;
 
   return {
     ...result,
+    requestedCount: normalizedItems.length,
+    processedCount: preloaded.length,
+    skippedCount: result.skippedCount + freshnessSkipped.length,
+    pointReadDocumentBudget: normalizedItems.length * 2,
     sameDayContextReadDocumentBudget,
+    freshEvidenceRequiredCount,
+    freshnessUnsafeCount,
+    skipped: [...result.skipped, ...freshnessSkipped],
   };
 }
