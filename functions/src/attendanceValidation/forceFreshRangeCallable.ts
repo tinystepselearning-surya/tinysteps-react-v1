@@ -1,5 +1,12 @@
 import * as admin from 'firebase-admin';
-import { FieldPath, FieldValue } from 'firebase-admin/firestore';
+import {
+  FieldPath,
+  FieldValue,
+  type DocumentData,
+  type DocumentReference,
+  type Firestore,
+  type Query,
+} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
@@ -11,46 +18,68 @@ import {
   refreshAttendanceValidationCaseEvidence,
 } from './forceFreshEvidenceCallable';
 import {
-  ATTENDANCE_VALIDATION_FORCE_FRESH_RANGES_COLLECTION,
+  ATTENDANCE_VALIDATION_FORCE_FRESH_RUNS_COLLECTION,
+  ATTENDANCE_VALIDATION_FORCE_FRESH_RUN_CASES_SUBCOLLECTION,
   AVS_FORCE_FRESH_RANGE_CONCURRENCY,
+  AVS_FORCE_FRESH_RANGE_MAX_CASES,
   AVS_FORCE_FRESH_RANGE_QUERY_LIMIT,
-  avsForceFreshRangeId,
+  cleanAvsForceFreshRunId,
+  forceFreshCounterDelta,
   forceFreshRangeBatchFromQueryRows,
+  forceFreshRunStatus,
   mapWithConcurrency,
   normalizeAvsForceFreshRange,
   type AvsForceFreshRangeCursor,
+  type AvsForceFreshTerminalStatus,
 } from './forceFreshRangePlanner';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
-import { loadProductionStaffIdentityRegistry } from './staffIdentityRegistry';
 import {
   AvsOrganizerResolutionError,
   resolveAttendanceValidationOrganizerUserId,
 } from './organizerConfig';
+import { loadProductionStaffIdentityRegistry } from './staffIdentityRegistry';
 
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const RUN_SCHEMA_VERSION = 2;
+const CHECKPOINT_SCHEMA_VERSION = 1;
 
-interface ForceFreshRangeState {
+interface ForceFreshRunState {
+  schemaVersion?: unknown;
+  runId?: unknown;
   fromDate?: unknown;
   toDate?: unknown;
   status?: unknown;
   cursorDate?: unknown;
   cursorCaseId?: unknown;
-  completedCaseIds?: unknown;
+  retryCursorCaseId?: unknown;
+  retryPass?: unknown;
   processedCount?: unknown;
+  attemptedCount?: unknown;
   refreshedCount?: unknown;
   skippedCount?: unknown;
   failedCount?: unknown;
   graphLogicalCalls?: unknown;
+  identityMappingsWritten?: unknown;
+  identityClaimsWritten?: unknown;
+  remainingCases?: unknown;
 }
 
 type RangeOutcome = {
   caseId: string;
-  status: 'refreshed' | 'skipped' | 'failed';
+  serviceDateYmd: string;
+  status: AvsForceFreshTerminalStatus;
   graphLogicalCalls: number;
   identityMappingWritten: boolean;
   identityClaimWritten: boolean;
+  errorKind: string | null;
+};
+
+type RangeItem = {
+  id: string;
+  serviceDateYmd: string;
+  data: Record<string, unknown>;
 };
 
 function text(value: unknown): string {
@@ -62,13 +91,8 @@ function count(value: unknown): number {
   return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0;
 }
 
-function completedCaseIds(value: unknown): Set<string> {
-  if (!Array.isArray(value)) return new Set();
-  return new Set(value.map(text).filter(Boolean));
-}
-
 function cursorFromState(
-  state: ForceFreshRangeState,
+  state: ForceFreshRunState,
 ): AvsForceFreshRangeCursor | null {
   const serviceDateYmd = text(state.cursorDate);
   const caseId = text(state.cursorCaseId);
@@ -91,6 +115,445 @@ function errorMessage(error: unknown): string {
     : 'Invalid Force Fresh selected-range request.';
 }
 
+function safeErrorKind(error: unknown): string {
+  if (error instanceof ForceFreshCaseRefreshError) {
+    const cause = error.causeError as { code?: unknown; name?: unknown } | null;
+    const causeCode = text(cause?.code);
+    if (causeCode) return causeCode.slice(0, 80);
+    const causeName = text(cause?.name);
+    if (causeName) return causeName.slice(0, 80);
+    return 'force_fresh_case_refresh_error';
+  }
+  if (error instanceof Error && error.name) return error.name.slice(0, 80);
+  return 'unknown_error';
+}
+
+function runCasesCollection(
+  runRef: DocumentReference<DocumentData>,
+) {
+  return runRef.collection(
+    ATTENDANCE_VALIDATION_FORCE_FRESH_RUN_CASES_SUBCOLLECTION,
+  );
+}
+
+function terminalCheckpointStatus(
+  value: unknown,
+): AvsForceFreshTerminalStatus | null {
+  const status = text(value);
+  return status === 'refreshed'
+    || status === 'skipped'
+    || status === 'failed'
+    ? status
+    : null;
+}
+
+async function loadOrCreateRun(params: {
+  db: Firestore;
+  range: { fromDate: string; toDate: string };
+  requestedRunId: string | null;
+  actorUid: string;
+}) {
+  const runs = params.db.collection(
+    ATTENDANCE_VALIDATION_FORCE_FRESH_RUNS_COLLECTION,
+  );
+  const runRef = params.requestedRunId
+    ? runs.doc(params.requestedRunId)
+    : runs.doc();
+  const runId = runRef.id;
+  const snapshot = await runRef.get();
+
+  if (snapshot.exists) {
+    const state = (snapshot.data() || {}) as ForceFreshRunState;
+    if (
+      text(state.fromDate) !== params.range.fromDate
+      || text(state.toDate) !== params.range.toDate
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Force Fresh generation belongs to a different date range.',
+      );
+    }
+    return { runRef, runId, state, created: false };
+  }
+
+  const state: ForceFreshRunState = {
+    schemaVersion: RUN_SCHEMA_VERSION,
+    runId,
+    fromDate: params.range.fromDate,
+    toDate: params.range.toDate,
+    status: 'in_progress',
+    cursorDate: null,
+    cursorCaseId: null,
+    retryCursorCaseId: null,
+    retryPass: 0,
+    processedCount: 0,
+    attemptedCount: 0,
+    refreshedCount: 0,
+    skippedCount: 0,
+    failedCount: 0,
+    graphLogicalCalls: 0,
+    identityMappingsWritten: 0,
+    identityClaimsWritten: 0,
+    remainingCases: 0,
+  };
+
+  try {
+    await runRef.create({
+      ...state,
+      concurrency: AVS_FORCE_FRESH_RANGE_CONCURRENCY,
+      maxCasesPerInvocation: AVS_FORCE_FRESH_RANGE_MAX_CASES,
+      createdBy: params.actorUid,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      operationalMutationAllowed: false,
+    });
+    return { runRef, runId, state, created: true };
+  } catch (error) {
+    // A retry can race only with the same explicit generation id. maxInstances=1
+    // already serializes normal execution, but re-read keeps this idempotent.
+    const raced = await runRef.get();
+    if (!raced.exists) throw error;
+    const racedState = (raced.data() || {}) as ForceFreshRunState;
+    if (
+      text(racedState.fromDate) !== params.range.fromDate
+      || text(racedState.toDate) !== params.range.toDate
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Force Fresh generation belongs to a different date range.',
+      );
+    }
+    return { runRef, runId, state: racedState, created: false };
+  }
+}
+
+async function terminalCheckpointIdsForRows(
+  db: Firestore,
+  runRef: DocumentReference<DocumentData>,
+  rows: readonly RangeItem[],
+): Promise<Set<string>> {
+  if (rows.length === 0) return new Set();
+  const refs = rows.map((row) => runCasesCollection(runRef).doc(row.id));
+  const snapshots = await db.getAll(...refs);
+  return new Set(
+    snapshots
+      .filter((snapshot) =>
+        snapshot.exists
+        && terminalCheckpointStatus(snapshot.data()?.status) !== null)
+      .map((snapshot) => snapshot.id),
+  );
+}
+
+async function persistOutcome(params: {
+  db: Firestore;
+  runRef: DocumentReference<DocumentData>;
+  outcome: RangeOutcome;
+}) {
+  const checkpointRef = runCasesCollection(params.runRef)
+    .doc(params.outcome.caseId);
+
+  await params.db.runTransaction(async (transaction) => {
+    const checkpointSnapshot = await transaction.get(checkpointRef);
+    const checkpointData = checkpointSnapshot.exists
+      ? (checkpointSnapshot.data() || {}) as Record<string, unknown>
+      : {};
+    const previousStatus = terminalCheckpointStatus(checkpointData.status);
+    const delta = forceFreshCounterDelta(
+      previousStatus,
+      params.outcome.status,
+    );
+    const previousAttempts = count(checkpointData.attemptCount);
+
+    transaction.set(checkpointRef, {
+      schemaVersion: CHECKPOINT_SCHEMA_VERSION,
+      runId: params.runRef.id,
+      caseId: params.outcome.caseId,
+      serviceDateYmd: params.outcome.serviceDateYmd,
+      status: params.outcome.status,
+      attemptCount: previousAttempts + 1,
+      lastGraphLogicalCalls: params.outcome.graphLogicalCalls,
+      lastErrorKind: params.outcome.errorKind,
+      identityMappingWritten: params.outcome.identityMappingWritten,
+      identityClaimWritten: params.outcome.identityClaimWritten,
+      ...(checkpointSnapshot.exists
+        ? {}
+        : { createdAt: FieldValue.serverTimestamp() }),
+      updatedAt: FieldValue.serverTimestamp(),
+      operationalMutationAllowed: false,
+    }, { merge: true });
+
+    transaction.set(params.runRef, {
+      attemptedCount: FieldValue.increment(1),
+      processedCount: FieldValue.increment(delta.processedCount),
+      refreshedCount: FieldValue.increment(delta.refreshedCount),
+      skippedCount: FieldValue.increment(delta.skippedCount),
+      failedCount: FieldValue.increment(delta.failedCount),
+      graphLogicalCalls:
+        FieldValue.increment(params.outcome.graphLogicalCalls),
+      identityMappingsWritten: FieldValue.increment(
+        params.outcome.identityMappingWritten ? 1 : 0,
+      ),
+      identityClaimsWritten: FieldValue.increment(
+        params.outcome.identityClaimWritten ? 1 : 0,
+      ),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+}
+
+async function processItems(params: {
+  db: Firestore;
+  runRef: DocumentReference<DocumentData>;
+  items: readonly RangeItem[];
+}) {
+  const hasEligibleCase = params.items.some((item) =>
+    text(item.data.classSessionId) === item.id
+    && Boolean(text(item.data.evidenceId)));
+
+  let organizerResolution = null;
+  if (hasEligibleCase) {
+    try {
+      organizerResolution =
+        await resolveAttendanceValidationOrganizerUserId(params.db);
+    } catch (error) {
+      if (error instanceof AvsOrganizerResolutionError) {
+        throw new HttpsError('failed-precondition', error.reason);
+      }
+      throw error;
+    }
+  }
+
+  const graphClient = hasEligibleCase ? graphClientFromSecrets() : null;
+  const staffRegistry = hasEligibleCase
+    ? await loadProductionStaffIdentityRegistry(params.db)
+    : null;
+
+  return mapWithConcurrency(
+    params.items,
+    AVS_FORCE_FRESH_RANGE_CONCURRENCY,
+    async (item): Promise<RangeOutcome> => {
+      let outcome: RangeOutcome;
+
+      if (
+        text(item.data.classSessionId) !== item.id
+        || !text(item.data.evidenceId)
+      ) {
+        outcome = {
+          caseId: item.id,
+          serviceDateYmd: item.serviceDateYmd,
+          status: 'skipped',
+          graphLogicalCalls: 0,
+          identityMappingWritten: false,
+          identityClaimWritten: false,
+          errorKind: null,
+        };
+      } else {
+        try {
+          const result = await refreshAttendanceValidationCaseEvidence({
+            db: params.db,
+            caseId: item.id,
+            organizerResolution: organizerResolution!,
+            graphClient: graphClient!,
+            staffRegistry: staffRegistry!,
+          });
+          outcome = {
+            caseId: item.id,
+            serviceDateYmd: item.serviceDateYmd,
+            status: 'refreshed',
+            graphLogicalCalls: result.graphLogicalCalls,
+            identityMappingWritten:
+              result.teacherIdentityMappingWritten,
+            identityClaimWritten:
+              result.teacherIdentityClaimWritten,
+            errorKind: null,
+          };
+        } catch (error) {
+          outcome = {
+            caseId: item.id,
+            serviceDateYmd: item.serviceDateYmd,
+            status: 'failed',
+            graphLogicalCalls:
+              error instanceof ForceFreshCaseRefreshError
+                ? error.graphLogicalCalls
+                : 0,
+            identityMappingWritten: false,
+            identityClaimWritten: false,
+            errorKind: safeErrorKind(error),
+          };
+          logger.error('AVS Force Fresh generation case failed', {
+            runId: params.runRef.id,
+            caseId: item.id,
+            errorKind: outcome.errorKind,
+          });
+        }
+      }
+
+      // The terminal checkpoint is committed before the discovery/retry cursor
+      // advances. A timeout can therefore repeat only work that never reached a
+      // terminal checkpoint.
+      await persistOutcome({
+        db: params.db,
+        runRef: params.runRef,
+        outcome,
+      });
+      return outcome;
+    },
+  );
+}
+
+async function remainingCasesAfterCursor(params: {
+  db: Firestore;
+  range: { fromDate: string; toDate: string };
+  cursor: AvsForceFreshRangeCursor | null;
+  hasMore: boolean;
+}): Promise<number> {
+  if (!params.cursor || !params.hasMore) return 0;
+
+  const snapshot = await params.db
+    .collection('attendanceValidationCases')
+    .where('serviceDateYmd', '>=', params.range.fromDate)
+    .where('serviceDateYmd', '<=', params.range.toDate)
+    .orderBy('serviceDateYmd', 'asc')
+    .orderBy(FieldPath.documentId(), 'asc')
+    .startAfter(params.cursor.serviceDateYmd, params.cursor.caseId)
+    .count()
+    .get();
+  return snapshot.data().count;
+}
+
+async function retryFailedItems(params: {
+  db: Firestore;
+  runRef: DocumentReference<DocumentData>;
+  state: ForceFreshRunState;
+}): Promise<{
+  outcomes: RangeOutcome[];
+  nextRetryCursor: string | null;
+  retryPassIncrement: number;
+}> {
+  const failedCases = runCasesCollection(params.runRef);
+  const retryCursor = text(params.state.retryCursorCaseId);
+
+  const baseQuery = () =>
+    failedCases
+      .where('status', '==', 'failed')
+      .orderBy(FieldPath.documentId(), 'asc')
+      .limit(AVS_FORCE_FRESH_RANGE_MAX_CASES);
+
+  let query: Query<DocumentData> = baseQuery();
+  if (retryCursor) query = query.startAfter(retryCursor);
+
+  let snapshot = await query.get();
+  let retryPassIncrement = 0;
+  if (snapshot.empty && retryCursor) {
+    snapshot = await baseQuery().get();
+    retryPassIncrement = 1;
+  }
+
+  if (snapshot.empty) {
+    return {
+      outcomes: [],
+      nextRetryCursor: null,
+      retryPassIncrement,
+    };
+  }
+
+  const caseRefs = snapshot.docs.map((checkpoint) =>
+    params.db.collection('attendanceValidationCases').doc(checkpoint.id));
+  const caseSnapshots = await params.db.getAll(...caseRefs);
+  const items: RangeItem[] = snapshot.docs.map((checkpoint, index) => ({
+    id: checkpoint.id,
+    serviceDateYmd: text(checkpoint.data().serviceDateYmd),
+    data: caseSnapshots[index].exists
+      ? (caseSnapshots[index].data() || {}) as Record<string, unknown>
+      : {},
+  }));
+
+  const outcomes = await processItems({
+    db: params.db,
+    runRef: params.runRef,
+    items,
+  });
+
+  return {
+    outcomes,
+    nextRetryCursor:
+      snapshot.size === AVS_FORCE_FRESH_RANGE_MAX_CASES
+        ? snapshot.docs[snapshot.docs.length - 1].id
+        : null,
+    retryPassIncrement,
+  };
+}
+
+function responseFromState(params: {
+  range: { fromDate: string; toDate: string };
+  runId: string;
+  state: ForceFreshRunState;
+  outcomes: readonly RangeOutcome[];
+  remainingCases: number;
+  checkpointedCasesSkipped: number;
+  alreadyComplete: boolean;
+  mode: 'scan' | 'retry_failed' | 'summary';
+}) {
+  const status = text(params.state.status) || 'in_progress';
+  const refreshed = params.outcomes.filter(
+    (item) => item.status === 'refreshed',
+  ).length;
+  const skipped = params.outcomes.filter(
+    (item) => item.status === 'skipped',
+  ).length;
+  const failed = params.outcomes.filter(
+    (item) => item.status === 'failed',
+  ).length;
+  const graphLogicalCalls = params.outcomes.reduce(
+    (sum, item) => sum + item.graphLogicalCalls,
+    0,
+  );
+  const currentFailedCases = count(params.state.failedCount);
+
+  return {
+    ok: true,
+    ...params.range,
+    runId: params.runId,
+    generationId: params.runId,
+    // Compatibility alias for the pre-Brick-4 dashboard response.
+    rangeId: params.runId,
+    status,
+    mode: params.mode,
+    alreadyComplete: params.alreadyComplete,
+    complete: status === 'complete',
+    completeWithFailures: status === 'complete_with_failures',
+    hasMore:
+      params.remainingCases > 0
+      || currentFailedCases > 0,
+    retryableFailures:
+      status === 'complete_with_failures'
+      && currentFailedCases > 0,
+    casesProcessed: params.outcomes.length,
+    attempted: params.outcomes.length,
+    refreshed,
+    skipped,
+    failed,
+    currentFailedCases,
+    checkpointedCasesSkipped: params.checkpointedCasesSkipped,
+    graphLogicalCalls,
+    remainingCases: params.remainingCases,
+    concurrency: AVS_FORCE_FRESH_RANGE_CONCURRENCY,
+    cumulative: {
+      casesProcessed: count(params.state.processedCount),
+      attempted: count(params.state.attemptedCount),
+      refreshed: count(params.state.refreshedCount),
+      skipped: count(params.state.skippedCount),
+      failed: currentFailedCases,
+      graphLogicalCalls: count(params.state.graphLogicalCalls),
+      identityMappingsWritten:
+        count(params.state.identityMappingsWritten),
+      identityClaimsWritten:
+        count(params.state.identityClaimsWritten),
+    },
+    operationalMutationAllowed: false as const,
+  };
+}
+
 export const forceRefreshAttendanceValidationRange = onCall(
   {
     region: REGION,
@@ -109,53 +572,104 @@ export const forceRefreshAttendanceValidationRange = onCall(
     await ensureAdmin(request.auth);
 
     let range: { fromDate: string; toDate: string };
+    let requestedRunId: string | null;
     try {
       range = normalizeAvsForceFreshRange(
         request.data?.fromDate,
         request.data?.toDate,
       );
+      requestedRunId = cleanAvsForceFreshRunId(request.data?.runId);
     } catch (error) {
       throw new HttpsError('invalid-argument', errorMessage(error));
     }
 
+    const retryFailures = request.data?.retryFailures === true;
     const db = admin.firestore();
-    const rangeId = avsForceFreshRangeId(range);
-    const rangeRef = db
-      .collection(ATTENDANCE_VALIDATION_FORCE_FRESH_RANGES_COLLECTION)
-      .doc(rangeId);
-    const stateSnapshot = await rangeRef.get();
-    const state = stateSnapshot.exists
-      ? (stateSnapshot.data() || {}) as ForceFreshRangeState
-      : {};
+    const loaded = await loadOrCreateRun({
+      db,
+      range,
+      requestedRunId,
+      actorUid: request.auth?.uid || 'admin',
+    });
+    const { runRef, runId } = loaded;
+    let state = loaded.state;
+    const status = text(state.status);
 
-    if (
-      stateSnapshot.exists
-      && text(state.status) === 'complete'
-      && text(state.fromDate) === range.fromDate
-      && text(state.toDate) === range.toDate
-    ) {
-      return {
-        ok: true,
-        ...range,
-        rangeId,
-        alreadyComplete: true,
-        complete: true,
-        casesProcessed: 0,
-        refreshed: 0,
-        skipped: 0,
-        failed: 0,
-        graphLogicalCalls: 0,
+    if (status === 'complete') {
+      return responseFromState({
+        range,
+        runId,
+        state,
+        outcomes: [],
         remainingCases: 0,
-        concurrency: AVS_FORCE_FRESH_RANGE_CONCURRENCY,
-        cumulative: {
-          casesProcessed: count(state.processedCount),
-          refreshed: count(state.refreshedCount),
-          skipped: count(state.skippedCount),
-          failed: count(state.failedCount),
-          graphLogicalCalls: count(state.graphLogicalCalls),
-        },
-        operationalMutationAllowed: false,
-      };
+        checkpointedCasesSkipped: 0,
+        alreadyComplete: true,
+        mode: 'summary',
+      });
+    }
+
+    if (status === 'complete_with_failures' && !retryFailures) {
+      return responseFromState({
+        range,
+        runId,
+        state,
+        outcomes: [],
+        remainingCases: 0,
+        checkpointedCasesSkipped: 0,
+        alreadyComplete: true,
+        mode: 'summary',
+      });
+    }
+
+    if (retryFailures) {
+      if (status !== 'complete_with_failures') {
+        throw new HttpsError(
+          'failed-precondition',
+          'Failed-case retry is available only after the generation finishes its range scan.',
+        );
+      }
+
+      const retryResult = await retryFailedItems({
+        db,
+        runRef,
+        state,
+      });
+      const stateAfterOutcomesSnapshot = await runRef.get();
+      const stateAfterOutcomes =
+        (stateAfterOutcomesSnapshot.data() || {}) as ForceFreshRunState;
+      const currentFailedCases = count(stateAfterOutcomes.failedCount);
+      const nextStatus = forceFreshRunStatus({
+        remainingCases: 0,
+        failedCases: currentFailedCases,
+      });
+
+      await runRef.set({
+        status: nextStatus,
+        retryCursorCaseId: retryResult.nextRetryCursor,
+        retryPass: FieldValue.increment(
+          retryResult.retryPassIncrement,
+        ),
+        remainingCases: 0,
+        lastBatchCaseCount: retryResult.outcomes.length,
+        updatedAt: FieldValue.serverTimestamp(),
+        ...(nextStatus === 'complete'
+          ? { completedAt: FieldValue.serverTimestamp() }
+          : {}),
+      }, { merge: true });
+
+      const finalSnapshot = await runRef.get();
+      state = (finalSnapshot.data() || {}) as ForceFreshRunState;
+
+      return responseFromState({
+        range,
+        runId,
+        state,
+        outcomes: retryResult.outcomes,
+        remainingCases: 0,
+        checkpointedCasesSkipped: 0,
+        alreadyComplete: false,
+        mode: 'retry_failed',
+      });
     }
 
     const cursor = cursorFromState(state);
@@ -166,6 +680,7 @@ export const forceRefreshAttendanceValidationRange = onCall(
       .orderBy('serviceDateYmd', 'asc')
       .orderBy(FieldPath.documentId(), 'asc')
       .limit(AVS_FORCE_FRESH_RANGE_QUERY_LIMIT);
+
     if (cursor) {
       casesQuery = casesQuery.startAfter(
         cursor.serviceDateYmd,
@@ -174,178 +689,89 @@ export const forceRefreshAttendanceValidationRange = onCall(
     }
 
     const querySnapshot = await casesQuery.get();
-    const rows = querySnapshot.docs.map((docSnapshot) => ({
+    const rows: RangeItem[] = querySnapshot.docs.map((docSnapshot) => ({
       id: docSnapshot.id,
       serviceDateYmd: text(docSnapshot.data().serviceDateYmd),
       data: (docSnapshot.data() || {}) as Record<string, unknown>,
     }));
+    const terminalIds = await terminalCheckpointIdsForRows(
+      db,
+      runRef,
+      rows,
+    );
     const plan = forceFreshRangeBatchFromQueryRows(
       rows,
-      completedCaseIds(state.completedCaseIds),
+      terminalIds,
     );
 
-    await rangeRef.set({
-      schemaVersion: 1,
-      fromDate: range.fromDate,
-      toDate: range.toDate,
+    await runRef.set({
       status: 'in_progress',
-      concurrency: AVS_FORCE_FRESH_RANGE_CONCURRENCY,
       updatedAt: FieldValue.serverTimestamp(),
       operationalMutationAllowed: false,
     }, { merge: true });
 
-    const hasEligibleCase = plan.batch.some((item) =>
-      text(item.data.classSessionId) === item.id
-      && Boolean(text(item.data.evidenceId)));
-    let organizerResolution = null;
-    if (hasEligibleCase) {
-      try {
-        organizerResolution =
-          await resolveAttendanceValidationOrganizerUserId(db);
-      } catch (error) {
-        if (error instanceof AvsOrganizerResolutionError) {
-          throw new HttpsError('failed-precondition', error.reason);
-        }
-        throw error;
-      }
-    }
-    const graphClient = hasEligibleCase ? graphClientFromSecrets() : null;
-    const staffRegistry = hasEligibleCase
-      ? await loadProductionStaffIdentityRegistry(db)
-      : null;
+    const outcomes = await processItems({
+      db,
+      runRef,
+      items: plan.batch,
+    });
 
-    const outcomes = await mapWithConcurrency(
-      plan.batch,
-      AVS_FORCE_FRESH_RANGE_CONCURRENCY,
-      async (item): Promise<RangeOutcome> => {
-        let outcome: RangeOutcome;
-        if (
-          text(item.data.classSessionId) !== item.id
-          || !text(item.data.evidenceId)
-        ) {
-          outcome = {
-            caseId: item.id,
-            status: 'skipped',
-            graphLogicalCalls: 0,
-            identityMappingWritten: false,
-            identityClaimWritten: false,
-          };
-        } else {
-          try {
-            const result = await refreshAttendanceValidationCaseEvidence({
-              db,
-              caseId: item.id,
-              organizerResolution: organizerResolution!,
-              graphClient: graphClient!,
-              staffRegistry: staffRegistry!,
-            });
-            outcome = {
-              caseId: item.id,
-              status: 'refreshed',
-              graphLogicalCalls: result.graphLogicalCalls,
-              identityMappingWritten: result.teacherIdentityMappingWritten,
-              identityClaimWritten: result.teacherIdentityClaimWritten,
-            };
-          } catch (error) {
-            outcome = {
-              caseId: item.id,
-              status: 'failed',
-              graphLogicalCalls: error instanceof ForceFreshCaseRefreshError
-                ? error.graphLogicalCalls
-                : 0,
-              identityMappingWritten: false,
-              identityClaimWritten: false,
-            };
-            logger.error('AVS Force Fresh selected-range case failed', {
-              rangeId,
-              caseId: item.id,
-              errorName: error instanceof Error ? error.name : 'unknown',
-              errorMessage: error instanceof Error ? error.message : 'unknown',
-            });
-          }
-        }
+    const remainingCases = await remainingCasesAfterCursor({
+      db,
+      range,
+      cursor: plan.nextCursor,
+      hasMore: plan.hasMore,
+    });
 
-        await rangeRef.set({
-          completedCaseIds: FieldValue.arrayUnion(item.id),
-          processedCount: FieldValue.increment(1),
-          ...(outcome.status === 'refreshed'
-            ? { refreshedCount: FieldValue.increment(1) }
-            : outcome.status === 'skipped'
-              ? { skippedCount: FieldValue.increment(1) }
-              : { failedCount: FieldValue.increment(1) }),
-          graphLogicalCalls: FieldValue.increment(outcome.graphLogicalCalls),
-          updatedAt: FieldValue.serverTimestamp(),
-        }, { merge: true });
-        return outcome;
-      },
-    );
+    const stateAfterOutcomesSnapshot = await runRef.get();
+    const stateAfterOutcomes =
+      (stateAfterOutcomesSnapshot.data() || {}) as ForceFreshRunState;
+    const failedCases = count(stateAfterOutcomes.failedCount);
+    const nextStatus = forceFreshRunStatus({
+      remainingCases,
+      failedCases,
+    });
 
-    const nextCursor = plan.nextCursor;
-    let remainingCases = 0;
-    if (nextCursor && plan.hasMore) {
-      const remainingSnapshot = await db
-        .collection('attendanceValidationCases')
-        .where('serviceDateYmd', '>=', range.fromDate)
-        .where('serviceDateYmd', '<=', range.toDate)
-        .orderBy('serviceDateYmd', 'asc')
-        .orderBy(FieldPath.documentId(), 'asc')
-        .startAfter(nextCursor.serviceDateYmd, nextCursor.caseId)
-        .count()
-        .get();
-      remainingCases = remainingSnapshot.data().count;
-    }
-
-    const complete = remainingCases === 0;
-    await rangeRef.set({
-      status: complete ? 'complete' : 'in_progress',
-      cursorDate: nextCursor?.serviceDateYmd ?? null,
-      cursorCaseId: nextCursor?.caseId ?? null,
+    await runRef.set({
+      status: nextStatus,
+      cursorDate: plan.nextCursor?.serviceDateYmd ?? null,
+      cursorCaseId: plan.nextCursor?.caseId ?? null,
       remainingCases,
       lastBatchCaseCount: plan.batch.length,
+      lastCheckpointedCaseCount: plan.checkpointedCaseCount,
       updatedAt: FieldValue.serverTimestamp(),
-      ...(complete ? { completedAt: FieldValue.serverTimestamp() } : {}),
+      ...(nextStatus === 'complete'
+        || nextStatus === 'complete_with_failures'
+        ? { scanCompletedAt: FieldValue.serverTimestamp() }
+        : {}),
+      ...(nextStatus === 'complete'
+        ? { completedAt: FieldValue.serverTimestamp() }
+        : {}),
     }, { merge: true });
 
-    const finalStateSnapshot = await rangeRef.get();
-    const finalState =
-      (finalStateSnapshot.data() || {}) as ForceFreshRangeState;
-    const refreshed = outcomes.filter((item) => item.status === 'refreshed').length;
-    const skipped = outcomes.filter((item) => item.status === 'skipped').length;
-    const failed = outcomes.filter((item) => item.status === 'failed').length;
-    const graphLogicalCalls = outcomes.reduce(
-      (sum, item) => sum + item.graphLogicalCalls,
-      0,
-    );
-    const identityMappingsWritten = outcomes.filter(
-      (item) => item.identityMappingWritten,
-    ).length;
-    const identityClaimsWritten = outcomes.filter(
-      (item) => item.identityClaimWritten,
-    ).length;
+    const finalSnapshot = await runRef.get();
+    state = (finalSnapshot.data() || {}) as ForceFreshRunState;
 
-    return {
-      ok: true,
-      ...range,
-      rangeId,
-      alreadyComplete: false,
-      complete,
-      casesProcessed: outcomes.length,
-      refreshed,
-      skipped,
-      failed,
-      graphLogicalCalls,
-      identityMappingsWritten,
-      identityClaimsWritten,
+    logger.info('AVS Force Fresh generation batch completed', {
+      runId,
+      fromDate: range.fromDate,
+      toDate: range.toDate,
+      status: text(state.status),
+      batchCaseCount: outcomes.length,
+      checkpointedCasesSkipped: plan.checkpointedCaseCount,
       remainingCases,
-      concurrency: AVS_FORCE_FRESH_RANGE_CONCURRENCY,
-      cumulative: {
-        casesProcessed: count(finalState.processedCount),
-        refreshed: count(finalState.refreshedCount),
-        skipped: count(finalState.skippedCount),
-        failed: count(finalState.failedCount),
-        graphLogicalCalls: count(finalState.graphLogicalCalls),
-      },
-      operationalMutationAllowed: false,
-    };
+      currentFailedCases: count(state.failedCount),
+    });
+
+    return responseFromState({
+      range,
+      runId,
+      state,
+      outcomes,
+      remainingCases,
+      checkpointedCasesSkipped: plan.checkpointedCaseCount,
+      alreadyComplete: false,
+      mode: 'scan',
+    });
   },
 );

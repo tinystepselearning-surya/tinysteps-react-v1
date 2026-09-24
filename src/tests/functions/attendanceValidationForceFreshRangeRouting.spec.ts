@@ -6,7 +6,7 @@ function read(relativePath: string): string {
   return fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
 }
 
-describe('AVS Force Fresh selected-range routing', () => {
+describe('AVS Force Fresh generation routing', () => {
   const source = read(
     'functions/src/attendanceValidation/forceFreshRangeCallable.ts',
   );
@@ -35,15 +35,39 @@ describe('AVS Force Fresh selected-range routing', () => {
     expect(source).toContain('staffRegistry: staffRegistry!');
   });
 
-  it('persists per-case completion before advancing the cursor', () => {
-    const checkpoint = source.indexOf(
-      'completedCaseIds: FieldValue.arrayUnion(item.id)',
+  it('persists per-case terminal checkpoints before advancing the discovery cursor', () => {
+    const checkpoint = source.indexOf('await persistOutcome({');
+    const cursor = source.indexOf(
+      'cursorCaseId: plan.nextCursor?.caseId',
     );
-    const cursor = source.indexOf('cursorCaseId: nextCursor?.caseId');
     expect(checkpoint).toBeGreaterThan(-1);
     expect(cursor).toBeGreaterThan(checkpoint);
+    expect(source).toContain(
+      'ATTENDANCE_VALIDATION_FORCE_FRESH_RUN_CASES_SUBCOLLECTION',
+    );
     expect(source).toContain('.limit(AVS_FORCE_FRESH_RANGE_QUERY_LIMIT)');
-    expect(source).toContain('remainingCases');
+    expect(source).not.toContain('completedCaseIds: FieldValue.arrayUnion');
+  });
+
+  it('uses explicit generation ids and never reuses permanent date-range state', () => {
+    expect(source).toContain('cleanAvsForceFreshRunId(request.data?.runId)');
+    expect(source).toContain('runs.doc(params.requestedRunId)');
+    expect(source).toContain('runs.doc()');
+    expect(source).toContain(
+      'ATTENDANCE_VALIDATION_FORCE_FRESH_RUNS_COLLECTION',
+    );
+    expect(source).not.toContain('avsForceFreshRangeId(');
+    expect(source).not.toContain(
+      '.collection(ATTENDANCE_VALIDATION_FORCE_FRESH_RANGES_COLLECTION)',
+    );
+  });
+
+  it('supports complete-with-failures and bounded failed-case retries', () => {
+    expect(source).toContain("status !== 'complete_with_failures'");
+    expect(source).toContain(".where('status', '==', 'failed')");
+    expect(source).toContain('retryCursorCaseId');
+    expect(source).toContain('retryFailures');
+    expect(source).toContain('AVS_FORCE_FRESH_RANGE_MAX_CASES');
   });
 
   it('writes only AVS sidecars and never imports operational writers', () => {
@@ -55,12 +79,15 @@ describe('AVS Force Fresh selected-range routing', () => {
     expect(source).toContain('operationalMutationAllowed: false');
   });
 
-  it('keeps progress backend-only and exports the callable', () => {
+  it('keeps generation progress backend-only and exports the callable', () => {
     expect(contract).toContain(
-      "forceFreshRanges: 'attendanceValidationForceFreshRanges'",
+      "forceFreshRuns: 'attendanceValidationForceFreshRuns'",
     );
     expect(rules).toContain(
-      'match /attendanceValidationForceFreshRanges/{rangeId}',
+      'match /attendanceValidationForceFreshRuns/{runId}',
+    );
+    expect(rules).toContain(
+      'match /cases/{caseId}',
     );
     expect(functionsIndex).toContain(
       'export { forceRefreshAttendanceValidationRange } from "./attendanceValidation/forceFreshRangeCallable";',

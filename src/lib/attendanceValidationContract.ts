@@ -82,6 +82,7 @@ export const ATTENDANCE_VALIDATION_COLLECTIONS = {
   dirtySessions: 'attendanceValidationDirtySessions',
   baselineRanges: 'attendanceValidationBaselineRanges',
   forceFreshRanges: 'attendanceValidationForceFreshRanges',
+  forceFreshRuns: 'attendanceValidationForceFreshRuns',
   config: 'attendanceValidationConfig',
 } as const;
 

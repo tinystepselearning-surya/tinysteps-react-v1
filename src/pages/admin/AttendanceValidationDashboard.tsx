@@ -188,22 +188,35 @@ interface AvsForceFreshRangeResponse {
   ok: boolean;
   fromDate: string;
   toDate: string;
+  runId: string;
+  generationId: string;
   rangeId: string;
+  status: 'in_progress' | 'complete' | 'complete_with_failures';
+  mode: 'scan' | 'retry_failed' | 'summary';
   alreadyComplete: boolean;
   complete: boolean;
+  completeWithFailures: boolean;
+  hasMore: boolean;
+  retryableFailures: boolean;
   casesProcessed: number;
+  attempted: number;
   refreshed: number;
   skipped: number;
   failed: number;
+  currentFailedCases: number;
+  checkpointedCasesSkipped: number;
   graphLogicalCalls: number;
   remainingCases: number;
   concurrency: number;
   cumulative: {
     casesProcessed: number;
+    attempted: number;
     refreshed: number;
     skipped: number;
     failed: number;
     graphLogicalCalls: number;
+    identityMappingsWritten: number;
+    identityClaimsWritten: number;
   };
   operationalMutationAllowed: false;
 }
@@ -622,6 +635,8 @@ export default function AttendanceValidationDashboard() {
     useState<AvsForceFreshRangeResponse | null>(null);
   const [forceFreshRangeCompletedAt, setForceFreshRangeCompletedAt] =
     useState<Date | null>(null);
+  const [forceFreshRangeGeneration, setForceFreshRangeGeneration] =
+    useState<{ runId: string; fromDate: string; toDate: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
 
@@ -889,33 +904,75 @@ export default function AttendanceValidationDashboard() {
       return;
     }
 
+    const sameGeneration =
+      forceFreshRangeGeneration?.fromDate === fromDate
+      && forceFreshRangeGeneration?.toDate === toDate
+        ? forceFreshRangeGeneration
+        : null;
+    const retryFailures =
+      Boolean(sameGeneration)
+      && forceFreshRangeResult?.runId === sameGeneration?.runId
+      && forceFreshRangeResult?.status === 'complete_with_failures';
+    const runId = sameGeneration?.runId
+      ?? `ffr_${Date.now().toString(36)}_${crypto.randomUUID().replace(/-/g, '')}`;
+
     const confirmed = window.confirm(
-      'Force Fresh Selected Range will make new Microsoft Graph reads for up to 100 existing AVS cases and rebuild their saved results. Continue?',
+      retryFailures
+        ? 'Retry only the failed Teams re-fetch cases in this generation? Completed cases will not be repeated.'
+        : sameGeneration
+          ? 'Continue this Teams re-fetch generation? Completed cases are checkpointed and will not be repeated.'
+          : 'Start a new Teams re-fetch generation for this selected range? It will make fresh Microsoft Graph reads for up to 100 existing AVS cases in this invocation.',
     );
     if (!confirmed) return;
 
+    if (!sameGeneration) {
+      setForceFreshRangeGeneration({ runId, fromDate, toDate });
+    }
     setForceFreshRangeRunning(true);
     setError(null);
 
     try {
       const result = await callFunction<
         AvsForceFreshRangeResponse,
-        { fromDate: string; toDate: string }
+        {
+          fromDate: string;
+          toDate: string;
+          runId: string;
+          retryFailures: boolean;
+        }
       >(
         'forceRefreshAttendanceValidationRange',
-        { fromDate, toDate },
+        { fromDate, toDate, runId, retryFailures },
       );
 
       setForceFreshRangeResult(result);
       setForceFreshRangeCompletedAt(new Date());
+      if (result.complete) {
+        setForceFreshRangeGeneration(null);
+      } else {
+        setForceFreshRangeGeneration({
+          runId: result.runId,
+          fromDate,
+          toDate,
+        });
+      }
       await loadSavedCases(false, true);
     } catch (forceFreshRangeError) {
       console.error('[AVS] Force Fresh Selected Range failed', forceFreshRangeError);
+      // Keep the explicit generation id after a timeout/error so a retry resumes
+      // the same server-side checkpoints instead of starting duplicate work.
+      setForceFreshRangeGeneration({ runId, fromDate, toDate });
       setError(safeForceFreshFailureMessage(forceFreshRangeError));
     } finally {
       setForceFreshRangeRunning(false);
     }
-  }, [fromDate, loadSavedCases, toDate]);
+  }, [
+    forceFreshRangeGeneration,
+    forceFreshRangeResult,
+    fromDate,
+    loadSavedCases,
+    toDate,
+  ]);
 
   const handleTeacherFilterChange = useCallback((value: string) => {
     setTeacherFilter(value);
@@ -1209,11 +1266,6 @@ export default function AttendanceValidationDashboard() {
                 || baselineRunning
                 || forceFreshRangeRunning
                 || forceFreshCaseId !== null
-                || (
-                  forceFreshRangeResult?.fromDate === fromDate
-                  && forceFreshRangeResult?.toDate === toDate
-                  && forceFreshRangeResult.complete
-                )
               }
               title="Exceptional action: fresh-refresh up to 100 existing AVS cases in the selected service-date range."
             >
@@ -1224,13 +1276,16 @@ export default function AttendanceValidationDashboard() {
                 ? 'Refreshing selected range…'
                 : forceFreshRangeResult?.fromDate === fromDate
                   && forceFreshRangeResult?.toDate === toDate
-                  && !forceFreshRangeResult.complete
-                  ? 'Continue Fresh Refresh'
-                  : forceFreshRangeResult?.fromDate === fromDate
-                    && forceFreshRangeResult?.toDate === toDate
-                    && forceFreshRangeResult.complete
-                    ? 'Fresh Refresh Complete'
-                    : 'Force Fresh Selected Range'}
+                  && forceFreshRangeResult.status === 'complete_with_failures'
+                  ? 'Retry Failed Refreshes'
+                  : forceFreshRangeGeneration?.fromDate === fromDate
+                    && forceFreshRangeGeneration?.toDate === toDate
+                    ? 'Continue Fresh Refresh'
+                    : forceFreshRangeResult?.fromDate === fromDate
+                      && forceFreshRangeResult?.toDate === toDate
+                      && forceFreshRangeResult.complete
+                      ? 'Re-fetch This Range Again'
+                      : 'Force Fresh Selected Range'}
             </Button>
           </div>
         </div>
@@ -1244,7 +1299,7 @@ export default function AttendanceValidationDashboard() {
         <p className="mt-1 text-xs text-slate-500">
           Latest Check is intentionally capped at 31 calendar days per run.
           First-Time Baseline is also capped at 31 days and processes at most 100 session documents per click with fresh Teams evidence only where no saved AVS case exists.
-          Selected-range Force Fresh uses five concurrent case refreshes and resumes from persisted progress.
+          Selected-range Force Fresh uses five concurrent case refreshes, explicit generation IDs, and per-case checkpoints so retries resume safely.
         </p>
 
         {loadedRange && loadedAt && (
@@ -1454,16 +1509,20 @@ export default function AttendanceValidationDashboard() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="font-medium text-slate-900">
-                {forceFreshRangeResult.complete
-                  ? 'Force Fresh Selected Range complete'
-                  : 'Force Fresh Selected Range batch complete'}
+                {forceFreshRangeResult.status === 'complete_with_failures'
+                  ? 'Force Fresh generation complete with failures'
+                  : forceFreshRangeResult.complete
+                    ? 'Force Fresh generation complete'
+                    : 'Force Fresh generation batch complete'}
               </p>
               <p className="mt-1 text-sm text-slate-700">
-                Cases processed: {forceFreshRangeResult.casesProcessed}.
+                Generation: {forceFreshRangeResult.runId.slice(0, 18)}….
+                {' '}Cases attempted this call: {forceFreshRangeResult.attempted}.
                 {' '}Refreshed: {forceFreshRangeResult.refreshed}.
                 {' '}Skipped: {forceFreshRangeResult.skipped}.
-                {' '}Failed: {forceFreshRangeResult.failed}.
-                {' '}Remaining cases: {forceFreshRangeResult.remainingCases}.
+                {' '}Failed this call: {forceFreshRangeResult.failed}.
+                {' '}Current failed: {forceFreshRangeResult.currentFailedCases}.
+                {' '}Remaining unscanned: {forceFreshRangeResult.remainingCases}.
               </p>
               <p className="mt-1 text-xs text-slate-600">
                 Microsoft Graph logical calls: {forceFreshRangeResult.graphLogicalCalls}.
@@ -1471,12 +1530,18 @@ export default function AttendanceValidationDashboard() {
                 {' '}Saved results for {forceFreshRangeResult.fromDate} to {forceFreshRangeResult.toDate} were automatically reloaded.
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Cumulative: {forceFreshRangeResult.cumulative.casesProcessed} processed,
+                Cumulative: {forceFreshRangeResult.cumulative.casesProcessed} unique cases processed,
+                {' '}{forceFreshRangeResult.cumulative.attempted} attempts,
                 {' '}{forceFreshRangeResult.cumulative.refreshed} refreshed,
                 {' '}{forceFreshRangeResult.cumulative.skipped} skipped,
-                {' '}{forceFreshRangeResult.cumulative.failed} failed,
+                {' '}{forceFreshRangeResult.cumulative.failed} currently failed,
                 {' '}{forceFreshRangeResult.cumulative.graphLogicalCalls} Graph logical calls.
               </p>
+              {forceFreshRangeResult.retryableFailures && (
+                <p className="mt-2 text-xs font-medium text-amber-800">
+                  This generation finished scanning the range but still has failed cases. Retry Failed Refreshes will retry only those failures.
+                </p>
+              )}
             </div>
             {forceFreshRangeCompletedAt && (
               <div className="shrink-0 text-xs text-slate-500">
