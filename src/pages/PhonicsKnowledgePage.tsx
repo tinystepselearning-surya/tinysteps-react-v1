@@ -20,6 +20,7 @@ import {
   getRelatedPhonicsResourcePages,
 } from '../lib/phonicsResourceDiscoveryGraph.js';
 import { getApprovedPhonicsEditorialReview } from '../lib/phonicsEditorialReviewRegistry.js';
+import { usePublicEditorialApproval } from '../lib/publicEditorialReview';
 import { getEditorialReviewer } from '../lib/editorialReviewerRegistry';
 import { getCanonicalTopicOwnerPath } from '../lib/canonicalTopicOwnershipRegistry.js';
 import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
@@ -82,7 +83,7 @@ const BulletPanel: FC<{ title: string; items: readonly string[]; tone?: 'plain' 
 
 function uniqueRelatedPaths(concept: PhonicsKnowledgeConcept) { return Array.from(new Set(concept.supportingPaths)).slice(0, 3); }
 function formatReviewDate(value: string) {
-  const date = new Date(`${value}T00:00:00Z`);
+  const date = new Date(value.includes('T') ? value : `${value}T00:00:00Z`);
   return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(date);
 }
 
@@ -101,7 +102,16 @@ export default function PhonicsKnowledgePage() {
   const relatedPaths = uniqueRelatedPaths(concept);
   const discoveryCluster = getPhonicsResourceDiscoveryClusterForPath(page.path);
   const relatedGuides = getRelatedPhonicsResourcePages(page.path, 4);
-  const editorialReview = getApprovedPhonicsEditorialReview(page.path);
+  const staticEditorialReview = getApprovedPhonicsEditorialReview(page.path);
+  const publicEditorialApproval = usePublicEditorialApproval(concept.id, page.publicationRevision);
+  const editorialReview = publicEditorialApproval
+    ? {
+        editorialReviewStatus: 'approved' as const,
+        reviewerKey: publicEditorialApproval.reviewerKey,
+        reviewedAt: publicEditorialApproval.reviewedAt,
+        reviewedRevision: publicEditorialApproval.reviewedRevision,
+      }
+    : staticEditorialReview;
   const reviewer = editorialReview ? getEditorialReviewer(editorialReview.reviewerKey) : null;
   const c7Handoff = getCommercialC7R3Handoff(page.path);
   const differentiation = getPhonicsResourceDifferentiation(concept.id);
