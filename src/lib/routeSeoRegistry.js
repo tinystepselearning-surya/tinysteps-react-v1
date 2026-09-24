@@ -600,7 +600,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/phonics-fees-india': {
     title: 'Phonics Class Fees in India 2026 | 1:1 & Group Price Guide',
     description:
-      'Compare 2026 phonics class fees in India with verified public 1:1 and group prices, provider sources, and online-vs-offline cost and time factors.',
+      'Compare 2026 live-online phonics class fees in India with verified public 1:1 and group prices, provider sources, and practical online-vs-offline cost factors.',
     canonicalPath: '/phonics-fees-india',
     ogType: 'website',
     keywords:
