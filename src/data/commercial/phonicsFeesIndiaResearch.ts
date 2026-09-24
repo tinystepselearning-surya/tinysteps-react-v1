@@ -80,7 +80,9 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'Learn2Read',
     sourceUrl: 'https://www.learn2read.co/english-phonics/power-plus/',
     sourceLabel: 'Official Power PLUS phonics course page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
+    note:
+      'The official page also discloses an extra ₹83.33 per class for bookings between 10 PM and 8 AM IST.',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹466.66 per class',
@@ -106,7 +108,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'Klariti Learning',
     sourceUrl: 'https://www.klaritilearning.com/phonics',
     sourceLabel: 'Official phonics course page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹18,000 / 40 sessions',
@@ -135,7 +137,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'MyBeeClub (Arise ‘n’ Shine)',
     sourceUrl: 'https://myarisenshine.com/online-phonics-reading-new.html',
     sourceLabel: 'Official online phonics course page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹500 per session',
@@ -164,7 +166,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'Fluffy Tales',
     sourceUrl: 'https://fluffytale.in/creative-cubs-2/',
     sourceLabel: 'Official Creative Cubs phonics course page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     note:
       'The page contains a 60-versus-66 total-class inconsistency, so the benchmark uses only its directly published per-class prices and does not infer a package total.',
     oneToOne: {
@@ -193,7 +195,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'EduNext Academy (CRECT Trust)',
     sourceUrl: 'https://crect.org/',
     sourceLabel: 'Official EduNext phonics pricing / FAQ',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹300 per session',
@@ -218,7 +220,8 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'instrucko',
     sourceUrl: 'https://www.instrucko.com/brochure_instrucko.pdf',
     sourceLabel: 'Official instrucko brochure · India-teacher phonics pricing',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
+    note: 'The official brochure states these prices are inclusive of 18% GST.',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹14,605 / 20 · ₹25,640 / 40 · ₹48,680 / 80',
@@ -246,7 +249,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'Bambinos / Unbox English',
     sourceUrl: 'https://demo.bambinos.live/',
     sourceLabel: 'Official Unbox English public page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: 'From ₹699 per class',
@@ -269,7 +272,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'iSchooling',
     sourceUrl: 'https://ischooling.in/program/online-phonics-classes/',
     sourceLabel: 'Official online phonics programme page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹5,000 per month',
@@ -290,10 +293,26 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     },
   },
   {
+    provider: 'Raynira Kids Academy',
+    sourceUrl: 'https://raynira.com/',
+    sourceLabel: 'Official Raynira Kids Academy homepage',
+    checkedAt: '2026-09-24',
+    group: {
+      format: 'group',
+      publicPriceLabel: 'From ₹1,900/month beginner · from ₹2,000/month advanced',
+      sessionStructureLabel: 'Live online phonics · 6-month level',
+      groupSizeLabel: 'Small learning groups · exact batch size not publicly stated',
+      benchmarkEligible: false,
+      evidenceStatus: 'published-not-normalized',
+      evidenceNote:
+        'The official site publishes monthly starting prices but does not state a fixed total live-session count for the billed month, so no per-class rate is inferred.',
+    },
+  },
+  {
     provider: 'Jolly Reading',
     sourceUrl: 'https://jollyreading.in/product-category/online-phonics-classes/',
     sourceLabel: 'Official online phonics product category',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     group: {
       format: 'group',
       publicPriceLabel: '₹18,000 beginner · ₹20,000 advanced',
@@ -310,7 +329,7 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
     provider: 'WizMantra',
     sourceUrl: 'https://wizmantraenglishclasses.com/phonics-for-kids/',
     sourceLabel: 'Official phonics-for-kids pricing page',
-    checkedAt: '2026-09-19',
+    checkedAt: '2026-09-24',
     oneToOne: {
       format: 'one-to-one',
       publicPriceLabel: '₹4,890/month',
@@ -323,12 +342,6 @@ export const PHONICS_FEES_INDIA_PROVIDERS: readonly PhonicsFeeProvider[] = [
 ] as const;
 
 export const PHONICS_FEES_REVIEWED_WITHOUT_COMPARABLE_PUBLIC_PRICE: readonly PhonicsFeeReviewedWithoutBenchmark[] = [
-  {
-    provider: 'Raynira Kids Academy',
-    sourceUrl: 'https://raynira.com/',
-    reason:
-      'The official site is reachable, but the exact current phonics fee could not be independently re-verified from the public source during the final 19 September 2026 audit. No price is published here until it can be re-verified.',
-  },
   {
     provider: 'Little Genius Academy',
     sourceUrl: 'https://littlegeniusacademy.co.in/one-on-one-online-phonics-classes.php',
@@ -384,11 +397,11 @@ function buildSegment(format: PhonicsFeeFormat, unitLabel: string): PhonicsFeeMa
 }
 
 export const PHONICS_FEES_INDIA_RESEARCH = {
-  id: 'phonics-fees-india-2026-09-19',
+  id: 'phonics-fees-india-2026-09-24',
   status: 'named-provider-source-of-truth-study' as const,
   geography: 'India-facing live online child phonics providers',
-  reviewedAt: '2026-09-19',
-  reviewedLabel: '19 September 2026',
+  reviewedAt: '2026-09-24',
+  reviewedLabel: '24 September 2026',
   sourceBasis: 'Official provider websites and official provider brochures',
   providerNamesPublic: true,
   rawProviderRowsRetainedInRepository: true,
@@ -406,5 +419,5 @@ export const PHONICS_FEES_INDIA_RESEARCH = {
   oneToOne: buildSegment('one-to-one', 'per live 1:1 class'),
   group: buildSegment('group', 'per child / live group class'),
   publicDisclosure:
-    'Tiny Steps publishes this price research. External-provider benchmark statistics exclude Tiny Steps. Provider prices can change; every named row links to the official source checked on 19 September 2026.',
+    'Tiny Steps publishes this price research. External-provider benchmark statistics exclude Tiny Steps. Provider prices can change; every named row links to the official source checked on 24 September 2026.',
 } as const;
