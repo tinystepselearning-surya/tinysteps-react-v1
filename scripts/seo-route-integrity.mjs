@@ -21,6 +21,8 @@ const REQUIRED_SPA_REWRITE_SOURCES = [
   '/unauthorized',
   '/surya',
   '/surya/**',
+  '/founder',
+  '/founder/**',
   '/Surya',
   '/Surya/**',
   '/admin',
