@@ -376,15 +376,6 @@ function participantEvidence(
   };
 }
 
-function transcriptMetadata(transcript: GraphCallTranscript): TranscriptEvidenceMetadata {
-  return {
-    transcriptId: requireText(transcript.id, 'transcriptId'),
-    createdDateTime: optionalText(transcript.createdDateTime),
-    endDateTime: optionalText(transcript.endDateTime),
-    contentUrlAvailable: Boolean(optionalText(transcript.transcriptContentUrl)),
-  };
-}
-
 function meetingMetadata(meeting: GraphOnlineMeeting): NonNullable<AttendanceValidationEvidenceDocument['meeting']> {
   return {
     onlineMeetingId: requireText(meeting.id, 'onlineMeetingId'),
