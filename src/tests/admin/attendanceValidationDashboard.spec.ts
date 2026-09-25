@@ -19,6 +19,9 @@ describe('AV6 admin attendance validation dashboard', () => {
   const businessReconciliation = readRepoFile(
     'src/lib/attendanceValidationBusinessReconciliation.ts',
   );
+  const businessOutcomeEngine = readRepoFile(
+    'functions/src/attendanceValidation/businessOutcomeEngine.ts',
+  );
 
   it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
@@ -125,7 +128,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain('<TableHead>Date</TableHead>');
     expect(businessView).toContain('<TableHead>Student</TableHead>');
     expect(businessView).toContain('<TableHead>Teacher</TableHead>');
-    expect(businessView).toContain('Teams supported');
+    expect(businessView).toContain('Teams Present');
     expect(businessView).toContain('Tiny Steps Present');
     expect(businessView).toContain('Difference');
     expect(businessView).toContain('formatServiceDate(group.serviceDateYmd)');
@@ -136,9 +139,9 @@ describe('AV6 admin attendance validation dashboard', () => {
   it('labels the source-case window separately from the three business outcomes', () => {
     expect(dashboard).toContain('Loaded AVS source cases');
     expect(dashboard).toContain('Verified, False Present, and False Absent');
-    expect(businessView).toContain('Student/day groups with no Present-count discrepancy.');
-    expect(businessView).toContain('Excess Tiny Steps Present marks beyond Teams-supported attendance.');
-    expect(businessView).toContain('Teams-supported attendance missing from Tiny Steps Present marks.');
+    expect(businessView).toContain("value: 'verified', label: 'Verified'");
+    expect(businessView).toContain("value: 'false_present', label: 'False Present'");
+    expect(businessView).toContain("value: 'false_absent', label: 'False Absent'");
   });
 
   it('shows the refined normal operator surface with only Load Results and Run Validation', () => {
@@ -212,15 +215,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
-  it('keeps the row-level exceptional fresh action as Re-fetch this case', () => {
-    expect(dashboard).toContain('Re-fetch this case');
-    expect(dashboard).toContain(
-      "'forceRefreshAttendanceValidationEvidence'",
-    );
-    expect(dashboard).toContain('caseId: item.id');
-    expect(dashboard).toContain(
-      'inputFingerprint: item.inputFingerprint',
-    );
+  it('keeps row-level correction and re-fetch controls out of the simple business view', () => {
+    expect(businessView).not.toContain('Review correction');
+    expect(businessView).not.toContain('Re-fetch this case');
+    expect(businessView).not.toContain('correct_to_absent');
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
     );
@@ -235,23 +233,25 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('f0f84eef-5cc2-4ece-8356-df08c2f113bb');
   });
 
-  it('surfaces auditable same-day Present-count reconciliation while preserving case diagnostics', () => {
-    expect(dashboard).toContain('sameDayCoverageSeconds');
-    expect(dashboard).toContain('sameDayPresentSessionCount');
-    expect(dashboard).toContain('sameDayOccurrenceCount');
-    expect(businessView).toContain('Same-day Teams overlap:');
-    expect(businessView).toContain('Teams occurrences:');
-    expect(businessView).toContain('Underlying Tiny Steps rows:');
-    expect(businessReconciliation).toContain('AVS_BUSINESS_PRESENT_OVERLAP_SECONDS = 25 * 60');
-    expect(businessReconciliation).toContain('supportedPresentCountFromOverlap');
+  it('uses only the strict Present-count business rule and persists its backend result', () => {
+    expect(dashboard).toContain('businessOutcome');
+    expect(dashboard).toContain('teamsSupportedPresentCount');
+    expect(dashboard).toContain('tinyStepsPresentCount');
+    expect(dashboard).toContain('businessDifferenceCount');
+    expect(businessOutcomeEngine).toContain(
+      'AVS_BUSINESS_PRESENT_OVERLAP_SECONDS = 25 * 60',
+    );
+    expect(businessOutcomeEngine).toContain('reconcileAvsBusinessOutcome');
+    expect(businessReconciliation).toContain('groupPersistedAvsBusinessOutcomes');
+    expect(businessReconciliation).toContain('performs no attendance inference');
   });
 
-  it('keeps internal AVS classifications diagnostic instead of exposing them as primary tabs', () => {
-    expect(dashboard).toContain("'NO_CLASS_OCCURRED'");
-    expect(businessView).toContain('Internal:');
+  it('does not expose legacy AVS classifications in the business view', () => {
+    expect(businessView).not.toContain('Internal:');
     expect(businessView).not.toContain("label: 'No class'");
     expect(businessView).not.toContain("label: 'Missing Teams'");
     expect(businessView).not.toContain("label: 'Ambiguous'");
+    expect(businessView).not.toContain("label: 'Conflict'");
   });
 
   it('automatically reloads saved results after unified validation', () => {
@@ -260,9 +260,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('await loadSavedCases(false, true)');
   });
 
-  it('does not offer Re-fetch this case against placeholder evidence that does not exist', () => {
-    expect(businessView).toContain(
-      "!item.reasons.includes('evidence_document_missing')",
-    );
+  it('treats non-evaluable source data as a technical state, not a fourth business tab', () => {
+    expect(businessView).toContain("Exclude<AvsBusinessOutcome, 'not_evaluable'>");
+    expect(businessView).toContain('not evaluated');
+    expect(businessView).not.toContain("label: 'Not Evaluable'");
   });
 });
