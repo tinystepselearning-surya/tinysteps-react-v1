@@ -144,12 +144,6 @@ export default function PhonicsKnowledgePage() {
           <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[0.18em]"><span className="rounded-full bg-sky-100 px-3 py-1.5 text-sky-800">Focused phonics guide</span><span className="text-slate-400">{page.group}</span></div>
           <h1 className="ts-answer-title mt-4 text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl sm:leading-[1.05]">{concept.parentQuestion}</h1>
           <div className="mt-6 rounded-[1.7rem] border border-sky-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-7"><p className="text-[11px] font-black uppercase tracking-[0.22em] text-sky-700">Quick answer</p><p className="ts-answer-summary mt-3 text-lg font-semibold leading-8 text-slate-800 sm:text-xl">{concept.quickAnswer}</p></div>
-          {editorialReview && reviewer && editorialReview.reviewedAt ? (
-            <aside className="mt-4 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/65 px-4 py-3.5 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-5" aria-label="Human editorial review" data-editorial-review="approved">
-              <p><span className="font-bold text-slate-900">Reviewed for phonics accuracy by </span><Link className="font-black text-emerald-800 underline decoration-emerald-300 underline-offset-4" to={reviewer.profilePath}>{reviewer.fullName}</Link></p>
-              <p className="shrink-0 text-xs font-semibold text-slate-500">{reviewer.roleLabel} · Reviewed {formatReviewDate(editorialReview.reviewedAt)}</p>
-            </aside>
-          ) : null}
         </header>
 
         <section className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(16rem,0.75fr)]">
@@ -241,6 +235,13 @@ export default function PhonicsKnowledgePage() {
         ) : (
           <section className="mt-8 rounded-[1.8rem] bg-slate-950 p-6 text-white sm:p-8"><div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Need help finding the actual gap?</p><h2 className="mt-2 text-2xl font-black tracking-[-0.025em]">Use an assessment when practice alone is not showing what is stuck.</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">The focused guide explains one pattern. A broader assessment can separate sound knowledge, blending, decoding, spelling and fluency needs.</p></div><Link to="/book-demo" className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-sky-50">Book free assessment</Link></div></section>
         )}
+
+        {editorialReview && reviewer && editorialReview.reviewedAt ? (
+          <aside className="mt-8 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/65 px-4 py-3.5 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-5" aria-label="Human editorial review" data-editorial-review="approved">
+            <p><span className="font-bold text-slate-900">Reviewed for phonics accuracy by </span><Link className="font-black text-emerald-800 underline decoration-emerald-300 underline-offset-4" to={reviewer.profilePath}>{reviewer.fullName}</Link></p>
+            <p className="shrink-0 text-xs font-semibold text-slate-500">{reviewer.roleLabel} · Reviewed {formatReviewDate(editorialReview.reviewedAt)}</p>
+          </aside>
+        ) : null}
       </article>
     </main>
   );
