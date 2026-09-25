@@ -3,6 +3,8 @@ export const AVS_SOAK_MAX_RANGE_DAYS = 31;
 export const AVS_SOAK_CASE_READ_CAP = 5000;
 export const AVS_SOAK_DIRTY_READ_CAP = 5000;
 export const AVS_SOAK_RUN_READ_CAP = 200;
+export const AVS_SOAK_CHECKPOINT_READ_CAP = 20000;
+export const AVS_SOAK_CURRENT_STATE_SCHEMA_VERSION = 1;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,6 +57,10 @@ function timestampDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function timestampMs(value) {
+  return timestampDate(value)?.getTime() ?? Number.NEGATIVE_INFINITY;
+}
+
 function sortedCounter(values) {
   const counts = {};
   for (const value of values) {
@@ -98,6 +104,192 @@ function operationalMutationMissingCount(rows) {
     (row) => row?.operationalMutationAllowed !== false
       && row?.operationalMutationAllowed !== true,
   ).length;
+}
+
+function runRecency(row) {
+  return {
+    time: Math.max(
+      timestampMs(row?.updatedAt),
+      timestampMs(row?.createdAt),
+    ),
+    order: count(row?._soakRunOrder),
+  };
+}
+
+function checkpointRecency(row) {
+  return {
+    time: Math.max(
+      timestampMs(row?.updatedAt),
+      timestampMs(row?._soakRunUpdatedAt),
+      timestampMs(row?._soakRunCreatedAt),
+    ),
+    runOrder: count(row?._soakRunOrder),
+    checkpointOrder: count(row?._soakCheckpointOrder),
+  };
+}
+
+function laterRun(candidate, current) {
+  if (!current) return candidate;
+  const next = runRecency(candidate);
+  const prev = runRecency(current);
+  if (next.time !== prev.time) return next.time > prev.time ? candidate : current;
+  return next.order >= prev.order ? candidate : current;
+}
+
+function laterCheckpoint(candidate, current) {
+  if (!current) return candidate;
+  const next = checkpointRecency(candidate);
+  const prev = checkpointRecency(current);
+  if (next.time !== prev.time) {
+    return next.time > prev.time ? candidate : current;
+  }
+
+  const nextFailed = text(candidate?.status) === 'failed';
+  const prevFailed = text(current?.status) === 'failed';
+  if (nextFailed !== prevFailed) {
+    return nextFailed ? candidate : current;
+  }
+
+  if (next.runOrder !== prev.runOrder) {
+    return next.runOrder > prev.runOrder ? candidate : current;
+  }
+  return next.checkpointOrder >= prev.checkpointOrder
+    ? candidate
+    : current;
+}
+
+function selectCurrentRuns(runRows) {
+  const byExactRange = new Map();
+  for (const row of runRows) {
+    const fromDate = validYmd(row?.fromDate);
+    const toDate = validYmd(row?.toDate);
+    if (!fromDate || !toDate) continue;
+    const key = `${fromDate}|${toDate}`;
+    byExactRange.set(key, laterRun(row, byExactRange.get(key)));
+  }
+  return [...byExactRange.values()];
+}
+
+function failureHasBrick6Taxonomy(row) {
+  return (
+    typeof row?.retryable === 'boolean'
+    && Boolean(text(row?.failureCategory))
+    && Boolean(text(row?.retryDisposition))
+    && Boolean(text(row?.operatorAction))
+  );
+}
+
+function summarizeCurrentReFetchState(runRows, checkpointRows) {
+  const currentRuns = selectCurrentRuns(runRows);
+  const currentRunKeys = new Set(
+    currentRuns
+      .map((row) => text(row?._soakRunKey))
+      .filter(Boolean),
+  );
+
+  const latestByCase = new Map();
+  let failedCheckpointMissingCaseIdCount = 0;
+
+  for (const row of checkpointRows) {
+    const caseId = text(row?.caseId);
+    if (!caseId) {
+      if (text(row?.status) === 'failed') {
+        failedCheckpointMissingCaseIdCount += 1;
+      }
+      continue;
+    }
+    latestByCase.set(
+      caseId,
+      laterCheckpoint(row, latestByCase.get(caseId)),
+    );
+  }
+
+  const latestRows = [...latestByCase.values()];
+  const currentFailedRows = latestRows.filter(
+    (row) => text(row?.status) === 'failed',
+  );
+
+  const retryableFromCheckpoints = currentFailedRows.filter(
+    (row) => row?.retryable === true,
+  ).length;
+  const actionRequiredFromCheckpoints = currentFailedRows.filter(
+    (row) => row?.retryable !== true,
+  ).length;
+  const legacyUncategorizedFromCheckpoints = currentFailedRows.filter(
+    (row) => !failureHasBrick6Taxonomy(row),
+  ).length;
+
+  let legacyRunFailureFallbackCount = 0;
+  for (const run of currentRuns) {
+    const runKey = text(run?._soakRunKey);
+    if (!runKey) {
+      legacyRunFailureFallbackCount += count(run?.failedCount);
+      continue;
+    }
+    const representedFailedCount = checkpointRows.filter(
+      (row) =>
+        text(row?._soakRunKey) === runKey
+        && text(row?.status) === 'failed',
+    ).length;
+    legacyRunFailureFallbackCount += Math.max(
+      0,
+      count(run?.failedCount) - representedFailedCount,
+    );
+  }
+
+  const allFailedWithCaseId = checkpointRows.filter(
+    (row) =>
+      Boolean(text(row?.caseId))
+      && text(row?.status) === 'failed',
+  ).length;
+  const currentFailedWithCaseId = currentFailedRows.length;
+  const supersededFailureCheckpointCount = Math.max(
+    0,
+    allFailedWithCaseId - currentFailedWithCaseId,
+  );
+
+  const legacyUncategorizedFailureBacklog =
+    legacyUncategorizedFromCheckpoints
+    + failedCheckpointMissingCaseIdCount
+    + legacyRunFailureFallbackCount;
+
+  const actionRequiredFailureBacklog =
+    actionRequiredFromCheckpoints
+    + failedCheckpointMissingCaseIdCount
+    + legacyRunFailureFallbackCount;
+
+  const failedCaseBacklog =
+    currentFailedRows.length
+    + failedCheckpointMissingCaseIdCount
+    + legacyRunFailureFallbackCount;
+
+  const remainingCaseBacklog = currentRuns.reduce(
+    (sum, row) => sum + count(row?.remainingCases),
+    0,
+  );
+
+  const currentRunCheckpointCount = checkpointRows.filter(
+    (row) => currentRunKeys.has(text(row?._soakRunKey)),
+  ).length;
+
+  return {
+    currentStateSchemaVersion: AVS_SOAK_CURRENT_STATE_SCHEMA_VERSION,
+    currentGenerationCount: currentRuns.length,
+    currentStateCheckpointCount: latestRows.length,
+    currentGenerationCheckpointCount: currentRunCheckpointCount,
+    failedCaseBacklog,
+    retryableFailureBacklog: retryableFromCheckpoints,
+    actionRequiredFailureBacklog,
+    legacyUncategorizedFailureBacklog,
+    remainingCaseBacklog,
+    supersededFailureCheckpointCount,
+    historicalGenerationCount: runRows.length,
+    historicalCheckpointCount: checkpointRows.length,
+    historicalGraphLogicalCalls: runRows.reduce(
+      (sum, row) => sum + count(row?.graphLogicalCalls),
+      0,
+    ),
+  };
 }
 
 export function normalizeAvsSoakRange(fromDate, toDate) {
@@ -151,6 +343,9 @@ export function summarizeAttendanceValidationSoak(input) {
   const forceFreshRuns = Array.isArray(input?.forceFreshRuns)
     ? input.forceFreshRuns
     : [];
+  const forceFreshCheckpoints = Array.isArray(input?.forceFreshCheckpoints)
+    ? input.forceFreshCheckpoints
+    : [];
 
   const caseRows = cases.filter((row) =>
     inRange(row?.serviceDateYmd, range),
@@ -168,6 +363,9 @@ export function summarizeAttendanceValidationSoak(input) {
       && toDate >= range.fromDate,
     );
   });
+  const checkpointRows = forceFreshCheckpoints.filter((row) =>
+    inRange(row?.serviceDateYmd, range),
+  );
 
   let dirtyOlderThan24Hours = 0;
   let dirtyOlderThan72Hours = 0;
@@ -192,12 +390,14 @@ export function summarizeAttendanceValidationSoak(input) {
   const explicitOperationalMutationPermissionCount =
     operationalMutationTrueCount(caseRows)
     + operationalMutationTrueCount(dirtyRows)
-    + operationalMutationTrueCount(runRows);
+    + operationalMutationTrueCount(runRows)
+    + operationalMutationTrueCount(forceFreshCheckpoints);
 
   const missingOperationalMutationFlagCount =
     operationalMutationMissingCount(caseRows)
     + operationalMutationMissingCount(dirtyRows)
-    + operationalMutationMissingCount(runRows);
+    + operationalMutationMissingCount(runRows)
+    + operationalMutationMissingCount(forceFreshCheckpoints);
 
   const invalidCaseDateCount = cases.filter(
     (row) => !validYmd(row?.serviceDateYmd),
@@ -205,10 +405,10 @@ export function summarizeAttendanceValidationSoak(input) {
   const invalidDirtyDateCount = dirtySessions.filter(
     (row) => !validYmd(row?.serviceDateYmd),
   ).length;
+  const invalidCheckpointDateCount = forceFreshCheckpoints.filter(
+    (row) => !validYmd(row?.serviceDateYmd),
+  ).length;
 
-  const statusCounts = sortedCounter(
-    runRows.map((row) => row?.status),
-  );
   const classificationCounts = sortedCounter(
     caseRows.map((row) => row?.classification),
   );
@@ -221,26 +421,13 @@ export function summarizeAttendanceValidationSoak(input) {
   const dirtyReasonCounts = sortedCounter(
     dirtyRows.map((row) => row?.reason),
   );
+  const historicalRunStatusCounts = sortedCounter(
+    runRows.map((row) => row?.status),
+  );
 
-  const retryableFailureBacklog = runRows.reduce(
-    (sum, row) => sum + count(row?.retryableFailureCount),
-    0,
-  );
-  const actionRequiredFailureBacklog = runRows.reduce(
-    (sum, row) => sum + count(row?.actionRequiredFailureCount),
-    0,
-  );
-  const failedCaseBacklog = runRows.reduce(
-    (sum, row) => sum + count(row?.failedCount),
-    0,
-  );
-  const remainingCaseBacklog = runRows.reduce(
-    (sum, row) => sum + count(row?.remainingCases),
-    0,
-  );
-  const graphLogicalCalls = runRows.reduce(
-    (sum, row) => sum + count(row?.graphLogicalCalls),
-    0,
+  const currentReFetchState = summarizeCurrentReFetchState(
+    runRows,
+    checkpointRows,
   );
 
   const openReviewCaseCount = caseRows.filter((row) => {
@@ -252,8 +439,14 @@ export function summarizeAttendanceValidationSoak(input) {
     (row) => text(row?.reason) === 'validation_infrastructure_retry',
   ).length;
 
+  const safetyInvariantViolation =
+    explicitOperationalMutationPermissionCount > 0
+    || invalidCaseDateCount > 0
+    || invalidDirtyDateCount > 0
+    || invalidCheckpointDateCount > 0;
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     brick: 'AVS_BRICK_7_PRODUCTION_SOAK',
     generatedAt: asOf.toISOString(),
     range,
@@ -277,34 +470,28 @@ export function summarizeAttendanceValidationSoak(input) {
       oldestDirtyAgeHours: Number(oldestDirtyAgeHours.toFixed(2)),
     },
     forceFreshRuns: {
-      totalCount: runRows.length,
-      statusCounts,
-      failedCaseBacklog,
-      retryableFailureBacklog,
-      actionRequiredFailureBacklog,
-      remainingCaseBacklog,
-      graphLogicalCalls,
+      ...currentReFetchState,
+      historicalRunStatusCounts,
     },
     safety: {
       explicitOperationalMutationPermissionCount,
       missingOperationalMutationFlagCount,
       invalidCaseDateCount,
       invalidDirtyDateCount,
-      invariantViolation:
-        explicitOperationalMutationPermissionCount > 0
-        || invalidCaseDateCount > 0
-        || invalidDirtyDateCount > 0,
+      invalidCheckpointDateCount,
+      invariantViolation: safetyInvariantViolation,
     },
     signals: {
       pendingDirtySessions: dirtyRows.length,
       infrastructureRetryDirtySessions: infrastructureRetryDirtyCount,
-      retryableFailureBacklog,
-      actionRequiredFailureBacklog,
+      retryableFailureBacklog:
+        currentReFetchState.retryableFailureBacklog,
+      actionRequiredFailureBacklog:
+        currentReFetchState.actionRequiredFailureBacklog,
+      legacyUncategorizedFailureBacklog:
+        currentReFetchState.legacyUncategorizedFailureBacklog,
       openReviewCases: openReviewCaseCount,
-      safetyInvariantViolation:
-        explicitOperationalMutationPermissionCount > 0
-        || invalidCaseDateCount > 0
-        || invalidDirtyDateCount > 0,
+      safetyInvariantViolation,
     },
     operationalMutationAllowed: false,
   };

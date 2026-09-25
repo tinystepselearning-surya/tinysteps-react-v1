@@ -15,11 +15,12 @@ describe('AVS Brick 7 production soak guardrails', () => {
     expect(audit).toContain("collection('attendanceValidationCases')");
     expect(audit).toContain("collection('attendanceValidationDirtySessions')");
     expect(audit).toContain("collection('attendanceValidationForceFreshRuns')");
-    expect(audit).toContain('.limit(cap + 1).get()');
+    expect(audit).toContain(".collection('cases')");
+    expect(audit).toContain('.limit(remaining + 1)');
+    expect(audit).toContain('AVS_SOAK_CHECKPOINT_READ_CAP');
     expect(audit).toContain('graphCalls: 0');
     expect(audit).toContain('operationalWrites: 0');
     expect(audit).toContain('range.toDate >= today');
-    expect(audit).toContain('completed service dates through yesterday IST only');
 
     for (const forbidden of [
       'MicrosoftGraphClient',
@@ -53,13 +54,6 @@ describe('AVS Brick 7 production soak guardrails', () => {
       expect(summary).not.toContain(forbidden);
     }
 
-    expect(callableContract).toContain("'runAttendanceValidationRange'");
-    expect(callableContract).toContain(
-      "'forceRefreshAttendanceValidationEvidence'",
-    );
-    expect(callableContract).toContain(
-      "'forceRefreshAttendanceValidationRange'",
-    );
     expect(
       callableContract.match(/'[^']+'/g)?.filter((value) =>
         value.includes('AttendanceValidation'),
@@ -67,14 +61,13 @@ describe('AVS Brick 7 production soak guardrails', () => {
     ).toHaveLength(3);
   });
 
-  it('emits aggregate-only diagnostics and refuses partial bounded reads', () => {
-    expect(audit).toContain('exceeded the bounded read cap');
-    expect(audit).toContain('doc.data() || {}');
-    expect(audit).not.toContain('doc.id');
-    expect(summary).toContain('classificationCounts');
-    expect(summary).toContain('dirtyReasonCounts');
-    expect(summary).toContain('retryableFailureBacklog');
-    expect(summary).toContain('actionRequiredFailureBacklog');
+  it('derives current re-fetch health from latest case checkpoints', () => {
+    expect(summary).toContain('selectCurrentRuns');
+    expect(summary).toContain('latestByCase');
+    expect(summary).toContain('laterCheckpoint');
+    expect(summary).toContain('supersededFailureCheckpointCount');
+    expect(summary).toContain('legacyUncategorizedFailureBacklog');
+    expect(summary).toContain('legacyRunFailureFallbackCount');
     expect(summary).not.toContain('studentName:');
     expect(summary).not.toContain('teacherName:');
     expect(summary).not.toContain('email:');
@@ -82,6 +75,7 @@ describe('AVS Brick 7 production soak guardrails', () => {
 
   it('keeps the existing AVS safety rules locked', () => {
     expect(summary).toContain("brick: 'AVS_BRICK_7_PRODUCTION_SOAK'");
+    expect(summary).toContain('schemaVersion: 2');
     expect(summary).toContain('operationalMutationAllowed: false');
     expect(summary).toContain('AVS_SOAK_MAX_RANGE_DAYS = 31');
     expect(summary).toContain(

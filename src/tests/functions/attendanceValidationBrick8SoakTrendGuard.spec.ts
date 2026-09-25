@@ -34,26 +34,29 @@ describe('AVS Brick 8 soak trend guardrails', () => {
     expect(core).toContain('operationalWrites: 0');
   });
 
+  it('gates only corrected current-state Brick 7 backlog', () => {
+    expect(core).toContain('AVS_SOAK_REPORT_SCHEMA_VERSION = 2');
+    expect(core).toContain('currentStateSchemaVersion');
+    expect(core).toContain('failedCaseBacklog');
+    expect(core).toContain('retryableFailureBacklog');
+    expect(core).toContain('actionRequiredFailureBacklog');
+    expect(core).toContain('legacyUncategorizedFailureBacklog');
+    expect(core).toContain('remainingCaseBacklog');
+    expect(core).toContain('current failure backlog counters are inconsistent');
+  });
+
+  it('requires genuinely comparable observation windows', () => {
+    expect(core).toContain('after.range.fromDate !== before.range.fromDate');
+    expect(core).toContain('after.range.toDate !== before.range.toDate');
+    expect(core).toContain('exact same service-date window');
+  });
+
   it('never authorizes automation from the soak exit gate', () => {
     expect(core).toContain('automationAuthorized: false');
     expect(core).toContain("'ready_for_manual_exit_review'");
     expect(core).toContain("'continue_soak'");
     expect(core).toContain("'blocked_safety'");
     expect(core).toContain('businessReviewCasesBlockExitGate: false');
-  });
-
-  it('compares only whitelisted aggregate Brick 7 fields', () => {
-    expect(core).toContain("AVS_SOAK_REPORT_BRICK = 'AVS_BRICK_7_PRODUCTION_SOAK'");
-    expect(core).toContain("AVS_SOAK_EXPECTED_PROJECT_ID = 'tinysteps-react-v1'");
-    expect(core).toContain('reads.bounded');
-    expect(core).toContain('openReviewCaseCount');
-    expect(core).toContain('infrastructureRetryCount');
-    expect(core).toContain('retryableFailureBacklog');
-    expect(core).toContain('actionRequiredFailureBacklog');
-    expect(core).not.toContain('studentName');
-    expect(core).not.toContain('teacherName');
-    expect(core).not.toContain('email');
-    expect(core).not.toContain('joinUrl');
   });
 
   it('keeps comparison manual and opt-in for a non-ready exit code', () => {

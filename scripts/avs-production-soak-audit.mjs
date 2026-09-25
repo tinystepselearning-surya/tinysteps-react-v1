@@ -3,6 +3,7 @@ import path from 'node:path';
 import admin from 'firebase-admin';
 import {
   AVS_SOAK_CASE_READ_CAP,
+  AVS_SOAK_CHECKPOINT_READ_CAP,
   AVS_SOAK_DIRTY_READ_CAP,
   AVS_SOAK_RUN_READ_CAP,
   normalizeAvsSoakRange,
@@ -37,14 +38,16 @@ function resolveRange() {
   const range = normalizeAvsSoakRange(fromDate, toDate);
   if (range.toDate >= today) {
     throw Object.assign(
-      new Error('AVS soak audit supports completed service dates through yesterday IST only.'),
+      new Error(
+        'AVS soak audit supports completed service dates through yesterday IST only.',
+      ),
       { code: 'avs-soak-incomplete-date-refused' },
     );
   }
   return range;
 }
 
-async function boundedQuery(label, query, cap) {
+async function boundedQueryData(label, query, cap) {
   const snapshot = await query.limit(cap + 1).get();
   if (snapshot.docs.length > cap) {
     throw Object.assign(
@@ -53,6 +56,73 @@ async function boundedQuery(label, query, cap) {
     );
   }
   return snapshot.docs.map((doc) => doc.data() || {});
+}
+
+async function boundedQueryDocs(label, query, cap) {
+  const snapshot = await query.limit(cap + 1).get();
+  if (snapshot.docs.length > cap) {
+    throw Object.assign(
+      new Error(`${label} exceeded the bounded read cap.`),
+      { code: 'avs-soak-read-cap-exceeded' },
+    );
+  }
+  return snapshot.docs;
+}
+
+async function loadRunCheckpoints(runDocs, cap) {
+  const forceFreshRuns = [];
+  const forceFreshCheckpoints = [];
+
+  for (let runIndex = 0; runIndex < runDocs.length; runIndex += 1) {
+    const runDoc = runDocs[runIndex];
+    const runData = runDoc.data() || {};
+    const runKey = `run-${runIndex}`;
+    const remaining = cap - forceFreshCheckpoints.length;
+
+    if (remaining <= 0) {
+      throw Object.assign(
+        new Error('attendanceValidationForceFreshRunCheckpoints exceeded the bounded read cap.'),
+        { code: 'avs-soak-read-cap-exceeded' },
+      );
+    }
+
+    const checkpointSnapshot = await runDoc.ref
+      .collection('cases')
+      .limit(remaining + 1)
+      .get();
+
+    if (checkpointSnapshot.docs.length > remaining) {
+      throw Object.assign(
+        new Error('attendanceValidationForceFreshRunCheckpoints exceeded the bounded read cap.'),
+        { code: 'avs-soak-read-cap-exceeded' },
+      );
+    }
+
+    forceFreshRuns.push({
+      ...runData,
+      _soakRunKey: runKey,
+      _soakRunOrder: runIndex,
+    });
+
+    for (
+      let checkpointIndex = 0;
+      checkpointIndex < checkpointSnapshot.docs.length;
+      checkpointIndex += 1
+    ) {
+      const checkpointData =
+        checkpointSnapshot.docs[checkpointIndex].data() || {};
+      forceFreshCheckpoints.push({
+        ...checkpointData,
+        _soakRunKey: runKey,
+        _soakRunOrder: runIndex,
+        _soakCheckpointOrder: checkpointIndex,
+        _soakRunUpdatedAt: runData.updatedAt ?? null,
+        _soakRunCreatedAt: runData.createdAt ?? null,
+      });
+    }
+  }
+
+  return { forceFreshRuns, forceFreshCheckpoints };
 }
 
 async function run() {
@@ -88,22 +158,34 @@ async function run() {
     .where('toDate', '>=', range.fromDate)
     .orderBy('toDate', 'asc');
 
-  const [cases, dirtySessions, runCandidates] = await Promise.all([
-    boundedQuery('attendanceValidationCases', casesQuery, AVS_SOAK_CASE_READ_CAP),
-    boundedQuery(
+  const [cases, dirtySessions, runCandidateDocs] = await Promise.all([
+    boundedQueryData(
+      'attendanceValidationCases',
+      casesQuery,
+      AVS_SOAK_CASE_READ_CAP,
+    ),
+    boundedQueryData(
       'attendanceValidationDirtySessions',
       dirtyQuery,
       AVS_SOAK_DIRTY_READ_CAP,
     ),
-    boundedQuery(
+    boundedQueryDocs(
       'attendanceValidationForceFreshRuns',
       runsQuery,
       AVS_SOAK_RUN_READ_CAP,
     ),
   ]);
 
-  const forceFreshRuns = runCandidates.filter((row) =>
-    String(row.fromDate || '').trim() <= range.toDate,
+  const overlappingRunDocs = runCandidateDocs.filter((doc) =>
+    String(doc.data()?.fromDate || '').trim() <= range.toDate,
+  );
+
+  const {
+    forceFreshRuns,
+    forceFreshCheckpoints,
+  } = await loadRunCheckpoints(
+    overlappingRunDocs,
+    AVS_SOAK_CHECKPOINT_READ_CAP,
   );
 
   const report = summarizeAttendanceValidationSoak({
@@ -112,6 +194,7 @@ async function run() {
     cases,
     dirtySessions,
     forceFreshRuns,
+    forceFreshCheckpoints,
   });
 
   const output = {
@@ -120,11 +203,15 @@ async function run() {
     reads: {
       attendanceValidationCases: cases.length,
       attendanceValidationDirtySessions: dirtySessions.length,
-      attendanceValidationForceFreshRuns: runCandidates.length,
+      attendanceValidationForceFreshRuns: runCandidateDocs.length,
+      attendanceValidationForceFreshRunCheckpoints:
+        forceFreshCheckpoints.length,
       caps: {
         attendanceValidationCases: AVS_SOAK_CASE_READ_CAP,
         attendanceValidationDirtySessions: AVS_SOAK_DIRTY_READ_CAP,
         attendanceValidationForceFreshRuns: AVS_SOAK_RUN_READ_CAP,
+        attendanceValidationForceFreshRunCheckpoints:
+          AVS_SOAK_CHECKPOINT_READ_CAP,
       },
       bounded: true,
     },

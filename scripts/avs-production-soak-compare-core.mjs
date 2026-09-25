@@ -1,4 +1,6 @@
 export const AVS_SOAK_REPORT_BRICK = 'AVS_BRICK_7_PRODUCTION_SOAK';
+export const AVS_SOAK_REPORT_SCHEMA_VERSION = 2;
+export const AVS_SOAK_CURRENT_STATE_SCHEMA_VERSION = 1;
 export const AVS_SOAK_COMPARISON_BRICK = 'AVS_BRICK_8_SOAK_TREND';
 export const AVS_SOAK_COMPARISON_SCHEMA_VERSION = 1;
 export const AVS_SOAK_EXPECTED_PROJECT_ID = 'tinysteps-react-v1';
@@ -82,8 +84,13 @@ function requireZero(value, name) {
 export function normalizeAvsBrick7SoakReport(input, label = 'report') {
   const report = asObject(input, label);
 
-  if (nonNegativeInteger(report.schemaVersion, `${label}.schemaVersion`) !== 1) {
-    throw new TypeError(`${label}.schemaVersion must be 1.`);
+  if (
+    nonNegativeInteger(report.schemaVersion, `${label}.schemaVersion`)
+    !== AVS_SOAK_REPORT_SCHEMA_VERSION
+  ) {
+    throw new TypeError(
+      `${label}.schemaVersion must be ${AVS_SOAK_REPORT_SCHEMA_VERSION}.`,
+    );
   }
   if (text(report.brick, `${label}.brick`) !== AVS_SOAK_REPORT_BRICK) {
     throw new TypeError(`${label}.brick is not a Brick 7 soak report.`);
@@ -127,8 +134,49 @@ export function normalizeAvsBrick7SoakReport(input, label = 'report') {
   const runs = asObject(report.forceFreshRuns, `${label}.forceFreshRuns`);
   const safety = asObject(report.safety, `${label}.safety`);
 
+  const currentStateSchemaVersion = nonNegativeInteger(
+    runs.currentStateSchemaVersion,
+    `${label}.forceFreshRuns.currentStateSchemaVersion`,
+  );
+  if (currentStateSchemaVersion !== AVS_SOAK_CURRENT_STATE_SCHEMA_VERSION) {
+    throw new TypeError(
+      `${label}.forceFreshRuns.currentStateSchemaVersion must be ${AVS_SOAK_CURRENT_STATE_SCHEMA_VERSION}.`,
+    );
+  }
+
+  const failedCaseBacklog = nonNegativeInteger(
+    runs.failedCaseBacklog,
+    `${label}.forceFreshRuns.failedCaseBacklog`,
+  );
+  const retryableFailureBacklog = nonNegativeInteger(
+    runs.retryableFailureBacklog,
+    `${label}.forceFreshRuns.retryableFailureBacklog`,
+  );
+  const actionRequiredFailureBacklog = nonNegativeInteger(
+    runs.actionRequiredFailureBacklog,
+    `${label}.forceFreshRuns.actionRequiredFailureBacklog`,
+  );
+  const legacyUncategorizedFailureBacklog = nonNegativeInteger(
+    runs.legacyUncategorizedFailureBacklog,
+    `${label}.forceFreshRuns.legacyUncategorizedFailureBacklog`,
+  );
+
+  if (
+    failedCaseBacklog
+    !== retryableFailureBacklog + actionRequiredFailureBacklog
+  ) {
+    throw new TypeError(
+      `${label}.forceFreshRuns current failure backlog counters are inconsistent.`,
+    );
+  }
+  if (legacyUncategorizedFailureBacklog > actionRequiredFailureBacklog) {
+    throw new TypeError(
+      `${label}.forceFreshRuns legacy backlog cannot exceed action-required backlog.`,
+    );
+  }
+
   return {
-    schemaVersion: 1,
+    schemaVersion: AVS_SOAK_REPORT_SCHEMA_VERSION,
     brick: AVS_SOAK_REPORT_BRICK,
     projectId,
     generatedAt: generatedAt.toISOString(),
@@ -153,28 +201,17 @@ export function normalizeAvsBrick7SoakReport(input, label = 'report') {
         dirty.infrastructureRetryCount,
         `${label}.dirtySessions.infrastructureRetryCount`,
       ),
-      olderThan24HoursCount: nonNegativeInteger(
-        dirty.olderThan24HoursCount,
-        `${label}.dirtySessions.olderThan24HoursCount`,
-      ),
       olderThan72HoursCount: nonNegativeInteger(
         dirty.olderThan72HoursCount,
         `${label}.dirtySessions.olderThan72HoursCount`,
       ),
     },
     forceFreshRuns: {
-      failedCaseBacklog: nonNegativeInteger(
-        runs.failedCaseBacklog,
-        `${label}.forceFreshRuns.failedCaseBacklog`,
-      ),
-      retryableFailureBacklog: nonNegativeInteger(
-        runs.retryableFailureBacklog,
-        `${label}.forceFreshRuns.retryableFailureBacklog`,
-      ),
-      actionRequiredFailureBacklog: nonNegativeInteger(
-        runs.actionRequiredFailureBacklog,
-        `${label}.forceFreshRuns.actionRequiredFailureBacklog`,
-      ),
+      currentStateSchemaVersion,
+      failedCaseBacklog,
+      retryableFailureBacklog,
+      actionRequiredFailureBacklog,
+      legacyUncategorizedFailureBacklog,
       remainingCaseBacklog: nonNegativeInteger(
         runs.remainingCaseBacklog,
         `${label}.forceFreshRuns.remainingCaseBacklog`,
@@ -192,6 +229,10 @@ export function normalizeAvsBrick7SoakReport(input, label = 'report') {
       invalidDirtyDateCount: nonNegativeInteger(
         safety.invalidDirtyDateCount,
         `${label}.safety.invalidDirtyDateCount`,
+      ),
+      invalidCheckpointDateCount: nonNegativeInteger(
+        safety.invalidCheckpointDateCount,
+        `${label}.safety.invalidCheckpointDateCount`,
       ),
       invariantViolation: bool(
         safety.invariantViolation,
@@ -212,9 +253,12 @@ export function compareAvsSoakReports(beforeInput, afterInput) {
   if (after.generatedAtMs <= before.generatedAtMs) {
     throw new TypeError('after.generatedAt must be later than before.generatedAt.');
   }
-  if (after.range.toDate < before.range.toDate) {
+  if (
+    after.range.fromDate !== before.range.fromDate
+    || after.range.toDate !== before.range.toDate
+  ) {
     throw new TypeError(
-      'after.range.toDate must be the same as or later than before.range.toDate.',
+      'Brick 8 requires the exact same service-date window for before and after snapshots.',
     );
   }
 
@@ -247,6 +291,10 @@ export function compareAvsSoakReports(beforeInput, afterInput) {
       before.forceFreshRuns.actionRequiredFailureBacklog,
       after.forceFreshRuns.actionRequiredFailureBacklog,
     ),
+    legacyUncategorizedFailures: metric(
+      before.forceFreshRuns.legacyUncategorizedFailureBacklog,
+      after.forceFreshRuns.legacyUncategorizedFailureBacklog,
+    ),
     remainingReFetchCases: metric(
       before.forceFreshRuns.remainingCaseBacklog,
       after.forceFreshRuns.remainingCaseBacklog,
@@ -264,11 +312,14 @@ export function compareAvsSoakReports(beforeInput, afterInput) {
       after.safety.explicitOperationalMutationPermissionCount === 0,
     noInvalidSidecarDates:
       after.safety.invalidCaseDateCount === 0
-      && after.safety.invalidDirtyDateCount === 0,
+      && after.safety.invalidDirtyDateCount === 0
+      && after.safety.invalidCheckpointDateCount === 0,
     noActionRequiredInfrastructureBacklog:
       after.forceFreshRuns.actionRequiredFailureBacklog === 0,
     noRetryableInfrastructureBacklog:
       after.forceFreshRuns.retryableFailureBacklog === 0,
+    noLegacyUncategorizedFailureBacklog:
+      after.forceFreshRuns.legacyUncategorizedFailureBacklog === 0,
     noInfrastructureRetryDirtyBacklog:
       after.dirtySessions.infrastructureRetryCount === 0,
     noStaleDirtyBacklog72Hours:
