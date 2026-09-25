@@ -193,6 +193,24 @@
         ]
       },
       {
+        "source": "/founder",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
+        "source": "/founder/**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
         "source": "/learning-partner/dashboard",
         "headers": [
           {
@@ -485,6 +503,14 @@
       },
       {
         "source": "/surya/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/founder",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/founder/**",
         "destination": "/index.html"
       },
       {
