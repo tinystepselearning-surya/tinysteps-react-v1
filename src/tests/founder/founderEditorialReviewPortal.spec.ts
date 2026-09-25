@@ -12,6 +12,7 @@ const routes = read('src/app/routes.tsx');
 const rules = read('firestore.rules');
 const publicReader = read('src/lib/publicEditorialReview.ts');
 const phonicsPage = read('src/pages/PhonicsKnowledgePage.tsx');
+const firebaseConfig = JSON.parse(read('firebase.json'));
 
 describe('Founder editorial review portal contract', () => {
   it('covers exactly the 31 governed phonics publications at their exact revisions', () => {
@@ -39,6 +40,22 @@ describe('Founder editorial review portal contract', () => {
     expect(dashboard).toContain('Open Page');
     expect(dashboard).toContain("'approved'");
     expect(dashboard).toContain("'changes-requested'");
+  });
+
+  it('keeps direct founder URLs on the authenticated SPA shell', () => {
+    const rewrites = firebaseConfig.hosting.rewrites as Array<{ source?: string; destination?: string }>;
+    const headers = firebaseConfig.hosting.headers as Array<{ source?: string; headers?: Array<{ key?: string; value?: string }> }>;
+
+    expect(rewrites).toContainEqual({ source: '/founder', destination: '/index.html' });
+    expect(rewrites).toContainEqual({ source: '/founder/**', destination: '/index.html' });
+
+    for (const source of ['/founder', '/founder/**']) {
+      const header = headers.find((entry) => entry.source === source);
+      expect(header?.headers).toContainEqual({
+        key: 'X-Robots-Tag',
+        value: 'noindex, nofollow, noarchive',
+      });
+    }
   });
 
   it('keeps private review state server-only and public approval state read-only', () => {
