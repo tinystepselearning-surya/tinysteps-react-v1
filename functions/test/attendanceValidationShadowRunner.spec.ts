@@ -786,9 +786,9 @@ describe('AV5.3 bounded shadow runner', () => {
       sameDayOccurrenceCount: 1,
       sameDayEvidenceEvaluable: true,
       businessOutcome: 'false_absent',
-      teamsSupportedPresentCount: 3,
+      teamsSupportedPresentCount: 2,
       tinyStepsPresentCount: 0,
-      businessDifferenceCount: 3,
+      businessDifferenceCount: 2,
     });
   });
 
