@@ -120,6 +120,9 @@ describe('collectTeamsEvidence', () => {
     ]);
     expect(participants[0].metrics.scheduledDwellPercentage).toBe(100);
     expect(participants[1].metrics.scheduledDwellPercentage).toBe(91.43);
+    expect(graphClient.listTranscripts).not.toHaveBeenCalled();
+    expect(result.evidence.transcripts).toEqual([]);
+    expect(result.evidence.completeness.transcriptsComplete).toBe(true);
     expect(saveCollectionResult).toHaveBeenCalledOnce();
   });
 
@@ -154,7 +157,7 @@ describe('collectTeamsEvidence', () => {
     expect(result.evidence.issues[0].kind).toBe('meeting_not_found');
   });
 
-  it('records transcript policy failures as partial evidence and still collects attendance reports', async () => {
+  it('does not request transcripts because they are irrelevant to the three business outcomes', async () => {
     const graphClient = makeGraph({
       listTranscripts: vi.fn().mockRejectedValue(new MicrosoftGraphError({
         kind: 'transcript_access_disabled',
@@ -167,23 +170,16 @@ describe('collectTeamsEvidence', () => {
 
     const result = await collectTeamsEvidence(baseRequest(), { graphClient, store });
 
-    expect(result.evidence.collectionStatus).toBe('partial');
+    expect(graphClient.listTranscripts).not.toHaveBeenCalled();
+    expect(result.evidence.collectionStatus).toBe('complete');
+    expect(result.evidence.transcripts).toEqual([]);
     expect(result.evidence.artifactAvailability.transcriptAvailable).toBe(false);
     expect(result.evidence.artifactAvailability.attendanceReportAvailable).toBe(true);
-    expect(result.evidence.issues).toContainEqual(expect.objectContaining({
-      stage: 'transcripts',
-      kind: 'transcript_access_disabled',
-      httpStatus: 403,
-    }));
-    expect(result.evidence.attendanceReports[0].participantRecords).toHaveLength(2);
+    expect(result.evidence.issues).toEqual([]);
   });
 
   it('marks first-page evidence partial when Graph advertises additional pages', async () => {
     const graphClient = makeGraph({
-      listTranscripts: vi.fn().mockResolvedValue({
-        value: [{ id: 'transcript-1' }],
-        '@odata.nextLink': 'https://graph.microsoft.com/next/transcripts',
-      }),
       listAttendanceReports: vi.fn().mockResolvedValue({
         value: [{ id: 'report-1' }],
         '@odata.nextLink': 'https://graph.microsoft.com/next/reports',
@@ -199,10 +195,10 @@ describe('collectTeamsEvidence', () => {
 
     expect(result.evidence.collectionStatus).toBe('partial');
     expect(result.evidence.completeness).toMatchObject({
-      transcriptsComplete: false,
+      transcriptsComplete: true,
       attendanceReportsComplete: false,
       attendanceRecordsComplete: false,
-      nextTranscriptPagePresent: true,
+      nextTranscriptPagePresent: false,
       nextAttendanceReportPagePresent: true,
     });
     expect(result.evidence.attendanceReports[0].nextRecordsPagePresent).toBe(true);
@@ -222,7 +218,7 @@ describe('collectTeamsEvidence', () => {
     const result = await collectTeamsEvidence(baseRequest(), { graphClient, store });
 
     expect(result.evidence.collectionStatus).toBe('partial');
-    expect(result.evidence.transcripts).toHaveLength(1);
+    expect(result.evidence.transcripts).toHaveLength(0);
     expect(result.evidence.attendanceReports).toHaveLength(1);
     expect(result.evidence.attendanceReports[0].recordsComplete).toBe(false);
     expect(result.evidence.attendanceReports[0].recordsIssue).toEqual(

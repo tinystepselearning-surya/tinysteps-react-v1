@@ -13,6 +13,15 @@ describe('AV6 admin attendance validation dashboard', () => {
   const routes = readRepoFile('src/app/routes.tsx');
   const firestoreRules = readRepoFile('firestore.rules');
   const callFunctions = readRepoFile('src/lib/callFunctions.ts');
+  const businessView = readRepoFile(
+    'src/pages/admin/components/AttendanceValidationBusinessView.tsx',
+  );
+  const businessReconciliation = readRepoFile(
+    'src/lib/attendanceValidationBusinessReconciliation.ts',
+  );
+  const businessOutcomeEngine = readRepoFile(
+    'functions/src/attendanceValidation/businessOutcomeEngine.ts',
+  );
 
   it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
@@ -33,33 +42,33 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('Load Results');
   });
 
-  it('uses button tabs instead of a classification select', () => {
-    expect(dashboard).toContain('const CLASSIFICATION_TABS');
-    expect(dashboard).toContain('role="tablist"');
-    expect(dashboard).toContain('role="tab"');
-    expect(dashboard).toContain('aria-selected={active}');
-    expect(dashboard).not.toContain('<select');
+  it('shows exactly three primary business outcome tabs', () => {
+    expect(dashboard).toContain('AttendanceValidationBusinessView');
+    expect(businessView).toContain("value: 'verified', label: 'Verified'");
+    expect(businessView).toContain("value: 'false_present', label: 'False Present'");
+    expect(businessView).toContain("value: 'false_absent', label: 'False Absent'");
+    expect(businessView).toContain('role="tablist"');
+    expect(businessView).toContain('role="tab"');
+    expect(businessView).toContain('aria-selected={active}');
+    expect(businessView).not.toContain("label: 'Missing attendance'");
+    expect(businessView).not.toContain("label: 'Conflict'");
+    expect(businessView).not.toContain("label: 'No class'");
+    expect(businessView).not.toContain("label: 'Missing Teams'");
+    expect(businessView).not.toContain("label: 'Ambiguous'");
   });
 
-  it('filters the already-loaded AVS window by canonical teacher ID without collapsing sessions', () => {
-    expect(dashboard).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
-    expect(dashboard).toContain('const teacherOptions = useMemo');
-    expect(dashboard).toContain('const teacherScopedCases = useMemo');
-    expect(dashboard).toContain('teacherFilterKey(item)');
-    expect(dashboard).toContain('Filter attendance validation by teacher');
-    expect(dashboard).toContain('Counts are session cases, not unique students.');
-    expect(dashboard).toContain('All teachers ({cases.length})');
-    expect(dashboard).toContain('teacherScopedCases.filter');
-    expect(dashboard).not.toContain('item.teacherName || item.teacherId');
+  it('filters the already-loaded business groups by canonical teacher identity', () => {
+    expect(businessView).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
+    expect(businessView).toContain('teacherFilterKey(group.teacherId, group.teacherName)');
+    expect(businessView).toContain('Filter AVS business reconciliation by teacher');
+    expect(businessView).toContain('All teachers ({groups.length})');
     expect(dashboard).not.toContain("collection(db, 'kids')");
   });
 
-  it('resets classification and search when switching teachers so another teacher never appears blank because of prior filters', () => {
-    expect(dashboard).toContain('const handleTeacherFilterChange = useCallback');
-    expect(dashboard).toContain('setTeacherFilter(value)');
-    expect(dashboard).toContain("setClassificationFilter('all')");
-    expect(dashboard).toContain("setSearch('')");
-    expect(dashboard).toContain('onValueChange={handleTeacherFilterChange}');
+  it('resets search and expanded group state when switching teachers', () => {
+    expect(businessView).toContain('setTeacherFilter(value)');
+    expect(businessView).toContain("setSearch('')");
+    expect(businessView).toContain('setExpandedKey(null)');
   });
 
   it('uses bounded enrollment and canonical teacher-user reads for display names', () => {
@@ -115,22 +124,24 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(firestoreRules).toContain('allow create, update, delete: if false;');
   });
 
-  it('shows human-readable class date, student, and teacher directly in each row', () => {
-    expect(dashboard).toContain('<TableHead>Class Date</TableHead>');
-    expect(dashboard).toContain('<TableHead>Student</TableHead>');
-    expect(dashboard).toContain('<TableHead>Teacher</TableHead>');
-    expect(dashboard).toContain('formatServiceDate(item.serviceDateYmd)');
-    expect(dashboard).toContain("item.studentName || 'Student name unavailable'");
-    expect(dashboard).toContain("item.teacherName || 'Teacher name unavailable'");
-    expect(dashboard).toContain('item.studentName');
-    expect(dashboard).toContain('item.teacherName');
-    expect(dashboard).toContain('Observed: {formatObservedAt(item.observedAt)}');
+  it('shows student/day reconciliation with Teams-supported and Tiny Steps Present counts', () => {
+    expect(businessView).toContain('<TableHead>Date</TableHead>');
+    expect(businessView).toContain('<TableHead>Student</TableHead>');
+    expect(businessView).toContain('<TableHead>Teacher</TableHead>');
+    expect(businessView).toContain('Teams Present');
+    expect(businessView).toContain('Tiny Steps Present');
+    expect(businessView).toContain('Difference');
+    expect(businessView).toContain('formatServiceDate(group.serviceDateYmd)');
+    expect(businessView).toContain("group.studentName || 'Student name unavailable'");
+    expect(businessView).toContain("group.teacherName || 'Teacher name unavailable'");
   });
 
-  it('labels dashboard counts as a loaded-window view rather than global totals', () => {
-    expect(dashboard).toContain('Loaded window');
-    expect(dashboard).toContain("{' '}verified");
-    expect(dashboard).toContain('Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.');
+  it('labels the source-case window separately from the three business outcomes', () => {
+    expect(dashboard).toContain('Loaded AVS source cases');
+    expect(dashboard).toContain('Verified, False Present, and False Absent');
+    expect(businessView).toContain("value: 'verified', label: 'Verified'");
+    expect(businessView).toContain("value: 'false_present', label: 'False Present'");
+    expect(businessView).toContain("value: 'false_absent', label: 'False Absent'");
   });
 
   it('shows the refined normal operator surface with only Load Results and Run Validation', () => {
@@ -204,15 +215,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
-  it('keeps the row-level exceptional fresh action as Re-fetch this case', () => {
-    expect(dashboard).toContain('Re-fetch this case');
-    expect(dashboard).toContain(
-      "'forceRefreshAttendanceValidationEvidence'",
-    );
-    expect(dashboard).toContain('caseId: item.id');
-    expect(dashboard).toContain(
-      'inputFingerprint: item.inputFingerprint',
-    );
+  it('keeps row-level correction and re-fetch controls out of the simple business view', () => {
+    expect(businessView).not.toContain('Review correction');
+    expect(businessView).not.toContain('Re-fetch this case');
+    expect(businessView).not.toContain('correct_to_absent');
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
     );
@@ -227,21 +233,25 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('f0f84eef-5cc2-4ece-8356-df08c2f113bb');
   });
 
-  it('surfaces auditable same-day coverage allocation in case details', () => {
-    expect(dashboard).toContain('sameDayCoverageSeconds');
-    expect(dashboard).toContain('sameDayPresentSessionCount');
-    expect(dashboard).toContain('sameDayRequiredOverlapSeconds');
-    expect(dashboard).toContain('sameDayOccurrenceCount');
-    expect(dashboard).toContain('Same-day Teams overlap:');
-    expect(dashboard).toContain('Present sessions:');
-    expect(dashboard).toContain('Required: &gt;');
-    expect(dashboard).toContain('Teams occurrences:');
+  it('uses only the strict Present-count business rule and persists its backend result', () => {
+    expect(dashboard).toContain('businessOutcome');
+    expect(dashboard).toContain('teamsSupportedPresentCount');
+    expect(dashboard).toContain('tinyStepsPresentCount');
+    expect(dashboard).toContain('businessDifferenceCount');
+    expect(businessOutcomeEngine).toContain(
+      'AVS_BUSINESS_PRESENT_OVERLAP_SECONDS = 25 * 60',
+    );
+    expect(businessOutcomeEngine).toContain('reconcileAvsBusinessOutcome');
+    expect(businessReconciliation).toContain('groupPersistedAvsBusinessOutcomes');
+    expect(businessReconciliation).toContain('performs no attendance inference');
   });
 
-  it('shows No Class Occurred as a first-class no-review classification', () => {
-    expect(dashboard).toContain("'NO_CLASS_OCCURRED'");
-    expect(dashboard).toContain("{ value: 'NO_CLASS_OCCURRED', label: 'No class' }");
-    expect(dashboard).toContain("validationDecision === 'not_occurred'");
+  it('does not expose legacy AVS classifications in the business view', () => {
+    expect(businessView).not.toContain('Internal:');
+    expect(businessView).not.toContain("label: 'No class'");
+    expect(businessView).not.toContain("label: 'Missing Teams'");
+    expect(businessView).not.toContain("label: 'Ambiguous'");
+    expect(businessView).not.toContain("label: 'Conflict'");
   });
 
   it('automatically reloads saved results after unified validation', () => {
@@ -250,9 +260,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('await loadSavedCases(false, true)');
   });
 
-  it('does not offer Re-fetch this case against placeholder evidence that does not exist', () => {
-    expect(dashboard).toContain(
-      "!item.reasons.includes('evidence_document_missing')",
-    );
+  it('treats non-evaluable source data as a technical state, not a fourth business tab', () => {
+    expect(businessView).toContain("Exclude<AvsBusinessOutcome, 'not_evaluable'>");
+    expect(businessView).toContain('not evaluated');
+    expect(businessView).not.toContain("label: 'Not Evaluable'");
   });
 });

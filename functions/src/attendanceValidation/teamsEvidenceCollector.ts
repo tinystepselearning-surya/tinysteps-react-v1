@@ -376,15 +376,6 @@ function participantEvidence(
   };
 }
 
-function transcriptMetadata(transcript: GraphCallTranscript): TranscriptEvidenceMetadata {
-  return {
-    transcriptId: requireText(transcript.id, 'transcriptId'),
-    createdDateTime: optionalText(transcript.createdDateTime),
-    endDateTime: optionalText(transcript.endDateTime),
-    contentUrlAvailable: Boolean(optionalText(transcript.transcriptContentUrl)),
-  };
-}
-
 function meetingMetadata(meeting: GraphOnlineMeeting): NonNullable<AttendanceValidationEvidenceDocument['meeting']> {
   return {
     onlineMeetingId: requireText(meeting.id, 'onlineMeetingId'),
@@ -541,21 +532,13 @@ export async function collectTeamsEvidence(
 
   const storedMeeting = meetingMetadata(meeting);
   const issues: StoredEvidenceIssue[] = [];
-  let transcripts: TranscriptEvidenceMetadata[] = [];
-  let transcriptsComplete = false;
-  let nextTranscriptPagePresent = false;
 
-  try {
-    const transcriptPage = await deps.graphClient.listTranscripts(
-      organizerUserId,
-      storedMeeting.onlineMeetingId,
-    );
-    transcripts = transcriptPage.value.map(transcriptMetadata);
-    nextTranscriptPagePresent = Boolean(transcriptPage['@odata.nextLink']);
-    transcriptsComplete = !nextTranscriptPagePresent;
-  } catch (error) {
-    issues.push(storedIssue('transcripts', error));
-  }
+  // AVS business reconciliation uses Teams attendance only. Transcript metadata
+  // does not affect Verified / False Present / False Absent, so normal AVS
+  // validation deliberately makes no transcript Graph request.
+  const transcripts: TranscriptEvidenceMetadata[] = [];
+  const transcriptsComplete = true;
+  const nextTranscriptPagePresent = false;
 
   let reportPage: GraphCollection<GraphMeetingAttendanceReport> | null = null;
   let attendanceReportsComplete = false;
@@ -614,8 +597,8 @@ export async function collectTeamsEvidence(
 
   const attendanceRecordsComplete = reportPage !== null
     && attendanceReports.every((report) => report.recordsComplete);
-  const hasIncompletePage = !transcriptsComplete
-    || !attendanceReportsComplete
+  const hasIncompletePage =
+    !attendanceReportsComplete
     || !attendanceRecordsComplete;
   const status: EvidenceCollectionStatus = issues.length > 0 || hasIncompletePage
     ? 'partial'

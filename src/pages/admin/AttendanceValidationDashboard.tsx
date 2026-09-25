@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useState } from 'react';
 import {
   collection,
   documentId,
@@ -15,25 +14,11 @@ import {
 import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
-import { Badge } from '@components/ui/badge';
+import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
+import type { AvsBusinessOutcome } from '../../lib/attendanceValidationBusinessReconciliation';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@components/ui/table';
 
 export const AV6_CASE_READ_LIMIT = 100;
 export const AV6_VALIDATION_START_YMD = '2026-09-01';
@@ -208,24 +193,17 @@ interface Av6ValidationCase {
   sameDayPresentSessionCount: number | null;
   sameDayRequiredOverlapSeconds: number | null;
   sameDayOccurrenceCount: number | null;
+  sameDayEvidenceEvaluable: boolean | null;
+  businessOutcome: AvsBusinessOutcome | null;
+  teamsSupportedPresentCount: number | null;
+  tinyStepsPresentCount: number | null;
+  businessDifferenceCount: number | null;
   inputFingerprint: string | null;
   resolutionId: string | null;
   attendanceCorrectionId: string | null;
   resolvedAt: string | null;
   resolvedByName: string | null;
 }
-
-const CLASSIFICATION_TABS: Array<{ value: 'all' | Av6Classification; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'VERIFIED', label: 'Verified' },
-  { value: 'MISSING_ATTENDANCE', label: 'Missing attendance' },
-  { value: 'ATTENDANCE_CONFLICT', label: 'Conflict' },
-  { value: 'POSSIBLE_FALSE_PRESENT', label: 'False present' },
-  { value: 'NO_CLASS_OCCURRED', label: 'No class' },
-  { value: 'MISSING_TEAMS_EVIDENCE', label: 'Missing Teams' },
-  { value: 'ORPHAN_TEAMS_CLASS', label: 'Orphan' },
-  { value: 'AMBIGUOUS', label: 'Ambiguous' },
-];
 
 function currentIstYmd(): string {
   return new Date(Date.now() + (5.5 * 60 * 60 * 1000)).toISOString().slice(0, 10);
@@ -398,6 +376,24 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     sameDayPresentSessionCount: asFiniteNumber(raw.sameDayPresentSessionCount),
     sameDayRequiredOverlapSeconds: asFiniteNumber(raw.sameDayRequiredOverlapSeconds),
     sameDayOccurrenceCount: asFiniteNumber(raw.sameDayOccurrenceCount),
+    sameDayEvidenceEvaluable:
+      raw.sameDayEvidenceEvaluable === true
+        ? true
+        : raw.sameDayEvidenceEvaluable === false
+          ? false
+          : null,
+    businessOutcome: (() => {
+      const value = asText(raw.businessOutcome);
+      return value === 'verified'
+        || value === 'false_present'
+        || value === 'false_absent'
+        || value === 'not_evaluable'
+        ? value
+        : null;
+    })(),
+    teamsSupportedPresentCount: asFiniteNumber(raw.teamsSupportedPresentCount),
+    tinyStepsPresentCount: asFiniteNumber(raw.tinyStepsPresentCount),
+    businessDifferenceCount: asFiniteNumber(raw.businessDifferenceCount),
     inputFingerprint: asText(raw.inputFingerprint),
     resolutionId: asText(raw.resolutionId),
     attendanceCorrectionId: asText(raw.attendanceCorrectionId),
@@ -585,12 +581,7 @@ function issueSummary(item: Av6ValidationCase): string[] {
 }
 
 export default function AttendanceValidationDashboard() {
-  const navigate = useNavigate();
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
-  const [classificationFilter, setClassificationFilter] = useState<'all' | Av6Classification>('all');
-  const [search, setSearch] = useState('');
-  const [teacherFilter, setTeacherFilter] = useState('all');
-  const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
   const [toDate, setToDate] = useState(yesterdayIstYmd);
   const [loadedRange, setLoadedRange] = useState<{ from: string; to: string } | null>(null);
@@ -677,11 +668,6 @@ export default function AttendanceValidationDashboard() {
       setHasMore(snapshot.docs.length === AV6_CASE_READ_LIMIT);
       if (!append) {
         setLoadedRange({ from: fromDate, to: toDate });
-        if (!preserveCurrentTab) {
-          setClassificationFilter('all');
-          setTeacherFilter('all');
-        }
-        setExpandedCaseId(null);
       }
       setLoadedAt(new Date());
     } catch (loadError) {
@@ -867,129 +853,6 @@ export default function AttendanceValidationDashboard() {
     toDate,
   ]);
 
-  const handleTeacherFilterChange = useCallback((value: string) => {
-    setTeacherFilter(value);
-    setClassificationFilter('all');
-    setSearch('');
-    setExpandedCaseId(null);
-  }, []);
-
-  const teacherOptions = useMemo(() => {
-    const byTeacher = new Map<
-      string,
-      { teacherName: string | null; teacherId: string | null; count: number }
-    >();
-
-    for (const item of cases) {
-      const key = teacherFilterKey(item);
-      if (!key) continue;
-      const current = byTeacher.get(key);
-      byTeacher.set(key, {
-        teacherName:
-          current?.teacherName
-          || readableDisplayName(item.teacherName),
-        teacherId: current?.teacherId || item.teacherId,
-        count: (current?.count ?? 0) + 1,
-      });
-    }
-
-    return [...byTeacher.entries()]
-      .map(([value, meta]) => ({
-        value,
-        count: meta.count,
-        label:
-          meta.teacherName
-          || (meta.teacherId
-            ? `Teacher name unavailable · ${meta.teacherId.slice(0, 8)}…`
-            : 'Teacher name unavailable'),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [cases]);
-
-  const teacherScopedCases = useMemo(() => {
-    if (teacherFilter === 'all') return cases;
-    return cases.filter((item) => teacherFilterKey(item) === teacherFilter);
-  }, [cases, teacherFilter]);
-
-  const summary = useMemo(() => {
-    const verified = teacherScopedCases.filter((item) => item.resolutionStatus === 'verified').length;
-    const resolved = teacherScopedCases.filter((item) => item.resolutionStatus === 'resolved').length;
-    const needsReview = teacherScopedCases.filter((item) => item.resolutionStatus === 'needs_review').length;
-    const possibleFalsePresent = teacherScopedCases.filter(
-      (item) => item.classification === 'POSSIBLE_FALSE_PRESENT',
-    ).length;
-    const conflicts = teacherScopedCases.filter(
-      (item) => item.classification === 'ATTENDANCE_CONFLICT',
-    ).length;
-
-    return { verified, resolved, needsReview, possibleFalsePresent, conflicts };
-  }, [teacherScopedCases]);
-
-  const classificationCounts = useMemo(() => {
-    const counts: Record<'all' | Av6Classification, number> = {
-      all: teacherScopedCases.length,
-      VERIFIED: 0,
-      MISSING_ATTENDANCE: 0,
-      ATTENDANCE_CONFLICT: 0,
-      POSSIBLE_FALSE_PRESENT: 0,
-      NO_CLASS_OCCURRED: 0,
-      MISSING_TEAMS_EVIDENCE: 0,
-      ORPHAN_TEAMS_CLASS: 0,
-      AMBIGUOUS: 0,
-    };
-    for (const item of teacherScopedCases) counts[item.classification] += 1;
-    return counts;
-  }, [teacherScopedCases]);
-
-  const openApprovedCorrection = useCallback((item: Av6ValidationCase) => {
-    if (
-      !item.classSessionId
-      || !item.kidId
-      || !item.inputFingerprint
-      || item.resolutionStatus !== 'needs_review'
-      || (item.recommendedAction !== 'correct_to_present'
-        && item.recommendedAction !== 'correct_to_absent')
-    ) {
-      return;
-    }
-
-    const params = new URLSearchParams();
-    params.set('tab', 'attendance-corrections');
-    params.set('avsCaseId', item.id);
-    params.set('avsFingerprint', item.inputFingerprint);
-    params.set('sessionId', item.classSessionId);
-    params.set('kidId', item.kidId);
-    params.set(
-      'newStatus',
-      item.recommendedAction === 'correct_to_present' ? 'present' : 'absent',
-    );
-    navigate(`/surya?${params.toString()}`);
-  }, [navigate]);
-
-  const visibleCases = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    return teacherScopedCases.filter((item) => {
-      if (
-        classificationFilter !== 'all'
-        && item.classification !== classificationFilter
-      ) {
-        return false;
-      }
-
-      if (!normalizedSearch) return true;
-      return [
-        item.id,
-        item.classSessionId,
-        item.enrollmentId,
-        item.kidId,
-        item.teacherId,
-        item.studentName,
-        item.teacherName,
-        item.evidenceId,
-        item.runId,
-      ].some((value) => value?.toLowerCase().includes(normalizedSearch));
-    });
-  }, [classificationFilter, search, teacherScopedCases]);
 
   return (
     <div className="space-y-4">
@@ -1022,30 +885,16 @@ export default function AttendanceValidationDashboard() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Loaded window
+              Loaded AVS source cases
             </p>
             <p className="mt-1 text-lg font-semibold text-slate-900">
-              {teacherScopedCases.length} session{teacherScopedCases.length === 1 ? '' : 's'}
+              {cases.length} session{cases.length === 1 ? '' : 's'}
             </p>
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <span>
-              <strong className="text-emerald-700">{summary.verified}</strong>
-              {' '}verified
-            </span>
-            <span>
-              <strong className="text-amber-700">{summary.needsReview}</strong>
-              {' '}need review
-            </span>
-            <span>
-              <strong className="text-red-700">{summary.possibleFalsePresent}</strong>
-              {' '}possible false present
-            </span>
-            {teacherFilter !== 'all' && (
-              <span className="text-slate-500">
-                of {cases.length} loaded cases
-              </span>
-            )}
+          <div className="max-w-2xl text-xs text-slate-500">
+            The business view below reconciles only three operator outcomes:
+            Verified, False Present, and False Absent. Evidence that is not safe
+            enough to compare is kept outside those three tabs until resolved.
           </div>
         </div>
       </Card>
@@ -1338,57 +1187,6 @@ export default function AttendanceValidationDashboard() {
         </Card>
       )}
 
-      <Card className="p-4">
-        <div className="grid gap-3 md:grid-cols-[280px_1fr]">
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-600">Teacher</div>
-            <Select value={teacherFilter} onValueChange={handleTeacherFilterChange}>
-              <SelectTrigger aria-label="Filter attendance validation by teacher">
-                <SelectValue placeholder="All teachers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All teachers ({cases.length})</SelectItem>
-                {teacherOptions.map((teacher) => (
-                  <SelectItem key={teacher.value} value={teacher.value}>
-                    {teacher.label} ({teacher.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-slate-500">
-              Filters the AVS cases already loaded for this date range. Counts are session cases, not unique students.
-            </p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-600">Search loaded cases</div>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by student, teacher, date, session, enrollment, evidence, or run ID"
-            />
-          </div>
-        </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Validation classifications">
-          {CLASSIFICATION_TABS.map((tab) => {
-            const active = classificationFilter === tab.value;
-            return (
-              <Button
-                key={tab.value}
-                type="button"
-                size="sm"
-                variant={active ? 'default' : 'outline'}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setClassificationFilter(tab.value)}
-                className="shrink-0"
-              >
-                {tab.label} ({classificationCounts[tab.value]})
-              </Button>
-            );
-          })}
-        </div>
-      </Card>
-
       {error && (
         <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <div className="flex items-center gap-2">
@@ -1398,204 +1196,31 @@ export default function AttendanceValidationDashboard() {
         </Card>
       )}
 
-      <Card className="overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-sm text-slate-500">
-            Loading saved attendance validation results…
-          </div>
-        ) : !loadedRange ? (
-          <div className="p-8 text-center">
-            <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
-            <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Click Load Results to read cached AVS cases. Opening this page does not read them automatically.
-            </p>
-          </div>
-        ) : cases.length === 0 ? (
-          <div className="p-8 text-center">
-            <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
-            <p className="mt-2 font-medium text-slate-700">No saved results in this range</p>
-            <p className="mt-1 text-sm text-slate-500">
-              No cached AVS cases were found for {loadedRange.from} to {loadedRange.to}.
-            </p>
-          </div>
-        ) : visibleCases.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">
-            No loaded cases match the selected teacher, tab, or search.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Class Date</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Session</TableHead>
-                  <TableHead>Tiny Steps</TableHead>
-                  <TableHead>AVS</TableHead>
-                  <TableHead>Classification</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead className="text-right">Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibleCases.map((item) => {
-                  const issues = issueSummary(item);
-                  const expanded = expandedCaseId === item.id;
-
-                  return (
-                    <TableRow key={item.id} className="align-top">
-                      <TableCell className="min-w-[130px]">
-                        <div className="font-medium text-slate-900">
-                          {formatServiceDate(item.serviceDateYmd)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        <div className="font-medium text-slate-900">
-                          {item.studentName || 'Student name unavailable'}
-                        </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {item.kidId || 'No kid ID'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        <div className="font-medium text-slate-900">
-                          {item.teacherName || 'Teacher name unavailable'}
-                        </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {item.teacherId || 'No teacher ID'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="min-w-[220px]">
-                        <div className="font-mono text-xs text-slate-800">
-                          {item.classSessionId || item.id}
-                        </div>
-                        {expanded && (
-                          <div className="mt-2 space-y-1 text-xs text-slate-500">
-                            <div>Observed: {formatObservedAt(item.observedAt)}</div>
-                            <div>Service date: {item.serviceDateYmd || '—'}</div>
-                            <div>Student: {item.studentName || '—'} ({item.kidId || 'no ID'})</div>
-                            <div>Teacher: {item.teacherName || '—'} ({item.teacherId || 'no ID'})</div>
-                            <div>Enrollment: {item.enrollmentId || '—'}</div>
-                            <div>Evidence: {item.evidenceId || '—'}</div>
-                            <div>Run: {item.runId || '—'}</div>
-                            <div>
-                              Fingerprint: {item.inputFingerprint?.slice(0, 16) || '—'}
-                            </div>
-                            {item.sameDayPresentSessionCount !== null && (
-                              <div>
-                                Same-day Teams overlap: {formatDurationSeconds(item.sameDayCoverageSeconds)}
-                                {' '}· Present sessions: {item.sameDayPresentSessionCount}
-                                {' '}· Required: &gt;{formatDurationSeconds(item.sameDayRequiredOverlapSeconds)}
-                                {' '}· Teams occurrences: {item.sameDayOccurrenceCount ?? 0}
-                              </div>
-                            )}
-                            {item.resolutionId && <div>Resolution: {item.resolutionId}</div>}
-                            {item.attendanceCorrectionId && (
-                              <div>Correction: {item.attendanceCorrectionId}</div>
-                            )}
-                            {item.resolvedAt && (
-                              <div>
-                                Resolved: {formatObservedAt(item.resolvedAt)}
-                                {item.resolvedByName ? ` by ${item.resolvedByName}` : ''}
-                              </div>
-                            )}
-                            {issues.length > 0 && (
-                              <div className="pt-1">
-                                <div className="font-medium text-slate-700">Signals</div>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                                  {issues.map((issue) => (
-                                    <li key={issue}>{humanize(issue)}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {humanize(item.tinyStepsAttendance)}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {humanize(item.validationDecision)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={classificationTone(item.classification)}
-                        >
-                          {humanize(item.classification)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{humanize(item.recommendedAction)}</div>
-                        <div className="text-xs text-slate-500">
-                          {humanize(item.resolutionStatus)}
-                        </div>
-                        {item.resolutionStatus === 'needs_review'
-                          && (item.recommendedAction === 'correct_to_present'
-                            || item.recommendedAction === 'correct_to_absent')
-                          && item.classSessionId
-                          && item.kidId
-                          && item.inputFingerprint && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="mt-2"
-                              onClick={() => openApprovedCorrection(item)}
-                            >
-                              Review correction
-                            </Button>
-                          )}
-                        {item.classSessionId === item.id
-                          && item.evidenceId
-                          && item.inputFingerprint
-                          && !item.reasons.includes('evidence_document_missing') && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="mt-2 w-full"
-                              onClick={() => void forceFreshEvidence(item)}
-                              disabled={
-                                validationRunning
-                                || forceFreshRangeRunning
-                                || loading
-                                || loadingMore
-                                || forceFreshCaseId !== null
-                              }
-                              title="Advanced: make fresh Microsoft Graph reads for this one class."
-                            >
-                              <RefreshCw
-                                className={`mr-2 h-4 w-4 ${forceFreshCaseId === item.id ? 'animate-spin' : ''}`}
-                              />
-                              {forceFreshCaseId === item.id
-                                ? 'Re-fetching…'
-                                : 'Re-fetch this case'}
-                            </Button>
-                          )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setExpandedCaseId(expanded ? null : item.id)
-                          }
-                        >
-                          {expanded ? 'Hide' : 'Inspect'}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
+      {loading ? (
+        <Card className="p-8 text-center text-sm text-slate-500">
+          Loading saved attendance validation results…
+        </Card>
+      ) : !loadedRange ? (
+        <Card className="p-8 text-center">
+          <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
+          <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Click Load Results to read cached AVS cases. Opening this page does not read them automatically.
+          </p>
+        </Card>
+      ) : cases.length === 0 ? (
+        <Card className="p-8 text-center">
+          <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
+          <p className="mt-2 font-medium text-slate-700">No saved results in this range</p>
+          <p className="mt-1 text-sm text-slate-500">
+            No cached AVS cases were found for {loadedRange.from} to {loadedRange.to}.
+          </p>
+        </Card>
+      ) : (
+        <Card className="p-4">
+          <AttendanceValidationBusinessView cases={cases} />
+        </Card>
+      )}
 
       {loadedRange
         && loadedRange.from === fromDate

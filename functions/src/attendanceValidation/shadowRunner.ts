@@ -11,19 +11,15 @@ import {
 } from './enrollmentIdentityBridge';
 import {
   AV4_PRODUCTION_MEANINGFUL_OVERLAP_SECONDS,
-  buildSessionProof,
   type Av4ProofIssueKind,
 } from './sessionProofEngine';
-import {
-  classifySessionProof,
-  type Av5ClassificationDecision,
-  type Av5ClassificationReason,
+import type {
+  Av5ClassificationDecision,
+  Av5ClassificationReason,
 } from './classificationEngine';
 import {
   normalizeTinyStepsAttendance,
-  reconcileAttendanceClassification,
   type Av5RecommendedAction,
-  type Av5ReconciliationClassification,
   type Av5ReconciliationReason,
   type Av5ReconciliationStatus,
   type CanonicalTinyStepsAttendance,
@@ -36,6 +32,10 @@ import {
   buildSameDayCoverageObservation,
   type SameDayCoverageAggregate,
 } from './sameDayCoverageEngine';
+import {
+  reconcileAvsBusinessOutcome,
+  type AvsBusinessOutcome,
+} from './businessOutcomeEngine';
 import {
   loadProductionStaffIdentityRegistry,
   type Av3StaffRegistryIssueKind,
@@ -74,7 +74,11 @@ export type Av53CaseReason =
   | 'same_day_multi_session_coverage_verified'
   | 'same_day_coverage_insufficient'
   | 'same_day_identity_requires_review'
-  | 'same_day_evidence_incomplete';
+  | 'same_day_evidence_incomplete'
+  | 'business_present_counts_aligned'
+  | 'business_false_present_count'
+  | 'business_false_absent_count'
+  | 'business_evidence_not_evaluable';
 
 export interface Av53ShadowWorkItem {
   classSessionId: string;
@@ -132,6 +136,11 @@ export interface Av53ValidationCaseDocument {
   sameDayPresentSessionCount: number | null;
   sameDayRequiredOverlapSeconds: number | null;
   sameDayOccurrenceCount: number | null;
+  sameDayEvidenceEvaluable: boolean | null;
+  businessOutcome: AvsBusinessOutcome | null;
+  teamsSupportedPresentCount: number | null;
+  tinyStepsPresentCount: number | null;
+  businessDifferenceCount: number | null;
   inputFingerprint: string;
   operationalMutationAllowed: false;
 }
@@ -444,51 +453,6 @@ function sameDayGroupKey(
   return sameDayGroupDescriptor(serviceDateYmd, session, evidence)?.key ?? null;
 }
 
-function scheduledWindowEvidence(
-  evidence: AttendanceValidationEvidenceDocument,
-): AttendanceValidationEvidenceDocument {
-  const startMs = Date.parse(evidence.session.scheduledStartDateTime);
-  const endMs = Date.parse(evidence.session.scheduledEndDateTime);
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) {
-    return evidence;
-  }
-
-  const scored = evidence.attendanceReports.map((report) => {
-    const reportStartMs = report.meetingStartDateTime
-      ? Date.parse(report.meetingStartDateTime)
-      : Number.NaN;
-    const reportEndMs = report.meetingEndDateTime
-      ? Date.parse(report.meetingEndDateTime)
-      : Number.NaN;
-    const overlapMs = Number.isFinite(reportStartMs)
-      && Number.isFinite(reportEndMs)
-      && reportEndMs > reportStartMs
-      ? Math.max(
-        0,
-        Math.min(endMs, reportEndMs) - Math.max(startMs, reportStartMs),
-      )
-      : 0;
-    return { report, overlapMs };
-  });
-
-  const overlapping = scored.filter((item) => item.overlapMs > 0);
-  let selected = overlapping;
-  if (overlapping.length > 1) {
-    const maxOverlapMs = Math.max(...overlapping.map((item) => item.overlapMs));
-    selected = overlapping.filter((item) => item.overlapMs === maxOverlapMs);
-  }
-
-  const attendanceReports = selected.map((item) => item.report);
-  return {
-    ...evidence,
-    attendanceReports,
-    artifactAvailability: {
-      ...evidence.artifactAvailability,
-      attendanceReportAvailable: attendanceReports.length > 0,
-    },
-  };
-}
-
 function attendanceEntryForKid(
   session: Record<string, unknown>,
   kidId: string | null,
@@ -550,6 +514,11 @@ function baseCase(params: {
   sameDayPresentSessionCount?: number | null;
   sameDayRequiredOverlapSeconds?: number | null;
   sameDayOccurrenceCount?: number | null;
+  sameDayEvidenceEvaluable?: boolean | null;
+  businessOutcome?: AvsBusinessOutcome | null;
+  teamsSupportedPresentCount?: number | null;
+  tinyStepsPresentCount?: number | null;
+  businessDifferenceCount?: number | null;
 }): Av53ValidationCaseDocument {
   const fingerprintSource = {
     evidenceId: params.evidenceId,
@@ -572,6 +541,11 @@ function baseCase(params: {
     sameDayPresentSessionCount: params.sameDayPresentSessionCount ?? null,
     sameDayRequiredOverlapSeconds: params.sameDayRequiredOverlapSeconds ?? null,
     sameDayOccurrenceCount: params.sameDayOccurrenceCount ?? null,
+    sameDayEvidenceEvaluable: params.sameDayEvidenceEvaluable ?? null,
+    businessOutcome: params.businessOutcome ?? null,
+    teamsSupportedPresentCount: params.teamsSupportedPresentCount ?? null,
+    tinyStepsPresentCount: params.tinyStepsPresentCount ?? null,
+    businessDifferenceCount: params.businessDifferenceCount ?? null,
   };
 
   return {
@@ -604,6 +578,11 @@ function baseCase(params: {
     sameDayPresentSessionCount: params.sameDayPresentSessionCount ?? null,
     sameDayRequiredOverlapSeconds: params.sameDayRequiredOverlapSeconds ?? null,
     sameDayOccurrenceCount: params.sameDayOccurrenceCount ?? null,
+    sameDayEvidenceEvaluable: params.sameDayEvidenceEvaluable ?? null,
+    businessOutcome: params.businessOutcome ?? null,
+    teamsSupportedPresentCount: params.teamsSupportedPresentCount ?? null,
+    tinyStepsPresentCount: params.tinyStepsPresentCount ?? null,
+    businessDifferenceCount: params.businessDifferenceCount ?? null,
     inputFingerprint: stableCaseFingerprint(fingerprintSource),
     operationalMutationAllowed: false,
   };
@@ -647,6 +626,11 @@ function caseFromMissingEvidence(params: {
     resolutionStatus: 'needs_review',
     reasons: ['evidence_document_missing'],
     staffRegistryIssues: params.registryIssues,
+    sameDayEvidenceEvaluable: false,
+    businessOutcome: 'not_evaluable',
+    teamsSupportedPresentCount: null,
+    tinyStepsPresentCount: null,
+    businessDifferenceCount: null,
   });
 }
 
@@ -677,6 +661,11 @@ function caseFromOrphanEvidence(params: {
     resolutionStatus: 'needs_review',
     reasons: ['operational_session_missing'],
     staffRegistryIssues: params.registryIssues,
+    sameDayEvidenceEvaluable: false,
+    businessOutcome: 'not_evaluable',
+    teamsSupportedPresentCount: null,
+    tinyStepsPresentCount: null,
+    businessDifferenceCount: null,
   });
 }
 
@@ -714,6 +703,11 @@ function caseFromReferenceMismatch(params: {
     resolutionStatus: 'needs_review',
     reasons: [params.reason],
     staffRegistryIssues: params.registryIssues,
+    sameDayEvidenceEvaluable: false,
+    businessOutcome: 'not_evaluable',
+    teamsSupportedPresentCount: null,
+    tinyStepsPresentCount: null,
+    businessDifferenceCount: null,
   });
 }
 
@@ -732,154 +726,62 @@ function caseFromEvidence(params: {
   const kidId = params.evidence.session.kidId || sessionKidId(params.session);
   const rawAttendance = attendanceEntryForKid(params.session, kidId);
   const tinyStepsAttendance = normalizeTinyStepsAttendance(rawAttendance);
+  const sameDay = params.sameDayCoverage;
 
-  if (
-    tinyStepsAttendance === 'present'
-    && params.sameDayCoverage
-    && params.sameDayCoverage.hasSameDayV2Evidence
-    && params.meaningfulOverlapSeconds !== null
-  ) {
-    const sameDay = params.sameDayCoverage;
-    const requiredSeconds =
-      sameDay.presentSessionCount * params.meaningfulOverlapSeconds;
+  const evidenceEvaluable = Boolean(
+    sameDay
+      && sameDay.hasSameDayV2Evidence
+      && !sameDay.contextIncomplete
+      && sameDay.aggregate.status !== 'review'
+      && params.meaningfulOverlapSeconds !== null,
+  );
 
-    if (sameDay.contextIncomplete) {
-      return baseCase({
-        id: params.item.classSessionId,
-        runId: params.runId,
-        evidenceId: params.item.evidenceId,
-        observedAt: params.observedAt,
-        serviceDateYmd: params.serviceDateYmd,
-        classSessionId: params.item.classSessionId,
-        enrollmentId: params.evidence.session.enrollmentId,
-        kidId,
-        teacherId: params.evidence.session.teacherId,
-        studentName: sessionStudentName(params.session),
-        teacherName: sessionTeacherName(params.session),
-        tinyStepsAttendance,
-        validationDecision: 'review',
-        classification: 'MISSING_TEAMS_EVIDENCE',
-        recommendedAction: 'review',
-        resolutionStatus: 'needs_review',
-        reasons: ['same_day_evidence_incomplete'],
-        staffRegistryIssues: params.registryIssues,
-        sameDayCoverageSeconds: sameDay.aggregate.totalOverlapSeconds,
-        sameDayPresentSessionCount: sameDay.presentSessionCount,
-        sameDayRequiredOverlapSeconds: requiredSeconds,
-        sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
-      });
-    }
+  const business = reconcileAvsBusinessOutcome({
+    evidenceEvaluable,
+    teamsOverlapSeconds: sameDay?.aggregate.totalOverlapSeconds ?? 0,
+    tinyStepsPresentCount:
+      sameDay?.presentSessionCount
+      ?? (tinyStepsAttendance === 'present' ? 1 : 0),
+    thresholdSeconds: params.meaningfulOverlapSeconds ?? undefined,
+  });
 
-    if (sameDay.aggregate.status === 'measured') {
-      if (sameDay.aggregate.totalOverlapSeconds > requiredSeconds) {
-        return baseCase({
-          id: params.item.classSessionId,
-          runId: params.runId,
-          evidenceId: params.item.evidenceId,
-          observedAt: params.observedAt,
-          serviceDateYmd: params.serviceDateYmd,
-          classSessionId: params.item.classSessionId,
-          enrollmentId: params.evidence.session.enrollmentId,
-          kidId,
-          teacherId: params.evidence.session.teacherId,
-          studentName: sessionStudentName(params.session),
-          teacherName: sessionTeacherName(params.session),
-          tinyStepsAttendance,
-          validationDecision: 'present',
-          classification: 'VERIFIED',
-          recommendedAction: 'none',
-          resolutionStatus: 'verified',
-          reasons: [
-            sameDay.presentSessionCount > 1
-              ? 'same_day_multi_session_coverage_verified'
-              : 'same_day_coverage_verified',
-          ],
-          staffRegistryIssues: params.registryIssues,
-          sameDayCoverageSeconds: sameDay.aggregate.totalOverlapSeconds,
-          sameDayPresentSessionCount: sameDay.presentSessionCount,
-          sameDayRequiredOverlapSeconds: requiredSeconds,
-          sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
-        });
-      }
+  let classification: Av53CaseClassification;
+  let validationDecision: Av5ClassificationDecision | null;
+  let recommendedAction: Av5RecommendedAction;
+  let resolutionStatus: Av5ReconciliationStatus;
+  let reasons: Av53CaseReason[];
 
-      return baseCase({
-        id: params.item.classSessionId,
-        runId: params.runId,
-        evidenceId: params.item.evidenceId,
-        observedAt: params.observedAt,
-        serviceDateYmd: params.serviceDateYmd,
-        classSessionId: params.item.classSessionId,
-        enrollmentId: params.evidence.session.enrollmentId,
-        kidId,
-        teacherId: params.evidence.session.teacherId,
-        studentName: sessionStudentName(params.session),
-        teacherName: sessionTeacherName(params.session),
-        tinyStepsAttendance,
-        validationDecision: 'review',
-        classification: 'POSSIBLE_FALSE_PRESENT',
-        recommendedAction: 'review',
-        resolutionStatus: 'needs_review',
-        reasons: ['same_day_coverage_insufficient'],
-        staffRegistryIssues: params.registryIssues,
-        sameDayCoverageSeconds: sameDay.aggregate.totalOverlapSeconds,
-        sameDayPresentSessionCount: sameDay.presentSessionCount,
-        sameDayRequiredOverlapSeconds: requiredSeconds,
-        sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
-      });
-    }
-
-    if (sameDay.aggregate.status === 'review') {
-      const evidenceIncomplete = sameDay.aggregate.issues.includes(
-        'same_day_attendance_evidence_incomplete',
-      );
-      return baseCase({
-        id: params.item.classSessionId,
-        runId: params.runId,
-        evidenceId: params.item.evidenceId,
-        observedAt: params.observedAt,
-        serviceDateYmd: params.serviceDateYmd,
-        classSessionId: params.item.classSessionId,
-        enrollmentId: params.evidence.session.enrollmentId,
-        kidId,
-        teacherId: params.evidence.session.teacherId,
-        studentName: sessionStudentName(params.session),
-        teacherName: sessionTeacherName(params.session),
-        tinyStepsAttendance,
-        validationDecision: 'review',
-        classification: evidenceIncomplete
-          ? 'MISSING_TEAMS_EVIDENCE'
-          : 'AMBIGUOUS',
-        recommendedAction: 'review',
-        resolutionStatus: 'needs_review',
-        reasons: [
-          evidenceIncomplete
-            ? 'same_day_evidence_incomplete'
-            : 'same_day_identity_requires_review',
-        ],
-        staffRegistryIssues: params.registryIssues,
-        sameDayCoverageSeconds: 0,
-        sameDayPresentSessionCount: sameDay.presentSessionCount,
-        sameDayRequiredOverlapSeconds: requiredSeconds,
-        sameDayOccurrenceCount: sameDay.aggregate.occurrenceCount,
-      });
-    }
+  switch (business.outcome) {
+    case 'verified':
+      classification = 'VERIFIED';
+      validationDecision =
+        (business.teamsSupportedPresentCount ?? 0) > 0 ? 'present' : null;
+      recommendedAction = 'none';
+      resolutionStatus = 'verified';
+      reasons = ['business_present_counts_aligned'];
+      break;
+    case 'false_present':
+      classification = 'POSSIBLE_FALSE_PRESENT';
+      validationDecision = 'review';
+      recommendedAction = 'review';
+      resolutionStatus = 'needs_review';
+      reasons = ['business_false_present_count'];
+      break;
+    case 'false_absent':
+      classification = 'MISSING_ATTENDANCE';
+      validationDecision = 'present';
+      recommendedAction = 'correct_to_present';
+      resolutionStatus = 'needs_review';
+      reasons = ['business_false_absent_count'];
+      break;
+    default:
+      classification = 'AMBIGUOUS';
+      validationDecision = 'review';
+      recommendedAction = 'review';
+      resolutionStatus = 'needs_review';
+      reasons = ['business_evidence_not_evaluable'];
+      break;
   }
-
-  const exactEvidence = scheduledWindowEvidence(params.evidence);
-  const identity = bridgeEnrollmentIdentity(
-    exactEvidence,
-    params.staffRegistry,
-  );
-  const proof = buildSessionProof(
-    exactEvidence,
-    identity,
-    { meaningfulOverlapSeconds: params.meaningfulOverlapSeconds },
-  );
-  const classification = classifySessionProof(proof);
-  const reconciliation = reconcileAttendanceClassification(
-    classification,
-    rawAttendance,
-  );
 
   return baseCase({
     id: params.item.classSessionId,
@@ -893,17 +795,22 @@ function caseFromEvidence(params: {
     teacherId: params.evidence.session.teacherId,
     studentName: sessionStudentName(params.session),
     teacherName: sessionTeacherName(params.session),
-    tinyStepsAttendance: reconciliation.tinyStepsAttendance,
-    validationDecision: classification.decision,
-    classification:
-      reconciliation.classification as Av5ReconciliationClassification,
-    recommendedAction: reconciliation.recommendedAction,
-    resolutionStatus: reconciliation.resolutionStatus,
-    reasons: reconciliation.reasons,
-    sourceClassificationReasons: classification.reasons,
-    proofIssues: proof.issues,
-    identityIssues: identity.issues,
+    tinyStepsAttendance,
+    validationDecision,
+    classification,
+    recommendedAction,
+    resolutionStatus,
+    reasons,
     staffRegistryIssues: params.registryIssues,
+    sameDayCoverageSeconds: sameDay?.aggregate.totalOverlapSeconds ?? null,
+    sameDayPresentSessionCount: sameDay?.presentSessionCount ?? null,
+    sameDayRequiredOverlapSeconds: null,
+    sameDayOccurrenceCount: sameDay?.aggregate.occurrenceCount ?? null,
+    sameDayEvidenceEvaluable: evidenceEvaluable,
+    businessOutcome: business.outcome,
+    teamsSupportedPresentCount: business.teamsSupportedPresentCount,
+    tinyStepsPresentCount: business.tinyStepsPresentCount,
+    businessDifferenceCount: business.differenceCount,
   });
 }
 
@@ -987,7 +894,10 @@ export async function runAv53Shadow(
     const externalCount = deps.sameDayPresentCountByGroup?.get(groupKey) ?? 0;
     sameDayCoverageByGroup.set(groupKey, {
       aggregate,
-      presentSessionCount: Math.max(1, inferredCount, externalCount),
+      // Zero is a valid Tiny Steps Present count. Do not manufacture one
+      // merely because a scheduled session exists; the three business outcomes
+      // compare actual Present marks against Teams-supported Presents.
+      presentSessionCount: Math.max(0, inferredCount, externalCount),
       contextIncomplete:
         deps.sameDayContextIncompleteGroups?.has(groupKey) ?? false,
       hasSameDayV2Evidence: observations.some(
