@@ -233,6 +233,37 @@ describe('AVS same-day attendance coverage', () => {
     );
   });
 
+  it('treats complete teacher evidence with no learner participant as measurable zero overlap', () => {
+    const absentIdentity = identity();
+    absentIdentity.learnerSidePresent = false;
+    absentIdentity.learnerSideParticipantCount = 0;
+    absentIdentity.participantClassifications =
+      absentIdentity.participantClassifications.filter(
+        (item) => item.classification !== 'learner_side',
+      );
+
+    const noLearnerReport = report(
+      'report-no-learner',
+      '2026-09-18T10:00:00.000Z',
+      '2026-09-18T10:35:00.000Z',
+    );
+    noLearnerReport.participantRecords =
+      noLearnerReport.participantRecords.filter(
+        (item) => item.participantRecordId !== 'learner-record',
+      );
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([noLearnerReport]),
+      absentIdentity,
+      '2026-09-18',
+    );
+    const aggregate = aggregateSameDayCoverage([observation]);
+
+    expect(observation.status).toBe('measured');
+    expect(aggregate.totalOverlapSeconds).toBe(0);
+    expect(aggregate.occurrenceCount).toBe(1);
+  });
+
   it('requires verified teacher and learner identity before measuring coverage', () => {
     const unresolvedIdentity = identity();
     unresolvedIdentity.identityConfidence = 'review';
