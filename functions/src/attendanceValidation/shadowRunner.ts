@@ -894,7 +894,10 @@ export async function runAv53Shadow(
     const externalCount = deps.sameDayPresentCountByGroup?.get(groupKey) ?? 0;
     sameDayCoverageByGroup.set(groupKey, {
       aggregate,
-      presentSessionCount: Math.max(1, inferredCount, externalCount),
+      // Zero is a valid Tiny Steps Present count. Do not manufacture one
+      // merely because a scheduled session exists; the three business outcomes
+      // compare actual Present marks against Teams-supported Presents.
+      presentSessionCount: Math.max(0, inferredCount, externalCount),
       contextIncomplete:
         deps.sameDayContextIncompleteGroups?.has(groupKey) ?? false,
       hasSameDayV2Evidence: observations.some(
