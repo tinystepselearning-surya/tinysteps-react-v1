@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useState } from 'react';
 import {
   collection,
   documentId,
@@ -17,25 +16,9 @@ import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
 import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
 import type { AvsBusinessOutcome } from '../../lib/attendanceValidationBusinessReconciliation';
-import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@components/ui/table';
 
 export const AV6_CASE_READ_LIMIT = 100;
 export const AV6_VALIDATION_START_YMD = '2026-09-01';
@@ -598,12 +581,7 @@ function issueSummary(item: Av6ValidationCase): string[] {
 }
 
 export default function AttendanceValidationDashboard() {
-  const navigate = useNavigate();
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
-  const [classificationFilter, setClassificationFilter] = useState<'all' | Av6Classification>('all');
-  const [search, setSearch] = useState('');
-  const [teacherFilter, setTeacherFilter] = useState('all');
-  const [expandedCaseId, setExpandedCaseId] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
   const [toDate, setToDate] = useState(yesterdayIstYmd);
   const [loadedRange, setLoadedRange] = useState<{ from: string; to: string } | null>(null);
@@ -690,11 +668,6 @@ export default function AttendanceValidationDashboard() {
       setHasMore(snapshot.docs.length === AV6_CASE_READ_LIMIT);
       if (!append) {
         setLoadedRange({ from: fromDate, to: toDate });
-        if (!preserveCurrentTab) {
-          setClassificationFilter('all');
-          setTeacherFilter('all');
-        }
-        setExpandedCaseId(null);
       }
       setLoadedAt(new Date());
     } catch (loadError) {
@@ -880,129 +853,6 @@ export default function AttendanceValidationDashboard() {
     toDate,
   ]);
 
-  const handleTeacherFilterChange = useCallback((value: string) => {
-    setTeacherFilter(value);
-    setClassificationFilter('all');
-    setSearch('');
-    setExpandedCaseId(null);
-  }, []);
-
-  const teacherOptions = useMemo(() => {
-    const byTeacher = new Map<
-      string,
-      { teacherName: string | null; teacherId: string | null; count: number }
-    >();
-
-    for (const item of cases) {
-      const key = teacherFilterKey(item);
-      if (!key) continue;
-      const current = byTeacher.get(key);
-      byTeacher.set(key, {
-        teacherName:
-          current?.teacherName
-          || readableDisplayName(item.teacherName),
-        teacherId: current?.teacherId || item.teacherId,
-        count: (current?.count ?? 0) + 1,
-      });
-    }
-
-    return [...byTeacher.entries()]
-      .map(([value, meta]) => ({
-        value,
-        count: meta.count,
-        label:
-          meta.teacherName
-          || (meta.teacherId
-            ? `Teacher name unavailable · ${meta.teacherId.slice(0, 8)}…`
-            : 'Teacher name unavailable'),
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [cases]);
-
-  const teacherScopedCases = useMemo(() => {
-    if (teacherFilter === 'all') return cases;
-    return cases.filter((item) => teacherFilterKey(item) === teacherFilter);
-  }, [cases, teacherFilter]);
-
-  const summary = useMemo(() => {
-    const verified = teacherScopedCases.filter((item) => item.resolutionStatus === 'verified').length;
-    const resolved = teacherScopedCases.filter((item) => item.resolutionStatus === 'resolved').length;
-    const needsReview = teacherScopedCases.filter((item) => item.resolutionStatus === 'needs_review').length;
-    const possibleFalsePresent = teacherScopedCases.filter(
-      (item) => item.classification === 'POSSIBLE_FALSE_PRESENT',
-    ).length;
-    const conflicts = teacherScopedCases.filter(
-      (item) => item.classification === 'ATTENDANCE_CONFLICT',
-    ).length;
-
-    return { verified, resolved, needsReview, possibleFalsePresent, conflicts };
-  }, [teacherScopedCases]);
-
-  const classificationCounts = useMemo(() => {
-    const counts: Record<'all' | Av6Classification, number> = {
-      all: teacherScopedCases.length,
-      VERIFIED: 0,
-      MISSING_ATTENDANCE: 0,
-      ATTENDANCE_CONFLICT: 0,
-      POSSIBLE_FALSE_PRESENT: 0,
-      NO_CLASS_OCCURRED: 0,
-      MISSING_TEAMS_EVIDENCE: 0,
-      ORPHAN_TEAMS_CLASS: 0,
-      AMBIGUOUS: 0,
-    };
-    for (const item of teacherScopedCases) counts[item.classification] += 1;
-    return counts;
-  }, [teacherScopedCases]);
-
-  const openApprovedCorrection = useCallback((item: Av6ValidationCase) => {
-    if (
-      !item.classSessionId
-      || !item.kidId
-      || !item.inputFingerprint
-      || item.resolutionStatus !== 'needs_review'
-      || (item.recommendedAction !== 'correct_to_present'
-        && item.recommendedAction !== 'correct_to_absent')
-    ) {
-      return;
-    }
-
-    const params = new URLSearchParams();
-    params.set('tab', 'attendance-corrections');
-    params.set('avsCaseId', item.id);
-    params.set('avsFingerprint', item.inputFingerprint);
-    params.set('sessionId', item.classSessionId);
-    params.set('kidId', item.kidId);
-    params.set(
-      'newStatus',
-      item.recommendedAction === 'correct_to_present' ? 'present' : 'absent',
-    );
-    navigate(`/surya?${params.toString()}`);
-  }, [navigate]);
-
-  const visibleCases = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    return teacherScopedCases.filter((item) => {
-      if (
-        classificationFilter !== 'all'
-        && item.classification !== classificationFilter
-      ) {
-        return false;
-      }
-
-      if (!normalizedSearch) return true;
-      return [
-        item.id,
-        item.classSessionId,
-        item.enrollmentId,
-        item.kidId,
-        item.teacherId,
-        item.studentName,
-        item.teacherName,
-        item.evidenceId,
-        item.runId,
-      ].some((value) => value?.toLowerCase().includes(normalizedSearch));
-    });
-  }, [classificationFilter, search, teacherScopedCases]);
 
   return (
     <div className="space-y-4">
