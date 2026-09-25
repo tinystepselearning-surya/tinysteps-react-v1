@@ -90,4 +90,19 @@ describe('AVS unified Run Validation backend routing', () => {
       "runAttendanceValidationRange: 'asia-south1'",
     );
   });
+
+  it('gives the long-running AVS range callables a browser deadline beyond the 540 second backend limit', () => {
+    expect(calls).toContain(
+      'const AVS_LONG_RUNNING_CALLABLE_TIMEOUT_MS = 600_000',
+    );
+    expect(calls).toContain(
+      'runAttendanceValidationRange: {\n    timeout: AVS_LONG_RUNNING_CALLABLE_TIMEOUT_MS',
+    );
+    expect(calls).toContain(
+      'forceRefreshAttendanceValidationRange: {\n    timeout: AVS_LONG_RUNNING_CALLABLE_TIMEOUT_MS',
+    );
+    expect(calls).toContain(
+      'httpsCallable(client, name, callableOptions)',
+    );
+  });
 });
