@@ -327,6 +327,160 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // Founder management view (read-only lift-and-shift)
+    // ----------------------------
+    // Founder reuses selected Admin workspaces for visibility. These grants are
+    // intentionally read-only: all existing Admin-only mutation rules and
+    // callable authorization remain unchanged.
+    match /users/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /schools/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /schoolUsers/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /kids/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /students/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /enrollments/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /classSessions/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /rescheduleCredits/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /teachers/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /courses/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /lessonFolders/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /lessons/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /lessonCatalog/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /lessonDailyAudit/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /teacherDailyAccess/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /leads/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /demoSessions/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /demoSessionsPrivate/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /whatsappInboundUnmatched/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /parentClassRecordings/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /classSamples/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /testimonials/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /parentWorksheetLibrary/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /billingCharges/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /payments/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /parentWallets/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /parentMonthlyReadModels/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /parentPaymentBackfillRuns/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /teacherPayouts/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /teacherPaymentOffsets/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /teacherEarnings/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /adminStats/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /progress/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /invoices/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /attendanceValidationCases/{document=**} {
+      allow read: if isFounder();
+    }
+
+    match /{path=**}/earnings/{docId} {
+      allow read: if isFounder();
+    }
+
+    match /{path=**}/months/{monthKey} {
+      allow read: if isFounder();
+    }
+
+    // ----------------------------
     // Kids helper functions (NO "let" usage)
     // ----------------------------
     function kidDocPath(kidId) {

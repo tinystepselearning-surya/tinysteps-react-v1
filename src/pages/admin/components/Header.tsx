@@ -6,6 +6,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 
 interface HeaderProps {
   onOpenMenu?: () => void;
+  portal?: 'admin' | 'founder';
 }
 
 const ADMIN_SECTION_LABELS: Record<string, string> = {
@@ -17,6 +18,7 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   // navigation now enters the unified Students & Enrollments workspace.
   enrollments: 'Students & Enrollments',
   'attendance-corrections': 'Attendance Corrections',
+  'attendance-validation': 'Attendance Validation',
   relationships: 'Relationship Management',
   courses: 'Course Management',
   'today-notifications': 'Sessions Management',
@@ -30,26 +32,32 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   holidays: 'Holiday Calendar',
   'teacher-payments': 'Teacher Payments',
   'parent-payments': 'Parent Payments',
+  'editorial-reviews': 'Editorial Reviews',
 };
 
-const resolveSectionTitle = (pathname: string, search: string) => {
+const resolveSectionTitle = (
+  pathname: string,
+  search: string,
+  portal: 'admin' | 'founder',
+) => {
   if (pathname.includes('/surya/analytics')) return 'Analytics';
-  const tab = new URLSearchParams(search).get('tab') || 'users';
-  return ADMIN_SECTION_LABELS[tab] || 'Admin Dashboard';
+  const fallback = portal === 'founder' ? 'editorial-reviews' : 'users';
+  const tab = new URLSearchParams(search).get('tab') || fallback;
+  return ADMIN_SECTION_LABELS[tab] || (portal === 'founder' ? 'Founder Workspace' : 'Admin Dashboard');
 };
 
-export default function Header({ onOpenMenu }: HeaderProps) {
+export default function Header({ onOpenMenu, portal = 'admin' }: HeaderProps) {
   const { user } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const sectionTitle = useMemo(
-    () => resolveSectionTitle(location.pathname, location.search),
-    [location.pathname, location.search],
+    () => resolveSectionTitle(location.pathname, location.search, portal),
+    [location.pathname, location.search, portal],
   );
 
-  const displayName = String(user?.displayName || 'Administrator').trim();
+  const displayName = String(user?.displayName || (portal === 'founder' ? 'Founder' : 'Administrator')).trim();
   const email = String(user?.email || '').trim();
 
   const handleLogout = async () => {
@@ -58,7 +66,7 @@ export default function Header({ onOpenMenu }: HeaderProps) {
     try {
       const { performAppLogout } = await import('../../../lib/auth');
       await performAppLogout('user-clicked-logout');
-      navigate('/surya/login', { replace: true });
+      navigate(portal === 'founder' ? '/founder/login' : '/surya/login', { replace: true });
     } catch (error) {
       console.error('[AdminHeader] Logout failed', error);
       setIsLoggingOut(false);
@@ -73,15 +81,15 @@ export default function Header({ onOpenMenu }: HeaderProps) {
             type="button"
             onClick={onOpenMenu}
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:hidden"
-            aria-label="Open admin navigation"
+            aria-label={portal === 'founder' ? 'Open founder navigation' : 'Open admin navigation'}
           >
             <Menu className="h-4 w-4" aria-hidden="true" />
           </button>
 
           <Link
-            to="/surya?tab=users"
+            to={portal === 'founder' ? '/founder?tab=editorial-reviews' : '/surya?tab=users'}
             className="flex shrink-0 items-center"
-            aria-label="Go to admin dashboard"
+            aria-label={portal === 'founder' ? 'Go to founder workspace' : 'Go to admin dashboard'}
           >
             <img src="/logo-header.webp" alt="Tiny Steps" className="h-8 w-auto" />
           </Link>
@@ -90,7 +98,7 @@ export default function Header({ onOpenMenu }: HeaderProps) {
 
           <div className="min-w-0 leading-tight">
             <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 sm:block">
-              Admin Console
+              {portal === 'founder' ? 'Founder Workspace' : 'Admin Console'}
             </p>
             <h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
               {sectionTitle}
@@ -113,7 +121,7 @@ export default function Header({ onOpenMenu }: HeaderProps) {
             className="h-9 gap-2 border-slate-200 px-2.5 text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 sm:px-3"
             onClick={handleLogout}
             disabled={isLoggingOut}
-            aria-label="Log out of admin"
+            aria-label={portal === 'founder' ? 'Log out of founder workspace' : 'Log out of admin'}
           >
             <LogOut className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">{isLoggingOut ? 'Logging out…' : 'Log out'}</span>
