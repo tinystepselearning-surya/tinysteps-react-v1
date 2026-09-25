@@ -904,6 +904,16 @@ function caseFromEvidence(params: {
     proofIssues: proof.issues,
     identityIssues: identity.issues,
     staffRegistryIssues: params.registryIssues,
+    sameDayCoverageSeconds:
+      params.sameDayCoverage?.aggregate.totalOverlapSeconds ?? null,
+    sameDayPresentSessionCount:
+      params.sameDayCoverage?.presentSessionCount ?? null,
+    sameDayRequiredOverlapSeconds:
+      params.sameDayCoverage && params.meaningfulOverlapSeconds !== null
+        ? params.sameDayCoverage.presentSessionCount * params.meaningfulOverlapSeconds
+        : null,
+    sameDayOccurrenceCount:
+      params.sameDayCoverage?.aggregate.occurrenceCount ?? null,
   });
 }
 
