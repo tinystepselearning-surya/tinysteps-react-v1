@@ -723,6 +723,42 @@ describe('AV5.3 bounded shadow runner', () => {
     expect(store.saved[0].recommendedAction).toBe('correct_to_present');
   });
 
+  it('persists same-day coverage diagnostics even when Tiny Steps is not Present', async () => {
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: {
+          ...session({ 'kid-1': { status: 'absent' } }),
+          status: 'completed',
+        },
+        evidence: evidence(),
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-business-reconciliation-metrics',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+        meaningfulOverlapSeconds: 600,
+      },
+      {
+        store,
+        staffRegistry: registry,
+        sameDayPresentCountByGroup: new Map([
+          ['2026-09-18|enrollment-1|kid-1|teacher-1', 0],
+        ]),
+      },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      tinyStepsAttendance: 'absent',
+      sameDayPresentSessionCount: 0,
+      sameDayCoverageSeconds: 1800,
+      sameDayRequiredOverlapSeconds: 0,
+      sameDayOccurrenceCount: 1,
+    });
+  });
+
   it('creates MISSING_TEAMS_EVIDENCE when an explicitly requested session has no evidence document', async () => {
     const store = new FakeStore([
       {
