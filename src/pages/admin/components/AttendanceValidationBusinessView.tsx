@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import {
   reconcileAvsBusinessGroups,
@@ -364,8 +364,8 @@ export default function AttendanceValidationBusinessView({
                     : 'Aligned';
 
                 return (
-                  <>
-                    <TableRow key={group.key} className="align-top">
+                  <Fragment key={group.key}>
+                    <TableRow className="align-top">
                       <TableCell className="min-w-[130px] font-medium text-slate-900">
                         {formatServiceDate(group.serviceDateYmd)}
                       </TableCell>
@@ -418,7 +418,7 @@ export default function AttendanceValidationBusinessView({
                     </TableRow>
 
                     {expanded && (
-                      <TableRow key={`${group.key}-details`}>
+                      <TableRow>
                         <TableCell colSpan={8} className="bg-slate-50">
                           <div className="space-y-3 p-2">
                             <div className="grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
@@ -511,7 +511,7 @@ export default function AttendanceValidationBusinessView({
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </TableBody>
