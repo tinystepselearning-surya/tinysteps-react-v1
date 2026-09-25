@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import {
-  reconcileAvsBusinessGroups,
+  groupPersistedAvsBusinessOutcomes,
   type AvsBusinessOutcome,
 } from '../../../lib/attendanceValidationBusinessReconciliation';
 import { Badge } from '@components/ui/badge';
@@ -32,37 +32,20 @@ export interface AttendanceValidationBusinessCase {
   studentName: string | null;
   teacherName: string | null;
   tinyStepsAttendance: 'present' | 'absent' | 'rescheduled' | null;
-  validationDecision: 'present' | 'absent' | 'not_occurred' | 'review' | null;
-  classification: string;
-  recommendedAction:
-    | 'none'
-    | 'review'
-    | 'correct_to_present'
-    | 'correct_to_absent';
-  resolutionStatus: 'verified' | 'needs_review' | 'resolved';
-  reasons: string[];
-  sourceClassificationReasons: string[];
-  proofIssues: string[];
-  identityIssues: string[];
-  staffRegistryIssues: string[];
-  sameDayCoverageSeconds: number | null;
-  sameDayPresentSessionCount: number | null;
-  sameDayOccurrenceCount: number | null;
   classSessionId: string | null;
-  evidenceId: string | null;
-  inputFingerprint: string | null;
+  businessOutcome: AvsBusinessOutcome | null;
+  teamsSupportedPresentCount: number | null;
+  tinyStepsPresentCount: number | null;
+  businessDifferenceCount: number | null;
+  sameDayEvidenceEvaluable: boolean | null;
 }
 
 interface Props {
   cases: AttendanceValidationBusinessCase[];
-  actionsDisabled: boolean;
-  reFetchingCaseId: string | null;
-  onReviewCorrection: (item: AttendanceValidationBusinessCase) => void;
-  onReFetchCase: (item: AttendanceValidationBusinessCase) => void;
 }
 
 const BUSINESS_TABS: Array<{
-  value: Exclude<AvsBusinessOutcome, 'unresolved'>;
+  value: Exclude<AvsBusinessOutcome, 'not_evaluable'>;
   label: string;
 }> = [
   { value: 'verified', label: 'Verified' },
@@ -71,7 +54,7 @@ const BUSINESS_TABS: Array<{
 ];
 
 function humanize(value: string | null): string {
-  if (!value) return '—';
+  if (!value) return 'Not marked';
   return value
     .toLowerCase()
     .split('_')
@@ -91,15 +74,7 @@ function formatServiceDate(value: string | null): string {
   }).format(parsed);
 }
 
-function formatDurationSeconds(value: number | null): string {
-  if (value === null) return '—';
-  const totalSeconds = Math.max(0, Math.round(value));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
-}
-
-function groupTone(outcome: AvsBusinessOutcome): string {
+function outcomeTone(outcome: AvsBusinessOutcome): string {
   if (outcome === 'verified') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-700';
   }
@@ -121,30 +96,17 @@ function teacherFilterKey(
   return null;
 }
 
-function uniqueSignals(item: AttendanceValidationBusinessCase): string[] {
-  return [
-    ...item.reasons,
-    ...item.sourceClassificationReasons,
-    ...item.proofIssues,
-    ...item.identityIssues,
-    ...item.staffRegistryIssues,
-  ].filter((value, index, all) => all.indexOf(value) === index);
-}
-
-export default function AttendanceValidationBusinessView({
-  cases,
-  actionsDisabled,
-  reFetchingCaseId,
-  onReviewCorrection,
-  onReFetchCase,
-}: Props) {
+export default function AttendanceValidationBusinessView({ cases }: Props) {
   const [activeTab, setActiveTab] =
-    useState<Exclude<AvsBusinessOutcome, 'unresolved'>>('verified');
+    useState<Exclude<AvsBusinessOutcome, 'not_evaluable'>>('verified');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
-  const groups = useMemo(() => reconcileAvsBusinessGroups(cases), [cases]);
+  const groups = useMemo(
+    () => groupPersistedAvsBusinessOutcomes(cases),
+    [cases],
+  );
 
   const teacherOptions = useMemo(() => {
     const counts = new Map<string, { label: string; count: number }>();
@@ -172,34 +134,23 @@ export default function AttendanceValidationBusinessView({
       teacherFilterKey(group.teacherId, group.teacherName) === teacherFilter);
   }, [groups, teacherFilter]);
 
-  const unresolvedGroups = useMemo(
-    () => teacherScopedGroups.filter((group) => group.outcome === 'unresolved'),
+  const notEvaluableCount = useMemo(
+    () => teacherScopedGroups.filter(
+      (group) => group.outcome === 'not_evaluable',
+    ).length,
     [teacherScopedGroups],
   );
 
-  const tabCounts = useMemo(() => {
-    const result = {
-      verified: 0,
-      false_present: 0,
-      false_absent: 0,
-    };
-    for (const group of teacherScopedGroups) {
-      if (group.outcome === 'verified') result.verified += 1;
-      if (group.outcome === 'false_present') result.false_present += 1;
-      if (group.outcome === 'false_absent') result.false_absent += 1;
-    }
-    return result;
-  }, [teacherScopedGroups]);
-
-  const discrepancyCounts = useMemo(() => ({
-    falsePresent: teacherScopedGroups.reduce(
-      (sum, group) => sum + group.falsePresentCount,
-      0,
-    ),
-    falseAbsent: teacherScopedGroups.reduce(
-      (sum, group) => sum + group.falseAbsentCount,
-      0,
-    ),
+  const tabCounts = useMemo(() => ({
+    verified: teacherScopedGroups.filter(
+      (group) => group.outcome === 'verified',
+    ).length,
+    false_present: teacherScopedGroups.filter(
+      (group) => group.outcome === 'false_present',
+    ).length,
+    false_absent: teacherScopedGroups.filter(
+      (group) => group.outcome === 'false_absent',
+    ).length,
   }), [teacherScopedGroups]);
 
   const visibleGroups = useMemo(() => {
@@ -215,61 +166,48 @@ export default function AttendanceValidationBusinessView({
         group.enrollmentId,
         group.kidId,
         group.teacherId,
-        ...group.cases.flatMap((item) => [
-          item.id,
-          item.classSessionId,
-          item.evidenceId,
-        ]),
+        ...group.cases.map((item) => item.classSessionId || item.id),
       ].some((value) => value?.toLowerCase().includes(normalizedSearch));
     });
   }, [activeTab, search, teacherScopedGroups]);
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-          <div className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-            Verified
-          </div>
-          <div className="mt-1 text-2xl font-semibold text-slate-900">
-            {tabCounts.verified}
-          </div>
-          <div className="mt-1 text-xs text-slate-600">
-            Student/day groups with no Present-count discrepancy.
-          </div>
-        </div>
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-          <div className="text-xs font-medium uppercase tracking-wide text-red-700">
-            False Present
-          </div>
-          <div className="mt-1 text-2xl font-semibold text-slate-900">
-            {discrepancyCounts.falsePresent}
-          </div>
-          <div className="mt-1 text-xs text-slate-600">
-            Excess Tiny Steps Present marks beyond Teams-supported attendance.
-          </div>
-        </div>
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-          <div className="text-xs font-medium uppercase tracking-wide text-orange-700">
-            False Absent
-          </div>
-          <div className="mt-1 text-2xl font-semibold text-slate-900">
-            {discrepancyCounts.falseAbsent}
-          </div>
-          <div className="mt-1 text-xs text-slate-600">
-            Teams-supported attendance missing from Tiny Steps Present marks.
-          </div>
-        </div>
+      <div
+        className="flex gap-2 overflow-x-auto pb-1"
+        role="tablist"
+        aria-label="AVS business outcomes"
+      >
+        {BUSINESS_TABS.map((tab) => {
+          const active = activeTab === tab.value;
+          return (
+            <Button
+              key={tab.value}
+              type="button"
+              size="sm"
+              variant={active ? 'default' : 'outline'}
+              role="tab"
+              aria-selected={active}
+              onClick={() => {
+                setActiveTab(tab.value);
+                setExpandedKey(null);
+              }}
+              className="shrink-0"
+            >
+              {tab.label} ({tabCounts[tab.value]})
+            </Button>
+          );
+        })}
       </div>
 
-      {unresolvedGroups.length > 0 && (
+      {notEvaluableCount > 0 && (
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <span className="font-medium">
-              {unresolvedGroups.length} evidence-unresolved group{unresolvedGroups.length === 1 ? '' : 's'}.
+              {notEvaluableCount} source-data group{notEvaluableCount === 1 ? '' : 's'} not evaluated.
             </span>
-            {' '}They are intentionally excluded from the three business tabs until AVS has enough safe Teams/identity evidence to compare Present counts.
+            {' '}These are technical extraction/identity failures, not attendance classifications. Run Validation again after the source issue is resolved.
           </div>
         </div>
       )}
@@ -303,41 +241,14 @@ export default function AttendanceValidationBusinessView({
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search student, teacher, date, enrollment, or session"
+            placeholder="Search student, teacher, date, or session"
           />
         </div>
       </div>
 
-      <div
-        className="flex gap-2 overflow-x-auto pb-1"
-        role="tablist"
-        aria-label="AVS business outcomes"
-      >
-        {BUSINESS_TABS.map((tab) => {
-          const active = activeTab === tab.value;
-          return (
-            <Button
-              key={tab.value}
-              type="button"
-              size="sm"
-              variant={active ? 'default' : 'outline'}
-              role="tab"
-              aria-selected={active}
-              onClick={() => {
-                setActiveTab(tab.value);
-                setExpandedKey(null);
-              }}
-              className="shrink-0"
-            >
-              {tab.label} ({tabCounts[tab.value]})
-            </Button>
-          );
-        })}
-      </div>
-
       {visibleGroups.length === 0 ? (
         <div className="rounded-lg border border-slate-200 p-8 text-center text-sm text-slate-500">
-          No loaded reconciliation groups match this tab, teacher, or search.
+          No results in this tab for the selected teacher/search.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -347,7 +258,7 @@ export default function AttendanceValidationBusinessView({
                 <TableHead>Date</TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>Teacher</TableHead>
-                <TableHead className="text-center">Teams supported</TableHead>
+                <TableHead className="text-center">Teams Present</TableHead>
                 <TableHead className="text-center">Tiny Steps Present</TableHead>
                 <TableHead>Difference</TableHead>
                 <TableHead>Result</TableHead>
@@ -358,10 +269,10 @@ export default function AttendanceValidationBusinessView({
               {visibleGroups.map((group) => {
                 const expanded = expandedKey === group.key;
                 const differenceText = group.outcome === 'false_present'
-                  ? `${group.falsePresentCount} excess Present`
+                  ? `${group.differenceCount} extra Present`
                   : group.outcome === 'false_absent'
-                    ? `${group.falseAbsentCount} missing Present`
-                    : 'Aligned';
+                    ? `${group.differenceCount} missing Present`
+                    : 'Matched';
 
                 return (
                   <Fragment key={group.key}>
@@ -373,29 +284,23 @@ export default function AttendanceValidationBusinessView({
                         <div className="font-medium text-slate-900">
                           {group.studentName || 'Student name unavailable'}
                         </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {group.kidId || 'No kid ID'}
-                        </div>
                       </TableCell>
                       <TableCell className="min-w-[180px]">
                         <div className="font-medium text-slate-900">
                           {group.teacherName || 'Teacher name unavailable'}
-                        </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {group.teacherId || 'No teacher ID'}
                         </div>
                       </TableCell>
                       <TableCell className="text-center text-base font-semibold">
                         {group.teamsSupportedPresentCount ?? '—'}
                       </TableCell>
                       <TableCell className="text-center text-base font-semibold">
-                        {group.tinyStepsPresentCount}
+                        {group.tinyStepsPresentCount ?? '—'}
                       </TableCell>
                       <TableCell>{differenceText}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={groupTone(group.outcome)}
+                          className={outcomeTone(group.outcome)}
                         >
                           {humanize(group.outcome)}
                         </Badge>
@@ -420,93 +325,20 @@ export default function AttendanceValidationBusinessView({
                     {expanded && (
                       <TableRow>
                         <TableCell colSpan={8} className="bg-slate-50">
-                          <div className="space-y-3 p-2">
-                            <div className="grid gap-2 text-xs text-slate-600 sm:grid-cols-3">
-                              <div>
-                                <span className="font-medium text-slate-700">Same-day Teams overlap:</span>
-                                {' '}{formatDurationSeconds(group.sameDayCoverageSeconds)}
+                          <div className="space-y-2 p-2 text-xs text-slate-600">
+                            {group.cases.map((item) => (
+                              <div
+                                key={item.id}
+                                className="rounded-md border border-slate-200 bg-white p-3"
+                              >
+                                <span className="font-mono text-slate-800">
+                                  {item.classSessionId || item.id}
+                                </span>
+                                {' '}· Tiny Steps: <span className="font-medium">
+                                  {humanize(item.tinyStepsAttendance)}
+                                </span>
                               </div>
-                              <div>
-                                <span className="font-medium text-slate-700">Teams occurrences:</span>
-                                {' '}{group.sameDayOccurrenceCount ?? '—'}
-                              </div>
-                              <div>
-                                <span className="font-medium text-slate-700">Underlying Tiny Steps rows:</span>
-                                {' '}{group.cases.length}
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              {group.cases.map((item) => {
-                                const signals = uniqueSignals(item);
-                                const canReviewCorrection =
-                                  item.resolutionStatus === 'needs_review'
-                                  && (item.recommendedAction === 'correct_to_present'
-                                    || item.recommendedAction === 'correct_to_absent')
-                                  && item.classSessionId
-                                  && item.kidId
-                                  && item.inputFingerprint;
-                                const canReFetch =
-                                  item.classSessionId === item.id
-                                  && item.evidenceId
-                                  && item.inputFingerprint
-                                  && !item.reasons.includes('evidence_document_missing');
-
-                                return (
-                                  <div
-                                    key={item.id}
-                                    className="rounded-md border border-slate-200 bg-white p-3"
-                                  >
-                                    <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                                      <div className="space-y-1 text-xs text-slate-600">
-                                        <div className="font-mono text-slate-800">
-                                          {item.classSessionId || item.id}
-                                        </div>
-                                        <div>
-                                          Tiny Steps: <span className="font-medium">{humanize(item.tinyStepsAttendance)}</span>
-                                          {' '}· AVS: <span className="font-medium">{humanize(item.validationDecision)}</span>
-                                          {' '}· Internal: <span className="font-medium">{humanize(item.classification)}</span>
-                                        </div>
-                                        {signals.length > 0 && (
-                                          <div>
-                                            Signals: {signals.map(humanize).join(', ')}
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      <div className="flex flex-wrap gap-2">
-                                        {canReviewCorrection && (
-                                          <Button
-                                            type="button"
-                                            size="sm"
-                                            onClick={() => onReviewCorrection(item)}
-                                            disabled={actionsDisabled}
-                                          >
-                                            Review correction
-                                          </Button>
-                                        )}
-                                        {canReFetch && (
-                                          <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => onReFetchCase(item)}
-                                            disabled={actionsDisabled}
-                                          >
-                                            <RefreshCw
-                                              className={`mr-2 h-4 w-4 ${reFetchingCaseId === item.id ? 'animate-spin' : ''}`}
-                                            />
-                                            {reFetchingCaseId === item.id
-                                              ? 'Re-fetching…'
-                                              : 'Re-fetch this case'}
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                            ))}
                           </div>
                         </TableCell>
                       </TableRow>
