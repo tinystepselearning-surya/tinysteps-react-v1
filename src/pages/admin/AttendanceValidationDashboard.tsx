@@ -15,6 +15,7 @@ import {
 import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
+import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -1022,30 +1023,16 @@ export default function AttendanceValidationDashboard() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Loaded window
+              Loaded AVS source cases
             </p>
             <p className="mt-1 text-lg font-semibold text-slate-900">
-              {teacherScopedCases.length} session{teacherScopedCases.length === 1 ? '' : 's'}
+              {cases.length} session{cases.length === 1 ? '' : 's'}
             </p>
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            <span>
-              <strong className="text-emerald-700">{summary.verified}</strong>
-              {' '}verified
-            </span>
-            <span>
-              <strong className="text-amber-700">{summary.needsReview}</strong>
-              {' '}need review
-            </span>
-            <span>
-              <strong className="text-red-700">{summary.possibleFalsePresent}</strong>
-              {' '}possible false present
-            </span>
-            {teacherFilter !== 'all' && (
-              <span className="text-slate-500">
-                of {cases.length} loaded cases
-              </span>
-            )}
+          <div className="max-w-2xl text-xs text-slate-500">
+            The business view below reconciles only three operator outcomes:
+            Verified, False Present, and False Absent. Evidence that is not safe
+            enough to compare is kept outside those three tabs until resolved.
           </div>
         </div>
       </Card>
@@ -1338,57 +1325,6 @@ export default function AttendanceValidationDashboard() {
         </Card>
       )}
 
-      <Card className="p-4">
-        <div className="grid gap-3 md:grid-cols-[280px_1fr]">
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-600">Teacher</div>
-            <Select value={teacherFilter} onValueChange={handleTeacherFilterChange}>
-              <SelectTrigger aria-label="Filter attendance validation by teacher">
-                <SelectValue placeholder="All teachers" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All teachers ({cases.length})</SelectItem>
-                {teacherOptions.map((teacher) => (
-                  <SelectItem key={teacher.value} value={teacher.value}>
-                    {teacher.label} ({teacher.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-slate-500">
-              Filters the AVS cases already loaded for this date range. Counts are session cases, not unique students.
-            </p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-600">Search loaded cases</div>
-            <Input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by student, teacher, date, session, enrollment, evidence, or run ID"
-            />
-          </div>
-        </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Validation classifications">
-          {CLASSIFICATION_TABS.map((tab) => {
-            const active = classificationFilter === tab.value;
-            return (
-              <Button
-                key={tab.value}
-                type="button"
-                size="sm"
-                variant={active ? 'default' : 'outline'}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setClassificationFilter(tab.value)}
-                className="shrink-0"
-              >
-                {tab.label} ({classificationCounts[tab.value]})
-              </Button>
-            );
-          })}
-        </div>
-      </Card>
-
       {error && (
         <Card className="border-red-200 bg-red-50 p-4 text-sm text-red-700">
           <div className="flex items-center gap-2">
@@ -1398,204 +1334,45 @@ export default function AttendanceValidationDashboard() {
         </Card>
       )}
 
-      <Card className="overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-sm text-slate-500">
-            Loading saved attendance validation results…
-          </div>
-        ) : !loadedRange ? (
-          <div className="p-8 text-center">
-            <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
-            <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Click Load Results to read cached AVS cases. Opening this page does not read them automatically.
-            </p>
-          </div>
-        ) : cases.length === 0 ? (
-          <div className="p-8 text-center">
-            <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
-            <p className="mt-2 font-medium text-slate-700">No saved results in this range</p>
-            <p className="mt-1 text-sm text-slate-500">
-              No cached AVS cases were found for {loadedRange.from} to {loadedRange.to}.
-            </p>
-          </div>
-        ) : visibleCases.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">
-            No loaded cases match the selected teacher, tab, or search.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Class Date</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Teacher</TableHead>
-                  <TableHead>Session</TableHead>
-                  <TableHead>Tiny Steps</TableHead>
-                  <TableHead>AVS</TableHead>
-                  <TableHead>Classification</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead className="text-right">Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibleCases.map((item) => {
-                  const issues = issueSummary(item);
-                  const expanded = expandedCaseId === item.id;
-
-                  return (
-                    <TableRow key={item.id} className="align-top">
-                      <TableCell className="min-w-[130px]">
-                        <div className="font-medium text-slate-900">
-                          {formatServiceDate(item.serviceDateYmd)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        <div className="font-medium text-slate-900">
-                          {item.studentName || 'Student name unavailable'}
-                        </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {item.kidId || 'No kid ID'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="min-w-[180px]">
-                        <div className="font-medium text-slate-900">
-                          {item.teacherName || 'Teacher name unavailable'}
-                        </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
-                          {item.teacherId || 'No teacher ID'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="min-w-[220px]">
-                        <div className="font-mono text-xs text-slate-800">
-                          {item.classSessionId || item.id}
-                        </div>
-                        {expanded && (
-                          <div className="mt-2 space-y-1 text-xs text-slate-500">
-                            <div>Observed: {formatObservedAt(item.observedAt)}</div>
-                            <div>Service date: {item.serviceDateYmd || '—'}</div>
-                            <div>Student: {item.studentName || '—'} ({item.kidId || 'no ID'})</div>
-                            <div>Teacher: {item.teacherName || '—'} ({item.teacherId || 'no ID'})</div>
-                            <div>Enrollment: {item.enrollmentId || '—'}</div>
-                            <div>Evidence: {item.evidenceId || '—'}</div>
-                            <div>Run: {item.runId || '—'}</div>
-                            <div>
-                              Fingerprint: {item.inputFingerprint?.slice(0, 16) || '—'}
-                            </div>
-                            {item.sameDayPresentSessionCount !== null && (
-                              <div>
-                                Same-day Teams overlap: {formatDurationSeconds(item.sameDayCoverageSeconds)}
-                                {' '}· Present sessions: {item.sameDayPresentSessionCount}
-                                {' '}· Required: &gt;{formatDurationSeconds(item.sameDayRequiredOverlapSeconds)}
-                                {' '}· Teams occurrences: {item.sameDayOccurrenceCount ?? 0}
-                              </div>
-                            )}
-                            {item.resolutionId && <div>Resolution: {item.resolutionId}</div>}
-                            {item.attendanceCorrectionId && (
-                              <div>Correction: {item.attendanceCorrectionId}</div>
-                            )}
-                            {item.resolvedAt && (
-                              <div>
-                                Resolved: {formatObservedAt(item.resolvedAt)}
-                                {item.resolvedByName ? ` by ${item.resolvedByName}` : ''}
-                              </div>
-                            )}
-                            {issues.length > 0 && (
-                              <div className="pt-1">
-                                <div className="font-medium text-slate-700">Signals</div>
-                                <ul className="mt-1 list-disc space-y-0.5 pl-4">
-                                  {issues.map((issue) => (
-                                    <li key={issue}>{humanize(issue)}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {humanize(item.tinyStepsAttendance)}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {humanize(item.validationDecision)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={classificationTone(item.classification)}
-                        >
-                          {humanize(item.classification)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{humanize(item.recommendedAction)}</div>
-                        <div className="text-xs text-slate-500">
-                          {humanize(item.resolutionStatus)}
-                        </div>
-                        {item.resolutionStatus === 'needs_review'
-                          && (item.recommendedAction === 'correct_to_present'
-                            || item.recommendedAction === 'correct_to_absent')
-                          && item.classSessionId
-                          && item.kidId
-                          && item.inputFingerprint && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="mt-2"
-                              onClick={() => openApprovedCorrection(item)}
-                            >
-                              Review correction
-                            </Button>
-                          )}
-                        {item.classSessionId === item.id
-                          && item.evidenceId
-                          && item.inputFingerprint
-                          && !item.reasons.includes('evidence_document_missing') && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              className="mt-2 w-full"
-                              onClick={() => void forceFreshEvidence(item)}
-                              disabled={
-                                validationRunning
-                                || forceFreshRangeRunning
-                                || loading
-                                || loadingMore
-                                || forceFreshCaseId !== null
-                              }
-                              title="Advanced: make fresh Microsoft Graph reads for this one class."
-                            >
-                              <RefreshCw
-                                className={`mr-2 h-4 w-4 ${forceFreshCaseId === item.id ? 'animate-spin' : ''}`}
-                              />
-                              {forceFreshCaseId === item.id
-                                ? 'Re-fetching…'
-                                : 'Re-fetch this case'}
-                            </Button>
-                          )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setExpandedCaseId(expanded ? null : item.id)
-                          }
-                        >
-                          {expanded ? 'Hide' : 'Inspect'}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Card>
+      {loading ? (
+        <Card className="p-8 text-center text-sm text-slate-500">
+          Loading saved attendance validation results…
+        </Card>
+      ) : !loadedRange ? (
+        <Card className="p-8 text-center">
+          <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
+          <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Click Load Results to read cached AVS cases. Opening this page does not read them automatically.
+          </p>
+        </Card>
+      ) : cases.length === 0 ? (
+        <Card className="p-8 text-center">
+          <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
+          <p className="mt-2 font-medium text-slate-700">No saved results in this range</p>
+          <p className="mt-1 text-sm text-slate-500">
+            No cached AVS cases were found for {loadedRange.from} to {loadedRange.to}.
+          </p>
+        </Card>
+      ) : (
+        <Card className="p-4">
+          <AttendanceValidationBusinessView
+            cases={cases}
+            actionsDisabled={
+              validationRunning
+              || forceFreshRangeRunning
+              || loading
+              || loadingMore
+              || forceFreshCaseId !== null
+            }
+            reFetchingCaseId={forceFreshCaseId}
+            onReviewCorrection={(item) =>
+              openApprovedCorrection(item as Av6ValidationCase)}
+            onReFetchCase={(item) =>
+              void forceFreshEvidence(item as Av6ValidationCase)}
+          />
+        </Card>
+      )}
 
       {loadedRange
         && loadedRange.from === fromDate
