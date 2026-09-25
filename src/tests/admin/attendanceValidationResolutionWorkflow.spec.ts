@@ -8,18 +8,21 @@ function readRepoFile(relativePath: string): string {
 
 describe('AV7 approved attendance validation correction workflow', () => {
   const dashboard = readRepoFile('src/pages/admin/AttendanceValidationDashboard.tsx');
+  const businessView = readRepoFile(
+    'src/pages/admin/components/AttendanceValidationBusinessView.tsx',
+  );
   const correctionPanel = readRepoFile('src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx');
   const correctionClient = readRepoFile('src/pages/admin/attendanceCorrectionTeacherPay.ts');
   const correctionFunction = readRepoFile('functions/src/saveTeacherSessionProgress.ts');
   const functionsIndex = readRepoFile('functions/src/index.ts');
 
-  it('routes only approvable AVS cases into the existing correction screen', () => {
-    expect(dashboard).toContain("item.recommendedAction !== 'correct_to_present'");
-    expect(dashboard).toContain("item.recommendedAction !== 'correct_to_absent'");
-    expect(dashboard).toContain("params.set('tab', 'attendance-corrections')");
-    expect(dashboard).toContain("params.set('avsCaseId', item.id)");
-    expect(dashboard).toContain("params.set('avsFingerprint', item.inputFingerprint)");
-    expect(dashboard).toContain('Review correction');
+  it('keeps correction routing out of the simplified AVS business screen', () => {
+    expect(dashboard).not.toContain("params.set('tab', 'attendance-corrections')");
+    expect(dashboard).not.toContain("params.set('avsCaseId', item.id)");
+    expect(dashboard).not.toContain("params.set('avsFingerprint', item.inputFingerprint)");
+    expect(businessView).not.toContain('Review correction');
+    expect(businessView).not.toContain('correct_to_absent');
+    expect(businessView).not.toContain('correct_to_present');
   });
 
   it('prefills the exact AVS-linked session and locks the approval target', () => {
