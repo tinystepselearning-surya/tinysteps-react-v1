@@ -763,6 +763,12 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/login',
     robots: 'noindex, nofollow',
   },
+  '/founder/login': {
+    title: 'Founder Sign In | Tiny Steps Learning',
+    description: 'Sign in to the Tiny Steps founder workspace.',
+    canonicalPath: '/founder/login',
+    robots: 'noindex, nofollow',
+  },
   '/teacher/login': {
     title: 'Teacher Sign In | Tiny Steps Learning',
     description: 'Sign in as a teacher.',
@@ -797,6 +803,12 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'Unauthorized | Tiny Steps Learning',
     description: 'You do not have permission to access this resource.',
     canonicalPath: '/unauthorized',
+    robots: 'noindex, nofollow',
+  },
+  '/founder': {
+    title: 'Founder Workspace | Tiny Steps Learning',
+    description: 'Private founder workspace.',
+    canonicalPath: '/founder',
     robots: 'noindex, nofollow',
   },
   '/surya': {

@@ -43,6 +43,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         <SelectContent>
           <SelectItem value="all">Overall List</SelectItem>
           <SelectItem value="admin">Admin</SelectItem>
+          <SelectItem value="founder">Founder</SelectItem>
           <SelectItem value="teacher">Teacher</SelectItem>
           <SelectItem value="parent">Parent</SelectItem>
           <SelectItem value="students">Student</SelectItem>

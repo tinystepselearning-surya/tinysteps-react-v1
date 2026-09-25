@@ -75,6 +75,16 @@ service cloud.firestore {
         || tokenRole() == 'school-admin';
     }
 
+    function isFounder() {
+      return isSignedIn() && (
+        tokenRole() == 'founder'
+        || (
+          userDocExists(request.auth.uid)
+          && userRole(request.auth.uid) == 'founder'
+        )
+      );
+    }
+
     function isSchoolAdmin() {
       return isSignedIn() && (
         isSchoolAdminToken()
@@ -294,6 +304,26 @@ service cloud.firestore {
         && messageThreadExists(threadId)
         && ('participantIds' in get(messageThreadDocPath(threadId)).data)
         && (request.auth.uid in get(messageThreadDocPath(threadId)).data.participantIds);
+    }
+
+    // ----------------------------
+    // Founder editorial review governance
+    // ----------------------------
+    // Public pages read one compact aggregate document. All writes remain
+    // server-only through the founder-authenticated callable workflow.
+    match /publicEditorialReviewState/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Private founder decisions and immutable audit events are never exposed
+    // directly to browser clients.
+    match /editorialReviewState/{docId} {
+      allow read, write: if false;
+    }
+
+    match /editorialReviewAudit/{docId} {
+      allow read, write: if false;
     }
 
     // ----------------------------
@@ -577,7 +607,10 @@ function teacherProgressIdentityUnchanged() {
       // Brick 1 introduces the dedicated school tenant collections.
       allow read: if isSignedIn()
         && (
-          !isSchoolAdmin()
+          (
+            !isSchoolAdmin()
+            && !isFounder()
+          )
           || request.auth.uid == uid
         );
 

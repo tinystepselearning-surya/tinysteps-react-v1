@@ -70,6 +70,7 @@ const PRIVATE_PATH_TOKENS = [
   '/login',
   '/dashboard',
   '/surya',
+  '/founder',
   '/main',
 ];
 
@@ -121,9 +122,11 @@ const ALLOWED_CANONICAL_MISSING_FROM_SITEMAP = new Set([
   '/parent/login',
   '/learning-partner/login',
   '/surya/login',
+  '/founder/login',
   '/admin/login',
   '/unauthorized',
   '/surya',
+  '/founder',
   '/teacher',
   '/parent',
   '/kids',

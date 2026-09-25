@@ -1,5 +1,6 @@
 const PROTECTED_APP_ROUTE_PREFIXES = [
   '/surya',
+  '/founder',
   '/admin',
   '/teacher',
   '/parent',
@@ -14,6 +15,7 @@ const PROTECTED_APP_ROUTE_PREFIXES = [
 const AUTH_ENTRY_ROUTES = new Set([
   '/login',
   '/surya/login',
+  '/founder/login',
   '/admin/login',
   '/teacher/login',
   '/parent/login',

@@ -14,6 +14,7 @@ vi.mock('../../lib/auth', () => ({
   handleLogin: vi.fn(),
   getRoleRedirectPath: (role: AuthRole) => ({
     admin: '/surya',
+    founder: '/founder',
     teacher: '/teacher',
     parent: '/parent',
     kid: '/parent/kids',
@@ -186,6 +187,41 @@ describe('LoginPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/bad credentials/i)).toBeInTheDocument();
     });
+  });
+
+  it('recognizes the founder login route as Founder', async () => {
+    (handleLogin as any).mockResolvedValue({
+      uid: 'founder-1',
+      email: 'founder@example.com',
+      displayName: 'Priya',
+      role: 'founder',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/founder/login']}>
+        <Routes>
+          <Route path="/founder/login" element={<LoginPage />} />
+          <Route path="/founder" element={<div>Founder dashboard</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Email, username, or phone number'), {
+      target: { value: 'founder@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: 'secret123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(handleLogin).toHaveBeenCalledWith(
+        'founder@example.com',
+        'secret123',
+        'founder',
+      );
+    });
+    expect(await screen.findByText('Founder dashboard')).toBeInTheDocument();
   });
 
   it(

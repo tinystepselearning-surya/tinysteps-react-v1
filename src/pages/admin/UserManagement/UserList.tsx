@@ -66,6 +66,7 @@ interface UserTableProps {
 interface UserRoleCounts {
   all: number;
   admin: number;
+  founder: number;
   teacher: number;
   parent: number;
   students: number;
@@ -107,6 +108,7 @@ const isHardDeleteProtectedRole = (
 
   return (
     canonical === 'parent' ||
+    canonical === 'founder' ||
     canonical === 'kid' ||
     canonical === 'schoolAdmin' ||
     raw === 'student' ||
@@ -188,6 +190,9 @@ function UserTable({
     switch (normalizeAuthRole(role)) {
       case 'admin':
         return 'destructive';
+
+      case 'founder':
+        return 'outline';
 
       case 'teacher':
         return 'default';
@@ -374,6 +379,7 @@ export function UserList() {
   const [roleCounts, setRoleCounts] = useState<UserRoleCounts>({
     all: 0,
     admin: 0,
+    founder: 0,
     teacher: 0,
     parent: 0,
     students: 0,
@@ -484,6 +490,7 @@ export function UserList() {
 
   useEffect(() => {
     let admin = 0;
+    let founder = 0;
     let teacher = 0;
     let parent = 0;
     let students = 0;
@@ -494,6 +501,7 @@ export function UserList() {
       const role = normalizeAuthRole(user.role);
 
       if (role === 'admin') admin += 1;
+      if (role === 'founder') founder += 1;
       if (role === 'teacher') teacher += 1;
       if (role === 'parent') parent += 1;
       if (role === 'kid') students += 1;
@@ -504,6 +512,7 @@ export function UserList() {
     setRoleCounts({
       all: baseFilteredForCounts.length,
       admin,
+      founder,
       teacher,
       parent,
       students,
@@ -576,6 +585,12 @@ export function UserList() {
         activeClass: 'from-rose-500 to-orange-400',
       },
       {
+        key: 'founder',
+        label: 'Founder',
+        count: roleCounts.founder,
+        activeClass: 'from-slate-900 to-violet-700',
+      },
+      {
         key: 'teacher',
         label: 'Teacher',
         count: roleCounts.teacher,
@@ -609,6 +624,7 @@ export function UserList() {
   }, [
     roleCounts.all,
     roleCounts.admin,
+    roleCounts.founder,
     roleCounts.teacher,
     roleCounts.parent,
     roleCounts.students,

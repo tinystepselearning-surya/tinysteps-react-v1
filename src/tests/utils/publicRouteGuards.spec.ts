@@ -30,6 +30,13 @@ describe(
       },
     );
 
+    it('treats founder workspace and login as private auth surfaces', () => {
+      expect(isProtectedAppRoute('/founder')).toBe(true);
+      expect(isProtectedAppRoute('/founder/reviews')).toBe(true);
+      expect(isAuthEntryRoute('/founder/login')).toBe(true);
+      expect(shouldShowPublicSupportWidgets('/founder')).toBe(false);
+    });
+
     it(
       'treats school login as an auth entry route',
       () => {

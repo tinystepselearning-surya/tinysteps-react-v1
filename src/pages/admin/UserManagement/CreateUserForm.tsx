@@ -289,8 +289,9 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         </div>
       )}
       <Tabs value={activeRole} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-7">
           <TabsTrigger value="admin">Admin</TabsTrigger>
+          <TabsTrigger value="founder">Founder</TabsTrigger>
           <TabsTrigger value="teacher">Teacher</TabsTrigger>
           <TabsTrigger value="parent">Parent</TabsTrigger>
           <TabsTrigger value="learningPartner">LP</TabsTrigger>

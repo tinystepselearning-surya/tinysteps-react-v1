@@ -12,6 +12,8 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   setUserRole: 'asia-south1',
   adminResetPassword: 'asia-south1',
   adminCreateUser: 'asia-south1',
+  getFounderEditorialReviewState: 'asia-south1',
+  setFounderEditorialReviewDecision: 'asia-south1',
   adminCreateSchool: 'asia-south1',
   adminUpdateSchool: 'asia-south1',
   adminAssignSchoolLearningPartner: 'asia-south1',
