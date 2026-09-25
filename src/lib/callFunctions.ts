@@ -1,4 +1,4 @@
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable, type HttpsCallableOptions } from 'firebase/functions';
 import { getRegionalFunctions } from './firebaseConfig';
 
 // Map known callable functions to the regions where they are actually deployed.
@@ -73,6 +73,21 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   subscribeNewsletter: 'asia-south1',
 };
 
+// Firebase Web callable requests default to a 70 second client deadline.
+// The AVS range functions intentionally have a 540 second backend timeout, so
+// keep their browser deadline slightly longer to avoid false deadline-exceeded
+// errors while bounded server work is still completing.
+const AVS_LONG_RUNNING_CALLABLE_TIMEOUT_MS = 600_000;
+
+const CALLABLE_OPTIONS_OVERRIDES: Record<string, HttpsCallableOptions> = {
+  runAttendanceValidationRange: {
+    timeout: AVS_LONG_RUNNING_CALLABLE_TIMEOUT_MS,
+  },
+  forceRefreshAttendanceValidationRange: {
+    timeout: AVS_LONG_RUNNING_CALLABLE_TIMEOUT_MS,
+  },
+};
+
 const FALLBACK_REGIONS = Array.from(
   new Set(
     [import.meta?.env?.VITE_FUNCTIONS_REGION, 'us-central1', 'asia-south1'].filter(Boolean) as string[]
@@ -92,7 +107,10 @@ export async function callFunction<T = any, P = any>(name: string, payload?: P):
   for (const region of regionsToTry) {
     try {
       const client = getRegionalFunctions(region);
-      const fn = httpsCallable(client, name);
+      const callableOptions = CALLABLE_OPTIONS_OVERRIDES[name];
+      const fn = callableOptions
+        ? httpsCallable(client, name, callableOptions)
+        : httpsCallable(client, name);
       const resp = await fn(payload as any);
       return (resp?.data as T) ?? (resp as unknown as T);
     } catch (err) {
