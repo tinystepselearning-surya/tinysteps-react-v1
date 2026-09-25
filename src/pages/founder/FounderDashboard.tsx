@@ -182,7 +182,7 @@ export default function FounderDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <div className="flex min-h-screen">
-        <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white md:flex md:flex-col">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 self-start border-r border-slate-200 bg-white md:flex md:flex-col">
           <div className="border-b border-slate-100 px-6 py-6">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">Tiny Steps</p>
             <h1 className="mt-1 text-xl font-black">Founder</h1>
@@ -216,8 +216,9 @@ export default function FounderDashboard() {
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Refresh
                 </Button>
-                <Button variant="outline" size="sm" className="md:hidden" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
                 </Button>
               </div>
             </div>
