@@ -147,10 +147,13 @@ export function buildSameDayCoverageObservation(
     };
   }
 
+  // For the three-outcome business reconciliation, verified teacher identity
+  // plus complete attendance records are sufficient to measure the learner side.
+  // If no learner-side participant exists, that is a measurable zero Present
+  // overlap rather than an ambiguous business outcome.
   const identityVerified =
     identity.identityConfidence === 'verified'
-    && identity.expectedTeacherPresent
-    && identity.learnerSidePresent;
+    && identity.expectedTeacherPresent;
 
   if (!identityVerified) {
     return {
