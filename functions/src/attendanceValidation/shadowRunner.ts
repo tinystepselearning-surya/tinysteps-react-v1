@@ -626,6 +626,11 @@ function caseFromMissingEvidence(params: {
     resolutionStatus: 'needs_review',
     reasons: ['evidence_document_missing'],
     staffRegistryIssues: params.registryIssues,
+    sameDayEvidenceEvaluable: false,
+    businessOutcome: 'not_evaluable',
+    teamsSupportedPresentCount: null,
+    tinyStepsPresentCount: null,
+    businessDifferenceCount: null,
   });
 }
 
@@ -656,6 +661,11 @@ function caseFromOrphanEvidence(params: {
     resolutionStatus: 'needs_review',
     reasons: ['operational_session_missing'],
     staffRegistryIssues: params.registryIssues,
+    sameDayEvidenceEvaluable: false,
+    businessOutcome: 'not_evaluable',
+    teamsSupportedPresentCount: null,
+    tinyStepsPresentCount: null,
+    businessDifferenceCount: null,
   });
 }
 
@@ -693,6 +703,11 @@ function caseFromReferenceMismatch(params: {
     resolutionStatus: 'needs_review',
     reasons: [params.reason],
     staffRegistryIssues: params.registryIssues,
+    sameDayEvidenceEvaluable: false,
+    businessOutcome: 'not_evaluable',
+    teamsSupportedPresentCount: null,
+    tinyStepsPresentCount: null,
+    businessDifferenceCount: null,
   });
 }
 
