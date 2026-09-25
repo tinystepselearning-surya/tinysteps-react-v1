@@ -10,6 +10,7 @@ import {
   BellDot,
   BookCopy,
   BookOpen,
+  BookOpenCheck,
   Building2,
   CalendarDays,
   ClipboardList,
@@ -66,6 +67,7 @@ import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 import { useAdminStats } from '../../hooks/useAdminStats';
+import FounderEditorialReviewsPanel from '../founder/FounderEditorialReviewsPanel';
 
 const ROLE_SHORTCUTS = [
   { id: 'admin', label: 'Admin', path: '/surya' },
@@ -106,6 +108,51 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'parent-payments', label: 'Parent Pay', icon: CreditCard },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
+
+const FOUNDER_BLOCKED_ADMIN_TABS = new Set([
+  'users',
+  'attendance-corrections',
+  'today-notifications',
+  'settings',
+  'relationships',
+]);
+
+const FOUNDER_MOBILE_TABS: MobileTabBarItem[] = [
+  { id: 'editorial-reviews', label: 'Reviews', icon: BookOpenCheck },
+  ...ADMIN_MOBILE_TABS.filter((tab) => !FOUNDER_BLOCKED_ADMIN_TABS.has(tab.id)),
+];
+
+const ADMIN_VALID_TABS = new Set([
+  'users',
+  'schools',
+  'students',
+  'leads',
+  'enrollments',
+  'attendance-corrections',
+  'attendance-validation',
+  'relationships',
+  'courses',
+  'today-notifications',
+  'lessons',
+  'class-recordings',
+  'class-samples',
+  'testimonials',
+  'parent-worksheets',
+  'analytics',
+  'holidays',
+  'teacher-payments',
+  'parent-payments',
+  'settings',
+]);
+
+const FOUNDER_VALID_TABS = new Set([
+  'editorial-reviews',
+  ...Array.from(ADMIN_VALID_TABS).filter((tab) => !FOUNDER_BLOCKED_ADMIN_TABS.has(tab)),
+]);
+
+type AdminDashboardProps = {
+  portal?: 'admin' | 'founder';
+};
 
 const AccessMessage = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
@@ -514,12 +561,15 @@ function MessagingBackendTestCard() {
 }
 
 // ---------- Main Admin Dashboard ----------
-export default function AdminDashboard() {
+export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps) {
   const { user, isLoading: authLoading } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [selectedTab, setSelectedTab] = useState('users');
+  const isFounderPortal = portal === 'founder';
+  const basePath = isFounderPortal ? '/founder' : '/surya';
+  const defaultTab = isFounderPortal ? 'editorial-reviews' : 'users';
+  const [selectedTab, setSelectedTab] = useState(defaultTab);
   const [leadsWorkspaceView, setLeadsWorkspaceView] = useState<LeadsWorkspaceView>('leads');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -527,33 +577,14 @@ export default function AdminDashboard() {
   const [enrollmentsReloadKey] = useState(0);
 
   const isSuperUser = isSuperUserEmail(user?.email);
-  const canViewAdmin = isSuperUser || user?.role === 'admin';
+  const canViewPortal = isFounderPortal
+    ? user?.role === 'founder'
+    : isSuperUser || user?.role === 'admin';
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabFromUrl = params.get('tab');
-    const validTabs = new Set([
-      'users',
-      'schools',
-      'students',
-      'leads',
-      'enrollments',
-      'attendance-corrections',
-      'attendance-validation',
-      'relationships',
-      'courses',
-      'today-notifications',
-      'lessons',
-      'class-recordings',
-      'class-samples',
-      'testimonials',
-      'parent-worksheets',
-      'analytics',
-      'holidays',
-      'teacher-payments',
-      'parent-payments',
-      'settings',
-    ]);
+    const validTabs = isFounderPortal ? FOUNDER_VALID_TABS : ADMIN_VALID_TABS;
 
     if (tabFromUrl === 'leads') {
       setLeadsWorkspaceView(params.get('leadView') === 'demos' ? 'demos' : 'leads');
@@ -566,10 +597,13 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (location.pathname.includes('/surya/analytics')) {
+    if (!isFounderPortal && location.pathname.includes('/surya/analytics')) {
       setSelectedTab('analytics');
+      return;
     }
-  }, [location.pathname, location.search, navigate]);
+
+    setSelectedTab(defaultTab);
+  }, [defaultTab, isFounderPortal, location.pathname, location.search]);
 
   const handleLeadsWorkspaceViewChange = (nextView: LeadsWorkspaceView) => {
     startTransition(() => {
@@ -578,7 +612,7 @@ export default function AdminDashboard() {
       params.set('tab', 'leads');
       if (nextView === 'demos') params.set('leadView', 'demos');
       else params.delete('leadView');
-      navigate(`/surya?${params.toString()}`, { replace: true });
+      navigate(`${basePath}?${params.toString()}`, { replace: true });
     });
   };
 
@@ -588,23 +622,28 @@ export default function AdminDashboard() {
     });
   };
 
-  const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(canViewAdmin);
+  const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(
+    canViewPortal && !isFounderPortal,
+  );
 
   if (authLoading) return <AccessMessage>Checking your permissions...</AccessMessage>;
   if (!user) return <AccessMessage>Login required.</AccessMessage>;
-  if (!canViewAdmin) return <AccessMessage>No permission.</AccessMessage>;
+  if (!canViewPortal) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
     <div className="mobile-app-scroll h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-gray-900">
-      <Header onOpenMenu={() => setMobileMenuOpen(true)} />
+      <Header portal={portal} onOpenMenu={() => setMobileMenuOpen(true)} />
 
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[320px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-0 sm:rounded-none">
           <DialogHeader className="sr-only">
-            <DialogTitle>Admin menu</DialogTitle>
-            <DialogDescription>Navigate between admin sections</DialogDescription>
+            <DialogTitle>{isFounderPortal ? 'Founder menu' : 'Admin menu'}</DialogTitle>
+            <DialogDescription>
+              {isFounderPortal ? 'Navigate between founder sections' : 'Navigate between admin sections'}
+            </DialogDescription>
           </DialogHeader>
           <Sidebar
+            portal={portal}
             selectedTab={selectedTab}
             onTabChange={handleTabChange}
             onNavigate={() => setMobileMenuOpen(false)}
@@ -615,6 +654,7 @@ export default function AdminDashboard() {
 
       <div className="flex flex-1 min-w-0 min-h-0 pb-24 lg:pb-0">
         <Sidebar
+          portal={portal}
           selectedTab={selectedTab}
           onTabChange={handleTabChange}
           className="hidden h-[calc(100vh-57px)] overflow-y-auto lg:sticky lg:top-[57px] lg:block"
@@ -622,7 +662,7 @@ export default function AdminDashboard() {
 
         <main className="flex min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
-          {isSuperUser && (
+          {!isFounderPortal && isSuperUser && (
             <Card className="mb-4 p-3">
               <div className="flex gap-2 flex-wrap">
                 {ROLE_SHORTCUTS.map((r) => (
@@ -635,6 +675,12 @@ export default function AdminDashboard() {
           )}
 
           <Tabs value={selectedTab} onValueChange={handleTabChange}>
+            {isFounderPortal ? (
+              <TabsContent value="editorial-reviews" className="mt-0">
+                <FounderEditorialReviewsPanel />
+              </TabsContent>
+            ) : null}
+
             <TabsContent value="users" className="mt-0">
               <UserManagement />
             </TabsContent>
@@ -734,7 +780,7 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      <footer className="hidden border-t p-4 text-sm sm:block">
+      {!isFounderPortal ? <footer className="hidden border-t p-4 text-sm sm:block">
         {statsLoading ? (
           'Loading…'
         ) : statsError ? (
@@ -745,15 +791,15 @@ export default function AdminDashboard() {
             {stats?.totalCourses}
           </>
         )}
-      </footer>
+      </footer> : null}
 
       <MobileTabBar
-        items={ADMIN_MOBILE_TABS}
+        items={isFounderPortal ? FOUNDER_MOBILE_TABS : ADMIN_MOBILE_TABS}
         activeId={selectedTab}
         onSelect={(nextTab) => {
           startTransition(() => {
             setSelectedTab(nextTab);
-            navigate(`/surya?tab=${nextTab}`, { replace: true });
+            navigate(`${basePath}?tab=${nextTab}`, { replace: true });
           });
         }}
       />
