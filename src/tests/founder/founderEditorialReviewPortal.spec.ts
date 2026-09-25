@@ -38,6 +38,8 @@ describe('Founder editorial review portal contract', () => {
 
     expect(dashboard).toContain('Editorial Reviews');
     expect(dashboard).toContain('Open Page');
+    expect(dashboard).toContain('Logout');
+    expect(dashboard).toContain('sticky top-0');
     expect(dashboard).toContain("'approved'");
     expect(dashboard).toContain("'changes-requested'");
   });
@@ -72,5 +74,9 @@ describe('Founder editorial review portal contract', () => {
     expect(phonicsPage).toContain('usePublicEditorialApproval');
     expect(phonicsPage).toContain('reviewedBy');
     expect(phonicsPage).toContain('Reviewed for phonics accuracy by');
+
+    const reviewAttributionIndex = phonicsPage.indexOf('Reviewed for phonics accuracy by');
+    const nextLearningStepIndex = phonicsPage.indexOf('Your next learning step');
+    expect(reviewAttributionIndex).toBeGreaterThan(nextLearningStepIndex);
   });
 });
