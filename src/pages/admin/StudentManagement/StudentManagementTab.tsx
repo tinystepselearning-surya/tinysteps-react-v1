@@ -307,7 +307,8 @@ export default function StudentManagementTab() {
     params.delete('focus');
     if (nextView === 'enrollments') params.set('view', 'enrollments');
     else params.delete('view');
-    navigate(`/surya?${params.toString()}`, { replace: true });
+    const basePath = location.pathname.startsWith('/founder') ? '/founder' : '/surya';
+    navigate(`${basePath}?${params.toString()}`, { replace: true });
   };
 
   const focusSummary = (focus: SummaryFocus) => {
