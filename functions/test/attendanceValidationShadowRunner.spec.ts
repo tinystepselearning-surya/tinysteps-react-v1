@@ -32,7 +32,7 @@ function evidence(
 ): AttendanceValidationEvidenceDocument {
   return {
     schemaVersion: 1,
-    calculationVersion: 1,
+    calculationVersion: 2,
     id: 'evidence-1',
     runId: 'av53-test',
     source: 'microsoft_teams_graph',
@@ -297,11 +297,16 @@ describe('AV5.3 bounded shadow runner', () => {
       resolutionStatus: 'verified',
       sameDayCoverageSeconds: 2100,
       sameDayPresentSessionCount: 1,
-      sameDayRequiredOverlapSeconds: 1500,
+      sameDayRequiredOverlapSeconds: null,
       sameDayOccurrenceCount: 1,
+      sameDayEvidenceEvaluable: true,
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      businessDifferenceCount: 0,
     });
     expect(store.saved[0].reasons).toContain(
-      'same_day_coverage_verified',
+      'business_present_counts_aligned',
     );
   });
 
@@ -348,11 +353,16 @@ describe('AV5.3 bounded shadow runner', () => {
         resolutionStatus: 'verified',
         sameDayCoverageSeconds: 3900,
         sameDayPresentSessionCount: 2,
-        sameDayRequiredOverlapSeconds: 3000,
+        sameDayRequiredOverlapSeconds: null,
         sameDayOccurrenceCount: 1,
+        sameDayEvidenceEvaluable: true,
+        businessOutcome: 'verified',
+        teamsSupportedPresentCount: 2,
+        tinyStepsPresentCount: 2,
+        businessDifferenceCount: 0,
       });
       expect(saved.reasons).toContain(
-        'same_day_multi_session_coverage_verified',
+        'business_present_counts_aligned',
       );
     }
   });
@@ -399,9 +409,14 @@ describe('AV5.3 bounded shadow runner', () => {
         recommendedAction: 'review',
         sameDayCoverageSeconds: 2100,
         sameDayPresentSessionCount: 2,
-        sameDayRequiredOverlapSeconds: 3000,
+        sameDayRequiredOverlapSeconds: null,
+        sameDayEvidenceEvaluable: true,
+        businessOutcome: 'false_present',
+        teamsSupportedPresentCount: 1,
+        tinyStepsPresentCount: 2,
+        businessDifferenceCount: 1,
       });
-      expect(saved.reasons).toContain('same_day_coverage_insufficient');
+      expect(saved.reasons).toContain('business_false_present_count');
     }
   });
 
@@ -474,10 +489,14 @@ describe('AV5.3 bounded shadow runner', () => {
 
     expect(store.saved[0]).toMatchObject({
       tinyStepsAttendance: null,
-      validationDecision: 'not_occurred',
-      classification: 'NO_CLASS_OCCURRED',
-      recommendedAction: 'none',
-      resolutionStatus: 'verified',
+      validationDecision: 'present',
+      classification: 'MISSING_ATTENDANCE',
+      recommendedAction: 'correct_to_present',
+      resolutionStatus: 'needs_review',
+      businessOutcome: 'false_absent',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 0,
+      businessDifferenceCount: 1,
     });
   });
 
@@ -506,17 +525,19 @@ describe('AV5.3 bounded shadow runner', () => {
     );
 
     expect(store.saved[0]).toMatchObject({
-      validationDecision: 'not_occurred',
+      validationDecision: null,
       tinyStepsAttendance: null,
-      classification: 'NO_CLASS_OCCURRED',
+      classification: 'VERIFIED',
       recommendedAction: 'none',
       resolutionStatus: 'verified',
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 0,
+      tinyStepsPresentCount: 0,
+      businessDifferenceCount: 0,
     });
-    expect(store.saved[0].reasons).toContain('verified_no_class_occurrence');
-    expect(store.saved[0].sourceClassificationReasons).toContain(
-      'verified_no_teams_occurrence',
-    );
-    expect(store.saved[0].proofIssues).toEqual(['no_teams_occurrence_confirmed']);
+    expect(store.saved[0].reasons).toContain('business_present_counts_aligned');
+    expect(store.saved[0].sourceClassificationReasons).toEqual([]);
+    expect(store.saved[0].proofIssues).toEqual([]);
   });
 
   it('uses the contract-v2 strict 25-minute threshold when production input omits an override', async () => {
@@ -550,8 +571,14 @@ describe('AV5.3 bounded shadow runner', () => {
       classification: 'POSSIBLE_FALSE_PRESENT',
       recommendedAction: 'review',
     });
-    expect(store.saved[0].sourceClassificationReasons).toContain(
-      'meaningful_overlap_not_met',
+    expect(store.saved[0]).toMatchObject({
+      businessOutcome: 'false_present',
+      teamsSupportedPresentCount: 0,
+      tinyStepsPresentCount: 1,
+      businessDifferenceCount: 1,
+    });
+    expect(store.saved[0].reasons).toContain(
+      'business_false_present_count',
     );
   });
 
@@ -719,8 +746,9 @@ describe('AV5.3 bounded shadow runner', () => {
     );
 
     expect(store.saved[0].tinyStepsAttendance).toBe('absent');
-    expect(store.saved[0].classification).toBe('ATTENDANCE_CONFLICT');
+    expect(store.saved[0].classification).toBe('MISSING_ATTENDANCE');
     expect(store.saved[0].recommendedAction).toBe('correct_to_present');
+    expect(store.saved[0].businessOutcome).toBe('false_absent');
   });
 
   it('persists same-day coverage diagnostics even when Tiny Steps is not Present', async () => {
@@ -754,8 +782,13 @@ describe('AV5.3 bounded shadow runner', () => {
       tinyStepsAttendance: 'absent',
       sameDayPresentSessionCount: 0,
       sameDayCoverageSeconds: 1800,
-      sameDayRequiredOverlapSeconds: 0,
+      sameDayRequiredOverlapSeconds: null,
       sameDayOccurrenceCount: 1,
+      sameDayEvidenceEvaluable: true,
+      businessOutcome: 'false_absent',
+      teamsSupportedPresentCount: 3,
+      tinyStepsPresentCount: 0,
+      businessDifferenceCount: 3,
     });
   });
 
@@ -894,8 +927,14 @@ describe('AV5.3 bounded shadow runner', () => {
       classification: 'AMBIGUOUS',
       recommendedAction: 'review',
     });
-    expect(store.saved[0].sourceClassificationReasons).toContain(
-      'overlap_threshold_not_configured',
+    expect(store.saved[0]).toMatchObject({
+      sameDayEvidenceEvaluable: false,
+      businessOutcome: 'not_evaluable',
+      teamsSupportedPresentCount: null,
+      businessDifferenceCount: 0,
+    });
+    expect(store.saved[0].reasons).toContain(
+      'business_evidence_not_evaluable',
     );
   });
 
