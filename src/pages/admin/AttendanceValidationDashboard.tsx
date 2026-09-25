@@ -16,6 +16,7 @@ import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-reac
 import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
 import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
+import type { AvsBusinessOutcome } from '../../lib/attendanceValidationBusinessReconciliation';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -209,24 +210,17 @@ interface Av6ValidationCase {
   sameDayPresentSessionCount: number | null;
   sameDayRequiredOverlapSeconds: number | null;
   sameDayOccurrenceCount: number | null;
+  sameDayEvidenceEvaluable: boolean | null;
+  businessOutcome: AvsBusinessOutcome | null;
+  teamsSupportedPresentCount: number | null;
+  tinyStepsPresentCount: number | null;
+  businessDifferenceCount: number | null;
   inputFingerprint: string | null;
   resolutionId: string | null;
   attendanceCorrectionId: string | null;
   resolvedAt: string | null;
   resolvedByName: string | null;
 }
-
-const CLASSIFICATION_TABS: Array<{ value: 'all' | Av6Classification; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'VERIFIED', label: 'Verified' },
-  { value: 'MISSING_ATTENDANCE', label: 'Missing attendance' },
-  { value: 'ATTENDANCE_CONFLICT', label: 'Conflict' },
-  { value: 'POSSIBLE_FALSE_PRESENT', label: 'False present' },
-  { value: 'NO_CLASS_OCCURRED', label: 'No class' },
-  { value: 'MISSING_TEAMS_EVIDENCE', label: 'Missing Teams' },
-  { value: 'ORPHAN_TEAMS_CLASS', label: 'Orphan' },
-  { value: 'AMBIGUOUS', label: 'Ambiguous' },
-];
 
 function currentIstYmd(): string {
   return new Date(Date.now() + (5.5 * 60 * 60 * 1000)).toISOString().slice(0, 10);
@@ -399,6 +393,24 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     sameDayPresentSessionCount: asFiniteNumber(raw.sameDayPresentSessionCount),
     sameDayRequiredOverlapSeconds: asFiniteNumber(raw.sameDayRequiredOverlapSeconds),
     sameDayOccurrenceCount: asFiniteNumber(raw.sameDayOccurrenceCount),
+    sameDayEvidenceEvaluable:
+      raw.sameDayEvidenceEvaluable === true
+        ? true
+        : raw.sameDayEvidenceEvaluable === false
+          ? false
+          : null,
+    businessOutcome: (() => {
+      const value = asText(raw.businessOutcome);
+      return value === 'verified'
+        || value === 'false_present'
+        || value === 'false_absent'
+        || value === 'not_evaluable'
+        ? value
+        : null;
+    })(),
+    teamsSupportedPresentCount: asFiniteNumber(raw.teamsSupportedPresentCount),
+    tinyStepsPresentCount: asFiniteNumber(raw.tinyStepsPresentCount),
+    businessDifferenceCount: asFiniteNumber(raw.businessDifferenceCount),
     inputFingerprint: asText(raw.inputFingerprint),
     resolutionId: asText(raw.resolutionId),
     attendanceCorrectionId: asText(raw.attendanceCorrectionId),
@@ -1356,21 +1368,7 @@ export default function AttendanceValidationDashboard() {
         </Card>
       ) : (
         <Card className="p-4">
-          <AttendanceValidationBusinessView
-            cases={cases}
-            actionsDisabled={
-              validationRunning
-              || forceFreshRangeRunning
-              || loading
-              || loadingMore
-              || forceFreshCaseId !== null
-            }
-            reFetchingCaseId={forceFreshCaseId}
-            onReviewCorrection={(item) =>
-              openApprovedCorrection(item as Av6ValidationCase)}
-            onReFetchCase={(item) =>
-              void forceFreshEvidence(item as Av6ValidationCase)}
-          />
+          <AttendanceValidationBusinessView cases={cases} />
         </Card>
       )}
 
