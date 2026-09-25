@@ -731,7 +731,7 @@ describe('AV5.3 bounded shadow runner', () => {
           ...session({ 'kid-1': { status: 'absent' } }),
           status: 'completed',
         },
-        evidence: evidence(),
+        evidence: shiftedSameDayEvidence('session-1', 'evidence-1', 1800),
       },
     ]);
 
