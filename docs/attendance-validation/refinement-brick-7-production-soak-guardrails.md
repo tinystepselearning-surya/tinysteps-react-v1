@@ -1,109 +1,90 @@
 # AVS Brick 7 — Production Soak & Safety Guardrails
 
-Brick 6 completed the original AVS processing architecture. Brick 7 deliberately
-does **not** add another validator, scheduler, realtime listener, or automatic
-attendance action.
-
-Its purpose is to provide a repeatable, bounded, read-only production soak audit
-before any future automation is considered.
+Brick 7 is a bounded, manual, read-only production-soak audit. The Brick 7/8
+hardening patch changes only how re-fetch health is interpreted; it does not
+change AVS validation or operational data.
 
 ## Operator command
 
-From the repository root:
-
 ```bash
-node scripts/avs-production-soak-audit.mjs \
+npm run audit:avs-soak -- \
   --project tinysteps-react-v1 \
   --from 2026-09-18 \
-  --to 2026-09-24
-```
-
-The date range is optional. By default the script audits the latest seven
-completed IST service dates through yesterday. Explicit ranges are also
-restricted to yesterday IST or earlier.
-
-Optional aggregate JSON output:
-
-```bash
-node scripts/avs-production-soak-audit.mjs \
-  --project tinysteps-react-v1 \
-  --from 2026-09-18 \
-  --to 2026-09-24 \
+  --to 2026-09-23 \
   --json-out artifacts/avs-soak.json
 ```
 
-The command uses Firebase Admin Application Default Credentials. It refuses to
-run unless `--project tinysteps-react-v1` is explicit.
+The range is capped at 31 completed IST service dates through yesterday.
 
-## Data read
+## Read boundary
 
-Only AVS-owned sidecars are queried:
+Only AVS-owned sidecars are read:
 
 - `attendanceValidationCases`
 - `attendanceValidationDirtySessions`
 - `attendanceValidationForceFreshRuns`
-
-No classSessions, enrollments, billing, payments, or teacher-earnings
-collections are queried.
+- nested `attendanceValidationForceFreshRuns/{run}/cases` checkpoints
 
 Hard caps:
 
-- 5,000 validation cases;
-- 5,000 dirty markers;
-- 200 re-fetch generations;
-- maximum 31 service days.
+- 5,000 validation cases
+- 5,000 dirty markers
+- 200 re-fetch generations
+- 20,000 generation checkpoints
 
-If a cap would be exceeded, the audit fails rather than returning a misleading
-partial report.
+Any cap overflow fails the audit instead of returning partial results.
 
-## Report
+## Current re-fetch state
 
-The report contains aggregate counts only:
+Historical top-level generation counters are no longer treated as the current
+unresolved backlog.
 
-- AVS classifications;
-- resolution status;
-- Tiny Steps attendance category;
-- reason/proof/identity issue counts;
-- dirty-marker reasons and age bands;
-- infrastructure-retry dirty backlog;
-- re-fetch generation status;
-- retryable failure backlog;
-- action-required failure backlog;
-- remaining cases and logical Graph calls already recorded by prior runs;
-- explicit operational-mutation permission violations;
-- invalid AVS sidecar dates.
+For every case represented in generation checkpoints, Brick 7 selects the most
+recent checkpoint. A later `refreshed` checkpoint therefore supersedes an
+older `failed` checkpoint for that same case.
 
-No student name, teacher name, email, Teams participant identity, Microsoft
-object ID, join URL, or Firestore document ID is emitted.
+The current backlog fields are:
 
-## Exit behavior
+- `failedCaseBacklog`
+- `retryableFailureBacklog`
+- `actionRequiredFailureBacklog`
+- `legacyUncategorizedFailureBacklog`
+- `remainingCaseBacklog`
 
-- exit 0: bounded audit completed and no hard AVS safety invariant was violated;
-- exit 1: configuration/read/runtime failure;
-- exit 2: audit completed but detected an explicit AVS safety invariant violation.
+Historical generation count, checkpoint count and logical Graph calls remain
+informational only.
 
-Backlog or business-review counts do not by themselves make the command fail.
-They are observability signals for an operator.
+## Legacy fail-closed rule
 
-## Explicit exclusions
+A failed checkpoint created before Brick 6 may not contain `retryable`,
+`failureCategory`, `retryDisposition`, or `operatorAction`.
 
-Brick 7 has:
+Such a failure is never interpreted as clean. It is counted as:
 
-- 0 Microsoft Graph calls;
-- 0 Firestore writes;
-- 0 operational collection writes;
-- 0 new browser callables;
-- 0 scheduled jobs;
-- 0 realtime listeners;
-- 0 automatic attendance corrections.
+- failed
+- action required
+- legacy uncategorized
 
-## Locked AVS rules
+If a current generation reports failed cases that have no corresponding
+checkpoint representation, the unmatched failures are also counted as legacy
+uncategorized/action-required.
 
-Brick 7 does not change:
+This prevents legacy failures from disappearing merely because the newer
+taxonomy fields did not exist when they were written.
 
-- strictly more than 1,500 seconds per Present row;
-- same-day pooling only for Present;
-- non-Present scheduled-occurrence matching;
-- expected teacher + learner proof;
-- fail-closed teacher identity;
-- attendance, scheduling, billing, payments, or teacher earnings.
+## Safety
+
+The report schema is now version 2 because current backlog semantics changed.
+
+Brick 7 still performs:
+
+- 0 Microsoft Graph calls
+- 0 Firestore writes
+- 0 operational collection writes
+- 0 browser callables
+- 0 scheduled jobs
+- 0 realtime listeners
+- 0 automatic attendance corrections
+
+The report remains aggregate-only and does not emit case IDs, student/teacher
+names, email addresses, Teams identities, Microsoft object IDs, or join URLs.

@@ -4,6 +4,40 @@ import {
   summarizeAttendanceValidationSoak,
 } from '../avs-production-soak-summary.mjs';
 
+function baseRun(overrides = {}) {
+  return {
+    fromDate: '2026-09-20',
+    toDate: '2026-09-24',
+    status: 'complete',
+    failedCount: 0,
+    remainingCases: 0,
+    graphLogicalCalls: 5,
+    updatedAt: new Date('2026-09-24T10:00:00.000Z'),
+    operationalMutationAllowed: false,
+    _soakRunKey: 'run-0',
+    _soakRunOrder: 0,
+    ...overrides,
+  };
+}
+
+function checkpoint(overrides = {}) {
+  return {
+    caseId: 'case-a',
+    serviceDateYmd: '2026-09-22',
+    status: 'refreshed',
+    retryable: false,
+    failureCategory: null,
+    retryDisposition: null,
+    operatorAction: null,
+    updatedAt: new Date('2026-09-24T10:00:00.000Z'),
+    operationalMutationAllowed: false,
+    _soakRunKey: 'run-0',
+    _soakRunOrder: 0,
+    _soakCheckpointOrder: 0,
+    ...overrides,
+  };
+}
+
 describe('AVS Brick 7 production soak summary', () => {
   it('accepts only the bounded AVS validation window', () => {
     expect(normalizeAvsSoakRange('2026-09-01', '2026-09-24')).toEqual({
@@ -19,7 +53,148 @@ describe('AVS Brick 7 production soak summary', () => {
     ).toThrow(/at most 31 days/);
   });
 
-  it('summarizes cases, dirty backlog, and re-fetch generations without PII', () => {
+  it('uses latest per-case checkpoint state instead of historical run totals', () => {
+    const report = summarizeAttendanceValidationSoak({
+      range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
+      asOf: new Date('2026-09-24T16:30:00.000Z'),
+      cases: [],
+      dirtySessions: [],
+      forceFreshRuns: [
+        baseRun({
+          status: 'complete_with_failures',
+          failedCount: 1,
+          updatedAt: new Date('2026-09-23T10:00:00.000Z'),
+          _soakRunKey: 'run-old',
+          _soakRunOrder: 0,
+        }),
+        baseRun({
+          updatedAt: new Date('2026-09-24T10:00:00.000Z'),
+          _soakRunKey: 'run-new',
+          _soakRunOrder: 1,
+        }),
+      ],
+      forceFreshCheckpoints: [
+        checkpoint({
+          status: 'failed',
+          retryable: true,
+          failureCategory: 'retryable_infrastructure',
+          retryDisposition: 'retry',
+          operatorAction: 'retry',
+          updatedAt: new Date('2026-09-23T10:00:00.000Z'),
+          _soakRunKey: 'run-old',
+          _soakRunOrder: 0,
+        }),
+        checkpoint({
+          status: 'refreshed',
+          updatedAt: new Date('2026-09-24T10:00:00.000Z'),
+          _soakRunKey: 'run-new',
+          _soakRunOrder: 1,
+        }),
+      ],
+    });
+
+    expect(report.forceFreshRuns.failedCaseBacklog).toBe(0);
+    expect(report.forceFreshRuns.retryableFailureBacklog).toBe(0);
+    expect(report.forceFreshRuns.actionRequiredFailureBacklog).toBe(0);
+    expect(report.forceFreshRuns.supersededFailureCheckpointCount).toBe(1);
+    expect(report.forceFreshRuns.currentGenerationCount).toBe(1);
+  });
+
+  it('keeps the newest failed checkpoint as current even when an older run succeeded', () => {
+    const report = summarizeAttendanceValidationSoak({
+      range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
+      asOf: new Date('2026-09-24T16:30:00.000Z'),
+      cases: [],
+      dirtySessions: [],
+      forceFreshRuns: [
+        baseRun({
+          updatedAt: new Date('2026-09-23T10:00:00.000Z'),
+          _soakRunKey: 'run-old',
+          _soakRunOrder: 0,
+        }),
+        baseRun({
+          status: 'complete_with_failures',
+          failedCount: 1,
+          updatedAt: new Date('2026-09-24T10:00:00.000Z'),
+          _soakRunKey: 'run-new',
+          _soakRunOrder: 1,
+        }),
+      ],
+      forceFreshCheckpoints: [
+        checkpoint({
+          status: 'refreshed',
+          updatedAt: new Date('2026-09-23T10:00:00.000Z'),
+          _soakRunKey: 'run-old',
+          _soakRunOrder: 0,
+        }),
+        checkpoint({
+          status: 'failed',
+          retryable: true,
+          failureCategory: 'retryable_infrastructure',
+          retryDisposition: 'retry',
+          operatorAction: 'retry',
+          updatedAt: new Date('2026-09-24T10:00:00.000Z'),
+          _soakRunKey: 'run-new',
+          _soakRunOrder: 1,
+        }),
+      ],
+    });
+
+    expect(report.forceFreshRuns.failedCaseBacklog).toBe(1);
+    expect(report.forceFreshRuns.retryableFailureBacklog).toBe(1);
+    expect(report.forceFreshRuns.actionRequiredFailureBacklog).toBe(0);
+  });
+
+  it('fails legacy failed checkpoints closed instead of losing their categorization', () => {
+    const report = summarizeAttendanceValidationSoak({
+      range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
+      asOf: new Date('2026-09-24T16:30:00.000Z'),
+      cases: [],
+      dirtySessions: [],
+      forceFreshRuns: [
+        baseRun({
+          status: 'complete_with_failures',
+          failedCount: 1,
+        }),
+      ],
+      forceFreshCheckpoints: [
+        checkpoint({
+          status: 'failed',
+          retryable: undefined,
+          failureCategory: undefined,
+          retryDisposition: undefined,
+          operatorAction: undefined,
+        }),
+      ],
+    });
+
+    expect(report.forceFreshRuns.failedCaseBacklog).toBe(1);
+    expect(report.forceFreshRuns.retryableFailureBacklog).toBe(0);
+    expect(report.forceFreshRuns.actionRequiredFailureBacklog).toBe(1);
+    expect(report.forceFreshRuns.legacyUncategorizedFailureBacklog).toBe(1);
+  });
+
+  it('keeps unrepresented legacy run failures action-required', () => {
+    const report = summarizeAttendanceValidationSoak({
+      range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
+      asOf: new Date('2026-09-24T16:30:00.000Z'),
+      cases: [],
+      dirtySessions: [],
+      forceFreshRuns: [
+        baseRun({
+          status: 'complete_with_failures',
+          failedCount: 2,
+        }),
+      ],
+      forceFreshCheckpoints: [],
+    });
+
+    expect(report.forceFreshRuns.failedCaseBacklog).toBe(2);
+    expect(report.forceFreshRuns.actionRequiredFailureBacklog).toBe(2);
+    expect(report.forceFreshRuns.legacyUncategorizedFailureBacklog).toBe(2);
+  });
+
+  it('summarizes dirty backlog and remains aggregate-only', () => {
     const report = summarizeAttendanceValidationSoak({
       range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
       asOf: new Date('2026-09-24T16:30:00.000Z'),
@@ -37,16 +212,6 @@ describe('AVS Brick 7 production soak summary', () => {
           teacherName: 'Private Teacher',
           email: 'private@example.com',
         },
-        {
-          serviceDateYmd: '2026-09-22',
-          classification: 'MISSING_TEAMS_EVIDENCE',
-          resolutionStatus: 'needs_review',
-          tinyStepsAttendance: 'present',
-          reasons: ['meeting_not_found'],
-          proofIssues: ['attendance_report_missing'],
-          identityIssues: [],
-          operationalMutationAllowed: false,
-        },
       ],
       dirtySessions: [
         {
@@ -55,90 +220,41 @@ describe('AVS Brick 7 production soak summary', () => {
           dirtyAt: new Date('2026-09-21T10:00:00.000Z'),
           operationalMutationAllowed: false,
         },
-        {
-          serviceDateYmd: '2026-09-23',
-          reason: 'teacher_attendance_changed',
-          dirtyAt: new Date('2026-09-24T10:00:00.000Z'),
-          operationalMutationAllowed: false,
-        },
       ],
-      forceFreshRuns: [
-        {
-          fromDate: '2026-09-20',
-          toDate: '2026-09-23',
-          status: 'complete_with_failures',
-          failedCount: 3,
-          retryableFailureCount: 2,
-          actionRequiredFailureCount: 1,
-          remainingCases: 0,
-          graphLogicalCalls: 12,
-          operationalMutationAllowed: false,
-        },
-      ],
+      forceFreshRuns: [baseRun()],
+      forceFreshCheckpoints: [checkpoint()],
     });
 
-    expect(report.cases.totalCount).toBe(2);
-    expect(report.cases.classificationCounts).toEqual({
-      MISSING_TEAMS_EVIDENCE: 1,
-      VERIFIED: 1,
-    });
-    expect(report.cases.openReviewCaseCount).toBe(1);
-    expect(report.dirtySessions.totalCount).toBe(2);
+    expect(report.schemaVersion).toBe(2);
     expect(report.dirtySessions.infrastructureRetryCount).toBe(1);
     expect(report.dirtySessions.olderThan24HoursCount).toBe(1);
-    expect(report.forceFreshRuns.retryableFailureBacklog).toBe(2);
-    expect(report.forceFreshRuns.actionRequiredFailureBacklog).toBe(1);
-    expect(report.forceFreshRuns.graphLogicalCalls).toBe(12);
+    expect(report.forceFreshRuns.currentStateSchemaVersion).toBe(1);
     expect(report.safety.invariantViolation).toBe(false);
 
     const serialized = JSON.stringify(report);
     expect(serialized).not.toContain('Private Student');
     expect(serialized).not.toContain('Private Teacher');
     expect(serialized).not.toContain('private@example.com');
+    expect(serialized).not.toContain('case-a');
   });
 
-  it('fails the safety signal only for explicit mutation permission or invalid dates', () => {
+  it('includes checkpoint mutation/date violations in the safety signal', () => {
     const report = summarizeAttendanceValidationSoak({
       range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
       asOf: new Date('2026-09-24T16:30:00.000Z'),
-      cases: [
-        {
-          serviceDateYmd: '2026-09-21',
-          classification: 'VERIFIED',
-          operationalMutationAllowed: true,
-        },
-        {
-          serviceDateYmd: 'bad-date',
-          classification: 'AMBIGUOUS',
-          operationalMutationAllowed: false,
-        },
-      ],
+      cases: [],
       dirtySessions: [],
-      forceFreshRuns: [],
+      forceFreshRuns: [baseRun()],
+      forceFreshCheckpoints: [
+        checkpoint({
+          serviceDateYmd: 'bad-date',
+          operationalMutationAllowed: true,
+        }),
+      ],
     });
 
     expect(report.safety.explicitOperationalMutationPermissionCount).toBe(1);
-    expect(report.safety.invalidCaseDateCount).toBe(1);
+    expect(report.safety.invalidCheckpointDateCount).toBe(1);
     expect(report.safety.invariantViolation).toBe(true);
-    expect(report.operationalMutationAllowed).toBe(false);
-  });
-
-  it('reports missing mutation flags separately without treating them as explicit permission', () => {
-    const report = summarizeAttendanceValidationSoak({
-      range: { fromDate: '2026-09-20', toDate: '2026-09-24' },
-      asOf: new Date('2026-09-24T16:30:00.000Z'),
-      cases: [
-        {
-          serviceDateYmd: '2026-09-21',
-          classification: 'VERIFIED',
-        },
-      ],
-      dirtySessions: [],
-      forceFreshRuns: [],
-    });
-
-    expect(report.safety.explicitOperationalMutationPermissionCount).toBe(0);
-    expect(report.safety.missingOperationalMutationFlagCount).toBe(1);
-    expect(report.safety.invariantViolation).toBe(false);
   });
 });
