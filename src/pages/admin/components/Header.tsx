@@ -18,6 +18,7 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   // navigation now enters the unified Students & Enrollments workspace.
   enrollments: 'Students & Enrollments',
   'attendance-corrections': 'Attendance Corrections',
+  'attendance-validation': 'Attendance Validation',
   relationships: 'Relationship Management',
   courses: 'Course Management',
   'today-notifications': 'Sessions Management',
