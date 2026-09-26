@@ -18,6 +18,7 @@ type SitemapSourceEntry = {
 const repoRoot = process.cwd();
 const refreshDate = '2026-08-30';
 const refreshDateOverrides: Record<string, string> = {
+  'what-age-to-start-phonics': '2026-09-26',
   'what-is-phonics-for-kids': '2026-09-26',
 };
 const batch3 = [
