@@ -212,12 +212,9 @@ export function LearningPathsSection() {
               to={item.path}
               className="group rounded-[22px] border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-5"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">{item.title}</h3>
-                  <p className="mt-1 text-xs font-medium text-slate-500">{item.ages}</p>
-                </div>
-                <span className="text-lg text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" aria-hidden="true">→</span>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">{item.title}</h3>
+                <p className="mt-1 text-xs font-medium text-slate-500">{item.ages}</p>
               </div>
               <p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>
               <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700">
@@ -440,7 +437,7 @@ export function ClassSamplesSection() {
 
 export function HomeFaqSection({ items }: { items: HomeFaqItem[] }) {
   return (
-    <section className="px-6 py-12 sm:py-14">
+    <section className="px-6 pb-12 pt-8 sm:pb-14 sm:pt-10">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Before you book</p>
@@ -450,11 +447,11 @@ export function HomeFaqSection({ items }: { items: HomeFaqItem[] }) {
           </p>
         </div>
 
-        <div className="mt-7 grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <details
               key={item.question}
-              className="group rounded-[20px] border border-slate-200 bg-white px-4 py-4 transition open:border-slate-300 open:bg-slate-50/60"
+              className="group h-full rounded-[20px] border border-slate-200 bg-white px-4 py-4 transition open:border-slate-300 open:bg-slate-50/60"
             >
               <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-950 marker:hidden sm:text-[0.95rem]">
                 <span>{item.question}</span>
