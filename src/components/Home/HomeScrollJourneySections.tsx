@@ -199,7 +199,7 @@ export function LearningPathsSection() {
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Choose the right focus</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Four clear Tiny Steps learning paths</h2>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Four clear Tiny Steps learning paths</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
             Start with the skill your child needs most. The assessment helps confirm the right level and learning path.
           </p>
@@ -450,7 +450,7 @@ export function HomeFaqSection({ items }: { items: HomeFaqItem[] }) {
           </p>
         </div>
 
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-7 grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
             <details
               key={item.question}
