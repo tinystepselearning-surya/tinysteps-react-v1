@@ -156,7 +156,7 @@ describe("FreeEnglishGameLandingPage", () => {
 
     expect(screen.getByRole("heading", { name: /free a-z phonics sounds game for kids/i, level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/a.z phonics sound detective/i)).toBeInTheDocument();
+    expect(screen.getByText("A–Z Phonics Sound Detective")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /play all 26/i })).toBeInTheDocument();
     expect(screen.getByText(/26 basic letter sounds/i)).toBeInTheDocument();
     expect(screen.getAllByText(/temporarily in this browser/i).length).toBeGreaterThan(0);
