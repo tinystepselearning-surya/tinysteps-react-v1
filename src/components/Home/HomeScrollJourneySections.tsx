@@ -258,7 +258,7 @@ const differentiators = [
 
 export function WhyTinyStepsSection() {
   return (
-    <section className="bg-slate-50/70 px-6 py-10 sm:py-12">
+    <section className="bg-slate-50/70 px-6 py-8 sm:py-10">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <div>
