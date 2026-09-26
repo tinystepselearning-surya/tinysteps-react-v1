@@ -19,6 +19,21 @@ describe('AVS simple business outcome engine', () => {
     expect(reconcileAvsBusinessOutcome({
       evidenceEvaluable: true,
       teamsOverlapSeconds: 2100,
+      sameDaySessionCount: 1,
+      tinyStepsPresentCount: 1,
+    })).toEqual({
+      outcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      differenceCount: 0,
+    });
+  });
+
+  it('caps a long single Teams class at one supported Present', () => {
+    expect(reconcileAvsBusinessOutcome({
+      evidenceEvaluable: true,
+      teamsOverlapSeconds: 65 * 60,
+      sameDaySessionCount: 1,
       tinyStepsPresentCount: 1,
     })).toEqual({
       outcome: 'verified',
@@ -32,6 +47,7 @@ describe('AVS simple business outcome engine', () => {
     expect(reconcileAvsBusinessOutcome({
       evidenceEvaluable: true,
       teamsOverlapSeconds: 2100,
+      sameDaySessionCount: 1,
       tinyStepsPresentCount: 2,
     })).toEqual({
       outcome: 'false_present',
@@ -45,6 +61,7 @@ describe('AVS simple business outcome engine', () => {
     expect(reconcileAvsBusinessOutcome({
       evidenceEvaluable: true,
       teamsOverlapSeconds: 4200,
+      sameDaySessionCount: 2,
       tinyStepsPresentCount: 1,
     })).toEqual({
       outcome: 'false_absent',
@@ -58,6 +75,7 @@ describe('AVS simple business outcome engine', () => {
     expect(reconcileAvsBusinessOutcome({
       evidenceEvaluable: false,
       teamsOverlapSeconds: 0,
+      sameDaySessionCount: 1,
       tinyStepsPresentCount: 1,
     })).toEqual({
       outcome: 'not_evaluable',

@@ -310,6 +310,42 @@ describe('AV5.3 bounded shadow runner', () => {
     );
   });
 
+  it('does not turn one long Teams class into two supported Presents', async () => {
+    const longEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-long',
+      65 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: {
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-long',
+        },
+        session: session(),
+        evidence: longEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-one-long-session',
+        workItems: [{
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-long',
+        }],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      businessDifferenceCount: 0,
+    });
+  });
+
   it('verifies two Present sessions only when pooled same-day teacher-learner overlap is more than 50 minutes', async () => {
     const firstEvidence = shiftedSameDayEvidence(
       'session-1',
@@ -786,9 +822,9 @@ describe('AV5.3 bounded shadow runner', () => {
       sameDayOccurrenceCount: 1,
       sameDayEvidenceEvaluable: true,
       businessOutcome: 'false_absent',
-      teamsSupportedPresentCount: 2,
+      teamsSupportedPresentCount: 1,
       tinyStepsPresentCount: 0,
-      businessDifferenceCount: 2,
+      businessDifferenceCount: 1,
     });
   });
 
