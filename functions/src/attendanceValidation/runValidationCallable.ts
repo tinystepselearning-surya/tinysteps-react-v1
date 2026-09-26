@@ -266,11 +266,16 @@ export const runAttendanceValidationRange = onCall(
     );
 
     const baseline =
-      remainingCapacity > 0 && freshFailedCount === 0
+      remainingCapacity > 0
         ? await runAttendanceValidationFirstTimeBaselineBatch(
             db,
             range,
-            { maxSessions: remainingCapacity },
+            {
+              maxSessions: remainingCapacity,
+              // A failure in unrelated fresh work must not block migration of
+              // legacy cases whose cached Teams evidence is still reusable.
+              allowFreshEvidence: freshFailedCount === 0,
+            },
           )
         : null;
 
@@ -286,7 +291,8 @@ export const runAttendanceValidationRange = onCall(
     const processedSessionCount =
       latest.dirtyFoundCount + (baseline?.batchSessionCount ?? 0);
     const baselineDeferred =
-      remainingCapacity === 0 || freshFailedCount > 0;
+      remainingCapacity === 0
+      || (baseline?.deferredFreshCount ?? 0) > 0;
     const baselineFailureSummary =
       baseline?.failureSummary ?? emptyAvsFailureSummary();
     const failureSummary = mergeAvsFailureSummaries(
