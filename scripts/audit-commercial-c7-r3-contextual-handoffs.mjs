@@ -16,6 +16,7 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'u
 const requiredFiles = [
   'src/lib/commercialC7ContextualHandoffImplementation.ts',
   'src/content/blog/shared/commercialHandoffs.ts',
+  'src/pages/GrammarKnowledgePage.tsx',
   'src/tests/seo/commercialC7ContextualHandoffs.spec.ts',
   'scripts/audit-commercial-c7-r3-contextual-handoffs.mjs',
   'docs/seo/commercial-growth/C7_R3_CONTEXTUAL_COMMERCIAL_HANDOFFS_2026-09-11.md',
@@ -31,6 +32,7 @@ const blogIndexPipeline = read('src/content/blog/index.ts');
 const blogLibrary = read('src/pages/blog/BlogIndexPage.tsx');
 const parentsHub = read('src/pages/parents/ParentsHubPage.tsx');
 const phonicsKnowledge = read('src/pages/PhonicsKnowledgePage.tsx');
+const grammarKnowledge = read('src/pages/GrammarKnowledgePage.tsx');
 const childReading = read('src/pages/public/ChildNotReadingProperlyPage.tsx');
 const slowReader = read('src/pages/public/SlowReaderChildHelpPage.tsx');
 const shyChild = read('src/pages/public/ShyChildSpeakingConfidencePage.tsx');
@@ -61,6 +63,11 @@ check(phonicsKnowledge.includes('data-c7-contextual-handoff={c7Handoff.ruleClass
 check(phonicsKnowledge.includes('to={c7Handoff.primary.to}'), 'phonics-primary-first', 'Focused phonics primary owner link missing');
 check(phonicsKnowledge.includes('c7Handoff.secondary ?'), 'phonics-secondary-conditional', 'Focused phonics secondary assessment must remain conditional');
 
+check(grammarKnowledge.includes('getCommercialC7R3Handoff'), 'grammar-r3-model', 'Focused grammar renderer does not read R3');
+check(grammarKnowledge.includes('data-c7-contextual-handoff={c7Handoff.ruleClass}'), 'grammar-r3-render', 'Focused grammar contextual handoff marker missing');
+check(grammarKnowledge.includes('to={c7Handoff.primary.to}'), 'grammar-primary-first', 'Focused grammar primary owner link missing');
+check(grammarKnowledge.includes('c7Handoff.secondary ?'), 'grammar-secondary-conditional', 'Focused grammar secondary assessment must remain conditional');
+
 check(blogLibrary.includes('PARENT_GOAL_ROUTES.map'), 'blog-library-discovery', 'Blog library lost its intent-specific discovery routes');
 check(parentsHub.includes('to="/book-demo"'), 'parents-assessment', 'Parents Hub lost assessment');
 check(parentsHub.includes("to: '/reading-classes-for-kids'"), 'parents-reading-route', 'Parents Hub lost reading programme routing');
@@ -90,6 +97,13 @@ if (baseRef) {
       'src/content/blog/index.ts',
       'src/content/blog/shared/commercialHandoffs.ts',
       'src/pages/PhonicsKnowledgePage.tsx',
+      'src/pages/GrammarKnowledgePage.tsx',
+      'src/pages/ResourcesPage.tsx',
+      'src/pages/SubjectResourcesPage.tsx',
+      'src/pages/blog/BlogIndexPage.tsx',
+      'src/pages/parents/ParentsHubPage.tsx',
+      'src/pages/public/FreeEnglishGamesHubPage.tsx',
+      'src/pages/ForSchoolsPage.tsx',
     ]);
     const privateAppSurfaceAllowlist = new Set([
       'src/pages/LoginPage.tsx',
@@ -126,5 +140,5 @@ if (failures.length) {
 }
 
 console.log(`C7-R3 contextual handoff audit passed (${checks.length} checks).`);
-console.log('Implementation: shared blog transformer + focused phonics shared renderer; navigation/decision hubs and correct standalone routes are explicitly protected.');
+console.log('Implementation: shared blog transformer + focused phonics and grammar shared renderers; navigation/decision hubs and correct standalone routes are explicitly protected.');
 console.log('Protection: C2/C4/C5/C6 unchanged; /book-demo remains the single conversion owner.');
