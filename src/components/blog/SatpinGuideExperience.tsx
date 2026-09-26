@@ -413,22 +413,6 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
 
   return (
     <div id="top" className="space-y-6 sm:space-y-8">
-      {resolvedHero ? (
-        <div className="overflow-hidden rounded-[28px] bg-slate-100 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
-          <div className="aspect-[1.8/1] w-full sm:aspect-[2.25/1]">
-            <img
-              src={resolvedHero}
-              alt="Child practising early sound-letter matching"
-              className="h-full w-full object-cover object-center"
-              width={1600}
-              height={900}
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-        </div>
-      ) : null}
-
       {tocItems.length ? (
         <details className="rounded-[20px] border border-slate-200/80 bg-white/[0.85] p-4 shadow-sm backdrop-blur-xl lg:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-slate-900">
@@ -457,32 +441,50 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
           data-satpin-section="quick-answer"
           className="scroll-mt-28 overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.05)]"
         >
-          <div className="p-6 sm:p-8">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-slate-950 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white">
-                SATPIN in 60 seconds
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[0.68rem] font-semibold text-slate-500">
-                Parent quick answer
-              </span>
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-slate-950 px-3 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-white">
+                  SATPIN in 60 seconds
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-[0.68rem] font-semibold text-slate-500">
+                  Parent quick answer
+                </span>
+              </div>
+
+              <h2 className="ts-answer-title ts-blog-hero-title mt-5 max-w-3xl text-[1.9rem] font-black tracking-[-0.04em] text-slate-950 sm:text-[2.25rem]">
+                {quick.title}
+              </h2>
+
+              <div className="mt-6 divide-y divide-slate-100 rounded-[20px] bg-slate-50/70 px-5">
+                {quick.blocks.map((block, index) => (
+                  <div key={'quick-' + index} className="grid gap-2 py-4 sm:grid-cols-[28px_minmax(0,1fr)]">
+                    <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-[#0b5bd3] shadow-sm">
+                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
+                    <p className={index === 0 ? 'ts-answer-summary ts-blog-quick-answer text-[0.98rem] leading-7 text-slate-700' : 'text-[0.98rem] leading-7 text-slate-700'}>
+                      {renderRichText(block.content, 'quick-' + index)}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <h2 className="ts-answer-title ts-blog-hero-title mt-5 max-w-4xl text-[1.9rem] font-black tracking-[-0.04em] text-slate-950 sm:text-[2.25rem]">
-              {quick.title}
-            </h2>
-
-            <div className="mt-6 divide-y divide-slate-100 rounded-[20px] bg-slate-50/70 px-5">
-              {quick.blocks.map((block, index) => (
-                <div key={'quick-' + index} className="grid gap-2 py-4 sm:grid-cols-[28px_minmax(0,1fr)]">
-                  <span className="mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-[#0b5bd3] shadow-sm">
-                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                  </span>
-                  <p className={index === 0 ? 'ts-answer-summary ts-blog-quick-answer text-[0.98rem] leading-7 text-slate-700' : 'text-[0.98rem] leading-7 text-slate-700'}>
-                    {renderRichText(block.content, 'quick-' + index)}
-                  </p>
+            {resolvedHero ? (
+              <div className="border-t border-slate-100 lg:border-l lg:border-t-0">
+                <div className="h-full min-h-64 overflow-hidden lg:min-h-full">
+                  <img
+                    src={resolvedHero}
+                    alt="Child practising early sound-letter matching"
+                    className="h-full w-full object-cover object-center"
+                    width={900}
+                    height={900}
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}

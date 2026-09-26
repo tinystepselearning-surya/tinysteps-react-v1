@@ -1017,7 +1017,7 @@ function buildMetaDescription(src: any) {
     : `Published ${formatBlogDate(metaSource.date)}`;
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900">
+    <div className={isSatpinGuide ? 'min-h-screen bg-[#f5f5f7] text-slate-900' : 'min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900'}>
       <ResearchArticleHero
         eyebrowPrimary={eyebrowPrimary}
         eyebrowSecondary={eyebrowSecondary}
