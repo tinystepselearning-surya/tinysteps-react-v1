@@ -4,35 +4,28 @@ import Button from '../Button/Button';
 
 const FinalCTASection: React.FC = () => {
   return (
-    <section className="bg-gradient-to-b from-white to-primary-50 py-20">
+    <section className="bg-gradient-to-b from-white to-primary-50 py-16 sm:py-20">
       <div className="mx-auto max-w-3xl px-6 text-center">
-        <h2 className="font-heading text-3xl font-bold md:text-4xl">Ready to see your child’s English grow, week by week?</h2>
-        <div className="mx-auto mt-6 space-y-3 text-gray-800">
-          <p>Start with a free 1:1 assessment class. We’ll gently check your child’s current level and suggest the right Tiny Steps path for phonics, grammar or public speaking.</p>
-          <ul className="mx-auto mt-4 max-w-md space-y-2 text-left text-gray-700">
-            <li className="flex items-start">
-              <span className="mr-3 mt-1 text-primary-600">•</span>
-              <span>35-minute 1:1 session with a Tiny Steps mentor</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-3 mt-1 text-primary-600">•</span>
-              <span>Age-appropriate activities in phonics, grammar or speaking</span>
-            </li>
-            <li className="flex items-start">
-              <span className="mr-3 mt-1 text-primary-600">•</span>
-              <span>Clear next-step recommendation for parents</span>
-            </li>
-          </ul>
-        </div>
-        <div className="mt-8 flex flex-col items-center gap-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">One clear next step</p>
+        <h2 className="mt-3 font-heading text-3xl font-bold text-slate-900 md:text-4xl">
+          Find the right starting point for your child
+        </h2>
+        <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-700">
+          Start with one free 35-minute 1:1 online demo assessment. A Tiny Steps teacher checks the skills related to your concern, recommends the most suitable starting pathway, and you decide what to do next.
+        </p>
+
+        <div className="mt-8 flex flex-col items-center gap-3">
           <Link to="/book-demo">
-            <Button size="lg" aria-label="Book Free 35-Minute Demo">Book Free 35-Minute Demo</Button>
+            <Button size="lg" aria-label="Book Free 35-Minute Demo">
+              Book Free 35-Minute Demo
+            </Button>
           </Link>
-          <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
-          <div className="mt-4 text-sm text-gray-700">
-            <p>Tiny Steps has served 5000+ students, with families across 15+ countries including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
-            <p>For fresh public reviews, parents may also check trusted third-party profiles such as Trustpilot, JustDial, and Reddit.</p>
-          </div>
+          <Link
+            to="/class-samples"
+            className="text-sm font-semibold text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-primary-700"
+          >
+            Prefer to look first? View real class samples
+          </Link>
         </div>
       </div>
     </section>
