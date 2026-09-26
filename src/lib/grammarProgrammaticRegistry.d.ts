@@ -34,5 +34,6 @@ export const GRAMMAR_PROGRAMMATIC_REVISION: string;
 export const GRAMMAR_PROGRAMMATIC_SEQUENCE: readonly GrammarProgrammaticSequenceEntry[];
 export const GRAMMAR_PROGRAMMATIC_PAGES: readonly GrammarProgrammaticPublishedPage[];
 export const GRAMMAR_PROGRAMMATIC_PATHS: readonly string[];
+export const GRAMMAR_PROGRAMMATIC_RESOURCE_SEO: Readonly<Record<string, { title: string; description: string; canonicalPath: string; ogType: string }>>;
 export function getGrammarProgrammaticPageBySlug(slug: string): GrammarProgrammaticPublishedPage | null;
 export function getGrammarProgrammaticPageByPath(pathname: string): GrammarProgrammaticPublishedPage | null;
