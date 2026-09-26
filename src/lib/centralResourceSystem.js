@@ -1,4 +1,6 @@
-export const CENTRAL_RESOURCE_SYSTEM_REVISION = '2026-09-26-r23';
+import { GRAMMAR_PUBLISHED_RESOURCE_PAGES } from './grammarPublicationRegistry.js';
+
+export const CENTRAL_RESOURCE_SYSTEM_REVISION = '2026-09-27-r28-grammar-pseo';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -28,6 +30,15 @@ export const CENTRAL_RESOURCE_CONTENT_FAMILIES = freezeList([
     ownerRole: 'skill-guide-library',
     discoveryRole: 'resource-content',
     governedPublishedCount: 31,
+  }),
+  freeze({
+    id: 'focused-grammar',
+    label: 'Grammar knowledge path',
+    description: 'Curriculum-ordered grammar concept guides from word foundations through tense control, clauses and coherent writing.',
+    destination: '/resources/grammar',
+    ownerRole: 'skill-guide-library',
+    discoveryRole: 'resource-content',
+    governedPublishedCount: GRAMMAR_PUBLISHED_RESOURCE_PAGES.length,
   }),
   freeze({
     id: 'parent-help',
@@ -66,6 +77,7 @@ export const CENTRAL_RESOURCE_RECONCILIATION = freeze({
   contentFamilies: CENTRAL_RESOURCE_CONTENT_FAMILIES,
   editorialArchive: '/blog',
   focusedPhonicsHub: '/resources/phonics',
+  focusedGrammarHub: '/resources/grammar',
   parentHelpHub: '/parents',
   practiceHub: '/free-english-games-for-kids',
   schoolsHub: '/for-schools',
@@ -77,6 +89,7 @@ export const CENTRAL_RESOURCE_RECONCILIATION = freeze({
     connectedCorpus: freeze({
       editorialBlogs: 'all-current-public-blogs',
       governedPhonicsGuides: 31,
+      governedGrammarGuides: GRAMMAR_PUBLISHED_RESOURCE_PAGES.length,
       additionalPublicRoutes: 'all-route-seo-public-content',
       noindexPolicy: 'connected-as-supporting-only-not-primary-answer-owner',
     }),
