@@ -32,9 +32,14 @@ if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.star
   fail('governed-phonics-count', 'Layer 2 must contain exactly the governed 31 focused phonics URLs.');
 }
 
-for (const file of ['src/pages/ResourcesPage.tsx', 'src/pages/SubjectResourcesPage.tsx']) {
-  const source = fs.readFileSync(path.join(root, file), 'utf8');
-  if (!source.includes('AiAnswerLayerDirectory')) fail('missing-visible-directory', file);
+const resourcesPageSource = fs.readFileSync(path.join(root, 'src/pages/ResourcesPage.tsx'), 'utf8');
+if (!resourcesPageSource.includes('AiAnswerLayerDirectory')) {
+  fail('missing-visible-directory', 'src/pages/ResourcesPage.tsx');
+}
+
+const subjectHubSource = fs.readFileSync(path.join(root, 'src/pages/SubjectResourcesPage.tsx'), 'utf8');
+for (const phrase of ['Learn the pathway', 'Practise the skill', 'Solve a problem']) {
+  if (!subjectHubSource.includes(phrase)) fail('subject-layer-contract', phrase);
 }
 
 const generator = fs.readFileSync(path.join(root, 'scripts/generate-rss.mjs'), 'utf8');
