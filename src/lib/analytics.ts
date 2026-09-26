@@ -3,16 +3,11 @@ import { isPublicAnalyticsPath } from './publicRouteManifest.js';
 import { classifyMarketingPath } from './analyticsClassification';
 
 let initialized = false;
-let interactionArmed = false;
 let scriptQueued = false;
-let fallbackTimerId: number | undefined;
 let idleLoadTimerId: number | undefined;
 
 const PRODUCTION_GA_MEASUREMENT_ID = 'G-J3TTBH8CN9';
 const PRODUCTION_CLARITY_ID = 'xl3yemvlms';
-
-const DESKTOP_FALLBACK_DELAY_MS = 18000;
-const MOBILE_FALLBACK_DELAY_MS = 12000;
 const IDLE_LOAD_TIMEOUT_MS = 9000;
 
 function shouldRunAnalytics() {
@@ -84,48 +79,6 @@ const queueScriptLoad = (id: string) => {
   }
 };
 
-const armInteractionLoader = (id: string) => {
-  if (interactionArmed) return;
-  interactionArmed = true;
-  const isMobileViewport = window.matchMedia?.('(max-width: 767px)').matches;
-  const connection = (navigator as any)?.connection;
-  const effectiveType =
-    typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
-  const isConstrainedNetwork =
-    Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
-  const fallbackDelayMs = isMobileViewport ? MOBILE_FALLBACK_DELAY_MS : DESKTOP_FALLBACK_DELAY_MS;
-
-  const clearFallbackTimer = () => {
-    if (fallbackTimerId !== undefined) {
-      window.clearTimeout(fallbackTimerId);
-      fallbackTimerId = undefined;
-    }
-  };
-
-  const loadOnInteraction = () => {
-    clearFallbackTimer();
-    queueScriptLoad(id);
-    window.removeEventListener('scroll', loadOnInteraction);
-    window.removeEventListener('click', loadOnInteraction);
-    window.removeEventListener('touchstart', loadOnInteraction);
-    window.removeEventListener('pointerdown', loadOnInteraction);
-    window.removeEventListener('keydown', loadOnInteraction);
-  };
-
-  window.addEventListener('scroll', loadOnInteraction, { once: true, passive: true });
-  window.addEventListener('click', loadOnInteraction, { once: true, passive: true });
-  window.addEventListener('touchstart', loadOnInteraction, { once: true, passive: true });
-  window.addEventListener('pointerdown', loadOnInteraction, { once: true, passive: true });
-  window.addEventListener('keydown', loadOnInteraction, { once: true, passive: true });
-
-  if (!isConstrainedNetwork) {
-    fallbackTimerId = window.setTimeout(() => {
-      clearFallbackTimer();
-      loadOnInteraction();
-    }, fallbackDelayMs);
-  }
-};
-
 export const initAnalytics = () => {
   if (!shouldRunAnalytics()) return;
   if (initialized) return;
@@ -140,7 +93,11 @@ export const initAnalytics = () => {
   };
   window.gtag('js', new Date());
   window.gtag('config', measurementId, { send_page_view: false });
-  armInteractionLoader(measurementId);
+
+  // P2 INP rule: third-party analytics/Clarity loading must never be armed by
+  // pointer, touch, keyboard, click, or scroll input. Events can queue in
+  // dataLayer while the scripts load independently during browser idle time.
+  queueScriptLoad(measurementId);
   initialized = true;
 };
 

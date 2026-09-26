@@ -72,6 +72,35 @@ function inferCtaLocation(node: HTMLElement): string {
   return 'card';
 }
 
+function scheduleAfterPaint(callback: () => void) {
+  if (typeof window === 'undefined') {
+    callback();
+    return;
+  }
+
+  const run = () => window.setTimeout(callback, 0);
+  if (typeof window.requestAnimationFrame === 'function') {
+    window.requestAnimationFrame(run);
+    return;
+  }
+
+  run();
+}
+
+function shouldTrackSynchronously(node: HTMLElement) {
+  if (!(node instanceof HTMLAnchorElement)) return false;
+  const href = node.getAttribute('href') || '';
+  if (!href) return false;
+  if (href.startsWith('tel:') || href.startsWith('mailto:')) return true;
+
+  try {
+    const destination = new URL(href, window.location.href);
+    return destination.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 export default function ConversionTracker() {
   const location = useLocation();
   const lastTrackedLandingPathRef = useRef<string>('');
@@ -146,11 +175,7 @@ export default function ConversionTracker() {
 
     if (!isMarketingPage && !resourceContext && !isC7KnowledgePage) return;
 
-    const clickHandler = (event: MouseEvent) => {
-      const node = findTrackableNode(event.target);
-      if (!node) return;
-      if (node.closest('[data-floating-assistant="1"]')) return;
-
+    const processTrackedClick = (node: HTMLElement) => {
       const label = getCtaLabelFromElement(node);
       if (!label) return;
 
@@ -162,6 +187,7 @@ export default function ConversionTracker() {
       const isPhone = Boolean(href?.startsWith('tel:'));
       const isEmail = Boolean(href?.startsWith('mailto:'));
       const ctaLocation = inferCtaLocation(node);
+      const program = inferProgramFromPath(pagePath);
 
       // R11 measures resource discovery separately from downstream assists. A
       // phonics-resource-to-phonics-resource click is navigation only; it is not
@@ -225,7 +251,7 @@ export default function ConversionTracker() {
           cta_location: ctaLocation,
           destination_path: destinationPath,
           funnel_name: 'website_lead_funnel',
-          program: inferProgramFromPath(pagePath),
+          program,
         });
       }
 
@@ -235,7 +261,7 @@ export default function ConversionTracker() {
           cta_label: label,
           cta_location: ctaLocation,
           destination_path: destinationPath,
-          program: inferProgramFromPath(pagePath),
+          program,
         });
       }
 
@@ -245,7 +271,7 @@ export default function ConversionTracker() {
           cta_label: label,
           cta_location: ctaLocation,
           destination_path: destinationPath,
-          program: inferProgramFromPath(pagePath),
+          program,
         });
       }
 
@@ -260,7 +286,7 @@ export default function ConversionTracker() {
           cta_label: label,
           cta_location: ctaLocation,
           destination_path: destinationPath,
-          program: inferProgramFromPath(pagePath),
+          program,
         });
       }
 
@@ -291,6 +317,23 @@ export default function ConversionTracker() {
           destination_path: destinationPath,
         });
       }
+    };
+
+    const clickHandler = (event: MouseEvent) => {
+      const node = findTrackableNode(event.target);
+      if (!node) return;
+      if (node.closest('[data-floating-assistant="1"]')) return;
+
+      // P2 INP rule: for in-app/public-site interactions, keep conversion
+      // classification and multi-event fan-out out of the click's presentation
+      // frame. External/tel/mailto links stay synchronous because the page may
+      // unload before a deferred callback can run.
+      if (shouldTrackSynchronously(node)) {
+        processTrackedClick(node);
+        return;
+      }
+
+      scheduleAfterPaint(() => processTrackedClick(node));
     };
 
     document.addEventListener('click', clickHandler, true);

@@ -129,6 +129,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (!showPrimaryBelowFoldSections) return;
     if (typeof window === "undefined") return;
     if (typeof navigator !== "undefined" && navigator.webdriver) return;
 
@@ -172,7 +173,7 @@ export default function HomePage() {
         (entries) => {
           if (entries.some((entry) => entry.isIntersecting)) activate();
         },
-        { rootMargin: "1200px 0px 1200px 0px", threshold: 0.01 }
+        { rootMargin: "900px 0px 900px 0px", threshold: 0.01 }
       );
       observer.observe(target);
     }
@@ -192,7 +193,7 @@ export default function HomePage() {
       }
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, []);
+  }, [showPrimaryBelowFoldSections]);
 
   return (
     <>
@@ -225,10 +226,11 @@ export default function HomePage() {
 
           {/* REVIEW ACTION 06 — DIFFERENTIATION: Explain why the Tiny Steps system is different before asking for deeper trust. */}
           <WhyTinyStepsSection />
+
+          {/* P2: this anchor only exists after the primary chapter has actually mounted, so the heavy deferred chapter cannot observe a temporary high-in-DOM anchor. */}
+          <div ref={deferredAnchorRef} className="h-px w-full" aria-hidden="true" />
         </>
       ) : null}
-
-      <div ref={deferredAnchorRef} className="h-px w-full" aria-hidden="true" />
 
       {showDeferredSections ? (
         <>
