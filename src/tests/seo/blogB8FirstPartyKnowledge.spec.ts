@@ -53,12 +53,12 @@ describe('B8 first-party knowledge guardrails', () => {
   it('preserves the hero-family ownership for B6 authority pages', () => {
     const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 
-    expect(getBlogHeroFamily(bySlug.get('satpin-phonics-guide')!)).toBe('satpin-letter-sounds');
-    expect(getBlogHeroFamily(bySlug.get('child-knows-abc-but-cannot-read')!)).toBe('blending-early-reading');
-    expect(getBlogHeroFamily(bySlug.get('why-child-knows-letter-sounds-but-cannot-read-words')!)).toBe('blending-early-reading');
-    expect(getBlogHeroFamily(bySlug.get('how-kids-learn-blending')!)).toBe('blending-early-reading');
-    expect(getBlogHeroFamily(bySlug.get('phonics-blending-activities')!)).toBe('blending-early-reading');
-    expect(getBlogHeroFamily(bySlug.get('how-to-improve-reading-fluency-in-children')!)).toBe('reading-fluency');
+    expect(getBlogHeroFamily(bySlug.get('satpin-phonics-guide')!)).toBe('sound-meets-letter');
+    expect(getBlogHeroFamily(bySlug.get('child-knows-abc-but-cannot-read')!)).toBe('finding-the-reading-gap');
+    expect(getBlogHeroFamily(bySlug.get('why-child-knows-letter-sounds-but-cannot-read-words')!)).toBe('blending-into-a-word');
+    expect(getBlogHeroFamily(bySlug.get('how-kids-learn-blending')!)).toBe('blending-into-a-word');
+    expect(getBlogHeroFamily(bySlug.get('phonics-blending-activities')!)).toBe('blending-into-a-word');
+    expect(getBlogHeroFamily(bySlug.get('how-to-improve-reading-fluency-in-children')!)).toBe('fluent-independent-reading');
   });
 
   it('keeps B7 authorship responsibility stable on the six B8-enriched posts', () => {
@@ -82,9 +82,9 @@ describe('B8 first-party knowledge guardrails', () => {
     const heroFamilies = readRepoFile('src/content/blog/shared/heroFamilies.ts');
 
     expect(audit).toContain('Live blog records audited: **76**');
-    expect(heroFamilies).toContain("'satpin-phonics-guide': 'satpin-letter-sounds'");
-    expect(heroFamilies).toContain("'phonics-blending-activities': 'blending-early-reading'");
-    expect(heroFamilies).toContain("'how-to-improve-reading-fluency-in-children': 'reading-fluency'");
+    expect(heroFamilies).toContain("'satpin-phonics-guide': 'sound-meets-letter'");
+    expect(heroFamilies).toContain("'phonics-blending-activities': 'blending-into-a-word'");
+    expect(heroFamilies).toContain("'how-to-improve-reading-fluency-in-children': 'fluent-independent-reading'");
 
     for (const slug of B8_ENRICHED_SLUGS) {
       const post = blogPosts.find((item) => item.slug === slug)!;

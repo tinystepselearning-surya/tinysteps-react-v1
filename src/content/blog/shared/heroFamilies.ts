@@ -1,127 +1,189 @@
 import type { BlogPost } from '../types';
-import { getLegacyWeekSourceSlug } from '../../../lib/blogWeekRenames.js';
+import { getPublicBlogSlug } from '../../../lib/blogWeekRenames.js';
 
 export type BlogHeroFamily =
-  | 'satpin-letter-sounds'
-  | 'blending-early-reading'
-  | 'reading-fluency'
-  | 'parent-home-practice'
-  | 'grammar-sentence-building'
-  | 'speaking-communication'
-  | 'school-readiness-routines'
-  | 'schools-research'
-  | 'teacher-classroom-support'
-  | 'general-phonics';
+  | 'listening-for-sounds'
+  | 'sound-meets-letter'
+  | 'blending-into-a-word'
+  | 'cracking-the-printed-code'
+  | 'breaking-down-longer-words'
+  | 'from-speech-to-spelling'
+  | 'reading-for-meaning'
+  | 'fluent-independent-reading'
+  | 'finding-the-reading-gap'
+  | 'learning-live-online'
+  | 'digital-practice-with-purpose'
+  | 'english-practice-at-home'
+  | 'building-better-sentences'
+  | 'planning-and-writing-ideas'
+  | 'editing-and-improving-writing'
+  | 'finding-your-speaking-voice'
+  | 'conversation-and-storytelling'
+  | 'presenting-with-confidence'
+  | 'ready-for-the-classroom'
+  | 'teacher-training-in-action'
+  | 'planning-a-school-reading-programme';
 
-type HeroFamilyPost = Pick<BlogPost, 'slug' | 'hero' | 'audience' | 'discoveryCategory'>;
+type HeroFamilyPost = Pick<BlogPost, 'slug' | 'hero'>;
 
+// Every current public blog article is assigned explicitly.
+// New articles intentionally fall back to their stored hero until they are editorially reviewed.
 export const BLOG_HERO_FAMILY_BY_SLUG: Readonly<Record<string, BlogHeroFamily>> = Object.freeze({
-  // SATPIN and first-sound sequence
-  'satpin-phonics-guide': 'satpin-letter-sounds',
-  'week-1-phonics-satpin-launch': 'satpin-letter-sounds',
+  // 1. Listening for Sounds
+  'phonological-awareness-vs-phonemic-awareness-vs-phonics': 'listening-for-sounds',
 
-  // Blending and first-word decoding
-  'why-child-knows-letter-sounds-but-cannot-read-words': 'blending-early-reading',
-  'child-knows-abc-but-cannot-read': 'blending-early-reading',
-  'cvc-words-explained-for-parents': 'blending-early-reading',
-  'how-kids-learn-blending': 'blending-early-reading',
-  'phonics-blending-activities': 'blending-early-reading',
-  'week-2-phonics-blending-club': 'blending-early-reading',
+  // 2. Sound Meets Letter
+  'benefits-of-phonics-for-kids': 'sound-meets-letter',
+  'phonics-games-for-letter-sounds': 'sound-meets-letter',
+  'phonics-rules-for-beginners': 'sound-meets-letter',
+  'phonics-satpin-launch': 'sound-meets-letter',
+  'satpin-phonics-guide': 'sound-meets-letter',
+  'synthetic-phonics-vs-traditional-reading': 'sound-meets-letter',
+  'what-is-phonics-for-kids': 'sound-meets-letter',
+  'what-age-to-start-phonics': 'sound-meets-letter',
+  'phonics-for-parents-guide': 'sound-meets-letter',
+  'how-phonics-classes-help-kids-read': 'sound-meets-letter',
 
-  // Connected-text fluency
-  'how-to-improve-reading-fluency-in-children': 'reading-fluency',
+  // 3. Blending Into a Word
+  'phonics-blending-club': 'blending-into-a-word',
+  'cvc-words-explained-for-parents': 'blending-into-a-word',
+  'how-kids-learn-blending': 'blending-into-a-word',
+  'phonics-blending-activities': 'blending-into-a-word',
+  'why-child-knows-letter-sounds-but-cannot-read-words': 'blending-into-a-word',
 
-  // Parent-led practice and home routines
-  'child-reads-in-class-but-forgets-at-home': 'parent-home-practice',
-  'how-to-engage-kids-in-english-learning-at-home': 'parent-home-practice',
-  'phonics-activities-for-kids-at-home': 'parent-home-practice',
-  'phonics-for-parents-guide': 'parent-home-practice',
-  'phonics-games-for-letter-sounds': 'parent-home-practice',
-  'week-16-phonics-summer-plan': 'parent-home-practice',
-  'week-26-screen-smart-summer-routine': 'parent-home-practice',
-  'week-27-prevent-summer-slide-reading': 'parent-home-practice',
+  // 4. Cracking the Printed Code
+  'digraphs-and-tricky-words': 'cracking-the-printed-code',
+  'phonics-tricky-words': 'cracking-the-printed-code',
+  'phonics-long-vowels': 'cracking-the-printed-code',
+  'long-vowel-sounds-for-kids': 'cracking-the-printed-code',
+  'science-of-phonics-learning': 'cracking-the-printed-code',
+  'phonics-r-controlled': 'cracking-the-printed-code',
+  'r-controlled-vowels-explained': 'cracking-the-printed-code',
+  'sight-words-or-phonics-first': 'cracking-the-printed-code',
 
-  // Grammar, writing, and sentence construction
-  'how-to-improve-sentence-formation-in-kids': 'grammar-sentence-building',
-  'child-knows-grammar-but-makes-mistakes': 'grammar-sentence-building',
-  'week-7-grammar-nouns-to-paragraphs': 'grammar-sentence-building',
-  'week-8-grammar-tenses': 'grammar-sentence-building',
-  'week-9-grammar-conjunctions': 'grammar-sentence-building',
-  'week-10-grammar-subject-verb': 'grammar-sentence-building',
-  'week-17-grammar-assessment': 'grammar-sentence-building',
-  'week-20-grammar-editing-camp': 'grammar-sentence-building',
-  'week-23-grammar-speaking-bridge': 'grammar-sentence-building',
+  // 5. Breaking Down Longer Words
+  'phonics-multisyllabic': 'breaking-down-longer-words',
 
-  // Speaking, listening, presentations, and communication confidence
-  'child-understands-english-but-does-not-speak': 'speaking-communication',
-  'child-gives-one-word-answers': 'speaking-communication',
-  'spoken-english-classes-for-kids-confidence': 'speaking-communication',
-  'week-12-speaking-confidence-seeds': 'speaking-communication',
-  'week-13-speaking-structure': 'speaking-communication',
-  'week-14-speaking-visual-aids': 'speaking-communication',
-  'week-15-speaking-debate-starters': 'speaking-communication',
-  'week-18-speaking-video-feedback': 'speaking-communication',
-  'week-21-speaking-competition-prep': 'speaking-communication',
-  'week-24-speaking-family-showcase': 'speaking-communication',
+  // 6. From Speech to Spelling
+  'how-phonics-improves-spelling': 'from-speech-to-spelling',
 
-  // School transitions and readiness routines
-  'june-school-reopening-english-readiness-plan': 'school-readiness-routines',
-  'week-25-back-to-school-plan': 'school-readiness-routines',
-  'what-age-to-start-phonics': 'school-readiness-routines',
+  // 7. Reading for Meaning
+  'phonics-comprehension': 'reading-for-meaning',
+  'why-child-reads-words-but-does-not-understand-story': 'reading-for-meaning',
+  'how-vocabulary-supports-reading-comprehension': 'reading-for-meaning',
 
-  // Classroom implementation and teacher enablement
-  'how-schools-can-assess-decoding-not-memorisation': 'teacher-classroom-support',
-  'phonics-teacher-training-for-schools-implementation': 'teacher-classroom-support',
+  // 8. Fluent Independent Reading
+  'how-long-does-phonics-take': 'fluent-independent-reading',
+  'how-phonics-builds-reading-confidence': 'fluent-independent-reading',
+  'how-to-improve-reading-fluency-in-children': 'fluent-independent-reading',
+  'how-children-recognise-words-automatically-after-phonics': 'fluent-independent-reading',
 
-  // Broad phonics without a stronger family match
-  'benefits-of-phonics-for-kids': 'general-phonics',
-  'digraphs-and-tricky-words': 'general-phonics',
-  'how-long-does-phonics-take': 'general-phonics',
-  'how-phonics-builds-reading-confidence': 'general-phonics',
-  'how-phonics-classes-help-kids-read': 'general-phonics',
-  'how-phonics-improves-spelling': 'general-phonics',
-  'long-vowel-sounds-for-kids': 'general-phonics',
-  'online-phonics-games': 'general-phonics',
-  'phonics-rules-for-beginners': 'general-phonics',
-  'r-controlled-vowels-explained': 'general-phonics',
-  'science-of-phonics-learning': 'general-phonics',
-  'sight-words-or-phonics-first': 'general-phonics',
-  'synthetic-phonics-vs-traditional-reading': 'general-phonics',
-  'week-3-phonics-tricky-words': 'general-phonics',
-  'week-4-phonics-long-vowels': 'general-phonics',
-  'week-5-phonics-r-controlled': 'general-phonics',
-  'week-19-phonics-multisyllabic': 'general-phonics',
-  'what-is-phonics-for-kids': 'general-phonics',
+  // 9. Finding the Reading Gap
+  'child-knows-abc-but-cannot-read': 'finding-the-reading-gap',
+  'phonics-diagnostics': 'finding-the-reading-gap',
+  'child-reads-in-class-but-forgets-at-home': 'finding-the-reading-gap',
+
+  // 10. Learning Live Online
+  'online-phonics-classes-vs-school': 'learning-live-online',
+  'why-parents-choose-online-phonics': 'learning-live-online',
+  'online-english-classes-for-kids-india': 'learning-live-online',
+
+  // 11. Digital Practice With Purpose
+  'online-phonics-games': 'digital-practice-with-purpose',
+  'are-phonics-apps-enough-for-kids': 'digital-practice-with-purpose',
+  'screen-smart-summer-routine-for-kids': 'digital-practice-with-purpose',
+
+  // 12. English Practice at Home
+  'prevent-summer-slide-reading': 'english-practice-at-home',
+  'phonics-activities-for-kids-at-home': 'english-practice-at-home',
+  'phonics-summer-plan': 'english-practice-at-home',
+  'can-child-improve-english-in-10-days': 'english-practice-at-home',
+  'how-phonics-grammar-and-communication-work-together': 'english-practice-at-home',
+  'how-to-engage-kids-in-english-learning-at-home': 'english-practice-at-home',
+
+  // 13. Building Better Sentences
+  'grammar-conjunctions': 'building-better-sentences',
+  'grammar-tenses': 'building-better-sentences',
+  'grammar-nouns-to-paragraphs': 'building-better-sentences',
+  'grammar-subject-verb': 'building-better-sentences',
+  'how-to-improve-sentence-formation-in-kids': 'building-better-sentences',
+
+  // 14. Planning and Writing Ideas
+  'grammar-creative-writing': 'planning-and-writing-ideas',
+  'how-to-teach-paragraph-writing-to-kids': 'planning-and-writing-ideas',
+
+  // 15. Editing and Improving Writing
+  'grammar-assessment': 'editing-and-improving-writing',
+  'grammar-editing-camp': 'editing-and-improving-writing',
+  'punctuation-and-capital-letters-for-kids': 'editing-and-improving-writing',
+  'child-knows-grammar-but-makes-mistakes': 'editing-and-improving-writing',
+
+  // 16. Finding Your Speaking Voice
+  'child-gives-one-word-answers': 'finding-your-speaking-voice',
+  'child-understands-english-but-does-not-speak': 'finding-your-speaking-voice',
+  'spoken-english-classes-for-kids-confidence': 'finding-your-speaking-voice',
+  'speaking-confidence-seeds': 'finding-your-speaking-voice',
+
+  // 17. Conversation and Storytelling
+  'grammar-speaking-bridge': 'conversation-and-storytelling',
+  'conversation-skills-for-kids': 'conversation-and-storytelling',
+  'how-to-teach-storytelling-to-kids': 'conversation-and-storytelling',
+
+  // 18. Presenting With Confidence
+  'speaking-debate-starters': 'presenting-with-confidence',
+  'speaking-visual-aids': 'presenting-with-confidence',
+  'speaking-structure': 'presenting-with-confidence',
+  'speaking-video-feedback': 'presenting-with-confidence',
+  'speaking-family-showcase': 'presenting-with-confidence',
+  'speaking-competition-prep': 'presenting-with-confidence',
+  'public-speaking-delivery-for-kids': 'presenting-with-confidence',
+
+  // 19. Ready for the Classroom
+  'back-to-school-english-confidence-plan': 'ready-for-the-classroom',
+  'june-school-reopening-english-readiness-plan': 'ready-for-the-classroom',
+
+  // 20. Teacher Training in Action
+  'phonics-teacher-training-for-schools-implementation': 'teacher-training-in-action',
+
+  // 21. Planning a School Reading Programme
+  'cbse-phonics-curriculum-vs-systematic-phonics-programme': 'planning-a-school-reading-programme',
+  'does-cbse-include-phonics-ncf-foundational-literacy': 'planning-a-school-reading-programme',
+  'how-schools-can-assess-decoding-not-memorisation': 'planning-a-school-reading-programme',
+  'international-phonics-benchmarks-for-indian-schools': 'planning-a-school-reading-programme',
+  'phonics-scope-and-sequence-for-cbse-schools': 'planning-a-school-reading-programme',
+  'systematic-cumulative-phonics-explained-for-schools': 'planning-a-school-reading-programme',
+  'why-letter-sounds-are-not-enough-to-read': 'planning-a-school-reading-programme',
 });
 
 export const BLOG_HERO_FAMILY_ASSET_DIRECTORY = '/blog/hero-families';
 
-// Add a family here only after its production WebP exists in public/blog/hero-families/.
-// Keeping this registry explicit prevents browsers from requesting planned-but-missing assets.
 export const AVAILABLE_BLOG_HERO_FAMILY_ASSETS: ReadonlySet<BlogHeroFamily> = new Set([
-  'satpin-letter-sounds',
-  'blending-early-reading',
-  'reading-fluency',
-  'parent-home-practice',
-  'grammar-sentence-building',
-  'speaking-communication',
-  'school-readiness-routines',
-  'schools-research',
-  'teacher-classroom-support',
-  'general-phonics',
+  'listening-for-sounds',
+  'sound-meets-letter',
+  'blending-into-a-word',
+  'cracking-the-printed-code',
+  'breaking-down-longer-words',
+  'from-speech-to-spelling',
+  'reading-for-meaning',
+  'fluent-independent-reading',
+  'finding-the-reading-gap',
+  'learning-live-online',
+  'digital-practice-with-purpose',
+  'english-practice-at-home',
+  'building-better-sentences',
+  'planning-and-writing-ideas',
+  'editing-and-improving-writing',
+  'finding-your-speaking-voice',
+  'conversation-and-storytelling',
+  'presenting-with-confidence',
+  'ready-for-the-classroom',
+  'teacher-training-in-action',
+  'planning-a-school-reading-programme',
 ]);
 
 export function getBlogHeroFamily(post: HeroFamilyPost): BlogHeroFamily | undefined {
-  const sourceSlug = getLegacyWeekSourceSlug(post.slug);
-  const explicitFamily = BLOG_HERO_FAMILY_BY_SLUG[post.slug]
-    ?? (sourceSlug ? BLOG_HERO_FAMILY_BY_SLUG[sourceSlug] : undefined);
-  if (explicitFamily) return explicitFamily;
-
-  if (post.audience === 'Schools & Research' || post.discoveryCategory === 'Schools & Research') {
-    return 'schools-research';
-  }
-
-  return undefined;
+  const publicSlug = getPublicBlogSlug(post.slug);
+  return BLOG_HERO_FAMILY_BY_SLUG[publicSlug];
 }
 
 export function getBlogHeroFamilyAssetPath(family: BlogHeroFamily): string {

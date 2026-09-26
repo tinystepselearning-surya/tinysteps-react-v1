@@ -1,43 +1,62 @@
 # Blog hero image system
 
-The blog hero-family registry gives selected posts a stable visual intent without replacing their stored `hero`. A family asset becomes eligible only after its finished WebP is added to `public/blog/hero-families/` and the family is added to `AVAILABLE_BLOG_HERO_FAMILY_ASSETS`. If an article has no reviewed family, `resolveBlogHero` returns the post's existing hero, so uncertain matches keep their established imagery and planned assets never create broken requests.
+The blog hero-family registry maps every current public Tiny Steps blog article to one reviewed visual family. The family assignment controls the shared image used by blog cards, article imagery, and structured-data image resolution through resolveBlogHero.
 
 ## Production contract
 
-- Compose for a 16:9 card crop; target a source size around 1600 × 900.
-- Deliver WebP for production.
-- Do not embed text, logos, fake UI screenshots, or watermarks.
-- Do not depict school uniforms that imply a specific real school.
-- Do not use photorealistic identifiable children. Prefer stylized educational illustration.
-- Use a consistent Tiny Steps pastel, warm, educational art direction.
-- Keep subjects clearly separated so responsive crops remain legible.
-- Keep faces and important content away from extreme edges.
-- Give every family a meaningfully different composition; do not repeat the same parent-child pose.
-- Make the scene explain the article intent rather than serving as unrelated decoration.
+- Compose for a 16:9 crop; current source images are 1920 x 1080 WebP.
+- Use premium photorealistic editorial photography.
+- Keep the main subject and learning action primarily in the right 55-65% of the frame.
+- Preserve roughly 35-45% calm, naturally open space on the left for hero text where the authority layout uses the image in the hero.
+- Do not embed titles, logos, watermarks, fake UI, borders, gradients, navy overlays, vignettes, or website effects in the image.
+- Keep props restrained and make the learning action explain the article intent.
+- Give every family a meaningfully different action, setting, age/stage, prop system, or camera composition.
+- Avoid generic stock-photo posing and avoid repeating the same parent-child desk scene.
+- Website/CSS owns all hero blending and dark treatment.
 
-## Families and concepts
+## Active visual families
 
-| Family | Intended composition |
+| Family | Visual intent |
 | --- | --- |
-| `satpin-letter-sounds` | Letter cards, sound objects, and early phonics materials. |
-| `blending-early-reading` | A child blending sound cards or building a word. |
-| `reading-fluency` | A child reading connected text with calm guided support. |
-| `parent-home-practice` | A parent and child doing a short home-learning activity. |
-| `grammar-sentence-building` | A child arranging word cards into a sentence. |
-| `speaking-communication` | Children speaking and listening with conversation cues. |
-| `school-readiness-routines` | Backpack, books, a routine checklist, and a home-school transition. |
-| `schools-research` | Curriculum documents, teacher planning, and an assessment or research context. |
-| `teacher-classroom-support` | A teacher modelling or rehearsing with a small group. |
-| `general-phonics` | A broad phonics scene without SATPIN-specific dominance. |
+| listening-for-sounds | Spoken-sound awareness with no print. |
+| sound-meets-letter | First sound-to-letter correspondence. |
+| blending-into-a-word | Several sounds visibly combined into one word. |
+| cracking-the-printed-code | Older reader noticing spelling patterns in real print. |
+| breaking-down-longer-words | Multisyllabic word chunking. |
+| from-speech-to-spelling | Hear, segment, then write. |
+| reading-for-meaning | Read, think, and explain comprehension. |
+| fluent-independent-reading | Smooth, confident connected-text reading. |
+| finding-the-reading-gap | Calm diagnostic observation of where reading breaks down. |
+| learning-live-online | Active child-teacher interaction in a live online lesson. |
+| digital-practice-with-purpose | Deliberate educational app practice rather than passive screen time. |
+| english-practice-at-home | Natural English practice during ordinary home activity. |
+| building-better-sentences | Constructing complete sentences and word order. |
+| planning-and-writing-ideas | Organising a main idea and supporting details before drafting. |
+| editing-and-improving-writing | Revising and polishing a first draft. |
+| finding-your-speaking-voice | Low-pressure speaking-confidence practice. |
+| conversation-and-storytelling | Sequenced storytelling and genuine listener interaction. |
+| presenting-with-confidence | Prepared public speaking with a small audience. |
+| ready-for-the-classroom | Confident classroom participation and school readiness. |
+| teacher-training-in-action | Teachers practising instruction with coaching and feedback. |
+| planning-a-school-reading-programme | School leaders reviewing progression, evidence, and implementation. |
 
-## Asset paths
+## Mapping rules
 
-Assets follow `public/blog/hero-families/<family>.webp`, producing public URLs such as `/blog/hero-families/reading-fluency.webp`.
+- src/content/blog/shared/heroFamilies.ts is the source of truth.
+- All 83 current public blog slugs are explicitly mapped exactly once.
+- Legacy week source slugs are normalized to their public slug before family resolution.
+- There is no category- or audience-based automatic family inference. A future article stays on its stored hero until its image family is editorially reviewed.
+- All 21 active family assets must exist under public/blog/hero-families/<family>.webp.
+- The older ten family WebPs may remain in the asset directory temporarily for rollback, but they are not active registry families after this migration.
 
-All ten approved family WebPs are now active. To publish a future family image:
+## Verification
 
-1. Add the reviewed WebP at the contracted path.
-2. Add that family to `AVAILABLE_BLOG_HERO_FAMILY_ASSETS`.
-3. Run the hero-family tests, blog SEO tests, production build, and SEO smoke checks.
+The hero-family regression test must verify:
 
-Slug mappings remain explicit in `src/content/blog/shared/heroFamilies.ts`. School research posts use their existing `audience` or `discoveryCategory` metadata rather than title matching, with explicit teacher-support mappings taking precedence. The resolver is shared by blog cards, article heroes, and their structured-data image fields. Rendered image alt text remains the article title; family identifiers are never exposed as alt text. Do not assign a family unless the editorial intent is clear.
+1. the live blog inventory is 83;
+2. the explicit mapping contains the same 83 public slugs;
+3. no article is unmapped;
+4. family counts remain stable;
+5. all 21 active WebPs exist and are non-empty;
+6. legacy week source slugs normalize to the same public family;
+7. future unreviewed posts still fall back safely to their stored hero.

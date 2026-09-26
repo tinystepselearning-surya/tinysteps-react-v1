@@ -21,7 +21,7 @@ describe('Blog #50 letter-sounds-to-decoding diagnostic quality refresh', () => 
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
     expect(post?.audience).toBe('Parent');
     expect(post?.discoveryCategory).toBe('Phonics');
-    expect(getBlogHeroFamily(post!)).toBe('blending-early-reading');
+    expect(getBlogHeroFamily(post!)).toBe('blending-into-a-word');
 
     const pillar = getParentAuthorityPillar(post!.slug);
     expect(pillar?.role).toBe('diagnostic-owner');
