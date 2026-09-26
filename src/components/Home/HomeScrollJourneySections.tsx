@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../../config/publicFacts';
 import {
   CLASS_SAMPLE_CATEGORY_LABELS,
   isValidYouTubeVideoId,
@@ -85,9 +86,9 @@ export function ParentProblemRecognitionSection() {
 }
 
 const trustSnapshot = [
-  { value: '5000+', label: 'students served' },
-  { value: '15+', label: 'countries with Tiny Steps families' },
-  { value: 'Live', label: '1:1 and small-group teaching' },
+  { value: PUBLIC_SITE_FACTS.learnerReach.learnersLabel, label: 'served through Tiny Steps' },
+  { value: PUBLIC_SITE_FACTS.learnerReach.countriesLabel, label: 'with Tiny Steps families' },
+  { value: PUBLIC_SESSION_DURATION_LABEL, label: 'standard 1:1 class' },
   { value: 'Weekly', label: 'parent progress visibility' },
 ];
 
