@@ -129,9 +129,9 @@ describe('Resources R21 high-value speaking content', () => {
     const legacy = getSpeakingCommunicationContentAuditByAction('consolidate')[0];
     expect(legacy).toMatchObject({
       path: '/blog/spoken-english-classes-for-kids-confidence',
-      consolidationTarget: '/blog/speaking-confidence-seeds',
-      implementationState: 'hold',
-      urlChangeAuthorized: false,
+      consolidationTarget: '/blog/child-understands-english-but-does-not-speak',
+      implementationState: 'redirected-source-removed',
+      urlChangeAuthorized: true,
       publicationApproved: false,
     });
   });
