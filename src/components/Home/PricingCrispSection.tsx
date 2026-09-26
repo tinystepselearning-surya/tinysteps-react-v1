@@ -14,11 +14,11 @@ const PricingCrispSection: React.FC = () => {
   return (
     <section
       id="one-to-one-pricing"
-      className="bg-gradient-to-b from-[#FDF7EC] via-white to-[#F3F7FF] py-20"
+      className="bg-slate-50/60 py-16 sm:py-20"
     >
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
-          <p className="mb-2 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700 shadow-sm">
+          <p className="mb-2 inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
             Standard live 1:1 plans
           </p>
           <h2 className="text-center text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
@@ -32,9 +32,9 @@ const PricingCrispSection: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
           {/* Starter Pack */}
-          <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
+          <div className="relative flex flex-col justify-between rounded-[24px] border border-slate-200 bg-white p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
               Starter · {ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes / month
             </p>
@@ -49,11 +49,8 @@ const PricingCrispSection: React.FC = () => {
 
           </div>
 
-          {/* Growth Pack (Most Popular) */}
-          <div className="relative flex flex-col justify-between rounded-3xl bg-white p-6 shadow-lg ring-2 ring-orange-300/70">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
-              Most popular
-            </div>
+          {/* Growth Pack */}
+          <div className="relative flex flex-col justify-between rounded-[24px] border border-slate-200 bg-white p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
               Growth · {ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes / month
             </p>
@@ -104,11 +101,9 @@ const PricingCrispSection: React.FC = () => {
           </Link>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
-          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <span>✅ No long-term lock-in</span>
-            <span>✅ Easy class rescheduling</span>
-            <span>✅ Pause anytime between months</span>
+        <div className="mt-7 flex flex-col items-center justify-center text-xs text-slate-500 sm:text-sm">
+          <p className="text-center leading-6">
+            Current scheduling, cancellation and refund terms are available with the full pricing details.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Link
