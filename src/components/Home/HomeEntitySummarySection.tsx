@@ -3,7 +3,8 @@ import { PUBLIC_AGE_RANGE_LABEL } from '../../config/publicFacts';
 import { PUBLIC_FACTS } from '../../lib/schemas';
 
 const pathwayLinks = [
-  { label: 'Phonics & Reading', href: '/phonics' },
+  { label: 'Phonics', href: '/phonics' },
+  { label: 'Reading', href: '/reading-classes-for-kids' },
   { label: 'Grammar & Sentence Building', href: '/grammar' },
   { label: 'Speaking & Communication', href: '/speaking' },
 ];
@@ -19,7 +20,7 @@ export default function HomeEntitySummarySection() {
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-700 sm:text-[0.95rem] sm:leading-7">
               Tiny Steps Learning is a live online English learning school for {PUBLIC_AGE_RANGE_LABEL}. Families in India and worldwide use
-              assessment-led 1:1 and small-group pathways in phonics and reading, grammar and sentence building, and speaking and communication.
+              assessment-led 1:1 and small-group pathways in phonics, reading, grammar and sentence building, and speaking and communication.
             </p>
           </div>
 
