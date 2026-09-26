@@ -392,14 +392,35 @@ export class MicrosoftGraphClient {
   ): Promise<GraphOnlineMeeting | null> {
     const organizer = pathSegment(organizerUserId);
     const joinUrl = requiredString(joinWebUrl, 'joinWebUrl');
-    const meetingId = teamsMeetingIdFromJoinUrl(joinUrl);
-    const filter = meetingId
-      ? `joinMeetingIdSettings/joinMeetingId eq '${odataString(meetingId)}'`
-      : `JoinWebUrl eq '${odataString(joinUrl)}'`;
-    const query = new URLSearchParams({ '$filter': filter });
-    const page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
-      `/users/${organizer}/onlineMeetings?${query.toString()}`,
+
+    // Microsoft documents JoinWebUrl as a supported lookup key and explicitly
+    // warns clients not to rely on parsing the URL format because that format
+    // can change. Always try the exact stored join URL first. This is important
+    // for newer short links such as /meet/{id}?p=..., where extracting the
+    // numeric path segment and switching query shapes can produce a Graph 400
+    // even though the meeting itself is valid.
+    const joinUrlQuery = new URLSearchParams({
+      '$filter': `JoinWebUrl eq '${odataString(joinUrl)}'`,
+    });
+    let page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
+      `/users/${organizer}/onlineMeetings?${joinUrlQuery.toString()}`,
     );
+
+    // Some tenants may not retain the short routing URL as JoinWebUrl. If the
+    // exact URL is a clean miss, fall back to the documented joinMeetingId
+    // filter. Do not fall back after an HTTP/Graph error because that would hide
+    // a real authorization/configuration/request failure.
+    if (page.value.length === 0) {
+      const meetingId = teamsMeetingIdFromJoinUrl(joinUrl);
+      if (meetingId) {
+        const meetingIdQuery = new URLSearchParams({
+          '$filter': `joinMeetingIdSettings/joinMeetingId eq '${odataString(meetingId)}'`,
+        });
+        page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
+          `/users/${organizer}/onlineMeetings?${meetingIdQuery.toString()}`,
+        );
+      }
+    }
 
     if (page.value.length === 0) return null;
     if (page.value.length > 1) {
