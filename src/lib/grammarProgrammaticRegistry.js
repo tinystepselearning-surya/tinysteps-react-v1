@@ -285,6 +285,17 @@ export const GRAMMAR_PROGRAMMATIC_PAGES = freezeList(
   GRAMMAR_PROGRAMMATIC_SEQUENCE.filter((entry) => entry.state === 'published'),
 );
 export const GRAMMAR_PROGRAMMATIC_PATHS = freezeList(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => entry.path));
+export const GRAMMAR_PROGRAMMATIC_RESOURCE_SEO = freeze(
+  Object.fromEntries(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => [
+    entry.path,
+    freeze({
+      title: entry.seoTitle,
+      description: entry.seoDescription,
+      canonicalPath: entry.path,
+      ogType: 'article',
+    }),
+  ])),
+);
 
 const bySlug = new Map(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => [entry.slug, entry]));
 const byPath = new Map(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => [entry.path, entry]));
