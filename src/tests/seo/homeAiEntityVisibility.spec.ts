@@ -67,10 +67,9 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(methodSource).not.toContain('Use this on your website');
   });
 
-  it('preserves the intended conversion sequence after proof', () => {
-    const renderStart = homeSource.indexOf('<TrustEvidenceSection />');
+  it('preserves the intended conversion sequence after differentiation', () => {
+    const renderStart = homeSource.indexOf('<GlobalLearnersMapSection />');
     const order = [
-      '<TrustEvidenceSection />',
       '<GlobalLearnersMapSection />',
       '<StepTimeline />',
       '<ClassSamplesSection />',
@@ -84,6 +83,16 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     for (let i = 1; i < order.length; i += 1) {
       expect(order[i]).toBeGreaterThan(order[i - 1]);
     }
+  });
+
+  it('keeps diagnosis compact and removes age-table repetition before programme discovery', () => {
+    expect(journeySource).toContain('We identify the skill gap before recommending a programme');
+    expect(journeySource).toContain('placement is based on the child&apos;s observed skills rather than age alone');
+    expect(journeySource).not.toContain('Common starting points by age');
+    expect(journeySource).not.toContain('Parent concern');
+    expect(journeySource).not.toContain('Age guidance');
+    expect(homeSource).not.toContain('<TrustEvidenceSection />');
+    expect(journeySource).toContain('Read parent testimonials');
   });
 
   it('keeps primary programme discovery complete without turning the homepage into a course catalogue', () => {
