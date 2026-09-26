@@ -140,14 +140,6 @@ const stageAccents = [
   { glow: "shadow-[0_18px_45px_rgba(52,211,153,0.14)]", border: "from-[#e8fff1] via-white to-[#fff7dd]", chip: "from-[#34d399] to-[#a3e635]" },
 ];
 
-const solidPromise = [
-  { letter: "S", title: "Structured", desc: "A clear path so your child never feels lost." },
-  { letter: "O", title: "Outcome-led", desc: "Milestones you can see in reading, writing & speaking." },
-  { letter: "L", title: "Low-pressure", desc: "Confidence-first correction—no fear of mistakes." },
-  { letter: "I", title: "Interactive", desc: "Games + practice that keeps kids engaged." },
-  { letter: "D", title: "Data-backed", desc: "Simple parent updates: what improved + what’s next." },
-];
-
 const StepTimeline: React.FC = () => {
   const [active, setActive] = useState(0);
   const [modal, setModal] = useState<null | "flow" | "grammar" | "speaking">(null);
@@ -162,10 +154,10 @@ const StepTimeline: React.FC = () => {
     return "Details";
   }, [modal]);
 
-  const openStageModal = () => {
-    if (stage.id === "phonics") setModal("flow");
-    else if (stage.id === "grammar") setModal("grammar");
-    else if (stage.id === "speaking") setModal("speaking");
+  const openStageModal = (stageId = stage.id) => {
+    if (stageId === "phonics") setModal("flow");
+    else if (stageId === "grammar") setModal("grammar");
+    else if (stageId === "speaking") setModal("speaking");
     else setModal("flow");
   };
 
@@ -301,19 +293,17 @@ const StepTimeline: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         {/* Title */}
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-          </div>
-
-          <h2 className="mt-4 font-heading text-3xl font-bold md:text-4xl text-slate-900">
-            Learning Stages (Not Random Classes)
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Inside each pathway</p>
+          <h2 className="mt-3 font-heading text-3xl font-bold text-slate-900 md:text-4xl">
+            What learning looks like in a Tiny Steps class
           </h2>
-          <p className="mt-2 text-base text-slate-600 max-w-3xl mx-auto">
-            Parents don’t need “more classes.” You need a structured path, visible milestones, and updates that make sense.
+          <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-600">
+            See what the child practises, how the teacher guides the skill, and what parents can expect to see as the pathway progresses.
           </p>
         </div>
 
-        {/* Stage selector */}
-        <div className="mt-8">
+        {/* Desktop pathway selector. Mobile uses one card per carousel slide to avoid duplicate controls. */}
+        <div className="mt-8 hidden md:block">
           <StageSelector />
         </div>
 
@@ -343,9 +333,31 @@ const StepTimeline: React.FC = () => {
                     <p className="mt-1 text-sm text-slate-600">{s.subtitle}</p>
                     <div className="mt-3 grid grid-cols-1 gap-3">
                       <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                        <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENTS GET</div>
+                        <div className="text-xs font-extrabold tracking-wide text-slate-700">CHILD PRACTISES</div>
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
-                          {s.parentGets.map((x) => (
+                          {s.childLearns.slice(0, 2).map((x) => (
+                            <li key={x} className="flex gap-2">
+                              <span className="mt-[2px]">✅</span>
+                              <span>{x}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                        <div className="text-xs font-extrabold tracking-wide text-slate-700">TEACHER GUIDANCE</div>
+                        <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                          {s.howWeTeach.slice(0, 2).map((x) => (
+                            <li key={x} className="flex gap-2">
+                              <span className="mt-[2px]">🧠</span>
+                              <span>{x}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                        <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENT VISIBILITY</div>
+                        <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                          {s.parentGets.slice(0, 2).map((x) => (
                             <li key={x} className="flex gap-2">
                               <span className="mt-[2px]">📩</span>
                               <span>{x}</span>
@@ -357,9 +369,9 @@ const StepTimeline: React.FC = () => {
                         <button
                           onClick={() => {
                             setActive(i);
-                            openStageModal();
+                            openStageModal(s.id);
                           }}
-                          className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700"
+                          className="w-full rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 px-4 py-3 text-sm font-semibold text-white"
                         >
                           {s.ctaLabel}
                         </button>
@@ -372,28 +384,6 @@ const StepTimeline: React.FC = () => {
           </Carousel>
         </div>
 
-        {/* S.O.L.I.D. Promise */}
-        <div className="mt-14">
-          <div className="text-center">
-            <h3 className="text-xl md:text-2xl font-bold text-slate-900">Our S.O.L.I.D. Promise to Parents</h3>
-            <p className="mt-2 text-sm md:text-base text-slate-600">
-            </p>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {solidPromise.map((p) => (
-              <div key={p.letter} className="rounded-2xl bg-white p-4 ring-1 ring-slate-200 hover:shadow-sm transition">
-                <div className="flex items-center gap-2">
-                  <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold">
-                    {p.letter}
-                  </div>
-                  <div className="font-bold text-slate-900">{p.title}</div>
-                </div>
-                <div className="mt-2 text-sm text-slate-600">{p.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Modal */}
@@ -401,8 +391,8 @@ const StepTimeline: React.FC = () => {
         <Modal isOpen={!!modal} onClose={() => setModal(null)}>
           <div className="p-6">
             <h3 className="text-lg font-bold text-slate-900">{modalTitle}</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Use this on your website to show parents what actually happens in class (no vague promises).
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              This is a simple example of how a Tiny Steps teacher can structure live guided practice for the selected pathway.
             </p>
 
             {modal === "flow" && (
