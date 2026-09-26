@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { applySeo } from '../lib/seo';
 import { shouldNoindexBlogSlug } from '../lib/blogIndexingPolicy.js';
 import { formatBlogDate, isoDateFromYMD } from '../lib/date';
@@ -29,9 +29,11 @@ import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import BlogConversionCard from '../components/blog/BlogConversionCard';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
-import SatpinGuideExperience, { SatpinGuideSidebar } from '../components/blog/SatpinGuideExperience';
+import SatpinGuideSidebar from '../components/blog/SatpinGuideSidebar';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
+
+const SatpinGuideExperience = lazy(() => import('../components/blog/SatpinGuideExperience'));
 // Meta removed — use applySeo as single source of truth
 
 const CATEGORY_ARTICLE_CONFIG = {
@@ -1039,12 +1041,20 @@ function buildMetaDescription(src: any) {
             <KnowledgeBreadcrumbs items={breadcrumbItems} tone="light" />
 
             {isSatpinGuide && post ? (
-              <SatpinGuideExperience
+              <Suspense
+                fallback={
+                  <div className="rounded-[2rem] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+                    Loading SATPIN learning guide…
+                  </div>
+                }
+              >
+                <SatpinGuideExperience
                 post={post}
                 headingItems={headingItems}
                 tocItems={tocItems}
-                resolvedHero={resolvedHero}
-              />
+                  resolvedHero={resolvedHero}
+                />
+              </Suspense>
             ) : (
               <>
             {resolvedHero ? (

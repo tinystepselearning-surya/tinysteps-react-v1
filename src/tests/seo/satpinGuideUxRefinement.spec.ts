@@ -54,6 +54,8 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(page).toContain("const isSatpinGuide = slug === 'satpin-phonics-guide'");
     expect(page).toContain('<SatpinGuideExperience');
     expect(page).toContain('<SatpinGuideSidebar tocItems={tocItems} />');
+    expect(page).toContain("lazy(() => import('../components/blog/SatpinGuideExperience'))");
+    expect(page).toContain('<Suspense');
     expect(page).toContain('compact={isSatpinGuide}');
     expect(experience).toContain("const SATPIN_SLUG = 'satpin-phonics-guide'");
     expect(experience).not.toContain('/blog/satpin-phonics-guide-v2');
