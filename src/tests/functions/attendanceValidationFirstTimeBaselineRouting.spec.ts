@@ -35,22 +35,42 @@ describe('AVS first-time date-range baseline routing', () => {
     expect(source).toContain('cursorSessionId: batchPlan.nextCursor?.sessionId');
   });
 
-  it('does not call Graph again for an already completed exact range', () => {
+  it('trusts a completed range checkpoint only for the current business schema', () => {
+    const schemaGate = source.indexOf('checkpointMatchesCurrentBusinessSchema');
     const completeGate = source.indexOf("text(state.status) === 'complete'");
     const graphClient = source.indexOf('new MicrosoftGraphClient');
-    expect(completeGate).toBeGreaterThan(-1);
+    expect(schemaGate).toBeGreaterThan(-1);
+    expect(completeGate).toBeGreaterThan(schemaGate);
     expect(graphClient).toBeGreaterThan(completeGate);
+    expect(source).toContain('businessCaseSchemaVersion');
+    expect(source).toContain('AVS_BUSINESS_CASE_SCHEMA_VERSION');
+    expect(source).toContain('const activeState = checkpointMatchesCurrentBusinessSchema');
     expect(source).toContain('alreadyComplete: true');
     expect(source).toContain('graphLogicalCalls: 0');
   });
 
-  it('reuses existing AVS cases and fresh-collects only missing cases', () => {
+  it('reuses current cases, migrates legacy cases from cached evidence, and fresh-collects only when needed', () => {
     expect(source).toContain("db.collection('attendanceValidationCases').doc(item.id)");
-    expect(source).toContain('!caseSnapshots[index].exists');
+    expect(source).toContain('isCurrentAvsBusinessCaseDocument(row.data)');
+    expect(source).toContain('cachedLegacyRows');
+    expect(source).toContain('evidenceId: text(row.data?.evidenceId)');
+    expect(source).toContain('legacyWithoutCachedEvidenceRows');
+    expect(source).toContain('freshCollectionRows');
     expect(source).toContain('collectTeamsEvidence(');
     expect(source).toContain('bindTeacherIdentityFromFreshEvidence');
-    expect(source).toContain('identityBinding.staffRegistry');
     expect(source).toContain('runAv53ShadowWithFirestore');
+    expect(source).toContain('missingEvidenceRequiresFresh: true');
+    expect(source).toContain('migratedLegacyCaseCount');
+    expect(source).toContain('migrationDeferredCount');
+  });
+
+  it('can migrate compatible cached legacy cases even while fresh collection is disabled', () => {
+    expect(source).toContain('allowFreshEvidence?: boolean');
+    expect(source).toContain('const allowFreshEvidence = options.allowFreshEvidence ?? true');
+    expect(source).toContain('const deferredFreshRows = allowFreshEvidence');
+    expect(source).toContain('for (const item of allowFreshEvidence ? freshCollectionRows : [])');
+    expect(source).toContain('cachedLegacyRows.map');
+    expect(source).toContain("reason: 'validation_infrastructure_retry'");
   });
 
   it('resolves one canonical backend organizer without teacher/session fallbacks', () => {
