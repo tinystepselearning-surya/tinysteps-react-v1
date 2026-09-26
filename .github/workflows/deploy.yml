@@ -38,11 +38,47 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.sha }}
 
+      - name: Resolve deployed Functions baseline
+        id: functions-baseline
+        shell: bash
+        env:
+          EVENT_BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}
+        run: |
+          set -euo pipefail
+
+          baseline="${EVENT_BEFORE}"
+          force_full="false"
+          source="event-parent"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            if git fetch origin               refs/heads/ci/functions-production:refs/remotes/origin/ci/functions-production               --force --quiet 2>/dev/null; then
+              candidate="$(git rev-parse refs/remotes/origin/ci/functions-production)"
+              if git merge-base --is-ancestor "${candidate}" "${GITHUB_SHA}"; then
+                baseline="${candidate}"
+                source="production-marker"
+              else
+                force_full="true"
+                source="invalid-production-marker"
+                echo "::warning::Functions production marker is not an ancestor of ${GITHUB_SHA}; forcing a full Functions deployment."
+              fi
+            else
+              force_full="true"
+              source="missing-production-marker"
+              echo "::warning::Functions production marker is missing; forcing a one-time full Functions deployment."
+            fi
+          fi
+
+          echo "sha=${baseline}" >> "${GITHUB_OUTPUT}"
+          echo "force_full=${force_full}" >> "${GITHUB_OUTPUT}"
+          echo "Functions baseline: ${baseline} (${source}); force_full=${force_full}"
+
       - name: Resolve artifact and Function impact
         id: impact
         run: >-
           node scripts/resolve-deployment-impact.mjs
           --before "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}"
+          --functions-before "${{ steps.functions-baseline.outputs.sha }}"
+          --force-functions-full "${{ steps.functions-baseline.outputs.force_full }}"
           --sha "${{ github.sha }}"
 
   build-and-test:
@@ -190,6 +226,8 @@ jobs:
        needs.analyze-changes.outputs.firestore_rules_changed == 'true')
     needs: [analyze-changes, build-and-test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     concurrency:
       group: firebase-deployment-tinysteps-react-v1
       # Let an active Firebase CLI operation finish; never cancel it mid-deploy.
@@ -419,6 +457,30 @@ jobs:
           name: avs-callable-transport-verification-${{ github.sha }}
           path: artifacts/avs-callable-transport-verification.md
           if-no-files-found: warn
+
+      - name: Advance Functions production baseline
+        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/ci/functions-production"
+          create_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs"
+          status="$(curl -sS -o /tmp/functions-production-ref.json -w "%{http_code}"             -H "Authorization: Bearer ${GITHUB_TOKEN}"             -H "Accept: application/vnd.github+json"             "${api}")"
+
+          if [[ "${status}" == "200" ]]; then
+            curl -fsS -X PATCH               -H "Authorization: Bearer ${GITHUB_TOKEN}"               -H "Accept: application/vnd.github+json"               -H "Content-Type: application/json"               -d "{\"sha\":\"${GITHUB_SHA}\",\"force\":false}"               "${api}" >/dev/null
+          elif [[ "${status}" == "404" ]]; then
+            curl -fsS -X POST               -H "Authorization: Bearer ${GITHUB_TOKEN}"               -H "Accept: application/vnd.github+json"               -H "Content-Type: application/json"               -d "{\"ref\":\"refs/heads/ci/functions-production\",\"sha\":\"${GITHUB_SHA}\"}"               "${create_api}" >/dev/null
+          else
+            cat /tmp/functions-production-ref.json >&2 || true
+            echo "Unable to read Functions production baseline ref (HTTP ${status})." >&2
+            exit 1
+          fi
+
+          echo "Functions production baseline advanced to ${GITHUB_SHA}."
 
       - name: Validate Ask Tiny Steps production build configuration
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
