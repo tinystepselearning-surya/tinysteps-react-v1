@@ -166,9 +166,10 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     // A completed pre-three-outcome checkpoint must not suppress migration.
     // Reset its cursor/counters and rescan the bounded range once using cached
     // evidence wherever possible.
-    const activeState = checkpointMatchesCurrentBusinessSchema
-      ? state
-      : {};
+    const activeState: BaselineRangeState =
+      checkpointMatchesCurrentBusinessSchema
+        ? state
+        : {};
 
     if (
       checkpointMatchesCurrentBusinessSchema
