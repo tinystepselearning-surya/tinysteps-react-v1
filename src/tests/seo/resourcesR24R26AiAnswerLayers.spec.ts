@@ -11,6 +11,7 @@ import {
   getAiAnswerLayerSubjectItems,
 } from '../../lib/aiAnswerLayerRegistry.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from '../../lib/phonicsPublicationRegistry.js';
+import { GRAMMAR_PUBLISHED_RESOURCE_PAGES } from '../../lib/grammarPublicationRegistry.js';
 
 const root = process.cwd();
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -23,14 +24,23 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(getAiAnswerLayerSubjectItems(1, 'speaking-communication')).toHaveLength(9);
   });
 
-  it('builds Layer 2 from curated core concepts plus all 31 governed phonics resources', () => {
+  it('builds Layer 2 from curated concepts plus all governed phonics and grammar resources', () => {
     expect(PHONICS_PUBLISHED_RESOURCE_PAGES).toHaveLength(31);
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(58);
-    const focused = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
+    expect(GRAMMAR_PUBLISHED_RESOURCE_PAGES).toHaveLength(42);
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(
+      27 + PHONICS_PUBLISHED_RESOURCE_PAGES.length + GRAMMAR_PUBLISHED_RESOURCE_PAGES.length,
+    );
+
+    const focusedPhonics = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/phonics/'),
     );
-    expect(focused).toHaveLength(31);
-    expect(new Set(focused.map((item) => item.canonicalPath)).size).toBe(31);
+    const focusedGrammar = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
+      item.canonicalPath.startsWith('/resources/grammar/'),
+    );
+    expect(focusedPhonics).toHaveLength(PHONICS_PUBLISHED_RESOURCE_PAGES.length);
+    expect(focusedGrammar).toHaveLength(GRAMMAR_PUBLISHED_RESOURCE_PAGES.length);
+    expect(new Set(focusedPhonics.map((item) => item.canonicalPath)).size).toBe(focusedPhonics.length);
+    expect(new Set(focusedGrammar.map((item) => item.canonicalPath)).size).toBe(focusedGrammar.length);
   });
 
   it('keeps Layer 3 focused on existing practice owners', () => {
@@ -52,7 +62,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     const component = read('src/components/resources/AiAnswerLayerDirectory.tsx');
     const resources = read('src/pages/ResourcesPage.tsx');
     const subjects = read('src/pages/SubjectResourcesPage.tsx');
-    expect(component).toContain('Question → answer → understanding → action');
+    expect(component).toContain('Question → explanation → practice');
     expect(component).toContain('data-ai-answer-layer');
     expect(component).toContain('data-ai-query');
     expect(resources).toContain('<AiAnswerLayerDirectory />');
@@ -70,29 +80,28 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).toContain('buildAiResourceText');
     expect(generator).toContain('buildAiAnswerLlmSection');
     expect(generator).toContain('AI Answer Layers — problem, concept, practice');
+    expect(generator).toContain('Focused Grammar Resource Library');
   });
 
   it('connects the full current content corpus instead of only the earlier curated blog subset', () => {
     const generator = read('scripts/generate-rss.mjs');
     expect(generator).toContain('buildEditorialBlogCorpus');
-    expect(generator).toContain('buildRetiredEditorialSourceCorpus');
     expect(generator).toContain('buildProgrammaticPhonicsCorpus');
+    expect(generator).toContain('buildProgrammaticGrammarCorpus');
     expect(generator).toContain('buildPublicRouteCorpus');
     expect(generator).toContain('PUBLIC_ROUTE_MANIFEST');
     expect(generator).toContain('buildCompleteBlogLlmSection');
     expect(generator).toContain('Complete Editorial Blog Corpus');
     expect(generator).toContain('editorial_blogs: editorialBlogs');
-    expect(generator).toContain('retired_editorial_sources: retiredEditorialSources');
-    expect(generator).toContain('editorial_source_records: editorialBlogs.length + retiredEditorialSources.length');
     expect(generator).toContain('programmatic_phonics_guides: programmaticPhonics');
+    expect(generator).toContain('programmatic_grammar_guides: programmaticGrammar');
     expect(generator).toContain('additional_public_routes: publicRoutes');
     expect(generator).toContain('supporting-only-noindex');
 
     const audit = read('scripts/audit-ai-answer-layers.mjs');
-    expect(audit).toContain('expectedBlogSourceInventory');
+    expect(audit).toContain('expectedLiveBlogCount');
     expect(audit).toContain('editorial-blog-baseline-regression');
-    expect(audit).toContain('retired-editorial-source-count');
-    expect(audit).toContain('redirect-lineage-only');
+    expect(audit).toContain('programmatic-grammar-corpus-count');
     expect(audit).toContain('public-route-manifest-coverage');
   });
 });
