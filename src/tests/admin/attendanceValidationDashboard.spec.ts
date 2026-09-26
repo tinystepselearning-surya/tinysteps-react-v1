@@ -193,6 +193,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('validationResult.firstEvidenceCollectedCount');
     expect(dashboard).toContain('validationResult.baselineExistingCaseCount');
     expect(dashboard).toContain('validationResult.baselinePersistedCaseCount');
+    expect(dashboard).toContain('finiteCount(validationResult.baselinePersistedCaseCount)');
+    expect(dashboard).toContain('formatFailureCodeCounts');
+    expect(dashboard).toContain('Failure codes:');
     expect(dashboard).toContain('validationResult.graphLogicalCalls');
     expect(dashboard).toContain('validationResult.continueValidation');
     expect(dashboard).toContain(
@@ -269,6 +272,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain('These groups could not be compared safely');
     expect(businessView).toContain('Show technical reasons');
     expect(businessView).toContain('technicalReasonsForGroup');
+    expect(businessView).toContain('Same-day comparison context missing');
+    expect(businessView).toContain('Teams evidence needs a current calculation');
+    expect(businessView).toContain('Teams same-day coverage requires review');
     expect(businessView).not.toContain("label: 'Not Evaluable'");
   });
 });

@@ -74,9 +74,9 @@ interface AvsUnifiedValidationResponse {
   baselineAttempted: boolean;
   baselineComplete: boolean;
   baselineBatchSessionCount: number;
-  baselineExistingCaseCount: number;
+  baselineExistingCaseCount?: number;
   baselineFreshEvidenceCount: number;
-  baselinePersistedCaseCount: number;
+  baselinePersistedCaseCount?: number;
   baselineBlockedCount: number;
   graphLogicalCalls: number;
   identityMappingsWritten: number;
@@ -251,6 +251,20 @@ function asFiniteNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value)
     ? value
     : null;
+}
+
+function finiteCount(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, value)
+    : 0;
+}
+
+function formatFailureCodeCounts(codeCounts: Record<string, number>): string {
+  return Object.entries(codeCounts)
+    .filter(([, count]) => Number.isFinite(count) && count > 0)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([code, count]) => `${code}: ${count}`)
+    .join(', ');
 }
 
 function formatDurationSeconds(value: number | null): string {
@@ -1035,17 +1049,17 @@ export default function AttendanceValidationDashboard() {
                 {' '}{validationResult.freshRefreshedCount
                   + validationResult.firstEvidenceCollectedCount
                   + validationResult.baselineFreshEvidenceCount} received fresh Teams evidence.
-                {validationResult.baselineExistingCaseCount > 0 && (
-                  <> {' '}{validationResult.baselineExistingCaseCount} already had a saved AVS case and did not need first-time evidence collection.</>
+                {finiteCount(validationResult.baselineExistingCaseCount) > 0 && (
+                  <> {' '}{finiteCount(validationResult.baselineExistingCaseCount)} already had a saved AVS case and did not need first-time evidence collection.</>
                 )}
                 {' '}{validationResult.freshFailedCount
                   + validationResult.baselineBlockedCount} need another validation attempt or review.
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Saved/rebuilt AVS cases this call: {validationResult.baselinePersistedCaseCount
-                  + validationResult.cachedRevalidatedCount
-                  + validationResult.freshRefreshedCount
-                  + validationResult.firstEvidenceCollectedCount}.
+                Saved/rebuilt AVS cases this call: {finiteCount(validationResult.baselinePersistedCaseCount)
+                  + finiteCount(validationResult.cachedRevalidatedCount)
+                  + finiteCount(validationResult.freshRefreshedCount)
+                  + finiteCount(validationResult.firstEvidenceCollectedCount)}.
                 {' '}Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
                 {' '}Automatic teacher identity mappings: {validationResult.identityMappingsWritten}.
                 {' '}Unsafe evidence references left for review: {validationResult.freshnessUnsafeCount}.
@@ -1067,6 +1081,12 @@ export default function AttendanceValidationDashboard() {
                   Admin action required: {validationResult.failureSummary.adminActionRequiredCount} infrastructure failure{validationResult.failureSummary.adminActionRequiredCount === 1 ? '' : 's'} need configuration, permission, or diagnostic attention before retrying.
                 </p>
               )}
+              {validationResult.failureSummary.totalCount > 0
+                && formatFailureCodeCounts(validationResult.failureSummary.codeCounts) && (
+                  <p className="mt-1 text-xs text-slate-700">
+                    Failure codes: {formatFailureCodeCounts(validationResult.failureSummary.codeCounts)}.
+                  </p>
+                )}
               {validationResult.evidenceIssueSummary.businessReviewCount > 0 && (
                 <p className="mt-2 text-xs text-slate-700">
                   Business-review evidence issues: {validationResult.evidenceIssueSummary.businessReviewCount}. These are review outcomes, not infrastructure failures.

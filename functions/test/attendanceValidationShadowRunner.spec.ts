@@ -346,6 +346,113 @@ describe('AV5.3 bounded shadow runner', () => {
     });
   });
 
+  it('does not let a cancelled same-day row raise one long class to two supported Presents', async () => {
+    const longEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-long-cancelled-slot',
+      65 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: {
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-long-cancelled-slot',
+        },
+        session: session(),
+        evidence: longEvidence,
+      },
+      {
+        item: {
+          classSessionId: 'session-2',
+          evidenceId: 'missing-cancelled-evidence',
+        },
+        session: {
+          ...session({}),
+          status: 'cancelled',
+        },
+        evidence: null,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-one-long-plus-cancelled',
+        workItems: [
+          {
+            classSessionId: 'session-1',
+            evidenceId: 'evidence-long-cancelled-slot',
+          },
+          {
+            classSessionId: 'session-2',
+            evidenceId: 'missing-cancelled-evidence',
+          },
+        ],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      id: 'session-1',
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      businessDifferenceCount: 0,
+    });
+  });
+
+  it('does not let a rescheduled same-day row raise one long class to two supported Presents', async () => {
+    const longEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-long-rescheduled-slot',
+      65 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: {
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-long-rescheduled-slot',
+        },
+        session: session(),
+        evidence: longEvidence,
+      },
+      {
+        item: {
+          classSessionId: 'session-2',
+          evidenceId: 'missing-rescheduled-evidence',
+        },
+        session: session({
+          'kid-1': { status: 'reschedule_requested' },
+        }),
+        evidence: null,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-one-long-plus-rescheduled',
+        workItems: [
+          {
+            classSessionId: 'session-1',
+            evidenceId: 'evidence-long-rescheduled-slot',
+          },
+          {
+            classSessionId: 'session-2',
+            evidenceId: 'missing-rescheduled-evidence',
+          },
+        ],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      id: 'session-1',
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      businessDifferenceCount: 0,
+    });
+  });
+
   it('verifies two Present sessions only when pooled same-day teacher-learner overlap is more than 50 minutes', async () => {
     const firstEvidence = shiftedSameDayEvidence(
       'session-1',
@@ -971,6 +1078,39 @@ describe('AV5.3 bounded shadow runner', () => {
     });
     expect(store.saved[0].reasons).toContain(
       'business_evidence_not_evaluable',
+    );
+    expect(store.saved[0].reasons).toContain(
+      'overlap_threshold_not_configured',
+    );
+  });
+
+  it('persists the concrete technical reason when same-day attendance evidence is incomplete', async () => {
+    const incompleteEvidence = evidence();
+    incompleteEvidence.completeness.attendanceReportsComplete = false;
+
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(),
+        evidence: incompleteEvidence,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-incomplete-same-day-evidence',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      businessOutcome: 'not_evaluable',
+      sameDayEvidenceEvaluable: false,
+      classification: 'AMBIGUOUS',
+    });
+    expect(store.saved[0].reasons).toContain(
+      'same_day_attendance_evidence_incomplete',
     );
   });
 
