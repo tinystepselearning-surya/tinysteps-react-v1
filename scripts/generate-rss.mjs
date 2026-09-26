@@ -233,6 +233,14 @@ function resolveAiExternalReferences(entry, blogItemMap) {
   return [...new Set(blogItemMap.get(absolute)?.externalReferences || [])];
 }
 
+function resolveAiAnswerSelector(entry) {
+  const pathName = String(entry.canonicalPath || '');
+  if (pathName.startsWith('/blog/')) return '.ts-answer-summary';
+  if (pathName.startsWith('/resources/phonics/')) return '.ts-answer-summary';
+  if (['/resources/phonics', '/resources/grammar', '/resources/speaking'].includes(pathName)) return '.ts-answer-summary';
+  return null;
+}
+
 function buildAiResourceIndex(blogItemMap) {
   const layers = AI_ANSWER_LAYER_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -247,7 +255,7 @@ function buildAiResourceIndex(blogItemMap) {
       reference_urls: [...new Set((entry.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
       external_reference_urls: resolveAiExternalReferences(entry, blogItemMap),
       practice_urls: [...new Set((entry.practicePaths || []).map(toCanonicalAbsoluteUrl))],
-      answer_selector: entry.layer <= 2 ? '.ts-answer-summary' : null,
+      answer_selector: resolveAiAnswerSelector(entry),
       answer_source: entry.answerSource,
       ownership_state: entry.ownershipState,
     })),
