@@ -14,7 +14,7 @@ describe('authoritative Blog #33 quality lock', () => {
     expect(post).toBeDefined();
     expect(post?.title).toBe('What Is Phonics for Kids? A Parent Start-Here Guide');
     expect(post?.author).toBe('Priya');
-    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.modifiedDate).toBe('2026-09-26');
     expect(post?.excerpt.length).toBeGreaterThanOrEqual(120);
     expect(post?.excerpt.length).toBeLessThanOrEqual(200);
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
@@ -22,8 +22,13 @@ describe('authoritative Blog #33 quality lock', () => {
     const body = post?.body.map((block) => block.content).join('\n') || '';
 
     expect(body).toContain('Phonics is a way of teaching reading and spelling by making the relationship between spoken sounds and written letters or letter groups explicit.');
+    expect(body).toContain('alphabetic principle');
+    expect(body).toContain('grapheme–phoneme correspondence (GPC)');
+    expect(body).toContain('encoding');
     expect(body).toContain('This is the start-here phonics guide');
     expect(body).toContain('Six terms make phonics much easier to understand');
+    expect(body).toContain('Phonemic awareness and phonics are related, but they are not the same');
+    expect(body).toContain('/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics');
     expect(body).toContain('The Tiny Steps phonics learning chain');
     expect(body).toContain('**Hear** —');
     expect(body).toContain('**Map** —');
@@ -32,9 +37,11 @@ describe('authoritative Blog #33 quality lock', () => {
     expect(body).toContain('**Spell** —');
     expect(body).toContain('**Transfer** —');
     expect(body).toContain('Rehearsed success is practice evidence; fresh-word and text use are stronger transfer evidence.');
-    expect(body).toContain('print first for word identity; context next for meaning and confirmation');
+    expect(body).toContain('What phonics is — and what it is not');
     expect(body).toContain('Phonics is not the same as learning the alphabet');
-    expect(body).toContain('Phonics is not the same as memorising whole words');
+    expect(body).toContain('Phonics is not whole-word shape memorisation');
+    expect(body).toContain('Phonics is not picture or context guessing');
+    expect(body).toContain('print first for word identity; context next for meaning and confirmation');
     expect(body).toContain('What phonics does not teach by itself');
 
     expect(body).toContain('/blog/what-age-to-start-phonics');
@@ -48,7 +55,19 @@ describe('authoritative Blog #33 quality lock', () => {
     expect(body).not.toContain('After one week');
   });
 
-  it('locks evidence, product transparency, FAQs and evergreen indexing', () => {
+  it('keeps the definition page distinct from the deeper parent-support guide', () => {
+    const post = bySlug.get('what-is-phonics-for-kids');
+    const body = post?.body.map((block) => block.content).join('\n') || '';
+
+    expect(body).toContain('Where home support fits');
+    expect(body).toContain('This article does not own the full home-practice method.');
+    expect(body).toContain('/blog/phonics-for-parents-guide');
+    expect(body).not.toContain('A flexible home routine for a child who is already learning phonics');
+    expect(body).not.toContain('Where Tiny Steps free games fit — and where they do not');
+    expect(body).not.toContain('Retrieve — review a small amount of already-taught sound–spelling knowledge.');
+  });
+
+  it('locks evidence, India relevance, targeted product transparency, FAQs and evergreen indexing', () => {
     const post = bySlug.get('what-is-phonics-for-kids');
     expect(post).toBeDefined();
 
@@ -56,19 +75,22 @@ describe('authoritative Blog #33 quality lock', () => {
     const evidence = getBlogEvidenceSummary(post!);
 
     expect(evidence.hasSourceSection).toBe(true);
-    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(5);
     expect(body).toContain('The Tiny Steps six-part learning chain is an editorial explanation.');
-    expect(body).toContain('specifically practises **hear a target sound → identify the printed letter → choose the matching balloon**');
-    expect(body).toContain('it does not by itself demonstrate blending, word decoding, spelling or fluent reading');
-    expect(body).toContain('Tracing success is not proof that the child can retrieve the sound or decode words.');
+    expect(body).toContain('NCERT — National Curriculum Framework for Foundational Stage 2022');
+    expect(body).toContain('https://www.ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf');
+    expect(body).toContain('Education Endowment Foundation phonics review');
+    expect(body).toContain('IES foundational-reading practice guide');
+    expect(body).toContain('For targeted practice only');
     expect(body).toContain('/free-balloon-pop-phonics-game-for-kids');
     expect(body).toContain('/free-letter-tracing-game-for-kids');
     expect(body).toContain('/phonics');
     expect(body).toContain('/book-demo');
 
-    expect(post?.faq).toHaveLength(6);
+    expect(post?.faq).toHaveLength(7);
     expect(post?.faq?.some((item) => /phonics in simple words/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /same as learning the alphabet/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /phonemic awareness and phonics/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /sounding out every word forever/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /sight words separate/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /teach comprehension/i.test(item.question))).toBe(true);

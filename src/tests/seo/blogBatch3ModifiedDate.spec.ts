@@ -17,6 +17,9 @@ type SitemapSourceEntry = {
 
 const repoRoot = process.cwd();
 const refreshDate = '2026-08-30';
+const refreshDateOverrides: Record<string, string> = {
+  'what-is-phonics-for-kids': '2026-09-26',
+};
 const batch3 = [
   ['synthetic-phonics-vs-traditional-reading', null],
   ['phonics-satpin-launch', 'week-1-phonics-satpin-launch'],
@@ -48,13 +51,14 @@ describe('Batch #3 modified-date SEO pipeline', () => {
     for (const [slug, legacySourceSlug] of batch3) {
       const post = postsBySlug.get(slug);
       const sitemapEntry = entriesByPublicSlug.get(slug);
+      const expectedRefreshDate = refreshDateOverrides[slug] || refreshDate;
 
       expect(post, `${slug} should remain in the public registry`).toBeDefined();
       expect(post?.date, `${slug} should retain an original publication date`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(post?.date, `${slug} publication date must not be replaced by its refresh date`).not.toBe(refreshDate);
-      expect(post?.modifiedDate, `${slug} should expose the Batch #3 refresh date`).toBe(refreshDate);
+      expect(post?.date, `${slug} publication date must not be replaced by its refresh date`).not.toBe(expectedRefreshDate);
+      expect(post?.modifiedDate, `${slug} should expose its current legitimate refresh date`).toBe(expectedRefreshDate);
       expect(sitemapEntry?.date, `${slug} sitemap publication input`).toBe(post?.date);
-      expect(sitemapEntry?.modifiedDate, `${slug} sitemap lastmod input`).toBe(refreshDate);
+      expect(sitemapEntry?.modifiedDate, `${slug} sitemap lastmod input`).toBe(expectedRefreshDate);
       expect(shouldIncludeBlogSlugInSitemap(slug), `${slug} sitemap eligibility`).toBe(true);
       expect(shouldNoindexBlogSlug(slug), `${slug} clean URL indexability`).toBe(false);
 
