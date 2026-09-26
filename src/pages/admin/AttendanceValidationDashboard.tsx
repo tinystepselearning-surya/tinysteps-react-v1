@@ -52,6 +52,19 @@ interface AvsFailureSummary {
   codeCounts: Record<string, number>;
 }
 
+interface AvsFailureDescriptor {
+  code: string;
+  category: string;
+  retryDisposition: string;
+  retryable: boolean;
+  operatorAction: string;
+  source: string;
+  stage: string | null;
+  httpStatus: number | null;
+  graphCode: string | null;
+  innerCode: string | null;
+}
+
 interface AvsUnifiedValidationResponse {
   ok: boolean;
   fromDate: string;
@@ -67,6 +80,12 @@ interface AvsUnifiedValidationResponse {
   freshRefreshedCount: number;
   firstEvidenceCollectedCount: number;
   freshFailedCount: number;
+  freshOutcomes?: Array<{
+    sessionId: string;
+    kind: 'stale' | 'missing';
+    status: 'refreshed' | 'collected' | 'existing_case' | 'failed' | 'blocked';
+    failure: AvsFailureDescriptor | null;
+  }>;
   retryableInfrastructureCount: number;
   adminActionRequiredCount: number;
   failureSummary: AvsFailureSummary;
@@ -265,6 +284,23 @@ function formatFailureCodeCounts(codeCounts: Record<string, number>): string {
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([code, count]) => `${code}: ${count}`)
     .join(', ');
+}
+
+function formatFreshFailureDiagnostics(
+  outcomes: AvsUnifiedValidationResponse['freshOutcomes'],
+): string[] {
+  return (outcomes ?? [])
+    .filter((item) => item.failure)
+    .map((item) => {
+      const failure = item.failure!;
+      const details = [
+        failure.stage ? `stage ${failure.stage}` : null,
+        failure.httpStatus !== null ? `HTTP ${failure.httpStatus}` : null,
+        failure.graphCode ? `Graph ${failure.graphCode}` : null,
+        failure.innerCode ? `Inner ${failure.innerCode}` : null,
+      ].filter(Boolean);
+      return `${item.sessionId}: ${failure.code}${details.length > 0 ? ` · ${details.join(' · ')}` : ''}`;
+    });
 }
 
 function formatDurationSeconds(value: number | null): string {
@@ -1087,6 +1123,13 @@ export default function AttendanceValidationDashboard() {
                     Failure codes: {formatFailureCodeCounts(validationResult.failureSummary.codeCounts)}.
                   </p>
                 )}
+              {formatFreshFailureDiagnostics(validationResult.freshOutcomes).length > 0 && (
+                <div className="mt-1 space-y-0.5 text-xs text-slate-700">
+                  {formatFreshFailureDiagnostics(validationResult.freshOutcomes).map((diagnostic) => (
+                    <div key={diagnostic}>Failure detail: {diagnostic}</div>
+                  ))}
+                </div>
+              )}
               {validationResult.evidenceIssueSummary.businessReviewCount > 0 && (
                 <p className="mt-2 text-xs text-slate-700">
                   Business-review evidence issues: {validationResult.evidenceIssueSummary.businessReviewCount}. These are review outcomes, not infrastructure failures.
