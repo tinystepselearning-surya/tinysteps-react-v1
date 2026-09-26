@@ -7,7 +7,8 @@ const authorityPath = 'src/content/blog/shared/authorityLinking.ts';
 const comparisonPath = 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx';
 const subjectHubPath = 'src/pages/SubjectResourcesPage.tsx';
 const phonicsPath = 'src/pages/phonics.tsx';
-const reviewedPaths = [authorityPath, comparisonPath, subjectHubPath, phonicsPath];
+const founderPanelPath = 'src/pages/founder/FounderEditorialReviewsPanel.tsx';
+const reviewedPaths = [authorityPath, comparisonPath, subjectHubPath, phonicsPath, founderPanelPath];
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
 
 describe('C7 verified SEO recovery repair boundary', () => {
@@ -17,6 +18,7 @@ describe('C7 verified SEO recovery repair boundary', () => {
       [comparisonPath]: '21ec5766587f1635227d718401e705e4a6affa81',
       [subjectHubPath]: '8041c125b53dd5bb94cc5a91ae7fa705c520f093',
       [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
+      [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
   });
@@ -30,6 +32,13 @@ describe('C7 verified SEO recovery repair boundary', () => {
     for (const file of reviewedPaths) {
       expect(isReviewedSeoRecoveryFile(file, read(file) + '// unreviewed edit')).toBe(false);
     }
+  });
+  it('pins the founder quality-status retirement to the exact reviewed blob', () => {
+    const panel = read(founderPanelPath);
+    expect(panel).toContain('Pre-publication Quality Status');
+    expect(panel).not.toContain('setFounderEditorialReviewDecision');
+    expect(isReviewedSeoRecoveryFile(founderPanelPath, panel)).toBe(true);
+    expect(isReviewedSeoRecoveryFile(founderPanelPath, panel.replace('Pre-publication Quality Status', 'Quality Status'))).toBe(false);
   });
   it('rejects restored retired recommendations and redirects in the comparison CTA', () => {
     const authority = read(authorityPath).replace('export const B7_BEST_PHONICS_DECISION_GUIDES = Object.freeze([',

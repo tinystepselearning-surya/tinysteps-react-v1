@@ -14,10 +14,14 @@ on:
       - 'src/tests/seo/resourcesR2LearningHub.spec.js'
       - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
       - 'scripts/audit-resources-r0.mjs'
-      - 'public/llms.txt'
-      - 'docs/seo/resources-architecture/**'
+      - 'docs/seo/resources-architecture/R4_CANONICAL_OWNERSHIP_MAP.md'
+      - 'docs/seo/resources-architecture/R4_SUBJECT_HUBS.md'
       - '.github/workflows/resources-r4-subject-hubs.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

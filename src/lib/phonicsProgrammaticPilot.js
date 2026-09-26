@@ -2,6 +2,7 @@ import {
   getBrick9PilotCandidates,
   getPhonicsKnowledgeConcept,
 } from '../content/phonicsKnowledge/index.js';
+import { assertPhonicsPrepublicationQuality } from './phonicsPrepublicationQuality.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -34,8 +35,9 @@ function buildPage(conceptId, approval) {
   if (!concept) throw new Error(`Brick 9 approval references missing concept: ${conceptId}`);
   if (!candidateIds.has(conceptId) || concept.expansionState !== 'pilot-wave-1') throw new Error(`Brick 9 may publish only R8 pilot-wave-1 concepts: ${conceptId}`);
   if (!concept.futureSlugCandidate) throw new Error(`Brick 9 concept lacks candidate slug: ${conceptId}`);
+  const qualityGate = assertPhonicsPrepublicationQuality(concept, approval);
   const path = `${PHONICS_PROGRAMMATIC_PILOT_PREFIX}/${concept.futureSlugCandidate}`;
-  return freeze({ conceptId, topicId: approval.topicId, slug: concept.futureSlugCandidate, path, seoTitle: approval.seoTitle, seoDescription: approval.seoDescription, cardTitle: approval.cardTitle, group: approval.group, publicationState: 'approved-wave-1', publicationRevision: PHONICS_PROGRAMMATIC_PILOT_REVISION, reviewDecision: 'Distinct parent intent, sufficient curated teaching value, direct curriculum alignment and no established canonical-owner collision.', concept });
+  return freeze({ conceptId, topicId: approval.topicId, slug: concept.futureSlugCandidate, path, seoTitle: approval.seoTitle, seoDescription: approval.seoDescription, cardTitle: approval.cardTitle, group: approval.group, publicationState: 'approved-wave-1', publicationRevision: PHONICS_PROGRAMMATIC_PILOT_REVISION, prepublicationQualityState: qualityGate.state, prepublicationQualityRevision: qualityGate.revision, prepublicationQualityChecks: qualityGate.checks, reviewDecision: 'Distinct parent intent, sufficient curated teaching value, direct curriculum alignment and no established canonical-owner collision.', concept });
 }
 
 export const PHONICS_PROGRAMMATIC_PILOT_PAGES = freezeList(Object.entries(APPROVALS).map(([conceptId, approval]) => buildPage(conceptId, approval)).sort((a, b) => a.concept.progressionRank - b.concept.progressionRank || a.cardTitle.localeCompare(b.cardTitle)));

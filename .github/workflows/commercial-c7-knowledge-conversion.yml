@@ -39,6 +39,9 @@ on:
       - 'src/lib/knowledgeBaseFinalClosure.js'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/pages/PhonicsKnowledgePage.tsx'
+      - 'src/pages/founder/FounderEditorialReviewsPanel.tsx'
+      - 'scripts/commercial-c7-reviewed-seo-repair.mjs'
+      - 'scripts/test/commercial-c7-reviewed-seo-repair.spec.mjs'
       - 'src/pages/public/SlowReaderChildHelpPage.tsx'
       - 'src/pages/public/ShyChildSpeakingConfidencePage.tsx'
       - 'src/lib/commercialC2KeywordOwnership.ts'
@@ -47,6 +50,10 @@ on:
       - 'src/lib/commercialC6ValidationFreeze.ts'
       - '.github/workflows/commercial-c7-knowledge-conversion.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -97,6 +104,7 @@ jobs:
           src/tests/seo/commercialC2KeywordOwnership.spec.ts
           src/tests/seo/commercialC5ConversionFlow.spec.ts
           src/tests/seo/commercialC4CtrOptimization.spec.ts
+          scripts/test/commercial-c7-reviewed-seo-repair.spec.mjs
       - name: Audit C7-R0 knowledge conversion inventory
         run: node scripts/audit-commercial-c7-r0-knowledge-conversion.mjs
       - name: Audit C7-R1 knowledge owner mapping
