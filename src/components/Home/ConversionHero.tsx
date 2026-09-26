@@ -35,7 +35,7 @@ const GlassCard = ({
   className?: string;
 }) => (
   <div
-    className={`relative overflow-hidden rounded-[24px] border border-white/55 bg-white/45 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] ${className}`}
+    className={`relative overflow-hidden rounded-[22px] border border-white/65 bg-white/55 backdrop-blur-xl shadow-[0_8px_26px_rgba(15,23,42,0.06)] ${className}`}
   >
     {children}
   </div>
@@ -47,7 +47,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
       size === "large" ? "md:col-span-2" : "col-span-1"
     }`}
   >
-    <GlassCard className="h-full min-h-[208px] border-white/70 transition-all duration-500 group-hover:border-orange-200/70 group-hover:shadow-[0_18px_50px_rgba(255,106,0,0.12)] md:min-h-[220px]">
+    <GlassCard className="h-full min-h-[168px] border-white/70 transition-all duration-300 group-hover:border-orange-200/70 md:min-h-[176px]">
       {/* premium hover glow (subtle) */}
       <div className="pointer-events-none absolute inset-0 rounded-[24px] opacity-0 transition-opacity duration-500 group-hover:opacity-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,106,0,0.20),transparent_60%)]" />
@@ -81,7 +81,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
 
 const ConversionHero: React.FC = () => {
   return (
-    <section className="relative min-h-[82vh] overflow-hidden px-4 pb-10 pt-6 md:min-h-screen md:px-8 md:pb-12 md:pt-8">
+    <section className="relative overflow-hidden px-4 pb-6 pt-6 md:px-8 md:pb-8 md:pt-8">
       {/* ✅ Classy Sunrise Background (more depth, less wash) */}
       <div className="pointer-events-none absolute inset-0">
         {/* base */}
@@ -89,7 +89,7 @@ const ConversionHero: React.FC = () => {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, #FFF5EC 0%, #FFF9F4 32%, #FFFFFF 100%)",
+              "linear-gradient(180deg, #FFF8F3 0%, #FFFBF8 38%, #FFFFFF 100%)",
           }}
         />
 
