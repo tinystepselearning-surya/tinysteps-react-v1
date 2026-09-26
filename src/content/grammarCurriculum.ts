@@ -1,4 +1,4 @@
-export const GRAMMAR_CURRICULUM_REVISION = '2026.09.26';
+export const GRAMMAR_CURRICULUM_REVISION = '2026.09.26.1';
 export const GRAMMAR_CURRICULUM_SCHEMA_VERSION = 1;
 
 export type GrammarCourseId = 'basic-grammar' | 'advanced-grammar';
@@ -235,6 +235,195 @@ const RUBRIC_CONFUSIONS: Record<GrammarRubricType, string[]> = {
   revision: [],
 };
 
+type GrammarLessonMetadata = {
+  rubricType: GrammarRubricType;
+  subskillChips: string[];
+  confusionOptions: string[];
+};
+
+const ADVANCED_LESSON_METADATA: Record<number, GrammarLessonMetadata> = {
+  1: {
+    rubricType: 'concept',
+    subskillChips: ['identify subject', 'identify verb', 'identify object', 'build SVO sentence', 'check sentence word order'],
+    confusionOptions: ['subject vs object', 'verb vs noun', 'incomplete sentence'],
+  },
+  2: {
+    rubricType: 'usage_practice',
+    subskillChips: ['identify simple present', 'use subject–verb agreement', 'choose base or s/es form', 'use present for routines and facts', 'edit simple present errors'],
+    confusionOptions: ['subject–verb agreement', 'do vs does', 'base verb vs s/es'],
+  },
+  3: {
+    rubricType: 'usage_practice',
+    subskillChips: ['identify simple past', 'form regular past verbs', 'use irregular past verbs', 'use past time markers', 'edit simple past errors'],
+    confusionOptions: ['regular vs irregular past', 'past vs present', 'did + base verb'],
+  },
+  4: {
+    rubricType: 'usage_practice',
+    subskillChips: ['identify simple future', 'use will + base verb', 'form future negatives and questions', 'use future time markers', 'edit simple future errors'],
+    confusionOptions: ['will + base verb', 'future vs present', 'missing future marker'],
+  },
+  5: {
+    rubricType: 'revision',
+    subskillChips: ['choose present, past, or future', 'choose tense from time and meaning', 'maintain tense consistency', 'correct mixed-tense errors', 'write across simple tenses'],
+    confusionOptions: ['present vs past', 'past vs future', 'tense does not match time or meaning'],
+  },
+  6: {
+    rubricType: 'sentence_building',
+    subskillChips: ['identify the core sentence', 'add meaningful detail', 'expand with phrases', 'keep correct word order', 'edit an expanded sentence'],
+    confusionOptions: ['detail vs new sentence', 'awkward word order', 'fragment after expansion'],
+  },
+  7: {
+    rubricType: 'usage_practice',
+    subskillChips: ['distinguish routine from action now', 'choose simple or continuous', 'use am/is/are + ing', 'use context to justify tense choice', 'explain tense choice'],
+    confusionOptions: ['simple present vs continuous', 'missing be verb', 'base verb vs -ing'],
+  },
+  8: {
+    rubricType: 'usage_practice',
+    subskillChips: ['distinguish completed from ongoing past', 'use was/were + ing', 'use simple past for completed events', 'combine interrupted actions', 'edit past-time tense choice'],
+    confusionOptions: ['simple past vs past continuous', 'was vs were', 'when vs while'],
+  },
+  9: {
+    rubricType: 'usage_practice',
+    subskillChips: ['use will for decisions and predictions', 'use going to for plans and evidence', 'use present continuous for arrangements', 'use simple present for timetables', 'justify the future form'],
+    confusionOptions: ['will vs going to', 'intention vs arrangement', 'arrangement vs timetable'],
+  },
+  10: {
+    rubricType: 'usage_practice',
+    subskillChips: ['distinguish experience from finished past', 'use have/has + past participle', 'choose present perfect or simple past', 'use time expressions accurately', 'edit perfect-tense errors'],
+    confusionOptions: ['present perfect vs simple past', 'have vs has', 'past form vs past participle'],
+  },
+  11: {
+    rubricType: 'usage_practice',
+    subskillChips: ['identify earlier and later past events', 'use had + past participle', 'sequence events clearly', 'choose past perfect or simple past', 'edit event-order errors'],
+    confusionOptions: ['event order', 'had + past participle', 'overuse of past perfect'],
+  },
+  12: {
+    rubricType: 'revision',
+    subskillChips: ['choose tense independently', 'maintain tense consistency', 'explain tense choice', 'edit tense shifts', 'use accurate tenses in speaking and writing'],
+    confusionOptions: ['unnecessary tense shift', 'time-marker mismatch', 'incorrect auxiliary'],
+  },
+  13: {
+    rubricType: 'sentence_building',
+    subskillChips: ['choose the correct question word', 'use correct auxiliary', 'build natural question word order', 'form yes/no and wh- questions', 'edit question errors'],
+    confusionOptions: ['missing auxiliary', 'wrong question order', 'do/does/did + base verb'],
+  },
+  14: {
+    rubricType: 'usage_practice',
+    subskillChips: ['form accurate negatives', 'use contractions correctly', 'build short answers', 'match auxiliary to tense', 'edit negative sentences'],
+    confusionOptions: ['doesn’t + base verb', 'didn’t + base verb', 'wrong short-answer auxiliary'],
+  },
+  15: {
+    rubricType: 'usage_practice',
+    subskillChips: ['identify modal meaning', 'choose the best modal', 'use modal + base verb', 'form modal negatives and questions', 'explain strength and politeness'],
+    confusionOptions: ['can vs could', 'should vs must', 'may vs might'],
+  },
+  16: {
+    rubricType: 'usage_practice',
+    subskillChips: ['identify countable and uncountable nouns', 'choose much or many', 'distinguish a few/few and a little/little', 'use some and any', 'write accurate quantity sentences'],
+    confusionOptions: ['much vs many', 'a few/few vs a little/little', 'some vs any'],
+  },
+  17: {
+    rubricType: 'writing_editing',
+    subskillChips: ['identify the pronoun antecedent', 'match pronoun agreement', 'avoid unclear reference', 'reduce unnecessary repetition', 'edit ambiguous pronouns'],
+    confusionOptions: ['unclear antecedent', 'singular vs plural pronoun', 'subject vs object pronoun'],
+  },
+  18: {
+    rubricType: 'revision',
+    subskillChips: ['spot grammar errors', 'explain the correction', 'correct agreement and tense', 'repair punctuation and structure', 'self-check independently'],
+    confusionOptions: ['subject–verb agreement', 'tense consistency', 'sentence boundary errors'],
+  },
+  19: {
+    rubricType: 'sentence_building',
+    subskillChips: ['identify independent clauses', 'choose a coordinating conjunction', 'join clauses correctly', 'punctuate compound sentences', 'avoid run-ons and comma splices'],
+    confusionOptions: ['comma splice', 'run-on sentence', 'wrong conjunction'],
+  },
+  20: {
+    rubricType: 'sentence_building',
+    subskillChips: ['identify reason and result', 'choose a cause/result connector', 'combine reason and result clauses', 'punctuate connectors correctly', 'rewrite cause-effect relationships'],
+    confusionOptions: ['because vs so', 'reason vs result', 'because-clause fragment'],
+  },
+  21: {
+    rubricType: 'sentence_building',
+    subskillChips: ['order events logically', 'choose sequence connectors', 'use when/while/before/after', 'keep tense sequence accurate', 'write connected event sentences'],
+    confusionOptions: ['before vs after', 'when vs while', 'tense sequence'],
+  },
+  22: {
+    rubricType: 'sentence_building',
+    subskillChips: ['identify condition and result', 'choose if or unless', 'choose conditional form by meaning', 'distinguish real and imagined possibilities', 'build accurate conditional sentences'],
+    confusionOptions: ['if vs unless', 'unnecessary will in an if-clause', 'real vs hypothetical condition'],
+  },
+  23: {
+    rubricType: 'sentence_building',
+    subskillChips: ['identify contrast and concession', 'choose an appropriate connector', 'combine contrasting ideas', 'punctuate contrast connectors', 'rewrite for smoother contrast'],
+    confusionOptions: ['although + but together', 'despite vs although', 'however punctuation'],
+  },
+  24: {
+    rubricType: 'revision',
+    subskillChips: ['choose connector by relationship', 'combine ideas coherently', 'vary linking words', 'punctuate connected ideas', 'edit choppy or overlinked writing'],
+    confusionOptions: ['reason vs contrast connector', 'sequence vs condition', 'connector overuse'],
+  },
+  25: {
+    rubricType: 'concept',
+    subskillChips: ['identify independent clauses', 'identify dependent clauses', 'test clause completeness', 'combine dependent and independent clauses', 'punctuate clause openings'],
+    confusionOptions: ['dependent clause as sentence', 'clause vs phrase', 'comma placement'],
+  },
+  26: {
+    rubricType: 'sentence_building',
+    subskillChips: ['identify the noun being described', 'choose who/which/that', 'build relative clauses', 'combine sentences with relative clauses', 'decide when relative clauses need commas'],
+    confusionOptions: ['who vs which vs that', 'unclear antecedent', 'defining vs non-defining comma choice'],
+  },
+  27: {
+    rubricType: 'writing_editing',
+    subskillChips: ['combine short sentences', 'choose coordination or subordination', 'vary sentence openings', 'vary sentence length and structure', 'preserve meaning while combining'],
+    confusionOptions: ['run-on after combining', 'fragment after combining', 'repeated sentence pattern'],
+  },
+  28: {
+    rubricType: 'writing_editing',
+    subskillChips: ['identify fragments', 'identify run-ons', 'repair comma splices', 'rewrite awkward sentences', 'check for complete meaning'],
+    confusionOptions: ['fragment vs complete sentence', 'run-on vs compound sentence', 'comma splice'],
+  },
+  29: {
+    rubricType: 'writing_editing',
+    subskillChips: ['distinguish direct and reported speech', 'punctuate direct speech', 'choose reporting verbs', 'adjust tense, pronouns, and time words when needed', 'convert speech accurately'],
+    confusionOptions: ['said vs told', 'incorrect or unnecessary tense shift', 'quotation punctuation'],
+  },
+  30: {
+    rubricType: 'writing_editing',
+    subskillChips: ['identify active and passive voice', 'convert active and passive forms', 'choose voice for purpose', 'maintain tense and agreement', 'adjust tone for audience'],
+    confusionOptions: ['active vs passive', 'be + past participle', 'inappropriate tone'],
+  },
+  31: {
+    rubricType: 'writing_editing',
+    subskillChips: ['write a focused topic sentence', 'add relevant supporting details', 'develop ideas with examples', 'use sentence variety', 'close the paragraph effectively'],
+    confusionOptions: ['weak topic sentence', 'off-topic detail', 'unsupported main idea'],
+  },
+  32: {
+    rubricType: 'writing_editing',
+    subskillChips: ['order sentences logically', 'use transitions purposefully', 'maintain clear reference', 'avoid unnecessary repetition', 'edit for paragraph flow'],
+    confusionOptions: ['misused transition', 'unclear reference', 'abrupt sentence sequence'],
+  },
+  33: {
+    rubricType: 'writing_editing',
+    subskillChips: ['sequence narrative events', 'maintain narrative tense', 'use time connectives', 'vary sentence structure', 'add relevant narrative detail'],
+    confusionOptions: ['tense shift', 'event-order confusion', 'run-on narrative sentence'],
+  },
+  34: {
+    rubricType: 'writing_editing',
+    subskillChips: ['choose precise vocabulary', 'organise description or explanation', 'use logical connectors', 'vary sentence structure', 'edit for clarity and completeness'],
+    confusionOptions: ['vague wording', 'list-like sentences', 'missing logical connection'],
+  },
+  35: {
+    rubricType: 'writing_editing',
+    subskillChips: ['state a clear opinion', 'give relevant reasons', 'support ideas with evidence or examples', 'link claim, reason, and evidence', 'write a strong conclusion'],
+    confusionOptions: ['claim vs reason', 'weak evidence', 'unsupported opinion'],
+  },
+  36: {
+    rubricType: 'revision',
+    subskillChips: ['apply grammar accurately', 'use varied sentence structures', 'organise ideas coherently', 'speak and write with clarity', 'self-edit independently'],
+    confusionOptions: ['tense inconsistency', 'weak cohesion', 'incomplete self-correction'],
+  },
+};
+
 function rubricForLesson(order: number): GrammarRubricType {
   const stagePosition = order % 6;
   if (stagePosition === 0) return 'revision';
@@ -278,12 +467,17 @@ function lessonMetadata(label: string, fallback: GrammarRubricType) {
   return { rubricType: fallback, subskillChips: RUBRIC_SUBSKILLS[fallback], confusionOptions: RUBRIC_CONFUSIONS[fallback] };
 }
 
-function buildLessons(courseId: GrammarCourseId, labels: readonly string[], stages: GrammarStage[]): GrammarLesson[] {
+function buildLessons(
+  courseId: GrammarCourseId,
+  labels: readonly string[],
+  stages: GrammarStage[],
+  explicitMetadata?: Record<number, GrammarLessonMetadata>,
+): GrammarLesson[] {
   return labels.map((label, index) => {
     const order = index + 1;
     const stage = stages.find((candidate) => order >= candidate.start && order <= candidate.end);
     if (!stage) throw new Error(`Missing Grammar stage for ${courseId} lesson ${order}`);
-    const metadata = lessonMetadata(label, rubricForLesson(order));
+    const metadata = explicitMetadata?.[order] ?? lessonMetadata(label, rubricForLesson(order));
     return {
       id: `${courseId}__lesson-${String(order).padStart(2, '0')}`,
       courseId,
@@ -316,7 +510,7 @@ export const GRAMMAR_COURSES: Record<GrammarCourseId, GrammarCourse> = {
     id: 'advanced-grammar', label: 'Advanced Grammar', publicSlug: 'grammar-mastery',
     aliases: ['advanced-grammar', 'grammar-mastery'],
     stages: ADVANCED_STAGES,
-    lessons: buildLessons('advanced-grammar', ADVANCED_LABELS, ADVANCED_STAGES),
+    lessons: buildLessons('advanced-grammar', ADVANCED_LABELS, ADVANCED_STAGES, ADVANCED_LESSON_METADATA),
   },
 };
 
