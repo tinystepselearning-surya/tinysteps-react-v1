@@ -8,6 +8,7 @@ import {
   getPublishedGrammarResourcePageBySlug,
   type GrammarCurriculumRef,
   type GrammarPublishedResourcePage,
+  type GrammarResourceLevel,
 } from '../lib/grammarPublicationRegistry.js';
 import {
   buildBreadcrumbListSchema,
@@ -28,7 +29,7 @@ const LEVEL_LABELS = {
   advanced: 'Advanced Grammar',
 } as const;
 
-const STAGE_LABELS = {
+const STAGE_LABELS: Record<GrammarResourceLevel, Record<number, string>> = {
   beginner: {
     1: 'Word Foundations',
     2: 'Grammar Basics',
@@ -45,7 +46,7 @@ const STAGE_LABELS = {
     5: 'Advanced Sentence Craft',
     6: 'Speaking & Writing Mastery',
   },
-} as const;
+};
 
 const RELATED_LABELS: Record<string, string> = {
   '/blog/grammar-nouns-to-paragraphs': 'Grammar roadmap: nouns to paragraphs',
@@ -120,7 +121,7 @@ const GrammarKnowledgePage: FC = () => {
   const canonicalUrl = `${SITE_ORIGIN}${page.path}`;
   const breadcrumbItems = getBreadcrumbTrail({ pathname: page.path, title: page.cardTitle });
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, SITE_ORIGIN);
-  const stageLabel = STAGE_LABELS[page.level][page.stageOrder as keyof (typeof STAGE_LABELS)[typeof page.level]];
+  const stageLabel = STAGE_LABELS[page.level][page.stageOrder] ?? `Stage ${page.stageOrder}`;
   const prerequisites = page.prerequisiteIds.map(learningLink).filter((item): item is NonNullable<typeof item> => Boolean(item));
   const nextSteps = page.nextIds.map(learningLink).filter((item): item is NonNullable<typeof item> => Boolean(item));
 
