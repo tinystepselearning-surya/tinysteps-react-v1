@@ -492,9 +492,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/free-sound-listening-game-for-kids': {
-    title: 'Free Sound Listening Game for Kids | Phonics Listening Practice',
+    title: 'Free A-Z Phonics Sounds Game for Kids | Sound Detective',
     description:
-      'Help children listen carefully and identify phonics sounds with a free online sound listening game from Tiny Steps. No login required.',
+      'Play a free A-Z phonics sounds game for kids. Listen to 26 basic alphabet letter sounds and choose the matching picture. No login required.',
     canonicalPath: '/free-sound-listening-game-for-kids',
     ogType: 'website',
   },
