@@ -33,6 +33,11 @@ import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import type { RescheduleCreditStatus } from '../../../services/rescheduleCredits';
+import {
+  GRAMMAR_CURRICULUM_REVISION,
+  GRAMMAR_CURRICULUM_SCHEMA_VERSION,
+  planGrammarCurriculumProjection,
+} from '../../../content/grammarCurriculum';
 
 const DEFAULT_PAGE_SIZE = 25;
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
@@ -199,22 +204,6 @@ const STAGE_DEFINITIONS_BY_COURSE: Record<string, StageDefinition[]> = {
     { stageOrder: 5, label: 'Stage 5 — Endings', start: 16, end: 16 },
     { stageOrder: 6, label: 'Stage 6 — Revision', start: 17, end: 20 },
   ],
-  'basic-grammar': [
-    { stageOrder: 1, label: 'Stage 1 — Sentence Foundations', start: 1, end: 6 },
-    { stageOrder: 2, label: 'Stage 2 — Meaning Builders', start: 7, end: 12 },
-    { stageOrder: 3, label: 'Stage 3 — Where/When/How', start: 13, end: 18 },
-    { stageOrder: 4, label: 'Stage 4 — Longer Sentences', start: 19, end: 24 },
-    { stageOrder: 5, label: 'Stage 5 — Asking + Punctuation', start: 25, end: 30 },
-    { stageOrder: 6, label: 'Stage 6 — Tenses Basics', start: 31, end: 36 },
-  ],
-  'advanced-grammar': [
-    { stageOrder: 1, label: 'Stage 1 — Tense Control', start: 1, end: 6 },
-    { stageOrder: 2, label: 'Stage 2 — Perfect Tenses + Modals', start: 7, end: 12 },
-    { stageOrder: 3, label: 'Stage 3 — Clauses + Complex Sentences', start: 13, end: 18 },
-    { stageOrder: 4, label: 'Stage 4 — Voice + Reported Speech', start: 19, end: 24 },
-    { stageOrder: 5, label: 'Stage 5 — Paragraph Cohesion', start: 25, end: 30 },
-    { stageOrder: 6, label: 'Stage 6 — Tone + Argument + Impact', start: 31, end: 36 },
-  ],
   'basic-public-speaking': [
     { stageOrder: 1, label: 'Stage 1 — Comfort + Routine', start: 1, end: 6 },
     { stageOrder: 2, label: 'Stage 2 — Clear Speaking', start: 7, end: 12 },
@@ -242,84 +231,6 @@ const resolveStageByLessonNumber = (
   if (!stages) return null;
   return stages.find((stage) => lessonNumber >= stage.start && lessonNumber <= stage.end) ?? null;
 };
-
-const GRAMMAR_BASIC_LABELS = [
-  'Nouns: people, places, things',
-  'Pronouns: he/she/they',
-  'Make a simple sentence (noun + verb)',
-  'Verb choice: is/are',
-  'Fix sentence basics (caps + full stop)',
-  'Revision: sentence foundations',
-  'Verbs: action words',
-  'Adjectives: describing words',
-  'Add an adjective',
-  'Articles: a/an/the',
-  'Capital letters check',
-  'Revision: meaning builders',
-  'Prepositions: in/on/under',
-  'Adverbs: how/when',
-  'Add a preposition phrase',
-  'Choose the correct preposition',
-  'Edit for adverbs',
-  'Revision: where/when/how',
-  'Conjunctions: and/but/because',
-  'Plurals: s/es',
-  'Join two sentences',
-  'Plural vs singular',
-  'Fix run-on sentences',
-  'Revision: longer sentences',
-  'Question words: who/what/where',
-  'Questions vs statements',
-  'Question marks',
-  'Exclamations: wow!/oh!',
-  'Edit question sentences',
-  'Revision: asking + punctuation',
-  'Tenses: past/present/future',
-  'Irregular verbs: go/went',
-  'Time words in sentences',
-  'Choose the correct tense',
-  'Fix tense mistakes',
-  'Revision: tenses capstone',
-];
-
-const GRAMMAR_ADVANCED_LABELS = [
-  'Simple vs continuous tense',
-  'Time clauses (when/while)',
-  'Choose the correct tense',
-  'Edit tense shifts',
-  'Tense consistency in paragraphs',
-  'Revision: tense control',
-  'Perfect tenses (have/has/had)',
-  'Present perfect vs past simple',
-  'Modals: can/must/should',
-  'Modal meaning & choice',
-  'Edit modal sentences',
-  'Revision: perfect + modals',
-  'Clauses: independent/dependent',
-  'Relative clauses: who/which/that',
-  'Complex sentences',
-  'Clause punctuation (comma)',
-  'Fix fragments',
-  'Revision: clauses',
-  'Passive voice',
-  'Active → passive',
-  'Reported speech',
-  'Reported speech tense shifts',
-  'Edit for clarity (voice + speech)',
-  'Revision: voice + speech',
-  'Punctuation: commas/semicolons',
-  'Transition words',
-  'Paragraph structure',
-  'Choose a transition',
-  'Edit paragraph cohesion',
-  'Revision: paragraphs',
-  'Tone + formality',
-  'Argument structure: claim/reason',
-  'Evidence sentence',
-  'Word choice for impact',
-  'Counterargument',
-  'Revision: capstone',
-];
 
 const SPEAKING_BASIC_LABELS = [
   'Confidence warm-up',
@@ -401,8 +312,6 @@ const SPEAKING_ADVANCED_LABELS = [
 
 const CURRICULUM_DISPLAY_TITLES = {
   ...PHONICS_DISPLAY_TITLES,
-  ...buildDisplayTitleMap('basic-grammar', buildLessonTitles(GRAMMAR_BASIC_LABELS)),
-  ...buildDisplayTitleMap('advanced-grammar', buildLessonTitles(GRAMMAR_ADVANCED_LABELS)),
   ...buildDisplayTitleMap('basic-public-speaking', buildLessonTitles(SPEAKING_BASIC_LABELS)),
   ...buildDisplayTitleMap('advanced-public-speaking', buildLessonTitles(SPEAKING_ADVANCED_LABELS)),
 };
@@ -1215,27 +1124,6 @@ const PHONICS_CURRICULUM_TOPICS = [
   return {
     ...topic,
     area: 'phonics',
-    displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
-    stageLabel: stage?.label ?? null,
-    stageOrder: stage?.stageOrder ?? null,
-    rubricType: overrides.rubricType,
-    subskillChips: overrides.subskillChips,
-    confusionOptions: overrides.confusionOptions,
-  };
-});
-
-const GRAMMAR_CURRICULUM_TOPICS = [
-  ...buildSequentialTopics('basic-grammar', 'grammar', GRAMMAR_BASIC_LABELS),
-  ...buildSequentialTopics('advanced-grammar', 'grammar', GRAMMAR_ADVANCED_LABELS),
-].map((topic) => {
-  const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
-  const overrides = applyLessonOverrides(topic, rubricType);
-  const stage = resolveStageByLessonNumber(
-    topic.courseId,
-    extractLessonNumber(topic.lesson, topic.id),
-  );
-  return {
-    ...topic,
     displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
     stageLabel: stage?.label ?? null,
     stageOrder: stage?.stageOrder ?? null,
@@ -2814,13 +2702,74 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       courseIds: ['phonics-foundations', 'early-phonics', 'advanced-phonics'],
     });
 
-  const handleSyncCurriculumGrammar = () =>
-    syncCurriculumArea({
-      area: 'grammar',
-      label: 'Grammar',
-      topics: GRAMMAR_CURRICULUM_TOPICS,
-      courseIds: ['basic-grammar', 'advanced-grammar'],
-    });
+  const handleSyncCurriculumGrammar = async () => {
+    if (!isAdmin || isCurriculumSyncing || syncCurriculumStatus.grammar) return;
+    setSyncCurriculumStatus((prev) => ({ ...prev, grammar: true }));
+    try {
+      const curriculumRef = doc(db, 'config', 'curriculumTopics');
+      const snap = await getDoc(curriculumRef);
+      const existing = snap.exists() ? (snap.data() as Record<string, unknown>) : {};
+      const plan = planGrammarCurriculumProjection(existing);
+      console.info('[grammar-curriculum-sync] audit', plan);
+
+      if (!plan.hasChanges) {
+        toast({
+          title: 'Grammar curriculum already synchronized',
+          description: `Revision ${plan.newRevision}; Basic ${plan.basicCount}, Advanced ${plan.advancedCount}. No write required.`,
+        });
+        return;
+      }
+
+      const detail = [
+        `Previous revision: ${plan.previousRevision ?? 'none'}`,
+        `New revision: ${plan.newRevision}`,
+        `Basic topics: ${plan.basicCount}`,
+        `Advanced topics: ${plan.advancedCount}`,
+        `Added IDs: ${plan.addedIds.length}`,
+        `Changed IDs: ${plan.changedIds.length}`,
+        `Stale IDs detected: ${plan.staleIds.length}`,
+        `Duplicate IDs detected: ${plan.duplicateIds.length}`,
+      ].join('\n');
+      const auditLists = [
+        plan.addedIds.length ? `Added IDs: ${plan.addedIds.join(', ')}` : '',
+        plan.changedTopics.length
+          ? `Changed labels/metadata: ${plan.changedTopics.map((topic) => `${topic.id} (${topic.previousLabel ?? 'missing'} → ${topic.nextLabel})`).join('; ')}`
+          : '',
+        plan.staleIds.length ? `Stale IDs detected: ${plan.staleIds.join(', ')}` : '',
+        plan.duplicateIds.length ? `Duplicate IDs detected: ${plan.duplicateIds.join(', ')}` : '',
+      ].filter(Boolean).join('\n');
+      if (!window.confirm(`Sync Canonical Grammar Curriculum?\n\n${detail}${auditLists ? `\n\n${auditLists}` : ''}\n\nHistorical progress will not be modified.`)) {
+        return;
+      }
+
+      const payload: Record<string, unknown> = {
+        topics: plan.topics,
+        grammarCurriculumRevision: GRAMMAR_CURRICULUM_REVISION,
+        grammarCurriculumSchemaVersion: GRAMMAR_CURRICULUM_SCHEMA_VERSION,
+        grammarCurriculumSyncedAt: serverTimestamp(),
+        grammarCurriculumSyncedBy: user?.uid ?? null,
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid ?? null,
+      };
+      if (!snap.exists() || !existing.createdAt) payload.createdAt = serverTimestamp();
+      if (!snap.exists() || !existing.createdBy) payload.createdBy = user?.uid ?? null;
+      await setDoc(curriculumRef, payload, { merge: true });
+
+      toast({
+        title: 'Canonical Grammar curriculum synchronized',
+        description: `Revision ${plan.newRevision}; Basic ${plan.basicCount}, Advanced ${plan.advancedCount}; ${plan.addedIds.length} added, ${plan.changedIds.length} changed, ${plan.staleIds.length} stale IDs reported.`,
+      });
+    } catch (err: any) {
+      console.error('Sync canonical Grammar curriculum failed', err);
+      toast({
+        title: 'Grammar curriculum sync failed',
+        description: err?.message || 'Unable to sync canonical Grammar curriculum.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncCurriculumStatus((prev) => ({ ...prev, grammar: false }));
+    }
+  };
 
   const handleSyncCurriculumSpeaking = () =>
     syncCurriculumArea({
@@ -2964,7 +2913,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               disabled={isCurriculumSyncing}
               className="h-8 text-xs"
             >
-              {syncCurriculumStatus.grammar ? 'Syncing Grammar...' : 'Sync Curriculum (Grammar)'}
+              {syncCurriculumStatus.grammar ? 'Auditing Grammar...' : 'Sync Canonical Grammar Curriculum'}
             </Button>
             <Button
               size="sm"

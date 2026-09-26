@@ -5,6 +5,7 @@ import {
 } from '../config/pricing';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { PHONICS_LESSONS_BY_COURSE, PHONICS_STAGE_DEFINITIONS } from './phonicsCurriculum';
+import { buildPublicGrammarStages } from './grammarCurriculum';
 
 // Lightweight course catalog and deep curriculum samples
 export type CourseTrack = 'phonics' | 'grammar' | 'speaking';
@@ -220,84 +221,6 @@ const ADVANCED_PHONICS_LESSONS = PHONICS_LESSONS_BY_COURSE['advanced-phonics'].m
   (lesson) => lesson.displayTitle,
 );
 
-const GRAMMAR_BASIC_LABELS = [
-  'Nouns',
-  'Proper Nouns',
-  'Verbs',
-  'Adjectives',
-  'Pronouns',
-  'Revision',
-  'Singular and Plural — Part 1',
-  'Singular and Plural — Part 2',
-  'Articles — a / an',
-  'Articles — the',
-  'Prepositions',
-  'Revision',
-  'Capital Letters and Full Stop',
-  'Question Mark',
-  'Exclamation Mark and Comma',
-  'Simple Sentences',
-  'Sentence Formation',
-  'Revision',
-  'Conjunctions — Part 1',
-  'Conjunctions — Part 2',
-  'Adverbs — How',
-  'Adverbs — When and Where',
-  'Expanding Sentences',
-  'Revision',
-  'Simple Present Tense',
-  'Simple Past Tense',
-  'Simple Future Tense',
-  'Revision — Tenses Basics',
-  'Questions and Answers',
-  'Revision',
-  'Jumbled Sentences',
-  'Make Better Sentences',
-  'Picture Description',
-  'Paragraph Writing',
-  'Overall Revision — 1',
-  'Overall Revision — 2',
-];
-
-const GRAMMAR_ADVANCED_LABELS = [
-  'Subject, Verb & Object',
-  'Simple Present Tense',
-  'Simple Past Tense',
-  'Simple Future Tense',
-  'Simple Tenses Revision',
-  'Expanding a Basic Sentence',
-  'Present Time: Simple Present vs Present Continuous',
-  'Past Time: Simple Past vs Past Continuous',
-  'Talking About the Future Naturally',
-  'Present Perfect & Simple Past',
-  'Past Perfect & Event Sequence',
-  'Tense Mastery: Speak, Write & Edit',
-  'Forming Questions Naturally',
-  'Negative Sentences & Short Answers',
-  'Modal Verbs: Meaning & Choice',
-  'Talking About Quantity Accurately',
-  'Clear Pronoun Reference & Avoiding Repetition',
-  'Grammar Accuracy Challenge',
-  'Compound Sentences',
-  'Expressing Reason & Result',
-  'Expressing Time & Sequence',
-  'Conditions & Possibilities',
-  'Contrast & Concession',
-  'Connecting Ideas Mastery',
-  'Independent & Dependent Clauses',
-  'Relative Clauses',
-  'Sentence Combining & Sentence Variety',
-  'Sentence Repair: Fragments, Run-ons & Awkward Sentences',
-  'Direct & Reported Speech',
-  'Active & Passive Voice + Tone',
-  'Building a Powerful Paragraph',
-  'Cohesion & Paragraph Flow',
-  'Narrative Speaking & Writing',
-  'Description & Explanation',
-  'Opinion, Reason & Evidence',
-  'Final Grammar, Speaking & Writing Mastery Showcase',
-];
-
 const SPEAKING_BASIC_LABELS = [
   'Warm-up routine',
   'Eye contact basics',
@@ -375,8 +298,6 @@ const SPEAKING_ADVANCED_LABELS = [
   'Revision: showcase',
 ];
 
-const GRAMMAR_BASIC_LESSONS = buildLessonTitles(GRAMMAR_BASIC_LABELS);
-const GRAMMAR_ADVANCED_LESSONS = buildLessonTitles(GRAMMAR_ADVANCED_LABELS);
 const SPEAKING_BASIC_LESSONS = buildLessonTitles(SPEAKING_BASIC_LABELS);
 const SPEAKING_ADVANCED_LESSONS = buildLessonTitles(SPEAKING_ADVANCED_LABELS);
 
@@ -399,101 +320,6 @@ const EARLY_PHONICS_STAGES = toPublicPhonicsStages(
 const ADVANCED_PHONICS_STAGES = toPublicPhonicsStages(
   PHONICS_STAGE_DEFINITIONS['advanced-phonics'],
 );
-
-const GRAMMAR_BASIC_STAGES = [
-  { title: 'Stage 1 — Word Foundations', start: 1, end: 6, focus: 'Goal: Identify and understand the main basic word types.' },
-  { title: 'Stage 2 — Grammar Basics', start: 7, end: 12, focus: 'Goal: Learn core grammar rules and usage basics.' },
-  { title: 'Stage 3 — Sentence Building', start: 13, end: 18, focus: 'Goal: Build correct sentences with proper punctuation.' },
-  { title: 'Stage 4 — Conjunctions and Adverbs', start: 19, end: 24, focus: 'Goal: Connect ideas and add detail to sentences.' },
-  { title: 'Stage 5 — Tenses Basics', start: 25, end: 30, focus: 'Goal: Learn the three basic tenses in a simple and gradual way.' },
-  { title: 'Stage 6 — Sentence Writing and Final Revision', start: 31, end: 36, focus: 'Goal: Apply learning to build and write meaningful sentences and short paragraphs.' },
-];
-
-const GRAMMAR_ADVANCED_STAGES: CurriculumStageDefinition[] = [
-  {
-    title: 'Stage 1 — Sentence Foundations',
-    start: 1,
-    end: 6,
-    focus: 'Goal: Build accurate sentences and control the three basic time frames.',
-    learns: [
-      'Build complete and grammatically correct sentences',
-      'Use present, past, and future simple tenses accurately',
-      'Choose the correct tense according to time and meaning',
-      'Expand basic sentences with meaningful detail',
-      'Improve sentence clarity and structure',
-    ],
-  },
-  {
-    title: 'Stage 2 — Tense Control',
-    start: 7,
-    end: 12,
-    focus: 'Goal: Use different tense forms naturally while speaking and writing.',
-    learns: [
-      'Distinguish routines from actions happening now',
-      'Describe completed and ongoing past actions accurately',
-      'Talk naturally about future plans, arrangements, and predictions',
-      'Use present perfect to connect past experiences with the present',
-      'Sequence past events clearly using past perfect',
-      'Maintain accurate tense across connected speaking and writing',
-    ],
-  },
-  {
-    title: 'Stage 3 — Grammar Accuracy',
-    start: 13,
-    end: 18,
-    focus: 'Goal: Speak and write with greater grammatical accuracy in everyday communication.',
-    learns: [
-      'Form grammatically correct questions using natural word order',
-      'Build accurate negative sentences and short responses',
-      'Use modal verbs for ability, possibility, advice, permission, and obligation',
-      'Talk about quantity using appropriate expressions',
-      'Use pronouns clearly without confusing the reader or listener',
-      'Identify and correct common grammatical mistakes independently',
-    ],
-  },
-  {
-    title: 'Stage 4 — Connecting Ideas',
-    start: 19,
-    end: 24,
-    focus: 'Goal: Join ideas smoothly and express relationships between them clearly.',
-    learns: [
-      'Combine related ideas into compound sentences',
-      'Explain reasons and results clearly',
-      'Organise events using accurate time and sequence language',
-      'Express conditions, possibilities, and imagined situations',
-      'Connect contrasting ideas naturally',
-      'Turn short, disconnected sentences into fluent and connected English',
-    ],
-  },
-  {
-    title: 'Stage 5 — Advanced Sentence Craft',
-    start: 25,
-    end: 30,
-    focus: 'Goal: Build, combine, vary, and edit more sophisticated sentence structures.',
-    learns: [
-      'Understand how clauses work together to form complete sentences',
-      'Add information smoothly using relative clauses',
-      'Combine short sentences into richer and more mature structures',
-      'Recognise and correct fragments, run-ons, and awkward sentences',
-      'Use direct and reported speech accurately',
-      'Choose appropriate voice and tone according to purpose and audience',
-    ],
-  },
-  {
-    title: 'Stage 6 — Speaking & Writing Mastery',
-    start: 31,
-    end: 36,
-    focus: 'Goal: Apply grammar confidently in independent speaking, writing, and editing.',
-    learns: [
-      'Organise ideas into clear and well-developed paragraphs',
-      'Connect sentences smoothly and maintain logical flow',
-      'Narrate events using accurate tense and sentence variety',
-      'Describe and explain ideas clearly using precise language',
-      'Express opinions and support them with reasons and examples',
-      'Review, edit, and improve speaking and writing independently',
-    ],
-  },
-];
 
 const SPEAKING_BASIC_STAGES = [
   { title: 'Stage 1 — Comfort + Routine', start: 1, end: 6, focus: 'Feel comfortable speaking in class routines.' },
@@ -532,10 +358,13 @@ export const curriculumBySlug: Record<string, { weeks?: CurriculumWeek[] }> = {
     weeks: buildStageItems(ADVANCED_PHONICS_LESSONS, ADVANCED_PHONICS_STAGES),
   },
   'grammar-essentials': {
-    weeks: buildStageItems(GRAMMAR_BASIC_LESSONS, GRAMMAR_BASIC_STAGES),
+    weeks: buildPublicGrammarStages('grammar-essentials'),
+  },
+  grammar: {
+    weeks: buildPublicGrammarStages('grammar'),
   },
   'grammar-mastery': {
-    weeks: buildStageItems(GRAMMAR_ADVANCED_LESSONS, GRAMMAR_ADVANCED_STAGES),
+    weeks: buildPublicGrammarStages('grammar-mastery'),
   },
   'public-speaking-foundations': {
     weeks: buildStageItems(SPEAKING_BASIC_LESSONS, SPEAKING_BASIC_STAGES),
@@ -554,10 +383,10 @@ export const curriculumBySlug: Record<string, { weeks?: CurriculumWeek[] }> = {
     weeks: buildStageItems(ADVANCED_PHONICS_LESSONS, ADVANCED_PHONICS_STAGES),
   },
   'basic-grammar': {
-    weeks: buildStageItems(GRAMMAR_BASIC_LESSONS, GRAMMAR_BASIC_STAGES),
+    weeks: buildPublicGrammarStages('basic-grammar'),
   },
   'advanced-grammar': {
-    weeks: buildStageItems(GRAMMAR_ADVANCED_LESSONS, GRAMMAR_ADVANCED_STAGES),
+    weeks: buildPublicGrammarStages('advanced-grammar'),
   },
   'basic-public-speaking': {
     weeks: buildStageItems(SPEAKING_BASIC_LESSONS, SPEAKING_BASIC_STAGES),
