@@ -202,10 +202,10 @@ const learningPaths = [
 ]
 
 const accentClasses: Record<string, string> = {
-  emerald: 'from-emerald-50 via-white to-white text-emerald-700',
-  sky: 'from-sky-50 via-white to-white text-sky-700',
-  amber: 'from-amber-50 via-white to-white text-amber-700',
-  violet: 'from-violet-50 via-white to-white text-violet-700',
+  emerald: 'text-emerald-700',
+  sky: 'text-sky-700',
+  amber: 'text-amber-700',
+  violet: 'text-violet-700',
 };
 
 export function LearningPathsSection() {
@@ -225,7 +225,7 @@ export function LearningPathsSection() {
             <Link
               key={item.title}
               to={item.path}
-              className={`group rounded-[30px] border border-slate-200 bg-gradient-to-br p-6 shadow-[0_18px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.1)] ${accentClasses[item.accent]}`}
+              className={`group rounded-[24px] border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_10px_30px_rgba(15,23,42,0.06)] ${accentClasses[item.accent]}`}
             >
               <div className="text-3xl">{item.icon}</div>
               <h3 className="mt-4 text-xl font-bold text-slate-900">{item.title}</h3>
@@ -238,16 +238,14 @@ export function LearningPathsSection() {
           ))}
         </div>
 
-        <p className="mt-6 text-center text-sm leading-6 text-slate-600">
-          Looking for writing, spoken English, reading-fluency or confidence-specific support?{' '}
+        <div className="mt-6 flex justify-center">
           <Link
             to="/courses"
-            className="font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900"
+            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/70 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white hover:text-slate-950"
           >
-            View all Tiny Steps courses
+            Need a specialist path? View all courses <span aria-hidden="true">→</span>
           </Link>
-          .
-        </p>
+        </div>
       </div>
     </section>
   );
@@ -295,7 +293,7 @@ export function WhyTinyStepsSection() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {differentiators.map((item, index) => (
-              <article key={item.title} className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+              <article key={item.title} className="rounded-[22px] border border-slate-200 bg-white p-5">
                 <div className="text-xs font-bold tracking-[0.18em] text-slate-400">0{index + 1}</div>
                 <h3 className="mt-3 text-lg font-semibold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
