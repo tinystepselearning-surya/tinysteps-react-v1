@@ -32,6 +32,7 @@ jobs:
       hosting_changed: ${{ steps.impact.outputs.hosting_changed }}
       firestore_validation_required: ${{ steps.impact.outputs.firestore_validation_required }}
       firestore_rules_changed: ${{ steps.impact.outputs.firestore_rules_changed }}
+      firestore_indexes_changed: ${{ steps.impact.outputs.firestore_indexes_changed }}
       school_transport_required: ${{ steps.impact.outputs.school_transport_required }}
       avs_transport_required: ${{ steps.impact.outputs.avs_transport_required }}
       lead_iam_required: ${{ steps.impact.outputs.lead_iam_required }}
@@ -282,7 +283,8 @@ jobs:
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       (needs.analyze-changes.outputs.functions_deployment_required == 'true' ||
        needs.analyze-changes.outputs.hosting_changed == 'true' ||
-       needs.analyze-changes.outputs.firestore_rules_changed == 'true')
+       needs.analyze-changes.outputs.firestore_rules_changed == 'true' ||
+       needs.analyze-changes.outputs.firestore_indexes_changed == 'true')
     needs: [analyze-changes, build-and-test]
     runs-on: ubuntu-latest
     permissions:
@@ -478,6 +480,16 @@ jobs:
         run: >-
           npx firebase-tools@15.30.0 deploy
           --only firestore:rules
+          --project "${{ env.FIREBASE_PROJECT_ID }}"
+          --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+
+      - name: Deploy Firestore Composite Indexes
+        if: needs.analyze-changes.outputs.firestore_indexes_changed == 'true'
+        run: >-
+          npx firebase-tools@15.30.0 deploy
+          --only firestore:indexes
           --project "${{ env.FIREBASE_PROJECT_ID }}"
           --non-interactive
         env:
