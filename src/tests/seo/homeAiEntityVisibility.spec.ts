@@ -141,7 +141,7 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
   });
 
   it('keeps assessment reassurance factual and the closing CTA concise', () => {
-    expect(reassuranceSource).toContain('Free assessment. Clear recommendation. You decide.');
+    expect(reassuranceSource).toContain('Try the assessment before you decide');
     expect(reassuranceSource).toContain('No payment or enrolment commitment is required');
     expect(reassuranceSource).toContain('Recommend a starting point');
     expect(reassuranceSource).not.toContain('What parents leave the assessment with');
