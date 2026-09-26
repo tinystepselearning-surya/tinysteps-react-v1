@@ -4,7 +4,6 @@ import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
-  ULTRA_PREMIUM_PRICING,
 } from '../../config/pricing';
 import {
   FREE_DEMO_CTA_LABEL,
@@ -90,55 +89,19 @@ const PricingCrispSection: React.FC = () => {
           All standard 1:1 packages use the same per-class rate and class duration. Package size is a scheduling choice; the child&apos;s programme and starting level are determined separately.
         </p>
 
-        <div className="relative mt-8 overflow-hidden rounded-[32px] border border-amber-200/30 bg-gradient-to-br from-[#0a1224] via-[#111d38] to-[#1a2747] p-6 text-white shadow-[0_30px_90px_-45px_rgba(2,6,23,0.95)] md:p-8">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-300/25 blur-3xl" />
-          <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-sky-300/15 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="inline-flex rounded-full border border-amber-200/40 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-100">
-                Ultra Premium Program
-              </p>
-              <span className="inline-flex rounded-full bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900">
-                International Mentor Experience
-              </span>
-            </div>
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-              Classes with native English-speaking teachers
-            </h3>
-            <p className="mt-3 max-w-3xl text-sm text-slate-200 md:text-base">
-              Optional premium format for parents seeking global accent exposure, advanced speaking confidence, and a high-touch classroom experience.
-            </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {ULTRA_PREMIUM_PRICING.map((row) => (
-                <div
-                  key={row.ratio}
-                  className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-sm"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-200">
-                    {row.ratio}
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-white">{row.format}</p>
-                  <p className="mt-3 text-xl font-bold text-white">
-                    {formatINR(row.perClass)}
-                    <span className="ml-1 text-xs font-medium text-slate-200">{row.unitLabel}</span>
-                  </p>
-                  <p className="mt-1 text-sm text-slate-200">
-                    {formatINR(row.package12)} {row.packageLabel}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-100">
-              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1">Live interactive classes</span>
-              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1">Premium speaking & listening exposure</span>
-              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1">Structured Tiny Steps curriculum</span>
-            </div>
-            <p className="mt-4 text-xs text-slate-300">
-              Batch availability depends on age, level, and suitable peer matching.
+        <div className="mt-7 rounded-[24px] border border-slate-200 bg-slate-50/80 px-5 py-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Other class formats are available</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Small-group classes and optional native English-speaking teacher formats are offered on selected schedules. Keep the homepage decision simple; the full pricing page shows the current format and fee details.
             </p>
           </div>
+          <Link
+            to="/pricing"
+            className="mt-3 inline-flex shrink-0 text-sm font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900 sm:mt-0"
+          >
+            Compare all formats
+          </Link>
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
