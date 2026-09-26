@@ -1,8 +1,8 @@
 import React, { memo } from "react";
-import { CheckCircle2, Globe2, Mic2, Sparkles } from "lucide-react";
+import { Globe2, Mic2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import BookAssessmentForm from "../forms/BookAssessmentForm";
-import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL } from "../../config/publicFacts";
+import { PUBLIC_LEARNER_REACH_LABEL } from "../../config/publicFacts";
 
 const heroHighlights = [
   {
@@ -47,7 +47,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
       size === "large" ? "md:col-span-2" : "col-span-1"
     }`}
   >
-    <GlassCard className="h-full min-h-[168px] border-white/70 transition-all duration-300 group-hover:border-orange-200/70 md:min-h-[176px]">
+    <GlassCard className="h-full min-h-[148px] border-white/70 transition-all duration-300 group-hover:border-orange-200/70 md:min-h-[154px]">
       {/* premium hover glow (subtle) */}
       <div className="pointer-events-none absolute inset-0 rounded-[24px] opacity-0 transition-opacity duration-500 group-hover:opacity-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,106,0,0.20),transparent_60%)]" />
@@ -212,19 +212,6 @@ const ConversionHero: React.FC = () => {
               </Link>
             </div>
 
-            {/* BENTO GRID VALUE PROPS */}
-            <div className="mt-6 hidden grid-cols-1 gap-1 md:grid md:grid-cols-2 lg:grid-cols-3">
-              {heroHighlights.map((item) => (
-                <SunTile
-                  key={item.title}
-                  eyebrow={item.eyebrow}
-                  title={item.title}
-                  desc={item.desc}
-                  icon={item.icon}
-                />
-              ))}
-            </div>
-
           </div>
 
           {/* RIGHT FORM CARD */}
@@ -237,32 +224,20 @@ const ConversionHero: React.FC = () => {
               submitAriaLabel="Book Free 35-Minute Demo on WhatsApp"
             />
 
-            <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/88 px-4 py-4 text-sm text-slate-700 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-5">
-              <p className="font-medium leading-6 text-slate-800">
-                Live 1:1 and small-group classes • Standard 1:1 sessions: {PUBLIC_SESSION_DURATION_LABEL} • Weekly parent updates
-              </p>
-              <p className="mt-1.5 text-slate-600">
-                Calm routines, clear milestones, and consistent feedback make progress easy to see.
-              </p>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                <a
-                  href="https://wa.me/919618398383?text=Hi!%20I%27d%20like%20to%20learn%20more%20about%20Tiny%20Steps%20classes%20for%20my%20child."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 font-semibold text-emerald-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-100"
-                >
-                  <span className="text-lg">💬</span>
-                  Quick questions? WhatsApp us
-                </a>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                  Assessment-led placement • Transparent pricing
-                </span>
-              </div>
-            </div>
-
           </div>
+        </div>
+
+        {/* Shared proof row: keeps both hero columns visually balanced on tablet and desktop. */}
+        <div className="mt-5 hidden gap-2 md:grid md:grid-cols-3">
+          {heroHighlights.map((item) => (
+            <SunTile
+              key={item.title}
+              eyebrow={item.eyebrow}
+              title={item.title}
+              desc={item.desc}
+              icon={item.icon}
+            />
+          ))}
         </div>
       </div>
     </section>
