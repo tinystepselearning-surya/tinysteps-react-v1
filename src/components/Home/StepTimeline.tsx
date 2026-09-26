@@ -11,7 +11,6 @@ type Stage = {
   childLearns: string[];
   howWeTeach: string[];
   parentGets: string[];
-  proofTiles: { label: string; desc: string }[];
   ctaLabel?: string;
 };
 
@@ -37,12 +36,6 @@ const stages: Stage[] = [
       "Short home practice prompt connected to the lesson",
       "Progress snapshot: what’s strong + what needs practice",
     ],
-    proofTiles: [
-      { label: "Skill Snapshot", desc: "Sounds/letters mastered + current focus" },
-      { label: "Home Practice", desc: "One short practice task linked to the lesson" },
-      { label: "Teacher Note", desc: "What helped your child most today" },
-      { label: "Next Steps", desc: "What’s coming next (no surprises)" },
-    ],
     ctaLabel: "See a sample class flow",
   },
   {
@@ -66,12 +59,6 @@ const stages: Stage[] = [
       "Examples of what is becoming more secure",
       "A clear next reading priority for upcoming practice",
     ],
-    proofTiles: [
-      { label: "Reading Focus", desc: "The specific reading skill being strengthened" },
-      { label: "Text Evidence", desc: "What the child can do in connected reading" },
-      { label: "Meaning Check", desc: "How understanding is checked after reading" },
-      { label: "Next Priority", desc: "The next reading focus based on current performance" },
-    ],
   },
   {
     id: "grammar",
@@ -93,12 +80,6 @@ const stages: Stage[] = [
       "Simple explanation of the rule taught (parent-friendly)",
       "Common mistakes to watch for (1–2 only)",
       "Stage skill summary (grammar + writing)",
-    ],
-    proofTiles: [
-      { label: "Rule in 1 Line", desc: "What your child learned today" },
-      { label: "Mistake Watch", desc: "1–2 likely errors + quick fix" },
-      { label: "Practice Sheet", desc: "Short, focused practice (optional)" },
-      { label: "Stage Summary", desc: "What improved + what’s next" },
     ],
     ctaLabel: "See a sample grammar activity",
   },
@@ -123,12 +104,6 @@ const stages: Stage[] = [
       "What improved today (confidence/clarity/length)",
       "Next goal for the child (one focus at a time)",
     ],
-    proofTiles: [
-      { label: "Speaking Prompt", desc: "Today’s topic + easy home prompt" },
-      { label: "Coach Note", desc: "What to praise + what to fix gently" },
-      { label: "Word Upgrade", desc: "New words used in conversation" },
-      { label: "Next Goal", desc: "One clear target for next class" },
-    ],
     ctaLabel: "See a sample speaking routine",
   },
   {
@@ -152,20 +127,7 @@ const stages: Stage[] = [
       "Visible strengths and current focus areas",
       "A recommended next step based on the child’s progress",
     ],
-    proofTiles: [
-      { label: "Milestones", desc: "Visible progress checkpoints" },
-      { label: "Focus Areas", desc: "What is secure and what still needs practice" },
-      { label: "Next Step", desc: "The recommended focus for upcoming classes" },
-      { label: "Transfer", desc: "How skills are being used across tasks" },
-    ],
   },
-];
-
-const stageAccents = [
-  { glow: "shadow-[0_18px_45px_rgba(255,143,92,0.16)]", border: "from-[#ffe3d0] via-[#fff6e9] to-white", chip: "from-[#ff8f5c] to-[#ffb347]" },
-  { glow: "shadow-[0_18px_45px_rgba(89,195,255,0.16)]", border: "from-[#dff3ff] via-white to-[#eafcff]", chip: "from-[#59c3ff] to-[#7ddff8]" },
-  { glow: "shadow-[0_18px_45px_rgba(194,140,255,0.14)]", border: "from-[#f2e6ff] via-white to-[#ffe9f6]", chip: "from-[#c28cff] to-[#f472d0]" },
-  { glow: "shadow-[0_18px_45px_rgba(52,211,153,0.14)]", border: "from-[#e8fff1] via-white to-[#fff7dd]", chip: "from-[#34d399] to-[#a3e635]" },
 ];
 
 const StepTimeline: React.FC = () => {
@@ -173,7 +135,6 @@ const StepTimeline: React.FC = () => {
   const [modal, setModal] = useState<null | "flow" | "grammar" | "speaking">(null);
 
   const stage = stages[active];
-  const accent = stageAccents[active % stageAccents.length];
 
   const modalTitle = useMemo(() => {
     if (modal === "flow") return "Sample Class Flow (Phonics)";
@@ -193,7 +154,6 @@ const StepTimeline: React.FC = () => {
     <div className="flex flex-wrap justify-center gap-2">
       {stages.map((s, i) => {
         const isActive = i === active;
-        const a = stageAccents[i % stageAccents.length];
         return (
           <button
             key={s.id}
@@ -203,7 +163,7 @@ const StepTimeline: React.FC = () => {
             className={[
               "group rounded-full px-4 py-2 text-sm font-semibold transition",
               isActive
-                ? `bg-gradient-to-r ${a.chip} text-white shadow-lg`
+                ? "bg-slate-950 text-white shadow-sm"
                 : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50",
             ].join(" ")}
           >
@@ -216,8 +176,7 @@ const StepTimeline: React.FC = () => {
   );
 
   const StageDetail = () => (
-    <div className={`rounded-[28px] p-[1px] bg-gradient-to-br ${accent.border} ${accent.glow}`}>
-      <div className="rounded-[26px] bg-white p-6 md:p-7 ring-1 ring-slate-200/60">
+    <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6 md:p-7">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -244,7 +203,7 @@ const StepTimeline: React.FC = () => {
           {stage.ctaLabel && (
             <button
               onClick={() => openStageModal()}
-              className="hidden md:inline-flex rounded-full px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700 hover:opacity-95"
+              className="hidden rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 md:inline-flex"
             >
               {stage.ctaLabel}
             </button>
@@ -253,7 +212,7 @@ const StepTimeline: React.FC = () => {
 
         {/* 3 columns */}
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
             <div className="text-xs font-extrabold tracking-wide text-slate-700">CHILD LEARNS</div>
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.childLearns.map((x) => (
@@ -265,7 +224,7 @@ const StepTimeline: React.FC = () => {
             </ul>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
             <div className="text-xs font-extrabold tracking-wide text-slate-700">HOW WE TEACH</div>
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.howWeTeach.map((x) => (
@@ -277,7 +236,7 @@ const StepTimeline: React.FC = () => {
             </ul>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
             <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENTS GET</div>
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.parentGets.map((x) => (
@@ -290,34 +249,20 @@ const StepTimeline: React.FC = () => {
           </div>
         </div>
 
-        {/* Proof tiles */}
-        <div className="mt-5">
-          <div className="text-xs font-extrabold tracking-wide text-slate-700">PROOF YOU CAN SEE</div>
-          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {stage.proofTiles.map((t) => (
-              <div key={t.label} className="rounded-2xl bg-white p-3 ring-1 ring-slate-200 hover:shadow-sm transition">
-                <div className="text-sm font-bold text-slate-900">{t.label}</div>
-                <div className="mt-1 text-xs text-slate-600">{t.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Mobile CTA */}
         {stage.ctaLabel && (
           <button
             onClick={() => openStageModal()}
-            className="mt-6 md:hidden w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700 hover:opacity-95"
+            className="mt-5 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 md:hidden"
           >
             {stage.ctaLabel}
           </button>
         )}
-      </div>
     </div>
   );
 
   return (
-    <section data-animate="fade-up" className="bg-white py-20">
+    <section data-animate="fade-up" className="bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-6xl px-6">
         {/* Title */}
         <div className="text-center">
@@ -331,17 +276,17 @@ const StepTimeline: React.FC = () => {
         </div>
 
         {/* Desktop pathway selector. Mobile uses one card per carousel slide to avoid duplicate controls. */}
-        <div className="mt-8 hidden md:block">
+        <div className="mt-7 hidden md:block">
           <StageSelector />
         </div>
 
         {/* Desktop detail */}
-        <div className="mt-10 hidden md:block">
+        <div className="mt-8 hidden md:block">
           <StageDetail />
         </div>
 
         {/* Mobile carousel */}
-        <div className="mt-10 md:hidden">
+        <div className="mt-8 md:hidden">
           <Carousel className="-mx-2" autoRotateMs={6500}>
             {stages.map((s, i) => (
               <div key={s.id} className="px-2">
@@ -355,12 +300,11 @@ const StepTimeline: React.FC = () => {
                   </button>
                 </div>
                 {/* Render detail for this slide */}
-                <div className="rounded-[28px] p-[1px] bg-gradient-to-br from-slate-100 via-white to-slate-50">
-                  <div className="rounded-[26px] bg-white p-5 ring-1 ring-slate-200">
+                <div className="rounded-[22px] border border-slate-200 bg-white p-5">
                     <h3 className="text-lg font-bold text-slate-900">{s.title}</h3>
                     <p className="mt-1 text-sm text-slate-600">{s.subtitle}</p>
                     <div className="mt-3 grid grid-cols-1 gap-3">
-                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                      <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
                         <div className="text-xs font-extrabold tracking-wide text-slate-700">CHILD PRACTISES</div>
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
                           {s.childLearns.slice(0, 2).map((x) => (
@@ -371,7 +315,7 @@ const StepTimeline: React.FC = () => {
                           ))}
                         </ul>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                      <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
                         <div className="text-xs font-extrabold tracking-wide text-slate-700">TEACHER GUIDANCE</div>
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
                           {s.howWeTeach.slice(0, 2).map((x) => (
@@ -382,7 +326,7 @@ const StepTimeline: React.FC = () => {
                           ))}
                         </ul>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                      <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
                         <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENT VISIBILITY</div>
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
                           {s.parentGets.slice(0, 2).map((x) => (
@@ -399,13 +343,12 @@ const StepTimeline: React.FC = () => {
                             setActive(i);
                             openStageModal(s.id);
                           }}
-                          className="w-full rounded-2xl bg-gradient-to-r from-slate-900 to-slate-700 px-4 py-3 text-sm font-semibold text-white"
+                          className="w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                           {s.ctaLabel}
                         </button>
                       )}
                     </div>
-                  </div>
                 </div>
               </div>
             ))}
