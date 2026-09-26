@@ -33,6 +33,7 @@ describe('Commercial C7-R4 knowledge conversion measurement', () => {
   it('recognizes frozen C7 knowledge surfaces rather than arbitrary marketing pages', () => {
     expect(isCommercialC7MeasuredKnowledgePath('/blog/online-english-classes-for-kids-india')).toBe(true);
     expect(isCommercialC7MeasuredKnowledgePath('/resources/phonics/kn-silent-k-phonics')).toBe(true);
+    expect(isCommercialC7MeasuredKnowledgePath('/resources/grammar/a-an-articles-for-kids')).toBe(true);
     expect(isCommercialC7MeasuredKnowledgePath('/pricing')).toBe(false);
     expect(isCommercialC7MeasuredKnowledgePath('/book-demo')).toBe(false);
   });

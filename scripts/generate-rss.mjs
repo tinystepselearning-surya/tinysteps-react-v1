@@ -22,6 +22,9 @@ import {
   PHONICS_PUBLISHED_RESOURCE_PAGES,
 } from '../src/lib/phonicsPublicationRegistry.js';
 import {
+  GRAMMAR_PROGRAMMATIC_PAGES,
+} from '../src/lib/grammarProgrammaticRegistry.js';
+import {
   AI_ANSWER_LAYER_DEFINITIONS,
   AI_ANSWER_LAYERS,
   AI_ANSWER_LAYER_MACHINE_JSON_PATH,
@@ -56,10 +59,9 @@ const REQUIRED_URLS = [
   'https://tinystepslearning.com/writing-classes-for-kids',
 ];
 
-const RETIRED_BLOG_SOURCE_REDIRECTS = new Map([
-  ['spoken-english-classes-for-kids-confidence', '/blog/child-understands-english-but-does-not-speak'],
+const EXCLUDED_BLOG_SLUGS = new Set([
+  'spoken-english-classes-for-kids-confidence',
 ]);
-const EXCLUDED_BLOG_SLUGS = new Set(RETIRED_BLOG_SOURCE_REDIRECTS.keys());
 const BLOG_SLUG_PATH = path.join(ROOT_DIR, 'src/content/blog/posts');
 const BLOG_DEFAULTS_PATH = path.join(ROOT_DIR, 'src/content/blog/shared/defaults.ts');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
@@ -238,45 +240,6 @@ function buildRssXml({ title, description, feedPath, items }) {
 }
 function writeFile(targetPath, content) { fs.mkdirSync(path.dirname(targetPath), { recursive: true }); fs.writeFileSync(targetPath, content, 'utf8'); }
 
-function buildRetiredEditorialSourceCorpus() {
-  const publicationDates = parsePublicationDateMap(BLOG_DEFAULTS_PATH);
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const records = [];
-
-  for (const postFile of walkFiles(BLOG_SLUG_PATH)) {
-    const content = fs.readFileSync(postFile, 'utf8');
-    const sourceSlug = extractSingleQuotedField(content, 'slug');
-    if (!sourceSlug || !RETIRED_BLOG_SOURCE_REDIRECTS.has(sourceSlug)) continue;
-
-    const sourceTitle = extractSingleQuotedField(content, 'title') || fallbackTitleFromPath('/blog/' + sourceSlug);
-    const dateFromPost = extractSingleQuotedField(content, 'date');
-    const date = dateFromPost || publicationDates.get(sourceSlug) || '';
-    if (date && date > todayIso) continue;
-
-    const excerpt = extractSingleQuotedField(content, 'excerpt');
-    const metaDescription = extractSingleQuotedField(content, 'metaDescription');
-    const quickAnswer = extractSingleQuotedField(content, 'quickAnswer');
-    const description = metaDescription || excerpt || quickAnswer || SITE_DESCRIPTION;
-    const redirectTarget = RETIRED_BLOG_SOURCE_REDIRECTS.get(sourceSlug);
-
-    records.push({
-      id: `retired-blog-${sourceSlug}`,
-      content_type: 'retired-editorial-source',
-      slug: sourceSlug,
-      title: sourceTitle,
-      summary: description,
-      source_url: SITE_URL + '/blog/' + sourceSlug,
-      redirect_target_url: toCanonicalAbsoluteUrl(redirectTarget),
-      indexing_state: 'redirected',
-      retrieval_role: 'redirect-lineage-only',
-      answer_eligible: false,
-      citation_eligible: false,
-    });
-  }
-
-  return records.sort((a, b) => a.source_url.localeCompare(b.source_url));
-}
-
 function buildEditorialBlogCorpus(blogItems) {
   return blogItems.map((item) => ({
     id: `blog-${item.slug}`,
@@ -312,8 +275,30 @@ function buildProgrammaticPhonicsCorpus() {
   }));
 }
 
+function buildProgrammaticGrammarCorpus() {
+  return GRAMMAR_PROGRAMMATIC_PAGES.map((page) => ({
+    id: `grammar-resource-${page.id}`,
+    content_type: 'programmatic-grammar-guide',
+    title: page.cardTitle,
+    summary: page.seoDescription || page.quickAnswer,
+    canonical_url: toCanonicalAbsoluteUrl(page.path),
+    sequence_order: page.order,
+    indexing_state: 'indexable',
+    retrieval_role: 'canonical-informational',
+    answer_eligible: true,
+    related_urls: [...new Set((page.relatedPaths || []).map(toCanonicalAbsoluteUrl))],
+    practice_urls: [
+      toCanonicalAbsoluteUrl('/free-grammar-games-for-kids'),
+      toCanonicalAbsoluteUrl('/free-sentence-building-games-for-kids'),
+    ],
+  }));
+}
+
 function buildPublicRouteCorpus(blogItemMap) {
-  const programmaticPaths = new Set(PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page.path));
+  const programmaticPaths = new Set([
+    ...PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page.path),
+    ...GRAMMAR_PROGRAMMATIC_PAGES.map((page) => page.path),
+  ]);
   const manifestByPath = new Map(PUBLIC_ROUTE_MANIFEST.map((entry) => [entry.path, entry]));
   const routePaths = new Set([
     ...PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path),
@@ -357,28 +342,21 @@ function buildPublicRouteCorpus(blogItemMap) {
   return [...map.values()].sort((a, b) => a.canonical_url.localeCompare(b.canonical_url));
 }
 
-function buildCompleteBlogLlmSection(blogItems, retiredSources = [], { detailed = false } = {}) {
+function buildCompleteBlogLlmSection(blogItems, { detailed = false } = {}) {
   const indexableCount = blogItems.filter((item) => item.indexingState === 'indexable').length;
   const noindexCount = blogItems.length - indexableCount;
-  const totalSourceRecords = blogItems.length + retiredSources.length;
   const lines = [
     BLOG_CORPUS_LLM_SECTION_HEADING,
     '',
-    `Generated editorial estate: ${blogItems.length} live canonical Tiny Steps articles + ${retiredSources.length} retired redirect lineage = ${totalSourceRecords} source records accounted for (${indexableCount} indexable; ${noindexCount} live supporting-only/noindex where policy requires it).`,
+    `Generated editorial estate: ${blogItems.length} live canonical Tiny Steps articles (${indexableCount} indexable; ${noindexCount} live supporting-only/noindex where policy requires it).`,
     '',
-    'This generated list is the complete live editorial coverage source for LLM discovery. Retired redirect sources are recorded only as lineage and must not be cited or treated as independent answer owners.',
+    'This generated list is the complete live editorial coverage source for LLM discovery. Retired redirect sources are excluded from the content corpus and are not independent answer owners.',
     '',
   ];
   for (const item of blogItems) {
     const status = item.indexingState === 'noindex' ? ' [supporting-only / noindex]' : '';
     const description = detailed ? ` — ${item.description}` : '';
     lines.push(`- [${item.title}](${item.link})${status}${description}`);
-  }
-  if (retiredSources.length) {
-    lines.push('', '### Retired editorial redirect lineage', '');
-    for (const item of retiredSources) {
-      lines.push(`- ${item.source_url} → ${item.redirect_target_url} [redirect lineage only; do not cite as an article]`);
-    }
   }
   return lines.join('\n').trim();
 }
@@ -400,14 +378,15 @@ function resolveAiAnswerSelector(entry) {
   const pathName = String(entry.canonicalPath || '');
   if (pathName.startsWith('/blog/')) return '.ts-answer-summary';
   if (pathName.startsWith('/resources/phonics/')) return '.ts-answer-summary';
+  if (pathName.startsWith('/resources/grammar/')) return '.ts-answer-summary';
   if (['/resources/phonics', '/resources/grammar', '/resources/speaking'].includes(pathName)) return '.ts-answer-summary';
   return null;
 }
 
 function buildAiResourceIndex(blogItems, blogItemMap) {
   const editorialBlogs = buildEditorialBlogCorpus(blogItems);
-  const retiredEditorialSources = buildRetiredEditorialSourceCorpus();
   const programmaticPhonics = buildProgrammaticPhonicsCorpus();
+  const programmaticGrammar = buildProgrammaticGrammarCorpus();
   const publicRoutes = buildPublicRouteCorpus(blogItemMap);
   const layers = AI_ANSWER_LAYER_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -441,16 +420,15 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
     ],
     corpus_counts: {
       editorial_blogs: editorialBlogs.length,
-      retired_editorial_sources: retiredEditorialSources.length,
-      editorial_source_records: editorialBlogs.length + retiredEditorialSources.length,
       programmatic_phonics_guides: programmaticPhonics.length,
+      programmatic_grammar_guides: programmaticGrammar.length,
       additional_public_routes: publicRoutes.length,
-      connected_public_content: editorialBlogs.length + retiredEditorialSources.length + programmaticPhonics.length + publicRoutes.length,
+      connected_public_content: editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + publicRoutes.length,
     },
     corpus: {
       editorial_blogs: editorialBlogs,
-      retired_editorial_sources: retiredEditorialSources,
       programmatic_phonics_guides: programmaticPhonics,
+      programmatic_grammar_guides: programmaticGrammar,
       additional_public_routes: publicRoutes,
     },
     layers,
@@ -480,21 +458,20 @@ function buildAiResourceText(index) {
 
   lines.push('## Connected content corpus', '');
   lines.push('Editorial blogs: ' + index.corpus_counts.editorial_blogs);
-  lines.push('Retired editorial source lineages: ' + index.corpus_counts.retired_editorial_sources);
-  lines.push('Editorial source records accounted for: ' + index.corpus_counts.editorial_source_records);
   lines.push('Programmatic phonics guides: ' + index.corpus_counts.programmatic_phonics_guides);
+  lines.push('Programmatic grammar guides: ' + index.corpus_counts.programmatic_grammar_guides);
   lines.push('Additional public routes: ' + index.corpus_counts.additional_public_routes, '');
 
   lines.push('### Editorial blogs', '');
   for (const item of index.corpus.editorial_blogs) {
     lines.push('- ' + item.title + ' — ' + item.canonical_url + ' [' + item.indexing_state + '; ' + item.retrieval_role + ']');
   }
-  lines.push('', '### Retired editorial source lineages', '');
-  for (const item of index.corpus.retired_editorial_sources) {
-    lines.push('- ' + item.source_url + ' -> ' + item.redirect_target_url + ' [redirect-lineage-only; do not cite as an article]');
-  }
   lines.push('', '### Programmatic phonics guides', '');
   for (const item of index.corpus.programmatic_phonics_guides) {
+    lines.push('- ' + item.title + ' — ' + item.canonical_url);
+  }
+  lines.push('', '### Programmatic grammar guides', '');
+  for (const item of index.corpus.programmatic_grammar_guides) {
     lines.push('- ' + item.title + ' — ' + item.canonical_url);
   }
   lines.push('', '### Additional public routes', '');
@@ -514,8 +491,8 @@ function buildAiAnswerLlmSection(index) {
     '- [Machine-readable JSON answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_JSON_PATH + ')',
     '- [Plain-text answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_TEXT_PATH + ')',
     '- Coverage: ' + counts,
-    '- Connected editorial estate: ' + index.corpus_counts.editorial_blogs + ' live canonical articles + ' + index.corpus_counts.retired_editorial_sources + ' retired redirect lineage = ' + index.corpus_counts.editorial_source_records + ' source records accounted for.',
-    '- Connected content corpus: ' + index.corpus_counts.programmatic_phonics_guides + ' programmatic phonics guides; ' + index.corpus_counts.additional_public_routes + ' additional public routes.',
+    '- Connected editorial estate: ' + index.corpus_counts.editorial_blogs + ' live canonical articles.',
+    '- Connected content corpus: ' + index.corpus_counts.programmatic_phonics_guides + ' programmatic phonics guides; ' + index.corpus_counts.programmatic_grammar_guides + ' programmatic grammar guides; ' + index.corpus_counts.additional_public_routes + ' additional public routes.',
   ].join('\n');
 }
 
@@ -566,7 +543,6 @@ function normalizeLlmDiscoveryFiles(aiIndex) {
           link: entry.canonical_url,
           indexingState: entry.indexing_state,
         })),
-        aiIndex.corpus.retired_editorial_sources,
         { detailed: isFullDirectory },
       ),
       PHONICS_LLM_SECTION_HEADING,

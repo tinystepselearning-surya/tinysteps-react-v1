@@ -322,6 +322,12 @@ const ParentsHubPage: React.FC = () => {
                 >
                   Explore Full FAQ
                 </Link>
+                <Link
+                  to="/resources"
+                  className="inline-flex items-center rounded-full border border-white/18 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                >
+                  All Learning Resources
+                </Link>
               </div>
             </div>
 

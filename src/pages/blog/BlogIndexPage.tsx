@@ -264,7 +264,7 @@ const BlogIndexPage: FC = () => {
 
   const todayIso = new Date().toISOString().slice(0, 10);
   const publishedPosts = useMemo(
-    () => allPosts.filter((post) => isPublishedBlogPost(post, todayIso)),
+    () => allPosts.filter((post) => !post.hideFromList && isPublishedBlogPost(post, todayIso)),
     [allPosts, todayIso],
   );
   const sortedPublishedPosts = useMemo(() => sortBlogIndexPostsNewest(publishedPosts), [publishedPosts]);
@@ -478,6 +478,12 @@ const BlogIndexPage: FC = () => {
                   className="rounded-xl border border-white/20 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                 >
                   Book a Free Demo
+                </Link>
+                <Link
+                  to="/resources"
+                  className="rounded-xl border border-white/20 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+                >
+                  All Learning Resources
                 </Link>
               </div>
             </div>

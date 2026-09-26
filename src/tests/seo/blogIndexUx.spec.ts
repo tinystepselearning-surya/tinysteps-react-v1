@@ -18,11 +18,14 @@ import {
 } from '../../pages/blog/blogIndexUx';
 
 describe('B5 blog index UX model with post-B7 polish', () => {
-  it('uses the real normalized post-Brick-4 registry instead of a stale hard-coded article count', () => {
+  it('keeps 83 source records but exposes only the 82 live articles in public discovery', () => {
     expect(blogPosts.length).toBe(83);
-    expect(getPublishedCountLabel(blogPosts.length)).toBe('83 published articles');
+    const visiblePosts = blogPosts.filter((post) => !post.hideFromList);
+    expect(visiblePosts).toHaveLength(82);
+    expect(getPublishedCountLabel(visiblePosts.length)).toBe('82 published articles');
 
     const source = fs.readFileSync(path.join(process.cwd(), 'src/pages/blog/BlogIndexPage.tsx'), 'utf8');
+    expect(source).toContain('!post.hideFromList && isPublishedBlogPost');
     expect(source).not.toContain('56+ curated parent articles');
   });
 
