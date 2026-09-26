@@ -134,7 +134,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Solve a problem',
         title: 'Find the closest sentence or grammar bottleneck',
-        description: 'Start with the sentence or grammar difficulty you notice most, then open the guide that matches it.'
+        description: 'Start with the sentence or grammar difficulty you notice most, then open the guide that matches it.',
         links: [
           { title: 'My child knows grammar but makes mistakes', description: 'Check whether the issue is recall, transfer, editing or spontaneous use.', to: '/blog/child-knows-grammar-but-makes-mistakes', label: 'Check this grammar gap' },
           { title: 'Sentence formation is weak', description: 'Identify the difference between vocabulary, structure and sentence expansion problems.', to: '/blog/how-to-improve-sentence-formation-in-kids', label: 'Check sentence formation' },
@@ -147,7 +147,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Speaking & Communication Resources',
     eyebrow: 'Confident expression',
     intro:
-      'Use Tiny Steps speaking and communication resources to build fuller answers, organise ideas, practise speaking, or understand confidence and language gaps.'
+      'Use Tiny Steps speaking and communication resources to build fuller answers, organise ideas, practise speaking, or understand confidence and language gaps.',
     canonicalPath: '/resources/speaking',
     allGuidesTo: '/blog?topic=Speaking%20%26%20Communication',
     allGuidesLabel: 'Browse all speaking guides',
@@ -169,7 +169,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Practise the skill',
         title: 'Use speaking practice that requires active expression',
-        description: 'Choose a short speaking activity that requires the child to respond, explain or express an idea aloud.'
+        description: 'Choose a short speaking activity that requires the child to respond, explain or express an idea aloud.',
         links: [
           { title: 'Speaking games', description: 'Use the free speaking collection for guided expression and response practice.', to: '/free-speaking-games-for-kids', label: 'Open speaking games' },
           { title: 'Speaking practice game', description: 'Use a focused activity for short, repeatable communication practice.', to: '/free-speaking-practice-game-for-kids', label: 'Practise speaking' },
@@ -178,7 +178,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Solve a problem',
         title: 'Start from the communication difficulty you are seeing',
-        description: 'Start with the communication difficulty you can observe, then open the closest explanation and next step.'
+        description: 'Start with the communication difficulty you can observe, then open the closest explanation and next step.',
         links: [
           { title: 'Very shy or reluctant to speak', description: 'Look at confidence, participation and low-pressure practice before forcing performance.', to: '/shy-child-speaking-confidence', label: 'Explore confidence help' },
           { title: 'Only one-word answers', description: 'Check sentence generation, vocabulary access and response habits.', to: '/blog/child-gives-one-word-answers', label: 'Check one-word answers' },
