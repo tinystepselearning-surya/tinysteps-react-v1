@@ -54,11 +54,15 @@ export function supportedPresentCountFromOverlap(
 /**
  * The complete AVS business reconciliation.
  *
- * Teams can never support more Present marks than the number of actual
- * eligible same-day Tiny Steps session slots for the same student + teacher.
- * Explicit cancelled/rescheduled slots are excluded before this count reaches
- * the engine. This prevents one unusually long class from being misread as two
- * or more separate classes.
+ * When Tiny Steps already records one or more Present marks for the same
+ * student + teacher + IST service date, that Present count is the authoritative
+ * upper bound on how many classes Teams may support for that day. Raw scheduled
+ * session rows must not manufacture an extra class beyond Tiny Steps' own
+ * recorded Present count.
+ *
+ * When Tiny Steps records zero Presents, the eligible same-day session count is
+ * still used as the upper bound so AVS can detect a genuinely missing Tiny Steps
+ * Present (False Absent) from verified Teams evidence.
  *
  * There are only three business outcomes:
  * - Verified: Teams-supported Present count == Tiny Steps Present count
@@ -100,9 +104,12 @@ export function reconcileAvsBusinessOutcome(
     input.teamsOverlapSeconds,
     input.thresholdSeconds,
   );
+  const presentCapacity = tinyStepsPresentCount > 0
+    ? tinyStepsPresentCount
+    : sameDaySessionCount;
   const teamsSupportedPresentCount = Math.min(
     durationSupportedPresentCount,
-    sameDaySessionCount,
+    presentCapacity,
   );
 
   if (tinyStepsPresentCount > teamsSupportedPresentCount) {
