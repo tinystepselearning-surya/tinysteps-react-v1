@@ -87,7 +87,7 @@ describe('Resources R23 central resource reconciliation', () => {
     const routes = read('src/app/routes.tsx');
 
     expect(page).toContain('CENTRAL_RESOURCE_CONTENT_FAMILIES');
-    expect(page).toContain('One Resource Center, all learning content');
+    expect(page).toContain('One place to find the right learning support');
     expect(page).toContain('Editorial guide library');
 
     for (const duplicate of ['resources/blog', 'resources/parents', 'resources/games', 'resources/schools']) {
