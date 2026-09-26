@@ -15,10 +15,10 @@ const PILOT_SLUGS = [
 ];
 
 describe('authority blog template rollout', () => {
-  it('rolls the reusable authority layout to all 83 registered blogs while retaining five curated pilot overrides', () => {
+  it('rolls the reusable authority layout to all 82 registered blogs while retaining five curated pilot overrides', () => {
     const page = read('src/pages/BlogPostPage.tsx');
 
-    expect(blogPosts).toHaveLength(83);
+    expect(blogPosts).toHaveLength(82);
     expect(page).toContain('const isAuthorityArticle = Boolean(post);');
     expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityArticle');
 
