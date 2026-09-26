@@ -125,6 +125,9 @@ export function classifyArtifactChanges(changedFiles, beforeFirebase = {}, after
   const functionsConfigChanged = configChanged(beforeFirebase, afterFirebase, 'functions');
   const firestoreConfigChanged = configChanged(beforeFirebase, afterFirebase, 'firestore');
   const hostingConfigChanged = configChanged(beforeFirebase, afterFirebase, 'hosting');
+  const contentOnlyValidation = files.length > 0 && files.every(file =>
+    file.startsWith('src/content/blog/posts/')
+      || /^src\/tests\/seo\/blog[^/]*\.spec\.[cm]?[jt]sx?$/.test(file));
   const functionsValidationRequired = functionsPathChanged || functionsConfigChanged
     || files.some(file => file === 'scripts/deploy-functions-batched.mjs'
       || file.startsWith('scripts/deployment/')
@@ -149,6 +152,7 @@ export function classifyArtifactChanges(changedFiles, beforeFirebase = {}, after
     functionsSourceChanged,
     functionsValidationRequired,
     frontendValidationRequired,
+    contentOnlyValidation,
     firestoreValidationRequired: firestoreRulesChanged,
     hostingChanged,
     firestoreRulesChanged,

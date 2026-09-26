@@ -4,8 +4,6 @@ on:
   pull_request:
     branches: [main, seo/resources-r22-speaking-communication-semantic-journeys]
     paths:
-      - 'src/content/blog/posts/public-speaking/conversation-skills-for-kids.ts'
-      - 'src/content/blog/posts/public-speaking/how-to-teach-storytelling-to-kids.ts'
       - 'src/components/blog/BlogSemanticPathway.tsx'
       - 'src/lib/speakingCommunicationCompletion*'
       - 'src/tests/seo/resourcesSP6*'
@@ -13,6 +11,10 @@ on:
       - 'docs/seo/resources-architecture/SP0_SP6_*'
       - '.github/workflows/session-c-speaking-communication-completion.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

@@ -87,6 +87,7 @@ const output = {
   functions_retired_targets: (result.retiredFunctions || []).join(','),
   hosting_changed: String(result.hostingChanged),
   frontend_validation_required: String(result.frontendValidationRequired),
+  content_only_validation: String(result.contentOnlyValidation),
   firestore_rules_changed: String(result.firestoreRulesChanged),
   firestore_validation_required: String(result.firestoreValidationRequired),
   school_transport_required: String(result.fullDeployment || result.impactedFunctions.some(id => schoolCallables.has(id))),
@@ -109,6 +110,7 @@ const lines = [
   `- Functions impacted: ${result.fullDeployment ? 'all (known global impact)' : result.impactedFunctions.length}`,
   `- Functions intentionally retired from source: ${(result.retiredFunctions || []).length}`,
   `- Hosting changed: ${result.hostingChanged}`,
+  `- Content-only validation: ${result.contentOnlyValidation}`,
   `- Firestore rules changed: ${result.firestoreRulesChanged}`,
   `- AVS callable transport verification required: ${result.fullDeployment || result.impactedFunctions.some(id => avsCallables.has(id))}`,
 ];

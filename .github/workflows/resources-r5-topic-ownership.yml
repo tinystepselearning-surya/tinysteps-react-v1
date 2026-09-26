@@ -8,7 +8,6 @@ on:
       - 'src/lib/resourcesArchitectureRegistry.js'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/content/blog/shared/technicalAuthority.ts'
-      - 'src/content/blog/posts/**'
       - 'src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js'
       - 'src/tests/seo/resourcesR4SubjectHubs.spec.js'
       - 'src/tests/seo/resourcesR3Navigation.spec.js'
@@ -22,6 +21,10 @@ on:
       - 'docs/seo/resources-architecture/R4_CANONICAL_OWNERSHIP_MAP.md'
       - 'docs/seo/resources-architecture/R5_CANONICAL_TOPIC_OWNERSHIP.md'
       - '.github/workflows/resources-r5-topic-ownership.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

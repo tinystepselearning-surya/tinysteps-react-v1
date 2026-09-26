@@ -9,11 +9,14 @@ on:
       - 'scripts/audit-resources-r14-reading-knowledge-architecture.mjs'
       - 'docs/seo/resources-architecture/R14_*'
       - '.github/workflows/resources-r14-reading-knowledge-architecture.yml'
-      - 'src/content/blog/**'
       - 'src/lib/canonicalTopicOwnershipRegistry.*'
       - 'src/lib/publicRouteManifest.js'
       - 'src/lib/routeSeoRegistry.js'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

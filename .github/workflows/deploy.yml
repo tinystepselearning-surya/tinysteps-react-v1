@@ -12,6 +12,9 @@ on:
         required: false
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 # Global environment variables
 env:
   FIREBASE_PROJECT_ID: tinysteps-react-v1
@@ -25,6 +28,7 @@ jobs:
       functions_full_deployment: ${{ steps.impact.outputs.functions_full_deployment }}
       functions_targets: ${{ steps.impact.outputs.functions_targets }}
       frontend_validation_required: ${{ steps.impact.outputs.frontend_validation_required }}
+      content_only_validation: ${{ steps.impact.outputs.content_only_validation }}
       hosting_changed: ${{ steps.impact.outputs.hosting_changed }}
       firestore_validation_required: ${{ steps.impact.outputs.firestore_validation_required }}
       firestore_rules_changed: ${{ steps.impact.outputs.firestore_rules_changed }}
@@ -148,7 +152,9 @@ jobs:
           FUNCTIONS_DEPLOY_ONLY: ${{ needs.analyze-changes.outputs.functions_targets }}
 
       - name: Run teacher progress enrollment audit classifier tests
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
+        if: >-
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
+          (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
         run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
 
       - name: Setup Java for Firestore emulator
@@ -195,8 +201,59 @@ jobs:
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run typecheck
 
-      - name: Run unit tests
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
+      - name: Run content-only blog and ownership tests
+        if: >-
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.content_only_validation == 'true'
+        run: >-
+          npx vitest run
+          src/tests/seo/blog
+          src/tests/content
+          src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
+          src/tests/seo/resourcesR8PhonicsKnowledgeDataset.spec.js
+          src/tests/seo/resourcesR15
+          src/tests/seo/resourcesR18
+          src/tests/seo/resourcesR19
+          src/tests/seo/resourcesR21
+          src/tests/seo/resourcesR22
+          src/tests/seo/resourcesSP6
+          src/tests/seo/grammarWritingGr
+
+      - name: Audit canonical ownership for content-only PR
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.content_only_validation == 'true'
+        run: node scripts/audit-canonical-topic-ownership.mjs
+
+      - name: Audit phonics knowledge collisions for content-only PR
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.content_only_validation == 'true'
+        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
+
+      - name: Audit controlled reading, grammar and speaking content for content-only PR
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.content_only_validation == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-resources-r15-high-value-reading-content.mjs --report
+          node scripts/audit-grammar-writing-gr1-taxonomy.mjs --report
+          node scripts/audit-grammar-writing-gr2-tenses.mjs --report
+          node scripts/audit-grammar-writing-gr3-writing-progression.mjs --report
+          node scripts/audit-grammar-writing-gr4-parent-problems.mjs --report
+          node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --report
+          node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
+          node scripts/audit-resources-r21-high-value-speaking-content.mjs --report
+          node scripts/audit-resources-r22-speaking-communication-semantic-journeys.mjs --report
+          node scripts/audit-resources-sp6-speaking-communication-closure.mjs --report
+
+      - name: Run full unit tests
+        if: >-
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
+          (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
         run: npm run test:unit -- --coverage
 
       - name: Validate Ask Tiny Steps production build configuration
@@ -212,7 +269,9 @@ jobs:
         run: npm run seo:smoke
 
       - name: Upload coverage to Codecov
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
+        if: >-
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
+          (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
         uses: codecov/codecov-action@v3
         with:
           files: ./coverage/coverage-final.json

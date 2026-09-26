@@ -4,9 +4,6 @@ on:
   pull_request:
     branches: [main, seo/resources-r20-speaking-communication-architecture]
     paths:
-      - 'src/content/blog/posts/public-speaking/conversation-skills-for-kids.ts'
-      - 'src/content/blog/posts/public-speaking/how-to-teach-storytelling-to-kids.ts'
-      - 'src/content/blog/posts/public-speaking/public-speaking-delivery-for-kids.ts'
       - 'src/lib/speakingCommunicationContentExecutionRegistry.*'
       - 'src/lib/speakingCommunicationContentCanonicalOwnership.*'
       - 'src/lib/speakingCommunicationKnowledgeArchitecture.*'
@@ -16,10 +13,13 @@ on:
       - 'scripts/audit-resources-r21-high-value-speaking-content.mjs'
       - 'scripts/generate-sitemaps.js'
       - 'docs/seo/resources-architecture/R21_*'
-      - '.github/workflows/resources-r14-reading-knowledge-architecture.yml'
       - '.github/workflows/resources-r20-speaking-communication-architecture.yml'
       - '.github/workflows/resources-r21-high-value-speaking-content.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

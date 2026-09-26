@@ -61,6 +61,27 @@ test('frontend-only change deploys no Functions', () => {
   assert.equal(result.hostingChanged, true);
 });
 
+test('blog post-only change uses the narrow content validation lane', () => {
+  const result = impact(['src/content/blog/posts/phonics/example.ts']);
+  assert.equal(result.contentOnlyValidation, true);
+  assert.equal(result.frontendValidationRequired, true);
+  assert.equal(result.hostingChanged, true);
+});
+
+test('blog post plus blog SEO regression stays in the narrow content lane', () => {
+  const result = impact([
+    'src/content/blog/posts/phonics/example.ts',
+    'src/tests/seo/blogQualityExample.spec.ts',
+  ]);
+  assert.equal(result.contentOnlyValidation, true);
+});
+
+test('shared blog runtime or application changes fail closed to full validation', () => {
+  assert.equal(impact(['src/content/blog/shared/authorityLinking.ts']).contentOnlyValidation, false);
+  assert.equal(impact(['src/content/blog/posts/phonics/example.ts', 'src/App.tsx']).contentOnlyValidation, false);
+  assert.equal(impact(['src/content/blog/posts/phonics/example.ts', 'src/pages/admin/Finance.tsx']).contentOnlyValidation, false);
+});
+
 test('Functions test-only change validates but deploys no Functions', () => {
   const result = impact(['functions/test/example.spec.ts']);
   assert.equal(result.functionsValidationRequired, true);

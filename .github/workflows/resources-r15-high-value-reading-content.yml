@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: [main, seo/resources-r14-reading-knowledge-architecture]
     paths:
-      - 'src/content/blog/**'
       - 'src/lib/readingContentExecutionRegistry.*'
       - 'src/lib/readingContentCanonicalOwnership.*'
       - 'src/lib/readingKnowledgeArchitecture.*'
@@ -16,6 +15,10 @@ on:
       - 'docs/seo/resources-architecture/R15_*'
       - '.github/workflows/resources-r15-high-value-reading-content.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
