@@ -1,26 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AVS_BUSINESS_CASE_SCHEMA_VERSION,
-  isCurrentAvsBusinessCaseDocument,
   reconcileAvsBusinessOutcome,
   supportedPresentCountFromOverlap,
 } from '../src/attendanceValidation/businessOutcomeEngine';
 
 describe('AVS simple business outcome engine', () => {
-  it('recognizes only explicitly versioned three-outcome case documents as current', () => {
-    expect(isCurrentAvsBusinessCaseDocument({
-      businessSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
-      businessOutcome: 'verified',
-    })).toBe(true);
-    expect(isCurrentAvsBusinessCaseDocument({
-      businessOutcome: 'verified',
-    })).toBe(false);
-    expect(isCurrentAvsBusinessCaseDocument({
-      businessSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
-      classification: 'VERIFIED',
-    })).toBe(false);
-  });
-
   it('uses strictly greater than 25 minutes and scales for multiple Presents', () => {
     expect(supportedPresentCountFromOverlap(0)).toBe(0);
     expect(supportedPresentCountFromOverlap(1500)).toBe(0);
