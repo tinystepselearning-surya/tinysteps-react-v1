@@ -22,16 +22,16 @@ const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
 const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
 
-const homeSeoTitle = "Online English Classes for Kids in India | Tiny Steps";
+const homeSeoTitle = "Tiny Steps Learning | Online English Learning for Kids Ages 3–12";
 const homeSeoDescription =
-  "Live 1:1 online English classes for kids ages 3–12. Phonics, reading, grammar and speaking with a free 35-minute 1:1 online demo assessment class and parent updates.";
+  "Tiny Steps Learning offers live 1:1 and small-group English learning for ages 3–12 across phonics and reading, grammar and sentence building, and speaking and communication. Start with a free 35-minute 1:1 online demo assessment.";
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
 
 const homeWebPageSchema = {
   ...createWebPageSchema({
-    name: "Tiny Steps Learning — Online English Classes for Kids",
+    name: "Tiny Steps Learning — Online English Learning for Kids Ages 3–12",
     description: homeSeoDescription,
     url: homeCanonicalUrl,
   }),
@@ -40,7 +40,7 @@ const homeWebPageSchema = {
     "@id": `${PUBLIC_FACTS.primaryWebsite}/#educational-organization`,
   },
   about: [
-    { "@type": "Thing", name: "Online English classes for children" },
+    { "@type": "Thing", name: "Online English learning for children" },
     { "@type": "Thing", name: "Phonics and reading" },
     { "@type": "Thing", name: "Grammar and sentence building" },
     { "@type": "Thing", name: "Speaking and communication" },
