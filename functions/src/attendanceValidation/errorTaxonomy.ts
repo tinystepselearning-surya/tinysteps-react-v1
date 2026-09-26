@@ -183,22 +183,33 @@ export function classifyAvsReason(
   return graphDescriptor(reason || 'unknown_error', extra);
 }
 
+function embeddedFailureDescriptor(
+  input: unknown,
+): AvsFailureDescriptor | null {
+  if (!input || typeof input !== 'object' || !('failure' in input)) {
+    return null;
+  }
+  const nested = (input as { failure?: unknown }).failure;
+  if (
+    nested
+    && typeof nested === 'object'
+    && typeof (nested as { code?: unknown }).code === 'string'
+  ) {
+    return nested as AvsFailureDescriptor;
+  }
+  return null;
+}
+
 export function classifyAvsFailure(
   input: unknown,
   extra: Partial<AvsFailureDescriptor> = {},
 ): AvsFailureDescriptor {
-  if (input && typeof input === 'object' && 'failure' in input) {
-    const nested = (input as { failure?: unknown }).failure;
-    if (
-      nested
-      && typeof nested === 'object'
-      && typeof (nested as { code?: unknown }).code === 'string'
-    ) {
-      return nested as AvsFailureDescriptor;
-    }
-  }
+  const directFailure = embeddedFailureDescriptor(input);
+  if (directFailure) return directFailure;
 
   const error = unwrapCause(input);
+  const unwrappedFailure = embeddedFailureDescriptor(error);
+  if (unwrappedFailure) return unwrappedFailure;
   if (error instanceof MicrosoftGraphError) {
     return graphDescriptor(error.kind, {
       ...extra,
