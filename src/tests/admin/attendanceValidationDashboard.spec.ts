@@ -195,7 +195,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('validationResult.baselinePersistedCaseCount');
     expect(dashboard).toContain('finiteCount(validationResult.baselinePersistedCaseCount)');
     expect(dashboard).toContain('formatFailureCodeCounts');
+    expect(dashboard).toContain('formatFreshFailureDiagnostics');
     expect(dashboard).toContain('Failure codes:');
+    expect(dashboard).toContain('Failure detail:');
     expect(dashboard).toContain('validationResult.graphLogicalCalls');
     expect(dashboard).toContain('validationResult.continueValidation');
     expect(dashboard).toContain(
