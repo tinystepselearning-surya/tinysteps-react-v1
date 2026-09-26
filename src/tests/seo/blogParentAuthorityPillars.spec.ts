@@ -29,8 +29,8 @@ function bodyText(slug: string) {
 }
 
 describe('B6 parent authority pillars', () => {
-  it('keeps the post-Brick-4 83-article registry while defining exactly the seven GSC-prioritised authority URLs', () => {
-    expect(blogPosts).toHaveLength(83);
+  it('keeps the post-Brick-4 82-article registry while defining exactly the seven GSC-prioritised authority URLs', () => {
+    expect(blogPosts).toHaveLength(82);
     expect(PARENT_AUTHORITY_PILLARS).toHaveLength(7);
     expect(new Set(PARENT_AUTHORITY_SLUGS).size).toBe(7);
     expect(getParentAuthorityPosts(blogPosts)).toHaveLength(7);
