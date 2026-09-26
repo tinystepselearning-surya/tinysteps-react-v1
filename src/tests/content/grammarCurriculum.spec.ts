@@ -80,18 +80,52 @@ describe('canonical Grammar curriculum', () => {
     expect(website[5]?.learns).toEqual(basic.stages[5].learningOutcomes);
   });
 
-  it('preserves topic-specific teacher metadata for representative Grammar lessons', () => {
+  it('preserves topic-specific teacher metadata for representative Basic Grammar lessons', () => {
     const basic = buildTeacherGrammarTopics('basic-grammar');
-    const advanced = buildTeacherGrammarTopics('advanced-grammar');
-    const topic = (topics: ReturnType<typeof buildTeacherGrammarTopics>, order: number) =>
-      topics.find((candidate) => candidate.order === order);
+    const topic = (order: number) => basic.find((candidate) => candidate.order === order);
 
-    expect(topic(basic, 4)?.subskillChips).toContain('identify adjectives');
-    expect(topic(basic, 7)?.subskillChips).toContain('make plural');
-    expect(topic(basic, 13)?.subskillChips).toContain('capitalize first word');
-    expect(topic(basic, 15)?.subskillChips).toContain('use exclamation mark');
-    expect(topic(advanced, 12)?.subskillChips).toContain('identify tense');
-    expect(topic(advanced, 28)?.subskillChips).toContain('spot run-on/fragment');
+    expect(topic(4)?.subskillChips).toContain('identify adjectives');
+    expect(topic(7)?.subskillChips).toContain('make plural');
+    expect(topic(13)?.subskillChips).toContain('capitalize first word');
+    expect(topic(15)?.subskillChips).toContain('use exclamation mark');
+  });
+
+  it('defines explicit pedagogical assessment metadata for all 36 Advanced Grammar lessons', () => {
+    const advanced = GRAMMAR_COURSES['advanced-grammar'].lessons;
+    const byOrder = new Map(advanced.map((lesson) => [lesson.order, lesson]));
+
+    expect(advanced).toHaveLength(36);
+    expect(advanced.every((lesson) => lesson.subskillChips.length === 5)).toBe(true);
+    expect(new Set(advanced.map((lesson) => lesson.subskillChips.join('|'))).size).toBe(36);
+
+    expect(byOrder.get(1)).toMatchObject({
+      rubricType: 'concept',
+      subskillChips: [
+        'identify subject',
+        'identify verb',
+        'identify object',
+        'build SVO sentence',
+        'check sentence word order',
+      ],
+    });
+    expect(byOrder.get(5)?.subskillChips).toContain('choose tense from time and meaning');
+    expect(byOrder.get(6)?.rubricType).toBe('sentence_building');
+    expect(byOrder.get(6)?.subskillChips).toContain('expand with phrases');
+    expect(byOrder.get(7)?.subskillChips).toContain('use context to justify tense choice');
+    expect(byOrder.get(9)?.subskillChips).toContain('use simple present for timetables');
+    expect(byOrder.get(12)?.rubricType).toBe('revision');
+    expect(byOrder.get(16)?.subskillChips).toContain('distinguish a few/few and a little/little');
+    expect(byOrder.get(22)?.subskillChips).toContain('choose conditional form by meaning');
+    expect(byOrder.get(22)?.confusionOptions).toContain('unnecessary will in an if-clause');
+    expect(byOrder.get(26)?.subskillChips).toContain('decide when relative clauses need commas');
+    expect(byOrder.get(29)?.subskillChips).toContain('adjust tense, pronouns, and time words when needed');
+    expect(byOrder.get(29)?.confusionOptions).toContain('incorrect or unnecessary tense shift');
+    expect(byOrder.get(28)?.subskillChips).toContain('repair comma splices');
+    expect(byOrder.get(30)?.rubricType).toBe('writing_editing');
+    expect(byOrder.get(30)?.subskillChips).toContain('adjust tone for audience');
+    expect(byOrder.get(34)?.subskillChips).toContain('organise description or explanation');
+    expect(byOrder.get(36)?.rubricType).toBe('revision');
+    expect(byOrder.get(36)?.subskillChips).toContain('organise ideas coherently');
   });
 
   it('normalizes public, internal, and legacy aliases to canonical IDs', () => {

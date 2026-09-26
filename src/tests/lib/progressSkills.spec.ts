@@ -1,3 +1,4 @@
+import { GRAMMAR_COURSES } from '../../content/grammarCurriculum';
 import { getProgressSkillsForLesson } from '../../lib/progressSkills';
 
 describe('getProgressSkillsForLesson', () => {
@@ -39,6 +40,34 @@ describe('getProgressSkillsForLesson', () => {
       'Read sentence',
     ]);
     expect(skills.map((skill) => skill.label).join(' ')).not.toMatch(/Magic E|Short vs long/i);
+  });
+
+  it('keeps canonical Advanced Grammar cards authoritative for all 36 lessons despite stale historical metadata', () => {
+    const advanced = GRAMMAR_COURSES['advanced-grammar'].lessons;
+    expect(advanced).toHaveLength(36);
+
+    advanced.forEach((lesson) => {
+      const skills = getProgressSkillsForLesson({
+        courseId: lesson.courseId,
+        topicId: lesson.id,
+        lessonId: lesson.lesson,
+        rubricType: lesson.rubricType,
+        area: lesson.area,
+        progressSkillsMeta: [
+          { key: 'legacy_skill_one', label: 'Legacy skill one', area: 'grammar' },
+          { key: 'legacy_skill_two', label: 'Legacy skill two', area: 'grammar' },
+          { key: 'legacy_skill_three', label: 'Legacy skill three', area: 'grammar' },
+        ],
+        subskillChips: lesson.subskillChips,
+      });
+
+      const expectedLabels = lesson.subskillChips.map(
+        (label) => label.charAt(0).toUpperCase() + label.slice(1),
+      );
+
+      expect(skills.map((skill) => skill.label)).toEqual(expectedLabels);
+      expect(skills.map((skill) => skill.label).join(' ')).not.toMatch(/Legacy skill/i);
+    });
   });
 
   it('still prefers explicit stored skill metadata for non-phonics feedback', () => {

@@ -76,6 +76,11 @@ const CANONICAL_PHONICS_COURSE_IDS = new Set([
   'advanced-phonics',
 ]);
 
+const CANONICAL_ADVANCED_GRAMMAR_COURSE_IDS = new Set([
+  'advanced-grammar',
+  'grammar-mastery',
+]);
+
 export const LEGACY_PROGRESS_SKILLS: ProgressSkillDefinition[] = [
   { key: 'recogniseSounds', label: 'Recognise Sounds', area: 'phonics' },
   { key: 'saySoundsClearly', label: 'Say Sounds Clearly', area: 'phonics' },
@@ -183,14 +188,26 @@ function canonicalPhonicsRubricLabels(context: ProgressSkillContext): string[] |
   return RUBRIC_PROGRESS_SKILLS[rubricType] ?? null;
 }
 
-export function getProgressSkillsForLesson(context: ProgressSkillContext): ProgressSkillDefinition[] {
-  // Phonics lesson identity/rubric comes from the canonical 31/40/30 lesson curriculum. Historical
-  // progress rows may carry progressRatingsMeta or subskillChips produced by an older stage/rubric
-  // map. When a canonical phonics rubric is available, never let that stale stored presentation
-  // metadata override the current lesson's rubric (for example Diphthong OO showing Magic-E skills).
-  const canonicalPhonicsLabels = canonicalPhonicsRubricLabels(context);
+function canonicalAdvancedGrammarLabels(context: ProgressSkillContext): string[] | null {
+  const courseId = String(context.courseId || '').trim().toLowerCase();
+  if (!CANONICAL_ADVANCED_GRAMMAR_COURSE_IDS.has(courseId)) return null;
+  if (!Array.isArray(context.subskillChips)) return null;
 
-  const explicitMeta = canonicalPhonicsLabels
+  const labels = context.subskillChips
+    .filter((label): label is string => typeof label === 'string' && label.trim().length > 0)
+    .map((label) => label.trim());
+
+  return labels.length > 0 ? labels : null;
+}
+
+export function getProgressSkillsForLesson(context: ProgressSkillContext): ProgressSkillDefinition[] {
+  // Source-owned curricula must win over stale presentation metadata stored on historical progress
+  // rows. This prevents old skill-card labels from overriding the current canonical lesson rubric.
+  const canonicalPhonicsLabels = canonicalPhonicsRubricLabels(context);
+  const canonicalAdvancedGrammarSkills = canonicalAdvancedGrammarLabels(context);
+  const canonicalCurriculumLabels = canonicalPhonicsLabels ?? canonicalAdvancedGrammarSkills;
+
+  const explicitMeta = canonicalCurriculumLabels
     ? []
     : normalizeProgressSkillDefinitions(
         Array.isArray(context.progressSkillsMeta) ? context.progressSkillsMeta : [],
@@ -202,7 +219,7 @@ export function getProgressSkillsForLesson(context: ProgressSkillContext): Progr
       ? context.area
       : 'general';
 
-  const labels = canonicalPhonicsLabels
+  const labels = canonicalCurriculumLabels
     ?? (Array.isArray(context.subskillChips) && context.subskillChips.length > 0
       ? context.subskillChips
       : RUBRIC_PROGRESS_SKILLS[String(context.rubricType || '').trim().toLowerCase()]
