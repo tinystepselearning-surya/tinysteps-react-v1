@@ -276,12 +276,6 @@ function asFiniteNumber(value: unknown): number | null {
     : null;
 }
 
-function finiteCount(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? Math.max(0, value)
-    : 0;
-}
-
 function formatFailureCodeCounts(codeCounts: Record<string, number>): string {
   return Object.entries(codeCounts)
     .filter(([, count]) => Number.isFinite(count) && count > 0)
@@ -315,7 +309,54 @@ function formatDurationSeconds(value: number | null): string {
   return seconds === 0 ? `${minutes}m` : `${minutes}m ${seconds}s`;
 }
 
+function avsErrorDiagnosticText(error: unknown): string {
+  const candidate = error && typeof error === 'object'
+    ? error as Record<string, unknown>
+    : {};
+  return [
+    candidate.code,
+    candidate.message,
+    JSON.stringify(candidate.details ?? ''),
+  ]
+    .map((value) => String(value ?? ''))
+    .join(' ')
+    .toLowerCase();
+}
+
+function isAvsTransportFailure(error: unknown): boolean {
+  const diagnosticText = avsErrorDiagnosticText(error);
+  return [
+    'err_name_not_resolved',
+    'err_quic_protocol_error',
+    'network-request-failed',
+    'failed to fetch',
+    'firestore/unavailable',
+    'functions/unavailable',
+    'functions/internal',
+    'network error',
+    'offline',
+  ].some((marker) => diagnosticText.includes(marker));
+}
+
+function safeLoadResultsFailureMessage(error: unknown): string {
+  if (isAvsTransportFailure(error)) {
+    return 'Unable to reach Firebase to load AVS results. Check the connection and retry.';
+  }
+  return 'Unable to load saved attendance validation results. Please try again.';
+}
+
+function safeRunValidationFailureMessage(error: unknown): string {
+  if (isAvsTransportFailure(error)) {
+    return 'Firebase/AVS could not be reached or the request ended unexpectedly. This can be a temporary network, DNS, or service issue. Nothing was changed. Please retry.';
+  }
+  return 'Run Validation failed safely. No operational attendance or finance was changed.';
+}
+
 function safeForceFreshFailureMessage(error: unknown): string {
+  if (isAvsTransportFailure(error)) {
+    return 'Firebase/AVS could not be reached or the request ended unexpectedly. This can be a temporary network, DNS, or service issue. Nothing was changed. Please retry.';
+  }
+
   const candidate = error && typeof error === 'object'
     ? error as Record<string, unknown>
     : {};
@@ -744,7 +785,7 @@ export default function AttendanceValidationDashboard() {
       setLoadedAt(new Date());
     } catch (loadError) {
       console.error('[AV6] Failed to load saved attendance validation cases', loadError);
-      setError('Unable to load saved attendance validation results. Please try again.');
+      setError(safeLoadResultsFailureMessage(loadError));
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -789,9 +830,7 @@ export default function AttendanceValidationDashboard() {
       await loadSavedCases(false, true);
     } catch (validationError) {
       console.error('[AVS] Run Validation failed', validationError);
-      setError(
-        'Run Validation failed safely. No operational attendance or finance was changed.',
-      );
+      setError(safeRunValidationFailureMessage(validationError));
     } finally {
       setValidationRunning(false);
     }
@@ -958,24 +997,6 @@ export default function AttendanceValidationDashboard() {
       </Card>
 
       <Card className="p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-              Loaded AVS source cases
-            </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
-              {cases.length} saved case{cases.length === 1 ? '' : 's'}
-            </p>
-          </div>
-          <div className="max-w-2xl text-xs text-slate-500">
-            The business view below reconciles only three operator outcomes:
-            Verified, False Present, and False Absent. Evidence that is not safe
-            enough to compare is kept outside those three tabs until resolved.
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-4">
         <div className="grid gap-3 lg:grid-cols-[240px_150px_150px_auto] lg:items-end">
           <div className="space-y-1 text-xs font-medium text-slate-600">
             <label htmlFor="avs-parent">Parent</label>
@@ -1110,7 +1131,7 @@ export default function AttendanceValidationDashboard() {
         {loadedRange && loadedAt && (
           <p className="mt-2 text-xs text-slate-500">
             Loaded {loadedRange.from} to {loadedRange.to} at {formatObservedAt(loadedAt.toISOString())}.
-            Each query reads at most {AV6_CASE_READ_LIMIT} saved cases; parent enrollment chunks are merged into one page.
+            Each query reads at most {AV6_CASE_READ_LIMIT} source records; parent enrollment chunks are merged into one page.
           </p>
         )}
       </Card>
@@ -1125,25 +1146,15 @@ export default function AttendanceValidationDashboard() {
                   : 'Validation complete'}
               </p>
               <p className="mt-1 text-sm text-slate-700">
-                {validationResult.processedSessionCount} session{validationResult.processedSessionCount === 1 ? '' : 's'} checked.
+                {validationResult.processedSessionCount} session record{validationResult.processedSessionCount === 1 ? '' : 's'} inspected.
                 {' '}{validationResult.cachedRevalidatedCount} reused compatible cached evidence.
                 {' '}{validationResult.freshRefreshedCount
                   + validationResult.firstEvidenceCollectedCount
                   + validationResult.baselineFreshEvidenceCount} received fresh Teams evidence.
-                {finiteCount(validationResult.baselineExistingCaseCount) > 0 && (
-                  <> {' '}{finiteCount(validationResult.baselineExistingCaseCount)} already had a saved AVS case.</>
-                )}
-                {' '}{validationResult.freshFailedCount
-                  + validationResult.baselineBlockedCount} need another validation attempt or review.
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Saved/rebuilt AVS cases this call: {validationResult.groupRebuiltCount ?? (finiteCount(validationResult.baselinePersistedCaseCount)
-                  + finiteCount(validationResult.cachedRevalidatedCount)
-                  + finiteCount(validationResult.freshRefreshedCount)
-                  + finiteCount(validationResult.firstEvidenceCollectedCount))}.
-                {' '}Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
+                Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
                 {' '}Automatic teacher identity mappings: {validationResult.identityMappingsWritten}.
-                {' '}Unsafe evidence references left for review: {validationResult.freshnessUnsafeCount}.
               </p>
               {validationResult.continueValidation && (
                 <p className="mt-2 text-xs font-medium text-blue-800">
@@ -1174,11 +1185,6 @@ export default function AttendanceValidationDashboard() {
                     <div key={diagnostic}>Failure detail: {diagnostic}</div>
                   ))}
                 </div>
-              )}
-              {validationResult.evidenceIssueSummary.businessReviewCount > 0 && (
-                <p className="mt-2 text-xs text-slate-700">
-                  Business-review evidence issues: {validationResult.evidenceIssueSummary.businessReviewCount}. These are review outcomes, not infrastructure failures.
-                </p>
               )}
               {validationResult.concurrentMarkerChangeDetected && (
                 <p className="mt-2 text-xs font-medium text-amber-800">

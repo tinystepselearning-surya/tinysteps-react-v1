@@ -1,8 +1,7 @@
 import { Fragment, useMemo, useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   groupPersistedAvsBusinessOutcomes,
-  type AvsBusinessGroup,
   type AvsBusinessOutcome,
 } from '../../../lib/attendanceValidationBusinessReconciliation';
 import { Badge } from '@components/ui/badge';
@@ -50,14 +49,24 @@ interface Props {
   cases: AttendanceValidationBusinessCase[];
 }
 
+type OperatorBusinessOutcome = Exclude<AvsBusinessOutcome, 'not_evaluable'>;
+
 const BUSINESS_TABS: Array<{
-  value: Exclude<AvsBusinessOutcome, 'not_evaluable'>;
+  value: OperatorBusinessOutcome;
   label: string;
 }> = [
   { value: 'verified', label: 'Verified' },
   { value: 'false_present', label: 'False Present' },
   { value: 'false_absent', label: 'False Absent' },
 ];
+
+function isOperatorBusinessOutcome(
+  outcome: AvsBusinessOutcome,
+): outcome is OperatorBusinessOutcome {
+  return outcome === 'verified'
+    || outcome === 'false_present'
+    || outcome === 'false_absent';
+}
 
 function humanize(value: string | null): string {
   if (!value) return 'Not marked';
@@ -102,62 +111,9 @@ function teacherFilterKey(
   return null;
 }
 
-function technicalIssueLabel(value: string): string {
-  switch (value) {
-    case 'same_day_identity_not_verified':
-      return 'Teacher/learner identity not verified';
-    case 'same_day_attendance_evidence_incomplete':
-      return 'Teams attendance evidence incomplete';
-    case 'same_day_context_missing':
-      return 'Same-day comparison context missing';
-    case 'same_day_context_incomplete':
-      return 'Same-day session context exceeded the safe bound';
-    case 'same_day_evidence_version_unsupported':
-      return 'Teams evidence needs a current calculation';
-    case 'same_day_coverage_requires_review':
-      return 'Teams same-day coverage requires review';
-    case 'overlap_threshold_not_configured':
-      return 'Overlap threshold unavailable';
-    case 'evidence_document_missing':
-      return 'Teams evidence missing';
-    case 'operational_session_reference_mismatch':
-      return 'Session/evidence reference mismatch';
-    case 'validation_scope_date_unresolved':
-      return 'Service date could not be resolved';
-    case 'validation_scope_date_conflict':
-      return 'Service date sources disagree';
-    default:
-      return humanize(value);
-  }
-}
-
-function technicalReasonsForGroup(
-  group: AvsBusinessGroup<AttendanceValidationBusinessCase>,
-): string[] {
-  const raw = group.cases.flatMap((item) => [
-    ...item.reasons,
-    ...item.sourceClassificationReasons,
-    ...item.proofIssues,
-    ...item.identityIssues,
-    ...item.staffRegistryIssues,
-  ]).filter((value) =>
-    value && value !== 'business_evidence_not_evaluable');
-
-  const labels = [...new Set(raw.map(technicalIssueLabel))];
-  if (labels.length > 0) return labels;
-
-  if (group.cases.some((item) => item.businessOutcome === null)) {
-    return ['Business result unavailable'];
-  }
-  if (new Set(group.cases.map((item) => item.businessOutcome)).size > 1) {
-    return ['Session results disagree within this student/day group'];
-  }
-  return ['Source evidence could not be compared safely'];
-}
-
 export default function AttendanceValidationBusinessView({ cases }: Props) {
   const [activeTab, setActiveTab] =
-    useState<Exclude<AvsBusinessOutcome, 'not_evaluable'>>('verified');
+    useState<OperatorBusinessOutcome>('verified');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
@@ -167,9 +123,14 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
     [cases],
   );
 
+  const operatorGroups = useMemo(
+    () => groups.filter((group) => isOperatorBusinessOutcome(group.outcome)),
+    [groups],
+  );
+
   const teacherOptions = useMemo(() => {
     const counts = new Map<string, { label: string; count: number }>();
-    for (const group of groups) {
+    for (const group of operatorGroups) {
       const key = teacherFilterKey(group.teacherId, group.teacherName);
       if (!key) continue;
       const current = counts.get(key);
@@ -185,35 +146,13 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
     return [...counts.entries()]
       .map(([value, meta]) => ({ value, ...meta }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [groups]);
+  }, [operatorGroups]);
 
   const teacherScopedGroups = useMemo(() => {
-    if (teacherFilter === 'all') return groups;
-    return groups.filter((group) =>
+    if (teacherFilter === 'all') return operatorGroups;
+    return operatorGroups.filter((group) =>
       teacherFilterKey(group.teacherId, group.teacherName) === teacherFilter);
-  }, [groups, teacherFilter]);
-
-  const notEvaluableGroups = useMemo(
-    () => teacherScopedGroups.filter(
-      (group) => group.outcome === 'not_evaluable',
-    ),
-    [teacherScopedGroups],
-  );
-
-  const notEvaluableCount = notEvaluableGroups.length;
-
-  const technicalIssueSummary = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const group of notEvaluableGroups) {
-      for (const reason of technicalReasonsForGroup(group)) {
-        counts.set(reason, (counts.get(reason) ?? 0) + 1);
-      }
-    }
-    return [...counts.entries()]
-      .map(([reason, count]) => ({ reason, count }))
-      .sort((left, right) =>
-        right.count - left.count || left.reason.localeCompare(right.reason));
-  }, [notEvaluableGroups]);
+  }, [operatorGroups, teacherFilter]);
 
   const tabCounts = useMemo(() => ({
     verified: teacherScopedGroups.filter(
@@ -273,32 +212,6 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
           );
         })}
       </div>
-
-      {notEvaluableCount > 0 && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <div>
-            <span className="font-medium">
-              {notEvaluableCount} group{notEvaluableCount === 1 ? '' : 's'} not evaluated.
-            </span>
-            {' '}These groups could not be compared safely and are excluded from the three attendance outcomes.
-            {technicalIssueSummary.length > 0 && (
-              <details className="mt-2">
-                <summary className="cursor-pointer font-medium">
-                  Show technical reasons
-                </summary>
-                <div className="mt-1 space-y-0.5 text-xs">
-                  {technicalIssueSummary.map((item) => (
-                    <div key={item.reason}>
-                      {item.reason}: {item.count} group{item.count === 1 ? '' : 's'}
-                    </div>
-                  ))}
-                </div>
-              </details>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="grid gap-3 md:grid-cols-[280px_1fr]">
         <div className="space-y-1">
