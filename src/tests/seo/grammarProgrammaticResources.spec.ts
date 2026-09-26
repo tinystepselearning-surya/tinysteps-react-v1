@@ -19,7 +19,7 @@ describe('Governed grammar programmatic resources', () => {
     expect(GRAMMAR_PROGRAMMATIC_SEQUENCE).toHaveLength(38);
     expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(32);
     expect(GRAMMAR_PROGRAMMATIC_PATHS).toHaveLength(32);
-    expect(new Set(GRAMMAR_PROGRAMMATIC_PATHS).size).toBe(15);
+    expect(new Set(GRAMMAR_PROGRAMMATIC_PATHS).size).toBe(32);
     expect(GRAMMAR_PROGRAMMATIC_SEQUENCE.map((entry) => entry.order)).toEqual(
       Array.from({ length: 38 }, (_, index) => index + 1),
     );
