@@ -151,20 +151,40 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
   });
 
-  it("renders the public sound listening play experience without auth or kidId", () => {
-    renderRoute("/free-sound-listening-game-for-kids?play=1");
+  it("renders the public sound listening play experience and makes the in-play CTA scroll to the game", () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
+    const scrollIntoViewMock = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewMock,
+    });
 
-    expect(screen.getByRole("heading", { name: /free a-z phonics sounds game for kids/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
-    expect(screen.getByText("A–Z Phonics Sound Detective")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /play all 26/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/26 basic letter sounds/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/temporarily in this browser/i).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/synced per-child tracking/i)).not.toBeInTheDocument();
-    expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-sound-listening-game-for-kids?play=1");
-    expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
-    expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
+    try {
+      renderRoute("/free-sound-listening-game-for-kids?play=1");
+
+      expect(screen.getByRole("heading", { name: /free a-z phonics sounds game for kids/i, level: 1 })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText("A–Z Phonics Sound Detective")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /play all 26/i })).toBeInTheDocument();
+      expect(screen.getAllByText(/26 basic letter sounds/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/temporarily in this browser/i).length).toBeGreaterThan(0);
+      expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/synced per-child tracking/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-sound-listening-game-for-kids?play=1");
+
+      const callsAfterRender = scrollIntoViewMock.mock.calls.length;
+      fireEvent.click(screen.getByRole("button", { name: /go to game/i }));
+      expect(scrollIntoViewMock.mock.calls.length).toBeGreaterThan(callsAfterRender);
+
+      expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+      expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(Element.prototype, "scrollIntoView", originalScrollIntoView);
+      } else {
+        delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+      }
+    }
   });
 
   it("renders the public word building play experience without auth, kidId, or active-kid recovery", () => {
