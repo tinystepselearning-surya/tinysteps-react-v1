@@ -15,10 +15,10 @@ const root = process.cwd();
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 
 describe('Governed grammar programmatic resources', () => {
-  it('publishes a bounded 31-page set inside a 38-step curriculum-aligned sequence', () => {
+  it('publishes a bounded 32-page set inside a 38-step curriculum-aligned sequence', () => {
     expect(GRAMMAR_PROGRAMMATIC_SEQUENCE).toHaveLength(38);
-    expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(31);
-    expect(GRAMMAR_PROGRAMMATIC_PATHS).toHaveLength(31);
+    expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(32);
+    expect(GRAMMAR_PROGRAMMATIC_PATHS).toHaveLength(32);
     expect(new Set(GRAMMAR_PROGRAMMATIC_PATHS).size).toBe(15);
     expect(GRAMMAR_PROGRAMMATIC_SEQUENCE.map((entry) => entry.order)).toEqual(
       Array.from({ length: 38 }, (_, index) => index + 1),
@@ -65,7 +65,7 @@ describe('Governed grammar programmatic resources', () => {
 
   it('publishes explicit informational canonical ownership without touching the commercial grammar owner', () => {
     const owners = CANONICAL_TOPIC_OWNERSHIP.filter((entry) => entry.id.startsWith('gp1-grammar-'));
-    expect(owners).toHaveLength(31);
+    expect(owners).toHaveLength(32);
     for (const owner of owners) {
       expect(owner.subject).toBe('grammar-writing');
       expect(owner.intent).toBe('informational');
