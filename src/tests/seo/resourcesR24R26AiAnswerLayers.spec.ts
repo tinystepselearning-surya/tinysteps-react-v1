@@ -71,4 +71,17 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).toContain('buildAiAnswerLlmSection');
     expect(generator).toContain('AI Answer Layers — problem, concept, practice');
   });
+
+  it('connects the full current content corpus instead of only the earlier curated blog subset', () => {
+    const generator = read('scripts/generate-rss.mjs');
+    expect(generator).toContain('buildEditorialBlogCorpus');
+    expect(generator).toContain('buildProgrammaticPhonicsCorpus');
+    expect(generator).toContain('buildPublicRouteCorpus');
+    expect(generator).toContain('buildCompleteBlogLlmSection');
+    expect(generator).toContain('Complete Editorial Blog Corpus');
+    expect(generator).toContain('editorial_blogs: editorialBlogs');
+    expect(generator).toContain('programmatic_phonics_guides: programmaticPhonics');
+    expect(generator).toContain('additional_public_routes: publicRoutes');
+    expect(generator).toContain('supporting-only-noindex');
+  });
 });
