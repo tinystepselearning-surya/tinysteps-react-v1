@@ -13,7 +13,7 @@ The connected corpus now represents the complete current Tiny Steps public conte
 
 ## Editorial blog coverage
 
-The generator reads the canonical blog source tree at build time and connects **all 83 current public editorial articles**.
+The generator reads the blog source tree at build time and accounts for the complete **83-record editorial estate** as **82 live canonical articles + 1 retired redirect lineage**.
 
 Each blog corpus record contains:
 
@@ -28,7 +28,7 @@ Each blog corpus record contains:
 - answer eligibility;
 - external evidence URLs already visible in the article source.
 
-The 83-blog count is build-audited. A missing article fails the generated-content audit rather than silently disappearing from LLM discovery.
+The 83-source estate is build-audited. The retired `spoken-english-classes-for-kids-confidence` source remains a redirect-lineage record pointing to `/blog/child-understands-english-but-does-not-speak`; it is not answer-eligible or citation-eligible. A missing live article or retired lineage record fails the generated-content audit.
 
 ## Indexing-policy boundary
 
@@ -63,7 +63,7 @@ No Wave 3 or unapproved candidate page is added.
 
 R27 also connects the union of the governed `PUBLIC_ROUTE_MANIFEST` and `ROUTE_SEO_REGISTRY`, after deduplicating URLs already owned by:
 
-- the 83-blog editorial corpus;
+- the 82-live-article editorial corpus plus 1 retired redirect lineage;
 - the 31-page governed phonics corpus.
 
 This additional corpus includes resource hubs, parent-help pages, practice/tools, school resources, programme/support pages, seasonal public pages and public legal routes. Manifest-declared noindex routes remain present only as supporting metadata.
@@ -80,6 +80,8 @@ Noindex public routes remain marked as supporting-only/noindex.
 Top-level corpus metadata includes:
 
 - `corpus_counts.editorial_blogs`;
+- `corpus_counts.retired_editorial_sources`;
+- `corpus_counts.editorial_source_records`;
 - `corpus_counts.programmatic_phonics_guides`;
 - `corpus_counts.additional_public_routes`;
 - `corpus_counts.connected_public_content`.
@@ -87,6 +89,7 @@ Top-level corpus metadata includes:
 The corpus itself is split into:
 
 - `corpus.editorial_blogs`;
+- `corpus.retired_editorial_sources`;
 - `corpus.programmatic_phonics_guides`;
 - `corpus.additional_public_routes`.
 
@@ -97,7 +100,8 @@ This avoids duplicating article bodies inside the index. The canonical page rema
 `/ai-resource-index.txt` now contains:
 
 - the three answer layers;
-- all 83 editorial blog URLs;
+- all 82 live canonical editorial URLs;
+- the 1 retired blog source recorded only as redirect lineage to its canonical destination;
 - all 31 governed programmatic phonics URLs;
 - all additional public corpus URLs.
 
@@ -111,9 +115,9 @@ The build now inserts a generated section into both discovery files:
 
 The section is generated directly from the current blog source tree, not maintained manually.
 
-`llms.txt` contains the complete current blog link set in compact form.
+`llms.txt` contains the complete live canonical blog link set in compact form plus an explicit retired redirect-lineage note.
 
-`llms-full.txt` contains the same complete link set with summaries and indexing-state annotations.
+`llms-full.txt` contains the same complete live set with summaries and indexing-state annotations, plus the retired source → canonical destination lineage.
 
 The generated section explicitly states that older curated authority sections are subsets and must not be interpreted as the complete editorial corpus.
 
@@ -121,7 +125,9 @@ The generated section explicitly states that older curated authority sections ar
 
 `scripts/audit-ai-answer-layers.mjs --generated` now fails when:
 
-- the generated editorial corpus is not exactly 83 current blogs;
+- the generated editorial estate does not reconcile to the source tree's live-canonical count plus retired-redirect count;
+- the total editorial source estate drops below the established 83 records;
+- a retired source becomes answer-eligible/citation-eligible or loses its exact redirect target;
 - the governed phonics corpus is not exactly 31 pages;
 - a blog canonical URL is duplicated;
 - a blog is missing a title or summary;
@@ -129,7 +135,7 @@ The generated section explicitly states that older curated authority sections ar
 - a noindex blog is not marked supporting-only;
 - connected corpus totals do not reconcile;
 - either LLM discovery file lacks the complete editorial corpus section;
-- `llms-full.txt` exposes fewer than 83 unique current blog URLs.
+- `llms-full.txt` omits any live canonical editorial URL or the retired source → destination lineage.
 
 ## Resulting retrieval model
 
@@ -143,6 +149,6 @@ The full architecture is now:
 
 The corpus includes:
 
-**83 editorial blogs + 31 governed programmatic phonics guides + all additional public route content**
+**82 live canonical editorial articles + 1 retired redirect lineage + 31 governed programmatic phonics guides + all additional public route content**
 
 while preserving canonical ownership, noindex policy, commercial-page roles and existing frozen SEO protections.
