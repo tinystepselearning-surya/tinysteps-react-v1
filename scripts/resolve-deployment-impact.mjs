@@ -8,17 +8,21 @@ import { AVS_BROWSER_CALLABLES } from './avs-callable-contract.mjs';
 const args = new Map();
 for (let index = 2; index < process.argv.length; index += 2) args.set(process.argv[index], process.argv[index + 1]);
 const before = args.get('--before');
-const sha = args.get('--sha');
+const functionsBefore = args.get('--functions-before') || before;
+const forceFunctionsFull = args.get('--force-functions-full') === 'true';
 if (!/^[a-f0-9]{40}$/.test(before || '') || /^0{40}$/.test(before || '')) throw new Error('A non-zero 40-character --before SHA is required');
+if (!/^[a-f0-9]{40}$/.test(functionsBefore || '') || /^0{40}$/.test(functionsBefore || '')) throw new Error('A non-zero 40-character --functions-before SHA is required');
+const sha = args.get('--sha');
 if (!/^[a-f0-9]{40}$/.test(sha || '')) throw new Error('A 40-character --sha is required');
 execFileSync('git', ['merge-base', '--is-ancestor', before, sha], { stdio: 'ignore' });
+execFileSync('git', ['merge-base', '--is-ancestor', functionsBefore, sha], { stdio: 'ignore' });
 
 function gitText(parameters) {
   return execFileSync('git', parameters, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 }
 
-function changedPaths() {
-  const fields = gitText(['diff', '--name-status', '-z', '--find-renames', before, sha]).split('\0').filter(Boolean);
+function changedPaths(fromRevision, toRevision) {
+  const fields = gitText(['diff', '--name-status', '-z', '--find-renames', fromRevision, toRevision]).split('\0').filter(Boolean);
   const paths = [];
   for (let index = 0; index < fields.length;) {
     const status = fields[index++];
@@ -38,14 +42,39 @@ function firebaseAt(revision) {
   return JSON.parse(gitText(['show', `${revision}:firebase.json`]));
 }
 
-const changedFiles = changedPaths();
-const result = resolveFunctionsImpact({
+const changedFiles = changedPaths(before, sha);
+const functionsChangedFiles = changedPaths(functionsBefore, sha);
+const artifactResult = resolveFunctionsImpact({
   changedFiles,
   beforeSources: sourceSnapshot(before),
   afterSources: sourceSnapshot(sha),
   beforeFirebase: firebaseAt(before),
   afterFirebase: firebaseAt(sha),
 });
+const functionsResult = resolveFunctionsImpact({
+  changedFiles: functionsChangedFiles,
+  beforeSources: sourceSnapshot(functionsBefore),
+  afterSources: sourceSnapshot(sha),
+  beforeFirebase: firebaseAt(functionsBefore),
+  afterFirebase: firebaseAt(sha),
+});
+const result = {
+  ...artifactResult,
+  functionsSourceChanged: functionsResult.functionsSourceChanged,
+  functionsValidationRequired:
+    artifactResult.functionsValidationRequired
+    || functionsResult.functionsValidationRequired
+    || forceFunctionsFull,
+  functionsDeploymentRequired:
+    functionsResult.functionsDeploymentRequired || forceFunctionsFull,
+  fullDeployment: functionsResult.fullDeployment || forceFunctionsFull,
+  fullDeploymentReason: forceFunctionsFull
+    ? 'production-functions-baseline-missing-or-invalid'
+    : functionsResult.fullDeploymentReason,
+  impactedFunctions: forceFunctionsFull ? [] : functionsResult.impactedFunctions,
+  retiredFunctions: forceFunctionsFull ? [] : functionsResult.retiredFunctions,
+  reasons: forceFunctionsFull ? {} : functionsResult.reasons,
+};
 const targetsCsv = result.impactedFunctions.join(',');
 const schoolCallables = new Set(SCHOOL_BROWSER_CALLABLES);
 const avsCallables = new Set(AVS_BROWSER_CALLABLES);
@@ -70,6 +99,9 @@ if (process.env.GITHUB_OUTPUT) {
 
 const lines = [
   '## Artifact impact analysis', '',
+  `- Functions production baseline: ${functionsBefore}`,
+  `- Functions baseline differs from event parent: ${functionsBefore !== before}`,
+  `- Functions force-full recovery: ${forceFunctionsFull}`,
   `- Functions source changed: ${result.functionsSourceChanged}`,
   `- Functions validation required: ${result.functionsValidationRequired}`,
   `- Functions deployment required: ${result.functionsDeploymentRequired}`,
@@ -92,7 +124,10 @@ if (result.impactedFunctions.length) {
     for (const reason of result.reasons[id]) lines.push(`  - ${reason}`);
   }
 }
-lines.push('', '### Changed files', '', ...changedFiles.map(file => `- \`${file}\``), '');
+lines.push('', '### Event changed files', '', ...changedFiles.map(file => `- \`${file}\``), '');
+if (functionsBefore !== before || forceFunctionsFull) {
+  lines.push('', '### Functions-baseline changed files', '', ...functionsChangedFiles.map(file => `- \`${file}\``), '');
+}
 const summary = `${lines.join('\n')}\n`;
 process.stdout.write(summary);
 if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, summary);
