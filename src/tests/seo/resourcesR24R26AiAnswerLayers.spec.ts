@@ -77,6 +77,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).toContain('buildEditorialBlogCorpus');
     expect(generator).toContain('buildProgrammaticPhonicsCorpus');
     expect(generator).toContain('buildPublicRouteCorpus');
+    expect(generator).toContain('PUBLIC_ROUTE_MANIFEST');
     expect(generator).toContain('buildCompleteBlogLlmSection');
     expect(generator).toContain('Complete Editorial Blog Corpus');
     expect(generator).toContain('editorial_blogs: editorialBlogs');
