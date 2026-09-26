@@ -48,7 +48,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     }
   });
 
-  it('renders the answer architecture on the central and subject hubs', () => {
+  it('adds the explicit answer directory at /resources while preserving the frozen subject-hub teaching structure', () => {
     const component = read('src/components/resources/AiAnswerLayerDirectory.tsx');
     const resources = read('src/pages/ResourcesPage.tsx');
     const subjects = read('src/pages/SubjectResourcesPage.tsx');
@@ -56,7 +56,10 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(component).toContain('data-ai-answer-layer');
     expect(component).toContain('data-ai-query');
     expect(resources).toContain('<AiAnswerLayerDirectory />');
-    expect(subjects).toContain('<AiAnswerLayerDirectory subject={aiAnswerSubject} compact />');
+    expect(subjects).toContain('Learn the pathway');
+    expect(subjects).toContain('Practise the skill');
+    expect(subjects).toContain('Solve a problem');
+    expect(subjects).not.toContain('AiAnswerLayerDirectory');
   });
 
   it('generates machine-readable JSON/text and advertises them through llms discovery', () => {
