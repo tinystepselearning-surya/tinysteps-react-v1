@@ -83,10 +83,7 @@ const SUPPORTING_LONG_TAIL = new Set([
 ]);
 
 // Weekly-roadmap support pages are governed centrally by blogIndexingPolicy.
-// Keep only independent sitemap exclusions here.
-const EXCLUDED_BLOG_SLUGS = new Set([
-  'spoken-english-classes-for-kids-confidence',
-]);
+// Historical retired URLs remain protected by the central redirect map where applicable.
 const RETIRED_BLOG_SLUGS = new Set(
   Object.keys(RETIRED_BLOG_PATH_REDIRECTS)
     .filter((route) => route.startsWith('/blog/'))
@@ -183,7 +180,6 @@ const RETIRED_BLOG_SLUGS = new Set(
     ...mdxEntries.map((entry) => entry.slug),
   ])
     .filter((slug) => Boolean(slug)
-      && !EXCLUDED_BLOG_SLUGS.has(slug)
       && !RETIRED_BLOG_SLUGS.has(slug)
       && shouldIncludeBlogSlugInSitemap(slug))
     .sort();
