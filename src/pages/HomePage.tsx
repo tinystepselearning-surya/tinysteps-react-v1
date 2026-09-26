@@ -41,7 +41,8 @@ const homeWebPageSchema = {
   },
   about: [
     { "@type": "Thing", name: "Online English learning for children" },
-    { "@type": "Thing", name: "Phonics and reading" },
+    { "@type": "Thing", name: "Phonics and decoding" },
+    { "@type": "Thing", name: "Reading fluency and comprehension" },
     { "@type": "Thing", name: "Grammar and sentence building" },
     { "@type": "Thing", name: "Speaking and communication" },
   ],
@@ -243,7 +244,7 @@ export default function HomePage() {
 
       {showPrimaryBelowFoldSections ? (
         <>
-          {/* REVIEW ACTION 05 — PROGRAMMES: Keep only the three parent-relevant learning paths; remove SEO/location entry-point navigation. */}
+          {/* REVIEW ACTION 05 — PROGRAMMES: Keep the four parent-relevant learning paths; remove SEO/location entry-point navigation. */}
           <LearningPathsSection />
 
           {/* REVIEW ACTION 06 — DIFFERENTIATION: Explain why the Tiny Steps system is different before asking for deeper trust. */}
