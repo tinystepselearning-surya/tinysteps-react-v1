@@ -470,8 +470,8 @@ if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) {
 if (PHONICS_PUBLISHED_RESOURCE_PAGES.length !== 31) {
   throw new Error('AI Layer 2 must preserve the governed 31-page phonics publication set.');
 }
-if (GRAMMAR_PROGRAMMATIC_PAGES.length !== 15) {
-  throw new Error('AI Layer 2 must preserve the governed 15-page grammar publication set.');
+if (GRAMMAR_PROGRAMMATIC_PAGES.length !== 31) {
+  throw new Error('AI Layer 2 must preserve the governed 31-page grammar publication set.');
 }
 for (const entry of AI_ANSWER_LAYER_ALL_ITEMS) {
   if (![1, 2, 3].includes(entry.layer)) throw new Error(`Unsupported AI answer layer: ${entry.id}`);
