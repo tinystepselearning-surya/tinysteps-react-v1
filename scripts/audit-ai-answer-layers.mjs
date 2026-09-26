@@ -43,7 +43,7 @@ for (const phrase of ['Learn the pathway', 'Practise the skill', 'Solve a proble
 }
 
 const generator = fs.readFileSync(path.join(root, 'scripts/generate-rss.mjs'), 'utf8');
-for (const token of ['AI_ANSWER_LAYER_MACHINE_JSON_PATH', 'AI_ANSWER_LAYER_MACHINE_TEXT_PATH', 'buildAiResourceIndex', 'buildAiAnswerLlmSection']) {
+for (const token of ['AI_ANSWER_LAYER_MACHINE_JSON_PATH', 'AI_ANSWER_LAYER_MACHINE_TEXT_PATH', 'buildAiResourceIndex', 'buildAiAnswerLlmSection', 'buildEditorialBlogCorpus', 'buildProgrammaticPhonicsCorpus', 'buildPublicRouteCorpus', 'buildCompleteBlogLlmSection']) {
   if (!generator.includes(token)) fail('generator-contract', token);
 }
 
@@ -56,6 +56,29 @@ if (process.argv.includes('--generated')) {
   if (fs.existsSync(jsonPath)) {
     const index = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
     if (!Array.isArray(index.layers) || index.layers.length !== 3) fail('generated-layer-count', 'Expected exactly three generated answer layers.');
+
+    const editorialBlogs = index.corpus?.editorial_blogs || [];
+    const programmaticPhonics = index.corpus?.programmatic_phonics_guides || [];
+    const additionalPublicRoutes = index.corpus?.additional_public_routes || [];
+    if (editorialBlogs.length !== 83) fail('editorial-blog-corpus-count', `Expected all 83 current blogs; found ${editorialBlogs.length}.`);
+    if (programmaticPhonics.length !== 31) fail('programmatic-phonics-corpus-count', `Expected all 31 governed phonics guides; found ${programmaticPhonics.length}.`);
+    if (!additionalPublicRoutes.length) fail('public-route-corpus-empty', 'Expected additional public site routes in the connected corpus.');
+
+    const blogUrls = editorialBlogs.map((item) => item.canonical_url);
+    if (new Set(blogUrls).size !== editorialBlogs.length) fail('editorial-blog-corpus-duplicates', 'Editorial blog corpus contains duplicate canonical URLs.');
+    for (const item of editorialBlogs) {
+      if (!item.canonical_url?.startsWith('https://tinystepslearning.com/blog/')) fail('editorial-blog-canonical', item.id);
+      if (!item.title?.trim() || !item.summary?.trim()) fail('editorial-blog-metadata', item.id);
+      if (!['indexable', 'noindex'].includes(item.indexing_state)) fail('editorial-blog-indexing-state', item.id);
+      if (item.indexing_state === 'noindex' && item.answer_eligible) fail('noindex-answer-eligibility', item.id);
+      if (item.indexing_state === 'noindex' && item.retrieval_role !== 'supporting-only-noindex') fail('noindex-retrieval-role', item.id);
+    }
+    if (index.corpus_counts?.editorial_blogs !== 83) fail('corpus-count-summary', 'corpus_counts.editorial_blogs must equal 83.');
+    if (index.corpus_counts?.programmatic_phonics_guides !== 31) fail('corpus-count-summary', 'corpus_counts.programmatic_phonics_guides must equal 31.');
+    if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + programmaticPhonics.length + additionalPublicRoutes.length) {
+      fail('connected-public-content-count', 'Connected public content total does not reconcile.');
+    }
+
     let externalReferenceCount = 0;
     for (const layer of index.layers || []) {
       for (const item of layer.items || []) {
@@ -75,11 +98,18 @@ if (process.argv.includes('--generated')) {
   for (const source of [llms, llmsFull]) {
     if (!source.includes('## AI Answer Layers — problem, concept, practice')) fail('llms-layer-section', 'AI answer layer section missing.');
     if (!source.includes('https://tinystepslearning.com/ai-resource-index.json')) fail('llms-json-link', 'Machine JSON link missing.');
+    if (!source.includes('## Complete Editorial Blog Corpus')) fail('llms-blog-corpus-section', 'Complete editorial blog corpus section missing.');
+    if (!source.includes('Generated complete corpus: 83 current Tiny Steps editorial articles')) fail('llms-blog-corpus-count', 'LLM discovery must declare all 83 current blogs.');
   }
+
+  const blogLinksInFull = new Set(
+    [...llmsFull.matchAll(/https:\/\/tinystepslearning\.com\/blog\/[a-z0-9-]+/g)].map((match) => match[0]),
+  );
+  if (blogLinksInFull.size < 83) fail('llms-full-blog-coverage', `Expected at least 83 unique current blog URLs in llms-full.txt; found ${blogLinksInFull.size}.`);
 }
 
 const report = {
-  revision: '2026-09-26-r24-r26',
+  revision: '2026-09-26-r24-r27',
   layer1: AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length,
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,
