@@ -29,11 +29,13 @@ import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import BlogConversionCard from '../components/blog/BlogConversionCard';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
+import AuthorityBlogSidebar from '../components/blog/AuthorityBlogSidebar';
 import SatpinGuideSidebar from '../components/blog/SatpinGuideSidebar';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 
 const SatpinGuideExperience = lazy(() => import('../components/blog/SatpinGuideExperience'));
+const AuthorityBlogExperience = lazy(() => import('../components/blog/AuthorityBlogExperience'));
 // Meta removed — use applySeo as single source of truth
 
 const CATEGORY_ARTICLE_CONFIG = {
@@ -271,6 +273,95 @@ const SATPIN_HERO_POINTS = [
     detail: 'Use retrieval, fresh-word decoding, spelling and transfer instead of arbitrary mastery scores.',
   },
 ];
+
+const AUTHORITY_BLOG_PILOT_SLUGS = new Set([
+  'what-is-phonics-for-kids',
+  'how-to-teach-paragraph-writing-to-kids',
+  'how-to-teach-storytelling-to-kids',
+  'child-understands-english-but-does-not-speak',
+  'phonics-for-parents-guide',
+]);
+
+const AUTHORITY_PILOT_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
+  'what-is-phonics-for-kids': [
+    { label: 'Understand', value: 'Sound → print', detail: 'See how phonemes, graphemes and blending fit together in one parent-friendly model.' },
+    { label: 'Apply', value: 'Blend and spell', detail: 'Connect sound–print knowledge to fresh-word decoding, spelling and matched reading.' },
+    { label: 'Check', value: 'Look for transfer', detail: 'Use independent recall and fresh-word reading instead of memorised examples alone.' },
+  ],
+  'how-to-teach-paragraph-writing-to-kids': [
+    { label: 'Focus', value: 'One main idea', detail: 'Help the child decide what the paragraph is really about before adding sentences.' },
+    { label: 'Build', value: 'Relevant details', detail: 'Choose details that explain or develop the main idea instead of simply adding more sentences.' },
+    { label: 'Revise', value: 'Clarity + cohesion', detail: 'Reread for order, connections and meaning before correcting surface conventions.' },
+  ],
+  'how-to-teach-storytelling-to-kids': [
+    { label: 'Organise', value: 'Sequence the story', detail: 'Make the people, situation, important change and ending easy for a listener to follow.' },
+    { label: 'Develop', value: 'Choose useful detail', detail: 'Add enough information for clarity without burying the central event.' },
+    { label: 'Progress', value: 'Retell independently', detail: 'Look for flexible retelling, less prompting and better adjustment for a fresh listener.' },
+  ],
+  'child-understands-english-but-does-not-speak': [
+    { label: 'Separate', value: 'Understanding vs speaking', detail: 'Treat comprehension, formulation and independent response as different observations.' },
+    { label: 'Observe', value: 'Prompts + settings', detail: 'Compare modelled, prompted and independent speaking across comfortable and classroom settings.' },
+    { label: 'Support', value: 'Fade prompts gently', detail: 'Use the smallest scaffold needed, then reduce support as independent communication grows.' },
+  ],
+  'phonics-for-parents-guide': [
+    { label: 'Reinforce', value: 'The taught sequence', detail: 'Support the sound–spelling knowledge the child is actually learning rather than adding random rules.' },
+    { label: 'Prompt', value: 'Use the print', detail: 'Bring attention back to the complete printed word instead of relying on picture guessing.' },
+    { label: 'Transfer', value: 'Read • spell • reread', detail: 'Check that taught knowledge carries into fresh words, spelling and connected reading.' },
+  ],
+};
+
+const AUTHORITY_PILOT_TOC_PREFIXES: Record<string, string[]> = {
+  'what-is-phonics-for-kids': [
+    'Quick answer:',
+    'Six terms make phonics',
+    'The Tiny Steps phonics learning chain',
+    'What systematic and cumulative phonics means',
+    'What should parents see in a good phonics lesson?',
+    'How to tell whether phonics is working',
+    'Evidence and source boundary',
+    'Tiny Steps next step',
+  ],
+  'how-to-teach-paragraph-writing-to-kids': [
+    'Quick answer:',
+    'What changes when a child moves from sentences to paragraphs?',
+    'The Tiny Steps paragraph routine:',
+    'Worked example:',
+    'Five practical paragraph activities for home',
+    'What progress should parents look for?',
+    'Evidence and curriculum boundary',
+    'What to use next',
+  ],
+  'how-to-teach-storytelling-to-kids': [
+    'Quick answer:',
+    'Retelling and creating a story',
+    'The Tiny Steps oral story map:',
+    'A worked retelling example',
+    'Five storytelling activities for home',
+    'Storytelling progress is increasing independence',
+    'Evidence and curriculum boundary',
+    'What to use next',
+  ],
+  'child-understands-english-but-does-not-speak': [
+    'Quick answer:',
+    'Why a child may understand English',
+    'The protected Tiny Steps four-stage understanding-to-speaking check',
+    'Confidence, language or both?',
+    'A low-pressure home routine',
+    'How to measure progress',
+    'How Tiny Steps fits',
+    'Evidence and references',
+  ],
+  'phonics-for-parents-guide': [
+    'Quick answer:',
+    'How phonics works:',
+    'The Tiny Steps home-support loop:',
+    'When your child gets stuck on a word:',
+    'Decodable books and rich read-alouds',
+    'How to tell whether phonics is transferring',
+    'Where Tiny Steps fits for parents',
+    'Evidence and sources reviewed',
+  ],
+};
 
 const SCHOOL_RESEARCH_HERO_POINTS = [
   {
@@ -521,6 +612,8 @@ const BlogPostPage: FC = () => {
   const post = useMemo(() => blogPosts.find((p) => p.slug === slug), [slug]);
   const isStoryUnderstandingPillar = slug === 'why-child-reads-words-but-does-not-understand-story';
   const isSatpinGuide = slug === 'satpin-phonics-guide';
+  const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug));
+  const useAuthorityLayout = isSatpinGuide || isAuthorityPilot;
   const [MdxComp, setMdxComp] = useState<any>(null);
   const [mdxMeta, setMdxMeta] = useState<any>(null);
   useEffect(() => {
@@ -796,11 +889,14 @@ function buildMetaDescription(src: any) {
   const hasCoursesLink = learningPathLinks.some((link) => link?.to === '/courses');
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
   const sidebarConfig = isSchoolConversion ? SCHOOL_RESEARCH_SIDEBAR : categoryConfig;
+  const pilotHeroPoints = slug ? AUTHORITY_PILOT_HERO_POINTS[slug] : undefined;
   const resolvedHeroPoints = isSatpinGuide
     ? SATPIN_HERO_POINTS
-    : isSchoolConversion
-      ? SCHOOL_RESEARCH_HERO_POINTS
-      : categoryConfig.heroPoints;
+    : isAuthorityPilot && pilotHeroPoints
+      ? pilotHeroPoints
+      : isSchoolConversion
+        ? SCHOOL_RESEARCH_HERO_POINTS
+        : categoryConfig.heroPoints;
   const recommendedPrimaryAction = isSchoolConversion
     ? blogConversionConfig?.primaryAction
     : blogConversionConfig?.secondaryAction || primaryAction;
@@ -856,23 +952,33 @@ function buildMetaDescription(src: any) {
   const headingItems = useMemo(() => buildHeadingMeta(post?.body || []), [post]);
   const tocItems = useMemo(() => {
     const h2Items = headingItems.filter((item) => item.level === 'h2');
-    if (!isSatpinGuide) return h2Items.slice(0, 9);
 
-    const priorityPrefixes = [
-      'Quick answer:',
-      'SATPIN sounds:',
-      'SATPIN words:',
-      'Do children need to master all six SATPIN sounds before blending?',
-      'A parent-friendly SATPIN start sequence',
-      'What should SATPIN progress look like?',
-      'What comes after SATPIN?',
-      'Evidence and references',
-    ];
+    if (isSatpinGuide) {
+      const priorityPrefixes = [
+        'Quick answer:',
+        'SATPIN sounds:',
+        'SATPIN words:',
+        'Do children need to master all six SATPIN sounds before blending?',
+        'A parent-friendly SATPIN start sequence',
+        'What should SATPIN progress look like?',
+        'What comes after SATPIN?',
+        'Evidence and references',
+      ];
 
-    return priorityPrefixes
-      .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
-      .filter(Boolean);
-  }, [headingItems, isSatpinGuide]);
+      return priorityPrefixes
+        .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
+        .filter(Boolean);
+    }
+
+    if (isAuthorityPilot && slug) {
+      const priorityPrefixes = AUTHORITY_PILOT_TOC_PREFIXES[slug] || [];
+      return priorityPrefixes
+        .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
+        .filter(Boolean);
+    }
+
+    return h2Items.slice(0, 9);
+  }, [headingItems, isAuthorityPilot, isSatpinGuide, slug]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
 
@@ -1016,7 +1122,7 @@ function buildMetaDescription(src: any) {
     : `Published ${formatBlogDate(metaSource.date)}`;
 
   return (
-    <div className={isSatpinGuide ? 'min-h-screen bg-[#f5f5f7] text-slate-900' : 'min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900'}>
+    <div className={useAuthorityLayout ? 'min-h-screen bg-[#f5f5f7] text-slate-900' : 'min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900'}>
       <ResearchArticleHero
         eyebrowPrimary={eyebrowPrimary}
         eyebrowSecondary={eyebrowSecondary}
@@ -1031,12 +1137,12 @@ function buildMetaDescription(src: any) {
         searchPainPoints={heroSearchPainPoints}
         searchLabel={isSchoolConversion ? 'Schools often ask' : 'Parents often search'}
         heroPoints={resolvedHeroPoints}
-        compact={isSatpinGuide}
+        compact={useAuthorityLayout}
       />
 
-      <div className={isSatpinGuide ? 'mx-auto max-w-[1380px] px-4 py-7 sm:px-6 sm:py-9' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
-        <div className={isSatpinGuide ? 'grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]' : 'grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]'}>
-          <div className={isSatpinGuide ? 'min-w-0 space-y-8 lg:order-2' : 'min-w-0 space-y-8'}>
+      <div className={useAuthorityLayout ? 'mx-auto max-w-[1380px] px-4 py-7 sm:px-6 sm:py-9' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
+        <div className={useAuthorityLayout ? 'grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]' : 'grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]'}>
+          <div className={useAuthorityLayout ? 'min-w-0 space-y-8 lg:order-2' : 'min-w-0 space-y-8'}>
             <KnowledgeBreadcrumbs items={breadcrumbItems} tone="light" />
 
             {isSatpinGuide && post ? (
@@ -1051,6 +1157,21 @@ function buildMetaDescription(src: any) {
                 post={post}
                 headingItems={headingItems}
                 tocItems={tocItems}
+                  resolvedHero={resolvedHero}
+                />
+              </Suspense>
+            ) : isAuthorityPilot && post ? (
+              <Suspense
+                fallback={
+                  <div className="rounded-[2rem] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
+                    Loading article guide…
+                  </div>
+                }
+              >
+                <AuthorityBlogExperience
+                  post={post}
+                  headingItems={headingItems}
+                  tocItems={tocItems}
                   resolvedHero={resolvedHero}
                 />
               </Suspense>
@@ -1134,7 +1255,7 @@ function buildMetaDescription(src: any) {
               <BlogConversionCard slug={slug} config={blogConversionConfig} />
             ) : null}
 
-            {!isSatpinGuide ? (
+            {!useAuthorityLayout ? (
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">
                 {isSchoolConversion ? 'Recommended Next for Schools' : 'Recommended Next for Parents'}
@@ -1161,9 +1282,15 @@ function buildMetaDescription(src: any) {
             ) : null}
           </div>
 
-          <aside className={isSatpinGuide ? 'hidden lg:order-1 lg:block lg:sticky lg:top-24 lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
+          <aside className={useAuthorityLayout ? 'hidden lg:order-1 lg:block lg:sticky lg:top-24 lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
             {isSatpinGuide ? (
               <SatpinGuideSidebar tocItems={tocItems} />
+            ) : isAuthorityPilot && slug ? (
+              <AuthorityBlogSidebar
+                tocItems={tocItems}
+                articleSlug={slug}
+                articleLabel={(metaSource.category || 'Article') + ' guide'}
+              />
             ) : (
               <>
 
