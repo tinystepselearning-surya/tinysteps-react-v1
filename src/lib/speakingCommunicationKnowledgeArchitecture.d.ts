@@ -16,9 +16,9 @@ export interface SpeakingCommunicationContentAuditRecord {
   readonly path: string | null;
   readonly proposedPath: string | null;
   readonly consolidationTarget: string | null;
-  readonly implementationState: 'established' | 'proposal-only' | 'hold';
+  readonly implementationState: 'established' | 'proposal-only' | 'hold' | 'redirected-source-removed';
   readonly publicationApproved: false;
-  readonly urlChangeAuthorized: false;
+  readonly urlChangeAuthorized: boolean;
   readonly reasons: readonly string[];
 }
 
