@@ -604,6 +604,12 @@ const ForSchoolsPage: React.FC = () => {
         }
       />
 
+      <div className="mx-auto flex w-full max-w-7xl justify-end px-6 pt-3">
+        <Link to="/resources" className="text-sm font-bold text-slate-600 underline decoration-slate-300 underline-offset-4 hover:text-slate-950">
+          ← All Tiny Steps Resources
+        </Link>
+      </div>
+
       <LeadSection id="cbse-ncf">
         <LeadCard className="overflow-hidden border-indigo-100 bg-gradient-to-br from-white via-orange-50/50 to-indigo-50/70">
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
