@@ -43,7 +43,6 @@ function groupKey(item: AvsBusinessCaseInput): string {
   ) {
     return [
       item.serviceDateYmd,
-      item.enrollmentId,
       item.kidId,
       item.teacherId,
     ].join('|');

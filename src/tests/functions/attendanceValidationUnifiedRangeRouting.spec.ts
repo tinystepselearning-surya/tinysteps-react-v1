@@ -24,44 +24,28 @@ describe('AVS unified Run Validation backend routing', () => {
     expect(contract).toContain("'runAttendanceValidationRange'");
   });
 
-  it('runs cached dirty reconciliation before deciding fresh work', () => {
-    const latest = source.indexOf(
-      'runAttendanceValidationLatestCheckBatch(',
-    );
-    const targets = source.indexOf(
-      'uniqueFreshValidationTargets({',
-    );
-    expect(latest).toBeGreaterThan(-1);
-    expect(targets).toBeGreaterThan(latest);
+  it('discovers complete scoped groups before deciding whether fresh evidence is required', () => {
+    const group = read('functions/src/attendanceValidation/groupValidation.ts');
+    expect(source.indexOf('discoverAvsRangeGroups(db')).toBeLessThan(source.indexOf('validateAvsBusinessGroup({'));
+    expect(group.indexOf('const tinyStepsPresentCount = present.length')).toBeLessThan(group.indexOf('await params.collectFresh(row)'));
+    expect(group).toContain('if (sufficient()) break');
+    expect(source).not.toContain('runAttendanceValidationLatestCheckBatch(');
+    expect(source).not.toContain('runAttendanceValidationFirstTimeBaselineBatch(');
   });
 
-  it('automatically refreshes stale cases and collects first evidence for missing cases or missing referenced evidence', () => {
-    expect(source).toContain(
-      'refreshAttendanceValidationCaseEvidence({',
-    );
-    expect(source).toContain(
-      'collectMissingAttendanceValidationCase({',
-    );
-    expect(source).toContain(
-      'missingCaseSessionIds: latest.baselineRequiredSessionIds',
-    );
-    expect(source).toContain(
-      'AVS_FORCE_FRESH_RANGE_CONCURRENCY',
-    );
-    expect(source).toContain('mapWithConcurrency(');
+  it('uses the canonical occurrence selector, identity binding, and evidence store for fresh work', () => {
+    expect(source).toContain('createOccurrenceSelectingTeamsEvidenceGraphClient(graph, session)');
+    expect(source).toContain('collectTeamsEvidence(');
+    expect(source).toContain('firstBlockingEvidenceFailure(result.evidence.issues)');
+    expect(source).toContain('bindTeacherIdentityFromFreshEvidence(');
   });
 
-  it('uses remaining capacity for the existing baseline cursor engine', () => {
-    expect(source).toContain(
-      'remainingUnifiedValidationCapacity(',
-    );
-    expect(source).toContain(
-      'runAttendanceValidationFirstTimeBaselineBatch(',
-    );
-    expect(source).toContain('{ maxSessions: remainingCapacity }');
-    expect(source).toContain(
-      'AVS_UNIFIED_VALIDATION_MAX_SESSIONS_PER_RUN',
-    );
+  it('caps whole-group work at 100 sessions and uses a scoped explicit continuation cursor', () => {
+    const group = read('functions/src/attendanceValidation/groupValidation.ts');
+    expect(group).toContain('processedSessionCount + members.length > 100');
+    expect(group).toContain('query.startAfter(cursor.date, cursor.sessionId)');
+    expect(source).toContain('resolveAvsParentEnrollments(db, parentId)');
+    expect(source).toContain('nextCursor: hasMore ? plan.nextCursor : null');
   });
 
   it('returns continuation, failure, Graph-call, and review diagnostics', () => {

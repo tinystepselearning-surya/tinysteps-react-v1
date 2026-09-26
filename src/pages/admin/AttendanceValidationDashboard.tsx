@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { loadAvsParentOptions, loadAvsParentEnrollmentIds, loadAvsParentCases, type AvsParentOption } from '../../lib/attendanceValidationParentScope';
+import { useCallback, useRef, useState } from 'react';
 import {
   collection,
   documentId,
@@ -66,6 +67,9 @@ interface AvsFailureDescriptor {
 }
 
 interface AvsUnifiedValidationResponse {
+  groupRebuiltCount?: number;
+  parentId?: string | null;
+  nextCursor?: { date: string; sessionId: string } | null;
   ok: boolean;
   fromDate: string;
   toDate: string;
@@ -633,6 +637,14 @@ function issueSummary(item: Av6ValidationCase): string[] {
 }
 
 export default function AttendanceValidationDashboard() {
+  const [parentId, setParentId] = useState('all');
+  const [parentSearch, setParentSearch] = useState('');
+  const [parents, setParents] = useState<AvsParentOption[]>([]);
+  const parentListPromise = useRef<Promise<AvsParentOption[]> | null>(null);
+  const loadParentsOnce = () => {
+    parentListPromise.current ??= loadAvsParentOptions();
+    void parentListPromise.current.then(setParents).catch((error: Error) => setError(error.message));
+  };
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
   const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
   const [toDate, setToDate] = useState(yesterdayIstYmd);
@@ -692,6 +704,7 @@ export default function AttendanceValidationDashboard() {
             where('serviceDateYmd', '>=', fromDate),
             where('serviceDateYmd', '<=', toDate),
             orderBy('serviceDateYmd', 'desc'),
+            orderBy(documentId(), 'desc'),
             startAfter(cursor),
             limit(AV6_CASE_READ_LIMIT),
           )
@@ -700,10 +713,17 @@ export default function AttendanceValidationDashboard() {
             where('serviceDateYmd', '>=', fromDate),
             where('serviceDateYmd', '<=', toDate),
             orderBy('serviceDateYmd', 'desc'),
+            orderBy(documentId(), 'desc'),
             limit(AV6_CASE_READ_LIMIT),
           );
 
-      const snapshot = await getDocs(casesQuery);
+      let snapshot: { docs: QueryDocumentSnapshot<DocumentData>[] };
+      if (parentId === 'all') {
+        snapshot = await getDocs(casesQuery);
+      } else {
+        const enrollmentIds = await loadAvsParentEnrollmentIds(parentId);
+        snapshot = { docs: await loadAvsParentCases(casesQuery, enrollmentIds, AV6_CASE_READ_LIMIT) };
+      }
       const nextCases = snapshot.docs.map((docSnapshot) =>
         normalizeCase(
           docSnapshot.id,
@@ -729,7 +749,7 @@ export default function AttendanceValidationDashboard() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [cursor, fromDate, loadedRange, toDate]);
+  }, [cursor, fromDate, loadedRange, toDate, parentId]);
 
   const runValidation = useCallback(async () => {
     if (!validDateRange(fromDate, toDate)) {
@@ -756,10 +776,12 @@ export default function AttendanceValidationDashboard() {
     try {
       const result = await callFunction<
         AvsUnifiedValidationResponse,
-        { fromDate: string; toDate: string }
+        { fromDate: string; toDate: string; parentId?: string; cursor?: { date: string; sessionId: string } | null }
       >(
         'runAttendanceValidationRange',
-        { fromDate, toDate },
+        { fromDate, toDate, ...(parentId !== 'all' ? { parentId } : {}),
+          cursor: validationResult?.fromDate === fromDate && validationResult?.toDate === toDate
+            && (validationResult?.parentId ?? 'all') === parentId ? validationResult?.nextCursor : null },
       );
 
       setValidationResult(result);
@@ -773,7 +795,7 @@ export default function AttendanceValidationDashboard() {
     } finally {
       setValidationRunning(false);
     }
-  }, [fromDate, loadSavedCases, toDate]);
+  }, [fromDate, loadSavedCases, toDate, parentId, validationResult]);
 
   const forceFreshEvidence = useCallback(async (item: Av6ValidationCase) => {
     if (
@@ -818,6 +840,7 @@ export default function AttendanceValidationDashboard() {
   }, [loadSavedCases]);
 
   const forceFreshSelectedRange = useCallback(async () => {
+    if (parentId !== 'all') return;
     if (!validDateRange(fromDate, toDate)) {
       setError(
         `Choose a valid date range from ${AV6_VALIDATION_START_YMD} onward.`,
@@ -898,6 +921,7 @@ export default function AttendanceValidationDashboard() {
       setForceFreshRangeRunning(false);
     }
   }, [
+    parentId,
     forceFreshRangeGeneration,
     forceFreshRangeResult,
     fromDate,
@@ -952,10 +976,30 @@ export default function AttendanceValidationDashboard() {
       </Card>
 
       <Card className="p-4">
-        <div className="grid gap-3 lg:grid-cols-[180px_180px_auto] lg:items-end">
+        <div className="grid gap-3 lg:grid-cols-[240px_150px_150px_auto] lg:items-end">
+          <div className="space-y-1 text-xs font-medium text-slate-600">
+            <label htmlFor="avs-parent">Parent</label>
+            <Input aria-label="Search parents" placeholder="Search parents…" value={parentSearch}
+              onFocus={loadParentsOnce} onChange={(event) => setParentSearch(event.target.value)} />
+            <select id="avs-parent" className="h-10 w-full rounded-md border bg-white px-2"
+              value={parentId} onFocus={loadParentsOnce}
+              disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
+              onChange={(event) => {
+                setParentId(event.target.value);
+                setCases([]); setCursor(null); setHasMore(false); setLoadedRange(null); setLoadedAt(null);
+                setValidationResult(null); setValidationCompletedAt(null);
+                setForceFreshRangeResult(null); setForceFreshRangeGeneration(null); setForceFreshRangeCompletedAt(null);
+                setForceFreshResult(null); setForceFreshCompletedAt(null); setError(null);
+              }}>
+              <option value="all">All parents</option>
+              {parents.filter((parent) => parent.id === parentId || parent.label.toLowerCase().includes(parentSearch.toLowerCase()))
+                .map((parent) => <option key={parent.id} value={parent.id}>{parent.label}</option>)}
+            </select>
+          </div>
           <label className="space-y-1 text-xs font-medium text-slate-600">
             <span>From</span>
             <Input
+              disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning}
               type="date"
               min={AV6_VALIDATION_START_YMD}
               max={yesterdayIstYmd()}
@@ -966,6 +1010,7 @@ export default function AttendanceValidationDashboard() {
           <label className="space-y-1 text-xs font-medium text-slate-600">
             <span>To</span>
             <Input
+              disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning}
               type="date"
               min={AV6_VALIDATION_START_YMD}
               max={yesterdayIstYmd()}
@@ -1028,14 +1073,14 @@ export default function AttendanceValidationDashboard() {
           </summary>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              Re-fetch Teams Data intentionally ignores cached Teams evidence for existing AVS cases. Use it only when you explicitly want new Microsoft Graph evidence for this range.
+              {parentId !== 'all' ? 'Re-fetch Teams Data is disabled while a parent is selected. Use Run Validation for this parent.' : 'Re-fetch Teams Data intentionally ignores cached Teams evidence for existing AVS cases.'} Use it only when you explicitly want new Microsoft Graph evidence for this range.
             </p>
             <Button
               type="button"
               variant="outline"
               onClick={() => void forceFreshSelectedRange()}
               disabled={
-                loading
+                parentId !== 'all' || loading
                 || loadingMore
                 || validationRunning
                 || forceFreshRangeRunning
@@ -1065,7 +1110,7 @@ export default function AttendanceValidationDashboard() {
         {loadedRange && loadedAt && (
           <p className="mt-2 text-xs text-slate-500">
             Loaded {loadedRange.from} to {loadedRange.to} at {formatObservedAt(loadedAt.toISOString())}.
-            Each page reads at most {AV6_CASE_READ_LIMIT} saved cases.
+            Each query reads at most {AV6_CASE_READ_LIMIT} saved cases; parent enrollment chunks are merged into one page.
           </p>
         )}
       </Card>
@@ -1086,16 +1131,16 @@ export default function AttendanceValidationDashboard() {
                   + validationResult.firstEvidenceCollectedCount
                   + validationResult.baselineFreshEvidenceCount} received fresh Teams evidence.
                 {finiteCount(validationResult.baselineExistingCaseCount) > 0 && (
-                  <> {' '}{finiteCount(validationResult.baselineExistingCaseCount)} already had a saved AVS case and did not need first-time evidence collection.</>
+                  <> {' '}{finiteCount(validationResult.baselineExistingCaseCount)} already had a saved AVS case.</>
                 )}
                 {' '}{validationResult.freshFailedCount
                   + validationResult.baselineBlockedCount} need another validation attempt or review.
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Saved/rebuilt AVS cases this call: {finiteCount(validationResult.baselinePersistedCaseCount)
+                Saved/rebuilt AVS cases this call: {validationResult.groupRebuiltCount ?? (finiteCount(validationResult.baselinePersistedCaseCount)
                   + finiteCount(validationResult.cachedRevalidatedCount)
                   + finiteCount(validationResult.freshRefreshedCount)
-                  + finiteCount(validationResult.firstEvidenceCollectedCount)}.
+                  + finiteCount(validationResult.firstEvidenceCollectedCount))}.
                 {' '}Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
                 {' '}Automatic teacher identity mappings: {validationResult.identityMappingsWritten}.
                 {' '}Unsafe evidence references left for review: {validationResult.freshnessUnsafeCount}.

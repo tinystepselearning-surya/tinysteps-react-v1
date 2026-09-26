@@ -148,6 +148,7 @@ export interface Av53ValidationCaseDocument {
   teamsSupportedPresentCount: number | null;
   tinyStepsPresentCount: number | null;
   businessDifferenceCount: number | null;
+  groupEvidenceIds?: string[];
   inputFingerprint: string;
   operationalMutationAllowed: false;
 }
@@ -432,7 +433,7 @@ interface SameDayGroupDescriptor {
   teacherId: string;
 }
 
-function sameDayGroupDescriptor(
+export function sameDayGroupDescriptor(
   serviceDateYmd: string,
   session: Record<string, unknown> | null,
   evidence: AttendanceValidationEvidenceDocument | null,
@@ -446,7 +447,7 @@ function sameDayGroupDescriptor(
 
   if (!enrollmentId || !kidId || !teacherId) return null;
   return {
-    key: [serviceDateYmd, enrollmentId, kidId, teacherId].join('|'),
+    key: [serviceDateYmd, kidId, teacherId].join('|'),
     serviceDateYmd,
     enrollmentId,
     kidId,
@@ -462,7 +463,7 @@ function sameDayGroupKey(
   return sameDayGroupDescriptor(serviceDateYmd, session, evidence)?.key ?? null;
 }
 
-function attendanceEntryForKid(
+export function attendanceEntryForKid(
   session: Record<string, unknown>,
   kidId: string | null,
 ): unknown {
@@ -1095,6 +1096,7 @@ export async function runAv53Shadow(
     }));
   }
 
+  cases.forEach(assertAvsBusinessPersistenceInvariant);
   await deps.store.saveCases(cases);
 
   return {
@@ -1186,6 +1188,7 @@ export class FirestoreAv53ShadowStore implements Av53ShadowStore {
   ): Promise<void> {
     if (cases.length === 0) return;
 
+    cases.forEach(assertAvsBusinessPersistenceInvariant);
     const batch = this.db.batch();
     for (const validationCase of cases) {
       batch.set(
@@ -1205,7 +1208,7 @@ export class FirestoreAv53ShadowStore implements Av53ShadowStore {
  * Cloud Function or scheduler in AV5.3.
  *
  * The staff registry is loaded once per run. Work-item session/evidence reads remain
- * exact point reads. Same-day multi-session validation adds bounded date+enrollment
+ * exact point reads. Same-day multi-session validation adds bounded date+student
  * context queries to count operational Present rows, reported separately as
  * sameDayContextReadDocumentBudget.
  * Case writes do not pre-read existing case documents.
@@ -1293,13 +1296,16 @@ export async function runAv53ShadowWithFirestore(
   const GROUP_SESSION_CONTEXT_LIMIT = 50;
 
   for (const group of sameDayGroups.values()) {
-    const snapshot = await db
-      .collection('classSessions')
-      .where('date', '==', group.serviceDateYmd)
-      .where('enrollmentId', '==', group.enrollmentId)
-      .limit(GROUP_SESSION_CONTEXT_LIMIT + 1)
-      .get();
-    sameDayContextReadDocumentBudget += snapshot.size;
+    const contextSnapshots = await Promise.all(
+      ([['kidId', '=='], ['kidIds', 'array-contains'], ['studentId', '=='], ['childId', '==']] as const)
+        .map(([field, operator]) => db.collection('classSessions')
+          .where('date', '==', group.serviceDateYmd)
+          .where(field, operator, group.kidId)
+          .limit(GROUP_SESSION_CONTEXT_LIMIT + 1).get()),
+    );
+    sameDayContextReadDocumentBudget += contextSnapshots.reduce((sum, item) => sum + item.size, 0);
+    const uniqueDocs = new Map(contextSnapshots.flatMap((item) => item.docs).map((doc) => [doc.id, doc]));
+    const snapshot = { size: uniqueDocs.size, docs: [...uniqueDocs.values()] };
 
     if (snapshot.size > GROUP_SESSION_CONTEXT_LIMIT) {
       sameDayContextIncompleteGroups.add(group.key);
@@ -1364,4 +1370,14 @@ export async function runAv53ShadowWithFirestore(
     freshnessUnsafeCount,
     skipped: [...result.skipped, ...freshnessSkipped],
   };
+}
+
+/** Fail closed at the write boundary, including callers outside Run Validation. */
+export function assertAvsBusinessPersistenceInvariant(value: Pick<Av53ValidationCaseDocument,
+  'tinyStepsPresentCount' | 'teamsSupportedPresentCount'>): void {
+  if ((value.tinyStepsPresentCount ?? 0) > 0
+    && value.teamsSupportedPresentCount !== null
+    && value.teamsSupportedPresentCount > value.tinyStepsPresentCount!) {
+    throw new Error('AVS business invariant violated: Teams Present exceeds Tiny Steps Present.');
+  }
 }
