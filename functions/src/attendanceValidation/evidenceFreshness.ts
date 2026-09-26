@@ -2,6 +2,9 @@ import {
   hashAttendanceEvidenceValue,
   type AttendanceValidationEvidenceDocument,
 } from './teamsEvidenceCollector';
+import {
+  AVS_SAME_DAY_EVIDENCE_CALCULATION_VERSION,
+} from './sameDayCoverageEngine';
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -16,6 +19,7 @@ export type EvidenceFreshnessDecision =
 export type EvidenceFreshnessReason =
   | 'compatible'
   | 'evidence_document_missing'
+  | 'evidence_calculation_version_outdated'
   | 'evidence_session_id_mismatch'
   | 'operational_enrollment_unresolved'
   | 'evidence_enrollment_unresolved'
@@ -290,6 +294,13 @@ export function classifyCachedEvidenceFreshness(params: {
       decision: 'unsafe_review',
       reasons: [...new Set(unsafeReasons)],
     };
+  }
+
+  if (
+    evidence.calculationVersion
+      < AVS_SAME_DAY_EVIDENCE_CALCULATION_VERSION
+  ) {
+    freshReasons.push('evidence_calculation_version_outdated');
   }
 
   if (enrollmentId !== evidenceEnrollmentId) {
