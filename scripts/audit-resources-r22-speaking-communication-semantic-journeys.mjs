@@ -149,7 +149,7 @@ for (const [id, expected] of [
   if (!owner || owner.ownerPath !== expected[0] || owner.intent !== expected[1]) add('commercial-owner-drift', id, JSON.stringify(owner));
 }
 const legacy = getSpeakingCommunicationContentAuditByAction('consolidate')[0];
-if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/speaking-confidence-seeds' || legacy.implementationState !== 'hold' || legacy.urlChangeAuthorized || legacy.publicationApproved) add('legacy-hold', 'legacy-hidden-confidence-article', 'R22 must not redirect, delete or transfer the held legacy confidence URL.');
+if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/child-understands-english-but-does-not-speak' || legacy.implementationState !== 'redirected-source-removed' || !legacy.urlChangeAuthorized || legacy.publicationApproved) add('legacy-hold', 'legacy-hidden-confidence-article', 'R22 must preserve the completed redirect-only retirement.');
 
 const pathwayFile = path.join(root, 'src/components/blog/BlogSemanticPathway.tsx');
 const pathwaySource = fs.readFileSync(pathwayFile, 'utf8');
