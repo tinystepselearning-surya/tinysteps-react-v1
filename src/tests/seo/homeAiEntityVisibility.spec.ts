@@ -69,6 +69,14 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(methodSource).not.toContain('proofTiles');
     expect(methodSource).not.toContain('PROOF YOU CAN SEE');
     expect(methodSource).not.toContain('stageAccents');
+    expect(methodSource).not.toContain('icon: "🔤"');
+    expect(methodSource).not.toContain('icon: "📚"');
+    expect(methodSource).not.toContain('icon: "🧩"');
+    expect(methodSource).not.toContain('icon: "🎤"');
+    expect(methodSource).not.toContain('icon: "🌟"');
+    expect(methodSource).not.toContain('>✅<');
+    expect(methodSource).not.toContain('>🧠<');
+    expect(methodSource).not.toContain('>📩<');
   });
 
   it('preserves the intended conversion sequence after differentiation', () => {
@@ -97,6 +105,7 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(journeySource).not.toContain('Age guidance');
     expect(homeSource).not.toContain('<TrustEvidenceSection />');
     expect(journeySource).toContain('Read parent testimonials');
+    expect(journeySource).toContain('bg-slate-50/70 px-6 py-8 sm:py-10');
   });
 
   it('keeps primary programme discovery complete without turning the homepage into a course catalogue', () => {
