@@ -155,7 +155,7 @@ function parseEvidenceItem(text: string): EvidenceItem | null {
 }
 
 function isEvidenceSection(title: string) {
-  return /\bevidence\b|\bsources? reviewed\b|\breferences\b/i.test(title);
+  return /^Evidence\b|\bsources? reviewed\b|\breferences\b/i.test(title);
 }
 
 function isNextSection(title: string) {
