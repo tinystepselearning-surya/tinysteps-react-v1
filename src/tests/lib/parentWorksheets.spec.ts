@@ -115,6 +115,34 @@ describe("parent worksheet helpers", () => {
     expect(groupParentWorksheets([legacy])[0]).toMatchObject({ legacy: true, lessonTitle: "Legacy / General Resources" });
   });
 
+  it("uses worksheet sort order for lesson tile ordering before lesson metadata labels", () => {
+    const make = (lessonNumber: number, folderTitle: string) => toParentWorksheetItem(`worksheet-${lessonNumber}`, {
+      title: `Worksheet ${lessonNumber}`,
+      url: "https://example.com/file.pdf",
+      lessonId: `lesson-${lessonNumber}`,
+      lessonTitle: `Lesson-${lessonNumber}`,
+      lessonFolderTitle: folderTitle,
+      targetCourseIds: ["advanced-phonics"],
+      courseId: "advanced-phonics",
+      courseTitle: "Advanced Phonics",
+      sortOrder: lessonNumber,
+    });
+
+    const groups = groupParentWorksheets([
+      make(2, "A section"),
+      make(1, "Z section"),
+      make(4, "B section"),
+      make(3, "Y section"),
+    ]);
+
+    expect(groups.map((group) => group.lessonTitle)).toEqual([
+      "Lesson-1",
+      "Lesson-2",
+      "Lesson-3",
+      "Lesson-4",
+    ]);
+  });
+
   it("sorts lesson groups in natural numeric order instead of lexicographic order", () => {
     const make = (lessonNumber: number) => toParentWorksheetItem(`worksheet-${lessonNumber}`, {
       title: `Worksheet ${lessonNumber}`,
