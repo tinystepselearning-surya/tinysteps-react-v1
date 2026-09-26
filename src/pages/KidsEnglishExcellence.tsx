@@ -819,7 +819,7 @@ const STAGES: Stage[] = [
       { gameId: "eem-g00b-letter-tracing-sounds", gameTitle: "Letter Tracing + Sounds", moduleId: "eem-m00-pre-writing-tracing", gameOrder: 1, desc: "trace while hearing letter sounds", route: "/kids/games/phonics/letter-tracing-sounds", status: 'live' },
       { gameId: "eem-g04-letter-sounds", gameTitle: "Letter Sounds", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 2, desc: "letter → sound match", route: "/kids/games/phonics/letter-sound", status: 'live' },
       { gameId: "eem-g04b-balloon-pop", gameTitle: "Balloon Pop", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 3, desc: "pop balloons with the correct sound", route: "/kids/games/phonics/balloon-pop", status: 'live' },
-      { gameId: "eem-g05-sound-listening", gameTitle: "Sound Listening", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 4, desc: "listen and tap the correct picture", route: "/kids/games/phonics/sound-detective", status: 'live' },
+      { gameId: "eem-g05-sound-listening", gameTitle: "A-Z Phonics Sound Detective", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 4, desc: "listen and match A-Z phonics sounds", route: "/kids/games/phonics/sound-detective", status: 'live' },
     ],
   },
   {
