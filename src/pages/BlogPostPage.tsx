@@ -29,6 +29,7 @@ import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import BlogConversionCard from '../components/blog/BlogConversionCard';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
+import SatpinGuideExperience, { SatpinGuideSidebar } from '../components/blog/SatpinGuideExperience';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 // Meta removed — use applySeo as single source of truth
@@ -249,6 +250,24 @@ const SCHOOL_RESEARCH_SEARCH_PAIN_POINTS = [
   'How should teachers assess decoding rather than memorisation?',
   'What support helps teachers apply a structured literacy progression?',
   'How can we turn research guidance into a practical school routine?',
+];
+
+const SATPIN_HERO_POINTS = [
+  {
+    label: 'Learn',
+    value: '6 SATPIN sounds',
+    detail: 'See the starter sound–print correspondences in one clear view.',
+  },
+  {
+    label: 'Practise',
+    value: 'First words & blending',
+    detail: 'Build simple matched words and know when blending can begin.',
+  },
+  {
+    label: 'Progress',
+    value: 'Know when to move forward',
+    detail: 'Use retrieval, fresh-word decoding, spelling and transfer instead of arbitrary mastery scores.',
+  },
 ];
 
 const SCHOOL_RESEARCH_HERO_POINTS = [
@@ -499,6 +518,7 @@ const BlogPostPage: FC = () => {
   const { slug } = useParams();
   const post = useMemo(() => blogPosts.find((p) => p.slug === slug), [slug]);
   const isStoryUnderstandingPillar = slug === 'why-child-reads-words-but-does-not-understand-story';
+  const isSatpinGuide = slug === 'satpin-phonics-guide';
   const [MdxComp, setMdxComp] = useState<any>(null);
   const [mdxMeta, setMdxMeta] = useState<any>(null);
   useEffect(() => {
@@ -774,6 +794,11 @@ function buildMetaDescription(src: any) {
   const hasCoursesLink = learningPathLinks.some((link) => link?.to === '/courses');
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
   const sidebarConfig = isSchoolConversion ? SCHOOL_RESEARCH_SIDEBAR : categoryConfig;
+  const resolvedHeroPoints = isSatpinGuide
+    ? SATPIN_HERO_POINTS
+    : isSchoolConversion
+      ? SCHOOL_RESEARCH_HERO_POINTS
+      : categoryConfig.heroPoints;
   const recommendedPrimaryAction = isSchoolConversion
     ? blogConversionConfig?.primaryAction
     : blogConversionConfig?.secondaryAction || primaryAction;
@@ -827,10 +852,26 @@ function buildMetaDescription(src: any) {
     : [primaryAction, categoryConfig.secondaryAction];
 
   const headingItems = useMemo(() => buildHeadingMeta(post?.body || []), [post]);
-  const tocItems = useMemo(
-    () => headingItems.filter((item) => item.level === 'h2').slice(0, 9),
-    [headingItems],
-  );
+  const tocItems = useMemo(() => {
+    const h2Items = headingItems.filter((item) => item.level === 'h2');
+    if (!isSatpinGuide) return h2Items.slice(0, 9);
+
+    const priorityPrefixes = [
+      'Quick answer:',
+      'SATPIN sounds:',
+      'SATPIN words:',
+      'Do children need to master all six SATPIN sounds before blending?',
+      'A parent-friendly SATPIN start sequence',
+      'What should SATPIN progress look like?',
+      'Five common SATPIN difficulties',
+      'What comes after SATPIN?',
+      'Evidence and references',
+    ];
+
+    return priorityPrefixes
+      .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
+      .filter(Boolean);
+  }, [headingItems, isSatpinGuide]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
 
@@ -988,7 +1029,8 @@ function buildMetaDescription(src: any) {
         actions={heroActions}
         searchPainPoints={heroSearchPainPoints}
         searchLabel={isSchoolConversion ? 'Schools often ask' : 'Parents often search'}
-        heroPoints={isSchoolConversion ? SCHOOL_RESEARCH_HERO_POINTS : categoryConfig.heroPoints}
+        heroPoints={resolvedHeroPoints}
+        compact={isSatpinGuide}
       />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
@@ -996,6 +1038,16 @@ function buildMetaDescription(src: any) {
           <div className="min-w-0 space-y-8">
             <KnowledgeBreadcrumbs items={breadcrumbItems} tone="light" />
 
+            {isSatpinGuide && post ? (
+              <SatpinGuideExperience
+                post={post}
+                headingItems={headingItems}
+                tocItems={tocItems}
+                resolvedHero={resolvedHero}
+                title={metaSource.title}
+              />
+            ) : (
+              <>
             {resolvedHero ? (
               <div className="self-start overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <div className={`aspect-[1.68/1] w-full ${isStoryUnderstandingPillar ? 'xl:aspect-[2.25/1]' : 'xl:aspect-[2.05/1]'}`}>
@@ -1029,6 +1081,10 @@ function buildMetaDescription(src: any) {
               </div>
             </article>
 
+
+              </>
+            )}
+
             {post?.faq?.length ? <ParentsAlsoAsk items={post.faq} /> : null}
 
             <AboutAuthor
@@ -1042,6 +1098,7 @@ function buildMetaDescription(src: any) {
               <BlogConversionCard slug={slug} config={blogConversionConfig} />
             ) : null}
 
+            {!isSatpinGuide ? (
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">
                 {isSchoolConversion ? 'Recommended Next for Schools' : 'Recommended Next for Parents'}
@@ -1065,9 +1122,15 @@ function buildMetaDescription(src: any) {
                 ) : null}
               </div>
             </section>
+            ) : null}
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            {isSatpinGuide ? (
+              <SatpinGuideSidebar tocItems={tocItems} />
+            ) : (
+              <>
+
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Article snapshot</p>
               <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-5">
@@ -1121,6 +1184,9 @@ function buildMetaDescription(src: any) {
                 ))}
               </div>
             </div>
+
+              </>
+            )}
           </aside>
         </div>
       </div>

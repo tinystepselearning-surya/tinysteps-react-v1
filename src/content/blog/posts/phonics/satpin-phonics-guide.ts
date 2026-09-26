@@ -6,8 +6,8 @@ const post: BlogPost = {
   category: 'Phonics',
   author: 'Priya',
   date: '2025-11-06',
-  modifiedDate: '2026-09-12',
-  readTime: '19 min read',
+  modifiedDate: '2026-09-26',
+  readTime: '21 min read',
   hero: '/blog/hero-phonics.jpg',
   metaDescription: 'SATPIN phonics explained: sounds, order, words, blending, early sentences, reading progress and what comes after SATPIN. A practical parent guide.',
   excerpt: 'A complete parent guide to SATPIN phonics: understand the sounds and order, build early words, begin blending and reading, track progress, and know what comes next.',
@@ -22,9 +22,23 @@ const post: BlogPost = {
     { type: 'p', content: 'SATPIN is a memorable label for the letters **s, a, t, p, i, n**. Different phonics programmes may introduce these letters in a slightly different internal order. For example, a programme may teach **s, a, t, i, p, n** while parents still use “SATPIN” as the name of the starter group.' },
     { type: 'p', content: 'That distinction matters because the quality of early phonics does not depend on preserving a catchy acronym letter by letter. It depends on a coherent programme sequence, accurate sound modelling, cumulative review and immediate application to reading and spelling.' },
 
+    { type: 'h2', content: 'SATPIN sounds: the six starter correspondences in one view' },
+    { type: 'p', content: 'When parents search for **SATPIN sounds**, they usually want the basic sound–print links represented by the six letters. In early phonics practice, these are commonly introduced as the consonant sounds and short vowel sounds shown below. Exact spoken vowel quality can vary slightly by accent, so follow the pronunciation model used by the child’s coherent programme or teacher.' },
+    { type: 'li', content: '**s** — /s/ as in **sat** and **sip**.' },
+    { type: 'li', content: '**a** — the short **a** sound heard in **sat**, **pat** and **nap**.' },
+    { type: 'li', content: '**t** — /t/ as in **tap** and **tin**.' },
+    { type: 'li', content: '**p** — /p/ as in **pin** and **pat**.' },
+    { type: 'li', content: '**i** — the short **i** sound heard in **sit**, **pin** and **tip**.' },
+    { type: 'li', content: '**n** — /n/ as in **nap**, **nip** and **tin**.' },
+    { type: 'p', content: 'For blending, keep consonant pronunciations clean enough to join into a word. Avoid adding an unnecessary “uh” after **t** or **p**. The goal is not accent perfection; it is a pronunciation the child can combine smoothly from left to right.' },
+
     { type: 'h2', content: 'SATPIN order: why you may see SATPIN, SATIPN or a slightly different sequence' },
     { type: 'p', content: 'Parents often search for the “correct SATPIN order”. There is no single research rule requiring every programme to introduce these six correspondences in the exact written order **s-a-t-p-i-n**. Some programmes group the same letters but teach them in another sequence, such as **s-a-t-i-p-n**.' },
     { type: 'p', content: 'What matters more than the acronym order is that the programme has a clear cumulative sequence, revisits previously taught correspondences and begins blending as soon as the taught set can form simple decodable words. Follow the child’s coherent programme rather than rearranging lessons only to match the word SATPIN.' },
+
+    { type: 'h2', content: 'Is SATPIN a phonics method?' },
+    { type: 'p', content: 'Parents often search for the **“SATPIN method”**, but SATPIN itself is better understood as a **starter letter–sound set inside a wider phonics programme**, not a complete teaching method on its own. Knowing these six correspondences does not specify how a programme will teach blending, spelling, cumulative review, decodable reading or the next sound–spelling relationships.' },
+    { type: 'p', content: 'A strong programme therefore uses SATPIN, or another useful starter set, as the beginning of a planned sequence. If a worksheet, app or course describes itself as a “SATPIN method”, check what comes after the six letters and whether children are explicitly taught to decode fresh words rather than simply memorise the set.' },
 
     { type: 'h2', content: 'Why can SATPIN be a useful first set?' },
     { type: 'h3', content: '1. A small set can create real words quickly' },
@@ -40,12 +54,16 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'SATPIN words: what can children read with the first set?' },
     { type: 'p', content: 'Useful SATPIN words are words made only from correspondences the child has already been taught. Depending on the programme order, early examples can include **sat, pat, tap, sap, sit, pit, tip, sip, pin, tin, nip, pan** and **nap**.' },
+    { type: 'li', content: '**Short-a SATPIN examples:** sat, pat, tap, sap, pan, nap.' },
+    { type: 'li', content: '**Short-i SATPIN examples:** sit, pit, tip, sip, pin, tin, nip.' },
+    { type: 'p', content: 'These groups are useful for practice variety, not for teaching children to memorise word families by sight. Keep returning to the same left-to-right process: look at each grapheme, retrieve its sound and blend through the whole word.' },
     { type: 'p', content: 'The purpose of a SATPIN word bank is not to memorise a fixed list. Mix familiar examples with a fresh decodable word so the child must apply the sound–spelling knowledge rather than recall card order. If a word is unfamiliar in meaning, let the child decode it first and then explain the vocabulary.' },
     { type: 'p', content: 'For the wider simple-word milestone beyond this starter set, use [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents).' },
 
     { type: 'h2', content: 'Do children need to master all six SATPIN sounds before blending?' },
     { type: 'p', content: '**No.** Blending can begin as soon as the child knows enough taught correspondences to build a simple word. Waiting for perfect recall of all six letters can accidentally turn phonics into a long isolated-sound course.' },
     { type: 'p', content: 'For example, if a programme has already introduced the correspondences needed for **sat**, the teacher can model blending that word while continuing to teach and review the rest of the starter set. UFLI similarly states that children can begin decoding and encoding once they have learned **some** phoneme–grapheme correspondences.' },
+    { type: 'p', content: 'Three simple SATPIN blending examples are **s-a-t → sat**, **p-i-n → pin** and **t-a-p → tap**. The hyphens show the teaching steps, not how the child should eventually read. As blending becomes secure, reduce the pauses so the phonemes merge smoothly into the spoken word.' },
     { type: 'p', content: '[Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the broader beginner sequence. This SATPIN guide owns the narrower question of how to understand and use this particular starter set.' },
 
     { type: 'h2', content: 'Letter sounds, letter names and “pure sounds”: what parents actually need to know' },
@@ -147,6 +165,14 @@ const post: BlogPost = {
     {
       question: 'What is the correct SATPIN order?',
       answer: 'SATPIN names the letters s, a, t, p, i and n, but phonics programmes may teach the same starter letters in a slightly different internal order. Follow the programme’s cumulative sequence rather than changing lessons only to match the acronym.'
+    },
+    {
+      question: 'What sounds do the SATPIN letters make?',
+      answer: 'The set represents s, a, t, p, i and n. In beginner practice, s, t, p and n use their common consonant sounds, while a and i use the short vowel sounds heard in words such as sat and sit. Follow the child’s programme or teacher for the exact pronunciation model.'
+    },
+    {
+      question: 'Is SATPIN a phonics method?',
+      answer: 'SATPIN is better understood as a useful starter letter–sound set within a systematic phonics programme, not a complete method by itself. A full programme must also teach blending, spelling, cumulative review, decodable reading and the next sound–spelling relationships.'
     },
     {
       question: 'What words can children make with SATPIN?',

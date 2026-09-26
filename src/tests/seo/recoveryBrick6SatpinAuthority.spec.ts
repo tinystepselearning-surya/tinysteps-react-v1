@@ -28,7 +28,9 @@ describe('SEO recovery Brick 6 SATPIN authority', () => {
     expect(source).toContain('SATPIN phonics explained: sounds, order, words, blending');
 
     for (const heading of [
+      'SATPIN sounds: the six starter correspondences in one view',
       'SATPIN order: why you may see SATPIN, SATIPN or a slightly different sequence',
+      'Is SATPIN a phonics method?',
       'SATPIN words: what can children read with the first set?',
       'SATPIN sentences and early reading: when to move beyond single words',
       'What comes after SATPIN?',
@@ -95,6 +97,8 @@ describe('SEO recovery Brick 6 SATPIN authority', () => {
     for (const question of [
       'What is SATPIN phonics?',
       'What is the correct SATPIN order?',
+      'What sounds do the SATPIN letters make?',
+      'Is SATPIN a phonics method?',
       'What words can children make with SATPIN?',
       'Should a child know all six SATPIN sounds before blending?',
       'How do SATPIN words become early reading?',

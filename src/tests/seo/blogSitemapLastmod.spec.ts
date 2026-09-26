@@ -38,7 +38,7 @@ describe('authoritative Blogs #1-#20 sitemap freshness', () => {
       }
       expect(post, `${slug} should remain in the public blog registry`).toBeDefined();
       expect(post?.modifiedDate, `${slug} should expose its actual refresh date`).toBe(
-        slug === 'satpin-phonics-guide' ? '2026-09-12' : '2026-08-30',
+        slug === 'satpin-phonics-guide' ? '2026-09-26' : '2026-08-30',
       );
     }
   });

@@ -41,7 +41,7 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(post?.title).toBe('SATPIN Phonics Guide: Sounds, Order, Words & Blending');
     expect(post?.author).toBe('Priya');
     expect(post?.date).toBe('2025-11-06');
-    expect(post?.modifiedDate).toBe('2026-09-12');
+    expect(post?.modifiedDate).toBe('2026-09-26');
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
@@ -121,7 +121,7 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(body).toContain('[Letter Tracing With Sounds](/letter-tracing-with-sounds-game)');
     expect(body).toContain('Neither game, by itself, proves that a child can blend SATPIN into words');
 
-    expect(post?.faq).toHaveLength(9);
+    expect(post?.faq).toHaveLength(11);
     expect(post?.faq?.some((item) => /What is SATPIN phonics/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /Why is SATPIN often taught early/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /all six SATPIN sounds before blending/i.test(item.question))).toBe(true);
