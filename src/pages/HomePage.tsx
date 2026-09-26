@@ -21,10 +21,6 @@ const GlobalLearnersMapSection = lazy(() => import("../components/Home/GlobalLea
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
 const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
-const LearningJourneyRoadmapPPT = lazy(async () => {
-  const mod = await import("./KidsEnglishExcellence");
-  return { default: mod.LearningJourneyRoadmapPPT };
-});
 
 const homeSeoTitle = "Online English Classes for Kids in India | Tiny Steps";
 const homeSeoDescription =
@@ -269,37 +265,28 @@ export default function HomePage() {
             </Suspense>
           </div>
 
-          {/* REVIEW ACTION 09 — JOURNEY: Show the high-level roadmap before the detailed learning-stage mechanics. */}
-          <section className="px-6 py-12">
-            <div className="mx-auto max-w-6xl">
-              <Suspense fallback={null}>
-                <LearningJourneyRoadmapPPT />
-              </Suspense>
-            </div>
-          </section>
-
-          {/* REVIEW ACTION 10 — METHOD: Explain child learning, teaching approach, parent visibility, and stage progression. */}
+          {/* REVIEW ACTION 09 — METHOD: Explain how each pathway works without adding a second, competing journey model. */}
           <Suspense fallback={null}>
             <StepTimeline />
           </Suspense>
 
-          {/* REVIEW ACTION 11 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
+          {/* REVIEW ACTION 10 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
           <ClassSamplesSection />
 
-          {/* REVIEW ACTION 12 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
+          {/* REVIEW ACTION 11 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
           <Suspense fallback={null}>
             <PricingCrispSection />
           </Suspense>
 
-          {/* REVIEW ACTION 13 — RISK REVERSAL: Explain assessment → personalised plan → parent decides, with no commitment pressure. */}
+          {/* REVIEW ACTION 12 — RISK REVERSAL: Explain assessment → recommended starting point → parent decides. */}
           <Suspense fallback={null}>
             <ParentReassurance />
           </Suspense>
 
-          {/* REVIEW ACTION 14 — OBJECTIONS: Replace the mid-page Quick Answer reset with a short practical FAQ near conversion. */}
+          {/* REVIEW ACTION 13 — OBJECTIONS: Keep a short practical FAQ near conversion. */}
           <HomeFaqSection items={homeFaqItems} />
 
-          {/* REVIEW ACTION 15 — FINAL CONVERSION: End with one clear booking action after the full parent decision journey. */}
+          {/* REVIEW ACTION 14 — FINAL CONVERSION: End with one concise booking action, not another full information block. */}
           <Suspense fallback={null}>
             <FinalCTASection />
           </Suspense>
