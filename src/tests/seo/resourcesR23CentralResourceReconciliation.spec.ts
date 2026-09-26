@@ -9,6 +9,7 @@ import {
 } from '../../lib/centralResourceSystem.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from '../../lib/phonicsPublicationRegistry.js';
+import { GRAMMAR_PUBLISHED_RESOURCE_PAGES } from '../../lib/grammarPublicationRegistry.js';
 import { RESOURCE_ECOSYSTEM_REGISTRY } from '../../lib/resourcesArchitectureRegistry.js';
 
 const repoRoot = process.cwd();
@@ -24,6 +25,7 @@ describe('Resources R23 central resource reconciliation', () => {
       redirectExistingOwners: false,
       editorialArchive: '/blog',
       focusedPhonicsHub: '/resources/phonics',
+      focusedGrammarHub: '/resources/grammar',
       parentHelpHub: '/parents',
       practiceHub: '/free-english-games-for-kids',
       schoolsHub: '/for-schools',
@@ -41,12 +43,14 @@ describe('Resources R23 central resource reconciliation', () => {
     expect([...byId.keys()]).toEqual([
       'editorial-guides',
       'focused-phonics',
+      'focused-grammar',
       'parent-help',
       'interactive-practice',
       'schools-educators',
     ]);
     expect(byId.get('editorial-guides')?.destination).toBe('/blog');
     expect(byId.get('focused-phonics')?.destination).toBe('/resources/phonics');
+    expect(byId.get('focused-grammar')?.destination).toBe('/resources/grammar');
   });
 
   it('reconciles the governed 31 phonics pages into the central Phonics & Reading pathway', () => {
@@ -55,6 +59,15 @@ describe('Resources R23 central resource reconciliation', () => {
     expect(focused?.governedPublishedCount).toBe(PHONICS_PUBLISHED_RESOURCE_PAGES.length);
     for (const page of PHONICS_PUBLISHED_RESOURCE_PAGES) {
       expect(page.path.startsWith('/resources/phonics/')).toBe(true);
+    }
+  });
+
+  it('reconciles the governed Grammar guides into the central Grammar & Writing pathway', () => {
+    const focused = CENTRAL_RESOURCE_CONTENT_FAMILIES.find((item) => item.id === 'focused-grammar');
+    expect(GRAMMAR_PUBLISHED_RESOURCE_PAGES).toHaveLength(42);
+    expect(focused?.governedPublishedCount).toBe(GRAMMAR_PUBLISHED_RESOURCE_PAGES.length);
+    for (const page of GRAMMAR_PUBLISHED_RESOURCE_PAGES) {
+      expect(page.path.startsWith('/resources/grammar/')).toBe(true);
     }
   });
 
