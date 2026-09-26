@@ -75,6 +75,13 @@ export type Av53CaseReason =
   | 'same_day_coverage_insufficient'
   | 'same_day_identity_requires_review'
   | 'same_day_evidence_incomplete'
+  | 'same_day_context_missing'
+  | 'same_day_context_incomplete'
+  | 'same_day_evidence_version_unsupported'
+  | 'same_day_coverage_requires_review'
+  | 'same_day_attendance_evidence_incomplete'
+  | 'same_day_identity_not_verified'
+  | 'overlap_threshold_not_configured'
   | 'business_present_counts_aligned'
   | 'business_false_present_count'
   | 'business_false_absent_count'
@@ -467,6 +474,35 @@ function attendanceEntryForKid(
   return (attendance as Record<string, unknown>)[kidId] ?? null;
 }
 
+function normalizedStatusToken(value: unknown): string {
+  const raw = value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as { status?: unknown }).status
+    : value;
+  return String(raw ?? '').trim().toLowerCase().replace(/-/g, '_');
+}
+
+const NON_OCCURRING_SESSION_TOKENS = new Set([
+  'cancelled',
+  'canceled',
+  'rescheduled',
+  'reschedule',
+  'reschedule_requested',
+  'rescheduled_requested',
+]);
+
+export function isAvsPresentCapEligibleSession(
+  session: Record<string, unknown>,
+  kidId: string | null,
+): boolean {
+  const lifecycleStatus = normalizedStatusToken(session.status);
+  if (NON_OCCURRING_SESSION_TOKENS.has(lifecycleStatus)) return false;
+
+  const attendanceStatus = normalizedStatusToken(
+    attendanceEntryForKid(session, kidId),
+  );
+  return !NON_OCCURRING_SESSION_TOKENS.has(attendanceStatus);
+}
+
 function sessionReferencesMatchEvidence(
   sessionId: string,
   session: Record<string, unknown>,
@@ -777,13 +813,46 @@ function caseFromEvidence(params: {
       resolutionStatus = 'needs_review';
       reasons = ['business_false_absent_count'];
       break;
-    default:
+    default: {
       classification = 'AMBIGUOUS';
       validationDecision = 'review';
       recommendedAction = 'review';
       resolutionStatus = 'needs_review';
-      reasons = ['business_evidence_not_evaluable'];
+
+      const technicalReasons: Av53CaseReason[] = [
+        'business_evidence_not_evaluable',
+      ];
+      if (!sameDay) {
+        technicalReasons.push('same_day_context_missing');
+      } else {
+        if (!sameDay.hasSameDayV2Evidence) {
+          technicalReasons.push('same_day_evidence_version_unsupported');
+        }
+        if (sameDay.contextIncomplete) {
+          technicalReasons.push('same_day_context_incomplete');
+        }
+        if (sameDay.aggregate.status === 'review') {
+          let specificCoverageIssueFound = false;
+          for (const issue of sameDay.aggregate.issues) {
+            if (issue === 'same_day_attendance_evidence_incomplete') {
+              technicalReasons.push(issue);
+              specificCoverageIssueFound = true;
+            } else if (issue === 'same_day_identity_not_verified') {
+              technicalReasons.push(issue);
+              specificCoverageIssueFound = true;
+            }
+          }
+          if (!specificCoverageIssueFound) {
+            technicalReasons.push('same_day_coverage_requires_review');
+          }
+        }
+      }
+      if (params.meaningfulOverlapSeconds === null) {
+        technicalReasons.push('overlap_threshold_not_configured');
+      }
+      reasons = [...new Set(technicalReasons)];
       break;
+    }
   }
 
   return baseCase({
@@ -824,7 +893,7 @@ function caseFromEvidence(params: {
  * scanning operational collections. The Firestore adapter may additionally perform
  * one bounded classSessions query per represented same-day enrollment group
  * (date + enrollmentId equality filters, hard cap 50 + one lookahead) only to
- * count how many Tiny Steps Present sessions belong to the same learner + teacher. It never reads enrollments, kids,
+ * count eligible same-day session slots and Tiny Steps Present sessions for the same learner + teacher. Explicit cancelled/rescheduled rows are excluded from the Present cap. It never reads enrollments, kids,
  * billing, earnings, credits or reschedule collections. A hard 2026-09-01 Tiny Steps
  * service-date lower bound permanently excludes July/August history.
  */
@@ -856,12 +925,14 @@ export async function runAv53Shadow(
     const groupKey = sameDayGroupKey(scope.serviceDateYmd, session, evidence);
     if (!groupKey) continue;
 
+    const kidId = evidence?.session.kidId || sessionKidId(session);
+    if (!isAvsPresentCapEligibleSession(session, kidId)) continue;
+
     inferredSessionCountByGroup.set(
       groupKey,
       (inferredSessionCountByGroup.get(groupKey) ?? 0) + 1,
     );
 
-    const kidId = evidence?.session.kidId || sessionKidId(session);
     const attendance = normalizeTinyStepsAttendance(
       attendanceEntryForKid(session, kidId),
     );
@@ -1239,6 +1310,8 @@ export async function runAv53ShadowWithFirestore(
         null,
       );
       if (!sessionGroup || sessionGroup.key !== group.key) continue;
+      if (!isAvsPresentCapEligibleSession(session, group.kidId)) continue;
+
       sameDaySessionCountByGroup.set(
         group.key,
         (sameDaySessionCountByGroup.get(group.key) ?? 0) + 1,
