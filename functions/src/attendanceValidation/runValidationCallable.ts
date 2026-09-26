@@ -320,7 +320,8 @@ export const runAttendanceValidationRange = onCall(
         AVS_UNIFIED_VALIDATION_MAX_SESSIONS_PER_RUN,
       processedSessionCount,
       dirtyFoundCount: latest.dirtyFoundCount,
-      cachedRevalidatedCount: latest.revalidatedCount,
+      cachedRevalidatedCount:
+        latest.revalidatedCount + (baseline?.migratedLegacyCaseCount ?? 0),
       staleEvidenceCount:
         latest.freshEvidenceRequiredSessionIds.length,
       missingEvidenceCaseCount:
@@ -347,6 +348,10 @@ export const runAttendanceValidationRange = onCall(
       baselineAlreadyComplete: baseline?.alreadyComplete ?? false,
       baselineBatchSessionCount: baseline?.batchSessionCount ?? 0,
       baselineFreshEvidenceCount: baseline?.freshEvidenceCount ?? 0,
+      baselineMigratedLegacyCaseCount:
+        baseline?.migratedLegacyCaseCount ?? 0,
+      baselineMigrationDeferredCount:
+        baseline?.migrationDeferredCount ?? 0,
       baselineBlockedCount: baseline?.blockedCount ?? 0,
       baselineDeferred,
       graphLogicalCalls,
