@@ -27,6 +27,18 @@ export default function FreeEnglishGameLandingPage() {
   const isPlayMode = searchParams.get("play") === "1";
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
 
+  const scrollToPlayer = () => {
+    const playSection = document.getElementById("play");
+    if (playSection && typeof playSection.scrollIntoView === "function") {
+      playSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  useEffect(() => {
+    if (!shouldRenderPlayer) return;
+    scrollToPlayer();
+  }, [shouldRenderPlayer]);
+
   useEffect(() => {
     if (!config) return;
 
@@ -105,18 +117,6 @@ export default function FreeEnglishGameLandingPage() {
       program: "phonics",
     });
   };
-
-  const scrollToPlayer = () => {
-    const playSection = document.getElementById("play");
-    if (playSection && typeof playSection.scrollIntoView === "function") {
-      playSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  useEffect(() => {
-    if (!shouldRenderPlayer) return;
-    scrollToPlayer();
-  }, [shouldRenderPlayer]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05010f] text-slate-100">
