@@ -212,6 +212,15 @@ test('mixed Firestore rules and Function change keeps artifact decisions indepen
   assert.equal(result.firestoreRulesChanged, true);
 });
 
+test('Firestore index-only change is detected for deployment without marking rules changed', () => {
+  const result = impact(['firestore.indexes.json']);
+  assert.equal(result.firestoreIndexesChanged, true);
+  assert.equal(result.firestoreRulesChanged, false);
+  assert.equal(result.firestoreValidationRequired, true);
+  assert.equal(result.functionsDeploymentRequired, false);
+  assert.equal(result.hostingChanged, false);
+});
+
 test('firebase hosting config changes only the Hosting artifact', () => {
   const after = { ...firebase, hosting: { public: 'different' } };
   const result = classifyArtifactChanges(['firebase.json'], firebase, after);
