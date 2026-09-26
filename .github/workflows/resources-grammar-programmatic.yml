@@ -1,0 +1,62 @@
+name: Resources Grammar Programmatic Knowledge
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/content/grammarCurriculum.ts'
+      - 'src/lib/grammarPublicationRegistry.*'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/lib/breadcrumbAeoGeoRegistry.js'
+      - 'src/lib/aiAnswerLayerRegistry.*'
+      - 'src/lib/centralResourceSystem.*'
+      - 'src/pages/GrammarKnowledgePage.tsx'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/components/resources/GrammarResourceTimeline.tsx'
+      - 'src/tests/seo/resourcesGrammarProgrammaticKnowledge.spec.ts'
+      - 'scripts/audit-resources-grammar-programmatic.mjs'
+      - 'scripts/generate-rss.mjs'
+      - 'scripts/audit-ai-answer-layers.mjs'
+      - 'public/llms.txt'
+      - 'public/llms-full.txt'
+      - '.github/workflows/resources-grammar-programmatic.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  grammar-programmatic-knowledge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Run Grammar publication regressions
+        run: npx vitest run src/tests/seo/resourcesGrammarProgrammaticKnowledge.spec.ts src/tests/seo/resourcesPublicCopyAndBacklinks.spec.ts src/tests/seo/resourcesR23CentralResourceReconciliation.spec.ts src/tests/seo/resourcesR24R26AiAnswerLayers.spec.ts
+      - name: Audit Grammar publication registry
+        run: node scripts/audit-resources-grammar-programmatic.mjs
+      - name: Run type check
+        run: npm run typecheck
+      - name: Build and prerender
+        run: npm run build
+      - name: Verify rendered Grammar pages
+        run: node scripts/audit-resources-grammar-programmatic.mjs --dist
+      - name: Verify generated AI and LLM corpus
+        run: node scripts/audit-ai-answer-layers.mjs --generated
+      - name: Run SEO smoke
+        run: npm run seo:smoke
