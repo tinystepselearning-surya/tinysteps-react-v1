@@ -379,6 +379,38 @@ test('workflow feeds resolver targets to bounded deployment and skips zero-impac
   assert.match(workflow, /Deploy to Firebase Production\n\s+if: needs\.analyze-changes\.outputs\.hosting_changed == 'true'/);
 });
 
+test('main pushes compare Functions against the last deployed Functions marker', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const resolver = readFileSync('scripts/resolve-deployment-impact.mjs', 'utf8');
+
+  assert.match(workflow, /Resolve deployed Functions baseline/);
+  assert.match(workflow, /refs\/heads\/ci\/functions-production:refs\/remotes\/origin\/ci\/functions-production/);
+  assert.match(workflow, /source="production-marker"/);
+  assert.match(workflow, /force_full="true"[\s\S]*missing-production-marker/);
+  assert.match(workflow, /--functions-before "\$\{\{ steps\.functions-baseline\.outputs\.sha \}\}"/);
+  assert.match(workflow, /--force-functions-full "\$\{\{ steps\.functions-baseline\.outputs\.force_full \}\}"/);
+
+  assert.match(resolver, /const functionsBefore = args\.get\('--functions-before'\) \|\| before/);
+  assert.match(resolver, /const forceFunctionsFull = args\.get\('--force-functions-full'\) === 'true'/);
+  assert.match(resolver, /const functionsChangedFiles = changedPaths\(functionsBefore, sha\)/);
+  assert.match(resolver, /functionsResult\.functionsDeploymentRequired \|\| forceFunctionsFull/);
+  assert.match(resolver, /production-functions-baseline-missing-or-invalid/);
+});
+
+test('successful Functions rollout advances the production baseline only after transport verification', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const deployIndex = workflow.indexOf('Deploy Cloud Functions in bounded batches');
+  const avsVerifyIndex = workflow.indexOf('Verify AVS callable transport');
+  const markerIndex = workflow.indexOf('Advance Functions production baseline');
+
+  assert.ok(deployIndex >= 0);
+  assert.ok(avsVerifyIndex > deployIndex);
+  assert.ok(markerIndex > avsVerifyIndex);
+  assert.match(workflow, /permissions:\n\s+contents: write/);
+  assert.match(workflow, /refs\/heads\/ci\/functions-production/);
+  assert.match(workflow, /"force":false/);
+});
+
 test('automated full-fleet mutation requires an explicit known-global decision', () => {
   const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
   assert.match(source, /event === 'push' && !options\.only && process\.env\.FUNCTIONS_DEPLOY_FULL !== 'true'/);
