@@ -62,7 +62,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
           className={
             compact
               ? heroImage
-                ? 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center'
+                ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center xl:grid-cols-[minmax(0,1fr)_430px]'
                 : 'grid gap-5'
               : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'
           }
@@ -117,13 +117,19 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
 
           {compact ? (
             heroImage ? (
-              <div className="justify-self-stretch overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.06] p-1.5 shadow-[0_18px_55px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:justify-self-end">
+              <div className="relative mx-auto w-full max-w-[680px] lg:mx-0 lg:justify-self-end lg:max-w-none">
                 <img
                   src={heroImage}
                   alt={heroImageAlt || title}
-                  className="aspect-[4/3] w-full rounded-[19px] bg-slate-900/20 object-cover lg:max-h-[250px]"
-                  width={900}
-                  height={675}
+                  className="h-auto w-full object-contain"
+                  style={{
+                    WebkitMaskImage:
+                      'radial-gradient(ellipse 96% 92% at 56% 50%, #000 66%, rgba(0,0,0,0.92) 80%, transparent 100%)',
+                    maskImage:
+                      'radial-gradient(ellipse 96% 92% at 56% 50%, #000 66%, rgba(0,0,0,0.92) 80%, transparent 100%)',
+                  }}
+                  width={960}
+                  height={540}
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
