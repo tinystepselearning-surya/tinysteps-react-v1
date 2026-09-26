@@ -5,6 +5,7 @@ import {
   SPEAKING_COMMUNICATION_PARENT_PROBLEM_ROUTES,
 } from './speakingCommunicationCompletionArchitecture.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from './phonicsPublicationRegistry.js';
+import { GRAMMAR_PROGRAMMATIC_PAGES } from './grammarProgrammaticRegistry.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -315,9 +316,24 @@ const GOVERNED_PHONICS_CONCEPT_ITEMS = PHONICS_PUBLISHED_RESOURCE_PAGES.map((pag
   practicePaths: page.concept.practicePaths || [],
 }));
 
+const GOVERNED_GRAMMAR_CONCEPT_ITEMS = GRAMMAR_PROGRAMMATIC_PAGES.map((page) => item({
+  id: `concept-governed-grammar-${page.id}`,
+  layer: 2,
+  subject: 'grammar-writing',
+  query: `What is ${page.cardTitle.toLowerCase()}?`,
+  answer: page.quickAnswer,
+  answerSource: 'governed-grammar-programmatic-registry',
+  canonicalPath: page.path,
+  ownershipState: page.state,
+  hubPath: '/resources/grammar',
+  supportingPaths: page.relatedPaths || [],
+  practicePaths: ['/free-grammar-games-for-kids', '/free-sentence-building-games-for-kids'],
+}));
+
 export const AI_ANSWER_LAYER_2_LEARNING_CONCEPTS = freezeList([
   ...CURATED_CONCEPT_ITEMS,
   ...GOVERNED_PHONICS_CONCEPT_ITEMS,
+  ...GOVERNED_GRAMMAR_CONCEPT_ITEMS,
 ]);
 
 const PRACTICE_ACTIONS = [
@@ -453,6 +469,9 @@ if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) {
 }
 if (PHONICS_PUBLISHED_RESOURCE_PAGES.length !== 31) {
   throw new Error('AI Layer 2 must preserve the governed 31-page phonics publication set.');
+}
+if (GRAMMAR_PROGRAMMATIC_PAGES.length !== 15) {
+  throw new Error('AI Layer 2 must preserve the governed 15-page grammar publication set.');
 }
 for (const entry of AI_ANSWER_LAYER_ALL_ITEMS) {
   if (![1, 2, 3].includes(entry.layer)) throw new Error(`Unsupported AI answer layer: ${entry.id}`);
