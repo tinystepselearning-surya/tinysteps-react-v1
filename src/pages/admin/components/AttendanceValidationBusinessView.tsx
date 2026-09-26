@@ -108,6 +108,16 @@ function technicalIssueLabel(value: string): string {
       return 'Teacher/learner identity not verified';
     case 'same_day_attendance_evidence_incomplete':
       return 'Teams attendance evidence incomplete';
+    case 'same_day_context_missing':
+      return 'Same-day comparison context missing';
+    case 'same_day_context_incomplete':
+      return 'Same-day session context exceeded the safe bound';
+    case 'same_day_evidence_version_unsupported':
+      return 'Teams evidence needs a current calculation';
+    case 'same_day_coverage_requires_review':
+      return 'Teams same-day coverage requires review';
+    case 'overlap_threshold_not_configured':
+      return 'Overlap threshold unavailable';
     case 'evidence_document_missing':
       return 'Teams evidence missing';
     case 'operational_session_reference_mismatch':
