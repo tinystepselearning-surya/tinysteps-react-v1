@@ -9,6 +9,7 @@ export type AvsBusinessOutcome =
 export interface AvsBusinessOutcomeInput {
   evidenceEvaluable: boolean;
   teamsOverlapSeconds: number;
+  sameDaySessionCount: number;
   tinyStepsPresentCount: number;
   thresholdSeconds?: number;
 }
@@ -53,6 +54,10 @@ export function supportedPresentCountFromOverlap(
 /**
  * The complete AVS business reconciliation.
  *
+ * Teams can never support more Present marks than the number of actual
+ * same-day Tiny Steps session rows for the same student + teacher. This prevents
+ * one unusually long class from being misread as two or more separate classes.
+ *
  * There are only three business outcomes:
  * - Verified: Teams-supported Present count == Tiny Steps Present count
  * - False Present: Tiny Steps has more Present marks than Teams supports
@@ -64,11 +69,18 @@ export function supportedPresentCountFromOverlap(
 export function reconcileAvsBusinessOutcome(
   input: AvsBusinessOutcomeInput,
 ): AvsBusinessOutcomeResult {
+  const sameDaySessionCount = requireNonNegativeFinite(
+    input.sameDaySessionCount,
+    'sameDaySessionCount',
+  );
   const tinyStepsPresentCount = requireNonNegativeFinite(
     input.tinyStepsPresentCount,
     'tinyStepsPresentCount',
   );
 
+  if (!Number.isInteger(sameDaySessionCount)) {
+    throw new RangeError('sameDaySessionCount must be an integer.');
+  }
   if (!Number.isInteger(tinyStepsPresentCount)) {
     throw new RangeError('tinyStepsPresentCount must be an integer.');
   }
@@ -82,9 +94,13 @@ export function reconcileAvsBusinessOutcome(
     };
   }
 
-  const teamsSupportedPresentCount = supportedPresentCountFromOverlap(
+  const durationSupportedPresentCount = supportedPresentCountFromOverlap(
     input.teamsOverlapSeconds,
     input.thresholdSeconds,
+  );
+  const teamsSupportedPresentCount = Math.min(
+    durationSupportedPresentCount,
+    sameDaySessionCount,
   );
 
   if (tinyStepsPresentCount > teamsSupportedPresentCount) {
