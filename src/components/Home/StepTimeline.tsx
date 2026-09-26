@@ -4,21 +4,18 @@ import Modal from "@/common/Modal";
 
 type Stage = {
   id: string;
-  icon: string;
   title: string;
   subtitle: string;
   focusChips: string[];
   childLearns: string[];
   howWeTeach: string[];
   parentGets: string[];
-  proofTiles: { label: string; desc: string }[];
   ctaLabel?: string;
 };
 
 const stages: Stage[] = [
   {
     id: "phonics",
-    icon: "🔤",
     title: "Phonics Foundations",
     subtitle: "Sounds → letters → blending → early reading",
     focusChips: ["Letter sounds", "Blending", "CVC words", "Tricky words"],
@@ -34,20 +31,34 @@ const stages: Stage[] = [
     ],
     parentGets: [
       "Clear “what we taught today” note",
-      "Simple 3–5 minute home practice prompt",
+      "Short home practice prompt connected to the lesson",
       "Progress snapshot: what’s strong + what needs practice",
-    ],
-    proofTiles: [
-      { label: "Skill Snapshot", desc: "Sounds/letters mastered + current focus" },
-      { label: "Home Practice", desc: "One tiny practice task (3–5 mins)" },
-      { label: "Teacher Note", desc: "What helped your child most today" },
-      { label: "Next Steps", desc: "What’s coming next (no surprises)" },
     ],
     ctaLabel: "See a sample class flow",
   },
   {
+    id: "reading",
+    title: "Reading & Fluency",
+    subtitle: "Accurate reading → smoother sentences → meaning",
+    focusChips: ["Accuracy", "Fluency", "Vocabulary", "Comprehension"],
+    childLearns: [
+      "Reads connected text with increasing accuracy and independence",
+      "Builds smoother phrasing without turning reading into a speed race",
+      "Explains key ideas and answers meaning-based questions",
+    ],
+    howWeTeach: [
+      "Right-level text with live modelling and guided rereading",
+      "Phrasing, vocabulary, retelling, and comprehension checks",
+      "Correction that returns the child to the text instead of encouraging guessing",
+    ],
+    parentGets: [
+      "The current reading focus: accuracy, fluency, vocabulary, or comprehension",
+      "Examples of what is becoming more secure",
+      "A clear next reading priority for upcoming practice",
+    ],
+  },
+  {
     id: "grammar",
-    icon: "🧩",
     title: "Grammar Builder",
     subtitle: "Sentence sense → correct structure → better writing",
     focusChips: ["Sentence building", "Tenses", "Punctuation", "Vocabulary"],
@@ -66,17 +77,10 @@ const stages: Stage[] = [
       "Common mistakes to watch for (1–2 only)",
       "Stage skill summary (grammar + writing)",
     ],
-    proofTiles: [
-      { label: "Rule in 1 Line", desc: "What your child learned today" },
-      { label: "Mistake Watch", desc: "1–2 likely errors + quick fix" },
-      { label: "Practice Sheet", desc: "Short, focused practice (optional)" },
-      { label: "Stage Summary", desc: "What improved + what’s next" },
-    ],
     ctaLabel: "See a sample grammar activity",
   },
   {
     id: "speaking",
-    icon: "🎤",
     title: "Public Speaking",
     subtitle: "Thinking → speaking → confidence → expression",
     focusChips: ["Clarity", "Fluency", "Confidence", "Stage presence"],
@@ -95,57 +99,29 @@ const stages: Stage[] = [
       "What improved today (confidence/clarity/length)",
       "Next goal for the child (one focus at a time)",
     ],
-    proofTiles: [
-      { label: "Speaking Prompt", desc: "Today’s topic + easy home prompt" },
-      { label: "Coach Note", desc: "What to praise + what to fix gently" },
-      { label: "Word Upgrade", desc: "New words used in conversation" },
-      { label: "Next Goal", desc: "One clear target for next class" },
-    ],
     ctaLabel: "See a sample speaking routine",
   },
   {
     id: "confidence",
-    icon: "🌟",
-    title: "The Breakthrough Stage",
-    subtitle: "Reading + writing + speaking… together in real life",
-    focusChips: ["Independent reading", "Confident speaking", "Strong writing", "School success"],
+    title: "Integrated Practice",
+    subtitle: "Reading + writing + speaking together in meaningful tasks",
+    focusChips: ["Independent reading", "Clear writing", "Confident speaking", "Skill transfer"],
     childLearns: [
-      "Reads independently with better fluency",
-      "Shares ideas confidently in school and at home",
-      "Writes clearer sentences with fewer errors",
+      "Practises reading with increasing independence",
+      "Connects sentence and writing skills across activities",
+      "Explains ideas in longer, more organised responses",
     ],
     howWeTeach: [
-      "Integrated practice (phonics + grammar + speaking)",
-      "Real-life tasks: reading aloud, mini presentations",
-      "Ongoing feedback loops (child + parent + teacher)",
+      "Integrated practice across reading, grammar, writing, and speaking",
+      "Real-use tasks such as reading aloud, short writing, and mini presentations",
+      "Ongoing feedback based on the child’s current focus areas",
     ],
     parentGets: [
-      "Parent dashboard-style insights (simple & visual)",
-      "Milestone updates you can feel at home",
-      "Optional advanced path (based on the child’s pace)",
-    ],
-    proofTiles: [
-      { label: "Milestones", desc: "Visible progress checkpoints" },
-      { label: "Insights", desc: "Strengths + focus areas (simple)" },
-      { label: "Personal Path", desc: "Child’s pace + next best step" },
-      { label: "Maintenance", desc: "Keep skills strong over time" },
+      "Milestone updates in clear parent-friendly language",
+      "Visible strengths and current focus areas",
+      "A recommended next step based on the child’s progress",
     ],
   },
-];
-
-const stageAccents = [
-  { glow: "shadow-[0_18px_45px_rgba(255,143,92,0.16)]", border: "from-[#ffe3d0] via-[#fff6e9] to-white", chip: "from-[#ff8f5c] to-[#ffb347]" },
-  { glow: "shadow-[0_18px_45px_rgba(89,195,255,0.16)]", border: "from-[#dff3ff] via-white to-[#eafcff]", chip: "from-[#59c3ff] to-[#7ddff8]" },
-  { glow: "shadow-[0_18px_45px_rgba(194,140,255,0.14)]", border: "from-[#f2e6ff] via-white to-[#ffe9f6]", chip: "from-[#c28cff] to-[#f472d0]" },
-  { glow: "shadow-[0_18px_45px_rgba(52,211,153,0.14)]", border: "from-[#e8fff1] via-white to-[#fff7dd]", chip: "from-[#34d399] to-[#a3e635]" },
-];
-
-const solidPromise = [
-  { letter: "S", title: "Structured", desc: "A clear path so your child never feels lost." },
-  { letter: "O", title: "Outcome-led", desc: "Milestones you can see in reading, writing & speaking." },
-  { letter: "L", title: "Low-pressure", desc: "Confidence-first correction—no fear of mistakes." },
-  { letter: "I", title: "Interactive", desc: "Games + practice that keeps kids engaged." },
-  { letter: "D", title: "Data-backed", desc: "Simple parent updates: what improved + what’s next." },
 ];
 
 const StepTimeline: React.FC = () => {
@@ -153,7 +129,6 @@ const StepTimeline: React.FC = () => {
   const [modal, setModal] = useState<null | "flow" | "grammar" | "speaking">(null);
 
   const stage = stages[active];
-  const accent = stageAccents[active % stageAccents.length];
 
   const modalTitle = useMemo(() => {
     if (modal === "flow") return "Sample Class Flow (Phonics)";
@@ -162,10 +137,10 @@ const StepTimeline: React.FC = () => {
     return "Details";
   }, [modal]);
 
-  const openStageModal = () => {
-    if (stage.id === "phonics") setModal("flow");
-    else if (stage.id === "grammar") setModal("grammar");
-    else if (stage.id === "speaking") setModal("speaking");
+  const openStageModal = (stageId = stage.id) => {
+    if (stageId === "phonics") setModal("flow");
+    else if (stageId === "grammar") setModal("grammar");
+    else if (stageId === "speaking") setModal("speaking");
     else setModal("flow");
   };
 
@@ -173,7 +148,6 @@ const StepTimeline: React.FC = () => {
     <div className="flex flex-wrap justify-center gap-2">
       {stages.map((s, i) => {
         const isActive = i === active;
-        const a = stageAccents[i % stageAccents.length];
         return (
           <button
             key={s.id}
@@ -183,11 +157,10 @@ const StepTimeline: React.FC = () => {
             className={[
               "group rounded-full px-4 py-2 text-sm font-semibold transition",
               isActive
-                ? `bg-gradient-to-r ${a.chip} text-white shadow-lg`
+                ? "bg-slate-950 text-white shadow-sm"
                 : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50",
             ].join(" ")}
           >
-            <span className="mr-2">{s.icon}</span>
             {s.title.replace(" Foundations", "").replace(" Builder", "")}
           </button>
         );
@@ -196,17 +169,13 @@ const StepTimeline: React.FC = () => {
   );
 
   const StageDetail = () => (
-    <div className={`rounded-[28px] p-[1px] bg-gradient-to-br ${accent.border} ${accent.glow}`}>
-      <div className="rounded-[26px] bg-white p-6 md:p-7 ring-1 ring-slate-200/60">
+    <div className="rounded-[24px] border border-slate-200 bg-white p-5 sm:p-6 md:p-7">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">{stage.icon}</div>
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900">{stage.title}</h3>
-                <p className="mt-1 text-sm md:text-base text-slate-600">{stage.subtitle}</p>
-              </div>
+            <div>
+              <h3 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">{stage.title}</h3>
+              <p className="mt-1 text-sm text-slate-600 md:text-base">{stage.subtitle}</p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -223,8 +192,8 @@ const StepTimeline: React.FC = () => {
 
           {stage.ctaLabel && (
             <button
-              onClick={openStageModal}
-              className="hidden md:inline-flex rounded-full px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700 hover:opacity-95"
+              onClick={() => openStageModal()}
+              className="hidden rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 md:inline-flex"
             >
               {stage.ctaLabel}
             </button>
@@ -233,97 +202,81 @@ const StepTimeline: React.FC = () => {
 
         {/* 3 columns */}
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
             <div className="text-xs font-extrabold tracking-wide text-slate-700">CHILD LEARNS</div>
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.childLearns.map((x) => (
                 <li key={x} className="flex gap-2">
-                  <span className="mt-[2px]">✅</span>
+                  <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                   <span>{x}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
             <div className="text-xs font-extrabold tracking-wide text-slate-700">HOW WE TEACH</div>
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.howWeTeach.map((x) => (
                 <li key={x} className="flex gap-2">
-                  <span className="mt-[2px]">🧠</span>
+                  <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                   <span>{x}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+          <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
             <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENTS GET</div>
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.parentGets.map((x) => (
                 <li key={x} className="flex gap-2">
-                  <span className="mt-[2px]">📩</span>
+                  <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                   <span>{x}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-
-        {/* Proof tiles */}
-        <div className="mt-5">
-          <div className="text-xs font-extrabold tracking-wide text-slate-700">PROOF YOU CAN SEE</div>
-          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-            {stage.proofTiles.map((t) => (
-              <div key={t.label} className="rounded-2xl bg-white p-3 ring-1 ring-slate-200 hover:shadow-sm transition">
-                <div className="text-sm font-bold text-slate-900">{t.label}</div>
-                <div className="mt-1 text-xs text-slate-600">{t.desc}</div>
-              </div>
-            ))}
           </div>
         </div>
 
         {/* Mobile CTA */}
         {stage.ctaLabel && (
           <button
-            onClick={openStageModal}
-            className="mt-6 md:hidden w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700 hover:opacity-95"
+            onClick={() => openStageModal()}
+            className="mt-5 w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 md:hidden"
           >
             {stage.ctaLabel}
           </button>
         )}
-      </div>
     </div>
   );
 
   return (
-    <section data-animate="fade-up" className="bg-white py-20">
+    <section data-animate="fade-up" className="bg-white py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-6">
         {/* Title */}
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-          </div>
-
-          <h2 className="mt-4 font-heading text-3xl font-bold md:text-4xl text-slate-900">
-            Learning Stages (Not Random Classes)
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Inside the learning experience</p>
+          <h2 className="mt-3 font-heading text-3xl font-bold text-slate-900 md:text-4xl">
+            How teaching changes by skill focus
           </h2>
-          <p className="mt-2 text-base text-slate-600 max-w-3xl mx-auto">
-            Parents don’t need “more classes.” You need a structured path, visible milestones, and updates that make sense.
+          <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-600">
+            Choose a focus to see what the child practises, how the teacher guides the skill, and what parents can see as learning progresses.
           </p>
         </div>
 
-        {/* Stage selector */}
-        <div className="mt-8">
+        {/* Desktop pathway selector. Mobile uses one card per carousel slide to avoid duplicate controls. */}
+        <div className="mt-7 hidden md:block">
           <StageSelector />
         </div>
 
         {/* Desktop detail */}
-        <div className="mt-10 hidden md:block">
+        <div className="mt-8 hidden md:block">
           <StageDetail />
         </div>
 
         {/* Mobile carousel */}
-        <div className="mt-10 md:hidden">
+        <div className="mt-8 md:hidden">
           <Carousel className="-mx-2" autoRotateMs={6500}>
             {stages.map((s, i) => (
               <div key={s.id} className="px-2">
@@ -332,22 +285,42 @@ const StepTimeline: React.FC = () => {
                     onClick={() => setActive(i)}
                     className="rounded-full bg-white px-4 py-2 text-sm font-semibold ring-1 ring-slate-200"
                   >
-                    <span className="mr-2">{s.icon}</span>
                     {s.title}
                   </button>
                 </div>
                 {/* Render detail for this slide */}
-                <div className="rounded-[28px] p-[1px] bg-gradient-to-br from-slate-100 via-white to-slate-50">
-                  <div className="rounded-[26px] bg-white p-5 ring-1 ring-slate-200">
+                <div className="rounded-[22px] border border-slate-200 bg-white p-5">
                     <h3 className="text-lg font-bold text-slate-900">{s.title}</h3>
                     <p className="mt-1 text-sm text-slate-600">{s.subtitle}</p>
                     <div className="mt-3 grid grid-cols-1 gap-3">
-                      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
-                        <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENTS GET</div>
+                      <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
+                        <div className="text-xs font-extrabold tracking-wide text-slate-700">CHILD PRACTISES</div>
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
-                          {s.parentGets.map((x) => (
+                          {s.childLearns.slice(0, 2).map((x) => (
                             <li key={x} className="flex gap-2">
-                              <span className="mt-[2px]">📩</span>
+                              <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                              <span>{x}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
+                        <div className="text-xs font-extrabold tracking-wide text-slate-700">TEACHER GUIDANCE</div>
+                        <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                          {s.howWeTeach.slice(0, 2).map((x) => (
+                            <li key={x} className="flex gap-2">
+                              <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                              <span>{x}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4">
+                        <div className="text-xs font-extrabold tracking-wide text-slate-700">PARENT VISIBILITY</div>
+                        <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                          {s.parentGets.slice(0, 2).map((x) => (
+                            <li key={x} className="flex gap-2">
+                              <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                               <span>{x}</span>
                             </li>
                           ))}
@@ -357,43 +330,20 @@ const StepTimeline: React.FC = () => {
                         <button
                           onClick={() => {
                             setActive(i);
-                            openStageModal();
+                            openStageModal(s.id);
                           }}
-                          className="w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700"
+                          className="w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                         >
                           {s.ctaLabel}
                         </button>
                       )}
                     </div>
-                  </div>
                 </div>
               </div>
             ))}
           </Carousel>
         </div>
 
-        {/* S.O.L.I.D. Promise */}
-        <div className="mt-14">
-          <div className="text-center">
-            <h3 className="text-xl md:text-2xl font-bold text-slate-900">Our S.O.L.I.D. Promise to Parents</h3>
-            <p className="mt-2 text-sm md:text-base text-slate-600">
-            </p>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {solidPromise.map((p) => (
-              <div key={p.letter} className="rounded-2xl bg-white p-4 ring-1 ring-slate-200 hover:shadow-sm transition">
-                <div className="flex items-center gap-2">
-                  <div className="h-9 w-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold">
-                    {p.letter}
-                  </div>
-                  <div className="font-bold text-slate-900">{p.title}</div>
-                </div>
-                <div className="mt-2 text-sm text-slate-600">{p.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Modal */}
@@ -401,8 +351,8 @@ const StepTimeline: React.FC = () => {
         <Modal isOpen={!!modal} onClose={() => setModal(null)}>
           <div className="p-6">
             <h3 className="text-lg font-bold text-slate-900">{modalTitle}</h3>
-            <p className="mt-2 text-sm text-slate-600">
-              Use this on your website to show parents what actually happens in class (no vague promises).
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              This is a simple example of how a Tiny Steps teacher can structure live guided practice for the selected pathway.
             </p>
 
             {modal === "flow" && (
@@ -425,7 +375,7 @@ const StepTimeline: React.FC = () => {
                 </div>
                 <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
                   <div className="font-bold">5) Quick Check + Parent Note (2 mins)</div>
-                  <div className="text-slate-600">What improved + what to practice (3–5 mins).</div>
+                  <div className="text-slate-600">What improved + what to practise next.</div>
                 </div>
               </div>
             )}
