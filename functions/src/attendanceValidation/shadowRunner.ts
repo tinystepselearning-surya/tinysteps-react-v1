@@ -893,8 +893,12 @@ function caseFromEvidence(params: {
  * scanning operational collections. The Firestore adapter may additionally perform
  * one bounded classSessions query per represented same-day enrollment group
  * (date + enrollmentId equality filters, hard cap 50 + one lookahead) only to
- * count eligible same-day session slots and Tiny Steps Present sessions for the same learner + teacher. Explicit cancelled/rescheduled rows are excluded from the Present cap. It never reads enrollments, kids,
- * billing, earnings, credits or reschedule collections. A hard 2026-09-01 Tiny Steps
+ * count eligible same-day session slots and Tiny Steps Present sessions for the
+ * same learner + teacher. When Tiny Steps has one or more Presents, that Present
+ * count is the authoritative Teams class cap; eligible session slots remain the
+ * fallback cap only when Tiny Steps has zero Presents so missing attendance can
+ * still be detected. It never reads enrollments, kids, billing, earnings, credits
+ * or reschedule collections. A hard 2026-09-01 Tiny Steps
  * service-date lower bound permanently excludes July/August history.
  */
 export async function runAv53Shadow(

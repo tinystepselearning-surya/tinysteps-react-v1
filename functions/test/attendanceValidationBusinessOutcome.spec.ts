@@ -57,16 +57,44 @@ describe('AVS simple business outcome engine', () => {
     });
   });
 
-  it('returns False Absent only for Teams-supported Presents missing in Tiny Steps', () => {
+  it('does not manufacture a second class when Tiny Steps records only one Present', () => {
     expect(reconcileAvsBusinessOutcome({
       evidenceEvaluable: true,
       teamsOverlapSeconds: 4200,
       sameDaySessionCount: 2,
       tinyStepsPresentCount: 1,
     })).toEqual({
-      outcome: 'false_absent',
-      teamsSupportedPresentCount: 2,
+      outcome: 'verified',
+      teamsSupportedPresentCount: 1,
       tinyStepsPresentCount: 1,
+      differenceCount: 0,
+    });
+  });
+
+  it('allows two Teams-supported Presents only when Tiny Steps itself records two Presents', () => {
+    expect(reconcileAvsBusinessOutcome({
+      evidenceEvaluable: true,
+      teamsOverlapSeconds: 65 * 60,
+      sameDaySessionCount: 2,
+      tinyStepsPresentCount: 2,
+    })).toEqual({
+      outcome: 'verified',
+      teamsSupportedPresentCount: 2,
+      tinyStepsPresentCount: 2,
+      differenceCount: 0,
+    });
+  });
+
+  it('still detects False Absent when Tiny Steps records zero Presents for a real session slot', () => {
+    expect(reconcileAvsBusinessOutcome({
+      evidenceEvaluable: true,
+      teamsOverlapSeconds: 2100,
+      sameDaySessionCount: 1,
+      tinyStepsPresentCount: 0,
+    })).toEqual({
+      outcome: 'false_absent',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 0,
       differenceCount: 1,
     });
   });

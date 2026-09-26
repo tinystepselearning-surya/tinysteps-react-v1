@@ -346,6 +346,57 @@ describe('AV5.3 bounded shadow runner', () => {
     });
   });
 
+  it('keeps one Tiny Steps Present authoritative even if another eligible same-day row exists', async () => {
+    const longEvidence = shiftedSameDayEvidence(
+      'session-1',
+      'evidence-anved-style',
+      65 * 60,
+    );
+    const store = new FakeStore([
+      {
+        item: {
+          classSessionId: 'session-1',
+          evidenceId: 'evidence-anved-style',
+        },
+        session: session(),
+        evidence: longEvidence,
+      },
+      {
+        item: {
+          classSessionId: 'session-2',
+          evidenceId: 'missing-extra-row-evidence',
+        },
+        session: session({}),
+        evidence: null,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-one-present-plus-extra-row',
+        workItems: [
+          {
+            classSessionId: 'session-1',
+            evidenceId: 'evidence-anved-style',
+          },
+          {
+            classSessionId: 'session-2',
+            evidenceId: 'missing-extra-row-evidence',
+          },
+        ],
+      },
+      { store, staffRegistry: registry },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      id: 'session-1',
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      businessDifferenceCount: 0,
+    });
+  });
+
   it('does not let a cancelled same-day row raise one long class to two supported Presents', async () => {
     const longEvidence = shiftedSameDayEvidence(
       'session-1',
