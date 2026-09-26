@@ -1,9 +1,14 @@
 # Targeted Firebase deployments
 
-`scripts/resolve-deployment-impact.mjs` compares the validated commit with its
-Git parent/base before any production mutation job enters the Firebase
-concurrency lock. It reports independent decisions for the Functions, Hosting,
-and Firestore artifacts in the GitHub Actions job summary.
+`scripts/resolve-deployment-impact.mjs` compares Hosting and Firestore against the
+current event parent/base, while Cloud Functions are compared against the last
+successfully deployed Functions revision recorded by the reserved
+`ci/functions-production` ref. This distinction prevents a stale-guarded
+Functions rollout from disappearing when a newer frontend-only commit reaches
+`main`. If the production Functions marker is missing or invalid, the workflow
+fails safe by requesting a one-time full bounded Functions deployment. It
+reports independent decisions for the Functions, Hosting, and Firestore
+artifacts in the GitHub Actions job summary.
 
 ## Functions targeting
 
@@ -32,8 +37,10 @@ A full fleet deployment is limited to known global inputs:
 
 Unsupported or unresolved dependencies on a deployed Function path fail the
 impact-analysis job with a diagnostic. They do not silently turn into a
-full-fleet deployment. Invalid or missing Git history also fails before any
-mutation.
+full-fleet deployment. Invalid Git history fails before any mutation. The Functions production marker
+is advanced only after the bounded Functions deployment and required callable
+transport verification succeed; stale-guarded or failed Functions rollouts do
+not advance it.
 
 ## Artifact isolation
 
