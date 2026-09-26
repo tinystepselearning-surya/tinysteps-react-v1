@@ -24,13 +24,13 @@ export default function ParentReassurance({ programName = 'Tiny Steps' }: Parent
 
           <Link
             to="/book-demo"
-            className="inline-flex w-full shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+            className="inline-flex w-full shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 lg:w-auto"
           >
             Book Free 35-Minute Demo
           </Link>
         </div>
 
-        <ol className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
+        <ol className="mt-5 grid gap-4 border-t border-slate-100 pt-5 md:grid-cols-3">
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">1</span>
             <div>
