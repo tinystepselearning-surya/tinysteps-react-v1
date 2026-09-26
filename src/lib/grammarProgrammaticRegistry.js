@@ -1,3 +1,8 @@
+import {
+  GRAMMAR_PROGRAMMATIC_PATHS as GRAMMAR_PROGRAMMATIC_MANIFEST_PATHS,
+  GRAMMAR_PROGRAMMATIC_RESOURCE_SEO as GRAMMAR_PROGRAMMATIC_MANIFEST_SEO,
+} from './grammarProgrammaticSeoManifest.js';
+
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
 
@@ -522,18 +527,8 @@ export const GRAMMAR_PROGRAMMATIC_SEQUENCE = freezeList([
 export const GRAMMAR_PROGRAMMATIC_PAGES = freezeList(
   GRAMMAR_PROGRAMMATIC_SEQUENCE.filter((entry) => entry.state === 'published'),
 );
-export const GRAMMAR_PROGRAMMATIC_PATHS = freezeList(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => entry.path));
-export const GRAMMAR_PROGRAMMATIC_RESOURCE_SEO = freeze(
-  Object.fromEntries(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => [
-    entry.path,
-    freeze({
-      title: entry.seoTitle,
-      description: entry.seoDescription,
-      canonicalPath: entry.path,
-      ogType: 'article',
-    }),
-  ])),
-);
+export const GRAMMAR_PROGRAMMATIC_PATHS = GRAMMAR_PROGRAMMATIC_MANIFEST_PATHS;
+export const GRAMMAR_PROGRAMMATIC_RESOURCE_SEO = GRAMMAR_PROGRAMMATIC_MANIFEST_SEO;
 
 const bySlug = new Map(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => [entry.slug, entry]));
 const byPath = new Map(GRAMMAR_PROGRAMMATIC_PAGES.map((entry) => [entry.path, entry]));
@@ -546,4 +541,16 @@ if (GRAMMAR_PROGRAMMATIC_SEQUENCE.map((entry) => entry.order).join(',') !== Arra
 }
 if (new Set(GRAMMAR_PROGRAMMATIC_PATHS).size !== GRAMMAR_PROGRAMMATIC_PATHS.length) {
   throw new Error('Grammar programmatic paths must be unique.');
+}
+if (
+  GRAMMAR_PROGRAMMATIC_PAGES.length !== GRAMMAR_PROGRAMMATIC_PATHS.length
+  || GRAMMAR_PROGRAMMATIC_PAGES.some((entry, index) => entry.path !== GRAMMAR_PROGRAMMATIC_PATHS[index])
+) {
+  throw new Error('Grammar content registry must stay aligned with the lightweight route manifest.');
+}
+for (const entry of GRAMMAR_PROGRAMMATIC_PAGES) {
+  const seo = GRAMMAR_PROGRAMMATIC_RESOURCE_SEO[entry.path];
+  if (!seo || seo.title !== entry.seoTitle || seo.description !== entry.seoDescription || seo.canonicalPath !== entry.path) {
+    throw new Error(`Grammar SEO manifest drift detected for ${entry.path}.`);
+  }
 }
