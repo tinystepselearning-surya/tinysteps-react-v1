@@ -29,13 +29,13 @@ import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import BlogConversionCard from '../components/blog/BlogConversionCard';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
+import AuthorityBlogExperience from '../components/blog/AuthorityBlogExperience';
 import AuthorityBlogSidebar from '../components/blog/AuthorityBlogSidebar';
 import SatpinGuideSidebar from '../components/blog/SatpinGuideSidebar';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 
 const SatpinGuideExperience = lazy(() => import('../components/blog/SatpinGuideExperience'));
-const AuthorityBlogExperience = lazy(() => import('../components/blog/AuthorityBlogExperience'));
 // Meta removed — use applySeo as single source of truth
 
 const CATEGORY_ARTICLE_CONFIG = {
@@ -1138,6 +1138,8 @@ function buildMetaDescription(src: any) {
         searchLabel={isSchoolConversion ? 'Schools often ask' : 'Parents often search'}
         heroPoints={resolvedHeroPoints}
         compact={useAuthorityLayout}
+        heroImage={isAuthorityPilot ? resolvedHero : undefined}
+        heroImageAlt={isAuthorityPilot ? metaSource.title : undefined}
       />
 
       <div className={useAuthorityLayout ? 'mx-auto max-w-[1380px] px-4 py-7 sm:px-6 sm:py-9' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
@@ -1172,7 +1174,6 @@ function buildMetaDescription(src: any) {
                   post={post}
                   headingItems={headingItems}
                   tocItems={tocItems}
-                  resolvedHero={resolvedHero}
                 />
               </Suspense>
             ) : (
