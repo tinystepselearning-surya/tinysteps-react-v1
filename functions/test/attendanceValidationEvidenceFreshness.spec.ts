@@ -114,7 +114,7 @@ describe('AVS cached Teams evidence freshness classifier', () => {
     );
   });
 
-  it('requires fresh evidence when the service date or scheduled window changes', () => {
+  it('requires fresh evidence when the service date changes', () => {
     const result = classifyCachedEvidenceFreshness({
       classSessionId: 'session-1',
       session: session({
@@ -126,12 +126,23 @@ describe('AVS cached Teams evidence freshness classifier', () => {
     });
 
     expect(result.decision).toBe('fresh_required');
-    expect(result.reasons).toEqual(
-      expect.arrayContaining([
-        'service_date_changed',
-        'scheduled_window_changed',
-      ]),
-    );
+    expect(result.reasons).toContain('service_date_changed');
+  });
+
+  it('reuses cached evidence when only the scheduled clock moves on the same IST date', () => {
+    const result = classifyCachedEvidenceFreshness({
+      classSessionId: 'session-1',
+      session: session({
+        startAt: { seconds: Date.parse('2026-09-01T12:30:00.000Z') / 1000 },
+        endAt: { seconds: Date.parse('2026-09-01T13:05:00.000Z') / 1000 },
+      }),
+      evidence: evidence(),
+    });
+
+    expect(result).toEqual({
+      decision: 'reuse_cached',
+      reasons: ['compatible'],
+    });
   });
 
   it('requires fresh evidence when the Teams join URL changes or is newly added', () => {
