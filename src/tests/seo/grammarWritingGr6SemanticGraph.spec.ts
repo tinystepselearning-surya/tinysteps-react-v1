@@ -10,6 +10,7 @@ import {
 import { GRAMMAR_WRITING_WRITING_STAGES } from '../../lib/grammarWritingWritingProgression.js';
 import { GRAMMAR_WRITING_PARENT_PROBLEMS } from '../../lib/grammarWritingParentProblemArchitecture.js';
 import { GRAMMAR_WRITING_PRACTICE_UTILITIES } from '../../lib/grammarWritingPracticeUtilities.js';
+import { GRAMMAR_PROGRAMMATIC_PAGES } from '../../lib/grammarProgrammaticRegistry.js';
 import {
   R19_GRAMMAR_WRITING_SEMANTIC_JOURNEYS,
   getGrammarWritingSemanticInternalLinksForPath,
@@ -114,6 +115,8 @@ describe('Session B GR6 grammar/writing semantic journey graph', () => {
     expect(GRAMMAR_WRITING_GR6_PUBLIC_OWNERS).toHaveLength(17);
     expect(GRAMMAR_WRITING_GR6_PUBLIC_JOURNEYS).toHaveLength(17);
     expect(new Set(GRAMMAR_WRITING_GR6_PUBLIC_JOURNEYS.map((item) => item.sourceTopicId)).size).toBe(17);
+    expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(32);
+    expect(GRAMMAR_WRITING_GR6_PUBLIC_OWNERS.some((item) => item.ownerPath.startsWith('/resources/grammar/'))).toBe(false);
 
     for (const owner of GRAMMAR_WRITING_GR6_PUBLIC_OWNERS) {
       const nodeRef = `public-topic:${String(owner.id)}`;
