@@ -80,6 +80,8 @@ describe('Governed grammar programmatic resources', () => {
     const page = read('src/pages/GrammarKnowledgePage.tsx');
     const hub = read('src/pages/SubjectResourcesPage.tsx');
     expect(page).toContain('getGrammarProgrammaticPageBySlug');
+    expect(page).toContain('getCommercialC7R3Handoff');
+    expect(page).toContain('data-c7-contextual-handoff={c7Handoff.ruleClass}');
     expect(page).toContain('<NotFoundPage />');
     expect(page).toContain('ts-answer-title');
     expect(page).toContain('ts-answer-summary');
