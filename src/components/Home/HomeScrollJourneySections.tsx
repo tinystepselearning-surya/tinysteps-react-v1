@@ -149,7 +149,7 @@ export function AssessmentStartPointsSection() {
               {assessmentChecks.map((item) => (
                 <div
                   key={item}
-                  className="rounded-[18px] border border-white bg-white/90 px-4 py-3 text-sm font-medium leading-5 text-slate-700 shadow-sm"
+                  className="rounded-[16px] border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium leading-5 text-slate-700"
                 >
                   {item}
                 </div>
@@ -210,7 +210,7 @@ export function LearningPathsSection() {
             <Link
               key={item.title}
               to={item.path}
-              className="group rounded-[22px] border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-5.5"
+              className="group rounded-[22px] border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -282,7 +282,7 @@ export function WhyTinyStepsSection() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             {differentiators.map((item, index) => (
-              <article key={item.title} className="rounded-[20px] border border-slate-200 bg-white p-4.5 sm:p-5">
+              <article key={item.title} className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-5">
                 <div className="text-xs font-bold tracking-[0.18em] text-slate-400">0{index + 1}</div>
                 <h3 className="mt-2 text-base font-semibold text-slate-950 sm:text-lg">{item.title}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.description}</p>
@@ -440,19 +440,32 @@ export function ClassSamplesSection() {
 
 export function HomeFaqSection({ items }: { items: HomeFaqItem[] }) {
   return (
-    <section className="px-6 py-14">
-      <div className="mx-auto max-w-4xl">
+    <section className="px-6 py-12 sm:py-14">
+      <div className="mx-auto max-w-6xl">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Before you book</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A few practical parent questions</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Before you book</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">Popular parent questions</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            Quick answers to the questions families most often ask before choosing a class format or booking the assessment.
+          </p>
         </div>
-        <div className="mt-8 space-y-3">
+
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((item) => (
-            <details key={item.question} className="group rounded-[22px] border border-slate-200 bg-white px-5 py-4 shadow-sm">
-              <summary className="cursor-pointer list-none pr-8 text-base font-semibold text-slate-900 marker:hidden">
-                {item.question}
+            <details
+              key={item.question}
+              className="group rounded-[20px] border border-slate-200 bg-white px-4 py-4 transition open:border-slate-300 open:bg-slate-50/60"
+            >
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-950 marker:hidden sm:text-[0.95rem]">
+                <span>{item.question}</span>
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 text-lg font-normal leading-none text-slate-400 transition group-open:rotate-45 group-open:text-slate-700"
+                >
+                  +
+                </span>
               </summary>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{item.answer}</p>
+              <p className="mt-3 border-t border-slate-100 pt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
             </details>
           ))}
         </div>
