@@ -61,6 +61,13 @@ describe('deployment consistency guardrails', () => {
       '/free-sentence-building-games-for-kids',
       '/free-sentence-making-game-for-kids',
     ]);
+    const authorityPilotPaths = new Set([
+      '/blog/what-is-phonics-for-kids',
+      '/blog/how-to-teach-paragraph-writing-to-kids',
+      '/blog/how-to-teach-storytelling-to-kids',
+      '/blog/child-understands-english-but-does-not-speak',
+      '/blog/phonics-for-parents-guide',
+    ]);
     const fetchMock = vi.fn(async (input: string | URL) => {
       const url = new URL(String(input));
       const redirect = PUBLIC_REDIRECT_MANIFEST.find(
@@ -81,11 +88,24 @@ describe('deployment consistency guardrails', () => {
           { status: 200 },
         );
       }
+      if (authorityPilotPaths.has(url.pathname)) {
+        return new Response(
+          `<title>Authority Article | Tiny Steps Blog</title><meta name="description" content="Substantial authority article description">`
+          + '<meta name="robots" content="index, follow"><meta name="googlebot" content="index, follow">'
+          + `<link rel="canonical" href="${origin}${url.pathname}"><h1>Authority Article</h1>`
+          + `<article>${'Useful authority article content for parents and educators. '.repeat(70)}</article>`,
+          { status: 200 },
+        );
+      }
       if (url.pathname === '/sitemap.xml') {
         return new Response('<sitemapindex><sitemap><loc>https://tinystepslearning.com/sitemap-static.xml</loc></sitemap></sitemapindex>');
       }
       if (url.pathname === '/sitemap-static.xml') {
-        return new Response('<urlset><url><loc>https://tinystepslearning.com/</loc></url></urlset>');
+        const urls = [
+          `${origin}/`,
+          ...Array.from(authorityPilotPaths).map((pathname) => `${origin}${pathname}`),
+        ];
+        return new Response(`<urlset>${urls.map((loc) => `<url><loc>${loc}</loc></url>`).join('')}</urlset>`);
       }
       if (url.pathname === '/build-info.json') {
         return new Response(JSON.stringify({ gitSha: sha }), { status: 200 });
@@ -109,6 +129,18 @@ describe('deployment consistency guardrails', () => {
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'redirect /terms')?.pass).toBe(true);
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'deployed build identity')?.pass).toBe(true);
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'genuine unknown-route 404')?.pass).toBe(true);
+    expect(
+      result.assertions.filter((assertion: { name: string; pass: boolean }) =>
+        assertion.name.startsWith('authority pilot Googlebot smartphone '),
+      ),
+    ).toHaveLength(5);
+    expect(
+      result.assertions
+        .filter((assertion: { name: string; pass: boolean }) =>
+          assertion.name.startsWith('authority pilot Googlebot smartphone '),
+        )
+        .every((assertion: { pass: boolean }) => assertion.pass),
+    ).toBe(true);
   });
 
   it('keeps the legal page free of obsolete homepage offer strings', () => {

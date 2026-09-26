@@ -11,6 +11,13 @@ const PUBLIC_GAME_INDEXABILITY_ROUTES = [
   '/free-sentence-building-games-for-kids',
   '/free-sentence-making-game-for-kids',
 ];
+const AUTHORITY_BLOG_PILOT_ROUTES = [
+  '/blog/what-is-phonics-for-kids',
+  '/blog/how-to-teach-paragraph-writing-to-kids',
+  '/blog/how-to-teach-storytelling-to-kids',
+  '/blog/child-understands-english-but-does-not-speak',
+  '/blog/phonics-for-parents-guide',
+];
 const GOOGLEBOT_SMARTPHONE_USER_AGENT =
   'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
@@ -45,6 +52,13 @@ const metaValues = (html, name) => [...html.matchAll(new RegExp(`<meta\\b(?=[^>]
   .map((match) => extract(match[0], /\bcontent=["']([^"']*)["']/i));
 const canonicalValues = (html) => [...html.matchAll(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>/gi)]
   .map((match) => extract(match[0], /\bhref=["']([^"']*)["']/i));
+const meaningfulTextFrom = (html) => html
+  .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+  .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&nbsp;|&#160;/gi, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
 
 export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fetch }) {
   const assertions = [];
@@ -146,6 +160,39 @@ export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fe
     await verifyPublicGameResponse(
       'public game Googlebot smartphone',
       await request(pathname, { headers: { 'user-agent': GOOGLEBOT_SMARTPHONE_USER_AGENT } }),
+    );
+  }
+
+  for (const pathname of AUTHORITY_BLOG_PILOT_ROUTES) {
+    const canonicalUrl = `${origin}${pathname}`;
+    const response = await request(pathname, {
+      headers: { 'user-agent': GOOGLEBOT_SMARTPHONE_USER_AGENT },
+    });
+    const html = await response.text();
+    const robotsValues = metaValues(html, 'robots');
+    const googlebotValues = metaValues(html, 'googlebot');
+    const canonicals = canonicalValues(html);
+    const xRobotsTag = response.headers.get('x-robots-tag') || '';
+    const meaningfulText = meaningfulTextFrom(html);
+    const notFoundLike = /\b(?:article not found|page not found|404)\b/i.test(
+      `${titleFrom(html)} ${h1From(html)}`,
+    );
+
+    record(
+      `authority pilot Googlebot smartphone ${pathname}`,
+      response.status === 200
+        && sitemapUrls.includes(canonicalUrl)
+        && robotsValues.length === 1
+        && googlebotValues.length === 1
+        && canonicals.length === 1
+        && canonicals[0] === canonicalUrl
+        && !/noindex|nofollow|noarchive/i.test(`${robotsValues.join(',')},${googlebotValues.join(',')},${xRobotsTag}`)
+        && Boolean(titleFrom(html))
+        && Boolean(extract(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i))
+        && Boolean(h1From(html))
+        && meaningfulText.length >= 2500
+        && !notFoundLike,
+      `HTTP ${response.status}; in sitemap ${sitemapUrls.includes(canonicalUrl)}; canonical ${canonicals.join(' | ') || '(missing)'}; text ${meaningfulText.length} chars; robots ${robotsValues.join(' | ') || '(missing)'}; googlebot ${googlebotValues.join(' | ') || '(missing)'}; X-Robots-Tag ${xRobotsTag || '(absent)'}`,
     );
   }
 

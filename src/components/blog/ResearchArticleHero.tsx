@@ -29,6 +29,8 @@ type ResearchArticleHeroProps = {
   searchLabel?: string;
   heroPoints: HeroPoint[];
   compact?: boolean;
+  heroImage?: string;
+  heroImageAlt?: string;
 };
 
 const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
@@ -46,6 +48,8 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
   searchLabel = 'Parents often search',
   heroPoints,
   compact = false,
+  heroImage,
+  heroImageAlt,
 }) => {
   return (
     <section className={compact ? 'relative isolate overflow-hidden bg-[#0b1220] text-white' : 'relative isolate overflow-hidden bg-slate-950 text-white'}>
@@ -54,7 +58,15 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
       {!compact ? <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" /> : null}
 
       <div className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${compact ? 'pb-8 pt-14 sm:pb-9 sm:pt-16' : 'pb-14 pt-24 sm:pb-20 sm:pt-32'}`}>
-        <div className={compact ? 'grid gap-5' : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'}>
+        <div
+          className={
+            compact
+              ? heroImage
+                ? 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center'
+                : 'grid gap-5'
+              : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'
+          }
+        >
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">
               {eyebrowPrimary}
@@ -103,17 +115,47 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
             </div>
           </div>
 
-          <div className={compact ? 'rounded-[22px] border border-white/10 bg-white/[0.055] p-4 backdrop-blur-xl' : 'rounded-[32px] border border-white/12 bg-white/8 p-5 sm:p-6 backdrop-blur'}>
+          {compact ? (
+            heroImage ? (
+              <div className="justify-self-stretch overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.06] p-1.5 shadow-[0_18px_55px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:justify-self-end">
+                <img
+                  src={heroImage}
+                  alt={heroImageAlt || title}
+                  className="aspect-[4/3] w-full rounded-[19px] bg-slate-900/20 object-cover lg:max-h-[250px]"
+                  width={900}
+                  height={675}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              </div>
+            ) : null
+          ) : (
+            <div className="rounded-[32px] border border-white/12 bg-white/8 p-5 sm:p-6 backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">{searchLabel}</p>
+              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
+                {searchPainPoints.map((item) => (
+                  <li key={item} className="border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {compact ? (
+          <div className="mt-5 rounded-[22px] border border-white/10 bg-white/[0.055] p-4 backdrop-blur-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">{searchLabel}</p>
-            <ul className={compact ? 'mt-3 flex flex-wrap gap-2 text-sm leading-6 text-slate-100' : 'mt-4 space-y-3 text-sm leading-6 text-slate-100'}>
+            <ul className="mt-3 flex flex-wrap gap-2 text-sm leading-6 text-slate-100">
               {searchPainPoints.map((item) => (
-                <li key={item} className={compact ? 'rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200' : 'border-b border-white/10 pb-3 last:border-b-0 last:pb-0'}>
+                <li key={item} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200">
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-        </div>
+        ) : null}
 
         <div className={`${compact ? 'mt-5' : 'mt-10'} grid gap-4 lg:grid-cols-3`}>
           {heroPoints.map((point) => (
