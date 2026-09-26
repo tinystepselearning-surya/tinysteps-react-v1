@@ -116,7 +116,7 @@ for (const [id, expected] of [
 }
 
 const legacy = getSpeakingCommunicationContentAuditByAction('consolidate')[0];
-if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/speaking-confidence-seeds' || legacy.implementationState !== 'hold' || legacy.urlChangeAuthorized || legacy.publicationApproved) add('legacy-hold', 'legacy-hidden-confidence-article', 'R21 must not silently consolidate, redirect or transfer the held legacy URL.');
+if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/child-understands-english-but-does-not-speak' || legacy.implementationState !== 'redirected-source-removed' || !legacy.urlChangeAuthorized || legacy.publicationApproved) add('legacy-hold', 'legacy-hidden-confidence-article', 'R21 must preserve the completed redirect-only retirement and keep the legacy source absent.');
 
 if (dist) {
   if (!exists('dist/index.html')) add('missing-build', 'R21', 'dist/index.html');
