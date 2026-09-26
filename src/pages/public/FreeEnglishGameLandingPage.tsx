@@ -20,12 +20,24 @@ import {
 
 const SITE_ORIGIN = "https://tinystepslearning.com";
 
+function scrollToPublicGamePlayer() {
+  const playSection = document.getElementById("play");
+  if (playSection && typeof playSection.scrollIntoView === "function") {
+    playSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 export default function FreeEnglishGameLandingPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const config: PublicEnglishGameLandingConfig | null = getPublicEnglishGameLandingByPath(location.pathname);
   const isPlayMode = searchParams.get("play") === "1";
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
+
+  useEffect(() => {
+    if (!shouldRenderPlayer) return;
+    scrollToPublicGamePlayer();
+  }, [shouldRenderPlayer]);
 
   useEffect(() => {
     if (!config) return;
@@ -221,12 +233,22 @@ export default function FreeEnglishGameLandingPage() {
 
               <div className="mt-4">
                 {config.isPublicPlayReady && config.playPath ? (
-                  <Link
-                    to={config.playPath}
-                    className="inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-900 hover:bg-cyan-300"
-                  >
-                    Play Free
-                  </Link>
+                  shouldRenderPlayer ? (
+                    <button
+                      type="button"
+                      onClick={scrollToPublicGamePlayer}
+                      className="inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-900 hover:bg-cyan-300"
+                    >
+                      Go to Game
+                    </button>
+                  ) : (
+                    <Link
+                      to={config.playPath}
+                      className="inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-900 hover:bg-cyan-300"
+                    >
+                      Play Free
+                    </Link>
+                  )
                 ) : (
                   <span className="inline-flex rounded-xl border border-slate-500/30 bg-slate-800/80 px-5 py-3 text-sm font-black text-slate-200">
                     {config.statusText}
@@ -269,7 +291,7 @@ export default function FreeEnglishGameLandingPage() {
           </section>
 
           {shouldRenderPlayer ? (
-            <section id="play" className="mt-4 public-game-panel p-3 sm:p-4">
+            <section id="play" className="mt-4 scroll-mt-24 public-game-panel p-3 sm:p-4">
               <div className="rounded-2xl border border-white/10 bg-slate-950/36 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
