@@ -15,7 +15,7 @@ export default function ParentReassurance({ programName = 'Tiny Steps' }: Parent
               Assessment before enrolment
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              Free assessment. Clear recommendation. You decide.
+              Try the assessment before you decide
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               The free assessment helps you understand whether {programName} is a suitable next step for your child. No payment or enrolment commitment is required to take the assessment.
