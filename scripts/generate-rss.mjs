@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 import {
   getPublicBlogSlug,
   getPublicBlogTitle,
@@ -271,13 +272,22 @@ function buildProgrammaticPhonicsCorpus() {
 
 function buildPublicRouteCorpus(blogItemMap) {
   const programmaticPaths = new Set(PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page.path));
+  const manifestByPath = new Map(PUBLIC_ROUTE_MANIFEST.map((entry) => [entry.path, entry]));
+  const routePaths = new Set([
+    ...PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path),
+    ...Object.keys(ROUTE_SEO_REGISTRY),
+  ]);
   const map = new Map();
-  for (const [routePath, config] of Object.entries(ROUTE_SEO_REGISTRY)) {
-    const canonicalPath = config?.canonicalPath || routePath;
+
+  for (const routePath of routePaths) {
+    const config = ROUTE_SEO_REGISTRY[routePath];
+    const manifest = manifestByPath.get(routePath);
+    const canonicalPath = config?.canonicalPath || manifest?.canonicalPath || routePath;
     const canonicalUrl = toCanonicalAbsoluteUrl(canonicalPath);
     if (blogItemMap.has(canonicalUrl) || programmaticPaths.has(canonicalPath)) continue;
     if (map.has(canonicalUrl)) continue;
-    const noindex = isNoIndexRoute(config);
+
+    const noindex = manifest ? manifest.indexable === false : isNoIndexRoute(config);
     map.set(canonicalUrl, {
       id: `route-${canonicalPath === '/' ? 'home' : canonicalPath.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-')}`,
       content_type: canonicalPath.startsWith('/resources/') || canonicalPath === '/resources'
@@ -288,10 +298,15 @@ function buildPublicRouteCorpus(blogItemMap) {
             ? 'practice-or-tool'
             : canonicalPath === '/for-schools'
               ? 'school-resource'
-              : 'public-route',
+              : manifest?.group === 'legal'
+                ? 'legal'
+                : manifest?.group === 'seasonal'
+                  ? 'seasonal'
+                  : 'public-route',
       title: normalizeText(config?.title || fallbackTitleFromPath(canonicalPath)),
       summary: normalizeText(config?.description || SITE_DESCRIPTION),
       canonical_url: canonicalUrl,
+      route_group: manifest?.group || null,
       indexing_state: noindex ? 'noindex' : 'indexable',
       retrieval_role: noindex ? 'supporting-only-noindex' : 'public-canonical',
       answer_eligible: !noindex,
