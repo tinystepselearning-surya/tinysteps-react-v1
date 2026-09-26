@@ -10,6 +10,7 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
   const summarySource = read('src/components/Home/HomeEntitySummarySection.tsx');
   const journeySource = read('src/components/Home/HomeScrollJourneySections.tsx');
   const heroSource = read('src/components/Home/ConversionHero.tsx');
+  const publicAssessmentFormSource = read('src/components/forms/PublicAssessmentForm.tsx');
   const methodSource = read('src/components/Home/StepTimeline.tsx');
   const pricingSource = read('src/components/Home/PricingCrispSection.tsx');
   const reassuranceSource = read('src/components/programs/ParentReassurance.tsx');
@@ -121,15 +122,24 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(heroSource).toContain('Shared proof row');
     expect(heroSource).not.toContain('Quick questions? WhatsApp us');
     expect(heroSource).not.toContain('Assessment-led placement • Transparent pricing');
+    expect(heroSource).toContain('appearance="heroCompact"');
+    expect(heroSource).toContain('secondaryHelperText={null}');
+    expect(publicAssessmentFormSource).toContain("appearance?: 'default' | 'embedded' | 'heroCompact'");
+    expect(publicAssessmentFormSource).toContain("const isHeroCompact = appearance === 'heroCompact'");
     expect(journeySource).toContain('md:hidden');
     expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.learnersLabel');
     expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.countriesLabel');
     expect(journeySource).not.toContain('PUBLIC_SESSION_DURATION_LABEL');
   });
 
-  it('keeps homepage pricing scannable without repeating common plan features', () => {
+  it('keeps homepage pricing in a two-column decision layout with three vertical plan options', () => {
     expect(pricingSource).toContain('Standard live 1:1 plans');
-    expect(pricingSource).toContain('All standard 1:1 packages use the same per-class rate and class duration');
+    expect(pricingSource).toContain('Every standard 1:1 package uses the same per-class rate and 35-minute class duration');
+    expect(pricingSource).toContain('lg:grid-cols-[0.82fr_1.18fr]');
+    expect(pricingSource).toContain('ONE_TO_ONE_MONTHLY_PACKAGES.map');
+    expect(pricingSource).toContain("const planNames = ['Starter', 'Growth', 'Intensive']");
+    expect(pricingSource).toContain("String(index + 1).padStart(2, '0')");
+    expect(pricingSource).toContain('monthly package');
     expect(pricingSource).not.toContain('Around 2 classes per week');
     expect(pricingSource).not.toContain('Around 3–4 classes per week');
     expect(pricingSource).not.toContain('Around 5–6 classes per week');
