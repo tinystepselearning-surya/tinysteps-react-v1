@@ -1,14 +1,11 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
+import { createHash } from 'crypto';
 import { FieldPath, type Firestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
 import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
-import {
-  AVS_BUSINESS_CASE_SCHEMA_VERSION,
-  isCurrentAvsBusinessCaseDocument,
-} from './businessOutcomeEngine';
 import {
   ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION,
   AVS_BASELINE_MAX_SESSIONS_PER_RUN,
@@ -56,7 +53,6 @@ const MICROSOFT_CLIENT_SECRET = defineSecret('MICROSOFT_CLIENT_SECRET');
 
 interface BaselineRangeState {
   schemaVersion?: unknown;
-  businessCaseSchemaVersion?: unknown;
   fromDate?: unknown;
   toDate?: unknown;
   status?: unknown;
@@ -65,7 +61,6 @@ interface BaselineRangeState {
   scannedSessionCount?: unknown;
   existingCaseCount?: unknown;
   freshEvidenceCount?: unknown;
-  migratedLegacyCaseCount?: unknown;
   blockedCount?: unknown;
 }
 
@@ -86,6 +81,11 @@ function currentIstYmd(now = new Date()): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Invalid baseline request.';
+}
+
+function missingEvidenceId(sessionId: string): string {
+  const digest = createHash('sha256').update(sessionId).digest('hex').slice(0, 40);
+  return `baseline_missing_${digest}`;
 }
 
 function countingGraphClient(base: TeamsEvidenceGraphClient): {
@@ -132,14 +132,10 @@ function cursorFromState(state: BaselineRangeState): AvsBaselineCursor | null {
 export async function runAttendanceValidationFirstTimeBaselineBatch(
   db: Firestore,
   range: { fromDate: string; toDate: string },
-  options: {
-    maxSessions?: number;
-    allowFreshEvidence?: boolean;
-  } = {},
+  options: { maxSessions?: number } = {},
 ) {
   const maxSessions =
     options.maxSessions ?? AVS_BASELINE_MAX_SESSIONS_PER_RUN;
-  const allowFreshEvidence = options.allowFreshEvidence ?? true;
   if (
     !Number.isInteger(maxSessions)
     || maxSessions < 1
@@ -157,38 +153,22 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     const state = stateSnapshot.exists
       ? (stateSnapshot.data() || {}) as BaselineRangeState
       : {};
-    const checkpointMatchesCurrentBusinessSchema =
-      stateSnapshot.exists
-      && text(state.fromDate) === range.fromDate
-      && text(state.toDate) === range.toDate
-      && count(state.businessCaseSchemaVersion)
-        === AVS_BUSINESS_CASE_SCHEMA_VERSION;
-    // A completed pre-three-outcome checkpoint must not suppress migration.
-    // Reset its cursor/counters and rescan the bounded range once using cached
-    // evidence wherever possible.
-    const activeState: BaselineRangeState =
-      checkpointMatchesCurrentBusinessSchema
-        ? state
-        : {};
 
     if (
-      checkpointMatchesCurrentBusinessSchema
+      stateSnapshot.exists
       && text(state.status) === 'complete'
+      && text(state.fromDate) === range.fromDate
+      && text(state.toDate) === range.toDate
     ) {
       return {
         ok: true,
         ...range,
         rangeId,
-        businessCaseSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
         alreadyComplete: true,
         complete: true,
         hasMore: false,
         batchSessionCount: 0,
         existingCaseCount: 0,
-        legacyCaseCount: 0,
-        migratedLegacyCaseCount: 0,
-        migrationDeferredCount: 0,
-        deferredFreshCount: 0,
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
@@ -198,12 +178,10 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         identityClaimsWritten: 0,
         operationalMutationAllowed: false,
         cumulative: {
-          scannedSessionCount: count(activeState.scannedSessionCount),
-          existingCaseCount: count(activeState.existingCaseCount),
-          freshEvidenceCount: count(activeState.freshEvidenceCount),
-          migratedLegacyCaseCount:
-            count(activeState.migratedLegacyCaseCount),
-          blockedCount: count(activeState.blockedCount),
+          scannedSessionCount: count(state.scannedSessionCount),
+          existingCaseCount: count(state.existingCaseCount),
+          freshEvidenceCount: count(state.freshEvidenceCount),
+          blockedCount: count(state.blockedCount),
         },
         readBudget: {
           baselineStateReads: 1,
@@ -220,7 +198,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       };
     }
 
-    const cursor = cursorFromState(activeState);
+    const cursor = cursorFromState(state);
     let sessionsQuery = db
       .collection('classSessions')
       .where('date', '>=', range.fromDate)
@@ -251,7 +229,6 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     if (batchPlan.batch.length === 0) {
       await rangeRef.set({
         schemaVersion: 1,
-        businessCaseSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
         fromDate: range.fromDate,
         toDate: range.toDate,
         status: 'complete',
@@ -264,16 +241,11 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         ok: true,
         ...range,
         rangeId,
-        businessCaseSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
         alreadyComplete: false,
         complete: true,
         hasMore: false,
         batchSessionCount: 0,
         existingCaseCount: 0,
-        legacyCaseCount: 0,
-        migratedLegacyCaseCount: 0,
-        migrationDeferredCount: 0,
-        deferredFreshCount: 0,
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
@@ -283,12 +255,10 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         identityClaimsWritten: 0,
         operationalMutationAllowed: false,
         cumulative: {
-          scannedSessionCount: count(activeState.scannedSessionCount),
-          existingCaseCount: count(activeState.existingCaseCount),
-          freshEvidenceCount: count(activeState.freshEvidenceCount),
-          migratedLegacyCaseCount:
-            count(activeState.migratedLegacyCaseCount),
-          blockedCount: count(activeState.blockedCount),
+          scannedSessionCount: count(state.scannedSessionCount),
+          existingCaseCount: count(state.existingCaseCount),
+          freshEvidenceCount: count(state.freshEvidenceCount),
+          blockedCount: count(state.blockedCount),
         },
         readBudget: {
           baselineStateReads: 1,
@@ -311,33 +281,10 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     );
     const caseSnapshots = await db.getAll(...caseRefs);
 
-    const caseRows = batchPlan.batch.map((item, index) => {
-      const snapshot = caseSnapshots[index];
-      const data = snapshot.exists
-        ? (snapshot.data() || {}) as Record<string, unknown>
-        : null;
-      return { item, snapshot, data };
-    });
-    const missingCaseRows = caseRows
-      .filter((row) => !row.snapshot.exists)
-      .map((row) => row.item);
-    const legacyCaseRows = caseRows.filter((row) =>
-      row.snapshot.exists
-      && row.data
-      && !isCurrentAvsBusinessCaseDocument(row.data));
-    const existingCaseCount = caseRows.filter((row) =>
-      row.snapshot.exists
-      && row.data
-      && isCurrentAvsBusinessCaseDocument(row.data)).length;
-    const cachedLegacyRows = legacyCaseRows.filter((row) =>
-      Boolean(text(row.data?.evidenceId)));
-    const legacyWithoutCachedEvidenceRows = legacyCaseRows
-      .filter((row) => !text(row.data?.evidenceId))
-      .map((row) => row.item);
-    const freshCollectionRows = [
-      ...missingCaseRows,
-      ...legacyWithoutCachedEvidenceRows,
-    ];
+    const missingCaseRows = batchPlan.batch.filter(
+      (_item, index) => !caseSnapshots[index].exists,
+    );
+    const existingCaseCount = batchPlan.batch.length - missingCaseRows.length;
 
     const snapshots = new Map<string, ReturnType<typeof buildBaselineEvidenceSessionSnapshot>>();
     const blocked: Array<{
@@ -347,7 +294,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     }> = [];
     const failureSummaries = [];
 
-    for (const item of freshCollectionRows) {
+    for (const item of missingCaseRows) {
       try {
         const sessionSnapshot = buildBaselineEvidenceSessionSnapshot(
           item.id,
@@ -368,7 +315,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     let organizerUserId: string | null = null;
     let organizerResolutionFailure = 'organizer_identity_unresolved';
     let organizerConfigReads = 0;
-    if (allowFreshEvidence && snapshots.size > 0) {
+    if (snapshots.size > 0) {
       try {
         const organizerResolution =
           await resolveAttendanceValidationOrganizerUserId(db);
@@ -397,11 +344,12 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     });
     const counted = countingGraphClient(baseGraphClient);
     const evidenceStore = new FirestoreAttendanceValidationEvidenceStore(db);
-    const workItems: Array<{ classSessionId: string; evidenceId: string }> =
-      cachedLegacyRows.map((row) => ({
-        classSessionId: row.item.id,
-        evidenceId: text(row.data?.evidenceId),
-      }));
+    const workItems: Array<{ classSessionId: string; evidenceId: string }> = blocked.map(
+      (item) => ({
+        classSessionId: item.sessionId,
+        evidenceId: missingEvidenceId(item.sessionId),
+      }),
+    );
     let freshEvidenceCount = 0;
     let staffRegistry: Av3StaffRegistrySnapshot | null = null;
     let identityMappingsWritten = 0;
@@ -415,21 +363,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       return staffRegistry;
     };
 
-    const deferredFreshRows = allowFreshEvidence
-      ? []
-      : freshCollectionRows;
-    const deferredFreshIds = new Set(
-      deferredFreshRows.map((item) => item.id),
-    );
-    for (const item of deferredFreshRows) {
-      await markAttendanceValidationDirtySession(db, {
-        sessionId: item.id,
-        session: item.data,
-        reason: 'validation_infrastructure_retry',
-      });
-    }
-
-    for (const item of allowFreshEvidence ? freshCollectionRows : []) {
+    for (const item of missingCaseRows) {
       const expectedSession = snapshots.get(item.id);
       if (!expectedSession) continue;
 
@@ -514,56 +448,26 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
           {
             runId: caseRunId,
             workItems,
-            missingEvidenceRequiresFresh: true,
           },
           () => new Date(),
           av53Registry!,
         )
       : null;
 
-    const legacyCaseIds = new Set(
-      legacyCaseRows.map((row) => row.item.id),
-    );
-    const migratedLegacyCaseCount = (av53Result?.caseIds ?? [])
-      .filter((caseId) => legacyCaseIds.has(caseId)).length;
-    const migrationDeferredIds = legacyCaseRows
-      .map((row) => row.item.id)
-      .filter((sessionId) =>
-        !(av53Result?.caseIds ?? []).includes(sessionId));
-    for (const sessionId of migrationDeferredIds) {
-      if (deferredFreshIds.has(sessionId)) continue;
-      const row = legacyCaseRows.find((item) => item.item.id === sessionId);
-      if (!row) continue;
-      await markAttendanceValidationDirtySession(db, {
-        sessionId,
-        session: row.item.data,
-        reason: 'validation_infrastructure_retry',
-      });
-    }
-
-    const deferredFreshCount = deferredFreshRows.length;
-    const migrationDeferredCount = migrationDeferredIds.length;
-    const hasMore =
-      batchPlan.hasMore
-      || deferredFreshCount > 0
-      || migrationDeferredCount > 0;
-    const complete = !hasMore;
+    const complete = !batchPlan.hasMore;
     const cumulative = {
       scannedSessionCount:
-        count(activeState.scannedSessionCount) + batchPlan.batch.length,
+        count(state.scannedSessionCount) + batchPlan.batch.length,
       existingCaseCount:
-        count(activeState.existingCaseCount) + existingCaseCount,
+        count(state.existingCaseCount) + existingCaseCount,
       freshEvidenceCount:
-        count(activeState.freshEvidenceCount) + freshEvidenceCount,
-      migratedLegacyCaseCount:
-        count(activeState.migratedLegacyCaseCount) + migratedLegacyCaseCount,
+        count(state.freshEvidenceCount) + freshEvidenceCount,
       blockedCount:
-        count(activeState.blockedCount) + blocked.length,
+        count(state.blockedCount) + blocked.length,
     };
 
     await rangeRef.set({
       schemaVersion: 1,
-      businessCaseSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
       fromDate: range.fromDate,
       toDate: range.toDate,
       status: complete ? 'complete' : 'in_progress',
@@ -572,17 +476,13 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       ...cumulative,
       lastBatchSessionCount: batchPlan.batch.length,
       lastExistingCaseCount: existingCaseCount,
-      lastLegacyCaseCount: legacyCaseRows.length,
-      lastMigratedLegacyCaseCount: migratedLegacyCaseCount,
-      lastMigrationDeferredCount: migrationDeferredCount,
-      lastDeferredFreshCount: deferredFreshCount,
       lastFreshEvidenceCount: freshEvidenceCount,
       lastBlockedCount: blocked.length,
       lastGraphLogicalCalls: counted.count(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      completedAt: complete
-        ? admin.firestore.FieldValue.serverTimestamp()
-        : null,
+      ...(complete
+        ? { completedAt: admin.firestore.FieldValue.serverTimestamp() }
+        : {}),
       operationalMutationAllowed: false,
     }, { merge: true });
 
@@ -597,16 +497,11 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       ok: true,
       ...range,
       rangeId,
-      businessCaseSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
       alreadyComplete: false,
       complete,
-      hasMore,
+      hasMore: batchPlan.hasMore,
       batchSessionCount: batchPlan.batch.length,
       existingCaseCount,
-      legacyCaseCount: legacyCaseRows.length,
-      migratedLegacyCaseCount,
-      migrationDeferredCount,
-      deferredFreshCount,
       freshEvidenceCount,
       persistedCaseCount: av53Result?.persistedCaseCount ?? 0,
       skippedCount: av53Result?.skippedCount ?? 0,
