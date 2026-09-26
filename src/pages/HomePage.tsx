@@ -227,11 +227,11 @@ export default function HomePage() {
       {/* REVIEW ACTION 01 — HOOK: Keep the existing hero focused on what Tiny Steps is and the primary demo action. */}
       <ConversionHero />
 
-      {/* AI/ENTITY SUMMARY: Keep critical brand facts and programme ownership in the initial crawlable DOM. */}
-      <HomeEntitySummarySection />
-
-      {/* REVIEW ACTION 02 — IDENTIFICATION: Replace the old generic approach block with parent problem recognition. */}
+      {/* REVIEW ACTION 02 — IDENTIFICATION: Preserve the parent-first recognition step immediately after the hero. */}
       <ParentProblemRecognitionSection />
+
+      {/* AI/ENTITY BRIDGE: Clarify the brand and intent owners without interrupting the hero → problem-recognition flow. */}
+      <HomeEntitySummarySection />
 
       {/* REVIEW ACTION 03 — EARLY TRUST: Give a compact credibility snapshot without restarting the company story. */}
       <TrustSnapshotSection />
