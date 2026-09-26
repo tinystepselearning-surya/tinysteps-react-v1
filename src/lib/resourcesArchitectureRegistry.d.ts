@@ -1,0 +1,31 @@
+export type ResourceEcosystemEntry = Readonly<{
+  path: string;
+  currentState: string;
+  pageFamily: string;
+  audience: string;
+  subject: string;
+  currentPurpose: string;
+  primaryIntent: string;
+  primaryQueryOwner: string;
+  commercialReadiness: string;
+  ctaPolicy: string;
+  primaryDestination: string | null;
+  protection: string;
+  futureResourceNode: string | null;
+  indexable?: boolean | null;
+  prerender?: boolean | null;
+  sitemap?: boolean | null;
+  canonicalPath?: string | null;
+  seoTitle?: string | null;
+  gscClicks?: number | null;
+  gscImpressions?: number | null;
+  gscCtr?: number | null;
+  gscPosition?: number | null;
+}>;
+
+export const RESOURCE_SEARCH_INTENTS: readonly string[];
+export const RESOURCE_CTA_POLICIES: readonly string[];
+export const RESOURCE_COMMERCIAL_READINESS: readonly string[];
+export const RESOURCE_ECOSYSTEM_REGISTRY: readonly ResourceEcosystemEntry[];
+export const RESOURCE_PROTECTED_PATHS: readonly string[];
+export const RESOURCE_PERFORMANCE_PRIORITY_PATHS: readonly string[];
