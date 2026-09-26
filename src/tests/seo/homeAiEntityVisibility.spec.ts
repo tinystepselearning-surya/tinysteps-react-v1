@@ -107,10 +107,16 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(journeySource).toContain('to="/courses"');
     expect(journeySource).toContain('Need a specialist path? View all courses');
     expect(journeySource).not.toContain('writing, spoken English, reading-fluency or confidence-specific support');
+    expect(journeySource).not.toContain("icon: '🔤'");
+    expect(journeySource).not.toContain("icon: '📚'");
+    expect(journeySource).not.toContain("icon: '✏️'");
+    expect(journeySource).not.toContain("icon: '🎤'");
   });
 
-  it('does not repeat desktop hero proof in a second desktop trust strip', () => {
+  it('does not reserve empty viewport height below the hero or repeat desktop proof', () => {
     expect(heroSource).toContain('PUBLIC_LEARNER_REACH_LABEL');
+    expect(heroSource).not.toContain('min-h-[82vh]');
+    expect(heroSource).not.toContain('md:min-h-screen');
     expect(journeySource).toContain('md:hidden');
     expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.learnersLabel');
     expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.countriesLabel');
@@ -147,6 +153,21 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(finalCtaSource).toContain('View real class samples');
     expect(finalCtaSource).not.toContain('5000+ students');
     expect(finalCtaSource).not.toContain('Trustpilot, JustDial, and Reddit');
+  });
+
+  it('uses a wide responsive reassurance strip and nine compact homepage FAQs', () => {
+    expect(reassuranceSource).toContain('max-w-6xl');
+    expect(reassuranceSource).toContain('md:grid-cols-3');
+    expect(reassuranceSource).toContain('lg:w-auto');
+
+    const faqQuestionCount = (homeSource.match(/question:/g) || []).length;
+    expect(faqQuestionCount).toBe(9);
+    expect(journeySource).toContain('Popular parent questions');
+    expect(journeySource).toContain('sm:grid-cols-2');
+    expect(journeySource).toContain('xl:grid-cols-3');
+    expect(homeSource).toContain('What age group does Tiny Steps teach?');
+    expect(homeSource).toContain('How much do Tiny Steps classes cost?');
+    expect(homeSource).toContain('What if I need to cancel or reschedule a class?');
   });
 
   it('keeps mobile method content complete without duplicate pathway controls', () => {
