@@ -14,7 +14,7 @@ const item = (config) => freeze({
   practicePaths: freezeList(config.practicePaths),
 });
 
-export const AI_ANSWER_LAYER_REVISION = '2026-09-26-r24-r26';
+export const AI_ANSWER_LAYER_REVISION = '2026-09-26-r24-r27';
 export const AI_ANSWER_LAYER_MACHINE_JSON_PATH = '/ai-resource-index.json';
 export const AI_ANSWER_LAYER_MACHINE_TEXT_PATH = '/ai-resource-index.txt';
 
