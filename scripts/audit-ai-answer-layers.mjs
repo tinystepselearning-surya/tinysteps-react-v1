@@ -50,7 +50,7 @@ if (expectedLiveCanonicalBlogs < 82) {
 }
 
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 89) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 31 governed grammar pages.');
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 90) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 32 governed grammar pages.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 11) fail('layer-3-count', 'Expected 11 focused practice actions.');
 
 const ids = AI_ANSWER_LAYER_ALL_ITEMS.map((item) => item.id);
