@@ -506,6 +506,15 @@ const ForSchoolsPage: React.FC = () => {
         jsonLd={[breadcrumbSchema, pageSchema, serviceSchema, definedTermsSchema, faqSchema]}
       />
 
+      <div className="mx-auto w-full max-w-7xl px-6 pt-4">
+        <Link
+          to="/resources"
+          className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+        >
+          ← All Tiny Steps Resources
+        </Link>
+      </div>
+
       <LeadHero
         alignDesktopTop
         compactTopSpacing
