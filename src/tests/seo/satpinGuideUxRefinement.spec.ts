@@ -88,7 +88,12 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain("'SatpinJumpNavClicked'");
     expect(experience).toContain("'SatpinDiagnosticOpened'");
     expect(experience).toContain("'SatpinSoundCardOpened'");
-    expect(sidebar).toContain("'SatpinAssessmentClicked'");
+    expect(sidebar).not.toContain('Need stage-specific guidance?');
+    expect(sidebar).not.toContain("'SatpinAssessmentClicked'");
+    expect(sidebar).toContain('requestAnimationFrame');
+    expect(sidebar).toContain('window.innerHeight * 0.28');
+    expect(sidebar).toContain('section.getBoundingClientRect().top <= readingMarker');
+    expect(sidebar).toContain('document.documentElement.scrollHeight - 8');
     expect(experience).toContain('renderRichText');
     expect(experience).toContain("type RichTone = 'light' | 'dark'");
     expect(experience).toContain('Learn a small sound set');
@@ -96,6 +101,9 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain('ts-answer-title ts-blog-hero-title');
     expect(experience).toContain('ts-answer-summary ts-blog-quick-answer');
     expect(experience).toContain("raw.startsWith('**')");
+    expect(experience).toContain('object-[50%_66%]');
+    expect(experience).toContain('border-y border-slate-200/70 px-1 py-7');
+    expect(experience).toContain('rounded-[16px] bg-slate-50/80 p-4');
   });
 
   it('keeps the evidence URLs in source data while rendering readable source links', () => {
@@ -121,8 +129,8 @@ describe('SATPIN authority-page UX refinement', () => {
     const sidebar = read('src/components/blog/SatpinGuideSidebar.tsx');
     expect(hero).toContain('compact?: boolean');
     expect(hero).toContain('compact = false');
-    expect(hero).toContain("compact ? 'pb-10 pt-20 sm:pb-12 sm:pt-24'");
-    expect(hero).toContain("compact ? 'grid gap-7'");
+    expect(hero).toContain("compact ? 'pb-8 pt-14 sm:pb-9 sm:pt-16'");
+    expect(hero).toContain("compact ? 'grid gap-5'");
     expect(sidebar).toContain('Guide index');
     expect(sidebar).toContain('aria-current');
     expect(sidebar).toContain("['SATPIN sounds:', 'Sounds']");

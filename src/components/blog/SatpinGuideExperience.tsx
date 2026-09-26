@@ -476,7 +476,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
                   <img
                     src={resolvedHero}
                     alt="Child practising early sound-letter matching"
-                    className="h-full w-full object-cover object-center"
+                    className="h-full w-full object-cover object-[50%_66%]"
                     width={900}
                     height={900}
                     loading="lazy"
@@ -743,10 +743,10 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         <section
           id={pronunciation.id}
           data-satpin-section="pronunciation"
-          className="scroll-mt-28 rounded-[26px] border border-slate-200/80 bg-white p-6"
+          className="scroll-mt-28 border-y border-slate-200/70 px-1 py-7 sm:px-2 sm:py-8"
         >
           <SectionHeading section={pronunciation} eyebrow="Pronunciation note" />
-          <details className="mt-4 rounded-[16px] bg-slate-50 p-4">
+          <details className="mt-4 rounded-[16px] bg-white/80 p-4">
             <summary className="cursor-pointer list-none text-sm font-semibold text-slate-900">Letter names, blendable pronunciations and “pure sounds”</summary>
             <div className="mt-4 border-t border-slate-200 pt-4">
               {pronunciationGroups.intro.length ? <TextBlocks blocks={pronunciationGroups.intro} compact /> : null}
@@ -816,7 +816,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         <section
           id={sentences.id}
           data-satpin-section="satpin-sentences"
-          className="scroll-mt-28 rounded-[26px] border border-slate-200/80 bg-[#fbfaf8] p-6 sm:p-7"
+          className="scroll-mt-28 border-y border-slate-200/70 px-1 py-7 sm:px-2 sm:py-8"
         >
           <SectionHeading section={sentences} eyebrow="Bridge into real reading" />
           <div className="mt-4"><TextBlocks blocks={sentences.blocks} compact /></div>
@@ -923,18 +923,18 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         <section
           id={evidence.id}
           data-satpin-section="evidence"
-          className="scroll-mt-28 rounded-[30px] border border-slate-200/80 bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.045)] sm:p-8"
+          className="scroll-mt-28 rounded-[28px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_36px_rgba(15,23,42,0.04)] sm:p-6"
         >
           <SectionHeading section={evidence} eyebrow="Evidence behind this guide" description="Readable source summaries first; full external citations remain linked and intact." />
           <div className="mt-4"><TextBlocks blocks={evidenceIntro} compact /></div>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <div className="mt-5 grid gap-2 md:grid-cols-2">
             {evidenceItems.map((source, index) => (
-              <div key={source.name + index} className="rounded-[18px] bg-slate-50 p-5">
+              <div key={source.name + index} className="rounded-[16px] bg-slate-50/80 p-4">
                 <p className="text-sm font-black leading-6 text-slate-950">{source.name}</p>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{renderRichText(source.description, 'evidence-' + index)}</p>
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">{renderRichText(source.description, 'evidence-' + index)}</p>
                 {source.url ? (
-                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0b5bd3] transition hover:text-[#07449f]">
+                  <a href={source.url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0b5bd3] transition hover:text-[#07449f]">
                     Read source
                     <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                   </a>
@@ -949,7 +949,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         <section
           id={bottom.id}
           data-satpin-section="bottom-line"
-          className="scroll-mt-28 rounded-[30px] border border-slate-200/80 bg-[#fbfaf8] p-6 sm:p-8"
+          className="scroll-mt-28 border-y border-slate-200/70 px-1 py-7 sm:px-2 sm:py-8"
         >
           <SectionHeading section={bottom} eyebrow="Bottom line for parents" />
           <div className="mt-4 max-w-4xl"><TextBlocks blocks={bottom.blocks} compact /></div>

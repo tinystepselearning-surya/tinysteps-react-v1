@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowUp, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { trackEvent } from '../../lib/analytics';
 
 type HeadingItem = {
@@ -42,7 +41,7 @@ const SatpinGuideSidebar: React.FC<SatpinGuideSidebarProps> = ({ tocItems }) => 
   const itemIds = useMemo(() => tocItems.map((item) => item.id), [tocItems]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
+    if (typeof window === 'undefined') return;
 
     const sections = itemIds
       .map((id) => document.getElementById(id))
@@ -50,18 +49,44 @@ const SatpinGuideSidebar: React.FC<SatpinGuideSidebarProps> = ({ tocItems }) => 
 
     if (!sections.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]?.target?.id) setActiveId(visible[0].target.id);
-      },
-      { rootMargin: '-18% 0px -68% 0px', threshold: [0, 0.1, 0.35] },
-    );
+    let frame = 0;
 
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+    const syncActiveSection = () => {
+      frame = 0;
+      const readingMarker = Math.max(136, Math.min(window.innerHeight * 0.28, 260));
+      let nextSection = sections[0];
+
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= readingMarker) {
+          nextSection = section;
+        } else {
+          break;
+        }
+      }
+
+      const atPageEnd =
+        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 8;
+      if (atPageEnd) nextSection = sections[sections.length - 1];
+
+      setActiveId((current) => (current === nextSection.id ? current : nextSection.id));
+    };
+
+    const scheduleSync = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(syncActiveSection);
+    };
+
+    syncActiveSection();
+    window.addEventListener('scroll', scheduleSync, { passive: true });
+    window.addEventListener('resize', scheduleSync);
+    window.addEventListener('hashchange', scheduleSync);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', scheduleSync);
+      window.removeEventListener('resize', scheduleSync);
+      window.removeEventListener('hashchange', scheduleSync);
+    };
   }, [itemIds]);
 
   return (
@@ -116,17 +141,6 @@ const SatpinGuideSidebar: React.FC<SatpinGuideSidebarProps> = ({ tocItems }) => 
         </div>
       </div>
 
-      <div className="rounded-[20px] border border-slate-200/70 bg-white/70 p-4 backdrop-blur-xl">
-        <p className="text-xs leading-5 text-slate-500">Need stage-specific guidance?</p>
-        <Link
-          to="/book-demo"
-          onClick={() => trackSatpinSidebarEvent('SatpinAssessmentClicked', { cta_position: 'left_index' })}
-          className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-slate-900 transition hover:text-[#0b5bd3]"
-        >
-          Book free assessment
-          <ChevronRight className="h-4 w-4" aria-hidden="true" />
-        </Link>
-      </div>
     </div>
   );
 };

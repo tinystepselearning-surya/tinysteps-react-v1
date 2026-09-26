@@ -53,8 +53,8 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
       {!compact ? <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" /> : null}
       {!compact ? <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" /> : null}
 
-      <div className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${compact ? 'pb-10 pt-20 sm:pb-12 sm:pt-24' : 'pb-14 pt-24 sm:pb-20 sm:pt-32'}`}>
-        <div className={compact ? 'grid gap-7' : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'}>
+      <div className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${compact ? 'pb-8 pt-14 sm:pb-9 sm:pt-16' : 'pb-14 pt-24 sm:pb-20 sm:pt-32'}`}>
+        <div className={compact ? 'grid gap-5' : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'}>
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">
               {eyebrowPrimary}
@@ -66,13 +66,13 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
               ) : null}
             </div>
 
-            <h1 className={`max-w-4xl font-black tracking-tight text-white ${compact ? 'mt-5 text-3xl sm:text-4xl lg:text-5xl' : 'mt-6 text-3xl sm:text-5xl lg:text-6xl'}`}>
+            <h1 className={`max-w-4xl font-black tracking-tight text-white ${compact ? 'mt-4 text-3xl sm:text-[2.35rem] lg:text-[2.85rem]' : 'mt-6 text-3xl sm:text-5xl lg:text-6xl'}`}>
               {title}
             </h1>
 
-            <p className={`${compact ? 'mt-4' : 'mt-6'} max-w-3xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8`}>{description}</p>
+            <p className={`${compact ? 'mt-3' : 'mt-6'} max-w-3xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8`}>{description}</p>
 
-            <div className={`${compact ? 'mt-6' : 'mt-8'} flex flex-wrap items-center gap-3 text-sm text-slate-200`}>
+            <div className={`${compact ? 'mt-5' : 'mt-8'} flex flex-wrap items-center gap-3 text-sm text-slate-200`}>
               <Link
                 to={authorTo}
                 className="rounded-full border border-white/15 bg-white/8 px-4 py-2 transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
@@ -85,7 +85,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
               <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{readTimeLabel}</span>
             </div>
 
-            <div className={`${compact ? 'mt-6' : 'mt-8'} flex flex-wrap gap-3`}>
+            <div className={`${compact ? 'mt-4' : 'mt-8'} flex flex-wrap gap-3`}>
               {actions.map((action) => (
                 <Link
                   key={action.label}
@@ -107,7 +107,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">{searchLabel}</p>
             <ul className={compact ? 'mt-3 flex flex-wrap gap-2 text-sm leading-6 text-slate-100' : 'mt-4 space-y-3 text-sm leading-6 text-slate-100'}>
               {searchPainPoints.map((item) => (
-                <li key={item} className={compact ? 'rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-200' : 'border-b border-white/10 pb-3 last:border-b-0 last:pb-0'}>
+                <li key={item} className={compact ? 'rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200' : 'border-b border-white/10 pb-3 last:border-b-0 last:pb-0'}>
                   {item}
                 </li>
               ))}
@@ -115,7 +115,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
           </div>
         </div>
 
-        <div className={`${compact ? 'mt-8' : 'mt-10'} grid gap-4 lg:grid-cols-3`}>
+        <div className={`${compact ? 'mt-5' : 'mt-10'} grid gap-4 lg:grid-cols-3`}>
           {heroPoints.map((point) => (
             <div
               key={point.label}
