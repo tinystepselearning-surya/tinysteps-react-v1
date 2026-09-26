@@ -38,7 +38,7 @@ describe('Blog #69 communication-classes overlap retirement lock', () => {
     const rssGenerator = read('scripts/generate-rss.mjs');
     const indexingPolicy = read('src/lib/blogIndexingPolicy.js');
 
-    expect(sitemapGenerator).toContain("'spoken-english-classes-for-kids-confidence'");
+    expect(sitemapGenerator).not.toContain("'spoken-english-classes-for-kids-confidence'");
     expect(rssGenerator).not.toContain('spoken-english-classes-for-kids-confidence');
     expect(rssGenerator).not.toContain('retired_editorial_sources');
     expect(indexingPolicy).not.toContain('spoken-english-classes-for-kids-confidence');
