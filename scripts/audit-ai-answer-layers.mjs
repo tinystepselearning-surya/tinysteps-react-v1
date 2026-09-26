@@ -51,12 +51,18 @@ if (process.argv.includes('--generated')) {
   if (fs.existsSync(jsonPath)) {
     const index = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
     if (!Array.isArray(index.layers) || index.layers.length !== 3) fail('generated-layer-count', 'Expected exactly three generated answer layers.');
+    let externalReferenceCount = 0;
     for (const layer of index.layers || []) {
       for (const item of layer.items || []) {
         if (!item.answer?.trim()) fail('generated-answer-empty', item.id);
         if (!item.canonical_url?.startsWith('https://tinystepslearning.com/')) fail('generated-canonical-url', item.id);
+        if (!Array.isArray(item.reference_urls)) fail('generated-related-references', item.id);
+        if (!Array.isArray(item.external_reference_urls)) fail('generated-external-references', item.id);
+        else externalReferenceCount += item.external_reference_urls.length;
+        if (!Array.isArray(item.practice_urls)) fail('generated-practice-links', item.id);
       }
     }
+    if (externalReferenceCount === 0) fail('generated-evidence-coverage', 'Expected at least one visible external evidence reference from canonical editorial sources.');
   }
 
   const llms = fs.readFileSync(path.join(root, 'public', 'llms.txt'), 'utf8');
