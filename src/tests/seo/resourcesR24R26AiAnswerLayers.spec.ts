@@ -26,8 +26,8 @@ describe('Resources R24-R26 AI answer layers', () => {
 
   it('builds Layer 2 from curated concepts plus governed phonics and grammar resources', () => {
     expect(PHONICS_PUBLISHED_RESOURCE_PAGES).toHaveLength(31);
-    expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(31);
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(89);
+    expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(32);
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(90);
     const phonics = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/phonics/'),
     );
@@ -35,9 +35,9 @@ describe('Resources R24-R26 AI answer layers', () => {
       item.canonicalPath.startsWith('/resources/grammar/'),
     );
     expect(phonics).toHaveLength(31);
-    expect(grammar).toHaveLength(31);
+    expect(grammar).toHaveLength(32);
     expect(new Set(phonics.map((item) => item.canonicalPath)).size).toBe(31);
-    expect(new Set(grammar.map((item) => item.canonicalPath)).size).toBe(31);
+    expect(new Set(grammar.map((item) => item.canonicalPath)).size).toBe(32);
   });
 
   it('keeps Layer 3 focused on existing practice owners', () => {
