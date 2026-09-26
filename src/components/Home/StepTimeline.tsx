@@ -4,7 +4,6 @@ import Modal from "@/common/Modal";
 
 type Stage = {
   id: string;
-  icon: string;
   title: string;
   subtitle: string;
   focusChips: string[];
@@ -17,7 +16,6 @@ type Stage = {
 const stages: Stage[] = [
   {
     id: "phonics",
-    icon: "🔤",
     title: "Phonics Foundations",
     subtitle: "Sounds → letters → blending → early reading",
     focusChips: ["Letter sounds", "Blending", "CVC words", "Tricky words"],
@@ -40,7 +38,6 @@ const stages: Stage[] = [
   },
   {
     id: "reading",
-    icon: "📚",
     title: "Reading & Fluency",
     subtitle: "Accurate reading → smoother sentences → meaning",
     focusChips: ["Accuracy", "Fluency", "Vocabulary", "Comprehension"],
@@ -62,7 +59,6 @@ const stages: Stage[] = [
   },
   {
     id: "grammar",
-    icon: "🧩",
     title: "Grammar Builder",
     subtitle: "Sentence sense → correct structure → better writing",
     focusChips: ["Sentence building", "Tenses", "Punctuation", "Vocabulary"],
@@ -85,7 +81,6 @@ const stages: Stage[] = [
   },
   {
     id: "speaking",
-    icon: "🎤",
     title: "Public Speaking",
     subtitle: "Thinking → speaking → confidence → expression",
     focusChips: ["Clarity", "Fluency", "Confidence", "Stage presence"],
@@ -108,7 +103,6 @@ const stages: Stage[] = [
   },
   {
     id: "confidence",
-    icon: "🌟",
     title: "Integrated Practice",
     subtitle: "Reading + writing + speaking together in meaningful tasks",
     focusChips: ["Independent reading", "Clear writing", "Confident speaking", "Skill transfer"],
@@ -167,7 +161,6 @@ const StepTimeline: React.FC = () => {
                 : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50",
             ].join(" ")}
           >
-            <span className="mr-2">{s.icon}</span>
             {s.title.replace(" Foundations", "").replace(" Builder", "")}
           </button>
         );
@@ -180,12 +173,9 @@ const StepTimeline: React.FC = () => {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">{stage.icon}</div>
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold text-slate-900">{stage.title}</h3>
-                <p className="mt-1 text-sm md:text-base text-slate-600">{stage.subtitle}</p>
-              </div>
+            <div>
+              <h3 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">{stage.title}</h3>
+              <p className="mt-1 text-sm text-slate-600 md:text-base">{stage.subtitle}</p>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -217,7 +207,7 @@ const StepTimeline: React.FC = () => {
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.childLearns.map((x) => (
                 <li key={x} className="flex gap-2">
-                  <span className="mt-[2px]">✅</span>
+                  <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                   <span>{x}</span>
                 </li>
               ))}
@@ -229,7 +219,7 @@ const StepTimeline: React.FC = () => {
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.howWeTeach.map((x) => (
                 <li key={x} className="flex gap-2">
-                  <span className="mt-[2px]">🧠</span>
+                  <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                   <span>{x}</span>
                 </li>
               ))}
@@ -241,7 +231,7 @@ const StepTimeline: React.FC = () => {
             <ul className="mt-2 space-y-2 text-sm text-slate-700">
               {stage.parentGets.map((x) => (
                 <li key={x} className="flex gap-2">
-                  <span className="mt-[2px]">📩</span>
+                  <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                   <span>{x}</span>
                 </li>
               ))}
@@ -262,7 +252,7 @@ const StepTimeline: React.FC = () => {
   );
 
   return (
-    <section data-animate="fade-up" className="bg-white py-16 sm:py-20">
+    <section data-animate="fade-up" className="bg-white py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-6">
         {/* Title */}
         <div className="text-center">
@@ -295,7 +285,6 @@ const StepTimeline: React.FC = () => {
                     onClick={() => setActive(i)}
                     className="rounded-full bg-white px-4 py-2 text-sm font-semibold ring-1 ring-slate-200"
                   >
-                    <span className="mr-2">{s.icon}</span>
                     {s.title}
                   </button>
                 </div>
@@ -309,7 +298,7 @@ const StepTimeline: React.FC = () => {
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
                           {s.childLearns.slice(0, 2).map((x) => (
                             <li key={x} className="flex gap-2">
-                              <span className="mt-[2px]">✅</span>
+                              <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                               <span>{x}</span>
                             </li>
                           ))}
@@ -320,7 +309,7 @@ const StepTimeline: React.FC = () => {
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
                           {s.howWeTeach.slice(0, 2).map((x) => (
                             <li key={x} className="flex gap-2">
-                              <span className="mt-[2px]">🧠</span>
+                              <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                               <span>{x}</span>
                             </li>
                           ))}
@@ -331,7 +320,7 @@ const StepTimeline: React.FC = () => {
                         <ul className="mt-2 space-y-2 text-sm text-slate-700">
                           {s.parentGets.slice(0, 2).map((x) => (
                             <li key={x} className="flex gap-2">
-                              <span className="mt-[2px]">📩</span>
+                              <span aria-hidden="true" className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
                               <span>{x}</span>
                             </li>
                           ))}
