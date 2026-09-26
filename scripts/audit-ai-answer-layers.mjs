@@ -15,6 +15,34 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
 const fail = (code, detail) => errors.push({ code, detail });
 
+function walkBlogSources(dirPath) {
+  const results = [];
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) results.push(...walkBlogSources(fullPath));
+    else if (entry.isFile() && fullPath.endsWith('.ts')) results.push(fullPath);
+  }
+  return results;
+}
+
+function expectedCurrentBlogCount() {
+  const today = new Date().toISOString().slice(0, 10);
+  const retiredSourceSlugs = new Set(['spoken-english-classes-for-kids-confidence']);
+  let count = 0;
+  for (const filePath of walkBlogSources(path.join(root, 'src/content/blog/posts'))) {
+    const source = fs.readFileSync(filePath, 'utf8');
+    const slug = /slug:\s*'([^']+)'/.exec(source)?.[1];
+    const date = /date:\s*'(\d{4}-\d{2}-\d{2})'/.exec(source)?.[1];
+    if (!slug || retiredSourceSlugs.has(slug)) continue;
+    if (date && date > today) continue;
+    count += 1;
+  }
+  return count;
+}
+
+const expectedBlogCount = expectedCurrentBlogCount();
+if (expectedBlogCount < 83) fail('editorial-blog-baseline-regression', `Expected at least the established 83-blog corpus; source tree currently resolves to ${expectedBlogCount}.`);
+
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
 if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 58) fail('layer-2-count', 'Expected 27 curated concepts plus the governed 31-page phonics set.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 11) fail('layer-3-count', 'Expected 11 focused practice actions.');
@@ -61,7 +89,7 @@ if (process.argv.includes('--generated')) {
     const editorialBlogs = index.corpus?.editorial_blogs || [];
     const programmaticPhonics = index.corpus?.programmatic_phonics_guides || [];
     const additionalPublicRoutes = index.corpus?.additional_public_routes || [];
-    if (editorialBlogs.length !== 83) fail('editorial-blog-corpus-count', `Expected all 83 current blogs; found ${editorialBlogs.length}.`);
+    if (editorialBlogs.length !== expectedBlogCount) fail('editorial-blog-corpus-count', `Expected all ${expectedBlogCount} current source blogs; found ${editorialBlogs.length}.`);
     if (programmaticPhonics.length !== 31) fail('programmatic-phonics-corpus-count', `Expected all 31 governed phonics guides; found ${programmaticPhonics.length}.`);
     if (!additionalPublicRoutes.length) fail('public-route-corpus-empty', 'Expected additional public site routes in the connected corpus.');
 
@@ -74,7 +102,7 @@ if (process.argv.includes('--generated')) {
       if (item.indexing_state === 'noindex' && item.answer_eligible) fail('noindex-answer-eligibility', item.id);
       if (item.indexing_state === 'noindex' && item.retrieval_role !== 'supporting-only-noindex') fail('noindex-retrieval-role', item.id);
     }
-    if (index.corpus_counts?.editorial_blogs !== 83) fail('corpus-count-summary', 'corpus_counts.editorial_blogs must equal 83.');
+    if (index.corpus_counts?.editorial_blogs !== expectedBlogCount) fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedBlogCount}.`);
     if (index.corpus_counts?.programmatic_phonics_guides !== 31) fail('corpus-count-summary', 'corpus_counts.programmatic_phonics_guides must equal 31.');
     if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + programmaticPhonics.length + additionalPublicRoutes.length) {
       fail('connected-public-content-count', 'Connected public content total does not reconcile.');
@@ -114,13 +142,13 @@ if (process.argv.includes('--generated')) {
     if (!source.includes('## AI Answer Layers — problem, concept, practice')) fail('llms-layer-section', 'AI answer layer section missing.');
     if (!source.includes('https://tinystepslearning.com/ai-resource-index.json')) fail('llms-json-link', 'Machine JSON link missing.');
     if (!source.includes('## Complete Editorial Blog Corpus')) fail('llms-blog-corpus-section', 'Complete editorial blog corpus section missing.');
-    if (!source.includes('Generated complete corpus: 83 current Tiny Steps editorial articles')) fail('llms-blog-corpus-count', 'LLM discovery must declare all 83 current blogs.');
+    if (!source.includes(`Generated complete corpus: ${expectedBlogCount} current Tiny Steps editorial articles`)) fail('llms-blog-corpus-count', `LLM discovery must declare all ${expectedBlogCount} current blogs.`);
   }
 
   const blogLinksInFull = new Set(
     [...llmsFull.matchAll(/https:\/\/tinystepslearning\.com\/blog\/[a-z0-9-]+/g)].map((match) => match[0]),
   );
-  if (blogLinksInFull.size < 83) fail('llms-full-blog-coverage', `Expected at least 83 unique current blog URLs in llms-full.txt; found ${blogLinksInFull.size}.`);
+  if (blogLinksInFull.size < expectedBlogCount) fail('llms-full-blog-coverage', `Expected at least ${expectedBlogCount} unique current blog URLs in llms-full.txt; found ${blogLinksInFull.size}.`);
 }
 
 const report = {
@@ -129,6 +157,7 @@ const report = {
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,
   total: AI_ANSWER_LAYER_ALL_ITEMS.length,
+  expectedCurrentBlogs: expectedBlogCount,
   errors,
 };
 console.log(JSON.stringify(report, null, 2));
