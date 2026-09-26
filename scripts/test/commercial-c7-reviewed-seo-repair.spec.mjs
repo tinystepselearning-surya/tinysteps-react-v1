@@ -1,14 +1,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { REVIEWED_SEO_RECOVERY_BLOBS, isReviewedSeoRecoveryFile } from '../commercial-c7-reviewed-seo-repair.mjs';
+import {
+  REVIEWED_SEO_RECOVERY_BLOBS,
+  REVIEWED_SEO_RECOVERY_DELETIONS,
+  isReviewedSeoRecoveryFile,
+} from '../commercial-c7-reviewed-seo-repair.mjs';
 
 const authorityPath = 'src/content/blog/shared/authorityLinking.ts';
 const comparisonPath = 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx';
 const subjectHubPath = 'src/pages/SubjectResourcesPage.tsx';
+const resourcesPath = 'src/pages/ResourcesPage.tsx';
+const grammarKnowledgePath = 'src/pages/GrammarKnowledgePage.tsx';
+const parentsHubPath = 'src/pages/parents/ParentsHubPage.tsx';
+const gamesHubPath = 'src/pages/public/FreeEnglishGamesHubPage.tsx';
+const schoolsPath = 'src/pages/ForSchoolsPage.tsx';
 const phonicsPath = 'src/pages/phonics.tsx';
 const founderPanelPath = 'src/pages/founder/FounderEditorialReviewsPanel.tsx';
-const reviewedPaths = [authorityPath, comparisonPath, subjectHubPath, phonicsPath, founderPanelPath];
+const reviewedPaths = [
+  authorityPath,
+  comparisonPath,
+  subjectHubPath,
+  resourcesPath,
+  grammarKnowledgePath,
+  parentsHubPath,
+  gamesHubPath,
+  schoolsPath,
+  phonicsPath,
+  founderPanelPath,
+];
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
 
 describe('C7 verified SEO recovery repair boundary', () => {
@@ -16,7 +36,12 @@ describe('C7 verified SEO recovery repair boundary', () => {
     expect(REVIEWED_SEO_RECOVERY_BLOBS).toEqual({
       [authorityPath]: 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
       [comparisonPath]: '21ec5766587f1635227d718401e705e4a6affa81',
-      [subjectHubPath]: '8041c125b53dd5bb94cc5a91ae7fa705c520f093',
+      [subjectHubPath]: '0a4fe318a3c4c043bbe7f7a4c1221d77e045d38b',
+      [resourcesPath]: '5822095736ccfd205b31b786095e391ef3662495',
+      [grammarKnowledgePath]: '3ecc9dbc2075c58561d654d8054f9aa96dafc382',
+      [parentsHubPath]: 'be93563714b2ee5a5bc014d023c9d0514645e106',
+      [gamesHubPath]: 'a231a915e65fb0dd042a97cda96463dd511eff9f',
+      [schoolsPath]: '8970447f39dfa0ddbaebf0b069a88fa11a29ee2a',
       [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
     });
@@ -28,6 +53,13 @@ describe('C7 verified SEO recovery repair boundary', () => {
       expect(isReviewedSeoRecoveryFile(file, fs.readFileSync(path.join(process.cwd(), file))), file).toBe(true);
     }
   });
+  it('pins the one approved retired speaking-source deletion', () => {
+    expect(REVIEWED_SEO_RECOVERY_DELETIONS).toEqual([
+      'src/content/blog/posts/public-speaking/spoken-english-classes-for-kids-confidence.ts',
+    ]);
+    expect(fs.existsSync(path.join(process.cwd(), REVIEWED_SEO_RECOVERY_DELETIONS[0]))).toBe(false);
+  });
+
   it('rejects any further protected-source mutation rather than allowing the whole filename', () => {
     for (const file of reviewedPaths) {
       expect(isReviewedSeoRecoveryFile(file, read(file) + '// unreviewed edit')).toBe(false);
