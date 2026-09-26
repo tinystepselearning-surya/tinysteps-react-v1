@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { BookOpenText, CheckCircle2, Globe2, Mic2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import BookAssessmentForm from "../forms/BookAssessmentForm";
+import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL } from "../../config/publicFacts";
 
 const heroHighlights = [
   {
@@ -13,7 +14,7 @@ const heroHighlights = [
   {
     eyebrow: "THE REACH",
     title: "Trusted Worldwide",
-    desc: "5000+ students served with families across 15+ countries choosing Tiny Steps for consistent live support.",
+    desc: `${PUBLIC_LEARNER_REACH_LABEL} have learned with Tiny Steps through live online support.`,
     icon: <Globe2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
   {
@@ -247,14 +248,14 @@ const ConversionHero: React.FC = () => {
             <BookAssessmentForm
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
-              description="Book one free 35-minute 1:1 online demo assessment class and find whether your child should start with phonics, reading, grammar, sentence formation, or speaking confidence."
+              description="Share a few details about your child so the assessment can focus on the most relevant English skill area."
               submitLabel="Book Free 35-Minute Demo on WhatsApp"
               submitAriaLabel="Book Free 35-Minute Demo on WhatsApp"
             />
 
             <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/88 px-4 py-4 text-sm text-slate-700 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-5">
               <p className="font-medium leading-6 text-slate-800">
-                5000+ students • Families in 15+ countries • 1:1 and small-group classes • Weekly parent updates
+                Live 1:1 and small-group classes • Standard 1:1 sessions: {PUBLIC_SESSION_DURATION_LABEL} • Weekly parent updates
               </p>
               <p className="mt-1.5 text-slate-600">
                 Calm routines, clear milestones, and consistent feedback make progress easy to see.
@@ -272,7 +273,7 @@ const ConversionHero: React.FC = () => {
                 </a>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                  One free 35-minute 1:1 demo assessment • Transparent pricing
+                  Assessment-led placement • Transparent pricing
                 </span>
               </div>
             </div>
