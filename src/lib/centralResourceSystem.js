@@ -69,4 +69,10 @@ export const CENTRAL_RESOURCE_RECONCILIATION = freeze({
   parentHelpHub: '/parents',
   practiceHub: '/free-english-games-for-kids',
   schoolsHub: '/for-schools',
+  aiAnswerArchitecture: freeze({
+    layers: freezeList([1, 2, 3]),
+    machineJson: '/ai-resource-index.json',
+    machineText: '/ai-resource-index.txt',
+    retrievalFlow: 'parent-problem -> canonical-answer -> learning-concept -> focused-practice',
+  }),
 });
