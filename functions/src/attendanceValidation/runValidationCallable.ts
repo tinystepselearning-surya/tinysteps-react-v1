@@ -266,16 +266,11 @@ export const runAttendanceValidationRange = onCall(
     );
 
     const baseline =
-      remainingCapacity > 0
+      remainingCapacity > 0 && freshFailedCount === 0
         ? await runAttendanceValidationFirstTimeBaselineBatch(
             db,
             range,
-            {
-              maxSessions: remainingCapacity,
-              // A failure in unrelated fresh work must not block migration of
-              // legacy cases whose cached Teams evidence is still reusable.
-              allowFreshEvidence: freshFailedCount === 0,
-            },
+            { maxSessions: remainingCapacity },
           )
         : null;
 
@@ -291,8 +286,7 @@ export const runAttendanceValidationRange = onCall(
     const processedSessionCount =
       latest.dirtyFoundCount + (baseline?.batchSessionCount ?? 0);
     const baselineDeferred =
-      remainingCapacity === 0
-      || (baseline?.deferredFreshCount ?? 0) > 0;
+      remainingCapacity === 0 || freshFailedCount > 0;
     const baselineFailureSummary =
       baseline?.failureSummary ?? emptyAvsFailureSummary();
     const failureSummary = mergeAvsFailureSummaries(
@@ -320,8 +314,7 @@ export const runAttendanceValidationRange = onCall(
         AVS_UNIFIED_VALIDATION_MAX_SESSIONS_PER_RUN,
       processedSessionCount,
       dirtyFoundCount: latest.dirtyFoundCount,
-      cachedRevalidatedCount:
-        latest.revalidatedCount + (baseline?.migratedLegacyCaseCount ?? 0),
+      cachedRevalidatedCount: latest.revalidatedCount,
       staleEvidenceCount:
         latest.freshEvidenceRequiredSessionIds.length,
       missingEvidenceCaseCount:
@@ -348,10 +341,6 @@ export const runAttendanceValidationRange = onCall(
       baselineAlreadyComplete: baseline?.alreadyComplete ?? false,
       baselineBatchSessionCount: baseline?.batchSessionCount ?? 0,
       baselineFreshEvidenceCount: baseline?.freshEvidenceCount ?? 0,
-      baselineMigratedLegacyCaseCount:
-        baseline?.migratedLegacyCaseCount ?? 0,
-      baselineMigrationDeferredCount:
-        baseline?.migrationDeferredCount ?? 0,
       baselineBlockedCount: baseline?.blockedCount ?? 0,
       baselineDeferred,
       graphLogicalCalls,
