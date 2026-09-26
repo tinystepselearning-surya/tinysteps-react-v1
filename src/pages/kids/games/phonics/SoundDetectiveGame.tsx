@@ -49,6 +49,8 @@ const IMAGE_CATALOG = [
   { id: "zoo", letter: "z", img: `${BASE}/zoo.png` },
 ];
 
+const ALPHABET_LETTERS = IMAGE_CATALOG.map((item) => item.letter);
+
 type Option = { id: string; imgSrc: string };
 type AnswerState = "idle" | "correct" | "wrong";
 
@@ -205,17 +207,20 @@ export default function SoundDetectiveGame({
   const [isFs, setIsFs] = useState(false);
 
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [isAzChallenge, setIsAzChallenge] = useState(false);
   const [levelIndex, setLevelIndex] = useState(0);
   const [roundIndex, setRoundIndex] = useState(0);
   const [roundLetters, setRoundLetters] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
   const selectedLevelRef = useRef<number | null>(null);
+  const isAzChallengeRef = useRef(false);
   const levelIndexRef = useRef(0);
   const roundIndexRef = useRef(0);
   const roundsLenRef = useRef(TOTAL_ROUNDS);
 
   useEffect(() => { selectedLevelRef.current = selectedLevel; }, [selectedLevel]);
+  useEffect(() => { isAzChallengeRef.current = isAzChallenge; }, [isAzChallenge]);
   useEffect(() => { levelIndexRef.current = levelIndex; }, [levelIndex]);
   useEffect(() => { roundIndexRef.current = roundIndex; }, [roundIndex]);
   useEffect(() => { roundsLenRef.current = roundLetters.length || TOTAL_ROUNDS; }, [roundLetters.length]);
@@ -336,12 +341,25 @@ export default function SoundDetectiveGame({
     stopLetterAudio();
   }, [stopLetterAudio]);
 
-  // Sync from URL (level param)
+  // Sync from URL. The A-Z challenge is intentionally public-only and does not alter
+  // the tracked seven-level progression used by enrolled learners.
   useEffect(() => {
+    const challenge = forceAnonymousMode && searchParams.get("challenge") === "az";
+    if (challenge) {
+      setSelectedLevel(null);
+      setIsAzChallenge(true);
+      setLevelIndex(0);
+      setRoundIndex(0);
+      setRoundLetters(shuffle(ALPHABET_LETTERS));
+      resetLevelTracking();
+      return;
+    }
+
     const raw = searchParams.get("level");
     const n = raw ? parseInt(raw, 10) : NaN;
 
     if (!Number.isNaN(n) && n >= 1 && n <= LEVELS.length) {
+      setIsAzChallenge(false);
       setSelectedLevel(n);
       setLevelIndex(n - 1);
       setRoundIndex(0);
@@ -349,6 +367,7 @@ export default function SoundDetectiveGame({
       resetLevelTracking();
     } else {
       setSelectedLevel(null);
+      setIsAzChallenge(false);
       setIsComplete(false);
       setAnswerState("idle");
       setSelectedId(null);
@@ -360,7 +379,7 @@ export default function SoundDetectiveGame({
       stopLetterAudio();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, forceAnonymousMode]);
 
   // Reset per-round hint state whenever round changes
   useEffect(() => {
@@ -391,14 +410,16 @@ export default function SoundDetectiveGame({
       const nowFs = document.fullscreenElement === fsRef.current;
       setIsFs(nowFs);
 
-      if (!document.fullscreenElement && selectedLevelRef.current != null) {
+      if (!document.fullscreenElement && (selectedLevelRef.current != null || isAzChallengeRef.current)) {
         const sp = new URLSearchParams(searchParamsRef.current);
         sp.delete("level");
+        sp.delete("challenge");
         sp.delete("letter");
         sp.delete("fs");
         setSearchParams(sp, { replace: true });
 
         setSelectedLevel(null);
+        setIsAzChallenge(false);
         setIsComplete(false);
         setAnswerState("idle");
         setSelectedId(null);
@@ -471,11 +492,11 @@ export default function SoundDetectiveGame({
 
   // Auto-play next letter sound after a correct answer advances
   useEffect(() => {
-    if (!selectedLevel) return;
+    if (selectedLevel == null && !isAzChallenge) return;
     if (isComplete) return;
     if (!autoPlayNextRef.current) return;
 
-    const key = `${selectedLevel}:${roundIndex}`;
+    const key = `${isAzChallenge ? "az" : selectedLevel}:${roundIndex}`;
     if (lastAutoPlayedKeyRef.current === key) {
       autoPlayNextRef.current = false;
       return;
@@ -486,7 +507,7 @@ export default function SoundDetectiveGame({
 
     // best-effort autoplay
     playSoundInternal({ allowTTS: false }).catch(() => {});
-  }, [selectedLevel, roundIndex, isComplete, playSoundInternal]);
+  }, [selectedLevel, isAzChallenge, roundIndex, isComplete, playSoundInternal]);
 
   const submitLevelResult = async (levelId: number, completed: boolean) => {
     if (forceAnonymousMode || !kidId) return;
@@ -583,7 +604,9 @@ export default function SoundDetectiveGame({
           return;
         }
 
-        await submitLevelResult(levelIndexRef.current + 1, true);
+        if (!isAzChallengeRef.current) {
+          await submitLevelResult(levelIndexRef.current + 1, true);
+        }
         setIsComplete(true);
       }, 750);
     } else {
@@ -624,6 +647,7 @@ export default function SoundDetectiveGame({
   };
 
   const startLevel = async (levelId: number) => {
+    setIsAzChallenge(false);
     setSelectedLevel(levelId);
     setLevelIndex(levelId - 1);
     setRoundIndex(0);
@@ -644,8 +668,38 @@ export default function SoundDetectiveGame({
     } catch {}
 
     const sp = new URLSearchParams(searchParams);
+    sp.delete("challenge");
     sp.set("level", String(levelId));
     if (kidId) sp.set("kidId", kidId);
+    setSearchParams(sp, { replace: true });
+  };
+
+  const startAzChallenge = async () => {
+    if (!forceAnonymousMode) return;
+
+    setSelectedLevel(null);
+    setIsAzChallenge(true);
+    setLevelIndex(0);
+    setRoundIndex(0);
+    setRoundLetters(shuffle(ALPHABET_LETTERS));
+    resetLevelTracking();
+
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+
+    try {
+      const target = fsRef.current || document.documentElement;
+      if ((target as any)?.requestFullscreen) {
+        await (target as any).requestFullscreen({ navigationUI: "hide" } as any);
+      } else if ((target as any)?.webkitRequestFullscreen) {
+        (target as any).webkitRequestFullscreen();
+      }
+    } catch {}
+
+    const sp = new URLSearchParams(searchParams);
+    sp.delete("level");
+    sp.set("challenge", "az");
     setSearchParams(sp, { replace: true });
   };
 
@@ -659,11 +713,13 @@ export default function SoundDetectiveGame({
     } finally {
       const sp = new URLSearchParams(searchParams);
       sp.delete("level");
+      sp.delete("challenge");
       sp.delete("letter");
       sp.delete("fs");
       setSearchParams(sp, { replace: true });
 
       setSelectedLevel(null);
+      setIsAzChallenge(false);
       setIsComplete(false);
       setAnswerState("idle");
       setSelectedId(null);
@@ -709,8 +765,12 @@ export default function SoundDetectiveGame({
       `}</style>
 
       <div className="w-full max-w-6xl mx-auto text-center mb-8">
-        <h1 className="text-5xl font-bold text-white">Choose Level</h1>
-        <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play Sound Detective</p>
+        <h1 className="text-5xl font-bold text-white">A–Z Phonics Sound Detective</h1>
+        <p className="text-white/70 mt-2">
+          {forceAnonymousMode
+            ? "Practise by phonics sound group, or play the full A–Z challenge with all 26 basic letter sounds."
+            : "Choose a phonics sound group to play Sound Detective."}
+        </p>
       </div>
 
       <div className="absolute top-5 right-5">
@@ -724,6 +784,30 @@ export default function SoundDetectiveGame({
       </div>
 
       <div className="level-grid w-full max-w-3xl mx-auto">
+        {forceAnonymousMode && (
+          <button
+            type="button"
+            onClick={startAzChallenge}
+            className="level-card"
+            style={{
+              gridColumn: "1 / -1",
+              background: "linear-gradient(135deg, rgba(34,211,238,0.14), rgba(124,92,255,0.16))",
+              borderColor: "rgba(103,232,249,0.28)",
+            }}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="text-left">
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-cyan-200">Featured free challenge</div>
+                <div className="mt-1 text-3xl font-black text-white">A–Z Challenge</div>
+                <div className="mt-2 text-sm text-white/80">26 basic letter sounds • one complete listening round</div>
+              </div>
+              <div className="shrink-0 rounded-full bg-cyan-300 px-4 py-2 text-sm font-black text-slate-950">
+                Play all 26
+              </div>
+            </div>
+          </button>
+        )}
+
         {SOUND_LEVELS.map((l) => (
           <button key={l.id} type="button" onClick={() => startLevel(l.id)} className="level-card">
             <div className="flex items-center justify-between">
@@ -739,7 +823,7 @@ export default function SoundDetectiveGame({
     </div>
   );
 
-  const GameplayUI = selectedLevel ? (
+  const GameplayUI = selectedLevel != null || isAzChallenge ? (
     <div className={isFs ? "fixed inset-0 w-screen h-screen" : "relative w-full"}>
       <div className={isFs ? "w-screen h-screen" : "mx-auto w-full max-w-[1200px] select-none"}>
         <div className={isFs ? "w-screen h-screen" : "w-full"}>
@@ -760,7 +844,9 @@ export default function SoundDetectiveGame({
             {/* Top HUD */}
             <div className="absolute top-3 left-3 z-30 flex items-center gap-3">
               <div className="rounded-full bg-black/45 px-3 py-1 text-xs text-white font-medium">
-                Level {levelIndex + 1}/{LEVELS.length} • Round {roundIndex + 1}/{roundLetters.length || TOTAL_ROUNDS}
+                {isAzChallenge
+                  ? `A–Z Challenge • Round ${roundIndex + 1}/${roundLetters.length || ALPHABET_LETTERS.length}`
+                  : `Level ${levelIndex + 1}/${LEVELS.length} • Round ${roundIndex + 1}/${roundLetters.length || TOTAL_ROUNDS}`}
               </div>
 
               <div className="hidden sm:block w-[240px] h-2 bg-black/30 rounded-full overflow-hidden">
@@ -884,35 +970,43 @@ export default function SoundDetectiveGame({
             {isComplete && (
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/95 via-pink-500/95 to-orange-500/95 flex flex-col items-center justify-center text-center z-50 backdrop-blur-sm">
                 <div className="text-8xl mb-4 animate-bounce">🎉</div>
-                <h2 className="text-4xl font-bold text-white mb-2">Level Complete!</h2>
+                <h2 className="text-4xl font-bold text-white mb-2">
+                  {isAzChallenge ? "A–Z Challenge Complete!" : "Level Complete!"}
+                </h2>
                 <p className="text-white/90 mb-6">
                   Finished! (Attempts: {attempts}, Correct: {correctCount}, Wrong: {wrongCount})
                 </p>
                 <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = levelIndex + 2;
-                      if (next <= LEVELS.length) {
-                        const sp = new URLSearchParams(searchParams);
-                        sp.set("level", String(next));
-                        if (kidId) sp.set("kidId", kidId);
-                        setSearchParams(sp, { replace: true });
-                        setIsComplete(false);
-                      } else {
-                        goBackToLevels();
-                      }
-                    }}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg"
-                  >
-                    Next Level ▶
-                  </button>
+                  {!isAzChallenge && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = levelIndex + 2;
+                        if (next <= LEVELS.length) {
+                          const sp = new URLSearchParams(searchParams);
+                          sp.set("level", String(next));
+                          if (kidId) sp.set("kidId", kidId);
+                          setSearchParams(sp, { replace: true });
+                          setIsComplete(false);
+                        } else {
+                          goBackToLevels();
+                        }
+                      }}
+                      className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg"
+                    >
+                      Next Level ▶
+                    </button>
+                  )}
 
                   <button
                     type="button"
                     onClick={() => {
                       setRoundIndex(0);
-                      setRoundLetters(scheduleRoundsForLevel(levelIndex + 1));
+                      setRoundLetters(
+                        isAzChallenge
+                          ? shuffle(ALPHABET_LETTERS)
+                          : scheduleRoundsForLevel(levelIndex + 1),
+                      );
                       resetLevelTracking();
                     }}
                     className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg"
@@ -989,8 +1083,8 @@ export default function SoundDetectiveGame({
       className={isFs ? "fixed inset-0 z-[9999] w-screen h-screen select-none" : "relative w-full select-none"}
       draggable={false}
     >
-      {!selectedLevel && LevelsUI}
-      {selectedLevel && GameplayUI}
+      {selectedLevel == null && !isAzChallenge && LevelsUI}
+      {(selectedLevel != null || isAzChallenge) && GameplayUI}
     </div>
   );
 }
