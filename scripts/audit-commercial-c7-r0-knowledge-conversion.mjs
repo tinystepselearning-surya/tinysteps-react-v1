@@ -1,7 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { REVIEWED_SEO_RECOVERY_BLOBS, isReviewedSeoRecoveryFile } from './commercial-c7-reviewed-seo-repair.mjs';
+import {
+  REVIEWED_SEO_RECOVERY_BLOBS,
+  REVIEWED_SEO_RECOVERY_DELETIONS,
+  isReviewedSeoRecoveryFile,
+} from './commercial-c7-reviewed-seo-repair.mjs';
 
 const root = process.cwd();
 const failures = [];
@@ -81,7 +85,8 @@ if (baseRef) {
     ]);
     const forbiddenLiveChanges = changed.filter((file) => {
       // Permit only byte-for-byte reviewed retirement repairs; future edits still fail.
-      if (Object.hasOwn(REVIEWED_SEO_RECOVERY_BLOBS, file) && isReviewedSeoRecoveryFile(file, read(file))) return false;
+      if (Object.hasOwn(REVIEWED_SEO_RECOVERY_BLOBS, file) && fs.existsSync(path.join(root, file)) && isReviewedSeoRecoveryFile(file, read(file))) return false;
+      if (REVIEWED_SEO_RECOVERY_DELETIONS.includes(file) && !fs.existsSync(path.join(root, file))) return false;
       if (laterBrickLiveAllowlist.has(file)) return false;
       if (privateAppSurfaceAllowlist.has(file)) return false;
       return (
@@ -109,4 +114,4 @@ if (failures.length) {
 
 console.log(`C7-R0 knowledge conversion audit passed (${checks.length} checks).`);
 console.log('Baseline: frozen KB + 51 blog authority plans + 31 published phonics pages + 3 subject hubs + 14 commercial owners.');
-console.log('Policy: R0 remains audit-only; cumulative later-brick live changes are limited to the explicit C7-R3 shared-renderer allowlist.');
+console.log('Policy: R0 remains audit-only; later live changes must be exact reviewed blobs, an exact reviewed deletion, or an explicit narrow C7 allowlist path.');
