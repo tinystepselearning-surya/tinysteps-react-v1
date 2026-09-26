@@ -14,7 +14,7 @@ import {
 
 const root = process.cwd();
 const source = (relative: string) => fs.readFileSync(path.join(root, relative), 'utf8');
-const blogSource = source('src/content/blog/posts/public-speaking/spoken-english-classes-for-kids-confidence.ts');
+const retiredSourcePath = path.join(root, 'src/content/blog/posts/public-speaking/spoken-english-classes-for-kids-confidence.ts');
 const routeManifestSource = source('src/lib/publicRouteManifest.js');
 const ownerById = new Map(R19_CANONICAL_TOPIC_OWNERSHIP.map((entry) => [entry.id, entry]));
 const publicBlogSlugs = new Set(blogPosts.map((post) => post.slug));
@@ -80,16 +80,16 @@ describe('Resources R20 speaking and communication knowledge architecture', () =
     expect(SPEAKING_COMMUNICATION_CONTENT_AUDIT).toHaveLength(14);
   });
 
-  it('holds the legacy consolidation candidate without authorizing a URL change', () => {
+  it('keeps the retired legacy URL as a permanent redirect with no live source article', () => {
     const legacy = getSpeakingCommunicationContentAuditByAction('consolidate')[0];
     expect(legacy).toMatchObject({
       path: '/blog/spoken-english-classes-for-kids-confidence',
-      consolidationTarget: '/blog/speaking-confidence-seeds',
-      implementationState: 'hold',
+      consolidationTarget: '/blog/child-understands-english-but-does-not-speak',
+      implementationState: 'redirected-source-removed',
       publicationApproved: false,
-      urlChangeAuthorized: false,
+      urlChangeAuthorized: true,
     });
-    expect(blogSource).toContain("slug: 'spoken-english-classes-for-kids-confidence'");
+    expect(fs.existsSync(retiredSourcePath)).toBe(false);
   });
 
   it('does not change Brick 6, R16 or R19 semantic behavior', () => {
