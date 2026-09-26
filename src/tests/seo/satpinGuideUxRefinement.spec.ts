@@ -137,6 +137,7 @@ describe('SATPIN authority-page UX refinement', () => {
   });
 
   it('keeps the shared compact hero system reusable across the full registered blog rollout', () => {
+    const page = read('src/pages/BlogPostPage.tsx');
     const hero = read('src/components/blog/ResearchArticleHero.tsx');
     const sidebar = read('src/components/blog/SatpinGuideSidebar.tsx');
     expect(page).toContain('const isAuthorityArticle = Boolean(post);');
