@@ -22,6 +22,9 @@ describe('AV6 admin attendance validation dashboard', () => {
   const businessOutcomeEngine = readRepoFile(
     'functions/src/attendanceValidation/businessOutcomeEngine.ts',
   );
+  const shadowRunner = readRepoFile(
+    'functions/src/attendanceValidation/shadowRunner.ts',
+  );
 
   it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
@@ -136,10 +139,11 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain("group.teacherName || 'Teacher name unavailable'");
   });
 
-  it('labels the source-case window separately from the three business outcomes', () => {
-    expect(dashboard).toContain('Loaded AVS source cases');
-    expect(dashboard).toContain("{cases.length} saved case");
-    expect(dashboard).toContain('Verified, False Present, and False Absent');
+  it('keeps source-record counts out of the operator outcome surface', () => {
+    expect(dashboard).not.toContain('Loaded AVS source cases');
+    expect(dashboard).not.toContain("{cases.length} saved case");
+    expect(dashboard).not.toContain('Saved/rebuilt AVS cases this call');
+    expect(dashboard).toContain('source records; parent enrollment chunks are merged into one page');
     expect(businessView).toContain("value: 'verified', label: 'Verified'");
     expect(businessView).toContain("value: 'false_present', label: 'False Present'");
     expect(businessView).toContain("value: 'false_absent', label: 'False Absent'");
@@ -191,9 +195,9 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('validationResult.cachedRevalidatedCount');
     expect(dashboard).toContain('validationResult.freshRefreshedCount');
     expect(dashboard).toContain('validationResult.firstEvidenceCollectedCount');
-    expect(dashboard).toContain('validationResult.baselineExistingCaseCount');
-    expect(dashboard).toContain('validationResult.baselinePersistedCaseCount');
-    expect(dashboard).toContain('finiteCount(validationResult.baselinePersistedCaseCount)');
+    expect(dashboard).toContain('session record{validationResult.processedSessionCount === 1');
+    expect(dashboard).not.toContain('already had a saved AVS case');
+    expect(dashboard).not.toContain('Saved/rebuilt AVS cases this call');
     expect(dashboard).toContain('formatFailureCodeCounts');
     expect(dashboard).toContain('formatFreshFailureDiagnostics');
     expect(dashboard).toContain('Failure codes:');
@@ -232,6 +236,16 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
+  it('classifies Firebase transport failures without weakening the safe failure boundary', () => {
+    expect(dashboard).toContain('isAvsTransportFailure');
+    expect(dashboard).toContain('err_name_not_resolved');
+    expect(dashboard).toContain('functions/internal');
+    expect(dashboard).toContain('temporary network, DNS, or service issue');
+    expect(dashboard).toContain('Nothing was changed. Please retry.');
+    expect(dashboard).toContain('safeLoadResultsFailureMessage(loadError)');
+    expect(dashboard).toContain('safeRunValidationFailureMessage(validationError)');
+  });
+
   it('surfaces safe re-fetch organizer failures without exposing organizer IDs', () => {
     expect(dashboard).toContain('safeForceFreshFailureMessage');
     expect(dashboard).toContain('organizer_config_invalid');
@@ -268,15 +282,14 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('await loadSavedCases(false, true)');
   });
 
-  it('treats non-evaluable source data as a technical state, not a fourth business tab', () => {
-    expect(businessView).toContain("Exclude<AvsBusinessOutcome, 'not_evaluable'>");
-    expect(businessView).toContain('not evaluated');
-    expect(businessView).toContain('These groups could not be compared safely');
-    expect(businessView).toContain('Show technical reasons');
-    expect(businessView).toContain('technicalReasonsForGroup');
-    expect(businessView).toContain('Same-day comparison context missing');
-    expect(businessView).toContain('Teams evidence needs a current calculation');
-    expect(businessView).toContain('Teams same-day coverage requires review');
+  it('keeps non-evaluable evidence internal and completely out of the operator business view', () => {
+    expect(businessView).toContain("type OperatorBusinessOutcome = Exclude<AvsBusinessOutcome, 'not_evaluable'>");
+    expect(businessView).toContain('groups.filter((group) => isOperatorBusinessOutcome(group.outcome))');
+    expect(businessView).not.toContain('not evaluated');
+    expect(businessView).not.toContain('Show technical reasons');
+    expect(businessView).not.toContain('technicalReasonsForGroup');
     expect(businessView).not.toContain("label: 'Not Evaluable'");
+    expect(shadowRunner).toContain("businessOutcome: 'not_evaluable'");
+    expect(shadowRunner).toContain("resolutionStatus: 'needs_review'");
   });
 });
