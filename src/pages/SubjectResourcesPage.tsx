@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import PhonicsPilotGuideGrid, { PHONICS_PILOT_RESOURCE_LINKS } from '../components/resources/PhonicsPilotGuideGrid';
+import GrammarResourceTimeline from '../components/resources/GrammarResourceTimeline';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { SPEAKING_KNOWLEDGE_CLUSTER_GROUPS } from '../lib/speakingKnowledgeCluster';
+import { GRAMMAR_PUBLISHED_RESOURCE_PAGES } from '../lib/grammarPublicationRegistry.js';
 import { ORGANIZATION_ID, SITE_ORIGIN, WEBSITE_ID, organizationSchema, websiteSchema } from '../lib/schemas';
 
 export type ResourceSubject = 'phonics' | 'grammar' | 'speaking';
@@ -196,6 +198,14 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
   const description = seo?.description ?? config.intro;
   const featuredLinks = subject === 'grammar' ? GRAMMAR_WRITING_FEATURED_GUIDES : [];
   const focusedPhonicsLinks = subject === 'phonics' ? [...PHONICS_PILOT_RESOURCE_LINKS] : [];
+  const focusedGrammarLinks: ResourceLink[] = subject === 'grammar'
+    ? GRAMMAR_PUBLISHED_RESOURCE_PAGES.map((page) => ({
+        title: page.cardTitle,
+        description: page.quickAnswer,
+        to: page.path,
+        label: 'Open grammar guide',
+      }))
+    : [];
   const speakingKnowledgeLinks: ResourceLink[] = subject === 'speaking'
     ? SPEAKING_KNOWLEDGE_CLUSTER_GROUPS.flatMap((group) => group.links.map((link) => ({
         title: link.title,
@@ -208,6 +218,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     ...featuredLinks,
     ...config.sections.flatMap((section) => section.links),
     ...focusedPhonicsLinks,
+    ...focusedGrammarLinks,
     ...speakingKnowledgeLinks,
   ];
   const structuredLinks = Array.from(
@@ -425,6 +436,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
           </div>
         </section>
       ) : null}
+
+      {subject === 'grammar' ? <GrammarResourceTimeline /> : null}
 
       <section id="resource-sections" className="mx-auto max-w-7xl space-y-14 px-6 py-14 sm:py-16 lg:py-20">
         {config.sections.map((section) => (
