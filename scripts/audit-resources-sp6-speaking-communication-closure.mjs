@@ -127,7 +127,7 @@ for (const [id, expected] of [
 }
 
 const legacy = getSpeakingCommunicationContentAuditByAction('consolidate')[0];
-if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/speaking-confidence-seeds' || legacy.implementationState !== 'hold' || legacy.urlChangeAuthorized || legacy.publicationApproved) add('legacy-hold', 'legacy-hidden-confidence-article', 'SP6 must preserve the R20 HOLD boundary exactly.');
+if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/child-understands-english-but-does-not-speak' || legacy.implementationState !== 'redirected-source-removed' || !legacy.urlChangeAuthorized || legacy.publicationApproved) add('legacy-hold', 'legacy-hidden-confidence-article', 'SP6 must preserve the completed redirect-only retirement exactly.');
 
 const pathwaySource = read('src/components/blog/BlogSemanticPathway.tsx');
 if (!pathwaySource.includes("from '../../lib/speakingCommunicationCompletionSemanticJourneyGraph.js'")) add('runtime-adapter', 'BlogSemanticPathway', 'Runtime must compose through the SP6 completion adapter.');
