@@ -7,6 +7,7 @@ import {
   getGrammarProgrammaticPageBySlug,
 } from '../lib/grammarProgrammaticRegistry.js';
 import { SITE_ORIGIN } from '../lib/schemas';
+import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
 
 const GrammarKnowledgePage: FC = () => {
   const { slug = '' } = useParams();
@@ -14,6 +15,7 @@ const GrammarKnowledgePage: FC = () => {
 
   if (!page) return <NotFoundPage />;
 
+  const c7Handoff = getCommercialC7R3Handoff(page.path);
   const canonicalUrl = `${SITE_ORIGIN}${page.path}`;
   const sequenceIndex = GRAMMAR_PROGRAMMATIC_SEQUENCE.findIndex((entry) => entry.id === page.id);
   const previous = sequenceIndex > 0 ? GRAMMAR_PROGRAMMATIC_SEQUENCE[sequenceIndex - 1] : null;
@@ -159,6 +161,39 @@ const GrammarKnowledgePage: FC = () => {
             ))}
           </div>
         </section>
+
+        {c7Handoff ? (
+          <section
+            className="rounded-[1.7rem] bg-slate-950 p-6 text-white sm:p-8"
+            data-c7-contextual-handoff={c7Handoff.ruleClass}
+          >
+            <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                  Your next learning step
+                </p>
+                <h2 className="mt-2 text-2xl font-black tracking-[-0.025em]">{c7Handoff.heading}</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">{c7Handoff.intro}</p>
+              </div>
+              <div className="flex flex-col gap-2 sm:min-w-56">
+                <Link
+                  to={c7Handoff.primary.to}
+                  className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-emerald-50"
+                >
+                  {c7Handoff.primary.label}
+                </Link>
+                {c7Handoff.secondary ? (
+                  <Link
+                    to={c7Handoff.secondary.to}
+                    className="rounded-full border border-white/40 px-5 py-3 text-center text-sm font-black text-white transition hover:border-white/70"
+                  >
+                    {c7Handoff.secondary.label}
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-6">
           <Link to="/resources/grammar" className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white">
