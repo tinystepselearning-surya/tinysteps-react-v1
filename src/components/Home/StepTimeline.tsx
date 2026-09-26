@@ -46,6 +46,34 @@ const stages: Stage[] = [
     ctaLabel: "See a sample class flow",
   },
   {
+    id: "reading",
+    icon: "📚",
+    title: "Reading & Fluency",
+    subtitle: "Accurate reading → smoother sentences → meaning",
+    focusChips: ["Accuracy", "Fluency", "Vocabulary", "Comprehension"],
+    childLearns: [
+      "Reads connected text with increasing accuracy and independence",
+      "Builds smoother phrasing without turning reading into a speed race",
+      "Explains key ideas and answers meaning-based questions",
+    ],
+    howWeTeach: [
+      "Right-level text with live modelling and guided rereading",
+      "Phrasing, vocabulary, retelling, and comprehension checks",
+      "Correction that returns the child to the text instead of encouraging guessing",
+    ],
+    parentGets: [
+      "The current reading focus: accuracy, fluency, vocabulary, or comprehension",
+      "Examples of what is becoming more secure",
+      "A clear next reading priority for upcoming practice",
+    ],
+    proofTiles: [
+      { label: "Reading Focus", desc: "The specific reading skill being strengthened" },
+      { label: "Text Evidence", desc: "What the child can do in connected reading" },
+      { label: "Meaning Check", desc: "How understanding is checked after reading" },
+      { label: "Next Priority", desc: "The next reading focus based on current performance" },
+    ],
+  },
+  {
     id: "grammar",
     icon: "🧩",
     title: "Grammar Builder",
@@ -293,12 +321,12 @@ const StepTimeline: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         {/* Title */}
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Inside each pathway</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Inside the learning experience</p>
           <h2 className="mt-3 font-heading text-3xl font-bold text-slate-900 md:text-4xl">
-            What learning looks like in a Tiny Steps class
+            How teaching changes by skill focus
           </h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            See what the child practises, how the teacher guides the skill, and what parents can expect to see as the pathway progresses.
+            Choose a focus to see what the child practises, how the teacher guides the skill, and what parents can see as learning progresses.
           </p>
         </div>
 
