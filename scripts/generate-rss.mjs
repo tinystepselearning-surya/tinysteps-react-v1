@@ -68,6 +68,7 @@ const LLM_DISCOVERY_FILES = [
 
 const BLOG_CORPUS_LLM_SECTION_HEADING = '## Complete Editorial Blog Corpus';
 const PHONICS_LLM_SECTION_HEADING = '## Focused Phonics Resource Library — 31 governed guides';
+const GRAMMAR_LLM_SECTION_HEADING = `## Focused Grammar Resource Library — ${GRAMMAR_PUBLISHED_RESOURCE_PAGES.length} governed guides`;
 const AI_ANSWER_LLM_SECTION_HEADING = '## AI Answer Layers — problem, concept, practice';
 
 function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
@@ -84,6 +85,25 @@ function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
       lines.push(`- [${page.cardTitle}](${SITE_URL}${page.path}) — ${description}`);
     }
     lines.push('');
+  }
+  return lines.join('\n').trim();
+}
+
+function buildGovernedGrammarLlmSection({ detailed = false } = {}) {
+  const lines = [
+    GRAMMAR_LLM_SECTION_HEADING,
+    '',
+    'These are curriculum-ordered informational grammar guides under /resources/grammar. Established broad editorial owners such as sentence formation, conjunctions, tenses, punctuation and paragraph writing remain on their existing canonical URLs.',
+    '',
+  ];
+  let currentLevel = '';
+  for (const page of GRAMMAR_PUBLISHED_RESOURCE_PAGES) {
+    if (page.level !== currentLevel) {
+      currentLevel = page.level;
+      lines.push(`### ${currentLevel === 'beginner' ? 'Beginner Grammar' : 'Advanced Grammar'}`, '');
+    }
+    const description = detailed ? page.quickAnswer : page.parentQuestion;
+    lines.push(`- [${page.cardTitle}](${SITE_URL}${page.path}) — ${description}`);
   }
   return lines.join('\n').trim();
 }
@@ -545,6 +565,12 @@ function normalizeLlmDiscoveryFiles(aiIndex) {
       text,
       buildGovernedPhonicsLlmSection({ detailed: isFullDirectory }),
       isFullDirectory ? '## Interpretation notes' : '## School and Institutional Partnerships',
+    );
+    text = upsertNamedMarkdownSection(
+      text,
+      GRAMMAR_LLM_SECTION_HEADING,
+      buildGovernedGrammarLlmSection({ detailed: isFullDirectory }),
+      AI_ANSWER_LLM_SECTION_HEADING,
     );
     text = upsertNamedMarkdownSection(
       text,
