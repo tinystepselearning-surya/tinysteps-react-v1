@@ -1,9 +1,10 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, startTransition, Suspense, useEffect, useRef, useState } from "react";
-import { organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
+import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
+import HomeEntitySummarySection from "../components/Home/HomeEntitySummarySection";
 import {
   AssessmentStartPointsSection,
   ClassSamplesSection,
@@ -31,6 +32,29 @@ const homeSeoDescription =
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
+
+const homeWebPageSchema = {
+  ...createWebPageSchema({
+    name: "Tiny Steps Learning — Online English Classes for Kids",
+    description: homeSeoDescription,
+    url: homeCanonicalUrl,
+  }),
+  "@id": `${homeCanonicalUrl}#webpage`,
+  mainEntity: {
+    "@id": `${PUBLIC_FACTS.primaryWebsite}/#educational-organization`,
+  },
+  about: [
+    { "@type": "Thing", name: "Online English classes for children" },
+    { "@type": "Thing", name: "Phonics and reading" },
+    { "@type": "Thing", name: "Grammar and sentence building" },
+    { "@type": "Thing", name: "Speaking and communication" },
+  ],
+  audience: {
+    "@type": "EducationalAudience",
+    educationalRole: "student",
+    audienceType: "Children aged 3–12",
+  },
+};
 
 const homeFaqItems = [
   {
@@ -201,11 +225,14 @@ export default function HomePage() {
         description={homeSeoDescription}
         keywords="online english classes for kids, online english classes for children, phonics classes for kids, online grammar classes for kids, spoken english classes for kids online, english tutor for kids online"
         canonical={homeCanonicalUrl}
-        jsonLd={[organizationSchema, websiteSchema, homeFaqSchema]}
+        jsonLd={[organizationSchema, websiteSchema, homeWebPageSchema, homeFaqSchema]}
       />
 
       {/* REVIEW ACTION 01 — HOOK: Keep the existing hero focused on what Tiny Steps is and the primary demo action. */}
       <ConversionHero />
+
+      {/* AI/ENTITY SUMMARY: Keep critical brand facts and programme ownership in the initial crawlable DOM. */}
+      <HomeEntitySummarySection />
 
       {/* REVIEW ACTION 02 — IDENTIFICATION: Replace the old generic approach block with parent problem recognition. */}
       <ParentProblemRecognitionSection />
