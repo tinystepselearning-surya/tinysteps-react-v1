@@ -88,7 +88,7 @@ describe('Resources architecture R2 learning gateway', () => {
       expect(page).toContain(destination);
     }
 
-    expect(page).toContain('Browse all guides');
+    expect(page).toContain('Editorial guide library');
   });
 
   it('publishes only the three approved subject hubs without duplicating parent, games, school, or blog hubs', () => {
