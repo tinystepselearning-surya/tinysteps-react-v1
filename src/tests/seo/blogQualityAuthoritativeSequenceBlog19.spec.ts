@@ -113,7 +113,7 @@ describe('authoritative Blog #19 quality lock', () => {
     );
     expect(source).toContain('[SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch)');
     expect(body).toContain('This guide focuses on **SATPIN explanation and progression**');
-    expect(body).toContain('Together they support **systematic and explicit sound–spelling teaching');
+    expect(body).toContain('This guide uses publicly accessible institutional guidance and research summaries');
     expect(body).toContain('does **not** establish SATPIN as the single mandatory first set');
     expect(body).toContain('SATPIN difficulty is not, by itself, evidence of dyslexia');
     expect(body).toContain('This article provides educational guidance, not diagnosis');
