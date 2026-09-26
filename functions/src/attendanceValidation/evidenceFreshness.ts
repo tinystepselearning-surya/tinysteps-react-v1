@@ -304,17 +304,11 @@ export function classifyCachedEvidenceFreshness(params: {
   if (serviceDate.value !== evidenceServiceDate) {
     freshReasons.push('service_date_changed');
   }
-  if (
-    currentWindow
-    && capturedWindow
-    && (
-      currentWindow.start.getTime() !== capturedWindow.start.getTime()
-      || currentWindow.end.getTime() !== capturedWindow.end.getTime()
-    )
-  ) {
-    freshReasons.push('scheduled_window_changed');
-  }
-
+  // AVS business reconciliation is service-date based. A class may move from
+  // its originally scheduled clock time to another time on the same IST date
+  // without changing the class identity. Both windows still have to resolve
+  // safely above, but an exact same-day clock shift alone does not invalidate
+  // cached Teams attendance evidence.
   if (joinUrl) {
     const currentHash = hashAttendanceEvidenceValue(joinUrl);
     if (!capturedJoinHash) {
