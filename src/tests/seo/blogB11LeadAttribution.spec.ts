@@ -35,8 +35,8 @@ const PROTECTED_FAMILIES = {
 } as const;
 
 describe('B11 blog lead conversion and attribution guardrails', () => {
-  it('keeps the post-Brick-4 83-source corpus and routes protected owners to the correct conversion family', () => {
-    expect(blogPosts).toHaveLength(83);
+  it('keeps the post-Brick-4 82-source corpus and routes protected owners to the correct conversion family', () => {
+    expect(blogPosts).toHaveLength(82);
 
     for (const [slug, [family, programRoute]] of Object.entries(PROTECTED_FAMILIES)) {
       const post = bySlug.get(slug);
