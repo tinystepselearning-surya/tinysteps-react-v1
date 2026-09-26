@@ -1044,7 +1044,6 @@ function buildMetaDescription(src: any) {
                 headingItems={headingItems}
                 tocItems={tocItems}
                 resolvedHero={resolvedHero}
-                title={metaSource.title}
               />
             ) : (
               <>

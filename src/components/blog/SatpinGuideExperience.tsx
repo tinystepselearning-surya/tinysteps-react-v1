@@ -15,7 +15,6 @@ type SatpinGuideExperienceProps = {
   headingItems: HeadingItem[];
   tocItems: HeadingItem[];
   resolvedHero?: string | null;
-  title: string;
 };
 
 type SatpinGuideSidebarProps = {
@@ -341,7 +340,6 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
   headingItems,
   tocItems,
   resolvedHero,
-  title,
 }) => {
   const [activeBlend, setActiveBlend] = useState(0);
   const [expandedSound, setExpandedSound] = useState<string | null>('s');
@@ -597,7 +595,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
                 <span>SATPIN is</span>
                 <span>SATPIN is not</span>
               </div>
-              {METHOD_ROWS.map(([yes, no], index) => (
+              {METHOD_ROWS.map(([yes, no]) => (
                 <div key={yes} className="grid grid-cols-2 border-t border-slate-100 px-4 py-3 text-sm leading-6 text-slate-700 first:border-t-0">
                   <span className="pr-3 font-medium text-slate-900">{yes}</span>
                   <span className="border-l border-slate-100 pl-3">{no}</span>
