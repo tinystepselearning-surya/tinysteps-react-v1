@@ -7,8 +7,8 @@ type ParentReassuranceProps = {
 
 export default function ParentReassurance({ programName = 'Tiny Steps' }: ParentReassuranceProps) {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-6 sm:py-8">
-      <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-5 sm:px-6 sm:py-6">
+    <section className="px-4 py-7 sm:px-6 sm:py-9">
+      <div className="mx-auto max-w-6xl rounded-[24px] border border-slate-200 bg-white px-5 py-5 sm:px-7 sm:py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
@@ -24,7 +24,7 @@ export default function ParentReassurance({ programName = 'Tiny Steps' }: Parent
 
           <Link
             to="/book-demo"
-            className="inline-flex shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            className="inline-flex w-full shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
           >
             Book Free 35-Minute Demo
           </Link>
