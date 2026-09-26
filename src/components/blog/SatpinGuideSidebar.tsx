@@ -16,11 +16,10 @@ const NAV_LABELS: Array<[string, string]> = [
   ['Quick answer:', 'Overview'],
   ['SATPIN sounds:', 'Sounds'],
   ['SATPIN words:', 'First words'],
-  ['Do children need to master all six SATPIN sounds before blending?', 'Blending'],
-  ['A parent-friendly SATPIN start sequence', 'Learning path'],
-  ['What should SATPIN progress look like?', 'Progress'],
-  ['Five common SATPIN difficulties', 'Difficulties'],
-  ['What comes after SATPIN?', 'Next stage'],
+  ['Do children need to master all six SATPIN sounds before blending?', 'Start blending'],
+  ['A parent-friendly SATPIN start sequence', 'How to practise'],
+  ['What should SATPIN progress look like?', 'Progress & help'],
+  ['What comes after SATPIN?', 'What next'],
   ['Evidence and references', 'Evidence'],
 ];
 

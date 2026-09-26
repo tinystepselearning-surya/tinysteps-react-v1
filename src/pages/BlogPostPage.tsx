@@ -865,7 +865,6 @@ function buildMetaDescription(src: any) {
       'Do children need to master all six SATPIN sounds before blending?',
       'A parent-friendly SATPIN start sequence',
       'What should SATPIN progress look like?',
-      'Five common SATPIN difficulties',
       'What comes after SATPIN?',
       'Evidence and references',
     ];

@@ -83,11 +83,10 @@ const MOBILE_LABELS: Array<[string, string]> = [
   ['Quick answer:', 'Overview'],
   ['SATPIN sounds:', 'Sounds'],
   ['SATPIN words:', 'First words'],
-  ['Do children need to master all six SATPIN sounds before blending?', 'Blending'],
-  ['A parent-friendly SATPIN start sequence', 'Learning path'],
-  ['What should SATPIN progress look like?', 'Progress'],
-  ['Five common SATPIN difficulties', 'Difficulties'],
-  ['What comes after SATPIN?', 'Next stage'],
+  ['Do children need to master all six SATPIN sounds before blending?', 'Start blending'],
+  ['A parent-friendly SATPIN start sequence', 'How to practise'],
+  ['What should SATPIN progress look like?', 'Progress & help'],
+  ['What comes after SATPIN?', 'What next'],
   ['Evidence and references', 'Evidence'],
 ];
 
@@ -490,7 +489,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
       ) : null}
 
       {(standFor || sounds) ? (
-        <div className="overflow-hidden rounded-[30px] border border-slate-200/80 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.045)]">
+        <div className="overflow-hidden border-y border-slate-200/70">
           {standFor ? (
             <section id={standFor.id} data-satpin-section="what-satpin-stands-for" className="scroll-mt-28 p-6 sm:p-8">
               <SectionHeading section={standFor} eyebrow="Start here" />
@@ -561,12 +560,12 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
       ) : null}
 
       {(order || method) ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-8 border-y border-slate-200/70 py-8 md:grid-cols-2">
           {order ? (
             <section
               id={order.id}
               data-satpin-section="satpin-order"
-              className="scroll-mt-28 rounded-[26px] border border-slate-200/80 bg-white p-6 shadow-[0_14px_35px_rgba(15,23,42,0.04)]"
+              className="scroll-mt-28 px-1 sm:px-2"
             >
               <SectionHeading section={order} eyebrow="Sequence clarity" />
               <div className="mt-5">
@@ -579,7 +578,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
             <section
               id={method.id}
               data-satpin-section="satpin-method"
-              className="scroll-mt-28 rounded-[26px] border border-slate-200/80 bg-white p-6 shadow-[0_14px_35px_rgba(15,23,42,0.04)]"
+              className="scroll-mt-28 px-1 sm:px-2"
             >
               <SectionHeading section={method} eyebrow="One useful distinction" />
               <div className="mt-5 overflow-hidden rounded-[16px] border border-slate-200/80">
@@ -603,6 +602,44 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
             </section>
           ) : null}
         </div>
+      ) : null}
+
+      {useful ? (
+        <section
+          id={useful.id}
+          data-satpin-section="why-satpin-helps"
+          className="scroll-mt-28 px-1 py-4 sm:px-2 sm:py-6"
+        >
+          <SectionHeading section={useful} eyebrow="Why the starter set can work" />
+          {usefulGroups.intro.length ? <div className="mt-4"><TextBlocks blocks={usefulGroups.intro} compact /></div> : null}
+
+          <div className="mt-6 grid gap-3 lg:grid-cols-3">
+            {usefulGroups.subsections.map((group, index) => {
+              const split = splitFirstParagraph(group.blocks);
+              return (
+                <div key={group.title} className="border-t border-slate-200 pt-4">
+                  <span className="text-[0.68rem] font-bold tabular-nums text-[#0b5bd3]">{String(index + 1).padStart(2, '0')}</span>
+                  <h3 id={group.id} className="scroll-mt-28 mt-2 text-lg font-black leading-6 tracking-tight text-slate-950">
+                    {group.title.replace(/^\d+\.\s*/, '')}
+                  </h3>
+                  {split.first ? (
+                    <p className="mt-3 line-clamp-4 text-sm leading-7 text-slate-600">
+                      {renderRichText(split.first.content, 'useful-first-' + index)}
+                    </p>
+                  ) : null}
+                  {split.rest.length ? (
+                    <details className="mt-3">
+                      <summary className="cursor-pointer list-none text-sm font-semibold text-[#0b5bd3]">More detail</summary>
+                      <div className="mt-3 border-t border-slate-200 pt-3">
+                        <TextBlocks blocks={split.rest} compact />
+                      </div>
+                    </details>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       ) : null}
 
       {words ? (
@@ -701,44 +738,6 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         </section>
       ) : null}
 
-      {useful ? (
-        <section
-          id={useful.id}
-          data-satpin-section="why-satpin-helps"
-          className="scroll-mt-28 rounded-[30px] border border-slate-200/80 bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.045)] sm:p-8"
-        >
-          <SectionHeading section={useful} eyebrow="Why the starter set can work" />
-          {usefulGroups.intro.length ? <div className="mt-4"><TextBlocks blocks={usefulGroups.intro} compact /></div> : null}
-
-          <div className="mt-6 grid gap-3 lg:grid-cols-3">
-            {usefulGroups.subsections.map((group, index) => {
-              const split = splitFirstParagraph(group.blocks);
-              return (
-                <div key={group.title} className="rounded-[20px] bg-slate-50 p-5">
-                  <span className="text-[0.68rem] font-bold tabular-nums text-[#0b5bd3]">{String(index + 1).padStart(2, '0')}</span>
-                  <h3 id={group.id} className="scroll-mt-28 mt-2 text-lg font-black leading-6 tracking-tight text-slate-950">
-                    {group.title.replace(/^\d+\.\s*/, '')}
-                  </h3>
-                  {split.first ? (
-                    <p className="mt-3 line-clamp-4 text-sm leading-7 text-slate-600">
-                      {renderRichText(split.first.content, 'useful-first-' + index)}
-                    </p>
-                  ) : null}
-                  {split.rest.length ? (
-                    <details className="mt-3">
-                      <summary className="cursor-pointer list-none text-sm font-semibold text-[#0b5bd3]">More detail</summary>
-                      <div className="mt-3 border-t border-slate-200 pt-3">
-                        <TextBlocks blocks={split.rest} compact />
-                      </div>
-                    </details>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
       {pronunciation ? (
         <section
           id={pronunciation.id}
@@ -769,7 +768,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
           data-satpin-section="satpin-sequence"
           className="scroll-mt-28 rounded-[30px] border border-slate-200/80 bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.045)] sm:p-8"
         >
-          <SectionHeading section={sequence} eyebrow="The learning path" description="Five clear steps. Move by what the child can do, not by a fixed daily timetable." />
+          <SectionHeading section={sequence} eyebrow="How to practise" description="A simple progression: teach, blend, spell, test a fresh word, then move into short text." />
           {sequenceGroups.intro.length ? <div className="mt-4"><TextBlocks blocks={sequenceGroups.intro} compact /></div> : null}
 
           <div className="relative mt-6">
@@ -823,13 +822,15 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         </section>
       ) : null}
 
+      {(progress || difficulties) ? (
+        <div className="overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.04)]">
       {progress ? (
         <section
           id={progress.id}
           data-satpin-section="satpin-progress"
-          className="scroll-mt-28 rounded-[30px] border border-slate-200/80 bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.045)] sm:p-8"
+          className="scroll-mt-28 p-6 sm:p-8"
         >
-          <SectionHeading section={progress} eyebrow="Progress checkpoint" description="Look for independence and transfer—not a universal percentage score." />
+          <SectionHeading section={progress} eyebrow="Progress and support" description="Look for independence and transfer first; then open the troubleshooting guidance only if a specific difficulty persists." />
           <div className="mt-6 grid gap-2 sm:grid-cols-2">
             {progressSignals.map((block, index) => (
               <div key={'progress-' + index} className={index === progressSignals.length - 1 ? 'rounded-[18px] bg-slate-50 p-4 sm:col-span-2' : 'rounded-[18px] bg-slate-50 p-4'}>
@@ -848,7 +849,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         <section
           id={difficulties.id}
           data-satpin-section="satpin-difficulties"
-          className="scroll-mt-28 rounded-[30px] border border-slate-200/80 bg-white p-6 shadow-[0_16px_45px_rgba(15,23,42,0.045)] sm:p-8"
+          className="scroll-mt-28 border-t border-slate-100 p-6 sm:p-8"
         >
           <SectionHeading section={difficulties} eyebrow="If your child is stuck" description="Open only the situation that matches what you are seeing." />
           <div className="mt-5 divide-y divide-slate-100 overflow-hidden rounded-[20px] bg-slate-50">
@@ -876,6 +877,10 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         </section>
       ) : null}
 
+
+        </div>
+      ) : null}
+
       {after ? (
         <section
           id={after.id}
@@ -900,23 +905,31 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
         </section>
       ) : null}
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        {[home, games, review].filter(Boolean).map((section) => (
-          <section
-            key={section!.title}
-            id={section!.id}
-            data-satpin-section={slugify(section!.title)}
-            className="scroll-mt-28 rounded-[22px] border border-slate-200/80 bg-white p-5"
-          >
-            <p className="text-[0.66rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Practical route</p>
-            <h2 className="mt-2 text-lg font-black tracking-tight text-slate-950">{section!.title}</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">{PRACTICAL_SUMMARIES[section!.title] || 'Open this route when it matches the child’s current need.'}</p>
-            <details className="mt-3">
-              <summary className="cursor-pointer list-none text-sm font-semibold text-[#0b5bd3]">Full guidance</summary>
-              <div className="mt-3 border-t border-slate-100 pt-3"><TextBlocks blocks={section!.blocks} compact /></div>
-            </details>
-          </section>
-        ))}
+      <div className="border-y border-slate-200/70">
+        <div className="divide-y divide-slate-200/70">
+          {[home, games, review].filter(Boolean).map((section) => (
+            <section
+              key={section!.title}
+              id={section!.id}
+              data-satpin-section={slugify(section!.title)}
+              className="scroll-mt-28 py-5 sm:py-6"
+            >
+              <div className="grid gap-3 md:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] md:gap-8">
+                <div>
+                  <p className="text-[0.66rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Related guidance</p>
+                  <h2 className="mt-2 text-lg font-black tracking-tight text-slate-950">{section!.title}</h2>
+                </div>
+                <div>
+                  <p className="text-sm leading-7 text-slate-600">{PRACTICAL_SUMMARIES[section!.title] || 'Open this route when it matches the child’s current need.'}</p>
+                  <details className="mt-2">
+                    <summary className="cursor-pointer list-none text-sm font-semibold text-[#0b5bd3]">Full guidance</summary>
+                    <div className="mt-3 border-t border-slate-200/70 pt-3"><TextBlocks blocks={section!.blocks} compact /></div>
+                  </details>
+                </div>
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
 
       {evidence ? (

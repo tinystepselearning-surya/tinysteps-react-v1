@@ -73,7 +73,7 @@ describe('SATPIN authority-page UX refinement', () => {
       'SATPIN in 60 seconds',
       'Try the blend',
       'Blending readiness',
-      'The learning path',
+      'How to practise',
       'Progress checkpoint',
       'If your child is stuck',
       'The next stage',
@@ -104,6 +104,10 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain('object-[50%_66%]');
     expect(experience).toContain('border-y border-slate-200/70 px-1 py-7');
     expect(experience).toContain('rounded-[16px] bg-slate-50/80 p-4');
+    expect(experience).toContain('grid gap-8 border-y border-slate-200/70 py-8 md:grid-cols-2');
+    expect(experience).toContain('overflow-hidden rounded-[28px] border border-slate-200/80 bg-white');
+    expect(experience).toContain('Related guidance');
+    expect(experience).toContain('divide-y divide-slate-200/70');
   });
 
   it('keeps the evidence URLs in source data while rendering readable source links', () => {
@@ -134,5 +138,9 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(sidebar).toContain('Guide index');
     expect(sidebar).toContain('aria-current');
     expect(sidebar).toContain("['SATPIN sounds:', 'Sounds']");
+    expect(sidebar).toContain("['A parent-friendly SATPIN start sequence', 'How to practise']");
+    expect(sidebar).toContain("['What should SATPIN progress look like?', 'Progress & help']");
+    expect(sidebar).toContain("['What comes after SATPIN?', 'What next']");
+    expect(sidebar).not.toContain("['Five common SATPIN difficulties', 'Difficulties']");
   });
 });
