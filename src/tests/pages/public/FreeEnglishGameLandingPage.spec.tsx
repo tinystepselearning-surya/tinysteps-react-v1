@@ -92,7 +92,7 @@ describe("FreeEnglishGameLandingPage", () => {
 
   it.each([
     ["/free-letter-sounds-game-for-kids", "Free Letter Sounds Game for Kids", "/free-letter-sound-games-for-kids"],
-    ["/free-sound-listening-game-for-kids", "Free Sound Listening Game for Kids", "/free-phonics-games-for-kids"],
+    ["/free-sound-listening-game-for-kids", "Free A-Z Phonics Sounds Game for Kids", "/free-phonics-games-for-kids"],
     ["/free-word-building-game-for-kids", "Free Word Building Game for Kids", "/free-word-building-games-for-kids"],
     ["/free-spelling-game-for-kids", "Free Spelling Game for Kids", "/free-word-building-games-for-kids"],
     ["/free-sentence-making-game-for-kids", "Free Sentence Making Game for Kids", "/free-sentence-building-games-for-kids"],
@@ -154,10 +154,11 @@ describe("FreeEnglishGameLandingPage", () => {
   it("renders the public sound listening play experience without auth or kidId", () => {
     renderRoute("/free-sound-listening-game-for-kids?play=1");
 
-    expect(screen.getByRole("heading", { name: /free sound listening game for kids/i, level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /free a-z phonics sounds game for kids/i, level: 1 })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
-    expect(screen.getByText(/choose level/i)).toBeInTheDocument();
-    expect(screen.getByText(/sound detective/i)).toBeInTheDocument();
+    expect(screen.getByText("A–Z Phonics Sound Detective")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /play all 26/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/26 basic letter sounds/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/temporarily in this browser/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/synced per-child tracking/i)).not.toBeInTheDocument();

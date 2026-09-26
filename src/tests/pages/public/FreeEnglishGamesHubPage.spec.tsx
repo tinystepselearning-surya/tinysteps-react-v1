@@ -104,7 +104,7 @@ describe("FreeEnglishGamesHubPage", () => {
     expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
     expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
     expect(screen.getByText("Letter Sounds")).toBeInTheDocument();
-    expect(screen.getByText("Sound Listening")).toBeInTheDocument();
+    expect(screen.getByText("A-Z Phonics Sound Detective")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /build words/i }));
     expect(screen.getByText("Blend 2 Sounds")).toBeInTheDocument();
     expect(screen.getByText("Spelling Practice")).toBeInTheDocument();
