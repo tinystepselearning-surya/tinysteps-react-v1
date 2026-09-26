@@ -212,6 +212,13 @@ jobs:
           src/tests/content
           src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
           src/tests/seo/resourcesR8PhonicsKnowledgeDataset.spec.js
+          src/tests/seo/resourcesR15
+          src/tests/seo/resourcesR18
+          src/tests/seo/resourcesR19
+          src/tests/seo/resourcesR21
+          src/tests/seo/resourcesR22
+          src/tests/seo/resourcesSP6
+          src/tests/seo/grammarWritingGr
 
       - name: Audit canonical ownership for content-only PR
         if: >-
@@ -224,6 +231,24 @@ jobs:
           github.event_name == 'pull_request' &&
           needs.analyze-changes.outputs.content_only_validation == 'true'
         run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
+
+      - name: Audit controlled reading, grammar and speaking content for content-only PR
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.content_only_validation == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-resources-r15-high-value-reading-content.mjs --report
+          node scripts/audit-grammar-writing-gr1-taxonomy.mjs --report
+          node scripts/audit-grammar-writing-gr2-tenses.mjs --report
+          node scripts/audit-grammar-writing-gr3-writing-progression.mjs --report
+          node scripts/audit-grammar-writing-gr4-parent-problems.mjs --report
+          node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --report
+          node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
+          node scripts/audit-resources-r21-high-value-speaking-content.mjs --report
+          node scripts/audit-resources-r22-speaking-communication-semantic-journeys.mjs --report
+          node scripts/audit-resources-sp6-speaking-communication-closure.mjs --report
 
       - name: Run full unit tests
         if: >-
