@@ -303,7 +303,7 @@ const ResourcesPage: FC = () => {
             </p>
           </div>
 
-          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {CENTRAL_RESOURCE_CONTENT_FAMILIES.map((family) => (
               <Link
                 key={family.id}
