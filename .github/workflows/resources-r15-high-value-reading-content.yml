@@ -4,9 +4,6 @@ on:
   pull_request:
     branches: [main, seo/resources-r14-reading-knowledge-architecture]
     paths:
-      - 'src/content/blog/posts/research/phonological-awareness-vs-phonemic-awareness-vs-phonics.ts'
-      - 'src/content/blog/posts/research/how-vocabulary-supports-reading-comprehension.ts'
-      - 'src/content/blog/posts/research/how-children-recognise-words-automatically-after-phonics.ts'
       - 'src/lib/readingContentExecutionRegistry.*'
       - 'src/lib/readingContentCanonicalOwnership.*'
       - 'src/lib/readingKnowledgeArchitecture.*'
