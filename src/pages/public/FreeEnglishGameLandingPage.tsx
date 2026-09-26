@@ -20,6 +20,13 @@ import {
 
 const SITE_ORIGIN = "https://tinystepslearning.com";
 
+function scrollToPublicGamePlayer() {
+  const playSection = document.getElementById("play");
+  if (playSection && typeof playSection.scrollIntoView === "function") {
+    playSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
 export default function FreeEnglishGameLandingPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -27,16 +34,9 @@ export default function FreeEnglishGameLandingPage() {
   const isPlayMode = searchParams.get("play") === "1";
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
 
-  const scrollToPlayer = () => {
-    const playSection = document.getElementById("play");
-    if (playSection && typeof playSection.scrollIntoView === "function") {
-      playSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   useEffect(() => {
     if (!shouldRenderPlayer) return;
-    scrollToPlayer();
+    scrollToPublicGamePlayer();
   }, [shouldRenderPlayer]);
 
   useEffect(() => {
@@ -236,7 +236,7 @@ export default function FreeEnglishGameLandingPage() {
                   shouldRenderPlayer ? (
                     <button
                       type="button"
-                      onClick={scrollToPlayer}
+                      onClick={scrollToPublicGamePlayer}
                       className="inline-flex rounded-xl bg-cyan-400 px-5 py-3 text-sm font-black text-slate-900 hover:bg-cyan-300"
                     >
                       Go to Game
