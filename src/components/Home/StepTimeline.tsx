@@ -215,7 +215,7 @@ const StepTimeline: React.FC = () => {
 
           {stage.ctaLabel && (
             <button
-              onClick={openStageModal}
+              onClick={() => openStageModal()}
               className="hidden md:inline-flex rounded-full px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700 hover:opacity-95"
             >
               {stage.ctaLabel}
@@ -278,7 +278,7 @@ const StepTimeline: React.FC = () => {
         {/* Mobile CTA */}
         {stage.ctaLabel && (
           <button
-            onClick={openStageModal}
+            onClick={() => openStageModal()}
             className="mt-6 md:hidden w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-slate-900 to-slate-700 hover:opacity-95"
           >
             {stage.ctaLabel}
