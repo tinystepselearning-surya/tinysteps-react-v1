@@ -16,10 +16,13 @@ on:
       - 'scripts/gsc-crawled-not-indexed-manifest.mjs'
       - 'scripts/seo-indexation-guard.mjs'
       - 'firebase.json'
-      - 'public/llms.txt'
-      - 'docs/seo/resources-architecture/**'
+      - 'docs/seo/resources-architecture/R2_LEARNING_RESOURCES_GATEWAY.md'
       - '.github/workflows/resources-r2-learning-hub.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

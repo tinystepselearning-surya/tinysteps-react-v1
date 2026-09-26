@@ -15,9 +15,13 @@ on:
       - 'src/lib/resourcesArchitectureRegistry.js'
       - 'scripts/audit-resources-r0.mjs'
       - 'scripts/audit-resources-r0-rendered.mjs'
-      - 'docs/seo/resources-architecture/**'
+      - 'docs/seo/resources-architecture/R3_GLOBAL_NAVIGATION.md'
       - '.github/workflows/resources-r3-navigation.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

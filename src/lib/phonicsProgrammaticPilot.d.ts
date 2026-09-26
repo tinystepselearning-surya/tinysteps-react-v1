@@ -17,6 +17,9 @@ export interface PhonicsProgrammaticPilotPage {
   readonly group: PhonicsProgrammaticPilotGroup;
   readonly publicationState: 'approved-wave-1';
   readonly publicationRevision: string;
+  readonly prepublicationQualityState: 'passed';
+  readonly prepublicationQualityRevision: string;
+  readonly prepublicationQualityChecks: readonly string[];
   readonly reviewDecision: string;
   readonly concept: PhonicsKnowledgeConcept;
 }
