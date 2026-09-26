@@ -234,7 +234,9 @@ function buildAiResourceIndex(blogItemMap) {
       canonical_url: toCanonicalAbsoluteUrl(entry.canonicalPath),
       hub_url: toCanonicalAbsoluteUrl(entry.hubPath),
       supporting_urls: [...new Set((entry.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
+      reference_urls: [...new Set((entry.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
       practice_urls: [...new Set((entry.practicePaths || []).map(toCanonicalAbsoluteUrl))],
+      answer_selector: entry.layer <= 2 ? '.ts-answer-summary' : null,
       answer_source: entry.answerSource,
       ownership_state: entry.ownershipState,
     })),
@@ -244,6 +246,7 @@ function buildAiResourceIndex(blogItemMap) {
     revision: '2026-09-26-r24-r26',
     canonical_resource_center: SITE_URL + '/resources',
     purpose: 'Machine-readable routing from parent problems to canonical educational answers and focused practice.',
+    retrieval_guidance: 'Use canonical_url as the primary answer source, use reference_urls for connected context, and use practice_urls only after the answer/skill is understood.',
     principles: [
       'One established canonical owner per answer intent.',
       'Use visible page answers and existing evidence; do not create duplicate AI-only article URLs.',
