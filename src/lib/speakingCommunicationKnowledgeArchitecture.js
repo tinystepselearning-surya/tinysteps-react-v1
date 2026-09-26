@@ -43,8 +43,8 @@ export const SPEAKING_COMMUNICATION_KNOWLEDGE_DOMAINS = freezeList([
 /**
  * High-value speaking/communication audit. Existing substantial pages stay in
  * place. CREATE is limited to missing parent utilities; the older hidden
- * confidence article is marked for controlled consolidation rather than being
- * promoted as a second authority owner.
+ * confidence article is retired from the live source corpus while its historical
+ * URL remains permanently redirected to the protected diagnostic owner.
  */
 export const SPEAKING_COMMUNICATION_CONTENT_AUDIT = freezeList([
   auditRecord({
@@ -125,8 +125,10 @@ export const SPEAKING_COMMUNICATION_CONTENT_AUDIT = freezeList([
     domainId: 'confidence-context-transfer',
     action: 'consolidate',
     path: '/blog/spoken-english-classes-for-kids-confidence',
-    consolidationTarget: '/blog/speaking-confidence-seeds',
-    reasons: ['Older hidden short article substantially overlaps the stronger speaking-confidence roadmap and understanding-versus-speaking diagnostic.', 'Do not promote it as a second authority owner; any redirect or removal should happen only in a controlled downstream consolidation step after checking URL/search history.'],
+    consolidationTarget: '/blog/child-understands-english-but-does-not-speak',
+    implementationState: 'redirected-source-removed',
+    urlChangeAuthorized: true,
+    reasons: ['The legacy hidden source duplicated the stronger understanding-versus-speaking diagnostic and was already protected by a permanent Hosting redirect.', 'The source file is removed from the live editorial corpus while the historical URL remains a one-hop 301 to the protected diagnostic owner.'],
   }),
   auditRecord({
     id: 'conversation-skills-parent-guide',
@@ -167,7 +169,16 @@ for (const item of SPEAKING_COMMUNICATION_CONTENT_AUDIT) {
   if (item.action === 'create' && (item.path || item.canonicalTopicId || item.publicationApproved || item.implementationState !== 'proposal-only')) {
     throw new Error(`R20 CREATE proposal crossed the publication boundary: ${item.id}.`);
   }
-  if (item.action === 'consolidate' && (item.urlChangeAuthorized || item.implementationState !== 'hold')) {
-    throw new Error(`R20 consolidation candidate must remain on hold: ${item.id}.`);
+  if (item.action === 'consolidate') {
+    const allowedStates = new Set(['hold', 'redirected-source-removed']);
+    if (!allowedStates.has(item.implementationState)) {
+      throw new Error(`R20 consolidation record has an unsupported state: ${item.id}.`);
+    }
+    if (item.implementationState === 'hold' && item.urlChangeAuthorized) {
+      throw new Error(`R20 consolidation HOLD cannot authorize a URL change: ${item.id}.`);
+    }
+    if (item.implementationState === 'redirected-source-removed' && !item.urlChangeAuthorized) {
+      throw new Error(`R20 completed consolidation must preserve its authorized redirect: ${item.id}.`);
+    }
   }
 }
