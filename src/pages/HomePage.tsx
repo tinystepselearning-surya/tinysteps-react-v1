@@ -2,6 +2,7 @@
 // @ts-nocheck
 import React, { lazy, startTransition, Suspense, useEffect, useRef, useState } from "react";
 import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
+import { STANDARD_PRICING_SUMMARY } from "../config/publicOffer";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 import HomeEntitySummarySection from "../components/Home/HomeEntitySummarySection";
@@ -54,26 +55,51 @@ const homeWebPageSchema = {
 
 const homeFaqItems = [
   {
-    question: "What happens in the free 35-minute demo assessment?",
+    question: "What age group does Tiny Steps teach?",
     answer:
-      "The teacher checks the child’s current level across the skills that matter for the concern you shared, such as letter sounds, blending, reading fluency, sentence formation, grammar accuracy, pronunciation, or speaking confidence. The goal is to recommend the right starting point rather than place every child into the same lesson.",
+      "Tiny Steps teaches children ages 3–12. Age helps us choose appropriate tasks, but the recommended starting point is based on the child’s current skill level rather than age alone.",
   },
   {
-    question: "How do you decide whether my child needs phonics, grammar, or speaking support?",
+    question: "What happens in the free 35-minute demo assessment?",
     answer:
-      "Tiny Steps looks at the child’s current bottleneck. A child who cannot blend may need phonics first, while a child who reads comfortably but struggles to form sentences may need grammar or speaking support. The recommended path is based on demonstrated skills, not age alone.",
+      "The teacher checks the skills most relevant to the concern you shared, such as letter sounds, blending, reading fluency, sentence formation, grammar accuracy, pronunciation, or speaking confidence. The goal is to recommend the right starting point before enrolment.",
+  },
+  {
+    question: "How do you choose between phonics, reading, grammar, and speaking?",
+    answer:
+      "Tiny Steps starts with the strongest current learning gap. Difficulty decoding unfamiliar words may point toward phonics; accurate but effortful reading may need fluency support; repeated sentence errors may need grammar; short or hesitant answers may need speaking support.",
   },
   {
     question: "Are Tiny Steps classes 1:1 or group classes?",
     answer:
-      `Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer depending on group size.`,
+      `Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer because more children need individual response time.`,
+  },
+  {
+    question: "How long is each Tiny Steps class?",
+    answer:
+      `Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}. Small-group class duration varies by group size and format, so the current pricing page is the source of truth for the exact option you are considering.`,
+  },
+  {
+    question: "Which platform does Tiny Steps use for live classes?",
+    answer:
+      "Tiny Steps conducts live online classes through Microsoft Teams. Enrolled families receive access through the scheduled class flow and parent portal.",
+  },
+  {
+    question: "How much do Tiny Steps classes cost?",
+    answer:
+      `${STANDARD_PRICING_SUMMARY}. Package and teacher-format options can differ, so check the pricing page for the current complete fee structure before enrolment.`,
   },
   {
     question: "How do parents know whether their child is improving?",
     answer:
-      "Parents receive clear progress visibility on what the child is learning, where improvement is showing, and what the next focus should be. The learning journey is organised around named stages and milestones rather than unrelated topics.",
+      "Parents receive clear visibility into what the child is learning, where improvement is showing, and what the next focus should be. Progress is organised around named skills and learning stages rather than unrelated topics.",
   },
-];
+  {
+    question: "What if I need to cancel or reschedule a class?",
+    answer:
+      "Parents should give at least 24 hours’ notice when they need to cancel or reschedule. With that notice, Tiny Steps will make reasonable efforts to offer a replacement class or alternate slot, subject to teacher availability and scheduling constraints.",
+  },
+]
 
 const homeFaqSchema = {
   "@context": "https://schema.org",
