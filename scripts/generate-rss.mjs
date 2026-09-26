@@ -12,6 +12,10 @@ import {
   RETIRED_BLOG_PATH_REDIRECTS,
   rewriteRetiredBlogPaths,
 } from './blog-consolidation-map.mjs';
+import {
+  PHONICS_PUBLICATION_GROUPS,
+  PHONICS_PUBLISHED_RESOURCE_PAGES,
+} from '../src/lib/phonicsPublicationRegistry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,6 +54,42 @@ const LLM_DISCOVERY_FILES = [
   path.join(PUBLIC_DIR, 'llms.txt'),
   path.join(PUBLIC_DIR, 'llms-full.txt'),
 ];
+
+const PHONICS_LLM_SECTION_HEADING = '## Focused Phonics Resource Library — 31 governed guides';
+
+function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
+  const lines = [
+    PHONICS_LLM_SECTION_HEADING,
+    '',
+    'These are governed informational phonics pattern guides under /resources/phonics. They are distinct from the editorial blog library and from the commercial /phonics programme page. Only explicitly approved publication records appear here.',
+    '',
+  ];
+  for (const group of PHONICS_PUBLICATION_GROUPS) {
+    lines.push(`### ${group}`, '');
+    for (const page of PHONICS_PUBLISHED_RESOURCE_PAGES.filter((candidate) => candidate.group === group)) {
+      const description = detailed ? page.seoDescription : page.concept.quickAnswer;
+      lines.push(`- [${page.cardTitle}](${SITE_URL}${page.path}) — ${description}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trim();
+}
+
+function upsertMarkdownSection(text, section, preferredAnchor) {
+  const start = text.indexOf(PHONICS_LLM_SECTION_HEADING);
+  if (start >= 0) {
+    const nextHeading = text.indexOf('\n## ', start + PHONICS_LLM_SECTION_HEADING.length);
+    const before = text.slice(0, start).trimEnd();
+    const after = nextHeading >= 0 ? text.slice(nextHeading + 1).trimStart() : '';
+    return [before, section.trim(), after].filter(Boolean).join('\n\n');
+  }
+
+  const anchorIndex = text.indexOf(preferredAnchor);
+  if (anchorIndex < 0) return `${text.trimEnd()}\n\n${section.trim()}\n`;
+  const before = text.slice(0, anchorIndex).trimEnd();
+  const after = text.slice(anchorIndex).trimStart();
+  return `${before}\n\n${section.trim()}\n\n${after}`;
+}
 
 function escapeXml(value) {
   return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
@@ -190,6 +230,14 @@ function normalizeLlmDiscoveryFiles() {
       )
       .replace('## Blogs 1-34 — Phonics Authority Programme', '## Phonics Authority Programme — 33 articles')
       .replace('## Blogs 35-51 — Parent Communication / English Support Programme', '## Parent Communication / English Support Programme — 17 articles');
+
+    const isFullDirectory = filePath.endsWith('llms-full.txt');
+    text = upsertMarkdownSection(
+      text,
+      buildGovernedPhonicsLlmSection({ detailed: isFullDirectory }),
+      isFullDirectory ? '## Interpretation notes' : '## School and Institutional Partnerships',
+    );
+
     fs.writeFileSync(filePath, `${text.replace(/\n+$/, '')}\n`, 'utf8');
   }
 }

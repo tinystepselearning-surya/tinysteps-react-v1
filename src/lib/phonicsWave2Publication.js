@@ -6,6 +6,7 @@ import {
   assertCurrentWavePublicationEligibility,
   CURRENT_WAVE_PUBLICATION_APPROVAL_STATE,
 } from './resourceExpansionGovernance.js';
+import { assertPhonicsPrepublicationQuality } from './phonicsPrepublicationQuality.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -58,6 +59,7 @@ function buildPage(conceptId, approval) {
     approvalRevision: PHONICS_WAVE_2_APPROVAL_REVISION,
   });
   if (!concept.futureSlugCandidate) throw new Error(`Invalid R12 Wave 2 concept: ${conceptId}`);
+  const qualityGate = assertPhonicsPrepublicationQuality(concept, approval);
   const path = `${PHONICS_WAVE_2_PREFIX}/${concept.futureSlugCandidate}`;
   return freeze({
     conceptId,
@@ -74,7 +76,10 @@ function buildPage(conceptId, approval) {
     publicationApprovalState: approval.publicationApprovalState,
     publicationApprovalRevision: approval.publicationApprovalRevision,
     publicationApprovalBasis: approval.publicationApprovalBasis,
-    reviewDecision: 'Explicit current-wave publication approval for a curriculum-eligible Brick 8 concept with distinct informational intent and protected canonical ownership. This is not a human phonics-review claim or an R11 performance decision.',
+    prepublicationQualityState: qualityGate.state,
+    prepublicationQualityRevision: qualityGate.revision,
+    prepublicationQualityChecks: qualityGate.checks,
+    reviewDecision: 'Explicit current-wave publication approval for a curriculum-eligible Brick 8 concept with distinct informational intent and protected canonical ownership. This is a pre-publication quality decision, not a human reviewer attribution or an R11 performance decision.',
     concept,
   });
 }

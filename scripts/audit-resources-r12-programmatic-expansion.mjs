@@ -6,12 +6,12 @@ import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from '../src/lib/phonicsProgrammatic
 import { PHONICS_PUBLISHED_RESOURCE_PAGES, PHONICS_PUBLISHED_RESOURCE_PATHS, PHONICS_WAVE_2_PAGES } from '../src/lib/phonicsPublicationRegistry.js';
 import { PHONICS_WAVE_2_PUBLICATION_APPROVALS } from '../src/lib/phonicsWave2Publication.js';
 import { CURRENT_WAVE_PUBLICATION_APPROVAL_STATE, evaluateFurtherResourceScale, RESOURCE_EXPANSION_GATE_REVISION } from '../src/lib/resourceExpansionGovernance.js';
-import { PHONICS_EDITORIAL_REVIEW_RECORDS, PHONICS_PUBLISHED_EDITORIAL_REVIEW_RECORDS, PHONICS_WAVE_2_EDITORIAL_REVIEW_RECORDS } from '../src/lib/phonicsEditorialReviewRegistry.js';
 import { PHONICS_WAVE_2_CANONICAL_TOPIC_OWNERSHIP, R12_CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/phonicsWave2CanonicalOwnership.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/canonicalTopicOwnershipRegistry.js';
 import { PHONICS_RESOURCE_DISCOVERY_CLUSTERS, getPhonicsResourceReachablePaths, getRelatedPhonicsResourcePages } from '../src/lib/phonicsResourceDiscoveryGraph.js';
 import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { PHONICS_PREPUBLICATION_QUALITY_REVISION, PHONICS_PREPUBLICATION_QUALITY_STATE } from '../src/lib/phonicsPrepublicationQuality.js';
 
 const root = process.cwd();
 const distMode = process.argv.includes('--dist');
@@ -65,10 +65,10 @@ if (clustered.length !== 31 || new Set(clustered).size !== 31) fail('cluster-cov
 const reachable = new Set(getPhonicsResourceReachablePaths());
 for (const pathValue of PHONICS_PUBLISHED_RESOURCE_PATHS) if (!reachable.has(pathValue)) fail('unreachable', pathValue, 'Resource is not reachable from the phonics hub.');
 
-if (PHONICS_EDITORIAL_REVIEW_RECORDS.length !== 16) fail('legacy-review-ledger', 'R9.1', 'Historical R9.1 ledger must stay exactly 16.');
-if (PHONICS_WAVE_2_EDITORIAL_REVIEW_RECORDS.length !== 15 || PHONICS_PUBLISHED_EDITORIAL_REVIEW_RECORDS.length !== 31) fail('review-ledger', 'R12', 'R12 requires 15 Wave 2 and 31 total review records.');
-for (const record of PHONICS_WAVE_2_EDITORIAL_REVIEW_RECORDS) {
-  if (record.editorialReviewStatus !== 'pending' || record.reviewedAt !== null || record.reviewedRevision !== null) fail('false-human-review', record.conceptId, 'Wave 2 remains pending until an actual human review occurs.');
+for (const page of PHONICS_PUBLISHED_RESOURCE_PAGES) {
+  if (page.prepublicationQualityState !== PHONICS_PREPUBLICATION_QUALITY_STATE) fail('prepublication-quality-state', page.conceptId, 'Published page did not pass the pre-publication quality gate.');
+  if (page.prepublicationQualityRevision !== PHONICS_PREPUBLICATION_QUALITY_REVISION) fail('prepublication-quality-revision', page.conceptId, 'Published page is not bound to the current pre-publication quality revision.');
+  if (!Array.isArray(page.prepublicationQualityChecks) || page.prepublicationQualityChecks.length < 10) fail('prepublication-quality-checks', page.conceptId, 'Published page is missing its pre-publication check set.');
 }
 
 if (PHONICS_WAVE_2_CANONICAL_TOPIC_OWNERSHIP.length !== 15 || R12_CANONICAL_TOPIC_OWNERSHIP.length !== CANONICAL_TOPIC_OWNERSHIP.length + 15) fail('ownership-count', 'R12', 'Wave 2 needs one additive owner per page.');
@@ -89,7 +89,7 @@ if (distMode) {
     if (!fs.existsSync(htmlPath)) { fail('prerender', page.path, htmlPath); continue; }
     const html = fs.readFileSync(htmlPath, 'utf8');
     if (!html.includes(canonical) || !html.includes(page.seoTitle) || !html.includes(page.concept.parentQuestion) || !html.includes('Quick answer')) fail('rendered-content', page.path, 'Rendered resource is missing canonical SEO or unique educational value.');
-    if (page.publicationWave === 'expansion-wave-2' && (html.includes('Reviewed for phonics accuracy by') || html.includes('"reviewedBy"'))) fail('pending-review-claim', page.path, 'Pending Wave 2 page must not expose a human-review claim or reviewedBy schema.');
+    if (html.includes('Reviewed for phonics accuracy by') || html.includes('"reviewedBy"')) fail('obsolete-review-claim', page.path, 'Programmatic resource pages must not expose the retired post-publication reviewer workflow.');
   }
 }
 
@@ -99,8 +99,8 @@ const report = {
   pilotPages: PHONICS_PROGRAMMATIC_PILOT_PAGES.length,
   wave2Pages: PHONICS_WAVE_2_PAGES.length,
   publishedPages: PHONICS_PUBLISHED_RESOURCE_PAGES.length,
-  reviewRecords: PHONICS_PUBLISHED_EDITORIAL_REVIEW_RECORDS.length,
-  wave2ReviewStatus: 'pending',
+  prepublicationQualityState: PHONICS_PREPUBLICATION_QUALITY_STATE,
+  prepublicationQualityRevision: PHONICS_PREPUBLICATION_QUALITY_REVISION,
   clusters: PHONICS_RESOURCE_DISCOVERY_CLUSTERS.length,
   distMode,
   errors,

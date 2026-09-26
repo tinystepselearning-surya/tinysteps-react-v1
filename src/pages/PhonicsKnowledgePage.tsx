@@ -19,9 +19,6 @@ import {
   getPhonicsResourceDiscoveryClusterForPath,
   getRelatedPhonicsResourcePages,
 } from '../lib/phonicsResourceDiscoveryGraph.js';
-import { getApprovedPhonicsEditorialReview } from '../lib/phonicsEditorialReviewRegistry.js';
-import { usePublicEditorialApproval } from '../lib/publicEditorialReview';
-import { getEditorialReviewer } from '../lib/editorialReviewerRegistry';
 import { getCanonicalTopicOwnerPath } from '../lib/canonicalTopicOwnershipRegistry.js';
 import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
 import { getPhonicsResourceDifferentiation } from '../lib/phonicsResourceDifferentiation';
@@ -82,19 +79,10 @@ const BulletPanel: FC<{ title: string; items: readonly string[]; tone?: 'plain' 
 };
 
 function uniqueRelatedPaths(concept: PhonicsKnowledgeConcept) { return Array.from(new Set(concept.supportingPaths)).slice(0, 3); }
-function formatReviewDate(value: string) {
-  const date = new Date(value.includes('T') ? value : `${value}T00:00:00Z`);
-  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(date);
-}
-
 export default function PhonicsKnowledgePage() {
   const { slug = '' } = useParams();
   const pilotPage = getPhonicsProgrammaticPilotPageBySlug(slug);
   const page = pilotPage ?? getPublishedPhonicsResourcePageBySlug(slug);
-  const publicEditorialApproval = usePublicEditorialApproval(
-    page ? String(page.conceptId) : '',
-    page ? String(page.publicationRevision) : '',
-  );
   if (!page) return <NotFoundPage />;
 
   const { concept } = page;
@@ -106,16 +94,6 @@ export default function PhonicsKnowledgePage() {
   const relatedPaths = uniqueRelatedPaths(concept);
   const discoveryCluster = getPhonicsResourceDiscoveryClusterForPath(page.path);
   const relatedGuides = getRelatedPhonicsResourcePages(page.path, 4);
-  const staticEditorialReview = getApprovedPhonicsEditorialReview(page.path);
-  const editorialReview = publicEditorialApproval
-    ? {
-        editorialReviewStatus: 'approved' as const,
-        reviewerKey: publicEditorialApproval.reviewerKey,
-        reviewedAt: publicEditorialApproval.reviewedAt,
-        reviewedRevision: publicEditorialApproval.reviewedRevision,
-      }
-    : staticEditorialReview;
-  const reviewer = editorialReview ? getEditorialReviewer(editorialReview.reviewerKey) : null;
   const c7Handoff = getCommercialC7R3Handoff(page.path);
   const differentiation = getPhonicsResourceDifferentiation(concept.id);
   const stageContext = PHONICS_STAGE_CONTEXT[concept.knowledgeStage];
@@ -131,7 +109,6 @@ export default function PhonicsKnowledgePage() {
     name: page.seoTitle, description: page.seoDescription, abstract: concept.quickAnswer, inLanguage: 'en-IN',
     isPartOf: { '@id': WEBSITE_ID }, publisher: { '@id': ORGANIZATION_ID }, breadcrumb: { '@id': breadcrumbSchema['@id'] }, mainEntity: { '@id': definedTermId },
     about: { '@type': 'Thing', name: 'Phonics and reading for children', url: `${SITE_ORIGIN}/resources/phonics` },
-    ...(editorialReview && reviewer ? { reviewedBy: { '@id': reviewer.personId } } : {}),
     speakable: buildSpeakableSpecification(['.ts-answer-title', '.ts-answer-summary']),
   };
 
@@ -236,12 +213,6 @@ export default function PhonicsKnowledgePage() {
           <section className="mt-8 rounded-[1.8rem] bg-slate-950 p-6 text-white sm:p-8"><div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"><div><p className="text-[11px] font-black uppercase tracking-[0.2em] text-sky-300">Need help finding the actual gap?</p><h2 className="mt-2 text-2xl font-black tracking-[-0.025em]">Use an assessment when practice alone is not showing what is stuck.</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">The focused guide explains one pattern. A broader assessment can separate sound knowledge, blending, decoding, spelling and fluency needs.</p></div><Link to="/book-demo" className="rounded-full bg-white px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-sky-50">Book free assessment</Link></div></section>
         )}
 
-        {editorialReview && reviewer && editorialReview.reviewedAt ? (
-          <aside className="mt-8 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50/65 px-4 py-3.5 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between sm:px-5" aria-label="Human editorial review" data-editorial-review="approved">
-            <p><span className="font-bold text-slate-900">Reviewed for phonics accuracy by </span><Link className="font-black text-emerald-800 underline decoration-emerald-300 underline-offset-4" to={reviewer.profilePath}>{reviewer.fullName}</Link></p>
-            <p className="shrink-0 text-xs font-semibold text-slate-500">{reviewer.roleLabel} · Reviewed {formatReviewDate(editorialReview.reviewedAt)}</p>
-          </aside>
-        ) : null}
       </article>
     </main>
   );
