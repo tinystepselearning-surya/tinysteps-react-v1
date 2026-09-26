@@ -9,10 +9,6 @@ on:
       - 'src/lib/grammarWritingWritingProgression.*'
       - 'src/lib/grammarWritingSemanticCanonicalOwnership.js'
       - 'src/content/courses.ts'
-      - 'src/content/blog/posts/parent-tips/how-to-improve-sentence-formation-in-kids.ts'
-      - 'src/content/blog/posts/grammar/how-to-teach-paragraph-writing-to-kids.ts'
-      - 'src/content/blog/posts/grammar/week-11-grammar-creative-writing.ts'
-      - 'src/content/blog/posts/grammar/week-20-grammar-editing-camp.ts'
       - 'src/tests/seo/grammarWritingGr1Taxonomy.spec.ts'
       - 'src/tests/seo/grammarWritingGr2TenseArchitecture.spec.ts'
       - 'src/tests/seo/grammarWritingGr3WritingProgression.spec.ts'
@@ -24,6 +20,10 @@ on:
       - 'docs/seo/resources-architecture/GR3_*'
       - '.github/workflows/gr3-grammar-writing-progression.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
