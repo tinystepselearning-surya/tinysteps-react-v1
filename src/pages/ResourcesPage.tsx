@@ -292,14 +292,14 @@ const ResourcesPage: FC = () => {
           <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
             <div>
               <p className="text-[9.5px] font-black uppercase tracking-[0.22em] text-slate-500">
-                Central resource system
+                Explore the full library
               </p>
               <h2 id="resource-library-heading" className="mt-1 text-xl font-black tracking-[-0.025em] text-slate-950 sm:text-2xl">
                 One Resource Center, all learning content
               </h2>
             </div>
             <p className="max-w-2xl text-sm leading-6 text-slate-600">
-              Guides, focused phonics resources, parent support, practice and school material are organised through this Resource Center while their established page URLs stay unchanged.
+              Guides, focused phonics resources, parent support, practice and school materials are organised here so you can move between related learning needs without starting over.
             </p>
           </div>
 
