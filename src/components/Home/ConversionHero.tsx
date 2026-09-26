@@ -219,16 +219,19 @@ const ConversionHero: React.FC = () => {
             <BookAssessmentForm
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
-              description="Share a few details about your child so the assessment can focus on the most relevant English skill area."
+              description="Tell us where your child needs support so the free assessment can focus on the right skills."
               submitLabel="Book Free 35-Minute Demo on WhatsApp"
               submitAriaLabel="Book Free 35-Minute Demo on WhatsApp"
+              appearance="heroCompact"
+              helperText="20–30 seconds • No commitment • WhatsApp confirmation"
+              secondaryHelperText={null}
             />
 
           </div>
         </div>
 
         {/* Shared proof row: keeps both hero columns visually balanced on tablet and desktop. */}
-        <div className="mt-5 hidden gap-2 md:grid md:grid-cols-3">
+        <div className="mt-4 hidden gap-2 md:grid md:grid-cols-3">
           {heroHighlights.map((item) => (
             <SunTile
               key={item.title}
