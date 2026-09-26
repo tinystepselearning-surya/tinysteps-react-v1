@@ -34,12 +34,12 @@ const stages: Stage[] = [
     ],
     parentGets: [
       "Clear “what we taught today” note",
-      "Simple 3–5 minute home practice prompt",
+      "Short home practice prompt connected to the lesson",
       "Progress snapshot: what’s strong + what needs practice",
     ],
     proofTiles: [
       { label: "Skill Snapshot", desc: "Sounds/letters mastered + current focus" },
-      { label: "Home Practice", desc: "One tiny practice task (3–5 mins)" },
+      { label: "Home Practice", desc: "One short practice task linked to the lesson" },
       { label: "Teacher Note", desc: "What helped your child most today" },
       { label: "Next Steps", desc: "What’s coming next (no surprises)" },
     ],
@@ -106,29 +106,29 @@ const stages: Stage[] = [
   {
     id: "confidence",
     icon: "🌟",
-    title: "The Breakthrough Stage",
-    subtitle: "Reading + writing + speaking… together in real life",
-    focusChips: ["Independent reading", "Confident speaking", "Strong writing", "School success"],
+    title: "Integrated Practice",
+    subtitle: "Reading + writing + speaking together in meaningful tasks",
+    focusChips: ["Independent reading", "Clear writing", "Confident speaking", "Skill transfer"],
     childLearns: [
-      "Reads independently with better fluency",
-      "Shares ideas confidently in school and at home",
-      "Writes clearer sentences with fewer errors",
+      "Practises reading with increasing independence",
+      "Connects sentence and writing skills across activities",
+      "Explains ideas in longer, more organised responses",
     ],
     howWeTeach: [
-      "Integrated practice (phonics + grammar + speaking)",
-      "Real-life tasks: reading aloud, mini presentations",
-      "Ongoing feedback loops (child + parent + teacher)",
+      "Integrated practice across reading, grammar, writing, and speaking",
+      "Real-use tasks such as reading aloud, short writing, and mini presentations",
+      "Ongoing feedback based on the child’s current focus areas",
     ],
     parentGets: [
-      "Parent dashboard-style insights (simple & visual)",
-      "Milestone updates you can feel at home",
-      "Optional advanced path (based on the child’s pace)",
+      "Milestone updates in clear parent-friendly language",
+      "Visible strengths and current focus areas",
+      "A recommended next step based on the child’s progress",
     ],
     proofTiles: [
       { label: "Milestones", desc: "Visible progress checkpoints" },
-      { label: "Insights", desc: "Strengths + focus areas (simple)" },
-      { label: "Personal Path", desc: "Child’s pace + next best step" },
-      { label: "Maintenance", desc: "Keep skills strong over time" },
+      { label: "Focus Areas", desc: "What is secure and what still needs practice" },
+      { label: "Next Step", desc: "The recommended focus for upcoming classes" },
+      { label: "Transfer", desc: "How skills are being used across tasks" },
     ],
   },
 ];
@@ -415,7 +415,7 @@ const StepTimeline: React.FC = () => {
                 </div>
                 <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200">
                   <div className="font-bold">5) Quick Check + Parent Note (2 mins)</div>
-                  <div className="text-slate-600">What improved + what to practice (3–5 mins).</div>
+                  <div className="text-slate-600">What improved + what to practise next.</div>
                 </div>
               </div>
             )}
