@@ -66,9 +66,13 @@ describe('authority blog template rollout', () => {
     expect(hero).toContain('heroImage?: string');
     expect(hero).toContain("lg:grid-cols-[minmax(0,1fr)_360px]");
     expect(hero).toContain("xl:grid-cols-[minmax(0,1fr)_430px]");
-    expect(hero).toContain('className="h-auto w-full object-contain"');
-    expect(hero).toContain('WebkitMaskImage');
-    expect(hero).toContain('maskImage');
+    expect(hero).toContain('className="relative aspect-video overflow-hidden"');
+    expect(hero).toContain('className="h-full w-full object-contain"');
+    expect(hero).toContain('pointer-events-none absolute -inset-10');
+    expect(hero).toContain('inset-y-0 left-0 w-[27%] bg-gradient-to-r');
+    expect(hero).toContain('inset-y-0 right-0 w-[9%] bg-gradient-to-l');
+    expect(hero).toContain('inset-x-0 top-0 h-[14%] bg-gradient-to-b');
+    expect(hero).toContain('inset-x-0 bottom-0 h-[16%] bg-gradient-to-t');
     expect(hero).toContain('width={960}');
     expect(hero).toContain('height={540}');
     expect(hero).toContain('loading="eager"');
