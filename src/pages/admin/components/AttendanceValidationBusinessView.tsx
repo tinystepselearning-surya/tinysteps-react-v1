@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   groupPersistedAvsBusinessOutcomes,
+  type AvsBusinessGroup,
   type AvsBusinessOutcome,
 } from '../../../lib/attendanceValidationBusinessReconciliation';
 import { Badge } from '@components/ui/badge';
@@ -38,6 +39,11 @@ export interface AttendanceValidationBusinessCase {
   tinyStepsPresentCount: number | null;
   businessDifferenceCount: number | null;
   sameDayEvidenceEvaluable: boolean | null;
+  reasons: string[];
+  sourceClassificationReasons: string[];
+  proofIssues: string[];
+  identityIssues: string[];
+  staffRegistryIssues: string[];
 }
 
 interface Props {
@@ -96,6 +102,49 @@ function teacherFilterKey(
   return null;
 }
 
+function technicalIssueLabel(value: string): string {
+  switch (value) {
+    case 'same_day_identity_not_verified':
+      return 'Teacher/learner identity not verified';
+    case 'same_day_attendance_evidence_incomplete':
+      return 'Teams attendance evidence incomplete';
+    case 'evidence_document_missing':
+      return 'Teams evidence missing';
+    case 'operational_session_reference_mismatch':
+      return 'Session/evidence reference mismatch';
+    case 'validation_scope_date_unresolved':
+      return 'Service date could not be resolved';
+    case 'validation_scope_date_conflict':
+      return 'Service date sources disagree';
+    default:
+      return humanize(value);
+  }
+}
+
+function technicalReasonsForGroup(
+  group: AvsBusinessGroup<AttendanceValidationBusinessCase>,
+): string[] {
+  const raw = group.cases.flatMap((item) => [
+    ...item.reasons,
+    ...item.sourceClassificationReasons,
+    ...item.proofIssues,
+    ...item.identityIssues,
+    ...item.staffRegistryIssues,
+  ]).filter((value) =>
+    value && value !== 'business_evidence_not_evaluable');
+
+  const labels = [...new Set(raw.map(technicalIssueLabel))];
+  if (labels.length > 0) return labels;
+
+  if (group.cases.some((item) => item.businessOutcome === null)) {
+    return ['Business result unavailable'];
+  }
+  if (new Set(group.cases.map((item) => item.businessOutcome)).size > 1) {
+    return ['Session results disagree within this student/day group'];
+  }
+  return ['Source evidence could not be compared safely'];
+}
+
 export default function AttendanceValidationBusinessView({ cases }: Props) {
   const [activeTab, setActiveTab] =
     useState<Exclude<AvsBusinessOutcome, 'not_evaluable'>>('verified');
@@ -134,12 +183,27 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
       teacherFilterKey(group.teacherId, group.teacherName) === teacherFilter);
   }, [groups, teacherFilter]);
 
-  const notEvaluableCount = useMemo(
+  const notEvaluableGroups = useMemo(
     () => teacherScopedGroups.filter(
       (group) => group.outcome === 'not_evaluable',
-    ).length,
+    ),
     [teacherScopedGroups],
   );
+
+  const notEvaluableCount = notEvaluableGroups.length;
+
+  const technicalIssueSummary = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const group of notEvaluableGroups) {
+      for (const reason of technicalReasonsForGroup(group)) {
+        counts.set(reason, (counts.get(reason) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()]
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((left, right) =>
+        right.count - left.count || left.reason.localeCompare(right.reason));
+  }, [notEvaluableGroups]);
 
   const tabCounts = useMemo(() => ({
     verified: teacherScopedGroups.filter(
@@ -205,9 +269,23 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <span className="font-medium">
-              {notEvaluableCount} source-data group{notEvaluableCount === 1 ? '' : 's'} not evaluated.
+              {notEvaluableCount} group{notEvaluableCount === 1 ? '' : 's'} not evaluated.
             </span>
-            {' '}These are technical extraction/identity failures, not attendance classifications. Run Validation again after the source issue is resolved.
+            {' '}These groups could not be compared safely and are excluded from the three attendance outcomes.
+            {technicalIssueSummary.length > 0 && (
+              <details className="mt-2">
+                <summary className="cursor-pointer font-medium">
+                  Show technical reasons
+                </summary>
+                <div className="mt-1 space-y-0.5 text-xs">
+                  {technicalIssueSummary.map((item) => (
+                    <div key={item.reason}>
+                      {item.reason}: {item.count} group{item.count === 1 ? '' : 's'}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         </div>
       )}
@@ -227,7 +305,7 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
               <SelectValue placeholder="All teachers" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All teachers ({groups.length})</SelectItem>
+              <SelectItem value="all">All teachers ({teacherOptions.length})</SelectItem>
               {teacherOptions.map((teacher) => (
                 <SelectItem key={teacher.value} value={teacher.value}>
                   {teacher.label} ({teacher.count})
