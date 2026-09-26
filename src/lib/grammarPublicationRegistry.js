@@ -1,23 +1,14 @@
-import { GRAMMAR_COURSES } from '../content/grammarCurriculum';
-
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
 
 export const GRAMMAR_PUBLICATION_REVISION = '2026-09-27-gr-pseo-1';
 export const GRAMMAR_PUBLICATION_PREFIX = '/resources/grammar';
 
-const courseById = GRAMMAR_COURSES;
-
 function curriculumRef(courseId, lessonNumber) {
-  const lesson = courseById[courseId]?.lessons?.find((item) => item.lessonNumber === lessonNumber);
-  if (!lesson) throw new Error(`Unknown Grammar curriculum reference: ${courseId} lesson ${lessonNumber}`);
-  return freeze({
-    courseId,
-    lessonNumber,
-    lessonTitle: lesson.label,
-    stageOrder: lesson.stageOrder,
-    stageLabel: lesson.stageLabel,
-  });
+  if (!['basic-grammar', 'advanced-grammar'].includes(courseId) || !Number.isInteger(lessonNumber) || lessonNumber < 1 || lessonNumber > 36) {
+    throw new Error(`Invalid Grammar curriculum reference: ${courseId} lesson ${lessonNumber}`);
+  }
+  return freeze({ courseId, lessonNumber });
 }
 
 function page(config) {
@@ -559,7 +550,7 @@ export const GRAMMAR_PUBLISHED_RESOURCE_PATHS = freezeList(
 export const GRAMMAR_PUBLISHED_RESOURCE_SEO = freeze(Object.fromEntries(
   GRAMMAR_PUBLISHED_RESOURCE_PAGES.map((item) => [item.path, freeze({
     title: `${item.cardTitle} | Examples & Practice | Tiny Steps`,
-    description: `${item.quickAnswer} See examples, common mistakes, curriculum placement and practice ideas.`,
+    description: `Learn ${item.label.toLowerCase()} for kids with clear examples, common mistakes, curriculum placement and practical next steps from Tiny Steps.`,
     canonicalPath: item.path,
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
