@@ -152,7 +152,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain(
       "'runAttendanceValidationRange'",
     );
-    expect(dashboard).toContain('{ fromDate, toDate }');
+    expect(dashboard).toContain("{ fromDate, toDate, ...(parentId !== 'all' ? { parentId } : {})");
     expect(dashboard).toContain('await loadSavedCases(false, true)');
     expect(callFunctions).toContain(
       "runAttendanceValidationRange: 'asia-south1'",

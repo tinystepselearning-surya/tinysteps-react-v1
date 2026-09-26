@@ -133,8 +133,11 @@ export function classifyArtifactChanges(changedFiles, beforeFirebase = {}, after
       || file.startsWith('scripts/deployment/')
       || file === 'scripts/test/functions-deployment.node-test.mjs'
       || file === '.github/workflows/deploy.yml');
-  const firestoreRulesChanged = firestoreConfigChanged || files.some(file =>
-    file === 'firestore.rules' || file === 'firestore.indexes.json' || file.startsWith('src/tests/firestore/'));
+  const firestoreRulesChanged = firestoreConfigChanged || files.includes('firestore.rules');
+  const firestoreIndexesChanged = firestoreConfigChanged || files.includes('firestore.indexes.json');
+  const firestoreValidationRequired = firestoreRulesChanged
+    || firestoreIndexesChanged
+    || files.some(file => file.startsWith('src/tests/firestore/'));
   const frontendValidationRequired = hostingConfigChanged || files.some(file =>
     file === 'package.json' || file === 'package-lock.json' || file === 'index.html'
       || file.startsWith('src/') || file.startsWith('public/') || file.startsWith('e2e/')
@@ -153,9 +156,10 @@ export function classifyArtifactChanges(changedFiles, beforeFirebase = {}, after
     functionsValidationRequired,
     frontendValidationRequired,
     contentOnlyValidation,
-    firestoreValidationRequired: firestoreRulesChanged,
+    firestoreValidationRequired,
     hostingChanged,
     firestoreRulesChanged,
+    firestoreIndexesChanged,
   };
 }
 

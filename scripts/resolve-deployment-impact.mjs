@@ -89,6 +89,7 @@ const output = {
   frontend_validation_required: String(result.frontendValidationRequired),
   content_only_validation: String(result.contentOnlyValidation),
   firestore_rules_changed: String(result.firestoreRulesChanged),
+  firestore_indexes_changed: String(result.firestoreIndexesChanged),
   firestore_validation_required: String(result.firestoreValidationRequired),
   school_transport_required: String(result.fullDeployment || result.impactedFunctions.some(id => schoolCallables.has(id))),
   avs_transport_required: String(result.fullDeployment || result.impactedFunctions.some(id => avsCallables.has(id))),
@@ -112,6 +113,7 @@ const lines = [
   `- Hosting changed: ${result.hostingChanged}`,
   `- Content-only validation: ${result.contentOnlyValidation}`,
   `- Firestore rules changed: ${result.firestoreRulesChanged}`,
+  `- Firestore indexes changed: ${result.firestoreIndexesChanged}`,
   `- AVS callable transport verification required: ${result.fullDeployment || result.impactedFunctions.some(id => avsCallables.has(id))}`,
 ];
 if (result.fullDeploymentReason) lines.push(`- Full deployment reason: ${result.fullDeploymentReason}`);
