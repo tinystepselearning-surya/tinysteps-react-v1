@@ -60,10 +60,16 @@ describe('authority blog template pilot', () => {
     expect(page).not.toContain("lazy(() => import('../components/blog/AuthorityBlogExperience'))");
     expect(page).toContain('heroImage={isAuthorityPilot ? resolvedHero : undefined}');
     expect(hero).toContain('heroImage?: string');
-    expect(hero).toContain("lg:grid-cols-[minmax(0,1fr)_300px]");
+    expect(hero).toContain("lg:grid-cols-[minmax(0,1fr)_330px]");
+    expect(hero).toContain("xl:grid-cols-[minmax(0,1fr)_360px]");
     expect(hero).toContain('loading="eager"');
     expect(hero).toContain('fetchPriority="high"');
     expect(hero).toContain('aspect-[4/3]');
+    expect(hero).toContain('relative isolate justify-self-stretch lg:justify-self-end');
+    expect(hero).toContain('bg-[radial-gradient(circle_at_center');
+    expect(hero).toContain('w-[30%] bg-[linear-gradient(90deg');
+    expect(hero).not.toContain('border border-white/12 bg-white/[0.06] p-1.5');
+    expect(hero).not.toContain('rounded-[19px]');
   });
 
   it('provides the reusable left-side scroll-spy index and mobile guide index', () => {
