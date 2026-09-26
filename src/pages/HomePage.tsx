@@ -236,7 +236,7 @@ export default function HomePage() {
       {/* REVIEW ACTION 03 — EARLY TRUST: Give a compact credibility snapshot without restarting the company story. */}
       <TrustSnapshotSection />
 
-      {/* REVIEW ACTION 04 — DIAGNOSIS: Explain what the assessment checks and show common age-based starting points. */}
+      {/* REVIEW ACTION 04 — DIAGNOSIS: Explain what the assessment may check without assigning children by age alone. */}
       <AssessmentStartPointsSection />
 
       <div ref={belowFoldAnchorRef} className="h-px w-full" aria-hidden="true" />
