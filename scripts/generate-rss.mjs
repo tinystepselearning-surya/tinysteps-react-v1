@@ -16,6 +16,12 @@ import {
   PHONICS_PUBLICATION_GROUPS,
   PHONICS_PUBLISHED_RESOURCE_PAGES,
 } from '../src/lib/phonicsPublicationRegistry.js';
+import {
+  AI_ANSWER_LAYER_DEFINITIONS,
+  AI_ANSWER_LAYERS,
+  AI_ANSWER_LAYER_MACHINE_JSON_PATH,
+  AI_ANSWER_LAYER_MACHINE_TEXT_PATH,
+} from '../src/lib/aiAnswerLayerRegistry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +62,7 @@ const LLM_DISCOVERY_FILES = [
 ];
 
 const PHONICS_LLM_SECTION_HEADING = '## Focused Phonics Resource Library — 31 governed guides';
+const AI_ANSWER_LLM_SECTION_HEADING = '## AI Answer Layers — problem, concept, practice';
 
 function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
   const lines = [
@@ -208,7 +215,92 @@ function buildRssXml({ title, description, feedPath, items }) {
 }
 function writeFile(targetPath, content) { fs.mkdirSync(path.dirname(targetPath), { recursive: true }); fs.writeFileSync(targetPath, content, 'utf8'); }
 
-function normalizeLlmDiscoveryFiles() {
+function resolveAiAnswer(entry, blogItemMap) {
+  if (entry.answer) return normalizeText(entry.answer);
+  const absolute = toCanonicalAbsoluteUrl(entry.canonicalPath);
+  if (blogItemMap.has(absolute)) return normalizeText(blogItemMap.get(absolute)?.description || '');
+  const routeMeta = ROUTE_SEO_REGISTRY[entry.canonicalPath];
+  return normalizeText(routeMeta?.description || '');
+}
+
+function buildAiResourceIndex(blogItemMap) {
+  const layers = AI_ANSWER_LAYER_DEFINITIONS.map((definition) => ({
+    ...definition,
+    items: (AI_ANSWER_LAYERS[definition.layer] || []).map((entry) => ({
+      id: entry.id,
+      subject: entry.subject,
+      query: entry.query,
+      answer: resolveAiAnswer(entry, blogItemMap),
+      canonical_url: toCanonicalAbsoluteUrl(entry.canonicalPath),
+      hub_url: toCanonicalAbsoluteUrl(entry.hubPath),
+      supporting_urls: [...new Set((entry.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
+      practice_urls: [...new Set((entry.practicePaths || []).map(toCanonicalAbsoluteUrl))],
+      answer_source: entry.answerSource,
+      ownership_state: entry.ownershipState,
+    })),
+  }));
+  return {
+    name: 'Tiny Steps AI Resource Answer Index',
+    revision: '2026-09-26-r24-r26',
+    canonical_resource_center: SITE_URL + '/resources',
+    purpose: 'Machine-readable routing from parent problems to canonical educational answers and focused practice.',
+    principles: [
+      'One established canonical owner per answer intent.',
+      'Use visible page answers and existing evidence; do not create duplicate AI-only article URLs.',
+      'Layer 1 identifies the problem, Layer 2 explains the concept, Layer 3 links to focused practice.',
+    ],
+    layers,
+  };
+}
+
+function buildAiResourceText(index) {
+  const lines = [
+    '# Tiny Steps AI Resource Answer Index',
+    '',
+    'Canonical Resource Center: ' + index.canonical_resource_center,
+    'JSON: ' + SITE_URL + AI_ANSWER_LAYER_MACHINE_JSON_PATH,
+    '',
+  ];
+  for (const layer of index.layers) {
+    lines.push('## Layer ' + layer.layer + ' — ' + layer.label, '', layer.purpose, '');
+    for (const entry of layer.items) {
+      lines.push('- Q: ' + entry.query);
+      if (entry.answer) lines.push('  A: ' + entry.answer);
+      lines.push('  Canonical: ' + entry.canonical_url);
+      if (entry.practice_urls.length) lines.push('  Practice: ' + entry.practice_urls.join(', '));
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trim() + '\n';
+}
+
+function buildAiAnswerLlmSection(index) {
+  const counts = index.layers.map((layer) => 'Layer ' + layer.layer + ' ' + layer.label + ': ' + layer.items.length).join('; ');
+  return [
+    AI_ANSWER_LLM_SECTION_HEADING,
+    '',
+    'Tiny Steps exposes a three-layer retrieval index for parent problems, educational concepts and focused practice. Existing canonical URLs remain the answer owners.',
+    '',
+    '- [Machine-readable JSON answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_JSON_PATH + ')',
+    '- [Plain-text answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_TEXT_PATH + ')',
+    '- Coverage: ' + counts,
+  ].join('\n');
+}
+
+function upsertNamedMarkdownSection(text, heading, section, preferredAnchor) {
+  const start = text.indexOf(heading);
+  if (start >= 0) {
+    const nextHeading = text.indexOf('\n## ', start + heading.length);
+    const before = text.slice(0, start).trimEnd();
+    const after = nextHeading >= 0 ? text.slice(nextHeading + 1).trimStart() : '';
+    return [before, section.trim(), after].filter(Boolean).join('\n\n');
+  }
+  const anchorIndex = text.indexOf(preferredAnchor);
+  if (anchorIndex < 0) return text.trimEnd() + '\n\n' + section.trim() + '\n';
+  return text.slice(0, anchorIndex).trimEnd() + '\n\n' + section.trim() + '\n\n' + text.slice(anchorIndex).trimStart();
+}
+
+function normalizeLlmDiscoveryFiles(aiIndex) {
   const retiredCommercialBlogUrls = Object.entries(RETIRED_BLOG_PATH_REDIRECTS)
     .filter(([, destination]) => !destination.startsWith('/blog/'))
     .map(([source]) => `${SITE_URL}${source}`);
@@ -237,6 +329,12 @@ function normalizeLlmDiscoveryFiles() {
       buildGovernedPhonicsLlmSection({ detailed: isFullDirectory }),
       isFullDirectory ? '## Interpretation notes' : '## School and Institutional Partnerships',
     );
+    text = upsertNamedMarkdownSection(
+      text,
+      AI_ANSWER_LLM_SECTION_HEADING,
+      buildAiAnswerLlmSection(aiIndex),
+      PHONICS_LLM_SECTION_HEADING,
+    );
 
     fs.writeFileSync(filePath, `${text.replace(/\n+$/, '')}\n`, 'utf8');
   }
@@ -258,7 +356,10 @@ function main() {
   writeFile(path.join(PUBLIC_DIR, 'feed.xml'), buildRssXml({ title: SITE_TITLE, description: SITE_DESCRIPTION, feedPath: '/feed.xml', items: siteFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'rss.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/rss.xml', items: blogFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'feed.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/feed.xml', items: blogFeedItems }));
-  normalizeLlmDiscoveryFiles();
-  console.log('Generated RSS feeds and canonicalized retired/legacy URLs across discovery files.');
+  const aiIndex = buildAiResourceIndex(blogItemMap);
+  writeFile(path.join(PUBLIC_DIR, AI_ANSWER_LAYER_MACHINE_JSON_PATH.slice(1)), JSON.stringify(aiIndex, null, 2) + '\n');
+  writeFile(path.join(PUBLIC_DIR, AI_ANSWER_LAYER_MACHINE_TEXT_PATH.slice(1)), buildAiResourceText(aiIndex));
+  normalizeLlmDiscoveryFiles(aiIndex);
+  console.log('Generated RSS feeds, AI answer indexes, and canonicalized discovery files.');
 }
 main();
