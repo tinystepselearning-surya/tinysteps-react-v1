@@ -61,12 +61,12 @@ No Wave 3 or unapproved candidate page is added.
 
 ## Additional public content coverage
 
-R27 also connects the remaining public routes represented in `ROUTE_SEO_REGISTRY`, after deduplicating URLs already owned by:
+R27 also connects the union of the governed `PUBLIC_ROUTE_MANIFEST` and `ROUTE_SEO_REGISTRY`, after deduplicating URLs already owned by:
 
 - the 83-blog editorial corpus;
 - the 31-page governed phonics corpus.
 
-This additional corpus includes resource hubs, parent-help pages, practice/tools, school resources and other canonical public site routes.
+This additional corpus includes resource hubs, parent-help pages, practice/tools, school resources, programme/support pages, seasonal public pages and public legal routes. Manifest-declared noindex routes remain present only as supporting metadata.
 
 Noindex public routes remain marked as supporting-only/noindex.
 
