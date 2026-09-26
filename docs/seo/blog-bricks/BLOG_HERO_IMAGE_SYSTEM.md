@@ -13,6 +13,9 @@ The blog hero-family registry maps every current public Tiny Steps blog article 
 - Give every family a meaningfully different action, setting, age/stage, prop system, or camera composition.
 - Avoid generic stock-photo posing and avoid repeating the same parent-child desk scene.
 - Website/CSS owns all hero blending and dark treatment.
+- Render the reviewed family asset at its native 16:9 ratio without `object-cover` cropping in the compact authority hero.
+- Keep the hero image chrome-free: no card background, border, padding frame, rounded tile, or tile shadow around the asset.
+- Use a soft CSS edge mask/fade so the photograph dissolves into the dark hero instead of reading as a separate rectangle; keep that treatment outside the source asset.
 
 ## Active visual families
 
