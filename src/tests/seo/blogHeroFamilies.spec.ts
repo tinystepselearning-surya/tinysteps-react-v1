@@ -27,7 +27,7 @@ const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
   'building-better-sentences': 5,
   'planning-and-writing-ideas': 2,
   'editing-and-improving-writing': 4,
-  'finding-your-speaking-voice': 4,
+  'finding-your-speaking-voice': 3,
   'conversation-and-storytelling': 3,
   'presenting-with-confidence': 7,
   'ready-for-the-classroom': 2,
@@ -36,10 +36,10 @@ const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
 };
 
 describe('blog hero image family architecture', () => {
-  it('maps all 83 public blog articles exactly once with no fallback gaps', () => {
-    expect(blogPosts).toHaveLength(83);
-    expect(Object.keys(BLOG_HERO_FAMILY_BY_SLUG)).toHaveLength(83);
-    expect(new Set(Object.keys(BLOG_HERO_FAMILY_BY_SLUG)).size).toBe(83);
+  it('maps all 82 public blog articles exactly once with no fallback gaps', () => {
+    expect(blogPosts).toHaveLength(82);
+    expect(Object.keys(BLOG_HERO_FAMILY_BY_SLUG)).toHaveLength(82);
+    expect(new Set(Object.keys(BLOG_HERO_FAMILY_BY_SLUG)).size).toBe(82);
 
     const postSlugs = blogPosts.map((post) => post.slug).sort();
     const mappedSlugs = Object.keys(BLOG_HERO_FAMILY_BY_SLUG).sort();
