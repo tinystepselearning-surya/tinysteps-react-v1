@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../../config/publicFacts';
+import { PUBLIC_SITE_FACTS } from '../../config/publicFacts';
 import {
   CLASS_SAMPLE_CATEGORY_LABELS,
   isValidYouTubeVideoId,
@@ -88,15 +88,13 @@ export function ParentProblemRecognitionSection() {
 const trustSnapshot = [
   { value: PUBLIC_SITE_FACTS.learnerReach.learnersLabel, label: 'served through Tiny Steps' },
   { value: PUBLIC_SITE_FACTS.learnerReach.countriesLabel, label: 'with Tiny Steps families' },
-  { value: PUBLIC_SESSION_DURATION_LABEL, label: 'standard 1:1 class' },
-  { value: 'Weekly', label: 'parent progress visibility' },
 ];
 
 export function TrustSnapshotSection() {
   return (
-    <section className="px-6 pb-10">
-      <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-slate-950 px-5 py-6 text-white shadow-[0_22px_60px_rgba(15,23,42,0.14)] sm:px-8">
-        <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+    <section className="px-6 pb-10 md:hidden">
+      <div className="mx-auto max-w-6xl rounded-[24px] border border-slate-200 bg-slate-950 px-5 py-5 text-white shadow-[0_18px_48px_rgba(15,23,42,0.12)]">
+        <div className="grid grid-cols-2 gap-5">
           {trustSnapshot.map((item) => (
             <div key={item.label} className="text-center lg:text-left">
               <div className="text-2xl font-bold tracking-tight text-white">{item.value}</div>
@@ -282,6 +280,17 @@ export function LearningPathsSection() {
             </Link>
           ))}
         </div>
+
+        <p className="mt-6 text-center text-sm leading-6 text-slate-600">
+          Looking for writing, spoken English, reading-fluency or confidence-specific support?{' '}
+          <Link
+            to="/courses"
+            className="font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900"
+          >
+            View all Tiny Steps courses
+          </Link>
+          .
+        </p>
       </div>
     </section>
   );
