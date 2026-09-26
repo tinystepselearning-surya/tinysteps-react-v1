@@ -20,13 +20,13 @@ const PricingCrispSection: React.FC = () => {
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <p className="mb-2 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700 shadow-sm">
-            1:1 Phonics · Grammar · Public Speaking
+            Standard live 1:1 plans
           </p>
           <h2 className="text-center text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-            Premium 1:1 classes, simple plans
+            Simple 1:1 pricing
           </h2>
           <p className="mt-3 text-center text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
-            <span className="font-semibold text-slate-900">Standard Program</span> • Classes with expert Indian teachers
+            Standard live 1:1 pricing is shared across the core programme system; programme and starting-level fit are confirmed through assessment.
           </p>
           <p className="mt-3 text-center text-sm font-semibold text-slate-800">
             {STANDARD_PRICING_SUMMARY}
@@ -47,11 +47,7 @@ const PricingCrispSection: React.FC = () => {
                 {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes} mins
               </div>
             </div>
-            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
-              <li>• Personalised assessment + roadmap</li>
-              <li>• Around 2 classes per week</li>
-              <li>• Phonics, grammar, or public speaking</li>
-            </ul>
+
           </div>
 
           {/* Growth Pack (Most Popular) */}
@@ -70,11 +66,7 @@ const PricingCrispSection: React.FC = () => {
                 {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[1].durationMinutes} mins
               </div>
             </div>
-            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
-              <li>• Personalised assessment + roadmap</li>
-              <li>• Around 3–4 classes per week</li>
-              <li>• Phonics, grammar, or public speaking</li>
-            </ul>
+
           </div>
 
           {/* Intensive Pack */}
@@ -90,13 +82,13 @@ const PricingCrispSection: React.FC = () => {
                 {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[2].durationMinutes} mins
               </div>
             </div>
-            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
-              <li>• Personalised assessment + roadmap</li>
-              <li>• Around 5–6 classes per week</li>
-              <li>• Phonics, grammar, or public speaking</li>
-            </ul>
+
           </div>
         </div>
+
+        <p className="mx-auto mt-5 max-w-3xl text-center text-sm leading-6 text-slate-600">
+          All standard 1:1 packages use the same per-class rate and class duration. Package size is a scheduling choice; the child&apos;s programme and starting level are determined separately.
+        </p>
 
         <div className="relative mt-8 overflow-hidden rounded-[32px] border border-amber-200/30 bg-gradient-to-br from-[#0a1224] via-[#111d38] to-[#1a2747] p-6 text-white shadow-[0_30px_90px_-45px_rgba(2,6,23,0.95)] md:p-8">
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-300/25 blur-3xl" />
