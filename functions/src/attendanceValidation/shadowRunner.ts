@@ -185,6 +185,7 @@ export interface Av53ShadowStore {
 
 interface Av53SameDayCoverageContext {
   aggregate: SameDayCoverageAggregate;
+  sessionCount: number;
   presentSessionCount: number;
   contextIncomplete: boolean;
   hasSameDayV2Evidence: boolean;
@@ -194,6 +195,7 @@ interface Av53ShadowDependencies {
   store: Av53ShadowStore;
   staffRegistry: Av3StaffRegistrySnapshot;
   now?: () => Date;
+  sameDaySessionCountByGroup?: ReadonlyMap<string, number>;
   sameDayPresentCountByGroup?: ReadonlyMap<string, number>;
   sameDayContextIncompleteGroups?: ReadonlySet<string>;
 }
@@ -739,6 +741,7 @@ function caseFromEvidence(params: {
   const business = reconcileAvsBusinessOutcome({
     evidenceEvaluable,
     teamsOverlapSeconds: sameDay?.aggregate.totalOverlapSeconds ?? 0,
+    sameDaySessionCount: sameDay?.sessionCount ?? 0,
     tinyStepsPresentCount:
       sameDay?.presentSessionCount
       ?? (tinyStepsAttendance === 'present' ? 1 : 0),
@@ -840,6 +843,7 @@ export async function runAv53Shadow(
   const cases: Av53ValidationCaseDocument[] = [];
   const skipped: Av53ShadowRunResult['skipped'] = [];
 
+  const inferredSessionCountByGroup = new Map<string, number>();
   const inferredPresentCountByGroup = new Map<string, number>();
   const observationsByGroup = new Map<string, ReturnType<typeof buildSameDayCoverageObservation>[]>();
 
@@ -851,6 +855,11 @@ export async function runAv53Shadow(
     if (scope.kind !== 'in_scope') continue;
     const groupKey = sameDayGroupKey(scope.serviceDateYmd, session, evidence);
     if (!groupKey) continue;
+
+    inferredSessionCountByGroup.set(
+      groupKey,
+      (inferredSessionCountByGroup.get(groupKey) ?? 0) + 1,
+    );
 
     const kidId = evidence?.session.kidId || sessionKidId(session);
     const attendance = normalizeTinyStepsAttendance(
@@ -890,14 +899,27 @@ export async function runAv53Shadow(
   const sameDayCoverageByGroup = new Map<string, Av53SameDayCoverageContext>();
   for (const [groupKey, observations] of observationsByGroup) {
     const aggregate = aggregateSameDayCoverage(observations);
-    const inferredCount = inferredPresentCountByGroup.get(groupKey) ?? 0;
-    const externalCount = deps.sameDayPresentCountByGroup?.get(groupKey) ?? 0;
+    const inferredSessionCount = inferredSessionCountByGroup.get(groupKey) ?? 0;
+    const externalSessionCount =
+      deps.sameDaySessionCountByGroup?.get(groupKey) ?? 0;
+    const inferredPresentCount = inferredPresentCountByGroup.get(groupKey) ?? 0;
+    const externalPresentCount =
+      deps.sameDayPresentCountByGroup?.get(groupKey) ?? 0;
     sameDayCoverageByGroup.set(groupKey, {
       aggregate,
+      sessionCount: Math.max(
+        0,
+        inferredSessionCount,
+        externalSessionCount,
+      ),
       // Zero is a valid Tiny Steps Present count. Do not manufacture one
       // merely because a scheduled session exists; the three business outcomes
       // compare actual Present marks against Teams-supported Presents.
-      presentSessionCount: Math.max(0, inferredCount, externalCount),
+      presentSessionCount: Math.max(
+        0,
+        inferredPresentCount,
+        externalPresentCount,
+      ),
       contextIncomplete:
         deps.sameDayContextIncompleteGroups?.has(groupKey) ?? false,
       hasSameDayV2Evidence: observations.some(
@@ -1189,6 +1211,7 @@ export async function runAv53ShadowWithFirestore(
     if (group) sameDayGroups.set(group.key, group);
   }
 
+  const sameDaySessionCountByGroup = new Map<string, number>();
   const sameDayPresentCountByGroup = new Map<string, number>();
   const sameDayContextIncompleteGroups = new Set<string>();
   let sameDayContextReadDocumentBudget = 0;
@@ -1216,6 +1239,10 @@ export async function runAv53ShadowWithFirestore(
         null,
       );
       if (!sessionGroup || sessionGroup.key !== group.key) continue;
+      sameDaySessionCountByGroup.set(
+        group.key,
+        (sameDaySessionCountByGroup.get(group.key) ?? 0) + 1,
+      );
       const attendance = normalizeTinyStepsAttendance(
         attendanceEntryForKid(session, group.kidId),
       );
@@ -1236,6 +1263,7 @@ export async function runAv53ShadowWithFirestore(
       store: new PreloadedAv53ShadowStore(baseStore, compatibleLoaded),
       staffRegistry,
       now,
+      sameDaySessionCountByGroup,
       sameDayPresentCountByGroup,
       sameDayContextIncompleteGroups,
     },
