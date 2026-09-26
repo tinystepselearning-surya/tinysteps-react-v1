@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
+import AiAnswerLayerDirectory from '../components/resources/AiAnswerLayerDirectory';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { CENTRAL_RESOURCE_CONTENT_FAMILIES } from '../lib/centralResourceSystem.js';
@@ -318,6 +319,8 @@ const ResourcesPage: FC = () => {
             ))}
           </div>
         </section>
+
+        <AiAnswerLayerDirectory />
       </section>
     </main>
   );
