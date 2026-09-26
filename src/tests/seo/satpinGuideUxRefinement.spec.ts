@@ -75,7 +75,7 @@ describe('SATPIN authority-page UX refinement', () => {
       'Try the blend',
       'Blending readiness',
       'How to practise',
-      'Progress checkpoint',
+      'Progress & help',
       'If your child is stuck',
       'The next stage',
       'Evidence behind this guide',
