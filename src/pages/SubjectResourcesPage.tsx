@@ -102,7 +102,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Grammar & Writing Resources',
     eyebrow: 'Clearer sentences',
     intro:
-      'Use the existing Tiny Steps grammar and writing resources to understand progression, practise sentence skills, or diagnose the gap you are seeing. The hub organises established content rather than competing with the live grammar programme.',
+      'Use Tiny Steps grammar and writing resources to understand progression, practise sentence skills, or find the gap you are seeing. Start with the closest need and follow the connected guides from grammar foundations into stronger writing.',
     canonicalPath: '/resources/grammar',
     allGuidesTo: '/blog?topic=Grammar',
     allGuidesLabel: 'Browse all grammar guides',
@@ -133,7 +133,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Solve a problem',
         title: 'Find the closest sentence or grammar bottleneck',
-        description: 'Problem pages retain their own search intent and diagnostic role.',
+        description: 'Start with the closest difficulty, then open the guide that matches what you are seeing.',
         links: [
           { title: 'My child knows grammar but makes mistakes', description: 'Check whether the issue is recall, transfer, editing or spontaneous use.', to: '/blog/child-knows-grammar-but-makes-mistakes', label: 'Check this grammar gap' },
           { title: 'Sentence formation is weak', description: 'Identify the difference between vocabulary, structure and sentence expansion problems.', to: '/blog/how-to-improve-sentence-formation-in-kids', label: 'Check sentence formation' },
@@ -146,7 +146,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Speaking & Communication Resources',
     eyebrow: 'Confident expression',
     intro:
-      'Use the existing Tiny Steps speaking and communication resources to build fuller answers, organise ideas, practise speaking, or diagnose confidence and language gaps. The live speaking programme remains a separate commercial route.',
+      'Use Tiny Steps speaking and communication resources to build fuller answers, organise ideas, practise speaking, or understand confidence and language gaps. Start with the need you can observe and move to the next useful guide or activity.',
     canonicalPath: '/resources/speaking',
     allGuidesTo: '/blog?topic=Speaking%20%26%20Communication',
     allGuidesLabel: 'Browse all speaking guides',
@@ -168,7 +168,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Practise the skill',
         title: 'Use speaking practice that requires active expression',
-        description: 'Practice routes remain part of the existing games ecosystem, not a second speaking product.',
+        description: 'Use short speaking activities that require active expression, then vary the topic to build independence.',
         links: [
           { title: 'Speaking games', description: 'Use the free speaking collection for guided expression and response practice.', to: '/free-speaking-games-for-kids', label: 'Open speaking games' },
           { title: 'Speaking practice game', description: 'Use a focused activity for short, repeatable communication practice.', to: '/free-speaking-practice-game-for-kids', label: 'Practise speaking' },
@@ -177,7 +177,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Solve a problem',
         title: 'Start from the communication difficulty you are seeing',
-        description: 'The diagnostic route remains the intent owner; the hub simply makes it easier to find.',
+        description: 'Choose the difficulty that best matches what you are seeing and follow the most relevant guide.',
         links: [
           { title: 'Very shy or reluctant to speak', description: 'Look at confidence, participation and low-pressure practice before forcing performance.', to: '/shy-child-speaking-confidence', label: 'Explore confidence help' },
           { title: 'Only one-word answers', description: 'Check sentence generation, vocabulary access and response habits.', to: '/blog/child-gives-one-word-answers', label: 'Check one-word answers' },
@@ -505,8 +505,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
         <div className="mx-auto grid max-w-7xl gap-6 px-6 py-12 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Need structured support?</p>
-            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Keep resource discovery separate from programme decisions.</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600">If you have finished exploring the guides and want teacher-led support, use the existing programme route. If the right starting point is still unclear, a free assessment is available as a secondary next step.</p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Move from free guidance to structured support when you need it.</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">If you have explored the guides and want teacher-led support, open the relevant programme. If the starting point is still unclear, use the free assessment.</p>
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
             <Link to={config.programmeTo} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">{config.programmeLabel}</Link>
