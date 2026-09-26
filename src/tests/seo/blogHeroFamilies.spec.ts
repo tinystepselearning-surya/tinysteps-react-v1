@@ -12,123 +12,121 @@ import {
 } from '../../content/blog/shared/heroFamilies';
 
 const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
-  'satpin-letter-sounds': 2,
-  'blending-early-reading': 6,
-  'reading-fluency': 1,
-  'parent-home-practice': 8,
-  'grammar-sentence-building': 9,
-  'speaking-communication': 10,
-  'school-readiness-routines': 3,
-  'schools-research': 6,
-  'teacher-classroom-support': 2,
-  'general-phonics': 18,
+  'listening-for-sounds': 1,
+  'sound-meets-letter': 10,
+  'blending-into-a-word': 5,
+  'cracking-the-printed-code': 8,
+  'breaking-down-longer-words': 1,
+  'from-speech-to-spelling': 1,
+  'reading-for-meaning': 3,
+  'fluent-independent-reading': 4,
+  'finding-the-reading-gap': 3,
+  'learning-live-online': 3,
+  'digital-practice-with-purpose': 3,
+  'english-practice-at-home': 6,
+  'building-better-sentences': 5,
+  'planning-and-writing-ideas': 2,
+  'editing-and-improving-writing': 4,
+  'finding-your-speaking-voice': 4,
+  'conversation-and-storytelling': 3,
+  'presenting-with-confidence': 7,
+  'ready-for-the-classroom': 2,
+  'teacher-training-in-action': 1,
+  'planning-a-school-reading-programme': 7,
 };
 
-const INTENTIONAL_EXISTING_HERO_SLUGS = [
-  'are-phonics-apps-enough-for-kids',
-  'can-child-improve-english-in-10-days',
-  'conversation-skills-for-kids',
-  'how-children-recognise-words-automatically-after-phonics',
-  'how-phonics-grammar-and-communication-work-together',
-  'how-to-teach-paragraph-writing-to-kids',
-  'how-to-teach-storytelling-to-kids',
-  'how-vocabulary-supports-reading-comprehension',
-  'online-english-classes-for-kids-india',
-  'online-phonics-classes-vs-school',
-  'grammar-creative-writing',
-  'phonics-diagnostics',
-  'phonics-comprehension',
-  'phonological-awareness-vs-phonemic-awareness-vs-phonics',
-  'public-speaking-delivery-for-kids',
-  'punctuation-and-capital-letters-for-kids',
-  'why-child-reads-words-but-does-not-understand-story',
-  'why-parents-choose-online-phonics',
-] as const;
-
 describe('blog hero image family architecture', () => {
-  it('maps every reviewed article to its approved family or an intentional existing-hero fallback', () => {
+  it('maps all 83 public blog articles exactly once with no fallback gaps', () => {
+    expect(blogPosts).toHaveLength(83);
+    expect(Object.keys(BLOG_HERO_FAMILY_BY_SLUG)).toHaveLength(83);
+    expect(new Set(Object.keys(BLOG_HERO_FAMILY_BY_SLUG)).size).toBe(83);
+
+    const postSlugs = blogPosts.map((post) => post.slug).sort();
+    const mappedSlugs = Object.keys(BLOG_HERO_FAMILY_BY_SLUG).sort();
+    expect(mappedSlugs).toEqual(postSlugs);
+    expect(blogPosts.filter((post) => !getBlogHeroFamily(post))).toEqual([]);
+  });
+
+  it('keeps the reviewed family distribution stable', () => {
     const actualCounts = Object.fromEntries(
       [...AVAILABLE_BLOG_HERO_FAMILY_ASSETS].map((family) => [family, 0]),
     ) as Record<BlogHeroFamily, number>;
 
     for (const post of blogPosts) {
       const family = getBlogHeroFamily(post);
-      if (family) actualCounts[family] += 1;
+      expect(family).toBeDefined();
+      actualCounts[family!] += 1;
     }
 
     expect(actualCounts).toEqual(EXPECTED_FAMILY_COUNTS);
-    expect(
-      blogPosts.filter((post) => !getBlogHeroFamily(post)).map((post) => post.slug).sort(),
-    ).toEqual([...INTENTIONAL_EXISTING_HERO_SLUGS].sort());
   });
 
-  it('keeps required semantic assignments explicit and stable', () => {
-    expect(BLOG_HERO_FAMILY_BY_SLUG['satpin-phonics-guide']).toBe('satpin-letter-sounds');
-    expect(BLOG_HERO_FAMILY_BY_SLUG['week-1-phonics-satpin-launch']).toBe('satpin-letter-sounds');
-    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-blending-activities']).toBe('blending-early-reading');
-    expect(BLOG_HERO_FAMILY_BY_SLUG['how-kids-learn-blending']).toBe('blending-early-reading');
-    expect(BLOG_HERO_FAMILY_BY_SLUG['how-to-improve-reading-fluency-in-children']).toBe(
-      'reading-fluency',
+  it('keeps critical semantic assignments explicit', () => {
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonological-awareness-vs-phonemic-awareness-vs-phonics']).toBe(
+      'listening-for-sounds',
     );
-    expect(BLOG_HERO_FAMILY_BY_SLUG['week-23-grammar-speaking-bridge']).toBe(
-      'grammar-sentence-building',
+    expect(BLOG_HERO_FAMILY_BY_SLUG['satpin-phonics-guide']).toBe('sound-meets-letter');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-blending-activities']).toBe('blending-into-a-word');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-multisyllabic']).toBe('breaking-down-longer-words');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['how-phonics-improves-spelling']).toBe('from-speech-to-spelling');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['why-child-reads-words-but-does-not-understand-story']).toBe(
+      'reading-for-meaning',
+    );
+    expect(BLOG_HERO_FAMILY_BY_SLUG['how-to-improve-reading-fluency-in-children']).toBe(
+      'fluent-independent-reading',
+    );
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-diagnostics']).toBe('finding-the-reading-gap');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['online-english-classes-for-kids-india']).toBe(
+      'learning-live-online',
     );
     expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-teacher-training-for-schools-implementation']).toBe(
-      'teacher-classroom-support',
+      'teacher-training-in-action',
+    );
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-scope-and-sequence-for-cbse-schools']).toBe(
+      'planning-a-school-reading-programme',
     );
   });
 
-  it('resolves cleaned weekly public slugs through their preserved semantic family', () => {
-    const cleanedGrammar = blogPosts.find((post) => post.slug === 'grammar-speaking-bridge')!;
-    const cleanedSpeaking = blogPosts.find((post) => post.slug === 'speaking-visual-aids')!;
-    const cleanedPhonics = blogPosts.find((post) => post.slug === 'phonics-satpin-launch')!;
-
-    expect(getBlogHeroFamily(cleanedGrammar)).toBe('grammar-sentence-building');
-    expect(getBlogHeroFamily(cleanedSpeaking)).toBe('speaking-communication');
-    expect(getBlogHeroFamily(cleanedPhonics)).toBe('satpin-letter-sounds');
+  it('normalizes legacy week source slugs to their public family', () => {
+    expect(getBlogHeroFamily({
+      slug: 'week-1-phonics-satpin-launch',
+      hero: '/blog/hero-phonics.jpg',
+    })).toBe('sound-meets-letter');
+    expect(getBlogHeroFamily({
+      slug: 'week-2-phonics-blending-club',
+      hero: '/blog/hero-phonics.jpg',
+    })).toBe('blending-into-a-word');
+    expect(getBlogHeroFamily({
+      slug: 'week-20-grammar-editing-camp',
+      hero: '/blog/hero-grammar.jpg',
+    })).toBe('editing-and-improving-writing');
   });
 
-  it('routes reviewed school evidence to research unless a teacher-support mapping is stronger', () => {
-    const researchPost = blogPosts.find(
-      (post) => post.slug === 'cbse-phonics-curriculum-vs-systematic-phonics-programme',
-    )!;
-    const teacherPost = blogPosts.find(
-      (post) => post.slug === 'phonics-teacher-training-for-schools-implementation',
-    )!;
-
-    expect(getBlogHeroFamily(researchPost)).toBe('schools-research');
-    expect(getBlogHeroFamily(teacherPost)).toBe('teacher-classroom-support');
-  });
-
-  it('activates only assets that exist and resolve to non-empty public WebP files', () => {
-    expect(AVAILABLE_BLOG_HERO_FAMILY_ASSETS.size).toBe(10);
+  it('activates all 21 reviewed WebPs and verifies every file exists', () => {
+    expect(AVAILABLE_BLOG_HERO_FAMILY_ASSETS.size).toBe(21);
 
     for (const family of AVAILABLE_BLOG_HERO_FAMILY_ASSETS) {
       const publicPath = getBlogHeroFamilyAssetPath(family);
       const filePath = join(process.cwd(), 'public', publicPath.replace(/^\//, ''));
-      expect(existsSync(filePath), `${family} asset must exist`).toBe(true);
-      expect(statSync(filePath).size, `${family} asset must not be empty`).toBeGreaterThan(0);
+      expect(existsSync(filePath), family + ' asset must exist').toBe(true);
+      expect(statSync(filePath).size, family + ' asset must not be empty').toBeGreaterThan(0);
     }
   });
 
-  it('uses the family image for mapped posts and preserves article-specific fallbacks', () => {
-    const mappedPost = blogPosts.find((post) => post.slug === 'satpin-phonics-guide')!;
-    const fallbackPost = blogPosts.find(
+  it('resolves family assets while preserving fallback behavior for future unreviewed posts', () => {
+    const satpin = blogPosts.find((post) => post.slug === 'satpin-phonics-guide')!;
+    const comprehension = blogPosts.find(
       (post) => post.slug === 'why-child-reads-words-but-does-not-understand-story',
     )!;
 
-    expect(resolveBlogHero(mappedPost)).toBe('/blog/hero-families/satpin-letter-sounds.webp');
-    expect(resolveBlogHero(fallbackPost)).toBe(fallbackPost.hero);
+    expect(resolveBlogHero(satpin)).toBe('/blog/hero-families/sound-meets-letter.webp');
+    expect(resolveBlogHero(comprehension)).toBe('/blog/hero-families/reading-for-meaning.webp');
     expect(resolveBlogHero({
-      slug: 'unmapped-test-post',
+      slug: 'future-unreviewed-post',
       hero: '/blog/existing-hero.webp',
-      audience: 'Parent',
-      discoveryCategory: 'Parent Guides',
     })).toBe('/blog/existing-hero.webp');
     expect(resolveBlogHero({
-      slug: 'unmapped-no-hero',
-      audience: 'Parent',
-      discoveryCategory: 'Parent Guides',
+      slug: 'future-unreviewed-no-hero',
     })).toBeUndefined();
   });
 });
