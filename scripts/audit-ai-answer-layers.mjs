@@ -95,19 +95,31 @@ if (process.argv.includes('--generated')) {
 
   if (fs.existsSync(jsonPath)) {
     const index = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-    if (!Array.isArray(index.layers) || index.layers.length !== 3) fail('generated-layer-count', 'Expected exactly three generated answer layers.');
+    if (!Array.isArray(index.layers) || index.layers.length !== 3) {
+      fail('generated-layer-count', 'Expected exactly three generated answer layers.');
+    }
 
     const editorialBlogs = index.corpus?.editorial_blogs || [];
     const programmaticPhonics = index.corpus?.programmatic_phonics_guides || [];
     const programmaticGrammar = index.corpus?.programmatic_grammar_guides || [];
     const additionalPublicRoutes = index.corpus?.additional_public_routes || [];
-    if (editorialBlogs.length !== expectedLiveCanonicalBlogs) fail('editorial-blog-corpus-count', `Expected all ${expectedLiveCanonicalBlogs} live canonical blogs; found ${editorialBlogs.length}.`);
-    if (programmaticPhonics.length !== PHONICS_PUBLISHED_RESOURCE_PAGES.length) fail('programmatic-phonics-corpus-count', `Expected all ${PHONICS_PUBLISHED_RESOURCE_PAGES.length} governed phonics guides; found ${programmaticPhonics.length}.`);
-    if (programmaticGrammar.length !== GRAMMAR_PUBLISHED_RESOURCE_PAGES.length) fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_PUBLISHED_RESOURCE_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
+
+    if (editorialBlogs.length !== expectedLiveCanonicalBlogs) {
+      fail('editorial-blog-corpus-count', `Expected all ${expectedLiveCanonicalBlogs} live canonical blogs; found ${editorialBlogs.length}.`);
+    }
+    if (programmaticPhonics.length !== PHONICS_PUBLISHED_RESOURCE_PAGES.length) {
+      fail('programmatic-phonics-corpus-count', `Expected all ${PHONICS_PUBLISHED_RESOURCE_PAGES.length} governed phonics guides; found ${programmaticPhonics.length}.`);
+    }
+    if (programmaticGrammar.length !== GRAMMAR_PUBLISHED_RESOURCE_PAGES.length) {
+      fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_PUBLISHED_RESOURCE_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
+    }
     if (!additionalPublicRoutes.length) fail('public-route-corpus-empty', 'Expected additional public site routes in the connected corpus.');
 
     const blogUrls = editorialBlogs.map((item) => item.canonical_url);
-    if (new Set(blogUrls).size !== editorialBlogs.length) fail('editorial-blog-corpus-duplicates', 'Editorial blog corpus contains duplicate canonical URLs.');
+    if (new Set(blogUrls).size !== editorialBlogs.length) {
+      fail('editorial-blog-corpus-duplicates', 'Editorial blog corpus contains duplicate canonical URLs.');
+    }
+
     for (const item of editorialBlogs) {
       if (!item.canonical_url?.startsWith('https://tinystepslearning.com/blog/')) fail('editorial-blog-canonical', item.id);
       if (!item.title?.trim() || !item.summary?.trim()) fail('editorial-blog-metadata', item.id);
@@ -115,20 +127,20 @@ if (process.argv.includes('--generated')) {
       if (item.indexing_state === 'noindex' && item.answer_eligible) fail('noindex-answer-eligibility', item.id);
       if (item.indexing_state === 'noindex' && item.retrieval_role !== 'supporting-only-noindex') fail('noindex-retrieval-role', item.id);
     }
-    if (index.corpus_counts?.editorial_blogs !== expectedLiveCanonicalBlogs) fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedLiveCanonicalBlogs}.`);
-    if (index.corpus_counts?.programmatic_phonics_guides !== PHONICS_PUBLISHED_RESOURCE_PAGES.length) fail('corpus-count-summary', 'programmatic_phonics_guides count drifted.');
-    if (index.corpus_counts?.programmatic_grammar_guides !== GRAMMAR_PUBLISHED_RESOURCE_PAGES.length) fail('corpus-count-summary', 'programmatic_grammar_guides count drifted.');
 
-      const expectedTargetPath = RETIRED_BLOG_SOURCE_REDIRECTS.get(item.slug);
-      const expectedSourceUrl = 'https://tinystepslearning.com/blog/' + item.slug;
-      const expectedTargetUrl = expectedTargetPath ? 'https://tinystepslearning.com' + expectedTargetPath : null;
-      if (item.source_url !== expectedSourceUrl) fail('retired-editorial-source-url', item.id);
-      if (item.redirect_target_url !== expectedTargetUrl) fail('retired-editorial-target-url', item.id);
-      if (item.indexing_state !== 'redirected') fail('retired-editorial-indexing-state', item.id);
-      if (item.retrieval_role !== 'redirect-lineage-only') fail('retired-editorial-retrieval-role', item.id);
-      if (item.answer_eligible !== false || item.citation_eligible !== false) fail('retired-editorial-eligibility', item.id);
+    if (index.corpus_counts?.editorial_blogs !== expectedLiveCanonicalBlogs) {
+      fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedLiveCanonicalBlogs}.`);
     }
-
+    if (index.corpus_counts?.programmatic_phonics_guides !== PHONICS_PUBLISHED_RESOURCE_PAGES.length) {
+      fail('corpus-count-summary', 'programmatic_phonics_guides count drifted.');
+    }
+    if (index.corpus_counts?.programmatic_grammar_guides !== GRAMMAR_PUBLISHED_RESOURCE_PAGES.length) {
+      fail('corpus-count-summary', 'programmatic_grammar_guides count drifted.');
+    }
+    if (
+      index.corpus_counts?.connected_public_content !==
+      editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + additionalPublicRoutes.length
+    ) {
       fail('connected-public-content-count', 'Connected public content total does not reconcile.');
     }
 
@@ -158,7 +170,9 @@ if (process.argv.includes('--generated')) {
         if (!Array.isArray(item.practice_urls)) fail('generated-practice-links', item.id);
       }
     }
-    if (externalReferenceCount === 0) fail('generated-evidence-coverage', 'Expected at least one visible external evidence reference from canonical editorial sources.');
+    if (externalReferenceCount === 0) {
+      fail('generated-evidence-coverage', 'Expected at least one visible external evidence reference from canonical editorial sources.');
+    }
   }
 
   const llms = fs.readFileSync(path.join(root, 'public', 'llms.txt'), 'utf8');
@@ -175,10 +189,6 @@ if (process.argv.includes('--generated')) {
   const generatedIndex = fs.existsSync(jsonPath) ? JSON.parse(fs.readFileSync(jsonPath, 'utf8')) : null;
   for (const item of generatedIndex?.corpus?.editorial_blogs || []) {
     if (!llmsFull.includes(item.canonical_url)) fail('llms-full-blog-coverage', item.canonical_url);
-  }
-    if (!llmsFull.includes(item.source_url) || !llmsFull.includes(item.redirect_target_url)) {
-      fail('llms-full-retired-lineage-coverage', item.id);
-    }
   }
 }
 
