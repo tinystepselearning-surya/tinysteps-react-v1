@@ -28,6 +28,7 @@ export const CENTRAL_RESOURCE_RECONCILIATION: Readonly<{
   contentFamilies: readonly CentralResourceContentFamily[];
   editorialArchive: '/blog';
   focusedPhonicsHub: '/resources/phonics';
+  focusedGrammarHub: '/resources/grammar';
   parentHelpHub: '/parents';
   practiceHub: '/free-english-games-for-kids';
   schoolsHub: '/for-schools';
@@ -39,6 +40,7 @@ export const CENTRAL_RESOURCE_RECONCILIATION: Readonly<{
     connectedCorpus: Readonly<{
       editorialBlogs: 'all-current-public-blogs';
       governedPhonicsGuides: 31;
+      governedGrammarGuides: number;
       additionalPublicRoutes: 'all-route-seo-public-content';
       noindexPolicy: 'connected-as-supporting-only-not-primary-answer-owner';
     }>;
