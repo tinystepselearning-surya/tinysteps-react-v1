@@ -5,6 +5,7 @@ import * as logger from "firebase-functions/logger";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ensureAdmin} from "./helpers/adminGuard";
 import {buildCanonicalTeacherWriteFields, resolveCanonicalTeacherIdForWrite} from "./helpers/teacherIdentity";
+import {isEnrollmentOperationallyActive} from "./helpers/status";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -33,7 +34,6 @@ const NON_REPLACEABLE_SESSION_STATUSES = new Set([
   "locked",
 ]);
 const CONSUMED_SESSION_STATUSES = new Set(["completed", "consumed", "settled", "paid"]);
-const OPERATIONAL_ENROLLMENT_STATUSES = new Set(["active", "trial"]);
 const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   "ad_hoc",
   "adhoc",
@@ -426,22 +426,7 @@ function normalizeStatus(value: unknown): string {
   return String(value || "").trim().toLowerCase();
 }
 
-function normalizeEnrollmentStatus(value: unknown): string {
-  const raw = normalizeStatus(value);
-  if (!raw) return "active";
-  if (raw === "pending_teacher") return "trial";
-  if (raw === "pending_payment" || raw === "pending_lp") return "active";
-  if (raw === "enrolled" || raw === "current" || raw === "ongoing") return "active";
-  if (raw === "canceled") return "cancelled";
-  return raw;
-}
 
-function isEnrollmentOperationallyActive(enrollmentLike: Record<string, unknown>): boolean {
-  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
-    return false;
-  }
-  return OPERATIONAL_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollmentLike.status));
-}
 
 function resolveSessionStartMs(raw: Record<string, unknown>): number | null {
   const startAt = toDateMaybe(raw.startAt);
