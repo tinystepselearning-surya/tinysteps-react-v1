@@ -26,11 +26,12 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(deferredIndex).toBeGreaterThan(trustIndex);
   });
 
-  it('publishes explicit homepage WebPage entity semantics', () => {
+  it('publishes explicit homepage WebPage entity semantics with brand-first metadata', () => {
+    expect(homeSource).toContain('Tiny Steps Learning | Online English Learning for Kids Ages 3–12');
     expect(homeSource).toContain('createWebPageSchema');
     expect(homeSource).toContain('homeWebPageSchema');
     expect(homeSource).toContain('Children aged 3–12');
-    expect(homeSource).toContain('Online English classes for children');
+    expect(homeSource).toContain('Online English learning for children');
     expect(homeSource).toContain('jsonLd={[organizationSchema, websiteSchema, homeWebPageSchema, homeFaqSchema]}');
   });
 
