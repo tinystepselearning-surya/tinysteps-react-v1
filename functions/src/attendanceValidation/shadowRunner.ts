@@ -33,6 +33,7 @@ import {
   type SameDayCoverageAggregate,
 } from './sameDayCoverageEngine';
 import {
+  AVS_BUSINESS_CASE_SCHEMA_VERSION,
   reconcileAvsBusinessOutcome,
   type AvsBusinessOutcome,
 } from './businessOutcomeEngine';
@@ -137,6 +138,7 @@ export interface Av53ValidationCaseDocument {
   sameDayRequiredOverlapSeconds: number | null;
   sameDayOccurrenceCount: number | null;
   sameDayEvidenceEvaluable: boolean | null;
+  businessSchemaVersion: typeof AVS_BUSINESS_CASE_SCHEMA_VERSION;
   businessOutcome: AvsBusinessOutcome | null;
   teamsSupportedPresentCount: number | null;
   tinyStepsPresentCount: number | null;
@@ -544,6 +546,7 @@ function baseCase(params: {
     sameDayRequiredOverlapSeconds: params.sameDayRequiredOverlapSeconds ?? null,
     sameDayOccurrenceCount: params.sameDayOccurrenceCount ?? null,
     sameDayEvidenceEvaluable: params.sameDayEvidenceEvaluable ?? null,
+    businessSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
     businessOutcome: params.businessOutcome ?? null,
     teamsSupportedPresentCount: params.teamsSupportedPresentCount ?? null,
     tinyStepsPresentCount: params.tinyStepsPresentCount ?? null,
@@ -581,6 +584,7 @@ function baseCase(params: {
     sameDayRequiredOverlapSeconds: params.sameDayRequiredOverlapSeconds ?? null,
     sameDayOccurrenceCount: params.sameDayOccurrenceCount ?? null,
     sameDayEvidenceEvaluable: params.sameDayEvidenceEvaluable ?? null,
+    businessSchemaVersion: AVS_BUSINESS_CASE_SCHEMA_VERSION,
     businessOutcome: params.businessOutcome ?? null,
     teamsSupportedPresentCount: params.teamsSupportedPresentCount ?? null,
     tinyStepsPresentCount: params.tinyStepsPresentCount ?? null,
