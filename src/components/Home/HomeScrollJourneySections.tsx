@@ -209,12 +209,21 @@ export function AssessmentStartPointsSection() {
 
 const learningPaths = [
   {
-    title: 'Phonics & Reading',
+    title: 'Phonics Foundations',
     ages: 'Ages 3–12',
-    description: 'Letter sounds, blending, decoding, CVC words, reading patterns, fluency, and stronger independent reading.',
+    description: 'Letter sounds, blending, decoding, CVC words, spelling patterns, and the foundations needed for independent word reading.',
     path: '/phonics',
     cta: 'Explore Phonics',
     accent: 'emerald',
+    icon: '🔤',
+  },
+  {
+    title: 'Reading & Fluency',
+    ages: 'Ages 3–12',
+    description: 'Accurate word and sentence reading, fluency, vocabulary, comprehension, retelling, and stronger reading confidence.',
+    path: '/reading-classes-for-kids',
+    cta: 'Explore Reading',
+    accent: 'violet',
     icon: '📚',
   },
   {
@@ -235,12 +244,13 @@ const learningPaths = [
     accent: 'amber',
     icon: '🎤',
   },
-];
+]
 
 const accentClasses: Record<string, string> = {
   emerald: 'from-emerald-50 via-white to-white text-emerald-700',
   sky: 'from-sky-50 via-white to-white text-sky-700',
   amber: 'from-amber-50 via-white to-white text-amber-700',
+  violet: 'from-violet-50 via-white to-white text-violet-700',
 };
 
 export function LearningPathsSection() {
@@ -249,13 +259,13 @@ export function LearningPathsSection() {
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Choose the right focus</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Three clear Tiny Steps learning paths</h2>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Four clear Tiny Steps learning paths</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
             Start with the skill your child needs most. The assessment helps confirm the right level and learning path.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
           {learningPaths.map((item) => (
             <Link
               key={item.title}
