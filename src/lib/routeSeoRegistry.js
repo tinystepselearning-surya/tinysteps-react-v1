@@ -1,6 +1,6 @@
 import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
 import { PHONICS_PUBLISHED_RESOURCE_SEO } from './phonicsPublicationRegistry.js';
-import { GRAMMAR_PROGRAMMATIC_RESOURCE_SEO } from './grammarProgrammaticRegistry.js';
+import { GRAMMAR_PROGRAMMATIC_RESOURCE_SEO } from './grammarProgrammaticSeoManifest.js';
 
 export const ROUTE_SEO_REGISTRY = {
   ...PHONICS_PUBLISHED_RESOURCE_SEO,
