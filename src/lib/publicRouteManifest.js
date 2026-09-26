@@ -1,4 +1,5 @@
 import { PHONICS_PUBLISHED_RESOURCE_PATHS } from './phonicsPublicationRegistry.js';
+import { GRAMMAR_PROGRAMMATIC_PATHS } from './grammarProgrammaticRegistry.js';
 
 const route = (path, group, {
   indexable = true,
@@ -26,6 +27,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/resources/phonics', 'static'),
   ...PHONICS_PUBLISHED_RESOURCE_PATHS.map((path) => route(path, 'static')),
   route('/resources/grammar', 'static'),
+  ...GRAMMAR_PROGRAMMATIC_PATHS.map((path) => route(path, 'static')),
   route('/resources/speaking', 'static'),
   route('/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', 'static'),
   route('/pricing', 'static'),
