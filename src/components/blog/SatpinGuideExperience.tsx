@@ -414,12 +414,12 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
               Parent quick answer
             </span>
           </div>
-          <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{quick.title}</h2>
+          <h2 className="ts-answer-title ts-blog-hero-title mt-5 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">{quick.title}</h2>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {quick.blocks.map((block, index) => (
               <div key={'quick-' + index} className="rounded-[1.4rem] border border-white/80 bg-white/80 p-5 shadow-sm">
-                <p className="text-sm leading-7 text-slate-700">{renderRichText(block.content, 'quick-' + index)}</p>
+                <p className={index === 0 ? "ts-answer-summary ts-blog-quick-answer text-sm leading-7 text-slate-700" : "text-sm leading-7 text-slate-700"}>{renderRichText(block.content, 'quick-' + index)}</p>
               </div>
             ))}
           </div>

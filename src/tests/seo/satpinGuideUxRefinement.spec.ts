@@ -86,6 +86,8 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain("'SatpinAssessmentClicked'");
     expect(experience).toContain("'SatpinPhonicsClassesClicked'");
     expect(experience).toContain('renderRichText');
+    expect(experience).toContain('ts-answer-title ts-blog-hero-title');
+    expect(experience).toContain('ts-answer-summary ts-blog-quick-answer');
     expect(experience).toContain("raw.startsWith('**')");
   });
 
