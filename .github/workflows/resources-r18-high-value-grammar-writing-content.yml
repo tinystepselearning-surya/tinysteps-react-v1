@@ -4,8 +4,6 @@ on:
   pull_request:
     branches: [main, seo/resources-r17-grammar-writing-architecture]
     paths:
-      - 'src/content/blog/posts/grammar/punctuation-and-capital-letters-for-kids.ts'
-      - 'src/content/blog/posts/grammar/how-to-teach-paragraph-writing-to-kids.ts'
       - 'src/lib/grammarWritingContentExecutionRegistry.*'
       - 'src/lib/grammarWritingContentCanonicalOwnership.*'
       - 'src/pages/SubjectResourcesPage.tsx'
@@ -16,6 +14,10 @@ on:
       - 'docs/seo/resources-architecture/R18_*'
       - '.github/workflows/resources-r18-high-value-grammar-writing-content.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
