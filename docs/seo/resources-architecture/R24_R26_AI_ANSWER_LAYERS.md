@@ -41,11 +41,12 @@ Layer 2 exposes educational concepts and canonical explanations.
 It includes:
 
 - **27 curated broad concept owners** across Phonics/Reading, Grammar/Writing, and Speaking/Communication;
-- **all 31 governed focused phonics resources** from `PHONICS_PUBLISHED_RESOURCE_PAGES`.
+- **all 31 governed focused phonics resources** from `PHONICS_PUBLISHED_RESOURCE_PAGES`;
+- **all 42 governed focused grammar resources** from `GRAMMAR_PUBLISHED_RESOURCE_PAGES`.
 
-Total Layer 2 coverage: **58 concept records**.
+Total Layer 2 coverage: **100 concept records**.
 
-The 31 focused phonics resources retain their own governed quick answers from the phonics dataset.
+The phonics and grammar resources retain governed quick answers from their subject registries. Grammar pages follow the canonical Tiny Steps curriculum progression and do not replace established broad editorial owners.
 
 For existing editorial concept owners, the machine index resolves the answer from the page's current source description/visible answer contract rather than duplicating a new body of content in the registry.
 
@@ -90,7 +91,7 @@ Practice remains a downstream action. A game/practice route must not become the 
 
 The visible structure is:
 
-> **Question → answer → understanding → action**
+> **Question → explanation → practice**
 
 The component emits stable machine-friendly attributes:
 
@@ -149,7 +150,7 @@ The audit verifies:
 - unique IDs;
 - preserved subject hubs;
 - no commercial page becomes an answer owner;
-- exactly 31 governed `/resources/phonics/*` records remain in Layer 2;
+- exactly 31 governed `/resources/phonics/*` records and 42 governed `/resources/grammar/*` records remain in Layer 2;
 - visible answer-layer discovery exists on the central and subject hubs;
 - generated JSON and text exist;
 - every generated answer is non-empty;
