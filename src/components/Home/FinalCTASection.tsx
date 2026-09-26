@@ -11,7 +11,7 @@ const FinalCTASection: React.FC = () => {
           Find the right starting point for your child
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-700">
-          Start with one free 35-minute 1:1 online demo assessment. A Tiny Steps teacher checks the skills related to your concern, recommends the most suitable starting pathway, and you decide what to do next.
+          Start with one free 35-minute 1:1 online demo assessment. You’ll leave with a recommended starting point for your child, then decide whether you want to continue.
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-3">
