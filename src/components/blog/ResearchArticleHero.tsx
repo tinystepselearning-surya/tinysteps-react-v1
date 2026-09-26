@@ -118,22 +118,25 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
           {compact ? (
             heroImage ? (
               <div className="relative mx-auto w-full max-w-[680px] lg:mx-0 lg:justify-self-end lg:max-w-none">
-                <img
-                  src={heroImage}
-                  alt={heroImageAlt || title}
-                  className="h-auto w-full object-contain"
-                  style={{
-                    WebkitMaskImage:
-                      'radial-gradient(ellipse 96% 92% at 56% 50%, #000 66%, rgba(0,0,0,0.92) 80%, transparent 100%)',
-                    maskImage:
-                      'radial-gradient(ellipse 96% 92% at 56% 50%, #000 66%, rgba(0,0,0,0.92) 80%, transparent 100%)',
-                  }}
-                  width={960}
-                  height={540}
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
-                />
+                <div className="pointer-events-none absolute -inset-10 bg-[radial-gradient(ellipse_at_center,_rgba(63,121,205,0.14)_0%,_rgba(23,48,84,0.08)_42%,_transparent_72%)] blur-2xl" />
+
+                <div className="relative aspect-video overflow-hidden">
+                  <img
+                    src={heroImage}
+                    alt={heroImageAlt || title}
+                    className="h-full w-full object-contain"
+                    width={960}
+                    height={540}
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-[27%] bg-gradient-to-r from-[#0b1220] via-[#0b1220]/80 to-transparent" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-[9%] bg-gradient-to-l from-[#10233f]/70 to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-[14%] bg-gradient-to-b from-[#0d1728]/65 to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-t from-[#0d1728]/75 to-transparent" />
+                </div>
               </div>
             ) : null
           ) : (
