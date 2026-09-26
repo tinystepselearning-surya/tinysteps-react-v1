@@ -6,6 +6,10 @@ import {
   hashAttendanceEvidenceValue,
   type AttendanceValidationEvidenceDocument,
 } from '../src/attendanceValidation/teamsEvidenceCollector';
+import {
+  classifyAvsFailure,
+  classifyAvsReason,
+} from '../src/attendanceValidation/errorTaxonomy';
 
 const joinUrl = 'https://teams.microsoft.com/l/meetup-join/original';
 
@@ -114,7 +118,7 @@ describe('AVS cached Teams evidence freshness classifier', () => {
     );
   });
 
-  it('requires fresh evidence when the service date or scheduled window changes', () => {
+  it('requires fresh evidence when the service date changes', () => {
     const result = classifyCachedEvidenceFreshness({
       classSessionId: 'session-1',
       session: session({
@@ -126,12 +130,23 @@ describe('AVS cached Teams evidence freshness classifier', () => {
     });
 
     expect(result.decision).toBe('fresh_required');
-    expect(result.reasons).toEqual(
-      expect.arrayContaining([
-        'service_date_changed',
-        'scheduled_window_changed',
-      ]),
-    );
+    expect(result.reasons).toContain('service_date_changed');
+  });
+
+  it('reuses cached evidence when only the scheduled clock moves on the same IST date', () => {
+    const result = classifyCachedEvidenceFreshness({
+      classSessionId: 'session-1',
+      session: session({
+        startAt: { seconds: Date.parse('2026-09-01T12:30:00.000Z') / 1000 },
+        endAt: { seconds: Date.parse('2026-09-01T13:05:00.000Z') / 1000 },
+      }),
+      evidence: evidence(),
+    });
+
+    expect(result).toEqual({
+      decision: 'reuse_cached',
+      reasons: ['compatible'],
+    });
   });
 
   it('requires fresh evidence when the Teams join URL changes or is newly added', () => {
@@ -206,5 +221,23 @@ describe('AVS cached Teams evidence freshness classifier', () => {
 
     expect(result.decision).toBe('unsafe_review');
     expect(result.reasons).toContain('evidence_session_id_mismatch');
+  });
+});
+
+describe('AVS failure taxonomy wrappers', () => {
+  it('preserves a structured failure nested inside a causeError wrapper', () => {
+    const failure = classifyAvsReason('forbidden');
+    expect(classifyAvsFailure({
+      causeError: { failure },
+    })).toEqual(failure);
+  });
+
+  it('preserves a structured failure through multiple causeError wrappers', () => {
+    const failure = classifyAvsReason('rate_limited');
+    expect(classifyAvsFailure({
+      causeError: {
+        causeError: { failure },
+      },
+    })).toEqual(failure);
   });
 });
