@@ -70,6 +70,8 @@ describe('AVS unified Run Validation backend routing', () => {
     expect(source).toContain('freshnessUnsafeCount');
     expect(source).toContain('organizerBlockedReason');
     expect(source).toContain('graphLogicalCalls');
+    expect(source).toContain('baselineExistingCaseCount');
+    expect(source).toContain('baselinePersistedCaseCount');
     expect(source).toContain('operationalMutationAllowed: false');
   });
 

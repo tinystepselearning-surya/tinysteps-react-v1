@@ -74,7 +74,9 @@ interface AvsUnifiedValidationResponse {
   baselineAttempted: boolean;
   baselineComplete: boolean;
   baselineBatchSessionCount: number;
+  baselineExistingCaseCount: number;
   baselineFreshEvidenceCount: number;
+  baselinePersistedCaseCount: number;
   baselineBlockedCount: number;
   graphLogicalCalls: number;
   identityMappingsWritten: number;
@@ -888,7 +890,7 @@ export default function AttendanceValidationDashboard() {
               Loaded AVS source cases
             </p>
             <p className="mt-1 text-lg font-semibold text-slate-900">
-              {cases.length} session{cases.length === 1 ? '' : 's'}
+              {cases.length} saved case{cases.length === 1 ? '' : 's'}
             </p>
           </div>
           <div className="max-w-2xl text-xs text-slate-500">
@@ -1028,16 +1030,23 @@ export default function AttendanceValidationDashboard() {
                   : 'Validation complete'}
               </p>
               <p className="mt-1 text-sm text-slate-700">
-                {validationResult.processedSessionCount} session{validationResult.processedSessionCount === 1 ? '' : 's'} processed.
+                {validationResult.processedSessionCount} session{validationResult.processedSessionCount === 1 ? '' : 's'} checked.
                 {' '}{validationResult.cachedRevalidatedCount} reused compatible cached evidence.
                 {' '}{validationResult.freshRefreshedCount
                   + validationResult.firstEvidenceCollectedCount
                   + validationResult.baselineFreshEvidenceCount} received fresh Teams evidence.
+                {validationResult.baselineExistingCaseCount > 0 && (
+                  <> {' '}{validationResult.baselineExistingCaseCount} already had a saved AVS case and did not need first-time evidence collection.</>
+                )}
                 {' '}{validationResult.freshFailedCount
                   + validationResult.baselineBlockedCount} need another validation attempt or review.
               </p>
               <p className="mt-1 text-xs text-slate-600">
-                Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
+                Saved/rebuilt AVS cases this call: {validationResult.baselinePersistedCaseCount
+                  + validationResult.cachedRevalidatedCount
+                  + validationResult.freshRefreshedCount
+                  + validationResult.firstEvidenceCollectedCount}.
+                {' '}Microsoft Graph logical calls: {validationResult.graphLogicalCalls}.
                 {' '}Automatic teacher identity mappings: {validationResult.identityMappingsWritten}.
                 {' '}Unsafe evidence references left for review: {validationResult.freshnessUnsafeCount}.
               </p>

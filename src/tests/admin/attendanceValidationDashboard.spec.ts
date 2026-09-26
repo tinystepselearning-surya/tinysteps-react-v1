@@ -61,7 +61,7 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
     expect(businessView).toContain('teacherFilterKey(group.teacherId, group.teacherName)');
     expect(businessView).toContain('Filter AVS business reconciliation by teacher');
-    expect(businessView).toContain('All teachers ({groups.length})');
+    expect(businessView).toContain('All teachers ({teacherOptions.length})');
     expect(dashboard).not.toContain("collection(db, 'kids')");
   });
 
@@ -138,6 +138,7 @@ describe('AV6 admin attendance validation dashboard', () => {
 
   it('labels the source-case window separately from the three business outcomes', () => {
     expect(dashboard).toContain('Loaded AVS source cases');
+    expect(dashboard).toContain("{cases.length} saved case");
     expect(dashboard).toContain('Verified, False Present, and False Absent');
     expect(businessView).toContain("value: 'verified', label: 'Verified'");
     expect(businessView).toContain("value: 'false_present', label: 'False Present'");
@@ -190,6 +191,8 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('validationResult.cachedRevalidatedCount');
     expect(dashboard).toContain('validationResult.freshRefreshedCount');
     expect(dashboard).toContain('validationResult.firstEvidenceCollectedCount');
+    expect(dashboard).toContain('validationResult.baselineExistingCaseCount');
+    expect(dashboard).toContain('validationResult.baselinePersistedCaseCount');
     expect(dashboard).toContain('validationResult.graphLogicalCalls');
     expect(dashboard).toContain('validationResult.continueValidation');
     expect(dashboard).toContain(
@@ -263,6 +266,9 @@ describe('AV6 admin attendance validation dashboard', () => {
   it('treats non-evaluable source data as a technical state, not a fourth business tab', () => {
     expect(businessView).toContain("Exclude<AvsBusinessOutcome, 'not_evaluable'>");
     expect(businessView).toContain('not evaluated');
+    expect(businessView).toContain('These groups could not be compared safely');
+    expect(businessView).toContain('Show technical reasons');
+    expect(businessView).toContain('technicalReasonsForGroup');
     expect(businessView).not.toContain("label: 'Not Evaluable'");
   });
 });
