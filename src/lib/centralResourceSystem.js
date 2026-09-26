@@ -74,5 +74,11 @@ export const CENTRAL_RESOURCE_RECONCILIATION = freeze({
     machineJson: '/ai-resource-index.json',
     machineText: '/ai-resource-index.txt',
     retrievalFlow: 'parent-problem -> canonical-answer -> learning-concept -> focused-practice',
+    connectedCorpus: freeze({
+      editorialBlogs: 'all-current-public-blogs',
+      governedPhonicsGuides: 31,
+      additionalPublicRoutes: 'all-route-seo-public-content',
+      noindexPolicy: 'connected-as-supporting-only-not-primary-answer-owner',
+    }),
   }),
 });
