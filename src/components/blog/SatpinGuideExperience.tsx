@@ -430,7 +430,7 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
       ) : null}
 
       {tocItems.length ? (
-        <details className="rounded-[20px] border border-slate-200/80 bg-white/85 p-4 shadow-sm backdrop-blur-xl lg:hidden">
+        <details className="rounded-[20px] border border-slate-200/80 bg-white/[0.85] p-4 shadow-sm backdrop-blur-xl lg:hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-slate-900">
             Guide index
             <ChevronDown className="h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -786,6 +786,9 @@ const SatpinGuideExperience: React.FC<SatpinGuideExperienceProps> = ({
                         <h3 id={group.id} className="scroll-mt-28 text-lg font-black tracking-tight text-slate-950">
                           {SEQUENCE_TITLES[index] || group.title.replace(/^Step\s+\d+\s+—\s+/i, '')}
                         </h3>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          {group.title.replace(/^Step\s+\d+\s+—\s+/i, '')}
+                        </p>
                         {split.first ? (
                           <p className="mt-2 text-sm leading-7 text-slate-600">{renderRichText(split.first.content, 'sequence-first-' + index)}</p>
                         ) : null}

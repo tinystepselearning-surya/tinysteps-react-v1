@@ -66,7 +66,7 @@ const SatpinGuideSidebar: React.FC<SatpinGuideSidebarProps> = ({ tocItems }) => 
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-[24px] border border-white/80 bg-white/78 p-3 shadow-[0_16px_45px_rgba(15,23,42,0.07)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/72">
+      <div className="overflow-hidden rounded-[24px] border border-white/80 bg-white/[0.78] p-3 shadow-[0_16px_45px_rgba(15,23,42,0.07)] backdrop-blur-2xl supports-[backdrop-filter]:bg-white/[0.72]">
         <div className="flex items-center justify-between px-2 pb-3 pt-1">
           <div>
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-400">Guide index</p>

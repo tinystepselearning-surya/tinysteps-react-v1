@@ -67,12 +67,13 @@ describe('SATPIN authority-page UX refinement', () => {
 
   it('implements chronological, progressive-disclosure and interaction patterns with crawlable source text', () => {
     const experience = read('src/components/blog/SatpinGuideExperience.tsx');
+    const sidebar = read('src/components/blog/SatpinGuideSidebar.tsx');
 
     for (const signal of [
       'SATPIN in 60 seconds',
       'Try the blend',
       'Blending readiness',
-      'The chronological pathway',
+      'The learning path',
       'Progress checkpoint',
       'If your child is stuck',
       'The next stage',
@@ -86,8 +87,8 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain("'SatpinSectionViewed'");
     expect(experience).toContain("'SatpinJumpNavClicked'");
     expect(experience).toContain("'SatpinDiagnosticOpened'");
-    expect(experience).toContain("'SatpinAssessmentClicked'");
-    expect(experience).toContain("'SatpinPhonicsClassesClicked'");
+    expect(experience).toContain("'SatpinSoundCardOpened'");
+    expect(sidebar).toContain("'SatpinAssessmentClicked'");
     expect(experience).toContain('renderRichText');
     expect(experience).toContain("type RichTone = 'light' | 'dark'");
     expect(experience).toContain('Learn a small sound set');
