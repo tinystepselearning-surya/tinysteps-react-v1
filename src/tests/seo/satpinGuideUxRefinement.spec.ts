@@ -28,6 +28,7 @@ describe('SATPIN authority-page UX refinement', () => {
       'Five common SATPIN difficulties and what to practise next',
       'What comes after SATPIN?',
       'Evidence and references',
+      'Neither source prescribes SATPIN as the one universal starter sequence',
     ]) {
       expect(body).toContain(phrase);
     }
@@ -44,7 +45,7 @@ describe('SATPIN authority-page UX refinement', () => {
       expect(body).toContain(route);
     }
 
-    expect(getBlogEvidenceSummary(post!).externalSourceCount).toBe(6);
+    expect(getBlogEvidenceSummary(post!).externalSourceCount).toBe(8);
   });
 
   it('uses a SATPIN-specific presentation layer without creating another SATPIN URL', () => {
@@ -118,10 +119,16 @@ describe('SATPIN authority-page UX refinement', () => {
       'gov.uk',
       'educationendowmentfoundation.org.uk',
       'ies.ed.gov',
+      'edresearch.edu.au',
+      'nichd.nih.gov',
       'ufli.education.ufl.edu',
     ]) {
       expect(body).toContain(domain);
     }
+
+    expect(body).toContain('The Reading Framework');
+    expect(body).toContain('Australian Education Research Organisation');
+    expect(body).toContain('National Reading Panel (historical reference)');
 
     expect(experience).toContain('Read source');
     expect(experience).toContain('target="_blank"');
