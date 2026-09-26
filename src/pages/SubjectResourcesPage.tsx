@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import PhonicsPilotGuideGrid, { PHONICS_PILOT_RESOURCE_LINKS } from '../components/resources/PhonicsPilotGuideGrid';
+import GrammarProgrammaticGuideGrid from '../components/resources/GrammarProgrammaticGuideGrid';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { SPEAKING_KNOWLEDGE_CLUSTER_GROUPS } from '../lib/speakingKnowledgeCluster';
@@ -102,7 +103,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Grammar & Writing Resources',
     eyebrow: 'Clearer sentences',
     intro:
-      'Use the existing Tiny Steps grammar and writing resources to understand progression, practise sentence skills, or diagnose the gap you are seeing. The hub organises established content rather than competing with the live grammar programme.',
+      'Use Tiny Steps grammar and writing resources to understand the learning progression, practise sentence skills, or find the closest explanation for the gap you are seeing.'
     canonicalPath: '/resources/grammar',
     allGuidesTo: '/blog?topic=Grammar',
     allGuidesLabel: 'Browse all grammar guides',
@@ -133,7 +134,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Solve a problem',
         title: 'Find the closest sentence or grammar bottleneck',
-        description: 'Problem pages retain their own search intent and diagnostic role.',
+        description: 'Start with the sentence or grammar difficulty you notice most, then open the guide that matches it.'
         links: [
           { title: 'My child knows grammar but makes mistakes', description: 'Check whether the issue is recall, transfer, editing or spontaneous use.', to: '/blog/child-knows-grammar-but-makes-mistakes', label: 'Check this grammar gap' },
           { title: 'Sentence formation is weak', description: 'Identify the difference between vocabulary, structure and sentence expansion problems.', to: '/blog/how-to-improve-sentence-formation-in-kids', label: 'Check sentence formation' },
@@ -146,7 +147,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Speaking & Communication Resources',
     eyebrow: 'Confident expression',
     intro:
-      'Use the existing Tiny Steps speaking and communication resources to build fuller answers, organise ideas, practise speaking, or diagnose confidence and language gaps. The live speaking programme remains a separate commercial route.',
+      'Use Tiny Steps speaking and communication resources to build fuller answers, organise ideas, practise speaking, or understand confidence and language gaps.'
     canonicalPath: '/resources/speaking',
     allGuidesTo: '/blog?topic=Speaking%20%26%20Communication',
     allGuidesLabel: 'Browse all speaking guides',
@@ -168,7 +169,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Practise the skill',
         title: 'Use speaking practice that requires active expression',
-        description: 'Practice routes remain part of the existing games ecosystem, not a second speaking product.',
+        description: 'Choose a short speaking activity that requires the child to respond, explain or express an idea aloud.'
         links: [
           { title: 'Speaking games', description: 'Use the free speaking collection for guided expression and response practice.', to: '/free-speaking-games-for-kids', label: 'Open speaking games' },
           { title: 'Speaking practice game', description: 'Use a focused activity for short, repeatable communication practice.', to: '/free-speaking-practice-game-for-kids', label: 'Practise speaking' },
@@ -177,7 +178,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       {
         eyebrow: 'Solve a problem',
         title: 'Start from the communication difficulty you are seeing',
-        description: 'The diagnostic route remains the intent owner; the hub simply makes it easier to find.',
+        description: 'Start with the communication difficulty you can observe, then open the closest explanation and next step.'
         links: [
           { title: 'Very shy or reluctant to speak', description: 'Look at confidence, participation and low-pressure practice before forcing performance.', to: '/shy-child-speaking-confidence', label: 'Explore confidence help' },
           { title: 'Only one-word answers', description: 'Check sentence generation, vocabulary access and response habits.', to: '/blog/child-gives-one-word-answers', label: 'Check one-word answers' },
@@ -406,6 +407,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
       </section>
 
       {subject === 'grammar' ? (
+        <>
         <section data-grammar-writing-featured-guides className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-7xl px-6 py-7 sm:py-8">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -424,6 +426,8 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
             </div>
           </div>
         </section>
+        <GrammarProgrammaticGuideGrid />
+        </>
       ) : null}
 
       <section id="resource-sections" className="mx-auto max-w-7xl space-y-14 px-6 py-14 sm:py-16 lg:py-20">
