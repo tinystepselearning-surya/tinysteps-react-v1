@@ -1134,7 +1134,7 @@ function buildMetaDescription(src: any) {
             ) : null}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <aside className={isSatpinGuide ? 'hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
             {isSatpinGuide ? (
               <SatpinGuideSidebar tocItems={tocItems} />
             ) : (
