@@ -53,9 +53,9 @@ for (const stage of GRAMMAR_WRITING_WRITING_STAGES) {
   }
 }
 
-const coursesSource = fs.readFileSync(path.join(root, 'src/content/courses.ts'), 'utf8');
+const grammarCurriculumSource = fs.readFileSync(path.join(root, 'src/content/grammarCurriculum.ts'), 'utf8');
 for (const anchor of GRAMMAR_WRITING_WRITING_CURRICULUM_ANCHORS) {
-  if (!coursesSource.includes(`'${anchor.lessonTitle}'`)) addError('curriculum-anchor-title-missing', `${anchor.courseSlug}:${anchor.lessonNumber}:${anchor.lessonTitle}`);
+  if (!grammarCurriculumSource.includes(`'${anchor.lessonTitle}'`)) addError('curriculum-anchor-title-missing', `${anchor.courseSlug}:${anchor.lessonNumber}:${anchor.lessonTitle}`);
 }
 
 const architectureSource = fs.readFileSync(path.join(root, 'src/lib/grammarWritingWritingProgression.js'), 'utf8');

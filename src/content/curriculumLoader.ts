@@ -24,6 +24,9 @@ const AUTHORITATIVE_SOURCE_OVERRIDE_KEYS = new Set([
   'advanced-phonics',
   'grammar-mastery',
   'advanced-grammar',
+  'grammar',
+  'grammar-essentials',
+  'basic-grammar',
 ]);
 
 const withoutSourceOwnedOverrides = (
@@ -48,7 +51,7 @@ export async function loadCurriculumOverrides(): Promise<CurriculumOverride | nu
     if (!res.ok) return null;
     const data = (await res.json()) as CurriculumOverride;
 
-    // Phonics and Advanced Grammar are maintained in source curriculum modules.
+    // Phonics and both Grammar courses are maintained in source curriculum modules.
     // Ignore legacy runtime JSON for these routes so older six-stage payloads cannot
     // overwrite approved lesson sequences, stage goals, outcomes, or public-page structure.
     return withoutSourceOwnedOverrides(data);

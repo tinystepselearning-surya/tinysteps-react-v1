@@ -78,6 +78,7 @@ import TinyStepsBrand from "../../components/common/TinyStepsBrand";
 import MobileTabBar from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
 import MessagesPanel from "../messages/MessagesPanel";
+import { GRAMMAR_COURSES, GRAMMAR_CURRICULUM_TOPICS } from "../../content/grammarCurriculum";
 import useMessageThreads from "../../hooks/useMessageThreads";
 import { useChildCourseProgressProjection } from "../../hooks/useChildCourseProgressProjection";
 import { buildCanonicalParentOverview } from "./parentOverviewProjection";
@@ -1020,22 +1021,8 @@ const STAGE_DEFINITIONS_BY_COURSE: Record<string, StageDefinition[]> = {
     { stageOrder: 5, label: "Stage 5 — Endings", start: 16, end: 16 },
     { stageOrder: 6, label: "Stage 6 — Revision", start: 17, end: 20 },
   ],
-  "basic-grammar": [
-    { stageOrder: 1, label: "Stage 1 — Sentence Foundations", start: 1, end: 6 },
-    { stageOrder: 2, label: "Stage 2 — Meaning Builders", start: 7, end: 12 },
-    { stageOrder: 3, label: "Stage 3 — Where/When/How", start: 13, end: 18 },
-    { stageOrder: 4, label: "Stage 4 — Longer Sentences", start: 19, end: 24 },
-    { stageOrder: 5, label: "Stage 5 — Asking + Punctuation", start: 25, end: 30 },
-    { stageOrder: 6, label: "Stage 6 — Tenses Basics", start: 31, end: 36 },
-  ],
-  "advanced-grammar": [
-    { stageOrder: 1, label: "Stage 1 — Tense Control", start: 1, end: 6 },
-    { stageOrder: 2, label: "Stage 2 — Perfect Tenses + Modals", start: 7, end: 12 },
-    { stageOrder: 3, label: "Stage 3 — Clauses + Complex Sentences", start: 13, end: 18 },
-    { stageOrder: 4, label: "Stage 4 — Voice + Reported Speech", start: 19, end: 24 },
-    { stageOrder: 5, label: "Stage 5 — Paragraph Cohesion", start: 25, end: 30 },
-    { stageOrder: 6, label: "Stage 6 — Tone + Argument + Impact", start: 31, end: 36 },
-  ],
+  "basic-grammar": GRAMMAR_COURSES["basic-grammar"].stages,
+  "advanced-grammar": GRAMMAR_COURSES["advanced-grammar"].stages,
   "basic-public-speaking": [
     { stageOrder: 1, label: "Stage 1 — Comfort + Routine", start: 1, end: 6 },
     { stageOrder: 2, label: "Stage 2 — Clear Speaking", start: 7, end: 12 },
@@ -1670,6 +1657,21 @@ export default function ParentDashboard() {
         stageLabel: resolvedStageLabel,
         stageOrder: resolvedStageOrder,
       });
+    });
+
+    // Grammar is source-owned. Firestore remains a backend/read-model projection, but the
+    // parent UI must not render an independently maintained or stale Grammar definition.
+    (['basic-grammar', 'advanced-grammar'] as const).forEach((courseId) => {
+      byCourse[courseId] = GRAMMAR_CURRICULUM_TOPICS
+        .filter((topic) => topic.courseId === courseId)
+        .map((topic) => ({
+          id: topic.id,
+          label: topic.displayTitle,
+          displayTitle: topic.displayTitle,
+          order: topic.order,
+          stageLabel: topic.stageLabel,
+          stageOrder: topic.stageOrder,
+        }));
     });
 
     Object.keys(byCourse).forEach((courseId) => {
