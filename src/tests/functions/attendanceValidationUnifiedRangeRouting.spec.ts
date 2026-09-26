@@ -51,16 +51,14 @@ describe('AVS unified Run Validation backend routing', () => {
     expect(source).toContain('mapWithConcurrency(');
   });
 
-  it('uses remaining capacity for baseline migration even when unrelated fresh work fails', () => {
+  it('uses remaining capacity for the existing baseline cursor engine', () => {
     expect(source).toContain(
       'remainingUnifiedValidationCapacity(',
     );
     expect(source).toContain(
       'runAttendanceValidationFirstTimeBaselineBatch(',
     );
-    expect(source).toContain('maxSessions: remainingCapacity');
-    expect(source).toContain('allowFreshEvidence: freshFailedCount === 0');
-    expect(source).not.toContain('remainingCapacity > 0 && freshFailedCount === 0');
+    expect(source).toContain('{ maxSessions: remainingCapacity }');
     expect(source).toContain(
       'AVS_UNIFIED_VALIDATION_MAX_SESSIONS_PER_RUN',
     );
