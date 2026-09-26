@@ -12,15 +12,11 @@ const RETIRED_PATH = `/blog/${RETIRED_SLUG}`;
 const CANONICAL_OWNER = '/blog/child-understands-english-but-does-not-speak';
 
 describe('Blog #69 communication-classes overlap retirement lock', () => {
-  it('keeps the numbered source hidden instead of reviving a competing public article', () => {
-    const post = bySlug.get(RETIRED_SLUG);
-    expect(post).toBeDefined();
-    expect(post?.title).toBe('Communication Classes for Kids: How to Help Shy Children Speak With Confidence');
-    expect(post?.hideFromList).toBe(true);
-
-    const source = read('src/content/blog/posts/public-speaking/spoken-english-classes-for-kids-confidence.ts');
-    expect(source).toContain("hideFromList: true");
-    expect(source).toContain("slug: 'spoken-english-classes-for-kids-confidence'");
+  it('removes the retired source from the live editorial corpus instead of keeping a hidden duplicate', () => {
+    expect(bySlug.has(RETIRED_SLUG)).toBe(false);
+    expect(
+      fs.existsSync(path.join(ROOT, 'src/content/blog/posts/public-speaking/spoken-english-classes-for-kids-confidence.ts')),
+    ).toBe(false);
   });
 
   it('preserves the one-hop permanent redirect to the protected speaking diagnostic owner', () => {
@@ -43,8 +39,8 @@ describe('Blog #69 communication-classes overlap retirement lock', () => {
     const indexingPolicy = read('src/lib/blogIndexingPolicy.js');
 
     expect(sitemapGenerator).toContain("'spoken-english-classes-for-kids-confidence'");
-    expect(rssGenerator).toContain("['spoken-english-classes-for-kids-confidence', '/blog/child-understands-english-but-does-not-speak']");
-    expect(rssGenerator).toContain('EXCLUDED_BLOG_SLUGS = new Set(RETIRED_BLOG_SOURCE_REDIRECTS.keys())');
+    expect(rssGenerator).not.toContain('spoken-english-classes-for-kids-confidence');
+    expect(rssGenerator).not.toContain('retired_editorial_sources');
     expect(indexingPolicy).not.toContain('spoken-english-classes-for-kids-confidence');
   });
 
