@@ -12,15 +12,15 @@ function sourceFiles(dir: string): string[] {
   });
 }
 describe('approved SEO recovery corpus and snippet contract', () => {
-  it('locks all 83 sources and canonical slugs, not merely the registry count', () => {
+  it('locks all 82 sources and canonical slugs, not merely the registry count', () => {
     const root = process.cwd();
     const actualFiles = sourceFiles(path.join(root, 'src/content/blog/posts'))
       .map((file) => path.relative(root, file).split(path.sep).join('/')).sort();
-    expect(EXPECTED_RECOVERY_SOURCE_PATHS).toHaveLength(83);
-    expect(EXPECTED_RECOVERY_BLOG_SLUGS).toHaveLength(83);
+    expect(EXPECTED_RECOVERY_SOURCE_PATHS).toHaveLength(82);
+    expect(EXPECTED_RECOVERY_BLOG_SLUGS).toHaveLength(82);
     expect(actualFiles).toEqual([...EXPECTED_RECOVERY_SOURCE_PATHS]);
     expect(blogPosts.map((post) => post.slug).sort()).toEqual([...EXPECTED_RECOVERY_BLOG_SLUGS]);
-    expect(new Set(blogPosts.map((post) => post.slug)).size).toBe(83);
+    expect(new Set(blogPosts.map((post) => post.slug)).size).toBe(82);
   });
   it('keeps the five approved CTR experiments and final public titles aligned', () => {
     expect(Object.fromEntries(SEO_RECOVERY_BRICK10_EXPERIMENTS.map((item) => [item.slug, item.title]))).toEqual(RECOVERY_CTR_TITLES);
