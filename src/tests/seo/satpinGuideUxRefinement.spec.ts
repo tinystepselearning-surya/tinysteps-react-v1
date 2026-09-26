@@ -56,7 +56,9 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(page).toContain('<SatpinGuideSidebar tocItems={tocItems} />');
     expect(page).toContain("lazy(() => import('../components/blog/SatpinGuideExperience'))");
     expect(page).toContain('<Suspense');
-    expect(page).toContain("isSatpinGuide ? 'hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start'");
+    expect(page).toContain("lg:grid-cols-[240px_minmax(0,1fr)]");
+    expect(page).toContain("lg:order-1 lg:block lg:sticky lg:top-24");
+    expect(page).toContain('Not sure what your child should learn next?');
     expect(page).toContain('compact={isSatpinGuide}');
     expect(experience).toContain("const SATPIN_SLUG = 'satpin-phonics-guide'");
     expect(experience).not.toContain('/blog/satpin-phonics-guide-v2');
@@ -74,7 +76,7 @@ describe('SATPIN authority-page UX refinement', () => {
       'Progress checkpoint',
       'If your child is stuck',
       'The next stage',
-      'Why this guidance is trustworthy',
+      'Evidence behind this guide',
     ]) {
       expect(experience).toContain(signal);
     }
@@ -87,6 +89,9 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain("'SatpinAssessmentClicked'");
     expect(experience).toContain("'SatpinPhonicsClassesClicked'");
     expect(experience).toContain('renderRichText');
+    expect(experience).toContain("type RichTone = 'light' | 'dark'");
+    expect(experience).toContain('Learn a small sound set');
+    expect(experience).toContain('Full guidance');
     expect(experience).toContain('ts-answer-title ts-blog-hero-title');
     expect(experience).toContain('ts-answer-summary ts-blog-quick-answer');
     expect(experience).toContain("raw.startsWith('**')");
@@ -112,8 +117,13 @@ describe('SATPIN authority-page UX refinement', () => {
 
   it('keeps the shared article hero compact mode opt-in so other blog pages retain their existing layout', () => {
     const hero = read('src/components/blog/ResearchArticleHero.tsx');
+    const sidebar = read('src/components/blog/SatpinGuideSidebar.tsx');
     expect(hero).toContain('compact?: boolean');
     expect(hero).toContain('compact = false');
     expect(hero).toContain("compact ? 'pb-10 pt-20 sm:pb-12 sm:pt-24'");
+    expect(hero).toContain("compact ? 'grid gap-7'");
+    expect(sidebar).toContain('Guide index');
+    expect(sidebar).toContain('aria-current');
+    expect(sidebar).toContain("['SATPIN sounds:', 'Sounds']");
   });
 });

@@ -1035,9 +1035,9 @@ function buildMetaDescription(src: any) {
         compact={isSatpinGuide}
       />
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-8">
+      <div className={isSatpinGuide ? 'mx-auto max-w-[1380px] px-4 py-7 sm:px-6 sm:py-9' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
+        <div className={isSatpinGuide ? 'grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]' : 'grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]'}>
+          <div className={isSatpinGuide ? 'min-w-0 space-y-8 lg:order-2' : 'min-w-0 space-y-8'}>
             <KnowledgeBreadcrumbs items={breadcrumbItems} tone="light" />
 
             {isSatpinGuide && post ? (
@@ -1103,7 +1103,35 @@ function buildMetaDescription(src: any) {
               reviewLabel={reviewLabel}
             />
 
-            {blogConversionConfig && slug ? (
+            {isSatpinGuide ? (
+              <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                  <div className="p-6 sm:p-8">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Next step</p>
+                    <h2 className="mt-3 max-w-2xl text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                      Not sure what your child should learn next?
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                      A free phonics assessment can identify the current decoding stage and the most useful next step without adding more random practice.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 border-t border-slate-100 p-6 sm:flex-row lg:border-l lg:border-t-0 lg:p-8">
+                    <Link
+                      to="/book-demo"
+                      className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Book free assessment
+                    </Link>
+                    <Link
+                      to="/phonics"
+                      className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Explore phonics
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            ) : blogConversionConfig && slug ? (
               <BlogConversionCard slug={slug} config={blogConversionConfig} />
             ) : null}
 
@@ -1134,7 +1162,7 @@ function buildMetaDescription(src: any) {
             ) : null}
           </div>
 
-          <aside className={isSatpinGuide ? 'hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
+          <aside className={isSatpinGuide ? 'hidden lg:order-1 lg:block lg:sticky lg:top-24 lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
             {isSatpinGuide ? (
               <SatpinGuideSidebar tocItems={tocItems} />
             ) : (

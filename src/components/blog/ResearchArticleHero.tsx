@@ -48,13 +48,13 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
   compact = false,
 }) => {
   return (
-    <section className="relative isolate overflow-hidden bg-slate-950 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,186,119,0.28),_transparent_34%),radial-gradient(circle_at_82%_18%,_rgba(94,170,255,0.28),_transparent_30%),linear-gradient(160deg,_rgba(15,23,42,0.98)_0%,_rgba(15,23,42,0.95)_46%,_rgba(10,37,79,0.96)_100%)]" />
-      <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" />
-      <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
+    <section className={compact ? 'relative isolate overflow-hidden bg-[#0b1220] text-white' : 'relative isolate overflow-hidden bg-slate-950 text-white'}>
+      <div className={compact ? 'absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,_rgba(255,170,112,0.18),_transparent_28%),radial-gradient(circle_at_86%_12%,_rgba(82,153,255,0.18),_transparent_30%),linear-gradient(145deg,_#121927_0%,_#0b1220_58%,_#10233f_100%)]' : 'absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,186,119,0.28),_transparent_34%),radial-gradient(circle_at_82%_18%,_rgba(94,170,255,0.28),_transparent_30%),linear-gradient(160deg,_rgba(15,23,42,0.98)_0%,_rgba(15,23,42,0.95)_46%,_rgba(10,37,79,0.96)_100%)]'} />
+      {!compact ? <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" /> : null}
+      {!compact ? <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" /> : null}
 
       <div className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${compact ? 'pb-10 pt-20 sm:pb-12 sm:pt-24' : 'pb-14 pt-24 sm:pb-20 sm:pt-32'}`}>
-        <div className={`grid lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end ${compact ? 'gap-8' : 'gap-12'}`}>
+        <div className={compact ? 'grid gap-7' : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'}>
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">
               {eyebrowPrimary}
@@ -103,11 +103,11 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/12 bg-white/8 p-5 sm:p-6 backdrop-blur">
+          <div className={compact ? 'rounded-[22px] border border-white/10 bg-white/[0.055] p-4 backdrop-blur-xl' : 'rounded-[32px] border border-white/12 bg-white/8 p-5 sm:p-6 backdrop-blur'}>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">{searchLabel}</p>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
+            <ul className={compact ? 'mt-3 flex flex-wrap gap-2 text-sm leading-6 text-slate-100' : 'mt-4 space-y-3 text-sm leading-6 text-slate-100'}>
               {searchPainPoints.map((item) => (
-                <li key={item} className="border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
+                <li key={item} className={compact ? 'rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-200' : 'border-b border-white/10 pb-3 last:border-b-0 last:pb-0'}>
                   {item}
                 </li>
               ))}
@@ -119,11 +119,11 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
           {heroPoints.map((point) => (
             <div
               key={point.label}
-              className="rounded-[28px] border border-white/12 bg-white/8 p-5 backdrop-blur"
+              className={compact ? 'rounded-[20px] border border-white/10 bg-white/[0.055] p-4 backdrop-blur-xl' : 'rounded-[28px] border border-white/12 bg-white/8 p-5 backdrop-blur'}
             >
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">{point.label}</p>
-              <p className="mt-3 text-xl font-bold text-white">{point.value}</p>
-              <p className="mt-3 text-sm leading-6 text-slate-200">{point.detail}</p>
+              <p className={compact ? 'mt-2 text-lg font-bold tracking-tight text-white' : 'mt-3 text-xl font-bold text-white'}>{point.value}</p>
+              <p className={compact ? 'mt-2 text-xs leading-5 text-slate-300' : 'mt-3 text-sm leading-6 text-slate-200'}>{point.detail}</p>
             </div>
           ))}
         </div>
