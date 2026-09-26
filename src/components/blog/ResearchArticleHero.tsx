@@ -62,7 +62,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
           className={
             compact
               ? heroImage
-                ? 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center'
+                ? 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-center xl:grid-cols-[minmax(0,1fr)_360px]'
                 : 'grid gap-5'
               : 'grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end'
           }
@@ -117,17 +117,31 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
 
           {compact ? (
             heroImage ? (
-              <div className="justify-self-stretch overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.06] p-1.5 shadow-[0_18px_55px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:justify-self-end">
-                <img
-                  src={heroImage}
-                  alt={heroImageAlt || title}
-                  className="aspect-[4/3] w-full rounded-[19px] bg-slate-900/20 object-cover lg:max-h-[250px]"
-                  width={900}
-                  height={675}
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
+              <div className="relative isolate justify-self-stretch lg:justify-self-end">
+                <div
+                  className="pointer-events-none absolute -inset-8 -z-10 rounded-[40px] bg-[radial-gradient(circle_at_center,_rgba(82,153,255,0.16)_0%,_rgba(82,153,255,0.07)_38%,_transparent_72%)] blur-2xl"
+                  aria-hidden="true"
                 />
+                <div className="relative overflow-hidden rounded-[28px]">
+                  <img
+                    src={heroImage}
+                    alt={heroImageAlt || title}
+                    className="aspect-[4/3] w-full bg-slate-900/20 object-cover lg:max-h-[260px]"
+                    width={900}
+                    height={675}
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-y-0 left-0 w-[30%] bg-[linear-gradient(90deg,_rgba(11,18,32,0.92)_0%,_rgba(11,18,32,0.58)_42%,_rgba(11,18,32,0)_100%)]"
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-[24%] bg-[linear-gradient(0deg,_rgba(11,18,32,0.30)_0%,_rgba(11,18,32,0)_100%)]"
+                    aria-hidden="true"
+                  />
+                </div>
               </div>
             ) : null
           ) : (
