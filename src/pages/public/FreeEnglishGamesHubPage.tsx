@@ -170,6 +170,15 @@ export default function FreeEnglishGamesHubPage() {
         canonical={PAGE_URL}
       />
 
+      <div className="mx-auto w-full max-w-7xl px-3 pt-4 sm:px-5">
+        <Link
+          to="/resources"
+          className="inline-flex rounded-full border border-violet-300/25 bg-white/10 px-4 py-2 text-sm font-extrabold text-slate-100 transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+        >
+          ← All Tiny Steps Resources
+        </Link>
+      </div>
+
       <EnglishExcellenceHub
         brandSubtitle="FREE LEARNING GAMES"
         title="English Excellence Games"
