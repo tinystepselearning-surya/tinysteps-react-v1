@@ -289,6 +289,8 @@ export const runAttendanceValidationRange = onCall(
       remainingCapacity === 0 || freshFailedCount > 0;
     const baselineFailureSummary =
       baseline?.failureSummary ?? emptyAvsFailureSummary();
+    const baselineExistingCaseCount = baseline?.existingCaseCount ?? 0;
+    const baselinePersistedCaseCount = baseline?.persistedCaseCount ?? 0;
     const failureSummary = mergeAvsFailureSummaries(
       freshFailureSummary,
       baselineFailureSummary,
@@ -340,9 +342,9 @@ export const runAttendanceValidationRange = onCall(
       baselineComplete: baseline?.complete ?? false,
       baselineAlreadyComplete: baseline?.alreadyComplete ?? false,
       baselineBatchSessionCount: baseline?.batchSessionCount ?? 0,
-      baselineExistingCaseCount: baseline?.existingCaseCount ?? 0,
+      baselineExistingCaseCount,
       baselineFreshEvidenceCount: baseline?.freshEvidenceCount ?? 0,
-      baselinePersistedCaseCount: baseline?.persistedCaseCount ?? 0,
+      baselinePersistedCaseCount,
       baselineBlockedCount: baseline?.blockedCount ?? 0,
       baselineDeferred,
       graphLogicalCalls,
@@ -379,6 +381,8 @@ export const runAttendanceValidationRange = onCall(
         failureSummary.adminActionRequiredCount,
       baselineBatchSessionCount:
         baseline?.batchSessionCount ?? 0,
+      baselineExistingCaseCount,
+      baselinePersistedCaseCount,
       graphLogicalCalls,
       hasMore,
     });
