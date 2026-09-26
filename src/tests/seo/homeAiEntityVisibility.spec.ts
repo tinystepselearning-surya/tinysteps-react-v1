@@ -120,6 +120,9 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(pricingSource).not.toContain('Around 3–4 classes per week');
     expect(pricingSource).not.toContain('Around 5–6 classes per week');
     expect(pricingSource).not.toContain('Phonics, grammar, or public speaking');
+    expect(pricingSource).toContain('Other class formats are available');
+    expect(pricingSource).toContain('Compare all formats');
+    expect(pricingSource).not.toContain('ULTRA_PREMIUM_PRICING.map');
   });
 
   it('keeps assessment reassurance factual and the closing CTA concise', () => {
