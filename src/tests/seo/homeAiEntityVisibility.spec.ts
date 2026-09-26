@@ -111,12 +111,16 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(journeySource).not.toContain("icon: '📚'");
     expect(journeySource).not.toContain("icon: '✏️'");
     expect(journeySource).not.toContain("icon: '🎤'");
+    expect(journeySource).not.toContain('group-hover:translate-x-0.5 group-hover:text-slate-500');
   });
 
   it('does not reserve empty viewport height below the hero or repeat desktop proof', () => {
     expect(heroSource).toContain('PUBLIC_LEARNER_REACH_LABEL');
     expect(heroSource).not.toContain('min-h-[82vh]');
     expect(heroSource).not.toContain('md:min-h-screen');
+    expect(heroSource).toContain('Shared proof row');
+    expect(heroSource).not.toContain('Quick questions? WhatsApp us');
+    expect(heroSource).not.toContain('Assessment-led placement • Transparent pricing');
     expect(journeySource).toContain('md:hidden');
     expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.learnersLabel');
     expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.countriesLabel');
@@ -165,6 +169,7 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(journeySource).toContain('Popular parent questions');
     expect(journeySource).toContain('sm:grid-cols-2');
     expect(journeySource).toContain('xl:grid-cols-3');
+    expect(journeySource).toContain('className="group h-full rounded-[20px]');
     expect(homeSource).toContain('What age group does Tiny Steps teach?');
     expect(homeSource).toContain('How much do Tiny Steps classes cost?');
     expect(homeSource).toContain('What if I need to cancel or reschedule a class?');
