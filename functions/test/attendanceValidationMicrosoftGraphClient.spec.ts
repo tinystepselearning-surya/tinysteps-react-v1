@@ -77,7 +77,8 @@ describe('MicrosoftGraphClient', () => {
     expect(graphHeaders.get('Authorization')).toBe('Bearer token-123');
   });
 
-  it('resolves a short Teams meeting link by numeric meeting ID', async () => {
+  it('resolves a short Teams meeting link by exact JoinWebUrl before parsing it', async () => {
+    const shortUrl = 'https://teams.microsoft.com/meet/48543659205152?p=example';
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(tokenResponse())
       .mockResolvedValueOnce(jsonResponse({
@@ -92,12 +93,47 @@ describe('MicrosoftGraphClient', () => {
 
     const meeting = await client.resolveOnlineMeetingByJoinUrl(
       'organizer',
-      'https://teams.microsoft.com/meet/48543659205152?p=example',
+      shortUrl,
     );
 
     expect(meeting?.id).toBe('meeting-short');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     const graphUrl = new URL(String(fetchMock.mock.calls[1][0]));
     expect(graphUrl.searchParams.get('$filter')).toBe(
+      `JoinWebUrl eq '${shortUrl}'`,
+    );
+  });
+
+  it('falls back to numeric joinMeetingId only after an exact short-link miss', async () => {
+    const shortUrl = 'https://teams.microsoft.com/meet/48543659205152?p=example';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(jsonResponse({ value: [] }))
+      .mockResolvedValueOnce(jsonResponse({
+        value: [{ id: 'meeting-short-fallback' }],
+      }));
+
+    const client = new MicrosoftGraphClient({
+      credentials,
+      fetchImpl: asFetch(fetchMock),
+      now: () => 1_000,
+    });
+
+    const meeting = await client.resolveOnlineMeetingByJoinUrl(
+      'organizer',
+      shortUrl,
+    );
+
+    expect(meeting?.id).toBe('meeting-short-fallback');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    const firstGraphUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(firstGraphUrl.searchParams.get('$filter')).toBe(
+      `JoinWebUrl eq '${shortUrl}'`,
+    );
+
+    const fallbackGraphUrl = new URL(String(fetchMock.mock.calls[2][0]));
+    expect(fallbackGraphUrl.searchParams.get('$filter')).toBe(
       "joinMeetingIdSettings/joinMeetingId eq '48543659205152'",
     );
   });
