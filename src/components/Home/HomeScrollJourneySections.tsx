@@ -118,86 +118,43 @@ const assessmentChecks = [
   'Pronunciation clarity',
 ];
 
-const ageStartingPoints = [
-  ['3–4', 'Not speaking clearly', 'Vocabulary, sounds, confidence'],
-  ['5–6', 'Knows letters but cannot read', 'Phonics, blending, CVC'],
-  ['7–8', 'Reads slowly, grammar mistakes', 'Fluency + grammar basics'],
-  ['9–12', 'Hesitates to speak', 'Public speaking, sentence confidence'],
-];
-
 export function AssessmentStartPointsSection() {
   return (
-    <section id="free-assessment-checklist" className="px-6 py-8">
-      <div className="mx-auto grid max-w-[84rem] gap-6 lg:grid-cols-[1.08fr_0.92fr] xl:gap-8">
-        <div className="relative overflow-hidden rounded-[34px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.95)_0%,rgba(245,252,255,0.96)_30%,rgba(236,245,255,0.96)_62%,rgba(255,248,238,0.95)_100%)] p-6 shadow-[0_30px_90px_rgba(62,84,120,0.14)] ring-1 ring-white/80 sm:p-8">
-          <div className="inline-flex rounded-full border border-sky-200 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-900">
-            One free 35-minute 1:1 demo assessment
+    <section id="free-assessment-checklist" className="px-6 py-8 sm:py-10">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(145deg,#f8fbff_0%,#ffffff_48%,#fff8f0_100%)] p-6 shadow-[0_22px_64px_rgba(62,84,120,0.10)] sm:p-8">
+        <div className="grid gap-7 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+          <div>
+            <div className="inline-flex rounded-full border border-sky-200 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-900">
+              One free 35-minute 1:1 demo assessment
+            </div>
+            <h2 className="mt-4 max-w-xl text-2xl font-semibold tracking-[-0.035em] text-slate-900 sm:text-3xl">
+              We identify the skill gap before recommending a programme
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-700 sm:text-base">
+              The teacher focuses on the areas connected to the concern you shared. Age helps us choose appropriate tasks, but placement is based on the child&apos;s observed skills rather than age alone.
+            </p>
+            <Link
+              to="/book-demo"
+              className="mt-5 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Book Free 35-Minute Demo
+            </Link>
           </div>
-          <h2 className="mt-5 max-w-xl text-2xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-[2.15rem] sm:leading-[1.08]">
-            What we check before recommending a starting point
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">
-            The assessment helps the teacher see where your child is secure, where they are getting stuck, and which Tiny Steps pathway should come next.
-          </p>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {assessmentChecks.map((item) => (
-              <div key={item} className="rounded-[20px] border border-white bg-white/90 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
-                {item}
-              </div>
-            ))}
-          </div>
-          <Link
-            to="/book-demo"
-            className="mt-6 inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Book Free 35-Minute Demo
-          </Link>
-        </div>
 
-        <div className="relative overflow-hidden rounded-[34px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.96)_0%,rgba(240,248,255,0.97)_45%,rgba(247,244,255,0.95)_100%)] p-6 shadow-[0_30px_90px_rgba(62,84,120,0.14)] ring-1 ring-white/80 sm:p-8">
-          <div className="inline-flex rounded-full border border-violet-200 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-violet-900">
-            Age guidance
-          </div>
-          <h2 className="mt-5 text-2xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-[2.15rem]">Common starting points by age</h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">Age helps us ask the right questions, but placement is based on the child’s actual skill level.</p>
-
-          <div className="mt-5 space-y-3 sm:hidden">
-            {ageStartingPoints.map(([age, concern, focus]) => (
-              <article key={age} className="rounded-[20px] border border-white bg-white/90 p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-violet-50 px-3 py-1 text-sm font-bold text-violet-800">Age {age}</span>
-                  <span className="text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Starting point</span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Depending on the child&apos;s needs, the assessment may check
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {assessmentChecks.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-[18px] border border-white bg-white/90 px-4 py-3 text-sm font-medium leading-5 text-slate-700 shadow-sm"
+                >
+                  {item}
                 </div>
-                <p className="mt-3 text-sm font-semibold text-slate-900">{concern}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600">Focus: {focus}</p>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-5 hidden overflow-hidden rounded-[24px] border border-white bg-white/90 shadow-sm sm:block">
-            <table className="w-full table-fixed border-collapse text-left text-sm text-slate-700">
-              <colgroup>
-                <col className="w-[18%]" />
-                <col className="w-[38%]" />
-                <col className="w-[44%]" />
-              </colgroup>
-              <thead className="bg-slate-50 text-slate-900">
-                <tr>
-                  <th className="px-5 py-4 font-semibold">Age</th>
-                  <th className="px-5 py-4 font-semibold">Parent concern</th>
-                  <th className="px-5 py-4 font-semibold">Tiny Steps focus</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ageStartingPoints.map(([age, concern, focus]) => (
-                  <tr key={age} className="border-t border-slate-200">
-                    <td className="whitespace-nowrap px-5 py-4 font-semibold text-slate-900">{age}</td>
-                    <td className="px-5 py-4 leading-6">{concern}</td>
-                    <td className="px-5 py-4 leading-6">{focus}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -298,20 +255,20 @@ export function LearningPathsSection() {
 
 const differentiators = [
   {
-    title: 'Assessment-led placement',
-    description: 'The starting point is based on the child’s current skills, not only age or school grade.',
+    title: 'One clear skill focus',
+    description: 'Each lesson works toward a defined objective instead of moving through unrelated activities.',
   },
   {
-    title: 'Structured progression',
-    description: 'Each pathway moves through named learning stages instead of unrelated topics from class to class.',
+    title: 'Model → practise → retry',
+    description: 'Teachers model the skill, guide the child through practice, correct errors, and give another attempt in real time.',
   },
   {
-    title: 'Live child participation',
-    description: 'Children read, speak, answer, practise, make mistakes, and try again with teacher guidance in real time.',
+    title: 'Support changes with the child',
+    description: 'Prompts, examples, repetition, and practice time can change while the learning objective stays structured.',
   },
   {
-    title: 'Visible parent progress',
-    description: 'Parents receive clear updates on what was taught, what improved, and what the next focus should be.',
+    title: 'Parents can see the next step',
+    description: 'Updates connect what was taught, what still needs practice, and the next learning focus.',
   },
 ];
 
@@ -326,9 +283,14 @@ export function WhyTinyStepsSection() {
             <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
               The purpose of the programme is to make the child’s next step understandable to the teacher, the child, and the parent.
             </p>
-            <Link to="/why-tiny-steps" className="mt-5 inline-flex text-sm font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900">
-              Learn more about the Tiny Steps approach
-            </Link>
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+              <Link to="/why-tiny-steps" className="text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900">
+                Learn more about the Tiny Steps approach
+              </Link>
+              <Link to="/testimonials" className="text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-slate-900">
+                Read parent testimonials
+              </Link>
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -340,67 +302,6 @@ export function WhyTinyStepsSection() {
               </article>
             ))}
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-const evidenceItems = [
-  {
-    title: 'Global learner footprint',
-    description: 'See the countries represented in the Tiny Steps learner community.',
-    path: '#global-learners-proof',
-    label: 'View global reach below',
-  },
-  {
-    title: 'Observable teaching',
-    description: 'See real class samples and understand how teachers guide participation.',
-    path: '#home-class-samples',
-    label: 'Preview class samples below',
-  },
-  {
-    title: 'Parent voice',
-    description: 'Read parent feedback from families sharing their Tiny Steps learning experience.',
-    path: '/testimonials',
-    label: 'Read parent testimonials',
-  },
-  {
-    title: 'Progress visibility',
-    description: 'See how learning goals, parent updates, and next steps stay visible throughout the journey.',
-    path: '/why-tiny-steps',
-    label: 'See how progress is shared',
-  },
-];
-
-export function TrustEvidenceSection() {
-  return (
-    <section className="px-6 py-12">
-      <div className="mx-auto max-w-6xl">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Proof you can inspect</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">See the learning experience before you decide</h2>
-          <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-            Explore the teaching style, parent feedback, learning structure, and progress visibility that sit behind the Tiny Steps experience.
-          </p>
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {evidenceItems.map((item) => {
-            const isAnchor = item.path.startsWith('#');
-            const className = 'rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md';
-            const content = (
-              <>
-                <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
-                <span className="mt-4 inline-flex text-sm font-semibold text-sky-700">{item.label} →</span>
-              </>
-            );
-            return isAnchor ? (
-              <a key={item.title} href={item.path} className={className}>{content}</a>
-            ) : (
-              <Link key={item.title} to={item.path} className={className}>{content}</Link>
-            );
-          })}
         </div>
       </div>
     </section>
