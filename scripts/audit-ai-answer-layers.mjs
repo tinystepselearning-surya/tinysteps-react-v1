@@ -9,6 +9,7 @@ import {
   AI_ANSWER_LAYER_MACHINE_JSON_PATH,
   AI_ANSWER_LAYER_MACHINE_TEXT_PATH,
 } from '../src/lib/aiAnswerLayerRegistry.js';
+import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -77,6 +78,20 @@ if (process.argv.includes('--generated')) {
     if (index.corpus_counts?.programmatic_phonics_guides !== 31) fail('corpus-count-summary', 'corpus_counts.programmatic_phonics_guides must equal 31.');
     if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + programmaticPhonics.length + additionalPublicRoutes.length) {
       fail('connected-public-content-count', 'Connected public content total does not reconcile.');
+    }
+
+    const representedCorpusUrls = new Set([
+      ...editorialBlogs.map((item) => item.canonical_url),
+      ...programmaticPhonics.map((item) => item.canonical_url),
+      ...additionalPublicRoutes.map((item) => item.canonical_url),
+    ]);
+    for (const route of PUBLIC_ROUTE_MANIFEST) {
+      const rawPath = route.canonicalPath || route.path;
+      const normalizedPath = rawPath === '/' ? '/' : rawPath.replace(/\/+$/, '');
+      const expectedUrl = 'https://tinystepslearning.com' + normalizedPath;
+      if (!representedCorpusUrls.has(expectedUrl)) {
+        fail('public-route-manifest-coverage', route.path + ' -> ' + expectedUrl);
+      }
     }
 
     let externalReferenceCount = 0;
