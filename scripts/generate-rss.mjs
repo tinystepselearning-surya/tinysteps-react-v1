@@ -104,6 +104,10 @@ function escapeXml(value) {
 function normalizeText(value) {
   return rewriteLegacyWeekBlogPaths(rewriteRetiredBlogPaths(String(value || ''))).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/\s+/g, ' ').trim();
 }
+function extractExternalReferenceUrlsFromSource(source) {
+  const urls = String(source || '').match(/https?:\/\/[^\s)\]}>,;'"]+/g) || [];
+  return [...new Set(urls.map((url) => url.replace(/[.,:!?]+$/, '')).filter((url) => !url.startsWith(SITE_URL)))];
+}
 function fromSingleQuotedJs(value) {
   return value.replace(/\\\\/g, '\\').replace(/\\'/g, "'").replace(/\\n/g, ' ').replace(/\\r/g, ' ').replace(/\\t/g, ' ');
 }
@@ -168,6 +172,7 @@ function parseBlogItemsFromSource() {
       pubDate: date ? new Date(`${date}T00:00:00Z`).toUTCString() : undefined,
       updatedDate: modifiedDate ? `${modifiedDate}T00:00:00Z` : undefined,
       sortDate: modifiedDate || date || '1970-01-01',
+      externalReferences: extractExternalReferenceUrlsFromSource(content),
     });
   }
   return [...itemsByUrl.values()].sort((a, b) => b.sortDate.localeCompare(a.sortDate));
@@ -223,6 +228,11 @@ function resolveAiAnswer(entry, blogItemMap) {
   return normalizeText(routeMeta?.description || '');
 }
 
+function resolveAiExternalReferences(entry, blogItemMap) {
+  const absolute = toCanonicalAbsoluteUrl(entry.canonicalPath);
+  return [...new Set(blogItemMap.get(absolute)?.externalReferences || [])];
+}
+
 function buildAiResourceIndex(blogItemMap) {
   const layers = AI_ANSWER_LAYER_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -235,6 +245,7 @@ function buildAiResourceIndex(blogItemMap) {
       hub_url: toCanonicalAbsoluteUrl(entry.hubPath),
       supporting_urls: [...new Set((entry.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
       reference_urls: [...new Set((entry.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
+      external_reference_urls: resolveAiExternalReferences(entry, blogItemMap),
       practice_urls: [...new Set((entry.practicePaths || []).map(toCanonicalAbsoluteUrl))],
       answer_selector: entry.layer <= 2 ? '.ts-answer-summary' : null,
       answer_source: entry.answerSource,
@@ -249,7 +260,7 @@ function buildAiResourceIndex(blogItemMap) {
     retrieval_guidance: 'Use canonical_url as the primary answer source, use reference_urls for connected context, and use practice_urls only after the answer/skill is understood.',
     principles: [
       'One established canonical owner per answer intent.',
-      'Use visible page answers and existing evidence; do not create duplicate AI-only article URLs.',
+      'Use visible page answers and existing evidence; external_reference_urls are extracted only from references already visible in canonical editorial sources.',
       'Layer 1 identifies the problem, Layer 2 explains the concept, Layer 3 links to focused practice.',
     ],
     layers,
@@ -270,6 +281,8 @@ function buildAiResourceText(index) {
       lines.push('- Q: ' + entry.query);
       if (entry.answer) lines.push('  A: ' + entry.answer);
       lines.push('  Canonical: ' + entry.canonical_url);
+      if (entry.reference_urls.length) lines.push('  Related: ' + entry.reference_urls.join(', '));
+      if (entry.external_reference_urls.length) lines.push('  Evidence: ' + entry.external_reference_urls.join(', '));
       if (entry.practice_urls.length) lines.push('  Practice: ' + entry.practice_urls.join(', '));
     }
     lines.push('');
