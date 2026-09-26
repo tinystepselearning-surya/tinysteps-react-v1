@@ -264,7 +264,7 @@ const BlogIndexPage: FC = () => {
 
   const todayIso = new Date().toISOString().slice(0, 10);
   const publishedPosts = useMemo(
-    () => allPosts.filter((post) => isPublishedBlogPost(post, todayIso)),
+    () => allPosts.filter((post) => !post.hideFromList && isPublishedBlogPost(post, todayIso)),
     [allPosts, todayIso],
   );
   const sortedPublishedPosts = useMemo(() => sortBlogIndexPostsNewest(publishedPosts), [publishedPosts]);
