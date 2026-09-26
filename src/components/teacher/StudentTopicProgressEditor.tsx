@@ -16,6 +16,7 @@ import {
   type ProgressRatings,
 } from '../../lib/skillRatings';
 import { getProgressSkillsForLesson } from '../../lib/progressSkills';
+import { getGrammarLessons, normalizeGrammarCourseId } from '../../content/grammarCurriculum';
 
 interface StudentTopicProgressEditorProps {
   kidId: string;
@@ -119,22 +120,8 @@ const STAGE_DEFINITIONS_BY_COURSE: Record<CourseId, StageDefinition[]> = {
     { stageOrder: 5, label: 'Stage 5 — Endings', start: 16, end: 16 },
     { stageOrder: 6, label: 'Stage 6 — Revision', start: 17, end: 20 },
   ],
-  'basic-grammar': [
-    { stageOrder: 1, label: 'Stage 1 — Sentence Foundations', start: 1, end: 6 },
-    { stageOrder: 2, label: 'Stage 2 — Meaning Builders', start: 7, end: 12 },
-    { stageOrder: 3, label: 'Stage 3 — Where/When/How', start: 13, end: 18 },
-    { stageOrder: 4, label: 'Stage 4 — Longer Sentences', start: 19, end: 24 },
-    { stageOrder: 5, label: 'Stage 5 — Asking + Punctuation', start: 25, end: 30 },
-    { stageOrder: 6, label: 'Stage 6 — Tenses Basics', start: 31, end: 36 },
-  ],
-  'advanced-grammar': [
-    { stageOrder: 1, label: 'Stage 1 — Tense Control', start: 1, end: 6 },
-    { stageOrder: 2, label: 'Stage 2 — Perfect Tenses + Modals', start: 7, end: 12 },
-    { stageOrder: 3, label: 'Stage 3 — Clauses + Complex Sentences', start: 13, end: 18 },
-    { stageOrder: 4, label: 'Stage 4 — Voice + Reported Speech', start: 19, end: 24 },
-    { stageOrder: 5, label: 'Stage 5 — Paragraph Cohesion', start: 25, end: 30 },
-    { stageOrder: 6, label: 'Stage 6 — Tone + Argument + Impact', start: 31, end: 36 },
-  ],
+  'basic-grammar': [],
+  'advanced-grammar': [],
   'basic-public-speaking': [
     { stageOrder: 1, label: 'Stage 1 — Comfort + Routine', start: 1, end: 6 },
     { stageOrder: 2, label: 'Stage 2 — Clear Speaking', start: 7, end: 12 },
@@ -332,84 +319,6 @@ const CONFUSION_OPTIONS_BY_RUBRIC: Record<RubricType, string[]> = {
 
 const isRubricType = (value: any): value is RubricType =>
   typeof value === 'string' && value in SUBSKILL_CHIPS_BY_RUBRIC;
-
-const GRAMMAR_BASIC_LABELS = [
-  'Nouns: people, places, things',
-  'Pronouns: he/she/they',
-  'Make a simple sentence (noun + verb)',
-  'Verb choice: is/are',
-  'Fix sentence basics (caps + full stop)',
-  'Revision: sentence foundations',
-  'Verbs: action words',
-  'Adjectives: describing words',
-  'Add an adjective',
-  'Articles: a/an/the',
-  'Capital letters check',
-  'Revision: meaning builders',
-  'Prepositions: in/on/under',
-  'Adverbs: how/when',
-  'Add a preposition phrase',
-  'Choose the correct preposition',
-  'Edit for adverbs',
-  'Revision: where/when/how',
-  'Conjunctions: and/but/because',
-  'Plurals: s/es',
-  'Join two sentences',
-  'Plural vs singular',
-  'Fix run-on sentences',
-  'Revision: longer sentences',
-  'Question words: who/what/where',
-  'Questions vs statements',
-  'Question marks',
-  'Exclamations: wow!/oh!',
-  'Edit question sentences',
-  'Revision: asking + punctuation',
-  'Tenses: past/present/future',
-  'Irregular verbs: go/went',
-  'Time words in sentences',
-  'Choose the correct tense',
-  'Fix tense mistakes',
-  'Revision: tenses capstone',
-];
-
-const GRAMMAR_ADVANCED_LABELS = [
-  'Simple vs continuous tense',
-  'Time clauses (when/while)',
-  'Choose the correct tense',
-  'Edit tense shifts',
-  'Tense consistency in paragraphs',
-  'Revision: tense control',
-  'Perfect tenses (have/has/had)',
-  'Present perfect vs past simple',
-  'Modals: can/must/should',
-  'Modal meaning & choice',
-  'Edit modal sentences',
-  'Revision: perfect + modals',
-  'Clauses: independent/dependent',
-  'Relative clauses: who/which/that',
-  'Complex sentences',
-  'Clause punctuation (comma)',
-  'Fix fragments',
-  'Revision: clauses',
-  'Passive voice',
-  'Active → passive',
-  'Reported speech',
-  'Reported speech tense shifts',
-  'Edit for clarity (voice + speech)',
-  'Revision: voice + speech',
-  'Punctuation: commas/semicolons',
-  'Transition words',
-  'Paragraph structure',
-  'Choose a transition',
-  'Edit paragraph cohesion',
-  'Revision: paragraphs',
-  'Tone + formality',
-  'Argument structure: claim/reason',
-  'Evidence sentence',
-  'Word choice for impact',
-  'Counterargument',
-  'Revision: capstone',
-];
 
 const SPEAKING_BASIC_LABELS = [
   'Confidence warm-up',
@@ -629,8 +538,14 @@ const TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
       extractLessonNumber(topic.lesson),
     )?.stageOrder ?? null,
   })),
-  'basic-grammar': buildSequentialTopics('basic-grammar', 'Basic Grammar', 'grammar', GRAMMAR_BASIC_LABELS),
-  'advanced-grammar': buildSequentialTopics('advanced-grammar', 'Advanced Grammar', 'grammar', GRAMMAR_ADVANCED_LABELS),
+  'basic-grammar': getGrammarLessons('basic-grammar').map((lesson) => ({
+    ...lesson,
+    courseLabel: 'Basic Grammar',
+  })),
+  'advanced-grammar': getGrammarLessons('advanced-grammar').map((lesson) => ({
+    ...lesson,
+    courseLabel: 'Advanced Grammar',
+  })),
   'basic-public-speaking': buildSequentialTopics(
     'basic-public-speaking',
     'Public Speaking (Basic)',
@@ -924,6 +839,9 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   const courseTopics = useMemo<CourseTopic[]>(() => {
     if (!selectedCourseId) return [];
+    if (normalizeGrammarCourseId(selectedCourseId)) {
+      return TOPICS_BY_COURSE[selectedCourseId];
+    }
     const courseLabel = COURSE_LABEL_BY_ID[selectedCourseId];
     const topicsForCourse = curriculumTopics
       .filter((t) => normalizeCourseId(String(t?.courseId ?? t?.course)) === selectedCourseId)

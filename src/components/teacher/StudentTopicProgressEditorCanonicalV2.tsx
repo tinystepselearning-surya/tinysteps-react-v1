@@ -31,6 +31,10 @@ import {
   PHONICS_CURRICULUM_REVISION,
   type PhonicsLesson,
 } from '../../content/phonicsCurriculum';
+import {
+  buildTeacherGrammarTopics,
+  normalizeGrammarCourseId,
+} from '../../content/grammarCurriculum';
 
 interface StudentTopicProgressEditorProps {
   kidId: string;
@@ -241,7 +245,11 @@ export default function StudentTopicProgressEditorCanonicalV2({
   }, [lockedCourseId, routeCourseId]);
 
   useEffect(() => {
-    if (!selectedCourseId || isPhonicsCourseId(selectedCourseId)) {
+    if (
+      !selectedCourseId
+      || isPhonicsCourseId(selectedCourseId)
+      || Boolean(normalizeGrammarCourseId(selectedCourseId))
+    ) {
       setConfigLoading(false);
       setConfigError(null);
       return;
@@ -341,6 +349,9 @@ export default function StudentTopicProgressEditorCanonicalV2({
     if (!selectedCourseId) return [];
     if (isPhonicsCourseId(selectedCourseId)) {
       return getPhonicsLessons(selectedCourseId).map(canonicalPhonicsTopic);
+    }
+    if (normalizeGrammarCourseId(selectedCourseId)) {
+      return buildTeacherGrammarTopics(selectedCourseId);
     }
     return configuredTopics
       .filter((topic) => topic.courseId === selectedCourseId)
