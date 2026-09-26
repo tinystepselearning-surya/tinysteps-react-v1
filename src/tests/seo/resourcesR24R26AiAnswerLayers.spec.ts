@@ -84,5 +84,10 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).toContain('programmatic_phonics_guides: programmaticPhonics');
     expect(generator).toContain('additional_public_routes: publicRoutes');
     expect(generator).toContain('supporting-only-noindex');
+
+    const audit = read('scripts/audit-ai-answer-layers.mjs');
+    expect(audit).toContain('expectedCurrentBlogCount');
+    expect(audit).toContain('editorial-blog-baseline-regression');
+    expect(audit).toContain('public-route-manifest-coverage');
   });
 });
