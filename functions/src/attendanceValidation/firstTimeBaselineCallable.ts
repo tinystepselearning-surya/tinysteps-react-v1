@@ -418,6 +418,9 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     const deferredFreshRows = allowFreshEvidence
       ? []
       : freshCollectionRows;
+    const deferredFreshIds = new Set(
+      deferredFreshRows.map((item) => item.id),
+    );
     for (const item of deferredFreshRows) {
       await markAttendanceValidationDirtySession(db, {
         sessionId: item.id,
@@ -528,6 +531,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
       .filter((sessionId) =>
         !(av53Result?.caseIds ?? []).includes(sessionId));
     for (const sessionId of migrationDeferredIds) {
+      if (deferredFreshIds.has(sessionId)) continue;
       const row = legacyCaseRows.find((item) => item.item.id === sessionId);
       if (!row) continue;
       await markAttendanceValidationDirtySession(db, {
