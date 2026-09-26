@@ -60,7 +60,8 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(page).toContain("lg:grid-cols-[240px_minmax(0,1fr)]");
     expect(page).toContain("lg:order-1 lg:block lg:sticky lg:top-24");
     expect(page).toContain('Not sure what your child should learn next?');
-    expect(page).toContain('compact={isSatpinGuide}');
+    expect(page).toContain('compact={useAuthorityLayout}');
+    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityPilot');
     expect(experience).toContain("const SATPIN_SLUG = 'satpin-phonics-guide'");
     expect(experience).not.toContain('/blog/satpin-phonics-guide-v2');
     expect(experience).not.toContain('/satpin-guide-new');
