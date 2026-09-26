@@ -8,6 +8,8 @@ const read = (relativePath: string) => fs.readFileSync(path.join(root, relativeP
 describe('homepage AI entity visibility and scroll-journey contract', () => {
   const homeSource = read('src/pages/HomePage.tsx');
   const summarySource = read('src/components/Home/HomeEntitySummarySection.tsx');
+  const journeySource = read('src/components/Home/HomeScrollJourneySections.tsx');
+  const heroSource = read('src/components/Home/ConversionHero.tsx');
   const methodSource = read('src/components/Home/StepTimeline.tsx');
   const reassuranceSource = read('src/components/programs/ParentReassurance.tsx');
   const finalCtaSource = read('src/components/Home/FinalCTASection.tsx');
@@ -39,6 +41,7 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(summarySource).toContain('Tiny Steps Learning at a glance');
     expect(summarySource).toContain('live online English learning school for {PUBLIC_AGE_RANGE_LABEL}');
     expect(summarySource).toContain("href: '/phonics'");
+    expect(summarySource).toContain("href: '/reading-classes-for-kids'");
     expect(summarySource).toContain("href: '/grammar'");
     expect(summarySource).toContain("href: '/speaking'");
     expect(summarySource).toContain('to="/online-english-classes-for-kids"');
@@ -55,8 +58,10 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
   it('keeps one method layer instead of two competing homepage journey models', () => {
     expect(homeSource).toContain('<StepTimeline />');
     expect(homeSource).not.toContain('LearningJourneyRoadmapPPT');
-    expect(methodSource).toContain('What learning looks like in a Tiny Steps class');
-    expect(methodSource).toContain('Inside each pathway');
+    expect(methodSource).toContain('How teaching changes by skill focus');
+    expect(methodSource).toContain('Inside the learning experience');
+    expect(methodSource).toContain('id: "reading"');
+    expect(methodSource).toContain('title: "Reading & Fluency"');
     expect(methodSource).not.toContain('S.O.L.I.D. Promise');
     expect(methodSource).not.toContain('Use this on your website');
   });
@@ -78,6 +83,24 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     for (let i = 1; i < order.length; i += 1) {
       expect(order[i]).toBeGreaterThan(order[i - 1]);
     }
+  });
+
+  it('keeps primary programme discovery complete without turning the homepage into a course catalogue', () => {
+    expect(journeySource).toContain('Four clear Tiny Steps learning paths');
+    expect(journeySource).toContain("path: '/phonics'");
+    expect(journeySource).toContain("path: '/reading-classes-for-kids'");
+    expect(journeySource).toContain("path: '/grammar'");
+    expect(journeySource).toContain("path: '/speaking'");
+    expect(journeySource).toContain('to="/courses"');
+    expect(journeySource).toContain('writing, spoken English, reading-fluency or confidence-specific support');
+  });
+
+  it('does not repeat desktop hero proof in a second desktop trust strip', () => {
+    expect(heroSource).toContain('PUBLIC_LEARNER_REACH_LABEL');
+    expect(journeySource).toContain('md:hidden');
+    expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.learnersLabel');
+    expect(journeySource).toContain('PUBLIC_SITE_FACTS.learnerReach.countriesLabel');
+    expect(journeySource).not.toContain('PUBLIC_SESSION_DURATION_LABEL');
   });
 
   it('keeps assessment reassurance factual and the closing CTA concise', () => {
