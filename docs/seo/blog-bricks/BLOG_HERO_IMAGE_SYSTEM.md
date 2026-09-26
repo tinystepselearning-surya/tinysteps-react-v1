@@ -40,6 +40,10 @@ The blog hero-family registry maps every current public Tiny Steps blog article 
 | teacher-training-in-action | Teachers practising instruction with coaching and feedback. |
 | planning-a-school-reading-programme | School leaders reviewing progression, evidence, and implementation. |
 
+## Shared authority-template rollout
+
+All 83 registered blog articles use the compact authority presentation layer: dark compact hero, reviewed family image in the hero, sticky left guide index on desktop, mobile guide index, editorial section rendering, evidence treatment, FAQ, author, and tracked conversion surfaces. SATPIN keeps its dedicated teaching experience inside the same shared shell. The five original pilots retain their article-specific hero points and curated TOC selections; all other articles use their category or school-research defaults.
+
 ## Mapping rules
 
 - src/content/blog/shared/heroFamilies.ts is the source of truth.

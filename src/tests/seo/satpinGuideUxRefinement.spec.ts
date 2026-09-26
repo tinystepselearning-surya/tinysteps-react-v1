@@ -61,7 +61,7 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(page).toContain("lg:order-1 lg:block lg:sticky lg:top-24");
     expect(page).toContain('Not sure what your child should learn next?');
     expect(page).toContain('compact={useAuthorityLayout}');
-    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityPilot');
+    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityArticle');
     expect(experience).toContain("const SATPIN_SLUG = 'satpin-phonics-guide'");
     expect(experience).not.toContain('/blog/satpin-phonics-guide-v2');
     expect(experience).not.toContain('/satpin-guide-new');
@@ -136,9 +136,11 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(experience).toContain('rel="noopener noreferrer"');
   });
 
-  it('keeps the shared article hero compact mode opt-in so other blog pages retain their existing layout', () => {
+  it('keeps the shared compact hero system reusable across the full registered blog rollout', () => {
     const hero = read('src/components/blog/ResearchArticleHero.tsx');
     const sidebar = read('src/components/blog/SatpinGuideSidebar.tsx');
+    expect(page).toContain('const isAuthorityArticle = Boolean(post);');
+    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityArticle');
     expect(hero).toContain('compact?: boolean');
     expect(hero).toContain('compact = false');
     expect(hero).toContain("compact ? 'pb-8 pt-14 sm:pb-9 sm:pt-16'");

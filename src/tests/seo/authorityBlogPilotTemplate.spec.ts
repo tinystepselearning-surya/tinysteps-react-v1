@@ -14,9 +14,13 @@ const PILOT_SLUGS = [
   'phonics-for-parents-guide',
 ];
 
-describe('authority blog template pilot', () => {
-  it('limits the new authority layout to exactly one pilot from each blog category', () => {
+describe('authority blog template rollout', () => {
+  it('rolls the reusable authority layout to all 83 registered blogs while retaining five curated pilot overrides', () => {
     const page = read('src/pages/BlogPostPage.tsx');
+
+    expect(blogPosts).toHaveLength(83);
+    expect(page).toContain('const isAuthorityArticle = Boolean(post);');
+    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityArticle');
 
     for (const slug of PILOT_SLUGS) {
       expect(page).toContain("'" + slug + "'");
@@ -42,23 +46,23 @@ describe('authority blog template pilot', () => {
     expect(page).toContain("import AuthorityBlogSidebar from '../components/blog/AuthorityBlogSidebar'");
     expect(page).toContain("const isSatpinGuide = slug === 'satpin-phonics-guide'");
     expect(page).toContain('const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug))');
-    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityPilot');
+    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityArticle');
     expect(page).toContain('<SatpinGuideExperience');
     expect(page).toContain('<AuthorityBlogExperience');
     expect(page).toContain('<SatpinGuideSidebar tocItems={tocItems} />');
     expect(page).toContain('<AuthorityBlogSidebar');
     expect(page).toContain('compact={useAuthorityLayout}');
-    expect(page).toContain('heroImage={isAuthorityPilot ? resolvedHero : undefined}');
-    expect(page).toContain('heroImageAlt={isAuthorityPilot ? metaSource.title : undefined}');
+    expect(page).toContain('heroImage={isAuthorityArticle ? resolvedHero : undefined}');
+    expect(page).toContain('heroImageAlt={isAuthorityArticle ? metaSource.title : undefined}');
   });
 
-  it('keeps pilot article content synchronous during client render and moves the image into the compact hero', () => {
+  it('keeps registered article content synchronous during client render and moves each reviewed family image into the compact hero', () => {
     const page = read('src/pages/BlogPostPage.tsx');
     const hero = read('src/components/blog/ResearchArticleHero.tsx');
 
     expect(page).toContain("import AuthorityBlogExperience from '../components/blog/AuthorityBlogExperience'");
     expect(page).not.toContain("lazy(() => import('../components/blog/AuthorityBlogExperience'))");
-    expect(page).toContain('heroImage={isAuthorityPilot ? resolvedHero : undefined}');
+    expect(page).toContain('heroImage={isAuthorityArticle ? resolvedHero : undefined}');
     expect(hero).toContain('heroImage?: string');
     expect(hero).toContain("lg:grid-cols-[minmax(0,1fr)_300px]");
     expect(hero).toContain('loading="eager"');
