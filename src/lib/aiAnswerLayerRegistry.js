@@ -5,6 +5,7 @@ import {
   SPEAKING_COMMUNICATION_PARENT_PROBLEM_ROUTES,
 } from './speakingCommunicationCompletionArchitecture.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from './phonicsPublicationRegistry.js';
+import { GRAMMAR_PUBLISHED_RESOURCE_PAGES } from './grammarPublicationRegistry.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -14,7 +15,7 @@ const item = (config) => freeze({
   practicePaths: freezeList(config.practicePaths),
 });
 
-export const AI_ANSWER_LAYER_REVISION = '2026-09-26-r24-r27';
+export const AI_ANSWER_LAYER_REVISION = '2026-09-27-r28-grammar-pseo';
 export const AI_ANSWER_LAYER_MACHINE_JSON_PATH = '/ai-resource-index.json';
 export const AI_ANSWER_LAYER_MACHINE_TEXT_PATH = '/ai-resource-index.txt';
 
@@ -315,9 +316,24 @@ const GOVERNED_PHONICS_CONCEPT_ITEMS = PHONICS_PUBLISHED_RESOURCE_PAGES.map((pag
   practicePaths: page.concept.practicePaths || [],
 }));
 
+const GOVERNED_GRAMMAR_CONCEPT_ITEMS = GRAMMAR_PUBLISHED_RESOURCE_PAGES.map((page) => item({
+  id: `concept-governed-grammar-${page.id}`,
+  layer: 2,
+  subject: 'grammar-writing',
+  query: page.parentQuestion || page.cardTitle,
+  answer: page.quickAnswer,
+  answerSource: 'governed-grammar-dataset',
+  canonicalPath: page.path,
+  ownershipState: page.publicationState,
+  hubPath: '/resources/grammar',
+  supportingPaths: page.relatedPaths || [],
+  practicePaths: page.practicePaths || [],
+}));
+
 export const AI_ANSWER_LAYER_2_LEARNING_CONCEPTS = freezeList([
   ...CURATED_CONCEPT_ITEMS,
   ...GOVERNED_PHONICS_CONCEPT_ITEMS,
+  ...GOVERNED_GRAMMAR_CONCEPT_ITEMS,
 ]);
 
 const PRACTICE_ACTIONS = [
