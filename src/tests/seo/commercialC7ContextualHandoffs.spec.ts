@@ -99,7 +99,11 @@ describe('Commercial C7-R3 contextual commercial handoffs', () => {
 
   it('covers shared renderers while explicitly protecting navigation hubs and correct standalone paths', () => {
     expect(COMMERCIAL_C7_R3_SUMMARY.focusedPhonicsHandoffCount).toBeGreaterThan(0);
+    expect(COMMERCIAL_C7_R3_SUMMARY.focusedGrammarHandoffCount).toBeGreaterThan(0);
     expect(COMMERCIAL_C7_R3_SUMMARY.blogHandoffCount).toBeGreaterThan(0);
+
+    const grammarHandoff = getCommercialC7R3Handoff('/resources/grammar/a-an-articles-for-kids');
+    expect(grammarHandoff?.primary.to).toBe('/grammar');
     expect(COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES.map((item) => item.path)).toEqual(
       expect.arrayContaining([
         '/blog',
