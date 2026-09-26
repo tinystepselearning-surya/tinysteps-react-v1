@@ -103,11 +103,11 @@ export const COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES = freezeList([
 ]);
 
 const protectedExistingPathSet = new Set(COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES.map((item) => item.path));
-const usesSharedR3Renderer = (path: string) => path.startsWith('/blog/') || path.startsWith('/resources/phonics/');
+const usesSharedR3Renderer = (path: string) => path.startsWith('/blog/') || path.startsWith('/resources/phonics/') || path.startsWith('/resources/grammar/');
 
 export const COMMERCIAL_C7_R3_POLICY = freeze({
   liveContextualHandoffsAllowed: true,
-  implementationSurfaces: freezeList(['blog-shared-pipeline', 'focused-phonics-shared-renderer']),
+  implementationSurfaces: freezeList(['blog-shared-pipeline', 'focused-phonics-shared-renderer', 'focused-grammar-shared-renderer']),
   directBlogBodyEditsAllowed: false,
   newKnowledgeUrlsAllowed: false,
   newCommercialUrlsAllowed: false,
@@ -128,6 +128,7 @@ export const COMMERCIAL_C7_R3_SUMMARY = freeze({
   handoffCount: COMMERCIAL_C7_R3_HANDOFFS.length,
   blogHandoffCount: COMMERCIAL_C7_R3_HANDOFFS.filter((item) => item.path.startsWith('/blog/')).length,
   focusedPhonicsHandoffCount: COMMERCIAL_C7_R3_HANDOFFS.filter((item) => item.path.startsWith('/resources/phonics/')).length,
+  focusedGrammarHandoffCount: COMMERCIAL_C7_R3_HANDOFFS.filter((item) => item.path.startsWith('/resources/grammar/')).length,
   protectedExistingSurfaceCount: COMMERCIAL_C7_R3_PROTECTED_EXISTING_SURFACES.length,
 });
 
