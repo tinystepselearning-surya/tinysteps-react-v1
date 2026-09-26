@@ -49,12 +49,18 @@ export function getBreadcrumbTrail({ pathname, title, category } = {}) {
     return freezeTrail([home, { name: 'Resources', path }]);
   }
 
-  if (path.startsWith('/resources/phonics/')) {
-    const currentName = String(title || 'Phonics guide').trim() || 'Phonics guide';
+  const resourceChildSubject = path.startsWith('/resources/phonics/')
+    ? '/resources/phonics'
+    : path.startsWith('/resources/grammar/')
+      ? '/resources/grammar'
+      : null;
+  if (resourceChildSubject) {
+    const fallback = resourceChildSubject === '/resources/phonics' ? 'Phonics guide' : 'Grammar guide';
+    const currentName = String(title || fallback).trim() || fallback;
     return freezeTrail([
       home,
       { name: 'Resources', path: '/resources' },
-      { name: RESOURCE_PATH_LABELS['/resources/phonics'], path: '/resources/phonics' },
+      { name: RESOURCE_PATH_LABELS[resourceChildSubject], path: resourceChildSubject },
       { name: currentName, path },
     ]);
   }
@@ -114,9 +120,11 @@ export function getAeoGeoPresentation({ pathname, category } = {}) {
   const path = normalizePath(pathname);
   const subject = path.startsWith('/resources/phonics/')
     ? 'phonics-reading'
-    : path.startsWith('/blog/')
-      ? subjectForBlogPath(path, category)
-      : null;
+    : path.startsWith('/resources/grammar/')
+      ? 'grammar-writing'
+      : path.startsWith('/blog/')
+        ? subjectForBlogPath(path, category)
+        : null;
   const subjectPresentation = subject ? RESOURCE_SUBJECT_PRESENTATION[subject] : null;
 
   return freeze({
