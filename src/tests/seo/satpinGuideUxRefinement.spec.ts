@@ -145,7 +145,7 @@ describe('SATPIN authority-page UX refinement', () => {
     expect(hero).toContain('compact?: boolean');
     expect(hero).toContain('compact = false');
     expect(hero).toContain("compact ? 'pb-8 pt-14 sm:pb-9 sm:pt-16'");
-    expect(hero).toContain("compact\n              ? heroImage\n                ? 'grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-center'\n                : 'grid gap-5'");
+    expect(hero).toContain("compact\n              ? heroImage\n                ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center xl:grid-cols-[minmax(0,1fr)_430px]'\n                : 'grid gap-5'");
     expect(sidebar).toContain('Guide index');
     expect(sidebar).toContain('aria-current');
     expect(sidebar).toContain("['SATPIN sounds:', 'Sounds']");
