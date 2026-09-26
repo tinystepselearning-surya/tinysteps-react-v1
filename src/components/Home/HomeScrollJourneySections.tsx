@@ -42,7 +42,7 @@ const problemSignals = [
 
 export function ParentProblemRecognitionSection() {
   return (
-    <section className="px-6 py-9 sm:py-12">
+    <section className="px-6 pb-8 pt-7 sm:pb-10 sm:pt-9">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Start with the real learning gap</p>
@@ -120,8 +120,8 @@ const assessmentChecks = [
 
 export function AssessmentStartPointsSection() {
   return (
-    <section id="free-assessment-checklist" className="px-6 py-8 sm:py-10">
-      <div className="mx-auto max-w-6xl overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(145deg,#f8fbff_0%,#ffffff_48%,#fff8f0_100%)] p-6 shadow-[0_22px_64px_rgba(62,84,120,0.10)] sm:p-8">
+    <section id="free-assessment-checklist" className="px-6 py-8 sm:py-9">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-[24px] border border-slate-200 bg-white p-5 sm:p-7">
         <div className="grid gap-7 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
           <div>
             <div className="inline-flex rounded-full border border-sky-200 bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-900">
@@ -169,8 +169,6 @@ const learningPaths = [
     description: 'Letter sounds, blending, decoding, CVC words, spelling patterns, and the foundations needed for independent word reading.',
     path: '/phonics',
     cta: 'Explore Phonics',
-    accent: 'emerald',
-    icon: '🔤',
   },
   {
     title: 'Reading & Fluency',
@@ -178,8 +176,6 @@ const learningPaths = [
     description: 'Accurate word and sentence reading, fluency, vocabulary, comprehension, retelling, and stronger reading confidence.',
     path: '/reading-classes-for-kids',
     cta: 'Explore Reading',
-    accent: 'violet',
-    icon: '📚',
   },
   {
     title: 'Grammar & Sentence Building',
@@ -187,8 +183,6 @@ const learningPaths = [
     description: 'Sentence structure, grammar foundations, tenses, vocabulary, writing clarity, and accurate expression.',
     path: '/grammar',
     cta: 'Explore Grammar',
-    accent: 'sky',
-    icon: '✏️',
   },
   {
     title: 'Speaking & Communication',
@@ -196,21 +190,12 @@ const learningPaths = [
     description: 'Longer answers, pronunciation, storytelling, presentation skills, confidence, clarity, and public speaking.',
     path: '/speaking',
     cta: 'Explore Speaking',
-    accent: 'amber',
-    icon: '🎤',
   },
 ]
 
-const accentClasses: Record<string, string> = {
-  emerald: 'text-emerald-700',
-  sky: 'text-sky-700',
-  amber: 'text-amber-700',
-  violet: 'text-violet-700',
-};
-
 export function LearningPathsSection() {
   return (
-    <section className="px-6 py-12">
+    <section className="px-6 py-10 sm:py-12">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Choose the right focus</p>
@@ -220,19 +205,23 @@ export function LearningPathsSection() {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <div className="mt-7 grid gap-3.5 md:grid-cols-2">
           {learningPaths.map((item) => (
             <Link
               key={item.title}
               to={item.path}
-              className={`group rounded-[24px] border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_10px_30px_rgba(15,23,42,0.06)] ${accentClasses[item.accent]}`}
+              className="group rounded-[22px] border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-5.5"
             >
-              <div className="text-3xl">{item.icon}</div>
-              <h3 className="mt-4 text-xl font-bold text-slate-900">{item.title}</h3>
-              <p className="mt-1 text-sm text-slate-500">{item.ages}</p>
-              <p className="mt-3 text-sm leading-7 text-slate-700">{item.description}</p>
-              <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">
-                {item.cta} <span aria-hidden="true">→</span>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">{item.title}</h3>
+                  <p className="mt-1 text-xs font-medium text-slate-500">{item.ages}</p>
+                </div>
+                <span className="text-lg text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500" aria-hidden="true">→</span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-700">
+{item.cta}
               </span>
             </Link>
           ))}
@@ -272,13 +261,13 @@ const differentiators = [
 
 export function WhyTinyStepsSection() {
   return (
-    <section className="bg-slate-50 px-6 py-14">
+    <section className="bg-slate-50/70 px-6 py-10 sm:py-12">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">Why Tiny Steps</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">A clear learning system, not random online classes</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base">
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.15rem]">A clear learning system, not random online classes</h2>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
               The purpose of the programme is to make the child’s next step understandable to the teacher, the child, and the parent.
             </p>
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
@@ -291,12 +280,12 @@ export function WhyTinyStepsSection() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {differentiators.map((item, index) => (
-              <article key={item.title} className="rounded-[22px] border border-slate-200 bg-white p-5">
+              <article key={item.title} className="rounded-[20px] border border-slate-200 bg-white p-4.5 sm:p-5">
                 <div className="text-xs font-bold tracking-[0.18em] text-slate-400">0{index + 1}</div>
-                <h3 className="mt-3 text-lg font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                <h3 className="mt-2 text-base font-semibold text-slate-950 sm:text-lg">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.description}</p>
               </article>
             ))}
           </div>
