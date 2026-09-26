@@ -103,7 +103,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     title: 'Grammar & Writing Resources',
     eyebrow: 'Clearer sentences',
     intro:
-      'Use Tiny Steps grammar and writing resources to understand the learning progression, practise sentence skills, or find the closest explanation for the gap you are seeing.'
+      'Use Tiny Steps grammar and writing resources to understand the learning progression, practise sentence skills, or find the closest explanation for the gap you are seeing.',
     canonicalPath: '/resources/grammar',
     allGuidesTo: '/blog?topic=Grammar',
     allGuidesLabel: 'Browse all grammar guides',
