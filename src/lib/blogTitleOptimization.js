@@ -2,9 +2,6 @@ export const BLOG_TITLE_OPTIMIZATIONS = Object.freeze({
   // Phonics
   'how-phonics-classes-help-kids-read': 'How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained',
 
-  // Public Speaking
-  'spoken-english-classes-for-kids-confidence': 'Communication Classes for Kids: How to Help Shy Children Speak With Confidence',
-
   // Parent Tips
   'how-to-engage-kids-in-english-learning-at-home': 'How to Keep Kids Engaged in English Practice at Home: Phonics, Grammar and Speaking',
   'june-school-reopening-english-readiness-plan': 'School Reopening English Readiness Checklist for Kids: Reading, Writing and Speaking',
