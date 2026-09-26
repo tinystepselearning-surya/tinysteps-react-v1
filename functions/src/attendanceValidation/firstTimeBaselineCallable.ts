@@ -185,6 +185,10 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         hasMore: false,
         batchSessionCount: 0,
         existingCaseCount: 0,
+        legacyCaseCount: 0,
+        migratedLegacyCaseCount: 0,
+        migrationDeferredCount: 0,
+        deferredFreshCount: 0,
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
@@ -197,6 +201,8 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
           scannedSessionCount: count(activeState.scannedSessionCount),
           existingCaseCount: count(activeState.existingCaseCount),
           freshEvidenceCount: count(activeState.freshEvidenceCount),
+          migratedLegacyCaseCount:
+            count(activeState.migratedLegacyCaseCount),
           blockedCount: count(activeState.blockedCount),
         },
         readBudget: {
@@ -264,6 +270,10 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
         hasMore: false,
         batchSessionCount: 0,
         existingCaseCount: 0,
+        legacyCaseCount: 0,
+        migratedLegacyCaseCount: 0,
+        migrationDeferredCount: 0,
+        deferredFreshCount: 0,
         freshEvidenceCount: 0,
         blockedCount: 0,
         blocked: [],
@@ -276,6 +286,8 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
           scannedSessionCount: count(activeState.scannedSessionCount),
           existingCaseCount: count(activeState.existingCaseCount),
           freshEvidenceCount: count(activeState.freshEvidenceCount),
+          migratedLegacyCaseCount:
+            count(activeState.migratedLegacyCaseCount),
           blockedCount: count(activeState.blockedCount),
         },
         readBudget: {
