@@ -39,8 +39,8 @@ function samplePost(body: BlogPost['body']): BlogPost {
 }
 
 describe('B7 blog editorial trust and authorship', () => {
-  it('keeps all 83 post-Brick-4 registry posts mapped to one explicit author responsibility profile', () => {
-    expect(blogPosts).toHaveLength(83);
+  it('keeps all 82 post-Brick-4 registry posts mapped to one explicit author responsibility profile', () => {
+    expect(blogPosts).toHaveLength(82);
 
     for (const post of blogPosts) {
       const author = resolveBlogAuthor(post.author, post.category);
