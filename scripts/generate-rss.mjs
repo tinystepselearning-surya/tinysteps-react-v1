@@ -9,6 +9,10 @@ import {
 } from '../src/lib/blogWeekRenames.js';
 import { getOptimizedBlogTitle } from '../src/lib/blogTitleOptimization.js';
 import {
+  shouldIncludeBlogSlugInSitemap,
+  shouldNoindexBlogSlug,
+} from '../src/lib/blogIndexingPolicy.js';
+import {
   RETIRED_BLOG_PATH_REDIRECTS,
   rewriteRetiredBlogPaths,
 } from './blog-consolidation-map.mjs';
@@ -61,6 +65,7 @@ const LLM_DISCOVERY_FILES = [
   path.join(PUBLIC_DIR, 'llms-full.txt'),
 ];
 
+const BLOG_CORPUS_LLM_SECTION_HEADING = '## Complete Editorial Blog Corpus';
 const PHONICS_LLM_SECTION_HEADING = '## Focused Phonics Resource Library — 31 governed guides';
 const AI_ANSWER_LLM_SECTION_HEADING = '## AI Answer Layers — problem, concept, practice';
 
@@ -163,15 +168,24 @@ function parseBlogItemsFromSource() {
     const excerpt = extractSingleQuotedField(content, 'excerpt');
     const metaDescription = extractSingleQuotedField(content, 'metaDescription');
     const quickAnswer = extractSingleQuotedField(content, 'quickAnswer');
+    const category = extractSingleQuotedField(content, 'category') || 'Editorial';
     const description = metaDescription || excerpt || quickAnswer || SITE_DESCRIPTION;
     const url = toCanonicalAbsoluteUrl(`/blog/${slug}`);
+    const noindex = shouldNoindexBlogSlug(slug);
     itemsByUrl.set(url, {
+      slug,
       title,
+      category,
       description,
       link: url,
+      publishedDate: date || null,
+      modifiedDate: modifiedDate || null,
       pubDate: date ? new Date(`${date}T00:00:00Z`).toUTCString() : undefined,
       updatedDate: modifiedDate ? `${modifiedDate}T00:00:00Z` : undefined,
       sortDate: modifiedDate || date || '1970-01-01',
+      indexingState: noindex ? 'noindex' : 'indexable',
+      sitemapEligible: shouldIncludeBlogSlugInSitemap(slug),
+      retrievalRole: noindex ? 'supporting-only-noindex' : 'canonical-editorial',
       externalReferences: extractExternalReferenceUrlsFromSource(content),
     });
   }
@@ -220,6 +234,91 @@ function buildRssXml({ title, description, feedPath, items }) {
 }
 function writeFile(targetPath, content) { fs.mkdirSync(path.dirname(targetPath), { recursive: true }); fs.writeFileSync(targetPath, content, 'utf8'); }
 
+function buildEditorialBlogCorpus(blogItems) {
+  return blogItems.map((item) => ({
+    id: `blog-${item.slug}`,
+    content_type: 'editorial-blog',
+    slug: item.slug,
+    title: item.title,
+    summary: item.description,
+    category: item.category,
+    canonical_url: item.link,
+    published_date: item.publishedDate,
+    modified_date: item.modifiedDate,
+    indexing_state: item.indexingState,
+    sitemap_eligible: item.sitemapEligible,
+    retrieval_role: item.retrievalRole,
+    answer_eligible: item.indexingState === 'indexable',
+    external_reference_urls: [...new Set(item.externalReferences || [])],
+  }));
+}
+
+function buildProgrammaticPhonicsCorpus() {
+  return PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => ({
+    id: `phonics-resource-${page.conceptId}`,
+    content_type: 'programmatic-phonics-guide',
+    title: page.cardTitle,
+    summary: page.seoDescription || page.concept.quickAnswer,
+    canonical_url: toCanonicalAbsoluteUrl(page.path),
+    group: page.group,
+    indexing_state: 'indexable',
+    retrieval_role: 'canonical-informational',
+    answer_eligible: true,
+    related_urls: [...new Set((page.concept.supportingPaths || []).map(toCanonicalAbsoluteUrl))],
+    practice_urls: [...new Set((page.concept.practicePaths || []).map(toCanonicalAbsoluteUrl))],
+  }));
+}
+
+function buildPublicRouteCorpus(blogItemMap) {
+  const programmaticPaths = new Set(PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page.path));
+  const map = new Map();
+  for (const [routePath, config] of Object.entries(ROUTE_SEO_REGISTRY)) {
+    const canonicalPath = config?.canonicalPath || routePath;
+    const canonicalUrl = toCanonicalAbsoluteUrl(canonicalPath);
+    if (blogItemMap.has(canonicalUrl) || programmaticPaths.has(canonicalPath)) continue;
+    if (map.has(canonicalUrl)) continue;
+    const noindex = isNoIndexRoute(config);
+    map.set(canonicalUrl, {
+      id: `route-${canonicalPath === '/' ? 'home' : canonicalPath.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-')}`,
+      content_type: canonicalPath.startsWith('/resources/') || canonicalPath === '/resources'
+        ? 'resource-hub'
+        : canonicalPath.startsWith('/parents')
+          ? 'parent-help'
+          : canonicalPath.startsWith('/free-') || canonicalPath.includes('-game')
+            ? 'practice-or-tool'
+            : canonicalPath === '/for-schools'
+              ? 'school-resource'
+              : 'public-route',
+      title: normalizeText(config?.title || fallbackTitleFromPath(canonicalPath)),
+      summary: normalizeText(config?.description || SITE_DESCRIPTION),
+      canonical_url: canonicalUrl,
+      indexing_state: noindex ? 'noindex' : 'indexable',
+      retrieval_role: noindex ? 'supporting-only-noindex' : 'public-canonical',
+      answer_eligible: !noindex,
+    });
+  }
+  return [...map.values()].sort((a, b) => a.canonical_url.localeCompare(b.canonical_url));
+}
+
+function buildCompleteBlogLlmSection(blogItems, { detailed = false } = {}) {
+  const indexableCount = blogItems.filter((item) => item.indexingState === 'indexable').length;
+  const noindexCount = blogItems.length - indexableCount;
+  const lines = [
+    BLOG_CORPUS_LLM_SECTION_HEADING,
+    '',
+    `Generated complete corpus: ${blogItems.length} current Tiny Steps editorial articles (${indexableCount} indexable; ${noindexCount} retained as supporting-only/noindex where the existing indexing policy requires it).`,
+    '',
+    'This generated list is the complete blog coverage source for LLM discovery. Older curated authority sections are subsets and must not be interpreted as the full editorial corpus.',
+    '',
+  ];
+  for (const item of blogItems) {
+    const status = item.indexingState === 'noindex' ? ' [supporting-only / noindex]' : '';
+    const description = detailed ? ` — ${item.description}` : '';
+    lines.push(`- [${item.title}](${item.link})${status}${description}`);
+  }
+  return lines.join('\n').trim();
+}
+
 function resolveAiAnswer(entry, blogItemMap) {
   if (entry.answer) return normalizeText(entry.answer);
   const absolute = toCanonicalAbsoluteUrl(entry.canonicalPath);
@@ -241,7 +340,10 @@ function resolveAiAnswerSelector(entry) {
   return null;
 }
 
-function buildAiResourceIndex(blogItemMap) {
+function buildAiResourceIndex(blogItems, blogItemMap) {
+  const editorialBlogs = buildEditorialBlogCorpus(blogItems);
+  const programmaticPhonics = buildProgrammaticPhonicsCorpus();
+  const publicRoutes = buildPublicRouteCorpus(blogItemMap);
   const layers = AI_ANSWER_LAYER_DEFINITIONS.map((definition) => ({
     ...definition,
     items: (AI_ANSWER_LAYERS[definition.layer] || []).map((entry) => ({
@@ -270,7 +372,19 @@ function buildAiResourceIndex(blogItemMap) {
       'One established canonical owner per answer intent.',
       'Use visible page answers and existing evidence; external_reference_urls are extracted only from references already visible in canonical editorial sources.',
       'Layer 1 identifies the problem, Layer 2 explains the concept, Layer 3 links to focused practice.',
+      'The content corpus connects all current public Tiny Steps educational content without making noindex or supporting-only pages primary answer owners.',
     ],
+    corpus_counts: {
+      editorial_blogs: editorialBlogs.length,
+      programmatic_phonics_guides: programmaticPhonics.length,
+      additional_public_routes: publicRoutes.length,
+      connected_public_content: editorialBlogs.length + programmaticPhonics.length + publicRoutes.length,
+    },
+    corpus: {
+      editorial_blogs: editorialBlogs,
+      programmatic_phonics_guides: programmaticPhonics,
+      additional_public_routes: publicRoutes,
+    },
     layers,
   };
 }
@@ -295,6 +409,24 @@ function buildAiResourceText(index) {
     }
     lines.push('');
   }
+
+  lines.push('## Connected content corpus', '');
+  lines.push('Editorial blogs: ' + index.corpus_counts.editorial_blogs);
+  lines.push('Programmatic phonics guides: ' + index.corpus_counts.programmatic_phonics_guides);
+  lines.push('Additional public routes: ' + index.corpus_counts.additional_public_routes, '');
+
+  lines.push('### Editorial blogs', '');
+  for (const item of index.corpus.editorial_blogs) {
+    lines.push('- ' + item.title + ' — ' + item.canonical_url + ' [' + item.indexing_state + '; ' + item.retrieval_role + ']');
+  }
+  lines.push('', '### Programmatic phonics guides', '');
+  for (const item of index.corpus.programmatic_phonics_guides) {
+    lines.push('- ' + item.title + ' — ' + item.canonical_url);
+  }
+  lines.push('', '### Additional public routes', '');
+  for (const item of index.corpus.additional_public_routes) {
+    lines.push('- ' + item.title + ' — ' + item.canonical_url + ' [' + item.indexing_state + ']');
+  }
   return lines.join('\n').trim() + '\n';
 }
 
@@ -308,6 +440,7 @@ function buildAiAnswerLlmSection(index) {
     '- [Machine-readable JSON answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_JSON_PATH + ')',
     '- [Plain-text answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_TEXT_PATH + ')',
     '- Coverage: ' + counts,
+    '- Connected content corpus: ' + index.corpus_counts.editorial_blogs + ' editorial blogs; ' + index.corpus_counts.programmatic_phonics_guides + ' programmatic phonics guides; ' + index.corpus_counts.additional_public_routes + ' additional public routes.',
   ].join('\n');
 }
 
@@ -348,6 +481,17 @@ function normalizeLlmDiscoveryFiles(aiIndex) {
       .replace('## Blogs 35-51 — Parent Communication / English Support Programme', '## Parent Communication / English Support Programme — 17 articles');
 
     const isFullDirectory = filePath.endsWith('llms-full.txt');
+    text = upsertNamedMarkdownSection(
+      text,
+      BLOG_CORPUS_LLM_SECTION_HEADING,
+      buildCompleteBlogLlmSection(aiIndex.corpus.editorial_blogs.map((entry) => ({
+        title: entry.title,
+        description: entry.summary,
+        link: entry.canonical_url,
+        indexingState: entry.indexing_state,
+      })), { detailed: isFullDirectory }),
+      PHONICS_LLM_SECTION_HEADING,
+    );
     text = upsertMarkdownSection(
       text,
       buildGovernedPhonicsLlmSection({ detailed: isFullDirectory }),
@@ -380,7 +524,7 @@ function main() {
   writeFile(path.join(PUBLIC_DIR, 'feed.xml'), buildRssXml({ title: SITE_TITLE, description: SITE_DESCRIPTION, feedPath: '/feed.xml', items: siteFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'rss.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/rss.xml', items: blogFeedItems }));
   writeFile(path.join(PUBLIC_BLOG_DIR, 'feed.xml'), buildRssXml({ title: `${SITE_TITLE} Blog`, description: 'Latest Tiny Steps Learning blog posts on phonics, grammar, reading, and speaking.', feedPath: '/blog/feed.xml', items: blogFeedItems }));
-  const aiIndex = buildAiResourceIndex(blogItemMap);
+  const aiIndex = buildAiResourceIndex(blogItems, blogItemMap);
   writeFile(path.join(PUBLIC_DIR, AI_ANSWER_LAYER_MACHINE_JSON_PATH.slice(1)), JSON.stringify(aiIndex, null, 2) + '\n');
   writeFile(path.join(PUBLIC_DIR, AI_ANSWER_LAYER_MACHINE_TEXT_PATH.slice(1)), buildAiResourceText(aiIndex));
   normalizeLlmDiscoveryFiles(aiIndex);
