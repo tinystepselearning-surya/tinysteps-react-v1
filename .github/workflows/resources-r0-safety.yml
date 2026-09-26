@@ -8,7 +8,7 @@ on:
       - 'scripts/audit-resources-r0.mjs'
       - 'scripts/audit-resources-r0-rendered.mjs'
       - 'src/tests/seo/resourcesR0SafetyBaseline.spec.js'
-      - 'docs/seo/resources-architecture/**'
+      - 'docs/seo/resources-architecture/R0_SAFETY_BASELINE.md'
       - 'src/lib/publicRouteManifest.js'
       - 'src/lib/routeSeoRegistry.js'
       - 'src/app/routes.tsx'
@@ -16,6 +16,10 @@ on:
       - 'public/robots.txt'
       - 'public/sitemap*.xml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

@@ -6,13 +6,16 @@ import { Buffer } from 'node:buffer';
 // The first two preserve the reviewed retired-Blog-10 repair. The latter two
 // cover the focused phonics resource indexing recovery plus the subsequently
 // reviewed Speaking Growth additions and ItemList deduplication on the shared
-// subject resource hub. Canonicals, titles, commercial ownership, robots policy
-// and conversion ownership remain unchanged.
+// subject resource hub. The founder-panel entry is the exact reviewed retirement
+// of post-publication approval actions into a read-only pre-publication status
+// surface. Canonicals, titles, commercial ownership, robots policy and conversion
+// ownership remain unchanged.
 export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/content/blog/shared/authorityLinking.ts': 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
   'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx': '21ec5766587f1635227d718401e705e4a6affa81',
   'src/pages/SubjectResourcesPage.tsx': '8041c125b53dd5bb94cc5a91ae7fa705c520f093',
   'src/pages/phonics.tsx': 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
+  'src/pages/founder/FounderEditorialReviewsPanel.tsx': '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
 });
 
 export function isReviewedSeoRecoveryFile(relativePath, source) {

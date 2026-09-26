@@ -1,324 +1,98 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, RefreshCw } from 'lucide-react';
-import callFunction from '../../lib/callFunctions';
-import { PHONICS_PUBLISHED_RESOURCE_PAGES } from '../../lib/phonicsPublicationRegistry.js';
-import { clearPublicEditorialReviewCache } from '../../lib/publicEditorialReview';
-import { Button } from '@components/ui/button';
+import { ExternalLink, ShieldCheck } from 'lucide-react';
 import { Card } from '@components/ui/card';
-import { Textarea } from '@components/ui/textarea';
-import { useToast } from '@components/hooks/use-toast';
-
-type ReviewStatus = 'pending' | 'approved' | 'changes-requested';
-type ReviewFilter = 'pending' | 'approved' | 'changes-requested' | 'all';
-
-type ReviewDecision = {
-  conceptId: string;
-  status: ReviewStatus;
-  reviewerKey: 'founder-priya';
-  reviewedByUid: string;
-  reviewedAt: string | null;
-  reviewedRevision: string | null;
-  reviewNotes: string | null;
-  updatedAt: string;
-};
-
-type ReviewStateResponse = {
-  reviewerKey: 'founder-priya';
-  totalPages: number;
-  decisions: Record<string, ReviewDecision>;
-};
-
-type ReviewDecisionResponse = {
-  decision: ReviewDecision;
-};
-
-const FILTERS: Array<{ id: ReviewFilter; label: string }> = [
-  { id: 'pending', label: 'Pending' },
-  { id: 'approved', label: 'Approved' },
-  { id: 'changes-requested', label: 'Changes Requested' },
-  { id: 'all', label: 'All' },
-];
-
-function statusClasses(status: ReviewStatus) {
-  if (status === 'approved') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-  if (status === 'changes-requested') return 'border-amber-200 bg-amber-50 text-amber-700';
-  return 'border-slate-200 bg-slate-50 text-slate-600';
-}
-
-function statusLabel(status: ReviewStatus) {
-  if (status === 'approved') return 'Approved';
-  if (status === 'changes-requested') return 'Changes requested';
-  return 'Pending';
-}
-
-function formatDate(value: string | null) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-}
+import { Button } from '@components/ui/button';
+import { PHONICS_PUBLISHED_RESOURCE_PAGES } from '../../lib/phonicsPublicationRegistry.js';
+import {
+  PHONICS_PREPUBLICATION_QUALITY_REVISION,
+  PHONICS_PREPUBLICATION_QUALITY_STATE,
+} from '../../lib/phonicsPrepublicationQuality.js';
 
 export default function FounderEditorialReviewsPanel() {
-  const { toast } = useToast();
-  const [decisions, setDecisions] = useState<Record<string, ReviewDecision>>({});
-  const [filter, setFilter] = useState<ReviewFilter>('pending');
-  const [loading, setLoading] = useState(true);
-  const [savingConceptId, setSavingConceptId] = useState<string | null>(null);
-  const [changeConceptId, setChangeConceptId] = useState<string | null>(null);
-  const [changeNotes, setChangeNotes] = useState('');
-
-  const pages = useMemo(
-    () => PHONICS_PUBLISHED_RESOURCE_PAGES.map((page: any) => ({
-      conceptId: String(page.conceptId),
-      title: String(page.cardTitle),
-      path: String(page.path),
-      group: String(page.group),
-      publicationWave: String(page.publicationWave || 'pilot-wave-1'),
-      publicationRevision: String(page.publicationRevision),
-    })),
-    [],
+  const pages = PHONICS_PUBLISHED_RESOURCE_PAGES;
+  const passed = pages.filter(
+    (page) =>
+      page.prepublicationQualityState === PHONICS_PREPUBLICATION_QUALITY_STATE
+      && page.prepublicationQualityRevision === PHONICS_PREPUBLICATION_QUALITY_REVISION,
   );
-
-  const loadState = async () => {
-    setLoading(true);
-    try {
-      const response = await callFunction<ReviewStateResponse, Record<string, never>>(
-        'getFounderEditorialReviewState',
-        {},
-      );
-      setDecisions(response.decisions || {});
-    } catch (error: any) {
-      toast({
-        title: 'Could not load editorial reviews',
-        description: error?.message || 'Please refresh and try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadState();
-  }, []);
-
-  const statusFor = (conceptId: string): ReviewStatus =>
-    decisions[conceptId]?.status || 'pending';
-
-  const counts = useMemo(() => {
-    let pending = 0;
-    let approved = 0;
-    let changesRequested = 0;
-    for (const page of pages) {
-      const status = statusFor(page.conceptId);
-      if (status === 'approved') approved += 1;
-      else if (status === 'changes-requested') changesRequested += 1;
-      else pending += 1;
-    }
-    return { pending, approved, changesRequested, all: pages.length };
-  }, [decisions, pages]);
-
-  const visiblePages = useMemo(() => {
-    if (filter === 'all') return pages;
-    return pages.filter((page) => statusFor(page.conceptId) === filter);
-  }, [decisions, filter, pages]);
-
-  const saveDecision = async (
-    conceptId: string,
-    status: 'approved' | 'changes-requested',
-    reviewNotes?: string,
-  ) => {
-    setSavingConceptId(conceptId);
-    try {
-      const response = await callFunction<
-        ReviewDecisionResponse,
-        { conceptId: string; status: 'approved' | 'changes-requested'; reviewNotes?: string }
-      >('setFounderEditorialReviewDecision', {
-        conceptId,
-        status,
-        reviewNotes,
-      });
-
-      setDecisions((current) => ({
-        ...current,
-        [conceptId]: response.decision,
-      }));
-      clearPublicEditorialReviewCache();
-      setChangeConceptId(null);
-      setChangeNotes('');
-
-      toast({
-        title: status === 'approved' ? 'Review approved' : 'Changes requested',
-        description:
-          status === 'approved'
-            ? 'This exact publication revision is now recorded as reviewed by Priya.'
-            : 'The review note has been saved and public approval is withheld.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Review update failed',
-        description: error?.message || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingConceptId(null);
-    }
-  };
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-slate-950">Editorial Reviews</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Review the published phonics guides and approve only the exact revision you checked.
-          </p>
+      <div>
+        <h2 className="text-2xl font-black text-slate-950">Pre-publication Quality Status</h2>
+        <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
+          Programmatic phonics guides are checked before they enter the published registry.
+          There is no post-publication approve/reject queue for these pages.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-slate-500">Published guides</p>
+          <p className="mt-1 text-2xl font-black">{pages.length}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-slate-500">Prechecked</p>
+          <p className="mt-1 text-2xl font-black text-emerald-700">{passed.length}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs font-semibold text-slate-500">Post-publication approvals required</p>
+          <p className="mt-1 text-2xl font-black">0</p>
+        </Card>
+      </div>
+
+      <Card className="border-emerald-200 bg-emerald-50/60 p-4 sm:p-5">
+        <div className="flex gap-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+          <div>
+            <p className="font-black text-emerald-900">Publication gate active</p>
+            <p className="mt-1 text-sm leading-6 text-emerald-900/80">
+              Every governed guide must carry a passed pre-publication quality state for the current
+              quality revision before it can be included in the published 31-page registry.
+            </p>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void loadState()} disabled={loading}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
-      </div>
+      </Card>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card className="p-4"><p className="text-xs font-semibold text-slate-500">Pending</p><p className="mt-1 text-2xl font-black">{counts.pending}</p></Card>
-        <Card className="p-4"><p className="text-xs font-semibold text-slate-500">Approved</p><p className="mt-1 text-2xl font-black text-emerald-700">{counts.approved}</p></Card>
-        <Card className="p-4"><p className="text-xs font-semibold text-slate-500">Changes</p><p className="mt-1 text-2xl font-black text-amber-700">{counts.changesRequested}</p></Card>
-        <Card className="p-4"><p className="text-xs font-semibold text-slate-500">Total</p><p className="mt-1 text-2xl font-black">{counts.all}</p></Card>
-      </div>
+      <div className="space-y-3">
+        {pages.map((page) => {
+          const current =
+            page.prepublicationQualityState === PHONICS_PREPUBLICATION_QUALITY_STATE
+            && page.prepublicationQualityRevision === PHONICS_PREPUBLICATION_QUALITY_REVISION;
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((item) => {
-          const count =
-            item.id === 'pending' ? counts.pending :
-            item.id === 'approved' ? counts.approved :
-            item.id === 'changes-requested' ? counts.changesRequested :
-            counts.all;
           return (
-            <Button
-              key={item.id}
-              size="sm"
-              variant={filter === item.id ? 'default' : 'outline'}
-              onClick={() => setFilter(item.id)}
-            >
-              {item.label} · {count}
-            </Button>
+            <Card key={page.conceptId} className="p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-black text-slate-950">{page.cardTitle}</h3>
+                    <span className={
+                      current
+                        ? 'rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700'
+                        : 'rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700'
+                    }>
+                      {current ? 'Prechecked' : 'Quality revision mismatch'}
+                    </span>
+                  </div>
+                  <p className="mt-1 break-all text-xs text-slate-500">{page.path}</p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    {page.group} · {page.publicationWave === 'pilot-wave-1' ? 'Wave 1' : 'Wave 2'}
+                    {' · '}Quality revision {page.prepublicationQualityRevision}
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(page.path, '_blank', 'noopener,noreferrer')}
+                >
+                  Open Page <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </Card>
           );
         })}
       </div>
-
-      {loading ? (
-        <Card className="p-8 text-center text-sm text-slate-500">Loading review queue…</Card>
-      ) : visiblePages.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-slate-500">No pages in this review state.</Card>
-      ) : (
-        <div className="space-y-3">
-          {visiblePages.map((page) => {
-            const decision = decisions[page.conceptId];
-            const status = statusFor(page.conceptId);
-            const isSaving = savingConceptId === page.conceptId;
-            const isChangeOpen = changeConceptId === page.conceptId;
-            const reviewedDate = formatDate(decision?.reviewedAt || null);
-
-            return (
-              <Card key={page.conceptId} className="overflow-hidden">
-                <div className="p-4 sm:p-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-black sm:text-lg">{page.title}</h3>
-                        <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusClasses(status)}`}>
-                          {statusLabel(status)}
-                        </span>
-                      </div>
-                      <p className="mt-1 break-all text-xs text-slate-500">{page.path}</p>
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                        <span>{page.group}</span>
-                        <span>{page.publicationWave === 'pilot-wave-1' ? 'Wave 1' : 'Wave 2'}</span>
-                        <span>Revision {page.publicationRevision}</span>
-                        {reviewedDate ? <span>Reviewed {reviewedDate}</span> : null}
-                      </div>
-                      {decision?.reviewNotes ? (
-                        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                          {decision.reviewNotes}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(page.path, '_blank', 'noopener,noreferrer')}
-                      >
-                        Open Page <ExternalLink className="ml-2 h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        disabled={isSaving}
-                        onClick={() => void saveDecision(page.conceptId, 'approved')}
-                      >
-                        {isSaving ? 'Saving…' : 'Approve'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isSaving}
-                        onClick={() => {
-                          setChangeConceptId(isChangeOpen ? null : page.conceptId);
-                          setChangeNotes(decision?.reviewNotes || '');
-                        }}
-                      >
-                        Request Changes
-                      </Button>
-                    </div>
-                  </div>
-
-                  {isChangeOpen ? (
-                    <div className="mt-4 border-t border-slate-100 pt-4">
-                      <label className="text-sm font-bold text-slate-800" htmlFor={`notes-${page.conceptId}`}>
-                        What needs to change?
-                      </label>
-                      <Textarea
-                        id={`notes-${page.conceptId}`}
-                        className="mt-2"
-                        rows={3}
-                        maxLength={2000}
-                        value={changeNotes}
-                        onChange={(event) => setChangeNotes(event.target.value)}
-                        placeholder="Add a concise academic/editorial correction note."
-                      />
-                      <div className="mt-3 flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setChangeConceptId(null);
-                            setChangeNotes('');
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          disabled={isSaving || !changeNotes.trim()}
-                          onClick={() => void saveDecision(page.conceptId, 'changes-requested', changeNotes)}
-                        >
-                          Save Change Request
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
