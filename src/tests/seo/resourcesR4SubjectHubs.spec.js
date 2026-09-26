@@ -89,7 +89,7 @@ describe('Resources architecture R4 subject hubs', () => {
     expect(page).toContain("programmeTo: '/phonics'");
     expect(page).toContain("programmeTo: '/grammar'");
     expect(page).toContain("programmeTo: '/speaking'");
-    expect(page).toContain('Keep resource discovery separate from programme decisions.');
+    expect(page).toContain('Move from free guidance to structured support when you need it.');
   });
 
   it('exposes all three subject hubs in llms.txt without changing physical article URLs', () => {
