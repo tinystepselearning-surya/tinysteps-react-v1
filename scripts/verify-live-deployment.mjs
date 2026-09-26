@@ -11,13 +11,6 @@ const PUBLIC_GAME_INDEXABILITY_ROUTES = [
   '/free-sentence-building-games-for-kids',
   '/free-sentence-making-game-for-kids',
 ];
-const AUTHORITY_BLOG_PILOT_ROUTES = [
-  '/blog/what-is-phonics-for-kids',
-  '/blog/how-to-teach-paragraph-writing-to-kids',
-  '/blog/how-to-teach-storytelling-to-kids',
-  '/blog/child-understands-english-but-does-not-speak',
-  '/blog/phonics-for-parents-guide',
-];
 const GOOGLEBOT_SMARTPHONE_USER_AGENT =
   'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
@@ -104,6 +97,15 @@ export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fe
   }
   record('canonical sitemap index', sitemapIndexResponse.status === 200 && sitemapRefs.length > 0, `${sitemapRefs.length} child sitemap(s)`);
 
+  const authorityBlogRoutes = sitemapUrls
+    .map((absoluteUrl) => new URL(absoluteUrl).pathname)
+    .filter((pathname) => pathname.startsWith('/blog/'));
+  record(
+    'authority blog sitemap coverage',
+    authorityBlogRoutes.length > 0,
+    `${authorityBlogRoutes.length} indexable blog route(s)`,
+  );
+
   const forbidden = [
     ...PUBLIC_REDIRECT_MANIFEST.map((entry) => entry.source),
     ...PRIVATE_ROUTES,
@@ -163,7 +165,7 @@ export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fe
     );
   }
 
-  for (const pathname of AUTHORITY_BLOG_PILOT_ROUTES) {
+  for (const pathname of authorityBlogRoutes) {
     const canonicalUrl = `${origin}${pathname}`;
     const response = await request(pathname, {
       headers: { 'user-agent': GOOGLEBOT_SMARTPHONE_USER_AGENT },
@@ -179,7 +181,7 @@ export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fe
     );
 
     record(
-      `authority pilot Googlebot smartphone ${pathname}`,
+      `authority blog Googlebot smartphone ${pathname}`,
       response.status === 200
         && sitemapUrls.includes(canonicalUrl)
         && robotsValues.length === 1

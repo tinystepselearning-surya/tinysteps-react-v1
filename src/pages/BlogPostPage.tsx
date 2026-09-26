@@ -274,15 +274,9 @@ const SATPIN_HERO_POINTS = [
   },
 ];
 
-const AUTHORITY_BLOG_PILOT_SLUGS = new Set([
-  'what-is-phonics-for-kids',
-  'how-to-teach-paragraph-writing-to-kids',
-  'how-to-teach-storytelling-to-kids',
-  'child-understands-english-but-does-not-speak',
-  'phonics-for-parents-guide',
-]);
 
-const AUTHORITY_PILOT_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
+
+const AUTHORITY_CURATED_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
   'what-is-phonics-for-kids': [
     { label: 'Understand', value: 'Sound → print', detail: 'See how phonemes, graphemes and blending fit together in one parent-friendly model.' },
     { label: 'Apply', value: 'Blend and spell', detail: 'Connect sound–print knowledge to fresh-word decoding, spelling and matched reading.' },
@@ -308,9 +302,34 @@ const AUTHORITY_PILOT_HERO_POINTS: Record<string, Array<{ label: string; value: 
     { label: 'Prompt', value: 'Use the print', detail: 'Bring attention back to the complete printed word instead of relying on picture guessing.' },
     { label: 'Transfer', value: 'Read • spell • reread', detail: 'Check that taught knowledge carries into fresh words, spelling and connected reading.' },
   ],
+  'child-knows-abc-but-cannot-read': [
+    { label: 'Diagnose', value: 'Find the first weak link', detail: 'Separate letter recognition, sound recall, blending, word reading and transfer instead of treating “knows ABC” as one skill.' },
+    { label: 'Support', value: 'Match the bottleneck', detail: 'Use the smallest next step that connects known letters and sounds to actual decoding.' },
+    { label: 'Progress', value: 'Read fresh words', detail: 'Look for independent decoding beyond rehearsed classroom examples.' },
+  ],
+  'punctuation-and-capital-letters-for-kids': [
+    { label: 'Start', value: 'Sentence boundaries', detail: 'Teach capitals at beginnings and names, then choose the end mark that matches the sentence.' },
+    { label: 'Routine', value: 'Say → find → choose', detail: 'Use a repeatable editing sequence before expanding into commas and other punctuation.' },
+    { label: 'Progress', value: 'Notice while writing', detail: 'Look for punctuation transferring into new sentences with fewer reminders.' },
+  ],
+  'conversation-skills-for-kids': [
+    { label: 'Listen', value: 'Understand the message', detail: 'Build responses from what the other person actually said rather than preparing a disconnected answer.' },
+    { label: 'Build', value: 'Respond • add • ask', detail: 'Extend a conversation with one relevant idea and a connected follow-up question.' },
+    { label: 'Progress', value: 'Repair + continue', detail: 'Look for stronger turn-taking, topic maintenance and recovery when communication breaks down.' },
+  ],
+  'child-reads-in-class-but-forgets-at-home': [
+    { label: 'Compare', value: 'Class vs home conditions', detail: 'Separate task difficulty, prompting, familiarity and setting before assuming the reading skill has disappeared.' },
+    { label: 'Test', value: 'Fresh-text transfer', detail: 'Use short matched reading at home to see whether decoding holds without classroom cues.' },
+    { label: 'Respond', value: 'Support the real gap', detail: 'Adjust decoding, fluency or comprehension support based on what breaks first.' },
+  ],
+  'why-letter-sounds-are-not-enough-to-read': [
+    { label: 'Move on', value: 'Sounds → blending', detail: 'Treat sound knowledge as the starting point and explicitly teach children to combine sounds into words.' },
+    { label: 'Extend', value: 'Spell + mixed practice', detail: 'Connect decoding to spelling, richer patterns and cumulative reading rather than isolated sound drills.' },
+    { label: 'Check', value: 'Transfer + fluency', detail: 'Look for accurate fresh-word reading and increasingly automatic recognition in connected text.' },
+  ],
 };
 
-const AUTHORITY_PILOT_TOC_PREFIXES: Record<string, string[]> = {
+const AUTHORITY_CURATED_TOC_PREFIXES: Record<string, string[]> = {
   'what-is-phonics-for-kids': [
     'Quick answer:',
     'Six terms make phonics',
@@ -360,6 +379,56 @@ const AUTHORITY_PILOT_TOC_PREFIXES: Record<string, string[]> = {
     'How to tell whether phonics is transferring',
     'Where Tiny Steps fits for parents',
     'Evidence and sources reviewed',
+  ],
+  'child-knows-abc-but-cannot-read': [
+    'Quick answer:',
+    'ABC knowledge has three different levels',
+    'The Tiny Steps six-step ABC-to-reading check',
+    'What the first weak step usually means',
+    'A simple home response for each bottleneck',
+    'What progress should look like',
+    'Evidence behind the ABC-to-reading pathway',
+    'Useful next steps',
+  ],
+  'punctuation-and-capital-letters-for-kids': [
+    'Quick answer:',
+    'Start with two jobs:',
+    'Full stop, question mark or exclamation mark?',
+    'The Tiny Steps boundary routine:',
+    'Why a child may know punctuation rules but still forget them',
+    'Five useful punctuation activities at home',
+    'Evidence and curriculum boundary',
+    'What to use next',
+  ],
+  'conversation-skills-for-kids': [
+    'Quick answer:',
+    'The Tiny Steps conversation loop:',
+    'Skill 1:',
+    'Skill 4:',
+    'Skill 5:',
+    'Five conversation activities parents can use at home',
+    'Evidence and curriculum boundary',
+    'What to use next',
+  ],
+  'child-reads-in-class-but-forgets-at-home': [
+    'Quick answer:',
+    'Why reading can look stronger in class than at home',
+    'The Tiny Steps four-variable class-to-home transfer check',
+    'Use a three-level transfer result',
+    'A five-minute home transfer routine',
+    'How to tell whether the real problem is decoding, fluency or comprehension',
+    'How Tiny Steps fits into the class-to-home decision',
+    'Evidence and references',
+  ],
+  'why-letter-sounds-are-not-enough-to-read': [
+    'Quick answer:',
+    'What the NCF evidence actually says beyond alphabet sounds',
+    'The Tiny Steps post-letter-sound pathway:',
+    'Five false signals',
+    'What a school should teach next when children know sounds but cannot blend',
+    'What to teach after children can blend simple CVC words',
+    'How Tiny Steps positions the transition beyond letter sounds',
+    'Official and research sources reviewed',
   ],
 };
 
@@ -612,8 +681,8 @@ const BlogPostPage: FC = () => {
   const post = useMemo(() => blogPosts.find((p) => p.slug === slug), [slug]);
   const isStoryUnderstandingPillar = slug === 'why-child-reads-words-but-does-not-understand-story';
   const isSatpinGuide = slug === 'satpin-phonics-guide';
-  const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug));
-  const useAuthorityLayout = isSatpinGuide || isAuthorityPilot;
+  const isAuthorityArticle = Boolean(post && slug && !isSatpinGuide);
+  const useAuthorityLayout = isSatpinGuide || isAuthorityArticle;
   const [MdxComp, setMdxComp] = useState<any>(null);
   const [mdxMeta, setMdxMeta] = useState<any>(null);
   useEffect(() => {
@@ -889,11 +958,11 @@ function buildMetaDescription(src: any) {
   const hasCoursesLink = learningPathLinks.some((link) => link?.to === '/courses');
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
   const sidebarConfig = isSchoolConversion ? SCHOOL_RESEARCH_SIDEBAR : categoryConfig;
-  const pilotHeroPoints = slug ? AUTHORITY_PILOT_HERO_POINTS[slug] : undefined;
+  const curatedHeroPoints = slug ? AUTHORITY_CURATED_HERO_POINTS[slug] : undefined;
   const resolvedHeroPoints = isSatpinGuide
     ? SATPIN_HERO_POINTS
-    : isAuthorityPilot && pilotHeroPoints
-      ? pilotHeroPoints
+    : curatedHeroPoints
+      ? curatedHeroPoints
       : isSchoolConversion
         ? SCHOOL_RESEARCH_HERO_POINTS
         : categoryConfig.heroPoints;
@@ -970,15 +1039,18 @@ function buildMetaDescription(src: any) {
         .filter(Boolean);
     }
 
-    if (isAuthorityPilot && slug) {
-      const priorityPrefixes = AUTHORITY_PILOT_TOC_PREFIXES[slug] || [];
-      return priorityPrefixes
-        .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
-        .filter(Boolean);
+    if (isAuthorityArticle && slug) {
+      const priorityPrefixes = AUTHORITY_CURATED_TOC_PREFIXES[slug] || [];
+      if (priorityPrefixes.length) {
+        return priorityPrefixes
+          .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
+          .filter(Boolean);
+      }
+      return h2Items.slice(0, 8);
     }
 
     return h2Items.slice(0, 9);
-  }, [headingItems, isAuthorityPilot, isSatpinGuide, slug]);
+  }, [headingItems, isAuthorityArticle, isSatpinGuide, slug]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
 
@@ -1138,8 +1210,8 @@ function buildMetaDescription(src: any) {
         searchLabel={isSchoolConversion ? 'Schools often ask' : 'Parents often search'}
         heroPoints={resolvedHeroPoints}
         compact={useAuthorityLayout}
-        heroImage={isAuthorityPilot ? resolvedHero : undefined}
-        heroImageAlt={isAuthorityPilot ? metaSource.title : undefined}
+        heroImage={isAuthorityArticle ? resolvedHero : undefined}
+        heroImageAlt={isAuthorityArticle ? metaSource.title : undefined}
       />
 
       <div className={useAuthorityLayout ? 'mx-auto max-w-[1380px] px-4 py-7 sm:px-6 sm:py-9' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
@@ -1162,7 +1234,7 @@ function buildMetaDescription(src: any) {
                   resolvedHero={resolvedHero}
                 />
               </Suspense>
-            ) : isAuthorityPilot && post ? (
+            ) : isAuthorityArticle && post ? (
               <Suspense
                 fallback={
                   <div className="rounded-[2rem] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
@@ -1286,7 +1358,7 @@ function buildMetaDescription(src: any) {
           <aside className={useAuthorityLayout ? 'hidden lg:order-1 lg:block lg:sticky lg:top-24 lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
             {isSatpinGuide ? (
               <SatpinGuideSidebar tocItems={tocItems} />
-            ) : isAuthorityPilot && slug ? (
+            ) : isAuthorityArticle && slug ? (
               <AuthorityBlogSidebar
                 tocItems={tocItems}
                 articleSlug={slug}

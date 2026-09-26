@@ -6,59 +6,53 @@ import { blogPosts } from '../../content/blog';
 const root = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(root, relativePath), 'utf8');
 
-const PILOT_SLUGS = [
+const CURATED_SLUGS = [
   'what-is-phonics-for-kids',
   'how-to-teach-paragraph-writing-to-kids',
   'how-to-teach-storytelling-to-kids',
   'child-understands-english-but-does-not-speak',
   'phonics-for-parents-guide',
+  'child-knows-abc-but-cannot-read',
+  'punctuation-and-capital-letters-for-kids',
+  'conversation-skills-for-kids',
+  'child-reads-in-class-but-forgets-at-home',
+  'why-letter-sounds-are-not-enough-to-read',
 ];
 
-describe('authority blog template pilot', () => {
-  it('limits the new authority layout to exactly one pilot from each blog category', () => {
+describe('authority blog template rollout', () => {
+  it('applies the authority layout automatically to every normal BlogPost', () => {
     const page = read('src/pages/BlogPostPage.tsx');
 
-    for (const slug of PILOT_SLUGS) {
-      expect(page).toContain("'" + slug + "'");
-      expect(blogPosts.some((post) => post.slug === slug)).toBe(true);
-    }
+    expect(blogPosts.length).toBeGreaterThan(50);
+    expect(new Set(blogPosts.map((post) => post.slug)).size).toBe(blogPosts.length);
 
-    expect(PILOT_SLUGS).toHaveLength(5);
-    expect(new Set(PILOT_SLUGS).size).toBe(5);
-
-    const categories = PILOT_SLUGS.map(
-      (slug) => blogPosts.find((post) => post.slug === slug)?.category,
-    );
-    expect(new Set(categories)).toEqual(
-      new Set(['Phonics', 'Grammar', 'Public Speaking', 'Parent Tips', 'Research']),
-    );
-  });
-
-  it('reuses the SATPIN visual system without replacing the SATPIN-specific teaching experience', () => {
-    const page = read('src/pages/BlogPostPage.tsx');
-
-    expect(page).toContain("import AuthorityBlogExperience from '../components/blog/AuthorityBlogExperience'");
-    expect(page).not.toContain("lazy(() => import('../components/blog/AuthorityBlogExperience'))");
-    expect(page).toContain("import AuthorityBlogSidebar from '../components/blog/AuthorityBlogSidebar'");
     expect(page).toContain("const isSatpinGuide = slug === 'satpin-phonics-guide'");
-    expect(page).toContain('const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug))');
-    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityPilot');
-    expect(page).toContain('<SatpinGuideExperience');
-    expect(page).toContain('<AuthorityBlogExperience');
-    expect(page).toContain('<SatpinGuideSidebar tocItems={tocItems} />');
-    expect(page).toContain('<AuthorityBlogSidebar');
-    expect(page).toContain('compact={useAuthorityLayout}');
-    expect(page).toContain('heroImage={isAuthorityPilot ? resolvedHero : undefined}');
-    expect(page).toContain('heroImageAlt={isAuthorityPilot ? metaSource.title : undefined}');
+    expect(page).toContain('const isAuthorityArticle = Boolean(post && slug && !isSatpinGuide)');
+    expect(page).toContain('const useAuthorityLayout = isSatpinGuide || isAuthorityArticle');
+    expect(page).not.toContain('AUTHORITY_BLOG_PILOT_SLUGS');
+    expect(page).not.toContain('isAuthorityPilot');
+
+    expect(page).toContain(') : isAuthorityArticle && post ? (');
+    expect(page).toContain(') : isAuthorityArticle && slug ? (');
+    expect(page).toContain('heroImage={isAuthorityArticle ? resolvedHero : undefined}');
+    expect(page).toContain('heroImageAlt={isAuthorityArticle ? metaSource.title : undefined}');
   });
 
-  it('keeps pilot article content synchronous during client render and moves the image into the compact hero', () => {
+  it('keeps SATPIN on its dedicated teaching experience', () => {
+    const page = read('src/pages/BlogPostPage.tsx');
+
+    expect(page).toContain('<SatpinGuideExperience');
+    expect(page).toContain('<SatpinGuideSidebar tocItems={tocItems} />');
+    expect(page).toContain('<AuthorityBlogExperience');
+    expect(page).toContain('<AuthorityBlogSidebar');
+  });
+
+  it('keeps the authority article renderer synchronous and the compact hero image eager', () => {
     const page = read('src/pages/BlogPostPage.tsx');
     const hero = read('src/components/blog/ResearchArticleHero.tsx');
 
     expect(page).toContain("import AuthorityBlogExperience from '../components/blog/AuthorityBlogExperience'");
     expect(page).not.toContain("lazy(() => import('../components/blog/AuthorityBlogExperience'))");
-    expect(page).toContain('heroImage={isAuthorityPilot ? resolvedHero : undefined}');
     expect(hero).toContain('heroImage?: string');
     expect(hero).toContain("lg:grid-cols-[minmax(0,1fr)_300px]");
     expect(hero).toContain('loading="eager"');
@@ -66,7 +60,22 @@ describe('authority blog template pilot', () => {
     expect(hero).toContain('aspect-[4/3]');
   });
 
-  it('provides the reusable left-side scroll-spy index and mobile guide index', () => {
+  it('preserves all supported blog block types and protects pre-H2 or H2-less content', () => {
+    const experience = read('src/components/blog/AuthorityBlogExperience.tsx');
+    const supported = new Set(['h2', 'h3', 'p', 'li']);
+
+    for (const post of blogPosts) {
+      expect(Array.isArray(post.body)).toBe(true);
+      for (const block of post.body) expect(supported.has(block.type)).toBe(true);
+    }
+
+    expect(experience).toContain('const prefaceBlocks: BlogBlock[] = []');
+    expect(experience).toContain('else prefaceBlocks.push(block)');
+    expect(experience).toContain("id: 'article-overview'");
+    expect(experience).toContain('blocks: [...prefaceBlocks, ...sections[0].blocks]');
+  });
+
+  it('provides the reusable desktop scroll-spy and mobile guide index library-wide', () => {
     const sidebar = read('src/components/blog/AuthorityBlogSidebar.tsx');
     const experience = read('src/components/blog/AuthorityBlogExperience.tsx');
 
@@ -102,23 +111,25 @@ describe('authority blog template pilot', () => {
     expect(experience).toContain("split('|')");
   });
 
-  it('uses article-specific hero points and curated eight-section indexes for all five pilots', () => {
+  it('retains bespoke hero points and eight-section indexes for the ten reviewed articles', () => {
     const page = read('src/pages/BlogPostPage.tsx');
 
-    expect(page).toContain('AUTHORITY_PILOT_HERO_POINTS');
-    expect(page).toContain('AUTHORITY_PILOT_TOC_PREFIXES');
-    expect(page).toContain('isAuthorityPilot && pilotHeroPoints');
-    expect(page).toContain('priorityPrefixes = AUTHORITY_PILOT_TOC_PREFIXES[slug] || []');
+    expect(page).toContain('AUTHORITY_CURATED_HERO_POINTS');
+    expect(page).toContain('AUTHORITY_CURATED_TOC_PREFIXES');
+    expect(page).toContain('curatedHeroPoints');
+    expect(page).toContain('priorityPrefixes = AUTHORITY_CURATED_TOC_PREFIXES[slug] || []');
+    expect(page).toContain('return h2Items.slice(0, 8)');
 
-    for (const slug of PILOT_SLUGS) {
-      const heroStart = page.indexOf("'" + slug + "': [", page.indexOf('AUTHORITY_PILOT_HERO_POINTS'));
-      const tocStart = page.indexOf("'" + slug + "': [", page.indexOf('AUTHORITY_PILOT_TOC_PREFIXES'));
+    for (const slug of CURATED_SLUGS) {
+      expect(blogPosts.some((post) => post.slug === slug)).toBe(true);
+      const heroStart = page.indexOf("'" + slug + "': [", page.indexOf('AUTHORITY_CURATED_HERO_POINTS'));
+      const tocStart = page.indexOf("'" + slug + "': [", page.indexOf('AUTHORITY_CURATED_TOC_PREFIXES'));
       expect(heroStart).toBeGreaterThan(-1);
       expect(tocStart).toBeGreaterThan(-1);
     }
   });
 
-  it('keeps FAQ, author and the existing tracked conversion card outside the reusable article renderer', () => {
+  it('keeps FAQ, author and tracked conversion ownership outside the reusable article renderer', () => {
     const page = read('src/pages/BlogPostPage.tsx');
 
     expect(page).toContain("{post?.faq?.length ? <ParentsAlsoAsk items={post.faq} /> : null}");
