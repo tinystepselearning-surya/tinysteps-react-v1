@@ -14,13 +14,14 @@ describe('authoritative Blog #32 quality lock', () => {
     expect(post).toBeDefined();
     expect(post?.title).toBe('What Is the Right Age to Start Phonics? A Parent Readiness Guide');
     expect(post?.author).toBe('Priya');
-    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.modifiedDate).toBe('2026-09-26');
     expect(post?.excerpt.length).toBeGreaterThanOrEqual(120);
     expect(post?.excerpt.length).toBeLessThanOrEqual(200);
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
 
+    expect(body).toContain('structured phonics often begins around ages 4–5');
     expect(body).toContain('age shapes the presentation; evidence shapes the starting point');
     expect(body).toContain('This article owns the readiness question');
     expect(body).toContain('The Tiny Steps five-part readiness lens');
@@ -30,8 +31,15 @@ describe('authoritative Blog #32 quality lock', () => {
     expect(body).toContain('4. Blend');
     expect(body).toContain('5. Participate');
     expect(body).toContain('Age bands are examples, not phonics milestones');
+    expect(body).toContain('early phonics exposure');
+    expect(body).toContain('formal systematic phonics instruction');
+    expect(body).toContain('Where Montessori materials can support early literacy');
+    expect(body).toContain('sandpaper letters');
+    expect(body).toContain('movable alphabet');
+    expect(body).toContain('https://montessori-ami.org/node/5651');
     expect(body).toContain('There is no required five-minute score, percentage or cut-off.');
     expect(body).toContain('No universal long oral-only stage is required.');
+    expect(body).toContain('Department for Education English research review');
     expect(body).toContain('accuracy → independence → transfer → retention');
 
     expect(body).toContain('/blog/what-is-phonics-for-kids');
@@ -40,6 +48,7 @@ describe('authoritative Blog #32 quality lock', () => {
     expect(body).toContain('/blog/phonics-diagnostics');
 
     expect(body).not.toMatch(/best age is (?:3|4|5)/i);
+    expect(body).not.toContain('Blog #32 answers');
     expect(body).not.toMatch(/must start (?:at|by) age/i);
     expect(body).not.toContain('A five-minute parent readiness check');
   });
@@ -52,16 +61,20 @@ describe('authoritative Blog #32 quality lock', () => {
     const evidence = getBlogEvidenceSummary(post!);
 
     expect(evidence.hasSourceSection).toBe(true);
-    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(7);
     expect(body).toContain('The Tiny Steps readiness lens and age-band examples are editorial guidance.');
+    expect(body).toContain('NCERT — National Curriculum Framework for Foundational Stage 2022');
+    expect(body).toContain('https://www.ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf');
     expect(body).toContain('A home readiness check can guide teaching; it cannot diagnose a condition.');
     expect(body).toContain('/phonics');
     expect(body).toContain('/curriculum');
     expect(body).toContain('/book-demo');
 
-    expect(post?.faq).toHaveLength(6);
+    expect(post?.faq).toHaveLength(8);
     expect(post?.faq?.some((item) => /best age to start phonics/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /3-year-old/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /structured phonics usually begin/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /Montessori materials support early phonics readiness/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /phonological awareness before learning letters/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /6 or 7 too late/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /which phonics level/i.test(item.question))).toBe(true);
