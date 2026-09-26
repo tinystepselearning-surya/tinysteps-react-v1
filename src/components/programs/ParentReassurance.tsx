@@ -7,69 +7,58 @@ type ParentReassuranceProps = {
 
 export default function ParentReassurance({ programName = 'Tiny Steps' }: ParentReassuranceProps) {
   return (
-    <section className="mx-auto max-w-4xl px-6 py-8">
-      <div className="overflow-hidden rounded-3xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 via-white to-sky-50/40 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-        <div className="px-6 py-5 sm:px-8">
-          <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Assessment before enrolment</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Try the assessment before you decide</h2>
-            <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              The free assessment helps you understand whether {programName} is a suitable next step for your child before you choose a plan.
+    <section className="mx-auto max-w-6xl px-6 py-6 sm:py-8">
+      <div className="rounded-[22px] border border-slate-200 bg-white px-5 py-5 sm:px-6 sm:py-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+              Assessment before enrolment
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+              Free assessment. Clear recommendation. You decide.
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              The free assessment helps you understand whether {programName} is a suitable next step for your child. No payment or enrolment commitment is required to take the assessment.
             </p>
           </div>
 
-          <div className="mt-8 grid gap-6 sm:grid-cols-3">
-            <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
-                <span className="text-2xl">📋</span>
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">1. Free 35-minute assessment</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                A Tiny Steps teacher checks the skills most relevant to the concern you shared and observes where your child is secure or getting stuck.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
-                <span className="text-2xl">🎯</span>
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">2. Recommended starting point</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                You receive a clear recommendation for the most suitable pathway and starting level based on what the teacher observed.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
-                <span className="text-2xl">✓</span>
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">3. You decide</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Review the recommendation, available schedule and current pricing, then decide whether you want to continue. There is no enrolment commitment from taking the assessment.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-sky-200/60 bg-sky-50/50 px-6 py-4">
-            <p className="text-sm font-semibold text-slate-900">What parents leave the assessment with</p>
-            <ul className="mt-2 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
-              <li>• Observed strengths and current focus areas</li>
-              <li>• Recommended pathway and starting level</li>
-              <li>• Simple home-practice guidance where useful</li>
-              <li>• Current class format, schedule and pricing options</li>
-            </ul>
-          </div>
-
-          <div className="mt-6 text-center">
-            <Link
-              to="/book-demo"
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Book Free 35-Minute Demo
-            </Link>
-            <p className="mt-3 text-xs text-slate-500">The assessment itself is free; no payment is required to book it.</p>
-          </div>
+          <Link
+            to="/book-demo"
+            className="inline-flex shrink-0 items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free 35-Minute Demo
+          </Link>
         </div>
+
+        <ol className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
+          <li className="flex gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">1</span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Assess the relevant skills</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                The teacher checks the areas connected to the concern you shared.
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">2</span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Recommend a starting point</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                You receive the recommended pathway and starting level, with current schedule and pricing context.
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">3</span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900">Decide what to do next</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Review the recommendation and continue only if the programme is the right fit for your child.
+              </p>
+            </div>
+          </li>
+        </ol>
       </div>
     </section>
   );
