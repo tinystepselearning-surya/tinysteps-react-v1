@@ -181,6 +181,7 @@ if (process.argv.includes('--generated')) {
     if (!source.includes('## AI Answer Layers — problem, concept, practice')) fail('llms-layer-section', 'AI answer layer section missing.');
     if (!source.includes('https://tinystepslearning.com/ai-resource-index.json')) fail('llms-json-link', 'Machine JSON link missing.');
     if (!source.includes('## Complete Editorial Blog Corpus')) fail('llms-blog-corpus-section', 'Complete editorial blog corpus section missing.');
+    if (!source.includes(`## Focused Grammar Resource Library — ${GRAMMAR_PUBLISHED_RESOURCE_PAGES.length} governed guides`)) fail('llms-grammar-corpus-section', 'Governed Grammar resource section missing.');
     if (!source.includes(`Generated editorial estate: ${expectedLiveCanonicalBlogs} live canonical Tiny Steps articles`)) {
       fail('llms-blog-corpus-count', `LLM discovery must declare the ${expectedLiveCanonicalBlogs} live canonical editorial articles.`);
     }
@@ -189,6 +190,9 @@ if (process.argv.includes('--generated')) {
   const generatedIndex = fs.existsSync(jsonPath) ? JSON.parse(fs.readFileSync(jsonPath, 'utf8')) : null;
   for (const item of generatedIndex?.corpus?.editorial_blogs || []) {
     if (!llmsFull.includes(item.canonical_url)) fail('llms-full-blog-coverage', item.canonical_url);
+  }
+  for (const item of generatedIndex?.corpus?.programmatic_grammar_guides || []) {
+    if (!llmsFull.includes(item.canonical_url)) fail('llms-full-grammar-coverage', item.canonical_url);
   }
 }
 
