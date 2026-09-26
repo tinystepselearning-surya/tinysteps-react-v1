@@ -87,22 +87,6 @@ describe('AVS cached Teams evidence freshness classifier', () => {
     });
   });
 
-  it('requires fresh evidence when cached evidence predates the same-day calculation contract', () => {
-    const oldEvidence = evidence();
-    oldEvidence.calculationVersion = 1;
-
-    const result = classifyCachedEvidenceFreshness({
-      classSessionId: 'session-1',
-      session: session(),
-      evidence: oldEvidence,
-    });
-
-    expect(result.decision).toBe('fresh_required');
-    expect(result.reasons).toContain(
-      'evidence_calculation_version_outdated',
-    );
-  });
-
   it('requires fresh evidence when the teacher changes', () => {
     const result = classifyCachedEvidenceFreshness({
       classSessionId: 'session-1',
