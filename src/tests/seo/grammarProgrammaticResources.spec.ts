@@ -53,7 +53,13 @@ describe('Governed grammar programmatic resources', () => {
 
   it('registers every grammar concept for routing, sitemap/prerender and SEO metadata', () => {
     const routes = read('src/app/routes.tsx');
+    const publicManifestSource = read('src/lib/publicRouteManifest.js');
+    const routeSeoSource = read('src/lib/routeSeoRegistry.js');
     expect(routes).toContain("{ path: 'resources/grammar/:slug', element: <GrammarKnowledgePage /> }");
+    expect(publicManifestSource).toContain("from './grammarProgrammaticSeoManifest.js'");
+    expect(routeSeoSource).toContain("from './grammarProgrammaticSeoManifest.js'");
+    expect(publicManifestSource).not.toContain("from './grammarProgrammaticRegistry.js'");
+    expect(routeSeoSource).not.toContain("from './grammarProgrammaticRegistry.js'");
 
     const manifestPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
     for (const page of GRAMMAR_PROGRAMMATIC_PAGES) {
