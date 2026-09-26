@@ -75,19 +75,24 @@ describe('Resources R24-R26 AI answer layers', () => {
   it('connects the full current content corpus instead of only the earlier curated blog subset', () => {
     const generator = read('scripts/generate-rss.mjs');
     expect(generator).toContain('buildEditorialBlogCorpus');
+    expect(generator).toContain('buildRetiredEditorialSourceCorpus');
     expect(generator).toContain('buildProgrammaticPhonicsCorpus');
     expect(generator).toContain('buildPublicRouteCorpus');
     expect(generator).toContain('PUBLIC_ROUTE_MANIFEST');
     expect(generator).toContain('buildCompleteBlogLlmSection');
     expect(generator).toContain('Complete Editorial Blog Corpus');
     expect(generator).toContain('editorial_blogs: editorialBlogs');
+    expect(generator).toContain('retired_editorial_sources: retiredEditorialSources');
+    expect(generator).toContain('editorial_source_records: editorialBlogs.length + retiredEditorialSources.length');
     expect(generator).toContain('programmatic_phonics_guides: programmaticPhonics');
     expect(generator).toContain('additional_public_routes: publicRoutes');
     expect(generator).toContain('supporting-only-noindex');
 
     const audit = read('scripts/audit-ai-answer-layers.mjs');
-    expect(audit).toContain('expectedCurrentBlogCount');
+    expect(audit).toContain('expectedBlogSourceInventory');
     expect(audit).toContain('editorial-blog-baseline-regression');
+    expect(audit).toContain('retired-editorial-source-count');
+    expect(audit).toContain('redirect-lineage-only');
     expect(audit).toContain('public-route-manifest-coverage');
   });
 });
