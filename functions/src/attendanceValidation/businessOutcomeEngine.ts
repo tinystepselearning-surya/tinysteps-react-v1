@@ -55,8 +55,10 @@ export function supportedPresentCountFromOverlap(
  * The complete AVS business reconciliation.
  *
  * Teams can never support more Present marks than the number of actual
- * same-day Tiny Steps session rows for the same student + teacher. This prevents
- * one unusually long class from being misread as two or more separate classes.
+ * eligible same-day Tiny Steps session slots for the same student + teacher.
+ * Explicit cancelled/rescheduled slots are excluded before this count reaches
+ * the engine. This prevents one unusually long class from being misread as two
+ * or more separate classes.
  *
  * There are only three business outcomes:
  * - Verified: Teams-supported Present count == Tiny Steps Present count
