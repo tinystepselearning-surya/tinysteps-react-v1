@@ -388,28 +388,64 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
   {
     publicPath: "/free-sound-listening-game-for-kids",
     categoryPath: "/free-phonics-games-for-kids",
-    seoTitle: "Free Sound Listening Game for Kids | Phonics Listening Practice",
+    seoTitle: "Free A-Z Phonics Sounds Game for Kids | Sound Detective",
     seoDescription:
-      "Help children listen carefully and identify phonics sounds with a free online sound listening game from Tiny Steps. No login required.",
-    h1: "Free Sound Listening Game for Kids",
+      "Play a free A-Z phonics sounds game for kids. Listen to 26 basic alphabet letter sounds and choose the matching picture. No login required.",
+    h1: "Free A-Z Phonics Sounds Game for Kids",
     intro:
-      "This Tiny Steps sound listening page is built for children who need extra phonics listening practice before they move confidently into blending and reading.",
+      "Play A-Z Phonics Sound Detective: hear a basic letter sound, inspect the picture clues, and choose the matching answer. Children can practise by sound group or take the full 26-sound A-Z challenge.",
     ageRange: "Ages 4 to 7",
-    skills: ["Listening for phonics sounds", "Sound discrimination", "Attention and recall", "Early phonics confidence"],
+    skills: ["A-Z phonics listening", "26 basic letter sounds", "Sound discrimination", "Picture-sound association"],
     howToPlay: [
-      "Play in a quiet space so your child can focus on each target sound.",
-      "Ask your child to listen first, then point or say the matching answer.",
-      "Repeat a few sounds at a time instead of rushing through a long session.",
+      "Choose one phonics sound group for focused practice, or start the A-Z Challenge to hear all 26 basic letter sounds.",
+      "Tap the headphones, listen to the target sound, then choose the matching picture clue.",
+      "Repeat short sessions and say the sound aloud before moving into blending and word reading.",
     ],
     skillAnswer:
-      "This game practises careful listening, sound discrimination, and the ability to notice phonics differences before reading longer words.",
+      "This game practises A-Z phonics listening, basic letter-sound recall, sound discrimination, and matching a heard sound to a familiar picture clue.",
     differenceAnswer:
-      "Free Tiny Steps listening practice is useful for repetition at home, while full classes add teacher prompting, correction, and saved learning progress.",
+      "Free Tiny Steps phonics games are useful for focused repetition at home. Live classes add teacher correction, blending and decoding practice, saved milestones, and structured progression.",
     gameIds: ["eem-g05-sound-listening"],
     isPublicPageReady: true,
     isPublicPlayReady: true,
     playPath: "/free-sound-listening-game-for-kids?play=1",
     statusText: "Play free",
+    benefits: [
+      "Covers all 26 basic A-Z letter sounds in the featured challenge",
+      "Builds careful phonics listening and sound discrimination",
+      "Strengthens recall before children move into blending",
+      "Works as a short home, classroom, or homeschool phonics warm-up",
+    ],
+    parentGuidance:
+      "Use the sound groups when a child is still learning a small set. Use the A-Z Challenge after most basic letter sounds are familiar. Encourage a crisp sound without adding an extra vowel, then ask the child to say one simple word that contains the sound.",
+    commonMistakes:
+      "This is letter-sound listening practice, not a complete map of every English phonics pattern. Digraphs and other spellings such as sh, ch, th, ai and ee are taught beyond the 26 basic alphabet letters.",
+    nextGameId: "eem-g06-blend-2-sounds",
+    relatedGameIds: ["eem-g04-letter-sounds", "eem-g04b-balloon-pop", "eem-g00b-letter-tracing-sounds"],
+    assessmentBridge:
+      "Once basic A-Z letter sounds are familiar, children need to blend those sounds into words and read fresh print. Tiny Steps live phonics classes connect sound knowledge to decoding, spelling and fluent reading with teacher feedback.",
+    faqs: [
+      {
+        question: "Does this phonics game cover A to Z?",
+        answer: "Yes. The featured A-Z Challenge uses all 26 basic alphabet letter sounds, while the smaller sound groups let children practise a manageable set at a time.",
+      },
+      {
+        question: "Are these all the sounds used in English phonics?",
+        answer: "No. This game focuses on 26 basic alphabet letter sounds. English phonics also includes digraphs and other spellings such as sh, ch, th, ai and ee.",
+      },
+      {
+        question: "What is the difference between this game and the Letter Sounds game?",
+        answer: "Sound Detective is mainly a listen-and-identify activity using picture clues. The Letter Sounds game focuses more directly on connecting printed letters with their sounds.",
+      },
+      {
+        question: "Is the A-Z phonics game free?",
+        answer: "Yes. It is free to play in the browser with no login required. Public progress is temporary and stays only in the current browser.",
+      },
+      {
+        question: "What should my child do after learning basic letter sounds?",
+        answer: "Move into oral blending, simple CVC word decoding, spelling and reading fresh words instead of practising isolated sounds only.",
+      },
+    ],
   },
   {
     publicPath: "/free-word-building-game-for-kids",
