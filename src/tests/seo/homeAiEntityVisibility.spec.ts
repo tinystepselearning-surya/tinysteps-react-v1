@@ -47,13 +47,13 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(summarySource).toContain("href: '/speaking'");
     expect(summarySource).toContain('to="/online-english-classes-for-kids"');
     expect(summarySource).toContain('to="/curriculum"');
-    expect(summarySource).toContain('to="/team/vannala-ravali-priya"');
-    expect(summarySource).toContain('PUBLIC_FACTS.founder.fullName');
 
     expect(summarySource).not.toContain('5000+');
     expect(summarySource).not.toContain('15+');
     expect(summarySource).not.toContain('35-minute');
     expect(summarySource).not.toContain('Weekly');
+    expect(summarySource).not.toContain('Academic direction:');
+    expect(summarySource).not.toContain('/team/vannala-ravali-priya');
   });
 
   it('keeps one method layer instead of two competing homepage journey models', () => {
@@ -65,6 +65,9 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(methodSource).toContain('title: "Reading & Fluency"');
     expect(methodSource).not.toContain('S.O.L.I.D. Promise');
     expect(methodSource).not.toContain('Use this on your website');
+    expect(methodSource).not.toContain('proofTiles');
+    expect(methodSource).not.toContain('PROOF YOU CAN SEE');
+    expect(methodSource).not.toContain('stageAccents');
   });
 
   it('preserves the intended conversion sequence after differentiation', () => {
@@ -102,7 +105,8 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(journeySource).toContain("path: '/grammar'");
     expect(journeySource).toContain("path: '/speaking'");
     expect(journeySource).toContain('to="/courses"');
-    expect(journeySource).toContain('writing, spoken English, reading-fluency or confidence-specific support');
+    expect(journeySource).toContain('Need a specialist path? View all courses');
+    expect(journeySource).not.toContain('writing, spoken English, reading-fluency or confidence-specific support');
   });
 
   it('does not repeat desktop hero proof in a second desktop trust strip', () => {
@@ -123,11 +127,18 @@ describe('homepage AI entity visibility and scroll-journey contract', () => {
     expect(pricingSource).toContain('Other class formats are available');
     expect(pricingSource).toContain('Compare all formats');
     expect(pricingSource).not.toContain('ULTRA_PREMIUM_PRICING.map');
+    expect(pricingSource).not.toContain('Most popular');
+    expect(pricingSource).not.toContain('No long-term lock-in');
+    expect(pricingSource).not.toContain('Easy class rescheduling');
+    expect(pricingSource).not.toContain('Pause anytime between months');
+    expect(pricingSource).toContain('Current scheduling, cancellation and refund terms');
   });
 
   it('keeps assessment reassurance factual and the closing CTA concise', () => {
-    expect(reassuranceSource).toContain('A Tiny Steps teacher checks the skills most relevant');
-    expect(reassuranceSource).toContain('Recommended starting point');
+    expect(reassuranceSource).toContain('Free assessment. Clear recommendation. You decide.');
+    expect(reassuranceSource).toContain('No payment or enrolment commitment is required');
+    expect(reassuranceSource).toContain('Recommend a starting point');
+    expect(reassuranceSource).not.toContain('What parents leave the assessment with');
     expect(reassuranceSource).not.toContain('current skill level report');
     expect(reassuranceSource).not.toContain('sample practice activities');
     expect(reassuranceSource).not.toContain('Takes 2 minutes');
