@@ -1,5 +1,4 @@
 export const AVS_BUSINESS_PRESENT_OVERLAP_SECONDS = 25 * 60;
-export const AVS_BUSINESS_CASE_SCHEMA_VERSION = 1;
 
 export type AvsBusinessOutcome =
   | 'verified'
@@ -20,19 +19,6 @@ export interface AvsBusinessOutcomeResult {
   teamsSupportedPresentCount: number | null;
   tinyStepsPresentCount: number;
   differenceCount: number;
-}
-
-export function isCurrentAvsBusinessCaseDocument(
-  value: Record<string, unknown>,
-): boolean {
-  const outcome = value.businessOutcome;
-  return value.businessSchemaVersion === AVS_BUSINESS_CASE_SCHEMA_VERSION
-    && (
-      outcome === 'verified'
-      || outcome === 'false_present'
-      || outcome === 'false_absent'
-      || outcome === 'not_evaluable'
-    );
 }
 
 function requireNonNegativeFinite(value: number, name: string): number {
