@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { BookOpenText, CheckCircle2, Globe2, Mic2, Sparkles } from "lucide-react";
+import { CheckCircle2, Globe2, Mic2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import BookAssessmentForm from "../forms/BookAssessmentForm";
 import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL } from "../../config/publicFacts";
@@ -229,22 +229,6 @@ const ConversionHero: React.FC = () => {
 
           {/* RIGHT FORM CARD */}
           <div className="relative min-w-0 lg:pl-6">
-            <div className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
-                  <BookOpenText className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
-                    Structured Path
-                  </div>
-                  <div className="text-sm font-semibold text-slate-800">
-                    Phonics to speaking
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <BookAssessmentForm
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
@@ -278,17 +262,6 @@ const ConversionHero: React.FC = () => {
               </div>
             </div>
 
-            {/* Floating Decorative Element */}
-            <div className="absolute -bottom-4 -left-2 h-20 w-20 motion-safe:animate-bounce motion-reduce:animate-none rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">
-              <div className="flex h-full w-full items-center justify-center rounded-xl bg-orange-50 text-2xl">
-                🎓
-              </div>
-            </div>
-
-            <div className="absolute -bottom-6 right-4 hidden motion-safe:animate-bounce motion-reduce:animate-none rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur [animation-duration:4s] [animation-delay:0.4s] sm:inline-flex">
-              <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" aria-hidden="true" />
-              Reply via WhatsApp
-            </div>
           </div>
         </div>
       </div>
