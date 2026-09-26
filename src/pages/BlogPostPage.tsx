@@ -613,7 +613,8 @@ const BlogPostPage: FC = () => {
   const isStoryUnderstandingPillar = slug === 'why-child-reads-words-but-does-not-understand-story';
   const isSatpinGuide = slug === 'satpin-phonics-guide';
   const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug));
-  const useAuthorityLayout = isSatpinGuide || isAuthorityPilot;
+  const isAuthorityArticle = Boolean(post);
+  const useAuthorityLayout = isSatpinGuide || isAuthorityArticle;
   const [MdxComp, setMdxComp] = useState<any>(null);
   const [mdxMeta, setMdxMeta] = useState<any>(null);
   useEffect(() => {
@@ -1138,8 +1139,8 @@ function buildMetaDescription(src: any) {
         searchLabel={isSchoolConversion ? 'Schools often ask' : 'Parents often search'}
         heroPoints={resolvedHeroPoints}
         compact={useAuthorityLayout}
-        heroImage={isAuthorityPilot ? resolvedHero : undefined}
-        heroImageAlt={isAuthorityPilot ? metaSource.title : undefined}
+        heroImage={isAuthorityArticle ? resolvedHero : undefined}
+        heroImageAlt={isAuthorityArticle ? metaSource.title : undefined}
       />
 
       <div className={useAuthorityLayout ? 'mx-auto max-w-[1380px] px-4 py-7 sm:px-6 sm:py-9' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
@@ -1162,7 +1163,7 @@ function buildMetaDescription(src: any) {
                   resolvedHero={resolvedHero}
                 />
               </Suspense>
-            ) : isAuthorityPilot && post ? (
+            ) : isAuthorityArticle && post ? (
               <Suspense
                 fallback={
                   <div className="rounded-[2rem] border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
@@ -1286,7 +1287,7 @@ function buildMetaDescription(src: any) {
           <aside className={useAuthorityLayout ? 'hidden lg:order-1 lg:block lg:sticky lg:top-24 lg:self-start' : 'space-y-4 lg:sticky lg:top-24 lg:self-start'}>
             {isSatpinGuide ? (
               <SatpinGuideSidebar tocItems={tocItems} />
-            ) : isAuthorityPilot && slug ? (
+            ) : isAuthorityArticle && slug ? (
               <AuthorityBlogSidebar
                 tocItems={tocItems}
                 articleSlug={slug}

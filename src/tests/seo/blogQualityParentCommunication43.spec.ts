@@ -22,7 +22,7 @@ describe('Blog #43 reading fluency quality refresh', () => {
     expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
     expect(post?.audience).toBe('Parent');
     expect(post?.discoveryCategory).toBe('Parent Guides');
-    expect(getBlogHeroFamily(post!)).toBe('reading-fluency');
+    expect(getBlogHeroFamily(post!)).toBe('fluent-independent-reading');
 
     const pillar = getParentAuthorityPillar(slug);
     expect(pillar?.role).toBe('fluency-pillar');

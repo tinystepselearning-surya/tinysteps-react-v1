@@ -162,28 +162,19 @@ describe('B9 grammar and speaking authority guardrails', () => {
   });
 
   it('preserves hero families and B7 author responsibility on the B9 authority owners', () => {
-    const grammarSlugs = [
-      GRAMMAR_OWNER,
-      'how-to-improve-sentence-formation-in-kids',
-      'child-knows-grammar-but-makes-mistakes',
-    ];
-    const speakingSlugs = [
-      SPEAKING_OWNER,
-      'child-understands-english-but-does-not-speak',
-      'child-gives-one-word-answers',
-    ];
+    const expectedFamilies = {
+      [GRAMMAR_OWNER]: 'building-better-sentences',
+      'how-to-improve-sentence-formation-in-kids': 'building-better-sentences',
+      'child-knows-grammar-but-makes-mistakes': 'editing-and-improving-writing',
+      [SPEAKING_OWNER]: 'finding-your-speaking-voice',
+      'child-understands-english-but-does-not-speak': 'finding-your-speaking-voice',
+      'child-gives-one-word-answers': 'finding-your-speaking-voice',
+    } as const;
 
-    for (const slug of grammarSlugs) {
+    for (const [slug, expectedFamily] of Object.entries(expectedFamilies)) {
       const post = bySlug.get(slug)!;
       const author = resolveBlogAuthor(post.author, post.category);
-      expect(getBlogHeroFamily(post)).toBe('grammar-sentence-building');
-      expect(author.profilePath).toBe(expectedAuthorProfilePath(author));
-    }
-
-    for (const slug of speakingSlugs) {
-      const post = bySlug.get(slug)!;
-      const author = resolveBlogAuthor(post.author, post.category);
-      expect(getBlogHeroFamily(post)).toBe('speaking-communication');
+      expect(getBlogHeroFamily(post)).toBe(expectedFamily);
       expect(author.profilePath).toBe(expectedAuthorProfilePath(author));
     }
   });
