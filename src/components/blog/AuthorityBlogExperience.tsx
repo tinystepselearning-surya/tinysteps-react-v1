@@ -42,7 +42,7 @@ function slugify(value: string) {
 function shortNavLabel(title: string) {
   if (/^Quick answer:/i.test(title)) return 'Overview';
   if (/^Evidence\b|\bEvidence and\b|\bSources reviewed\b/i.test(title)) return 'Evidence';
-  if (/^(What to use next|Tiny Steps next step|Where Tiny Steps fits)/i.test(title)) return 'What next';
+  if (/^(What to use next|Useful next steps|Tiny Steps next step|Where Tiny Steps fits|How Tiny Steps fits)/i.test(title)) return 'What next';
   return title;
 }
 
@@ -103,6 +103,7 @@ function renderRichText(text: string, keyPrefix = 'rich'): React.ReactNode {
 function buildSections(post: BlogPost, headingItems: HeadingItem[]) {
   const headingIdByTitle = new Map(headingItems.map((item) => [item.title, item.id]));
   const sections: GuideSection[] = [];
+  const prefaceBlocks: BlogBlock[] = [];
   let current: GuideSection | null = null;
 
   for (const block of post.body || []) {
@@ -117,6 +118,22 @@ function buildSections(post: BlogPost, headingItems: HeadingItem[]) {
     }
 
     if (current) current.blocks.push(block);
+    else prefaceBlocks.push(block);
+  }
+
+  if (!sections.length) {
+    return [{
+      title: post.title,
+      id: 'article-overview',
+      blocks: prefaceBlocks,
+    }];
+  }
+
+  if (prefaceBlocks.length) {
+    sections[0] = {
+      ...sections[0],
+      blocks: [...prefaceBlocks, ...sections[0].blocks],
+    };
   }
 
   return sections;
@@ -159,7 +176,7 @@ function isEvidenceSection(title: string) {
 }
 
 function isNextSection(title: string) {
-  return /^(What to use next|Tiny Steps next step|Where Tiny Steps fits)/i.test(title);
+  return /^(What to use next|Useful next steps|Tiny Steps next step|Where Tiny Steps fits|How Tiny Steps fits)/i.test(title);
 }
 
 function RichBlocks({

@@ -61,12 +61,17 @@ describe('deployment consistency guardrails', () => {
       '/free-sentence-building-games-for-kids',
       '/free-sentence-making-game-for-kids',
     ]);
-    const authorityPilotPaths = new Set([
+    const authorityBlogPaths = new Set([
       '/blog/what-is-phonics-for-kids',
       '/blog/how-to-teach-paragraph-writing-to-kids',
       '/blog/how-to-teach-storytelling-to-kids',
       '/blog/child-understands-english-but-does-not-speak',
       '/blog/phonics-for-parents-guide',
+      '/blog/child-knows-abc-but-cannot-read',
+      '/blog/punctuation-and-capital-letters-for-kids',
+      '/blog/conversation-skills-for-kids',
+      '/blog/child-reads-in-class-but-forgets-at-home',
+      '/blog/why-letter-sounds-are-not-enough-to-read',
     ]);
     const fetchMock = vi.fn(async (input: string | URL) => {
       const url = new URL(String(input));
@@ -88,7 +93,7 @@ describe('deployment consistency guardrails', () => {
           { status: 200 },
         );
       }
-      if (authorityPilotPaths.has(url.pathname)) {
+      if (authorityBlogPaths.has(url.pathname)) {
         return new Response(
           `<title>Authority Article | Tiny Steps Blog</title><meta name="description" content="Substantial authority article description">`
           + '<meta name="robots" content="index, follow"><meta name="googlebot" content="index, follow">'
@@ -103,7 +108,7 @@ describe('deployment consistency guardrails', () => {
       if (url.pathname === '/sitemap-static.xml') {
         const urls = [
           `${origin}/`,
-          ...Array.from(authorityPilotPaths).map((pathname) => `${origin}${pathname}`),
+          ...Array.from(authorityBlogPaths).map((pathname) => `${origin}${pathname}`),
         ];
         return new Response(`<urlset>${urls.map((loc) => `<url><loc>${loc}</loc></url>`).join('')}</urlset>`);
       }
@@ -131,13 +136,13 @@ describe('deployment consistency guardrails', () => {
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'genuine unknown-route 404')?.pass).toBe(true);
     expect(
       result.assertions.filter((assertion: { name: string; pass: boolean }) =>
-        assertion.name.startsWith('authority pilot Googlebot smartphone '),
+        assertion.name.startsWith('authority blog Googlebot smartphone '),
       ),
-    ).toHaveLength(5);
+    ).toHaveLength(10);
     expect(
       result.assertions
         .filter((assertion: { name: string; pass: boolean }) =>
-          assertion.name.startsWith('authority pilot Googlebot smartphone '),
+          assertion.name.startsWith('authority blog Googlebot smartphone '),
         )
         .every((assertion: { pass: boolean }) => assertion.pass),
     ).toBe(true);
