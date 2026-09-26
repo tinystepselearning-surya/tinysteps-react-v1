@@ -121,7 +121,6 @@ export const BLOG_HERO_FAMILY_BY_SLUG: Readonly<Record<string, BlogHeroFamily>> 
   // 16. Finding Your Speaking Voice
   'child-gives-one-word-answers': 'finding-your-speaking-voice',
   'child-understands-english-but-does-not-speak': 'finding-your-speaking-voice',
-  'spoken-english-classes-for-kids-confidence': 'finding-your-speaking-voice',
   'speaking-confidence-seeds': 'finding-your-speaking-voice',
 
   // 17. Conversation and Storytelling
