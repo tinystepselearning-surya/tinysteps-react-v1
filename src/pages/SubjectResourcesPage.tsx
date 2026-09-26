@@ -436,6 +436,10 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
         </section>
       ) : null}
 
+      <section className="mx-auto max-w-7xl px-6 pt-10 sm:pt-12">
+        <AiAnswerLayerDirectory subject={aiAnswerSubject} compact />
+      </section>
+
       <section id="resource-sections" className="mx-auto max-w-7xl space-y-14 px-6 py-14 sm:py-16 lg:py-20">
         {config.sections.map((section) => (
           <section key={section.eyebrow} aria-labelledby={`${subject}-${section.eyebrow.split(' ').join('-').toLowerCase()}`}>
