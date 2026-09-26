@@ -36,5 +36,11 @@ export const CENTRAL_RESOURCE_RECONCILIATION: Readonly<{
     machineJson: '/ai-resource-index.json';
     machineText: '/ai-resource-index.txt';
     retrievalFlow: string;
+    connectedCorpus: Readonly<{
+      editorialBlogs: 'all-current-public-blogs';
+      governedPhonicsGuides: 31;
+      additionalPublicRoutes: 'all-route-seo-public-content';
+      noindexPolicy: 'connected-as-supporting-only-not-primary-answer-owner';
+    }>;
   }>;
 }>;
