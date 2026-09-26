@@ -1,6 +1,5 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import { createHash } from 'crypto';
 import { FieldPath, type Firestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
@@ -87,11 +86,6 @@ function currentIstYmd(now = new Date()): string {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Invalid baseline request.';
-}
-
-function missingEvidenceId(sessionId: string): string {
-  const digest = createHash('sha256').update(sessionId).digest('hex').slice(0, 40);
-  return `baseline_missing_${digest}`;
 }
 
 function countingGraphClient(base: TeamsEvidenceGraphClient): {
@@ -361,7 +355,7 @@ export async function runAttendanceValidationFirstTimeBaselineBatch(
     let organizerUserId: string | null = null;
     let organizerResolutionFailure = 'organizer_identity_unresolved';
     let organizerConfigReads = 0;
-    if (snapshots.size > 0) {
+    if (allowFreshEvidence && snapshots.size > 0) {
       try {
         const organizerResolution =
           await resolveAttendanceValidationOrganizerUserId(db);
