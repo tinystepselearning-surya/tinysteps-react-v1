@@ -11,7 +11,6 @@ import {
   HomeFaqSection,
   LearningPathsSection,
   ParentProblemRecognitionSection,
-  TrustEvidenceSection,
   TrustSnapshotSection,
   WhyTinyStepsSection,
 } from "../components/Home/HomeScrollJourneySections";
@@ -256,38 +255,35 @@ export default function HomePage() {
 
       {showDeferredSections ? (
         <>
-          {/* REVIEW ACTION 07 — PROOF: Replace unsupported outcome percentages with evidence parents can inspect. */}
-          <TrustEvidenceSection />
-
-          {/* REVIEW ACTION 08 — GLOBAL PROOF: Keep the learner map as concrete social proof, now inside the proof chapter. */}
+          {/* REVIEW ACTION 07 — GLOBAL PROOF: Move directly into concrete social proof instead of adding a directory of proof cards. */}
           <div id="global-learners-proof">
             <Suspense fallback={null}>
               <GlobalLearnersMapSection />
             </Suspense>
           </div>
 
-          {/* REVIEW ACTION 09 — METHOD: Explain how each pathway works without adding a second, competing journey model. */}
+          {/* REVIEW ACTION 08 — METHOD: Explain how each pathway works without adding a second, competing journey model. */}
           <Suspense fallback={null}>
             <StepTimeline />
           </Suspense>
 
-          {/* REVIEW ACTION 10 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
+          {/* REVIEW ACTION 09 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
           <ClassSamplesSection />
 
-          {/* REVIEW ACTION 11 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
+          {/* REVIEW ACTION 10 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
           <Suspense fallback={null}>
             <PricingCrispSection />
           </Suspense>
 
-          {/* REVIEW ACTION 12 — RISK REVERSAL: Explain assessment → recommended starting point → parent decides. */}
+          {/* REVIEW ACTION 11 — RISK REVERSAL: Explain assessment → recommended starting point → parent decides. */}
           <Suspense fallback={null}>
             <ParentReassurance />
           </Suspense>
 
-          {/* REVIEW ACTION 13 — OBJECTIONS: Keep a short practical FAQ near conversion. */}
+          {/* REVIEW ACTION 12 — OBJECTIONS: Keep a short practical FAQ near conversion. */}
           <HomeFaqSection items={homeFaqItems} />
 
-          {/* REVIEW ACTION 14 — FINAL CONVERSION: End with one concise booking action, not another full information block. */}
+          {/* REVIEW ACTION 13 — FINAL CONVERSION: End with one concise booking action, not another full information block. */}
           <Suspense fallback={null}>
             <FinalCTASection />
           </Suspense>
