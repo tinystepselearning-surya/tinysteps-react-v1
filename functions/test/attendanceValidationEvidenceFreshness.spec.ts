@@ -6,6 +6,10 @@ import {
   hashAttendanceEvidenceValue,
   type AttendanceValidationEvidenceDocument,
 } from '../src/attendanceValidation/teamsEvidenceCollector';
+import {
+  classifyAvsFailure,
+  classifyAvsReason,
+} from '../src/attendanceValidation/errorTaxonomy';
 
 const joinUrl = 'https://teams.microsoft.com/l/meetup-join/original';
 
@@ -217,5 +221,23 @@ describe('AVS cached Teams evidence freshness classifier', () => {
 
     expect(result.decision).toBe('unsafe_review');
     expect(result.reasons).toContain('evidence_session_id_mismatch');
+  });
+});
+
+describe('AVS failure taxonomy wrappers', () => {
+  it('preserves a structured failure nested inside a causeError wrapper', () => {
+    const failure = classifyAvsReason('forbidden');
+    expect(classifyAvsFailure({
+      causeError: { failure },
+    })).toEqual(failure);
+  });
+
+  it('preserves a structured failure through multiple causeError wrappers', () => {
+    const failure = classifyAvsReason('rate_limited');
+    expect(classifyAvsFailure({
+      causeError: {
+        causeError: { failure },
+      },
+    })).toEqual(failure);
   });
 });
