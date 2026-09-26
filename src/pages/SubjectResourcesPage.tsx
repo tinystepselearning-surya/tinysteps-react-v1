@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import PhonicsPilotGuideGrid, { PHONICS_PILOT_RESOURCE_LINKS } from '../components/resources/PhonicsPilotGuideGrid';
-import AiAnswerLayerDirectory, { type AiAnswerSubject } from '../components/resources/AiAnswerLayerDirectory';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { SPEAKING_KNOWLEDGE_CLUSTER_GROUPS } from '../lib/speakingKnowledgeCluster';
@@ -189,15 +188,8 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
   },
 };
 
-const AI_SUBJECT_BY_RESOURCE: Record<ResourceSubject, AiAnswerSubject> = {
-  phonics: 'phonics-reading',
-  grammar: 'grammar-writing',
-  speaking: 'speaking-communication',
-};
-
 const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => {
   const config = SUBJECTS[subject];
-  const aiAnswerSubject = AI_SUBJECT_BY_RESOURCE[subject];
   const seo = getRouteConfig(config.canonicalPath);
   const canonicalUrl = `${SITE_ORIGIN}${config.canonicalPath}`;
   const title = seo?.title ?? config.title;
@@ -307,8 +299,6 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
               </Link>
             </div>
           </div>
-
-          <AiAnswerLayerDirectory subject={aiAnswerSubject} compact />
 
           <div id="resource-sections" className="mt-8 grid gap-4 lg:grid-cols-3">
             {config.sections.map((section, sectionIndex) => {
@@ -435,10 +425,6 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
           </div>
         </section>
       ) : null}
-
-      <section className="mx-auto max-w-7xl px-6 pt-10 sm:pt-12">
-        <AiAnswerLayerDirectory subject={aiAnswerSubject} compact />
-      </section>
 
       <section id="resource-sections" className="mx-auto max-w-7xl space-y-14 px-6 py-14 sm:py-16 lg:py-20">
         {config.sections.map((section) => (
