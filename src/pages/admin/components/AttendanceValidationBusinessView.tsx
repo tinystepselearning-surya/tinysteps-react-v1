@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   groupPersistedAvsBusinessOutcomes,
+  type AvsBusinessGroup,
   type AvsBusinessOutcome,
 } from '../../../lib/attendanceValidationBusinessReconciliation';
 import { Badge } from '@components/ui/badge';
@@ -121,7 +122,7 @@ function technicalIssueLabel(value: string): string {
 }
 
 function technicalReasonsForGroup(
-  group: ReturnType<typeof groupPersistedAvsBusinessOutcomes<AttendanceValidationBusinessCase>>[number],
+  group: AvsBusinessGroup<AttendanceValidationBusinessCase>,
 ): string[] {
   const raw = group.cases.flatMap((item) => [
     ...item.reasons,
