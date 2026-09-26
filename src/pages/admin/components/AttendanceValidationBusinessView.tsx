@@ -269,7 +269,7 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
             <span className="font-medium">
-              {notEvaluableCount} source-data group{notEvaluableCount === 1 ? '' : 's'} not evaluated.
+              {notEvaluableCount} group{notEvaluableCount === 1 ? '' : 's'} not evaluated.
             </span>
             {' '}These groups could not be compared safely and are excluded from the three attendance outcomes.
             {technicalIssueSummary.length > 0 && (
