@@ -75,8 +75,8 @@ for (const item of create) {
 if (allowR21Execution && r21ExecutionById.size !== create.length) add('r21-execution-count', 'R20', `Expected exactly ${create.length} downstream R21 executions, found ${r21ExecutionById.size}.`);
 
 const legacy = consolidate[0];
-if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/speaking-confidence-seeds' || legacy.implementationState !== 'hold' || legacy.urlChangeAuthorized) add('legacy-hold', 'legacy-hidden-confidence-article', 'R20 must authorize no new redirect, deletion or canonical change.');
-if (!hasBlogSlug('spoken-english-classes-for-kids-confidence')) add('legacy-source-missing', 'legacy-hidden-confidence-article', 'The historical source must remain present during audit-only R20.');
+if (!legacy || legacy.path !== '/blog/spoken-english-classes-for-kids-confidence' || legacy.consolidationTarget !== '/blog/child-understands-english-but-does-not-speak' || legacy.implementationState !== 'redirected-source-removed' || !legacy.urlChangeAuthorized) add('legacy-hold', 'legacy-hidden-confidence-article', 'R20 must record the completed redirect-only retirement without restoring the source.');
+if (hasBlogSlug('spoken-english-classes-for-kids-confidence')) add('legacy-source-still-live', 'legacy-hidden-confidence-article', 'The retired speaking source must remain absent from the live editorial corpus.');
 
 const canonicalById = new Map(CANONICAL_TOPIC_OWNERSHIP.map((entry) => [entry.id, entry]));
 for (const [id, expected] of [
