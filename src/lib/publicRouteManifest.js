@@ -1,5 +1,5 @@
 import { PHONICS_PUBLISHED_RESOURCE_PATHS } from './phonicsPublicationRegistry.js';
-import { GRAMMAR_PROGRAMMATIC_PATHS } from './grammarProgrammaticRegistry.js';
+import { GRAMMAR_PROGRAMMATIC_PATHS } from './grammarProgrammaticSeoManifest.js';
 
 const route = (path, group, {
   indexable = true,
