@@ -408,7 +408,7 @@ test('successful Functions rollout advances the production baseline only after t
   assert.ok(markerIndex > avsVerifyIndex);
   assert.match(workflow, /permissions:\n\s+contents: write/);
   assert.match(workflow, /refs\/heads\/ci\/functions-production/);
-  assert.match(workflow, /"force":false/);
+  assert.match(workflow, /\\\"force\\\":false/);
 });
 
 test('automated full-fleet mutation requires an explicit known-global decision', () => {
