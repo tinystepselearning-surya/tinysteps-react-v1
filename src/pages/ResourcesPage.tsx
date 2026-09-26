@@ -14,6 +14,7 @@ import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
+import { CENTRAL_RESOURCE_CONTENT_FAMILIES } from '../lib/centralResourceSystem.js';
 import {
   ORGANIZATION_ID,
   SITE_ORIGIN,
@@ -263,7 +264,7 @@ const ResourcesPage: FC = () => {
               to="/blog"
               className="group inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white/[0.85] px-4 py-2 text-xs font-black text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:bg-white hover:text-slate-950 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 sm:text-[13px]"
             >
-              Browse all guides
+              Editorial guide library
               <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -282,6 +283,41 @@ const ResourcesPage: FC = () => {
             <ResourcePathwayCard key={pathway.title} pathway={pathway} reduceMotion={reduceMotion} />
           ))}
         </div>
+
+        <section
+          aria-labelledby="resource-library-heading"
+          className="mx-auto mt-5 w-full max-w-[1240px] rounded-[1.45rem] border border-slate-200/90 bg-white/80 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.045)] backdrop-blur sm:p-5"
+        >
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
+            <div>
+              <p className="text-[9.5px] font-black uppercase tracking-[0.22em] text-slate-500">
+                Central resource system
+              </p>
+              <h2 id="resource-library-heading" className="mt-1 text-xl font-black tracking-[-0.025em] text-slate-950 sm:text-2xl">
+                One Resource Center, all learning content
+              </h2>
+            </div>
+            <p className="max-w-2xl text-sm leading-6 text-slate-600">
+              Guides, focused phonics resources, parent support, practice and school material are organised through this Resource Center while their established page URLs stay unchanged.
+            </p>
+          </div>
+
+          <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+            {CENTRAL_RESOURCE_CONTENT_FAMILIES.map((family) => (
+              <Link
+                key={family.id}
+                to={family.destination}
+                className="group rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
+              >
+                <span className="flex items-start justify-between gap-2">
+                  <span className="text-sm font-black leading-5 text-slate-950">{family.label}</span>
+                  <ArrowUpRight aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </span>
+                <span className="mt-1.5 block text-xs leading-5 text-slate-600">{family.description}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </section>
     </main>
   );
