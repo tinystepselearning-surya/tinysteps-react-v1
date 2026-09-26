@@ -183,6 +183,13 @@ export const groupParentWorksheets = (items: ParentWorksheetItem[]): ParentWorks
     const courseDiff = naturalWorksheetCollator.compare(a.courseTitle, b.courseTitle);
     if (courseDiff !== 0) return courseDiff;
     if (a.legacy !== b.legacy) return a.legacy ? 1 : -1;
+
+    // The parent dashboard already treats worksheet sortOrder as the canonical
+    // display order. Preserve that order after grouping resources into lesson
+    // tiles instead of reordering the groups by folder/title metadata.
+    const orderDiff = (a.items[0]?.sortOrder ?? 0) - (b.items[0]?.sortOrder ?? 0);
+    if (orderDiff !== 0) return orderDiff;
+
     return naturalWorksheetCollator.compare(lessonSortLabel(a), lessonSortLabel(b));
   });
 };
