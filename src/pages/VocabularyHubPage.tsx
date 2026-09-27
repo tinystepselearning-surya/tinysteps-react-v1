@@ -91,12 +91,12 @@ const VocabularyHubPage: FC = () => {
       <section className="border-y border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-6 py-12 sm:py-14">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">First authority batch</p>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Published authority guides</p>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950 sm:text-4xl">
-              Start with six high-value vocabulary guides
+              Explore ten high-value vocabulary guides
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              These pages are the first published part of the wider sixteen-topic vocabulary architecture. Each one connects explanation to context and practice, while the existing Vocabulary Adventure remains the practice surface.
+              The published library now combines the six GV4 foundation guides with four GV5 guides for natural English, speaking and writing transfer. Each page connects explanation to context and practice, while Vocabulary Adventure remains the practice surface.
             </p>
           </div>
 
