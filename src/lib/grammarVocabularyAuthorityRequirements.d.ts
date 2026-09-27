@@ -12,6 +12,7 @@ export type AuthorityRequirement = Readonly<{
   rationale?: string;
   stageId?: string;
   relatedCoreIds?: readonly string[];
+  relatedReferenceIds?: readonly string[];
   childOutcomes: readonly string[];
   practiceTargets?: readonly string[];
   practiceModes?: readonly string[];
