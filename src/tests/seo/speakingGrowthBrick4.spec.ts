@@ -37,7 +37,7 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('to="/spoken-english-classes-for-kids-online"');
     expect(speaking).toContain('to="/grammar"');
     expect(speaking).toContain('to="/confidence-building-program-kids"');
-    expect(speaking).toContain('to="/courses/public-speaking-excellence"');
+    expect(speaking).toContain('Check the right speaking level');
     expect(speaking).toContain('Best fit: this Speaking programme');
     expect(speaking).toContain('children who can already communicate at a basic level');
     expect(speaking).toContain('one-word everyday answers or sentence formation itself');
@@ -77,6 +77,6 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('let the free 1:1 assessment confirm the best pathway');
     expect(speaking).toContain('Tiny Steps uses assessment-first placement');
     expect(speaking).toContain('What happens in the free speaking assessment?');
-    expect(speaking).toContain('Not sure why your child hesitates while speaking?');
+    expect(speaking).toContain('Not sure which speaking path fits your child?');
   });
 });
