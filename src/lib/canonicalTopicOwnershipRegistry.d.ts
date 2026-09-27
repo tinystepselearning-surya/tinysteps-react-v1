@@ -4,7 +4,8 @@ export type CanonicalTopicSubject =
   | 'grammar-writing'
   | 'speaking-communication'
   | 'schools-research'
-  | 'general-english';
+  | 'general-english'
+  | 'vocabulary-language';
 
 export type CanonicalTopicOwnerRole =
   | 'gateway'
