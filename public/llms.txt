@@ -146,12 +146,12 @@ These are the canonical Tiny Steps commercial owners for programme, comparison, 
 - [Online Phonics Classes for Kids](https://tinystepslearning.com/phonics) — generic phonics programme owner.
 - [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india) — phonics comparison and provider-selection owner.
 - [Phonics Class Fees in India](https://tinystepslearning.com/phonics-fees-india) — phonics fee, cost and market-benchmark owner.
-- [Reading Classes for Kids](https://tinystepslearning.com/reading-classes-for-kids) — broad reading classes and reading-tutor owner.
+- [Reading Classes for Kids](https://tinystepslearning.com/reading-classes-for-kids) — connected-text reading owner for accuracy, fluency, phrasing, vocabulary, comprehension, retelling and reading confidence. If unfamiliar-word decoding or blending is unstable, use /phonics instead.
 - [Reading Fluency Program for Kids](https://tinystepslearning.com/reading-fluency-program) — specialist fluency owner for children whose decoding is reasonably secure but connected reading remains slow, hesitant or choppy.
-- [Grammar Classes for Kids](https://tinystepslearning.com/grammar) — grammar mechanics, sentence formation, tenses, punctuation and correction owner.
+- [Grammar Classes for Kids](https://tinystepslearning.com/grammar) — grammar mechanics, sentence formation, tenses, punctuation, correction and sentence-level accuracy owner. Paragraph development, creative writing, editing and longer composition belong to /writing-classes-for-kids.
 - [Writing Classes for Kids](https://tinystepslearning.com/writing-classes-for-kids) — writing, paragraph, story, school-writing, editing and independent-expression owner.
 - [Spoken English Classes for Kids Online](https://tinystepslearning.com/spoken-english-classes-for-kids-online) — everyday conversation and conversational-fluency owner.
-- [Public Speaking & Communication Classes for Kids](https://tinystepslearning.com/speaking) — public speaking, storytelling, presentations and general communication-skills owner.
+- [Public Speaking & Communication Classes for Kids](https://tinystepslearning.com/speaking) — structured answers, storytelling, show-and-tell, presentations, audience awareness and general communication-skills owner. Everyday conversational fluency belongs to /spoken-english-classes-for-kids-online; confidence-only barriers belong to /confidence-building-program-kids.
 - [Confidence Building Program for Kids](https://tinystepslearning.com/confidence-building-program-kids) — specialist speaking-confidence and participation owner.
 - [Online English Classes for Kids](https://tinystepslearning.com/online-english-classes-for-kids) — broad/global/NRI English programme and generic online English-tutor owner.
 - [Online English Classes for Kids in Hyderabad](https://tinystepslearning.com/online-english-classes-hyderabad) — Hyderabad broad online-English service owner; it does not represent a physical centre.
@@ -252,7 +252,10 @@ Use these as the preferred Tiny Steps editorial authorities for the named parent
 - Do not collapse sentence formation with grammar-rule transfer. The sentence-formation guide owns building/expanding sentences; the grammar-mistakes guide owns applying known rules reliably.
 - Do not collapse speaking hesitation with one-word answers. The first concerns moving from comprehension to independent response; the second concerns expanding an already-produced response.
 - Do not collapse decoding with comprehension. The knows-letter-sounds-but-cannot-read guide owns the missing decoding bridge; the reads-words-but-does-not-understand-stories guide owns meaning after reasonably accurate word reading.
-- Commercial searches for Grammar classes or Public Speaking classes belong to https://tinystepslearning.com/grammar and https://tinystepslearning.com/speaking. Editorial diagnostic guides explain the learning problem and should not be treated as substitute commercial landing pages.
+- Keep commercial Reading separate from Phonics: /phonics owns blending and unfamiliar-word decoding; /reading-classes-for-kids owns connected-text accuracy, fluency, phrasing, vocabulary, comprehension, retelling and reading confidence after the phonics decision.
+- Keep Grammar separate from Writing: /grammar owns sentence-level grammar control; /writing-classes-for-kids owns idea development, paragraphs, stories, editing and longer composition.
+- Keep Public Speaking separate from Spoken English and confidence-only support: /speaking owns structured and audience-facing communication; /spoken-english-classes-for-kids-online owns everyday conversation; /confidence-building-program-kids owns confidence as the primary barrier.
+- Commercial searches for Grammar classes, Reading classes or Public Speaking classes belong to https://tinystepslearning.com/grammar, https://tinystepslearning.com/reading-classes-for-kids and https://tinystepslearning.com/speaking. Editorial diagnostic guides explain the learning problem and should not be treated as substitute commercial landing pages.
 - Retired overlapping blog URLs should not be revived as separate authorities; follow their HTTP redirects to the current intent owner.
 
 ## Notes for AI Agents
