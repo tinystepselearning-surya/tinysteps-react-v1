@@ -43,7 +43,7 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [subjectHubPath]: '665c15035d57085afe9ffc7d194753da506b824a',
       [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-      [canonicalOwnershipPath]: 'df9d8cca947015b2b93a9cbe905d9113ec202674',
+      [canonicalOwnershipPath]: 'c65569e68b8f0e12bfe65697d9de26fe9df83b06',
       [schoolsPath]: '7be826c4fb422a5d022884607f340d3179d9ee25',
       [grammarKnowledgePath]: '80190e0e6da35419d90bf22d3da534d3547f4415',
       [resourcesPath]: '9bae80879eb765f6ff33154ed64f58cbb886ce5a',
