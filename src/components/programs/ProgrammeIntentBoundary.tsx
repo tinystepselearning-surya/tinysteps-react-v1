@@ -15,10 +15,10 @@ export default function ProgrammeIntentBoundary({ config }: ProgrammeIntentBound
         <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:gap-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
-              Right pathway
+              Programme fit
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              What {config.ownerLabel} should own
+              When {config.ownerLabel} is the right fit
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
               {config.ownerIntent}.
@@ -36,7 +36,7 @@ export default function ProgrammeIntentBoundary({ config }: ProgrammeIntentBound
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Use a different owner when
+              Choose a different pathway when
             </p>
             <div className="mt-3 grid gap-3">
               {config.handoffs.map((handoff) => (
@@ -56,7 +56,7 @@ export default function ProgrammeIntentBoundary({ config }: ProgrammeIntentBound
               ))}
             </div>
             <p className="mt-4 text-xs leading-5 text-slate-500">
-              These boundaries keep each Tiny Steps programme page specific enough for parents, search engines and answer engines to identify the correct owner.
+              If two needs overlap, the free assessment is used to identify the primary starting point before a programme is recommended.
             </p>
           </div>
         </div>
