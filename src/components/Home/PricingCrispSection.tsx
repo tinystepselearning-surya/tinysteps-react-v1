@@ -4,170 +4,106 @@ import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
-  ULTRA_PREMIUM_PRICING,
 } from '../../config/pricing';
 import {
   FREE_DEMO_CTA_LABEL,
   STANDARD_PRICING_SUMMARY,
 } from '../../config/publicOffer';
 
+const planNames = ['Starter', 'Growth', 'Intensive'];
+
 const PricingCrispSection: React.FC = () => {
   return (
-    <section
-      id="one-to-one-pricing"
-      className="bg-gradient-to-b from-[#FDF7EC] via-white to-[#F3F7FF] py-20"
-    >
+    <section id="one-to-one-pricing" className="bg-slate-50/60 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-6">
-        <div className="text-center">
-          <p className="mb-2 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700 shadow-sm">
-            1:1 Phonics · Grammar · Public Speaking
-          </p>
-          <h2 className="text-center text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-            Premium 1:1 classes, simple plans
-          </h2>
-          <p className="mt-3 text-center text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
-            <span className="font-semibold text-slate-900">Standard Program</span> • Classes with expert Indian teachers
-          </p>
-          <p className="mt-3 text-center text-sm font-semibold text-slate-800">
-            {STANDARD_PRICING_SUMMARY}
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {/* Starter Pack */}
-          <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-              Starter · {ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes / month
+        <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start lg:gap-12">
+          <div className="lg:sticky lg:top-28">
+            <p className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+              Standard live 1:1 plans
             </p>
-            <div className="mt-2">
-              <div className="text-2xl font-bold text-slate-900">
-                {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}
-              </div>
-              <div className="text-sm text-slate-600">
-                {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes} mins
-              </div>
-            </div>
-            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
-              <li>• Personalised assessment + roadmap</li>
-              <li>• Around 2 classes per week</li>
-              <li>• Phonics, grammar, or public speaking</li>
-            </ul>
-          </div>
 
-          {/* Growth Pack (Most Popular) */}
-          <div className="relative flex flex-col justify-between rounded-3xl bg-white p-6 shadow-lg ring-2 ring-orange-300/70">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
-              Most popular
-            </div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-              Growth · {ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes / month
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+              Simple 1:1 pricing
+            </h2>
+
+            <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
+              Every standard 1:1 package uses the same per-class rate and 35-minute class duration. Choose the monthly class count that suits your schedule; programme and starting level are confirmed separately through assessment.
             </p>
-            <div className="mt-2">
-              <div className="text-2xl font-bold text-slate-900">
-                {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}
-              </div>
-              <div className="text-sm text-slate-600">
-                {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[1].durationMinutes} mins
-              </div>
-            </div>
-            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
-              <li>• Personalised assessment + roadmap</li>
-              <li>• Around 3–4 classes per week</li>
-              <li>• Phonics, grammar, or public speaking</li>
-            </ul>
-          </div>
 
-          {/* Intensive Pack */}
-          <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-              Intensive · {ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes / month
-            </p>
-            <div className="mt-2">
-              <div className="text-2xl font-bold text-slate-900">
-                {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}
-              </div>
-              <div className="text-sm text-slate-600">
-                {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[2].durationMinutes} mins
-              </div>
+            <div className="mt-5 rounded-[20px] border border-slate-200 bg-white px-5 py-4">
+              <p className="text-sm font-semibold text-slate-950">Current standard pricing</p>
+              <p className="mt-1.5 text-sm leading-6 text-slate-600">{STANDARD_PRICING_SUMMARY}</p>
             </div>
-            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
-              <li>• Personalised assessment + roadmap</li>
-              <li>• Around 5–6 classes per week</li>
-              <li>• Phonics, grammar, or public speaking</li>
-            </ul>
-          </div>
-        </div>
 
-        <div className="relative mt-8 overflow-hidden rounded-[32px] border border-amber-200/30 bg-gradient-to-br from-[#0a1224] via-[#111d38] to-[#1a2747] p-6 text-white shadow-[0_30px_90px_-45px_rgba(2,6,23,0.95)] md:p-8">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-300/25 blur-3xl" />
-          <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-sky-300/15 blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="inline-flex rounded-full border border-amber-200/40 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-100">
-                Ultra Premium Program
+            <div className="mt-4 rounded-[20px] border border-slate-200 bg-white px-5 py-4">
+              <p className="text-sm font-semibold text-slate-950">Other class formats are available</p>
+              <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                Small-group and selected native English-speaking teacher formats have their own current schedules and fee details.
               </p>
-              <span className="inline-flex rounded-full bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900">
-                International Mentor Experience
-              </span>
-            </div>
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-              Classes with native English-speaking teachers
-            </h3>
-            <p className="mt-3 max-w-3xl text-sm text-slate-200 md:text-base">
-              Optional premium format for parents seeking global accent exposure, advanced speaking confidence, and a high-touch classroom experience.
-            </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {ULTRA_PREMIUM_PRICING.map((row) => (
-                <div
-                  key={row.ratio}
-                  className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-sm"
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-200">
-                    {row.ratio}
-                  </p>
-                  <p className="mt-1 text-base font-semibold text-white">{row.format}</p>
-                  <p className="mt-3 text-xl font-bold text-white">
-                    {formatINR(row.perClass)}
-                    <span className="ml-1 text-xs font-medium text-slate-200">{row.unitLabel}</span>
-                  </p>
-                  <p className="mt-1 text-sm text-slate-200">
-                    {formatINR(row.package12)} {row.packageLabel}
-                  </p>
-                </div>
-              ))}
+              <Link
+                to="/pricing"
+                className="mt-3 inline-flex text-sm font-semibold text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900"
+              >
+                Compare all formats
+              </Link>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-100">
-              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1">Live interactive classes</span>
-              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1">Premium speaking & listening exposure</span>
-              <span className="rounded-full border border-white/25 bg-white/10 px-3 py-1">Structured Tiny Steps curriculum</span>
-            </div>
-            <p className="mt-4 text-xs text-slate-300">
-              Batch availability depends on age, level, and suitable peer matching.
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Current scheduling, cancellation and refund terms are available with the full pricing details.
             </p>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                to="/pricing"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+              >
+                View pricing details
+              </Link>
+              <Link
+                to="/book-demo"
+                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                {FREE_DEMO_CTA_LABEL}
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
-          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <span>✅ No long-term lock-in</span>
-            <span>✅ Easy class rescheduling</span>
-            <span>✅ Pause anytime between months</span>
-          </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
-            <Link
-              to="/pricing"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
-            >
-              View pricing details
-            </Link>
-            <Link
-              to="/book-demo"
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              {FREE_DEMO_CTA_LABEL}
-            </Link>
+          <div className="space-y-3">
+            {ONE_TO_ONE_MONTHLY_PACKAGES.map((plan, index) => (
+              <div
+                key={plan.classes}
+                className="group rounded-[22px] border border-slate-200 bg-white px-5 py-5 transition hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:px-6"
+              >
+                <div className="grid gap-4 sm:grid-cols-[auto_1fr_auto] sm:items-center">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">
+                    {String(index + 1).padStart(2, '0')}
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {planNames[index]}
+                    </p>
+                    <h3 className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                      {plan.classes} classes / month
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {formatINR(PER_CLASS_PRICE)} per class • {plan.durationMinutes} mins
+                    </p>
+                  </div>
+
+                  <div className="sm:text-right">
+                    <div className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                      {formatINR(plan.monthlyFee)}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">monthly package</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="rounded-[20px] border border-dashed border-slate-300 bg-white/60 px-5 py-4 text-sm leading-6 text-slate-600">
+              Package size is a scheduling choice, not a different curriculum tier. The assessment determines the child&apos;s recommended programme and starting level.
+            </div>
           </div>
         </div>
       </div>

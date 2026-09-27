@@ -1,16 +1,17 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, startTransition, Suspense, useEffect, useRef, useState } from "react";
-import { organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
+import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
+import { STANDARD_PRICING_SUMMARY } from "../config/publicOffer";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
+import HomeEntitySummarySection from "../components/Home/HomeEntitySummarySection";
 import {
   AssessmentStartPointsSection,
   ClassSamplesSection,
   HomeFaqSection,
   LearningPathsSection,
   ParentProblemRecognitionSection,
-  TrustEvidenceSection,
   TrustSnapshotSection,
   WhyTinyStepsSection,
 } from "../components/Home/HomeScrollJourneySections";
@@ -20,40 +21,85 @@ const GlobalLearnersMapSection = lazy(() => import("../components/Home/GlobalLea
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
 const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
-const LearningJourneyRoadmapPPT = lazy(async () => {
-  const mod = await import("./KidsEnglishExcellence");
-  return { default: mod.LearningJourneyRoadmapPPT };
-});
 
-const homeSeoTitle = "Online English Classes for Kids in India | Tiny Steps";
+const homeSeoTitle = "Tiny Steps Learning | Online English Learning for Kids Ages 3–12";
 const homeSeoDescription =
-  "Live 1:1 online English classes for kids ages 3–12. Phonics, reading, grammar and speaking with a free 35-minute 1:1 online demo assessment class and parent updates.";
+  "Tiny Steps Learning offers live 1:1 and small-group English learning for ages 3–12 across phonics and reading, grammar and sentence building, and speaking and communication. Start with a free 35-minute 1:1 online demo assessment.";
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
 
+const homeWebPageSchema = {
+  ...createWebPageSchema({
+    name: "Tiny Steps Learning — Online English Learning for Kids Ages 3–12",
+    description: homeSeoDescription,
+    url: homeCanonicalUrl,
+  }),
+  "@id": `${homeCanonicalUrl}#webpage`,
+  mainEntity: {
+    "@id": `${PUBLIC_FACTS.primaryWebsite}/#educational-organization`,
+  },
+  about: [
+    { "@type": "Thing", name: "Online English learning for children" },
+    { "@type": "Thing", name: "Phonics and decoding" },
+    { "@type": "Thing", name: "Reading fluency and comprehension" },
+    { "@type": "Thing", name: "Grammar and sentence building" },
+    { "@type": "Thing", name: "Speaking and communication" },
+  ],
+  audience: {
+    "@type": "EducationalAudience",
+    educationalRole: "student",
+    audienceType: "Children aged 3–12",
+  },
+};
+
 const homeFaqItems = [
+  {
+    question: "What age group does Tiny Steps teach?",
+    answer:
+      "Tiny Steps teaches children ages 3–12. Age helps us choose appropriate tasks, but the recommended starting point is based on the child’s current skill level rather than age alone.",
+  },
   {
     question: "What happens in the free 35-minute demo assessment?",
     answer:
-      "The teacher checks the child’s current level across the skills that matter for the concern you shared, such as letter sounds, blending, reading fluency, sentence formation, grammar accuracy, pronunciation, or speaking confidence. The goal is to recommend the right starting point rather than place every child into the same lesson.",
+      "The teacher checks the skills most relevant to the concern you shared, such as letter sounds, blending, reading fluency, sentence formation, grammar accuracy, pronunciation, or speaking confidence. The goal is to recommend the right starting point before enrolment.",
   },
   {
-    question: "How do you decide whether my child needs phonics, grammar, or speaking support?",
+    question: "How do you choose between phonics, reading, grammar, and speaking?",
     answer:
-      "Tiny Steps looks at the child’s current bottleneck. A child who cannot blend may need phonics first, while a child who reads comfortably but struggles to form sentences may need grammar or speaking support. The recommended path is based on demonstrated skills, not age alone.",
+      "Tiny Steps starts with the strongest current learning gap. Difficulty decoding unfamiliar words may point toward phonics; accurate but effortful reading may need fluency support; repeated sentence errors may need grammar; short or hesitant answers may need speaking support.",
   },
   {
     question: "Are Tiny Steps classes 1:1 or group classes?",
     answer:
-      `Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer depending on group size.`,
+      `Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer because more children need individual response time.`,
+  },
+  {
+    question: "How long is each Tiny Steps class?",
+    answer:
+      `Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}. Small-group class duration varies by group size and format, so the current pricing page is the source of truth for the exact option you are considering.`,
+  },
+  {
+    question: "Which platform does Tiny Steps use for live classes?",
+    answer:
+      "Tiny Steps conducts live online classes through Microsoft Teams. Enrolled families receive access through the scheduled class flow and parent portal.",
+  },
+  {
+    question: "How much do Tiny Steps classes cost?",
+    answer:
+      `${STANDARD_PRICING_SUMMARY}. Package and teacher-format options can differ, so check the pricing page for the current complete fee structure before enrolment.`,
   },
   {
     question: "How do parents know whether their child is improving?",
     answer:
-      "Parents receive clear progress visibility on what the child is learning, where improvement is showing, and what the next focus should be. The learning journey is organised around named stages and milestones rather than unrelated topics.",
+      "Parents receive clear visibility into what the child is learning, where improvement is showing, and what the next focus should be. Progress is organised around named skills and learning stages rather than unrelated topics.",
   },
-];
+  {
+    question: "What if I need to cancel or reschedule a class?",
+    answer:
+      "Parents should give at least 24 hours’ notice when they need to cancel or reschedule. With that notice, Tiny Steps will make reasonable efforts to offer a replacement class or alternate slot, subject to teacher availability and scheduling constraints.",
+  },
+]
 
 const homeFaqSchema = {
   "@context": "https://schema.org",
@@ -201,26 +247,29 @@ export default function HomePage() {
         description={homeSeoDescription}
         keywords="online english classes for kids, online english classes for children, phonics classes for kids, online grammar classes for kids, spoken english classes for kids online, english tutor for kids online"
         canonical={homeCanonicalUrl}
-        jsonLd={[organizationSchema, websiteSchema, homeFaqSchema]}
+        jsonLd={[organizationSchema, websiteSchema, homeWebPageSchema, homeFaqSchema]}
       />
 
       {/* REVIEW ACTION 01 — HOOK: Keep the existing hero focused on what Tiny Steps is and the primary demo action. */}
       <ConversionHero />
 
-      {/* REVIEW ACTION 02 — IDENTIFICATION: Replace the old generic approach block with parent problem recognition. */}
+      {/* REVIEW ACTION 02 — IDENTIFICATION: Preserve the parent-first recognition step immediately after the hero. */}
       <ParentProblemRecognitionSection />
+
+      {/* AI/ENTITY BRIDGE: Clarify the brand and intent owners without interrupting the hero → problem-recognition flow. */}
+      <HomeEntitySummarySection />
 
       {/* REVIEW ACTION 03 — EARLY TRUST: Give a compact credibility snapshot without restarting the company story. */}
       <TrustSnapshotSection />
 
-      {/* REVIEW ACTION 04 — DIAGNOSIS: Explain what the assessment checks and show common age-based starting points. */}
+      {/* REVIEW ACTION 04 — DIAGNOSIS: Explain what the assessment may check without assigning children by age alone. */}
       <AssessmentStartPointsSection />
 
       <div ref={belowFoldAnchorRef} className="h-px w-full" aria-hidden="true" />
 
       {showPrimaryBelowFoldSections ? (
         <>
-          {/* REVIEW ACTION 05 — PROGRAMMES: Keep only the three parent-relevant learning paths; remove SEO/location entry-point navigation. */}
+          {/* REVIEW ACTION 05 — PROGRAMMES: Keep the four parent-relevant learning paths; remove SEO/location entry-point navigation. */}
           <LearningPathsSection />
 
           {/* REVIEW ACTION 06 — DIFFERENTIATION: Explain why the Tiny Steps system is different before asking for deeper trust. */}
@@ -232,47 +281,35 @@ export default function HomePage() {
 
       {showDeferredSections ? (
         <>
-          {/* REVIEW ACTION 07 — PROOF: Replace unsupported outcome percentages with evidence parents can inspect. */}
-          <TrustEvidenceSection />
-
-          {/* REVIEW ACTION 08 — GLOBAL PROOF: Keep the learner map as concrete social proof, now inside the proof chapter. */}
+          {/* REVIEW ACTION 07 — GLOBAL PROOF: Move directly into concrete social proof instead of adding a directory of proof cards. */}
           <div id="global-learners-proof">
             <Suspense fallback={null}>
               <GlobalLearnersMapSection />
             </Suspense>
           </div>
 
-          {/* REVIEW ACTION 09 — JOURNEY: Show the high-level roadmap before the detailed learning-stage mechanics. */}
-          <section className="px-6 py-12">
-            <div className="mx-auto max-w-6xl">
-              <Suspense fallback={null}>
-                <LearningJourneyRoadmapPPT />
-              </Suspense>
-            </div>
-          </section>
-
-          {/* REVIEW ACTION 10 — METHOD: Explain child learning, teaching approach, parent visibility, and stage progression. */}
+          {/* REVIEW ACTION 08 — METHOD: Explain how each pathway works without adding a second, competing journey model. */}
           <Suspense fallback={null}>
             <StepTimeline />
           </Suspense>
 
-          {/* REVIEW ACTION 11 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
+          {/* REVIEW ACTION 09 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
           <ClassSamplesSection />
 
-          {/* REVIEW ACTION 12 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
+          {/* REVIEW ACTION 10 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
           <Suspense fallback={null}>
             <PricingCrispSection />
           </Suspense>
 
-          {/* REVIEW ACTION 13 — RISK REVERSAL: Explain assessment → personalised plan → parent decides, with no commitment pressure. */}
+          {/* REVIEW ACTION 11 — RISK REVERSAL: Explain assessment → recommended starting point → parent decides. */}
           <Suspense fallback={null}>
             <ParentReassurance />
           </Suspense>
 
-          {/* REVIEW ACTION 14 — OBJECTIONS: Replace the mid-page Quick Answer reset with a short practical FAQ near conversion. */}
+          {/* REVIEW ACTION 12 — OBJECTIONS: Keep a short practical FAQ near conversion. */}
           <HomeFaqSection items={homeFaqItems} />
 
-          {/* REVIEW ACTION 15 — FINAL CONVERSION: End with one clear booking action after the full parent decision journey. */}
+          {/* REVIEW ACTION 13 — FINAL CONVERSION: End with one concise booking action, not another full information block. */}
           <Suspense fallback={null}>
             <FinalCTASection />
           </Suspense>

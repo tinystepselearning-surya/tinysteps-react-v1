@@ -1,7 +1,8 @@
 import React, { memo } from "react";
-import { BookOpenText, CheckCircle2, Globe2, Mic2, Sparkles } from "lucide-react";
+import { Globe2, Mic2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import BookAssessmentForm from "../forms/BookAssessmentForm";
+import { PUBLIC_LEARNER_REACH_LABEL } from "../../config/publicFacts";
 
 const heroHighlights = [
   {
@@ -13,7 +14,7 @@ const heroHighlights = [
   {
     eyebrow: "THE REACH",
     title: "Trusted Worldwide",
-    desc: "5000+ students served with families across 15+ countries choosing Tiny Steps for consistent live support.",
+    desc: `${PUBLIC_LEARNER_REACH_LABEL} have learned with Tiny Steps through live online support.`,
     icon: <Globe2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
   {
@@ -34,7 +35,7 @@ const GlassCard = ({
   className?: string;
 }) => (
   <div
-    className={`relative overflow-hidden rounded-[24px] border border-white/55 bg-white/45 backdrop-blur-xl shadow-[0_10px_40px_rgba(15,23,42,0.08)] ${className}`}
+    className={`relative overflow-hidden rounded-[22px] border border-white/65 bg-white/55 backdrop-blur-xl shadow-[0_8px_26px_rgba(15,23,42,0.06)] ${className}`}
   >
     {children}
   </div>
@@ -46,7 +47,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
       size === "large" ? "md:col-span-2" : "col-span-1"
     }`}
   >
-    <GlassCard className="h-full min-h-[208px] border-white/70 transition-all duration-500 group-hover:border-orange-200/70 group-hover:shadow-[0_18px_50px_rgba(255,106,0,0.12)] md:min-h-[220px]">
+    <GlassCard className="h-full min-h-[148px] border-white/70 transition-all duration-300 group-hover:border-orange-200/70 md:min-h-[154px]">
       {/* premium hover glow (subtle) */}
       <div className="pointer-events-none absolute inset-0 rounded-[24px] opacity-0 transition-opacity duration-500 group-hover:opacity-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,106,0,0.20),transparent_60%)]" />
@@ -80,7 +81,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
 
 const ConversionHero: React.FC = () => {
   return (
-    <section className="relative min-h-[82vh] overflow-hidden px-4 pb-10 pt-6 md:min-h-screen md:px-8 md:pb-12 md:pt-8">
+    <section className="relative overflow-hidden px-4 pb-6 pt-6 md:px-8 md:pb-8 md:pt-8">
       {/* ✅ Classy Sunrise Background (more depth, less wash) */}
       <div className="pointer-events-none absolute inset-0">
         {/* base */}
@@ -88,7 +89,7 @@ const ConversionHero: React.FC = () => {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, #FFF5EC 0%, #FFF9F4 32%, #FFFFFF 100%)",
+              "linear-gradient(180deg, #FFF8F3 0%, #FFFBF8 38%, #FFFFFF 100%)",
           }}
         />
 
@@ -211,84 +212,35 @@ const ConversionHero: React.FC = () => {
               </Link>
             </div>
 
-            {/* BENTO GRID VALUE PROPS */}
-            <div className="mt-6 hidden grid-cols-1 gap-1 md:grid md:grid-cols-2 lg:grid-cols-3">
-              {heroHighlights.map((item) => (
-                <SunTile
-                  key={item.title}
-                  eyebrow={item.eyebrow}
-                  title={item.title}
-                  desc={item.desc}
-                  icon={item.icon}
-                />
-              ))}
-            </div>
-
           </div>
 
           {/* RIGHT FORM CARD */}
           <div className="relative min-w-0 lg:pl-6">
-            <div className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
-                  <BookOpenText className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
-                    Structured Path
-                  </div>
-                  <div className="text-sm font-semibold text-slate-800">
-                    Phonics to speaking
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <BookAssessmentForm
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
-              description="Book one free 35-minute 1:1 online demo assessment class and find whether your child should start with phonics, reading, grammar, sentence formation, or speaking confidence."
+              description="Tell us where your child needs support so the free assessment can focus on the right skills."
               submitLabel="Book Free 35-Minute Demo on WhatsApp"
               submitAriaLabel="Book Free 35-Minute Demo on WhatsApp"
+              appearance="heroCompact"
+              helperText="20–30 seconds • No commitment • WhatsApp confirmation"
+              secondaryHelperText={null}
             />
 
-            <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/88 px-4 py-4 text-sm text-slate-700 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-5">
-              <p className="font-medium leading-6 text-slate-800">
-                5000+ students • Families in 15+ countries • 1:1 and small-group classes • Weekly parent updates
-              </p>
-              <p className="mt-1.5 text-slate-600">
-                Calm routines, clear milestones, and consistent feedback make progress easy to see.
-              </p>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                <a
-                  href="https://wa.me/919618398383?text=Hi!%20I%27d%20like%20to%20learn%20more%20about%20Tiny%20Steps%20classes%20for%20my%20child."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 font-semibold text-emerald-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-100"
-                >
-                  <span className="text-lg">💬</span>
-                  Quick questions? WhatsApp us
-                </a>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                  One free 35-minute 1:1 demo assessment • Transparent pricing
-                </span>
-              </div>
-            </div>
-
-            {/* Floating Decorative Element */}
-            <div className="absolute -bottom-4 -left-2 h-20 w-20 motion-safe:animate-bounce motion-reduce:animate-none rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">
-              <div className="flex h-full w-full items-center justify-center rounded-xl bg-orange-50 text-2xl">
-                🎓
-              </div>
-            </div>
-
-            <div className="absolute -bottom-6 right-4 hidden motion-safe:animate-bounce motion-reduce:animate-none rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur [animation-duration:4s] [animation-delay:0.4s] sm:inline-flex">
-              <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" aria-hidden="true" />
-              Reply via WhatsApp
-            </div>
           </div>
+        </div>
+
+        {/* Shared proof row: keeps both hero columns visually balanced on tablet and desktop. */}
+        <div className="mt-4 hidden gap-2 md:grid md:grid-cols-3">
+          {heroHighlights.map((item) => (
+            <SunTile
+              key={item.title}
+              eyebrow={item.eyebrow}
+              title={item.title}
+              desc={item.desc}
+              icon={item.icon}
+            />
+          ))}
         </div>
       </div>
     </section>
