@@ -11,6 +11,7 @@ import {
 } from '../src/lib/aiAnswerLayerRegistry.js';
 import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 import { GRAMMAR_KNOWLEDGE_PAGES } from '../src/lib/grammarKnowledgeRegistry.js';
+import { VOCABULARY_AUTHORITY_PAGES } from '../src/lib/vocabularyAuthorityRegistry.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -50,7 +51,7 @@ if (expectedLiveCanonicalBlogs < 82) {
 }
 
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 96) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar knowledge pages.');
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 102) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar knowledge pages plus 6 governed vocabulary authority pages.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 11) fail('layer-3-count', 'Expected 11 focused practice actions.');
 
 const ids = AI_ANSWER_LAYER_ALL_ITEMS.map((item) => item.id);
@@ -68,6 +69,9 @@ if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.star
 }
 if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/grammar/')).length !== GRAMMAR_KNOWLEDGE_PAGES.length) {
   fail('governed-grammar-count', 'Layer 2 must contain every governed grammar programmatic URL.');
+}
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/vocabulary/')).length !== VOCABULARY_AUTHORITY_PAGES.length) {
+  fail('governed-vocabulary-count', 'Layer 2 must contain every governed GV4 Vocabulary authority URL.');
 }
 
 const resourcesPageSource = fs.readFileSync(path.join(root, 'src/pages/ResourcesPage.tsx'), 'utf8');
@@ -98,10 +102,18 @@ if (process.argv.includes('--generated')) {
     const editorialBlogs = index.corpus?.editorial_blogs || [];
     const programmaticPhonics = index.corpus?.programmatic_phonics_guides || [];
     const programmaticGrammar = index.corpus?.programmatic_grammar_guides || [];
+    const vocabularyAuthority = index.corpus?.vocabulary_authority_guides || [];
     const additionalPublicRoutes = index.corpus?.additional_public_routes || [];
     if (editorialBlogs.length !== expectedLiveCanonicalBlogs) fail('editorial-blog-corpus-count', `Expected all ${expectedLiveCanonicalBlogs} live canonical blogs; found ${editorialBlogs.length}.`);
     if (programmaticPhonics.length !== 31) fail('programmatic-phonics-corpus-count', `Expected all 31 governed phonics guides; found ${programmaticPhonics.length}.`);
     if (programmaticGrammar.length !== GRAMMAR_KNOWLEDGE_PAGES.length) fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_KNOWLEDGE_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
+    if (vocabularyAuthority.length !== VOCABULARY_AUTHORITY_PAGES.length) fail('vocabulary-authority-corpus-count', `Expected all ${VOCABULARY_AUTHORITY_PAGES.length} governed vocabulary guides; found ${vocabularyAuthority.length}.`);
+    for (const item of vocabularyAuthority) {
+      const references = item.external_reference_urls || [];
+      if (references.length < 2) fail('vocabulary-reference-depth', `${item.id} has only ${references.length} external reference(s).`);
+      if (new Set(references).size !== references.length) fail('vocabulary-reference-duplicates', item.id);
+      if (references.some((url) => !String(url).startsWith('https://'))) fail('vocabulary-reference-url', item.id);
+    }
     for (const item of programmaticGrammar) {
       const references = item.external_reference_urls || [];
       if (references.length < 2) fail('programmatic-grammar-reference-depth', `${item.id} has only ${references.length} external reference(s).`);
@@ -123,11 +135,12 @@ if (process.argv.includes('--generated')) {
     if (index.corpus_counts?.editorial_blogs !== expectedLiveCanonicalBlogs) fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedLiveCanonicalBlogs}.`);
     if (index.corpus_counts?.programmatic_phonics_guides !== 31) fail('corpus-count-summary', 'corpus_counts.programmatic_phonics_guides must equal 31.');
     if (index.corpus_counts?.programmatic_grammar_guides !== GRAMMAR_KNOWLEDGE_PAGES.length) fail('corpus-count-summary', `corpus_counts.programmatic_grammar_guides must equal ${GRAMMAR_KNOWLEDGE_PAGES.length}.`);
+    if (index.corpus_counts?.vocabulary_authority_guides !== VOCABULARY_AUTHORITY_PAGES.length) fail('corpus-count-summary', `corpus_counts.vocabulary_authority_guides must equal ${VOCABULARY_AUTHORITY_PAGES.length}.`);
     if ('retired_editorial_sources' in (index.corpus_counts || {}) || 'editorial_source_records' in (index.corpus_counts || {})) {
       fail('retired-lineage-count-leak', 'Retired lineage counters must not remain in the public content corpus.');
     }
 
-    if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + additionalPublicRoutes.length) {
+    if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + vocabularyAuthority.length + additionalPublicRoutes.length) {
       fail('connected-public-content-count', 'Connected public content total does not reconcile.');
     }
 
@@ -135,6 +148,7 @@ if (process.argv.includes('--generated')) {
       ...editorialBlogs.map((item) => item.canonical_url),
       ...programmaticPhonics.map((item) => item.canonical_url),
       ...programmaticGrammar.map((item) => item.canonical_url),
+      ...vocabularyAuthority.map((item) => item.canonical_url),
       ...additionalPublicRoutes.map((item) => item.canonical_url),
     ]);
     for (const route of PUBLIC_ROUTE_MANIFEST) {
@@ -181,7 +195,7 @@ if (process.argv.includes('--generated')) {
 }
 
 const report = {
-  revision: '2026-09-27-gv3',
+  revision: '2026-09-27-gv4',
   layer1: AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length,
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,
