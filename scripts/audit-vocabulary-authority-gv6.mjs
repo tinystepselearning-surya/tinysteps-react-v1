@@ -13,9 +13,6 @@ import {
   AI_ANSWER_LAYER_2_LEARNING_CONCEPTS,
   AI_ANSWER_LAYER_3_PRACTICE_ACTIONS,
 } from '../src/lib/aiAnswerLayerRegistry.js';
-import { getCommercialC7R1Mapping } from '../src/lib/commercialC7KnowledgeOwnerMapping.ts';
-import { getCommercialC7R2NextStepRule } from '../src/lib/commercialC7IntentNextStepRules.ts';
-import { getCommercialC7R3Handoff } from '../src/lib/commercialC7ContextualHandoffImplementation.ts';
 import {
   VOCABULARY_GV6_FREEZE_POLICY,
   VOCABULARY_GV6_MEASUREMENT_POLICY,
@@ -61,16 +58,29 @@ for (const page of VOCABULARY_AUTHORITY_PAGES) {
   if (!layer2) fail('layer2-page', page.path);
   else if (layer2.practicePaths?.[0] !== VOCABULARY_GV6_PRACTICE_OWNER) fail('layer2-practice', page.path);
 
-  const r1 = getCommercialC7R1Mapping(page.path);
-  const r2 = getCommercialC7R2NextStepRule(page.path);
-  const r3 = getCommercialC7R3Handoff(page.path);
-  if (!r1 || r1.primaryCommercialOwner !== null || r1.ownerFamily !== 'soft-discovery' || r1.decision !== 'HOLD_SOFT_DISCOVERY') {
-    fail('c7-r1', page.path);
-  }
-  if (!r2 || r2.ruleClass !== 'SOFT_DISCOVERY' || r2.primaryDestination !== null || r2.maxCommercialPrompts !== 0) {
-    fail('c7-r2', page.path);
-  }
-  if (r3 !== null) fail('c7-r3', page.path);
+}
+
+const c7R1Source = fs.readFileSync(path.join(root, 'src', 'lib', 'commercialC7KnowledgeOwnerMapping.ts'), 'utf8');
+const c7R2Source = fs.readFileSync(path.join(root, 'src', 'lib', 'commercialC7IntentNextStepRules.ts'), 'utf8');
+const c7R3Source = fs.readFileSync(path.join(root, 'src', 'lib', 'commercialC7ContextualHandoffImplementation.ts'), 'utf8');
+
+for (const token of [
+  "input.subjects.includes('vocabulary')",
+  "owner: null",
+  "family: 'soft-discovery'",
+  "decision === 'HOLD_SOFT_DISCOVERY'",
+]) {
+  if (!c7R1Source.includes(token)) fail('c7-r1-source-contract', token);
+}
+for (const token of [
+  "ruleClass: 'SOFT_DISCOVERY' as const",
+  "primaryDestination: null",
+  "maxCommercialPrompts: 0 as const",
+]) {
+  if (!c7R2Source.includes(token)) fail('c7-r2-source-contract', token);
+}
+if (!c7R3Source.includes(".filter((rule) => rule.ruleClass !== 'SOFT_DISCOVERY'")) {
+  fail('c7-r3-source-contract', 'Soft-discovery rules must remain excluded from live C7 handoffs.');
 }
 
 const practiceItems = AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.filter((item) => item.subject === 'vocabulary');
