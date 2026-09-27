@@ -363,8 +363,8 @@ export default function GrammarPage() {
                 problem: 'Child writes short answers with repeated grammar errors',
                 meaning: 'Sentence accuracy, punctuation, or correction may be the main gap. If the difficulty is idea development or paragraphs, Writing is the better owner.',
                 support: 'Focus: accurate short written responses',
-                href: '/writing-classes-for-kids',
-                anchor: 'See when Writing is the better fit',
+                href: '/grammar',
+                anchor: 'Explore school-answer grammar support',
                 tone: 'bg-[#FFFBEA] border-[#F4E2A0]',
               },
             ].map((item) => (
@@ -461,7 +461,7 @@ export default function GrammarPage() {
             {[
               {
                 title: 'Assessment before placement',
-                lookFor: 'A starting level based on the child&apos;s current grammar control.',
+                lookFor: "A starting level based on the child's current grammar control.",
                 avoid: 'The same worksheet sequence for every child.',
               },
               {
