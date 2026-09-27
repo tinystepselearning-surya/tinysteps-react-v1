@@ -1,6 +1,7 @@
 import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from './phonicsProgrammaticPilot.js';
 import { GRAMMAR_PROGRAMMATIC_PAGES } from './grammarProgrammaticRegistry.js';
 import { GRAMMAR_REFERENCE_EXTENSION_ROUTE_MANIFEST } from './grammarReferenceExtensionSeoManifest.js';
+import { VOCABULARY_AUTHORITY_ROUTE_MANIFEST } from './vocabularyAuthoritySeoManifest.js';
 
 const freezeList = (values = []) => Object.freeze([...values]);
 
@@ -100,6 +101,16 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     hubPath: null,
     queryIntent: 'book Tiny Steps free assessment',
     supportingPaths: ['/phonics', '/grammar', '/speaking', '/pricing'],
+  }),
+
+  topic('vocabulary-resource-discovery', {
+    subject: 'general-english',
+    intent: 'informational',
+    ownerPath: '/resources/vocabulary',
+    ownerRole: 'subject-hub',
+    hubPath: '/resources/vocabulary',
+    queryIntent: 'Tiny Steps vocabulary resources for kids',
+    supportingPaths: ['/resources', '/free-games/word-meaning-flashcards', '/blog/how-vocabulary-supports-reading-comprehension'],
   }),
 
   topic('phonics-subject-discovery', {
@@ -486,6 +497,16 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     hubPath: '/resources/grammar',
     queryIntent: page.cardTitle.toLowerCase(),
     supportingPaths: [...new Set(['/resources/grammar', ...page.relatedPaths])].filter((path) => path !== page.path),
+    forbiddenCompetingOwners: [],
+  })),
+  ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`gv4-vocabulary-${page.id}`, {
+    subject: 'general-english',
+    intent: 'informational',
+    ownerPath: page.path,
+    ownerRole: 'skill-guide',
+    hubPath: '/resources/vocabulary',
+    queryIntent: `vocabulary guide: ${page.cardTitle.toLowerCase()}`,
+    supportingPaths: [...new Set(['/resources/vocabulary', ...page.relatedPaths])].filter((path) => path !== page.path),
     forbiddenCompetingOwners: [],
   })),
 ]);
