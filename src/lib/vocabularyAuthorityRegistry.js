@@ -1,6 +1,6 @@
 import {
   VOCABULARY_AUTHORITY_ROUTE_MANIFEST,
-  VOCABULARY_AUTHORITY_RESOURCE_SEO,
+  VOCABULARY_AUTHORITY_RESOURCE_SEO as MANIFEST_SEO,
   VOCABULARY_AUTHORITY_PATHS as MANIFEST_PATHS,
 } from './vocabularyAuthoritySeoManifest.js';
 import { getVocabularyAuthoritySources } from './vocabularyAuthoritySources.js';
@@ -534,7 +534,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
 ]);
 
 export const VOCABULARY_AUTHORITY_PATHS = MANIFEST_PATHS;
-export const VOCABULARY_AUTHORITY_RESOURCE_SEO = VOCABULARY_AUTHORITY_RESOURCE_SEO;
+export const VOCABULARY_AUTHORITY_RESOURCE_SEO = MANIFEST_SEO;
 
 const bySlug = new Map(VOCABULARY_AUTHORITY_PAGES.map((entry) => [entry.slug, entry]));
 const byPath = new Map(VOCABULARY_AUTHORITY_PAGES.map((entry) => [entry.path, entry]));
