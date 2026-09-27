@@ -12,7 +12,7 @@ import { extractBlogEntriesFromPostFiles } from './blog-route-utils.mjs';
 
 const ROOT = process.cwd();
 const BLOG_POSTS_DIR = path.join(ROOT, 'src', 'content', 'blog', 'posts');
-const SUBJECT_HUBS = new Set(['/resources/phonics', '/resources/grammar', '/resources/speaking']);
+const SUBJECT_HUBS = new Set(['/resources/phonics', '/resources/grammar', '/resources/speaking', '/resources/vocabulary']);
 const routePaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
 const redirectSources = new Set(PUBLIC_REDIRECT_MANIFEST.map((entry) => entry.source));
 const subjects = new Set(CANONICAL_TOPIC_SUBJECTS);
@@ -103,6 +103,9 @@ for (const entry of CANONICAL_TOPIC_OWNERSHIP) {
       || (/^gv3-grammar-ref-/.test(entry.id)
         && entry.ownerPath.startsWith('/resources/grammar/')
         && entry.hubPath === '/resources/grammar')
+      || (/^gv4-vocabulary-/.test(entry.id)
+        && entry.ownerPath.startsWith('/resources/vocabulary/')
+        && entry.hubPath === '/resources/vocabulary')
     );
   if (entry.ownerPath.startsWith('/resources/') && entry.ownerRole !== 'subject-hub' && !isGovernedResourceSkillGuide) {
     fail(`Resources child route cannot own non-discovery intent for ${entry.id}: ${entry.ownerPath}`);
@@ -144,6 +147,7 @@ const requiredOwnerPaths = [
   '/resources/phonics', '/phonics', '/phonics-fees-india', '/best-online-phonics-classes-for-kids-in-india',
   '/resources/grammar', '/grammar', '/writing-classes-for-kids',
   '/resources/speaking', '/speaking', '/spoken-english-classes-for-kids-online',
+  '/resources/vocabulary',
 ];
 for (const required of requiredOwnerPaths) {
   if (!ownerPaths.has(required)) fail(`Required canonical owner is missing from R5 registry: ${required}`);
