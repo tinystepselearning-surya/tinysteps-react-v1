@@ -10,7 +10,7 @@ import {
   AI_ANSWER_LAYER_MACHINE_TEXT_PATH,
 } from '../src/lib/aiAnswerLayerRegistry.js';
 import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
-import { GRAMMAR_PROGRAMMATIC_PAGES } from '../src/lib/grammarProgrammaticRegistry.js';
+import { GRAMMAR_KNOWLEDGE_PAGES } from '../src/lib/grammarKnowledgeRegistry.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -50,7 +50,7 @@ if (expectedLiveCanonicalBlogs < 82) {
 }
 
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 90) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 32 governed grammar pages.');
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 96) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar knowledge pages.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 11) fail('layer-3-count', 'Expected 11 focused practice actions.');
 
 const ids = AI_ANSWER_LAYER_ALL_ITEMS.map((item) => item.id);
@@ -66,7 +66,7 @@ for (const item of AI_ANSWER_LAYER_ALL_ITEMS) {
 if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/phonics/')).length !== 31) {
   fail('governed-phonics-count', 'Layer 2 must contain exactly the governed 31 focused phonics URLs.');
 }
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/grammar/')).length !== GRAMMAR_PROGRAMMATIC_PAGES.length) {
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/grammar/')).length !== GRAMMAR_KNOWLEDGE_PAGES.length) {
   fail('governed-grammar-count', 'Layer 2 must contain every governed grammar programmatic URL.');
 }
 
@@ -101,7 +101,7 @@ if (process.argv.includes('--generated')) {
     const additionalPublicRoutes = index.corpus?.additional_public_routes || [];
     if (editorialBlogs.length !== expectedLiveCanonicalBlogs) fail('editorial-blog-corpus-count', `Expected all ${expectedLiveCanonicalBlogs} live canonical blogs; found ${editorialBlogs.length}.`);
     if (programmaticPhonics.length !== 31) fail('programmatic-phonics-corpus-count', `Expected all 31 governed phonics guides; found ${programmaticPhonics.length}.`);
-    if (programmaticGrammar.length !== GRAMMAR_PROGRAMMATIC_PAGES.length) fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_PROGRAMMATIC_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
+    if (programmaticGrammar.length !== GRAMMAR_KNOWLEDGE_PAGES.length) fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_KNOWLEDGE_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
     for (const item of programmaticGrammar) {
       const references = item.external_reference_urls || [];
       if (references.length < 2) fail('programmatic-grammar-reference-depth', `${item.id} has only ${references.length} external reference(s).`);
@@ -122,7 +122,7 @@ if (process.argv.includes('--generated')) {
     }
     if (index.corpus_counts?.editorial_blogs !== expectedLiveCanonicalBlogs) fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedLiveCanonicalBlogs}.`);
     if (index.corpus_counts?.programmatic_phonics_guides !== 31) fail('corpus-count-summary', 'corpus_counts.programmatic_phonics_guides must equal 31.');
-    if (index.corpus_counts?.programmatic_grammar_guides !== GRAMMAR_PROGRAMMATIC_PAGES.length) fail('corpus-count-summary', `corpus_counts.programmatic_grammar_guides must equal ${GRAMMAR_PROGRAMMATIC_PAGES.length}.`);
+    if (index.corpus_counts?.programmatic_grammar_guides !== GRAMMAR_KNOWLEDGE_PAGES.length) fail('corpus-count-summary', `corpus_counts.programmatic_grammar_guides must equal ${GRAMMAR_KNOWLEDGE_PAGES.length}.`);
     if ('retired_editorial_sources' in (index.corpus_counts || {}) || 'editorial_source_records' in (index.corpus_counts || {})) {
       fail('retired-lineage-count-leak', 'Retired lineage counters must not remain in the public content corpus.');
     }
@@ -181,7 +181,7 @@ if (process.argv.includes('--generated')) {
 }
 
 const report = {
-  revision: '2026-09-26-r24-r27',
+  revision: '2026-09-27-gv3',
   layer1: AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length,
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,

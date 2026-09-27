@@ -1,5 +1,6 @@
 import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from './phonicsProgrammaticPilot.js';
 import { GRAMMAR_PROGRAMMATIC_PAGES } from './grammarProgrammaticRegistry.js';
+import { GRAMMAR_REFERENCE_EXTENSION_ROUTE_MANIFEST } from './grammarReferenceExtensionSeoManifest.js';
 
 const freezeList = (values = []) => Object.freeze([...values]);
 
@@ -468,6 +469,16 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     forbiddenCompetingOwners: [],
   })),
   ...GRAMMAR_PROGRAMMATIC_PAGES.map((page) => topic(`gp1-grammar-${page.id}`, {
+    subject: 'grammar-writing',
+    intent: 'informational',
+    ownerPath: page.path,
+    ownerRole: 'skill-guide',
+    hubPath: '/resources/grammar',
+    queryIntent: page.cardTitle.toLowerCase(),
+    supportingPaths: [...new Set(['/resources/grammar', ...page.relatedPaths])].filter((path) => path !== page.path),
+    forbiddenCompetingOwners: [],
+  })),
+  ...GRAMMAR_REFERENCE_EXTENSION_ROUTE_MANIFEST.map((page) => topic(`gv3-grammar-ref-${page.id}`, {
     subject: 'grammar-writing',
     intent: 'informational',
     ownerPath: page.path,

@@ -4,6 +4,7 @@ import Meta from '../components/common/Meta';
 import KnowledgeBreadcrumbs from '../components/common/KnowledgeBreadcrumbs';
 import PhonicsPilotGuideGrid, { PHONICS_PILOT_RESOURCE_LINKS } from '../components/resources/PhonicsPilotGuideGrid';
 import GrammarProgrammaticGuideGrid from '../components/resources/GrammarProgrammaticGuideGrid';
+import GrammarReferenceExtensionGuideGrid from '../components/resources/GrammarReferenceExtensionGuideGrid';
 import { buildBreadcrumbListSchema, buildSpeakableSpecification, getBreadcrumbTrail } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { getRouteConfig } from '../lib/seo';
 import { SPEAKING_KNOWLEDGE_CLUSTER_GROUPS } from '../lib/speakingKnowledgeCluster';
@@ -427,6 +428,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
           </div>
         </section>
         <GrammarProgrammaticGuideGrid />
+        <GrammarReferenceExtensionGuideGrid />
         </>
       ) : null}
 

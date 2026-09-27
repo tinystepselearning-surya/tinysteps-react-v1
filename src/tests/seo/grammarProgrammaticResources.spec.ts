@@ -124,7 +124,7 @@ describe('Governed grammar programmatic resources', () => {
   it('uses a single safe renderer and exposes the sequence from the Grammar hub', () => {
     const page = read('src/pages/GrammarKnowledgePage.tsx');
     const hub = read('src/pages/SubjectResourcesPage.tsx');
-    expect(page).toContain('getGrammarProgrammaticPageBySlug');
+    expect(page).toContain('getGrammarKnowledgePageBySlug');
     expect(page).toContain('getCommercialC7R3Handoff');
     expect(page).toContain('data-c7-contextual-handoff={c7Handoff.ruleClass}');
     expect(page).toContain('<NotFoundPage />');
@@ -142,6 +142,7 @@ describe('Governed grammar programmatic resources', () => {
     expect(page).toContain('{relatedLabel(path)}');
     expect(page).not.toContain('>Related guide</Link>');
     expect(hub).toContain('<GrammarProgrammaticGuideGrid />');
+    expect(hub).toContain('<GrammarReferenceExtensionGuideGrid />');
   });
 
   it('keeps public Resource copy reader-facing and maintains reciprocal Resources links', () => {
