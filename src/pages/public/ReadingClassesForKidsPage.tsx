@@ -11,6 +11,7 @@ import { buildSpeakableSpecification } from '../../lib/breadcrumbAeoGeoRegistry.
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 import ProgrammeIntentBoundary from '../../components/programs/ProgrammeIntentBoundary';
 import ProgrammeHeroSnapshot from '../../components/programs/ProgrammeHeroSnapshot';
+import ProgrammeFaqAccordion from '../../components/programs/ProgrammeFaqAccordion';
 import { getProgrammeAiVisibility } from '../../lib/programmeAiVisibility';
 
 const READING_SEO_KEYWORDS = [
@@ -469,27 +470,27 @@ export default function ReadingClassesForKidsPage() {
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
-          <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-5 md:py-7">
+          <div className="grid gap-4 md:grid-cols-[0.78fr_1.22fr] md:items-end md:gap-8">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-700">Reading pathway</p>
               <h2 className="mt-2 max-w-2xl text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
                 From accurate connected reading to comprehension and confidence
               </h2>
             </div>
-            <p className="max-w-xl text-sm leading-6 text-slate-600">
-              This Reading pathway begins after the phonics decision. If decoding is unstable, the child is routed to Phonics; if decoding is reasonably secure, Reading can focus on connected-text accuracy, fluency, vocabulary, comprehension and retelling.
+            <p className="max-w-2xl text-sm leading-6 text-slate-600">
+              This Reading pathway begins after the phonics decision. If decoding is unstable, the child is routed to Phonics; once decoding is reasonably secure, Reading can focus on connected-text accuracy, fluency, vocabulary, comprehension and retelling.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-x-7 gap-y-5 md:grid-cols-3">
+          <div className="mt-5 grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
             {readingStages.map((stage) => (
-              <article key={stage.title} className="border-l border-slate-200 pl-4">
-                <h3 className="text-base font-semibold text-slate-950">{stage.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">{stage.detail}</p>
+              <article key={stage.title} className="border-l border-slate-200 py-1 pl-4">
+                <h3 className="text-sm font-semibold text-slate-950 md:text-[15px]">{stage.title}</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-600 md:text-sm">{stage.detail}</p>
                 {stage.href && stage.cta ? (
-                  <Link to={stage.href} className="mt-2 inline-block text-xs font-semibold text-slate-800 underline underline-offset-2">
+                  <Link to={stage.href} className="mt-1.5 inline-block text-xs font-semibold text-slate-800 underline underline-offset-2">
                     {stage.cta}
                   </Link>
                 ) : null}
@@ -497,105 +498,127 @@ export default function ReadingClassesForKidsPage() {
             ))}
           </div>
 
-          <p className="mt-6 text-sm leading-6 text-slate-600">
+          <p className="mt-5 text-sm leading-6 text-slate-600">
             <strong className="text-slate-950">General Reading or specialist fluency?</strong>{' '}
-            Stay here when support spans several connected-reading skills. If word accuracy is already secure but connected reading remains slow, hesitant, or choppy, use the{' '}
+            Stay here when support spans several connected-reading skills. If word accuracy is secure but connected reading remains slow, hesitant, or choppy, use the{' '}
             <Link to="/reading-fluency-program" className="font-semibold text-sky-800 underline underline-offset-2">Reading Fluency Programme</Link>.
           </p>
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200/80 bg-white/80 p-5 md:p-7">
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[24px] border border-slate-200/80 bg-white/80 p-5 md:p-6">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Choosing reading support</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What should parents look for in the best online reading classes?</h2>
-          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-600">
-            “Best” should mean best fit for the child&apos;s current needs. Compare teaching process, progression, correction, and evidence rather than a marketing claim.
-          </p>
+          <div className="mt-2 grid gap-4 md:grid-cols-[0.85fr_1.15fr] md:items-start md:gap-8">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What should parents look for in the best online reading classes?</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                “Best” should mean best fit for the child&apos;s current needs. Four checks cover the eight detailed criteria below without turning the page into a long comparison document.
+              </p>
+            </div>
 
-          <div className="mt-6 grid gap-x-8 gap-y-4 md:grid-cols-2">
-            {bestReadingClassCriteria.map((criterion) => (
-              <article key={criterion.title} className="grid grid-cols-[auto_1fr] gap-3 border-b border-slate-200 pb-4">
-                <span className="mt-1 h-2 w-2 rounded-full bg-sky-400" aria-hidden="true" />
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-950">{criterion.title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{criterion.detail}</p>
-                </div>
-              </article>
-            ))}
+            <div className="divide-y divide-slate-200 border-y border-slate-200">
+              {[
+                {
+                  title: 'Assess correctly',
+                  summary: 'Start with the right pathway and the right reading level.',
+                  criteria: bestReadingClassCriteria.slice(0, 2),
+                },
+                {
+                  title: 'Teach explicitly',
+                  summary: 'Model the strategy, correct live, and let the child retry.',
+                  criteria: bestReadingClassCriteria.slice(2, 4),
+                },
+                {
+                  title: 'Measure real progress',
+                  summary: 'Use a clear progression and check transfer on fresh text.',
+                  criteria: bestReadingClassCriteria.slice(4, 6),
+                },
+                {
+                  title: 'Keep expectations and next steps clear',
+                  summary: 'Avoid fixed guarantees and show parents what comes next.',
+                  criteria: bestReadingClassCriteria.slice(6, 8),
+                },
+              ].map((principle) => (
+                <details key={principle.title} className="group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-950">{principle.title}</h3>
+                      <p className="mt-0.5 text-xs leading-5 text-slate-600 sm:text-sm">{principle.summary}</p>
+                    </div>
+                    <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 text-base text-slate-500 transition group-open:rotate-45">+</span>
+                  </summary>
+                  <div className="grid gap-3 pb-4 sm:grid-cols-2">
+                    {principle.criteria.map((criterion) => (
+                      <div key={criterion.title} className="rounded-[14px] bg-slate-50 px-3.5 py-3">
+                        <p className="text-xs font-semibold text-slate-950">{criterion.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-600">{criterion.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ))}
+            </div>
           </div>
 
-          <p className="mt-5 text-sm leading-6 text-slate-600">
-            No reading provider is the best fit for every child. Tiny Steps explains its approach and shows supporting evidence so parents can decide whether the programme matches their child&apos;s reading gap.
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            For sentence, paragraph, and creative-writing support, use the dedicated{' '}
-            <Link to="/writing-classes-for-kids" className="font-semibold text-sky-800 underline underline-offset-2">Writing Classes for Kids</Link> page.
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            No reading provider is the best fit for every child. For sentence, paragraph, and creative-writing support, use{' '}
+            <Link to="/writing-classes-for-kids" className="font-semibold text-slate-700 underline underline-offset-2">Writing Classes for Kids</Link>.
           </p>
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="rounded-[24px] border border-slate-200 bg-white p-5 md:p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">1-to-1 reading classes online</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Individual support can respond to the exact error</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              A 1-to-1 online reading tutor can adjust the text level, pause at the exact error, guide a retry, and change the next task immediately. Group reading can also work when children are progressing comfortably at a shared level.
-            </p>
-
-            <div className="mt-5 border-t border-slate-200 pt-4">
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <article className="border-y border-slate-200 py-5">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">How Tiny Steps teaches</p>
-              <h3 className="mt-2 font-semibold text-slate-950">Assessment → targeted teaching → fresh check → next step</h3>
-              <ol className="mt-3 grid gap-2 text-sm leading-6 text-slate-600">
-                <li><strong className="text-slate-900">1. Assess:</strong> identify the current reading bottleneck.</li>
-                <li><strong className="text-slate-900">2. Teach:</strong> model and practise the right strategy at the right level.</li>
-                <li><strong className="text-slate-900">3. Check:</strong> use fresh words, sentences, or passages to see whether the skill transfers.</li>
-                <li><strong className="text-slate-900">4. Progress:</strong> share the next priority and move forward when the evidence supports it.</li>
-              </ol>
-            </div>
-          </article>
-
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 md:p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700">Evidence before enrolment</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Check the programme, teaching, parent evidence, and cost</h2>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {proofLinks.map((item) => (
-                <Link key={item.href} to={item.href} className="group rounded-[16px] border border-slate-200 bg-slate-50/55 px-4 py-3 transition hover:bg-white">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
-                    <span className="text-slate-300 transition group-hover:text-slate-600">↗</span>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Assessment → targeted teaching → fresh check → next step</h2>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {[
+                  ['1. Assess', 'Identify the current reading bottleneck.'],
+                  ['2. Teach', 'Model and practise the right strategy at the right level.'],
+                  ['3. Check', 'Use fresh text to see whether the skill transfers.'],
+                  ['4. Progress', 'Share the next priority and move forward when evidence supports it.'],
+                ].map(([title, detail]) => (
+                  <div key={title} className="border-l border-slate-200 pl-3">
+                    <p className="text-xs font-semibold text-slate-950">{title}</p>
+                    <p className="mt-0.5 text-xs leading-5 text-slate-600">{detail}</p>
                   </div>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p>
-                </Link>
-              ))}
+                ))}
+              </div>
+              <p className="mt-4 text-xs leading-5 text-slate-500">
+                Live 1:1 support is especially useful when a child needs individual pacing and immediate correction; group reading can also work for children progressing comfortably at a shared level.
+              </p>
+            </article>
+
+            <div className="border-y border-slate-200 py-5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700">Evidence before enrolment</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Check the programme, teaching, parent evidence, and cost</h2>
+              <div className="mt-4 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                {proofLinks.map((item) => (
+                  <Link key={item.href} to={item.href} className="group flex items-center justify-between gap-3 border-b border-slate-100 py-2.5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
+                      <p className="mt-0.5 text-xs leading-5 text-slate-500">{item.detail}</p>
+                    </div>
+                    <span className="shrink-0 text-slate-300 transition group-hover:text-slate-600">↗</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="mx-auto mt-5 max-w-6xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Reading guides for parents</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-slate-200 pb-5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Reading guides</span>
             {[
-              {
-                href: '/blog/how-to-improve-reading-fluency-in-children',
-                title: 'How to Improve Reading Fluency in Children',
-              },
-              {
-                href: '/blog/phonics-comprehension',
-                title: 'From Decoding to Comprehension',
-              },
-              {
-                href: '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
-                title: 'Why Letter Sounds Are Not Enough to Read',
-              },
-              {
-                href: '/child-not-reading-properly',
-                title: 'Child Not Reading Properly: Parent Diagnostic Guide',
-              },
-            ].map((item) => (
-              <Link key={item.href} to={item.href} className="text-sm font-semibold leading-5 text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-slate-950">
-                {item.title}
+              ['/blog/how-to-improve-reading-fluency-in-children', 'Improve reading fluency'],
+              ['/blog/phonics-comprehension', 'From decoding to comprehension'],
+              ['/blog/why-child-knows-letter-sounds-but-cannot-read-words', 'Why letter sounds are not enough'],
+              ['/child-not-reading-properly', 'Parent diagnostic guide'],
+            ].map(([href, title]) => (
+              <Link key={href} to={href} className="text-xs font-semibold text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-slate-950">
+                {title}
               </Link>
             ))}
           </div>
@@ -626,18 +649,12 @@ export default function ReadingClassesForKidsPage() {
         </div>
       </section>
 
-      <section id="faq" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
+      <section id="faq" className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Quick answers</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">Questions parents ask about online reading classes</h2>
-          <div className="mt-4">
-            {faqItems.map((item) => (
-              <article key={item.question} className="border-b border-slate-200 py-4 last:border-b-0">
-                <h3 className="faq-question text-[17px] font-semibold text-slate-900 md:text-lg">{item.question}</h3>
-                <p className="faq-answer mt-2 text-[15px] leading-6 text-slate-600 md:text-base">{item.answer}</p>
-              </article>
-            ))}
-          </div>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Open only the question you need; all answers stay collapsed by default.</p>
+          <ProgrammeFaqAccordion items={faqItems} accent="sky" />
         </div>
       </section>
 
