@@ -29,6 +29,7 @@ import {
 } from '../src/lib/vocabularyAuthorityRegistry.js';
 import {
   AI_ANSWER_LAYER_DEFINITIONS,
+  AI_ANSWER_LAYER_REVISION,
   AI_ANSWER_LAYERS,
   AI_ANSWER_LAYER_MACHINE_JSON_PATH,
   AI_ANSWER_LAYER_MACHINE_TEXT_PATH,
@@ -78,6 +79,7 @@ const LLM_DISCOVERY_FILES = [
 const BLOG_CORPUS_LLM_SECTION_HEADING = '## Complete Editorial Blog Corpus';
 const PHONICS_LLM_SECTION_HEADING = '## Focused Phonics Resource Library — 31 governed guides';
 const AI_ANSWER_LLM_SECTION_HEADING = '## AI Answer Layers — problem, concept, practice';
+const VOCABULARY_LLM_SECTION_HEADING = '## Vocabulary Authority Library — 16 governed guides';
 
 function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
   const lines = [
@@ -440,7 +442,7 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
   }));
   return {
     name: 'Tiny Steps AI Resource Answer Index',
-    revision: '2026-09-27-gv5b',
+    revision: AI_ANSWER_LAYER_REVISION,
     canonical_resource_center: SITE_URL + '/resources',
     purpose: 'Machine-readable routing from parent problems to canonical educational answers and focused practice.',
     retrieval_guidance: 'Use canonical_url as the primary answer source, use reference_urls for connected context, and use practice_urls only after the answer/skill is understood.',
@@ -520,6 +522,24 @@ function buildAiResourceText(index) {
   return lines.join('\n').trim() + '\n';
 }
 
+function buildVocabularyLlmSection({ detailed = false } = {}) {
+  const lines = [
+    VOCABULARY_LLM_SECTION_HEADING,
+    '',
+    'Tiny Steps Vocabulary is a governed 16-guide knowledge estate under /resources/vocabulary. The guides own vocabulary meaning, retrieval, natural usage and lexical transfer; Vocabulary Adventure remains the single practice owner.',
+    '',
+    '- [Vocabulary knowledge hub](' + SITE_URL + '/resources/vocabulary)',
+    '- [Vocabulary Adventure practice](' + SITE_URL + '/free-games/word-meaning-flashcards)',
+    '- Semantic transfer remains bounded: Reading -> ' + SITE_URL + '/reading-classes-for-kids; Speaking -> ' + SITE_URL + '/spoken-english-classes-for-kids-online; Writing -> ' + SITE_URL + '/writing-classes-for-kids.',
+    '',
+  ];
+  for (const page of VOCABULARY_AUTHORITY_PAGES) {
+    const description = detailed ? (page.seoDescription || page.quickAnswer) : page.quickAnswer;
+    lines.push('- [' + page.cardTitle + '](' + SITE_URL + page.path + ') — ' + description);
+  }
+  return lines.join('\n').trim();
+}
+
 function buildAiAnswerLlmSection(index) {
   const counts = index.layers.map((layer) => 'Layer ' + layer.layer + ' ' + layer.label + ': ' + layer.items.length).join('; ');
   return [
@@ -590,6 +610,12 @@ function normalizeLlmDiscoveryFiles(aiIndex) {
       text,
       buildGovernedPhonicsLlmSection({ detailed: isFullDirectory }),
       isFullDirectory ? '## Interpretation notes' : '## School and Institutional Partnerships',
+    );
+    text = upsertNamedMarkdownSection(
+      text,
+      VOCABULARY_LLM_SECTION_HEADING,
+      buildVocabularyLlmSection({ detailed: isFullDirectory }),
+      AI_ANSWER_LLM_SECTION_HEADING,
     );
     text = upsertNamedMarkdownSection(
       text,

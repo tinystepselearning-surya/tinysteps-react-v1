@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  AI_ANSWER_LAYER_REVISION,
   AI_ANSWER_LAYER_1_PARENT_PROBLEMS,
   AI_ANSWER_LAYER_2_LEARNING_CONCEPTS,
   AI_ANSWER_LAYER_3_PRACTICE_ACTIONS,
@@ -195,8 +196,10 @@ if (process.argv.includes('--generated')) {
   }
 }
 
+if (AI_ANSWER_LAYER_REVISION !== '2026-09-27-gv6') fail('revision', AI_ANSWER_LAYER_REVISION);
+
 const report = {
-  revision: '2026-09-27-gv5b',
+  revision: AI_ANSWER_LAYER_REVISION,
   layer1: AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length,
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,
