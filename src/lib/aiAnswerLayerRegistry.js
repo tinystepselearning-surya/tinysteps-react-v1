@@ -5,7 +5,7 @@ import {
   SPEAKING_COMMUNICATION_PARENT_PROBLEM_ROUTES,
 } from './speakingCommunicationCompletionArchitecture.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from './phonicsPublicationRegistry.js';
-import { GRAMMAR_PROGRAMMATIC_PAGES } from './grammarProgrammaticRegistry.js';
+import { GRAMMAR_KNOWLEDGE_PAGES } from './grammarKnowledgeRegistry.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -15,7 +15,7 @@ const item = (config) => freeze({
   practicePaths: freezeList(config.practicePaths),
 });
 
-export const AI_ANSWER_LAYER_REVISION = '2026-09-26-r24-r27';
+export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv3';
 export const AI_ANSWER_LAYER_MACHINE_JSON_PATH = '/ai-resource-index.json';
 export const AI_ANSWER_LAYER_MACHINE_TEXT_PATH = '/ai-resource-index.txt';
 
@@ -316,13 +316,13 @@ const GOVERNED_PHONICS_CONCEPT_ITEMS = PHONICS_PUBLISHED_RESOURCE_PAGES.map((pag
   practicePaths: page.concept.practicePaths || [],
 }));
 
-const GOVERNED_GRAMMAR_CONCEPT_ITEMS = GRAMMAR_PROGRAMMATIC_PAGES.map((page) => item({
+const GOVERNED_GRAMMAR_CONCEPT_ITEMS = GRAMMAR_KNOWLEDGE_PAGES.map((page) => item({
   id: `concept-governed-grammar-${page.id}`,
   layer: 2,
   subject: 'grammar-writing',
   query: `What is ${page.cardTitle.toLowerCase()}?`,
   answer: page.quickAnswer,
-  answerSource: 'governed-grammar-programmatic-registry',
+  answerSource: 'governed-grammar-knowledge-registry',
   canonicalPath: page.path,
   ownershipState: page.state,
   hubPath: '/resources/grammar',
