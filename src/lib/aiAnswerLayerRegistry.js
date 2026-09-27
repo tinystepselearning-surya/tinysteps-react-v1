@@ -31,7 +31,7 @@ export const AI_ANSWER_LAYER_DEFINITIONS = freezeList([
     id: 'layer-2-learning-concepts',
     layer: 2,
     label: 'Learning concepts',
-    purpose: 'Expose canonical educational explanations for phonics, reading, grammar, writing, speaking and communication concepts.',
+    purpose: 'Expose canonical educational explanations for phonics, reading, grammar, writing, vocabulary, speaking and communication concepts.',
   }),
   freeze({
     id: 'layer-3-practice-actions',
