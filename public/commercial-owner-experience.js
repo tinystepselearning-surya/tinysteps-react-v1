@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const REVISION = '2026-09-11-commercial-ux-r2';
+  const REVISION = '2026-09-27-commercial-ux-r3';
   const OWNER_PATHS = Object.freeze([
     '/phonics',
     '/best-online-phonics-classes-for-kids-in-india',
@@ -19,6 +19,7 @@
     '/book-demo',
   ]);
   const OWNER_SET = new Set(OWNER_PATHS);
+  const DESKTOP_CTA_DISABLED_PATHS = new Set(['/grammar']);
   const STYLE_ID = 'ts-commercial-owner-experience-css';
   const PROGRESS_ID = 'ts-commercial-owner-progress';
   const CTA_ID = 'ts-commercial-owner-cta';
@@ -365,7 +366,8 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${progressValue})`;
 
     const cta = ensureCta();
-    const shouldShow = currentPath !== '/book-demo' && currentPath !== '/phonics-fees-india' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
+    const desktopCtaDisabled = DESKTOP_CTA_DISABLED_PATHS.has(currentPath) && window.innerWidth >= 768;
+    const shouldShow = !desktopCtaDisabled && currentPath !== '/book-demo' && currentPath !== '/phonics-fees-india' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
     cta.classList.toggle('is-visible', shouldShow);
 
     const title = cta.querySelector('.ts-commercial-cta-title');
