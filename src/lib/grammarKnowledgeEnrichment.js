@@ -20,6 +20,7 @@ export const GRAMMAR_KNOWLEDGE_ENRICHMENT = freeze(
       id,
       freeze({
         sourceIds: freezeList(value.sourceIds),
+        whyItMatters: value.whyItMatters,
         rulePoints: freezeList(value.rulePoints),
         workedExamples: freezeWorkedExamples(value.workedExamples),
         teachingNote: value.teachingNote,
