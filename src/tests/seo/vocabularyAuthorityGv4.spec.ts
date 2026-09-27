@@ -139,7 +139,7 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
 
     const hub = vocabOwners.find((entry) => entry.id === 'vocabulary-resource-discovery');
     expect(hub).toMatchObject({
-      subject: 'general-english',
+      subject: 'vocabulary-language',
       intent: 'informational',
       ownerPath: '/resources/vocabulary',
       ownerRole: 'subject-hub',
@@ -150,7 +150,7 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     expect(guideOwners).toHaveLength(6);
     for (const page of VOCABULARY_AUTHORITY_PAGES) {
       const owner = guideOwners.find((entry) => entry.ownerPath === page.path);
-      expect(owner?.subject, page.id).toBe('general-english');
+      expect(owner?.subject, page.id).toBe('vocabulary-language');
       expect(owner?.intent, page.id).toBe('informational');
       expect(owner?.ownerRole, page.id).toBe('skill-guide');
       expect(owner?.hubPath, page.id).toBe('/resources/vocabulary');
