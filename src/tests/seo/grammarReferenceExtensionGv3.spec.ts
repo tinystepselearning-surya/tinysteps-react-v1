@@ -168,6 +168,6 @@ describe('GV3 first Grammar reference-extension publication batch', () => {
     expect(generator).toContain("page.state === 'reference-extension' ? 'grammar-reference-extension'");
     expect(generator).toContain('grammarReferences');
     expect(audit).toContain('GRAMMAR_KNOWLEDGE_PAGES');
-    expect(audit).toContain('38 governed grammar knowledge pages');
+    expect(audit).toContain('38 governed grammar pages');
   });
 });
