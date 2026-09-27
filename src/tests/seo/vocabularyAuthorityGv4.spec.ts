@@ -23,6 +23,9 @@ import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
 import { AI_ANSWER_LAYER_2_LEARNING_CONCEPTS } from '../../lib/aiAnswerLayerRegistry.js';
 import { CENTRAL_RESOURCE_SUBJECT_HUBS } from '../../lib/centralResourceSystem.js';
+import { getCommercialC7R1Mapping } from '../../lib/commercialC7KnowledgeOwnerMapping';
+import { getCommercialC7R2NextStepRule } from '../../lib/commercialC7IntentNextStepRules';
+import { getCommercialC7R3Handoff } from '../../lib/commercialC7ContextualHandoffImplementation';
 
 const root = process.cwd();
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -161,6 +164,20 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
       '/resources/grammar',
       '/resources/speaking',
     ]);
+  });
+
+  it('keeps the new Vocabulary family soft-discovery in frozen C7 instead of inventing a broad-English commercial handoff', () => {
+    const paths = ['/resources/vocabulary', ...VOCABULARY_AUTHORITY_PAGES.map((page) => page.path)];
+    for (const path of paths) {
+      const mapping = getCommercialC7R1Mapping(path);
+      const rule = getCommercialC7R2NextStepRule(path);
+      expect(mapping?.primaryCommercialOwner, path).toBeNull();
+      expect(mapping?.decision, path).toBe('HOLD_SOFT_DISCOVERY');
+      expect(rule?.ruleClass, path).toBe('SOFT_DISCOVERY');
+      expect(rule?.primaryDestination, path).toBeNull();
+      expect(rule?.secondaryDestination, path).toBeNull();
+      expect(getCommercialC7R3Handoff(path), path).toBeNull();
+    }
   });
 
   it('adds six Vocabulary concepts to Layer 2 and keeps practice separate from knowledge ownership', () => {
