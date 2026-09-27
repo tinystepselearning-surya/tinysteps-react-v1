@@ -67,6 +67,10 @@ if (baseRef) {
       'src/content/blog/index.ts',
       'src/content/blog/shared/commercialHandoffs.ts',
       'src/pages/PhonicsKnowledgePage.tsx',
+      // GV4 publishes these two exact informational Vocabulary surfaces after
+      // the C7 freeze. They remain outside commercial handoff ownership.
+      'src/pages/VocabularyHubPage.tsx',
+      'src/pages/VocabularyKnowledgePage.tsx',
     ]);
     const privateAppSurfaceAllowlist = new Set([
       // Private/authenticated product surfaces are outside the C7 public
@@ -109,4 +113,4 @@ if (failures.length) {
 
 console.log(`C7-R0 knowledge conversion audit passed (${checks.length} checks).`);
 console.log('Baseline: frozen KB + 51 blog authority plans + 31 published phonics pages + 3 subject hubs + 14 commercial owners.');
-console.log('Policy: R0 remains audit-only; cumulative later-brick live changes are limited to the explicit C7-R3 shared-renderer allowlist.');
+console.log('Policy: R0 remains audit-only; cumulative post-freeze live changes are limited to the explicit reviewed allowlist.');

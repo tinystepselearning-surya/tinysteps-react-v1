@@ -48,14 +48,15 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).toContain('Supporting foundations — only when the assessment shows they are needed');
     expect(speaking).toContain('Grammar & sentence formation');
     expect(speaking).toContain('Everyday conversation & fluency');
-    expect(speaking).toContain('1 Complete responses');
-    expect(speaking).toContain('6 Advanced public speaking');
+    expect(speaking).toContain('speakingPathwayCards.map((card, index)');
+    expect(speaking).toContain('Complete spoken responses');
+    expect(speaking).toContain('Presentation confidence');
     expect(speaking).toContain('speakingFacts.levels.beginner.canonicalCoursePath');
     expect(speaking).toContain('speakingFacts.levels.advanced.canonicalCoursePath');
   });
 
   it('adds class-sample, teacher-system, progress and parent-evidence proof surfaces', () => {
-    expect(speaking).toContain('What a Tiny Steps speaking class looks like');
+    expect(speaking).toContain('program="Public Speaking & Communication"');
     expect(speaking).toContain('to="/class-samples"');
     expect(speaking).toContain('SPEAKING_EVIDENCE_SURFACES.map');
     expect(speakingEvidence).toContain("id: 'academic-ownership'");
@@ -67,8 +68,9 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).not.toContain('Approved parent feedback from speaking families');
     expect((speaking.match(/<TestimonialSnippets/g) ?? [])).toHaveLength(1);
     expect((speaking.match(/<ResponsiveTeachingSection/g) ?? [])).toHaveLength(1);
-    expect(speaking).toContain('<caption className="sr-only">What parents should compare when evaluating public speaking classes for kids</caption>');
-    expect((speaking.match(/scope="col"/g) ?? [])).toHaveLength(2);
+    expect(speaking).toContain('What parents should compare before choosing speaking classes');
+    expect(speaking).toContain('Structured live practice');
+    expect(speaking).toContain('Fresh-task progress');
   });
 
   it('keeps the assessment as the decision mechanism instead of promising automatic placement', () => {
