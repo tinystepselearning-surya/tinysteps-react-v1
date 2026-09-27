@@ -46,6 +46,34 @@ export const VOCABULARY_AUTHORITY_ROUTE_MANIFEST = freezeList([
     title: 'Word Families, Prefixes and Suffixes for Kids | Tiny Steps',
     description: 'Build vocabulary through base words, prefixes, suffixes and related word families while connecting changes in form to changes in meaning.',
   }),
+  freeze({
+    id: 'vocabulary-collocations',
+    cardTitle: 'Collocations for Kids',
+    path: '/resources/vocabulary/collocations-for-kids',
+    title: 'Collocations for Kids: Natural Word Partnerships | Tiny Steps',
+    description: 'Help children notice and use natural English word partnerships such as make a mistake, heavy rain and deeply interested through meaning, context and repeated use.',
+  }),
+  freeze({
+    id: 'phrasal-verbs-expressions',
+    cardTitle: 'Phrasal Verbs & Common Expressions',
+    path: '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
+    title: 'Phrasal Verbs and Common Expressions for Kids | Tiny Steps',
+    description: 'Teach useful phrasal verbs and everyday expressions through context, meaning, word order and child-relevant speaking situations.',
+  }),
+  freeze({
+    id: 'vocabulary-for-writing',
+    cardTitle: 'Vocabulary for Better Writing',
+    path: '/resources/vocabulary/vocabulary-for-better-writing',
+    title: 'Vocabulary for Better Writing: Precise Word Choice for Kids | Tiny Steps',
+    description: 'Help children replace vague or repeated wording with precise, natural vocabulary that improves descriptions, explanations, stories and school answers.',
+  }),
+  freeze({
+    id: 'vocabulary-for-speaking',
+    cardTitle: 'Vocabulary for Speaking & Conversation',
+    path: '/resources/vocabulary/vocabulary-for-speaking-conversation',
+    title: 'Vocabulary for Speaking and Conversation for Kids | Tiny Steps',
+    description: 'Build retrievable vocabulary for fuller answers, conversation, explanation, storytelling and confident everyday speaking without memorised scripts.',
+  }),
 ]);
 
 export const VOCABULARY_AUTHORITY_PATHS = freezeList(
@@ -70,9 +98,9 @@ export const VOCABULARY_RESOURCE_SEO = freeze({
   ])),
 });
 
-if (VOCABULARY_AUTHORITY_ROUTE_MANIFEST.length !== 6) {
-  throw new Error('GV4 must publish exactly six first-batch Vocabulary authority guides.');
+if (VOCABULARY_AUTHORITY_ROUTE_MANIFEST.length !== 10) {
+  throw new Error('GV5 must expose exactly ten published Vocabulary authority guides: six GV4 guides plus four natural-English/transfer guides.');
 }
 if (new Set(VOCABULARY_AUTHORITY_PATHS).size !== VOCABULARY_AUTHORITY_PATHS.length) {
-  throw new Error('GV4 Vocabulary authority paths must be unique.');
+  throw new Error('Published Vocabulary authority paths must be unique.');
 }
