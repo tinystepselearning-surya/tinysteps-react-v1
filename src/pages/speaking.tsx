@@ -6,8 +6,10 @@ import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publ
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
 import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
-import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
+import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
+import { getProgrammeAiVisibility } from '../lib/programmeAiVisibility';
 import {
   SPEAKING_PROGRESS_DIMENSIONS,
   SPEAKING_PROGRESS_FRAMEWORK_PATH,
@@ -19,6 +21,7 @@ import {
 
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
+const speakingAiVisibility = getProgrammeAiVisibility('/speaking');
 const seoTitle = 'Public Speaking & Communication Classes for Kids | Tiny Steps';
 const seoDescription =
   'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.';
@@ -169,6 +172,13 @@ export default function SpeakingPage() {
         url: canonicalUrl,
       }),
       '@id': `${canonicalUrl}#webpage`,
+      about: [
+        { '@type': 'Thing', name: 'Public speaking classes for kids' },
+        { '@type': 'Thing', name: 'Communication skills for kids' },
+        { '@type': 'Thing', name: 'Structured spoken answers' },
+        { '@type': 'Thing', name: 'Storytelling' },
+        { '@type': 'Thing', name: 'Presentations and audience awareness' },
+      ],
       speakable: buildSpeakableSpecification([
         '.ts-speaking-answer-title',
         '.ts-speaking-answer-summary',
@@ -236,6 +246,16 @@ export default function SpeakingPage() {
       })),
     };
 
+    const courseSchema = createCourseSchema({
+      name: 'Public Speaking & Communication Classes for Kids',
+      description:
+        'Live 1:1 public speaking and communication classes for kids focused on structured answers, storytelling, show-and-tell, presentations, audience awareness and clear communication.',
+      url: canonicalUrl,
+      educationalLevel: `${speakingFacts.levels.beginner.ageRange.label} Foundations; ${speakingFacts.levels.advanced.ageRange.label} Excellence`,
+      teaches: ['public speaking', 'structured answers', 'storytelling', 'show-and-tell', 'presentations', 'audience awareness', 'communication skills'],
+      areaServed: ['India', 'Worldwide'],
+    });
+
     const speakingEvidenceSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -262,7 +282,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -414,11 +434,13 @@ export default function SpeakingPage() {
             </p>
             <h2 className="ts-speaking-answer-title mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
             <p className="ts-speaking-answer-summary max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Public speaking classes for kids should help children who can already communicate at a basic level build structured responses, organise ideas, tell stories, handle show-and-tell, and become more ready for presentations and audience-facing speaking. If the main difficulty is one-word everyday answers or sentence formation itself, the free {demoMinutes}-minute 1:1 online demo assessment class may instead point to Spoken English or Grammar support before or alongside Speaking.
+              Public Speaking & Communication owns structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English, confidence-only barriers belong to Confidence Building, and sentence-accuracy problems belong to Grammar; the free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
             </p>
           </article>
         </div>
       </section>
+
+      {speakingAiVisibility ? <ProgrammeIntentBoundary config={speakingAiVisibility} /> : null}
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">
