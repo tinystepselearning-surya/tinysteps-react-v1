@@ -74,6 +74,24 @@ type Av7SessionSeed = {
   date: string;
 };
 
+type AvsAdminCorrectionContext = {
+  sessionId: string;
+  kidId: string;
+  enrollmentId: string | null;
+  newStatus: 'present' | 'absent';
+};
+
+function parseAvsAdminCorrectionContext(searchParams: URLSearchParams): AvsAdminCorrectionContext | null {
+  if (searchParams.get('avsAdmin') !== '1') return null;
+  const sessionId = String(searchParams.get('sessionId') || '').trim();
+  const kidId = String(searchParams.get('kidId') || '').trim();
+  const enrollmentId = String(searchParams.get('enrollmentId') || '').trim() || null;
+  const newStatus = String(searchParams.get('newStatus') || '').trim().toLowerCase();
+  if (!sessionId || !kidId) return null;
+  if (newStatus !== 'present' && newStatus !== 'absent') return null;
+  return { sessionId, kidId, enrollmentId, newStatus };
+}
+
 function parseAv7CorrectionContext(searchParams: URLSearchParams): Av7CorrectionContext | null {
   const caseId = String(searchParams.get('avsCaseId') || '').trim();
   const fingerprint = String(searchParams.get('avsFingerprint') || '').trim();
@@ -201,6 +219,11 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     () => parseAv7CorrectionContext(searchParams),
     [searchParams],
   );
+  const avsAdminContext = useMemo(
+    () => parseAvsAdminCorrectionContext(searchParams),
+    [searchParams],
+  );
+  const hasLockedPrefill = Boolean(av7Context || avsAdminContext);
   const saveInFlightRef = useRef(false);
   const [mode, setMode] = useState<AttendanceCorrectionMode>('existing');
   const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
@@ -231,6 +254,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [pendingSessionSelection, setPendingSessionSelection] = useState<PendingSessionSelection>(null);
   const [av7SessionSeed, setAv7SessionSeed] = useState<Av7SessionSeed | null>(null);
   const [av7PrefillError, setAv7PrefillError] = useState<string | null>(null);
+  const [avsAdminParentLabel, setAvsAdminParentLabel] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -293,6 +317,110 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       cancelled = true;
     };
   }, [av7Context]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!avsAdminContext || av7Context) {
+      if (!avsAdminContext) setAvsAdminParentLabel('');
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setMode('existing');
+    setNewStatus(avsAdminContext.newStatus);
+    setReason((current) => current || 'Attendance validation admin correction');
+    setAv7PrefillError(null);
+    setAvsAdminParentLabel('');
+
+    const loadAvsAdminSession = async () => {
+      try {
+        const sessionSnap = await getDoc(doc(db, 'classSessions', avsAdminContext.sessionId));
+        if (cancelled) return;
+        if (!sessionSnap.exists()) {
+          setAv7PrefillError('The selected attendance session no longer exists.');
+          return;
+        }
+
+        const data = (sessionSnap.data() || {}) as Record<string, unknown>;
+        const kidIds = collectKidIds(data);
+        if (kidIds.length > 0 && !kidIds.includes(avsAdminContext.kidId)) {
+          setAv7PrefillError('The selected student is no longer assigned to this session.');
+          return;
+        }
+
+        const startAt = toDateMaybe(data.startAt);
+        const date =
+          (typeof data.date === 'string' && data.date.trim())
+          || (startAt ? toIstDateLabel(startAt) : '');
+        const teacherId =
+          typeof data.teacherId === 'string' ? data.teacherId.trim() : '';
+        if (!date || !teacherId) {
+          setAv7PrefillError('The selected session is missing its date or teacher identity.');
+          return;
+        }
+
+        let parentId =
+          typeof data.parentId === 'string' ? data.parentId.trim() : '';
+        let parentLabel =
+          typeof data.parentName === 'string' ? data.parentName.trim() : '';
+
+        if (avsAdminContext.enrollmentId) {
+          const enrollmentSnap = await getDoc(doc(db, 'enrollments', avsAdminContext.enrollmentId));
+          if (enrollmentSnap.exists()) {
+            const enrollment = (enrollmentSnap.data() || {}) as Record<string, unknown>;
+            if (!parentId) {
+              parentId =
+                (typeof enrollment.parentId === 'string' && enrollment.parentId.trim())
+                || (typeof enrollment.userId === 'string' && enrollment.userId.trim())
+                || '';
+            }
+            if (!parentLabel) {
+              parentLabel =
+                (typeof enrollment.parentName === 'string' && enrollment.parentName.trim())
+                || '';
+            }
+          }
+        }
+
+        if (parentId && !parentLabel) {
+          const parentSnap = await getDoc(doc(db, 'users', parentId));
+          if (parentSnap.exists()) {
+            const parent = (parentSnap.data() || {}) as Record<string, unknown>;
+            parentLabel =
+              (typeof parent.displayName === 'string' && parent.displayName.trim())
+              || (typeof parent.fullName === 'string' && parent.fullName.trim())
+              || (typeof parent.name === 'string' && parent.name.trim())
+              || (typeof parent.email === 'string' && parent.email.trim())
+              || parentId;
+          } else {
+            parentLabel = parentId;
+          }
+        }
+
+        if (cancelled) return;
+        setAvsAdminParentLabel(parentLabel || parentId || 'Parent unavailable');
+        setSelectedDate(date);
+        setAv7SessionSeed({ teacherId, date });
+        setPendingSessionSelection({
+          sessionId: avsAdminContext.sessionId,
+          kidId: avsAdminContext.kidId,
+        });
+      } catch (err) {
+        console.error('Failed to prepare attendance validation admin correction', err);
+        if (!cancelled) {
+          setAv7PrefillError(
+            err instanceof Error ? err.message : 'Unable to load the selected attendance session.',
+          );
+        }
+      }
+    };
+
+    void loadAvsAdminSession();
+    return () => {
+      cancelled = true;
+    };
+  }, [avsAdminContext, av7Context]);
 
   useEffect(() => {
     if (!av7SessionSeed || teacherOptions.length === 0) return;
@@ -730,6 +858,21 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       });
       return;
     }
+    if (
+      avsAdminContext
+      && (
+        selectedSessionId !== avsAdminContext.sessionId
+        || selectedKidId !== avsAdminContext.kidId
+        || newStatus !== avsAdminContext.newStatus
+      )
+    ) {
+      toast({
+        title: 'Attendance selection changed',
+        description: 'Return to Attendance Validation and select the attendance action again.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (av7PrefillError) {
       toast({
         title: 'AVS correction unavailable',
@@ -767,7 +910,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       setReason('');
       resetTeacherPayHandling();
       setReloadKey((value) => value + 1);
-      if (av7Context) {
+      if (av7Context || avsAdminContext) {
         navigate('/surya?tab=attendance-validation', { replace: true });
       }
     } catch (err) {
@@ -920,6 +1063,32 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         </div>
       )}
 
+      {avsAdminContext && !av7Context && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950">
+          <div className="font-semibold">Attendance Validation admin action</div>
+          <div className="mt-1 text-xs">
+            This exact session, student, date, teacher and selected attendance status were opened from Attendance Validation.
+            The attendance decision is the admin&apos;s.
+          </div>
+          <div className="mt-2 text-xs">
+            Parent: <span className="font-medium">{avsAdminParentLabel || 'Loading parent...'}</span>
+          </div>
+          {av7PrefillError && (
+            <div className="mt-2 font-medium text-red-700">{av7PrefillError}</div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => navigate('/surya?tab=attendance-validation')}
+            disabled={saving}
+          >
+            Back to Attendance Validation
+          </Button>
+        </div>
+      )}
+
       <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
         <Button
           type="button"
@@ -935,7 +1104,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           size="sm"
           variant={mode === 'create' ? 'default' : 'ghost'}
           onClick={() => setMode('create')}
-          disabled={saving || Boolean(av7Context)}
+          disabled={saving || hasLockedPrefill}
         >
           Create Missing Session
         </Button>
@@ -948,7 +1117,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
             value={selectedTeacherId}
             onChange={(event) => setSelectedTeacherId(event.target.value)}
-            disabled={loadingTeachers || saving || Boolean(av7Context)}
+            disabled={loadingTeachers || saving || hasLockedPrefill}
           >
             {teacherOptions.length === 0 ? (
               <option value="">{loadingTeachers ? 'Loading teachers...' : 'No teachers found'}</option>
@@ -966,7 +1135,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             type="date"
             value={selectedDate}
             onChange={(event) => setSelectedDate(event.target.value)}
-            disabled={saving || Boolean(av7Context)}
+            disabled={saving || hasLockedPrefill}
           />
         </div>
       </div>
@@ -980,7 +1149,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
                 value={selectedKidId}
                 onChange={(event) => setSelectedKidId(event.target.value)}
-                disabled={loadingSessions || saving || kidOptions.length === 0 || Boolean(av7Context)}
+                disabled={loadingSessions || saving || kidOptions.length === 0 || hasLockedPrefill}
               >
                 {kidOptions.length === 0 ? (
                   <option value="">{loadingSessions ? 'Loading students...' : 'No students for selected filters'}</option>
@@ -998,7 +1167,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
                 value={selectedSessionId}
                 onChange={(event) => setSelectedSessionId(event.target.value)}
-                disabled={loadingSessions || saving || sessionOptions.length === 0 || Boolean(av7Context)}
+                disabled={loadingSessions || saving || sessionOptions.length === 0 || hasLockedPrefill}
               >
                 {sessionOptions.length === 0 ? (
                   <option value="">{loadingSessions ? 'Loading sessions...' : 'No sessions found'}</option>
@@ -1025,7 +1194,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
                 value={newStatus}
                 onChange={(event) => setNewStatus(event.target.value as AttendanceCorrectionStatus)}
-                disabled={saving || Boolean(av7Context)}
+                disabled={saving || hasLockedPrefill}
               >
                 {ATTENDANCE_CORRECTION_STATUS_OPTIONS.map((status) => (
                   <option key={status} value={status}>{status}</option>
@@ -1152,19 +1321,31 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             || !isAdmin
             || Boolean(av7PrefillError)
             || Boolean(av7Context && !av7LinkMatchesSelection)
+            || Boolean(
+              avsAdminContext
+              && (
+                selectedSessionId !== avsAdminContext.sessionId
+                || selectedKidId !== avsAdminContext.kidId
+                || newStatus !== avsAdminContext.newStatus
+              )
+            )
           }
         >
           {saving
             ? av7Context
               ? 'Approving...'
-              : mode === 'existing'
-                ? 'Saving...'
-                : 'Creating & Saving...'
+              : avsAdminContext
+                ? 'Saving attendance...'
+                : mode === 'existing'
+                  ? 'Saving...'
+                  : 'Creating & Saving...'
             : av7Context
               ? 'Approve AVS Correction'
-              : mode === 'existing'
-                ? 'Save Correction'
-                : 'Create Session & Save Attendance'}
+              : avsAdminContext
+                ? `Confirm Mark ${newStatus === 'present' ? 'Present' : 'Absent'}`
+                : mode === 'existing'
+                  ? 'Save Correction'
+                  : 'Create Session & Save Attendance'}
         </Button>
       </div>
 

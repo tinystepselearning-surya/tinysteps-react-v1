@@ -92,13 +92,17 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain("collection(db, 'teacherEarnings')");
   });
 
-  it('does not expose browser-side mutation primitives', () => {
+  it('keeps AVS itself read-only while routing explicit admin corrections through the canonical workflow', () => {
     expect(dashboard).not.toContain('setDoc(');
     expect(dashboard).not.toContain('updateDoc(');
     expect(dashboard).not.toContain('deleteDoc(');
     expect(dashboard).not.toContain('addDoc(');
     expect(dashboard).not.toContain('writeBatch(');
-    expect(dashboard).toContain('No attendance or financial correction can be made from this screen');
+    expect(dashboard).toContain('Attendance can be corrected from an inspected session line by an explicit admin action');
+    expect(businessView).toContain("params.set('tab', 'attendance-corrections')");
+    expect(businessView).toContain("params.set('avsAdmin', '1')");
+    expect(businessView).toContain('Mark Present');
+    expect(businessView).toContain('Mark Absent');
   });
 
   it('shows the permanent September 2026 validation scope', () => {
@@ -227,10 +231,13 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
-  it('keeps row-level correction and re-fetch controls out of the simple business view', () => {
-    expect(businessView).not.toContain('Review correction');
+  it('adds row-level admin attendance actions without adding row-level Teams re-fetch controls', () => {
+    expect(businessView).toContain('Mark Present');
+    expect(businessView).toContain('Mark Absent');
+    expect(businessView).toContain("params.set('sessionId', item.classSessionId)");
+    expect(businessView).toContain("params.set('kidId', item.kidId)");
+    expect(businessView).toContain("params.set('enrollmentId', item.enrollmentId)");
     expect(businessView).not.toContain('Re-fetch this case');
-    expect(businessView).not.toContain('correct_to_absent');
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
     );
