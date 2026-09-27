@@ -26,7 +26,7 @@ describe('Grammar, Reading and Speaking AI visibility hardening', () => {
       '/grammar',
       '/speaking',
     ]);
-    expect(PROGRAMME_AI_VISIBILITY.some((item) => item.path === ('/phonics' as never))).toBe(false);
+    expect(PROGRAMME_AI_VISIBILITY.map((item) => String(item.path))).not.toContain('/phonics');
 
     const phonicsOwner = COMMERCIAL_C2_OWNERSHIP_CLUSTERS.find((item) => item.id === 'phonics-provider');
     expect(phonicsOwner?.canonicalOwnerPath).toBe('/phonics');
