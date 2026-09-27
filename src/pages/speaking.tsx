@@ -402,8 +402,8 @@ export default function SpeakingPage() {
                 <h3 className="text-sm font-semibold text-slate-950">Has ideas but cannot organise a clear answer</h3>
                 <p className="mt-1 text-sm leading-5 text-slate-600">Complete responses, idea organisation, storytelling, and audience-facing communication are core Speaking territory.</p>
                 <p className="mt-2 text-xs font-semibold text-sky-800">Best fit: this Speaking programme</p>
-                <Link to="/courses/public-speaking-excellence" className="mt-2 inline-block text-xs font-semibold text-slate-700 underline underline-offset-2">
-                  View Advanced level
+                <Link to="/book-demo" className="mt-2 inline-block text-xs font-semibold text-slate-700 underline underline-offset-2">
+                  Check the right speaking level
                 </Link>
               </div>
             </div>
@@ -613,7 +613,7 @@ export default function SpeakingPage() {
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f5f3ff_0%,#ffffff_52%,#fff7ed_100%)] p-6 text-center sm:p-8 md:p-9">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Not sure why your child hesitates while speaking?</h2>
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Not sure which speaking path fits your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-slate-600 md:text-base">
             Book one free {demoMinutes}-minute 1:1 online demo assessment class and let Tiny Steps identify whether the best next step is public speaking and communication, everyday spoken English, grammar support, or specialist confidence-building support.
           </p>
