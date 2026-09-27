@@ -58,6 +58,11 @@ describe('Commercial owner UX consistency layer', () => {
     expect(experience).toContain("DESKTOP_CTA_DISABLED_PATHS.has(currentPath) && window.innerWidth >= 768");
     expect(experience).toContain('const shouldShow = !desktopCtaDisabled');
     expect(experience).not.toContain("DESKTOP_CTA_DISABLED_PATHS = new Set(['/phonics'");
+
+    expect(index).toContain("const premiumOwners = new Set(['/reading-classes-for-kids', '/grammar', '/speaking'])");
+    expect(index).toContain("document.documentElement.dataset.tsPremiumProgrammeOwner = '1'");
+    expect(index).toContain('html[data-ts-premium-programme-owner="1"] #ts-commercial-owner-cta');
+    expect(index).toContain('display: none !important;');
   });
 
   it('keeps the delayed CTA inaccessible while hidden and clear of existing floating controls', () => {
