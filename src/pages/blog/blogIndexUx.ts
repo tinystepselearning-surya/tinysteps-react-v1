@@ -21,6 +21,7 @@ export type BlogIndexItem = Pick<
   | 'date'
   | 'modifiedDate'
   | 'readTime'
+  | 'hideFromList'
   | 'hero'
   | 'excerpt'
   | 'audience'

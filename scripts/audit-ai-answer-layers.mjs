@@ -10,6 +10,7 @@ import {
   AI_ANSWER_LAYER_MACHINE_TEXT_PATH,
 } from '../src/lib/aiAnswerLayerRegistry.js';
 import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
+import { GRAMMAR_PROGRAMMATIC_PAGES } from '../src/lib/grammarProgrammaticRegistry.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
@@ -25,42 +26,31 @@ function walkBlogSources(dirPath) {
   return results;
 }
 
-const RETIRED_BLOG_SOURCE_REDIRECTS = new Map([
-  ['spoken-english-classes-for-kids-confidence', '/blog/child-understands-english-but-does-not-speak'],
+const EXCLUDED_BLOG_SLUGS = new Set([
+  'spoken-english-classes-for-kids-confidence',
 ]);
 
-function expectedBlogSourceInventory() {
+function expectedLiveBlogCount() {
   const today = new Date().toISOString().slice(0, 10);
   let liveCanonical = 0;
-  let retiredRedirects = 0;
-
   for (const filePath of walkBlogSources(path.join(root, 'src/content/blog/posts'))) {
     const source = fs.readFileSync(filePath, 'utf8');
     const slug = /slug:\s*'([^']+)'/.exec(source)?.[1];
     const date = /date:\s*'(\d{4}-\d{2}-\d{2})'/.exec(source)?.[1];
-    if (!slug) continue;
+    if (!slug || EXCLUDED_BLOG_SLUGS.has(slug)) continue;
     if (date && date > today) continue;
-    if (RETIRED_BLOG_SOURCE_REDIRECTS.has(slug)) retiredRedirects += 1;
-    else liveCanonical += 1;
+    liveCanonical += 1;
   }
-
-  return {
-    liveCanonical,
-    retiredRedirects,
-    totalSourceRecords: liveCanonical + retiredRedirects,
-  };
+  return liveCanonical;
 }
 
-const expectedBlogInventory = expectedBlogSourceInventory();
-if (expectedBlogInventory.totalSourceRecords < 83) {
-  fail(
-    'editorial-blog-baseline-regression',
-    `Expected at least the established 83-source editorial estate; source tree currently resolves to ${expectedBlogInventory.liveCanonical} live canonical + ${expectedBlogInventory.retiredRedirects} retired redirect = ${expectedBlogInventory.totalSourceRecords}.`,
-  );
+const expectedLiveCanonicalBlogs = expectedLiveBlogCount();
+if (expectedLiveCanonicalBlogs < 82) {
+  fail('editorial-blog-baseline-regression', `Expected at least the established 82 live canonical editorial articles; found ${expectedLiveCanonicalBlogs}.`);
 }
 
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 58) fail('layer-2-count', 'Expected 27 curated concepts plus the governed 31-page phonics set.');
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 90) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 32 governed grammar pages.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 11) fail('layer-3-count', 'Expected 11 focused practice actions.');
 
 const ids = AI_ANSWER_LAYER_ALL_ITEMS.map((item) => item.id);
@@ -76,6 +66,9 @@ for (const item of AI_ANSWER_LAYER_ALL_ITEMS) {
 if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/phonics/')).length !== 31) {
   fail('governed-phonics-count', 'Layer 2 must contain exactly the governed 31 focused phonics URLs.');
 }
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/grammar/')).length !== GRAMMAR_PROGRAMMATIC_PAGES.length) {
+  fail('governed-grammar-count', 'Layer 2 must contain every governed grammar programmatic URL.');
+}
 
 const resourcesPageSource = fs.readFileSync(path.join(root, 'src/pages/ResourcesPage.tsx'), 'utf8');
 if (!resourcesPageSource.includes('AiAnswerLayerDirectory')) {
@@ -88,7 +81,7 @@ for (const phrase of ['Learn the pathway', 'Practise the skill', 'Solve a proble
 }
 
 const generator = fs.readFileSync(path.join(root, 'scripts/generate-rss.mjs'), 'utf8');
-for (const token of ['AI_ANSWER_LAYER_MACHINE_JSON_PATH', 'AI_ANSWER_LAYER_MACHINE_TEXT_PATH', 'buildAiResourceIndex', 'buildAiAnswerLlmSection', 'buildEditorialBlogCorpus', 'buildProgrammaticPhonicsCorpus', 'buildPublicRouteCorpus', 'buildCompleteBlogLlmSection']) {
+for (const token of ['AI_ANSWER_LAYER_MACHINE_JSON_PATH', 'AI_ANSWER_LAYER_MACHINE_TEXT_PATH', 'buildAiResourceIndex', 'buildAiAnswerLlmSection', 'buildEditorialBlogCorpus', 'buildProgrammaticPhonicsCorpus', 'buildProgrammaticGrammarCorpus', 'buildPublicRouteCorpus', 'buildCompleteBlogLlmSection']) {
   if (!generator.includes(token)) fail('generator-contract', token);
 }
 
@@ -103,12 +96,13 @@ if (process.argv.includes('--generated')) {
     if (!Array.isArray(index.layers) || index.layers.length !== 3) fail('generated-layer-count', 'Expected exactly three generated answer layers.');
 
     const editorialBlogs = index.corpus?.editorial_blogs || [];
-    const retiredEditorialSources = index.corpus?.retired_editorial_sources || [];
     const programmaticPhonics = index.corpus?.programmatic_phonics_guides || [];
+    const programmaticGrammar = index.corpus?.programmatic_grammar_guides || [];
     const additionalPublicRoutes = index.corpus?.additional_public_routes || [];
-    if (editorialBlogs.length !== expectedBlogInventory.liveCanonical) fail('editorial-blog-corpus-count', `Expected all ${expectedBlogInventory.liveCanonical} live canonical blogs; found ${editorialBlogs.length}.`);
-    if (retiredEditorialSources.length !== expectedBlogInventory.retiredRedirects) fail('retired-editorial-source-count', `Expected ${expectedBlogInventory.retiredRedirects} retired redirect lineage record(s); found ${retiredEditorialSources.length}.`);
+    if (editorialBlogs.length !== expectedLiveCanonicalBlogs) fail('editorial-blog-corpus-count', `Expected all ${expectedLiveCanonicalBlogs} live canonical blogs; found ${editorialBlogs.length}.`);
     if (programmaticPhonics.length !== 31) fail('programmatic-phonics-corpus-count', `Expected all 31 governed phonics guides; found ${programmaticPhonics.length}.`);
+    if (programmaticGrammar.length !== GRAMMAR_PROGRAMMATIC_PAGES.length) fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_PROGRAMMATIC_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
+    if ('retired_editorial_sources' in (index.corpus || {})) fail('retired-lineage-leak', 'Retired redirect sources must not be represented as content corpus records.');
     if (!additionalPublicRoutes.length) fail('public-route-corpus-empty', 'Expected additional public site routes in the connected corpus.');
 
     const blogUrls = editorialBlogs.map((item) => item.canonical_url);
@@ -120,29 +114,21 @@ if (process.argv.includes('--generated')) {
       if (item.indexing_state === 'noindex' && item.answer_eligible) fail('noindex-answer-eligibility', item.id);
       if (item.indexing_state === 'noindex' && item.retrieval_role !== 'supporting-only-noindex') fail('noindex-retrieval-role', item.id);
     }
-    if (index.corpus_counts?.editorial_blogs !== expectedBlogInventory.liveCanonical) fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedBlogInventory.liveCanonical}.`);
-    if (index.corpus_counts?.retired_editorial_sources !== expectedBlogInventory.retiredRedirects) fail('corpus-count-summary', `corpus_counts.retired_editorial_sources must equal ${expectedBlogInventory.retiredRedirects}.`);
-    if (index.corpus_counts?.editorial_source_records !== expectedBlogInventory.totalSourceRecords) fail('corpus-count-summary', `corpus_counts.editorial_source_records must equal ${expectedBlogInventory.totalSourceRecords}.`);
+    if (index.corpus_counts?.editorial_blogs !== expectedLiveCanonicalBlogs) fail('corpus-count-summary', `corpus_counts.editorial_blogs must equal ${expectedLiveCanonicalBlogs}.`);
     if (index.corpus_counts?.programmatic_phonics_guides !== 31) fail('corpus-count-summary', 'corpus_counts.programmatic_phonics_guides must equal 31.');
-
-    for (const item of retiredEditorialSources) {
-      const expectedTargetPath = RETIRED_BLOG_SOURCE_REDIRECTS.get(item.slug);
-      const expectedSourceUrl = 'https://tinystepslearning.com/blog/' + item.slug;
-      const expectedTargetUrl = expectedTargetPath ? 'https://tinystepslearning.com' + expectedTargetPath : null;
-      if (item.source_url !== expectedSourceUrl) fail('retired-editorial-source-url', item.id);
-      if (item.redirect_target_url !== expectedTargetUrl) fail('retired-editorial-target-url', item.id);
-      if (item.indexing_state !== 'redirected') fail('retired-editorial-indexing-state', item.id);
-      if (item.retrieval_role !== 'redirect-lineage-only') fail('retired-editorial-retrieval-role', item.id);
-      if (item.answer_eligible !== false || item.citation_eligible !== false) fail('retired-editorial-eligibility', item.id);
+    if (index.corpus_counts?.programmatic_grammar_guides !== GRAMMAR_PROGRAMMATIC_PAGES.length) fail('corpus-count-summary', `corpus_counts.programmatic_grammar_guides must equal ${GRAMMAR_PROGRAMMATIC_PAGES.length}.`);
+    if ('retired_editorial_sources' in (index.corpus_counts || {}) || 'editorial_source_records' in (index.corpus_counts || {})) {
+      fail('retired-lineage-count-leak', 'Retired lineage counters must not remain in the public content corpus.');
     }
 
-    if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + retiredEditorialSources.length + programmaticPhonics.length + additionalPublicRoutes.length) {
+    if (index.corpus_counts?.connected_public_content !== editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + additionalPublicRoutes.length) {
       fail('connected-public-content-count', 'Connected public content total does not reconcile.');
     }
 
     const representedCorpusUrls = new Set([
       ...editorialBlogs.map((item) => item.canonical_url),
       ...programmaticPhonics.map((item) => item.canonical_url),
+      ...programmaticGrammar.map((item) => item.canonical_url),
       ...additionalPublicRoutes.map((item) => item.canonical_url),
     ]);
     for (const route of PUBLIC_ROUTE_MANIFEST) {
@@ -174,19 +160,17 @@ if (process.argv.includes('--generated')) {
     if (!source.includes('## AI Answer Layers — problem, concept, practice')) fail('llms-layer-section', 'AI answer layer section missing.');
     if (!source.includes('https://tinystepslearning.com/ai-resource-index.json')) fail('llms-json-link', 'Machine JSON link missing.');
     if (!source.includes('## Complete Editorial Blog Corpus')) fail('llms-blog-corpus-section', 'Complete editorial blog corpus section missing.');
-    if (!source.includes(`Generated editorial estate: ${expectedBlogInventory.liveCanonical} live canonical Tiny Steps articles + ${expectedBlogInventory.retiredRedirects} retired redirect lineage = ${expectedBlogInventory.totalSourceRecords} source records accounted for`)) {
-      fail('llms-blog-corpus-count', `LLM discovery must declare ${expectedBlogInventory.liveCanonical} live canonical + ${expectedBlogInventory.retiredRedirects} retired redirect lineage = ${expectedBlogInventory.totalSourceRecords} editorial source records.`);
+    if (!source.includes(`Generated editorial estate: ${expectedLiveCanonicalBlogs} live canonical Tiny Steps articles`)) {
+      fail('llms-blog-corpus-count', `LLM discovery must declare the ${expectedLiveCanonicalBlogs} live canonical editorial articles.`);
+    }
+    if (source.includes('redirect lineage only') || source.includes('redirect-lineage-only')) {
+      fail('llms-retired-lineage-leak', 'Retired redirect lineage must not be exposed as content in LLM discovery files.');
     }
   }
 
   const generatedIndex = fs.existsSync(jsonPath) ? JSON.parse(fs.readFileSync(jsonPath, 'utf8')) : null;
   for (const item of generatedIndex?.corpus?.editorial_blogs || []) {
     if (!llmsFull.includes(item.canonical_url)) fail('llms-full-blog-coverage', item.canonical_url);
-  }
-  for (const item of generatedIndex?.corpus?.retired_editorial_sources || []) {
-    if (!llmsFull.includes(item.source_url) || !llmsFull.includes(item.redirect_target_url)) {
-      fail('llms-full-retired-lineage-coverage', item.id);
-    }
   }
 }
 
@@ -196,9 +180,7 @@ const report = {
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,
   total: AI_ANSWER_LAYER_ALL_ITEMS.length,
-  expectedLiveCanonicalBlogs: expectedBlogInventory.liveCanonical,
-  expectedRetiredBlogRedirects: expectedBlogInventory.retiredRedirects,
-  expectedEditorialSourceRecords: expectedBlogInventory.totalSourceRecords,
+  expectedLiveCanonicalBlogs,
   errors,
 };
 console.log(JSON.stringify(report, null, 2));

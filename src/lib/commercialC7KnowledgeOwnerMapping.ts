@@ -235,7 +235,17 @@ function inferOwner(input: MappingInput): { owner: string | null; family: Commer
   }
 
   if (input.subjects.includes('grammar-writing') || text.includes('grammar')) {
-    if (text.includes('writing') || text.includes('paragraph') || text.includes('composition')) {
+    // The subject taxonomy label "grammar-writing" must not itself be treated
+    // as evidence of writing intent. Classify writing only from the public path
+    // or explicit intent tokens; otherwise focused grammar skill guides belong
+    // to the frozen /grammar commercial owner.
+    const grammarIntentText = normalize([input.path, ...input.intents].join(' '));
+    if (
+      grammarIntentText.includes('writing')
+      || grammarIntentText.includes('paragraph')
+      || grammarIntentText.includes('composition')
+      || grammarIntentText.includes('editing')
+    ) {
       return {
         owner: '/writing-classes-for-kids',
         family: 'writing-programme',

@@ -64,7 +64,7 @@ const AiAnswerLayerDirectory: FC<{ subject?: AiAnswerSubject; compact?: boolean 
       layer: 1,
       eyebrow: 'Layer 1 · Parent problem',
       title: 'Start with what you are seeing',
-      description: 'Natural parent questions route to the closest established explanation before any programme decision.',
+      description: 'Start with the concern you are seeing and open the explanation that matches it most closely.',
       icon: Search,
       items: layerItems(1, subject),
     },
@@ -72,7 +72,7 @@ const AiAnswerLayerDirectory: FC<{ subject?: AiAnswerSubject; compact?: boolean 
       layer: 2,
       eyebrow: 'Layer 2 · Learning concept',
       title: 'Understand the skill or idea',
-      description: 'Canonical explanations define the concept, its learning boundary and the related knowledge path.',
+      description: 'Understand what the skill means, where it fits, and what children usually need before or after it.',
       icon: BookOpenText,
       items: layerItems(2, subject),
     },
@@ -80,7 +80,7 @@ const AiAnswerLayerDirectory: FC<{ subject?: AiAnswerSubject; compact?: boolean 
       layer: 3,
       eyebrow: 'Layer 3 · Practice',
       title: 'Choose the next focused action',
-      description: 'Practice follows understanding and stays connected to the skill it is intended to strengthen.',
+      description: 'Choose a short activity that directly practises the skill you have just identified.',
       icon: Dumbbell,
       items: layerItems(3, subject),
     },
@@ -97,17 +97,17 @@ const AiAnswerLayerDirectory: FC<{ subject?: AiAnswerSubject; compact?: boolean 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.23em] text-slate-500">
-              Answer architecture
+              Find the right answer
             </p>
             <h2
               id={subject ? `ai-answer-layers-${subject}` : 'ai-answer-layers'}
               className="mt-1 text-xl font-black tracking-[-0.025em] text-slate-950 sm:text-2xl"
             >
-              {subject ? `${SUBJECT_LABELS[subject]}: question → answer → practice` : 'Question → answer → understanding → action'}
+              {subject ? `${SUBJECT_LABELS[subject]}: question → explanation → practice` : 'Start with a question → understand the skill → choose practice'}
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-6 text-slate-600">
-            Each route keeps one canonical owner while exposing clear questions, concise answers and connected next steps for parents, search engines and AI retrieval systems.
+            Start with the concern or skill you recognise, open the clearest explanation, then move to a focused next step or practice activity.
           </p>
         </div>
 

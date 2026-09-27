@@ -1,5 +1,5 @@
 import { trackEvent } from './analytics';
-import { isPublicAnalyticsPath } from './publicRouteManifest.js';
+import { isPublicAnalyticsPath } from './publicAnalyticsPathPolicy.js';
 
 type EventTimingLike = PerformanceEntry & {
   duration: number;

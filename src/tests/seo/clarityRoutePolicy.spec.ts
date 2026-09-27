@@ -22,6 +22,7 @@ describe('Microsoft Clarity route policy', () => {
       '/free-games/word-meaning-flashcards',
       '/games/english-excellence',
       '/online-phonics-reading-classes',
+      '/resources/grammar/a-an-articles-for-kids',
       '/blog/what-is-phonics-for-kids',
       '/courses/phonics-foundation',
       '/curriculum',

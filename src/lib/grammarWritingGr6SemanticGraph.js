@@ -61,7 +61,14 @@ export const GRAMMAR_WRITING_GR6_PRINCIPLES = freezeList([
   freeze({ id: 'no-orphan-nodes-or-owners', statement: 'Every GR1-GR5 entity and every grammar-writing canonical public owner must participate in the semantic graph with a meaningful connection.' }),
 ]);
 
-const grammarPublicOwners = freezeList(R19_CANONICAL_TOPIC_OWNERSHIP.filter((item) => item.subject === 'grammar-writing'));
+// GR6 is a frozen pre-programmatic semantic graph. Later governed grammar skill
+// guides live under /resources/grammar/* and must not be back-propagated into
+// the historical 17-owner graph merely because the global ownership registry
+// grows. The subject hub itself (/resources/grammar) remains part of GR6.
+const grammarPublicOwners = freezeList(R19_CANONICAL_TOPIC_OWNERSHIP.filter((item) =>
+  item.subject === 'grammar-writing'
+  && !String(item.ownerPath || '').startsWith('/resources/grammar/'),
+));
 export const GRAMMAR_WRITING_GR6_PUBLIC_OWNERS = grammarPublicOwners;
 
 const semanticNodes = [];

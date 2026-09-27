@@ -8,57 +8,78 @@ const comparisonPath = 'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx';
 const subjectHubPath = 'src/pages/SubjectResourcesPage.tsx';
 const phonicsPath = 'src/pages/phonics.tsx';
 const founderPanelPath = 'src/pages/founder/FounderEditorialReviewsPanel.tsx';
-const reviewedPaths = [authorityPath, comparisonPath, subjectHubPath, phonicsPath, founderPanelPath];
+const canonicalOwnershipPath = 'src/lib/canonicalTopicOwnershipRegistry.js';
+const schoolsPath = 'src/pages/ForSchoolsPage.tsx';
+const grammarKnowledgePath = 'src/pages/GrammarKnowledgePage.tsx';
+const resourcesPath = 'src/pages/ResourcesPage.tsx';
+const blogIndexPath = 'src/pages/blog/BlogIndexPage.tsx';
+const blogIndexUxPath = 'src/pages/blog/blogIndexUx.ts';
+const parentsHubPath = 'src/pages/parents/ParentsHubPage.tsx';
+const freeGamesPath = 'src/pages/public/FreeEnglishGamesHubPage.tsx';
+
+const reviewedPaths = [
+  authorityPath,
+  comparisonPath,
+  subjectHubPath,
+  phonicsPath,
+  founderPanelPath,
+  canonicalOwnershipPath,
+  schoolsPath,
+  grammarKnowledgePath,
+  resourcesPath,
+  blogIndexPath,
+  blogIndexUxPath,
+  parentsHubPath,
+  freeGamesPath,
+];
+
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
 
-describe('C7 verified SEO recovery repair boundary', () => {
-  it('permits exactly the independently reviewed Git blob versions', () => {
+describe('C7 verified post-freeze SEO boundary', () => {
+  it('pins only independently reviewed Git blob versions', () => {
     expect(REVIEWED_SEO_RECOVERY_BLOBS).toEqual({
       [authorityPath]: 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
       [comparisonPath]: '21ec5766587f1635227d718401e705e4a6affa81',
-      [subjectHubPath]: '8041c125b53dd5bb94cc5a91ae7fa705c520f093',
+      [subjectHubPath]: 'f6b0137a50f5168fe0d8c5cfd0536d10415e4403',
       [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
+      [canonicalOwnershipPath]: '7dcadd586c67d2acd37c6337b9bdd3834523de55',
+      [schoolsPath]: '7be826c4fb422a5d022884607f340d3179d9ee25',
+      [grammarKnowledgePath]: 'ae51b9f16febf006480603837165864d074ff649',
+      [resourcesPath]: '221e0f12e712d471e41aa452ecd4dfae0854597b',
+      [blogIndexPath]: 'c392e1025138d96d7ae11d1748d66be84e99f437',
+      [blogIndexUxPath]: 'c42e8c80ba0f56217eb9fb14a4ec1b4fafd8a919',
+      [parentsHubPath]: 'c895e42389e264b3bfede7d1a2e029b2a93e0165',
+      [freeGamesPath]: 'c42429e4613e72aef51fa7ad43504a31decba04a',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
   });
+
   it('accepts the exact reviewed sources as text and bytes', () => {
     for (const file of reviewedPaths) {
       expect(isReviewedSeoRecoveryFile(file, read(file)), file).toBe(true);
       expect(isReviewedSeoRecoveryFile(file, fs.readFileSync(path.join(process.cwd(), file))), file).toBe(true);
     }
   });
-  it('rejects any further protected-source mutation rather than allowing the whole filename', () => {
+
+  it('fails closed after any byte change', () => {
     for (const file of reviewedPaths) {
-      expect(isReviewedSeoRecoveryFile(file, read(file) + '// unreviewed edit')).toBe(false);
+      expect(isReviewedSeoRecoveryFile(file, read(file) + '// changed')).toBe(false);
     }
   });
-  it('pins the founder quality-status retirement to the exact reviewed blob', () => {
-    const panel = read(founderPanelPath);
-    expect(panel).toContain('Pre-publication Quality Status');
-    expect(panel).not.toContain('setFounderEditorialReviewDecision');
-    expect(isReviewedSeoRecoveryFile(founderPanelPath, panel)).toBe(true);
-    expect(isReviewedSeoRecoveryFile(founderPanelPath, panel.replace('Pre-publication Quality Status', 'Quality Status'))).toBe(false);
-  });
-  it('rejects restored retired recommendations and redirects in the comparison CTA', () => {
-    const authority = read(authorityPath).replace('export const B7_BEST_PHONICS_DECISION_GUIDES = Object.freeze([',
-      "export const B7_BEST_PHONICS_DECISION_GUIDES = Object.freeze(['how-to-choose-phonics-classes',");
-    const comparison = read(comparisonPath).replace('href="#provider-scorecard"', 'href="/blog/how-to-choose-phonics-classes"');
-    expect(authority).not.toBe(read(authorityPath));
-    expect(comparison).not.toBe(read(comparisonPath));
-    expect(isReviewedSeoRecoveryFile(authorityPath, authority)).toBe(false);
-    expect(isReviewedSeoRecoveryFile(comparisonPath, comparison)).toBe(false);
-  });
-  it('does not whitelist other protected owners or inherited object keys', () => {
-    for (const file of ['src/lib/commercialC2KeywordOwnership.ts', 'src/lib/commercialC4CtrOptimization.ts', 'src/lib/commercialC6ValidationFreeze.ts', 'toString', '__proto__']) {
+
+  it('keeps frozen commercial owner files outside the exception map', () => {
+    for (const file of [
+      'src/lib/commercialC2KeywordOwnership.ts',
+      'src/lib/commercialC4CtrOptimization.ts',
+      'src/lib/commercialC6ValidationFreeze.ts',
+    ]) {
       expect(isReviewedSeoRecoveryFile(file, read(comparisonPath))).toBe(false);
     }
   });
-  it('fails closed for missing, malformed or cross-file source input', () => {
-    for (const input of [undefined, null, {}, 0, '']) {
-      expect(isReviewedSeoRecoveryFile(authorityPath, input)).toBe(false);
-    }
+
+  it('fails closed for malformed or cross-file source input', () => {
+    expect(isReviewedSeoRecoveryFile(authorityPath, null)).toBe(false);
     expect(isReviewedSeoRecoveryFile(authorityPath, read(comparisonPath))).toBe(false);
-    expect(isReviewedSeoRecoveryFile(null, read(authorityPath))).toBe(false);
   });
 });

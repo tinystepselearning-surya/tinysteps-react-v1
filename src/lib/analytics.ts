@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { isPublicAnalyticsPath } from './publicRouteManifest.js';
+import { isPublicAnalyticsPath } from './publicAnalyticsPathPolicy.js';
 import { classifyMarketingPath } from './analyticsClassification';
 
 let initialized = false;

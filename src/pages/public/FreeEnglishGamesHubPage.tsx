@@ -175,8 +175,16 @@ export default function FreeEnglishGamesHubPage() {
         title="English Excellence Games"
         trustLine="Play free English games for kids. No login required. Progress is saved only temporarily in this browser."
         topRight={
-          <div className="inline-flex items-center rounded-full border border-emerald-300/35 bg-white/80 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700 shadow-sm">
-            No Login Required
+          <div className="flex items-center gap-2">
+            <Link
+              to="/resources"
+              className="inline-flex items-center rounded-full border border-slate-300/40 bg-white/85 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-slate-700 shadow-sm"
+            >
+              All Resources
+            </Link>
+            <div className="inline-flex items-center rounded-full border border-emerald-300/35 bg-white/80 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700 shadow-sm">
+              No Login Required
+            </div>
           </div>
         }
         currentStage={currentStage}

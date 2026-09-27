@@ -1,4 +1,6 @@
 import { PHONICS_PUBLISHED_RESOURCE_PATHS } from './phonicsPublicationRegistry.js';
+import { GRAMMAR_PROGRAMMATIC_PATHS } from './grammarProgrammaticSeoManifest.js';
+export { isPublicAnalyticsPath } from './publicAnalyticsPathPolicy.js';
 
 const route = (path, group, {
   indexable = true,
@@ -26,6 +28,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/resources/phonics', 'static'),
   ...PHONICS_PUBLISHED_RESOURCE_PATHS.map((path) => route(path, 'static')),
   route('/resources/grammar', 'static'),
+  ...GRAMMAR_PROGRAMMATIC_PATHS.map((path) => route(path, 'static')),
   route('/resources/speaking', 'static'),
   route('/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', 'static'),
   route('/pricing', 'static'),
@@ -165,16 +168,3 @@ export const ROUTE_INTENT_MANIFEST = [
   ...PUBLIC_REDIRECT_MANIFEST.map((entry) => ({ ...entry, path: entry.source, intent: 'redirect', permanent: entry.status === 301 || entry.status === 308, sitemap: false, prerender: false })),
   ...APPLICATION_ROUTE_INTENT_MANIFEST,
 ];
-
-const DYNAMIC_PUBLIC_PREFIXES = DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST.map((entry) => entry.path.replace(/\*\*$/, ''));
-const PUBLIC_ANALYTICS_EXCLUSIONS = new Set(['/parents/payments']);
-const PUBLIC_ANALYTICS_ALIASES = new Set(['/games/english-excellence', '/online-phonics-reading-classes']);
-
-export function isPublicAnalyticsPath(pathname) {
-  const normalized = String(pathname || '/').toLowerCase().replace(/\/+$/, '') || '/';
-  if (PUBLIC_ANALYTICS_EXCLUSIONS.has(normalized)) return false;
-  if (PUBLIC_ANALYTICS_ALIASES.has(normalized)) return true;
-  const entry = PUBLIC_ROUTE_MANIFEST.find((candidate) => candidate.path === normalized);
-  if (entry) return true;
-  return DYNAMIC_PUBLIC_PREFIXES.some((prefix) => normalized.startsWith(prefix));
-}
