@@ -6,7 +6,7 @@ import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publ
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
 import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
-import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
 import ProgrammeHeroSnapshot from '../components/programs/ProgrammeHeroSnapshot';
@@ -240,16 +240,6 @@ export default function SpeakingPage() {
       })),
     };
 
-    const courseSchema = createCourseSchema({
-      name: 'Public Speaking & Communication Classes for Kids',
-      description:
-        'Live 1:1 public speaking and communication classes for kids focused on structured answers, storytelling, show-and-tell, presentations, audience awareness and clear communication.',
-      url: canonicalUrl,
-      educationalLevel: `${speakingFacts.levels.beginner.ageRange.label} Foundations; ${speakingFacts.levels.advanced.ageRange.label} Excellence`,
-      teaches: ['public speaking', 'structured answers', 'storytelling', 'show-and-tell', 'presentations', 'audience awareness', 'communication skills'],
-      areaServed: ['India', 'Worldwide'],
-    });
-
     const speakingEvidenceSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -276,7 +266,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -378,7 +368,7 @@ export default function SpeakingPage() {
             </p>
             <h2 className="ts-speaking-answer-title mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
             <p className="ts-speaking-answer-summary max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Public Speaking & Communication owns structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English, confidence-only barriers belong to Confidence Building, and sentence-accuracy problems belong to Grammar; the free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
+              Public Speaking & Communication is for children who can already communicate at a basic level and need stronger structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English; if the main difficulty is one-word everyday answers or sentence formation itself, Spoken English or Grammar may be the better starting point. Confidence-only barriers belong to Confidence Building. The free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
             </p>
           </article>
         </div>
