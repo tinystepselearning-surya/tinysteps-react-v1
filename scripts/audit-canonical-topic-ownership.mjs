@@ -100,6 +100,9 @@ for (const entry of CANONICAL_TOPIC_OWNERSHIP) {
       || (/^gp1-grammar-/.test(entry.id)
         && entry.ownerPath.startsWith('/resources/grammar/')
         && entry.hubPath === '/resources/grammar')
+      || (/^gv3-grammar-ref-/.test(entry.id)
+        && entry.ownerPath.startsWith('/resources/grammar/')
+        && entry.hubPath === '/resources/grammar')
     );
   if (entry.ownerPath.startsWith('/resources/') && entry.ownerRole !== 'subject-hub' && !isGovernedResourceSkillGuide) {
     fail(`Resources child route cannot own non-discovery intent for ${entry.id}: ${entry.ownerPath}`);
