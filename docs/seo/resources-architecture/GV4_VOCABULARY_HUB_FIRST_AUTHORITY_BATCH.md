@@ -185,7 +185,7 @@ GV4 adds:
 
 No commercial programme owner changes.
 
-Vocabulary is kept inside the existing canonical subject taxonomy as a governed general-English knowledge layer rather than modifying frozen Phonics, Grammar or Speaking subject ownership.
+Vocabulary is added as its own informational canonical subject. This keeps lexical knowledge distinct from broad-English commercial intent and prevents the frozen C7 layer from treating a Vocabulary guide as evidence that a parent is seeking a broad English programme. Phonics, Grammar, Reading, Speaking and Writing ownership remains unchanged.
 
 ## Central Resources discovery
 
