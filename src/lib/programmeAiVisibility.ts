@@ -157,6 +157,6 @@ for (const item of PROGRAMME_AI_VISIBILITY) {
   }
 }
 
-if (PROGRAMME_AI_VISIBILITY.some((item) => item.path === '/phonics')) {
+if (PROGRAMME_AI_VISIBILITY.some((item) => String(item.path) === '/phonics')) {
   throw new Error('Reading/Grammar/Speaking growth must not redefine the protected /phonics owner.');
 }
