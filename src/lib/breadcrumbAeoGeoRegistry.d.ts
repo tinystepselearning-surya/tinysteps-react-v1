@@ -1,7 +1,8 @@
 export type ResourceKnowledgeSubject =
   | 'phonics-reading'
   | 'grammar-writing'
-  | 'speaking-communication';
+  | 'speaking-communication'
+  | 'vocabulary';
 
 export type BreadcrumbItem = Readonly<{
   name: string;
