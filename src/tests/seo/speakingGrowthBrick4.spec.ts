@@ -56,7 +56,7 @@ describe('Speaking growth Brick 4 flagship page', () => {
   });
 
   it('adds class-sample, teacher-system, progress and parent-evidence proof surfaces', () => {
-    expect(speaking).toContain('How teachers deliver this course');
+    expect(speaking).toContain('program="Public Speaking & Communication"');
     expect(speaking).toContain('to="/class-samples"');
     expect(speaking).toContain('SPEAKING_EVIDENCE_SURFACES.map');
     expect(speakingEvidence).toContain("id: 'academic-ownership'");
