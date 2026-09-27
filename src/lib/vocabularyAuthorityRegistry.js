@@ -952,7 +952,139 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
     relatedPaths: ['/resources/vocabulary/everyday-vocabulary-for-kids', '/spoken-english-classes-for-kids-online', '/free-games/word-meaning-flashcards'],
     featuredWordIds: ['eat', 'sweet', 'bottle'],
   }),
-]);
+
+  page({
+    order: 8,
+    id: 'nature-weather-places-transport',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'nature-weather-places-transport-for-kids',
+    cardTitle: 'Nature, Weather, Places & Transport Vocabulary',
+    seoTitle: 'Nature, Weather, Places and Transport Vocabulary for Kids | Tiny Steps',
+    seoDescription: 'Build vocabulary for weather, nature, neighbourhood places, transport and travel through categories, scenes, context and real-life speaking.',
+    quickAnswer: 'Nature, weather, places and transport vocabulary helps children describe what they see around them and talk about movement through the world. Useful words include garden, river, cloudy, windy, market, library, street, bus and station. Children learn them best through scenes, routes, stories and real contexts rather than as four separate lists to memorise.',
+    concept: 'These domains connect naturally. A child may describe rainy weather while travelling by bus to a market, notice trees near a street, or explain a route from school to a library. Teaching the words in connected scenes helps children build semantic categories while also practising location, movement and descriptive language that supports reading and conversation.',
+    whyItMatters: 'Environmental vocabulary appears frequently in stories, school topics, travel, maps and everyday conversation. Children need place and transport words to understand where events happen and how people move. Weather and nature words support description and science-related reading. A broader vocabulary also helps children give directions, compare places and explain experiences with more detail.',
+    coreIdeas: [
+      'Build clear semantic groups first: weather, nature, town places and transport. Then deliberately connect them. For example, cloudy and windy belong to weather; tree and river to nature; market and library to places; bus and bicycle to transport. Classification gives structure, while connected sentences prevent the categories from remaining isolated.',
+      'Use scene and route language. Ask what a child can see, where something is, how a person could travel there and what the weather is like. A single picture or simple map can prompt nouns, action words and describing words. The vocabulary objective remains the meaning of the target words, while grammar such as prepositions can be reinforced naturally.',
+      'Teach transport words with purpose and context rather than ranking one option as universally best. Walk, bicycle, bus, train, car and boat fit different distances and environments. Children can explain which word matches a scenario and why, building precise understanding without turning the language task into transport policy or safety advice.',
+    ],
+    workedExamples: [
+      {
+        example: '“Dark clouds gathered above the park, and a strong wind moved the branches.”',
+        explanation: 'Clouds, park, wind and branches connect weather and nature vocabulary in one scene. The child can infer that conditions are changing and add a suitable word such as rainy only if the context supports it. This encourages evidence-based description.',
+      },
+      {
+        example: '“We walked along the street to the market, then took a bus home.”',
+        explanation: 'Street and market are place words, while walked and bus describe movement and transport. A follow-up can ask for a different route or destination, forcing the child to retrieve the vocabulary in a changed context.',
+      },
+      {
+        example: '“The library is opposite the garden and near the bus stop.”',
+        explanation: 'The example combines two known place words with a transport location. It can be used with a simple map so children connect vocabulary to visual position and real navigation language without needing to memorise a route script.',
+      },
+    ],
+    examples: [
+      'Weather and nature: sunny, cloudy, windy, rain, river, tree, garden',
+      'Places: street, market, library, park, station, bridge',
+      'Transport and travel: walk, bicycle, bus, train, car, boat, journey',
+    ],
+    commonMistakes: [
+      'Teaching large themed posters as if pointing and naming once proves secure vocabulary knowledge.',
+      'Mixing weather and climate explanations into a basic word lesson without enough language support, which can overwhelm the lexical goal.',
+      'Practising route or transport sentences as one fixed script instead of changing destinations, weather and travel choices to test flexible retrieval.',
+    ],
+    trickyCases: [
+      'Place words can be broad or specific. Station may refer to a train, bus or other service depending on context, while market can describe a physical place or a broader buying-and-selling system in advanced texts. Teach the concrete child-relevant meaning first and expand only when context requires it.',
+      'Weather words often combine with intensity and time. Light rain, heavy rain, a windy morning and a sudden storm are different expressions. Children can notice these natural combinations without needing a full meteorology explanation.',
+    ],
+    teachingNote: 'Use photographs, short travel stories, simple maps and local scenes. Start with a small semantic set, then ask the child to describe a changed scene or plan a route using target words. Encourage questions such as “How do you know it is windy?” or “Which place would you visit to borrow a book?” These require meaning, not label recall. Revisit the same words in reading so visual vocabulary transfers into text comprehension.',
+    practicePrompts: [
+      'Sort sixteen words into weather, nature, places and transport, then create four sentences that combine words from at least two categories.',
+      'Use a simple map to give a route from a school to a library, market or park, changing the transport word and one landmark each time.',
+      'Describe two weather scenes using evidence from the picture and choose precise words such as cloudy, windy, bright or wet rather than guessing unsupported details.',
+    ],
+    faqs: [
+      {
+        question: 'Should children learn vocabulary by topic?',
+        answer: 'Topic grouping is useful because related words form a memory network, but children also need to use the words outside the original topic page. After learning transport words, for example, include them in a story, route task or conversation. Category learning plus varied retrieval is stronger than memorising one themed list.',
+      },
+      {
+        question: 'How can this vocabulary support reading comprehension?',
+        answer: 'Stories and informational texts often assume that readers know common place, weather and travel words. When those words are familiar, children can spend more attention on events and ideas. If a word is unknown, connect it to the scene or context, then return to the sentence and check that the meaning fits.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/context-clues-for-kids', '/reading-classes-for-kids', '/spoken-english-classes-for-kids-online'],
+    featuredWordIds: ['garden', 'market', 'street', 'library', 'bright'],
+  }),
+
+  page({
+    order: 10,
+    id: 'multiple-meaning-confused-words',
+    stageId: 'word-relationships',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'multiple-meaning-confused-words-for-kids',
+    cardTitle: 'Multiple-Meaning & Easily Confused Words',
+    seoTitle: 'Multiple-Meaning and Easily Confused Words for Kids | Tiny Steps',
+    seoDescription: 'Help children use context to choose the right meaning and distinguish words that look, sound or seem similar but work differently.',
+    quickAnswer: 'Multiple-meaning words have more than one related or established meaning, while easily confused words can look, sound or seem similar even though their meanings or uses differ. Children need to use sentence context, meaning clues and careful comparison to decide which word or sense fits, rather than choosing only from spelling or sound.',
+    concept: 'English contains words whose meaning changes with context and word pairs that learners commonly mix up. Light can describe brightness or low weight; bank can refer to a place for money or the side of a river. Pairs such as quiet and quite or accept and except require comparison because visual similarity does not make the meanings interchangeable. The central skill is checking meaning inside the whole sentence.',
+    whyItMatters: 'Confusion at the word level can change comprehension and writing meaning even when a sentence looks nearly correct. Readers may misunderstand a story if they select the first familiar meaning of a multiple-meaning word. Writers may choose a similar-looking word that creates the wrong message. Learning to pause, inspect context and verify meaning supports reading accuracy, spelling awareness and editing.',
+    coreIdeas: [
+      'For multiple-meaning words, teach one familiar sense first, then contrast a second sense in clearly different sentences. Ask what clues make the meaning change. “The bag is light” points to weight, while “Turn on the light” points to illumination. Children should explain the evidence rather than memorise two definitions without context.',
+      'For easily confused words, compare meaning and usage directly. Quiet means making little noise, while quite often changes degree; their spellings are similar but their jobs and meanings differ. Accept and except also look similar but express different ideas. Short contrast sentences are more useful than copying each word repeatedly in isolation.',
+      'Use a verify step. After selecting a meaning or word, reread the complete sentence and substitute a simple explanation where possible. If bank means river edge, “We sat on the edge of the river” should preserve the message. If the replacement does not make sense, the child should reconsider rather than treating the first guess as final.',
+    ],
+    workedExamples: [
+      {
+        example: '“This box is light.” / “Please switch on the light.”',
+        explanation: 'The first sentence uses light to mean not heavy; the second uses it to mean illumination. Box and switch on are strong contextual clues. Children can paraphrase each sentence to show that the same spelling does not guarantee the same meaning.',
+      },
+      {
+        example: '“Please be quiet during the reading.” / “The puzzle was quite difficult.”',
+        explanation: 'Quiet relates to low noise, while quite modifies the degree of difficult. The words look similar, so visual memory alone can cause errors. Reading the entire sentence reveals which meaning is required.',
+      },
+      {
+        example: '“They sat on the river bank and watched the water.”',
+        explanation: 'Water and river strongly support the river-edge meaning of bank rather than a financial institution. The child can replace bank with river edge to test the inference, then compare it with a second sentence about depositing money.',
+      },
+    ],
+    examples: [
+      'Multiple meanings: light, bank, bat, ring, watch',
+      'Similar-looking confusions: quiet/quite, accept/except, lose/loose',
+      'Context check: identify clues → propose meaning → reread → verify',
+    ],
+    commonMistakes: [
+      'Choosing the most familiar meaning of a word without checking whether it makes sense in the current sentence.',
+      'Assuming words that look or sound similar must be related in meaning.',
+      'Correcting a confused word from spelling alone without asking what the writer intended to say.',
+    ],
+    trickyCases: [
+      'Some words have many dictionary meanings, and children do not need all of them at once. Teach the senses that appear in age-appropriate reading and add others when a real text creates a reason. Too many definitions can make a useful strategy feel like a memory test.',
+      'Homophones, multiple-meaning words and near-confusions are different relationships, and classroom labels can vary. The practical priority is consistent: use context, compare meanings and verify the chosen word. Terminology should support that reasoning rather than become the main learning target.',
+    ],
+    teachingNote: 'Use pairs of short sentences where one clue clearly changes the meaning. Ask the child to underline the clue, explain the sense in simple words and test a paraphrase. For confused pairs, place both words in meaningful sentences and discuss why swapping them would change or break the message. Later move into short paragraphs where clues are less obvious. Encourage dictionary checking when context does not provide enough information.',
+    practicePrompts: [
+      'Read eight sentences containing four multiple-meaning words and explain which sense is active in each sentence using one clue as evidence.',
+      'Choose the correct word from five easily confused pairs, then explain the meaning difference rather than relying only on spelling.',
+      'Write two sentences for one multiple-meaning word so that each sentence clearly activates a different meaning, then ask another person to identify the clues.',
+    ],
+    faqs: [
+      {
+        question: 'Are multiple-meaning words the same as homophones?',
+        answer: 'Not necessarily. A multiple-meaning word uses the same written form for more than one meaning, often with related or established senses. Homophones are different words that sound the same, such as pair and pear. Children do not need advanced linguistic labels to solve the problem; they need to use context and meaning to identify the intended word or sense.',
+      },
+      {
+        question: 'What should a child do when context is not enough?',
+        answer: 'A strong reader can recognise uncertainty. If nearby sentences do not provide enough evidence, check a dictionary, glossary, teacher or another reliable source. Context is a useful first strategy, not a guarantee that every exact meaning can be inferred from every sentence.',
+      },
+    ],
+    sourceIds: ['ies-context-clues', 'british-council-vocabulary-overview', 'ies-reading-interventions'],
+    relatedPaths: ['/resources/vocabulary/context-clues-for-kids', '/resources/vocabulary/synonyms-antonyms-for-kids', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: [],
+  }),
+].sort((a, b) => a.order - b.order));
 
 export const VOCABULARY_AUTHORITY_PATHS = freezeList(
   VOCABULARY_AUTHORITY_PAGES.map((entry) => entry.path),
