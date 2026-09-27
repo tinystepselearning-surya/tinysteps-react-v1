@@ -5,6 +5,8 @@ type ResponsiveTeachingSectionProps = {
   steps: Array<{ title: string; detail: string }>;
   observation: string;
   appearance?: 'default' | 'premium';
+  eyebrow?: string;
+  title?: string;
 };
 
 export default function ResponsiveTeachingSection({
@@ -14,6 +16,8 @@ export default function ResponsiveTeachingSection({
   steps,
   observation,
   appearance = 'default',
+  eyebrow = 'Responsive teaching in practice',
+  title = 'How teachers deliver this course',
 }: ResponsiveTeachingSectionProps) {
   const headingId = `${id}-heading`;
   const premium = appearance === 'premium';
@@ -36,10 +40,10 @@ export default function ResponsiveTeachingSection({
         <div className={premium ? 'grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:gap-10' : ''}>
           <div>
             <p className={premium ? 'text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500' : 'text-xs font-bold uppercase tracking-[0.18em] text-emerald-800'}>
-              Responsive teaching in practice
+              {eyebrow}
             </p>
             <h2 id={headingId} className={premium ? 'mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl' : 'mt-3 text-2xl font-bold text-slate-950 sm:text-3xl'}>
-              How teachers deliver this course
+              {title}
             </h2>
             <p className={premium ? 'mt-3 max-w-xl text-sm leading-6 text-slate-600 md:text-[15px]' : 'mt-4 max-w-4xl text-sm leading-7 text-slate-700 md:text-base'}>
               {introduction}
