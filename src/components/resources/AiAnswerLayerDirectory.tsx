@@ -134,7 +134,7 @@ const AiAnswerLayerDirectory: FC<{ subject?: AiAnswerSubject; compact?: boolean 
                 <p className="mt-2 text-xs leading-5 text-slate-600">{config.description}</p>
 
                 <div className="mt-3 space-y-2">
-                  {config.items.slice(0, subject ? 4 : 6).map((entry) => (
+                  {config.items.slice(0, subject ? 4 : 8).map((entry) => (
                     <Link
                       key={entry.id}
                       to={entry.canonicalPath}
