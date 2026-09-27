@@ -160,8 +160,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Bottom line for parents' },
     { type: 'p', content: 'SATPIN is useful when it does its real job: **help a child turn a manageable starter set of sound–spelling relationships into early reading and spelling**. Do not race to finish six letters, and do not stay on isolated sounds after the child is ready to blend. Teach cumulatively, use fresh words, connect reading with spelling, and move ahead when the process is becoming stable enough to carry new phonics knowledge.' },
-    { type: 'p', content: 'If you want structured help identifying the right starting point and progressing beyond SATPIN, explore the [Tiny Steps phonics programme](/phonics) or [book a free 35-minute 1:1 demo assessment](/book-demo).' },
-    { type: 'p', content: 'If you are choosing between providers rather than learning SATPIN itself, use the [phonics programme comparison guide](/best-online-phonics-classes-for-kids-in-india). For India-specific cost and package benchmarks, use [Phonics Class Fees in India](/phonics-fees-india). Those pages own provider-selection and pricing intent so this guide can stay focused on SATPIN teaching and progression.' }
+    { type: 'p', content: 'If you want structured help identifying the right starting point and progressing beyond SATPIN, explore the [Tiny Steps phonics programme](/phonics) or [book a free 35-minute 1:1 demo assessment](/book-demo).' }
   ],
   faq: [
     {
