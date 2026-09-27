@@ -56,7 +56,7 @@ const FIRST_BATCH_IDS = [
 ];
 
 describe('GV4 Vocabulary hub and first authority publication batch', () => {
-  it('publishes one Vocabulary hub and exactly six approved authority guides from the frozen 16-topic architecture', () => {
+  it('preserves the original six-guide GV4 publication inside the additive Vocabulary architecture', () => {
     expect(VOCABULARY_AUTHORITY_REVISION).toBe('2026-09-27-gv5');
     expect(VOCABULARY_HUB_PATH).toBe('/resources/vocabulary');
     expect(VOCABULARY_AUTHORITY_REQUIREMENTS).toHaveLength(16);
@@ -77,7 +77,7 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     }
   });
 
-  it('keeps the remaining ten planned authority topics unpublished and out of public routing', () => {
+  it('keeps every still-unpublished authority topic out of public routing', () => {
     const published = new Set(VOCABULARY_AUTHORITY_PAGES.map((page) => page.id));
     const publicPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
     const remaining = VOCABULARY_AUTHORITY_REQUIREMENTS.filter((item) => !published.has(item.id));
