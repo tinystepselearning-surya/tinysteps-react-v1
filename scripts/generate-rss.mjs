@@ -22,8 +22,8 @@ import {
   PHONICS_PUBLISHED_RESOURCE_PAGES,
 } from '../src/lib/phonicsPublicationRegistry.js';
 import {
-  GRAMMAR_PROGRAMMATIC_PAGES,
-} from '../src/lib/grammarProgrammaticRegistry.js';
+  GRAMMAR_KNOWLEDGE_PAGES,
+} from '../src/lib/grammarKnowledgeRegistry.js';
 import {
   AI_ANSWER_LAYER_DEFINITIONS,
   AI_ANSWER_LAYERS,
@@ -277,13 +277,14 @@ function buildProgrammaticPhonicsCorpus() {
 }
 
 function buildProgrammaticGrammarCorpus() {
-  return GRAMMAR_PROGRAMMATIC_PAGES.map((page) => ({
+  return GRAMMAR_KNOWLEDGE_PAGES.map((page) => ({
     id: `grammar-resource-${page.id}`,
-    content_type: 'programmatic-grammar-guide',
+    content_type: page.state === 'reference-extension' ? 'grammar-reference-extension' : 'programmatic-grammar-guide',
     title: page.cardTitle,
     summary: page.seoDescription || page.quickAnswer,
     canonical_url: toCanonicalAbsoluteUrl(page.path),
-    sequence_order: page.order,
+    sequence_order: page.state === 'published' ? page.order : null,
+    reference_order: page.state === 'reference-extension' ? page.referenceOrder : null,
     indexing_state: 'indexable',
     retrieval_role: 'canonical-informational',
     answer_eligible: true,
@@ -299,7 +300,7 @@ function buildProgrammaticGrammarCorpus() {
 function buildPublicRouteCorpus(blogItemMap) {
   const programmaticPaths = new Set([
     ...PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page.path),
-    ...GRAMMAR_PROGRAMMATIC_PAGES.map((page) => page.path),
+    ...GRAMMAR_KNOWLEDGE_PAGES.map((page) => page.path),
   ]);
   const manifestByPath = new Map(PUBLIC_ROUTE_MANIFEST.map((entry) => [entry.path, entry]));
   const routePaths = new Set([
@@ -373,7 +374,10 @@ function resolveAiAnswer(entry, blogItemMap) {
 
 function resolveAiExternalReferences(entry, blogItemMap) {
   const absolute = toCanonicalAbsoluteUrl(entry.canonicalPath);
-  return [...new Set(blogItemMap.get(absolute)?.externalReferences || [])];
+  const editorialReferences = blogItemMap.get(absolute)?.externalReferences || [];
+  const grammarPage = GRAMMAR_KNOWLEDGE_PAGES.find((page) => page.path === entry.canonicalPath);
+  const grammarReferences = grammarPage?.sources?.map((source) => source.url).filter(Boolean) || [];
+  return [...new Set([...editorialReferences, ...grammarReferences])];
 }
 
 function resolveAiAnswerSelector(entry) {
@@ -410,7 +414,7 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
   }));
   return {
     name: 'Tiny Steps AI Resource Answer Index',
-    revision: '2026-09-26-r24-r27',
+    revision: '2026-09-27-gv3',
     canonical_resource_center: SITE_URL + '/resources',
     purpose: 'Machine-readable routing from parent problems to canonical educational answers and focused practice.',
     retrieval_guidance: 'Use canonical_url as the primary answer source, use reference_urls for connected context, and use practice_urls only after the answer/skill is understood.',
