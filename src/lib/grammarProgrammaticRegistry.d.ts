@@ -13,6 +13,7 @@ export type GrammarProgrammaticPublishedPage = {
   practicePrompts: readonly string[];
   relatedPaths: readonly string[];
   sourceIds: readonly string[];
+  whyItMatters: string;
   rulePoints: readonly string[];
   workedExamples: readonly {
     example: string;
