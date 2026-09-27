@@ -21,6 +21,7 @@ const RESOURCE_PATH_LABELS = freeze({
   '/resources/phonics': 'Phonics & Reading',
   '/resources/grammar': 'Grammar & Writing',
   '/resources/speaking': 'Speaking & Communication',
+  '/resources/vocabulary': 'Vocabulary',
 });
 
 function normalizePath(value) {
@@ -55,6 +56,16 @@ export function getBreadcrumbTrail({ pathname, title, category } = {}) {
       home,
       { name: 'Resources', path: '/resources' },
       { name: RESOURCE_PATH_LABELS['/resources/phonics'], path: '/resources/phonics' },
+      { name: currentName, path },
+    ]);
+  }
+
+  if (path.startsWith('/resources/vocabulary/')) {
+    const currentName = String(title || 'Vocabulary guide').trim() || 'Vocabulary guide';
+    return freezeTrail([
+      home,
+      { name: 'Resources', path: '/resources' },
+      { name: RESOURCE_PATH_LABELS['/resources/vocabulary'], path: '/resources/vocabulary' },
       { name: currentName, path },
     ]);
   }
@@ -112,17 +123,20 @@ export function buildBreadcrumbListSchema(items, siteOrigin) {
 
 export function getAeoGeoPresentation({ pathname, category } = {}) {
   const path = normalizePath(pathname);
+  const isVocabulary = path.startsWith('/resources/vocabulary/');
   const subject = path.startsWith('/resources/phonics/')
     ? 'phonics-reading'
     : path.startsWith('/blog/')
       ? subjectForBlogPath(path, category)
-      : null;
+      : isVocabulary
+        ? 'vocabulary-language'
+        : null;
   const subjectPresentation = subject ? RESOURCE_SUBJECT_PRESENTATION[subject] : null;
 
   return freeze({
     subject: subject || null,
-    subjectHubPath: subjectPresentation?.path || null,
-    aboutName: subjectPresentation?.aboutName || null,
+    subjectHubPath: isVocabulary ? '/resources/vocabulary' : subjectPresentation?.path || null,
+    aboutName: isVocabulary ? 'Vocabulary learning for children' : subjectPresentation?.aboutName || null,
     breadcrumbPath: path,
     answerSelectors: freeze(['.ts-answer-title', '.ts-answer-summary']),
   });
