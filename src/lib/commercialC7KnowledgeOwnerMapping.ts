@@ -197,6 +197,14 @@ function inferOwner(input: MappingInput): { owner: string | null; family: Commer
       rationale: 'Pure practice intent stays low-pressure until the parent signals a programme decision; R1 does not force a commercial CTA.',
     };
   }
+  if (input.subjects.includes('vocabulary') && input.commercialTargets.length === 0 && !input.directAssessment) {
+    return {
+      owner: null,
+      family: 'soft-discovery',
+      rationale:
+        'Vocabulary authority pages remain informational and practice-led. R1 must not infer a speaking, writing or broad-English programme owner from transfer terminology in the page path or topic ID.',
+    };
+  }
   if (text.includes('parent-routine') && input.commercialTargets.length === 0) {
     return {
       owner: null,
