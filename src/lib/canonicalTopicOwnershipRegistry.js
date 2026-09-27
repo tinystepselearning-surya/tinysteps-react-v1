@@ -19,6 +19,7 @@ export const CANONICAL_TOPIC_SUBJECTS = Object.freeze([
   'speaking-communication',
   'schools-research',
   'general-english',
+  'vocabulary',
 ]);
 
 export const CANONICAL_TOPIC_OWNER_ROLES = Object.freeze([
@@ -490,7 +491,7 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     forbiddenCompetingOwners: [],
   })),
   topic('gv4-vocabulary-hub', {
-    subject: 'general-english',
+    subject: 'vocabulary',
     intent: 'informational',
     ownerPath: '/resources/vocabulary',
     ownerRole: 'subject-hub',
@@ -500,7 +501,7 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     forbiddenCompetingOwners: [],
   }),
   ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`gv4-vocabulary-${page.id}`, {
-    subject: 'general-english',
+    subject: 'vocabulary',
     intent: 'informational',
     ownerPath: page.path,
     ownerRole: 'skill-guide',
