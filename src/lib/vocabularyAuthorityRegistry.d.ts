@@ -1,7 +1,7 @@
 export type VocabularyAuthorityPage = Readonly<{
   state: 'published';
   publicationApproved: true;
-  publicationBatch: 'gv4-first-authority-batch' | 'gv5-natural-english-transfer';
+  publicationBatch: 'gv4-first-authority-batch' | 'gv5-natural-english-transfer' | 'gv5b-foundation-completion';
   hubPath: '/resources/vocabulary';
   practicePath: '/free-games/word-meaning-flashcards';
   order: number;
