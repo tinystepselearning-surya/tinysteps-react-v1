@@ -10,9 +10,25 @@ import {
 import { PUBLIC_ROUTE_MANIFEST } from '../../lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
+import { GRAMMAR_KNOWLEDGE_ENRICHMENT_IDS } from '../../lib/grammarKnowledgeEnrichment.js';
+import { GRAMMAR_KNOWLEDGE_SOURCES } from '../../lib/grammarKnowledgeSources.js';
 
 const root = process.cwd();
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
+const countWords = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+
+const knowledgeWordCount = (page: (typeof GRAMMAR_PROGRAMMATIC_PAGES)[number]) => countWords([
+  page.quickAnswer,
+  page.concept,
+  ...page.examples,
+  ...page.commonMistakes,
+  ...page.practicePrompts,
+  ...page.rulePoints,
+  ...page.workedExamples.flatMap((item) => [item.example, item.explanation]),
+  page.teachingNote,
+  ...page.trickyCases,
+  ...page.faqs.flatMap((item) => [item.question, item.answer]),
+].join(' '));
 
 describe('Governed grammar programmatic resources', () => {
   it('publishes a bounded 32-page set inside a 38-step curriculum-aligned sequence', () => {
@@ -39,13 +55,28 @@ describe('Governed grammar programmatic resources', () => {
     expect(GRAMMAR_PROGRAMMATIC_PATHS.some((route) => route.includes('subject-verb'))).toBe(false);
   });
 
-  it('requires substantial differentiated content on every generated grammar concept', () => {
+  it('requires genuinely substantial, referenced knowledge content on every generated grammar concept', () => {
+    expect(GRAMMAR_KNOWLEDGE_ENRICHMENT_IDS).toHaveLength(32);
+    expect(Object.keys(GRAMMAR_KNOWLEDGE_SOURCES).length).toBeGreaterThanOrEqual(20);
+
     for (const page of GRAMMAR_PROGRAMMATIC_PAGES) {
-      expect(page.quickAnswer.length, page.id).toBeGreaterThan(90);
-      expect(page.concept.length, page.id).toBeGreaterThan(120);
+      expect(countWords(page.quickAnswer), page.id).toBeGreaterThanOrEqual(20);
+      expect(countWords(page.concept), page.id).toBeGreaterThanOrEqual(20);
+      expect(knowledgeWordCount(page), page.id).toBeGreaterThanOrEqual(400);
       expect(page.examples, page.id).toHaveLength(3);
       expect(page.commonMistakes, page.id).toHaveLength(3);
       expect(page.practicePrompts, page.id).toHaveLength(3);
+      expect(page.rulePoints, page.id).toHaveLength(3);
+      expect(page.workedExamples, page.id).toHaveLength(3);
+      expect(page.trickyCases, page.id).toHaveLength(2);
+      expect(page.faqs, page.id).toHaveLength(2);
+      expect(page.sources.length, page.id).toBeGreaterThanOrEqual(2);
+      expect(new Set(page.sources.map((source) => source.url)).size, page.id).toBe(page.sources.length);
+      for (const source of page.sources) {
+        expect(source.url.startsWith('https://'), `${page.id}:${source.id}`).toBe(true);
+        expect(source.publisher.length, `${page.id}:${source.id}`).toBeGreaterThan(3);
+        expect(source.note.length, `${page.id}:${source.id}`).toBeGreaterThan(20);
+      }
       expect(page.path.startsWith('/resources/grammar/'), page.id).toBe(true);
       expect(page.hubPath, page.id).toBe('/resources/grammar');
     }
@@ -98,6 +129,15 @@ describe('Governed grammar programmatic resources', () => {
     expect(page).toContain('ts-answer-title');
     expect(page).toContain('ts-answer-summary');
     expect(page).toContain("'@type': 'DefinedTerm'");
+    expect(page).toContain("'@type': 'FAQPage'");
+    expect(page).toContain('citation: page.sources.map');
+    expect(page).toContain('Core rules and patterns');
+    expect(page).toContain('Worked examples');
+    expect(page).toContain('Tricky cases and useful distinctions');
+    expect(page).toContain('How to teach it');
+    expect(page).toContain('References and further reading');
+    expect(page).toContain('{relatedLabel(path)}');
+    expect(page).not.toContain('>Related guide</Link>');
     expect(hub).toContain('<GrammarProgrammaticGuideGrid />');
   });
 
