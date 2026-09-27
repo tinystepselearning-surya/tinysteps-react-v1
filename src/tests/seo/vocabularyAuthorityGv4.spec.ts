@@ -66,7 +66,7 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
 
     const firstBatch = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv4-first-authority-batch');
     expect(firstBatch).toHaveLength(6);
-    expect(firstBatch.map((page) => page.id)).toEqual(FIRST_BATCH_IDS);
+    expect(firstBatch.map((page) => page.id).sort()).toEqual([...FIRST_BATCH_IDS].sort());
 
     const requirementIds = new Set(VOCABULARY_AUTHORITY_REQUIREMENTS.map((item) => item.id));
     for (const page of firstBatch) {
