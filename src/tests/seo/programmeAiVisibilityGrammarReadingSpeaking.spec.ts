@@ -42,8 +42,8 @@ describe('Grammar, Reading and Speaking AI visibility hardening', () => {
     expect(reading?.doNotOwn.join(' ')).toContain('phonics');
     expect(reading?.handoffs.some((item) => item.path === '/phonics')).toBe(true);
 
-    expect(readingSource).toContain('They should not take over phonics ownership');
-    expect(readingSource).toContain('the correct first route is the Phonics programme');
+    expect(readingSource).toContain('Phonics owns sound–spelling knowledge, blending, and decoding unfamiliar words');
+    expect(readingSource).toContain('the child is routed to the Phonics programme first');
     expect(readingSource).toContain('From accurate connected reading to comprehension and confidence');
     expect(readingSource).not.toContain("title: '1. Decode unfamiliar words'");
     expect(readingSource).not.toContain("'Decoding accuracy'");
@@ -72,7 +72,10 @@ describe('Grammar, Reading and Speaking AI visibility hardening', () => {
 
     expect(speakingSource).toContain('Everyday conversational fluency belongs to Spoken English');
     expect(speakingSource).toContain('confidence-only barriers belong to Confidence Building');
-    expect(speakingSource).toContain("teaches: ['public speaking', 'structured answers', 'storytelling', 'show-and-tell', 'presentations', 'audience awareness', 'communication skills']");
+    expect(speakingSource).toContain("{ '@type': 'Thing', name: 'Public speaking classes for kids' }");
+    expect(speakingSource).toContain("{ '@type': 'Thing', name: 'Structured spoken answers' }");
+    expect(speakingSource).toContain("name: 'Tiny Steps Public Speaking levels'");
+    expect(speakingSource).not.toContain('createCourseSchema(');
   });
 
   it('uses answer-engine extraction and shared intent-boundary UI on all three pages', () => {
