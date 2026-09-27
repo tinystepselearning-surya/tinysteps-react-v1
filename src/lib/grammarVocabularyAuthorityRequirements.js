@@ -63,6 +63,7 @@ const grammarGap = (config) => freeze({
   requiredSections: AUTHORITY_PAGE_REQUIRED_SECTIONS,
   ...config,
   relatedCoreIds: freezeList(config.relatedCoreIds || []),
+  relatedReferenceIds: freezeList(config.relatedReferenceIds || []),
   childOutcomes: freezeList(config.childOutcomes || []),
   practiceTargets: freezeList(config.practiceTargets || []),
 });
@@ -160,7 +161,7 @@ export const GRAMMAR_REFERENCE_EXTENSION_REQUIREMENTS = freezeList([
   }),
   grammarGap({
     order: 10,
-    id: 'collocations',
+    id: 'grammar-collocations',
     label: 'Collocations for Kids',
     proposedPath: '/resources/grammar/collocations-for-kids',
     rationale: 'Tiny Steps has collocation practice, but no authority resource explaining why some word combinations are natural and others are merely grammatically possible.',
@@ -174,7 +175,8 @@ export const GRAMMAR_REFERENCE_EXTENSION_REQUIREMENTS = freezeList([
     label: 'Easily Confused English Words',
     proposedPath: '/resources/grammar/easily-confused-words-for-kids',
     rationale: 'Tiny Steps does not currently have a public authority cluster for high-frequency meaning and form confusions such as advice/advise, affect/effect or then/than.',
-    relatedCoreIds: ['word-formation', 'adverbs', 'prepositions'],
+    relatedCoreIds: ['adverbs', 'prepositions'],
+    relatedReferenceIds: ['word-formation'],
     childOutcomes: ['distinguish commonly confused forms', 'use sentence context to choose accurately', 'edit meaning-changing word errors'],
     practiceTargets: ['contrast pairs', 'context selection', 'error correction'],
   }),
@@ -229,7 +231,7 @@ export const VOCABULARY_KNOWLEDGE_STAGES = freezeList([
     order: 5,
     label: 'Natural English',
     purpose: 'Teach common word partnerships and multi-word expressions so children produce language that is natural as well as grammatically possible.',
-    topicIds: ['collocations', 'phrasal-verbs-expressions'],
+    topicIds: ['vocabulary-collocations', 'phrasal-verbs-expressions'],
   }),
   vocabularyStage({
     id: 'transfer-speaking-writing',
@@ -392,7 +394,7 @@ export const VOCABULARY_AUTHORITY_REQUIREMENTS = freezeList([
   }),
   vocabularyTopic({
     order: 13,
-    id: 'collocations',
+    id: 'vocabulary-collocations',
     stageId: 'natural-english',
     label: 'Collocations for Kids',
     proposedPath: '/resources/vocabulary/collocations-for-kids',
