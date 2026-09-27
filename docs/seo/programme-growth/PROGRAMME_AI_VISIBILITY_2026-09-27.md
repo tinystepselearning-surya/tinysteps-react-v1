@@ -79,7 +79,7 @@ Grammar/sentence-control barriers remain with Grammar.
 
 2. **Schema / Google-facing semantics**
    - WebPage `about` entities;
-   - Course schema on all three programme owners;
+   - Course schema retained where the existing architecture supports it (Grammar) and added for Reading; Speaking keeps its frozen WebPage + ItemList level architecture rather than pretending the two speaking levels are one Course entity;
    - FAQ schema retained;
    - speakable selectors on the visible answer summaries.
 
