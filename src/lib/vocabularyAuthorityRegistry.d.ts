@@ -1,0 +1,42 @@
+export type VocabularyAuthorityPage = Readonly<{
+  state: 'published';
+  publicationApproved: true;
+  publicationBatch: 'gv4-first-authority-batch';
+  hubPath: '/resources/vocabulary';
+  practicePath: '/free-games/word-meaning-flashcards';
+  order: number;
+  id: string;
+  stageId: string;
+  slug: string;
+  cardTitle: string;
+  seoTitle: string;
+  seoDescription: string;
+  quickAnswer: string;
+  concept: string;
+  whyItMatters: string;
+  coreIdeas: readonly string[];
+  workedExamples: readonly { example: string; explanation: string }[];
+  examples: readonly string[];
+  commonMistakes: readonly string[];
+  trickyCases: readonly string[];
+  teachingNote: string;
+  practicePrompts: readonly string[];
+  faqs: readonly { question: string; answer: string }[];
+  sourceIds: readonly string[];
+  sources: readonly {
+    id: string;
+    publisher: string;
+    title: string;
+    url: string;
+    note: string;
+  }[];
+  relatedPaths: readonly string[];
+  featuredWordIds: readonly string[];
+  path: string;
+}>;
+
+export const VOCABULARY_AUTHORITY_REVISION: string;
+export const VOCABULARY_AUTHORITY_PAGES: readonly VocabularyAuthorityPage[];
+export const VOCABULARY_AUTHORITY_PATHS: readonly string[];
+export function getVocabularyAuthorityPageBySlug(slug: string): VocabularyAuthorityPage | null;
+export function getVocabularyAuthorityPageByPath(pathname: string): VocabularyAuthorityPage | null;

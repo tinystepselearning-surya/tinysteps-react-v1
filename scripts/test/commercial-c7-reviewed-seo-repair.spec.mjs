@@ -16,6 +16,8 @@ const blogIndexPath = 'src/pages/blog/BlogIndexPage.tsx';
 const blogIndexUxPath = 'src/pages/blog/blogIndexUx.ts';
 const parentsHubPath = 'src/pages/parents/ParentsHubPage.tsx';
 const freeGamesPath = 'src/pages/public/FreeEnglishGamesHubPage.tsx';
+const vocabularyHubPath = 'src/pages/VocabularyHubPage.tsx';
+const vocabularyKnowledgePath = 'src/pages/VocabularyKnowledgePage.tsx';
 
 const reviewedPaths = [
   authorityPath,
@@ -31,6 +33,8 @@ const reviewedPaths = [
   blogIndexUxPath,
   parentsHubPath,
   freeGamesPath,
+  vocabularyHubPath,
+  vocabularyKnowledgePath,
 ];
 
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
@@ -43,14 +47,16 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [subjectHubPath]: '665c15035d57085afe9ffc7d194753da506b824a',
       [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-      [canonicalOwnershipPath]: 'd758197495553a9578b0f4d20ca82175943aad67',
+      [canonicalOwnershipPath]: 'c65569e68b8f0e12bfe65697d9de26fe9df83b06',
       [schoolsPath]: '7be826c4fb422a5d022884607f340d3179d9ee25',
       [grammarKnowledgePath]: '80190e0e6da35419d90bf22d3da534d3547f4415',
-      [resourcesPath]: '221e0f12e712d471e41aa452ecd4dfae0854597b',
+      [resourcesPath]: '9bae80879eb765f6ff33154ed64f58cbb886ce5a',
       [blogIndexPath]: 'c392e1025138d96d7ae11d1748d66be84e99f437',
       [blogIndexUxPath]: 'c42e8c80ba0f56217eb9fb14a4ec1b4fafd8a919',
       [parentsHubPath]: 'c895e42389e264b3bfede7d1a2e029b2a93e0165',
       [freeGamesPath]: 'c42429e4613e72aef51fa7ad43504a31decba04a',
+      [vocabularyHubPath]: 'b7cefa2beda8a93435e645114c4dcb4800f95fb5',
+      [vocabularyKnowledgePath]: '21bd4cf5ae358af13f9841788c29008de8a253cc',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
   });

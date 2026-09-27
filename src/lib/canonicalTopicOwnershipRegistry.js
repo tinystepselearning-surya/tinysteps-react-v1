@@ -1,6 +1,7 @@
 import { PHONICS_PROGRAMMATIC_PILOT_PAGES } from './phonicsProgrammaticPilot.js';
 import { GRAMMAR_PROGRAMMATIC_PAGES } from './grammarProgrammaticRegistry.js';
 import { GRAMMAR_REFERENCE_EXTENSION_ROUTE_MANIFEST } from './grammarReferenceExtensionSeoManifest.js';
+import { VOCABULARY_AUTHORITY_ROUTE_MANIFEST } from './vocabularyAuthoritySeoManifest.js';
 
 const freezeList = (values = []) => Object.freeze([...values]);
 
@@ -18,6 +19,7 @@ export const CANONICAL_TOPIC_SUBJECTS = Object.freeze([
   'speaking-communication',
   'schools-research',
   'general-english',
+  'vocabulary',
 ]);
 
 export const CANONICAL_TOPIC_OWNER_ROLES = Object.freeze([
@@ -486,6 +488,26 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     hubPath: '/resources/grammar',
     queryIntent: page.cardTitle.toLowerCase(),
     supportingPaths: [...new Set(['/resources/grammar', ...page.relatedPaths])].filter((path) => path !== page.path),
+    forbiddenCompetingOwners: [],
+  })),
+  topic('gv4-vocabulary-hub', {
+    subject: 'vocabulary',
+    intent: 'informational',
+    ownerPath: '/resources/vocabulary',
+    ownerRole: 'subject-hub',
+    hubPath: '/resources',
+    queryIntent: 'vocabulary resources for kids',
+    supportingPaths: ['/resources', '/free-games/word-meaning-flashcards'],
+    forbiddenCompetingOwners: [],
+  }),
+  ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`gv4-vocabulary-${page.id}`, {
+    subject: 'vocabulary',
+    intent: 'informational',
+    ownerPath: page.path,
+    ownerRole: 'skill-guide',
+    hubPath: '/resources/vocabulary',
+    queryIntent: page.cardTitle.toLowerCase(),
+    supportingPaths: ['/resources/vocabulary', '/free-games/word-meaning-flashcards'],
     forbiddenCompetingOwners: [],
   })),
 ]);

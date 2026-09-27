@@ -13,6 +13,7 @@ import {
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from '../../lib/phonicsPublicationRegistry.js';
 import { GRAMMAR_PROGRAMMATIC_PAGES } from '../../lib/grammarProgrammaticRegistry.js';
 import { GRAMMAR_KNOWLEDGE_PAGES } from '../../lib/grammarKnowledgeRegistry.js';
+import { VOCABULARY_AUTHORITY_PAGES } from '../../lib/vocabularyAuthorityRegistry.js';
 
 const root = process.cwd();
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -29,21 +30,28 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(PHONICS_PUBLISHED_RESOURCE_PAGES).toHaveLength(31);
     expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(32);
     expect(GRAMMAR_KNOWLEDGE_PAGES).toHaveLength(38);
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(96);
+    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(6);
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(102);
     const phonics = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/phonics/'),
     );
     const grammar = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/grammar/'),
     );
+    const vocabulary = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
+      item.canonicalPath.startsWith('/resources/vocabulary/'),
+    );
     expect(phonics).toHaveLength(31);
     expect(grammar).toHaveLength(38);
+    expect(vocabulary).toHaveLength(6);
     expect(new Set(phonics.map((item) => item.canonicalPath)).size).toBe(31);
     expect(new Set(grammar.map((item) => item.canonicalPath)).size).toBe(38);
+    expect(new Set(vocabulary.map((item) => item.canonicalPath)).size).toBe(6);
   });
 
   it('keeps Layer 3 focused on existing practice owners', () => {
-    expect(AI_ANSWER_LAYER_3_PRACTICE_ACTIONS).toHaveLength(11);
+    expect(AI_ANSWER_LAYER_3_PRACTICE_ACTIONS).toHaveLength(12);
+    expect(AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.some((item) => item.canonicalPath === '/free-games/word-meaning-flashcards')).toBe(true);
     expect(AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.every((item) => Boolean(item.answer))).toBe(true);
     expect(AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.some((item) => item.canonicalPath === '/book-demo')).toBe(false);
   });
@@ -89,6 +97,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).not.toContain('buildRetiredEditorialSourceCorpus');
     expect(generator).toContain('buildProgrammaticPhonicsCorpus');
     expect(generator).toContain('buildProgrammaticGrammarCorpus');
+    expect(generator).toContain('buildVocabularyAuthorityCorpus');
     expect(generator).toContain('buildPublicRouteCorpus');
     expect(generator).toContain('PUBLIC_ROUTE_MANIFEST');
     expect(generator).toContain('buildCompleteBlogLlmSection');
@@ -98,6 +107,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).not.toContain('editorial_source_records:');
     expect(generator).toContain('programmatic_phonics_guides: programmaticPhonics');
     expect(generator).toContain('programmatic_grammar_guides: programmaticGrammar');
+    expect(generator).toContain('vocabulary_authority_guides: vocabularyAuthority');
     expect(generator).toContain('external_reference_urls: [...new Set((page.sources || []).map((source) => source.url).filter(Boolean))]');
     expect(generator).toContain('additional_public_routes: publicRoutes');
     expect(generator).toContain('supporting-only-noindex');

@@ -52,6 +52,19 @@ const RESOURCE_PATHWAYS = [
     spotlight: 'rgba(16, 185, 129, 0.15)',
   },
   {
+    eyebrow: 'Stronger word knowledge',
+    title: 'Vocabulary',
+    description:
+      'Build everyday word knowledge, emotion and school vocabulary, synonyms, antonyms, context clues, prefixes, suffixes, and useful word families.',
+    to: '/resources/vocabulary',
+    icon: BookOpenText,
+    iconTone: 'border-violet-200/80 bg-violet-50 text-violet-700',
+    accentLine: 'from-violet-400 via-fuchsia-400 to-indigo-500',
+    orb: 'bg-violet-200/[0.55]',
+    hoverBorder: 'group-hover:border-violet-300/90',
+    spotlight: 'rgba(139, 92, 246, 0.14)',
+  },
+  {
     eyebrow: 'Confident expression',
     title: 'Speaking & Communication',
     description:
@@ -201,7 +214,7 @@ const ResourcesPage: FC = () => {
   const title = seo?.title ?? 'English Learning Resources for Kids, Parents & Educators | Tiny Steps';
   const description =
     seo?.description ??
-    'Explore Tiny Steps phonics and reading, grammar and writing, speaking and communication guides, parent help, free learning activities, and school resources.';
+    'Explore Tiny Steps phonics and reading, grammar and writing, vocabulary, speaking and communication guides, parent help, free learning activities, and school resources.';
   const canonicalPath = seo?.canonicalPath ?? '/resources';
   const canonicalUrl = `${SITE_ORIGIN}${canonicalPath}`;
 
