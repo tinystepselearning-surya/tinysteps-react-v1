@@ -7,7 +7,10 @@ import {
   formatPublicInr,
 } from '../../config/publicFacts';
 import { applySeo } from '../../lib/seo';
-import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+import { buildSpeakableSpecification } from '../../lib/breadcrumbAeoGeoRegistry.js';
+import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+import ProgrammeIntentBoundary from '../../components/programs/ProgrammeIntentBoundary';
+import { getProgrammeAiVisibility } from '../../lib/programmeAiVisibility';
 
 const READING_SEO_KEYWORDS = [
   'online reading classes for kids',
@@ -15,7 +18,6 @@ const READING_SEO_KEYWORDS = [
   'reading classes for kids India',
   'reading classes near me',
   'reading class for kids near me',
-  'reading and writing classes for kids near me',
   'english reading classes for kids',
   'english reading classes for kids near me',
   'best reading classes for kids',
@@ -36,21 +38,23 @@ const READING_SEO_KEYWORDS = [
   'online reading classes for kids worldwide',
 ];
 
+const readingAiVisibility = getProgrammeAiVisibility('/reading-classes-for-kids');
+
 const faqItems = [
   {
     question: 'What do online reading classes for kids usually work on?',
     answer:
-      'A strong reading class first identifies the child’s current bottleneck, then targets the right stage: decoding, accurate word reading, sentence reading, fluency, vocabulary, comprehension, or reading-aloud confidence. Not every struggling reader needs the same lesson plan.',
+      'A strong reading class should target connected-text reading: accurate word and sentence reading, fluency, phrasing, vocabulary, comprehension, retelling, and reading-aloud confidence. If unfamiliar-word decoding or blending is not secure, the child should be routed to phonics rather than treating decoding as the Reading page’s main programme intent.',
   },
   {
     question: 'How do I know if my child needs reading support?',
     answer:
-      'Common signs include guessing words, slow word-by-word reading, frequent pauses, avoiding reading aloud, weak story understanding, or difficulty answering questions about a passage. An assessment helps separate a phonics problem from a fluency or comprehension problem.',
+      'Common signs include slow or effortful connected reading, frequent pauses, weak phrasing, avoiding reading aloud, weak story understanding, or difficulty explaining a passage. The assessment also checks whether the child should leave this pathway and start with phonics because decoding is still unstable.',
   },
   {
     question: 'What should parents look for in the best reading classes for kids?',
     answer:
-      'Look for assessment-first placement, explicit teaching, right-level text, live correction, a clear decoding-to-fluency-to-comprehension pathway, fresh evidence of progress, realistic expectations, and parent-visible next steps. The best fit depends on the child’s actual reading gap rather than a ranking claim.',
+      'Look for assessment-first placement, explicit teaching, right-level connected text, live correction, fluency and comprehension work matched to the child, fresh evidence of progress, realistic expectations, and parent-visible next steps. If decoding is not secure, the provider should route the child to phonics instead of blurring the two programmes.',
   },
   {
     question: 'Are online reading classes effective for struggling readers?',
@@ -60,7 +64,7 @@ const faqItems = [
   {
     question: 'What is the difference between phonics classes and reading classes?',
     answer:
-      'Phonics focuses on how print represents sounds and how children decode unfamiliar words. Reading classes can include phonics when needed, but also extend into sentence reading, fluency, vocabulary, comprehension, retelling, and reading confidence.',
+      'Phonics owns sound–spelling knowledge, blending, and decoding unfamiliar words. Tiny Steps Reading Classes start from connected reading needs such as accuracy, fluency, phrasing, vocabulary, comprehension, retelling, and reading confidence. If decoding is unstable, the child is routed to the Phonics programme first.',
   },
   {
     question: 'What is the difference between reading fluency and reading comprehension?',
@@ -70,7 +74,7 @@ const faqItems = [
   {
     question: 'Is a 1-to-1 online reading tutor better than a group class?',
     answer:
-      'Both formats can work. Live 1:1 reading support is especially useful when a child has a specific decoding, fluency, comprehension, or confidence gap that needs individual pacing and immediate correction. Group classes can suit children progressing comfortably at a shared level.',
+      'Both formats can work. Live 1:1 reading support is especially useful when a child has a specific connected-reading, fluency, comprehension, vocabulary, or reading-confidence gap that needs individual pacing and immediate correction. Group classes can suit children progressing comfortably at a shared level.',
   },
   {
     question: 'Can reading classes help my child read more fluently?',
@@ -99,43 +103,39 @@ const faqItems = [
 
 const readingStages = [
   {
-    title: '1. Decode unfamiliar words',
-    detail: 'Check sound–spelling knowledge, blending, and whether the child can work through unfamiliar words instead of guessing.',
-    href: '/phonics',
-    cta: 'Explore phonics support',
+    title: '1. Read connected text accurately',
+    detail: 'Strengthen accurate word and sentence reading in appropriately matched text without making phonics/decoding the primary programme target.',
   },
   {
-    title: '2. Read words accurately',
-    detail: 'Strengthen accurate word reading so attention is not consumed by repeated decoding errors.',
+    title: '2. Improve phrasing and smoothness',
+    detail: 'Move through sentences with more natural phrasing, fewer disruptive pauses, and better attention to punctuation.',
   },
   {
-    title: '3. Read sentences smoothly',
-    detail: 'Move from isolated words into connected sentence reading with better phrasing and fewer disruptive pauses.',
-  },
-  {
-    title: '4. Build reading fluency',
+    title: '3. Build reading fluency',
     detail: 'Develop smoother pace, accuracy, expression, and stamina without turning fluency into a speed race.',
     href: '/reading-fluency-program',
     cta: 'See reading fluency support',
   },
   {
-    title: '5. Understand what was read',
-    detail: 'Work on vocabulary, sentence meaning, sequencing, inference, retelling, and answering questions from the text.',
-    href: '/blog/phonics-comprehension',
+    title: '4. Build vocabulary in context',
+    detail: 'Use the text to clarify important word meanings so unfamiliar vocabulary does not block sentence or passage understanding.',
+  },
+  {
+    title: '5. Understand and explain the text',
+    detail: 'Work on sentence meaning, sequencing, inference, retelling, and answering questions with evidence from the passage.',
+    href: '/blog/why-child-reads-words-but-does-not-understand-story',
     cta: 'Read the comprehension guide',
   },
   {
     title: '6. Read with confidence',
     detail: 'Help the child read aloud with greater independence, expression, and willingness to participate in school and at home.',
-    href: '/speaking',
-    cta: 'Explore communication support',
   },
 ];
 
 const bestReadingClassCriteria = [
   {
     title: 'Assessment-first placement',
-    detail: 'The programme should identify whether the main gap is decoding, fluency, comprehension, vocabulary, or confidence before choosing the starting point.',
+    detail: 'The programme should identify whether the child belongs in connected-reading support or should first be routed to phonics because decoding is unstable. Within Reading, the main gap may be fluency, comprehension, vocabulary, phrasing, or confidence.',
   },
   {
     title: 'Right-level reading material',
@@ -151,7 +151,7 @@ const bestReadingClassCriteria = [
   },
   {
     title: 'A clear reading progression',
-    detail: 'The pathway should connect decoding, accurate word reading, sentence reading, fluency, comprehension, vocabulary, and reading confidence.',
+    detail: 'The pathway should connect accurate connected reading, phrasing, fluency, vocabulary, comprehension, retelling, and reading confidence while keeping phonics/decoding as a separate earlier owner.',
   },
   {
     title: 'Fresh evidence of progress',
@@ -261,18 +261,23 @@ export default function ReadingClassesForKidsPage() {
       '@id': `${canonicalUrl}#webpage`,
       about: [
         { '@type': 'Thing', name: 'Online reading classes for kids' },
-        { '@type': 'Thing', name: 'Reading support for struggling readers' },
-        { '@type': 'Thing', name: 'Reading fluency' },
+        { '@type': 'Thing', name: 'Connected-text reading' },
+        { '@type': 'Thing', name: 'Reading fluency and phrasing' },
         { '@type': 'Thing', name: 'Reading comprehension' },
+        { '@type': 'Thing', name: 'Vocabulary and retelling' },
         { '@type': 'Thing', name: 'Online reading tutoring' },
       ],
+      speakable: buildSpeakableSpecification([
+        '.ts-reading-answer-title',
+        '.ts-reading-answer-summary',
+      ]),
     };
 
     const pathwaySchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#reading-pathway`,
-      name: 'Tiny Steps reading pathway',
+      name: 'Tiny Steps connected-reading pathway',
       itemListElement: readingStages.map((stage, index) => ({
         '@type': 'ListItem',
         position: index + 1,
@@ -305,6 +310,16 @@ export default function ReadingClassesForKidsPage() {
       '@id': `${canonicalUrl}#faq`,
     };
 
+    const courseSchema = createCourseSchema({
+      name: 'Online Reading Classes for Kids',
+      description:
+        'Live 1:1 online reading classes for kids focused on connected-text accuracy, fluency, phrasing, vocabulary, comprehension, retelling and reading confidence, with phonics used as a separate route when decoding is unstable.',
+      url: canonicalUrl,
+      educationalLevel: 'Children ages 3–12; placement by current reading need',
+      teaches: ['connected reading', 'reading fluency', 'phrasing', 'vocabulary', 'reading comprehension', 'retelling', 'reading confidence'],
+      areaServed: ['India', 'Worldwide'],
+    });
+
     applySeo({
       title: seoTitle,
       description: seoDescription,
@@ -312,7 +327,7 @@ export default function ReadingClassesForKidsPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: READING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, pathwaySchema, qualityCriteriaSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, courseSchema, pathwaySchema, qualityCriteriaSchema, faqSchema],
     });
   }, [canonicalUrl]);
 
@@ -343,10 +358,10 @@ export default function ReadingClassesForKidsPage() {
                 Online Reading Classes for Kids
               </h1>
               <p className="mt-5 max-w-[760px] text-base leading-7 text-slate-700 md:text-lg md:leading-8">
-                Tiny Steps provides 35-minute live 1:1 online reading classes for children ages 3–12 in India and worldwide. Support can target decoding, sentence reading, smoother connected reading, comprehension, vocabulary, or reading confidence. We identify the reading gap first, then teach the next skill instead of giving every child the same reading practice.
+                Tiny Steps provides 35-minute live 1:1 online reading classes for children ages 3–12 in India and worldwide. This pathway focuses on connected-text accuracy, smoother reading, phrasing, vocabulary, comprehension, retelling, and reading confidence. We identify the reading gap first instead of giving every child the same practice.
               </p>
               <p className="mt-3 max-w-[760px] text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                For families searching for reading classes near me, English reading classes for kids, reading classes for struggling readers, or an online reading tutor, the same live programme is available online from India and internationally. If decoding is still the bottleneck, we route the child to phonics first; if accurate word reading is established and slow or choppy connected reading is the main issue, we route to the dedicated reading-fluency programme.
+                The same live programme is available online in India and internationally. If unfamiliar-word decoding, blending, or sound–spelling knowledge is still the bottleneck, we route the child to <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-2">Phonics</Link> first. If word reading is reasonably accurate and only connected reading remains slow or choppy, we can route to the dedicated <Link to="/reading-fluency-program" className="font-semibold text-slate-900 underline underline-offset-2">Reading Fluency Programme</Link>.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {[
@@ -373,12 +388,12 @@ export default function ReadingClassesForKidsPage() {
 
             <aside className="rounded-[30px] border border-sky-100 bg-white/95 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.09)] md:p-7">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Quick answer</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900">What should reading classes actually help with?</h2>
-              <p className="mt-3 leading-7 text-slate-700">
-                Reading support should match the child’s current gap. Some children need decoding first; others need smoother connected reading, comprehension, vocabulary support, or guided reading-aloud practice.
+              <h2 className="ts-reading-answer-title mt-2 text-2xl font-bold text-slate-900">What should reading classes actually help with?</h2>
+              <p className="ts-reading-answer-summary mt-3 leading-7 text-slate-700">
+                Reading Classes should improve connected-text accuracy, sentence reading, fluency, phrasing, vocabulary, comprehension, retelling, and reading-aloud confidence. They should not take over phonics ownership: if the child cannot reliably decode unfamiliar words, the correct first route is the Phonics programme.
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {['Decoding accuracy', 'Sentence reading', 'Reading fluency', 'Comprehension', 'Vocabulary', 'Reading confidence'].map((item) => (
+                {['Connected-text accuracy', 'Sentence reading', 'Fluency & phrasing', 'Comprehension', 'Vocabulary & retelling', 'Reading confidence'].map((item) => (
                   <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
                     {item}
                   </div>
@@ -392,13 +407,15 @@ export default function ReadingClassesForKidsPage() {
         </div>
       </section>
 
+      {readingAiVisibility ? <ProgrammeIntentBoundary config={readingAiVisibility} /> : null}
+
       <section className="bg-[#fffaf3] px-4 py-9 sm:px-5 md:py-12 lg:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-3xl border border-[#F0D6AD] bg-white p-5 shadow-sm md:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">Reading support for struggling readers</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Start with the child’s actual reading problem</h2>
             <p className="mt-3 max-w-4xl leading-7 text-slate-700">
-              “My child is struggling to read” can describe several different problems. A useful first step is to identify whether the main bottleneck is decoding, fluency, comprehension, or confidence before choosing the next lesson path.
+              “My child is struggling to read” can describe several different problems. The first decision is whether decoding is unstable and therefore belongs in Phonics, or whether the child is ready for connected-reading support focused on fluency, vocabulary, comprehension, retelling, or confidence.
             </p>
             <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               {readingProblemRoutes.map((item) => (
@@ -420,10 +437,10 @@ export default function ReadingClassesForKidsPage() {
           <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Reading pathway</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">From decoding to comprehension and reading confidence</h2>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">From accurate connected reading to comprehension and confidence</h2>
             </div>
             <p className="max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              The right starting point depends on what the child can already do. We use specialist phonics or fluency support when those narrower needs are the clearest bottleneck.
+              This Reading pathway begins after the phonics decision. If decoding is unstable, the child is routed to Phonics; if decoding is reasonably secure, Reading can focus on connected-text accuracy, fluency, vocabulary, comprehension and retelling.
             </p>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
