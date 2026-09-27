@@ -10,9 +10,9 @@ import { Buffer } from 'node:buffer';
 // conversion boundaries remain frozen; any further byte change fails closed.
 export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/content/blog/shared/authorityLinking.ts': 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
-  'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx': '21ec5766587f1635227d718401e705e4a6affa81',
+  'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx': 'd596928ee258a70f375dd66aa1054e52c0252d78',
   'src/pages/SubjectResourcesPage.tsx': '665c15035d57085afe9ffc7d194753da506b824a',
-  'src/pages/phonics.tsx': 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
+  'src/pages/phonics.tsx': '5eb38c8670a1dd1c1c6e28f04a01c8edfb6bee4f',
   'src/pages/founder/FounderEditorialReviewsPanel.tsx': '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
   'src/lib/canonicalTopicOwnershipRegistry.js': 'bdf87da7f1ee8c48fa897d5487a54730c18e9dbd',
   'src/pages/ForSchoolsPage.tsx': '7be826c4fb422a5d022884607f340d3179d9ee25',
