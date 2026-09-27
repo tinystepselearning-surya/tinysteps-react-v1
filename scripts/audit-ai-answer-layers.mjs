@@ -102,6 +102,12 @@ if (process.argv.includes('--generated')) {
     if (editorialBlogs.length !== expectedLiveCanonicalBlogs) fail('editorial-blog-corpus-count', `Expected all ${expectedLiveCanonicalBlogs} live canonical blogs; found ${editorialBlogs.length}.`);
     if (programmaticPhonics.length !== 31) fail('programmatic-phonics-corpus-count', `Expected all 31 governed phonics guides; found ${programmaticPhonics.length}.`);
     if (programmaticGrammar.length !== GRAMMAR_PROGRAMMATIC_PAGES.length) fail('programmatic-grammar-corpus-count', `Expected all ${GRAMMAR_PROGRAMMATIC_PAGES.length} governed grammar guides; found ${programmaticGrammar.length}.`);
+    for (const item of programmaticGrammar) {
+      const references = item.external_reference_urls || [];
+      if (references.length < 2) fail('programmatic-grammar-reference-depth', `${item.id} has only ${references.length} external reference(s).`);
+      if (new Set(references).size !== references.length) fail('programmatic-grammar-reference-duplicates', item.id);
+      if (references.some((url) => !String(url).startsWith('https://'))) fail('programmatic-grammar-reference-url', item.id);
+    }
     if ('retired_editorial_sources' in (index.corpus || {})) fail('retired-lineage-leak', 'Retired redirect sources must not be represented as content corpus records.');
     if (!additionalPublicRoutes.length) fail('public-route-corpus-empty', 'Expected additional public site routes in the connected corpus.');
 

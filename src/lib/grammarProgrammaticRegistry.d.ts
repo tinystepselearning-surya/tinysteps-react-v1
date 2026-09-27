@@ -12,6 +12,26 @@ export type GrammarProgrammaticPublishedPage = {
   commonMistakes: readonly string[];
   practicePrompts: readonly string[];
   relatedPaths: readonly string[];
+  sourceIds: readonly string[];
+  whyItMatters: string;
+  rulePoints: readonly string[];
+  workedExamples: readonly {
+    example: string;
+    explanation: string;
+  }[];
+  teachingNote: string;
+  trickyCases: readonly string[];
+  faqs: readonly {
+    question: string;
+    answer: string;
+  }[];
+  sources: readonly {
+    id: string;
+    publisher: string;
+    title: string;
+    url: string;
+    note: string;
+  }[];
   hubPath: '/resources/grammar';
   path: string;
 };
