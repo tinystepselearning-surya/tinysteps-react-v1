@@ -2,11 +2,13 @@ import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
 import { PHONICS_PUBLISHED_RESOURCE_SEO } from './phonicsPublicationRegistry.js';
 import { GRAMMAR_PROGRAMMATIC_RESOURCE_SEO } from './grammarProgrammaticSeoManifest.js';
 import { GRAMMAR_REFERENCE_EXTENSION_RESOURCE_SEO } from './grammarReferenceExtensionSeoManifest.js';
+import { VOCABULARY_AUTHORITY_RESOURCE_SEO } from './vocabularyAuthoritySeoManifest.js';
 
 export const ROUTE_SEO_REGISTRY = {
   ...PHONICS_PUBLISHED_RESOURCE_SEO,
   ...GRAMMAR_PROGRAMMATIC_RESOURCE_SEO,
   ...GRAMMAR_REFERENCE_EXTENSION_RESOURCE_SEO,
+  ...VOCABULARY_AUTHORITY_RESOURCE_SEO,
   '/': {
     title: 'Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning',
     description:
