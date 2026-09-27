@@ -12,6 +12,21 @@ const GV5_VOCABULARY_AUTHORITY_IDS = new Set([
   'vocabulary-for-speaking',
 ]);
 
+const GV5B_VOCABULARY_AUTHORITY_IDS = new Set([
+  'action-words',
+  'describing-words',
+  'home-family-routines',
+  'food-clothes-body',
+  'nature-weather-places-transport',
+  'multiple-meaning-confused-words',
+]);
+
+const vocabularyOwnerPrefix = (pageId) => {
+  if (GV5B_VOCABULARY_AUTHORITY_IDS.has(pageId)) return 'gv5b';
+  if (GV5_VOCABULARY_AUTHORITY_IDS.has(pageId)) return 'gv5';
+  return 'gv4';
+};
+
 const topic = (id, config) => Object.freeze({
   id,
   supportingPaths: freezeList(config.supportingPaths),
@@ -507,7 +522,7 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     supportingPaths: ['/resources', '/free-games/word-meaning-flashcards'],
     forbiddenCompetingOwners: [],
   }),
-  ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`${GV5_VOCABULARY_AUTHORITY_IDS.has(page.id) ? 'gv5' : 'gv4'}-vocabulary-${page.id}`, {
+  ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`${vocabularyOwnerPrefix(page.id)}-vocabulary-${page.id}`, {
     subject: 'vocabulary',
     intent: 'informational',
     ownerPath: page.path,
