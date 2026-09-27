@@ -6,6 +6,7 @@ import {
 } from './speakingCommunicationCompletionArchitecture.js';
 import { PHONICS_PUBLISHED_RESOURCE_PAGES } from './phonicsPublicationRegistry.js';
 import { GRAMMAR_KNOWLEDGE_PAGES } from './grammarKnowledgeRegistry.js';
+import { VOCABULARY_AUTHORITY_PAGES } from './vocabularyAuthorityRegistry.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
@@ -15,7 +16,7 @@ const item = (config) => freeze({
   practicePaths: freezeList(config.practicePaths),
 });
 
-export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv3';
+export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv4';
 export const AI_ANSWER_LAYER_MACHINE_JSON_PATH = '/ai-resource-index.json';
 export const AI_ANSWER_LAYER_MACHINE_TEXT_PATH = '/ai-resource-index.txt';
 
@@ -330,10 +331,25 @@ const GOVERNED_GRAMMAR_CONCEPT_ITEMS = GRAMMAR_KNOWLEDGE_PAGES.map((page) => ite
   practicePaths: ['/free-grammar-games-for-kids', '/free-sentence-building-games-for-kids'],
 }));
 
+const GOVERNED_VOCABULARY_CONCEPT_ITEMS = VOCABULARY_AUTHORITY_PAGES.map((page) => item({
+  id: `concept-governed-vocabulary-${page.id}`,
+  layer: 2,
+  subject: 'general-english',
+  query: page.parentQuestion,
+  answer: page.quickAnswer,
+  answerSource: 'governed-vocabulary-authority-registry',
+  canonicalPath: page.path,
+  ownershipState: page.state,
+  hubPath: '/resources/vocabulary',
+  supportingPaths: page.relatedPaths || [],
+  practicePaths: [page.practicePath],
+}));
+
 export const AI_ANSWER_LAYER_2_LEARNING_CONCEPTS = freezeList([
   ...CURATED_CONCEPT_ITEMS,
   ...GOVERNED_PHONICS_CONCEPT_ITEMS,
   ...GOVERNED_GRAMMAR_CONCEPT_ITEMS,
+  ...GOVERNED_VOCABULARY_CONCEPT_ITEMS,
 ]);
 
 const PRACTICE_ACTIONS = [
@@ -472,6 +488,9 @@ if (PHONICS_PUBLISHED_RESOURCE_PAGES.length !== 31) {
 }
 if (GRAMMAR_KNOWLEDGE_PAGES.length !== 38) {
   throw new Error('AI Layer 2 must expose the governed 38-page Grammar knowledge set: 32 core guides plus 6 GV3 reference extensions.');
+}
+if (VOCABULARY_AUTHORITY_PAGES.length !== 6) {
+  throw new Error('AI Layer 2 must expose the six GV4 Vocabulary authority guides.');
 }
 for (const entry of AI_ANSWER_LAYER_ALL_ITEMS) {
   if (![1, 2, 3].includes(entry.layer)) throw new Error(`Unsupported AI answer layer: ${entry.id}`);
