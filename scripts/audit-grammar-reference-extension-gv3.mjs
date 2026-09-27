@@ -97,9 +97,9 @@ for (const page of GRAMMAR_REFERENCE_EXTENSION_PAGES) {
 if (ownerByPath.size !== 6) fail('owner-count', `Expected six GV3 canonical owners; found ${ownerByPath.size}.`);
 
 if (process.argv.includes('--dist')) {
-  const sitemapPath = path.join(root, 'dist', 'sitemap.xml');
+  const sitemapPath = path.join(root, 'dist', 'sitemap-static.xml');
   const sitemap = fs.existsSync(sitemapPath) ? fs.readFileSync(sitemapPath, 'utf8') : '';
-  if (!sitemap) fail('dist-sitemap', 'dist/sitemap.xml is missing.');
+  if (!sitemap) fail('dist-sitemap', 'dist/sitemap-static.xml is missing.');
 
   for (const page of GRAMMAR_REFERENCE_EXTENSION_PAGES) {
     const htmlPath = path.join(root, 'dist', page.path.replace(/^\//, ''), 'index.html');
