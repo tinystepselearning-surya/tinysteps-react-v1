@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const REVISION = '2026-09-27-commercial-ux-r4';
+  const REVISION = '2026-09-27-commercial-ux-r5';
   const OWNER_PATHS = Object.freeze([
     '/phonics',
     '/best-online-phonics-classes-for-kids-in-india',
@@ -19,7 +19,7 @@
     '/book-demo',
   ]);
   const OWNER_SET = new Set(OWNER_PATHS);
-  const DESKTOP_CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking']);
+  const CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking']);
   const STYLE_ID = 'ts-commercial-owner-experience-css';
   const PROGRESS_ID = 'ts-commercial-owner-progress';
   const CTA_ID = 'ts-commercial-owner-cta';
@@ -56,6 +56,14 @@ html.${ROOT_ACTIVE_CLASS} #root main :is(a,button)[class*="rounded"] { touch-act
 html.${ROOT_ACTIVE_CLASS} #root main :is(a,button)[class*="rounded"]:active { transform: translateY(1px) scale(.99); }
 html.${ROOT_ACTIVE_CLASS} #root main details > summary { transition: color 180ms ease, background-color 180ms ease; }
 html.${ROOT_ACTIVE_CLASS} #root main details[open] > summary { color: var(--ts-commercial-ink); }
+
+@media (min-width:768px) {
+  html[data-ts-commercial-path="/reading-classes-for-kids"] button[aria-label="Back to top"],
+  html[data-ts-commercial-path="/grammar"] button[aria-label="Back to top"],
+  html[data-ts-commercial-path="/speaking"] button[aria-label="Back to top"] {
+    display: none !important;
+  }
+}
 
 /* Pricing: bridge the legacy glass-panel system into the current commercial language. */
 html[data-ts-commercial-path="/pricing"] #root .page-gradient {
@@ -365,16 +373,23 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     const progress = ensureProgress().firstElementChild;
     if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${progressValue})`;
 
-    const cta = ensureCta();
-    const desktopCtaDisabled = DESKTOP_CTA_DISABLED_PATHS.has(currentPath) && window.innerWidth >= 768;
-    const shouldShow = !desktopCtaDisabled && currentPath !== '/book-demo' && currentPath !== '/phonics-fees-india' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
-    cta.classList.toggle('is-visible', shouldShow);
+    const ctaDisabled = CTA_DISABLED_PATHS.has(currentPath);
+    const cta = ctaDisabled ? document.getElementById(CTA_ID) : ensureCta();
+    if (cta) {
+      cta.hidden = ctaDisabled;
+      if (ctaDisabled) {
+        cta.classList.remove('is-visible');
+      } else {
+        const shouldShow = currentPath !== '/book-demo' && currentPath !== '/phonics-fees-india' && window.scrollY > Math.max(420, window.innerHeight * 0.42) && progressValue < 0.94;
+        cta.classList.toggle('is-visible', shouldShow);
 
-    const title = cta.querySelector('.ts-commercial-cta-title');
-    if (title) {
-      title.textContent = progressValue > 0.68
-        ? 'Ready for a clear next step? Start with the free assessment.'
-        : 'Find the right starting point before choosing a programme';
+        const title = cta.querySelector('.ts-commercial-cta-title');
+        if (title) {
+          title.textContent = progressValue > 0.68
+            ? 'Ready for a clear next step? Start with the free assessment.'
+            : 'Find the right starting point before choosing a programme';
+        }
+      }
     }
   }
 
@@ -391,7 +406,15 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     document.documentElement.classList.add(ROOT_ACTIVE_CLASS);
     document.documentElement.dataset.tsCommercialPath = path;
     ensureProgress().hidden = false;
-    ensureCta().hidden = false;
+    const existingCta = document.getElementById(CTA_ID);
+    if (CTA_DISABLED_PATHS.has(path)) {
+      if (existingCta) {
+        existingCta.classList.remove('is-visible');
+        existingCta.hidden = true;
+      }
+    } else {
+      ensureCta().hidden = false;
+    }
     if (routeChanged) setupSectionReveals();
     requestScrollUpdate();
   }
