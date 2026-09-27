@@ -2,20 +2,35 @@ import {
   GRAMMAR_PROGRAMMATIC_PATHS as GRAMMAR_PROGRAMMATIC_MANIFEST_PATHS,
   GRAMMAR_PROGRAMMATIC_RESOURCE_SEO as GRAMMAR_PROGRAMMATIC_MANIFEST_SEO,
 } from './grammarProgrammaticSeoManifest.js';
+import { getGrammarKnowledgeEnrichment } from './grammarKnowledgeEnrichment.js';
+import { getGrammarKnowledgeSources } from './grammarKnowledgeSources.js';
 
 const freeze = (value) => Object.freeze(value);
 const freezeList = (values = []) => Object.freeze([...values]);
 
-const page = (config) => freeze({
-  state: 'published',
-  hubPath: '/resources/grammar',
-  ...config,
-  path: `/resources/grammar/${config.slug}`,
-  examples: freezeList(config.examples),
-  commonMistakes: freezeList(config.commonMistakes),
-  practicePrompts: freezeList(config.practicePrompts),
-  relatedPaths: freezeList(config.relatedPaths),
-});
+const page = (config) => {
+  const enrichment = getGrammarKnowledgeEnrichment(config.id);
+  if (!enrichment) {
+    throw new Error(`Missing grammar knowledge enrichment for ${config.id}`);
+  }
+  const sources = getGrammarKnowledgeSources(enrichment.sourceIds);
+  if (sources.length < 2) {
+    throw new Error(`Grammar knowledge page ${config.id} requires at least two authoritative references`);
+  }
+
+  return freeze({
+    state: 'published',
+    hubPath: '/resources/grammar',
+    ...config,
+    ...enrichment,
+    sources,
+    path: `/resources/grammar/${config.slug}`,
+    examples: freezeList(config.examples),
+    commonMistakes: freezeList(config.commonMistakes),
+    practicePrompts: freezeList(config.practicePrompts),
+    relatedPaths: freezeList(config.relatedPaths),
+  });
+};
 
 const existing = (config) => freeze({
   state: 'existing-owner',
@@ -23,7 +38,7 @@ const existing = (config) => freeze({
   ...config,
 });
 
-export const GRAMMAR_PROGRAMMATIC_REVISION = '2026-09-27-gp1';
+export const GRAMMAR_PROGRAMMATIC_REVISION = '2026-09-27-gp2-authority';
 
 /**
  * Curriculum-aligned discovery sequence. This is a learning progression, not a
