@@ -558,10 +558,10 @@ export default function GrammarPage() {
           <h2 className="mb-4 mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">What happens in the free grammar assessment?</h2>
           <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <p className="text-base leading-7 text-slate-600">
+              <p className="text-base leading-7 text-slate-300">
                 The free grammar assessment helps us understand where your child is currently getting stuck.
               </p>
-              <p className="mt-3 text-base leading-7 text-slate-600">
+              <p className="mt-3 text-base leading-7 text-slate-300">
                 During the assessment, we may check sentence formation, parts of speech, tenses, articles, prepositions, punctuation, sentence correction, written answers, and confidence while explaining ideas. Based on this, Tiny Steps recommends the right grammar path.
               </p>
               <Link
@@ -573,7 +573,7 @@ export default function GrammarPage() {
             </div>
             <div className="rounded-[22px] border border-white/10 bg-white/5 p-5 md:p-6">
               <h3 className="text-lg font-semibold text-white">Assessment steps</h3>
-              <ol className="mt-3 space-y-2.5 text-slate-600">
+              <ol className="mt-3 space-y-2.5 text-slate-300">
                 <li className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-950">1</span>
                   <span>Check the child&apos;s current grammar level</span>
