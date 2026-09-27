@@ -24,7 +24,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'simple-past': {
     sourceIds: ['cambridge-past-simple-continuous', 'british-council-grammar'],
-    whyItMatters: 'The simple past is fundamental for recounts, stories and explanations of completed events. Accurate control of regular, irregular and did-based forms gives children a reliable base for more advanced narrative tense choices.',
+    whyItMatters: 'The simple past is fundamental for recounts, stories and explanations of completed events. Accurate control of regular, irregular and did-based forms gives children a reliable base for more advanced narrative tense choices. It also supports sequencing because children can place several finished events in a clear order before learning how background and earlier-past forms interact with them.',
     rulePoints: [
       'The simple past presents an event, action or state as located in a completed past time. The speaker views the event as a whole rather than as ongoing background.',
       'Regular verbs usually form the past with -ed, but many high-frequency verbs are irregular. Children need both pattern knowledge and repeated exposure to common irregular forms.',
