@@ -78,6 +78,7 @@ const LLM_DISCOVERY_FILES = [
 const BLOG_CORPUS_LLM_SECTION_HEADING = '## Complete Editorial Blog Corpus';
 const PHONICS_LLM_SECTION_HEADING = '## Focused Phonics Resource Library — 31 governed guides';
 const AI_ANSWER_LLM_SECTION_HEADING = '## AI Answer Layers — problem, concept, practice';
+const VOCABULARY_LLM_SECTION_HEADING = '## Vocabulary Authority Library — 6 governed guides';
 
 function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
   const lines = [
@@ -93,6 +94,21 @@ function buildGovernedPhonicsLlmSection({ detailed = false } = {}) {
       lines.push(`- [${page.cardTitle}](${SITE_URL}${page.path}) — ${description}`);
     }
     lines.push('');
+  }
+  return lines.join('\n').trim();
+}
+
+function buildVocabularyLlmSection({ detailed = false } = {}) {
+  const lines = [
+    VOCABULARY_LLM_SECTION_HEADING,
+    '',
+    'These are governed child-focused Vocabulary knowledge guides under /resources/vocabulary. Vocabulary Adventure remains the separate practice surface at /free-games/word-meaning-flashcards.',
+    '',
+    `- [Vocabulary Resources for Kids](${SITE_URL}/resources/vocabulary) — canonical Vocabulary knowledge hub`,
+  ];
+  for (const page of VOCABULARY_AUTHORITY_PAGES) {
+    const description = detailed ? page.seoDescription : page.quickAnswer;
+    lines.push(`- [${page.cardTitle}](${SITE_URL}${page.path}) — ${description}`);
   }
   return lines.join('\n').trim();
 }
@@ -590,6 +606,12 @@ function normalizeLlmDiscoveryFiles(aiIndex) {
       text,
       buildGovernedPhonicsLlmSection({ detailed: isFullDirectory }),
       isFullDirectory ? '## Interpretation notes' : '## School and Institutional Partnerships',
+    );
+    text = upsertNamedMarkdownSection(
+      text,
+      VOCABULARY_LLM_SECTION_HEADING,
+      buildVocabularyLlmSection({ detailed: isFullDirectory }),
+      AI_ANSWER_LLM_SECTION_HEADING,
     );
     text = upsertNamedMarkdownSection(
       text,
