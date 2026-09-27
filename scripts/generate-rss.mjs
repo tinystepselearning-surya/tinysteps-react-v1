@@ -25,6 +25,9 @@ import {
   GRAMMAR_KNOWLEDGE_PAGES,
 } from '../src/lib/grammarKnowledgeRegistry.js';
 import {
+  VOCABULARY_AUTHORITY_PAGES,
+} from '../src/lib/vocabularyAuthorityRegistry.js';
+import {
   AI_ANSWER_LAYER_DEFINITIONS,
   AI_ANSWER_LAYERS,
   AI_ANSWER_LAYER_MACHINE_JSON_PATH,
@@ -297,10 +300,29 @@ function buildProgrammaticGrammarCorpus() {
   }));
 }
 
+function buildVocabularyAuthorityCorpus() {
+  return VOCABULARY_AUTHORITY_PAGES.map((page) => ({
+    id: `vocabulary-resource-${page.id}`,
+    content_type: 'vocabulary-authority-guide',
+    title: page.cardTitle,
+    summary: page.seoDescription || page.quickAnswer,
+    canonical_url: toCanonicalAbsoluteUrl(page.path),
+    stage_id: page.stageId,
+    publication_order: page.order,
+    indexing_state: 'indexable',
+    retrieval_role: 'canonical-informational',
+    answer_eligible: true,
+    related_urls: [...new Set((page.relatedPaths || []).map(toCanonicalAbsoluteUrl))],
+    practice_urls: [toCanonicalAbsoluteUrl(page.practicePath)],
+    external_reference_urls: [...new Set((page.sources || []).map((source) => source.url).filter(Boolean))],
+  }));
+}
+
 function buildPublicRouteCorpus(blogItemMap) {
   const programmaticPaths = new Set([
     ...PHONICS_PUBLISHED_RESOURCE_PAGES.map((page) => page.path),
     ...GRAMMAR_KNOWLEDGE_PAGES.map((page) => page.path),
+    ...VOCABULARY_AUTHORITY_PAGES.map((page) => page.path),
   ]);
   const manifestByPath = new Map(PUBLIC_ROUTE_MANIFEST.map((entry) => [entry.path, entry]));
   const routePaths = new Set([
@@ -377,7 +399,9 @@ function resolveAiExternalReferences(entry, blogItemMap) {
   const editorialReferences = blogItemMap.get(absolute)?.externalReferences || [];
   const grammarPage = GRAMMAR_KNOWLEDGE_PAGES.find((page) => page.path === entry.canonicalPath);
   const grammarReferences = grammarPage?.sources?.map((source) => source.url).filter(Boolean) || [];
-  return [...new Set([...editorialReferences, ...grammarReferences])];
+  const vocabularyPage = VOCABULARY_AUTHORITY_PAGES.find((page) => page.path === entry.canonicalPath);
+  const vocabularyReferences = vocabularyPage?.sources?.map((source) => source.url).filter(Boolean) || [];
+  return [...new Set([...editorialReferences, ...grammarReferences, ...vocabularyReferences])];
 }
 
 function resolveAiAnswerSelector(entry) {
@@ -385,7 +409,8 @@ function resolveAiAnswerSelector(entry) {
   if (pathName.startsWith('/blog/')) return '.ts-answer-summary';
   if (pathName.startsWith('/resources/phonics/')) return '.ts-answer-summary';
   if (pathName.startsWith('/resources/grammar/')) return '.ts-answer-summary';
-  if (['/resources/phonics', '/resources/grammar', '/resources/speaking'].includes(pathName)) return '.ts-answer-summary';
+  if (pathName.startsWith('/resources/vocabulary/')) return '.ts-answer-summary';
+  if (['/resources/phonics', '/resources/grammar', '/resources/vocabulary', '/resources/speaking'].includes(pathName)) return '.ts-answer-summary';
   return null;
 }
 
@@ -393,6 +418,7 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
   const editorialBlogs = buildEditorialBlogCorpus(blogItems);
   const programmaticPhonics = buildProgrammaticPhonicsCorpus();
   const programmaticGrammar = buildProgrammaticGrammarCorpus();
+  const vocabularyAuthority = buildVocabularyAuthorityCorpus();
   const publicRoutes = buildPublicRouteCorpus(blogItemMap);
   const layers = AI_ANSWER_LAYER_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -414,7 +440,7 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
   }));
   return {
     name: 'Tiny Steps AI Resource Answer Index',
-    revision: '2026-09-27-gv3',
+    revision: '2026-09-27-gv4',
     canonical_resource_center: SITE_URL + '/resources',
     purpose: 'Machine-readable routing from parent problems to canonical educational answers and focused practice.',
     retrieval_guidance: 'Use canonical_url as the primary answer source, use reference_urls for connected context, and use practice_urls only after the answer/skill is understood.',
@@ -428,13 +454,15 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
       editorial_blogs: editorialBlogs.length,
       programmatic_phonics_guides: programmaticPhonics.length,
       programmatic_grammar_guides: programmaticGrammar.length,
+      vocabulary_authority_guides: vocabularyAuthority.length,
       additional_public_routes: publicRoutes.length,
-      connected_public_content: editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + publicRoutes.length,
+      connected_public_content: editorialBlogs.length + programmaticPhonics.length + programmaticGrammar.length + vocabularyAuthority.length + publicRoutes.length,
     },
     corpus: {
       editorial_blogs: editorialBlogs,
       programmatic_phonics_guides: programmaticPhonics,
       programmatic_grammar_guides: programmaticGrammar,
+      vocabulary_authority_guides: vocabularyAuthority,
       additional_public_routes: publicRoutes,
     },
     layers,
@@ -466,6 +494,7 @@ function buildAiResourceText(index) {
   lines.push('Editorial blogs: ' + index.corpus_counts.editorial_blogs);
   lines.push('Programmatic phonics guides: ' + index.corpus_counts.programmatic_phonics_guides);
   lines.push('Programmatic grammar guides: ' + index.corpus_counts.programmatic_grammar_guides);
+  lines.push('Vocabulary authority guides: ' + index.corpus_counts.vocabulary_authority_guides);
   lines.push('Additional public routes: ' + index.corpus_counts.additional_public_routes, '');
 
   lines.push('### Editorial blogs', '');
@@ -478,6 +507,10 @@ function buildAiResourceText(index) {
   }
   lines.push('', '### Programmatic grammar guides', '');
   for (const item of index.corpus.programmatic_grammar_guides) {
+    lines.push('- ' + item.title + ' — ' + item.canonical_url);
+  }
+  lines.push('', '### Vocabulary authority guides', '');
+  for (const item of index.corpus.vocabulary_authority_guides) {
     lines.push('- ' + item.title + ' — ' + item.canonical_url);
   }
   lines.push('', '### Additional public routes', '');
@@ -498,7 +531,7 @@ function buildAiAnswerLlmSection(index) {
     '- [Plain-text answer index](' + SITE_URL + AI_ANSWER_LAYER_MACHINE_TEXT_PATH + ')',
     '- Coverage: ' + counts,
     '- Connected editorial estate: ' + index.corpus_counts.editorial_blogs + ' live canonical articles.',
-    '- Connected content corpus: ' + index.corpus_counts.programmatic_phonics_guides + ' programmatic phonics guides; ' + index.corpus_counts.programmatic_grammar_guides + ' programmatic grammar guides; ' + index.corpus_counts.additional_public_routes + ' additional public routes.',
+    '- Connected content corpus: ' + index.corpus_counts.programmatic_phonics_guides + ' programmatic phonics guides; ' + index.corpus_counts.programmatic_grammar_guides + ' programmatic grammar guides; ' + index.corpus_counts.vocabulary_authority_guides + ' vocabulary authority guides; ' + index.corpus_counts.additional_public_routes + ' additional public routes.',
   ].join('\n');
 }
 
