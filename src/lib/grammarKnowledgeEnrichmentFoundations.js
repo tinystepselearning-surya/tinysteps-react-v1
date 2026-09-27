@@ -208,7 +208,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   adverbs: {
     sourceIds: ['cambridge-adjectives-adverbs', 'british-council-grammar'],
-    whyItMatters: 'Adverbs let children refine actions and descriptions by adding information about manner, time, place, frequency and degree. Understanding their function also prevents the common confusion between adjective and adverb roles.',
+    whyItMatters: 'Adverbs let children refine actions and descriptions by adding information about manner, time, place, frequency and degree. Understanding their function also prevents the common confusion between adjective and adverb roles. This control becomes especially useful when children revise sentences for precision, vary emphasis and explain how an event happened rather than simply naming the event.',
     rulePoints: [
       'Adverbs can add information about manner, time, place, frequency, degree or viewpoint. They commonly modify verbs, adjectives, other adverbs or sometimes a whole clause.',
       'Many manner adverbs end in -ly, but the ending is not a complete test. Words such as very, often, here and yesterday are adverbs, while some -ly words are adjectives.',
