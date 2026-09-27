@@ -1,6 +1,7 @@
 export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   'compound-sentences': {
     sourceIds: ['cambridge-conjunctions', 'purdue-runons'],
+    whyItMatters: 'Compound sentences give children a controlled way to connect complete ideas without producing choppy writing or run-ons. They are an important bridge from simple sentence accuracy to purposeful paragraph development.',
     rulePoints: [
       'A compound sentence joins two or more independent clauses so that each side could stand as a complete sentence. Coordinating conjunctions such as and, but, or, so, for, nor and yet can express the relationship.',
       'When two independent clauses are joined with a coordinating conjunction, formal written English commonly uses a comma before the conjunction. A semicolon can also join closely related independent clauses without a coordinating conjunction.',
@@ -23,6 +24,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'reason-result': {
     sourceIds: ['cambridge-conjunctions', 'cambridge-grammar'],
+    whyItMatters: 'Reason and result connectors help children make logic visible to the reader. This supports explanation, argument and paragraph cohesion because ideas are linked by cause and consequence rather than simply placed next to each other.',
     rulePoints: [
       'Reason connectors explain why something happens; result connectors show what follows from a cause. Because and since can introduce reasons, while so, therefore and as a result can signal consequences in different structures.',
       'Connector choice affects grammar and punctuation. Because usually introduces a dependent reason clause, while therefore is commonly an adverbial connector linking complete ideas rather than functioning like a coordinating conjunction.',
@@ -45,6 +47,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'time-sequence': {
     sourceIds: ['cambridge-conjunctions', 'british-council-grammar'],
+    whyItMatters: 'Time and sequence language helps readers reconstruct order, overlap and progression. It is therefore essential for narratives, procedures and explanations where clear chronology is part of the meaning.',
     rulePoints: [
       'Time and sequence connectors help readers follow when events happen and in what order. Words and phrases such as before, after, while, when, first, next, then and finally serve different grammatical roles.',
       'Subordinating time words can introduce clauses, while sequencing adverbs often organise discourse across sentences. Children should learn the structure around the connector rather than treating all linking words as one category.',
@@ -67,6 +70,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   conditionals: {
     sourceIds: ['british-council-conditionals', 'cambridge-future'],
+    whyItMatters: 'Conditionals let children express relationships between situations and consequences, from general truths to real possibilities and imagined alternatives. They develop both grammatical flexibility and more sophisticated reasoning in language.',
     rulePoints: [
       'Conditional structures connect a condition with a consequence. The grammar changes according to whether the speaker presents the condition as general, realistically possible, hypothetical or contrary to past fact.',
       'A common real-future pattern uses present tense in the if-clause and a future/modal form in the result: “If it rains, we will stay inside.” Standard teaching avoids unnecessary will inside this basic if-clause.',
@@ -89,6 +93,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'contrast-concession': {
     sourceIds: ['cambridge-conjunctions', 'cambridge-grammar'],
+    whyItMatters: 'Contrast and concession help children connect ideas that do not simply agree or follow each other. These structures are important for balanced explanations, comparisons and more mature argumentative writing.',
     rulePoints: [
       'Contrast highlights a difference between ideas; concession acknowledges one fact while showing that another result still follows. But, although, however and despite can all express contrastive relationships with different grammar.',
       'But coordinates comparable elements or clauses. Although introduces a dependent clause. However often links complete ideas as an adverbial connector. Despite is followed by a noun phrase or -ing form rather than a finite clause in its ordinary pattern.',
@@ -111,6 +116,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'relative-clauses': {
     sourceIds: ['british-council-relative-clauses', 'british-council-clauses'],
+    whyItMatters: 'Relative clauses allow children to add precise information about a noun without starting a new sentence. They support sentence variety, compact description and the move from simple to controlled complex writing.',
     rulePoints: [
       'A relative clause adds information about a noun. Relative pronouns such as who, which, that and whose help connect the clause to the noun being described.',
       'Defining relative clauses identify which person or thing is meant and are essential to the reference. Non-defining relative clauses add extra information and are typically set off with commas.',
@@ -133,6 +139,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'fragments-runons': {
     sourceIds: ['purdue-fragments', 'purdue-runons'],
+    whyItMatters: 'Sentence-boundary control is essential for readable writing. Understanding fragments and run-ons helps children diagnose why a sentence fails structurally instead of relying only on punctuation guesswork.',
     rulePoints: [
       'A sentence fragment is an incomplete structure presented as if it were a complete sentence. It may be a dependent clause, a phrase or a group missing a required subject or verb.',
       'A run-on occurs when independent clauses are joined without appropriate punctuation or connection. A comma splice is a related error in which a comma alone joins independent clauses.',
@@ -155,6 +162,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'reported-speech': {
     sourceIds: ['cambridge-reported-speech', 'british-council-grammar'],
+    whyItMatters: 'Reported speech develops control of viewpoint, pronouns, tense and question structure at the same time. It is especially valuable in narrative writing, summaries and communication about what another person said or thought.',
     rulePoints: [
       'Direct speech presents the speaker’s words as quoted; reported or indirect speech represents the content through a reporting structure. Pronouns, time references and verb forms may shift when the reporting viewpoint changes.',
       'Common reporting verbs include say, tell and ask, but they follow different patterns. Tell normally takes a person object; say does not take that object directly in the same way.',
@@ -177,6 +185,7 @@ export const GRAMMAR_KNOWLEDGE_SENTENCE_AND_WRITING = {
   },
   'active-passive': {
     sourceIds: ['cambridge-passive', 'purdue-sentence-clarity'],
+    whyItMatters: 'Voice choices teach children that grammar can change what a sentence foregrounds. Understanding active and passive forms supports clearer writing and helps learners choose whether the doer or the affected participant should be the focus.',
     rulePoints: [
       'Active voice typically makes the doer the grammatical subject: “The class completed the project.” Passive voice typically makes the affected participant the subject: “The project was completed by the class.”',
       'The common passive pattern uses a form of be plus a past participle. The tense and aspect are carried largely by the be/auxiliary sequence while the lexical verb appears as a participle.',
