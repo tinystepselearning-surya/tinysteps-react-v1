@@ -2,7 +2,8 @@ export type AiAnswerLayer = 1 | 2 | 3;
 export type AiAnswerSubject =
   | 'phonics-reading'
   | 'grammar-writing'
-  | 'speaking-communication';
+  | 'speaking-communication'
+  | 'general-english';
 
 export type AiAnswerLayerDefinition = Readonly<{
   id: string;
