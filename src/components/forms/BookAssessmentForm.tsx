@@ -8,6 +8,9 @@ type BookAssessmentFormProps = {
   description?: string;
   submitLabel?: string;
   submitAriaLabel?: string;
+  appearance?: 'default' | 'embedded' | 'heroCompact';
+  helperText?: string;
+  secondaryHelperText?: string | null;
 };
 
 export default function BookAssessmentForm(props: BookAssessmentFormProps) {

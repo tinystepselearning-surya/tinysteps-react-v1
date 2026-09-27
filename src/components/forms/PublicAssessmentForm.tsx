@@ -44,7 +44,7 @@ type PublicAssessmentFormProps = {
   description?: string;
   submitLabel?: string;
   submitAriaLabel?: string;
-  appearance?: 'default' | 'embedded';
+  appearance?: 'default' | 'embedded' | 'heroCompact';
   helperText?: string;
   secondaryHelperText?: string | null;
 };
@@ -377,21 +377,38 @@ export default function PublicAssessmentForm({
     }
   };
 
+  const isHeroCompact = appearance === 'heroCompact';
   const cardClassName = appearance === 'embedded'
     ? 'border-white/90 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:p-7'
-    : 'border-slate-200 p-5 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8';
+    : isHeroCompact
+      ? 'border-slate-200 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.12)] sm:p-6'
+      : 'border-slate-200 p-5 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8';
+
+  const headerClassName = isHeroCompact ? 'relative mb-4' : 'relative mb-6 sm:mb-7';
+  const formClassName = isHeroCompact
+    ? 'relative space-y-3 pb-1 sm:space-y-3.5 sm:pb-2'
+    : 'relative space-y-4 pb-6 sm:space-y-5 sm:pb-10';
+  const fieldGridClassName = isHeroCompact
+    ? 'grid grid-cols-1 gap-3 sm:grid-cols-2'
+    : 'grid grid-cols-1 gap-4 sm:grid-cols-2';
+  const selectGridClassName = isHeroCompact
+    ? 'grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start'
+    : 'grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start';
+  const submitClassName = isHeroCompact
+    ? 'mt-3 inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/30 px-5 py-3 text-base font-bold text-white shadow-md shadow-orange-200/60 transition-all hover:shadow-orange-300/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2'
+    : 'mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/30 px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:py-6 md:text-lg';
 
   return (
     <GlassCard className={cardClassName}>
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
-      <div className="relative mb-6 sm:mb-7">
+      <div className={headerClassName}>
         <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{title}</h2>
         <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{description}</p>
       </div>
 
-      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="relative space-y-4 pb-6 sm:space-y-5 sm:pb-10">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className={formClassName}>
+        <div className={fieldGridClassName}>
           <div className="group space-y-1">
             <label htmlFor="assessment-parent-name" className="sr-only">
               Parent Name *
@@ -464,7 +481,7 @@ export default function PublicAssessmentForm({
           {errors.whatsapp ? <p className="text-xs text-rose-600">{errors.whatsapp}</p> : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start">
+        <div className={selectGridClassName}>
           <div className="group space-y-1">
             <label htmlFor="assessment-child-age" className="sr-only">
               Child Age *
@@ -528,7 +545,7 @@ export default function PublicAssessmentForm({
           type="submit"
           aria-label={submitAriaLabel}
           disabled={isSubmitting}
-          className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/30 px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:py-6 md:text-lg"
+          className={submitClassName}
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}
