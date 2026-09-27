@@ -52,6 +52,19 @@ const RESOURCE_PATHWAYS = [
     spotlight: 'rgba(16, 185, 129, 0.15)',
   },
   {
+    eyebrow: 'Words in context',
+    title: 'Vocabulary',
+    description:
+      'Build word meaning, synonyms and antonyms, context clues, word families, and the transfer of new vocabulary into reading, speaking, and writing.',
+    to: '/resources/vocabulary',
+    icon: BookOpenText,
+    iconTone: 'border-violet-200/80 bg-violet-50 text-violet-700',
+    accentLine: 'from-violet-400 via-fuchsia-400 to-indigo-500',
+    orb: 'bg-violet-200/[0.55]',
+    hoverBorder: 'group-hover:border-violet-300/90',
+    spotlight: 'rgba(139, 92, 246, 0.15)',
+  },
+  {
     eyebrow: 'Confident expression',
     title: 'Speaking & Communication',
     description:
