@@ -208,9 +208,12 @@ export default function GrammarPage() {
   }, [canonicalPath, canonicalUrl]);
 
   return (
-    <div className="bg-gradient-to-b from-[#FFF8EF] via-white to-[#EEF8FF] pb-16">
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8EF] via-white to-[#EEF8FF] px-4 py-8 sm:px-5 md:py-12 lg:px-8 lg:py-14">
-        <div className="mx-auto max-w-7xl">
+    <div className="bg-[#fbfbfd] pb-12">
+      <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#fff8f2_0%,#fff_72%,#fbfbfd_100%)]" />
+        <div className="pointer-events-none absolute left-[-8%] top-[-28%] h-[560px] w-[560px] rounded-full bg-orange-200/35 blur-[120px]" />
+        <div className="pointer-events-none absolute right-[-6%] top-[-20%] h-[520px] w-[520px] rounded-full bg-sky-100/70 blur-[120px]" />
+        <div className="relative mx-auto max-w-7xl">
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-slate-600 sm:text-sm">
             <ol className="flex flex-wrap items-center gap-2">
               <li>
@@ -225,40 +228,39 @@ export default function GrammarPage() {
             </ol>
           </nav>
 
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid grid-cols-1 items-center gap-7 lg:grid-cols-[1.06fr_0.94fr] lg:gap-10">
             <div>
-              <p className="inline-flex items-center rounded-full border border-orange-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
+              <p className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700 shadow-[0_8px_22px_rgba(249,115,22,0.08)] backdrop-blur">
                 Grammar clarity for children
               </p>
-              <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">
+              <h1 className="mt-5 max-w-[720px] text-[clamp(2.65rem,8vw,4.65rem)] font-black leading-[0.95] tracking-[-0.055em] text-[#172033]">
                 Online Grammar Classes for Kids
               </h1>
-              <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps provides live 1:1 online grammar classes for children in India and worldwide. The programme focuses on sentence formation, grammar accuracy, tenses, punctuation, correction, and accurate short school answers through level-matched teaching.
+              <p className="mt-5 max-w-[680px] text-base font-medium leading-7 text-slate-700 md:text-[1.08rem] md:leading-8">
+                Live 1:1 grammar support for children in India and worldwide, focused on sentence formation, tense control, punctuation, correction, and accurate short school answers.
               </p>
-              <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Assessment first separates a grammar-control problem from a writing-composition or conversational-fluency problem. It then identifies whether the child needs Beginner Grammar, Advanced Grammar, or focused work on sentence formation, tenses, punctuation, correction, or school-answer accuracy. <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">Book one free {demoMinutes}-minute 1:1 online demo assessment class</Link> to identify the starting point.
+              <p className="mt-3 max-w-[660px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
+                Assessment first separates a grammar-control problem from writing-composition or conversational-fluency needs, then identifies the right Beginner, Advanced, or focused starting point.
               </p>
 
-              <div className="mt-7">
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Link
                   to="/book-demo"
-                  className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-slate-800 sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#182338] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(23,32,51,0.18)] transition hover:bg-[#111b2d]"
                 >
                   Book Free 35-Minute Demo
                 </Link>
                 <Link
                   to="/curriculum?tab=grammar"
-                  className="ml-0 mt-3 inline-flex min-h-[44px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:ml-3 sm:mt-0"
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300/80 bg-white/85 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-white"
                 >
                   View Full Curriculum Roadmap
                 </Link>
-                <p className="mt-3 text-sm text-slate-600 md:text-[15px]">One free {demoMinutes}-minute 1:1 assessment before enrolment</p>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {[grammarFacts.levels.beginner.ageRange.label + ' Beginner', grammarFacts.levels.advanced.ageRange.label + ' Advanced', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, 'India + worldwide'].map((chip) => (
-                  <span key={chip} className="rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm sm:px-3.5">
+                  <span key={chip} className="rounded-full border border-slate-200/80 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-600 backdrop-blur sm:px-3.5 sm:text-sm">
                     {chip}
                   </span>
                 ))}
@@ -266,6 +268,7 @@ export default function GrammarPage() {
             </div>
 
             <ProgrammeHeroSnapshot
+              variant="grammar"
               eyebrow="Grammar programme focus"
               title="What this programme builds"
               summary="Sentence-level grammar control is the core job: understand the pattern, use it accurately, correct mistakes, and transfer it into clear short responses."
@@ -290,23 +293,22 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="bg-[#fffaf3] px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-10 lg:px-6 lg:pb-14">
-        <div className="mx-auto max-w-6xl">
-          <article className="max-w-6xl rounded-2xl border border-[#F1D8A8] bg-white/95 p-5 shadow-sm md:rounded-3xl md:p-7">
-            <p className="inline-flex rounded-full bg-[#FFF2C7] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A4A10] md:text-[11px] md:tracking-[0.18em]">
-              Parent clarity
-            </p>
-            <h2 className="ts-grammar-answer-title mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do grammar classes for kids include?</h2>
-            <p className="ts-grammar-answer-summary max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
+      <section className="px-4 py-5 sm:px-5 md:py-7 lg:px-6">
+        <div className="mx-auto grid max-w-6xl gap-4 border-y border-slate-200/80 py-5 md:grid-cols-[0.28fr_0.72fr] md:items-start md:gap-8 md:py-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700">Parent clarity</p>
+          <div>
+            <h2 className="ts-grammar-answer-title text-xl font-semibold tracking-[-0.025em] text-slate-950 md:text-2xl">Quick Answer: What do grammar classes for kids include?</h2>
+            <p className="ts-grammar-answer-summary mt-2 max-w-[920px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
               Grammar classes should build sentence-level language control: parts of speech, complete sentence formation, tense use, punctuation, correction, and grammar accuracy in short spoken or written responses. Paragraph development, creative writing, editing, and longer composition belong to the dedicated Writing programme rather than this Grammar owner.
             </p>
-          </article>
+          </div>
         </div>
       </section>
 
       {grammarAiVisibility ? <ProgrammeIntentBoundary config={grammarAiVisibility} /> : null}
 
       <ResponsiveTeachingSection
+        appearance="premium"
         id="teacher-delivery"
         program="Grammar"
         introduction="Teachers move from a clear sentence model to guided practice and independent use. Correction stays specific: the child sees the error, retries the sentence in context and receives only as much prompting as needed."
@@ -322,7 +324,7 @@ export default function GrammarPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Common grammar gaps</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Common grammar gaps</p>
               <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Find your child&apos;s grammar gap</h2>
             </div>
             <p className="max-w-xl text-sm leading-6 text-slate-600">
@@ -392,8 +394,8 @@ export default function GrammarPage() {
 
 
 
-      <section className="bg-[#eff7ff] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-sky-100 bg-gradient-to-br from-[#F5FBFF] via-white to-[#FFF8EF] p-5 shadow-sm md:rounded-3xl md:p-8">
+      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Tiny Steps grammar pathway</h2>
 
           <div className="flex flex-wrap gap-2">
@@ -411,9 +413,9 @@ export default function GrammarPage() {
             Tiny Steps uses assessment-first placement to find the exact grammar gap and then helps the child move forward step by step.
           </p>
 
-          <div className="mt-6 grid gap-4 md:gap-5 md:grid-cols-2">
+          <div className="mt-5 grid gap-x-6 gap-y-4 md:grid-cols-3">
             {grammarPathwayCards.map((card) => (
-              <article key={card.name} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white/85 p-5 shadow-sm transition hover:shadow-md md:p-6">
+              <article key={card.name} className="flex h-full flex-col border-l border-slate-200 pl-4">
                 <h3 className="text-lg font-semibold text-slate-900">{card.name}</h3>
                 <p className="mt-2 text-sm text-slate-700 md:text-base">{card.description}</p>
                 <Link to={card.href} className="mt-4 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
@@ -429,7 +431,7 @@ export default function GrammarPage() {
         <div className="mx-auto max-w-6xl rounded-[24px] border border-slate-200 bg-white p-5 md:p-6">
           <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Programme boundary</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Programme boundary</p>
               <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar supports writing, but it is not the writing programme</h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700 md:text-base">
                 Grammar owns sentence-level control: sentence formation, tenses, punctuation, correction, and <strong className="font-semibold text-slate-900">written sentence accuracy</strong> in short answers. It should help children use grammar correctly, not only name rules.
@@ -437,11 +439,11 @@ export default function GrammarPage() {
             </div>
             <div className="grid gap-3">
               <Link to="/writing-classes-for-kids" className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4 transition hover:bg-white">
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Choose Writing when</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Choose Writing when</span>
                 <p className="mt-1 text-sm leading-6 text-slate-700">idea development, paragraphs, stories, editing, or longer composition is the main need.</p>
               </Link>
               <Link to="/spoken-english-classes-for-kids-online" className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4 transition hover:bg-white">
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Choose Spoken English when</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Choose Spoken English when</span>
                 <p className="mt-1 text-sm leading-6 text-slate-700">everyday conversational fluency and fuller spontaneous responses are the main need.</p>
               </Link>
             </div>
@@ -449,9 +451,9 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="px-4 py-8 sm:px-5 md:py-10 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200 bg-white p-5 md:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Decision support</p>
+      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200/80 bg-white/80 p-5 md:p-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Decision support</p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">What to look for in a strong grammar programme</h2>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
             The useful difference is not more worksheets. Look for teaching that identifies the gap, uses grammar in real sentences, corrects errors live, and shows parents what is changing.
@@ -502,11 +504,11 @@ export default function GrammarPage() {
 
 
 
-      <section className="bg-[#fff6ec] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl">
           <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar levels and age guidance</h2>
           <div className="grid gap-4 md:gap-5 md:grid-cols-3">
-            <article className="flex h-full flex-col rounded-2xl border border-amber-100 bg-gradient-to-br from-white to-amber-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
+            <article className="flex h-full flex-col rounded-[22px] border border-amber-100 bg-white p-5">
               <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">{grammarFacts.levels.beginner.label} · {grammarFacts.levels.beginner.ageRange.label}</span>
               <p className="mt-3 text-sm text-slate-700">
                 {grammarFacts.levels.beginner.lessonCount} lessons build core grammar, sentence formation, punctuation, tense foundations, and accurate use in meaningful sentences.
@@ -516,7 +518,7 @@ export default function GrammarPage() {
               </Link>
             </article>
 
-            <article className="flex h-full flex-col rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
+            <article className="flex h-full flex-col rounded-[22px] border border-sky-100 bg-white p-5">
               <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">{grammarFacts.levels.advanced.label} · {grammarFacts.levels.advanced.ageRange.label}</span>
               <p className="mt-3 text-sm text-slate-700">
                 {grammarFacts.levels.advanced.lessonCount} lessons develop stronger tense control, sentence complexity, correction, grammar in context, and accurate written and spoken expression.
@@ -526,7 +528,7 @@ export default function GrammarPage() {
               </Link>
             </article>
 
-            <article className="flex h-full flex-col rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
+            <article className="flex h-full flex-col rounded-[22px] border border-indigo-100 bg-white p-5">
               <span className="inline-flex w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-800">Placement by readiness</span>
               <p className="mt-3 text-sm text-slate-700">
                 The age ranges overlap intentionally. Assessment considers current grammar accuracy, sentence control, correction skill, and readiness so the child starts in the appropriate track rather than being placed by age alone.
@@ -550,41 +552,42 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
-          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">What happens in the free grammar assessment?</h2>
+      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] bg-slate-950 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.12)] md:p-7">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-300">Free 1:1 starting check</p>
+          <h2 className="mb-4 mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">What happens in the free grammar assessment?</h2>
           <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <p className="text-base leading-7 text-slate-700">
+              <p className="text-base leading-7 text-slate-300">
                 The free grammar assessment helps us understand where your child is currently getting stuck.
               </p>
-              <p className="mt-3 text-base leading-7 text-slate-700">
+              <p className="mt-3 text-base leading-7 text-slate-300">
                 During the assessment, we may check sentence formation, parts of speech, tenses, articles, prepositions, punctuation, sentence correction, written answers, and confidence while explaining ideas. Based on this, Tiny Steps recommends the right grammar path.
               </p>
               <Link
                 to="/book-demo"
-                className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.25)] transition hover:bg-slate-800 sm:w-auto sm:px-7 sm:py-3"
+                className="mt-6 inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 sm:w-auto"
               >
                 Book Free 35-Minute Demo
               </Link>
             </div>
-            <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5 md:p-6">
-              <h3 className="text-lg font-semibold text-slate-900">Assessment steps</h3>
-              <ol className="mt-3 space-y-2.5 text-slate-700">
+            <div className="rounded-[22px] border border-white/10 bg-white/5 p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-white">Assessment steps</h3>
+              <ol className="mt-3 space-y-2.5 text-slate-300">
                 <li className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">1</span>
+                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-950">1</span>
                   <span>Check the child&apos;s current grammar level</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">2</span>
+                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-950">2</span>
                   <span>Identify the grammar and sentence gap</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">3</span>
+                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-950">3</span>
                   <span>Recommend the right learning path</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">4</span>
+                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-semibold text-slate-950">4</span>
                   <span>Explain the next steps to parents</span>
                 </li>
               </ol>
@@ -593,8 +596,8 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="bg-[#eef6ff] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-sm md:rounded-[30px] md:p-8">
+      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-sky-100 bg-sky-50/45 p-5 md:p-7">
           <p className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">Parent visibility</p>
           <h2 className="mb-4 mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">How parents see grammar progress</h2>
           <p className="text-slate-700">Parents should not have to guess whether grammar is improving.</p>
@@ -623,12 +626,12 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section id="faq" className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
+      <section id="faq" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Frequently asked questions</h2>
           <div className="space-y-3 md:space-y-4">
             {faqItems.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-5">
+              <article key={item.question} className="border-b border-slate-200 py-4 last:border-b-0">
                 <h3 className="faq-question text-[17px] font-semibold text-slate-900 md:text-lg">{item.question}</h3>
                 <p className="faq-answer mt-2 text-[15px] leading-6 text-slate-700 md:text-base">{item.answer}</p>
               </article>
@@ -637,31 +640,31 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="px-4 pb-10 pt-6 sm:px-5 md:pb-12 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-slate-900 p-6 text-center text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:p-8 md:p-10">
+      <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#eff6ff_100%)] p-6 text-center text-slate-950 sm:p-8 md:p-9">
           <h2 className="text-2xl font-bold md:text-3xl">Not sure where your child is stuck in grammar?</h2>
-          <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
+          <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-600">
             Book one free 35-minute 1:1 online demo assessment class to identify whether the main gap is sentence formation, tense control, punctuation, correction, or written sentence accuracy.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"
-              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-950 px-8 py-3 font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
             >
               Book Free 35-Minute Demo
             </Link>
           </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">
-            <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-white">writing classes for kids</Link>
-            <span className="hidden sm:inline text-slate-400">•</span>
-            <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2 hover:text-white">spoken English classes for kids</Link>
-            <span className="hidden sm:inline text-slate-400">•</span>
-            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-600">
+            <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-950">writing classes for kids</Link>
+            <span className="hidden sm:inline text-slate-300">•</span>
+            <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2 hover:text-slate-950">spoken English classes for kids</Link>
+            <span className="hidden sm:inline text-slate-300">•</span>
+            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-slate-950">class pricing</Link>
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-300">
-            <Link to="/online-english-classes-for-kids" className="underline underline-offset-2 hover:text-white">online English classes for kids</Link>
-            <span className="hidden sm:inline text-slate-500">•</span>
-            <Link to="/class-samples" className="underline underline-offset-2 hover:text-white">real class samples</Link>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-600">
+            <Link to="/online-english-classes-for-kids" className="underline underline-offset-2 hover:text-slate-950">online English classes for kids</Link>
+            <span className="hidden sm:inline text-slate-400">•</span>
+            <Link to="/class-samples" className="underline underline-offset-2 hover:text-slate-950">real class samples</Link>
           </div>
         </div>
       </section>

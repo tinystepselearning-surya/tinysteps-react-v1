@@ -53,10 +53,11 @@ describe('Commercial owner UX consistency layer', () => {
     expect(experience).toContain("currentPath !== '/book-demo'");
   });
 
-  it('keeps the Grammar desktop journey free of the competing floating assessment card', () => {
-    expect(experience).toContain("const DESKTOP_CTA_DISABLED_PATHS = new Set(['/grammar'])");
+  it('keeps the premium Reading, Grammar and Speaking desktop journeys free of the competing floating assessment card', () => {
+    expect(experience).toContain("const DESKTOP_CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking'])");
     expect(experience).toContain("DESKTOP_CTA_DISABLED_PATHS.has(currentPath) && window.innerWidth >= 768");
     expect(experience).toContain('const shouldShow = !desktopCtaDisabled');
+    expect(experience).not.toContain("DESKTOP_CTA_DISABLED_PATHS = new Set(['/phonics'");
   });
 
   it('keeps the delayed CTA inaccessible while hidden and clear of existing floating controls', () => {
