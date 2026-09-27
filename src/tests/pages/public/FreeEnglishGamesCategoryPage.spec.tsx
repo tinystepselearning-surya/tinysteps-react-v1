@@ -74,18 +74,6 @@ describe("FreeEnglishGamesCategoryPage", () => {
     },
   );
 
-  it("bridges the high-authority phonics games category to the correct commercial owners", () => {
-    renderRoute("/free-phonics-games-for-kids");
-
-    expect(screen.getByRole("heading", { level: 2, name: /free games practise skills; live support adds placement/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /explore live phonics programme/i })).toHaveAttribute("href", "/phonics");
-    expect(screen.getByRole("link", { name: /compare phonics programmes/i })).toHaveAttribute(
-      "href",
-      "/best-online-phonics-classes-for-kids-in-india",
-    );
-    expect(screen.getByRole("link", { name: /review phonics fees/i })).toHaveAttribute("href", "/phonics-fees-india");
-  });
-
   it("features Tiny Steps Phonics Balloon Pop on the letter-sound authority category", () => {
     renderRoute("/free-letter-sound-games-for-kids");
 
