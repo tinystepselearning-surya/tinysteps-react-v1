@@ -45,7 +45,7 @@ const faqItems = [
   {
     question: 'What do online reading classes for kids usually work on?',
     answer:
-      'A strong reading class should target connected-text reading: accurate word and sentence reading, fluency, phrasing, vocabulary, comprehension, retelling, and reading-aloud confidence. If unfamiliar-word decoding or blending is not secure, the child should be routed to phonics rather than treating decoding as the Reading page’s main programme intent.',
+      'A strong reading class should target connected-text reading: accurate word and sentence reading, fluency, phrasing, vocabulary, comprehension, retelling, and reading-aloud confidence. If unfamiliar-word decoding or blending is not secure, the child should be routed to phonics rather than treating decoding as a Reading-class skill.',
   },
   {
     question: 'How do I know if my child needs reading support?',
@@ -152,7 +152,7 @@ const bestReadingClassCriteria = [
   },
   {
     title: 'A clear reading progression',
-    detail: 'The pathway should connect accurate connected reading, phrasing, fluency, vocabulary, comprehension, retelling, and reading confidence while keeping phonics/decoding as a separate earlier owner.',
+    detail: 'The pathway should connect accurate connected reading, phrasing, fluency, vocabulary, comprehension, retelling, and reading confidence while keeping phonics and decoding as a separate earlier pathway.',
   },
   {
     title: 'Fresh evidence of progress',
@@ -262,7 +262,9 @@ export default function ReadingClassesForKidsPage() {
       '@id': `${canonicalUrl}#webpage`,
       about: [
         { '@type': 'Thing', name: 'Online reading classes for kids' },
+        { '@type': 'Thing', name: 'Reading support for struggling readers' },
         { '@type': 'Thing', name: 'Connected-text reading' },
+        { '@type': 'Thing', name: 'Reading fluency' },
         { '@type': 'Thing', name: 'Reading fluency and phrasing' },
         { '@type': 'Thing', name: 'Reading comprehension' },
         { '@type': 'Thing', name: 'Vocabulary and retelling' },
@@ -464,7 +466,7 @@ export default function ReadingClassesForKidsPage() {
           </div>
           <div className="mt-6 rounded-2xl border border-sky-200 bg-white px-5 py-4 text-sm leading-6 text-slate-700">
             <strong className="text-slate-950">General reading classes or the specialist fluency programme?</strong>{' '}
-            Stay on this page when the child needs broader reading support or the main gap is not yet clear. If decoding and word accuracy are already secure but connected reading remains slow, hesitant, or choppy, use the{' '}
+            Stay on this page when the child needs support across connected-reading skills and decoding is reasonably secure. If the main gap is not yet clear, the assessment first separates Phonics, general Reading, and specialist fluency needs. If word accuracy is already secure but connected reading remains slow, hesitant, or choppy, use the{' '}
             <Link to="/reading-fluency-program" className="font-semibold text-sky-800 underline underline-offset-2">Reading Fluency Programme</Link>.
           </div>
         </div>
@@ -501,7 +503,7 @@ export default function ReadingClassesForKidsPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">1-to-1 reading classes online</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900">When individual reading support is useful</h2>
             <p className="mt-3 leading-7 text-slate-700">
-              A 1-to-1 online reading tutor can adjust the text level, pause at the exact error, ask the child to retry, and change the next task immediately. That is especially useful when a child has a specific decoding, fluency, comprehension, or confidence gap.
+              A 1-to-1 online reading tutor can adjust the text level, pause at the exact error, ask the child to retry, and change the next task immediately. That is especially useful when a child has a specific connected-reading, fluency, comprehension, vocabulary, or reading-confidence gap. If decoding is unstable, the assessment should route the child to Phonics first.
             </p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Group reading classes can also work well when children are at a similar level and benefit from shared discussion. The format should follow the learning need rather than a blanket rule.
