@@ -1,0 +1,88 @@
+name: Resources GV4 Vocabulary Authority
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/vocabularyAuthority*'
+      - 'src/lib/aiAnswerLayerRegistry.*'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/lib/publicAnalyticsPathPolicy.js'
+      - 'src/lib/canonicalTopicOwnershipRegistry.js'
+      - 'src/lib/breadcrumbAeoGeoRegistry.js'
+      - 'src/pages/VocabularyResourcesPage.tsx'
+      - 'src/pages/VocabularyKnowledgePage.tsx'
+      - 'src/pages/ResourcesPage.tsx'
+      - 'src/pages/kids/games/reading/WordMeaningFlashcards.tsx'
+      - 'src/components/resources/AiAnswerLayerDirectory.tsx'
+      - 'src/app/routes.tsx'
+      - 'src/tests/seo/vocabularyAuthorityGv4.spec.ts'
+      - 'src/tests/seo/vocabularyLexicalModel.spec.ts'
+      - 'src/tests/seo/resourcesR24R26AiAnswerLayers.spec.ts'
+      - 'scripts/audit-vocabulary-authority-gv4.mjs'
+      - 'scripts/audit-ai-answer-layers.mjs'
+      - 'scripts/audit-canonical-topic-ownership.mjs'
+      - 'scripts/generate-rss.mjs'
+      - 'scripts/commercial-c7-reviewed-seo-repair.mjs'
+      - 'scripts/test/commercial-c7-reviewed-seo-repair.spec.mjs'
+      - 'docs/seo/resources-architecture/GV4_*'
+      - '.github/workflows/resources-gv4-vocabulary-authority.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  resources-gv4-vocabulary-authority:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run GV4 authority and frozen-baseline regressions
+        run: >
+          npx vitest run
+          src/tests/seo/vocabularyAuthorityGv4.spec.ts
+          src/tests/seo/vocabularyLexicalModel.spec.ts
+          src/tests/pages/public/WordMeaningFlashcards.spec.tsx
+          src/tests/seo/grammarVocabularyAuthorityRequirements.spec.ts
+          src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
+          src/tests/seo/resourcesR23CentralResourceReconciliation.spec.ts
+          src/tests/seo/resourcesR24R26AiAnswerLayers.spec.ts
+          src/tests/seo/commercialC7KnowledgeConversionAudit.spec.ts
+          scripts/test/commercial-c7-reviewed-seo-repair.spec.mjs
+      - name: Audit GV4 source publication contract
+        run: node scripts/audit-vocabulary-authority-gv4.mjs
+      - name: Audit canonical ownership
+        run: node scripts/audit-canonical-topic-ownership.mjs
+      - name: Lint GV4 TypeScript surfaces
+        run: >
+          npx eslint
+          src/pages/VocabularyResourcesPage.tsx
+          src/pages/VocabularyKnowledgePage.tsx
+          src/pages/ResourcesPage.tsx
+          src/pages/kids/games/reading/WordMeaningFlashcards.tsx
+          src/components/resources/AiAnswerLayerDirectory.tsx
+          src/tests/seo/vocabularyAuthorityGv4.spec.ts
+      - name: Run type check
+        run: npm run typecheck
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Build and prerender public site
+        run: npm run build
+      - name: Verify rendered GV4 publication contract
+        run: node scripts/audit-vocabulary-authority-gv4.mjs --dist
+      - name: Verify generated AI answer layers
+        run: node scripts/audit-ai-answer-layers.mjs --generated
