@@ -16,6 +16,8 @@ const blogIndexPath = 'src/pages/blog/BlogIndexPage.tsx';
 const blogIndexUxPath = 'src/pages/blog/blogIndexUx.ts';
 const parentsHubPath = 'src/pages/parents/ParentsHubPage.tsx';
 const freeGamesPath = 'src/pages/public/FreeEnglishGamesHubPage.tsx';
+const vocabularyHubPath = 'src/pages/VocabularyHubPage.tsx';
+const vocabularyKnowledgePath = 'src/pages/VocabularyKnowledgePage.tsx';
 
 const reviewedPaths = [
   authorityPath,
@@ -31,6 +33,8 @@ const reviewedPaths = [
   blogIndexUxPath,
   parentsHubPath,
   freeGamesPath,
+  vocabularyHubPath,
+  vocabularyKnowledgePath,
 ];
 
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
@@ -51,6 +55,8 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [blogIndexUxPath]: 'c42e8c80ba0f56217eb9fb14a4ec1b4fafd8a919',
       [parentsHubPath]: 'c895e42389e264b3bfede7d1a2e029b2a93e0165',
       [freeGamesPath]: 'c42429e4613e72aef51fa7ad43504a31decba04a',
+      [vocabularyHubPath]: 'b7cefa2beda8a93435e645114c4dcb4800f95fb5',
+      [vocabularyKnowledgePath]: '21bd4cf5ae358af13f9841788c29008de8a253cc',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
   });
