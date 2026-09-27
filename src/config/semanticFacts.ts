@@ -105,9 +105,9 @@ export const SEMANTIC_FACTS = {
       totalLessonCount: 101,
     },
     grammar: {
-      label: 'Grammar & Writing',
+      label: 'Grammar & Sentence Building',
       commercialPath: '/grammar',
-      claim: 'Structured grammar, sentence-building and writing progression.',
+      claim: 'Structured grammar, sentence-building and sentence-accuracy progression.',
       levels: {
         beginner: {
           courseId: 'basic-grammar',
