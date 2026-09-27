@@ -16,7 +16,7 @@ const item = (config) => freeze({
   practicePaths: freezeList(config.practicePaths),
 });
 
-export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv5';
+export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv5b';
 export const AI_ANSWER_LAYER_MACHINE_JSON_PATH = '/ai-resource-index.json';
 export const AI_ANSWER_LAYER_MACHINE_TEXT_PATH = '/ai-resource-index.txt';
 
@@ -499,8 +499,8 @@ if (PHONICS_PUBLISHED_RESOURCE_PAGES.length !== 31) {
 if (GRAMMAR_KNOWLEDGE_PAGES.length !== 38) {
   throw new Error('AI Layer 2 must expose the governed 38-page Grammar knowledge set: 32 core guides plus 6 GV3 reference extensions.');
 }
-if (VOCABULARY_AUTHORITY_PAGES.length !== 10) {
-  throw new Error('AI Layer 2 must expose the ten published Vocabulary authority guides.');
+if (VOCABULARY_AUTHORITY_PAGES.length !== 16) {
+  throw new Error('AI Layer 2 must expose the complete sixteen-guide Vocabulary authority architecture.');
 }
 for (const entry of AI_ANSWER_LAYER_ALL_ITEMS) {
   if (![1, 2, 3].includes(entry.layer)) throw new Error(`Unsupported AI answer layer: ${entry.id}`);

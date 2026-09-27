@@ -51,7 +51,7 @@ if (expectedLiveCanonicalBlogs < 82) {
 }
 
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 106) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar pages plus 10 governed vocabulary guides.');
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 112) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar pages plus 16 governed vocabulary guides.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 12) fail('layer-3-count', 'Expected 12 focused practice actions including Vocabulary Adventure.');
 
 const ids = AI_ANSWER_LAYER_ALL_ITEMS.map((item) => item.id);
@@ -196,7 +196,7 @@ if (process.argv.includes('--generated')) {
 }
 
 const report = {
-  revision: '2026-09-27-gv5',
+  revision: '2026-09-27-gv5b',
   layer1: AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length,
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,

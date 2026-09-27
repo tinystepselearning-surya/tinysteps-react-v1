@@ -89,8 +89,14 @@ describe('Commercial C7-R1 knowledge to commercial owner mapping', () => {
     expect(held.every((mapping) => mapping.primaryCommercialOwner === null)).toBe(true);
   });
 
-  it('keeps GV5 Vocabulary transfer guides in soft discovery instead of inferring programme owners from their names', () => {
+  it('keeps published Vocabulary authority guides in soft discovery instead of inferring programme owners from their names', () => {
     const paths = [
+      '/resources/vocabulary/action-words-for-kids',
+      '/resources/vocabulary/describing-words-for-kids',
+      '/resources/vocabulary/home-family-daily-routine-vocabulary',
+      '/resources/vocabulary/food-clothes-body-vocabulary-for-kids',
+      '/resources/vocabulary/nature-weather-places-transport-for-kids',
+      '/resources/vocabulary/multiple-meaning-confused-words-for-kids',
       '/resources/vocabulary/collocations-for-kids',
       '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
       '/resources/vocabulary/vocabulary-for-better-writing',

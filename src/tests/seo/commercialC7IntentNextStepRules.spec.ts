@@ -40,8 +40,14 @@ describe('Commercial C7-R2 intent next-step rules', () => {
     }
   });
 
-  it('keeps GV5 Vocabulary transfer guides free of commercial destinations', () => {
+  it('keeps published Vocabulary authority guides free of commercial destinations', () => {
     const paths = [
+      '/resources/vocabulary/action-words-for-kids',
+      '/resources/vocabulary/describing-words-for-kids',
+      '/resources/vocabulary/home-family-daily-routine-vocabulary',
+      '/resources/vocabulary/food-clothes-body-vocabulary-for-kids',
+      '/resources/vocabulary/nature-weather-places-transport-for-kids',
+      '/resources/vocabulary/multiple-meaning-confused-words-for-kids',
       '/resources/vocabulary/collocations-for-kids',
       '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
       '/resources/vocabulary/vocabulary-for-better-writing',

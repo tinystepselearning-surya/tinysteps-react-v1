@@ -32,7 +32,7 @@ const page = (config) => {
   });
 };
 
-export const VOCABULARY_AUTHORITY_REVISION = '2026-09-27-gv5';
+export const VOCABULARY_AUTHORITY_REVISION = '2026-09-27-gv5b';
 
 export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   page({
@@ -101,7 +101,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 2,
+    order: 3,
     id: 'feelings-emotions',
     stageId: 'everyday-foundations',
     slug: 'feelings-emotions-for-kids',
@@ -166,7 +166,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 3,
+    order: 5,
     id: 'school-vocabulary',
     stageId: 'everyday-foundations',
     slug: 'school-vocabulary-for-kids',
@@ -231,7 +231,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 4,
+    order: 9,
     id: 'synonyms-antonyms',
     stageId: 'word-relationships',
     slug: 'synonyms-antonyms-for-kids',
@@ -296,7 +296,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 5,
+    order: 12,
     id: 'context-clues',
     stageId: 'vocabulary-in-context',
     slug: 'context-clues-for-kids',
@@ -361,7 +361,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 6,
+    order: 11,
     id: 'word-families-prefixes-suffixes',
     stageId: 'word-building',
     slug: 'word-families-prefixes-suffixes-for-kids',
@@ -426,7 +426,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 7,
+    order: 13,
     id: 'vocabulary-collocations',
     stageId: 'natural-english',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -492,7 +492,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 8,
+    order: 14,
     id: 'phrasal-verbs-expressions',
     stageId: 'natural-english',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -558,7 +558,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 9,
+    order: 15,
     id: 'vocabulary-for-writing',
     stageId: 'transfer-speaking-writing',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -624,7 +624,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 10,
+    order: 16,
     id: 'vocabulary-for-speaking',
     stageId: 'transfer-speaking-writing',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -688,7 +688,403 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
     relatedPaths: ['/resources/vocabulary/feelings-emotions-for-kids', '/resources/vocabulary/collocations-for-kids', '/spoken-english-classes-for-kids-online'],
     featuredWordIds: [],
   }),
-]);
+
+  page({
+    order: 2,
+    id: 'action-words',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'action-words-for-kids',
+    cardTitle: 'Action Words for Kids',
+    seoTitle: 'Action Words for Kids: Stronger Verbs for Speaking & Writing | Tiny Steps',
+    seoDescription: 'Build a richer bank of action words for movement, school, home and communication, then choose precise verbs that fit meaning and context.',
+    quickAnswer: 'Action words name what people, animals and things do. Children build stronger vocabulary when they move beyond a small set such as go, do and make and learn precise verbs such as hurry, carry, whisper, collect, compare and explain. The vocabulary goal is choosing a word that matches the action clearly; the Grammar guide separately explains how verbs behave in sentences.',
+    concept: 'An action-word vocabulary network groups verbs by meaning and situation so children can retrieve a useful word when they speak, read or write. Movement verbs can include walk, march, race, crawl and wander; school verbs can include read, write, compare and explain; home verbs can include pour, fold, tidy and carry. The important step is not memorising labels but noticing how one action differs from another.',
+    whyItMatters: 'Precise action words improve comprehension and make speaking and writing more informative. A child who understands dashed, wandered and crept can picture a story more accurately than a child who interprets every movement as went. In writing, one well-chosen verb can replace a vague verb plus several extra words. In classroom instructions, understanding verbs such as compare, underline and summarise is also essential for knowing what a task requires.',
+    coreIdeas: [
+      'Teach action words in meaningful families. Put walk, march, race, crawl and tiptoe beside one another and ask how the movement changes. A child should notice speed, purpose, body position or mood rather than merely reciting five alternatives for go. Meaningful contrasts create a stronger retrieval network and help the child choose a verb for a real situation.',
+      'Connect each verb to a subject and context. “The baby crawled across the mat,” “The class compared two diagrams,” and “Mira whispered the answer” show who performs the action and why that verb fits. This keeps the Vocabulary page focused on usable meaning while the Grammar verb page can separately explain tense, agreement and sentence structure.',
+      'Move from recognition to production. First let the child match a verb to a picture or short scenario, then choose between nearby alternatives, explain the difference and finally use the word in an original sentence. Repeated retrieval across different situations is more useful than copying the same definition or completing one predictable worksheet pattern.',
+    ],
+    workedExamples: [
+      {
+        example: '“The puppy raced across the garden when it heard the gate open.”',
+        explanation: 'Raced tells us that the puppy moved very quickly. Went would be grammatically possible but less precise. Ask the child what evidence in the situation supports raced and whether strolled would change the picture. The comparison makes the meaning of the action word explicit.',
+      },
+      {
+        example: '“Please compare the two maps and explain one difference.”',
+        explanation: 'Compare and explain are learning actions. Compare requires looking for similarities or differences, while explain requires making an idea understandable. These verbs are vocabulary children need to follow school instructions, not only grammar terms to identify in sentences.',
+      },
+      {
+        example: '“Ravi carried the box carefully because the glasses inside could break.”',
+        explanation: 'Carried means held and moved something from one place to another. The context adds purpose and manner. A follow-up can contrast carried with pushed, pulled or dragged so the child understands that several movement verbs involve different physical actions.',
+      },
+    ],
+    examples: [
+      'Movement: walk, race, crawl, climb, hurry, wander',
+      'School actions: read, write, compare, explain, practise, check',
+      'Communication and home actions: ask, answer, whisper, pour, fold, carry',
+    ],
+    commonMistakes: [
+      'Calling every action word a “strong verb” and assuming unusual vocabulary is automatically better. The best word is the one that expresses the intended action naturally and accurately.',
+      'Teaching long verb lists without scenarios, which can leave children able to recognise a word on a card but unable to retrieve it in speaking or writing.',
+      'Turning vocabulary practice into a grammar-identification exercise only. Knowing that raced is a verb is useful, but children also need to understand how raced differs in meaning from walked, hurried or wandered.',
+    ],
+    trickyCases: [
+      'Some words can represent actions in one context and other ideas in another. A child can “answer a question,” while answer can also name the response itself. Use the sentence to decide the active meaning and avoid teaching word class as if every word has only one permanent job.',
+      'Many precise verbs carry extra information. Whisper includes a quiet voice; sprint includes very fast running; stare includes sustained looking. Children should not replace a broad verb unless the added meaning is actually true in the situation.',
+    ],
+    teachingNote: 'Choose one small action family at a time and use it in pictures, demonstrations, reading and speaking. Ask the child to act out two contrasting verbs, explain the difference, and then use each in a new sentence. During writing, highlight one vague verb and ask what really happened before offering alternatives. Keep tense correction secondary during a Vocabulary activity unless it blocks meaning; the main objective is accurate lexical choice and independent retrieval.',
+    practicePrompts: [
+      'Sort twelve action words into movement, school, home and communication groups, then explain why one word could reasonably belong to more than one group.',
+      'Replace went, did or said in six short sentences only when a more precise verb fits the evidence, and explain what extra meaning the new verb adds.',
+      'Use five action words from Vocabulary Adventure or the 50-word lexical set in a short retell, making each action clear enough that a listener could picture it.',
+    ],
+    faqs: [
+      {
+        question: 'Are action words the same as verbs?',
+        answer: 'Many beginner action words are verbs, but the Vocabulary goal and Grammar goal are different. This guide focuses on meaning, precision and retrieval: which action word best describes what happened? The Grammar verb guide explains how verbs function structurally, including tense, helping verbs and agreement. Linking the two is useful, but one page should not duplicate the other.',
+      },
+      {
+        question: 'How can a child learn stronger action words without sounding unnatural?',
+        answer: 'Start with situations the child understands and compare a few nearby choices. Ask whether the action was fast, slow, quiet, careful, sudden or repeated. Then choose a common precise verb that matches that evidence. Children do not need rare words; they need useful words they can understand, retrieve and use accurately in new sentences.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/grammar/verbs-for-kids', '/resources/vocabulary/vocabulary-for-better-writing', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['run', 'jump', 'eat', 'read', 'write', 'draw', 'sing', 'dance', 'carry', 'open'],
+  }),
+
+  page({
+    order: 4,
+    id: 'describing-words',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'describing-words-for-kids',
+    cardTitle: 'Describing Words for Kids',
+    seoTitle: 'Describing Words for Kids: Precise Adjectives & Details | Tiny Steps',
+    seoDescription: 'Help children choose useful describing words for size, shape, colour, texture, quality and personality without overloading sentences.',
+    quickAnswer: 'Describing words help children express what a person, place, object or experience is like. A strong vocabulary goes beyond big, nice and good by giving children precise choices for size, shape, colour, texture, quality, sound, speed and personality. The goal is not adding more adjectives to every sentence; it is choosing the few details that make the meaning clearer.',
+    concept: 'Description becomes useful when vocabulary is organised by the property being described. A child can compare big and enormous for size, soft and rough for texture, quiet and noisy for sound, or patient and helpful for personality. Grouping words by meaning makes it easier to retrieve a suitable choice and prevents children from treating every adjective as a decorative extra.',
+    whyItMatters: 'Precise describing vocabulary supports reading comprehension, speaking, storytelling and factual writing. Readers need descriptive words to build a mental picture and infer mood or character. Speakers use them to explain preferences and experiences. Writers use them to select relevant detail. A limited descriptive vocabulary can make many answers sound repetitive even when the child has good ideas.',
+    coreIdeas: [
+      'Teach descriptions through contrasts and scales. Small, medium, large and enormous show size; cool, cold and freezing show temperature; quiet and loud contrast sound. The words should be discussed in context because intensity and appropriateness matter. A cup can be small, a building can be enormous, and the same object may be described differently depending on what it is compared with.',
+      'Separate useful precision from adjective stacking. “A rough wooden table” can communicate texture and material clearly, while a sentence with six unrelated adjectives may become harder to understand. Ask which details matter for the listener or reader. This helps children learn that rich vocabulary improves meaning when it is selected, not simply accumulated.',
+      'Connect description to nouns and situations without duplicating Grammar. Vocabulary practice asks, “Which word best describes this?” Grammar can separately teach adjective position, comparative forms and sentence structure. Keeping the lexical purpose clear lets children build a broader bank of words while still linking naturally to the adjective reference guide.',
+    ],
+    workedExamples: [
+      {
+        example: '“The path was narrow and rocky, so we walked in a single line.”',
+        explanation: 'Narrow describes limited width and rocky describes the surface. Both details matter because they explain the walkers’ behaviour. The sentence shows that description can carry useful information rather than merely making writing sound more elaborate.',
+      },
+      {
+        example: '“Maya gave a patient explanation to the younger student.”',
+        explanation: 'Patient describes a personal quality shown through behaviour. Instead of saying Maya was nice, the more precise word identifies how she acted. Ask what evidence would make helpful, generous or cheerful a better choice in a different situation.',
+      },
+      {
+        example: '“The blanket felt soft, but the old wall was rough.”',
+        explanation: 'Soft and rough are texture words learned through a direct contrast. The child can then apply them to new objects and discuss borderline cases. This moves the words beyond one memorised picture or object.',
+      },
+    ],
+    examples: [
+      'Size and shape: tiny, wide, narrow, round, enormous',
+      'Texture and quality: soft, rough, smooth, clean, fragile',
+      'People and atmosphere: patient, cheerful, peaceful, crowded, noisy',
+    ],
+    commonMistakes: [
+      'Replacing simple words with rare synonyms only to make writing sound advanced, even when the child does not fully understand the new word.',
+      'Adding many describing words to one noun without deciding which details are relevant to the message.',
+      'Teaching adjective labels without developing meaning contrasts, so the child can identify a describing word but still relies on nice, big and good in real communication.',
+    ],
+    trickyCases: [
+      'The same describing word can activate different meanings. Bright can describe strong light, vivid colour or an intelligent person in some contexts. The surrounding noun and sentence help the child choose the intended sense.',
+      'Description can be partly subjective. A room one person calls small may feel comfortable to another. Teach children to distinguish measurable properties from opinions and to give evidence when a descriptive judgement could reasonably vary.',
+    ],
+    teachingNote: 'Build small word banks around one property at a time. Use real objects, photographs or short passages and ask the child to select one or two details that matter. Compare nearby choices such as small, tiny and narrow rather than teaching them as interchangeable. During speaking and writing, ask “What exactly do you mean?” and “Which detail helps the listener picture it?” Remove word banks gradually so retrieval becomes independent.',
+    practicePrompts: [
+      'Sort fifteen describing words into size, shape, colour, texture, sound, quality and personality, then discuss any word that could fit more than one group.',
+      'Improve five vague descriptions by replacing only one word in each sentence with a more precise choice, then explain the change in meaning.',
+      'Choose an object or place and describe it using three relevant details from different categories without repeating a memorised sentence pattern.',
+    ],
+    faqs: [
+      {
+        question: 'Are describing words always adjectives?',
+        answer: 'Many common describing words taught to children are adjectives, but this Vocabulary guide is about useful descriptive meaning rather than complete grammatical classification. Grammar lessons can explain how adjectives function, where they appear and how comparative forms work. Here the priority is choosing precise words that fit the person, object, place or experience being described.',
+      },
+      {
+        question: 'How can I stop my child using nice, good and big repeatedly?',
+        answer: 'Ask what the child specifically means before offering a synonym. Nice might mean kind, peaceful, tasty or enjoyable depending on context. Good might mean accurate, helpful, exciting or effective. Once the intended idea is clear, compare two or three familiar alternatives and reuse the chosen word in several new sentences so it becomes available independently.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/grammar/adjectives-for-kids', '/resources/vocabulary/vocabulary-for-better-writing', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['big', 'small', 'soft', 'loud', 'bright', 'clean', 'cold', 'sweet', 'fast', 'slow'],
+  }),
+
+  page({
+    order: 6,
+    id: 'home-family-routines',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'home-family-daily-routine-vocabulary',
+    cardTitle: 'Home, Family & Daily Routine Vocabulary',
+    seoTitle: 'Home, Family and Daily Routine Vocabulary for Kids | Tiny Steps',
+    seoDescription: 'Build useful vocabulary for family, rooms, household actions, daily routines and time-of-day so children can describe everyday home life clearly.',
+    quickAnswer: 'Home and routine vocabulary gives children the words to talk about family members, rooms, household objects, daily actions and time-of-day. Strong knowledge means more than naming kitchen, blanket or morning: children should connect words to what happens there, sequence familiar routines and use the vocabulary naturally when answering questions or describing real life.',
+    concept: 'Everyday home vocabulary is easiest to remember when words are connected into meaningful events. Family, kitchen, breakfast, bottle and morning can appear in one routine; bedroom, blanket, read and night can appear in another. These networks help children retrieve vocabulary as part of a message instead of treating every word as an isolated flashcard label.',
+    whyItMatters: 'Home is one of the richest sources of repeated language for young learners. Children need this vocabulary to understand stories, follow instructions, describe their day and participate in conversation. Sequencing routine words also supports narrative language because children practise before, after, first, next and later while talking about familiar actions. For multilingual learners, home topics provide an accessible bridge between known experiences and new English words.',
+    coreIdeas: [
+      'Organise vocabulary around real household zones and routines. In a kitchen, children may meet plate, cup, bottle, sink, cook, pour and wash; in a bedroom they may use bed, blanket, wardrobe, sleep and wake up. The room gives a memory structure, while sentences and questions turn the labels into usable language.',
+      'Connect people words to relationships and roles without assuming every family looks the same. Children may live with parents, grandparents, siblings, one caregiver or other relatives. Teach words such as family, parent, grandparent, brother, sister, cousin and neighbour flexibly, and let children describe their own household only to the level they are comfortable sharing.',
+      'Use routine vocabulary to practise sequencing and retrieval. Morning, afternoon, evening and night can anchor actions such as wake up, brush, eat, pack, return, play and sleep. Ask children to change the sequence for weekdays, weekends or holidays so the vocabulary transfers beyond one memorised “my daily routine” script.',
+    ],
+    workedExamples: [
+      {
+        example: '“In the morning, I fill my bottle in the kitchen before I pack my school bag.”',
+        explanation: 'The sentence combines time-of-day, room, object and routine action vocabulary. A follow-up can ask what happens first, what could happen on a weekend instead, or which words would change if the routine took place in the evening.',
+      },
+      {
+        example: '“Our neighbour brought a parcel while my family was eating dinner.”',
+        explanation: 'Neighbour names a person who lives nearby and family names the household group. The sentence provides a realistic event rather than a family-tree label exercise. Children can explain the relationship between neighbour and family without assuming they are relatives.',
+      },
+      {
+        example: '“I folded the blanket and put it on the bed after I woke up.”',
+        explanation: 'The routine links an object to two actions and a sequence marker. It checks whether the child knows what a blanket is and can also use the word while describing what happened, which is stronger evidence of vocabulary knowledge than pointing to a picture.',
+      },
+    ],
+    examples: [
+      'People: family, parent, grandparent, sibling, cousin, neighbour',
+      'Rooms and objects: kitchen, bedroom, window, blanket, bottle',
+      'Routine language: morning, wake up, brush, pack, return, evening',
+    ],
+    commonMistakes: [
+      'Teaching family vocabulary only through one fixed family-tree model and unintentionally implying that every child has the same household structure.',
+      'Asking children to memorise a long daily-routine paragraph, which can produce fluent recitation without flexible vocabulary use.',
+      'Stopping at room and object labels instead of connecting the words to actions, location language and real communication.',
+    ],
+    trickyCases: [
+      'Household vocabulary varies across regions and varieties of English. Words such as wardrobe and closet or tap and faucet may differ. Prioritise the variety children are most likely to encounter while recognising widely understood alternatives when they appear.',
+      'Some routine words are culturally or personally variable. Meals, school times and household tasks do not happen at identical times for every family. Use examples as language practice rather than presenting one routine as the correct lifestyle.',
+    ],
+    teachingNote: 'Use a simple home map, real photos or the child’s own routine as a context, but avoid requiring personal information. Teach a small cluster of words, then ask location, function and sequence questions: “Where would you find it?”, “What do you do with it?”, “What happens before that?” Revisit the same words in stories and conversation. Gradually remove visual support and ask the child to retell a changed routine so retrieval becomes flexible.',
+    practicePrompts: [
+      'Sort twelve words into people, rooms, objects and routine actions, then make one sentence that combines words from three different groups.',
+      'Put six routine events in a sensible order and retell them using first, next, after that and finally, then create a different weekend version.',
+      'Use the home-and-routine words from the lexical set—family, window, kitchen, blanket, neighbour and morning—in new sentences that are not copies of the game examples.',
+    ],
+    faqs: [
+      {
+        question: 'Should children memorise a “daily routine” speech?',
+        answer: 'A short model can demonstrate useful language, but the goal should be flexible retrieval. Change the day, time, person or order and ask the child to adapt the answer. If the vocabulary disappears as soon as the script changes, the words are not yet secure for independent speaking.',
+      },
+      {
+        question: 'How can parents practise home vocabulary without worksheets?',
+        answer: 'Use ordinary moments. Ask the child to name an object, explain its function, follow a two-step instruction or describe what happens next in a routine. Keep the exchange brief and natural. Reusing the same words across several days is more valuable than testing a very long list once.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-everyday-objects', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/everyday-vocabulary-for-kids', '/spoken-english-classes-for-kids-online', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['family', 'window', 'kitchen', 'blanket', 'neighbour', 'morning'],
+  }),
+
+  page({
+    order: 7,
+    id: 'food-clothes-body',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'food-clothes-body-vocabulary-for-kids',
+    cardTitle: 'Food, Clothes & Body Vocabulary',
+    seoTitle: 'Food, Clothes and Body Vocabulary for Kids | Tiny Steps',
+    seoDescription: 'Teach practical words for food, drinks, clothes, body parts and basic everyday health so children can describe needs, choices and routines.',
+    quickAnswer: 'Food, clothes and body vocabulary covers practical words children use to talk about meals, preferences, what they wear, body parts and simple everyday needs. Children should move from naming items to using the vocabulary in sentences such as “I prefer ripe mango,” “My sleeve is wet,” or “My ankle hurts,” while keeping health discussion basic and age-appropriate.',
+    concept: 'These everyday domains are broad, so vocabulary should be taught in small useful groups rather than one enormous themed list. Food can be organised by meals, ingredients, taste or preparation; clothes by item, weather or purpose; body vocabulary by visible parts and simple actions. Repeated contextual use helps children understand category relationships and retrieve the right word when they need it.',
+    whyItMatters: 'Children meet these words in instructions, stories, school routines, shopping, travel and conversation. They may need to explain what they ate, choose appropriate clothing for weather, follow a sports instruction or say where something feels uncomfortable. Practical vocabulary supports independence and comprehension, especially when children can combine a noun with useful verbs and describing words instead of naming an item only.',
+    coreIdeas: [
+      'Teach category plus function. Apple, rice and yoghurt are foods, but children can also discuss taste, meal, preparation or preference. Shirt, jacket and socks are clothes, and their purpose changes with weather or activity. Hand, knee and shoulder are body parts that appear in movement instructions. Function and context make category words easier to retrieve.',
+      'Build natural word combinations around the nouns. Children can learn drink water, peel a banana, wear a jacket, tie shoelaces, bend your knee and raise your hand. These short combinations connect vocabulary to real communication and reduce the chance that a word remains a label known only from picture matching.',
+      'Keep basic health language descriptive rather than diagnostic. Children can learn phrases such as sore throat, upset stomach, tired legs or “my knee hurts” for everyday communication. The learning objective is vocabulary for describing a simple need or sensation, not teaching children to diagnose illness or replace adult medical advice.',
+    ],
+    workedExamples: [
+      {
+        example: '“I packed a sandwich, an apple and a bottle of water for the trip.”',
+        explanation: 'The sentence groups foods and a drink inside a realistic purpose. A child can classify the items, add a preference, or change one item while preserving the sentence structure. Bottle also connects to the existing lexical baseline without changing the game dataset.',
+      },
+      {
+        example: '“Wear a light jacket because the morning is cool.”',
+        explanation: 'Jacket is linked to weather and purpose. Light here describes the type or weight of clothing rather than brightness, showing how context supports word meaning. The child can compare jacket, sweater and T-shirt for different situations.',
+      },
+      {
+        example: '“I bent my knee to tie my shoelace.”',
+        explanation: 'Knee is learned together with an action and another clothing-related word. The context shows where the body word is useful. Follow-up instructions such as raise your hand or turn your head can reinforce comprehension without turning the activity into anatomy study.',
+      },
+    ],
+    examples: [
+      'Food and drink: fruit, rice, bread, yoghurt, water, sweet, sour',
+      'Clothes: shirt, trousers, dress, jacket, socks, shoes, sleeve',
+      'Body and simple needs: hand, knee, shoulder, ankle, hungry, thirsty, sore',
+    ],
+    commonMistakes: [
+      'Teaching dozens of food or body labels in one sitting, which creates recognition overload and weak long-term retrieval.',
+      'Practising nouns without common actions such as eat, drink, wear, wash, bend and tie, so children know labels but struggle to form useful sentences.',
+      'Using basic health vocabulary to make medical claims. The language goal is describing a simple sensation or need, not diagnosing a condition.',
+    ],
+    trickyCases: [
+      'Food vocabulary varies widely by culture. Use familiar local foods alongside internationally common words and teach the English label when it has a clear equivalent. The purpose is communication, not replacing the child’s own food culture with a narrow example set.',
+      'Some clothing words differ by English variety, such as trousers and pants. Children can learn the form used in their school or materials while being told that another common variety exists. Context usually makes the intended item clear.',
+    ],
+    teachingNote: 'Choose one practical subtopic at a time and use real situations: packing lunch, choosing clothes for weather or following a movement instruction. Ask children to classify, describe and use the word rather than copy it repeatedly. Mix familiar and new vocabulary so success is possible. For body and simple health words, keep examples neutral and everyday and direct real health concerns to a parent, teacher or healthcare professional.',
+    practicePrompts: [
+      'Plan a simple packed lunch using six vocabulary words, then explain one taste, preference or preparation choice without turning the task into nutrition advice.',
+      'Choose clothes for three weather situations and explain each choice using wear, need, light, warm, wet or dry naturally.',
+      'Follow and then create five safe movement instructions using body-part words, such as raise your hand or bend your knee, and explain each instruction in your own words.',
+    ],
+    faqs: [
+      {
+        question: 'How many themed words should a child learn at once?',
+        answer: 'Use a small enough set that the child can understand, retrieve and use the words in new contexts. Ten deeply practised words are usually more useful than a very long list completed once. Revisit older vocabulary while adding a few new items so categories grow gradually.',
+      },
+      {
+        question: 'Should food vocabulary lessons include nutrition rules?',
+        answer: 'Vocabulary lessons can discuss ordinary categories, tastes, meals and preparation, but they do not need to prescribe diets or make health claims. If nutrition is the teaching goal, use age-appropriate guidance from the child’s school, family or qualified health sources. Here the focus is accurate English meaning and everyday use.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-overview', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/everyday-vocabulary-for-kids', '/spoken-english-classes-for-kids-online', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['eat', 'sweet', 'bottle'],
+  }),
+
+  page({
+    order: 8,
+    id: 'nature-weather-places-transport',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'nature-weather-places-transport-for-kids',
+    cardTitle: 'Nature, Weather, Places & Transport Vocabulary',
+    seoTitle: 'Nature, Weather, Places and Transport Vocabulary for Kids | Tiny Steps',
+    seoDescription: 'Build vocabulary for weather, nature, neighbourhood places, transport and travel through categories, scenes, context and real-life speaking.',
+    quickAnswer: 'Nature, weather, places and transport vocabulary helps children describe what they see around them and talk about movement through the world. Useful words include garden, river, cloudy, windy, market, library, street, bus and station. Children learn them best through scenes, routes, stories and real contexts rather than as four separate lists to memorise.',
+    concept: 'These domains connect naturally. A child may describe rainy weather while travelling by bus to a market, notice trees near a street, or explain a route from school to a library. Teaching the words in connected scenes helps children build semantic categories while also practising location, movement and descriptive language that supports reading and conversation.',
+    whyItMatters: 'Environmental vocabulary appears frequently in stories, school topics, travel, maps and everyday conversation. Children need place and transport words to understand where events happen and how people move. Weather and nature words support description and science-related reading. A broader vocabulary also helps children give directions, compare places and explain experiences with more detail.',
+    coreIdeas: [
+      'Build clear semantic groups first: weather, nature, town places and transport. Then deliberately connect them. For example, cloudy and windy belong to weather; tree and river to nature; market and library to places; bus and bicycle to transport. Classification gives structure, while connected sentences prevent the categories from remaining isolated.',
+      'Use scene and route language. Ask what a child can see, where something is, how a person could travel there and what the weather is like. A single picture or simple map can prompt nouns, action words and describing words. The vocabulary objective remains the meaning of the target words, while grammar such as prepositions can be reinforced naturally.',
+      'Teach transport words with purpose and context rather than ranking one option as universally best. Walk, bicycle, bus, train, car and boat fit different distances and environments. Children can explain which word matches a scenario and why, building precise understanding without turning the language task into transport policy or safety advice.',
+    ],
+    workedExamples: [
+      {
+        example: '“Dark clouds gathered above the park, and a strong wind moved the branches.”',
+        explanation: 'Clouds, park, wind and branches connect weather and nature vocabulary in one scene. The child can infer that conditions are changing and add a suitable word such as rainy only if the context supports it. This encourages evidence-based description.',
+      },
+      {
+        example: '“We walked along the street to the market, then took a bus home.”',
+        explanation: 'Street and market are place words, while walked and bus describe movement and transport. A follow-up can ask for a different route or destination, forcing the child to retrieve the vocabulary in a changed context.',
+      },
+      {
+        example: '“The library is opposite the garden and near the bus stop.”',
+        explanation: 'The example combines two known place words with a transport location. It can be used with a simple map so children connect vocabulary to visual position and real navigation language without needing to memorise a route script.',
+      },
+    ],
+    examples: [
+      'Weather and nature: sunny, cloudy, windy, rain, river, tree, garden',
+      'Places: street, market, library, park, station, bridge',
+      'Transport and travel: walk, bicycle, bus, train, car, boat, journey',
+    ],
+    commonMistakes: [
+      'Teaching large themed posters as if pointing and naming once proves secure vocabulary knowledge.',
+      'Mixing weather and climate explanations into a basic word lesson without enough language support, which can overwhelm the lexical goal.',
+      'Practising route or transport sentences as one fixed script instead of changing destinations, weather and travel choices to test flexible retrieval.',
+    ],
+    trickyCases: [
+      'Place words can be broad or specific. Station may refer to a train, bus or other service depending on context, while market can describe a physical place or a broader buying-and-selling system in advanced texts. Teach the concrete child-relevant meaning first and expand only when context requires it.',
+      'Weather words often combine with intensity and time. Light rain, heavy rain, a windy morning and a sudden storm are different expressions. Children can notice these natural combinations without needing a full meteorology explanation.',
+    ],
+    teachingNote: 'Use photographs, short travel stories, simple maps and local scenes. Start with a small semantic set, then ask the child to describe a changed scene or plan a route using target words. Encourage questions such as “How do you know it is windy?” or “Which place would you visit to borrow a book?” These require meaning, not label recall. Revisit the same words in reading so visual vocabulary transfers into text comprehension.',
+    practicePrompts: [
+      'Sort sixteen words into weather, nature, places and transport, then create four sentences that combine words from at least two categories.',
+      'Use a simple map to give a route from a school to a library, market or park, changing the transport word and one landmark each time.',
+      'Describe two weather scenes using evidence from the picture and choose precise words such as cloudy, windy, bright or wet rather than guessing unsupported details.',
+    ],
+    faqs: [
+      {
+        question: 'Should children learn vocabulary by topic?',
+        answer: 'Topic grouping is useful because related words form a memory network, but children also need to use the words outside the original topic page. After learning transport words, for example, include them in a story, route task or conversation. Category learning plus varied retrieval is stronger than memorising one themed list.',
+      },
+      {
+        question: 'How can this vocabulary support reading comprehension?',
+        answer: 'Stories and informational texts often assume that readers know common place, weather and travel words. When those words are familiar, children can spend more attention on events and ideas. If a word is unknown, connect it to the scene or context, then return to the sentence and check that the meaning fits.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/context-clues-for-kids', '/reading-classes-for-kids', '/spoken-english-classes-for-kids-online'],
+    featuredWordIds: ['garden', 'market', 'street', 'library', 'bright'],
+  }),
+
+  page({
+    order: 10,
+    id: 'multiple-meaning-confused-words',
+    stageId: 'word-relationships',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'multiple-meaning-confused-words-for-kids',
+    cardTitle: 'Multiple-Meaning & Easily Confused Words',
+    seoTitle: 'Multiple-Meaning and Easily Confused Words for Kids | Tiny Steps',
+    seoDescription: 'Help children use context to choose the right meaning and distinguish words that look, sound or seem similar but work differently.',
+    quickAnswer: 'Multiple-meaning words have more than one related or established meaning, while easily confused words can look, sound or seem similar even though their meanings or uses differ. Children need to use sentence context, meaning clues and careful comparison to decide which word or sense fits, rather than choosing only from spelling or sound.',
+    concept: 'English contains words whose meaning changes with context and word pairs that learners commonly mix up. Light can describe brightness or low weight; bank can refer to a place for money or the side of a river. Pairs such as quiet and quite or accept and except require comparison because visual similarity does not make the meanings interchangeable. The central skill is checking meaning inside the whole sentence.',
+    whyItMatters: 'Confusion at the word level can change comprehension and writing meaning even when a sentence looks nearly correct. Readers may misunderstand a story if they select the first familiar meaning of a multiple-meaning word. Writers may choose a similar-looking word that creates the wrong message. Learning to pause, inspect context and verify meaning supports reading accuracy, spelling awareness and editing.',
+    coreIdeas: [
+      'For multiple-meaning words, teach one familiar sense first, then contrast a second sense in clearly different sentences. Ask what clues make the meaning change. “The bag is light” points to weight, while “Turn on the light” points to illumination. Children should explain the evidence rather than memorise two definitions without context.',
+      'For easily confused words, compare meaning and usage directly. Quiet means making little noise, while quite often changes degree; their spellings are similar but their jobs and meanings differ. Accept and except also look similar but express different ideas. Short contrast sentences are more useful than copying each word repeatedly in isolation.',
+      'Use a verify step. After selecting a meaning or word, reread the complete sentence and substitute a simple explanation where possible. If bank means river edge, “We sat on the edge of the river” should preserve the message. If the replacement does not make sense, the child should reconsider rather than treating the first guess as final.',
+    ],
+    workedExamples: [
+      {
+        example: '“This box is light.” / “Please switch on the light.”',
+        explanation: 'The first sentence uses light to mean not heavy; the second uses it to mean illumination. Box and switch on are strong contextual clues. Children can paraphrase each sentence to show that the same spelling does not guarantee the same meaning.',
+      },
+      {
+        example: '“Please be quiet during the reading.” / “The puzzle was quite difficult.”',
+        explanation: 'Quiet relates to low noise, while quite modifies the degree of difficult. The words look similar, so visual memory alone can cause errors. Reading the entire sentence reveals which meaning is required.',
+      },
+      {
+        example: '“They sat on the river bank and watched the water.”',
+        explanation: 'Water and river strongly support the river-edge meaning of bank rather than a financial institution. The child can replace bank with river edge to test the inference, then compare it with a second sentence about depositing money.',
+      },
+    ],
+    examples: [
+      'Multiple meanings: light, bank, bat, ring, watch',
+      'Similar-looking confusions: quiet/quite, accept/except, lose/loose',
+      'Context check: identify clues → propose meaning → reread → verify',
+    ],
+    commonMistakes: [
+      'Choosing the most familiar meaning of a word without checking whether it makes sense in the current sentence.',
+      'Assuming words that look or sound similar must be related in meaning.',
+      'Correcting a confused word from spelling alone without asking what the writer intended to say.',
+    ],
+    trickyCases: [
+      'Some words have many dictionary meanings, and children do not need all of them at once. Teach the senses that appear in age-appropriate reading and add others when a real text creates a reason. Too many definitions can make a useful strategy feel like a memory test.',
+      'Homophones, multiple-meaning words and near-confusions are different relationships, and classroom labels can vary. The practical priority is consistent: use context, compare meanings and verify the chosen word. Terminology should support that reasoning rather than become the main learning target.',
+    ],
+    teachingNote: 'Use pairs of short sentences where one clue clearly changes the meaning. Ask the child to underline the clue, explain the sense in simple words and test a paraphrase. For confused pairs, place both words in meaningful sentences and discuss why swapping them would change or break the message. Later move into short paragraphs where clues are less obvious. Encourage dictionary checking when context does not provide enough information.',
+    practicePrompts: [
+      'Read eight sentences containing four multiple-meaning words and explain which sense is active in each sentence using one clue as evidence.',
+      'Choose the correct word from five easily confused pairs, then explain the meaning difference rather than relying only on spelling.',
+      'Write two sentences for one multiple-meaning word so that each sentence clearly activates a different meaning, then ask another person to identify the clues.',
+    ],
+    faqs: [
+      {
+        question: 'Are multiple-meaning words the same as homophones?',
+        answer: 'Not necessarily. A multiple-meaning word uses the same written form for more than one meaning, often with related or established senses. Homophones are different words that sound the same, such as pair and pear. Children do not need advanced linguistic labels to solve the problem; they need to use context and meaning to identify the intended word or sense.',
+      },
+      {
+        question: 'What should a child do when context is not enough?',
+        answer: 'A strong reader can recognise uncertainty. If nearby sentences do not provide enough evidence, check a dictionary, glossary, teacher or another reliable source. Context is a useful first strategy, not a guarantee that every exact meaning can be inferred from every sentence.',
+      },
+    ],
+    sourceIds: ['ies-context-clues', 'british-council-vocabulary-overview', 'ies-reading-interventions'],
+    relatedPaths: ['/resources/vocabulary/context-clues-for-kids', '/resources/vocabulary/synonyms-antonyms-for-kids', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: [],
+  }),
+].sort((a, b) => a.order - b.order));
 
 export const VOCABULARY_AUTHORITY_PATHS = freezeList(
   VOCABULARY_AUTHORITY_PAGES.map((entry) => entry.path),

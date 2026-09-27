@@ -90,8 +90,14 @@ describe('Commercial C7-R3 contextual commercial handoffs', () => {
     expect(text).not.toContain('/speaking');
   });
 
-  it('does not create R3 commercial handoffs for GV5 Vocabulary transfer guides', () => {
+  it('does not create R3 commercial handoffs for published Vocabulary authority guides', () => {
     const paths = [
+      '/resources/vocabulary/action-words-for-kids',
+      '/resources/vocabulary/describing-words-for-kids',
+      '/resources/vocabulary/home-family-daily-routine-vocabulary',
+      '/resources/vocabulary/food-clothes-body-vocabulary-for-kids',
+      '/resources/vocabulary/nature-weather-places-transport-for-kids',
+      '/resources/vocabulary/multiple-meaning-confused-words-for-kids',
       '/resources/vocabulary/collocations-for-kids',
       '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
       '/resources/vocabulary/vocabulary-for-better-writing',

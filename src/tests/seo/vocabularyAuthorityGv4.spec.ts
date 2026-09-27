@@ -57,16 +57,16 @@ const FIRST_BATCH_IDS = [
 
 describe('GV4 Vocabulary hub and first authority publication batch', () => {
   it('preserves the original six-guide GV4 publication inside the additive Vocabulary architecture', () => {
-    expect(VOCABULARY_AUTHORITY_REVISION).toBe('2026-09-27-gv5');
+    expect(VOCABULARY_AUTHORITY_REVISION).toBe('2026-09-27-gv5b');
     expect(VOCABULARY_HUB_PATH).toBe('/resources/vocabulary');
     expect(VOCABULARY_AUTHORITY_REQUIREMENTS).toHaveLength(16);
     expect(VOCABULARY_KNOWLEDGE_STAGES).toHaveLength(6);
-    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(10);
-    expect(VOCABULARY_AUTHORITY_PATHS).toHaveLength(10);
+    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(16);
+    expect(VOCABULARY_AUTHORITY_PATHS).toHaveLength(16);
 
     const firstBatch = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv4-first-authority-batch');
     expect(firstBatch).toHaveLength(6);
-    expect(firstBatch.map((page) => page.id)).toEqual(FIRST_BATCH_IDS);
+    expect(firstBatch.map((page) => page.id).sort()).toEqual([...FIRST_BATCH_IDS].sort());
 
     const requirementIds = new Set(VOCABULARY_AUTHORITY_REQUIREMENTS.map((item) => item.id));
     for (const page of firstBatch) {
@@ -77,12 +77,12 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     }
   });
 
-  it('keeps every still-unpublished authority topic out of public routing', () => {
+  it('confirms the frozen sixteen-topic requirement set is fully published after additive completion', () => {
     const published = new Set(VOCABULARY_AUTHORITY_PAGES.map((page) => page.id));
     const publicPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
     const remaining = VOCABULARY_AUTHORITY_REQUIREMENTS.filter((item) => !published.has(item.id));
 
-    expect(remaining).toHaveLength(6);
+    expect(remaining).toHaveLength(0);
     for (const item of remaining) {
       expect(publicPaths.has(item.proposedPath), item.id).toBe(false);
     }
@@ -140,7 +140,8 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     for (const page of VOCABULARY_AUTHORITY_PAGES) {
       expect(routePaths.has(page.path), page.path).toBe(true);
       expect(ROUTE_SEO_REGISTRY[page.path]?.canonicalPath, page.path).toBe(page.path);
-      const ownerId = `${page.publicationBatch === 'gv5-natural-english-transfer' ? 'gv5' : 'gv4'}-vocabulary-${page.id}`;
+      const ownerPrefix = page.publicationBatch === 'gv5b-foundation-completion' ? 'gv5b' : page.publicationBatch === 'gv5-natural-english-transfer' ? 'gv5' : 'gv4';
+      const ownerId = `${ownerPrefix}-vocabulary-${page.id}`;
       const owner = CANONICAL_TOPIC_OWNERSHIP.find((entry) => entry.id === ownerId);
       expect(owner?.ownerPath, page.id).toBe(page.path);
       expect(owner?.ownerRole, page.id).toBe('skill-guide');
@@ -171,12 +172,12 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
   });
 
   it('keeps Vocabulary concepts aligned with all published guides and one practice owner', () => {
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(106);
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(112);
     const vocabulary = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/vocabulary/'),
     );
-    expect(vocabulary).toHaveLength(10);
-    expect(new Set(vocabulary.map((item) => item.canonicalPath)).size).toBe(10);
+    expect(vocabulary).toHaveLength(16);
+    expect(new Set(vocabulary.map((item) => item.canonicalPath)).size).toBe(16);
     for (const item of vocabulary) {
       expect(item.subject).toBe('vocabulary');
       expect(item.hubPath).toBe('/resources/vocabulary');
@@ -206,6 +207,6 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     expect(breadcrumbs).toContain("'/resources/vocabulary': 'Vocabulary'");
     expect(breadcrumbs).toContain("path.startsWith('/resources/vocabulary/')");
     expect(breadcrumbs).toContain("aboutName: 'Vocabulary learning for children'");
-    expect(VOCABULARY_AUTHORITY_ROUTE_MANIFEST).toHaveLength(10);
+    expect(VOCABULARY_AUTHORITY_ROUTE_MANIFEST).toHaveLength(16);
   });
 });
