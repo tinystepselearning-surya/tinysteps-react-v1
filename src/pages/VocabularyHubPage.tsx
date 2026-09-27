@@ -93,10 +93,10 @@ const VocabularyHubPage: FC = () => {
           <div className="max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Published authority guides</p>
             <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950 sm:text-4xl">
-              Explore ten high-value vocabulary guides
+              Explore all sixteen vocabulary authority guides
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              The published library now combines the six GV4 foundation guides with four GV5 guides for natural English, speaking and writing transfer. Each page connects explanation to context and practice, while Vocabulary Adventure remains the practice surface.
+              The full frozen Vocabulary architecture is now published: six GV4 guides, four GV5 natural-English and transfer guides, and six GV5B foundation-completion guides. Each page connects explanation to context and practice, while Vocabulary Adventure remains the practice surface.
             </p>
           </div>
 
@@ -126,7 +126,7 @@ const VocabularyHubPage: FC = () => {
           <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Vocabulary progression</p>
           <h2 className="mt-3 text-3xl font-black tracking-[-0.03em] text-slate-950 sm:text-4xl">Six stages, one connected system</h2>
           <p className="mt-4 text-base leading-8 text-slate-600">
-            Published guides appear as links. The wider architecture stays visible as a progression, but unpublished topics do not create placeholder URLs or thin pages.
+            All sixteen frozen authority topics are now published and linked through the six-stage progression. The stage view remains the canonical learning map for future discovery and practice integration.
           </p>
         </div>
 
