@@ -14,7 +14,7 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/pages/SubjectResourcesPage.tsx': '665c15035d57085afe9ffc7d194753da506b824a',
   'src/pages/phonics.tsx': '5eb38c8670a1dd1c1c6e28f04a01c8edfb6bee4f',
   'src/pages/founder/FounderEditorialReviewsPanel.tsx': '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-  'src/lib/canonicalTopicOwnershipRegistry.js': 'c65569e68b8f0e12bfe65697d9de26fe9df83b06',
+  'src/lib/canonicalTopicOwnershipRegistry.js': '5fc9ce94d7d08c2d76c6bcc1f96c13c390e9fffe',
   'src/pages/ForSchoolsPage.tsx': '7be826c4fb422a5d022884607f340d3179d9ee25',
   'src/pages/GrammarKnowledgePage.tsx': '80190e0e6da35419d90bf22d3da534d3547f4415',
   'src/pages/ResourcesPage.tsx': '9bae80879eb765f6ff33154ed64f58cbb886ce5a',
@@ -23,7 +23,7 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/pages/parents/ParentsHubPage.tsx': 'c895e42389e264b3bfede7d1a2e029b2a93e0165',
   'src/pages/public/FreeEnglishGamesHubPage.tsx': 'c42429e4613e72aef51fa7ad43504a31decba04a',
   // GV4 informational Vocabulary surfaces: exact reviewed publication bytes only.
-  'src/pages/VocabularyHubPage.tsx': 'b7cefa2beda8a93435e645114c4dcb4800f95fb5',
+  'src/pages/VocabularyHubPage.tsx': 'ad474cf4ae446d986b0dedd24916292e08600312',
   'src/pages/VocabularyKnowledgePage.tsx': '21bd4cf5ae358af13f9841788c29008de8a253cc',
 });
 

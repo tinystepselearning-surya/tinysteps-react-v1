@@ -47,7 +47,7 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [subjectHubPath]: '665c15035d57085afe9ffc7d194753da506b824a',
       [phonicsPath]: '5eb38c8670a1dd1c1c6e28f04a01c8edfb6bee4f',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-      [canonicalOwnershipPath]: 'c65569e68b8f0e12bfe65697d9de26fe9df83b06',
+      [canonicalOwnershipPath]: '5fc9ce94d7d08c2d76c6bcc1f96c13c390e9fffe',
       [schoolsPath]: '7be826c4fb422a5d022884607f340d3179d9ee25',
       [grammarKnowledgePath]: '80190e0e6da35419d90bf22d3da534d3547f4415',
       [resourcesPath]: '9bae80879eb765f6ff33154ed64f58cbb886ce5a',
@@ -55,7 +55,7 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [blogIndexUxPath]: 'c42e8c80ba0f56217eb9fb14a4ec1b4fafd8a919',
       [parentsHubPath]: 'c895e42389e264b3bfede7d1a2e029b2a93e0165',
       [freeGamesPath]: 'c42429e4613e72aef51fa7ad43504a31decba04a',
-      [vocabularyHubPath]: 'b7cefa2beda8a93435e645114c4dcb4800f95fb5',
+      [vocabularyHubPath]: 'ad474cf4ae446d986b0dedd24916292e08600312',
       [vocabularyKnowledgePath]: '21bd4cf5ae358af13f9841788c29008de8a253cc',
     });
     expect(Object.isFrozen(REVIEWED_SEO_RECOVERY_BLOBS)).toBe(true);
