@@ -9,6 +9,7 @@ import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FA
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
 import ProgrammeHeroSnapshot from '../components/programs/ProgrammeHeroSnapshot';
+import ProgrammeFaqAccordion from '../components/programs/ProgrammeFaqAccordion';
 import { getProgrammeAiVisibility } from '../lib/programmeAiVisibility';
 
 const grammarFacts = SEMANTIC_FACTS.programmes.grammar;
@@ -320,72 +321,60 @@ export default function GrammarPage() {
         observation="whether the child can use the pattern beyond a rule exercise, explain or correct an error, and build a complete sentence with less support."
       />
 
-      <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-10 md:pt-10 lg:px-6">
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-5 flex flex-col justify-between gap-3 md:flex-row md:items-end">
+          <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr] md:gap-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Common grammar gaps</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Find your child&apos;s grammar gap</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Common grammar gaps</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">Find your child&apos;s grammar gap</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                These are starting signals, not fixed labels. The assessment confirms whether Grammar is the primary need or another programme should take over.
+              </p>
             </div>
-            <p className="max-w-xl text-sm leading-6 text-slate-600">
-              These are starting signals, not fixed labels. The assessment confirms whether Grammar is the primary need or another programme should take over.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              {
-                pill: 'Grammar application',
-                problem: 'Child knows grammar rules but cannot use them',
-                meaning: 'Rules may be recalled, but articles, prepositions, agreement, or word order still break in new sentences.',
-                support: 'Focus: apply and correct grammar in fresh sentences',
-                href: '/grammar',
-                anchor: 'Explore grammar support',
-                tone: 'bg-[#F3FAFF] border-[#D7ECFA]',
-              },
-              {
-                pill: 'Sentence formation',
-                problem: 'Child struggles to build complete sentences',
-                meaning: 'Sentence structure and idea order may need guided modelling, correction, and repeated use in context.',
-                support: 'Focus: complete, accurate sentence construction',
-                href: '/grammar',
-                anchor: 'Explore sentence formation support',
-                tone: 'bg-[#FFF8F0] border-[#F6D9B9]',
-              },
-              {
-                pill: 'Tense control',
-                problem: 'Child mixes past, present, and future',
-                meaning: 'Tense forms may be known in exercises but not yet stable in everyday answers or explanations.',
-                support: 'Focus: choose and maintain the correct tense',
-                href: '/grammar',
-                anchor: 'Explore tense support',
-                tone: 'bg-[#F3FFF6] border-[#CFEFD7]',
-              },
-              {
-                pill: 'School-answer accuracy',
-                problem: 'Child writes short answers with repeated grammar errors',
-                meaning: 'Sentence accuracy, punctuation, or correction may be the main gap. If the difficulty is idea development or paragraphs, Writing is the better owner.',
-                support: 'Focus: accurate short written responses',
-                href: '/grammar',
-                anchor: 'Explore school-answer grammar support',
-                tone: 'bg-[#FFFBEA] border-[#F4E2A0]',
-              },
-            ].map((item) => (
-              <article
-                key={item.problem}
-                data-grammar-gap-card
-                className={`rounded-[22px] border p-5 md:p-6 ${item.tone}`}
-              >
-                <span className="inline-flex rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 md:text-[11px]">
-                  {item.pill}
-                </span>
-                <h3 className="mt-3 text-lg font-bold leading-snug text-slate-950 md:text-xl">{item.problem}</h3>
-                <p className="mt-2 text-[15px] leading-6 text-slate-700 md:text-base">{item.meaning}</p>
-                <p className="mt-3 text-sm font-semibold text-slate-900">{item.support}</p>
-                <Link to={item.href} className="mt-2 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
-                  {item.anchor}
-                </Link>
-              </article>
-            ))}
+
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {[
+                {
+                  pill: 'Grammar application',
+                  problem: 'Child knows grammar rules but cannot use them',
+                  meaning: 'Rules may be recalled, but articles, prepositions, agreement, or word order still break in new sentences.',
+                  support: 'Apply and correct grammar in fresh sentences',
+                  tone: 'border-sky-100 bg-sky-50/55',
+                },
+                {
+                  pill: 'Sentence formation',
+                  problem: 'Child struggles to build complete sentences',
+                  meaning: 'Sentence structure and idea order may need guided modelling, correction, and repeated use in context.',
+                  support: 'Build complete, accurate sentences',
+                  tone: 'border-orange-100 bg-orange-50/55',
+                },
+                {
+                  pill: 'Tense control',
+                  problem: 'Child mixes past, present, and future',
+                  meaning: 'Tense forms may be known in exercises but not yet stable in everyday answers or explanations.',
+                  support: 'Choose and maintain the correct tense',
+                  tone: 'border-emerald-100 bg-emerald-50/55',
+                },
+                {
+                  pill: 'School-answer accuracy',
+                  problem: 'Child writes short answers with repeated grammar errors',
+                  meaning: 'Sentence accuracy, punctuation, or correction may be the gap. If idea development or paragraphs are the difficulty, Writing is the better owner.',
+                  support: 'Improve accurate short written responses',
+                  tone: 'border-amber-100 bg-amber-50/55',
+                },
+              ].map((item) => (
+                <article
+                  key={item.problem}
+                  data-grammar-gap-card
+                  className={`rounded-[18px] border p-4 ${item.tone}`}
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">{item.pill}</span>
+                  <h3 className="mt-2 text-base font-semibold leading-snug text-slate-950">{item.problem}</h3>
+                  <p className="mt-1.5 text-sm leading-5 text-slate-600">{item.meaning}</p>
+                  <p className="mt-2 text-xs font-semibold text-slate-800">{item.support}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -394,31 +383,25 @@ export default function GrammarPage() {
 
 
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
-          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Tiny Steps grammar pathway</h2>
-
-          <div className="flex flex-wrap gap-2">
-            {['1 Parts of speech', '2 Sentence structure', '3 Tenses', '4 Punctuation', '5 Written sentence accuracy', '6 Confident school answers'].map((step) => (
-              <span key={step} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
-                {step}
-              </span>
-            ))}
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-5 md:py-7">
+          <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr] md:items-end md:gap-8">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700">Grammar pathway</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">Tiny Steps grammar pathway</h2>
+            </div>
+            <p className="max-w-2xl text-sm leading-6 text-slate-600">
+              Assessment-first placement identifies the exact grammar gap, then moves the child forward from sentence foundations to accurate, confident school answers.
+            </p>
           </div>
 
-          <p className="mt-3 text-slate-700">
-            Children do not all struggle with grammar at the same stage. Some need basic parts of speech, while others need sentence formation, tense correction, punctuation, or grammar application in school answers.
-          </p>
-          <p className="mt-3 text-slate-700">
-            Tiny Steps uses assessment-first placement to find the exact grammar gap and then helps the child move forward step by step.
-          </p>
-
-          <div className="mt-5 grid gap-x-6 gap-y-4 md:grid-cols-3">
-            {grammarPathwayCards.map((card) => (
-              <article key={card.name} className="flex h-full flex-col border-l border-slate-200 pl-4">
-                <h3 className="text-lg font-semibold text-slate-900">{card.name}</h3>
-                <p className="mt-2 text-sm text-slate-700 md:text-base">{card.description}</p>
-                <Link to={card.href} className="mt-4 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
+          <div className="mt-5 grid gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+            {grammarPathwayCards.map((card, index) => (
+              <article key={card.name} className="border-l border-slate-200 py-1 pl-4">
+                <span className="text-[10px] font-bold tracking-[0.15em] text-orange-600">0{index + 1}</span>
+                <h3 className="mt-1 text-sm font-semibold text-slate-950 md:text-[15px]">{card.name}</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-600 md:text-sm">{card.description}</p>
+                <Link to={card.href} className="mt-1.5 inline-block text-xs font-semibold text-slate-800 underline underline-offset-2">
                   {card.anchor}
                 </Link>
               </article>
@@ -427,76 +410,80 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[24px] border border-slate-200 bg-white p-5 md:p-6">
-          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+      <section className="px-4 py-5 sm:px-5 md:py-6 lg:px-6">
+        <div className="mx-auto max-w-6xl border-y border-slate-200 py-5">
+          <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Programme boundary</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar supports writing, but it is not the writing programme</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700 md:text-base">
-                Grammar owns sentence-level control: sentence formation, tenses, punctuation, correction, and <strong className="font-semibold text-slate-900">written sentence accuracy</strong> in short answers. It should help children use grammar correctly, not only name rules.
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Programme boundary</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-2xl">Grammar supports writing, but it is not the writing programme</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                Grammar owns sentence formation, tenses, punctuation, correction, and <strong className="font-semibold text-slate-900">written sentence accuracy</strong> in short answers.
               </p>
             </div>
-            <div className="grid gap-3">
-              <Link to="/writing-classes-for-kids" className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4 transition hover:bg-white">
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Choose Writing when</span>
-                <p className="mt-1 text-sm leading-6 text-slate-700">idea development, paragraphs, stories, editing, or longer composition is the main need.</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Link to="/writing-classes-for-kids" className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:bg-slate-50">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Choose Writing when</span>
+                <p className="mt-1 text-xs leading-5 text-slate-600">idea development, paragraphs, stories, editing, or longer composition is the main need.</p>
               </Link>
-              <Link to="/spoken-english-classes-for-kids-online" className="rounded-[18px] border border-slate-200 bg-slate-50/70 p-4 transition hover:bg-white">
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Choose Spoken English when</span>
-                <p className="mt-1 text-sm leading-6 text-slate-700">everyday conversational fluency and fuller spontaneous responses are the main need.</p>
+              <Link to="/spoken-english-classes-for-kids-online" className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:bg-slate-50">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Choose Spoken English when</span>
+                <p className="mt-1 text-xs leading-5 text-slate-600">everyday conversational fluency and fuller spontaneous responses are the main need.</p>
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200/80 bg-white/80 p-5 md:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Decision support</p>
-          <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">What to look for in a strong grammar programme</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
-            The useful difference is not more worksheets. Look for teaching that identifies the gap, uses grammar in real sentences, corrects errors live, and shows parents what is changing.
-          </p>
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[24px] border border-slate-200/80 bg-white/80 p-5 md:p-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Decision support</p>
+          <div className="mt-2 grid gap-4 md:grid-cols-[0.72fr_1.28fr] md:gap-8">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What to look for in a strong grammar programme</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                The useful difference is not more worksheets. Look for four things: accurate placement, grammar in real sentences, live correction, and visible parent progress.
+              </p>
+            </div>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-2">
-            {[
-              {
-                title: 'Assessment before placement',
-                lookFor: "A starting level based on the child's current grammar control.",
-                avoid: 'The same worksheet sequence for every child.',
-              },
-              {
-                title: 'Grammar used in real sentences',
-                lookFor: 'Sentence formation, short answers, and grammar transfer in context.',
-                avoid: 'Rules taught mainly as isolated definitions or drills.',
-              },
-              {
-                title: 'Live correction and retry',
-                lookFor: 'Specific teacher feedback followed by another attempt.',
-                avoid: 'App-only practice with no explanation of recurring errors.',
-              },
-              {
-                title: 'Parent-visible progress',
-                lookFor: 'Clear strengths, repeated errors, improvement areas, and next steps.',
-                avoid: 'Vague progress updates without skill-level evidence.',
-              },
-            ].map((item) => (
-              <article key={item.title} data-grammar-decision-card className="rounded-[20px] border border-slate-200 bg-slate-50/60 p-4 md:p-5">
-                <h3 className="font-semibold text-slate-950">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700"><strong className="font-semibold text-emerald-700">Look for:</strong> {item.lookFor}</p>
-                <p className="mt-1 text-sm leading-6 text-slate-600"><strong className="font-semibold text-slate-700">Avoid:</strong> {item.avoid}</p>
-              </article>
-            ))}
+            <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
+              {[
+                {
+                  title: 'Assessment before placement',
+                  lookFor: "A starting level based on the child's current grammar control.",
+                  avoid: 'The same worksheet sequence for every child.',
+                },
+                {
+                  title: 'Grammar used in real sentences',
+                  lookFor: 'Sentence formation, short answers, and grammar transfer in context.',
+                  avoid: 'Rules taught mainly as isolated definitions or drills.',
+                },
+                {
+                  title: 'Live correction and retry',
+                  lookFor: 'Specific teacher feedback followed by another attempt.',
+                  avoid: 'App-only practice with no explanation of recurring errors.',
+                },
+                {
+                  title: 'Parent-visible progress',
+                  lookFor: 'Clear strengths, repeated errors, improvement areas, and next steps.',
+                  avoid: 'Vague progress updates without skill-level evidence.',
+                },
+              ].map((item) => (
+                <article key={item.title} data-grammar-decision-card className="border-l border-slate-200 pl-4">
+                  <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-600"><strong className="text-emerald-700">Look for:</strong> {item.lookFor}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-slate-500"><strong className="text-slate-700">Avoid:</strong> {item.avoid}</p>
+                </article>
+              ))}
+            </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-700">
+          <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-200 pt-4 text-xs text-slate-700">
             <Link to="/pricing" className="font-semibold underline underline-offset-2">Review class pricing</Link>
             <Link to="/book-demo" className="font-semibold underline underline-offset-2">Book the free {demoMinutes}-minute assessment</Link>
             <Link to="/class-samples" className="font-semibold underline underline-offset-2">See real class samples</Link>
           </div>
 
-          <div className="mt-7 border-t border-slate-200 pt-6">
+          <div className="mt-5 border-t border-slate-200 pt-5">
             <TestimonialSnippets courseTag="grammar" title="What grammar parents noticed first" />
           </div>
         </div>
@@ -596,75 +583,58 @@ export default function GrammarPage() {
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-sky-100 bg-sky-50/45 p-5 md:p-7">
-          <p className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">Parent visibility</p>
-          <h2 className="mb-4 mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">How parents see grammar progress</h2>
-          <p className="text-slate-700">Parents should not have to guess whether grammar is improving.</p>
-          <p className="mt-3 text-slate-700">
-            Tiny Steps focuses on visible grammar progress through class updates, skill-based feedback, strengths, improvement areas, and next-step guidance.
-          </p>
-          <ul className="mt-5 grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              'Grammar topics practised',
-              'Sentence formation progress',
-              'Common mistakes noticed',
-              'Written sentence accuracy',
-              'Skills that need more support',
-              'Suggested next grammar practice',
-            ].map((item) => (
-              <li key={item} className="h-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-[15px] text-slate-700 shadow-sm md:text-base">
-                <span className="mr-2 font-semibold text-emerald-600">✓</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-slate-700">
-            See <Link to="/parents/tracking-progress" className="font-semibold underline underline-offset-2">how Tiny Steps tracks progress</Link> and review{' '}
-            <Link to="/why-tiny-steps" className="font-semibold underline underline-offset-2">why parents choose Tiny Steps</Link> before deciding next steps.
-          </p>
-        </div>
-      </section>
-
-      <section id="faq" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
-          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Frequently asked questions</h2>
-          <div className="space-y-3 md:space-y-4">
-            {faqItems.map((item) => (
-              <article key={item.question} className="border-b border-slate-200 py-4 last:border-b-0">
-                <h3 className="faq-question text-[17px] font-semibold text-slate-900 md:text-lg">{item.question}</h3>
-                <p className="faq-answer mt-2 text-[15px] leading-6 text-slate-700 md:text-base">{item.answer}</p>
-              </article>
-            ))}
+      <section className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[24px] border border-sky-100 bg-sky-50/40 p-5 md:p-6">
+          <div className="grid gap-5 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-700">Parent visibility</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">How parents see grammar progress</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Parents should know what was practised, what is improving, and what comes next.</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                ['What was practised', 'Grammar topics and sentence patterns used in class.'],
+                ['What is improving', 'Sentence formation, correction, and written sentence accuracy.'],
+                ['What comes next', 'Repeated errors, support priorities, and suggested next practice.'],
+              ].map(([title, detail]) => (
+                <div key={title} className="rounded-[14px] border border-white/80 bg-white/80 px-3.5 py-3">
+                  <p className="text-xs font-semibold text-slate-950">{title}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p>
+                </div>
+              ))}
+            </div>
           </div>
+          <p className="mt-4 text-xs leading-5 text-slate-600">
+            See <Link to="/parents/tracking-progress" className="font-semibold underline underline-offset-2">how Tiny Steps tracks progress</Link> and{' '}
+            <Link to="/why-tiny-steps" className="font-semibold underline underline-offset-2">why parents choose Tiny Steps</Link>.
+          </p>
         </div>
       </section>
 
-      <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#eff6ff_100%)] p-6 text-center text-slate-950 sm:p-8 md:p-9">
-          <h2 className="text-2xl font-bold md:text-3xl">Not sure where your child is stuck in grammar?</h2>
-          <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Book one free 35-minute 1:1 online demo assessment class to identify whether the main gap is sentence formation, tense control, punctuation, correction, or written sentence accuracy.
+      <section id="faq" className="px-4 py-6 sm:px-5 md:py-8 lg:px-6">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">Frequently asked questions</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Open only the question you need; all answers stay collapsed by default.</p>
+          <ProgrammeFaqAccordion items={faqItems} accent="orange" />
+        </div>
+      </section>
+
+      <section className="px-4 pb-9 pt-5 sm:px-5 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#eff6ff_100%)] p-6 text-center sm:p-8">
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Not sure where your child is stuck in grammar?</h2>
+          <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-slate-600 md:text-base">
+            Start with one free 35-minute 1:1 assessment to identify whether the main gap is sentence formation, tense control, punctuation, correction, or written sentence accuracy.
           </p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"
-              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-950 px-8 py-3 font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-950 px-7 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Book Free 35-Minute Demo
             </Link>
-          </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-600">
-            <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-950">writing classes for kids</Link>
-            <span className="hidden sm:inline text-slate-300">•</span>
-            <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2 hover:text-slate-950">spoken English classes for kids</Link>
-            <span className="hidden sm:inline text-slate-300">•</span>
-            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-slate-950">class pricing</Link>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-600">
-            <Link to="/online-english-classes-for-kids" className="underline underline-offset-2 hover:text-slate-950">online English classes for kids</Link>
-            <span className="hidden sm:inline text-slate-400">•</span>
-            <Link to="/class-samples" className="underline underline-offset-2 hover:text-slate-950">real class samples</Link>
+            <Link to="/online-english-classes-for-kids" className="text-sm font-semibold text-slate-700 underline underline-offset-3">
+              Explore all online English programmes
+            </Link>
           </div>
         </div>
       </section>
