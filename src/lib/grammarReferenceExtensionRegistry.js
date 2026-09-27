@@ -15,6 +15,8 @@ const page = (config) => {
 
   return freeze({
     state: 'reference-extension',
+    publicationApproved: true,
+    publicationBatch: 'gv3-first-reference-batch',
     referenceOrder: config.referenceOrder,
     hubPath: '/resources/grammar',
     ...config,
