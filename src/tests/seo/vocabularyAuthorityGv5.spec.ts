@@ -50,12 +50,12 @@ const GV5_IDS = [
 
 describe('GV5 Vocabulary natural English and transfer publication', () => {
   it('publishes exactly four GV5 guides on top of the preserved six-guide GV4 batch', () => {
-    expect(VOCABULARY_AUTHORITY_REVISION).toBe('2026-09-27-gv5');
+    expect(VOCABULARY_AUTHORITY_REVISION).toBe('2026-09-27-gv5b');
     expect(VOCABULARY_AUTHORITY_REQUIREMENTS).toHaveLength(16);
     expect(VOCABULARY_KNOWLEDGE_STAGES).toHaveLength(6);
-    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(10);
-    expect(VOCABULARY_AUTHORITY_PATHS).toHaveLength(10);
-    expect(VOCABULARY_AUTHORITY_ROUTE_MANIFEST).toHaveLength(10);
+    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(16);
+    expect(VOCABULARY_AUTHORITY_PATHS).toHaveLength(16);
+    expect(VOCABULARY_AUTHORITY_ROUTE_MANIFEST).toHaveLength(16);
 
     const gv4 = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv4-first-authority-batch');
     const gv5 = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv5-natural-english-transfer');
@@ -70,22 +70,14 @@ describe('GV5 Vocabulary natural English and transfer publication', () => {
     ]);
   });
 
-  it('keeps the six still-planned foundation/relationship topics unpublished', () => {
+  it('preserves the GV5 batch while the six deferred requirements are now completed by GV5B', () => {
     const publishedIds = new Set(VOCABULARY_AUTHORITY_PAGES.map((page) => page.id));
     const routePaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
     const remaining = VOCABULARY_AUTHORITY_REQUIREMENTS.filter((item) => !publishedIds.has(item.id));
-    expect(remaining.map((item) => item.id)).toEqual([
-      'action-words',
-      'describing-words',
-      'home-family-routines',
-      'food-clothes-body',
-      'nature-weather-places-transport',
-      'multiple-meaning-confused-words',
-    ]);
-    for (const item of remaining) {
-      expect(routePaths.has(item.proposedPath), item.id).toBe(false);
-      expect(ROUTE_SEO_REGISTRY[item.proposedPath], item.id).toBeUndefined();
-      expect(CANONICAL_TOPIC_OWNERSHIP.some((owner) => owner.ownerPath === item.proposedPath), item.id).toBe(false);
+    expect(remaining).toHaveLength(0);
+    for (const item of VOCABULARY_AUTHORITY_REQUIREMENTS) {
+      expect(routePaths.has(item.proposedPath), item.id).toBe(true);
+      expect(ROUTE_SEO_REGISTRY[item.proposedPath]?.canonicalPath, item.id).toBe(item.proposedPath);
     }
   });
 
@@ -135,11 +127,11 @@ describe('GV5 Vocabulary natural English and transfer publication', () => {
   });
 
   it('extends Layer 2 and the hub presentation without widening practice or conversion ownership', () => {
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(106);
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(112);
     const vocabulary = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/vocabulary/'),
     );
-    expect(vocabulary).toHaveLength(10);
+    expect(vocabulary).toHaveLength(16);
 
     const gv5Paths = new Set(
       VOCABULARY_AUTHORITY_PAGES
@@ -154,8 +146,8 @@ describe('GV5 Vocabulary natural English and transfer publication', () => {
     }
 
     const hub = read('src/pages/VocabularyHubPage.tsx');
-    expect(hub).toContain('Explore ten high-value vocabulary guides');
-    expect(hub).toContain('six GV4 foundation guides with four GV5 guides');
+    expect(hub).toContain('Explore all sixteen vocabulary authority guides');
+    expect(hub).toContain('six GV4 guides, four GV5 natural-English and transfer guides, and six GV5B foundation-completion guides');
   });
 
   it('keeps cross-domain ownership descriptive rather than publishing competing Grammar owners', () => {
