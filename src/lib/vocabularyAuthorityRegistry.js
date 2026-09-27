@@ -688,6 +688,138 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
     relatedPaths: ['/resources/vocabulary/feelings-emotions-for-kids', '/resources/vocabulary/collocations-for-kids', '/spoken-english-classes-for-kids-online'],
     featuredWordIds: [],
   }),
+
+  page({
+    order: 2,
+    id: 'action-words',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'action-words-for-kids',
+    cardTitle: 'Action Words for Kids',
+    seoTitle: 'Action Words for Kids: Stronger Verbs for Speaking & Writing | Tiny Steps',
+    seoDescription: 'Build a richer bank of action words for movement, school, home and communication, then choose precise verbs that fit meaning and context.',
+    quickAnswer: 'Action words name what people, animals and things do. Children build stronger vocabulary when they move beyond a small set such as go, do and make and learn precise verbs such as hurry, carry, whisper, collect, compare and explain. The vocabulary goal is choosing a word that matches the action clearly; the Grammar guide separately explains how verbs behave in sentences.',
+    concept: 'An action-word vocabulary network groups verbs by meaning and situation so children can retrieve a useful word when they speak, read or write. Movement verbs can include walk, march, race, crawl and wander; school verbs can include read, write, compare and explain; home verbs can include pour, fold, tidy and carry. The important step is not memorising labels but noticing how one action differs from another.',
+    whyItMatters: 'Precise action words improve comprehension and make speaking and writing more informative. A child who understands dashed, wandered and crept can picture a story more accurately than a child who interprets every movement as went. In writing, one well-chosen verb can replace a vague verb plus several extra words. In classroom instructions, understanding verbs such as compare, underline and summarise is also essential for knowing what a task requires.',
+    coreIdeas: [
+      'Teach action words in meaningful families. Put walk, march, race, crawl and tiptoe beside one another and ask how the movement changes. A child should notice speed, purpose, body position or mood rather than merely reciting five alternatives for go. Meaningful contrasts create a stronger retrieval network and help the child choose a verb for a real situation.',
+      'Connect each verb to a subject and context. “The baby crawled across the mat,” “The class compared two diagrams,” and “Mira whispered the answer” show who performs the action and why that verb fits. This keeps the Vocabulary page focused on usable meaning while the Grammar verb page can separately explain tense, agreement and sentence structure.',
+      'Move from recognition to production. First let the child match a verb to a picture or short scenario, then choose between nearby alternatives, explain the difference and finally use the word in an original sentence. Repeated retrieval across different situations is more useful than copying the same definition or completing one predictable worksheet pattern.',
+    ],
+    workedExamples: [
+      {
+        example: '“The puppy raced across the garden when it heard the gate open.”',
+        explanation: 'Raced tells us that the puppy moved very quickly. Went would be grammatically possible but less precise. Ask the child what evidence in the situation supports raced and whether strolled would change the picture. The comparison makes the meaning of the action word explicit.',
+      },
+      {
+        example: '“Please compare the two maps and explain one difference.”',
+        explanation: 'Compare and explain are learning actions. Compare requires looking for similarities or differences, while explain requires making an idea understandable. These verbs are vocabulary children need to follow school instructions, not only grammar terms to identify in sentences.',
+      },
+      {
+        example: '“Ravi carried the box carefully because the glasses inside could break.”',
+        explanation: 'Carried means held and moved something from one place to another. The context adds purpose and manner. A follow-up can contrast carried with pushed, pulled or dragged so the child understands that several movement verbs involve different physical actions.',
+      },
+    ],
+    examples: [
+      'Movement: walk, race, crawl, climb, hurry, wander',
+      'School actions: read, write, compare, explain, practise, check',
+      'Communication and home actions: ask, answer, whisper, pour, fold, carry',
+    ],
+    commonMistakes: [
+      'Calling every action word a “strong verb” and assuming unusual vocabulary is automatically better. The best word is the one that expresses the intended action naturally and accurately.',
+      'Teaching long verb lists without scenarios, which can leave children able to recognise a word on a card but unable to retrieve it in speaking or writing.',
+      'Turning vocabulary practice into a grammar-identification exercise only. Knowing that raced is a verb is useful, but children also need to understand how raced differs in meaning from walked, hurried or wandered.',
+    ],
+    trickyCases: [
+      'Some words can represent actions in one context and other ideas in another. A child can “answer a question,” while answer can also name the response itself. Use the sentence to decide the active meaning and avoid teaching word class as if every word has only one permanent job.',
+      'Many precise verbs carry extra information. Whisper includes a quiet voice; sprint includes very fast running; stare includes sustained looking. Children should not replace a broad verb unless the added meaning is actually true in the situation.',
+    ],
+    teachingNote: 'Choose one small action family at a time and use it in pictures, demonstrations, reading and speaking. Ask the child to act out two contrasting verbs, explain the difference, and then use each in a new sentence. During writing, highlight one vague verb and ask what really happened before offering alternatives. Keep tense correction secondary during a Vocabulary activity unless it blocks meaning; the main objective is accurate lexical choice and independent retrieval.',
+    practicePrompts: [
+      'Sort twelve action words into movement, school, home and communication groups, then explain why one word could reasonably belong to more than one group.',
+      'Replace went, did or said in six short sentences only when a more precise verb fits the evidence, and explain what extra meaning the new verb adds.',
+      'Use five action words from Vocabulary Adventure or the 50-word lexical set in a short retell, making each action clear enough that a listener could picture it.',
+    ],
+    faqs: [
+      {
+        question: 'Are action words the same as verbs?',
+        answer: 'Many beginner action words are verbs, but the Vocabulary goal and Grammar goal are different. This guide focuses on meaning, precision and retrieval: which action word best describes what happened? The Grammar verb guide explains how verbs function structurally, including tense, helping verbs and agreement. Linking the two is useful, but one page should not duplicate the other.',
+      },
+      {
+        question: 'How can a child learn stronger action words without sounding unnatural?',
+        answer: 'Start with situations the child understands and compare a few nearby choices. Ask whether the action was fast, slow, quiet, careful, sudden or repeated. Then choose a common precise verb that matches that evidence. Children do not need rare words; they need useful words they can understand, retrieve and use accurately in new sentences.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/grammar/verbs-for-kids', '/resources/vocabulary/vocabulary-for-better-writing', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['run', 'jump', 'eat', 'read', 'write', 'draw', 'sing', 'dance', 'carry', 'open'],
+  }),
+
+  page({
+    order: 4,
+    id: 'describing-words',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'describing-words-for-kids',
+    cardTitle: 'Describing Words for Kids',
+    seoTitle: 'Describing Words for Kids: Precise Adjectives & Details | Tiny Steps',
+    seoDescription: 'Help children choose useful describing words for size, shape, colour, texture, quality and personality without overloading sentences.',
+    quickAnswer: 'Describing words help children express what a person, place, object or experience is like. A strong vocabulary goes beyond big, nice and good by giving children precise choices for size, shape, colour, texture, quality, sound, speed and personality. The goal is not adding more adjectives to every sentence; it is choosing the few details that make the meaning clearer.',
+    concept: 'Description becomes useful when vocabulary is organised by the property being described. A child can compare big and enormous for size, soft and rough for texture, quiet and noisy for sound, or patient and helpful for personality. Grouping words by meaning makes it easier to retrieve a suitable choice and prevents children from treating every adjective as a decorative extra.',
+    whyItMatters: 'Precise describing vocabulary supports reading comprehension, speaking, storytelling and factual writing. Readers need descriptive words to build a mental picture and infer mood or character. Speakers use them to explain preferences and experiences. Writers use them to select relevant detail. A limited descriptive vocabulary can make many answers sound repetitive even when the child has good ideas.',
+    coreIdeas: [
+      'Teach descriptions through contrasts and scales. Small, medium, large and enormous show size; cool, cold and freezing show temperature; quiet and loud contrast sound. The words should be discussed in context because intensity and appropriateness matter. A cup can be small, a building can be enormous, and the same object may be described differently depending on what it is compared with.',
+      'Separate useful precision from adjective stacking. “A rough wooden table” can communicate texture and material clearly, while a sentence with six unrelated adjectives may become harder to understand. Ask which details matter for the listener or reader. This helps children learn that rich vocabulary improves meaning when it is selected, not simply accumulated.',
+      'Connect description to nouns and situations without duplicating Grammar. Vocabulary practice asks, “Which word best describes this?” Grammar can separately teach adjective position, comparative forms and sentence structure. Keeping the lexical purpose clear lets children build a broader bank of words while still linking naturally to the adjective reference guide.',
+    ],
+    workedExamples: [
+      {
+        example: '“The path was narrow and rocky, so we walked in a single line.”',
+        explanation: 'Narrow describes limited width and rocky describes the surface. Both details matter because they explain the walkers’ behaviour. The sentence shows that description can carry useful information rather than merely making writing sound more elaborate.',
+      },
+      {
+        example: '“Maya gave a patient explanation to the younger student.”',
+        explanation: 'Patient describes a personal quality shown through behaviour. Instead of saying Maya was nice, the more precise word identifies how she acted. Ask what evidence would make helpful, generous or cheerful a better choice in a different situation.',
+      },
+      {
+        example: '“The blanket felt soft, but the old wall was rough.”',
+        explanation: 'Soft and rough are texture words learned through a direct contrast. The child can then apply them to new objects and discuss borderline cases. This moves the words beyond one memorised picture or object.',
+      },
+    ],
+    examples: [
+      'Size and shape: tiny, wide, narrow, round, enormous',
+      'Texture and quality: soft, rough, smooth, clean, fragile',
+      'People and atmosphere: patient, cheerful, peaceful, crowded, noisy',
+    ],
+    commonMistakes: [
+      'Replacing simple words with rare synonyms only to make writing sound advanced, even when the child does not fully understand the new word.',
+      'Adding many describing words to one noun without deciding which details are relevant to the message.',
+      'Teaching adjective labels without developing meaning contrasts, so the child can identify a describing word but still relies on nice, big and good in real communication.',
+    ],
+    trickyCases: [
+      'The same describing word can activate different meanings. Bright can describe strong light, vivid colour or an intelligent person in some contexts. The surrounding noun and sentence help the child choose the intended sense.',
+      'Description can be partly subjective. A room one person calls small may feel comfortable to another. Teach children to distinguish measurable properties from opinions and to give evidence when a descriptive judgement could reasonably vary.',
+    ],
+    teachingNote: 'Build small word banks around one property at a time. Use real objects, photographs or short passages and ask the child to select one or two details that matter. Compare nearby choices such as small, tiny and narrow rather than teaching them as interchangeable. During speaking and writing, ask “What exactly do you mean?” and “Which detail helps the listener picture it?” Remove word banks gradually so retrieval becomes independent.',
+    practicePrompts: [
+      'Sort fifteen describing words into size, shape, colour, texture, sound, quality and personality, then discuss any word that could fit more than one group.',
+      'Improve five vague descriptions by replacing only one word in each sentence with a more precise choice, then explain the change in meaning.',
+      'Choose an object or place and describe it using three relevant details from different categories without repeating a memorised sentence pattern.',
+    ],
+    faqs: [
+      {
+        question: 'Are describing words always adjectives?',
+        answer: 'Many common describing words taught to children are adjectives, but this Vocabulary guide is about useful descriptive meaning rather than complete grammatical classification. Grammar lessons can explain how adjectives function, where they appear and how comparative forms work. Here the priority is choosing precise words that fit the person, object, place or experience being described.',
+      },
+      {
+        question: 'How can I stop my child using nice, good and big repeatedly?',
+        answer: 'Ask what the child specifically means before offering a synonym. Nice might mean kind, peaceful, tasty or enjoyable depending on context. Good might mean accurate, helpful, exciting or effective. Once the intended idea is clear, compare two or three familiar alternatives and reuse the chosen word in several new sentences so it becomes available independently.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/grammar/adjectives-for-kids', '/resources/vocabulary/vocabulary-for-better-writing', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['big', 'small', 'soft', 'loud', 'bright', 'clean', 'cold', 'sweet', 'fast', 'slow'],
+  }),
 ]);
 
 export const VOCABULARY_AUTHORITY_PATHS = freezeList(
