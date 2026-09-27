@@ -70,14 +70,16 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
     const page = read(readingPagePath);
 
     expect(page).toContain('What should parents look for in the best online reading classes?');
-    expect(page).toContain('Assessment-first placement');
-    expect(page).toContain('Right-level reading material');
-    expect(page).toContain('Explicit teaching, not only practice');
-    expect(page).toContain('Live correction and retry');
-    expect(page).toContain('A clear reading progression');
-    expect(page).toContain('Fresh evidence of progress');
-    expect(page).toContain('Realistic expectations');
-    expect(page).toContain('Parent-visible next steps');
+    expect(page).toContain('Start in the right place');
+    expect(page).toContain('Teach, correct, retry');
+    expect(page).toContain('Check real progress');
+    expect(page).toContain('Keep expectations clear');
+    expect(page).toContain('explicit teaching');
+    expect(page).toContain('right-level material');
+    expect(page).toContain('clear reading progression');
+    expect(page).toContain('fresh, right-level material');
+    expect(page).toContain('Avoid fixed guarantees');
+    expect(page).toContain('readingDecisionPrinciples.map((criterion, index)');
     expect(page).toContain('No reading provider is the best fit for every child.');
     expect(page).not.toContain("Tiny Steps is India's #1 reading");
     expect(page).not.toContain('Tiny Steps is the best reading class');
