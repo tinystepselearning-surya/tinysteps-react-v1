@@ -488,6 +488,15 @@ export default function FreeLetterTracingGamePage() {
                   <span className="mt-2 block text-sm leading-6 text-slate-600">Explore teacher-guided phonics when your child needs structured progression, correction and reading transfer.</span>
                 </Link>
               </div>
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-sky-100 pt-4 text-sm text-slate-700">
+                <span className="font-semibold text-slate-900">For parents comparing guided support:</span>
+                <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold underline underline-offset-4 hover:text-sky-700">
+                  compare phonics programmes
+                </Link>
+                <Link to="/phonics-fees-india" className="font-semibold underline underline-offset-4 hover:text-sky-700">
+                  review phonics fees in India
+                </Link>
+              </div>
             </section>
 
             <section className="abc-print-hide mt-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
