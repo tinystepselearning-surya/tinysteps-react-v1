@@ -8,13 +8,14 @@ const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relat
 const readingPagePath = 'src/pages/public/ReadingClassesForKidsPage.tsx';
 
 describe('Phonics Brick 3 reading classes authority guardrails', () => {
-  it('keeps /reading-classes-for-kids as the broad reading-support destination', () => {
+  it('keeps /reading-classes-for-kids as the connected-reading destination after the phonics decision', () => {
     const page = read(readingPagePath);
     const routes = read('src/app/routes.tsx');
 
     expect(page).toContain("const canonicalPath = '/reading-classes-for-kids'");
-    expect(page).toContain('From decoding to comprehension and reading confidence');
-    expect(page).toContain('The right starting point depends on what the child can already do.');
+    expect(page).toContain('From accurate connected reading to comprehension and confidence');
+    expect(page).toContain('This Reading pathway begins after the phonics decision.');
+    expect(page).toContain('If decoding is unstable, the child is routed to Phonics');
     expect(page).not.toContain('broad reading owner page');
     expect(page).not.toContain('Specialist pages handle narrower problems');
     expect(routes).toContain("const ReadingClassesForKidsPage = lazy(() => import('../pages/public/ReadingClassesForKidsPage'))");

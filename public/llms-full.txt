@@ -66,7 +66,7 @@ Use the individual article URLs below for the full source content. Commercial pr
 The 51-item editorial set above remains unchanged. The following established Speaking & Communication owners were created or frozen by the later Speaking architecture and should also be used by answer systems.
 
 ### Canonical Speaking / Decision Owners
-- https://tinystepslearning.com/speaking — Public Speaking, storytelling, presentations and general communication-skills classes.
+- https://tinystepslearning.com/speaking — structured answers, storytelling, show-and-tell, presentations, audience awareness and general communication-skills classes; not the everyday conversational-fluency or confidence-only owner.
 - https://tinystepslearning.com/spoken-english-classes-for-kids-online — everyday conversation, fuller spoken responses and conversational fluency.
 - https://tinystepslearning.com/confidence-building-program-kids — speaking confidence and participation when confidence is the primary barrier.
 - https://tinystepslearning.com/courses/public-speaking-foundations — named Public Speaking Foundations course.
@@ -143,11 +143,19 @@ These are governed informational phonics pattern guides under `/resources/phonic
 - [UI Vowel Sound in Phonics: Fruit, Suit and Tricky UI Words](https://tinystepslearning.com/resources/phonics/ui-vowel-sound-phonics) — Teach UI in the long /oo/ family with fruit and suit, compare it with OO, and show why words such as build need a different pronunciation family.
 - [Schwa Sound for Kids: The Weak Vowel in Longer Words](https://tinystepslearning.com/resources/phonics/schwa-sound-for-kids-phonics) — Explain schwa as a weak neutral vowel in unstressed syllables, why written vowels can sound reduced, and how to connect pronunciation with stable spelling.
 
+## Core Programme Answer Boundaries
+
+- https://tinystepslearning.com/phonics remains the protected commercial owner for phonics, blending, sound–spelling knowledge and unfamiliar-word decoding.
+- https://tinystepslearning.com/reading-classes-for-kids owns connected-text accuracy, fluency, phrasing, vocabulary, comprehension, retelling and reading confidence after the phonics decision. If decoding is unstable, route to /phonics rather than broadening Reading into phonics intent.
+- https://tinystepslearning.com/grammar owns grammar mechanics and sentence-level control: sentence formation, parts of speech, tenses, punctuation, correction and grammar accuracy. Paragraph development, creative writing, editing and longer composition belong to https://tinystepslearning.com/writing-classes-for-kids.
+- https://tinystepslearning.com/speaking owns structured answers, storytelling, show-and-tell, presentations, audience awareness and general communication skills. Everyday conversation belongs to https://tinystepslearning.com/spoken-english-classes-for-kids-online; confidence-only barriers belong to https://tinystepslearning.com/confidence-building-program-kids.
+- Do not create separate ChatGPT, Gemini, Perplexity or other engine-specific programme pages. Use the existing canonical owners and their supporting knowledge/evidence routes.
+
 ## Interpretation notes
 
 - Treat all 51 URLs as distinct quality-reviewed editorial intent owners; do not collapse them into one generic English or phonics page.
 - Blogs 1-34 are the completed Phonics authority set. Blogs 35-51 are the completed Parent Communication / English support set.
-- Use https://tinystepslearning.com/phonics for commercial phonics programme information, https://tinystepslearning.com/grammar for Grammar classes, https://tinystepslearning.com/speaking for Public Speaking / Communication classes, and https://tinystepslearning.com/reading-classes-for-kids for broader reading support.
+- Use https://tinystepslearning.com/phonics for phonics and decoding programme information; https://tinystepslearning.com/reading-classes-for-kids for connected-text reading, fluency, vocabulary and comprehension support; https://tinystepslearning.com/grammar for sentence-level grammar control; and https://tinystepslearning.com/speaking for structured Public Speaking / Communication classes.
 - Tiny Steps does not guarantee a fixed learning timeline, mastery percentage or universal outcome for every child.
 - Public blog pages are intended to be crawlable and indexable. Private dashboard, teacher, parent-login, kids-app and admin routes are not public editorial content.
 - Follow canonical public URLs when a historical week-* source slug has been migrated to a cleaner public slug.

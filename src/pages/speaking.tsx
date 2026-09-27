@@ -8,6 +8,9 @@ import { applySeo } from '../lib/seo';
 import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
+import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
+import ProgrammeHeroSnapshot from '../components/programs/ProgrammeHeroSnapshot';
+import { getProgrammeAiVisibility } from '../lib/programmeAiVisibility';
 import {
   SPEAKING_PROGRESS_DIMENSIONS,
   SPEAKING_PROGRESS_FRAMEWORK_PATH,
@@ -19,6 +22,7 @@ import {
 
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
+const speakingAiVisibility = getProgrammeAiVisibility('/speaking');
 const seoTitle = 'Public Speaking & Communication Classes for Kids | Tiny Steps';
 const seoDescription =
   'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.';
@@ -113,13 +117,6 @@ const speakingPathwayCards = [
   },
 ];
 
-const speakingPyramidLevels = [
-  'Presentation confidence',
-  'Storytelling',
-  'Structured answers',
-  'Complete sentences',
-  'Listening and ideas',
-];
 
 const publicSpeakingLevelArchitecture = [
   {
@@ -169,6 +166,13 @@ export default function SpeakingPage() {
         url: canonicalUrl,
       }),
       '@id': `${canonicalUrl}#webpage`,
+      about: [
+        { '@type': 'Thing', name: 'Public speaking classes for kids' },
+        { '@type': 'Thing', name: 'Communication skills for kids' },
+        { '@type': 'Thing', name: 'Structured spoken answers' },
+        { '@type': 'Thing', name: 'Storytelling' },
+        { '@type': 'Thing', name: 'Presentations and audience awareness' },
+      ],
       speakable: buildSpeakableSpecification([
         '.ts-speaking-answer-title',
         '.ts-speaking-answer-summary',
@@ -305,7 +309,7 @@ export default function SpeakingPage() {
               <div className="mt-7">
                 <Link
                   to="/book-demo"
-                  className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9B72] px-6 py-3.5 text-base font-bold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition hover:from-[#FF715B] hover:to-[#FF9267] sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
+                  className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
                 >
                   Book Free {demoMinutes}-Minute Demo
                 </Link>
@@ -319,89 +323,39 @@ export default function SpeakingPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {[
-                  {
-                    label: 'Clear expression',
-                    className: 'border-[#F5DAB7] bg-[#FFF7EC] text-[#7A4A10]',
-                    dotClassName: 'bg-[#E58E41]',
-                  },
-                  {
-                    label: 'Storytelling confidence',
-                    className: 'border-[#D9E7F6] bg-[#F6FBFF] text-[#224764]',
-                    dotClassName: 'bg-[#65A7E3]',
-                  },
-                  {
-                    label: 'Parent progress visibility',
-                    className: 'border-[#E4DCF8] bg-[#FBF8FF] text-[#4E447C]',
-                    dotClassName: 'bg-[#9A88E6]',
-                  },
-                ].map((chip) => (
-                  <span key={chip.label} className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur sm:px-3.5 sm:text-sm ${chip.className}`}>
-                    <span className={`h-2 w-2 rounded-full ${chip.dotClassName}`} aria-hidden="true" />
-                    {chip.label}
+                {['Structured answers', 'Storytelling & presentations', 'Parent-visible progress'].map((chip) => (
+                  <span key={chip} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 sm:px-3.5 sm:text-sm">
+                    {chip}
                   </span>
                 ))}
               </div>
-              <p className="mt-4 max-w-[660px] text-sm leading-7 text-slate-700">
-                If the main goal is everyday conversational fluency rather than presentations or communication structure, use <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">Spoken English Classes for Kids</Link>. If confidence itself is the primary difficulty across situations, review the <Link to="/confidence-building-program-kids" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">Confidence Building Programme</Link>.
-              </p>
             </div>
 
-            <aside className="relative mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.95),rgba(255,249,241,0.94))] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#FFB878] via-[#A9CFFF] to-[#D9C0FF]" />
-              <p className="mb-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:text-[11px] md:mb-5 md:text-xs md:tracking-[0.22em]">
-                SPEAKING JOURNEY PREVIEW
-              </p>
-
-              <div className="mx-auto flex w-full max-w-full flex-col items-center md:max-w-[450px]">
-                {speakingPyramidLevels.map((title, index) => {
-                  const widthClass =
-                    index === 0
-                      ? 'w-[54%] md:w-[50%]'
-                      : index === 1
-                        ? 'w-[66%] md:w-[62%]'
-                        : index === 2
-                          ? 'w-[78%] md:w-[74%]'
-                          : index === 3
-                            ? 'w-[90%] md:w-[86%]'
-                            : 'w-full md:w-[98%]';
-
-                  const bg =
-                    index === 0
-                      ? '#FFB562'
-                      : index === 1
-                        ? '#BFE7F2'
-                        : index === 2
-                          ? '#8ED8E8'
-                          : index === 3
-                            ? '#58C4DD'
-                            : '#2E8FD0';
-
-                  const textColor = index >= 3 ? '#FFFFFF' : '#0A192F';
-
-                  return (
-                    <div key={title} className={`${index === 0 ? '' : '-mt-[1px]'} ${widthClass} mx-auto`}>
-                      <div
-                        className="flex h-[38px] items-center justify-center border border-white/80 px-2 text-center font-bold leading-tight shadow-[0_6px_14px_rgba(15,23,42,0.055)] sm:h-[40px] sm:px-3 md:h-[48px] md:px-4 lg:h-[50px]"
-                        style={{
-                          clipPath: 'polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)',
-                          background: bg,
-                        }}
-                      >
-                        <span className="text-[12px] font-bold leading-tight sm:text-[13px] md:text-[15px] lg:text-[16px]" style={{ color: textColor }}>
-                          {title}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mx-auto mt-4 w-full max-w-full rounded-2xl border border-[#E9C68D] bg-gradient-to-br from-[#FFF8EC] via-[#FFF6E8] to-[#FFF1D8] px-4 py-3.5 text-center shadow-[0_8px_22px_rgba(122,74,16,0.07)] md:mt-5 md:max-w-[450px] md:rounded-[22px] md:px-5 md:py-4">
-                <span className="block text-[16px] font-extrabold leading-snug text-[#6B3A0E] md:text-[19px]">We identify the child&apos;s speaking gap first.</span>
-                <span className="mt-1 block text-[14px] font-medium leading-snug text-[#7A4A10] md:mt-1.5 md:text-[16px]">Then we suggest the right speaking and communication path.</span>
-              </div>
-            </aside>
+            <ProgrammeHeroSnapshot
+              eyebrow="Speaking programme focus"
+              title="What this programme builds"
+              summary="This pathway develops structured and audience-facing communication rather than ordinary conversational fluency alone."
+              items={[
+                'Structured answers',
+                'Storytelling',
+                'Show-and-tell',
+                'Presentations',
+                'Audience awareness',
+                'Clear communication',
+              ]}
+              footer={
+                <>
+                  Everyday conversation belongs to{' '}
+                  <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline underline-offset-2">
+                    Spoken English
+                  </Link>
+                  ; confidence-only barriers belong to{' '}
+                  <Link to="/confidence-building-program-kids" className="font-semibold text-slate-900 underline underline-offset-2">
+                    Confidence Building
+                  </Link>.
+                </>
+              }
+            />
           </div>
         </div>
       </section>
@@ -414,11 +368,13 @@ export default function SpeakingPage() {
             </p>
             <h2 className="ts-speaking-answer-title mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
             <p className="ts-speaking-answer-summary max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Public speaking classes for kids should help children who can already communicate at a basic level build structured responses, organise ideas, tell stories, handle show-and-tell, and become more ready for presentations and audience-facing speaking. If the main difficulty is one-word everyday answers or sentence formation itself, the free {demoMinutes}-minute 1:1 online demo assessment class may instead point to Spoken English or Grammar support before or alongside Speaking.
+              Public Speaking & Communication is for children who can already communicate at a basic level and need stronger structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English; if the main difficulty is one-word everyday answers or sentence formation itself, Spoken English or Grammar may be the better starting point. Confidence-only barriers belong to Confidence Building. The free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
             </p>
           </article>
         </div>
       </section>
+
+      {speakingAiVisibility ? <ProgrammeIntentBoundary config={speakingAiVisibility} /> : null}
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">
