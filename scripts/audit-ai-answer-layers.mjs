@@ -51,7 +51,7 @@ if (expectedLiveCanonicalBlogs < 82) {
 }
 
 if (AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length !== 28) fail('layer-1-count', 'Expected 28 reconciled parent-problem entries.');
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 102) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar pages plus 6 governed vocabulary guides.');
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 106) fail('layer-2-count', 'Expected 27 curated concepts plus 31 governed phonics pages plus 38 governed grammar pages plus 10 governed vocabulary guides.');
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 12) fail('layer-3-count', 'Expected 12 focused practice actions including Vocabulary Adventure.');
 
 const ids = AI_ANSWER_LAYER_ALL_ITEMS.map((item) => item.id);
@@ -71,7 +71,7 @@ if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.star
   fail('governed-grammar-count', 'Layer 2 must contain every governed grammar programmatic URL.');
 }
 if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/vocabulary/')).length !== VOCABULARY_AUTHORITY_PAGES.length) {
-  fail('governed-vocabulary-count', 'Layer 2 must contain every published GV4 Vocabulary authority URL.');
+  fail('governed-vocabulary-count', 'Layer 2 must contain every published Vocabulary authority URL.');
 }
 
 const resourcesPageSource = fs.readFileSync(path.join(root, 'src/pages/ResourcesPage.tsx'), 'utf8');
@@ -196,7 +196,7 @@ if (process.argv.includes('--generated')) {
 }
 
 const report = {
-  revision: '2026-09-27-gv4',
+  revision: '2026-09-27-gv5',
   layer1: AI_ANSWER_LAYER_1_PARENT_PROBLEMS.length,
   layer2: AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length,
   layer3: AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length,
