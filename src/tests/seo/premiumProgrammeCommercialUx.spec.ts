@@ -12,6 +12,7 @@ const phonics = read('src/pages/phonics.tsx');
 const snapshot = read('src/components/programs/ProgrammeHeroSnapshot.tsx');
 const boundary = read('src/components/programs/ProgrammeIntentBoundary.tsx');
 const teaching = read('src/components/programs/ResponsiveTeachingSection.tsx');
+const faqAccordion = read('src/components/programs/ProgrammeFaqAccordion.tsx');
 const commercialUx = read('public/commercial-owner-experience.js');
 
 describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
@@ -39,6 +40,8 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
     expect(snapshot).not.toContain('https://');
     expect(boundary).toContain('Use another pathway when');
     expect(teaching).toContain("appearance?: 'default' | 'premium'");
+    expect(teaching).toContain('eyebrow?: string');
+    expect(teaching).toContain('title?: string');
     expect(grammar).toContain('appearance="premium"');
     expect(speaking).toContain('appearance="premium"');
   });
@@ -49,11 +52,11 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
     expect(teaching).toContain("appearance = 'default'");
   });
 
-  it('keeps Phonics out of the three-page floating CTA suppression', () => {
+  it('hard-disables the extra floating assessment CTA only on the three premium programme owners', () => {
     expect(commercialUx).toContain(
-      "const DESKTOP_CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking'])",
+      "const CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking'])",
     );
-    expect(commercialUx).not.toContain("DESKTOP_CTA_DISABLED_PATHS = new Set(['/phonics'");
+    expect(commercialUx).not.toContain("CTA_DISABLED_PATHS = new Set(['/phonics'");
   });
 
   it('keeps each page compact without removing its decision-critical owner boundary', () => {
@@ -64,9 +67,31 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
     expect(speaking).toContain('Confidence-only barriers belong to Confidence Building');
   });
 
-  it('uses editorial FAQ lists rather than nested FAQ card stacks on all three pages', () => {
+  it('collapses every programme FAQ by default while keeping the full answers in the DOM', () => {
     for (const source of [reading, grammar, speaking]) {
-      expect(source).toContain('border-b border-slate-200 py-4 last:border-b-0');
+      expect(source).toContain('ProgrammeFaqAccordion');
     }
+    expect(reading).toContain('accent="sky"');
+    expect(grammar).toContain('accent="orange"');
+    expect(speaking).toContain('accent="violet"');
+    expect(faqAccordion).toContain('<details');
+    expect(faqAccordion).toContain('<summary');
+    expect(faqAccordion).not.toContain(' open=');
+    expect(faqAccordion).not.toContain('open={');
+    expect(faqAccordion).toContain('{item.answer}');
+  });
+
+  it('uses progressive disclosure for dense decision and evidence sections', () => {
+    expect(reading).toContain("title: 'Assess correctly'");
+    expect(reading).toContain('principle.criteria.map');
+    expect(grammar).toContain("['What was practised', 'Grammar topics and sentence patterns used in class.']");
+    expect(speaking).toContain('Why this source matters');
+    expect(speaking).toContain('data-speaking-evidence-kind={item.kind}');
+  });
+
+  it('removes the duplicated Speaking teaching block and keeps one shared teaching system', () => {
+    expect((speaking.match(/<ResponsiveTeachingSection/g) ?? [])).toHaveLength(1);
+    expect(speaking).toContain('title="What a Tiny Steps speaking class looks like"');
+    expect(speaking).toContain('eyebrow="See the teaching before you decide"');
   });
 });
