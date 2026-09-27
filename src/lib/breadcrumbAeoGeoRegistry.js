@@ -7,6 +7,7 @@ export const RESOURCE_SUBJECT_PRESENTATION = freeze({
   'phonics-reading': freeze({ label: 'Phonics & Reading', path: '/resources/phonics', aboutName: 'Phonics and reading for children' }),
   'grammar-writing': freeze({ label: 'Grammar & Writing', path: '/resources/grammar', aboutName: 'Grammar and writing for children' }),
   'speaking-communication': freeze({ label: 'Speaking & Communication', path: '/resources/speaking', aboutName: 'Speaking and communication for children' }),
+  'vocabulary': freeze({ label: 'Vocabulary', path: '/resources/vocabulary', aboutName: 'Vocabulary learning for children' }),
 });
 
 const BLOG_CATEGORY_SUBJECT = freeze({
@@ -21,6 +22,7 @@ const RESOURCE_PATH_LABELS = freeze({
   '/resources/phonics': 'Phonics & Reading',
   '/resources/grammar': 'Grammar & Writing',
   '/resources/speaking': 'Speaking & Communication',
+  '/resources/vocabulary': 'Vocabulary',
 });
 
 function normalizePath(value) {
@@ -55,6 +57,16 @@ export function getBreadcrumbTrail({ pathname, title, category } = {}) {
       home,
       { name: 'Resources', path: '/resources' },
       { name: RESOURCE_PATH_LABELS['/resources/phonics'], path: '/resources/phonics' },
+      { name: currentName, path },
+    ]);
+  }
+
+  if (path.startsWith('/resources/vocabulary/')) {
+    const currentName = String(title || 'Vocabulary guide').trim() || 'Vocabulary guide';
+    return freezeTrail([
+      home,
+      { name: 'Resources', path: '/resources' },
+      { name: RESOURCE_PATH_LABELS['/resources/vocabulary'], path: '/resources/vocabulary' },
       { name: currentName, path },
     ]);
   }
@@ -114,9 +126,11 @@ export function getAeoGeoPresentation({ pathname, category } = {}) {
   const path = normalizePath(pathname);
   const subject = path.startsWith('/resources/phonics/')
     ? 'phonics-reading'
-    : path.startsWith('/blog/')
-      ? subjectForBlogPath(path, category)
-      : null;
+    : path.startsWith('/resources/vocabulary/')
+      ? 'vocabulary'
+      : path.startsWith('/blog/')
+        ? subjectForBlogPath(path, category)
+        : null;
   const subjectPresentation = subject ? RESOURCE_SUBJECT_PRESENTATION[subject] : null;
 
   return freeze({
