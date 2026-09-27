@@ -1,6 +1,7 @@
 export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   'simple-present': {
     sourceIds: ['cambridge-present-simple', 'british-council-grammar'],
+    whyItMatters: 'The simple present is one of the core systems for everyday communication. It supports routines, facts, instructions and stable states, and its do/does patterns become the basis for many later questions, negatives and tense contrasts.',
     rulePoints: [
       'The simple present commonly expresses routines, repeated actions, general facts and relatively stable states. It can also appear in instructions, commentaries and fixed schedules.',
       'With most verbs, I/you/we/they use the base form while he/she/it takes -s or -es in affirmative clauses. Be and a few other very common verbs have irregular forms.',
@@ -23,6 +24,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'simple-past': {
     sourceIds: ['cambridge-past-simple-continuous', 'british-council-grammar'],
+    whyItMatters: 'The simple past is fundamental for recounts, stories and explanations of completed events. Accurate control of regular, irregular and did-based forms gives children a reliable base for more advanced narrative tense choices.',
     rulePoints: [
       'The simple past presents an event, action or state as located in a completed past time. The speaker views the event as a whole rather than as ongoing background.',
       'Regular verbs usually form the past with -ed, but many high-frequency verbs are irregular. Children need both pattern knowledge and repeated exposure to common irregular forms.',
@@ -45,6 +47,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'simple-future': {
     sourceIds: ['cambridge-future', 'british-council-future-forms'],
+    whyItMatters: 'Will is a useful first future pattern because its form is simple and stable. Teaching its real meanings also prevents children from assuming that every future idea requires will, preparing them for the wider future system.',
     rulePoints: [
       'Will + base verb is one common way to refer to future time, especially for spontaneous decisions, predictions, promises and willingness. It is useful for beginners but is not the whole English future system.',
       'The form is stable across subjects: I will go, she will go, they will go. Questions invert will and the subject, and negatives use will not or won’t.',
@@ -67,6 +70,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'modal-verbs': {
     sourceIds: ['british-council-modals', 'cambridge-grammar'],
+    whyItMatters: 'Modal verbs allow children to express shades of meaning rather than only facts: ability, possibility, permission, advice, necessity and prediction. This makes them important for both accurate grammar and more mature communication.',
     rulePoints: [
       'Core modal verbs such as can, could, may, might, must, should, will and would combine with the base form of another verb and add meanings such as ability, possibility, advice, permission, obligation or prediction.',
       'Modals do not normally take -s with third-person singular subjects and do not use do/does/did to form ordinary questions or negatives. The modal itself moves before the subject in questions.',
@@ -89,6 +93,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   clauses: {
     sourceIds: ['british-council-clauses', 'cambridge-grammar'],
+    whyItMatters: 'Clause awareness is the structural foundation of sentence building. Once children can distinguish independent and dependent clauses, conjunctions, complex sentences, punctuation and sentence-boundary errors become much easier to reason about.',
     rulePoints: [
       'A clause is built around a verb phrase and normally has a subject. An independent clause can stand as a complete sentence, while a dependent clause relies on another clause for a complete message.',
       'Dependent clauses can express relationships such as time, reason, condition, contrast or additional information about a noun. Their opening words often signal the relationship.',
@@ -111,6 +116,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'present-simple-vs-continuous': {
     sourceIds: ['cambridge-present-simple', 'british-council-present-continuous'],
+    whyItMatters: 'This contrast teaches children that tense choice reflects viewpoint, not only time words. Distinguishing routine or state from temporary or ongoing activity is a major step toward flexible, natural control of English verbs.',
     rulePoints: [
       'The simple present typically presents routines, facts and states; the present continuous commonly presents activity in progress around now or a temporary situation. The contrast is about how the speaker views the situation.',
       'Present continuous uses a present form of be plus an -ing form: am working, is reading, are playing. Omitting be produces an incomplete standard continuous form.',
@@ -133,6 +139,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'past-simple-vs-continuous': {
     sourceIds: ['cambridge-past-simple-continuous', 'british-council-grammar'],
+    whyItMatters: 'This contrast is central to narrative writing because it separates completed story events from background activity in progress. Children who understand the distinction can create clearer timelines and more controlled storytelling.',
     rulePoints: [
       'The simple past often presents a completed event as a whole, while the past continuous presents an activity or temporary state as already in progress at a particular past time.',
       'Past continuous uses was/were + -ing. It is especially useful for background situations, interrupted activity and two events viewed as unfolding at the same time.',
@@ -155,6 +162,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'future-forms': {
     sourceIds: ['british-council-future-forms', 'cambridge-future'],
+    whyItMatters: 'Choosing among future forms develops meaning-based grammar control. Children learn to distinguish decisions, intentions, arrangements, schedules and predictions instead of applying one future pattern to every situation.',
     rulePoints: [
       'English uses several constructions for future time. Will commonly suits spontaneous decisions and some predictions; going to often suits prior intentions or evidence-based predictions; present continuous commonly suits arrangements.',
       'Present simple can refer to timetabled or scheduled future events, while other future constructions such as future continuous and future perfect express different viewpoints.',
@@ -177,6 +185,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'present-perfect-vs-past': {
     sourceIds: ['british-council-present-perfect', 'cambridge-past-simple-continuous'],
+    whyItMatters: 'This distinction helps children manage the boundary between finished past time and past events connected to the present. It is one of the most important tense contrasts for moving from basic accuracy to natural English usage.',
     rulePoints: [
       'The simple past locates an event inside a finished past time; the present perfect connects past experience or activity to the present and normally avoids finished-time expressions such as yesterday or last year.',
       'Present perfect uses have/has + past participle. It is common for life experience, recent events with present relevance, unfinished time periods and situations continuing from the past.',
@@ -199,6 +208,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'past-perfect': {
     sourceIds: ['cambridge-past-perfect', 'british-council-grammar'],
+    whyItMatters: 'Past perfect gives writers a precise way to look back from one past moment to an earlier one. It is especially useful in narratives and explanations where event order would otherwise be unclear.',
     rulePoints: [
       'The past perfect uses had + past participle and looks back from one past reference point to an earlier event or state. It helps make the order of past events explicit.',
       'It is especially useful when chronology might otherwise be unclear: “When we arrived, the film had started” makes the earlier start clear.',
@@ -221,6 +231,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   questions: {
     sourceIds: ['cambridge-questions', 'british-council-grammar'],
+    whyItMatters: 'Question formation is essential for real communication and reveals how English auxiliary verbs work. Mastering question structure also reinforces tense, agreement, word order and the difference between direct and embedded questions.',
     rulePoints: [
       'Many English questions use auxiliary or modal inversion: auxiliary/modal + subject + main verb. When there is no other auxiliary in a simple-present or simple-past question, do/does/did is normally introduced.',
       'Wh-questions add a question word such as who, what, where, when, why or how. If the wh-word itself is the subject, ordinary do-support is not required in the same way.',
@@ -243,6 +254,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   'negatives-short-answers': {
     sourceIds: ['cambridge-negation', 'british-council-grammar'],
+    whyItMatters: 'Negatives and short answers show children how auxiliaries carry tense, agreement and polarity. Learning them as part of one verb system improves both spoken responsiveness and written sentence accuracy.',
     rulePoints: [
       'Standard negative clauses commonly place not after be, a modal or an auxiliary. When a simple-present or simple-past clause has no auxiliary, do/does/did is normally introduced.',
       'Short answers repeat the relevant auxiliary rather than the whole clause: “Does she swim?” — “Yes, she does.” This keeps agreement and tense visible.',
@@ -265,6 +277,7 @@ export const GRAMMAR_KNOWLEDGE_TENSES_AND_FORMS = {
   },
   quantifiers: {
     sourceIds: ['british-council-quantifiers', 'cambridge-determiners'],
+    whyItMatters: 'Quantifiers connect grammar with real meaning about amount and number. They also reinforce countable and uncountable noun distinctions, helping children make noun phrases that sound natural and precise.',
     rulePoints: [
       'Quantifiers express amount or number. Choosing among much, many, some, any, few, little, a lot of and related forms depends partly on whether a noun is countable and whether it is singular or plural.',
       'Many is used with plural count nouns; much is used with uncount nouns, especially in questions and negatives. A lot of works naturally with both in many everyday contexts.',
