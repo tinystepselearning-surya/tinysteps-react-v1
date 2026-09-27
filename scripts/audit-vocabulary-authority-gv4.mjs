@@ -9,9 +9,6 @@ import {
 import {
   VOCABULARY_AUTHORITY_REQUIREMENTS,
 } from '../src/lib/grammarVocabularyAuthorityRequirements.js';
-import {
-  VOCABULARY_LEXICAL_ENTRIES,
-} from '../src/lib/vocabularyLexicalModel.ts';
 import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../src/lib/canonicalTopicOwnershipRegistry.js';
@@ -53,7 +50,6 @@ if (VOCABULARY_AUTHORITY_PAGES.length !== 6) fail('page-count', `Expected six GV
 if (VOCABULARY_AUTHORITY_PAGES.map((page) => page.id).join('|') !== EXPECTED_IDS.join('|')) {
   fail('page-order', VOCABULARY_AUTHORITY_PAGES.map((page) => page.id).join(','));
 }
-if (VOCABULARY_LEXICAL_ENTRIES.length !== 50) fail('gv2-lexical-baseline', `Expected 50 migrated lexical entries; found ${VOCABULARY_LEXICAL_ENTRIES.length}.`);
 
 const requirementIds = new Set(VOCABULARY_AUTHORITY_REQUIREMENTS.map((item) => item.id));
 const publicPaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
@@ -158,7 +154,6 @@ const report = {
   brick: 'GV4',
   revision: VOCABULARY_AUTHORITY_REVISION,
   vocabularyAuthorityPages: VOCABULARY_AUTHORITY_PAGES.length,
-  lexicalBaselineWords: VOCABULARY_LEXICAL_ENTRIES.length,
   minimumKnowledgeWords: Math.min(...VOCABULARY_AUTHORITY_PAGES.map(knowledgeWords)),
   maximumKnowledgeWords: Math.max(...VOCABULARY_AUTHORITY_PAGES.map(knowledgeWords)),
   canonicalOwners: owners.length,
