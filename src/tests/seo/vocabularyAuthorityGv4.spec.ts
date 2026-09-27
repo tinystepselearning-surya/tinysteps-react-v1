@@ -22,6 +22,7 @@ import {
 import { PUBLIC_ROUTE_MANIFEST } from '../../lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import { CANONICAL_TOPIC_OWNERSHIP } from '../../lib/canonicalTopicOwnershipRegistry.js';
+import { getCommercialC7R3Handoff } from '../../lib/commercialC7ContextualHandoffImplementation';
 import {
   AI_ANSWER_LAYER_2_LEARNING_CONCEPTS,
   AI_ANSWER_LAYER_3_PRACTICE_ACTIONS,
@@ -131,6 +132,8 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     const hubOwner = CANONICAL_TOPIC_OWNERSHIP.find((entry) => entry.id === 'gv4-vocabulary-hub');
     expect(hubOwner?.ownerPath).toBe(VOCABULARY_HUB_PATH);
     expect(hubOwner?.ownerRole).toBe('subject-hub');
+    expect(hubOwner?.subject).toBe('vocabulary');
+    expect(getCommercialC7R3Handoff(VOCABULARY_HUB_PATH)).toBeNull();
 
     for (const page of VOCABULARY_AUTHORITY_PAGES) {
       expect(routePaths.has(page.path), page.path).toBe(true);
@@ -138,7 +141,9 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
       const owner = CANONICAL_TOPIC_OWNERSHIP.find((entry) => entry.id === 'gv4-vocabulary-' + page.id);
       expect(owner?.ownerPath, page.id).toBe(page.path);
       expect(owner?.ownerRole, page.id).toBe('skill-guide');
+      expect(owner?.subject, page.id).toBe('vocabulary');
       expect(owner?.hubPath, page.id).toBe('/resources/vocabulary');
+      expect(getCommercialC7R3Handoff(page.path), page.id).toBeNull();
     }
 
     const routes = read('src/app/routes.tsx');
@@ -170,6 +175,7 @@ describe('GV4 Vocabulary hub and first authority publication batch', () => {
     expect(vocabulary).toHaveLength(6);
     expect(new Set(vocabulary.map((item) => item.canonicalPath)).size).toBe(6);
     for (const item of vocabulary) {
+      expect(item.subject).toBe('vocabulary');
       expect(item.hubPath).toBe('/resources/vocabulary');
       expect(item.practicePaths).toEqual(['/free-games/word-meaning-flashcards']);
     }
