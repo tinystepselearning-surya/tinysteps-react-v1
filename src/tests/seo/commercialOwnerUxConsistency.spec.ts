@@ -6,8 +6,10 @@ import { COMMERCIAL_C3_UNIQUE_OWNER_PATHS } from '../../lib/commercialC3OwnerPag
 const repoRoot = process.cwd();
 const experiencePath = path.join(repoRoot, 'public/commercial-owner-experience.js');
 const indexPath = path.join(repoRoot, 'index.html');
+const firebasePath = path.join(repoRoot, 'firebase.json');
 const experience = fs.readFileSync(experiencePath, 'utf8');
 const index = fs.readFileSync(indexPath, 'utf8');
+const firebase = fs.readFileSync(firebasePath, 'utf8');
 
 function readOwnerManifest() {
   const match = experience.match(/const OWNER_PATHS = Object\.freeze\(\[([\s\S]*?)\]\);/);
@@ -25,8 +27,10 @@ describe('Commercial owner UX consistency layer', () => {
     expect(new Set(manifest)).toEqual(new Set(COMMERCIAL_C3_UNIQUE_OWNER_PATHS));
   });
 
-  it('loads the enhancement as a deferred, non-render-blocking public asset', () => {
-    expect(index).toContain('<script defer src="/commercial-owner-experience.js"></script>');
+  it('loads the enhancement as a deferred, cache-busted public asset', () => {
+    expect(index).toContain('<script defer src="/commercial-owner-experience.js?v=20260927-r5"></script>');
+    expect(firebase).toContain('"source": "/commercial-owner-experience.js"');
+    expect(firebase).toContain('"value": "no-cache, no-store, must-revalidate"');
   });
 
   it('keeps the runtime lightweight and CWV-safe by contract', () => {
@@ -53,11 +57,18 @@ describe('Commercial owner UX consistency layer', () => {
     expect(experience).toContain("currentPath !== '/book-demo'");
   });
 
-  it('keeps the premium Reading, Grammar and Speaking desktop journeys free of the competing floating assessment card', () => {
-    expect(experience).toContain("const DESKTOP_CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking'])");
-    expect(experience).toContain("DESKTOP_CTA_DISABLED_PATHS.has(currentPath) && window.innerWidth >= 768");
-    expect(experience).toContain('const shouldShow = !desktopCtaDisabled');
-    expect(experience).not.toContain("DESKTOP_CTA_DISABLED_PATHS = new Set(['/phonics'");
+  it('hard-disables the competing floating assessment card on Reading, Grammar and Speaking', () => {
+    expect(experience).toContain("const CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking'])");
+    expect(experience).toContain('const ctaDisabled = CTA_DISABLED_PATHS.has(currentPath)');
+    expect(experience).toContain('cta.hidden = ctaDisabled');
+    expect(experience).toContain('CTA_DISABLED_PATHS.has(path)');
+    expect(experience).not.toContain("CTA_DISABLED_PATHS = new Set(['/phonics'");
+  });
+
+  it('removes the desktop Back to top control from the three premium programme owners', () => {
+    expect(experience).toContain('html[data-ts-commercial-path="/reading-classes-for-kids"] button[aria-label="Back to top"]');
+    expect(experience).toContain('html[data-ts-commercial-path="/grammar"] button[aria-label="Back to top"]');
+    expect(experience).toContain('html[data-ts-commercial-path="/speaking"] button[aria-label="Back to top"]');
   });
 
   it('keeps the delayed CTA inaccessible while hidden and clear of existing floating controls', () => {
