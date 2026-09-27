@@ -132,7 +132,8 @@ describe('GV3 first Grammar reference-extension publication batch', () => {
   });
 
   it('adds all six reference guides to the AI concept layer without turning the Grammar programme into an answer owner', () => {
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(96);
+    // GV3 owns 38 Grammar items; later knowledge families may add to Layer 2 without changing that frozen Grammar count.
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length).toBeGreaterThanOrEqual(96);
     const grammarItems = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/grammar/'),
     );
