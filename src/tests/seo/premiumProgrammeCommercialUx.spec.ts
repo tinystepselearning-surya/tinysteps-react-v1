@@ -64,9 +64,9 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
     expect(speaking).toContain('Confidence-only barriers belong to Confidence Building');
   });
 
-  it('uses editorial FAQ lists rather than nested FAQ card stacks on all three pages', () => {
+  it('keeps FAQ content collapsed by default on all three premium owners', () => {
     for (const source of [reading, grammar, speaking]) {
-      expect(source).toContain('border-b border-slate-200 py-4 last:border-b-0');
+      expect(source).toContain('ProgrammeFaqAccordion');
     }
   });
 });

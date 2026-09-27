@@ -43,9 +43,23 @@
       })();
     </script>
     <script defer src="/seo-indexability-guard.js"></script>
+    <script>
+      (() => {
+        const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+        const premiumOwners = new Set(['/reading-classes-for-kids', '/grammar', '/speaking']);
+        if (premiumOwners.has(pathname)) {
+          document.documentElement.dataset.tsPremiumProgrammeOwner = '1';
+        }
+      })();
+    </script>
     <script defer src="/commercial-owner-experience.js"></script>
     <style>
       #ts-commercial-owner-cta { visibility: hidden; }
+      @media (min-width: 768px) {
+        html[data-ts-premium-programme-owner="1"] #ts-commercial-owner-cta {
+          display: none !important;
+        }
+      }
       #ts-commercial-owner-cta.is-visible { visibility: visible; }
       @media (min-width: 640px) {
         #ts-commercial-owner-cta { bottom: 80px !important; }
