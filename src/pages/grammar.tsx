@@ -423,8 +423,8 @@ export default function GrammarPage() {
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-2xl">Grammar supports writing, but it is not the writing programme</h2>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-600">
             Grammar owns sentence formation, tenses, punctuation, correction, and <strong className="font-semibold text-slate-900">written sentence accuracy</strong>.{' '}
-            <Link to="/writing-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-2">Choose Writing</Link> for idea development, paragraphs, stories, editing, or longer composition;{' '}
-            <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline underline-offset-2">choose Spoken English</Link> for everyday conversational fluency and fuller spontaneous responses.
+            <Link to="/writing-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-2">Choose Writing when</Link> idea development, paragraphs, stories, editing, or longer composition is the main need;{' '}
+            <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline underline-offset-2">Choose Spoken English when</Link> everyday conversational fluency and fuller spontaneous responses are the main need.
           </p>
         </div>
       </section>
