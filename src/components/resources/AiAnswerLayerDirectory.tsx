@@ -8,7 +8,7 @@ import {
   getAiAnswerLayerSubjectItems,
 } from '../../lib/aiAnswerLayerRegistry.js';
 
-export type AiAnswerSubject = 'phonics-reading' | 'grammar-writing' | 'speaking-communication';
+export type AiAnswerSubject = 'phonics-reading' | 'grammar-writing' | 'speaking-communication' | 'general-english';
 
 type AnswerItem = {
   id: string;
@@ -32,12 +32,14 @@ const SUBJECTS: readonly AiAnswerSubject[] = [
   'phonics-reading',
   'grammar-writing',
   'speaking-communication',
+  'general-english',
 ];
 
 const SUBJECT_LABELS: Record<AiAnswerSubject, string> = {
   'phonics-reading': 'Phonics & Reading',
   'grammar-writing': 'Grammar & Writing',
   'speaking-communication': 'Speaking & Communication',
+  'general-english': 'Vocabulary & General English',
 };
 
 function balancedItems(items: readonly AnswerItem[], perSubject: number) {
