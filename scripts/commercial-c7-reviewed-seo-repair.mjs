@@ -5,8 +5,8 @@ import { Buffer } from 'node:buffer';
 // These are Git blob IDs, not general permission to edit the named files.
 // The original entries preserve independently reviewed recovery work. The
 // Resources/Grammar entries pin only the exact reviewed snapshots required for
-// the central Resources gateway, governed grammar guides, retired-blog listing
-// cleanup and reciprocal discovery links. Commercial C2/C4/C5/C6 ownership and
+// the central Resources gateway, governed grammar guides, retired-blog listing,
+// reciprocal discovery links and the exact GV4 Vocabulary publication snapshots. Commercial C2/C4/C5/C6 ownership and
 // conversion boundaries remain frozen; any further byte change fails closed.
 export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/content/blog/shared/authorityLinking.ts': 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
@@ -22,6 +22,9 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/pages/blog/blogIndexUx.ts': 'c42e8c80ba0f56217eb9fb14a4ec1b4fafd8a919',
   'src/pages/parents/ParentsHubPage.tsx': 'c895e42389e264b3bfede7d1a2e029b2a93e0165',
   'src/pages/public/FreeEnglishGamesHubPage.tsx': 'c42429e4613e72aef51fa7ad43504a31decba04a',
+  // GV4 informational Vocabulary surfaces: exact reviewed publication bytes only.
+  'src/pages/VocabularyHubPage.tsx': 'b7cefa2beda8a93435e645114c4dcb4800f95fb5',
+  'src/pages/VocabularyKnowledgePage.tsx': '21bd4cf5ae358af13f9841788c29008de8a253cc',
 });
 
 export function isReviewedSeoRecoveryFile(relativePath, source) {
