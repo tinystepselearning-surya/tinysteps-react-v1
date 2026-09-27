@@ -43,6 +43,14 @@ describe('Grammar page UX refinement', () => {
     expect(grammar).toContain('Choose Spoken English when');
   });
 
+  it('keeps Grammar-owned diagnostics and pathway stages free of pointless self-links', () => {
+    expect(grammar).not.toContain("href: '/grammar'");
+    expect(grammar).not.toContain('to={item.href}');
+    expect(grammar).not.toContain('to={card.href}');
+    expect(grammar).toContain("name: 'Written sentence accuracy'");
+    expect(grammar).toContain('Paragraph, story, editing, and longer-composition work belongs to the dedicated Writing programme.');
+  });
+
   it('consolidates programme quality criteria and parent evidence into one decision section', () => {
     expect(grammar).toContain('What to look for in a strong grammar programme');
     expect(grammar).toContain('Assessment before placement');

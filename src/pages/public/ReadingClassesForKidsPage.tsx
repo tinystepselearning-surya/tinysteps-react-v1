@@ -134,38 +134,26 @@ const readingStages = [
   },
 ];
 
-const bestReadingClassCriteria = [
+const readingDecisionPrinciples = [
   {
-    title: 'Assessment-first placement',
-    detail: 'The programme should identify whether the child belongs in connected-reading support or should first be routed to phonics because decoding is unstable. Within Reading, the main gap may be fluency, comprehension, vocabulary, phrasing, or confidence.',
+    title: 'Start in the right place',
+    detail:
+      'Assess first and match the text level to the child. If decoding is unstable, route to Phonics before connected-reading work.',
   },
   {
-    title: 'Right-level reading material',
-    detail: 'Practice should be difficult enough to grow skill without being so hard that the child depends on guessing or constant adult rescue.',
+    title: 'Teach, correct, retry',
+    detail:
+      'Use explicit teaching, model the strategy, correct the exact error, and let the child make a fresh attempt instead of only completing practice.',
   },
   {
-    title: 'Explicit teaching, not only practice',
-    detail: 'A teacher should explain the strategy the child needs, model it, guide an attempt, and then check whether the child can use it independently.',
+    title: 'Check real progress',
+    detail:
+      'Use a clear reading progression and fresh, right-level material so improvement is not confused with memorising one familiar passage.',
   },
   {
-    title: 'Live correction and retry',
-    detail: 'Errors should lead to useful feedback and another attempt so the child learns how to repair the reading process.',
-  },
-  {
-    title: 'A clear reading progression',
-    detail: 'The pathway should connect accurate connected reading, phrasing, fluency, vocabulary, comprehension, retelling, and reading confidence while keeping phonics and decoding as a separate earlier pathway.',
-  },
-  {
-    title: 'Fresh evidence of progress',
-    detail: 'Progress should be checked on new, appropriately matched words, sentences, or passages—not only material the child has rehearsed repeatedly.',
-  },
-  {
-    title: 'Realistic expectations',
-    detail: 'A strong provider avoids fixed guarantees for every child and adjusts pace when the evidence shows a different bottleneck.',
-  },
-  {
-    title: 'Parent-visible next steps',
-    detail: 'Parents should know what improved, what still needs work, and what to practise next without receiving vague “doing well” updates.',
+    title: 'Keep expectations clear',
+    detail:
+      'Avoid fixed guarantees. Parents should know what improved, what still needs support, and what comes next.',
   },
 ];
 
@@ -298,7 +286,7 @@ export default function ReadingClassesForKidsPage() {
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#reading-class-quality-criteria`,
       name: 'What parents should look for in online reading classes for kids',
-      itemListElement: bestReadingClassCriteria.map((criterion, index) => ({
+      itemListElement: readingDecisionPrinciples.map((criterion, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         item: {
@@ -515,24 +503,7 @@ export default function ReadingClassesForKidsPage() {
           </p>
 
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                title: 'Start in the right place',
-                detail: 'Assess first and match the text level to the child. If decoding is unstable, route to Phonics before connected-reading work.',
-              },
-              {
-                title: 'Teach, correct, retry',
-                detail: 'Model the strategy explicitly, correct the exact error, and let the child make a fresh attempt instead of only completing practice.',
-              },
-              {
-                title: 'Check real progress',
-                detail: 'Use a clear progression and fresh reading material so improvement is not confused with memorising one familiar passage.',
-              },
-              {
-                title: 'Keep expectations clear',
-                detail: 'Avoid fixed guarantees. Parents should know what improved, what still needs support, and what comes next.',
-              },
-            ].map((principle, index) => (
+            {readingDecisionPrinciples.map((principle, index) => (
               <article key={principle.title} className="border-l border-slate-200 pl-4">
                 <span className="text-[10px] font-bold tracking-[0.16em] text-sky-700">0{index + 1}</span>
                 <h3 className="mt-2 text-sm font-semibold text-slate-950">{principle.title}</h3>

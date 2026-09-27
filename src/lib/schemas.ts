@@ -358,7 +358,10 @@ export function createFAQPageSchema(items: Array<{ question: string; answer: str
       speakable: {
         '@type': 'SpeakableSpecification',
         cssSelector: ['.faq-question', '.faq-answer'],
-        xpath: ['//h3[@class="faq-question"]', '//p[@class="faq-answer"]'],
+        xpath: [
+          "//*[contains(concat(' ', normalize-space(@class), ' '), ' faq-question ')]",
+          "//*[contains(concat(' ', normalize-space(@class), ' '), ' faq-answer ')]",
+        ],
       },
     })),
   };
