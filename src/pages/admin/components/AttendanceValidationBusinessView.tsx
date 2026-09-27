@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   groupPersistedAvsBusinessOutcomes,
@@ -112,6 +113,7 @@ function teacherFilterKey(
 }
 
 export default function AttendanceValidationBusinessView({ cases }: Props) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] =
     useState<OperatorBusinessOutcome>('verified');
   const [teacherFilter, setTeacherFilter] = useState('all');
@@ -183,6 +185,22 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
       ].some((value) => value?.toLowerCase().includes(normalizedSearch));
     });
   }, [activeTab, search, teacherScopedGroups]);
+
+  const openAttendanceCorrection = (
+    item: AttendanceValidationBusinessCase,
+    newStatus: 'present' | 'absent',
+  ) => {
+    if (!item.classSessionId || !item.kidId) return;
+
+    const params = new URLSearchParams();
+    params.set('tab', 'attendance-corrections');
+    params.set('avsAdmin', '1');
+    params.set('sessionId', item.classSessionId);
+    params.set('kidId', item.kidId);
+    if (item.enrollmentId) params.set('enrollmentId', item.enrollmentId);
+    params.set('newStatus', newStatus);
+    navigate(`/surya?${params.toString()}`);
+  };
 
   return (
     <div className="space-y-4">
@@ -330,14 +348,39 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
                             {group.cases.map((item) => (
                               <div
                                 key={item.id}
-                                className="rounded-md border border-slate-200 bg-white p-3"
+                                className="flex flex-col gap-3 rounded-md border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
                               >
-                                <span className="font-mono text-slate-800">
-                                  {item.classSessionId || item.id}
-                                </span>
-                                {' '}· Tiny Steps: <span className="font-medium">
-                                  {humanize(item.tinyStepsAttendance)}
-                                </span>
+                                <div>
+                                  <span className="font-mono text-slate-800">
+                                    {item.classSessionId || item.id}
+                                  </span>
+                                  {' '}· Tiny Steps: <span className="font-medium">
+                                    {humanize(item.tinyStepsAttendance)}
+                                  </span>
+                                </div>
+
+                                {group.outcome !== 'verified' && item.classSessionId && item.kidId && (
+                                  <div className="flex shrink-0 gap-2">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={item.tinyStepsAttendance === 'present'}
+                                      onClick={() => openAttendanceCorrection(item, 'present')}
+                                    >
+                                      Mark Present
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={item.tinyStepsAttendance === 'absent'}
+                                      onClick={() => openAttendanceCorrection(item, 'absent')}
+                                    >
+                                      Mark Absent
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
