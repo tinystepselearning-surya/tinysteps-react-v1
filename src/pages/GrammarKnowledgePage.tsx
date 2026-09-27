@@ -129,6 +129,11 @@ const GrammarKnowledgePage: FC = () => {
           <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">What this grammar skill means</h2>
           <p className="mt-4 text-base leading-8 text-slate-700">{page.concept}</p>
 
+          <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/55 p-5">
+            <h3 className="text-base font-black text-slate-950">Why this skill matters</h3>
+            <p className="mt-2 text-sm leading-7 text-slate-700">{page.whyItMatters}</p>
+          </div>
+
           <div className="mt-7 border-t border-slate-100 pt-6">
             <h3 className="text-lg font-black text-slate-950">Core rules and patterns</h3>
             <ul className="mt-4 space-y-4">
