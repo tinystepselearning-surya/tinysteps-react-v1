@@ -13,12 +13,18 @@ on:
       - 'src/lib/canonicalTopicOwnershipRegistry.js'
       - 'src/lib/breadcrumbAeoGeoRegistry.js'
       - 'src/lib/aiAnswerLayerRegistry.js'
+      - 'src/lib/commercialC7KnowledgeOwnerMapping.ts'
+      - 'src/lib/commercialC7IntentNextStepRules.ts'
+      - 'src/lib/commercialC7ContextualHandoffImplementation.ts'
       - 'src/lib/publicAnalyticsPathPolicy.js'
       - 'src/pages/VocabularyHubPage.tsx'
       - 'src/pages/VocabularyKnowledgePage.tsx'
       - 'src/tests/seo/vocabularyAuthorityGv4.spec.ts'
       - 'src/tests/seo/vocabularyAuthorityGv5.spec.ts'
       - 'src/tests/seo/resourcesR24R26AiAnswerLayers.spec.ts'
+      - 'src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts'
+      - 'src/tests/seo/commercialC7IntentNextStepRules.spec.ts'
+      - 'src/tests/seo/commercialC7ContextualHandoffs.spec.ts'
       - 'scripts/audit-vocabulary-authority-gv4.mjs'
       - 'scripts/audit-vocabulary-authority-gv5.mjs'
       - 'scripts/audit-canonical-topic-ownership.mjs'
@@ -60,6 +66,9 @@ jobs:
           src/tests/seo/grammarVocabularyAuthorityRequirements.spec.ts
           src/tests/seo/resourcesR24R26AiAnswerLayers.spec.ts
           src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
+          src/tests/seo/commercialC7KnowledgeOwnerMapping.spec.ts
+          src/tests/seo/commercialC7IntentNextStepRules.spec.ts
+          src/tests/seo/commercialC7ContextualHandoffs.spec.ts
           scripts/test/commercial-c7-reviewed-seo-repair.spec.mjs
       - name: Audit GV5 source publication contract
         run: node scripts/audit-vocabulary-authority-gv5.mjs
