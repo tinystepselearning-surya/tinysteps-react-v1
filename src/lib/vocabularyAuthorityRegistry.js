@@ -820,6 +820,138 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
     relatedPaths: ['/resources/grammar/adjectives-for-kids', '/resources/vocabulary/vocabulary-for-better-writing', '/free-games/word-meaning-flashcards'],
     featuredWordIds: ['big', 'small', 'soft', 'loud', 'bright', 'clean', 'cold', 'sweet', 'fast', 'slow'],
   }),
+
+  page({
+    order: 6,
+    id: 'home-family-routines',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'home-family-daily-routine-vocabulary',
+    cardTitle: 'Home, Family & Daily Routine Vocabulary',
+    seoTitle: 'Home, Family and Daily Routine Vocabulary for Kids | Tiny Steps',
+    seoDescription: 'Build useful vocabulary for family, rooms, household actions, daily routines and time-of-day so children can describe everyday home life clearly.',
+    quickAnswer: 'Home and routine vocabulary gives children the words to talk about family members, rooms, household objects, daily actions and time-of-day. Strong knowledge means more than naming kitchen, blanket or morning: children should connect words to what happens there, sequence familiar routines and use the vocabulary naturally when answering questions or describing real life.',
+    concept: 'Everyday home vocabulary is easiest to remember when words are connected into meaningful events. Family, kitchen, breakfast, bottle and morning can appear in one routine; bedroom, blanket, read and night can appear in another. These networks help children retrieve vocabulary as part of a message instead of treating every word as an isolated flashcard label.',
+    whyItMatters: 'Home is one of the richest sources of repeated language for young learners. Children need this vocabulary to understand stories, follow instructions, describe their day and participate in conversation. Sequencing routine words also supports narrative language because children practise before, after, first, next and later while talking about familiar actions. For multilingual learners, home topics provide an accessible bridge between known experiences and new English words.',
+    coreIdeas: [
+      'Organise vocabulary around real household zones and routines. In a kitchen, children may meet plate, cup, bottle, sink, cook, pour and wash; in a bedroom they may use bed, blanket, wardrobe, sleep and wake up. The room gives a memory structure, while sentences and questions turn the labels into usable language.',
+      'Connect people words to relationships and roles without assuming every family looks the same. Children may live with parents, grandparents, siblings, one caregiver or other relatives. Teach words such as family, parent, grandparent, brother, sister, cousin and neighbour flexibly, and let children describe their own household only to the level they are comfortable sharing.',
+      'Use routine vocabulary to practise sequencing and retrieval. Morning, afternoon, evening and night can anchor actions such as wake up, brush, eat, pack, return, play and sleep. Ask children to change the sequence for weekdays, weekends or holidays so the vocabulary transfers beyond one memorised “my daily routine” script.',
+    ],
+    workedExamples: [
+      {
+        example: '“In the morning, I fill my bottle in the kitchen before I pack my school bag.”',
+        explanation: 'The sentence combines time-of-day, room, object and routine action vocabulary. A follow-up can ask what happens first, what could happen on a weekend instead, or which words would change if the routine took place in the evening.',
+      },
+      {
+        example: '“Our neighbour brought a parcel while my family was eating dinner.”',
+        explanation: 'Neighbour names a person who lives nearby and family names the household group. The sentence provides a realistic event rather than a family-tree label exercise. Children can explain the relationship between neighbour and family without assuming they are relatives.',
+      },
+      {
+        example: '“I folded the blanket and put it on the bed after I woke up.”',
+        explanation: 'The routine links an object to two actions and a sequence marker. It checks whether the child knows what a blanket is and can also use the word while describing what happened, which is stronger evidence of vocabulary knowledge than pointing to a picture.',
+      },
+    ],
+    examples: [
+      'People: family, parent, grandparent, sibling, cousin, neighbour',
+      'Rooms and objects: kitchen, bedroom, window, blanket, bottle',
+      'Routine language: morning, wake up, brush, pack, return, evening',
+    ],
+    commonMistakes: [
+      'Teaching family vocabulary only through one fixed family-tree model and unintentionally implying that every child has the same household structure.',
+      'Asking children to memorise a long daily-routine paragraph, which can produce fluent recitation without flexible vocabulary use.',
+      'Stopping at room and object labels instead of connecting the words to actions, location language and real communication.',
+    ],
+    trickyCases: [
+      'Household vocabulary varies across regions and varieties of English. Words such as wardrobe and closet or tap and faucet may differ. Prioritise the variety children are most likely to encounter while recognising widely understood alternatives when they appear.',
+      'Some routine words are culturally or personally variable. Meals, school times and household tasks do not happen at identical times for every family. Use examples as language practice rather than presenting one routine as the correct lifestyle.',
+    ],
+    teachingNote: 'Use a simple home map, real photos or the child’s own routine as a context, but avoid requiring personal information. Teach a small cluster of words, then ask location, function and sequence questions: “Where would you find it?”, “What do you do with it?”, “What happens before that?” Revisit the same words in stories and conversation. Gradually remove visual support and ask the child to retell a changed routine so retrieval becomes flexible.',
+    practicePrompts: [
+      'Sort twelve words into people, rooms, objects and routine actions, then make one sentence that combines words from three different groups.',
+      'Put six routine events in a sensible order and retell them using first, next, after that and finally, then create a different weekend version.',
+      'Use the home-and-routine words from the lexical set—family, window, kitchen, blanket, neighbour and morning—in new sentences that are not copies of the game examples.',
+    ],
+    faqs: [
+      {
+        question: 'Should children memorise a “daily routine” speech?',
+        answer: 'A short model can demonstrate useful language, but the goal should be flexible retrieval. Change the day, time, person or order and ask the child to adapt the answer. If the vocabulary disappears as soon as the script changes, the words are not yet secure for independent speaking.',
+      },
+      {
+        question: 'How can parents practise home vocabulary without worksheets?',
+        answer: 'Use ordinary moments. Ask the child to name an object, explain its function, follow a two-step instruction or describe what happens next in a routine. Keep the exchange brief and natural. Reusing the same words across several days is more valuable than testing a very long list once.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-everyday-objects', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/everyday-vocabulary-for-kids', '/spoken-english-classes-for-kids-online', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['family', 'window', 'kitchen', 'blanket', 'neighbour', 'morning'],
+  }),
+
+  page({
+    order: 7,
+    id: 'food-clothes-body',
+    stageId: 'everyday-foundations',
+    publicationBatch: 'gv5b-foundation-completion',
+    slug: 'food-clothes-body-vocabulary-for-kids',
+    cardTitle: 'Food, Clothes & Body Vocabulary',
+    seoTitle: 'Food, Clothes and Body Vocabulary for Kids | Tiny Steps',
+    seoDescription: 'Teach practical words for food, drinks, clothes, body parts and basic everyday health so children can describe needs, choices and routines.',
+    quickAnswer: 'Food, clothes and body vocabulary covers practical words children use to talk about meals, preferences, what they wear, body parts and simple everyday needs. Children should move from naming items to using the vocabulary in sentences such as “I prefer ripe mango,” “My sleeve is wet,” or “My ankle hurts,” while keeping health discussion basic and age-appropriate.',
+    concept: 'These everyday domains are broad, so vocabulary should be taught in small useful groups rather than one enormous themed list. Food can be organised by meals, ingredients, taste or preparation; clothes by item, weather or purpose; body vocabulary by visible parts and simple actions. Repeated contextual use helps children understand category relationships and retrieve the right word when they need it.',
+    whyItMatters: 'Children meet these words in instructions, stories, school routines, shopping, travel and conversation. They may need to explain what they ate, choose appropriate clothing for weather, follow a sports instruction or say where something feels uncomfortable. Practical vocabulary supports independence and comprehension, especially when children can combine a noun with useful verbs and describing words instead of naming an item only.',
+    coreIdeas: [
+      'Teach category plus function. Apple, rice and yoghurt are foods, but children can also discuss taste, meal, preparation or preference. Shirt, jacket and socks are clothes, and their purpose changes with weather or activity. Hand, knee and shoulder are body parts that appear in movement instructions. Function and context make category words easier to retrieve.',
+      'Build natural word combinations around the nouns. Children can learn drink water, peel a banana, wear a jacket, tie shoelaces, bend your knee and raise your hand. These short combinations connect vocabulary to real communication and reduce the chance that a word remains a label known only from picture matching.',
+      'Keep basic health language descriptive rather than diagnostic. Children can learn phrases such as sore throat, upset stomach, tired legs or “my knee hurts” for everyday communication. The learning objective is vocabulary for describing a simple need or sensation, not teaching children to diagnose illness or replace adult medical advice.',
+    ],
+    workedExamples: [
+      {
+        example: '“I packed a sandwich, an apple and a bottle of water for the trip.”',
+        explanation: 'The sentence groups foods and a drink inside a realistic purpose. A child can classify the items, add a preference, or change one item while preserving the sentence structure. Bottle also connects to the existing lexical baseline without changing the game dataset.',
+      },
+      {
+        example: '“Wear a light jacket because the morning is cool.”',
+        explanation: 'Jacket is linked to weather and purpose. Light here describes the type or weight of clothing rather than brightness, showing how context supports word meaning. The child can compare jacket, sweater and T-shirt for different situations.',
+      },
+      {
+        example: '“I bent my knee to tie my shoelace.”',
+        explanation: 'Knee is learned together with an action and another clothing-related word. The context shows where the body word is useful. Follow-up instructions such as raise your hand or turn your head can reinforce comprehension without turning the activity into anatomy study.',
+      },
+    ],
+    examples: [
+      'Food and drink: fruit, rice, bread, yoghurt, water, sweet, sour',
+      'Clothes: shirt, trousers, dress, jacket, socks, shoes, sleeve',
+      'Body and simple needs: hand, knee, shoulder, ankle, hungry, thirsty, sore',
+    ],
+    commonMistakes: [
+      'Teaching dozens of food or body labels in one sitting, which creates recognition overload and weak long-term retrieval.',
+      'Practising nouns without common actions such as eat, drink, wear, wash, bend and tie, so children know labels but struggle to form useful sentences.',
+      'Using basic health vocabulary to make medical claims. The language goal is describing a simple sensation or need, not diagnosing a condition.',
+    ],
+    trickyCases: [
+      'Food vocabulary varies widely by culture. Use familiar local foods alongside internationally common words and teach the English label when it has a clear equivalent. The purpose is communication, not replacing the child’s own food culture with a narrow example set.',
+      'Some clothing words differ by English variety, such as trousers and pants. Children can learn the form used in their school or materials while being told that another common variety exists. Context usually makes the intended item clear.',
+    ],
+    teachingNote: 'Choose one practical subtopic at a time and use real situations: packing lunch, choosing clothes for weather or following a movement instruction. Ask children to classify, describe and use the word rather than copy it repeatedly. Mix familiar and new vocabulary so success is possible. For body and simple health words, keep examples neutral and everyday and direct real health concerns to a parent, teacher or healthcare professional.',
+    practicePrompts: [
+      'Plan a simple packed lunch using six vocabulary words, then explain one taste, preference or preparation choice without turning the task into nutrition advice.',
+      'Choose clothes for three weather situations and explain each choice using wear, need, light, warm, wet or dry naturally.',
+      'Follow and then create five safe movement instructions using body-part words, such as raise your hand or bend your knee, and explain each instruction in your own words.',
+    ],
+    faqs: [
+      {
+        question: 'How many themed words should a child learn at once?',
+        answer: 'Use a small enough set that the child can understand, retrieve and use the words in new contexts. Ten deeply practised words are usually more useful than a very long list completed once. Revisit older vocabulary while adding a few new items so categories grow gradually.',
+      },
+      {
+        question: 'Should food vocabulary lessons include nutrition rules?',
+        answer: 'Vocabulary lessons can discuss ordinary categories, tastes, meals and preparation, but they do not need to prescribe diets or make health claims. If nutrition is the teaching goal, use age-appropriate guidance from the child’s school, family or qualified health sources. Here the focus is accurate English meaning and everyday use.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-a1-a2', 'british-council-vocabulary-overview', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/everyday-vocabulary-for-kids', '/spoken-english-classes-for-kids-online', '/free-games/word-meaning-flashcards'],
+    featuredWordIds: ['eat', 'sweet', 'bottle'],
+  }),
 ]);
 
 export const VOCABULARY_AUTHORITY_PATHS = freezeList(
