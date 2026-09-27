@@ -32,7 +32,7 @@ const page = (config) => {
   });
 };
 
-export const VOCABULARY_AUTHORITY_REVISION = '2026-09-27-gv5';
+export const VOCABULARY_AUTHORITY_REVISION = '2026-09-27-gv5b';
 
 export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   page({
@@ -101,7 +101,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 2,
+    order: 3,
     id: 'feelings-emotions',
     stageId: 'everyday-foundations',
     slug: 'feelings-emotions-for-kids',
@@ -166,7 +166,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 3,
+    order: 5,
     id: 'school-vocabulary',
     stageId: 'everyday-foundations',
     slug: 'school-vocabulary-for-kids',
@@ -231,7 +231,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 4,
+    order: 9,
     id: 'synonyms-antonyms',
     stageId: 'word-relationships',
     slug: 'synonyms-antonyms-for-kids',
@@ -296,7 +296,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 5,
+    order: 12,
     id: 'context-clues',
     stageId: 'vocabulary-in-context',
     slug: 'context-clues-for-kids',
@@ -361,7 +361,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 6,
+    order: 11,
     id: 'word-families-prefixes-suffixes',
     stageId: 'word-building',
     slug: 'word-families-prefixes-suffixes-for-kids',
@@ -426,7 +426,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 7,
+    order: 13,
     id: 'vocabulary-collocations',
     stageId: 'natural-english',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -492,7 +492,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 8,
+    order: 14,
     id: 'phrasal-verbs-expressions',
     stageId: 'natural-english',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -558,7 +558,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 9,
+    order: 15,
     id: 'vocabulary-for-writing',
     stageId: 'transfer-speaking-writing',
     publicationBatch: 'gv5-natural-english-transfer',
@@ -624,7 +624,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   }),
 
   page({
-    order: 10,
+    order: 16,
     id: 'vocabulary-for-speaking',
     stageId: 'transfer-speaking-writing',
     publicationBatch: 'gv5-natural-english-transfer',
