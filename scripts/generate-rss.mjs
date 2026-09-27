@@ -292,6 +292,7 @@ function buildProgrammaticGrammarCorpus() {
       toCanonicalAbsoluteUrl('/free-grammar-games-for-kids'),
       toCanonicalAbsoluteUrl('/free-sentence-building-games-for-kids'),
     ],
+    external_reference_urls: [...new Set((page.sources || []).map((source) => source.url).filter(Boolean))],
   }));
 }
 

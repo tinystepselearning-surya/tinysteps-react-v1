@@ -96,6 +96,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(generator).not.toContain('editorial_source_records:');
     expect(generator).toContain('programmatic_phonics_guides: programmaticPhonics');
     expect(generator).toContain('programmatic_grammar_guides: programmaticGrammar');
+    expect(generator).toContain('external_reference_urls: [...new Set((page.sources || []).map((source) => source.url).filter(Boolean))]');
     expect(generator).toContain('additional_public_routes: publicRoutes');
     expect(generator).toContain('supporting-only-noindex');
 
@@ -104,6 +105,7 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(audit).toContain('editorial-blog-baseline-regression');
     expect(audit).toContain('retired-lineage-leak');
     expect(audit).toContain('programmatic-grammar-corpus-count');
+    expect(audit).toContain('programmatic-grammar-reference-depth');
     expect(audit).toContain('public-route-manifest-coverage');
   });
 });

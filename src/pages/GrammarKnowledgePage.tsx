@@ -9,6 +9,21 @@ import {
 import { SITE_ORIGIN } from '../lib/schemas';
 import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
 
+const fallbackLabel = (path: string) => {
+  const leaf = path.split('/').filter(Boolean).pop() || 'Related guide';
+  return leaf
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.length <= 3 ? word.toUpperCase() : word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const relatedLabel = (path: string) => {
+  const sequenceEntry = GRAMMAR_PROGRAMMATIC_SEQUENCE.find((entry) => entry.path === path);
+  if (sequenceEntry) return 'cardTitle' in sequenceEntry ? sequenceEntry.cardTitle : sequenceEntry.label;
+  return fallbackLabel(path);
+};
+
 const GrammarKnowledgePage: FC = () => {
   const { slug = '' } = useParams();
   const page = getGrammarProgrammaticPageBySlug(slug);
@@ -46,6 +61,7 @@ const GrammarKnowledgePage: FC = () => {
       '@type': 'SpeakableSpecification',
       cssSelector: ['.ts-answer-title', '.ts-answer-summary'],
     },
+    citation: page.sources.map((source) => source.url),
   };
 
   const breadcrumbSchema = {
@@ -60,6 +76,20 @@ const GrammarKnowledgePage: FC = () => {
     ],
   };
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${canonicalUrl}#faq`,
+    mainEntity: page.faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+
   const positionLabel = `Step ${page.order} of ${GRAMMAR_PROGRAMMATIC_SEQUENCE.length}`;
 
   return (
@@ -68,7 +98,7 @@ const GrammarKnowledgePage: FC = () => {
         title={page.seoTitle}
         description={page.seoDescription}
         canonical={canonicalUrl}
-        jsonLd={[webPageSchema, breadcrumbSchema]}
+        jsonLd={[webPageSchema, breadcrumbSchema, faqSchema]}
       />
 
       <section className="border-b border-emerald-100 bg-[radial-gradient(circle_at_10%_10%,rgba(16,185,129,0.10),transparent_26%),linear-gradient(180deg,#f3fbf8_0%,#ffffff_100%)]">
@@ -98,14 +128,44 @@ const GrammarKnowledgePage: FC = () => {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Understand the idea</p>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">What this grammar skill means</h2>
           <p className="mt-4 text-base leading-8 text-slate-700">{page.concept}</p>
+
+          <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/55 p-5">
+            <h3 className="text-base font-black text-slate-950">Why this skill matters</h3>
+            <p className="mt-2 text-sm leading-7 text-slate-700">{page.whyItMatters}</p>
+          </div>
+
+          <div className="mt-7 border-t border-slate-100 pt-6">
+            <h3 className="text-lg font-black text-slate-950">Core rules and patterns</h3>
+            <ul className="mt-4 space-y-4">
+              {page.rulePoints.map((point) => (
+                <li key={point} className="flex gap-3 text-sm leading-7 text-slate-700">
+                  <span aria-hidden="true" className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </article>
+
+        <section className="rounded-[1.6rem] border border-slate-200 bg-white p-6 sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">See the rule in context</p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950">Worked examples</h2>
+          <div className="mt-5 grid gap-4">
+            {page.workedExamples.map((item) => (
+              <div key={item.example} className="rounded-2xl border border-emerald-100 bg-emerald-50/55 p-5">
+                <p className="font-black leading-7 text-slate-950">{item.example}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.explanation}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="grid gap-5 lg:grid-cols-2">
           <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-            <h2 className="text-xl font-black text-slate-950">Examples</h2>
+            <h2 className="text-xl font-black text-slate-950">More examples</h2>
             <ul className="mt-4 space-y-3">
               {page.examples.map((example) => (
-                <li key={example} className="rounded-xl bg-emerald-50/70 px-4 py-3 text-sm leading-6 text-slate-800">
+                <li key={example} className="rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-800">
                   {example}
                 </li>
               ))}
@@ -125,6 +185,24 @@ const GrammarKnowledgePage: FC = () => {
           </section>
         </div>
 
+        <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/55 p-6 sm:p-7">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-800">Watch for these</p>
+            <h2 className="mt-2 text-xl font-black text-slate-950">Tricky cases and useful distinctions</h2>
+            <ul className="mt-4 space-y-4">
+              {page.trickyCases.map((item) => (
+                <li key={item} className="text-sm leading-7 text-slate-700">{item}</li>
+              ))}
+            </ul>
+          </div>
+
+          <aside className="rounded-[1.5rem] border border-sky-200 bg-sky-50/60 p-6 sm:p-7">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-800">For parents and teachers</p>
+            <h2 className="mt-2 text-xl font-black text-slate-950">How to teach it</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-700">{page.teachingNote}</p>
+          </aside>
+        </section>
+
         <section className="rounded-[1.6rem] border border-emerald-200 bg-emerald-50/60 p-6 sm:p-8">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Try it</p>
           <h2 className="mt-2 text-2xl font-black text-slate-950">Short practice prompts</h2>
@@ -136,6 +214,19 @@ const GrammarKnowledgePage: FC = () => {
               </li>
             ))}
           </ol>
+        </section>
+
+        <section className="rounded-[1.6rem] border border-slate-200 bg-white p-6 sm:p-8">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Questions parents often ask</p>
+          <h2 className="mt-2 text-2xl font-black text-slate-950">Quick clarifications</h2>
+          <div className="mt-5 divide-y divide-slate-100">
+            {page.faqs.map((faq) => (
+              <article key={faq.question} className="py-5 first:pt-0 last:pb-0">
+                <h3 className="font-black leading-7 text-slate-950">{faq.question}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{faq.answer}</p>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
@@ -156,10 +247,34 @@ const GrammarKnowledgePage: FC = () => {
           <div className="mt-5 flex flex-wrap gap-2.5">
             {page.relatedPaths.map((path) => (
               <Link key={path} to={path} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
-                Related guide
+                {relatedLabel(path)}
               </Link>
             ))}
           </div>
+        </section>
+
+        <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50/75 p-6 sm:p-7">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">References and further reading</p>
+          <h2 className="mt-2 text-xl font-black text-slate-950">Sources used to check this grammar explanation</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            Tiny Steps writes the teaching explanation and examples independently. These references are provided for grammar definitions, usage patterns and further reading.
+          </p>
+          <ul className="mt-5 grid gap-3">
+            {page.sources.map((source) => (
+              <li key={source.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-black text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700"
+                >
+                  {source.title}
+                </a>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{source.publisher}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{source.note}</p>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {c7Handoff ? (
