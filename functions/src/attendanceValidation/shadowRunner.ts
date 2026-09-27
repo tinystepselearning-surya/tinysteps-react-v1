@@ -495,12 +495,18 @@ export function isAvsPresentCapEligibleSession(
   session: Record<string, unknown>,
   kidId: string | null,
 ): boolean {
+  const attendanceEntry = attendanceEntryForKid(session, kidId);
+  const canonicalAttendance = normalizeTinyStepsAttendance(attendanceEntry);
+
+  // Tiny Steps attendance is authoritative. An explicit Present (including
+  // historical Late -> Present) must remain countable even when the session
+  // lifecycle was later moved to cancelled/rescheduled.
+  if (canonicalAttendance === 'present') return true;
+
   const lifecycleStatus = normalizedStatusToken(session.status);
   if (NON_OCCURRING_SESSION_TOKENS.has(lifecycleStatus)) return false;
 
-  const attendanceStatus = normalizedStatusToken(
-    attendanceEntryForKid(session, kidId),
-  );
+  const attendanceStatus = normalizedStatusToken(attendanceEntry);
   return !NON_OCCURRING_SESSION_TOKENS.has(attendanceStatus);
 }
 
@@ -895,10 +901,13 @@ function caseFromEvidence(params: {
  * one bounded classSessions query per represented same-day enrollment group
  * (date + enrollmentId equality filters, hard cap 50 + one lookahead) only to
  * count eligible same-day session slots and Tiny Steps Present sessions for the
- * same learner + teacher. When Tiny Steps has one or more Presents, that Present
- * count is the authoritative Teams class cap; eligible session slots remain the
- * fallback cap only when Tiny Steps has zero Presents so missing attendance can
- * still be detected. It never reads enrollments, kids, billing, earnings, credits
+ * same learner + teacher. Explicit Tiny Steps Present attendance remains countable
+ * even if the session lifecycle was later cancelled/rescheduled; those lifecycle
+ * states are excluded only from zero-Present fallback capacity. When Tiny Steps has
+ * one or more Presents, that Present count is the authoritative Teams class cap;
+ * eligible session slots remain the fallback cap only when Tiny Steps has zero
+ * Presents so missing attendance can still be detected. It never reads enrollments,
+ * kids, billing, earnings, credits
  * or reschedule collections. A hard 2026-09-01 Tiny Steps
  * service-date lower bound permanently excludes July/August history.
  */
