@@ -129,25 +129,6 @@ const post: BlogPost = {
 
     {
       type: 'h2',
-      content: 'How often should a child practise phonics? Use response, not a fixed timetable',
-    },
-    {
-      type: 'p',
-      content:
-        'There is **no single research-backed number of phonics lessons or home-practice sessions per week that fits every child**. Frequency and pacing should be interpreted alongside the child’s starting point, attention, retention, teaching sequence and whether learning transfers to fresh words and connected reading. A child who retains and applies a pattern may be ready to move on; a child who repeatedly loses earlier knowledge may need more review before additional content is added.',
-    },
-    { type: 'li', content: '**Frequency:** create enough opportunities for the child to retrieve and apply taught knowledge without turning practice into an endurance task.' },
-    { type: 'li', content: '**Pacing:** add new material when earlier knowledge is usable enough to support it; do not use lesson count alone as the signal to advance.' },
-    { type: 'li', content: '**Spacing:** revisit earlier sounds and patterns after a gap so retention is checked instead of assumed from same-session performance.' },
-    { type: 'li', content: '**Transfer:** include an unfamiliar but appropriate word, spelling attempt or short matched sentence so the child has to use the underlying knowledge rather than remember an example.' },
-    {
-      type: 'p',
-      content:
-        'If a school or tutor recommends a particular weekly rhythm, ask **why that frequency fits this child and what evidence would make the teacher speed up, slow down or revisit a prerequisite**. A useful recommendation explains the learning reason for the schedule rather than presenting one universal number as the correct dose for every learner.',
-    },
-
-    {
-      type: 'h2',
       content: 'When your child gets stuck on a word: prompt the print, not the picture',
     },
     {
@@ -373,27 +354,6 @@ const post: BlogPost = {
       type: 'p',
       content:
         'There is no single evidence-based referral timeline that fits every child. The teacher’s assessment, the child’s developmental and language context, consistency of instruction and response to targeted support all matter.',
-    },
-
-    {
-      type: 'h2',
-      content: 'What a personalized phonics support workflow should look like',
-    },
-    {
-      type: 'p',
-      content:
-        'Personalization should mean more than putting a child into a 1:1 class or changing the worksheet. Parents should be able to see **what was assessed, which bottleneck was identified, why the next target was chosen, how transfer is checked and what would cause the plan to change**. Tiny Steps uses the following service workflow as an observable planning loop; it is not a standardized clinical assessment protocol.',
-    },
-    { type: 'li', content: '**Assess:** sample relevant sound–print knowledge, blending, fresh-word decoding, spelling and connected reading.' },
-    { type: 'li', content: '**Locate:** identify the earliest recurring bottleneck rather than treating every reading difficulty as the same problem.' },
-    { type: 'li', content: '**Target:** choose the smallest useful next step in the cumulative sequence and explain why it comes next.' },
-    { type: 'li', content: '**Teach and retry:** model, prompt, correct the exact error and give another attempt while the teacher can still observe the process.' },
-    { type: 'li', content: '**Check transfer and retention:** use fresh examples and later review to see whether the learning survives beyond the original lesson.' },
-    { type: 'li', content: '**Adjust and report:** move ahead, review a prerequisite or change practice intensity based on the evidence, then make the next target clear to parents.' },
-    {
-      type: 'p',
-      content:
-        'For Tiny Steps programme details, use the [online phonics classes page](/phonics). If you are comparing providers, formats, progress visibility, pricing and practical policies, use the [phonics provider comparison guide](/best-online-phonics-classes-for-kids-in-india) so this parent-support article stays focused on understanding and supporting the child’s reading process.',
     },
 
     {
