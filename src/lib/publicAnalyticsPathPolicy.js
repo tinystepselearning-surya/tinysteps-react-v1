@@ -71,6 +71,7 @@ const PUBLIC_ANALYTICS_STATIC_PATHS = new Set([
   "/resources/grammar",
   "/resources/phonics",
   "/resources/speaking",
+  "/resources/vocabulary",
   "/seasonal/christmas-tree",
   "/shy-child-speaking-confidence",
   "/sitemap",
@@ -98,6 +99,7 @@ const PUBLIC_ANALYTICS_DYNAMIC_PREFIXES = Object.freeze([
   '/courses/',
   '/resources/phonics/',
   '/resources/grammar/',
+  '/resources/vocabulary/',
 ]);
 
 const PUBLIC_ANALYTICS_EXCLUSIONS = new Set(['/parents/payments']);
