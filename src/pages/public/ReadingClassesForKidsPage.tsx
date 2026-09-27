@@ -10,6 +10,7 @@ import { applySeo } from '../../lib/seo';
 import { buildSpeakableSpecification } from '../../lib/breadcrumbAeoGeoRegistry.js';
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 import ProgrammeIntentBoundary from '../../components/programs/ProgrammeIntentBoundary';
+import ProgrammeHeroSnapshot from '../../components/programs/ProgrammeHeroSnapshot';
 import { getProgrammeAiVisibility } from '../../lib/programmeAiVisibility';
 
 const READING_SEO_KEYWORDS = [
@@ -386,23 +387,28 @@ export default function ReadingClassesForKidsPage() {
               </div>
             </div>
 
-            <aside className="rounded-[30px] border border-sky-100 bg-white/95 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.09)] md:p-7">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Quick answer</p>
-              <h2 className="ts-reading-answer-title mt-2 text-2xl font-bold text-slate-900">What should reading classes actually help with?</h2>
-              <p className="ts-reading-answer-summary mt-3 leading-7 text-slate-700">
-                Reading Classes should improve connected-text accuracy, sentence reading, fluency, phrasing, vocabulary, comprehension, retelling, and reading-aloud confidence. They should not take over phonics ownership: if the child cannot reliably decode unfamiliar words, the correct first route is the Phonics programme.
-              </p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {['Connected-text accuracy', 'Sentence reading', 'Fluency & phrasing', 'Comprehension', 'Vocabulary & retelling', 'Reading confidence'].map((item) => (
-                  <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <p className="mt-5 text-sm leading-6 text-slate-600">
-                Tiny Steps standard live 1:1 reading classes are {PUBLIC_SESSION_DURATION_LABEL}. Current standard 1:1 pricing is ₹{oneToOnePrice} per class; confirm current options on the <Link to="/pricing" className="font-semibold underline underline-offset-2">pricing page</Link>.
-              </p>
-            </aside>
+            <ProgrammeHeroSnapshot
+              eyebrow="Reading programme focus"
+              title="What this programme builds"
+              summary="Reading support begins with connected text: accurate reading, smoother phrasing, vocabulary, comprehension, retelling, and confident reading aloud."
+              items={[
+                'Connected-text accuracy',
+                'Sentence reading',
+                'Fluency & phrasing',
+                'Vocabulary in context',
+                'Comprehension & retelling',
+                'Reading confidence',
+              ]}
+              footer={
+                <>
+                  If unfamiliar-word decoding or blending is unstable, start with{' '}
+                  <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-2">
+                    Phonics
+                  </Link>.
+                  {' '}Standard live 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}; current standard pricing is ₹{oneToOnePrice} per class.
+                </>
+              }
+            />
           </div>
         </div>
       </section>
