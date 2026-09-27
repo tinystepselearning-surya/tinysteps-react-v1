@@ -93,7 +93,6 @@ export default function FreeEnglishGamesCategoryPage() {
     title: tile.gameTitle,
   })).filter((item): item is { route: string; title: string } => Boolean(item.route));
   const isLetterSoundCategory = config.route === "/free-letter-sound-games-for-kids";
-  const isPhonicsCategory = config.route === "/free-phonics-games-for-kids";
 
   const faqItems = [
     { question: config.categoryQuestion, answer: config.categoryAnswer },
@@ -372,27 +371,6 @@ export default function FreeEnglishGamesCategoryPage() {
               </MagicBento>
             </section>
           </div>
-
-          {isPhonicsCategory ? (
-            <section className="mt-3 rounded-lg border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(8,47,73,0.62),rgba(30,41,59,0.72))] p-4 backdrop-blur-md">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-cyan-200">For parents considering guided phonics</p>
-              <h2 className="mt-1 text-lg font-black text-white">Free games practise skills; live support adds placement, correction and progression</h2>
-              <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-200">
-                Use the games for focused practice. If your child needs a structured starting level, teacher feedback or help choosing a programme, continue to the relevant parent decision page rather than treating a game score as a reading assessment.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link to="/phonics" className="rounded-lg bg-cyan-300 px-3 py-2 text-xs font-black text-slate-950 hover:bg-cyan-200">
-                  Explore live phonics programme
-                </Link>
-                <Link to="/best-online-phonics-classes-for-kids-in-india" className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/15">
-                  Compare phonics programmes
-                </Link>
-                <Link to="/phonics-fees-india" className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/15">
-                  Review phonics fees
-                </Link>
-              </div>
-            </section>
-          ) : null}
 
           <div className="mt-3 rounded-lg border border-violet-300/20 bg-slate-950/42 px-4 py-3 backdrop-blur-md">
             <p className="text-sm font-semibold text-slate-200">
