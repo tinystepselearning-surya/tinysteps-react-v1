@@ -14,7 +14,7 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/pages/SubjectResourcesPage.tsx': '665c15035d57085afe9ffc7d194753da506b824a',
   'src/pages/phonics.tsx': 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
   'src/pages/founder/FounderEditorialReviewsPanel.tsx': '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-  'src/lib/canonicalTopicOwnershipRegistry.js': 'b0c6af4749f77c21d04613f314f696d7dcc65e4e',
+  'src/lib/canonicalTopicOwnershipRegistry.js': '1be4bb4853c9f32842882c4d7b5e3194f26bf72f',
   'src/pages/ForSchoolsPage.tsx': '7be826c4fb422a5d022884607f340d3179d9ee25',
   'src/pages/GrammarKnowledgePage.tsx': '80190e0e6da35419d90bf22d3da534d3547f4415',
   'src/pages/ResourcesPage.tsx': 'b4c64ba762cfae96f0ff2f8b705310dbf36cd639',
