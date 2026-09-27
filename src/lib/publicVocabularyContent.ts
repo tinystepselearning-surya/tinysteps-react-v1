@@ -1,3 +1,8 @@
+import {
+  VOCABULARY_LEXICAL_ENTRIES,
+  toLegacyPublicVocabularyWord,
+} from './vocabularyLexicalModel';
+
 export type PublicVocabularyWord = {
   id: string;
   word: string;
@@ -55,58 +60,9 @@ export type PublicVocabularyLevel = {
   challenges: PublicVocabularyChallenge[];
 };
 
-export const PUBLIC_VOCABULARY_WORDS: PublicVocabularyWord[] = [
-  { id: "run", word: "run", meaning: "to move fast using your legs", sentence: "I run in the park.", category: "action" },
-  { id: "jump", word: "jump", meaning: "to push your body up into the air", sentence: "The boy jumps over the rope.", category: "action" },
-  { id: "eat", word: "eat", meaning: "to put food in your mouth and swallow it", sentence: "I eat an apple.", category: "action" },
-  { id: "read", word: "read", meaning: "to look at words and understand them", sentence: "She reads a storybook.", category: "action" },
-  { id: "write", word: "write", meaning: "to make letters or words on paper", sentence: "I write my name.", category: "action" },
-  { id: "draw", word: "draw", meaning: "to make a picture with a pencil, crayon, or pen", sentence: "I draw a flower.", category: "action" },
-  { id: "sing", word: "sing", meaning: "to make music with your voice", sentence: "We sing a happy song.", category: "action" },
-  { id: "dance", word: "dance", meaning: "to move your body to music", sentence: "The children dance on the stage.", category: "action" },
-  { id: "carry", word: "carry", meaning: "to hold something and take it with you", sentence: "I carry my school bag.", category: "action" },
-  { id: "open", word: "open", meaning: "to move something so it is not closed", sentence: "Please open the door.", category: "action" },
-  { id: "happy", word: "happy", meaning: "feeling good or joyful", sentence: "The child is happy.", category: "feeling" },
-  { id: "sad", word: "sad", meaning: "feeling unhappy", sentence: "The girl is sad.", category: "feeling" },
-  { id: "angry", word: "angry", meaning: "feeling upset or mad", sentence: "He is angry because his toy broke.", category: "feeling" },
-  { id: "tired", word: "tired", meaning: "needing rest or sleep", sentence: "I am tired after playing.", category: "feeling" },
-  { id: "excited", word: "excited", meaning: "feeling very happy and eager", sentence: "She is excited for her birthday.", category: "feeling" },
-  { id: "scared", word: "scared", meaning: "feeling afraid", sentence: "The puppy is scared of thunder.", category: "feeling" },
-  { id: "proud", word: "proud", meaning: "feeling happy about something you did well", sentence: "I am proud of my drawing.", category: "feeling" },
-  { id: "bored", word: "bored", meaning: "feeling uninterested", sentence: "He is bored during the long wait.", category: "feeling" },
-  { id: "calm", word: "calm", meaning: "peaceful and not worried", sentence: "I feel calm after taking a deep breath.", category: "feeling" },
-  { id: "surprised", word: "surprised", meaning: "feeling amazed because something unexpected happened", sentence: "She was surprised by the gift.", category: "feeling" },
-  { id: "big", word: "big", meaning: "large in size", sentence: "The elephant is big.", category: "describing" },
-  { id: "small", word: "small", meaning: "little in size", sentence: "The cup is small.", category: "describing" },
-  { id: "soft", word: "soft", meaning: "smooth and gentle to touch", sentence: "The pillow is soft.", category: "describing" },
-  { id: "loud", word: "loud", meaning: "making a lot of sound", sentence: "The drum is loud.", category: "describing" },
-  { id: "bright", word: "bright", meaning: "full of light or colour", sentence: "The sun is bright.", category: "describing" },
-  { id: "clean", word: "clean", meaning: "not dirty", sentence: "My room is clean.", category: "describing" },
-  { id: "cold", word: "cold", meaning: "having a low temperature", sentence: "The water is cold.", category: "describing" },
-  { id: "sweet", word: "sweet", meaning: "tasting like sugar", sentence: "The mango is sweet.", category: "describing" },
-  { id: "fast", word: "fast", meaning: "moving quickly", sentence: "The rabbit is fast.", category: "describing" },
-  { id: "slow", word: "slow", meaning: "moving with little speed", sentence: "The turtle is slow.", category: "describing" },
-  { id: "pencil", word: "pencil", meaning: "a tool used for writing or drawing", sentence: "I write with a pencil.", category: "school" },
-  { id: "teacher", word: "teacher", meaning: "a person who helps children learn", sentence: "My teacher explains the lesson.", category: "school" },
-  { id: "classroom", word: "classroom", meaning: "a room where children learn", sentence: "We sit in the classroom.", category: "school" },
-  { id: "lesson", word: "lesson", meaning: "something we learn", sentence: "Today's lesson is about words.", category: "school" },
-  { id: "homework", word: "homework", meaning: "school work done at home", sentence: "I finish my homework.", category: "school" },
-  { id: "notebook", word: "notebook", meaning: "a book used for writing notes or work", sentence: "I write answers in my notebook.", category: "school" },
-  { id: "question", word: "question", meaning: "something we ask to get an answer", sentence: "The teacher asks a question.", category: "school" },
-  { id: "answer", word: "answer", meaning: "what we say or write for a question", sentence: "I know the answer.", category: "school" },
-  { id: "library", word: "library", meaning: "a place where books are kept", sentence: "We read books in the library.", category: "school" },
-  { id: "practice", word: "practice", meaning: "doing something again to get better", sentence: "I practice reading every day.", category: "school" },
-  { id: "family", word: "family", meaning: "people who live with us or care for us", sentence: "I love my family.", category: "everyday" },
-  { id: "garden", word: "garden", meaning: "a place where plants and flowers grow", sentence: "The flowers are in the garden.", category: "everyday" },
-  { id: "market", word: "market", meaning: "a place where people buy and sell things", sentence: "We buy fruits from the market.", category: "everyday" },
-  { id: "bottle", word: "bottle", meaning: "a container used to hold water or other liquids", sentence: "I drink water from a bottle.", category: "everyday" },
-  { id: "window", word: "window", meaning: "an opening in a wall that lets in light and air", sentence: "I opened the window.", category: "everyday" },
-  { id: "kitchen", word: "kitchen", meaning: "a room where food is cooked", sentence: "Mother is in the kitchen.", category: "everyday" },
-  { id: "blanket", word: "blanket", meaning: "a warm cover used while sleeping", sentence: "I sleep under a blanket.", category: "everyday" },
-  { id: "street", word: "street", meaning: "a road in a town or city", sentence: "Cars move on the street.", category: "everyday" },
-  { id: "neighbour", word: "neighbour", meaning: "a person who lives near your home", sentence: "Our neighbour has a dog.", category: "everyday" },
-  { id: "morning", word: "morning", meaning: "the early part of the day", sentence: "I brush my teeth in the morning.", category: "everyday" },
-];
+export const PUBLIC_VOCABULARY_WORDS: PublicVocabularyWord[] = VOCABULARY_LEXICAL_ENTRIES.map(
+  (entry) => toLegacyPublicVocabularyWord(entry),
+) as PublicVocabularyWord[];
 
 export const PUBLIC_VOCABULARY_WORDS_BY_ID = Object.fromEntries(
   PUBLIC_VOCABULARY_WORDS.map((entry) => [entry.id, entry]),
