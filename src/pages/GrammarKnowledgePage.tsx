@@ -2,10 +2,9 @@ import type { FC } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import NotFoundPage from './NotFoundPage';
-import {
-  GRAMMAR_PROGRAMMATIC_SEQUENCE,
-  getGrammarProgrammaticPageBySlug,
-} from '../lib/grammarProgrammaticRegistry.js';
+import { GRAMMAR_PROGRAMMATIC_SEQUENCE } from '../lib/grammarProgrammaticRegistry.js';
+import { GRAMMAR_REFERENCE_EXTENSION_PAGES } from '../lib/grammarReferenceExtensionRegistry.js';
+import { getGrammarKnowledgePageBySlug } from '../lib/grammarKnowledgeRegistry.js';
 import { SITE_ORIGIN } from '../lib/schemas';
 import { getCommercialC7R3Handoff } from '../lib/commercialC7ContextualHandoffImplementation';
 
@@ -21,22 +20,36 @@ const fallbackLabel = (path: string) => {
 const relatedLabel = (path: string) => {
   const sequenceEntry = GRAMMAR_PROGRAMMATIC_SEQUENCE.find((entry) => entry.path === path);
   if (sequenceEntry) return 'cardTitle' in sequenceEntry ? sequenceEntry.cardTitle : sequenceEntry.label;
+  const referenceEntry = GRAMMAR_REFERENCE_EXTENSION_PAGES.find((entry) => entry.path === path);
+  if (referenceEntry) return referenceEntry.cardTitle;
   return fallbackLabel(path);
 };
 
 const GrammarKnowledgePage: FC = () => {
   const { slug = '' } = useParams();
-  const page = getGrammarProgrammaticPageBySlug(slug);
+  const page = getGrammarKnowledgePageBySlug(slug);
 
   if (!page) return <NotFoundPage />;
 
+  const isReferenceExtension = page.state === 'reference-extension';
   const c7Handoff = getCommercialC7R3Handoff(page.path);
   const canonicalUrl = `${SITE_ORIGIN}${page.path}`;
-  const sequenceIndex = GRAMMAR_PROGRAMMATIC_SEQUENCE.findIndex((entry) => entry.id === page.id);
-  const previous = sequenceIndex > 0 ? GRAMMAR_PROGRAMMATIC_SEQUENCE[sequenceIndex - 1] : null;
-  const next = sequenceIndex >= 0 && sequenceIndex < GRAMMAR_PROGRAMMATIC_SEQUENCE.length - 1
-    ? GRAMMAR_PROGRAMMATIC_SEQUENCE[sequenceIndex + 1]
-    : null;
+  const sequenceIndex = isReferenceExtension
+    ? -1
+    : GRAMMAR_PROGRAMMATIC_SEQUENCE.findIndex((entry) => entry.id === page.id);
+  const referenceIndex = isReferenceExtension
+    ? GRAMMAR_REFERENCE_EXTENSION_PAGES.findIndex((entry) => entry.id === page.id)
+    : -1;
+  const previous = isReferenceExtension
+    ? (referenceIndex > 0 ? GRAMMAR_REFERENCE_EXTENSION_PAGES[referenceIndex - 1] : null)
+    : (sequenceIndex > 0 ? GRAMMAR_PROGRAMMATIC_SEQUENCE[sequenceIndex - 1] : null);
+  const next = isReferenceExtension
+    ? (referenceIndex >= 0 && referenceIndex < GRAMMAR_REFERENCE_EXTENSION_PAGES.length - 1
+      ? GRAMMAR_REFERENCE_EXTENSION_PAGES[referenceIndex + 1]
+      : null)
+    : (sequenceIndex >= 0 && sequenceIndex < GRAMMAR_PROGRAMMATIC_SEQUENCE.length - 1
+      ? GRAMMAR_PROGRAMMATIC_SEQUENCE[sequenceIndex + 1]
+      : null);
 
   const webPageSchema = {
     '@context': 'https://schema.org',
@@ -90,7 +103,9 @@ const GrammarKnowledgePage: FC = () => {
     })),
   };
 
-  const positionLabel = `Step ${page.order} of ${GRAMMAR_PROGRAMMATIC_SEQUENCE.length}`;
+  const positionLabel = isReferenceExtension
+    ? `Reference guide ${page.referenceOrder} of ${GRAMMAR_REFERENCE_EXTENSION_PAGES.length}`
+    : `Step ${page.order} of ${GRAMMAR_PROGRAMMATIC_SEQUENCE.length}`;
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7faf9_0%,#ffffff_42%,#f8fafc_100%)] text-slate-950">
@@ -112,7 +127,7 @@ const GrammarKnowledgePage: FC = () => {
           </nav>
 
           <p className="mt-7 text-xs font-black uppercase tracking-[0.22em] text-emerald-700">
-            Grammar learning sequence · {positionLabel}
+            {isReferenceExtension ? 'Grammar reference library' : 'Grammar learning sequence'} · {positionLabel}
           </p>
           <h1 className="ts-answer-title mt-3 text-4xl font-black tracking-[-0.035em] text-slate-950 sm:text-5xl">
             {page.cardTitle}
@@ -230,7 +245,9 @@ const GrammarKnowledgePage: FC = () => {
         </section>
 
         <section className="rounded-[1.5rem] border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-black text-slate-950">Continue the grammar pathway</h2>
+          <h2 className="text-xl font-black text-slate-950">
+            {isReferenceExtension ? 'Continue the grammar reference library' : 'Continue the grammar pathway'}
+          </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {previous ? (
               <Link to={previous.path} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 hover:bg-white">

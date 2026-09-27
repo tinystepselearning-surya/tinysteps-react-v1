@@ -204,6 +204,62 @@ export const GRAMMAR_KNOWLEDGE_SOURCES = Object.freeze({
     url: 'https://owl.purdue.edu/owl/general_writing/mechanics/sentence_clarity.html',
     note: 'Writing reference for clarity, sentence structure and appropriate active/passive choices.',
   }),
+  'cambridge-determiners-types-noun': freeze({
+    id: 'cambridge-determiners-types-noun',
+    publisher: 'Cambridge Dictionary',
+    title: 'Determiners and types of noun',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/determiners-and-types-of-noun',
+    note: 'Reference for how determiner choice changes with singular, plural, countable and uncountable nouns.',
+  }),
+  'cambridge-countable-uncountable': freeze({
+    id: 'cambridge-countable-uncountable',
+    publisher: 'Cambridge Dictionary',
+    title: 'Nouns: countable and uncountable',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/nouns-countable-and-uncountable',
+    note: 'Reference for countable and uncountable noun behaviour, quantity expressions and countable phrases for mass nouns.',
+  }),
+  'british-council-countable-uncountable': freeze({
+    id: 'british-council-countable-uncountable',
+    publisher: 'British Council LearnEnglish',
+    title: 'Nouns: countable and uncountable',
+    url: 'https://learnenglish.britishcouncil.org/free-resources/grammar/a1-a2/nouns-countable-uncountable',
+    note: 'Learner-focused reference for a/an, some, any, much and many with countable and uncountable nouns.',
+  }),
+  'cambridge-noun-phrases-dependent': freeze({
+    id: 'cambridge-noun-phrases-dependent',
+    publisher: 'Cambridge Dictionary',
+    title: 'Noun phrases: dependent words',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/noun-phrases-dependent-words',
+    note: 'Reference for noun-phrase heads, determiners, premodifiers, complements and postmodifiers.',
+  }),
+  'cambridge-verb-forms': freeze({
+    id: 'cambridge-verb-forms',
+    publisher: 'Cambridge Dictionary',
+    title: 'Verb forms',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/verb-forms',
+    note: 'Reference for base, past, past participle, -ing and third-person singular forms of English verbs.',
+  }),
+  'british-council-irregular-verbs': freeze({
+    id: 'british-council-irregular-verbs',
+    publisher: 'British Council LearnEnglish',
+    title: 'Irregular verbs',
+    url: 'https://learnenglish.britishcouncil.org/free-resources/grammar/english-grammar-reference/irregular-verbs',
+    note: 'Learner reference for common irregular past and past-participle forms alongside regular -ed patterns.',
+  }),
+  'cambridge-word-order-focus': freeze({
+    id: 'cambridge-word-order-focus',
+    publisher: 'Cambridge Dictionary',
+    title: 'Word order and focus',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/word-order-and-focus_2',
+    note: 'Reference for typical subject-verb-object order, alternative arrangements and how word order changes information focus.',
+  }),
+  'cambridge-common-mistakes': freeze({
+    id: 'cambridge-common-mistakes',
+    publisher: 'Cambridge Dictionary',
+    title: 'Common mistakes in English',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/common-mistakes-in-english',
+    note: 'Corpus-informed reference grouping frequent learner errors in countability, determiners, prepositions, spelling, word choice, order and patterns.',
+  }),
 });
 
 export const getGrammarKnowledgeSources = (sourceIds = []) => Object.freeze(

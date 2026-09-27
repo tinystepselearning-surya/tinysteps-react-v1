@@ -1,5 +1,6 @@
 import { PHONICS_PUBLISHED_RESOURCE_PATHS } from './phonicsPublicationRegistry.js';
 import { GRAMMAR_PROGRAMMATIC_PATHS } from './grammarProgrammaticSeoManifest.js';
+import { GRAMMAR_REFERENCE_EXTENSION_PATHS } from './grammarReferenceExtensionSeoManifest.js';
 export { isPublicAnalyticsPath } from './publicAnalyticsPathPolicy.js';
 
 const route = (path, group, {
@@ -29,6 +30,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   ...PHONICS_PUBLISHED_RESOURCE_PATHS.map((path) => route(path, 'static')),
   route('/resources/grammar', 'static'),
   ...GRAMMAR_PROGRAMMATIC_PATHS.map((path) => route(path, 'static')),
+  ...GRAMMAR_REFERENCE_EXTENSION_PATHS.map((path) => route(path, 'static')),
   route('/resources/speaking', 'static'),
   route('/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', 'static'),
   route('/pricing', 'static'),
