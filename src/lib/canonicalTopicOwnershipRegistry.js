@@ -5,6 +5,13 @@ import { VOCABULARY_AUTHORITY_ROUTE_MANIFEST } from './vocabularyAuthoritySeoMan
 
 const freezeList = (values = []) => Object.freeze([...values]);
 
+const GV5_VOCABULARY_AUTHORITY_IDS = new Set([
+  'vocabulary-collocations',
+  'phrasal-verbs-expressions',
+  'vocabulary-for-writing',
+  'vocabulary-for-speaking',
+]);
+
 const topic = (id, config) => Object.freeze({
   id,
   supportingPaths: freezeList(config.supportingPaths),
@@ -500,7 +507,7 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     supportingPaths: ['/resources', '/free-games/word-meaning-flashcards'],
     forbiddenCompetingOwners: [],
   }),
-  ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`gv4-vocabulary-${page.id}`, {
+  ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`${GV5_VOCABULARY_AUTHORITY_IDS.has(page.id) ? 'gv5' : 'gv4'}-vocabulary-${page.id}`, {
     subject: 'vocabulary',
     intent: 'informational',
     ownerPath: page.path,
