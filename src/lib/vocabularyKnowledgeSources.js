@@ -86,6 +86,27 @@ export const VOCABULARY_KNOWLEDGE_SOURCES = Object.freeze({
     url: 'https://ies.ed.gov/ncee/wwc/practiceguide/29',
     note: 'Evidence-based practice guide that includes building world and word knowledge as part of comprehension instruction.',
   }),
+  'cambridge-collocation': freeze({
+    id: 'cambridge-collocation',
+    publisher: 'Cambridge Dictionary',
+    title: 'Collocation',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/collocation_2',
+    note: 'Reference explaining that collocations are recurring word partnerships and that some combinations are stronger or more restricted than others.',
+  }),
+  'cambridge-phrasal-verbs': freeze({
+    id: 'cambridge-phrasal-verbs',
+    publisher: 'Cambridge Dictionary',
+    title: 'Phrasal verbs and multi-word verbs',
+    url: 'https://dictionary.cambridge.org/grammar/british-grammar/phrasal-verbs-and-multi-word-verbs',
+    note: 'Reference for multi-word verb structure, meaning, particles and common differences between phrasal and prepositional verbs.',
+  }),
+  'british-council-phrasal-verbs': freeze({
+    id: 'british-council-phrasal-verbs',
+    publisher: 'British Council LearnEnglish',
+    title: 'Phrasal verbs',
+    url: 'https://learnenglish.britishcouncil.org/free-resources/grammar/b1-b2/phrasal-verbs',
+    note: 'Learner-facing reference showing common phrasal verbs in context and explaining separable and inseparable patterns.',
+  }),
 });
 
 export const getVocabularyKnowledgeSources = (ids = []) =>
