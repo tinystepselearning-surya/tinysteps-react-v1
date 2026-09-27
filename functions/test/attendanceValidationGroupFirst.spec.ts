@@ -50,6 +50,36 @@ describe('group-first AVS business validation', () => {
     const { result } = await run([row(presentId, false), row(extraId, false, { status })]);
     expect(result.cases.every((item) => item.teamsSupportedPresentCount === 1)).toBe(true);
   });
+  it.each(['cancelled', 'rescheduled'])(
+    'keeps explicit Present authoritative when lifecycle is %s',
+    async (status) => {
+      const { result } = await run(
+        [row(presentId, true, { status })],
+        [evidence(presentId, 1800)],
+      );
+      expect(result.cases[0]).toMatchObject({
+        tinyStepsPresentCount: 1,
+        teamsSupportedPresentCount: 1,
+        businessOutcome: 'verified',
+        businessDifferenceCount: 0,
+      });
+    },
+  );
+  it('counts a Present on a later-rescheduled session in a multi-Present day', async () => {
+    const { result } = await run(
+      [row(presentId), row(extraId, true, { status: 'rescheduled' })],
+      [evidence(presentId, 2700), evidence(extraId, 2700)],
+    );
+    expect(result.cases).toHaveLength(2);
+    for (const item of result.cases) {
+      expect(item).toMatchObject({
+        tinyStepsPresentCount: 2,
+        teamsSupportedPresentCount: 1,
+        businessOutcome: 'false_present',
+        businessDifferenceCount: 1,
+      });
+    }
+  });
   it('combines different enrollments for the same student/teacher/date', async () => {
     const { result } = await run([row(presentId), row(extraId, false, { enrollmentId: 'other-enrollment' })]);
     expect(result.cases.every((item) => item.businessOutcome === 'verified' && item.tinyStepsPresentCount === 1)).toBe(true);
