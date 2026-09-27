@@ -19,6 +19,7 @@ export const CANONICAL_TOPIC_SUBJECTS = Object.freeze([
   'speaking-communication',
   'schools-research',
   'general-english',
+  'vocabulary-language',
 ]);
 
 export const CANONICAL_TOPIC_OWNER_ROLES = Object.freeze([
@@ -104,7 +105,7 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
   }),
 
   topic('vocabulary-resource-discovery', {
-    subject: 'general-english',
+    subject: 'vocabulary-language',
     intent: 'informational',
     ownerPath: '/resources/vocabulary',
     ownerRole: 'subject-hub',
@@ -500,13 +501,20 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     forbiddenCompetingOwners: [],
   })),
   ...VOCABULARY_AUTHORITY_ROUTE_MANIFEST.map((page) => topic(`gv4-vocabulary-${page.id}`, {
-    subject: 'general-english',
+    subject: 'vocabulary-language',
     intent: 'informational',
     ownerPath: page.path,
     ownerRole: 'skill-guide',
     hubPath: '/resources/vocabulary',
     queryIntent: `vocabulary guide: ${page.cardTitle.toLowerCase()}`,
-    supportingPaths: [...new Set(['/resources/vocabulary', ...page.relatedPaths])].filter((path) => path !== page.path),
+    supportingPaths: [...new Set([
+      '/resources/vocabulary',
+      ...page.relatedPaths.filter((relatedPath) =>
+        relatedPath.startsWith('/resources/')
+        || relatedPath.startsWith('/free-')
+        || relatedPath.startsWith('/blog/')
+      ),
+    ])].filter((relatedPath) => relatedPath !== page.path),
     forbiddenCompetingOwners: [],
   })),
 ]);
