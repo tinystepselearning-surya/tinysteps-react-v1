@@ -8,6 +8,7 @@ import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js'
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
+import ProgrammeHeroSnapshot from '../components/programs/ProgrammeHeroSnapshot';
 import { getProgrammeAiVisibility } from '../lib/programmeAiVisibility';
 
 const grammarFacts = SEMANTIC_FACTS.programmes.grammar;
@@ -122,13 +123,6 @@ const grammarPathwayCards = [
   },
 ];
 
-const grammarPyramidLevels = [
-  'Confident school answers',
-  'Written sentence accuracy',
-  'Tense clarity',
-  'Sentence structure',
-  'Parts of speech',
-];
 
 export default function GrammarPage() {
   const canonicalPath = '/grammar';
@@ -271,60 +265,27 @@ export default function GrammarPage() {
               </div>
             </div>
 
-            <aside className="mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
-              <p className="mb-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:text-[11px] md:mb-5 md:text-xs md:tracking-[0.22em]">
-                GRAMMAR JOURNEY PREVIEW
-              </p>
-
-              <div className="mx-auto flex w-full max-w-full flex-col items-center md:max-w-[450px]">
-                {grammarPyramidLevels.map((title, index) => {
-                  const widthClass =
-                    index === 0
-                      ? 'w-[54%] md:w-[50%]'
-                      : index === 1
-                        ? 'w-[66%] md:w-[62%]'
-                        : index === 2
-                          ? 'w-[78%] md:w-[74%]'
-                          : index === 3
-                            ? 'w-[90%] md:w-[86%]'
-                            : 'w-full md:w-[98%]';
-
-                  const bg =
-                    index === 0
-                      ? '#FFB562'
-                      : index === 1
-                        ? '#BFE7F2'
-                        : index === 2
-                          ? '#8ED8E8'
-                          : index === 3
-                            ? '#58C4DD'
-                            : '#2E8FD0';
-
-                  const textColor = index >= 3 ? '#FFFFFF' : '#0A192F';
-
-                  return (
-                    <div key={title} className={`${index === 0 ? '' : '-mt-[1px]'} ${widthClass} mx-auto`}>
-                      <div
-                        className="flex h-[38px] items-center justify-center border border-white/80 px-2 text-center font-bold leading-tight shadow-[0_6px_14px_rgba(15,23,42,0.055)] sm:h-[40px] sm:px-3 md:h-[48px] md:px-4 lg:h-[50px]"
-                        style={{
-                          clipPath: 'polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)',
-                          background: bg,
-                        }}
-                      >
-                        <span className="text-[12px] font-bold leading-tight sm:text-[13px] md:text-[15px] lg:text-[16px]" style={{ color: textColor }}>
-                          {title}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mx-auto mt-4 w-full max-w-full rounded-2xl border border-[#E9C68D] bg-gradient-to-br from-[#FFF8EC] to-[#FFF2DA] px-4 py-3.5 text-center shadow-[0_8px_22px_rgba(122,74,16,0.07)] md:mt-5 md:max-w-[450px] md:rounded-[22px] md:px-5 md:py-4">
-                <span className="block text-[16px] font-extrabold leading-snug text-[#6B3A0E] md:text-[19px]">We identify the child&apos;s grammar gap first.</span>
-                <span className="mt-1 block text-[14px] font-medium leading-snug text-[#7A4A10] md:mt-1.5 md:text-[16px]">Then we suggest the right learning path.</span>
-              </div>
-            </aside>
+            <ProgrammeHeroSnapshot
+              eyebrow="Grammar programme focus"
+              title="What this programme builds"
+              summary="Sentence-level grammar control is the core job: understand the pattern, use it accurately, correct mistakes, and transfer it into clear short responses."
+              items={[
+                'Sentence formation',
+                'Parts of speech',
+                'Tense control',
+                'Punctuation',
+                'Grammar correction',
+                'Written sentence accuracy',
+              ]}
+              footer={
+                <>
+                  Placement is assessment-led across Beginner and Advanced Grammar. For paragraph development and longer composition, use the{' '}
+                  <Link to="/writing-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-2">
+                    Writing programme
+                  </Link>.
+                </>
+              }
+            />
           </div>
         </div>
       </section>
