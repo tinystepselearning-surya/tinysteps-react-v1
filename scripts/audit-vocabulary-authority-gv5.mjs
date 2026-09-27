@@ -46,33 +46,27 @@ const EXPECTED_GV5_IDS = [
   'vocabulary-for-speaking',
 ];
 
-if (VOCABULARY_AUTHORITY_REVISION !== '2026-09-27-gv5') fail('revision', VOCABULARY_AUTHORITY_REVISION);
+if (VOCABULARY_AUTHORITY_REVISION !== '2026-09-27-gv5b') fail('revision', VOCABULARY_AUTHORITY_REVISION);
 if (VOCABULARY_AUTHORITY_REQUIREMENTS.length !== 16) fail('requirement-count', VOCABULARY_AUTHORITY_REQUIREMENTS.length);
 if (VOCABULARY_KNOWLEDGE_STAGES.length !== 6) fail('stage-count', VOCABULARY_KNOWLEDGE_STAGES.length);
-if (VOCABULARY_AUTHORITY_PAGES.length !== 10) fail('published-count', VOCABULARY_AUTHORITY_PAGES.length);
-if (VOCABULARY_AUTHORITY_PATHS.length !== 10) fail('path-count', VOCABULARY_AUTHORITY_PATHS.length);
+if (VOCABULARY_AUTHORITY_PAGES.length !== 16) fail('published-count', VOCABULARY_AUTHORITY_PAGES.length);
+if (VOCABULARY_AUTHORITY_PATHS.length !== 16) fail('path-count', VOCABULARY_AUTHORITY_PATHS.length);
 if (VOCABULARY_LEXICAL_ENTRIES.length !== 50) fail('lexical-baseline', VOCABULARY_LEXICAL_ENTRIES.length);
 
 const gv4 = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv4-first-authority-batch');
 const gv5 = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv5-natural-english-transfer');
+const gv5b = VOCABULARY_AUTHORITY_PAGES.filter((page) => page.publicationBatch === 'gv5b-foundation-completion');
 if (gv4.length !== 6) fail('gv4-preservation', gv4.map((page) => page.id).join(','));
 if (gv5.length !== 4) fail('gv5-count', gv5.map((page) => page.id).join(','));
+if (gv5b.length !== 6) fail('gv5b-count', gv5b.map((page) => page.id).join(','));
 if (gv5.map((page) => page.id).join('|') !== EXPECTED_GV5_IDS.join('|')) {
   fail('gv5-order', gv5.map((page) => page.id).join(','));
 }
 
 const publishedIds = new Set(VOCABULARY_AUTHORITY_PAGES.map((page) => page.id));
 const remaining = VOCABULARY_AUTHORITY_REQUIREMENTS.filter((item) => !publishedIds.has(item.id));
-const expectedRemaining = [
-  'action-words',
-  'describing-words',
-  'home-family-routines',
-  'food-clothes-body',
-  'nature-weather-places-transport',
-  'multiple-meaning-confused-words',
-];
-if (remaining.map((item) => item.id).join('|') !== expectedRemaining.join('|')) {
-  fail('remaining-six', remaining.map((item) => item.id).join(','));
+if (remaining.length !== 0) {
+  fail('remaining-unpublished', remaining.map((item) => item.id).join(','));
 }
 
 const routePaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
@@ -113,8 +107,8 @@ for (const page of gv5) {
 }
 
 const vocabularyLayer2 = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/vocabulary/'));
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 106) fail('layer2-total', AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length);
-if (vocabularyLayer2.length !== 10) fail('layer2-vocabulary', vocabularyLayer2.length);
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 112) fail('layer2-total', AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length);
+if (vocabularyLayer2.length !== 16) fail('layer2-vocabulary', vocabularyLayer2.length);
 for (const page of gv5) {
   const item = vocabularyLayer2.find((entry) => entry.canonicalPath === page.path);
   if (!item) fail('layer2-page', page.path);
@@ -158,7 +152,7 @@ if (process.argv.includes('--dist')) {
   if (!fs.existsSync(hubPath)) fail('dist-hub', VOCABULARY_HUB_PATH);
   else {
     const hub = fs.readFileSync(hubPath, 'utf8');
-    if (!hub.includes('Explore ten high-value vocabulary guides')) fail('dist-hub-count', VOCABULARY_HUB_PATH);
+    if (!hub.includes('Explore all sixteen vocabulary authority guides')) fail('dist-hub-count', VOCABULARY_HUB_PATH);
   }
 
   const aiPath = path.join(root, 'public', 'ai-resource-index.json');
@@ -166,7 +160,7 @@ if (process.argv.includes('--dist')) {
   else {
     const ai = JSON.parse(fs.readFileSync(aiPath, 'utf8'));
     const corpus = ai.corpus?.vocabulary_authority_guides || [];
-    if (corpus.length !== 10) fail('ai-corpus-count', corpus.length);
+    if (corpus.length !== 16) fail('ai-corpus-count', corpus.length);
     for (const page of gv5) {
       const item = corpus.find((entry) => entry.canonical_url === `https://tinystepslearning.com${page.path}`);
       if (!item) fail('ai-corpus-page', page.path);
@@ -184,6 +178,7 @@ const report = {
   publishedTotal: VOCABULARY_AUTHORITY_PAGES.length,
   gv4Preserved: gv4.length,
   gv5Published: gv5.length,
+  gv5bPublished: gv5b.length,
   remainingUnpublished: remaining.length,
   lexicalBaseline: VOCABULARY_LEXICAL_ENTRIES.length,
   gv5MinimumKnowledgeWords: Math.min(...gv5.map(knowledgeWordCount)),
