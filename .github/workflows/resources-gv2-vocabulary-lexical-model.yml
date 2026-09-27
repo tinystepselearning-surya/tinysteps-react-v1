@@ -40,5 +40,7 @@ jobs:
         run: npx eslint src/lib/vocabularyLexicalModel.ts src/lib/publicVocabularyContent.ts src/tests/seo/vocabularyLexicalModel.spec.ts
       - name: Run type check
         run: npm run typecheck
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
       - name: Build public site
         run: npm run build
