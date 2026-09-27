@@ -45,6 +45,7 @@ const subjectHub = (subject) => ({
   'phonics-reading': '/resources/phonics',
   'grammar-writing': '/resources/grammar',
   'speaking-communication': '/resources/speaking',
+  'vocabulary': '/resources/vocabulary',
 }[subject] || '/resources');
 
 const resolveGrammarOwnerPath = (topicId) =>
@@ -334,7 +335,7 @@ const GOVERNED_GRAMMAR_CONCEPT_ITEMS = GRAMMAR_KNOWLEDGE_PAGES.map((page) => ite
 const GOVERNED_VOCABULARY_CONCEPT_ITEMS = VOCABULARY_AUTHORITY_PAGES.map((page) => item({
   id: `concept-governed-vocabulary-${page.id}`,
   layer: 2,
-  subject: 'general-english',
+  subject: 'vocabulary',
   query: `How can children learn ${page.cardTitle.toLowerCase()}?`,
   answer: page.quickAnswer,
   answerSource: 'governed-vocabulary-authority-registry',
@@ -427,7 +428,7 @@ const PRACTICE_ACTIONS = [
   },
   {
     id: 'practice-vocabulary',
-    subject: 'general-english',
+    subject: 'vocabulary',
     query: 'Practise vocabulary meanings and context',
     answer: 'Use Vocabulary Adventure to retrieve word meanings, interpret words from context, compare synonyms and antonyms, and recall vocabulary after explanation.',
     canonicalPath: '/free-games/word-meaning-flashcards',
