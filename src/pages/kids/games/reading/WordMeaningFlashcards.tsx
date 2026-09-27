@@ -244,6 +244,15 @@ export default function WordMeaningFlashcards() {
             <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
               {PUBLIC_VOCABULARY_WORDS.length} reusable words from Tiny Steps vocabulary sets
             </p>
+            {!isAuthenticatedRoute ? (
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Need the meaning and strategy first?{' '}
+                <Link to="/resources/vocabulary" className="font-black text-indigo-700 underline decoration-indigo-200 underline-offset-4 hover:text-indigo-900">
+                  Open the Vocabulary knowledge library
+                </Link>
+                .
+              </p>
+            ) : null}
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PUBLIC_VOCABULARY_LEVELS.map((level, index) => {
