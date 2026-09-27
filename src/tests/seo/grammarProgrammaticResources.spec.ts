@@ -20,6 +20,7 @@ const countWords = (value: string) => value.trim().split(/\s+/).filter(Boolean).
 const knowledgeWordCount = (page: (typeof GRAMMAR_PROGRAMMATIC_PAGES)[number]) => countWords([
   page.quickAnswer,
   page.concept,
+  page.whyItMatters,
   ...page.examples,
   ...page.commonMistakes,
   ...page.practicePrompts,
@@ -63,6 +64,7 @@ describe('Governed grammar programmatic resources', () => {
       expect(countWords(page.quickAnswer), page.id).toBeGreaterThanOrEqual(20);
       expect(countWords(page.concept), page.id).toBeGreaterThanOrEqual(20);
       expect(knowledgeWordCount(page), page.id).toBeGreaterThanOrEqual(400);
+      expect(countWords(page.whyItMatters), page.id).toBeGreaterThanOrEqual(25);
       expect(page.examples, page.id).toHaveLength(3);
       expect(page.commonMistakes, page.id).toHaveLength(3);
       expect(page.practicePrompts, page.id).toHaveLength(3);
@@ -131,6 +133,7 @@ describe('Governed grammar programmatic resources', () => {
     expect(page).toContain("'@type': 'DefinedTerm'");
     expect(page).toContain("'@type': 'FAQPage'");
     expect(page).toContain('citation: page.sources.map');
+    expect(page).toContain('Why this skill matters');
     expect(page).toContain('Core rules and patterns');
     expect(page).toContain('Worked examples');
     expect(page).toContain('Tricky cases and useful distinctions');
