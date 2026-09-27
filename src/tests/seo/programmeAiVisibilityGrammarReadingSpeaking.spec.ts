@@ -71,7 +71,7 @@ describe('Grammar, Reading and Speaking AI visibility hardening', () => {
     ]);
 
     expect(speakingSource).toContain('Everyday conversational fluency belongs to Spoken English');
-    expect(speakingSource).toContain('confidence-only barriers belong to Confidence Building');
+    expect(speakingSource).toContain('Confidence-only barriers belong to Confidence Building');
     expect(speakingSource).toContain("{ '@type': 'Thing', name: 'Public speaking classes for kids' }");
     expect(speakingSource).toContain("{ '@type': 'Thing', name: 'Structured spoken answers' }");
     expect(speakingSource).toContain("name: 'Tiny Steps Public Speaking levels'");
