@@ -180,6 +180,8 @@ if (process.argv.includes('--generated')) {
     if (!source.includes('## AI Answer Layers — problem, concept, practice')) fail('llms-layer-section', 'AI answer layer section missing.');
     if (!source.includes('https://tinystepslearning.com/ai-resource-index.json')) fail('llms-json-link', 'Machine JSON link missing.');
     if (!source.includes('## Complete Editorial Blog Corpus')) fail('llms-blog-corpus-section', 'Complete editorial blog corpus section missing.');
+    if (!source.includes('## Vocabulary Authority Library — 6 governed guides')) fail('llms-vocabulary-section', 'Vocabulary authority section missing.');
+    if (!source.includes('https://tinystepslearning.com/resources/vocabulary')) fail('llms-vocabulary-hub', 'Vocabulary hub link missing.');
     if (!source.includes(`Generated editorial estate: ${expectedLiveCanonicalBlogs} live canonical Tiny Steps articles`)) {
       fail('llms-blog-corpus-count', `LLM discovery must declare the ${expectedLiveCanonicalBlogs} live canonical editorial articles.`);
     }
