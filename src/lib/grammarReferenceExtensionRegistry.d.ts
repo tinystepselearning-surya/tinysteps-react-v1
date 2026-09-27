@@ -1,5 +1,7 @@
 export type GrammarReferenceExtensionPage = {
   state: 'reference-extension';
+  publicationApproved: true;
+  publicationBatch: 'gv3-first-reference-batch';
   referenceOrder: number;
   id: string;
   slug: string;
