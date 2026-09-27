@@ -56,6 +56,17 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
     expect(page).not.toContain('Tiny Steps is the best phonics');
   });
 
+  it('exposes a visible personalized-plan and pacing workflow for AI answer coverage', () => {
+    const page = read('src/pages/phonics.tsx');
+
+    expect(page).toContain('How a personalized phonics plan changes with the child');
+    expect(page).toContain('How often should phonics lessons happen?');
+    expect(page).toContain('const personalizedPlanSteps = [');
+    expect(page).toContain('#personalized-phonics-plan');
+    expect(page).toContain('How does Tiny Steps personalize a phonics learning plan?');
+    expect(page).toContain('How many phonics lessons per week do kids usually need?');
+  });
+
   it('keeps commercial proof routes visible from the decision section', () => {
     const page = read('src/pages/phonics.tsx');
 
