@@ -981,7 +981,7 @@ export default function AttendanceValidationDashboard() {
               </h2>
               <p className="mt-1 text-sm text-slate-700">
                 Review saved AVS results and validate completed sessions from {AV6_VALIDATION_START_YMD} onward.
-                No attendance or financial correction can be made from this screen.
+                Attendance can be corrected from an inspected session line by an explicit admin action.
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.

@@ -16,23 +16,35 @@ describe('AV7 approved attendance validation correction workflow', () => {
   const correctionFunction = readRepoFile('functions/src/saveTeacherSessionProgress.ts');
   const functionsIndex = readRepoFile('functions/src/index.ts');
 
-  it('keeps correction routing out of the simplified AVS business screen', () => {
-    expect(dashboard).not.toContain("params.set('tab', 'attendance-corrections')");
-    expect(dashboard).not.toContain("params.set('avsCaseId', item.id)");
-    expect(dashboard).not.toContain("params.set('avsFingerprint', item.inputFingerprint)");
-    expect(businessView).not.toContain('Review correction');
-    expect(businessView).not.toContain('correct_to_absent');
-    expect(businessView).not.toContain('correct_to_present');
+  it('routes explicit AVS admin decisions into the existing attendance correction workflow', () => {
+    expect(businessView).toContain("params.set('tab', 'attendance-corrections')");
+    expect(businessView).toContain("params.set('avsAdmin', '1')");
+    expect(businessView).toContain("params.set('sessionId', item.classSessionId)");
+    expect(businessView).toContain("params.set('kidId', item.kidId)");
+    expect(businessView).toContain("params.set('newStatus', newStatus)");
+    expect(businessView).toContain('Mark Present');
+    expect(businessView).toContain('Mark Absent');
+    expect(businessView).not.toContain("params.set('avsCaseId', item.id)");
+    expect(businessView).not.toContain("params.set('avsFingerprint', item.inputFingerprint)");
   });
 
   it('prefills the exact AVS-linked session and locks the approval target', () => {
     expect(correctionPanel).toContain("getDoc(doc(db, 'classSessions', av7Context.sessionId))");
     expect(correctionPanel).toContain("setMode('existing')");
     expect(correctionPanel).toContain('setPendingSessionSelection');
-    expect(correctionPanel).toContain('disabled={saving || Boolean(av7Context)}');
+    expect(correctionPanel).toContain('const hasLockedPrefill = Boolean(av7Context || avsAdminContext)');
     expect(correctionPanel).toContain('AV7 approved-correction review');
     expect(correctionPanel).toContain('Existing teacher-pay and finance safeguards still apply.');
     expect(correctionPanel).toContain('Approve AVS Correction');
+  });
+
+  it('prefills AVS admin decisions without adding AVS recommendation linkage', () => {
+    expect(correctionPanel).toContain("parseAvsAdminCorrectionContext");
+    expect(correctionPanel).toContain("getDoc(doc(db, 'classSessions', avsAdminContext.sessionId))");
+    expect(correctionPanel).toContain("getDoc(doc(db, 'enrollments', avsAdminContext.enrollmentId))");
+    expect(correctionPanel).toContain("getDoc(doc(db, 'users', parentId))");
+    expect(correctionPanel).toContain('The attendance decision is the admin&apos;s.');
+    expect(correctionPanel).toContain('Confirm Mark');
   });
 
   it('passes validation linkage through the existing adminAttendanceCorrection callable', () => {
