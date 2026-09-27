@@ -4,11 +4,15 @@ import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
+import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
+import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
+import { getProgrammeAiVisibility } from '../lib/programmeAiVisibility';
 
 const grammarFacts = SEMANTIC_FACTS.programmes.grammar;
 const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
+const grammarAiVisibility = getProgrammeAiVisibility('/grammar');
 
 const GRAMMAR_SEO_KEYWORDS = [
   'online grammar classes for kids',
@@ -103,8 +107,8 @@ const grammarPathwayCards = [
     url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
   {
-    name: 'Writing clarity',
-    description: 'Apply grammar accurately in written answers; use the dedicated writing programme for paragraph and creative-writing development.',
+    name: 'Written sentence accuracy',
+    description: 'Apply grammar accurately in written sentences and short school answers; use the dedicated writing programme for paragraph and creative-writing development.',
     href: '/writing-classes-for-kids',
     anchor: 'writing classes for kids',
     url: `${PUBLIC_FACTS.primaryWebsite}/writing-classes-for-kids`,
@@ -120,7 +124,7 @@ const grammarPathwayCards = [
 
 const grammarPyramidLevels = [
   'Confident school answers',
-  'Writing clarity',
+  'Written sentence accuracy',
   'Tense clarity',
   'Sentence structure',
   'Parts of speech',
@@ -151,6 +155,17 @@ export default function GrammarPage() {
         url: canonicalUrl,
       }),
       '@id': `${canonicalUrl}#webpage`,
+      about: [
+        { '@type': 'Thing', name: 'Online grammar classes for kids' },
+        { '@type': 'Thing', name: 'Sentence formation' },
+        { '@type': 'Thing', name: 'English tenses' },
+        { '@type': 'Thing', name: 'Punctuation' },
+        { '@type': 'Thing', name: 'Grammar correction' },
+      ],
+      speakable: buildSpeakableSpecification([
+        '.ts-grammar-answer-title',
+        '.ts-grammar-answer-summary',
+      ]),
     };
 
     const pathwayItemListSchema = {
@@ -225,10 +240,10 @@ export default function GrammarPage() {
                 Online Grammar Classes for Kids
               </h1>
               <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps provides live 1:1 online grammar classes for children in India and worldwide. Build sentence formation, grammar accuracy, tenses, punctuation, correction skills, and clearer school answers through level-matched teaching.
+                Tiny Steps provides live 1:1 online grammar classes for children in India and worldwide. The programme focuses on sentence formation, grammar accuracy, tenses, punctuation, correction, and accurate short school answers through level-matched teaching.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps follows an assessment-first grammar path to understand whether your child needs Beginner Grammar, Advanced Grammar, or focused support with sentence formation, tenses, punctuation, correction, or grammar use in school answers. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book one free {demoMinutes}-minute 1:1 online demo assessment class</Link>.
+                Assessment separates a grammar-control problem from a writing-composition or conversational-fluency problem before placement. The child may need Beginner Grammar, Advanced Grammar, or focused work on sentence formation, tenses, punctuation, correction, or grammar use in school answers. <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">Book one free {demoMinutes}-minute 1:1 online demo assessment class</Link> to identify the starting point.
               </p>
 
               <div className="mt-7">
@@ -254,9 +269,6 @@ export default function GrammarPage() {
                   </span>
                 ))}
               </div>
-              <p className="mt-4 max-w-[660px] text-sm leading-7 text-slate-700">
-                Parents often combine this page with <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-4 hover:text-sky-700">spoken English classes for kids online</Link> when the child needs grammar in use while speaking.
-              </p>
             </div>
 
             <aside className="mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
@@ -323,13 +335,15 @@ export default function GrammarPage() {
             <p className="inline-flex rounded-full bg-[#FFF2C7] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A4A10] md:text-[11px] md:tracking-[0.18em]">
               Parent clarity
             </p>
-            <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do grammar classes for kids include?</h2>
-            <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Grammar classes for kids should help children understand how words work in sentences and apply grammar in real speaking and writing. Tiny Steps focuses on parts of speech, sentence formation, tenses, punctuation, correction practice, writing clarity, and school-answer confidence through an assessment-first learning path.
+            <h2 className="ts-grammar-answer-title mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do grammar classes for kids include?</h2>
+            <p className="ts-grammar-answer-summary max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
+              Grammar classes should build sentence-level language control: parts of speech, complete sentence formation, tense use, punctuation, correction, and grammar accuracy in short spoken or written responses. Paragraph development, creative writing, editing, and longer composition belong to the dedicated Writing programme rather than this Grammar owner.
             </p>
           </article>
         </div>
       </section>
+
+      {grammarAiVisibility ? <ProgrammeIntentBoundary config={grammarAiVisibility} /> : null}
 
       <ResponsiveTeachingSection
         id="teacher-delivery"
@@ -501,7 +515,7 @@ export default function GrammarPage() {
 
       <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
-          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar, sentence formation, and writing are connected</h2>
+          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar supports writing, but it is not the writing programme</h2>
           <div className="grid gap-4 md:grid-cols-3 md:gap-5">
             <article className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
               <h3 className="text-lg font-semibold text-slate-900">Grammar</h3>
@@ -518,12 +532,12 @@ export default function GrammarPage() {
             <article className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
               <h3 className="text-lg font-semibold text-slate-900">Writing clarity</h3>
               <p className="mt-2 text-sm text-slate-700 md:text-base">
-                Writing clarity helps children express complete ideas in school answers, stories, paragraphs, and explanations.
+                Written sentence accuracy helps children apply grammar correctly inside short answers and explanations.
               </p>
             </article>
           </div>
           <p className="mt-4 text-slate-700">
-            Tiny Steps connects grammar with real usage so children do not only memorise rules; they learn to apply grammar accurately in speaking and writing. For paragraph structure, creative writing, editing, and longer written responses, use the dedicated <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2">Writing Classes for Kids</Link>. For grammar use during spoken responses, see <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2">Spoken English Classes for Kids</Link>.
+            Tiny Steps connects grammar with real usage so children do not only memorise rules; they practise accurate sentence control in speaking and writing. For idea development, paragraph structure, creative writing, editing, and longer composition, use the dedicated <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2">Writing Classes for Kids</Link>. For everyday conversational fluency and fuller spontaneous responses, use <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-2">Spoken English Classes for Kids</Link>.
           </p>
         </div>
       </section>
@@ -537,10 +551,10 @@ export default function GrammarPage() {
               'Live teacher correction',
               'Grammar applied in real sentences',
               'Sentence formation support',
-              'Writing and school-answer practice',
+              'Written sentence correction',
               '1:1 attention',
               'Parent progress visibility',
-              'Communication confidence support',
+              'Grammar transfer across contexts',
             ].map((item) => (
               <li key={item} className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-800">
                 {item}
