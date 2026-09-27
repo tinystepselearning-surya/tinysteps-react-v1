@@ -12,11 +12,25 @@ export const VOCABULARY_AUTHORITY_ROUTE_MANIFEST = freezeList([
     description: 'Build useful everyday vocabulary through familiar objects, routines, people and places, then practise meaning, context and independent use.',
   }),
   freeze({
+    id: 'action-words',
+    cardTitle: 'Action Words for Kids',
+    path: '/resources/vocabulary/action-words-for-kids',
+    title: 'Action Words for Kids: Stronger Verbs for Speaking & Writing | Tiny Steps',
+    description: 'Build a richer bank of action words for movement, school, home and communication, then choose precise verbs that fit meaning and context.',
+  }),
+  freeze({
     id: 'feelings-emotions',
     cardTitle: 'Feelings & Emotions Vocabulary',
     path: '/resources/vocabulary/feelings-emotions-for-kids',
     title: 'Feelings and Emotions Vocabulary for Kids | Tiny Steps',
     description: 'Help children move beyond happy, sad and angry by learning precise emotion words, intensity, context and natural sentence use.',
+  }),
+  freeze({
+    id: 'describing-words',
+    cardTitle: 'Describing Words for Kids',
+    path: '/resources/vocabulary/describing-words-for-kids',
+    title: 'Describing Words for Kids: Precise Adjectives & Details | Tiny Steps',
+    description: 'Help children choose useful describing words for size, shape, colour, texture, quality and personality without overloading sentences.',
   }),
   freeze({
     id: 'school-vocabulary',
@@ -26,6 +40,27 @@ export const VOCABULARY_AUTHORITY_ROUTE_MANIFEST = freezeList([
     description: 'Teach useful school vocabulary for classroom objects, instructions, learning actions, subjects and everyday school communication.',
   }),
   freeze({
+    id: 'home-family-routines',
+    cardTitle: 'Home, Family & Daily Routine Vocabulary',
+    path: '/resources/vocabulary/home-family-daily-routine-vocabulary',
+    title: 'Home, Family and Daily Routine Vocabulary for Kids | Tiny Steps',
+    description: 'Build useful vocabulary for family, rooms, household actions, daily routines and time-of-day so children can describe everyday home life clearly.',
+  }),
+  freeze({
+    id: 'food-clothes-body',
+    cardTitle: 'Food, Clothes & Body Vocabulary',
+    path: '/resources/vocabulary/food-clothes-body-vocabulary-for-kids',
+    title: 'Food, Clothes and Body Vocabulary for Kids | Tiny Steps',
+    description: 'Teach practical words for food, drinks, clothes, body parts and basic everyday health so children can describe needs, choices and routines.',
+  }),
+  freeze({
+    id: 'nature-weather-places-transport',
+    cardTitle: 'Nature, Weather, Places & Transport Vocabulary',
+    path: '/resources/vocabulary/nature-weather-places-transport-for-kids',
+    title: 'Nature, Weather, Places and Transport Vocabulary for Kids | Tiny Steps',
+    description: 'Build vocabulary for weather, nature, neighbourhood places, transport and travel through categories, scenes, context and real-life speaking.',
+  }),
+  freeze({
     id: 'synonyms-antonyms',
     cardTitle: 'Synonyms & Antonyms for Kids',
     path: '/resources/vocabulary/synonyms-antonyms-for-kids',
@@ -33,11 +68,11 @@ export const VOCABULARY_AUTHORITY_ROUTE_MANIFEST = freezeList([
     description: 'Teach similar and opposite meanings without treating every synonym as interchangeable, using context and shades of meaning.',
   }),
   freeze({
-    id: 'context-clues',
-    cardTitle: 'Context Clues for Kids',
-    path: '/resources/vocabulary/context-clues-for-kids',
-    title: 'Context Clues for Kids: Work Out Unknown Word Meanings | Tiny Steps',
-    description: 'Teach children how to reread, notice clues, infer a possible meaning and check whether it makes sense in the sentence or passage.',
+    id: 'multiple-meaning-confused-words',
+    cardTitle: 'Multiple-Meaning & Easily Confused Words',
+    path: '/resources/vocabulary/multiple-meaning-confused-words-for-kids',
+    title: 'Multiple-Meaning and Easily Confused Words for Kids | Tiny Steps',
+    description: 'Help children use context to choose the right meaning and distinguish words that look, sound or seem similar but work differently.',
   }),
   freeze({
     id: 'word-families-prefixes-suffixes',
@@ -45,6 +80,13 @@ export const VOCABULARY_AUTHORITY_ROUTE_MANIFEST = freezeList([
     path: '/resources/vocabulary/word-families-prefixes-suffixes-for-kids',
     title: 'Word Families, Prefixes and Suffixes for Kids | Tiny Steps',
     description: 'Build vocabulary through base words, prefixes, suffixes and related word families while connecting changes in form to changes in meaning.',
+  }),
+  freeze({
+    id: 'context-clues',
+    cardTitle: 'Context Clues for Kids',
+    path: '/resources/vocabulary/context-clues-for-kids',
+    title: 'Context Clues for Kids: Work Out Unknown Word Meanings | Tiny Steps',
+    description: 'Teach children how to reread, notice clues, infer a possible meaning and check whether it makes sense in the sentence or passage.',
   }),
   freeze({
     id: 'vocabulary-collocations',
@@ -83,7 +125,7 @@ export const VOCABULARY_AUTHORITY_PATHS = freezeList(
 export const VOCABULARY_RESOURCE_SEO = freeze({
   [VOCABULARY_HUB_PATH]: freeze({
     title: 'Vocabulary Resources for Kids: Meaning, Context & Word Building | Tiny Steps',
-    description: 'Explore child-friendly vocabulary resources for everyday words, emotions, school language, synonyms, antonyms, context clues, prefixes, suffixes and word families.',
+    description: 'Explore 16 child-friendly vocabulary guides covering everyday words, actions, descriptions, word relationships, context, natural English, speaking and writing transfer.',
     canonicalPath: VOCABULARY_HUB_PATH,
     ogType: 'website',
   }),
@@ -98,8 +140,8 @@ export const VOCABULARY_RESOURCE_SEO = freeze({
   ])),
 });
 
-if (VOCABULARY_AUTHORITY_ROUTE_MANIFEST.length !== 10) {
-  throw new Error('GV5 must expose exactly ten published Vocabulary authority guides: six GV4 guides plus four natural-English/transfer guides.');
+if (VOCABULARY_AUTHORITY_ROUTE_MANIFEST.length !== 16) {
+  throw new Error('GV5B must expose the complete frozen sixteen-guide Vocabulary authority architecture.');
 }
 if (new Set(VOCABULARY_AUTHORITY_PATHS).size !== VOCABULARY_AUTHORITY_PATHS.length) {
   throw new Error('Published Vocabulary authority paths must be unique.');
