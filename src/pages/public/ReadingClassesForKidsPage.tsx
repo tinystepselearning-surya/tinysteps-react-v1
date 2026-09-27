@@ -11,6 +11,7 @@ import { buildSpeakableSpecification } from '../../lib/breadcrumbAeoGeoRegistry.
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 import ProgrammeIntentBoundary from '../../components/programs/ProgrammeIntentBoundary';
 import ProgrammeHeroSnapshot from '../../components/programs/ProgrammeHeroSnapshot';
+import ProgrammeFaqAccordion from '../../components/programs/ProgrammeFaqAccordion';
 import { getProgrammeAiVisibility } from '../../lib/programmeAiVisibility';
 
 const READING_SEO_KEYWORDS = [
@@ -513,14 +514,29 @@ export default function ReadingClassesForKidsPage() {
             “Best” should mean best fit for the child&apos;s current needs. Compare teaching process, progression, correction, and evidence rather than a marketing claim.
           </p>
 
-          <div className="mt-6 grid gap-x-8 gap-y-4 md:grid-cols-2">
-            {bestReadingClassCriteria.map((criterion) => (
-              <article key={criterion.title} className="grid grid-cols-[auto_1fr] gap-3 border-b border-slate-200 pb-4">
-                <span className="mt-1 h-2 w-2 rounded-full bg-sky-400" aria-hidden="true" />
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-950">{criterion.title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">{criterion.detail}</p>
-                </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                title: 'Start in the right place',
+                detail: 'Assess first and match the text level to the child. If decoding is unstable, route to Phonics before connected-reading work.',
+              },
+              {
+                title: 'Teach, correct, retry',
+                detail: 'Model the strategy explicitly, correct the exact error, and let the child make a fresh attempt instead of only completing practice.',
+              },
+              {
+                title: 'Check real progress',
+                detail: 'Use a clear progression and fresh reading material so improvement is not confused with memorising one familiar passage.',
+              },
+              {
+                title: 'Keep expectations clear',
+                detail: 'Avoid fixed guarantees. Parents should know what improved, what still needs support, and what comes next.',
+              },
+            ].map((principle, index) => (
+              <article key={principle.title} className="border-l border-slate-200 pl-4">
+                <span className="text-[10px] font-bold tracking-[0.16em] text-sky-700">0{index + 1}</span>
+                <h3 className="mt-2 text-sm font-semibold text-slate-950">{principle.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">{principle.detail}</p>
               </article>
             ))}
           </div>
@@ -560,7 +576,7 @@ export default function ReadingClassesForKidsPage() {
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700">Evidence before enrolment</p>
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Check the programme, teaching, parent evidence, and cost</h2>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {proofLinks.map((item) => (
+              {proofLinks.filter((item) => !['/phonics', '/reading-fluency-program'].includes(item.href)).map((item) => (
                 <Link key={item.href} to={item.href} className="group rounded-[16px] border border-slate-200 bg-slate-50/55 px-4 py-3 transition hover:bg-white">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
@@ -627,17 +643,10 @@ export default function ReadingClassesForKidsPage() {
       </section>
 
       <section id="faq" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
+        <div className="mx-auto max-w-6xl py-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Quick answers</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">Questions parents ask about online reading classes</h2>
-          <div className="mt-4">
-            {faqItems.map((item) => (
-              <article key={item.question} className="border-b border-slate-200 py-4 last:border-b-0">
-                <h3 className="faq-question text-[17px] font-semibold text-slate-900 md:text-lg">{item.question}</h3>
-                <p className="faq-answer mt-2 text-[15px] leading-6 text-slate-600 md:text-base">{item.answer}</p>
-              </article>
-            ))}
-          </div>
+          <ProgrammeFaqAccordion items={faqItems} accent="sky" />
         </div>
       </section>
 
