@@ -1,6 +1,7 @@
 export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   nouns: {
     sourceIds: ['cambridge-nouns', 'british-council-grammar'],
+    whyItMatters: 'Nouns anchor sentence meaning because subjects, objects and noun phrases are built around them. Secure noun knowledge makes later work with pronouns, articles, agreement and sentence expansion much easier to understand as connected grammar rather than separate rules.',
     rulePoints: [
       'A noun can name a person, place, animal, object or abstract idea. The useful classroom question is not only “What is the word?” but “What is this word naming in this sentence?”',
       'Common nouns name a class or category, while proper nouns identify a particular name. Concrete and abstract nouns are another useful distinction, but these categories describe meaning rather than a different sentence position.',
@@ -23,6 +24,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   'proper-nouns': {
     sourceIds: ['cambridge-nouns', 'british-council-grammar'],
+    whyItMatters: 'Proper nouns connect grammar with writing conventions. Children need the concept to understand why some names take capitals while ordinary category words do not, which supports both accurate sentence writing and later punctuation editing.',
     rulePoints: [
       'A proper noun identifies a particular person, place, organisation, day, month or other named entity. In standard written English, proper nouns normally begin with capital letters.',
       'The contrast is semantic as well as visual: city is a general category, while Hyderabad is one particular city; teacher is a role, while Ms Rao is a specific person.',
@@ -45,6 +47,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   verbs: {
     sourceIds: ['british-council-grammar', 'cambridge-grammar'],
+    whyItMatters: 'Verbs organise what a clause says about action, state and time. Strong verb awareness supports tense, agreement, questions, negatives, modal verbs and voice, so this is a central bridge from basic word classes to sentence grammar.',
     rulePoints: [
       'A verb expresses an action, event, process or state and forms the centre of the verb phrase. A complete clause normally needs a verb even when the verb does not describe visible movement.',
       'Forms of be, have and do can work as main verbs or auxiliaries. Modal verbs such as can, might and should help express meanings including ability, possibility and advice.',
@@ -67,6 +70,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   adjectives: {
     sourceIds: ['cambridge-adjectives', 'british-council-grammar'],
+    whyItMatters: 'Adjectives help children make noun phrases more precise and informative. Learning to choose relevant description rather than simply adding more words strengthens both grammar control and the quality of descriptive and explanatory writing.',
     rulePoints: [
       'An adjective gives information about a noun or pronoun. It can describe quality, identify which one is meant, or add other relevant detail to the noun phrase.',
       'Adjectives often appear before a noun, as in “a narrow bridge,” or after linking verbs, as in “the bridge is narrow.” Their position changes, but the describing relationship remains.',
@@ -89,6 +93,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   pronouns: {
     sourceIds: ['british-council-grammar', 'cambridge-determiners'],
+    whyItMatters: 'Pronouns are essential for cohesion across sentences. Children who can track clear pronoun reference are better prepared to write paragraphs that flow without awkward repetition or confusing shifts in who or what is being discussed.',
     rulePoints: [
       'Pronouns can replace, refer back to or fill the position of noun phrases. Common groups include personal, possessive, reflexive, demonstrative, interrogative and relative pronouns.',
       'A pronoun should have a clear reference. If a sentence contains two possible people or things, a pronoun such as he, she, it or they can become ambiguous.',
@@ -111,6 +116,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   'singular-plural': {
     sourceIds: ['cambridge-nouns', 'british-council-grammar'],
+    whyItMatters: 'Number is not only a noun-ending issue. Singular and plural choices affect determiners, pronouns and subject–verb agreement across the sentence, making this concept an important foundation for grammatical consistency.',
     rulePoints: [
       'Singular nouns refer to one entity; plural nouns normally refer to more than one. Regular plurals commonly use -s or -es, but English also contains many irregular plural forms.',
       'Plural meaning affects the wider sentence. Demonstratives, pronouns and verbs may also need to change when a singular noun becomes plural.',
@@ -133,6 +139,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   'articles-a-an': {
     sourceIds: ['british-council-indefinite-article', 'british-council-articles'],
+    whyItMatters: 'A/an teaches children to connect sound, countability and reference. That combination prepares them for the wider determiner system and helps them understand why article choice depends on meaning and pronunciation rather than spelling alone.',
     rulePoints: [
       'A and an are indefinite articles used with singular countable nouns when the reference is not yet uniquely identified or when we mean one member of a class.',
       'Choose a before a consonant sound and an before a vowel sound. The pronunciation of the following word matters more than its first written letter.',
@@ -155,6 +162,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   'article-the': {
     sourceIds: ['british-council-articles', 'cambridge-determiners'],
+    whyItMatters: 'The introduces the important idea of shared reference: grammar changes according to what speaker and listener can identify. This supports more natural noun phrases and prepares children for richer choices among articles, demonstratives and other determiners.',
     rulePoints: [
       'The is the definite article. It signals that the speaker or writer expects the listener or reader to identify the intended noun from shared knowledge, earlier mention or the surrounding situation.',
       'A common pattern is first mention with a/an and later mention with the: “I saw a dog. The dog followed me.” The second noun phrase now points to an identifiable dog.',
@@ -177,6 +185,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   prepositions: {
     sourceIds: ['cambridge-prepositions', 'british-council-grammar'],
+    whyItMatters: 'Prepositions make relationships explicit, helping children describe where, when and how ideas connect. Accurate preposition use supports clearer instructions, descriptions and sentence expansion, while also preparing learners for common fixed phrases in English.',
     rulePoints: [
       'Prepositions commonly show relationships in place, time, direction, position or other logical connections. They are typically followed by a noun phrase, pronoun or -ing form that completes the relationship.',
       'Meaning changes with the preposition: under the table, beside the table and through the doorway describe different relationships even when the surrounding sentence stays similar.',
@@ -199,6 +208,7 @@ export const GRAMMAR_KNOWLEDGE_FOUNDATIONS = {
   },
   adverbs: {
     sourceIds: ['cambridge-adjectives-adverbs', 'british-council-grammar'],
+    whyItMatters: 'Adverbs let children refine actions and descriptions by adding information about manner, time, place, frequency and degree. Understanding their function also prevents the common confusion between adjective and adverb roles.',
     rulePoints: [
       'Adverbs can add information about manner, time, place, frequency, degree or viewpoint. They commonly modify verbs, adjectives, other adverbs or sometimes a whole clause.',
       'Many manner adverbs end in -ly, but the ending is not a complete test. Words such as very, often, here and yesterday are adverbs, while some -ly words are adjectives.',
