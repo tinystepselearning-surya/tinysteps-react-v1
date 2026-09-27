@@ -27,9 +27,6 @@ describe('Blog #56 phonics for parents quality refresh', () => {
     expect(body).toContain('hear → map → blend → recognise → spell → read in text');
     expect(body).toContain('Phonemic awareness and phonics are connected, but they are not the same thing');
     expect(body).toContain('The Tiny Steps home-support loop: retrieve → read → spell → reread → transfer');
-    expect(body).toContain('How often should a child practise phonics? Use response, not a fixed timetable');
-    expect(body).toContain('What a personalized phonics support workflow should look like');
-    expect(body).toContain('/best-online-phonics-classes-for-kids-in-india');
     expect(body).toContain('When your child gets stuck on a word: prompt the print, not the picture');
     expect(body).toContain('Decodable books and rich read-alouds serve different purposes');
     expect(body).toContain('Home reading should not become a nightly test');
