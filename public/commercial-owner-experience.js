@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const REVISION = '2026-09-27-commercial-ux-r3';
+  const REVISION = '2026-09-27-commercial-ux-r4';
   const OWNER_PATHS = Object.freeze([
     '/phonics',
     '/best-online-phonics-classes-for-kids-in-india',
@@ -19,7 +19,7 @@
     '/book-demo',
   ]);
   const OWNER_SET = new Set(OWNER_PATHS);
-  const DESKTOP_CTA_DISABLED_PATHS = new Set(['/grammar']);
+  const DESKTOP_CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking']);
   const STYLE_ID = 'ts-commercial-owner-experience-css';
   const PROGRESS_ID = 'ts-commercial-owner-progress';
   const CTA_ID = 'ts-commercial-owner-cta';
