@@ -83,44 +83,26 @@ const grammarPathwayCards = [
   {
     name: 'Parts of speech',
     description: 'Understand naming words, action words, describing words, and basic word roles.',
-    href: '/grammar',
-    anchor: 'grammar classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
   {
     name: 'Sentence structure',
     description: 'Build complete sentences with clearer order, meaning, and response flow.',
-    href: '/grammar',
-    anchor: 'grammar classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
   {
     name: 'Tenses',
     description: 'Use past, present, and future correctly in everyday speaking and writing.',
-    href: '/grammar',
-    anchor: 'grammar classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
   {
     name: 'Punctuation',
     description: 'Apply punctuation marks correctly for cleaner, clearer sentence writing.',
-    href: '/grammar',
-    anchor: 'grammar classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
   {
     name: 'Written sentence accuracy',
-    description: 'Apply grammar accurately in written sentences and short school answers; use the dedicated writing programme for paragraph and creative-writing development.',
-    href: '/writing-classes-for-kids',
-    anchor: 'writing classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/writing-classes-for-kids`,
+    description: 'Apply grammar accurately in written sentences and short school answers. Paragraph, story, editing, and longer-composition work belongs to the dedicated Writing programme.',
   },
   {
     name: 'Confident school answers',
     description: 'Apply grammar accurately when building complete, clear school responses.',
-    href: '/grammar',
-    anchor: 'grammar classes for school-answer clarity',
-    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
   },
 ];
 
@@ -173,7 +155,6 @@ export default function GrammarPage() {
       itemListElement: grammarPathwayCards.map((card, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        url: card.url,
         item: {
           '@type': 'Thing',
           name: card.name,
@@ -338,36 +319,24 @@ export default function GrammarPage() {
                 pill: 'Grammar application',
                 problem: 'Child knows grammar rules but cannot use them',
                 meaning: 'Rules may be recalled, but articles, prepositions, agreement, or word order still break in new sentences.',
-                support: 'Focus: apply and correct grammar in fresh sentences',
-                href: '/grammar',
-                anchor: 'Explore grammar support',
                 tone: 'bg-[#F3FAFF] border-[#D7ECFA]',
               },
               {
                 pill: 'Sentence formation',
                 problem: 'Child struggles to build complete sentences',
                 meaning: 'Sentence structure and idea order may need guided modelling, correction, and repeated use in context.',
-                support: 'Focus: complete, accurate sentence construction',
-                href: '/grammar',
-                anchor: 'Explore sentence formation support',
                 tone: 'bg-[#FFF8F0] border-[#F6D9B9]',
               },
               {
                 pill: 'Tense control',
                 problem: 'Child mixes past, present, and future',
                 meaning: 'Tense forms may be known in exercises but not yet stable in everyday answers or explanations.',
-                support: 'Focus: choose and maintain the correct tense',
-                href: '/grammar',
-                anchor: 'Explore tense support',
                 tone: 'bg-[#F3FFF6] border-[#CFEFD7]',
               },
               {
                 pill: 'School-answer accuracy',
                 problem: 'Child writes short answers with repeated grammar errors',
                 meaning: 'Sentence accuracy, punctuation, or correction may be the main gap. If the difficulty is idea development or paragraphs, Writing is the better owner.',
-                support: 'Focus: accurate short written responses',
-                href: '/grammar',
-                anchor: 'Explore school-answer grammar support',
                 tone: 'bg-[#FFFBEA] border-[#F4E2A0]',
               },
             ].map((item) => (
@@ -381,9 +350,6 @@ export default function GrammarPage() {
                 </span>
                 <h3 className="mt-3 text-base font-semibold leading-snug text-slate-950">{item.problem}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{item.meaning}</p>
-                <Link to={item.href} className="mt-3 inline-block text-xs font-semibold text-slate-800 underline underline-offset-2">
-                  {item.anchor}
-                </Link>
               </article>
             ))}
           </div>
@@ -408,9 +374,6 @@ export default function GrammarPage() {
                 <span className="text-[10px] font-bold tracking-[0.16em] text-orange-600">0{index + 1}</span>
                 <h3 className="mt-1.5 text-base font-semibold text-slate-900">{card.name}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-slate-600">{card.description}</p>
-                <Link to={card.href} className="mt-2 inline-block text-xs font-semibold text-slate-800 underline underline-offset-2">
-                  {card.anchor}
-                </Link>
               </article>
             ))}
           </div>
