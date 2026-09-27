@@ -76,8 +76,10 @@ describe('GV5 Vocabulary natural English and transfer publication', () => {
     const remaining = VOCABULARY_AUTHORITY_REQUIREMENTS.filter((item) => !publishedIds.has(item.id));
     expect(remaining).toHaveLength(0);
     for (const item of VOCABULARY_AUTHORITY_REQUIREMENTS) {
-      expect(routePaths.has(item.proposedPath), item.id).toBe(true);
-      expect(ROUTE_SEO_REGISTRY[item.proposedPath]?.canonicalPath, item.id).toBe(item.proposedPath);
+      const publishedPage = VOCABULARY_AUTHORITY_PAGES.find((page) => page.id === item.id);
+      expect(publishedPage, item.id).toBeTruthy();
+      expect(routePaths.has(publishedPage!.path), item.id).toBe(true);
+      expect(ROUTE_SEO_REGISTRY[publishedPage!.path]?.canonicalPath, item.id).toBe(publishedPage!.path);
     }
   });
 
