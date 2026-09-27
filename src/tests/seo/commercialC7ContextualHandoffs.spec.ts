@@ -90,6 +90,19 @@ describe('Commercial C7-R3 contextual commercial handoffs', () => {
     expect(text).not.toContain('/speaking');
   });
 
+  it('does not create R3 commercial handoffs for GV5 Vocabulary transfer guides', () => {
+    const paths = [
+      '/resources/vocabulary/collocations-for-kids',
+      '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
+      '/resources/vocabulary/vocabulary-for-better-writing',
+      '/resources/vocabulary/vocabulary-for-speaking-conversation',
+    ];
+
+    for (const path of paths) {
+      expect(getCommercialC7R3Handoff(path), path).toBeNull();
+    }
+  });
+
   it('caps every implemented knowledge surface at the R2 two-commercial-prompt maximum', () => {
     for (const handoff of COMMERCIAL_C7_R3_HANDOFFS) {
       expect(1 + (handoff.secondary ? 1 : 0)).toBeLessThanOrEqual(2);
