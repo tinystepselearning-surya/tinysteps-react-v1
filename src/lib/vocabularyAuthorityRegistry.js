@@ -7,13 +7,13 @@ const freezeList = (values = []) => Object.freeze([...values]);
 const page = (config) => {
   const sources = getVocabularyKnowledgeSources(config.sourceIds);
   if (sources.length < 2) {
-    throw new Error(`GV4 Vocabulary authority page ${config.id} requires at least two authoritative references.`);
+    throw new Error(`Published Vocabulary authority page ${config.id} requires at least two authoritative references.`);
   }
 
   return freeze({
     state: 'published',
     publicationApproved: true,
-    publicationBatch: 'gv4-first-authority-batch',
+    publicationBatch: config.publicationBatch || 'gv4-first-authority-batch',
     hubPath: '/resources/vocabulary',
     practicePath: '/free-games/word-meaning-flashcards',
     ...config,
@@ -32,7 +32,7 @@ const page = (config) => {
   });
 };
 
-export const VOCABULARY_AUTHORITY_REVISION = '2026-09-27-gv4';
+export const VOCABULARY_AUTHORITY_REVISION = '2026-09-27-gv5';
 
 export const VOCABULARY_AUTHORITY_PAGES = freezeList([
   page({
@@ -424,6 +424,270 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
     relatedPaths: ['/resources/grammar/nouns-for-kids', '/free-spelling-game-for-kids', '/reading-classes-for-kids'],
     featuredWordIds: ['happy', 'read', 'write', 'teacher', 'practice'],
   }),
+
+  page({
+    order: 7,
+    id: 'vocabulary-collocations',
+    stageId: 'natural-english',
+    publicationBatch: 'gv5-natural-english-transfer',
+    slug: 'collocations-for-kids',
+    cardTitle: 'Collocations for Kids',
+    seoTitle: 'Collocations for Kids: Natural Word Partnerships | Tiny Steps',
+    seoDescription: 'Help children notice and use natural English word partnerships such as make a mistake, heavy rain and deeply interested through meaning, context and repeated use.',
+    quickAnswer: 'Collocations are words that regularly occur together in ways that sound natural to experienced English users. Children build stronger vocabulary when they learn useful partnerships such as make a mistake, heavy rain, take a break and deeply interested as connected chunks, while still understanding the meaning of each word and the whole expression.',
+    concept: 'Knowing individual words does not automatically tell a learner which combinations are usual in English. A child may know strong and rain but still need to learn that heavy rain is the more typical partnership. Collocation knowledge sits between vocabulary and grammar: the sentence can be grammatically possible yet sound unusual because the chosen words are not normally paired in that context.',
+    whyItMatters: 'Natural word partnerships help children understand reading more quickly and produce smoother speaking and writing. When a child retrieves make a decision, ask a question or strong evidence as a familiar unit, less effort is spent assembling every word from scratch. This supports fluency, precision and editing because the child starts noticing not only whether a sentence is correct, but whether the word choice fits normal English usage.',
+    coreIdeas: [
+      'Teach collocations as meaningful partnerships rather than as isolated pairs to memorise. Start with a useful base word such as decision, homework, rain or interested and collect a few common partners in complete sentences. Ask what the phrase means, where the child might hear it, and whether another combination would sound normal in the same situation. This keeps collocation learning connected to communication.',
+      'Contrast natural and unusual combinations carefully. Heavy rain is common, while thick rain is unusual in standard everyday English even though thick and heavy can both describe intensity in other contexts. The goal is not to tell children that language has arbitrary secret rules; it is to help them notice recurring patterns through reading, listening and repeated use.',
+      'Build collocations across several patterns: adjective + noun, verb + noun, adverb + adjective and verb + preposition or particle combinations where relevant. Child-friendly examples include strong wind, make progress, deeply worried and interested in. Repeated exposure to several pattern types helps children see that vocabulary knowledge includes relationships between words, not only dictionary meanings.',
+    ],
+    workedExamples: [
+      {
+        example: '“We had heavy rain all afternoon.”',
+        explanation: 'Heavy rain is a common adjective-and-noun collocation. The child already understands heavy in other meanings, but here it expresses intensity. Comparing heavy rain with strong wind shows that English selects different natural partners for related weather ideas.',
+      },
+      {
+        example: '“I made a mistake in the last sentence, so I corrected it.”',
+        explanation: 'Make a mistake is a common verb-and-noun partnership. Learners may be tempted to say do a mistake because do and make overlap in some contexts. Practising the complete phrase inside a meaningful sentence makes retrieval more reliable than memorising a rule alone.',
+      },
+      {
+        example: '“Nila was deeply interested in the science experiment.”',
+        explanation: 'Deeply interested is an adverb-and-adjective combination that sounds natural when the interest is strong. The preposition in also belongs to the wider usage pattern. Learning the whole frame gives the child a useful speaking and writing unit rather than one disconnected adjective.',
+      },
+    ],
+    examples: [
+      'Adjective + noun: heavy rain, strong wind, close friend',
+      'Verb + noun: make a mistake, take a break, ask a question',
+      'Adverb + adjective: deeply interested, highly unusual, completely different',
+    ],
+    commonMistakes: [
+      'Choosing a grammatically possible partner by translating directly from another language instead of checking which combination English commonly uses.',
+      'Teaching long collocation lists without sentences or situations, which can create short-term recognition but weak spontaneous use.',
+      'Treating every frequent pair as a fixed expression. Some collocations are strong and restricted, while others allow many reasonable partners, so children need examples rather than absolute rules.',
+    ],
+    trickyCases: [
+      'Some collocations vary by variety, register or context. A combination that is normal in one form of English may be less common in another. For children, prioritise high-frequency widely understood combinations and avoid presenting minor variation as an error when the meaning is clear and usage is accepted.',
+      'A collocation can overlap with grammar or idiom teaching. Interested in has a grammatical pattern, while make a mistake is mainly lexical. Vocabulary teaching should focus on acquiring and retrieving the natural partnership; structural explanations can be added only when they help the child use it accurately.',
+    ],
+    teachingNote: 'Collect collocations from material the child is already reading or hearing. Write the key word in the centre and add two or three useful partners, then place each partnership into a fresh sentence. Use short contrast tasks such as heavy rain or thick rain, make progress or do progress, and ask the child to explain which sounds familiar. Recycle the same partnerships in speaking and writing over several days. During editing, underline a vague or unusual combination and ask the child to choose the natural partnership rather than simply supplying the answer.',
+    practicePrompts: [
+      'Match ten base words with natural partners, then use five completed collocations in original sentences about school, home, weather or hobbies.',
+      'Read six sentences containing one unusual word partnership each, replace it with a more natural collocation, and explain what clue helped you decide.',
+      'Choose four useful collocations from reading or conversation this week, record the whole phrase rather than one word, and reuse each phrase in a different context.',
+    ],
+    faqs: [
+      {
+        question: 'Is a collocation the same as an idiom?',
+        answer: 'No. A collocation is a frequent or natural word partnership whose overall meaning is usually connected to the meanings of its words, such as heavy rain or make a mistake. An idiom can have a meaning that is difficult to predict from the individual words. Some expressions sit between these categories, so children benefit more from learning useful usage in context than from arguing about labels.',
+      },
+      {
+        question: 'Should children memorise collocation lists?',
+        answer: 'Short lists can organise review, but memorisation alone is not enough. Children should meet each partnership in a sentence, retrieve it after a delay, compare it with nearby alternatives and use it in speaking or writing. A small number of reusable collocations learned deeply is more valuable than a very long list that never transfers into communication.',
+      },
+    ],
+    sourceIds: ['cambridge-collocation', 'british-council-vocabulary-b1-b2', 'british-council-vocabulary-overview'],
+    relatedPaths: ['/resources/vocabulary/context-clues-for-kids', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online'],
+    featuredWordIds: [],
+  }),
+
+  page({
+    order: 8,
+    id: 'phrasal-verbs-expressions',
+    stageId: 'natural-english',
+    publicationBatch: 'gv5-natural-english-transfer',
+    slug: 'phrasal-verbs-common-expressions-for-kids',
+    cardTitle: 'Phrasal Verbs & Common Expressions',
+    seoTitle: 'Phrasal Verbs and Common Expressions for Kids | Tiny Steps',
+    seoDescription: 'Teach useful phrasal verbs and everyday expressions through context, meaning, word order and child-relevant speaking situations.',
+    quickAnswer: 'Phrasal verbs combine a verb with one or more small words such as up, out, off or after, and the combined meaning may differ from the basic verb. Children learn them best as useful expressions in context, for example wake up, put away, find out and look after, with attention to meaning and word order rather than by memorising hundreds of disconnected combinations.',
+    concept: 'Multi-word expressions are a major part of natural English. Some phrasal verbs are transparent, such as sit down, while others are less predictable, such as find out meaning discover. Common expressions may also include recurring chunks that children hear in conversation. Vocabulary teaching should prioritise high-frequency child-relevant meanings and show how the whole expression behaves inside a sentence.',
+    whyItMatters: 'Children encounter phrasal verbs constantly in stories, classroom instructions and conversation. If they process only the main verb, they can misunderstand the sentence: pick up, give up and look up do not simply repeat the meanings of pick, give and look. Learning common multi-word expressions improves listening, reading and conversational fluency and gives children more natural alternatives for everyday speaking.',
+    coreIdeas: [
+      'Teach one phrasal verb with one useful meaning first. Many phrasal verbs have several meanings, so presenting every dictionary sense at once can overload the learner. For look up, a child may first learn “search for information” in a sentence such as “Look up the word in a dictionary.” Other meanings can be added later when context makes them useful.',
+      'Show the expression inside a complete situation. Put away becomes memorable when a teacher says, “Please put away your books before lunch.” Look after becomes clear when a child explains, “I look after my little brother for ten minutes while Mum is nearby.” Meaning, situation and natural sentence pattern should be learned together.',
+      'Notice word order where it matters. Some phrasal verbs can be separated with a noun object, while pronouns may require a particular position, as in “pick the book up” and “pick it up.” Other multi-word verbs remain together, as in “look after the dog.” Children do not need dense terminology, but they do need accurate models and repeated examples.',
+    ],
+    workedExamples: [
+      {
+        example: '“Please put your pencils away when the activity ends.”',
+        explanation: 'Put away means place something where it belongs after use. The object appears between the verb and particle here. The child can compare “put the pencils away” with “put them away” and practise the expression as a classroom routine.',
+      },
+      {
+        example: '“We found out why the plant was bending toward the window.”',
+        explanation: 'Find out means discover or learn information. The meaning is not simply the basic meaning of find. A follow-up task can replace found out with discovered and discuss which version sounds more natural in everyday conversation.',
+      },
+      {
+        example: '“Can you look after my bag while I fill my water bottle?”',
+        explanation: 'Look after means take care of or keep watch over something. The words remain together before the object in this pattern. The whole expression should be retrieved as one useful unit rather than translated word by word.',
+      },
+    ],
+    examples: [
+      'Daily routines: wake up, get dressed, put away',
+      'Learning and discovery: find out, look up, work out',
+      'Responsibility and interaction: look after, help out, calm down',
+    ],
+    commonMistakes: [
+      'Trying to guess every phrasal verb by combining the literal meanings of its parts, even when the expression has developed a different meaning.',
+      'Learning a translation without a sentence pattern, which can lead to incorrect object placement or missing prepositions and particles.',
+      'Studying too many low-frequency phrasal verbs at once instead of selecting a small set that the child is likely to hear and use repeatedly.',
+    ],
+    trickyCases: [
+      'The same phrasal verb can have several meanings. Pick up can mean lift something, collect someone, learn something informally or improve depending on context. Teach the most relevant meaning first and use surrounding words to decide which meaning is active.',
+      'Not every verb followed by a preposition or particle behaves the same way. Listen to, look after and pick up have different structural patterns. Vocabulary instruction should model correct use, while detailed grammar classification can remain a separate reference topic.',
+    ],
+    teachingNote: 'Select five or six expressions from the child’s real reading, classroom language or conversation. Create a short scenario for each, act out concrete examples where possible, and ask the child to paraphrase the meaning in simple words. Revisit the expressions in mixed practice so the child must choose from context. When word order matters, compare two correct models and one incorrect model, but keep the main focus on understanding and using the expression naturally.',
+    practicePrompts: [
+      'Choose the correct expression for eight short situations using a set such as wake up, put away, find out, look up, look after and calm down, then explain the meaning in your own words.',
+      'Rewrite five sentences by replacing a longer explanation with a suitable phrasal verb, making sure the object appears in the correct place.',
+      'Keep a one-week expression notebook: record the whole phrase, the sentence where you noticed it, a child-friendly meaning and one new sentence of your own.',
+    ],
+    faqs: [
+      {
+        question: 'How many phrasal verbs should a child learn?',
+        answer: 'There is no useful fixed total for every age. Start with a small set that appears often in the child’s books, classroom instructions and conversations. A phrasal verb is worth keeping when the child can understand it in a new context and use it without depending on the original example. Add new expressions gradually instead of chasing a large list.',
+      },
+      {
+        question: 'Why are phrasal verbs difficult for learners?',
+        answer: 'The small particle can change the verb’s meaning, one expression may have several meanings, and word order is not identical across all multi-word verbs. Context and repeated sentence use therefore matter. Children should learn the expression as a meaningful unit while still noticing the structure required for accurate use.',
+      },
+    ],
+    sourceIds: ['cambridge-phrasal-verbs', 'british-council-phrasal-verbs', 'british-council-vocabulary-b1-b2'],
+    relatedPaths: ['/resources/vocabulary/context-clues-for-kids', '/spoken-english-classes-for-kids-online', '/writing-classes-for-kids'],
+    featuredWordIds: [],
+  }),
+
+  page({
+    order: 9,
+    id: 'vocabulary-for-writing',
+    stageId: 'transfer-speaking-writing',
+    publicationBatch: 'gv5-natural-english-transfer',
+    slug: 'vocabulary-for-better-writing',
+    cardTitle: 'Vocabulary for Better Writing',
+    seoTitle: 'Vocabulary for Better Writing: Precise Word Choice for Kids | Tiny Steps',
+    seoDescription: 'Help children replace vague or repeated wording with precise, natural vocabulary that improves descriptions, explanations, stories and school answers.',
+    quickAnswer: 'Better writing vocabulary means choosing words that express the intended idea clearly and precisely, not simply replacing ordinary words with the longest synonym available. Children improve when they build useful word banks, compare shades of meaning, learn natural word partnerships and practise retrieving those words while planning, drafting and revising real sentences.',
+    concept: 'Writing places different demands on vocabulary than recognition exercises. A child may understand enormous, exhausted or whispered while reading yet still write big, tired and said because those familiar words are easier to retrieve. Transfer requires deliberate retrieval, sentence-level practice and opportunities to revise vague or repeated wording without making the writing unnatural.',
+    whyItMatters: 'Precise vocabulary improves clarity, description and explanation across stories, paragraphs and school answers. It can help a child distinguish a glance from a stare, a narrow path from a dangerous path, or a conclusion from a guess. Strong vocabulary also reduces repetition, but variety should serve meaning. The goal is clear communication, not decorating every sentence with difficult words.',
+    coreIdeas: [
+      'Move from vague to precise by asking what the writer actually means. Instead of replacing nice mechanically, ask whether the person was kind, helpful, cheerful, patient or generous. Instead of changing went simply to a “strong verb,” ask whether the person rushed, wandered, marched or quietly entered. Precision comes from the situation, not from a synonym list.',
+      'Build topic-specific and purpose-specific word banks before writing. A description of a storm may need weather, movement and sound vocabulary; an explanation of a science process may need sequence and cause words; a story may need action, dialogue and emotion language. Organising words by communicative purpose makes retrieval easier during drafting.',
+      'Teach revision as a meaning check. Children can underline repeated general words, identify one or two places where a more exact choice would help, test alternatives in the sentence and keep the simplest word when it is already best. This prevents “thesaurus writing,” where unfamiliar substitutes are inserted only to sound advanced.',
+    ],
+    workedExamples: [
+      {
+        example: 'Draft: “The dog went to the gate quickly.” Revision: “The dog raced to the gate.”',
+        explanation: 'Raced compresses the idea of moving quickly into one precise action verb. The revision is useful because it sharpens meaning, not because raced is a longer or more difficult word.',
+      },
+      {
+        example: 'Draft: “The girl was very scared.” Revision: “The girl was terrified when the lights suddenly went out.”',
+        explanation: 'Terrified expresses stronger fear, while the added context explains the cause. The writer should choose it only when the situation supports that intensity. Precision depends on matching the word to evidence in the scene.',
+      },
+      {
+        example: 'Draft: “The experiment was good.” Revision: “The experiment produced clear results that supported our prediction.”',
+        explanation: 'Academic writing often improves when a vague evaluation is replaced by specific information. Instead of searching for a harder synonym for good, the child states what made the result useful.',
+      },
+    ],
+    examples: [
+      'Precise action: went → hurried, wandered, climbed, returned',
+      'Precise description: nice → patient, cheerful, helpful, peaceful',
+      'Academic clarity: good result → clear result, reliable evidence, accurate observation',
+    ],
+    commonMistakes: [
+      'Replacing every repeated word even when repetition is needed for clarity, especially with key academic terms that should stay consistent.',
+      'Choosing an unfamiliar thesaurus synonym without checking its meaning, tone, grammar pattern or natural collocations.',
+      'Trying to improve vocabulary before the sentence has a clear idea, which can produce complicated wording around weak content.',
+    ],
+    trickyCases: [
+      'Simple words are often the best words. Said, went, big and good are not forbidden. Revision should target places where a more precise choice genuinely improves meaning, while leaving clear ordinary vocabulary untouched.',
+      'Writing vocabulary differs by genre and audience. A playful story, a science explanation and a formal school answer need different word choices. Teach children to ask who will read the piece and what the writing needs to accomplish before selecting vocabulary.',
+    ],
+    teachingNote: 'Separate drafting from vocabulary revision so the child can first capture the idea. During a second pass, choose only two or three sentences to improve. Ask: Which word is vague? What exactly happened? What feeling or quality do you mean? Which alternative sounds natural here? Keep a small reusable bank of words the child has already met in reading and speaking. Require each new word to survive a sentence check before it enters the final draft.',
+    practicePrompts: [
+      'Revise a six-sentence paragraph by improving only three vague words. For every change, explain what extra meaning the new word adds.',
+      'Create a word bank for one topic such as a storm, a school competition or a science experiment, grouping words into actions, descriptions, feelings and useful academic language.',
+      'Take five synonyms from a dictionary or Vocabulary Adventure challenge, test each in two sentences, and decide where the replacement is natural and where the original word is better.',
+    ],
+    faqs: [
+      {
+        question: 'Should children avoid simple words in writing?',
+        answer: 'No. Clear simple words are often exactly right. Better vocabulary means having enough choices to express a precise idea, not replacing ordinary language automatically. A child should change a word when the new choice adds useful meaning, fits the tone and sounds natural in the sentence.',
+      },
+      {
+        question: 'How can a child stop repeating the same words?',
+        answer: 'First identify which repetition is actually distracting. Then build alternatives by meaning and function rather than by random synonym search. Pronouns, sentence restructuring, precise verbs and a small set of well-understood synonyms can help. Important technical words may need to repeat so the writing stays clear.',
+      },
+    ],
+    sourceIds: ['ies-academic-vocabulary', 'british-council-vocabulary-b1-b2', 'british-council-vocabulary-overview'],
+    relatedPaths: ['/resources/vocabulary/synonyms-antonyms-for-kids', '/resources/vocabulary/collocations-for-kids', '/writing-classes-for-kids'],
+    featuredWordIds: [],
+  }),
+
+  page({
+    order: 10,
+    id: 'vocabulary-for-speaking',
+    stageId: 'transfer-speaking-writing',
+    publicationBatch: 'gv5-natural-english-transfer',
+    slug: 'vocabulary-for-speaking-conversation',
+    cardTitle: 'Vocabulary for Speaking & Conversation',
+    seoTitle: 'Vocabulary for Speaking and Conversation for Kids | Tiny Steps',
+    seoDescription: 'Build retrievable vocabulary for fuller answers, conversation, explanation, storytelling and confident everyday speaking without memorised scripts.',
+    quickAnswer: 'Speaking vocabulary is the language a child can retrieve quickly enough to use while answering, explaining, describing and having a conversation. Growth therefore depends on more than recognising words on a worksheet: children need repeated opportunities to recall useful vocabulary, combine it into natural phrases and use it across changing real-life speaking situations.',
+    concept: 'A child can have a large receptive vocabulary but a smaller active vocabulary. During conversation there is little time to search memory, so familiar general words often appear first. Speaking practice should help useful words move from recognition into retrieval through short supported responses, repeated use in new contexts and gradual removal of prompts.',
+    whyItMatters: 'Limited active vocabulary can make a child give one-word answers, repeat the same adjectives and verbs or pause even when the underlying idea is clear. A stronger speaking vocabulary supports fuller answers, storytelling, classroom participation and explanation. It also helps confidence because the child has more language available to express a thought instead of memorising one fixed response.',
+    coreIdeas: [
+      'Teach vocabulary in ready-to-use chunks as well as individual words. Useful frames such as in my opinion, I noticed that, the main reason is, excited about and take part in give children natural starting points for speaking. The frame should support meaning, not become a script that the child repeats without understanding.',
+      'Use retrieval with variation. After learning a word such as disappointed, compare several situations and ask where it fits, then use it in a personal answer, a story retell and a prediction. Reusing the word across different prompts strengthens access to the meaning and prevents the child from linking it to only one memorised sentence.',
+      'Expand answers through meaningful follow-up questions. Instead of demanding “speak more,” ask for one relevant detail: What happened next? Why did you choose that? How did you feel? What was different? These prompts create a reason to retrieve action, description, emotion and linking vocabulary while keeping the conversation purposeful.',
+    ],
+    workedExamples: [
+      {
+        example: 'Short answer: “It was good.” Expanded answer: “I enjoyed the museum because the space exhibit was fascinating.”',
+        explanation: 'The stronger response adds a precise reaction and a reason. Fascinating is useful only because it matches the child’s meaning. The goal is not length by itself; it is a clearer and more informative spoken message.',
+      },
+      {
+        example: 'Basic retell: “He went home.” Expanded retell: “He hurried home because the storm was getting stronger.”',
+        explanation: 'Hurried and getting stronger make the sequence more vivid and specific. A teacher can first offer two choices, then later ask the child to retrieve an action word independently in a different story.',
+      },
+      {
+        example: 'Conversation: “What do you think about the rule?” — “In my opinion, the rule is fair because everyone gets the same amount of time.”',
+        explanation: 'The discourse phrase in my opinion helps organise the response, while fair and the reason that follows carry the actual meaning. Practising a small number of flexible conversation chunks can support fluency without turning answers into scripts.',
+      },
+    ],
+    examples: [
+      'Give a reason: because, the main reason is, this happened because',
+      'Express an opinion: I think, in my opinion, I prefer, I agree because',
+      'Describe precisely: fascinating, crowded, peaceful, disappointed, relieved',
+    ],
+    commonMistakes: [
+      'Giving children long word lists before speaking and expecting all of the words to appear naturally in one conversation.',
+      'Correcting every vocabulary choice immediately, which can interrupt the message and make the child focus on avoiding errors instead of communicating.',
+      'Practising one perfect answer repeatedly until the child can recite it, then mistaking memorisation for flexible conversational vocabulary.',
+    ],
+    trickyCases: [
+      'A child may know a word but need extra retrieval time. Silence does not always mean lack of knowledge. Give a short pause, a meaning cue or two possible choices, then reduce support over time so independent recall strengthens.',
+      'Spoken vocabulary can be informal, neutral or formal depending on the situation. Children should learn that language for chatting with a friend may differ from language for a school presentation, while both can be correct and appropriate.',
+    ],
+    teachingNote: 'Choose a narrow speaking topic and pre-teach only a few high-value words or chunks. Ask one open question, listen for places where the child relies on vague language, and give a brief prompt only when it will unlock a more precise idea. Recycle the target vocabulary in a second topic so the child has to retrieve it again rather than copy the first answer. Praise clear meaning and independence; correction should be selective and should not turn the conversation into a vocabulary test.',
+    practicePrompts: [
+      'Answer five familiar questions using one precise action, feeling or description word in each answer, then answer the same questions again with different examples.',
+      'Retell a short event twice: first with no word bank, then with five useful vocabulary prompts. Compare which words helped make the retell clearer rather than simply longer.',
+      'Hold a three-minute conversation about a hobby, school event or trip. Afterwards, choose two vague words you repeated and practise more precise alternatives in fresh sentences.',
+    ],
+    faqs: [
+      {
+        question: 'Why does my child know words in worksheets but not use them while speaking?',
+        answer: 'Recognition is easier than rapid retrieval. In conversation the child must understand the question, plan an idea, select words and build a sentence at the same time. Repeated retrieval in varied speaking tasks helps move vocabulary into active use. Small cues can support the transition, but the goal is to remove those cues gradually.',
+      },
+      {
+        question: 'Should children memorise speaking vocabulary sentences?',
+        answer: 'A few flexible chunks can reduce cognitive load, but complete memorised answers should not replace genuine conversation. Children need to adapt vocabulary to new questions, people and situations. Practise the same useful words in several different responses so the child learns the language rather than one script.',
+      },
+    ],
+    sourceIds: ['british-council-vocabulary-overview', 'british-council-vocabulary-b1-b2', 'ies-foundational-vocabulary'],
+    relatedPaths: ['/resources/vocabulary/feelings-emotions-for-kids', '/resources/vocabulary/collocations-for-kids', '/spoken-english-classes-for-kids-online'],
+    featuredWordIds: [],
+  }),
 ]);
 
 export const VOCABULARY_AUTHORITY_PATHS = freezeList(
@@ -437,15 +701,15 @@ export const getVocabularyAuthorityPageByPath = (pathname) =>
   VOCABULARY_AUTHORITY_PAGES.find((entry) => entry.path === String(pathname || '').replace(/\/+$/, '')) ?? null;
 
 if (VOCABULARY_AUTHORITY_PAGES.length !== VOCABULARY_AUTHORITY_ROUTE_MANIFEST.length) {
-  throw new Error('GV4 Vocabulary content must stay aligned with its lightweight SEO manifest.');
+  throw new Error('Published Vocabulary content must stay aligned with its lightweight SEO manifest.');
 }
 for (const entry of VOCABULARY_AUTHORITY_PAGES) {
   const manifest = VOCABULARY_AUTHORITY_ROUTE_MANIFEST.find((item) => item.id === entry.id);
   const seo = VOCABULARY_RESOURCE_SEO[entry.path];
   if (!manifest || manifest.path !== entry.path || manifest.cardTitle !== entry.cardTitle) {
-    throw new Error(`GV4 Vocabulary manifest drift detected for ${entry.id}.`);
+    throw new Error(`Vocabulary manifest drift detected for ${entry.id}.`);
   }
   if (!seo || seo.title !== entry.seoTitle || seo.description !== entry.seoDescription) {
-    throw new Error(`GV4 Vocabulary SEO drift detected for ${entry.id}.`);
+    throw new Error(`Vocabulary SEO drift detected for ${entry.id}.`);
   }
 }

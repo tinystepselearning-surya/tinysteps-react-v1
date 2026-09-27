@@ -44,7 +44,7 @@ function knowledgeWordCount(page) {
   ].join(' '));
 }
 
-const EXPECTED_IDS = [
+const EXPECTED_GV4_IDS = [
   'everyday-vocabulary',
   'feelings-emotions',
   'school-vocabulary',
@@ -52,11 +52,18 @@ const EXPECTED_IDS = [
   'context-clues',
   'word-families-prefixes-suffixes',
 ];
+const EXPECTED_GV5_IDS = [
+  'vocabulary-collocations',
+  'phrasal-verbs-expressions',
+  'vocabulary-for-writing',
+  'vocabulary-for-speaking',
+];
+const EXPECTED_IDS = [...EXPECTED_GV4_IDS, ...EXPECTED_GV5_IDS];
 
-if (VOCABULARY_AUTHORITY_REVISION !== '2026-09-27-gv4') fail('revision', VOCABULARY_AUTHORITY_REVISION);
+if (VOCABULARY_AUTHORITY_REVISION !== '2026-09-27-gv5') fail('revision', VOCABULARY_AUTHORITY_REVISION);
 if (VOCABULARY_AUTHORITY_REQUIREMENTS.length !== 16) fail('requirement-count', VOCABULARY_AUTHORITY_REQUIREMENTS.length);
 if (VOCABULARY_KNOWLEDGE_STAGES.length !== 6) fail('stage-count', VOCABULARY_KNOWLEDGE_STAGES.length);
-if (VOCABULARY_AUTHORITY_PAGES.length !== 6) fail('published-count', VOCABULARY_AUTHORITY_PAGES.length);
+if (VOCABULARY_AUTHORITY_PAGES.length !== 10) fail('published-count', VOCABULARY_AUTHORITY_PAGES.length);
 if (VOCABULARY_LEXICAL_ENTRIES.length !== 50) fail('lexical-baseline', VOCABULARY_LEXICAL_ENTRIES.length);
 if (VOCABULARY_AUTHORITY_PAGES.map((page) => page.id).join('|') !== EXPECTED_IDS.join('|')) {
   fail('publication-order', VOCABULARY_AUTHORITY_PAGES.map((page) => page.id).join(','));
@@ -64,14 +71,14 @@ if (VOCABULARY_AUTHORITY_PAGES.map((page) => page.id).join('|') !== EXPECTED_IDS
 
 const publishedIds = new Set(VOCABULARY_AUTHORITY_PAGES.map((page) => page.id));
 const routePaths = new Set(PUBLIC_ROUTE_MANIFEST.map((entry) => entry.path));
-const owners = CANONICAL_TOPIC_OWNERSHIP.filter((entry) => entry.id === 'gv4-vocabulary-hub' || entry.id.startsWith('gv4-vocabulary-'));
+const owners = CANONICAL_TOPIC_OWNERSHIP.filter((entry) => entry.id === 'gv4-vocabulary-hub' || entry.id.startsWith('gv4-vocabulary-') || entry.id.startsWith('gv5-vocabulary-'));
 const layer2Vocabulary = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) => item.canonicalPath.startsWith('/resources/vocabulary/'));
 
 if (!routePaths.has(VOCABULARY_HUB_PATH)) fail('hub-route', VOCABULARY_HUB_PATH);
 if (ROUTE_SEO_REGISTRY[VOCABULARY_HUB_PATH]?.canonicalPath !== VOCABULARY_HUB_PATH) fail('hub-seo', VOCABULARY_HUB_PATH);
-if (owners.length !== 7) fail('owner-count', `Expected 7 GV4 owners; found ${owners.length}.`);
-if (layer2Vocabulary.length !== 6) fail('ai-layer2-vocabulary-count', `Expected 6 Vocabulary Layer 2 items; found ${layer2Vocabulary.length}.`);
-if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 102) fail('ai-layer2-total', AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length);
+if (owners.length !== 11) fail('owner-count', `Expected 1 Vocabulary hub plus 10 guide owners; found ${owners.length}.`);
+if (layer2Vocabulary.length !== 10) fail('ai-layer2-vocabulary-count', `Expected 10 Vocabulary Layer 2 items; found ${layer2Vocabulary.length}.`);
+if (AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length !== 106) fail('ai-layer2-total', AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.length);
 if (AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length !== 12) fail('ai-layer3-total', AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.length);
 
 const practice = AI_ANSWER_LAYER_3_PRACTICE_ACTIONS.find((item) => item.id === 'practice-vocabulary');
@@ -84,7 +91,7 @@ else {
 for (const page of VOCABULARY_AUTHORITY_PAGES) {
   const words = knowledgeWordCount(page);
   if (!page.publicationApproved) fail('publication-approved', page.id);
-  if (page.publicationBatch !== 'gv4-first-authority-batch') fail('publication-batch', page.id);
+  if (!['gv4-first-authority-batch', 'gv5-natural-english-transfer'].includes(page.publicationBatch)) fail('publication-batch', page.id);
   if (words < 600) fail('knowledge-depth', `${page.id}: ${words}`);
   if ((page.sources || []).length < 2) fail('reference-depth', page.id);
   if (new Set((page.sources || []).map((source) => source.url)).size !== page.sources.length) fail('reference-duplicates', page.id);
@@ -156,7 +163,7 @@ if (process.argv.includes('--dist')) {
   } else {
     const ai = JSON.parse(fs.readFileSync(aiPath, 'utf8'));
     const vocabularyCorpus = ai.corpus?.vocabulary_authority_guides || [];
-    if (vocabularyCorpus.length !== 6) fail('ai-corpus-count', vocabularyCorpus.length);
+    if (vocabularyCorpus.length !== 10) fail('ai-corpus-count', vocabularyCorpus.length);
     for (const page of VOCABULARY_AUTHORITY_PAGES) {
       const item = vocabularyCorpus.find((entry) => entry.canonical_url === `https://tinystepslearning.com${page.path}`);
       if (!item) {
@@ -171,7 +178,7 @@ if (process.argv.includes('--dist')) {
 }
 
 const report = {
-  brick: 'GV4',
+  brick: 'GV4-preservation-under-GV5',
   revision: VOCABULARY_AUTHORITY_REVISION,
   vocabularyStages: VOCABULARY_KNOWLEDGE_STAGES.length,
   authorityRequirements: VOCABULARY_AUTHORITY_REQUIREMENTS.length,

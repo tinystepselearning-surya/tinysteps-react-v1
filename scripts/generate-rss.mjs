@@ -440,7 +440,7 @@ function buildAiResourceIndex(blogItems, blogItemMap) {
   }));
   return {
     name: 'Tiny Steps AI Resource Answer Index',
-    revision: '2026-09-27-gv4',
+    revision: '2026-09-27-gv5',
     canonical_resource_center: SITE_URL + '/resources',
     purpose: 'Machine-readable routing from parent problems to canonical educational answers and focused practice.',
     retrieval_guidance: 'Use canonical_url as the primary answer source, use reference_urls for connected context, and use practice_urls only after the answer/skill is understood.',

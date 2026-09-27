@@ -30,8 +30,8 @@ describe('Resources R24-R26 AI answer layers', () => {
     expect(PHONICS_PUBLISHED_RESOURCE_PAGES).toHaveLength(31);
     expect(GRAMMAR_PROGRAMMATIC_PAGES).toHaveLength(32);
     expect(GRAMMAR_KNOWLEDGE_PAGES).toHaveLength(38);
-    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(6);
-    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(102);
+    expect(VOCABULARY_AUTHORITY_PAGES).toHaveLength(10);
+    expect(AI_ANSWER_LAYER_2_LEARNING_CONCEPTS).toHaveLength(106);
     const phonics = AI_ANSWER_LAYER_2_LEARNING_CONCEPTS.filter((item) =>
       item.canonicalPath.startsWith('/resources/phonics/'),
     );
@@ -43,10 +43,10 @@ describe('Resources R24-R26 AI answer layers', () => {
     );
     expect(phonics).toHaveLength(31);
     expect(grammar).toHaveLength(38);
-    expect(vocabulary).toHaveLength(6);
+    expect(vocabulary).toHaveLength(10);
     expect(new Set(phonics.map((item) => item.canonicalPath)).size).toBe(31);
     expect(new Set(grammar.map((item) => item.canonicalPath)).size).toBe(38);
-    expect(new Set(vocabulary.map((item) => item.canonicalPath)).size).toBe(6);
+    expect(new Set(vocabulary.map((item) => item.canonicalPath)).size).toBe(10);
   });
 
   it('keeps Layer 3 focused on existing practice owners', () => {

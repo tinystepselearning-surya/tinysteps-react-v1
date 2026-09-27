@@ -89,6 +89,24 @@ describe('Commercial C7-R1 knowledge to commercial owner mapping', () => {
     expect(held.every((mapping) => mapping.primaryCommercialOwner === null)).toBe(true);
   });
 
+  it('keeps GV5 Vocabulary transfer guides in soft discovery instead of inferring programme owners from their names', () => {
+    const paths = [
+      '/resources/vocabulary/collocations-for-kids',
+      '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
+      '/resources/vocabulary/vocabulary-for-better-writing',
+      '/resources/vocabulary/vocabulary-for-speaking-conversation',
+    ];
+
+    for (const path of paths) {
+      const mapping = getCommercialC7R1Mapping(path);
+      expect(mapping, path).not.toBeNull();
+      expect(mapping?.subjects, path).toContain('vocabulary');
+      expect(mapping?.primaryCommercialOwner, path).toBeNull();
+      expect(mapping?.ownerFamily, path).toBe('soft-discovery');
+      expect(mapping?.decision, path).toBe('HOLD_SOFT_DISCOVERY');
+    }
+  });
+
   it('preserves assessment-first journeys only where assessment already resolves an ambiguous need', () => {
     const assessmentFirst = COMMERCIAL_C7_R1_OWNER_MAPPINGS.filter((mapping) => mapping.decision === 'PRESERVE_ASSESSMENT_FIRST');
     expect(assessmentFirst.length).toBeGreaterThan(0);

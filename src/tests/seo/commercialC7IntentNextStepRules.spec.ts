@@ -40,6 +40,24 @@ describe('Commercial C7-R2 intent next-step rules', () => {
     }
   });
 
+  it('keeps GV5 Vocabulary transfer guides free of commercial destinations', () => {
+    const paths = [
+      '/resources/vocabulary/collocations-for-kids',
+      '/resources/vocabulary/phrasal-verbs-common-expressions-for-kids',
+      '/resources/vocabulary/vocabulary-for-better-writing',
+      '/resources/vocabulary/vocabulary-for-speaking-conversation',
+    ];
+
+    for (const path of paths) {
+      const rule = getCommercialC7R2NextStepRule(path);
+      expect(rule, path).not.toBeNull();
+      expect(rule?.ruleClass, path).toBe('SOFT_DISCOVERY');
+      expect(rule?.primaryDestination, path).toBeNull();
+      expect(rule?.secondaryDestination, path).toBeNull();
+      expect(rule?.maxCommercialPrompts, path).toBe(0);
+    }
+  });
+
   it('routes the broad-English buyer guide to the frozen broad-English owner without bypassing into assessment', () => {
     const rule = getCommercialC7R2NextStepRule('/blog/online-english-classes-for-kids-india');
     expect(rule?.ruleClass).toBe('OWNER_HANDOFF');
