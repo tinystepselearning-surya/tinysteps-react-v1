@@ -421,7 +421,7 @@ export const VOCABULARY_AUTHORITY_PAGES = freezeList([
       },
     ],
     sourceIds: ['cambridge-word-formation', 'ies-foundational-vocabulary', 'british-council-vocabulary-overview'],
-    relatedPaths: ['/resources/grammar/word-formation-prefixes-suffixes-for-kids', '/free-spelling-game-for-kids', '/reading-classes-for-kids'],
+    relatedPaths: ['/resources/grammar/nouns-for-kids', '/free-spelling-game-for-kids', '/reading-classes-for-kids'],
     featuredWordIds: ['happy', 'read', 'write', 'teacher', 'practice'],
   }),
 ]);
