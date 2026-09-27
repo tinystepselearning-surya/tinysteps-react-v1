@@ -88,7 +88,14 @@ describe('Grammar, Reading and Speaking AI visibility hardening', () => {
     for (const source of [grammarSource, readingSource, speakingSource]) {
       expect(source).toContain('ProgrammeIntentBoundary');
       expect(source).toContain('getProgrammeAiVisibility');
+      expect(source).toContain('ProgrammeHeroSnapshot');
+      expect(source).toContain('title="What this programme builds"');
     }
+
+    expect(grammarSource).not.toContain('grammarPyramidLevels');
+    expect(speakingSource).not.toContain('speakingPyramidLevels');
+    expect(grammarSource).not.toContain('GRAMMAR JOURNEY PREVIEW');
+    expect(speakingSource).not.toContain('SPEAKING JOURNEY PREVIEW');
   });
 
   it('keeps Ask Tiny Steps retrieval specific to the canonical programme owners', () => {
