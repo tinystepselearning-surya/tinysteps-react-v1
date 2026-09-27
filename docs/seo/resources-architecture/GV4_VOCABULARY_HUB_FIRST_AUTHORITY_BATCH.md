@@ -160,7 +160,7 @@ GV4 creates seven new Vocabulary ownership records:
 - one `vocabulary-resource-discovery` owner for `/resources/vocabulary`;
 - six `gv4-vocabulary-*` skill-guide owners.
 
-The canonical registry uses the existing `general-english` subject family rather than adding a new cross-system subject enum.
+The canonical registry uses a dedicated `vocabulary-language` subject family. This deliberately keeps Vocabulary knowledge separate from the frozen C7 `general-english` commercial chooser logic, so publishing Vocabulary does not create implicit broad-English programme handoffs.
 
 The six child pages are governed informational owners under the Vocabulary hub.
 
