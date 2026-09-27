@@ -43,9 +43,9 @@ describe('C7 verified post-freeze SEO boundary', () => {
   it('pins only independently reviewed Git blob versions', () => {
     expect(REVIEWED_SEO_RECOVERY_BLOBS).toEqual({
       [authorityPath]: 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
-      [comparisonPath]: '21ec5766587f1635227d718401e705e4a6affa81',
+      [comparisonPath]: 'd596928ee258a70f375dd66aa1054e52c0252d78',
       [subjectHubPath]: '665c15035d57085afe9ffc7d194753da506b824a',
-      [phonicsPath]: 'c2378e822fcf65e1c9aaa51ab02d07493f5fa507',
+      [phonicsPath]: '5eb38c8670a1dd1c1c6e28f04a01c8edfb6bee4f',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
       [canonicalOwnershipPath]: '5fc9ce94d7d08c2d76c6bcc1f96c13c390e9fffe',
       [schoolsPath]: '7be826c4fb422a5d022884607f340d3179d9ee25',

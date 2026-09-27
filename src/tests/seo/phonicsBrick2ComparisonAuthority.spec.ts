@@ -65,6 +65,19 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(page).toContain('No single provider format is automatically best for every child.');
   });
 
+  it('covers personalized tutoring workflows and lesson pacing without taking pricing ownership', () => {
+    const page = read('src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx');
+
+    expect(page).toContain('const personalizationWorkflowChecks = [');
+    expect(page).toContain('const pacingQuestions = [');
+    expect(page).toContain('How to tell whether a phonics plan is genuinely personalized');
+    expect(page).toContain('Questions to ask before accepting a fixed weekly schedule');
+    expect(page).toContain('#personalized-tutoring-workflow');
+    expect(page).toContain('#phonics-frequency-pacing-questions');
+    expect(page).toContain('There is no universal lesson count that is automatically right for every child.');
+    expect(page).toContain('to="/phonics-fees-india"');
+  });
+
   it('maps Tiny Steps claims to inspectable proof routes', () => {
     const page = read('src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx');
 

@@ -66,6 +66,42 @@ const comparisonFormats = [
   },
 ];
 
+const personalizationWorkflowChecks = [
+  {
+    title: 'Assessment before placement',
+    detail: 'A provider should sample the child’s current sound–print knowledge, blending, fresh-word decoding, spelling and connected reading before recommending a level.',
+  },
+  {
+    title: 'A named bottleneck',
+    detail: 'Parents should be told which earliest recurring difficulty is limiting progress instead of hearing only a broad label such as “weak reading”.',
+  },
+  {
+    title: 'A reason for the next target',
+    detail: 'The next lesson focus should follow from the assessed bottleneck and the programme sequence, not simply from age, package order or the next worksheet.',
+  },
+  {
+    title: 'Transfer checks on fresh examples',
+    detail: 'The teacher should check whether a taught skill works on an unfamiliar but appropriate word, spelling task or matched piece of text.',
+  },
+  {
+    title: 'A rule for changing the plan',
+    detail: 'Parents should know what evidence would make the teacher move ahead, review a prerequisite, slow the pace or change practice intensity.',
+  },
+  {
+    title: 'Progress reported as reading behaviour',
+    detail: 'Updates should describe what the child can now do more independently and what the next bottleneck or target is, not only how many lessons were completed.',
+  },
+];
+
+const pacingQuestions = [
+  'How was the recommended weekly lesson frequency chosen for this child?',
+  'What home practice is useful between lessons, and what should parents avoid adding?',
+  'What evidence would make the teacher slow down, repeat a prerequisite or move ahead?',
+  'How is retention checked after a gap rather than only within the same lesson?',
+  'Does the programme use fresh words or matched text to check transfer before adding complexity?',
+  'If the child misses a week, how is earlier knowledge reviewed before new content is added?',
+];
+
 const providerScorecard = [
   'Placement is based on current reading and spelling behaviour, not age alone.',
   'The provider can explain the child’s main bottleneck in plain language.',
@@ -348,6 +384,32 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         name: item,
       })),
     };
+    const personalizationSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#personalized-tutoring-workflow`,
+      name: 'How parents can evaluate personalized phonics tutoring',
+      itemListElement: personalizationWorkflowChecks.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: item.title,
+          description: item.detail,
+        },
+      })),
+    };
+    const pacingSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#phonics-frequency-pacing-questions`,
+      name: 'Questions to ask about phonics lesson frequency and pacing',
+      itemListElement: pacingQuestions.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item,
+      })),
+    };
 
     const faqSchema = {
       ...createFAQPageSchema(faqItems),
@@ -375,7 +437,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       canonicalPath,
       ogType: routeConfig?.ogType ?? 'website',
       keywords: primaryIntentKeywords,
-      jsonLd: [breadcrumbSchema, webpageSchema, decisionFrameworkSchema, scorecardSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, decisionFrameworkSchema, scorecardSchema, personalizationSchema, pacingSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
@@ -606,6 +668,50 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               </article>
             );
           })}
+        </div>
+      </Section>
+
+      <Section id="personalized-workflow" tint="lavender">
+        <SectionHeading eyebrow="Personalized tutoring workflow" title="How to tell whether a phonics plan is genuinely personalized">
+          <p>
+            Personalization should be visible in the teaching process, not only in a “1:1” label. A strong provider can explain what was assessed, which bottleneck was identified, why the next target was chosen, how transfer is checked and what evidence would change the plan.
+          </p>
+        </SectionHeading>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {personalizationWorkflowChecks.map((item, index) => {
+            const tone = premiumTones[index % premiumTones.length];
+            return (
+              <article
+                key={item.title}
+                className={`group relative overflow-hidden rounded-[26px] border p-5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-1 ${tone.card}`}
+              >
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}>
+                  {index + 1}
+                </span>
+                <h3 className="mt-4 text-lg font-bold text-slate-950">{item.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 rounded-[28px] border border-sky-200 bg-white p-5 shadow-sm sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Frequency and pacing</p>
+          <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">Questions to ask before accepting a fixed weekly schedule</h3>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
+            There is no universal lesson count that is automatically right for every child. Frequency should be justified by the child’s starting point, attention, retention, appropriate practice between lessons and whether taught knowledge transfers to fresh words and connected reading.
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {pacingQuestions.map((question, index) => (
+              <div key={question} className="flex gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
+                  {index + 1}
+                </span>
+                <p className="text-sm leading-6 text-slate-700">{question}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </Section>
 
