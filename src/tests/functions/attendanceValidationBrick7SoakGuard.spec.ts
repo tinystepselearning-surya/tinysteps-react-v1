@@ -42,7 +42,7 @@ describe('AVS Brick 7 production soak guardrails', () => {
     }
   });
 
-  it('does not add automation, realtime listeners, or another browser callable', () => {
+  it('does not add automation or realtime listeners, and lists the authorized callables', () => {
     for (const forbidden of [
       'onSchedule(',
       'setInterval(',
@@ -58,7 +58,7 @@ describe('AVS Brick 7 production soak guardrails', () => {
       callableContract.match(/'[^']+'/g)?.filter((value) =>
         value.includes('AttendanceValidation'),
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(5);
   });
 
   it('derives current re-fetch health from latest case checkpoints', () => {

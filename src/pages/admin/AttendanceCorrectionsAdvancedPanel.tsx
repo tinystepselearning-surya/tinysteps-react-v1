@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { callFunction } from '../../lib/callFunctions';
 import { Timestamp, collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { type FunctionsError, httpsCallable } from 'firebase/functions';
 import { Button } from '@components/ui/button';
@@ -896,10 +897,29 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     setSaving(true);
     try {
       await saveCorrection(selectedSessionId, selectedKidId, trimmedReason);
+      let avsRecheckIds: string[] | null = null;
+      let avsRecheckFailed = false;
+      if (avsAdminContext && !av7Context) {
+        try {
+          const recheck = await callFunction<{
+            ok: boolean; status: string; classSessionIds: string[];
+          }, { classSessionId: string; kidId: string }>(
+            'revalidateAttendanceValidationGroupCached',
+            { classSessionId: selectedSessionId, kidId: selectedKidId },
+          );
+          if (recheck.ok) avsRecheckIds = recheck.classSessionIds;
+          else avsRecheckFailed = true;
+        } catch (recheckError) {
+          console.error('AVS cached recheck failed after attendance correction', recheckError);
+          avsRecheckFailed = true;
+        }
+      }
       const financiallyNeutral = !teacherPayDecisionRequired && newStatus === 'present';
       toast({
         title: 'Attendance corrected',
-        description: financiallyNeutral
+        description: avsRecheckFailed
+          ? 'Attendance corrected. AVS recheck could not complete; refresh Tiny Steps validation again.'
+          : financiallyNeutral
           ? `Attendance corrected from ${previousStatus} to ${newStatus}. Existing financial records remain unchanged.`
           : teacherPayDecisionRequired
             ? teacherPayDisposition === 'retain_school'
@@ -911,7 +931,9 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       resetTeacherPayHandling();
       setReloadKey((value) => value + 1);
       if (av7Context || avsAdminContext) {
-        navigate('/surya?tab=attendance-validation', { replace: true });
+        const params = new URLSearchParams({ tab: 'attendance-validation' });
+        if (avsRecheckIds?.length) params.set('avsRechecked', avsRecheckIds.join(','));
+        navigate(`/surya?${params.toString()}`, { replace: true });
       }
     } catch (err) {
       const error = formatFunctionsError(err);

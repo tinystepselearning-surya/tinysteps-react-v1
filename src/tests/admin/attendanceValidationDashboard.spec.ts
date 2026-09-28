@@ -38,7 +38,8 @@ describe('AV6 admin attendance validation dashboard', () => {
   });
 
   it('does not auto-read AVS cases merely because the admin page opens', () => {
-    expect(dashboard).not.toContain('useEffect(');
+    expect(dashboard).toContain("searchParams.get('avsRechecked')");
+    expect(dashboard).toContain("getDoc(doc(db, 'attendanceValidationCases', id))");
     expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
     expect(dashboard).toContain('Opening this page does not read them automatically.');
     expect(dashboard).toContain('Display names may use bounded enrollment and teacher-user reads only');
@@ -213,12 +214,8 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
-  it('moves selected-range fresh Graph collection under Advanced and preserves Brick 4 generations', () => {
-    expect(dashboard).toContain('<summary className="cursor-pointer text-sm font-medium text-slate-700">');
-    expect(dashboard).toContain('Advanced');
-    expect(dashboard).toContain('Re-fetch Teams Data');
-    expect(dashboard).toContain('Continue Re-fetch');
-    expect(dashboard).toContain('Retry Failed Re-fetches');
+  it('keeps the old range callable for compatibility but removes its button', () => {
+    expect(dashboard).not.toContain('onClick={() => void forceFreshSelectedRange()}');
     expect(dashboard).toContain(
       "'forceRefreshAttendanceValidationRange'",
     );
@@ -231,13 +228,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
   });
 
-  it('adds row-level admin attendance actions without adding row-level Teams re-fetch controls', () => {
+  it('adds row-level attendance, cached recheck, and advanced Teams actions', () => {
     expect(businessView).toContain('Mark Present');
     expect(businessView).toContain('Mark Absent');
     expect(businessView).toContain("params.set('sessionId', item.classSessionId)");
     expect(businessView).toContain("params.set('kidId', item.kidId)");
     expect(businessView).toContain("params.set('enrollmentId', item.enrollmentId)");
     expect(businessView).not.toContain('Re-fetch this case');
+    expect(businessView).toContain('Refresh Tiny Steps');
+    expect(businessView).toContain('Advanced: Re-fetch Teams Evidence');
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
     );

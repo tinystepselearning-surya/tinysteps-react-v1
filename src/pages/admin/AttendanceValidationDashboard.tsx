@@ -1,8 +1,11 @@
 import { loadAvsParentOptions, loadAvsParentEnrollmentIds, loadAvsParentCases, type AvsParentOption } from '../../lib/attendanceValidationParentScope';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   collection,
+  doc,
   documentId,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -114,6 +117,7 @@ interface AvsForceFreshResponse {
   ok: boolean;
   caseId: string;
   classSessionId: string;
+  classSessionIds: string[];
   evidenceId: string;
   collectionStatus: string;
   issueKinds: string[];
@@ -228,6 +232,9 @@ interface Av6ValidationCase {
   attendanceCorrectionId: string | null;
   resolvedAt: string | null;
   resolvedByName: string | null;
+  resolutionDecision: string | null;
+  manualVerificationReason: string | null;
+  sourceBusinessOutcome: AvsBusinessOutcome | null;
 }
 
 function currentIstYmd(): string {
@@ -496,6 +503,12 @@ function normalizeCase(id: string, raw: Record<string, unknown>): Av6ValidationC
     attendanceCorrectionId: asText(raw.attendanceCorrectionId),
     resolvedAt: asText(raw.resolvedAt),
     resolvedByName: asText(raw.resolvedByName),
+    resolutionDecision: asText(raw.resolutionDecision),
+    manualVerificationReason: asText(raw.manualVerificationReason),
+    sourceBusinessOutcome: (() => {
+      const value = asText(raw.sourceBusinessOutcome);
+      return value === 'false_present' || value === 'false_absent' || value === 'verified' ? value : null;
+    })(),
   };
 }
 
@@ -678,6 +691,7 @@ function issueSummary(item: Av6ValidationCase): string[] {
 }
 
 export default function AttendanceValidationDashboard() {
+  const [searchParams] = useSearchParams();
   const [parentId, setParentId] = useState('all');
   const [parentSearch, setParentSearch] = useState('');
   const [parents, setParents] = useState<AvsParentOption[]>([]);
@@ -711,6 +725,26 @@ export default function AttendanceValidationDashboard() {
     useState<{ runId: string; fromDate: string; toDate: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
+  const loadedRecheckToken = useRef<string | null>(null);
+
+  const reloadExactCases = useCallback(async (ids: string[]) => {
+    const unique = [...new Set(ids)].filter((id) => id && !id.includes('/')).slice(0, 100);
+    const snapshots = await Promise.all(unique.map((id) => getDoc(doc(db, 'attendanceValidationCases', id))));
+    const updated = await enrichCaseDisplayNames(snapshots.filter((snap) => snap.exists())
+      .map((snap) => normalizeCase(snap.id, snap.data() as Record<string, unknown>)));
+    setCases((current) => [...updated, ...current.filter((item) => !unique.includes(item.id))]);
+    setLoadedRange((current) => current ?? { from: fromDate, to: toDate });
+    setLoadedAt(new Date());
+  }, [fromDate, toDate]);
+
+  useEffect(() => {
+    const token = searchParams.get('avsRechecked');
+    if (!token || token === loadedRecheckToken.current) return;
+    loadedRecheckToken.current = token;
+    const ids = token.split(',').filter(Boolean);
+    if (!ids.length) return;
+    void reloadExactCases(ids).catch((error) => setError(safeLoadResultsFailureMessage(error)));
+  }, [searchParams, reloadExactCases]);
 
   const loadSavedCases = useCallback(async (
     append = false,
@@ -839,11 +873,10 @@ export default function AttendanceValidationDashboard() {
   const forceFreshEvidence = useCallback(async (item: Av6ValidationCase) => {
     if (
       !item.inputFingerprint
-      || !item.evidenceId
       || !item.classSessionId
       || item.classSessionId !== item.id
     ) {
-      setError('Re-fetch this case is available only for an existing session-backed AVS case with cached evidence.');
+      setError('Re-fetch Teams Evidence requires an existing session-backed AVS case.');
       return;
     }
 
@@ -869,14 +902,14 @@ export default function AttendanceValidationDashboard() {
 
       setForceFreshResult(result);
       setForceFreshCompletedAt(new Date());
-      await loadSavedCases(false, true);
+      await reloadExactCases(result.classSessionIds);
     } catch (forceFreshError) {
       console.error('[AVS] Re-fetch this case failed', forceFreshError);
       setError(safeForceFreshFailureMessage(forceFreshError));
     } finally {
       setForceFreshCaseId(null);
     }
-  }, [loadSavedCases]);
+  }, [reloadExactCases]);
 
   const forceFreshSelectedRange = useCallback(async () => {
     if (parentId !== 'all') return;
@@ -1087,46 +1120,6 @@ export default function AttendanceValidationDashboard() {
         <p className="mt-1 text-xs text-slate-500">
           Run Validation is capped at 31 completed service days and 100 sessions per invocation. Fresh Microsoft Graph reads occur only when the unified backend determines they are required.
         </p>
-
-        <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
-          <summary className="cursor-pointer text-sm font-medium text-slate-700">
-            Advanced
-          </summary>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-slate-500">
-              {parentId !== 'all' ? 'Re-fetch Teams Data is disabled while a parent is selected. Use Run Validation for this parent.' : 'Re-fetch Teams Data intentionally ignores cached Teams evidence for existing AVS cases.'} Use it only when you explicitly want new Microsoft Graph evidence for this range.
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void forceFreshSelectedRange()}
-              disabled={
-                parentId !== 'all' || loading
-                || loadingMore
-                || validationRunning
-                || forceFreshRangeRunning
-                || forceFreshCaseId !== null
-              }
-              title="Advanced: start or continue a fresh Teams evidence generation for the selected range."
-              className="shrink-0"
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${forceFreshRangeRunning ? 'animate-spin' : ''}`}
-              />
-              {forceFreshRangeRunning
-                ? 'Re-fetching Teams data…'
-                : forceFreshRangeResult?.fromDate === fromDate
-                  && forceFreshRangeResult?.toDate === toDate
-                  && forceFreshRangeResult.status === 'complete_with_failures'
-                  && forceFreshRangeResult.retryableFailures
-                  ? 'Retry Failed Re-fetches'
-                  : forceFreshRangeGeneration?.fromDate === fromDate
-                    && forceFreshRangeGeneration?.toDate === toDate
-                    ? 'Continue Re-fetch'
-                    : 'Re-fetch Teams Data'}
-            </Button>
-          </div>
-        </details>
 
         {loadedRange && loadedAt && (
           <p className="mt-2 text-xs text-slate-500">
@@ -1341,7 +1334,33 @@ export default function AttendanceValidationDashboard() {
         </Card>
       ) : (
         <Card className="p-4">
-          <AttendanceValidationBusinessView cases={cases} />
+          <AttendanceValidationBusinessView cases={cases}
+            onRecheck={async (item) => {
+              if (!item.classSessionId || !item.kidId) return;
+              try {
+                const result = await callFunction<{ ok: boolean; status: string; classSessionIds: string[] },
+                  { classSessionId: string; kidId: string }>('revalidateAttendanceValidationGroupCached',
+                    { classSessionId: item.classSessionId, kidId: item.kidId });
+                if (!result.ok) {
+                  setError('Fresh Teams evidence required. Inspect the session and use Advanced: Re-fetch Teams Evidence.');
+                  return;
+                }
+                await reloadExactCases(result.classSessionIds);
+              } catch (recheckError) { setError(safeRunValidationFailureMessage(recheckError)); }
+            }}
+            onRefetch={async (item) => {
+              const fullCase = cases.find((candidate) => candidate.id === item.id);
+              if (fullCase) await forceFreshEvidence(fullCase);
+            }}
+            onVerify={async (item, reason) => {
+              if (!item.classSessionId || !item.kidId) return;
+              try {
+                const result = await callFunction<{ classSessionIds: string[] },
+                  { classSessionId: string; kidId: string; reason: string }>('adminVerifyAttendanceValidationGroup',
+                    { classSessionId: item.classSessionId, kidId: item.kidId, reason });
+                await reloadExactCases(result.classSessionIds);
+              } catch (verifyError) { setError(safeRunValidationFailureMessage(verifyError)); }
+            }} />
         </Card>
       )}
 

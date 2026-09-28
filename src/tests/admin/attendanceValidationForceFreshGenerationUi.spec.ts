@@ -10,27 +10,9 @@ const dashboard = fs.readFileSync(
   'utf8',
 );
 
-describe('AVS Brick 4 Force Fresh generation UI compatibility', () => {
-  it('creates an explicit generation id before the first backend call', () => {
-    expect(dashboard).toContain('crypto.randomUUID()');
-    expect(dashboard).toContain('forceFreshRangeGeneration');
-    expect(dashboard).toContain('{ fromDate, toDate, runId, retryFailures }');
-  });
-
-  it('retains the generation id after a timeout so the next call resumes', () => {
-    expect(dashboard).toContain(
-      'setForceFreshRangeGeneration({ runId, fromDate, toDate })',
-    );
-    expect(dashboard).toContain(
-      'Completed cases are checkpointed and will not be repeated.',
-    );
-  });
-
-  it('supports retrying failures and rerunning a completed date range as a new generation', () => {
-    expect(dashboard).toContain("'Retry Failed Re-fetches'");
-    expect(dashboard).toContain("'Re-fetch Teams Data'");
-    expect(dashboard).not.toContain(
-      '&& forceFreshRangeResult.complete\n                )',
-    );
+describe('AVS range re-fetch UI deprecation', () => {
+  it('has no broad range re-fetch button', () => {
+    expect(dashboard).not.toContain('onClick={() => void forceFreshSelectedRange()}');
+    expect(dashboard).toContain('onRefetch={async (item) =>');
   });
 });
