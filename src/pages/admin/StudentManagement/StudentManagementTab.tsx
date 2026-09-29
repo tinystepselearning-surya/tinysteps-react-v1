@@ -25,7 +25,7 @@ import { normalizeEnrollmentStatus } from '../../../lib/statuses';
 import StudentList from './StudentList';
 import CreateStudentForm from './CreateStudentForm';
 import EditStudentForm from './EditStudentForm';
-import AssignCourseModal from './AssignCourseModal';
+import AdmissionSetupWizard from './AdmissionSetupWizard';
 import EnrollmentsList from '../EnrollmentManagement/EnrollmentsList';
 import EnrollmentDetailView from '../EnrollmentManagement/EnrollmentDetailView';
 import type { Student } from '../../../types/Student';
@@ -130,6 +130,12 @@ const isActiveLikeEnrollment = (enrollment: Record<string, unknown>): boolean =>
   return !PAST_ENROLLMENT_STATUSES.has(status);
 };
 
+const isOperationalEnrollment = (enrollment: Record<string, unknown>): boolean => {
+  if (!isActiveLikeEnrollment(enrollment)) return false;
+  const status = normalizeEnrollmentStatus(enrollment.status);
+  return status === 'active' || status === 'trial';
+};
+
 const getStudentDisplayName = (student: StudentRecord): string => {
   const value =
     student.fullName ||
@@ -166,7 +172,13 @@ export default function StudentManagementTab() {
   const activeSummaryFocus = resolveSummaryFocus(location.search);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [showAssignCourseModal, setShowAssignCourseModal] = useState(false);
+  const [wizardLaunch, setWizardLaunch] = useState<{
+    student: Student;
+    creationIntent: 'initial_course' | 'additional_course';
+    enrollmentId?: string | null;
+    excludedCourseIds: string[];
+  } | null>(null);
+  const [manageCoursesStudent, setManageCoursesStudent] = useState<Student | null>(null);
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -216,10 +228,10 @@ export default function StudentManagementTab() {
           .map((student) => String(student.id || '').trim())
           .filter(Boolean),
       );
-      const activeEnrollments = latestEnrollments.filter((enrollment) => isActiveLikeEnrollment(enrollment));
+      const activeEnrollments = latestEnrollments.filter((enrollment) => isOperationalEnrollment(enrollment));
       const activeEnrolledStudentIds = new Set<string>();
 
-      activeEnrollments.forEach((enrollment) => {
+      courseSlotEnrollments.forEach((enrollment) => {
         collectEnrollmentStudentIds(enrollment).forEach((studentId) => {
           if (activeStudentIds.has(studentId)) activeEnrolledStudentIds.add(studentId);
         });
@@ -278,8 +290,13 @@ export default function StudentManagementTab() {
     };
   }, []);
 
-  const activeEnrollments = useMemo(
+  const courseSlotEnrollments = useMemo(
     () => enrollmentRecords.filter((enrollment) => isActiveLikeEnrollment(enrollment)),
+    [enrollmentRecords],
+  );
+
+  const activeEnrollments = useMemo(
+    () => enrollmentRecords.filter((enrollment) => isOperationalEnrollment(enrollment)),
     [enrollmentRecords],
   );
 
@@ -299,7 +316,7 @@ export default function StudentManagementTab() {
       });
     });
     return map;
-  }, [activeEnrollments]);
+  }, [courseSlotEnrollments]);
 
   const switchView = (nextView: ManagementView) => {
     const params = new URLSearchParams(location.search);
@@ -328,8 +345,21 @@ export default function StudentManagementTab() {
     navigate(`${basePath}?${params.toString()}`, { replace: true });
   };
 
-  const handleStudentCreated = () => {
+  const handleStudentCreated = async (studentId: string) => {
     setRefreshKey(k => k + 1);
+    try {
+      const snap = await getDoc(doc(db, 'kids', studentId));
+      if (!snap.exists()) return;
+      const student = { id: snap.id, ...(snap.data() as Record<string, unknown>) } as unknown as Student;
+      setWizardLaunch({
+        student,
+        creationIntent: 'initial_course',
+        enrollmentId: null,
+        excludedCourseIds: [],
+      });
+    } catch (err) {
+      console.error('[StudentManagement] unable to open admission setup after student creation', err);
+    }
   };
 
   const handleEditStudent = (student: Student) => {
@@ -338,8 +368,47 @@ export default function StudentManagementTab() {
   };
 
   const handleAssignCourse = (student: Student) => {
-    setSelectedStudent(student);
-    setShowAssignCourseModal(true);
+    const linked = activeEnrollmentsByStudentId.get(String(student.id || '').trim()) || [];
+    const setupPending = linked.find(
+      (enrollment) => normalizeEnrollmentStatus(enrollment.status) === 'setup_pending',
+    );
+    if (setupPending) {
+      setWizardLaunch({
+        student,
+        creationIntent: setupPending.creationIntent === 'additional_course'
+          ? 'additional_course'
+          : 'initial_course',
+        enrollmentId: setupPending.id,
+        excludedCourseIds: linked
+          .filter((row) => row.id !== setupPending.id)
+          .map((row) => String(row.courseId || '').trim())
+          .filter(Boolean),
+      });
+      return;
+    }
+    if (linked.length === 0) {
+      setWizardLaunch({
+        student,
+        creationIntent: 'initial_course',
+        enrollmentId: null,
+        excludedCourseIds: [],
+      });
+      return;
+    }
+    setManageCoursesStudent(student);
+  };
+
+  const startAdditionalCourseSetup = (student: Student) => {
+    const linked = activeEnrollmentsByStudentId.get(String(student.id || '').trim()) || [];
+    setManageCoursesStudent(null);
+    setWizardLaunch({
+      student,
+      creationIntent: 'additional_course',
+      enrollmentId: null,
+      excludedCourseIds: linked
+        .map((row) => String(row.courseId || '').trim())
+        .filter(Boolean),
+    });
   };
 
   const handleArchiveStudent = async (studentId: string) => {
@@ -545,6 +614,10 @@ export default function StudentManagementTab() {
                 const student = studentRecord as unknown as Student;
                 const active = isActiveCanonicalStudent(studentRecord);
                 const linkedEnrollments = activeEnrollmentsByStudentId.get(studentRecord.id) || [];
+                const setupPendingEnrollment = linkedEnrollments.find(
+                  (row) => normalizeEnrollmentStatus(row.status) === 'setup_pending',
+                );
+                const operationalCount = linkedEnrollments.filter(isOperationalEnrollment).length;
                 const grade = getStudentGrade(studentRecord);
 
                 return (
@@ -565,9 +638,14 @@ export default function StudentManagementTab() {
                         <span className="font-medium text-amber-700">No active enrollment</span>
                       ) : (
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline">
-                            {linkedEnrollments.length} active
-                          </Badge>
+                          {operationalCount > 0 ? (
+                            <Badge variant="outline">
+                              {operationalCount} active
+                            </Badge>
+                          ) : null}
+                          {setupPendingEnrollment ? (
+                            <Badge variant="secondary">Setup incomplete</Badge>
+                          ) : null}
                           {linkedEnrollments.slice(0, 3).map((enrollment, index) => (
                             <Button
                               key={enrollment.id}
@@ -594,7 +672,11 @@ export default function StudentManagementTab() {
                             size="sm"
                             onClick={() => handleAssignCourse(student)}
                           >
-                            {linkedEnrollments.length === 0 ? 'Create enrollment' : 'Add enrollment'}
+                            {setupPendingEnrollment
+                              ? 'Continue Setup'
+                              : linkedEnrollments.length === 0
+                                ? 'Set Up Admission'
+                                : 'Manage Courses'}
                           </Button>
                         )}
                         <Button
@@ -795,7 +877,7 @@ export default function StudentManagementTab() {
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <span>
-            Lifecycle-safe changes preserve history: teacher reassignment updates eligible future classes only, while a course change completes the current enrollment and creates a linked next enrollment instead of rewriting past attendance or finance records.
+            Lifecycle-safe changes preserve history: admission setup stays non-operational until completion; additional courses remain independent; course progression completes the old enrollment, while corrections discontinue the wrong assignment and create a linked corrected enrollment without rewriting historical attendance or finance records.
           </span>
         </div>
       </div>
@@ -840,13 +922,82 @@ export default function StudentManagementTab() {
         />
       )}
 
-      {selectedStudent && showAssignCourseModal && (
-        <AssignCourseModal
-          student={selectedStudent}
-          onClose={() => { setShowAssignCourseModal(false); setSelectedStudent(null); }}
-          onAssigned={() => { setShowAssignCourseModal(false); setSelectedStudent(null); setRefreshKey(k => k + 1); }}
+      {wizardLaunch ? (
+        <AdmissionSetupWizard
+          student={wizardLaunch.student}
+          creationIntent={wizardLaunch.creationIntent}
+          enrollmentId={wizardLaunch.enrollmentId}
+          excludedCourseIds={wizardLaunch.excludedCourseIds}
+          onClose={() => {
+            setWizardLaunch(null);
+            setRefreshKey(k => k + 1);
+          }}
+          onCompleted={() => {
+            setRefreshKey(k => k + 1);
+          }}
         />
-      )}
+      ) : null}
+
+      <Dialog
+        open={Boolean(manageCoursesStudent)}
+        onOpenChange={(open) => {
+          if (!open) setManageCoursesStudent(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Manage Courses</DialogTitle>
+          </DialogHeader>
+          {manageCoursesStudent ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-slate-50 p-3 text-sm">
+                <div className="font-medium">
+                  {(manageCoursesStudent as any).fullName || (manageCoursesStudent as any).name || manageCoursesStudent.id}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Add a separate course or open an existing enrollment to progress/correct its course.
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {(activeEnrollmentsByStudentId.get(String(manageCoursesStudent.id || '').trim()) || []).map((enrollment) => {
+                  const pending = normalizeEnrollmentStatus(enrollment.status) === 'setup_pending';
+                  return (
+                    <div key={enrollment.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                      <div className="min-w-0">
+                        <div className="font-medium">{getEnrollmentCourseLabel(enrollment)}</div>
+                        <div className="text-xs text-slate-500">
+                          {pending ? 'Setup incomplete' : getEnrollmentTeacherLabel(enrollment)}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={pending ? 'default' : 'outline'}
+                        onClick={() => {
+                          if (pending) {
+                            handleAssignCourse(manageCoursesStudent);
+                            setManageCoursesStudent(null);
+                          } else {
+                            setManageCoursesStudent(null);
+                            openEnrollmentDetails(enrollment.id);
+                          }
+                        }}
+                      >
+                        {pending ? 'Continue Setup' : 'Manage / Change Course'}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Button type="button" onClick={() => startAdditionalCourseSetup(manageCoursesStudent)}>
+                Add Additional Course
+              </Button>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={detailOpen}
