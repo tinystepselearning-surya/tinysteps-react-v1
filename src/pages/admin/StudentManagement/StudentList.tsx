@@ -24,7 +24,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Button } from '@components/ui/button';
 import { toast } from '@components/hooks/use-toast';
-import AssignCourseModal from './AssignCourseModal';
 import AssignTeacherModal from './AssignTeacherModal';
 import AssignLPModal from './AssignLPModal';
 import { Student } from '../../../types/Student';
@@ -1574,7 +1573,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(DEFAULT_PAGE_SIZE);
 
-  const [assignCourseFor, setAssignCourseFor] = useState<Student | null>(null);
   const [assignTeacherFor, setAssignTeacherFor] = useState<Student | null>(null);
   const [assignLPFor, setAssignLPFor] = useState<Student | null>(null);
   const [enrollmentDetailsFor, setEnrollmentDetailsFor] = useState<Student | null>(null);
@@ -3474,20 +3472,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           ) : null}
         </DialogContent>
       </Dialog>
-
-      {assignCourseFor && (
-        <AssignCourseModal
-          student={assignCourseFor}
-          creationIntent={(enrollmentsByStudent[assignCourseFor.id] || []).length > 0 ? 'additional_course' : 'initial_course'}
-          existingCourseIds={(enrollmentsByStudent[assignCourseFor.id] || [])
-            .map((enrollment) => String(enrollment.courseId || '').trim())
-            .filter(Boolean)}
-          onClose={() => setAssignCourseFor(null)}
-          onAssigned={() => {
-            void enrollmentsQuery.refetch();
-          }}
-        />
-      )}
 
       {assignTeacherFor && (
         <AssignTeacherModal
