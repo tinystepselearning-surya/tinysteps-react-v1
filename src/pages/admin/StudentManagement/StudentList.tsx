@@ -3352,7 +3352,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                         onClick={() => handleDeleteEnrollment(enrollment.id)}
                         disabled={!canManageEnrollmentDetails}
                       >
-                        Remove
+                        Discontinue
                       </Button>
                     </div>
                   ))}
@@ -3478,10 +3478,13 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       {assignCourseFor && (
         <AssignCourseModal
           student={assignCourseFor}
+          creationIntent={(enrollmentsByStudent[assignCourseFor.id] || []).length > 0 ? 'additional_course' : 'initial_course'}
+          existingCourseIds={(enrollmentsByStudent[assignCourseFor.id] || [])
+            .map((enrollment) => String(enrollment.courseId || '').trim())
+            .filter(Boolean)}
           onClose={() => setAssignCourseFor(null)}
           onAssigned={() => {
-            setAssignCourseFor(null);
-            enrollmentsQuery.refetch();
+            void enrollmentsQuery.refetch();
           }}
         />
       )}
