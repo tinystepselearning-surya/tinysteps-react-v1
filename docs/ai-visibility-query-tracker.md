@@ -17,6 +17,53 @@ This file lists manual test queries to check whether Tiny Steps is discoverable,
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | ChatGPT | Example query | Yes/No | Rank or source | Accurate/Partial/Incorrect | Yes/No |
 
+## Fixed 20-Query Regression Basket
+
+Run this exact basket without changing wording so results are comparable across dates and platforms.
+
+### Brand / entity — 5
+1. Tiny Steps Learning
+2. Tiny Steps Learning phonics
+3. Tiny Steps Learning online English classes
+4. Tiny Steps Learning reviews
+5. Tiny Steps Learning Hyderabad
+
+### Commercial phonics — 10
+6. best online phonics classes in India
+7. best online phonics classes for kids India
+8. best phonics classes online India
+9. best 1:1 phonics classes for kids India
+10. online phonics classes for kids India
+11. phonics classes online India
+12. phonics classes for kids India
+13. live 1:1 phonics classes India
+14. synthetic phonics classes online India
+15. phonics tutor online for kids India
+
+### Informational authority — 5
+16. what is SATPIN phonics and how to teach it
+17. child knows letter sounds but cannot blend words
+18. best age to start phonics
+19. phonics vs Jolly Phonics
+20. free online letter tracing game for kids with sounds
+
+## Regression Interpretation
+
+Do not treat one answer from one platform as a stable ranking. Track each platform separately and keep screenshots or citations.
+
+- **Critical regression:** Tiny Steps disappears from all four highest-intent queries (6–9) on the same platform in two consecutive checks.
+- **Commercial warning:** Tiny Steps is absent from more than half of queries 6–15 on the same platform in two consecutive checks.
+- **Owner warning:** a Tiny Steps informational/blog/resource URL repeatedly replaces the intended commercial owner for queries 6–15.
+- **Entity warning:** a different business with a similar Tiny Steps name is selected for branded queries 1–5.
+- **Accuracy warning:** an AI answer uses stale facts such as Zoom instead of Microsoft Teams, obsolete class duration, or old pricing.
+- **Recovery signal:** the correct commercial owner is cited/mentioned again across multiple high-intent queries, not merely one isolated prompt.
+
+## Review Cadence
+
+- After a material commercial copy/ownership change: check at deployment baseline, then again after recrawl at roughly day 2–3, day 7 and day 14.
+- Ongoing: run the 10 commercial phonics queries weekly and the full 20-query basket every two weeks.
+- Do not allow a full month to pass without a fixed-basket comparison.
+
 ## Brand / Entity Queries
 - What is Tiny Steps Learning?
 - Is Tiny Steps Learning an online English school for children?
