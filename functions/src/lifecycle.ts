@@ -458,7 +458,12 @@ export const createEnrollment = onCall({ region: REGION }, async (request) => {
   if (request.auth?.uid && !requestedKidId) {
     throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
   }
-  await ensureEnrollmentCreator(request.auth, requestedKidId);
+  const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
+  if (creationIntent === 'transition') {
+    await ensureAdmin(request.auth);
+  } else {
+    await ensureEnrollmentCreator(request.auth, requestedKidId);
+  }
   return createEnrollmentInternal(
     data,
     request.auth?.uid || 'admin',
