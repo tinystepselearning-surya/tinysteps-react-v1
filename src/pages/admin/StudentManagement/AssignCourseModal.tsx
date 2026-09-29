@@ -35,7 +35,9 @@ import { useAuthStore } from '../../../store/useAuthStore';
 interface Props {
   student: Student;
   onClose: () => void;
-  onAssigned?: () => void;
+  onAssigned?: (enrollmentId?: string) => void;
+  creationIntent?: 'initial_course' | 'additional_course';
+  existingCourseIds?: string[];
 }
 
 type Course = {
@@ -79,6 +81,8 @@ export default function AssignCourseModal({
   student,
   onClose,
   onAssigned,
+  creationIntent = 'initial_course',
+  existingCourseIds = [],
 }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selected, setSelected] = useState<string>('');
@@ -153,7 +157,9 @@ export default function AssignCourseModal({
     // Filter out intermediate-level grammar and speaking courses.
     // Business rule: Only basic → advanced progression is offered for these areas.
     // Intermediate tier is not part of the active curriculum offering.
+    const existingCourseIdSet = new Set(existingCourseIds.map((id) => String(id || '').trim()).filter(Boolean));
     const filteredCourses = courses.filter((course) => {
+      if (existingCourseIdSet.has(course.id)) return false;
       const id = String(course.id || '').toLowerCase();
       if (id.includes('intermediate-grammar') || id.includes('intermediate-public-speaking')) return false;
       const level = normalizeLevel(course.level || course.levelName);
@@ -184,7 +190,7 @@ export default function AssignCourseModal({
       const nameB = (b.name || b.title || b.id || '').toLowerCase();
       return nameA.localeCompare(nameB);
     });
-  }, [courses]);
+  }, [courses, existingCourseIds]);
 
   // For LP role: check if this LP is assigned to the student (async Firestore check).
   // Admin authorization is derived synchronously from user.role above.
@@ -308,8 +314,9 @@ export default function AssignCourseModal({
         sessionsPerMonthForFrequency(sessionFrequency);
       const billingCycle: 'monthly' = 'monthly';
       const creditsTotal = sessionsPerMonth; // 1-month worth of sessions
-      await createEnrollment({
+      const created = await createEnrollment({
         operationId: `assign-course-${crypto.randomUUID()}`,
+        creationIntent,
         kidId: selectedKidId,
         courseId: selected,
         feePerClass,
@@ -324,7 +331,7 @@ export default function AssignCourseModal({
         title: 'Assigned',
         description: 'Course assigned to student.',
       });
-      onAssigned?.();
+      onAssigned?.(created.enrollmentId);
       onClose();
     } catch (err: unknown) {
       console.error(err);
@@ -351,7 +358,9 @@ export default function AssignCourseModal({
             Assign Course to {studentName}
           </DialogTitle>
           <DialogDescription>
-            Choose a course for this student and create an enrollment.
+            {creationIntent === 'additional_course'
+              ? 'Add an independent additional course without changing existing enrollments.'
+              : 'Assign the first course and create the student enrollment.'}
             Only Admins and the assigned Learning Partner can perform
             this action.
           </DialogDescription>
@@ -438,7 +447,7 @@ export default function AssignCourseModal({
             onClick={handleAssign}
             disabled={!canAssign || saving || !selected || coursesLoading}
           >
-            {saving ? 'Assigning…' : 'Assign Course'}
+            {saving ? 'Assigning…' : creationIntent === 'additional_course' ? 'Add Course' : 'Assign Course'}
           </Button>
         </DialogFooter>
       </DialogContent>
