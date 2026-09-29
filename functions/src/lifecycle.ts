@@ -497,7 +497,7 @@ export const saveEnrollmentSetupDraft = onCall({ region: REGION }, async (reques
     throw new HttpsError('invalid-argument', 'scheduleDraft must be an object');
   }
 
-  const scheduleDraft = scheduleDraftRaw
+  const scheduleDraft: Record<string, unknown> | null = scheduleDraftRaw
     ? removeUndefinedDeep({
         enrollmentStartDate: toOptionalId((scheduleDraftRaw as Record<string, unknown>).enrollmentStartDate),
         classesStartDate: toOptionalId((scheduleDraftRaw as Record<string, unknown>).classesStartDate),
@@ -515,7 +515,7 @@ export const saveEnrollmentSetupDraft = onCall({ region: REGION }, async (reques
                 };
               })
           : [],
-      })
+      }) as Record<string, unknown>
     : null;
 
   if (scheduleDraft) {
