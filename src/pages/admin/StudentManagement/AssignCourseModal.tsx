@@ -732,11 +732,7 @@ export default function AssignCourseModal({
             >
               Back
             </Button>
-            {createdEnrollmentId && step >= 3 && step < 5 && (
-              <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-                Save & Exit
-              </Button>
-            )}
+
           </div>
 
           <div className="flex gap-2">
@@ -756,14 +752,32 @@ export default function AssignCourseModal({
               </>
             )}
             {step === 3 && (
-              <Button onClick={() => void saveTeacherAndContinue(false)} disabled={saving || !selectedTeacherId}>
-                {saving ? 'Saving…' : teacherSaved ? 'Continue to Schedule' : 'Save Teacher & Continue'}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => void saveTeacherAndContinue(true)}
+                  disabled={saving || !selectedTeacherId}
+                >
+                  {saving ? 'Saving…' : 'Save Teacher & Exit'}
+                </Button>
+                <Button onClick={() => void saveTeacherAndContinue(false)} disabled={saving || !selectedTeacherId}>
+                  {saving ? 'Saving…' : teacherSaved ? 'Continue to Schedule' : 'Save Teacher & Continue'}
+                </Button>
+              </>
             )}
             {step === 4 && (
-              <Button onClick={() => void saveScheduleAndContinue(false)} disabled={saving || !teacherSaved}>
-                {saving ? 'Saving…' : scheduleSaved ? 'Continue to Review' : 'Save Schedule & Continue'}
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => void saveScheduleAndContinue(true)}
+                  disabled={saving || !teacherSaved}
+                >
+                  {saving ? 'Saving…' : 'Save Schedule & Exit'}
+                </Button>
+                <Button onClick={() => void saveScheduleAndContinue(false)} disabled={saving || !teacherSaved}>
+                  {saving ? 'Saving…' : scheduleSaved ? 'Continue to Review' : 'Save Schedule & Continue'}
+                </Button>
+              </>
             )}
             {step === 5 && (
               <Button onClick={closeFinished}>Complete Setup</Button>
