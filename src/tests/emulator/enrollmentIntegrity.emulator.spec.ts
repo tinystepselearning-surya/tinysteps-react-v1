@@ -518,10 +518,8 @@ describe('Firestore Emulator course transition state machine', () => {
       joinUrl: 'https://teams.example.test/server-owned-class',
     });
     const result = await callFunction<Record<string, unknown>, { state: string; newEnrollmentId: string }>(
-      'transitionEnrollmentCourse', {
-        ...transitionInput(operationId, foundationsId),
-        joinUrl: 'https://teams.example.test/untrusted-override',
-      },
+      'transitionEnrollmentCourse',
+      transitionInput(operationId, foundationsId),
     );
 
     expect(result.state).toBe('complete');
@@ -554,6 +552,44 @@ describe('Firestore Emulator course transition state machine', () => {
     expect(transition.data()?.state).toBe('complete');
     const audits = await adminDb.collection('auditLogs').where('operationId', '==', operationId).get();
     expect(audits.docs.some((row) => row.data().type === 'enrollment_course_transition_completed')).toBe(true);
+  });
+
+  it('uses a new Teams link when the admin supplies a valid replacement', async () => {
+    const operationId = 'transition-new-teams-link';
+    const { foundationsId } = await seedTransitionContext(operationId);
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      joinUrl: 'https://teams.example.test/existing-class',
+    });
+
+    const result = await callFunction<Record<string, unknown>, { newEnrollmentId: string }>(
+      'transitionEnrollmentCourse',
+      {
+        ...transitionInput(operationId, foundationsId),
+        joinUrl: 'https://teams.example.test/new-course-class',
+      },
+    );
+
+    const destination = await adminDb.collection('enrollments').doc(result.newEnrollmentId).get();
+    expect(destination.data()?.joinUrl).toBe('https://teams.example.test/new-course-class');
+
+    const transition = await adminDb.collection('enrollmentCourseTransitions').doc(operationId).get();
+    expect(transition.data()?.destinationJoinUrl).toBe('https://teams.example.test/new-course-class');
+  });
+
+  it('rejects an invalid replacement Teams link without changing the enrollment', async () => {
+    const operationId = 'transition-invalid-teams-link';
+    const { foundationsId } = await seedTransitionContext(operationId);
+
+    await expect(callFunction('transitionEnrollmentCourse', {
+      ...transitionInput(operationId, foundationsId),
+      joinUrl: 'ftp://invalid.example.test/class',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'invalid-argument');
+      return true;
+    });
+
+    expect((await adminDb.collection('enrollments').doc(foundationsId).get()).data()?.status).toBe('active');
+    expect((await adminDb.collection('enrollmentCourseTransitions').doc(operationId).get()).exists).toBe(false);
   });
 
   it('corrects a wrong course without completing it and carries only unused credits', async () => {
