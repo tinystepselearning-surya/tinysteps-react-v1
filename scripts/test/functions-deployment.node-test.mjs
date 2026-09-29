@@ -410,7 +410,7 @@ test('successful Functions rollout advances the production baseline only after t
   assert.match(workflow, /permissions:\n\s+contents: write/);
   assert.match(workflow, /advance-production-marker\.sh ci\/functions-production/);
   assert.match(markerUpdater, /ci\/functions-production\|ci\/hosting-production\|ci\/firestore-rules-production\|ci\/firestore-indexes-production/);
-  assert.match(markerUpdater, /"force":true/);
+  assert.match(markerUpdater, /\\\"force\\\":true/);
 });
 
 test('main pushes compare Hosting and Firestore against their last successful production markers', () => {
