@@ -252,6 +252,7 @@ async function createEnrollmentInternal(
   const operationId = String(data.operationId || '').trim();
   const requestedKidId = String(data.kidId || data.studentId || '').trim();
   const requestedCourseId = String(data.courseId || '').trim();
+  const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
   if (!operationId || !requestedKidId || !requestedCourseId) {
     throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
   }
@@ -262,7 +263,11 @@ async function createEnrollmentInternal(
   const existingOperation = await operationRef.get();
   if (existingOperation.exists) {
     const data = existingOperation.data() || {};
-    if (data.kidId !== requestedKidId || data.courseId !== requestedCourseId) {
+    if (
+      data.kidId !== requestedKidId
+      || data.courseId !== requestedCourseId
+      || (data.creationIntent && data.creationIntent !== creationIntent)
+    ) {
       throw new HttpsError('already-exists', 'operationId was already used for a different enrollment request');
     }
     return { ok: true, enrollmentId: String(data.enrollmentId || ''), idempotentReplay: true };
@@ -281,7 +286,6 @@ async function createEnrollmentInternal(
   if (String(course.status || '').trim().toLowerCase() !== 'active') {
     throw new HttpsError('failed-precondition', 'Selected course is not active and cannot be assigned');
   }
-  const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
   const [existingOperational, allOperational] = await Promise.all([
     findOperationalSameCourseEnrollmentIds({
       db,
