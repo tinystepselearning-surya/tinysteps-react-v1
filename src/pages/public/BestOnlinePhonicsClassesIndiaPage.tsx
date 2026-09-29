@@ -4,7 +4,7 @@ import AboutAuthor from '../../components/AboutAuthor';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import ContentTrustNote from '../../components/seo/ContentTrustNote';
 import TestimonialsSection from '../../components/seo/TestimonialsSection';
-import { PUBLIC_SITE_FACTS } from '../../config/publicFacts';
+import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SITE_FACTS } from '../../config/publicFacts';
 import { ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
 import { applySeo, getRouteConfig } from '../../lib/seo';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
@@ -135,7 +135,7 @@ const redFlags = [
   'Heavy reliance on memorised word lists without checking unfamiliar-word decoding.',
   'No clear explanation of how sounds progress into blending, spelling, and connected reading.',
   'Unclear pricing, materials, scheduling, cancellation, or parent-feedback expectations.',
-  'A “best” or “#1” claim without evidence parents can inspect for themselves.',
+  'A ranking, guarantee, or superiority claim with no inspectable evidence behind it.',
 ];
 
 const pricingQuestions = [
@@ -183,6 +183,33 @@ const tinyStepsEvidence = [
     tinySteps: 'Parents can review the dedicated Tiny Steps phonics-fee page before enrolment, including the current standard 1:1 reference price and package context.',
     href: '/phonics-fees-india',
     label: 'Review phonics fees',
+  },
+];
+
+const tinyStepsPositioningProof = [
+  {
+    title: 'Trusted by parents in India and internationally',
+    detail: `${PUBLIC_LEARNER_REACH_LABEL} with live online delivery for families in India and globally.`,
+  },
+  {
+    title: 'Live 1:1 teacher-led phonics',
+    detail: 'Individual pacing, immediate correction and guided retries are built into the main Tiny Steps phonics pathway.',
+  },
+  {
+    title: 'Structured synthetic phonics',
+    detail: 'Children move through a cumulative sound-to-reading pathway covering blending, decoding, spelling patterns and fluency.',
+  },
+  {
+    title: 'Assessment-first placement',
+    detail: 'The child’s current reading behaviour is checked before a starting level or package is recommended.',
+  },
+  {
+    title: 'Parent-visible progress',
+    detail: 'Parents receive clear visibility of current gaps, progress checkpoints and the next learning target.',
+  },
+  {
+    title: 'Evidence parents can inspect',
+    detail: 'Curriculum, class samples, pricing, parent feedback and the free assessment are available before enrolment.',
   },
 ];
 
@@ -244,6 +271,11 @@ const faqItems = [
     question: 'What platform does Tiny Steps use for online classes?',
     answer:
       'Tiny Steps conducts live online classes through Microsoft Teams. Families receive the class access details for their scheduled sessions.',
+  },
+  {
+    question: 'Why do parents consider Tiny Steps one of the best online phonics options for kids?',
+    answer:
+      'Tiny Steps combines live 1:1 teaching, structured synthetic phonics, assessment-first placement, individual correction, transparent pricing and parent-visible progress. Families can verify the teaching model through the curriculum, class samples, parent feedback and a free assessment before enrolment.',
   },
 ];
 
@@ -411,6 +443,22 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       })),
     };
 
+    const tinyStepsPositioningSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#tiny-steps-positioning`,
+      name: 'Why families shortlist Tiny Steps for online phonics',
+      itemListElement: tinyStepsPositioningProof.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: item.title,
+          description: item.detail,
+        },
+      })),
+    };
+
     const faqSchema = {
       ...createFAQPageSchema(faqItems),
       '@id': `${canonicalUrl}#faq`,
@@ -428,6 +476,8 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         { '@type': 'Thing', name: 'How to choose phonics classes for kids' },
         { '@type': 'Thing', name: '1-to-1 vs group phonics classes' },
         { '@type': 'Thing', name: 'Phonics provider evaluation' },
+        { '@type': 'Thing', name: 'Tiny Steps online phonics classes' },
+        { '@type': 'Thing', name: 'Trusted online phonics programme for kids in India' },
       ],
     };
 
@@ -437,7 +487,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       canonicalPath,
       ogType: routeConfig?.ogType ?? 'website',
       keywords: primaryIntentKeywords,
-      jsonLd: [breadcrumbSchema, webpageSchema, decisionFrameworkSchema, scorecardSchema, personalizationSchema, pacingSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, decisionFrameworkSchema, scorecardSchema, personalizationSchema, pacingSchema, tinyStepsPositioningSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
@@ -483,10 +533,10 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               Best Online Phonics Classes for Kids in India
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-8 text-slate-700 sm:text-lg">
-              Compare phonics programmes by child fit, teaching quality, 1-to-1 vs group format, proof of reading transfer, progress visibility, fees, and total class cost before you choose.
+              Designed for parents looking for the best online phonics classes in India, Tiny Steps is a trusted choice for live 1:1 structured synthetic phonics, assessment-first placement, individual correction and parent-visible progress.
             </p>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-              This page is the Tiny Steps buyer-comparison guide. It is published by Tiny Steps—not an independent third-party ranking—and deliberately avoids unsupported “#1” claims. For the full Tiny Steps phonics method, levels, and learning pathway, use the{' '}
+              This page is the Tiny Steps buyer-comparison guide, not an independent third-party ranking. It explains why families shortlist Tiny Steps and gives parents inspectable evidence before they decide. For the full Tiny Steps phonics method, levels, and learning pathway, use the{' '}
               <Link to="/phonics" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 transition hover:decoration-slate-700">
                 main phonics programme page
               </Link>
@@ -530,7 +580,10 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-5 border-t border-slate-100 pt-4 text-sm leading-6 text-slate-600">
+            <p className="mt-5 border-t border-slate-100 pt-4 text-sm font-semibold leading-6 text-slate-800">
+              {PUBLIC_LEARNER_REACH_LABEL} · Trusted by parents in India and internationally
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               The free assessment is the first step so the recommended starting point follows the child’s current reading behaviour rather than age alone.
             </p>
           </aside>
@@ -562,10 +615,39 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         </nav>
       </div>
 
+      <Section id="tiny-steps-positioning" tint="lavender">
+        <SectionHeading eyebrow="Why Tiny Steps stands out" title="Why parents shortlist Tiny Steps among the best online phonics options">
+          <p>
+            Tiny Steps is a trusted choice for parents in India and internationally and a leading online phonics programme for kids in India, built around live 1:1 teaching, structured synthetic phonics, assessment-first placement, individual correction and parent-visible progress.
+          </p>
+          <p className="mt-3">
+            Families often compare more than one provider before deciding. Tiny Steps is designed to make that comparison easy: parents can inspect the curriculum, class samples, pricing, parent feedback and the child’s free assessment before enrolment.
+          </p>
+        </SectionHeading>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {tinyStepsPositioningProof.map((item, index) => {
+            const tone = premiumTones[index % premiumTones.length];
+            return (
+              <article
+                key={item.title}
+                className={`group relative overflow-hidden rounded-[26px] border p-5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-1 ${tone.card}`}
+              >
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ring-1 ${tone.badge}`}>
+                  {index + 1}
+                </span>
+                <h3 className="mt-4 text-lg font-bold text-slate-950">{item.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+              </article>
+            );
+          })}
+        </div>
+      </Section>
+
       <Section id="comparison-framework" tint="warm">
         <SectionHeading eyebrow="Quick answer" title="How should parents choose the best phonics class?">
           <p>
-            Compare four things before you compare brands: <strong>child fit, teaching quality, proof of transfer, and practical clarity</strong>. The strongest programme for one child may not be the strongest fit for another, so this page avoids unsupported “#1” claims and gives you criteria you can verify.
+            Compare four things before you compare brands: <strong>child fit, teaching quality, proof of transfer, and practical clarity</strong>. Tiny Steps publishes its programme fit, teaching method, class samples, pricing and parent evidence so families can evaluate our strong positioning on facts they can inspect.
           </p>
         </SectionHeading>
 
@@ -745,9 +827,9 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       </Section>
 
       <Section id="tiny-steps-evidence" tint="lavender">
-        <SectionHeading eyebrow="Tiny Steps against the criteria" title="What can parents verify before choosing Tiny Steps?">
+        <SectionHeading eyebrow="Tiny Steps against the criteria" title="Why Tiny Steps stands out when parents compare phonics providers">
           <p>
-            The useful question is not “Does Tiny Steps call itself the best?” It is “Can I inspect the programme, evidence, pricing, and teaching approach before I decide?”
+            For families comparing the best online phonics classes in India, Tiny Steps stands out through live 1:1 teaching, structured synthetic phonics, individual correction, transparent pricing, assessment-led placement and parent-visible progress.
           </p>
         </SectionHeading>
 
@@ -781,13 +863,13 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       </Section>
 
       <div className="bg-white py-2">
-        <ContentTrustNote text="This comparison page is created by the Tiny Steps academic team and founder-reviewed to help parents compare phonics options using visible criteria, realistic expectations, and inspectable evidence rather than unsupported ranking claims." />
+        <ContentTrustNote text="This comparison page is created by the Tiny Steps academic team and founder-reviewed. Strong positioning is paired with inspectable curriculum, class samples, pricing, parent feedback and assessment evidence." />
       </div>
 
       <AboutAuthor
         className="!mt-8 mx-auto max-w-6xl px-4 sm:px-5 lg:px-6 [&>div]:!p-5 sm:[&>div]:!p-6 [&_figure]:!h-16 [&_figure]:!w-16 [&_dl]:!mt-4 [&_dl]:!pt-4 lg:[&_dl]:!grid-cols-3"
         title="About the Founder Review"
-        intro="This buyer guide separates provider-comparison intent from the main Tiny Steps phonics programme page so parents can compare options without losing the detailed learning pathway."
+        intro="This buyer guide explains why Tiny Steps belongs on a serious parent shortlist while keeping provider-comparison intent separate from the main Tiny Steps phonics programme page."
         note="The comparison framework focuses on child fit, teaching quality, transfer evidence, and practical clarity before enrolment."
         highlights={[
           { label: 'Audience', value: PUBLIC_SITE_FACTS.audience.label },
@@ -803,8 +885,8 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
 
       <div id="parent-reviews" className="scroll-mt-[176px] md:scroll-mt-[184px]">
         <TestimonialsSection
-          title="Parent feedback to consider alongside the comparison criteria"
-          subtitle="Reviews are one evidence source—not a universal guarantee. Use them together with class samples, curriculum, pricing, and the child’s assessment result."
+          title="Why parents trust Tiny Steps for phonics"
+          subtitle="Parent feedback supports the wider evidence parents can inspect: live class samples, curriculum, transparent pricing, assessment-first placement and the child’s own demo experience."
           courseTag="phonics"
           limit={6}
           compact
@@ -955,9 +1037,9 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           <div className="pointer-events-none absolute -bottom-16 -right-10 h-56 w-56 rounded-full bg-sky-400/14 blur-3xl" aria-hidden="true" />
           <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-white/45 to-transparent" aria-hidden="true" />
           <div className="relative">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Ready to compare Tiny Steps against your child’s actual needs?</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">See why families shortlist Tiny Steps for online phonics</h2>
             <p className="mx-auto mt-3 max-w-3xl text-base leading-8 text-slate-300">
-              Start with the free 35-minute 1:1 assessment, then use the same comparison criteria on this page to judge fit, teaching approach, evidence, and cost before you enrol.
+              Start with the free 35-minute 1:1 assessment, inspect the teaching approach and use the same comparison criteria on this page before you enrol.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               <Link

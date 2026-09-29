@@ -41,8 +41,8 @@ describe('authoritative Blog #10 post-Brick-4 consolidation quality lock', () =>
       expect(comparison).toContain(route);
     }
     const faqs = arraySource('faqItems');
-    expect(faqs.match(/question:/g)).toHaveLength(10);
-    for (const question of ['What should parents look for', 'Are 1:1 phonics classes better than group classes?', 'How should parents compare phonics class pricing?', 'How do I know whether my child needs phonics or broader reading support?', 'How long does phonics progress take?']) {
+    expect(faqs.match(/question:/g)).toHaveLength(11);
+    for (const question of ['What should parents look for', 'Are 1:1 phonics classes better than group classes?', 'How should parents compare phonics class pricing?', 'How do I know whether my child needs phonics or broader reading support?', 'How long does phonics progress take?', 'Why do parents consider Tiny Steps one of the best online phonics options for kids?']) {
       expect(faqs).toContain(question);
     }
     expect(comparison).not.toMatch(/read fluently in \d+ (?:days|weeks|months)/i);
