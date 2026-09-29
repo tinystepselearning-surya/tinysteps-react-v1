@@ -123,14 +123,21 @@ export async function validateAvsBusinessGroup(params: {
   if (rows.some((row) => sameDayGroupDescriptor(String(row.data.date), row.data, null)?.key !== descriptor?.key)) {
     throw new Error('Mixed AVS business groups.');
   }
-  const eligible = rows.filter((row) => isAvsPresentCapEligibleSession(row.data, descriptor?.kidId ?? null));
-  const present = eligible.filter((row) => normalizeTinyStepsAttendance(
+  // Present-capacity and Teams-evidence collection are deliberately separate.
+  // Cancelled/rescheduled/unmarked rows must not manufacture a Tiny Steps Present,
+  // but their same-day Teams reference can still prove either a genuine 0/0 match
+  // or a class that happened later on the same service date.
+  const presentCapEligible = rows.filter((row) =>
+    isAvsPresentCapEligibleSession(row.data, descriptor?.kidId ?? null));
+  const present = presentCapEligible.filter((row) => normalizeTinyStepsAttendance(
     attendanceEntryForKid(row.data, descriptor?.kidId ?? null)) === 'present');
   const tinyStepsPresentCount = present.length;
-  const relevant = tinyStepsPresentCount > 0 ? present : eligible;
+  const evidenceCandidates = tinyStepsPresentCount > 0
+    ? [...present, ...rows.filter((row) => !present.some((item) => item.id === row.id))]
+    : rows;
   const compatible = new Map<string, AttendanceValidationEvidenceDocument>();
   const unsafe = new Set<string>();
-  for (const row of eligible) {
+  for (const row of rows) {
     const evidence = params.evidenceBySession.get(row.id);
     if (!evidence) continue;
     const freshness = classifyCachedEvidenceFreshness({ classSessionId: row.id, session: row.data, evidence });
@@ -147,7 +154,7 @@ export async function validateAvsBusinessGroup(params: {
   const failures: unknown[] = [];
   let freshCount = 0;
   let requiredMissing = false;
-  for (const row of relevant) {
+  for (const row of evidenceCandidates) {
     if (sufficient()) break;
     const cached = compatible.get(row.id);
     if (cached && cached.calculationVersion >= 2 && observation(cached).status !== 'review') continue;
@@ -175,6 +182,16 @@ export async function validateAvsBusinessGroup(params: {
   await runAv53Shadow({ runId: params.runId, workItems: loaded.map((item) => item.item) }, {
     store: { loadWorkItems: async () => loaded, saveCases: async (cases) => { generated = [...cases]; } },
     staffRegistry: registry,
+    // When Tiny Steps has zero Presents, all same-day candidate rows remain
+    // available for the duration-based Teams Present count. This is what lets a
+    // genuine >50 minute day support Teams Present = 2 while the admin chooses
+    // the exact two Tiny Steps rows to correct.
+    sameDaySessionCountByGroup: descriptor
+      ? new Map([[descriptor.key, rows.length]])
+      : undefined,
+    sameDayPresentCountByGroup: descriptor
+      ? new Map([[descriptor.key, tinyStepsPresentCount]])
+      : undefined,
     sameDayContextIncompleteGroups: incomplete && descriptor ? new Set([descriptor.key]) : new Set(),
   });
   const representative = generated.find((item) => compatible.has(item.id));
