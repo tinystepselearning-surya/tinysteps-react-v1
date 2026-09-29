@@ -214,6 +214,36 @@ async function findOperationalSameCourseEnrollmentIds(args: {
     .map((docSnap) => docSnap.id);
 }
 
+async function findOperationalEnrollmentIdsForKid(args: {
+  db: FirebaseFirestore.Firestore;
+  kidId: string;
+  excludeEnrollmentId?: string;
+}): Promise<string[]> {
+  const {db, kidId, excludeEnrollmentId} = args;
+  const snapshots = await Promise.all([
+    db.collection('enrollments').where('kidId', '==', kidId).get(),
+    db.collection('enrollments').where('studentId', '==', kidId).get(),
+    db.collection('enrollments').where('kidIds', 'array-contains', kidId).get(),
+  ]);
+  const matches = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  snapshots.forEach((snapshot) => snapshot.docs.forEach((docSnap) => matches.set(docSnap.id, docSnap)));
+  return Array.from(matches.values())
+    .filter((docSnap) => docSnap.id !== excludeEnrollmentId)
+    .filter((docSnap) => doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>))
+    .map((docSnap) => docSnap.id);
+}
+
+type EnrollmentCreationIntent = 'initial_course' | 'additional_course' | 'transition';
+
+function requireEnrollmentCreationIntent(value: unknown): EnrollmentCreationIntent {
+  const intent = String(value || '').trim();
+  if (intent === 'initial_course' || intent === 'additional_course' || intent === 'transition') return intent;
+  throw new HttpsError(
+    'invalid-argument',
+    'creationIntent must be initial_course, additional_course, or transition',
+  );
+}
+
 async function createEnrollmentInternal(
   data: Record<string, unknown>,
   actor: string,
@@ -251,16 +281,51 @@ async function createEnrollmentInternal(
   if (String(course.status || '').trim().toLowerCase() !== 'active') {
     throw new HttpsError('failed-precondition', 'Selected course is not active and cannot be assigned');
   }
-  const existingOperational = await findOperationalSameCourseEnrollmentIds({
-    db,
-    kidId: canonicalKidId,
-    courseId: canonicalCourseId,
-  });
+  const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
+  const [existingOperational, allOperational] = await Promise.all([
+    findOperationalSameCourseEnrollmentIds({
+      db,
+      kidId: canonicalKidId,
+      courseId: canonicalCourseId,
+    }),
+    findOperationalEnrollmentIdsForKid({
+      db,
+      kidId: canonicalKidId,
+    }),
+  ]);
   if (existingOperational.length > 0) {
     throw new HttpsError(
       'already-exists',
       `An operational enrollment already exists for this child and course: ${existingOperational[0]}`,
     );
+  }
+
+  if (creationIntent === 'initial_course' && allOperational.length > 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'This child already has an operational enrollment. Use Add Additional Course or Change Course.',
+    );
+  }
+  if (creationIntent === 'additional_course' && allOperational.length === 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'This child has no operational enrollment. Use Assign Course for the first course.',
+    );
+  }
+  if (creationIntent === 'transition') {
+    const transitionOperationId = String(data.transitionOperationId || '').trim();
+    if (!transitionOperationId) {
+      throw new HttpsError('invalid-argument', 'transitionOperationId is required for transition enrollment creation');
+    }
+    const transitionSnap = await db.collection(ENROLLMENT_TRANSITIONS_COLLECTION).doc(transitionOperationId).get();
+    const transitionData = transitionSnap.data() || {};
+    if (
+      !transitionSnap.exists
+      || String(transitionData.kidId || '').trim() !== canonicalKidId
+      || String(transitionData.newCourseId || '').trim() !== canonicalCourseId
+    ) {
+      throw new HttpsError('failed-precondition', 'Transition enrollment creation is not backed by a valid course transition');
+    }
   }
 
   const teacherId = toOptionalId(data.teacherId);
@@ -339,6 +404,10 @@ async function createEnrollmentInternal(
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
       creationOperationId: operationId,
+      creationIntent,
+      ...(creationIntent === 'transition'
+        ? { transitionOperationId: String(data.transitionOperationId || '').trim() }
+        : {}),
     });
     tx.create(enrollmentRef, enrollmentPayload);
     tx.set(keyRef, {
@@ -353,6 +422,7 @@ async function createEnrollmentInternal(
       enrollmentId: enrollmentRef.id,
       kidId: canonicalKidId,
       courseId: canonicalCourseId,
+      creationIntent,
       state: 'complete',
       createdAt: FieldValue.serverTimestamp(),
       createdBy: actor,
@@ -364,6 +434,7 @@ async function createEnrollmentInternal(
       kidId: canonicalKidId,
       courseId: canonicalCourseId,
       operationId,
+      creationIntent,
       createdAt: FieldValue.serverTimestamp(),
       createdBy: actor,
     });
