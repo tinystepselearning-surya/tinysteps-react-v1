@@ -282,6 +282,14 @@ const AUTHORITY_BLOG_PILOT_SLUGS = new Set([
   'phonics-for-parents-guide',
 ]);
 
+const AUTHORITY_BLOG_BATCH_2_SLUGS = new Set([
+  'grammar-tenses',
+  'grammar-conjunctions',
+  'long-vowel-sounds-for-kids',
+  'why-child-knows-letter-sounds-but-cannot-read-words',
+  'child-gives-one-word-answers',
+]);
+
 const AUTHORITY_PILOT_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
   'what-is-phonics-for-kids': [
     { label: 'Understand', value: 'Sound → print', detail: 'See how phonemes, graphemes and blending fit together in one parent-friendly model.' },
@@ -307,6 +315,34 @@ const AUTHORITY_PILOT_HERO_POINTS: Record<string, Array<{ label: string; value: 
     { label: 'Reinforce', value: 'The taught sequence', detail: 'Support the sound–spelling knowledge the child is actually learning rather than adding random rules.' },
     { label: 'Prompt', value: 'Use the print', detail: 'Bring attention back to the complete printed word instead of relying on picture guessing.' },
     { label: 'Transfer', value: 'Read • spell • reread', detail: 'Check that taught knowledge carries into fresh words, spelling and connected reading.' },
+  ],
+};
+
+const AUTHORITY_BATCH_2_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
+  'grammar-tenses': [
+    { label: 'Understand', value: 'Past • present • future', detail: 'Anchor tense choices to when an event happens before adding more verb forms.' },
+    { label: 'Choose', value: 'Meaning before the verb form', detail: 'Use the timeline and sentence meaning together instead of relying on time words mechanically.' },
+    { label: 'Transfer', value: 'Say → write → fresh context', detail: 'Check that the child can move the same tense idea into new spoken and written examples.' },
+  ],
+  'grammar-conjunctions': [
+    { label: 'Connect', value: 'Add • contrast • reason • result', detail: 'Treat conjunctions as meaning relationships between ideas, not a list of joining words.' },
+    { label: 'Choose', value: 'Meaning before connector', detail: 'Decide what the second idea is doing before choosing and, but, because or so.' },
+    { label: 'Transfer', value: 'Two ideas → one clear sentence', detail: 'Check that children can combine fresh ideas without changing the intended meaning.' },
+  ],
+  'long-vowel-sounds-for-kids': [
+    { label: 'Group', value: 'Pattern families', detail: 'Teach long-vowel spellings in controlled families instead of presenting one giant long-vowel rule.' },
+    { label: 'Compare', value: 'Read + spell', detail: 'Check the pattern in both decoding and encoding so memorised reading does not hide a spelling gap.' },
+    { label: 'Progress', value: 'One pattern at a time', detail: 'Add another spelling family only when the current one transfers into fresh examples.' },
+  ],
+  'why-child-knows-letter-sounds-but-cannot-read-words': [
+    { label: 'Diagnose', value: 'Sounds → blending', detail: 'Find the exact step where isolated sound knowledge stops becoming successful word reading.' },
+    { label: 'Practise', value: 'Known sounds + CVC words', detail: 'Use words built from already-known correspondences before adding harder patterns.' },
+    { label: 'Check', value: 'Fresh-word transfer', detail: 'Look for independent blending on new regular words rather than repeated-card recognition.' },
+  ],
+  'child-gives-one-word-answers': [
+    { label: 'Separate', value: 'Idea vs response length', detail: 'Check whether the child lacks an idea, vocabulary, sentence structure or simply needs more processing time.' },
+    { label: 'Expand', value: 'One idea at a time', detail: 'Build fuller responses with a reason, example or detail instead of demanding a long answer immediately.' },
+    { label: 'Fade', value: 'Smallest prompt → independence', detail: 'Use temporary scaffolds, then reduce them as the child begins to respond more independently.' },
   ],
 };
 
@@ -360,6 +396,59 @@ const AUTHORITY_PILOT_TOC_PREFIXES: Record<string, string[]> = {
     'How to tell whether phonics is transferring',
     'Where Tiny Steps fits for parents',
     'Evidence and sources reviewed',
+  ],
+};
+
+const AUTHORITY_BATCH_2_TOC_PREFIXES: Record<string, string[]> = {
+  'grammar-tenses': [
+    'Quick answer:',
+    'The Tiny Steps timeline:',
+    'Simple present tense for kids:',
+    'Simple past tense for kids:',
+    'Future time for kids:',
+    'The Tiny Steps tense pathway:',
+    'How to know whether a tense pattern is becoming secure',
+    'Evidence and sources reviewed',
+  ],
+  'grammar-conjunctions': [
+    'Quick answer:',
+    'The Tiny Steps conjunction framework:',
+    'Because vs so:',
+    'From two short sentences to one stronger sentence',
+    'The Tiny Steps conjunction ladder:',
+    'Five conjunction activities that build meaning',
+    'How to know whether conjunction use is secure',
+    'Evidence and sources reviewed',
+  ],
+  'long-vowel-sounds-for-kids': [
+    'Quick answer:',
+    'The main long-vowel pattern families',
+    'What order should parents use?',
+    'The Tiny Steps long-vowel learning chain',
+    'Common long-vowel mix-ups',
+    'Reading and spelling should be checked together',
+    'When is a child ready for another long-vowel pattern?',
+    'Evidence and references',
+  ],
+  'why-child-knows-letter-sounds-but-cannot-read-words': [
+    'Quick answer:',
+    'Is this the right guide for your child?',
+    'The Tiny Steps six-stage decoding check',
+    'Six common reasons a child knows sounds but still cannot read words',
+    'A practical home routine:',
+    'What to say when your child gets stuck',
+    'What progress should look like',
+    'Evidence and references',
+  ],
+  'child-gives-one-word-answers': [
+    'Quick answer:',
+    'First separate Blog 37 from the nearby speaking problems',
+    'The Tiny Steps six-question cause map for one-word answers',
+    'The protected Tiny Steps answer-expansion checkpoint',
+    'Use the smallest prompt that works',
+    'A short home routine that keeps conversation natural',
+    'How to measure progress without counting words alone',
+    'Evidence and references',
   ],
 };
 
@@ -613,6 +702,7 @@ const BlogPostPage: FC = () => {
   const isStoryUnderstandingPillar = slug === 'why-child-reads-words-but-does-not-understand-story';
   const isSatpinGuide = slug === 'satpin-phonics-guide';
   const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug));
+  const isAuthorityBatch2 = Boolean(slug && AUTHORITY_BLOG_BATCH_2_SLUGS.has(slug));
   const isAuthorityArticle = Boolean(post);
   const useAuthorityLayout = isSatpinGuide || isAuthorityArticle;
   const [MdxComp, setMdxComp] = useState<any>(null);
@@ -891,13 +981,16 @@ function buildMetaDescription(src: any) {
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
   const sidebarConfig = isSchoolConversion ? SCHOOL_RESEARCH_SIDEBAR : categoryConfig;
   const pilotHeroPoints = slug ? AUTHORITY_PILOT_HERO_POINTS[slug] : undefined;
+  const batch2HeroPoints = slug ? AUTHORITY_BATCH_2_HERO_POINTS[slug] : undefined;
   const resolvedHeroPoints = isSatpinGuide
     ? SATPIN_HERO_POINTS
     : isAuthorityPilot && pilotHeroPoints
       ? pilotHeroPoints
-      : isSchoolConversion
-        ? SCHOOL_RESEARCH_HERO_POINTS
-        : categoryConfig.heroPoints;
+      : isAuthorityBatch2 && batch2HeroPoints
+        ? batch2HeroPoints
+        : isSchoolConversion
+          ? SCHOOL_RESEARCH_HERO_POINTS
+          : categoryConfig.heroPoints;
   const recommendedPrimaryAction = isSchoolConversion
     ? blogConversionConfig?.primaryAction
     : blogConversionConfig?.secondaryAction || primaryAction;
@@ -978,8 +1071,15 @@ function buildMetaDescription(src: any) {
         .filter(Boolean);
     }
 
+    if (isAuthorityBatch2 && slug) {
+      const priorityPrefixes = AUTHORITY_BATCH_2_TOC_PREFIXES[slug] || [];
+      return priorityPrefixes
+        .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
+        .filter(Boolean);
+    }
+
     return h2Items.slice(0, 9);
-  }, [headingItems, isAuthorityPilot, isSatpinGuide, slug]);
+  }, [headingItems, isAuthorityBatch2, isAuthorityPilot, isSatpinGuide, slug]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
 
