@@ -35,7 +35,34 @@ describe('AVS persisted three-outcome business grouping', () => {
     expect(group.outcome).toBe('verified');
     expect(group.teamsSupportedPresentCount).toBe(1);
     expect(group.tinyStepsPresentCount).toBe(1);
+    expect(group.verifiedCategory).toBe('present_match');
     expect(group.cases).toHaveLength(2);
+  });
+
+  it('classifies automatic 0 / 0 verification as Zero Match', () => {
+    const [group] = groupPersistedAvsBusinessOutcomes([
+      avsCase('zero-match', {
+        teamsSupportedPresentCount: 0,
+        tinyStepsPresentCount: 0,
+      }),
+    ]);
+    expect(group.outcome).toBe('verified');
+    expect(group.verifiedCategory).toBe('zero_match');
+  });
+
+  it('classifies automatic 2 / 2 verification as Present Match', () => {
+    const [group] = groupPersistedAvsBusinessOutcomes([
+      avsCase('double-a', {
+        teamsSupportedPresentCount: 2,
+        tinyStepsPresentCount: 2,
+      }),
+      avsCase('double-b', {
+        teamsSupportedPresentCount: 2,
+        tinyStepsPresentCount: 2,
+      }),
+    ]);
+    expect(group.outcome).toBe('verified');
+    expect(group.verifiedCategory).toBe('present_match');
   });
 
   it('preserves a backend False Present result', () => {
@@ -134,6 +161,7 @@ describe('AVS persisted three-outcome business grouping', () => {
     ]);
     expect(group.outcome).toBe('verified');
     expect(group.manualVerified).toBe(true);
+    expect(group.verifiedCategory).toBe('admin');
     expect(group.cases[0].sourceBusinessOutcome).toBe('false_present');
   });
 });
