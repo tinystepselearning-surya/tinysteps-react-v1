@@ -3352,7 +3352,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                         onClick={() => handleDeleteEnrollment(enrollment.id)}
                         disabled={!canManageEnrollmentDetails}
                       >
-                        Remove
+                        Discontinue
                       </Button>
                     </div>
                   ))}
