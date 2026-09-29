@@ -673,7 +673,7 @@ export default function EnrollmentDetailView({
       '',
       `Change type: ${transitionType === 'progression' ? 'Course progression' : 'Wrong-course correction'}`,
       `Teacher: ${nextTeacherLabel}${changeTeacherForNextCourse ? ' (changed)' : ' (same)'}`,
-      `Class link: ${changeClassLinkForNextCourse ? 'new link will be used' : currentClassLink ? 'same link' : 'no link currently set'}`,
+      `Teams link: ${changeClassLinkForNextCourse ? 'new Teams link will be used' : currentClassLink ? 'existing Teams link will be kept' : 'no Teams link currently set'}`,
       'Class schedule and rates will continue automatically.',
       transitionType === 'progression'
         ? 'The previous enrollment will be marked Completed; its historical attendance, payments and billing remain unchanged.'
@@ -1116,16 +1116,16 @@ export default function EnrollmentDetailView({
                     disabled={actionBusy !== null}
                   />
                   <span>
-                    <span className="font-medium">Use a different class link</span>
+                    <span className="font-medium">Use a new Teams link</span>
                     <span className="block text-xs text-slate-500">
-                      Leave this off to keep the existing class link. Turn it on to add or replace the link for the next course.
+                      Leave this off to keep the existing Teams link. Turn it on only when the new course should use a different Teams link.
                     </span>
                   </span>
                 </label>
 
                 {changeClassLinkForNextCourse ? (
                   <div className="ml-7 max-w-xl space-y-1">
-                    <label className="text-sm font-medium">New class link</label>
+                    <label className="text-sm font-medium">New Teams link</label>
                     <Input
                       type="url"
                       placeholder="https://..."
@@ -1137,9 +1137,9 @@ export default function EnrollmentDetailView({
                       <div className="text-xs text-red-600">Enter a complete http:// or https:// link.</div>
                     ) : null}
                     {currentClassLink ? (
-                      <div className="text-xs text-slate-500">The current link remains unchanged unless you confirm the course move.</div>
+                      <div className="text-xs text-slate-500">The existing Teams link will be replaced only for the new enrollment.</div>
                     ) : (
-                      <div className="text-xs text-slate-500">No existing class link is set; this will add one to the next course.</div>
+                      <div className="text-xs text-slate-500">No Teams link is currently set; this will add one to the new enrollment.</div>
                     )}
                   </div>
                 ) : null}
@@ -1147,7 +1147,7 @@ export default function EnrollmentDetailView({
 
               <div className="rounded-lg bg-white px-3 py-2 text-xs text-slate-600">
                 <div><strong>Teacher:</strong> {changeTeacherForNextCourse ? getTeacherLabel(selectedNextTeacher) : currentTeacherLabel}</div>
-                <div><strong>Class link:</strong> {changeClassLinkForNextCourse ? 'New link' : currentClassLink ? 'Keep current link' : 'No link'}</div>
+                <div><strong>Teams link:</strong> {changeClassLinkForNextCourse ? 'Use new Teams link' : currentClassLink ? 'Keep existing Teams link' : 'No Teams link'}</div>
                 <div><strong>Schedule & rates:</strong> Continue unchanged</div>
               </div>
 
