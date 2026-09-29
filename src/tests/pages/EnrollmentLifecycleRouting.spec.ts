@@ -70,6 +70,10 @@ describe('admin lifecycle routing', () => {
     expect(assignCourseSource).toContain("Schedule");
     expect(assignCourseSource).toContain("Review");
     expect(assignCourseSource).toContain("Save & Exit");
+    expect(assignCourseSource).toContain("Save Teacher & Exit");
+    expect(assignCourseSource).toContain("Save Schedule & Exit");
+    expect(assignCourseSource).toContain("saveTeacherAndContinue(true)");
+    expect(assignCourseSource).toContain("saveScheduleAndContinue(true)");
     expect(assignCourseSource).toContain("reassignEnrollmentTeacher");
     expect(assignCourseSource).toContain("saveRollingEnrollmentSchedule");
     expect(createEnrollmentSource).not.toContain("setDoc(enrollmentRef");
