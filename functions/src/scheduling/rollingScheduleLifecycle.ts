@@ -766,6 +766,7 @@ export const saveRollingEnrollmentSchedule = onCall(
           'setup.scheduleComplete': true,
           'setup.completedAt': FieldValue.serverTimestamp(),
           'setup.completedBy': actorUid,
+          setupDraft: FieldValue.delete(),
         } : {}),
         'rollingScheduleActivation.state': 'success',
         'rollingScheduleActivation.completedAt': FieldValue.serverTimestamp(),
