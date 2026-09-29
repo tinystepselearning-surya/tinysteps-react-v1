@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, Layers3, ShieldCheck } from 'lucide-react';
@@ -167,6 +167,9 @@ export default function StudentManagementTab() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showAssignCourseModal, setShowAssignCourseModal] = useState(false);
+  const [showCourseManagement, setShowCourseManagement] = useState(false);
+  const [courseCreationIntent, setCourseCreationIntent] = useState<'initial_course' | 'additional_course'>('initial_course');
+  const [resumeEnrollment, setResumeEnrollment] = useState<EnrollmentRecord | null>(null);
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -328,8 +331,23 @@ export default function StudentManagementTab() {
     navigate(`${basePath}?${params.toString()}`, { replace: true });
   };
 
-  const handleStudentCreated = () => {
+  const handleStudentCreated = async (studentId: string) => {
     setRefreshKey(k => k + 1);
+    try {
+      const snap = await getDoc(doc(db, 'kids', studentId));
+      const createdStudent = snap.exists()
+        ? ({ id: snap.id, ...(snap.data() as Record<string, unknown>) } as unknown as Student)
+        : ({ id: studentId } as Student);
+      setSelectedStudent(createdStudent);
+      setCourseCreationIntent('initial_course');
+      setResumeEnrollment(null);
+      setShowAssignCourseModal(true);
+    } catch {
+      setSelectedStudent({ id: studentId } as Student);
+      setCourseCreationIntent('initial_course');
+      setResumeEnrollment(null);
+      setShowAssignCourseModal(true);
+    }
   };
 
   const handleEditStudent = (student: Student) => {
@@ -338,8 +356,36 @@ export default function StudentManagementTab() {
   };
 
   const handleAssignCourse = (student: Student) => {
+    const linked = activeEnrollmentsByStudentId.get(student.id) || [];
     setSelectedStudent(student);
+    setResumeEnrollment(null);
+    if (linked.length === 0) {
+      setCourseCreationIntent('initial_course');
+      setShowAssignCourseModal(true);
+      return;
+    }
+    setShowCourseManagement(true);
+  };
+
+  const startAdditionalCourse = () => {
+    setCourseCreationIntent('additional_course');
+    setResumeEnrollment(null);
+    setShowCourseManagement(false);
     setShowAssignCourseModal(true);
+  };
+
+  const continueEnrollmentSetup = (enrollment: EnrollmentRecord) => {
+    setResumeEnrollment(enrollment);
+    setCourseCreationIntent('additional_course');
+    setShowCourseManagement(false);
+    setShowAssignCourseModal(true);
+  };
+
+  const enrollmentNeedsSetup = (enrollment: EnrollmentRecord): boolean => {
+    const hasTeacher = Boolean(String(enrollment.teacherId || '').trim());
+    const schedule = enrollment.schedule as Record<string, unknown> | undefined;
+    const weeklySlots = Array.isArray(schedule?.weeklySlots) ? schedule?.weeklySlots : [];
+    return !hasTeacher || weeklySlots.length === 0;
   };
 
   const handleArchiveStudent = async (studentId: string) => {
@@ -594,7 +640,7 @@ export default function StudentManagementTab() {
                             size="sm"
                             onClick={() => handleAssignCourse(student)}
                           >
-                            {linkedEnrollments.length === 0 ? 'Create enrollment' : 'Add enrollment'}
+                            {linkedEnrollments.length === 0 ? 'Set Up Admission' : 'Manage Courses'}
                           </Button>
                         )}
                         <Button
@@ -795,7 +841,7 @@ export default function StudentManagementTab() {
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <span>
-            Lifecycle-safe changes preserve history: teacher reassignment updates eligible future classes only, while a course change completes the current enrollment and creates a linked next enrollment instead of rewriting past attendance or finance records.
+            Lifecycle-safe changes preserve history: first-course and additional-course creation use explicit intent, teacher/schedule setup is resumable, and a course change creates a linked enrollment instead of rewriting historical attendance or finance records.
           </span>
         </div>
       </div>
@@ -840,11 +886,87 @@ export default function StudentManagementTab() {
         />
       )}
 
+      {selectedStudent && showCourseManagement && (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowCourseManagement(false);
+              setSelectedStudent(null);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-[680px]">
+            <DialogHeader>
+              <DialogTitle>Manage Courses — {getStudentDisplayName(selectedStudent as unknown as StudentRecord)}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="rounded-lg border bg-slate-50 p-3 text-sm">
+                This student already has an operational enrollment. Choose whether to add an independent course or manage/change an existing course.
+              </div>
+
+              <div className="space-y-2">
+                {(activeEnrollmentsByStudentId.get(selectedStudent.id) || []).map((enrollment) => (
+                  <div key={enrollment.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                    <div>
+                      <div className="font-medium">{getEnrollmentCourseLabel(enrollment)}</div>
+                      <div className="text-xs text-slate-500">
+                        Teacher: {getEnrollmentTeacherLabel(enrollment)}
+                        {enrollmentNeedsSetup(enrollment) ? ' • Setup incomplete' : ' • Setup complete'}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {enrollmentNeedsSetup(enrollment) && (
+                        <Button size="sm" onClick={() => continueEnrollmentSetup(enrollment)}>
+                          Continue Setup
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setShowCourseManagement(false);
+                          setSelectedStudent(null);
+                          openEnrollmentDetails(enrollment.id);
+                        }}
+                      >
+                        Change / Manage Course
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t pt-4">
+                <Button onClick={startAdditionalCourse}>
+                  Add Additional Course
+                </Button>
+                <p className="mt-1 text-xs text-slate-500">
+                  Creates a separate enrollment. Existing courses, attendance, billing and schedules remain unchanged.
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {selectedStudent && showAssignCourseModal && (
         <AssignCourseModal
           student={selectedStudent}
-          onClose={() => { setShowAssignCourseModal(false); setSelectedStudent(null); }}
-          onAssigned={() => { setShowAssignCourseModal(false); setSelectedStudent(null); setRefreshKey(k => k + 1); }}
+          creationIntent={courseCreationIntent}
+          existingCourseIds={(activeEnrollmentsByStudentId.get(selectedStudent.id) || [])
+            .map((enrollment) => String(enrollment.courseId || '').trim())
+            .filter(Boolean)}
+          resumeEnrollment={resumeEnrollment as any}
+          onClose={() => {
+            setShowAssignCourseModal(false);
+            setResumeEnrollment(null);
+            setSelectedStudent(null);
+            setRefreshKey(k => k + 1);
+          }}
+          onAssigned={() => {
+            setRefreshKey(k => k + 1);
+          }}
         />
       )}
 
