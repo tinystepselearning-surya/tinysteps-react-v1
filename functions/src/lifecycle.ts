@@ -271,13 +271,19 @@ async function createEnrollmentInternal(
     );
   }
   if (operationId.length > 150) throw new HttpsError('invalid-argument', 'operationId is too long');
+  const requestedSetupPending = data.setupPending === true && creationIntent !== 'transition';
 
   const db = admin.firestore();
   const operationRef = db.collection(ENROLLMENT_CREATION_OPERATIONS_COLLECTION).doc(operationId);
   const existingOperation = await operationRef.get();
   if (existingOperation.exists) {
     const data = existingOperation.data() || {};
-    if (data.kidId !== requestedKidId || data.courseId !== requestedCourseId) {
+    if (
+      data.kidId !== requestedKidId
+      || data.courseId !== requestedCourseId
+      || (data.creationIntent != null && data.creationIntent !== creationIntent)
+      || (data.setupPending != null && Boolean(data.setupPending) !== requestedSetupPending)
+    ) {
       throw new HttpsError('already-exists', 'operationId was already used for a different enrollment request');
     }
     return { ok: true, enrollmentId: String(data.enrollmentId || ''), idempotentReplay: true };
@@ -331,7 +337,7 @@ async function createEnrollmentInternal(
     const teacherSnap = await db.collection('users').doc(teacherId).get();
     if (!teacherSnap.exists) throw new HttpsError('not-found', 'Selected teacher was not found');
   }
-  const setupPending = data.setupPending === true && creationIntent !== 'transition';
+  const setupPending = requestedSetupPending;
   const ratePerSession = Number(data.ratePerSession ?? data.feePerClass ?? (setupPending ? 0 : course.ratePerSession) ?? 0);
   const teacherPayPerSession = Number(data.teacherPayPerSession ?? 0);
   const creditsTotal = Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
