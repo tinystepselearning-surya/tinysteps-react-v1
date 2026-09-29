@@ -29,6 +29,7 @@ import AssignCourseModal from './AssignCourseModal';
 import EnrollmentsList from '../EnrollmentManagement/EnrollmentsList';
 import EnrollmentDetailView from '../EnrollmentManagement/EnrollmentDetailView';
 import type { Student } from '../../../types/Student';
+import { normalizeEnrollmentScheduleSlots } from '../../../lib/sessionScheduleIntegrity';
 
 type ManagementView = 'students' | 'enrollments';
 type SummaryFocus =
@@ -384,8 +385,8 @@ export default function StudentManagementTab() {
   const enrollmentNeedsSetup = (enrollment: EnrollmentRecord): boolean => {
     const hasTeacher = Boolean(String(enrollment.teacherId || '').trim());
     const schedule = enrollment.schedule as Record<string, unknown> | undefined;
-    const weeklySlots = Array.isArray(schedule?.weeklySlots) ? schedule?.weeklySlots : [];
-    return !hasTeacher || weeklySlots.length === 0;
+    const scheduleSlots = normalizeEnrollmentScheduleSlots(schedule);
+    return !hasTeacher || scheduleSlots.length === 0;
   };
 
   const handleArchiveStudent = async (studentId: string) => {
