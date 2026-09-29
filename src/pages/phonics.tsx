@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { PUBLIC_LEARNER_REACH_LABEL } from '../config/publicFacts';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
 import ProgramFacts from '../components/programs/ProgramFacts';
@@ -135,6 +136,11 @@ const faqItems = [
     answer:
       'Yes. Tiny Steps supports families in India and worldwide through live online phonics classes, subject to compatible teacher and class timings.',
   },
+  {
+    question: 'Why do parents choose Tiny Steps for online phonics?',
+    answer:
+      'Tiny Steps is a trusted choice for parents in India and internationally who want live 1:1 phonics, structured synthetic phonics, assessment-first placement, individual correction and parent-visible progress. Families can inspect the curriculum, class samples, pricing and parent feedback before deciding.',
+  },
 ];
 const schemaFaqItems = faqItems;
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
@@ -176,6 +182,11 @@ const trustChips = [
     label: 'Parent progress updates',
     className: 'border-[#D4EFDF] bg-[#F4FFF8] text-[#235F49]',
     dotClassName: 'bg-[#4FB37E]',
+  },
+  {
+    label: 'Trusted in India & internationally',
+    className: 'border-[#E4DCF8] bg-[#FBF8FF] text-[#4C4379]',
+    dotClassName: 'bg-[#9D88E5]',
   },
 ];
 const pyramidLevels = [
@@ -458,7 +469,7 @@ export default function PhonicsPage({
   const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids";
   const heroSubtitle =
     heroSubtitleOverride ??
-    "Live 1:1 online phonics classes for children ages 3–12 in India and worldwide. We teach letter sounds, blending, decoding, spelling patterns and reading fluency through a structured level-based pathway with parent-visible progress.";
+    "Trusted by parents in India and internationally, Tiny Steps delivers live 1:1 online phonics for children ages 3–12 through structured synthetic phonics, assessment-first placement, individual correction and parent-visible progress.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -598,6 +609,7 @@ export default function PhonicsPage({
               </Link>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
+              <MetricPill>{PUBLIC_LEARNER_REACH_LABEL}</MetricPill>
               <MetricPill>Free 35-minute demo assessment</MetricPill>
               <MetricPill>Level-based plan</MetricPill>
               <MetricPill>Parent progress updates</MetricPill>
@@ -735,6 +747,9 @@ export default function PhonicsPage({
           <h2 className="mt-2 max-w-4xl text-2xl font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-3xl">Quick Answer: What are online phonics classes for kids?</h2>
           <p className="mt-3 max-w-5xl text-base leading-relaxed text-slate-700">
             Online phonics classes help children connect letters with sounds, blend sounds into words, read CVC words, understand digraphs and vowel teams, and build early reading fluency. Tiny Steps uses live 1:1 guidance, assessment-first placement, and parent-visible progress updates so families can follow a clear, level-based phonics path from first sounds to independent reading with confidence.
+          </p>
+          <p className="mt-3 max-w-5xl text-base font-medium leading-relaxed text-slate-800">
+            Tiny Steps is a trusted choice for families in India and internationally who want personalised, teacher-led phonics rather than app-only practice or a one-size-fits-all sequence.
           </p>
           <div className="mt-6 flex flex-wrap gap-2.5">
             {intentSupportChips.map((label) => (
