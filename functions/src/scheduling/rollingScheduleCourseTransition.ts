@@ -48,6 +48,20 @@ async function readEnrollment(enrollmentId: string): Promise<RecordLike> {
   return {id: snap.id, ...(snap.data() || {})};
 }
 
+function validateOptionalClassLink(value: unknown): string | null {
+  const link = text(value);
+  if (!link) return null;
+  try {
+    const parsed = new URL(link);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error('unsupported protocol');
+    }
+    return link;
+  } catch {
+    throw new HttpsError('invalid-argument', 'Class link must be a valid http:// or https:// URL');
+  }
+}
+
 function validateYmd(value: unknown, fieldName: string): string {
   const ymd = text(value);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
@@ -104,6 +118,7 @@ export const transitionEnrollmentCourse = onCall(
     const newTeacherId = text(data.newTeacherId);
     const reason = text(data.reason);
     const transitionType = text(data.transitionType);
+    const requestedJoinUrl = validateOptionalClassLink(data.joinUrl);
     if (transitionType !== 'progression' && transitionType !== 'correction') {
       throw new HttpsError('invalid-argument', 'transitionType must be progression or correction');
     }
@@ -124,6 +139,11 @@ export const transitionEnrollmentCourse = onCall(
         String(priorData.oldEnrollmentId || '') !== oldEnrollmentId
         || String(priorData.newCourseId || '') !== newCourseId
         || (String(priorData.transitionType || '') && String(priorData.transitionType || '') !== transitionType)
+        || (
+          requestedJoinUrl
+          && String(priorData.destinationJoinUrl || '')
+          && String(priorData.destinationJoinUrl || '') !== requestedJoinUrl
+        )
       ) {
         throw new HttpsError('already-exists', 'operationId belongs to a different course transition');
       }
@@ -150,6 +170,13 @@ export const transitionEnrollmentCourse = onCall(
     }
 
     const oldEnrollment = await readEnrollment(oldEnrollmentId);
+    const existingJoinUrl = text(oldEnrollment.joinUrl)
+      || text(oldEnrollment.meetingLink)
+      || text(oldEnrollment.classLink)
+      || null;
+    const destinationJoinUrl = text(prior.data()?.destinationJoinUrl)
+      || requestedJoinUrl
+      || existingJoinUrl;
     const oldStatus = normalizeEnrollmentStatus(oldEnrollment.status);
     const expectedTerminalForRetry =
       prior.exists
@@ -226,6 +253,7 @@ export const transitionEnrollmentCourse = onCall(
       newTeacherId,
       transitionType,
       reason,
+      destinationJoinUrl,
       sourceCreditsRemaining: oldCreditsRemaining,
       destinationCreditsTotal,
       state: 'creating_rolling_enrollment',
@@ -256,12 +284,8 @@ export const transitionEnrollmentCourse = onCall(
     if (!newEnrollmentId) throw new HttpsError('internal', 'Next enrollment creation did not return an enrollmentId');
 
     const newEnrollmentRef = db.collection('enrollments').doc(newEnrollmentId);
-    const inheritedJoinUrl = text(oldEnrollment.joinUrl)
-      || text(oldEnrollment.meetingLink)
-      || text(oldEnrollment.classLink)
-      || null;
     await newEnrollmentRef.set({
-      joinUrl: inheritedJoinUrl,
+      joinUrl: destinationJoinUrl,
       previousEnrollmentId: oldEnrollmentId,
       transitionOperationId: operationId,
       transitionType,
