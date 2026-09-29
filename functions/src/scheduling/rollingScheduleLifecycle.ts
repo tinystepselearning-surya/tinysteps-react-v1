@@ -611,6 +611,7 @@ export const saveRollingEnrollmentSchedule = onCall(
 
     let scheduleRevision = 0;
     let replayResult: SaveRollingEnrollmentScheduleResult | null = null;
+    let activatingSetupPending = false;
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(enrollmentRef);
       if (!snap.exists) throw new HttpsError('not-found', `Enrollment ${enrollmentId} not found`);
@@ -618,6 +619,23 @@ export const saveRollingEnrollmentSchedule = onCall(
       const normalizedStatus = normalizeEnrollmentStatus(enrollment.status);
       if (TERMINAL_STATUSES.has(normalizedStatus)) {
         throw new HttpsError('failed-precondition', 'Cannot activate a rolling schedule on a terminal enrollment');
+      }
+      activatingSetupPending = normalizedStatus === 'setup_pending';
+      if (activatingSetupPending) {
+        const teacherId = optionalText(enrollment.teacherId);
+        const storedRate = Number(enrollment.ratePerSession ?? enrollment.feePerClass ?? 0);
+        if (!teacherId) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Assign a teacher before completing admission setup',
+          );
+        }
+        if (!Number.isFinite(storedRate) || storedRate <= 0) {
+          throw new HttpsError(
+            'failed-precondition',
+            'Set valid financial terms before completing admission setup',
+          );
+        }
       }
 
       const activation = isRecordLike(enrollment.rollingScheduleActivation)
@@ -650,7 +668,14 @@ export const saveRollingEnrollmentSchedule = onCall(
         );
       }
 
+      const activationStatus = activatingSetupPending ? 'active' : normalizedStatus;
       tx.update(enrollmentRef, {
+        ...(activatingSetupPending ? {
+          status: 'active',
+          setupPending: false,
+          'setup.activatedAt': FieldValue.serverTimestamp(),
+          'setup.activatedBy': actorUid,
+        } : {}),
         startDate: ymdToIstMidnightTimestamp(enrollmentStartDateYmd),
         startDateYmd: enrollmentStartDateYmd,
         classesStartDate: ymdToIstMidnightTimestamp(classesStartDateYmd),
@@ -675,7 +700,7 @@ export const saveRollingEnrollmentSchedule = onCall(
         'scheduleMaterialization.scheduleRevision': schedule.revision,
         'scheduleMaterialization.nextOccurrenceYmd': null,
         'scheduleMaterialization.nextMaterializationDueYmd': null,
-        'scheduleMaterialization.lifecycleState': normalizedStatus,
+        'scheduleMaterialization.lifecycleState': activationStatus,
         'rollingScheduleActivation.state': 'in_progress',
         'rollingScheduleActivation.lastRequestKey': idempotencyKey,
         'rollingScheduleActivation.startedAt': FieldValue.serverTimestamp(),
@@ -737,6 +762,11 @@ export const saveRollingEnrollmentSchedule = onCall(
         pausedSessionsCancelled,
       };
       await enrollmentRef.update({
+        ...(activatingSetupPending ? {
+          'setup.scheduleComplete': true,
+          'setup.completedAt': FieldValue.serverTimestamp(),
+          'setup.completedBy': actorUid,
+        } : {}),
         'rollingScheduleActivation.state': 'success',
         'rollingScheduleActivation.completedAt': FieldValue.serverTimestamp(),
         'rollingScheduleActivation.completedBy': actorUid,
@@ -749,6 +779,12 @@ export const saveRollingEnrollmentSchedule = onCall(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await enrollmentRef.update({
+        ...(activatingSetupPending ? {
+          status: 'setup_pending',
+          setupPending: true,
+          'setup.scheduleComplete': false,
+          'scheduleMaterialization.lifecycleState': 'setup_pending',
+        } : {}),
         'rollingScheduleActivation.state': 'failed',
         'rollingScheduleActivation.failedAt': FieldValue.serverTimestamp(),
         'rollingScheduleActivation.failedBy': actorUid,
