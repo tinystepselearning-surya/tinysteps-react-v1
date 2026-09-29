@@ -421,7 +421,6 @@ describe('Firestore Emulator course transition state machine', () => {
       kidId: ids.kidId,
       kidIds: [ids.kidId],
       courseId: ids.grammarCourseId,
-      creationIntent: 'additional_course',
       teacherId: ids.teacherBId,
       date: '2099-08-04',
       startTime: '18:00',
