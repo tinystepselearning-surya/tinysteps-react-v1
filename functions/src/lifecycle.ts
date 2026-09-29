@@ -366,8 +366,48 @@ async function createEnrollmentInternal(
     .doc(buildOperationalEnrollmentKeyId(canonicalKidId, canonicalCourseId));
   const auditRef = db.collection('auditLogs').doc();
   await db.runTransaction(async (tx) => {
-    const [operationCheck, keySnap] = await Promise.all([tx.get(operationRef), tx.get(keyRef)]);
-    if (operationCheck.exists) return;
+    const enrollmentCollection = db.collection('enrollments');
+    const [operationCheck, keySnap, kidIdSnap, studentIdSnap, kidIdsSnap] = await Promise.all([
+      tx.get(operationRef),
+      tx.get(keyRef),
+      tx.get(enrollmentCollection.where('kidId', '==', canonicalKidId)),
+      tx.get(enrollmentCollection.where('studentId', '==', canonicalKidId)),
+      tx.get(enrollmentCollection.where('kidIds', 'array-contains', canonicalKidId)),
+    ]);
+    if (operationCheck.exists) {
+      const operationData = operationCheck.data() || {};
+      if (
+        operationData.kidId !== canonicalKidId
+        || operationData.courseId !== canonicalCourseId
+        || (operationData.creationIntent && operationData.creationIntent !== creationIntent)
+      ) {
+        throw new HttpsError('already-exists', 'operationId collision detected');
+      }
+      return;
+    }
+
+    const transactionalMatches = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    [kidIdSnap, studentIdSnap, kidIdsSnap].forEach((snapshot) => {
+      snapshot.docs.forEach((docSnap) => transactionalMatches.set(docSnap.id, docSnap));
+    });
+    const transactionalOperational = Array.from(transactionalMatches.values())
+      .filter((docSnap) =>
+        doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>),
+      );
+
+    if (creationIntent === 'initial_course' && transactionalOperational.length > 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'This child already has an operational enrollment. Use Add Additional Course or Change Course.',
+      );
+    }
+    if (creationIntent === 'additional_course' && transactionalOperational.length === 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'This child has no operational enrollment. Use Assign Course for the first course.',
+      );
+    }
+
     const keyData = keySnap.data() || {};
     const ownsReservation = Boolean(
       reservedByOperationId && keyData.reservationOperationId === reservedByOperationId,
