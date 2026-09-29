@@ -705,8 +705,7 @@ export default function EnrollmentDetailView({
         reason,
       });
 
-      const result = (response.data || {}) as Record<string, unknown>;
-      const newEnrollmentId = String(result.newEnrollmentId || '').trim();
+      void response.data;
       toast({
         title: courseTransitionType === 'progression' ? 'Course progression complete' : 'Course correction complete',
         description: courseTransitionType === 'progression'
