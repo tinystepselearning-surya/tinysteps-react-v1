@@ -23,8 +23,7 @@ if [[ -z "${GITHUB_REPOSITORY:-}" || -z "${GITHUB_TOKEN:-}" ]]; then
   exit 64
 fi
 
-encoded_ref="${marker_ref//\//%2F}"
-api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/${encoded_ref#ci%2F}"
+api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/${marker_ref}"
 create_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs"
 
 status="$(curl -sS -o /tmp/production-marker-ref.json -w "%{http_code}" \
