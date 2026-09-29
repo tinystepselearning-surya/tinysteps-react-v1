@@ -15,7 +15,7 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(registry).toContain("'/best-online-phonics-classes-for-kids-in-india': {");
     expect(registry).toContain("canonicalPath: '/best-online-phonics-classes-for-kids-in-india'");
 
-    expect(page).toContain('This page is the Tiny Steps buyer-comparison guide.');
+    expect(page).toContain('This page is the Tiny Steps buyer-comparison guide, not an independent third-party ranking.');
     expect(page).toContain('main phonics programme page');
     expect(page).toContain('For the full Tiny Steps phonics method, levels, and learning pathway');
   });
@@ -85,7 +85,7 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
       expect(page, route).toContain(route);
     }
 
-    expect(page).toContain('What can parents verify before choosing Tiny Steps?');
+    expect(page).toContain('Why Tiny Steps stands out when parents compare phonics providers');
     expect(page).toContain('Starting-point clarity');
     expect(page).toContain('Program progression');
     expect(page).toContain('Curriculum evidence');
@@ -110,8 +110,12 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(page).toContain('PUBLIC_SITE_FACTS.liveSessions.label');
     expect(page).toContain('PER_CLASS_PRICE');
     expect(page).toContain('ONE_TO_ONE_MONTHLY_PACKAGES');
-    expect(page).toContain('avoids unsupported “#1” claims');
+    expect(page).toContain('Trusted by parents in India and internationally');
+    expect(page).toContain('a leading online phonics programme for kids in India');
+    expect(page).toContain('one of the best online phonics options for kids');
+    expect(page).toContain('not an independent third-party ranking');
     expect(page).toContain('A fixed “read in X weeks” promise');
+    expect(page).not.toMatch(/Vedantu|Bansal|PlanetSpark|Learn to Read/i);
     expect(page).not.toContain("Tiny Steps is India's #1");
     expect(page).not.toContain('Tiny Steps is the best phonics');
   });
@@ -127,5 +131,7 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(page).toContain("name: 'Online phonics classes comparison'");
     expect(page).toContain("name: '1-to-1 vs group phonics classes'");
     expect(page).toContain("name: 'Phonics provider evaluation'");
+    expect(page).toContain("'@id': `${canonicalUrl}#tiny-steps-positioning`");
+    expect(page).toContain("name: 'Why families shortlist Tiny Steps for online phonics'");
   });
 });

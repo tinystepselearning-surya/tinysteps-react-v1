@@ -4,6 +4,12 @@ export type AvsBusinessOutcome =
   | 'false_absent'
   | 'not_evaluable';
 
+export type AvsVerifiedCategory =
+  | 'present_match'
+  | 'zero_match'
+  | 'admin'
+  | null;
+
 export interface AvsBusinessCaseInput {
   id: string;
   serviceDateYmd: string | null;
@@ -35,6 +41,7 @@ export interface AvsBusinessGroup<T extends AvsBusinessCaseInput = AvsBusinessCa
   differenceCount: number;
   outcome: AvsBusinessOutcome;
   manualVerified: boolean;
+  verifiedCategory: AvsVerifiedCategory;
   cases: T[];
 }
 
@@ -122,6 +129,21 @@ export function groupPersistedAvsBusinessOutcomes<T extends AvsBusinessCaseInput
           ...cases.map((item) => item.businessDifferenceCount ?? 0),
         );
 
+      const manualVerified = outcome === 'verified'
+        && cases.every((item) => item.resolutionDecision === 'manual_verified');
+      const verifiedCategory: AvsVerifiedCategory = outcome !== 'verified'
+        ? null
+        : manualVerified
+          ? 'admin'
+          : teamsSupportedPresentCount === 0 && tinyStepsPresentCount === 0
+            ? 'zero_match'
+            : teamsSupportedPresentCount !== null
+              && tinyStepsPresentCount !== null
+              && teamsSupportedPresentCount === tinyStepsPresentCount
+              && teamsSupportedPresentCount > 0
+                ? 'present_match'
+                : null;
+
       return {
         key,
         serviceDateYmd: first.serviceDateYmd,
@@ -138,7 +160,8 @@ export function groupPersistedAvsBusinessOutcomes<T extends AvsBusinessCaseInput
           outcome === 'not_evaluable' ? null : tinyStepsPresentCount,
         differenceCount,
         outcome,
-        manualVerified: outcome === 'verified' && cases.every((item) => item.resolutionDecision === 'manual_verified'),
+        manualVerified,
+        verifiedCategory,
         cases,
       };
     })

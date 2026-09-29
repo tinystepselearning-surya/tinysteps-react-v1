@@ -12,6 +12,7 @@ describe('Best online phonics buyer guide UX refresh', () => {
 
   it('keeps the buyer journey in decision-first scroll order', () => {
     const orderedSections = [
+      '<Section id="tiny-steps-positioning" tint="lavender">',
       '<Section id="comparison-framework" tint="warm">',
       '<Section id="programme-fit">',
       '<Section id="format-comparison" tint="blue">',
@@ -20,7 +21,7 @@ describe('Best online phonics buyer guide UX refresh', () => {
       '<div id="parent-reviews"',
       '<Section id="pricing" tint="warm">',
       '<Section id="faq" tint="lavender">',
-      'Ready to compare Tiny Steps against your child’s actual needs?',
+      'See why families shortlist Tiny Steps for online phonics',
       '<ClusterSeoNav cluster="phonics" />',
     ];
 

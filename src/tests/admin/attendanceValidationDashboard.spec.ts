@@ -61,6 +61,23 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).not.toContain("label: 'Ambiguous'");
   });
 
+  it('splits Verified into Present Match and Zero Match without mixing admin overrides', () => {
+    expect(businessView).toContain('All Verified ({tabCounts.verified})');
+    expect(businessView).toContain('Present Match ({verifiedCounts.present_match})');
+    expect(businessView).toContain('Zero Match ({verifiedCounts.zero_match})');
+    expect(businessView).toContain('Admin Verified ({verifiedCounts.admin})');
+    expect(businessReconciliation).toContain("'present_match'");
+    expect(businessReconciliation).toContain("'zero_match'");
+    expect(businessReconciliation).toContain("'admin'");
+  });
+
+  it('guides False Absent admins by the remaining Teams-supported Present count', () => {
+    expect(businessView).toContain('Teams summary: {group.teamsSupportedPresentCount ?? 0} Present');
+    expect(businessView).toContain('Choose {group.differenceCount} row');
+    expect(businessView).toContain('below to mark Present.');
+    expect(businessView).toContain('Mark Present');
+  });
+
   it('filters the already-loaded business groups by canonical teacher identity', () => {
     expect(businessView).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
     expect(businessView).toContain('teacherFilterKey(group.teacherId, group.teacherName)');
