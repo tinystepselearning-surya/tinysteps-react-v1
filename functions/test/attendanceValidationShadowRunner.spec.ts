@@ -1013,6 +1013,39 @@ describe('AV5.3 bounded shadow runner', () => {
     });
   });
 
+  it('does not attach an unrelated stale staff override to a missing-evidence case', async () => {
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'missing-evidence' },
+        session: session(),
+        evidence: null,
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-missing-evidence-staff-scope',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'missing-evidence' }],
+      },
+      {
+        store,
+        staffRegistry: {
+          ...registry,
+          issues: [{
+            kind: 'override_without_active_staff',
+            staffIds: ['unrelated-old-teacher'],
+          }],
+        },
+      },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      classification: 'MISSING_TEAMS_EVIDENCE',
+      reasons: ['evidence_document_missing'],
+    });
+    expect(store.saved[0].staffRegistryIssues).toEqual([]);
+  });
+
   it('creates ORPHAN_TEAMS_CLASS only when explicit evidence exists and the expected Tiny Steps session is missing', async () => {
     const store = new FakeStore([
       {
