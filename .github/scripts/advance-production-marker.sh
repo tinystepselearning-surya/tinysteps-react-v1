@@ -23,13 +23,14 @@ if [[ -z "${GITHUB_REPOSITORY:-}" || -z "${GITHUB_TOKEN:-}" ]]; then
   exit 64
 fi
 
-api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/${marker_ref}"
+read_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/ref/heads/${marker_ref}"
+patch_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/${marker_ref}"
 create_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs"
 
 status="$(curl -sS -o /tmp/production-marker-ref.json -w "%{http_code}" \
   -H "Authorization: Bearer ${GITHUB_TOKEN}" \
   -H "Accept: application/vnd.github+json" \
-  "${api}")"
+  "${read_api}")"
 
 if [[ "${status}" == "200" ]]; then
   curl -fsS -X PATCH \
@@ -37,7 +38,7 @@ if [[ "${status}" == "200" ]]; then
     -H "Accept: application/vnd.github+json" \
     -H "Content-Type: application/json" \
     -d "{\"sha\":\"${target_sha}\",\"force\":true}" \
-    "${api}" >/dev/null
+    "${patch_api}" >/dev/null
 elif [[ "${status}" == "404" ]]; then
   curl -fsS -X POST \
     -H "Authorization: Bearer ${GITHUB_TOKEN}" \
