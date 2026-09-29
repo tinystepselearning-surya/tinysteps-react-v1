@@ -43,6 +43,8 @@ jobs:
           src/tests/seo/blogB9GrammarSpeakingAuthority.spec.ts
       - name: Audit Batch 2 source contract
         run: node scripts/audit-authority-blog-batch2.mjs
+      - name: Regenerate RSS and discovery snapshots
+        run: npm run generate:rss
       - name: Audit blog consolidation
         run: npm run seo:blog-consolidation
       - name: Run type check
