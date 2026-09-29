@@ -88,6 +88,8 @@ describe('admin lifecycle routing', () => {
     expect(enrollmentDetailSource).toContain("transitionType === 'correction'");
     expect(enrollmentDetailSource).toContain('transitionType,');
     expect(enrollmentDetailSource).toContain('joinUrl: nextClassLink || null');
+    expect(enrollmentDetailSource).toContain('Use a new Teams link');
+    expect(enrollmentDetailSource).toContain('Keep existing Teams link');
     expect(enrollmentDetailSource).toContain('const newSchedule = enrollment.schedule;');
     expect(enrollmentDetailSource).toContain('const operationId = `course-${transitionType}-');
     expect(enrollmentDetailSource).not.toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
