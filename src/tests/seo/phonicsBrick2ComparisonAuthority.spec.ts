@@ -15,7 +15,7 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
     expect(registry).toContain("'/best-online-phonics-classes-for-kids-in-india': {");
     expect(registry).toContain("canonicalPath: '/best-online-phonics-classes-for-kids-in-india'");
 
-    expect(page).toContain('This page is the Tiny Steps buyer-comparison guide.');
+    expect(page).toContain('This page is the Tiny Steps buyer-comparison guide, not an independent third-party ranking.');
     expect(page).toContain('main phonics programme page');
     expect(page).toContain('For the full Tiny Steps phonics method, levels, and learning pathway');
   });
@@ -85,7 +85,7 @@ describe('Phonics Brick 2 buyer-comparison authority guardrails', () => {
       expect(page, route).toContain(route);
     }
 
-    expect(page).toContain('What can parents verify before choosing Tiny Steps?');
+    expect(page).toContain('Why Tiny Steps stands out when parents compare phonics providers');
     expect(page).toContain('Starting-point clarity');
     expect(page).toContain('Program progression');
     expect(page).toContain('Curriculum evidence');
