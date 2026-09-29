@@ -31,15 +31,26 @@ describe('admission setup lifecycle hardening contracts', () => {
     expect(lifecycleSource).toContain("financialTermChanges");
   });
 
-  it('activates setup_pending only through a validated rolling schedule save', () => {
-    expect(rollingLifecycleSource).toContain("activatingSetupPending = normalizedStatus === 'setup_pending'");
+  it('activates setup_pending atomically with its initial rolling sessions', () => {
+    expect(rollingLifecycleSource).toContain('async function activateSetupPendingEnrollmentAtomically');
+    expect(rollingLifecycleSource).toContain("normalizeEnrollmentStatus(initialEnrollment.status) === 'setup_pending'");
+    expect(rollingLifecycleSource).toContain('return activateSetupPendingEnrollmentAtomically({');
     expect(rollingLifecycleSource).toContain('Assign a teacher before completing admission setup');
     expect(rollingLifecycleSource).toContain('Set valid financial terms before completing admission setup');
+    expect(rollingLifecycleSource).toContain('const sessionSnaps = await Promise.all(sessionRefs.map((ref) => tx.get(ref)))');
+    expect(rollingLifecycleSource).toContain('prepared.forEach(({occurrence, payload}) => {');
+    expect(rollingLifecycleSource).toContain("tx.create(db.collection('classSessions').doc(occurrence.sessionId), payload)");
     expect(rollingLifecycleSource).toContain("status: 'active'");
-    expect(rollingLifecycleSource).toContain("setupPending: false");
-    expect(rollingLifecycleSource).toContain("setupDraft: FieldValue.delete()");
-    expect(rollingLifecycleSource).toContain("status: 'setup_pending'");
-    expect(rollingLifecycleSource).toContain("setupPending: true");
+    expect(rollingLifecycleSource).toContain('setupPending: false');
+    expect(rollingLifecycleSource).toContain('setupDraft: FieldValue.delete()');
+    const firstWrite = rollingLifecycleSource.indexOf("tx.create(db.collection('classSessions').doc(occurrence.sessionId), payload)");
+    const enrollmentActivation = rollingLifecycleSource.indexOf("status: 'active'", firstWrite);
+    expect(firstWrite).toBeGreaterThan(-1);
+    expect(enrollmentActivation).toBeGreaterThan(firstWrite);
+    expect(rollingLifecycleSource.slice(
+      rollingLifecycleSource.indexOf('async function activateSetupPendingEnrollmentAtomically'),
+      rollingLifecycleSource.indexOf('export const saveRollingEnrollmentSchedule'),
+    )).not.toContain('materializeRollingEnrollmentWindowInternal');
   });
 
   it('keeps progression and correction semantically distinct', () => {
