@@ -203,6 +203,26 @@ describe('createEnrollment creation intent invariants', () => {
     });
   });
 
+  it('serializes concurrent different first-course assignments so only one initial_course succeeds', async () => {
+    const results = await Promise.allSettled([
+      createEnrollment({
+        operationId: 'intent-concurrent-first-phonics',
+        courseId: ids.phonicsCourseId,
+        creationIntent: 'initial_course',
+      }),
+      createEnrollment({
+        operationId: 'intent-concurrent-first-grammar',
+        courseId: ids.grammarCourseId,
+        creationIntent: 'initial_course',
+      }),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    const enrollments = await adminDb.collection('enrollments').where('kidId', '==', ids.kidId).get();
+    expect(enrollments.size).toBe(1);
+  });
+
   it('rejects additional_course when the child has no operational enrollment', async () => {
     await expect(createEnrollment({
       operationId: 'intent-invalid-first-additional',
