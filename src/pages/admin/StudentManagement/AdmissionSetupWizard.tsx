@@ -241,11 +241,15 @@ export default function AdmissionSetupWizard({
     if (defaultRate > 0 && !parentRate) setParentRate(String(defaultRate));
   }, [selectedCourse, enrollmentId, parentRate]);
 
-  const saveDraft = async (resumeStep: WizardStep, includeSchedule: boolean) => {
-    if (!enrollmentId) return;
+  const saveDraft = async (
+    resumeStep: WizardStep,
+    includeSchedule: boolean,
+    targetEnrollmentId = enrollmentId,
+  ) => {
+    if (!targetEnrollmentId) return;
     const save = httpsCallable(regionalFunctions, 'saveEnrollmentSetupDraft');
     await save({
-      enrollmentId,
+      enrollmentId: targetEnrollmentId,
       resumeStep,
       ...(includeSchedule
         ? {
@@ -295,7 +299,7 @@ export default function AdmissionSetupWizard({
     try {
       setSaving(true);
       const id = await ensureCourseEnrollment();
-      await saveDraft('fees', false);
+      await saveDraft('fees', false, id);
       if (exitAfter) {
         toast({ title: 'Setup saved', description: 'Continue from Fees when you reopen this admission.' });
         onClose();
@@ -393,6 +397,14 @@ export default function AdmissionSetupWizard({
       toast({ title: 'Valid dates required', variant: 'destructive' });
       return false;
     }
+    if (classesStartDate < enrollmentStartDate) {
+      toast({
+        title: 'Class start date is too early',
+        description: 'Classes cannot start before the enrollment start date.',
+        variant: 'destructive',
+      });
+      return false;
+    }
     if (slots.length === 0) {
       toast({ title: 'Add at least one weekly class slot', variant: 'destructive' });
       return false;
@@ -421,11 +433,14 @@ export default function AdmissionSetupWizard({
     return true;
   };
 
-  const saveScheduleDraft = async (exitAfter = false) => {
+  const saveScheduleDraft = async (
+    exitAfter = false,
+    exitResumeStep: WizardStep = 'schedule',
+  ) => {
     if (!validateSchedule()) return;
     try {
       setSaving(true);
-      await saveDraft(exitAfter ? 'schedule' : 'review', true);
+      await saveDraft(exitAfter ? exitResumeStep : 'review', true);
       if (exitAfter) {
         toast({ title: 'Setup saved', description: 'The timetable is saved as a draft. No classes were activated.' });
         onClose();
@@ -493,7 +508,8 @@ export default function AdmissionSetupWizard({
     if (step === 'course') return saveCourse(true);
     if (step === 'fees') return saveFees(true);
     if (step === 'teacher') return saveTeacher(true);
-    if (step === 'schedule' || step === 'review') return saveScheduleDraft(true);
+    if (step === 'schedule') return saveScheduleDraft(true, 'schedule');
+    if (step === 'review') return saveScheduleDraft(true, 'review');
   };
 
   const goBack = () => {
