@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,9 +19,12 @@ import { Input } from '@components/ui/input';
 import {
   collection,
   getDocs,
+  query,
+  where,
   doc,
   getDoc,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
 import {
   createEnrollment,
@@ -32,10 +35,35 @@ import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
 
+type EnrollmentCreationIntent = 'initial_course' | 'additional_course';
+
+type ResumeEnrollment = {
+  id: string;
+  courseId?: string;
+  courseName?: string;
+  ratePerSession?: number;
+  feePerClass?: number;
+  teacherPayPerSession?: number;
+  teacherId?: string;
+  joinUrl?: string;
+  classesStartDateYmd?: string;
+  schedule?: {
+    weeklySlots?: Array<{
+      weekday?: number;
+      time?: string;
+      durationMinutes?: number;
+      durationMins?: number;
+    }>;
+  };
+};
+
 interface Props {
   student: Student;
   onClose: () => void;
-  onAssigned?: () => void;
+  onAssigned?: (enrollmentId?: string) => void;
+  creationIntent?: EnrollmentCreationIntent;
+  existingCourseIds?: string[];
+  resumeEnrollment?: ResumeEnrollment | null;
 }
 
 type Course = {
@@ -51,6 +79,23 @@ type Course = {
   sessionFrequency?: string;
 };
 
+type TeacherUser = {
+  id: string;
+  uid?: string;
+  name?: string;
+  displayName?: string;
+  email?: string;
+};
+
+type WizardStep = 1 | 2 | 3 | 4 | 5;
+
+type WeeklySlot = {
+  id: string;
+  weekday: number;
+  time: string;
+  durationMinutes: number;
+};
+
 const defaultCourses = [
   'Phonics Foundations',
   'Early Phonics',
@@ -61,7 +106,16 @@ const defaultCourses = [
   'Public Speaking (Advanced)',
 ];
 
-// simple helper to estimate credits for a monthly cycle
+const WEEKDAYS = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+];
+
 const sessionsPerMonthForFrequency = (freq?: string) => {
   switch (freq) {
     case 'weekly':
@@ -75,54 +129,129 @@ const sessionsPerMonthForFrequency = (freq?: string) => {
   }
 };
 
+const todayYmd = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const newSlot = (): WeeklySlot => ({
+  id: typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : `slot-${Date.now()}-${Math.random()}`,
+  weekday: 1,
+  time: '18:00',
+  durationMinutes: 35,
+});
+
 export default function AssignCourseModal({
   student,
   onClose,
   onAssigned,
+  creationIntent = 'initial_course',
+  existingCourseIds = [],
+  resumeEnrollment = null,
 }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selected, setSelected] = useState<string>('');
+  const [teachers, setTeachers] = useState<TeacherUser[]>([]);
+  const [step, setStep] = useState<WizardStep>(1);
+  const [selected, setSelected] = useState<string>(resumeEnrollment?.courseId || '');
   const [lpCanAssign, setLpCanAssign] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
-  const [feePerClassInput, setFeePerClassInput] = useState<string>('');
-  const [teacherPayPerSessionInput, setTeacherPayPerSessionInput] = useState<string>('');
+  const [createdEnrollmentId, setCreatedEnrollmentId] = useState<string>(resumeEnrollment?.id || '');
+  const [feePerClassInput, setFeePerClassInput] = useState<string>(
+    String(resumeEnrollment?.ratePerSession ?? resumeEnrollment?.feePerClass ?? ''),
+  );
+  const [teacherPayPerSessionInput, setTeacherPayPerSessionInput] = useState<string>(
+    String(resumeEnrollment?.teacherPayPerSession ?? ''),
+  );
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>(resumeEnrollment?.teacherId || '');
+  const [teacherSaved, setTeacherSaved] = useState(Boolean(resumeEnrollment?.teacherId));
+  const [classesStartDate, setClassesStartDate] = useState<string>(
+    resumeEnrollment?.classesStartDateYmd || todayYmd(),
+  );
+  const [meetingLink, setMeetingLink] = useState<string>(resumeEnrollment?.joinUrl || '');
+  const [weeklySlots, setWeeklySlots] = useState<WeeklySlot[]>(() => {
+    const source = resumeEnrollment?.schedule?.weeklySlots || [];
+    const normalized = source
+      .map((slot) => ({
+        id: typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : `slot-${Math.random()}`,
+        weekday: Number(slot.weekday),
+        time: String(slot.time || ''),
+        durationMinutes: Number(slot.durationMinutes ?? slot.durationMins ?? 35),
+      }))
+      .filter((slot) =>
+        Number.isInteger(slot.weekday)
+        && slot.weekday >= 0
+        && slot.weekday <= 6
+        && /^([01]\d|2[0-3]):([0-5]\d)$/.test(slot.time),
+      );
+    return normalized.length ? normalized : [newSlot()];
+  });
+  const [scheduleSaved, setScheduleSaved] = useState(Boolean(resumeEnrollment?.schedule?.weeklySlots?.length));
 
   const { user } = useAuthStore();
-
-  // Derive a safe display name without touching unknown typed fields
   const studentName =
     (student as any).fullName ||
     (student as any).name ||
     (student as any).displayName ||
     student.id;
 
-  // Admin can always assign — no async needed. LP needs a Firestore check.
   const isAdmin = user?.role === 'admin';
   const canAssign = isAdmin || lpCanAssign === true;
-
-  // Load courses from hook (only active by default); keep fallback if none
   const { data: fetchedCourses = [], isLoading: coursesLoading } = useCourses({ status: 'active' });
+
+  useEffect(() => {
+    if (resumeEnrollment) {
+      if (!resumeEnrollment.teacherId) setStep(3);
+      else if (!resumeEnrollment.schedule?.weeklySlots?.length) setStep(4);
+      else setStep(5);
+    }
+  }, [resumeEnrollment]);
 
   useEffect(() => {
     if (Array.isArray(fetchedCourses) && fetchedCourses.length > 0) {
       setCourses(fetchedCourses as any);
       return;
     }
-
-    // In development only: fallback to defaults when no courses exist so dev flows keep working
     if (import.meta.env?.DEV) {
-      const mapped: Course[] = defaultCourses.map((title) => ({
+      setCourses(defaultCourses.map((title) => ({
         id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         title,
         status: 'active',
-      }));
-      setCourses(mapped);
+      })));
       return;
     }
-
-    // In production/non-DEV: explicitly show empty list (no fallback)
     setCourses([]);
   }, [fetchedCourses]);
+
+  useEffect(() => {
+    const loadTeachers = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'users'), where('role', '==', 'teacher')));
+        setTeachers(snap.docs.map((row) => ({ id: row.id, ...(row.data() as any) })));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    void loadTeachers();
+  }, []);
+
+  useEffect(() => {
+    if (!user || !student || user.role !== 'learningPartner') return;
+    const check = async () => {
+      try {
+        const studentDoc = await getDoc(doc(db, 'kids', student.id));
+        const data = studentDoc.exists() ? (studentDoc.data() as any) : (student as any);
+        const lpId = data.lpId || data.primaryLpId || (student as any).lpId;
+        setLpCanAssign(lpId === user.uid);
+      } catch (error) {
+        console.error(error);
+        setLpCanAssign(false);
+      }
+    };
+    void check();
+  }, [user, student]);
 
   const normalizeArea = (value?: string) => {
     const v = String(value || '').toLowerCase().trim();
@@ -142,18 +271,16 @@ export default function AssignCourseModal({
     return v;
   };
 
-  const sortedCourses = React.useMemo(() => {
+  const sortedCourses = useMemo(() => {
     const areaOrder = ['phonics', 'grammar', 'speaking'];
     const levelOrderByArea: Record<string, string[]> = {
       phonics: ['foundations', 'early', 'advanced'],
       grammar: ['basic', 'advanced'],
       speaking: ['basic', 'advanced'],
     };
-
-    // Filter out intermediate-level grammar and speaking courses.
-    // Business rule: Only basic → advanced progression is offered for these areas.
-    // Intermediate tier is not part of the active curriculum offering.
+    const existingCourseIdSet = new Set(existingCourseIds.map((id) => String(id || '').trim()).filter(Boolean));
     const filteredCourses = courses.filter((course) => {
+      if (!resumeEnrollment && existingCourseIdSet.has(course.id)) return false;
       const id = String(course.id || '').toLowerCase();
       if (id.includes('intermediate-grammar') || id.includes('intermediate-public-speaking')) return false;
       const level = normalizeLevel(course.level || course.levelName);
@@ -161,7 +288,6 @@ export default function AssignCourseModal({
       if ((area === 'grammar' || area === 'speaking') && level === 'intermediate') return false;
       return true;
     });
-
     return [...filteredCourses].sort((a, b) => {
       const areaA = normalizeArea(a.area);
       const areaB = normalizeArea(b.area);
@@ -170,7 +296,6 @@ export default function AssignCourseModal({
       if (areaIdxA !== areaIdxB) {
         return (areaIdxA === -1 ? 999 : areaIdxA) - (areaIdxB === -1 ? 999 : areaIdxB);
       }
-
       const levelA = normalizeLevel(a.level || a.levelName);
       const levelB = normalizeLevel(b.level || b.levelName);
       const levelOrder = levelOrderByArea[areaA] || [];
@@ -179,158 +304,100 @@ export default function AssignCourseModal({
       if (levelIdxA !== levelIdxB) {
         return (levelIdxA === -1 ? 999 : levelIdxA) - (levelIdxB === -1 ? 999 : levelIdxB);
       }
-
-      const nameA = (a.name || a.title || a.id || '').toLowerCase();
-      const nameB = (b.name || b.title || b.id || '').toLowerCase();
-      return nameA.localeCompare(nameB);
+      return String(a.name || a.title || a.id).localeCompare(String(b.name || b.title || b.id));
     });
-  }, [courses]);
-
-  // For LP role: check if this LP is assigned to the student (async Firestore check).
-  // Admin authorization is derived synchronously from user.role above.
-  useEffect(() => {
-    if (!user || !student) return;
-    if (user.role !== 'learningPartner') return;
-
-    const check = async () => {
-      try {
-        const studentDoc = await getDoc(doc(db, 'kids', student.id));
-        const data = studentDoc.exists()
-          ? (studentDoc.data() as any)
-          : (student as any);
-
-        const lpId = data.lpId || data.primaryLpId || (student as any).lpId;
-        setLpCanAssign(lpId === user.uid);
-      } catch (err) {
-        console.error(err);
-        setLpCanAssign(false);
-      }
-    };
-
-    void check();
-  }, [user, student]);
+  }, [courses, existingCourseIds, resumeEnrollment]);
 
   useEffect(() => {
+    if (!selected || resumeEnrollment) return;
+    const selectedCourse = courses.find((course) => course.id === selected);
+    const defaultFee = Number(selectedCourse?.feePerClass ?? selectedCourse?.ratePerSession ?? 0);
+    setFeePerClassInput(Number.isFinite(defaultFee) && defaultFee > 0 ? String(defaultFee) : '');
+  }, [selected, courses, resumeEnrollment]);
+
+  const selectedCourse = courses.find((course) => course.id === selected) || null;
+  const selectedTeacher = teachers.find((teacher) => (teacher.uid || teacher.id) === selectedTeacherId) || null;
+  const courseLabel = selectedCourse?.name || selectedCourse?.title || resumeEnrollment?.courseName || selected || 'Course';
+  const teacherLabel =
+    selectedTeacher?.displayName ||
+    selectedTeacher?.name ||
+    selectedTeacher?.email ||
+    selectedTeacherId ||
+    'Not assigned';
+
+  const progress = [
+    { number: 1, label: 'Course' },
+    { number: 2, label: 'Fees' },
+    { number: 3, label: 'Teacher' },
+    { number: 4, label: 'Schedule' },
+    { number: 5, label: 'Review' },
+  ];
+
+  const handleCreateEnrollment = async (): Promise<string | null> => {
+    if (createdEnrollmentId) return createdEnrollmentId;
     if (!selected) {
-      setFeePerClassInput('');
-      setTeacherPayPerSessionInput('');
-      return;
+      toast({ title: 'Select a course', variant: 'destructive' });
+      return null;
     }
-    const selectedCourse = courses.find((c) => c.id === selected);
-    if (!selectedCourse) {
-      setFeePerClassInput('');
-      setTeacherPayPerSessionInput('');
-      return;
-    }
-    const rawDefault =
-      selectedCourse.feePerClass ??
-      selectedCourse.ratePerSession ??
-      0;
-    const defaultFee = Number(rawDefault);
-    if (Number.isFinite(defaultFee) && defaultFee > 0) {
-      setFeePerClassInput(String(defaultFee));
-    } else {
-      setFeePerClassInput('');
-    }
-  }, [selected, courses]);
-
-  const handleAssign = async () => {
-    if (saving) return;
-
-    if (!selected) {
-      toast({
-        title: 'Select a course',
-        description: 'Please choose a course before assigning.',
-      });
-      return;
-    }
-
-    if (!canAssign) {
-      toast({
-        title: 'Not authorized',
-        description:
-          'You do not have permission to assign a course to this student.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     const feePerClass = Number(feePerClassInput);
-    if (!Number.isFinite(feePerClass) || feePerClass <= 0) {
-      toast({
-        title: 'Fee per class required',
-        description: 'Enter a valid fee per class before assigning.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const rawTeacherPay = teacherPayPerSessionInput.trim() === ''
+    const teacherPayPerSession = teacherPayPerSessionInput.trim() === ''
       ? 0
       : Number(teacherPayPerSessionInput);
-    if (!Number.isFinite(rawTeacherPay) || rawTeacherPay < 0) {
-      toast({
-        title: 'Invalid teacher pay',
-        description: 'Enter a valid non-negative teacher pay per session.',
-        variant: 'destructive',
-      });
-      return;
+    if (!Number.isFinite(feePerClass) || feePerClass <= 0) {
+      toast({ title: 'Fee per class required', description: 'Enter a positive parent fee.', variant: 'destructive' });
+      return null;
     }
-    const teacherPayPerSession = rawTeacherPay;
+    if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
+      toast({ title: 'Invalid teacher pay', variant: 'destructive' });
+      return null;
+    }
+    if (!canAssign) {
+      toast({ title: 'Not authorized', variant: 'destructive' });
+      return null;
+    }
 
+    const kidSnap = await getDoc(doc(db, 'kids', student.id));
+    if (!kidSnap.exists()) {
+      toast({ title: 'Invalid student link', variant: 'destructive' });
+      return null;
+    }
+
+    const creditsTotal = sessionsPerMonthForFrequency(selectedCourse?.sessionFrequency || 'weekly');
+    const created = await createEnrollment({
+      operationId: `assign-course-${crypto.randomUUID()}`,
+      creationIntent,
+      kidId: student.id,
+      courseId: selected,
+      feePerClass,
+      ratePerSession: feePerClass,
+      teacherPayPerSession,
+      currency: 'INR',
+      billingCycle: 'monthly',
+      creditsTotal,
+    });
+    setCreatedEnrollmentId(created.enrollmentId);
+    onAssigned?.(created.enrollmentId);
+    return created.enrollmentId;
+  };
+
+  const saveFeesAndContinue = async (exitAfterSave: boolean) => {
     try {
       setSaving(true);
-      const selectedKidId = String(student.id || '').trim();
-      if (!selectedKidId) {
-        toast({
-          title: 'Missing student',
-          description: 'Select a valid student before assigning a course.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const studentDoc = await getDoc(doc(db, 'kids', selectedKidId));
-      if (!studentDoc.exists()) {
-        toast({
-          title: 'Invalid student link',
-          description:
-            'Selected student is not found in the canonical kids collection. Please refresh Student Management and try again.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const selectedCourse = courses.find((c) => c.id === selected);
-      const sessionFrequency =
-        selectedCourse?.sessionFrequency || 'weekly';
-      const sessionsPerMonth =
-        sessionsPerMonthForFrequency(sessionFrequency);
-      const billingCycle: 'monthly' = 'monthly';
-      const creditsTotal = sessionsPerMonth; // 1-month worth of sessions
-      await createEnrollment({
-        operationId: `assign-course-${crypto.randomUUID()}`,
-        kidId: selectedKidId,
-        courseId: selected,
-        feePerClass,
-        ratePerSession: feePerClass,
-        teacherPayPerSession,
-        currency: 'INR',
-        billingCycle,
-        creditsTotal,
-      });
-
+      const enrollmentId = await handleCreateEnrollment();
+      if (!enrollmentId) return;
       toast({
-        title: 'Assigned',
-        description: 'Course assigned to student.',
+        title: 'Enrollment created',
+        description: exitAfterSave
+          ? 'Course and fees are saved. Teacher and schedule can be completed later.'
+          : 'Course and fees saved. Continue with teacher assignment.',
       });
-      onAssigned?.();
-      onClose();
-    } catch (err: unknown) {
-      console.error(err);
+      if (exitAfterSave) onClose();
+      else setStep(3);
+    } catch (error) {
+      console.error(error);
       toast({
-        title: 'Course not assigned',
-        description: getCreateEnrollmentErrorMessage(err),
+        title: 'Enrollment not created',
+        description: getCreateEnrollmentErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -338,108 +405,370 @@ export default function AssignCourseModal({
     }
   };
 
+  const saveTeacherAndContinue = async (exitAfterSave: boolean) => {
+    if (!createdEnrollmentId) return;
+    if (!selectedTeacherId) {
+      toast({ title: 'Select a teacher', variant: 'destructive' });
+      return;
+    }
+    try {
+      setSaving(true);
+      const regionalFunctions = getFunctions(undefined, 'asia-south1');
+      const reassignEnrollmentTeacher = httpsCallable(regionalFunctions, 'reassignEnrollmentTeacher');
+      await reassignEnrollmentTeacher({
+        enrollmentId: createdEnrollmentId,
+        newTeacherId: selectedTeacherId,
+      });
+      setTeacherSaved(true);
+      toast({ title: 'Teacher assigned' });
+      if (exitAfterSave) onClose();
+      else setStep(4);
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: 'Teacher not assigned',
+        description: error?.message || 'Failed to assign teacher.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveScheduleAndContinue = async (exitAfterSave: boolean) => {
+    if (!createdEnrollmentId || !teacherSaved) {
+      toast({
+        title: 'Teacher required',
+        description: 'Assign a teacher before activating a recurring schedule.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(classesStartDate)) {
+      toast({ title: 'Valid start date required', variant: 'destructive' });
+      return;
+    }
+    const cleanSlots = weeklySlots.map((slot) => ({
+      weekday: Number(slot.weekday),
+      time: String(slot.time || '').trim(),
+      durationMinutes: Number(slot.durationMinutes),
+    }));
+    const invalidSlot = cleanSlots.some((slot) =>
+      !Number.isInteger(slot.weekday)
+      || slot.weekday < 0
+      || slot.weekday > 6
+      || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(slot.time)
+      || !Number.isFinite(slot.durationMinutes)
+      || slot.durationMinutes < 10
+      || slot.durationMinutes > 180,
+    );
+    if (!cleanSlots.length || invalidSlot) {
+      toast({ title: 'Complete every schedule slot', variant: 'destructive' });
+      return;
+    }
+    if (meetingLink && !/^https?:\/\//i.test(meetingLink.trim())) {
+      toast({ title: 'Enter a complete class link', description: 'Use http:// or https://', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const regionalFunctions = getFunctions(undefined, 'asia-south1');
+      const saveRollingEnrollmentSchedule = httpsCallable(regionalFunctions, 'saveRollingEnrollmentSchedule');
+      await saveRollingEnrollmentSchedule({
+        enrollmentId: createdEnrollmentId,
+        enrollmentStartDate: classesStartDate,
+        classesStartDate,
+        feePerClass: Number(feePerClassInput),
+        joinUrl: meetingLink.trim() || null,
+        currency: 'INR',
+        weeklySlots: cleanSlots,
+        idempotencyKey:
+          typeof crypto?.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `admission-schedule-${createdEnrollmentId}-${Date.now()}`,
+      });
+      setScheduleSaved(true);
+      toast({ title: 'Schedule activated', description: 'Continuous recurring schedule saved safely.' });
+      if (exitAfterSave) onClose();
+      else setStep(5);
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        title: 'Schedule not saved',
+        description: error?.message || 'Failed to activate recurring schedule.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateSlot = (id: string, patch: Partial<WeeklySlot>) => {
+    setWeeklySlots((current) => current.map((slot) => slot.id === id ? { ...slot, ...patch } : slot));
+  };
+
+  const closeFinished = () => {
+    onAssigned?.(createdEnrollmentId || undefined);
+    onClose();
+  };
+
   return (
-    <Dialog
-      open={true}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
+      <DialogContent className="sm:max-w-[720px] max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            Assign Course to {studentName}
+            {resumeEnrollment ? `Continue Admission Setup — ${studentName}` : `Admission Setup — ${studentName}`}
           </DialogTitle>
           <DialogDescription>
-            Choose a course for this student and create an enrollment.
-            Only Admins and the assigned Learning Partner can perform
-            this action.
+            Complete the admission in sequence. After the enrollment is created, you can save and exit at any later step and continue later.
           </DialogDescription>
         </DialogHeader>
 
-          <div className="py-4 space-y-4">
-            {coursesLoading ? (
-              <div className="p-4 text-sm text-muted-foreground text-center">Loading courses…</div>
-            ) : sortedCourses.length > 0 ? (
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Course</label>
-                <Select value={selected} onValueChange={setSelected}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortedCourses.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {(c.name || c.title || 'Untitled Course')}
-                        {(c.area || c.level) ? ` — ${c.area || ''}${c.area && c.level ? ' / ' : ''}${c.level || ''}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <div className="p-4 rounded border border-dashed border-gray-200 text-sm text-muted-foreground">
-                No courses found. Please add courses in Course Management first.
-              </div>
-            )}
+        <div className="grid grid-cols-5 gap-2">
+          {progress.map((item) => (
+            <div
+              key={item.number}
+              className={[
+                'rounded-md border px-2 py-2 text-center text-xs',
+                step === item.number
+                  ? 'border-blue-500 bg-blue-50 font-semibold text-blue-900'
+                  : item.number < step
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-slate-200 text-slate-500',
+              ].join(' ')}
+            >
+              <div>{item.number}</div>
+              <div>{item.label}</div>
+            </div>
+          ))}
+        </div>
 
-            {selected && (
-              <>
+        <div className="min-h-[300px] py-3">
+          {step === 1 && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold">1. Select course</h4>
+                <p className="text-sm text-muted-foreground">
+                  {creationIntent === 'additional_course'
+                    ? 'Choose an additional independent course. Existing active courses stay unchanged.'
+                    : 'Choose the child\'s first course.'}
+                </p>
+              </div>
+              <Select value={selected} onValueChange={setSelected} disabled={Boolean(resumeEnrollment)}>
+                <SelectTrigger>
+                  <SelectValue placeholder={coursesLoading ? 'Loading courses…' : 'Select course'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortedCourses.map((course) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.name || course.title || course.id}
+                      {(course.area || course.level) ? ` — ${course.area || ''}${course.area && course.level ? ' / ' : ''}${course.level || ''}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!coursesLoading && sortedCourses.length === 0 && (
+                <p className="text-sm text-amber-700">No eligible active courses are available.</p>
+              )}
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold">2. Assign fees</h4>
+                <p className="text-sm text-muted-foreground">Course: {courseLabel}</p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Fee per class (₹) *</label>
+                  <label className="text-sm font-medium">Parent fee per class (₹) *</label>
                   <Input
                     type="number"
                     min={1}
                     step={1}
-                    placeholder="e.g., 599"
                     value={feePerClassInput}
-                    onChange={(e) => setFeePerClassInput(e.target.value)}
+                    onChange={(event) => setFeePerClassInput(event.target.value)}
+                    disabled={Boolean(createdEnrollmentId)}
                   />
-                  {feePerClassInput && Number(feePerClassInput) <= 0 && (
-                    <p className="text-xs text-red-500">Fee must be greater than 0.</p>
-                  )}
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium">Teacher pay per session (₹)</label>
+                  <label className="text-sm font-medium">Teacher pay per class (₹)</label>
                   <Input
                     type="number"
                     min={0}
                     step={1}
-                    placeholder="e.g., 300"
                     value={teacherPayPerSessionInput}
-                    onChange={(e) => setTeacherPayPerSessionInput(e.target.value)}
+                    onChange={(event) => setTeacherPayPerSessionInput(event.target.value)}
+                    disabled={Boolean(createdEnrollmentId)}
                   />
-                  {(!teacherPayPerSessionInput || Number(teacherPayPerSessionInput) <= 0) && (
-                    <p className="text-xs text-amber-600">
-                      Teacher earnings will be ₹0 until set.
-                    </p>
-                  )}
                 </div>
-              </>
-            )}
+              </div>
+              <p className="text-xs text-slate-500">
+                The enrollment is created only after these financial terms are validated, preventing a course-only partial record.
+              </p>
+            </div>
+          )}
 
-            {!canAssign && user?.role !== 'learningPartner' && (
-              <p className="text-xs text-red-500">
-                You are not authorized to assign courses for this student.
-              </p>
-            )}
-            {!canAssign && user?.role === 'learningPartner' && lpCanAssign === false && (
-              <p className="text-xs text-red-500">
-                You are not the assigned Learning Partner for this student.
-              </p>
+          {step === 3 && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold">3. Assign teacher</h4>
+                <p className="text-sm text-muted-foreground">Enrollment: {courseLabel}</p>
+              </div>
+              <Select value={selectedTeacherId} onValueChange={(value) => {
+                setSelectedTeacherId(value);
+                setTeacherSaved(value === resumeEnrollment?.teacherId && Boolean(value));
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select teacher" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teachers.map((teacher) => (
+                    <SelectItem key={teacher.uid || teacher.id} value={teacher.uid || teacher.id}>
+                      {teacher.displayName || teacher.name || teacher.email || teacher.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {teacherSaved && <p className="text-sm text-emerald-700">Teacher assignment saved.</p>}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold">4. Schedule classes</h4>
+                <p className="text-sm text-muted-foreground">
+                  Teacher: {teacherLabel}. Configure the continuous weekly recurrence.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Classes start date</label>
+                  <Input type="date" value={classesStartDate} onChange={(event) => setClassesStartDate(event.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Microsoft Teams / class link</label>
+                  <Input
+                    type="url"
+                    placeholder="https://teams.microsoft.com/..."
+                    value={meetingLink}
+                    onChange={(event) => setMeetingLink(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Weekly class slots</label>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setWeeklySlots((current) => [...current, newSlot()])}>
+                    Add slot
+                  </Button>
+                </div>
+                {weeklySlots.map((slot, index) => (
+                  <div key={slot.id} className="grid gap-2 rounded-md border p-3 md:grid-cols-[1.2fr_1fr_1fr_auto]">
+                    <Select value={String(slot.weekday)} onValueChange={(value) => updateSlot(slot.id, { weekday: Number(value) })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {WEEKDAYS.map((day) => (
+                          <SelectItem key={day.value} value={String(day.value)}>{day.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input type="time" value={slot.time} onChange={(event) => updateSlot(slot.id, { time: event.target.value })} />
+                    <Input
+                      type="number"
+                      min={10}
+                      max={180}
+                      step={5}
+                      value={slot.durationMinutes}
+                      onChange={(event) => updateSlot(slot.id, { durationMinutes: Number(event.target.value) })}
+                      aria-label={`Duration for slot ${index + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setWeeklySlots((current) => current.filter((row) => row.id !== slot.id))}
+                      disabled={weeklySlots.length === 1}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              {scheduleSaved && <p className="text-sm text-emerald-700">Recurring schedule saved and activated.</p>}
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold">5. Review admission</h4>
+                <p className="text-sm text-muted-foreground">The setup is ready for operational use.</p>
+              </div>
+              <div className="rounded-lg border bg-slate-50 p-4 text-sm space-y-2">
+                <div><strong>Student:</strong> {studentName}</div>
+                <div><strong>Course:</strong> {courseLabel}</div>
+                <div><strong>Parent fee:</strong> ₹{feePerClassInput || '—'} / class</div>
+                <div><strong>Teacher pay:</strong> ₹{teacherPayPerSessionInput || '0'} / class</div>
+                <div><strong>Teacher:</strong> {teacherLabel}</div>
+                <div><strong>Schedule:</strong> {scheduleSaved ? `${weeklySlots.length} weekly slot${weeklySlots.length === 1 ? '' : 's'} from ${classesStartDate}` : 'Not yet configured'}</div>
+                <div><strong>Class link:</strong> {meetingLink || 'Not set'}</div>
+                <div><strong>Enrollment ID:</strong> {createdEnrollmentId || '—'}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex flex-wrap justify-between gap-2 sm:justify-between">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((current) => Math.max(1, current - 1) as WizardStep)}
+              disabled={saving || step === 1 || Boolean(createdEnrollmentId && step <= 2)}
+            >
+              Back
+            </Button>
+            {createdEnrollmentId && step >= 3 && step < 5 && (
+              <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+                Save & Exit
+              </Button>
             )}
           </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleAssign}
-            disabled={!canAssign || saving || !selected || coursesLoading}
-          >
-            {saving ? 'Assigning…' : 'Assign Course'}
-          </Button>
+          <div className="flex gap-2">
+            {step === 1 && (
+              <Button onClick={() => setStep(2)} disabled={!selected || coursesLoading || !canAssign}>
+                Continue to Fees
+              </Button>
+            )}
+            {step === 2 && (
+              <>
+                <Button variant="outline" onClick={() => void saveFeesAndContinue(true)} disabled={saving || Boolean(createdEnrollmentId)}>
+                  {saving ? 'Saving…' : 'Save & Exit'}
+                </Button>
+                <Button onClick={() => void saveFeesAndContinue(false)} disabled={saving}>
+                  {saving ? 'Saving…' : createdEnrollmentId ? 'Continue to Teacher' : 'Save & Continue'}
+                </Button>
+              </>
+            )}
+            {step === 3 && (
+              <Button onClick={() => void saveTeacherAndContinue(false)} disabled={saving || !selectedTeacherId}>
+                {saving ? 'Saving…' : teacherSaved ? 'Continue to Schedule' : 'Save Teacher & Continue'}
+              </Button>
+            )}
+            {step === 4 && (
+              <Button onClick={() => void saveScheduleAndContinue(false)} disabled={saving || !teacherSaved}>
+                {saving ? 'Saving…' : scheduleSaved ? 'Continue to Review' : 'Save Schedule & Continue'}
+              </Button>
+            )}
+            {step === 5 && (
+              <Button onClick={closeFinished}>Complete Setup</Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
