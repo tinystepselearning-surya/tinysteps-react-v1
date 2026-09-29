@@ -214,6 +214,27 @@ describe('createEnrollment creation intent invariants', () => {
     });
   });
 
+  it('rejects reusing an enrollment operation ID with a different creation intent', async () => {
+    const operationId = 'intent-idempotency-mismatch';
+    await createEnrollment({
+      operationId,
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'initial_course',
+    });
+    await expect(callFunction('createEnrollment', {
+      operationId,
+      creationIntent: 'additional_course',
+      kidId: ids.kidId,
+      courseId: ids.phonicsCourseId,
+      ratePerSession: 500,
+      teacherPayPerSession: 250,
+      creditsTotal: 4,
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'already-exists');
+      return true;
+    });
+  });
+
   it('allows a different additional course but still blocks a duplicate same course', async () => {
     const phonicsId = await createEnrollment({
       operationId: 'intent-first-course',
