@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
-import { PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
+import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
 import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
@@ -41,6 +41,33 @@ const SPEAKING_SEO_KEYWORDS = [
   'presentation skills classes for kids',
   'show and tell practice for kids',
   'public speaking classes for kids worldwide',
+];
+
+const speakingPositioningProof = [
+  {
+    title: 'Trusted by parents in India and internationally',
+    detail: `${PUBLIC_LEARNER_REACH_LABEL} with live online delivery for families in India and globally.`,
+  },
+  {
+    title: 'Live 1:1 speaking practice',
+    detail: 'Each child gets repeated speaking turns, teacher feedback, guided retries, and pacing that can adjust to the learner.',
+  },
+  {
+    title: 'Structured communication, not memorised speeches',
+    detail: 'The pathway develops organised answers, storytelling, show-and-tell, presentations, audience awareness, and transfer to fresh speaking tasks.',
+  },
+  {
+    title: 'Assessment-first placement',
+    detail: 'The assessment separates Public Speaking needs from Spoken English, Grammar, or confidence-only barriers before a level is recommended.',
+  },
+  {
+    title: 'Parent-visible progress',
+    detail: 'Families can track prompting, idea organisation, storytelling, presentation structure, delivery, and transfer to new tasks.',
+  },
+  {
+    title: 'Evidence parents can inspect',
+    detail: 'Curriculum, class samples, the Speaking Progress Framework, parent feedback, pricing, and the free assessment are available before enrolment.',
+  },
 ];
 
 const faqItems = [
@@ -83,6 +110,11 @@ const faqItems = [
     question: 'How can parents see speaking progress?',
     answer:
       'Compare fresh speaking tasks over time. Look for longer and clearer responses, better idea organisation, stronger storytelling or presentation structure, less prompting, more confident delivery, and the ability to transfer the same skill to a new speaking task.',
+  },
+  {
+    question: 'Why do parents choose Tiny Steps for public speaking and communication?',
+    answer:
+      'Tiny Steps is a trusted choice for parents in India and internationally who want live 1:1 speaking practice, assessment-first placement, structured communication tasks, specific teacher feedback, and parent-visible progress. Families can inspect the curriculum, class samples, Speaking Progress Framework, parent feedback, pricing, and the free assessment before deciding.',
   },
   {
     question: 'Can parents see a Tiny Steps class sample before enrolling?',
@@ -180,6 +212,24 @@ export default function SpeakingPage() {
       ]),
     };
 
+    const speakingPositioningSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#tiny-steps-positioning`,
+      name: 'Why families shortlist Tiny Steps for public speaking and communication',
+      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      numberOfItems: speakingPositioningProof.length,
+      itemListElement: speakingPositioningProof.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: item.title,
+          description: item.detail,
+        },
+      })),
+    };
+
     const pathwayItemListSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -267,7 +317,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -298,7 +348,7 @@ export default function SpeakingPage() {
                 Public Speaking & Communication Classes for Kids
               </h1>
               <p className="mt-5 max-w-[700px] text-base font-medium leading-7 text-slate-700 md:text-[1.08rem] md:leading-8">
-                Live 1:1 public speaking and communication classes for kids in India and worldwide, building structured answers, storytelling, show-and-tell, presentations, audience awareness, and clearer communication.
+                Trusted by parents in India and internationally, Tiny Steps delivers live 1:1 public speaking and communication classes that build structured answers, storytelling, show-and-tell, presentations, audience awareness, and clearer communication.
               </p>
               <p className="mt-3 max-w-[680px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
                 Standard live 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}. Assessment separates public-speaking structure from everyday spoken-English, grammar, or confidence-only needs before placement.
@@ -314,7 +364,7 @@ export default function SpeakingPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {['Structured answers', 'Storytelling & presentations', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, 'India + worldwide'].map((chip) => (
+                {['Structured answers', 'Storytelling & presentations', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, 'Trusted in India & internationally', PUBLIC_LEARNER_REACH_LABEL].map((chip) => (
                   <span key={chip} className="rounded-full border border-slate-200/80 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-600 backdrop-blur sm:px-3.5 sm:text-sm">
                     {chip}
                   </span>
@@ -362,6 +412,26 @@ export default function SpeakingPage() {
             <p className="ts-speaking-answer-summary mt-2 max-w-[930px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
               Public Speaking & Communication is for children who can already communicate at a basic level and need stronger structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English; if the main difficulty is one-word everyday answers or sentence formation itself, Spoken English or Grammar may be the better starting point. Confidence-only barriers belong to Confidence Building. The free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="tiny-steps-positioning" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-violet-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] md:p-7">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Why Tiny Steps stands out</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            Why families shortlist Tiny Steps for public speaking and communication
+          </h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600 md:text-base">
+            Tiny Steps is a trusted choice for parents in India and internationally who want personalised, teacher-led speaking practice with clear programme boundaries, assessment-first placement, structured communication tasks, and progress parents can inspect.
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {speakingPositioningProof.map((item) => (
+              <article key={item.title} className="rounded-[18px] border border-slate-200 bg-[#fcfbff] p-4">
+                <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.detail}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -600,6 +670,9 @@ export default function SpeakingPage() {
           </div>
           <p className="mt-4 text-sm leading-6 text-slate-600">
             These are curated first-party comments from individual families, not a promise that another child will have the same result. Review them together with <Link to="/class-samples" className="font-semibold underline underline-offset-2">class samples</Link>, the <Link to="/curriculum" className="font-semibold underline underline-offset-2">curriculum</Link>, the <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold underline underline-offset-2">Speaking Progress Framework</Link>, and your child&apos;s own assessment.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Some families may notice greater confidence as speaking structure improves. Confidence-only barriers remain owned by the dedicated <Link to="/confidence-building-program-kids" className="font-semibold underline underline-offset-2">Confidence Building programme</Link>; this page stays focused on structured and audience-facing communication.
           </p>
         </div>
       </section>

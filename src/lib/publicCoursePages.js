@@ -397,22 +397,23 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     publicSlug: 'grammar-mastery',
     routePath: '/courses/grammar-mastery',
     name: 'Advanced Grammar',
-    h1: 'Grammar Mastery Classes for Stronger Writing',
-    title: 'Grammar Mastery Classes for Kids | Tiny Steps',
+    h1: 'Advanced Grammar Mastery Classes for Kids',
+    title: 'Advanced Grammar Mastery Classes for Kids | Tiny Steps',
     description:
-      'Learners progress from basic grammar knowledge to confident, accurate speaking and independent writing, with stronger sentence structure, tense control, clarity, fluency, and self-editing skills.',
+      'Live 1:1 Advanced Grammar for kids strengthening tense control, sentence structure, punctuation, grammar correction, self-editing, and grammar transfer into connected writing.',
     educationalLevel: 'Advanced',
     track: 'grammar',
     breadcrumbName: 'Grammar Mastery',
     keywords: [
       'advanced grammar classes for kids',
       'grammar mastery classes',
-      'writing support for children',
+      'grammar for writing accuracy',
     ],
     legacySlugs: ['advanced-grammar'],
     relatedLinks: [
       { label: 'Track your child’s progress', to: '/parents/tracking-progress' },
       { label: 'Common grammar mistakes parents notice', to: '/parents/common-mistakes' },
+      { label: 'Choose Writing for idea development and longer composition', to: '/writing-classes-for-kids' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
@@ -424,7 +425,12 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
       {
         question: 'Does this course help with paragraph writing?',
         answer:
-          'Yes. Children practise writing more clearly, editing mistakes, and organizing ideas into stronger sentences and paragraphs.',
+          'It can strengthen grammar transfer inside connected paragraphs through tense consistency, sentence connections, punctuation, correction, and self-editing. Idea development, paragraph planning, story composition, and longer writing belong to the dedicated Writing programme.',
+      },
+      {
+        question: 'Is Advanced Grammar the same as the Tiny Steps Writing programme?',
+        answer:
+          'No. Advanced Grammar owns grammar control and transfer: accurate sentences, tense consistency, punctuation, correction, and editing. The Writing programme owns idea development, paragraph planning, stories, composition, revision, and longer independent writing.',
       },
     ],
   },
@@ -520,6 +526,11 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
         question: 'What if confidence itself is the main barrier?',
         answer:
           'If the child has enough language and structure but hesitation, participation comfort, or dependence on prompting is the primary difficulty across situations, the specialist Confidence Building programme may be a clearer fit.',
+      },
+      {
+        question: 'Can an older child be placed in Public Speaking Foundations?',
+        answer:
+          'Yes. Ages 4–7 are the typical guide, but placement is assessment-led. An older child may start in Foundations when current speaking structure, storytelling, presentation readiness, or independence shows that this is the most useful starting level.',
       },
     ],
   },

@@ -57,7 +57,7 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
   'advanced-grammar': {
     name: 'Advanced Grammar Program',
     description:
-      'Advanced grammar program for children focused on tenses, sentence structure, writing accuracy, paragraph writing, editing, and confident communication.',
+      'Advanced grammar program for children focused on tense control, sentence structure, punctuation, grammar correction, self-editing, and grammar transfer into connected writing. Idea development and longer composition remain with the dedicated Writing programme.',
     educationalLevel: 'Advanced',
   },
   'basic-public-speaking': {
@@ -187,6 +187,14 @@ const CourseDetailPage: FC = () => {
   )}`;
   const stageAuthority = coursePageConfig?.stageAuthority;
   const testimonialProgram = TESTIMONIAL_PROGRAM_BY_COURSE_SLUG[course.slug];
+  const testimonialSubtitle =
+    course.slug === 'basic-public-speaking'
+      ? 'Approved feedback from families whose children were placed in this Foundations level. The published ages 4–7 range is a guide; assessment-led placement can place an older child here when Foundations is the most useful starting level.'
+      : 'Approved feedback from families in this exact course level, shown after the curriculum so you can compare the learning plan with the outcomes parents noticed.';
+  const testimonialContextNote =
+    course.slug === 'basic-public-speaking'
+      ? 'Some families may mention confidence as a change they noticed. Foundations remains a Public Speaking structure level; if hesitation or participation comfort is the primary barrier, use the dedicated Confidence Building programme.'
+      : null;
   const courseSchemaConfig = COURSE_SCHEMA_BY_SLUG[course.slug] || {
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
@@ -527,7 +535,7 @@ const CourseDetailPage: FC = () => {
         <TestimonialsSection
           eyebrow="Step 3 · Parent feedback"
           title={`Parent feedback for ${course.name}`}
-          subtitle="Approved feedback from families in this exact course level, shown after the curriculum so you can compare the learning plan with the outcomes parents noticed."
+          subtitle={testimonialSubtitle}
           program={testimonialProgram}
           courseTag={courseTrack}
           limit={3}
@@ -536,6 +544,14 @@ const CourseDetailPage: FC = () => {
           viewAllHref="/testimonials"
           viewAllLabel="View all program reviews"
         />
+        {testimonialContextNote ? (
+          <p className="mx-auto mt-3 max-w-5xl text-xs leading-5 text-slate-500">
+            {testimonialContextNote}{' '}
+            <Link to="/confidence-building-program-kids" className="font-semibold text-slate-700 underline underline-offset-2">
+              Review Confidence Building
+            </Link>.
+          </p>
+        ) : null}
       </LeadSection>
 
       {Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 ? (
