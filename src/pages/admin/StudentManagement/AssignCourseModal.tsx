@@ -33,6 +33,7 @@ import {
 import { useCourses } from '../../../hooks/useData';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
+import { normalizeEnrollmentScheduleSlots } from '../../../lib/sessionScheduleIntegrity';
 import { useAuthStore } from '../../../store/useAuthStore';
 
 type EnrollmentCreationIntent = 'initial_course' | 'additional_course';
@@ -47,14 +48,7 @@ type ResumeEnrollment = {
   teacherId?: string;
   joinUrl?: string;
   classesStartDateYmd?: string;
-  schedule?: {
-    weeklySlots?: Array<{
-      weekday?: number;
-      time?: string;
-      durationMinutes?: number;
-      durationMins?: number;
-    }>;
-  };
+  schedule?: Record<string, unknown>;
 };
 
 interface Props {
@@ -171,24 +165,23 @@ export default function AssignCourseModal({
     resumeEnrollment?.classesStartDateYmd || todayYmd(),
   );
   const [meetingLink, setMeetingLink] = useState<string>(resumeEnrollment?.joinUrl || '');
+  const normalizedResumeSlots = useMemo(
+    () => normalizeEnrollmentScheduleSlots(resumeEnrollment?.schedule),
+    [resumeEnrollment?.schedule],
+  );
   const [weeklySlots, setWeeklySlots] = useState<WeeklySlot[]>(() => {
-    const source = resumeEnrollment?.schedule?.weeklySlots || [];
-    const normalized = source
+    const normalized = normalizeEnrollmentScheduleSlots(resumeEnrollment?.schedule)
       .map((slot) => ({
         id: typeof crypto?.randomUUID === 'function' ? crypto.randomUUID() : `slot-${Math.random()}`,
-        weekday: Number(slot.weekday),
-        time: String(slot.time || ''),
-        durationMinutes: Number(slot.durationMinutes ?? slot.durationMins ?? 35),
-      }))
-      .filter((slot) =>
-        Number.isInteger(slot.weekday)
-        && slot.weekday >= 0
-        && slot.weekday <= 6
-        && /^([01]\d|2[0-3]):([0-5]\d)$/.test(slot.time),
-      );
+        weekday: slot.weekday,
+        time: slot.time,
+        durationMinutes: slot.durationMinutes,
+      }));
     return normalized.length ? normalized : [newSlot()];
   });
-  const [scheduleSaved, setScheduleSaved] = useState(Boolean(resumeEnrollment?.schedule?.weeklySlots?.length));
+  const [scheduleSaved, setScheduleSaved] = useState(
+    normalizeEnrollmentScheduleSlots(resumeEnrollment?.schedule).length > 0,
+  );
 
   const { user } = useAuthStore();
   const studentName =
@@ -204,10 +197,10 @@ export default function AssignCourseModal({
   useEffect(() => {
     if (resumeEnrollment) {
       if (!resumeEnrollment.teacherId) setStep(3);
-      else if (!resumeEnrollment.schedule?.weeklySlots?.length) setStep(4);
+      else if (normalizedResumeSlots.length === 0) setStep(4);
       else setStep(5);
     }
-  }, [resumeEnrollment]);
+  }, [resumeEnrollment, normalizedResumeSlots.length]);
 
   useEffect(() => {
     if (Array.isArray(fetchedCourses) && fetchedCourses.length > 0) {
