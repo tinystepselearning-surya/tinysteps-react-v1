@@ -477,6 +477,96 @@ export async function createEnrollmentForCourseTransitionInternal(
   );
 }
 
+export const saveEnrollmentSetupDraft = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  const enrollmentId = String(request.data?.enrollmentId || '').trim();
+  const resumeStep = String(request.data?.resumeStep || '').trim();
+  const allowedSteps = new Set(['fees', 'teacher', 'schedule', 'review']);
+  if (!enrollmentId || !allowedSteps.has(resumeStep)) {
+    throw new HttpsError(
+      'invalid-argument',
+      'enrollmentId and a valid resumeStep are required',
+    );
+  }
+
+  const scheduleDraftRaw = request.data?.scheduleDraft;
+  if (
+    scheduleDraftRaw != null
+    && (typeof scheduleDraftRaw !== 'object' || Array.isArray(scheduleDraftRaw))
+  ) {
+    throw new HttpsError('invalid-argument', 'scheduleDraft must be an object');
+  }
+
+  const scheduleDraft = scheduleDraftRaw
+    ? removeUndefinedDeep({
+        enrollmentStartDate: toOptionalId((scheduleDraftRaw as Record<string, unknown>).enrollmentStartDate),
+        classesStartDate: toOptionalId((scheduleDraftRaw as Record<string, unknown>).classesStartDate),
+        joinUrl: toOptionalId((scheduleDraftRaw as Record<string, unknown>).joinUrl),
+        weeklySlots: Array.isArray((scheduleDraftRaw as Record<string, unknown>).weeklySlots)
+          ? ((scheduleDraftRaw as Record<string, unknown>).weeklySlots as unknown[])
+              .map((row) => {
+                const slot = row && typeof row === 'object' && !Array.isArray(row)
+                  ? row as Record<string, unknown>
+                  : {};
+                return {
+                  weekday: Number(slot.weekday),
+                  time: String(slot.time || '').trim(),
+                  durationMinutes: Number(slot.durationMinutes ?? 35),
+                };
+              })
+          : [],
+      })
+    : null;
+
+  if (scheduleDraft) {
+    const weeklySlots = Array.isArray(scheduleDraft.weeklySlots)
+      ? scheduleDraft.weeklySlots as Array<Record<string, unknown>>
+      : [];
+    for (const slot of weeklySlots) {
+      const weekday = Number(slot.weekday);
+      const time = String(slot.time || '');
+      const durationMinutes = Number(slot.durationMinutes);
+      if (
+        !Number.isInteger(weekday)
+        || weekday < 0
+        || weekday > 6
+        || !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)
+        || !Number.isFinite(durationMinutes)
+        || durationMinutes < 10
+        || durationMinutes > 180
+      ) {
+        throw new HttpsError('invalid-argument', 'scheduleDraft contains an invalid weekly slot');
+      }
+    }
+  }
+
+  const db = admin.firestore();
+  const ref = db.collection('enrollments').doc(enrollmentId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Enrollment not found');
+  const enrollment = (snap.data() || {}) as Record<string, unknown>;
+  if (normalizeEnrollmentStatus(enrollment.status) !== 'setup_pending') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Setup drafts can only be saved while the enrollment is setup_pending',
+    );
+  }
+
+  const actor = request.auth?.uid || 'admin';
+  await ref.set({
+    setupDraft: removeUndefinedDeep({
+      resumeStep,
+      ...(scheduleDraft ? {scheduleDraft} : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: actor,
+    }),
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor,
+  }, { merge: true });
+
+  return { ok: true, enrollmentId, resumeStep };
+});
+
 export const updateEnrollmentFinancialTerms = onCall({ region: REGION }, async (request) => {
   await ensureAdmin(request.auth);
   const enrollmentId = String(request.data?.enrollmentId || '').trim();
