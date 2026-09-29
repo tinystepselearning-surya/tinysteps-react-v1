@@ -1165,7 +1165,7 @@ describe('AV5.3 bounded shadow runner', () => {
     );
   });
 
-  it('propagates staff-registry integrity issues into every persisted case for audit visibility', async () => {
+  it('scopes staff-registry integrity issues to the teacher on the persisted case', async () => {
     const store = new FakeStore([
       {
         item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
@@ -1189,6 +1189,10 @@ describe('AV5.3 bounded shadow runner', () => {
               kind: 'duplicate_email_hash',
               staffIds: ['teacher-1', 'teacher-2'],
             },
+            {
+              kind: 'override_without_active_staff',
+              staffIds: ['unrelated-old-teacher'],
+            },
           ],
         },
       },
@@ -1197,6 +1201,9 @@ describe('AV5.3 bounded shadow runner', () => {
     expect(store.saved[0].staffRegistryIssues).toEqual([
       'duplicate_email_hash',
     ]);
+    expect(store.saved[0].staffRegistryIssues).not.toContain(
+      'override_without_active_staff',
+    );
   });
 
   it('enforces a hard bounded work-list size before any store read', async () => {
