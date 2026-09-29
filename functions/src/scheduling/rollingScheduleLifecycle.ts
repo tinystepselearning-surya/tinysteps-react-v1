@@ -16,6 +16,7 @@ import {
   ROLLING_SCHEDULE_TIME_ZONE,
   addDaysYmd,
   buildRollingMaterializationPlan,
+  buildRollingScheduledSessionPayload,
   createFirestoreRollingScheduleMaterializerStore,
   materializeRollingEnrollmentWindowInternal,
   normalizeRollingMaterializerSlots,
@@ -584,6 +585,232 @@ function plainMaterializationResult(result: Awaited<ReturnType<typeof materializ
     nextOccurrenceYmd: result.materialization.nextOccurrenceYmd,
     nextMaterializationDueYmd: result.materialization.nextMaterializationDueYmd,
   };
+}
+
+async function activateSetupPendingEnrollmentAtomically(args: {
+  db: admin.firestore.Firestore;
+  enrollmentId: string;
+  enrollmentRef: admin.firestore.DocumentReference;
+  enrollmentStartDateYmd: string;
+  classesStartDateYmd: string;
+  requestedFeePerClass: number;
+  currency: string;
+  joinUrl: string | null;
+  weeklySlots: SaveRollingEnrollmentScheduleInput['weeklySlots'];
+  idempotencyKey: string | null;
+  actorUid: string;
+}): Promise<SaveRollingEnrollmentScheduleResult> {
+  const {
+    db,
+    enrollmentId,
+    enrollmentRef,
+    enrollmentStartDateYmd,
+    classesStartDateYmd,
+    requestedFeePerClass,
+    currency,
+    joinUrl,
+    weeklySlots,
+    idempotencyKey,
+    actorUid,
+  } = args;
+  const todayYmd = resolveRollingLifecycleTodayYmd();
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(enrollmentRef);
+    if (!snap.exists) throw new HttpsError('not-found', `Enrollment ${enrollmentId} not found`);
+    const enrollment = (snap.data() || {}) as Record<string, unknown>;
+    const normalizedStatus = normalizeEnrollmentStatus(enrollment.status);
+    const activation = isRecordLike(enrollment.rollingScheduleActivation)
+      ? enrollment.rollingScheduleActivation
+      : {};
+
+    if (
+      idempotencyKey
+      && optionalText(activation.lastRequestKey) === idempotencyKey
+      && String(activation.state || '') === 'success'
+      && isRecordLike(activation.lastResult)
+    ) {
+      const replay = activation.lastResult as unknown as SaveRollingEnrollmentScheduleResult;
+      return {
+        ...replay,
+        idempotentReplay: true,
+        orchestrationState: 'replayed',
+      };
+    }
+
+    if (normalizedStatus !== 'setup_pending') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Admission setup is no longer pending. Refresh before activating it.',
+      );
+    }
+
+    const teacherId = optionalText(enrollment.teacherId);
+    if (!teacherId) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Assign a teacher before completing admission setup',
+      );
+    }
+    const storedRate = Number(enrollment.ratePerSession ?? enrollment.feePerClass ?? 0);
+    if (!Number.isFinite(storedRate) || storedRate <= 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Set valid financial terms before completing admission setup',
+      );
+    }
+    if (Math.abs(storedRate - requestedFeePerClass) > 0.0001) {
+      throw new HttpsError(
+        'aborted',
+        'Financial terms changed while admission setup was open. Refresh and review before activation.',
+      );
+    }
+
+    const {schedule, recurrenceChanged} = buildCanonicalRollingScheduleDefinition({
+      existingEnrollment: enrollment,
+      weeklySlots,
+      classesStartDateYmd,
+    });
+    if (isCanonicalRollingEnrollment(enrollment) && recurrenceChanged) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Pending admission already has a different canonical timetable. Review before activation.',
+      );
+    }
+
+    const proposedEnrollment: Record<string, unknown> = {
+      ...enrollment,
+      status: 'active',
+      setupPending: false,
+      startDateYmd: enrollmentStartDateYmd,
+      classesStartDateYmd,
+      feePerClass: storedRate,
+      ratePerSession: storedRate,
+      currency,
+      joinUrl,
+      schedule: {
+        schemaVersion: schedule.schemaVersion,
+        deliveryMode: schedule.deliveryMode,
+        timezone: schedule.timezone,
+        revision: schedule.revision,
+        weeklySlots: schedule.weeklySlots,
+        weekdays: schedule.weekdays,
+        timeHHmm: schedule.timeHHmm,
+        durationMins: schedule.durationMins,
+      },
+      scheduleMaterialization: {
+        schemaVersion: ROLLING_SCHEDULE_MATERIALIZATION_VERSION,
+        horizonDays: ROLLING_SCHEDULE_HORIZON_DAYS,
+        scheduleRevision: schedule.revision,
+        nextOccurrenceYmd: null,
+        nextMaterializationDueYmd: null,
+        lifecycleState: 'active',
+      },
+    };
+
+    const plan = buildRollingMaterializationPlan({
+      enrollmentId,
+      enrollment: proposedEnrollment,
+      anchorYmd: todayYmd,
+    });
+    const sessionRefs = plan.occurrences.map((occurrence) =>
+      db.collection('classSessions').doc(occurrence.sessionId),
+    );
+    const sessionSnaps = await Promise.all(sessionRefs.map((ref) => tx.get(ref)));
+    const existingSessionIds = sessionSnaps
+      .filter((sessionSnap) => sessionSnap.exists)
+      .map((sessionSnap) => sessionSnap.id);
+    if (existingSessionIds.length > 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        `Admission setup activation found ${existingSessionIds.length} pre-existing scheduled row(s). Review schedule integrity before activating.`,
+      );
+    }
+
+    const prepared = plan.occurrences.map((occurrence) => ({
+      occurrence,
+      payload: buildRollingScheduledSessionPayload({
+        enrollmentId,
+        enrollment: proposedEnrollment,
+        occurrence,
+        scheduleRevision: plan.scheduleRevision,
+        actorId: actorUid,
+      }),
+    }));
+
+    const initialMaterialization = {
+      expectedCount: plan.occurrences.length,
+      existingCount: 0,
+      createdCount: prepared.length,
+      raceAlreadyExistsCount: 0,
+      materializedThroughYmd: plan.materialization.materializedThroughYmd,
+      nextOccurrenceYmd: plan.materialization.nextOccurrenceYmd,
+      nextMaterializationDueYmd: plan.materialization.nextMaterializationDueYmd,
+    };
+    const response: SaveRollingEnrollmentScheduleResult = {
+      ok: true,
+      enrollmentId,
+      scheduleRevision: schedule.revision,
+      deliveryMode: ROLLING_SCHEDULE_DELIVERY_MODE,
+      horizonDays: ROLLING_SCHEDULE_HORIZON_DAYS,
+      orchestrationState: 'activated',
+      idempotentReplay: false,
+      initialMaterialization,
+      pausedSessionsCancelled: 0,
+    };
+
+    prepared.forEach(({occurrence, payload}) => {
+      tx.create(db.collection('classSessions').doc(occurrence.sessionId), payload);
+    });
+    tx.update(enrollmentRef, {
+      status: 'active',
+      setupPending: false,
+      startDate: ymdToIstMidnightTimestamp(enrollmentStartDateYmd),
+      startDateYmd: enrollmentStartDateYmd,
+      classesStartDate: ymdToIstMidnightTimestamp(classesStartDateYmd),
+      classesStartDateYmd,
+      feePerClass: storedRate,
+      ratePerSession: storedRate,
+      currency,
+      joinUrl,
+      'schedule.schemaVersion': schedule.schemaVersion,
+      'schedule.deliveryMode': schedule.deliveryMode,
+      'schedule.timezone': schedule.timezone,
+      'schedule.revision': schedule.revision,
+      'schedule.weeklySlots': schedule.weeklySlots,
+      'schedule.weekdays': schedule.weekdays,
+      'schedule.timeHHmm': schedule.timeHHmm,
+      'schedule.durationMins': schedule.durationMins,
+      'schedule.weeksAhead': FieldValue.delete(),
+      'schedule.plannedSessions': FieldValue.delete(),
+      'schedule.endDateYmd': FieldValue.delete(),
+      'scheduleMaterialization.schemaVersion': plan.materialization.schemaVersion,
+      'scheduleMaterialization.horizonDays': plan.materialization.horizonDays,
+      'scheduleMaterialization.scheduleRevision': plan.materialization.scheduleRevision,
+      'scheduleMaterialization.materializedThroughYmd': plan.materialization.materializedThroughYmd,
+      'scheduleMaterialization.nextOccurrenceYmd': plan.materialization.nextOccurrenceYmd,
+      'scheduleMaterialization.nextMaterializationDueYmd': plan.materialization.nextMaterializationDueYmd,
+      'scheduleMaterialization.lifecycleState': 'active',
+      'setup.activatedAt': FieldValue.serverTimestamp(),
+      'setup.activatedBy': actorUid,
+      'setup.scheduleComplete': true,
+      'setup.completedAt': FieldValue.serverTimestamp(),
+      'setup.completedBy': actorUid,
+      setupDraft: FieldValue.delete(),
+      'rollingScheduleActivation.state': 'success',
+      'rollingScheduleActivation.lastRequestKey': idempotencyKey,
+      'rollingScheduleActivation.startedAt': FieldValue.serverTimestamp(),
+      'rollingScheduleActivation.startedBy': actorUid,
+      'rollingScheduleActivation.completedAt': FieldValue.serverTimestamp(),
+      'rollingScheduleActivation.completedBy': actorUid,
+      'rollingScheduleActivation.lastResult': response,
+      'rollingScheduleActivation.error': FieldValue.delete(),
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: actorUid,
+    });
+
+    return response;
+  });
 }
 
 export const saveRollingEnrollmentSchedule = onCall(
