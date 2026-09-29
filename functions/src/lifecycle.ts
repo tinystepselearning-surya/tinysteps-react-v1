@@ -461,15 +461,22 @@ export const createEnrollment = onCall({ region: REGION }, async (request) => {
   }
   const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
   if (creationIntent === 'transition') {
-    await ensureAdmin(request.auth);
-  } else {
-    await ensureEnrollmentCreator(request.auth, requestedKidId);
+    throw new HttpsError('permission-denied', 'Transition enrollments must be created through the course transition flow');
   }
+  await ensureEnrollmentCreator(request.auth, requestedKidId);
   return createEnrollmentInternal(
     data,
     request.auth?.uid || 'admin',
   );
 });
+
+export async function createTransitionEnrollmentInternal(data: Record<string, unknown>, actor: string) {
+  return createEnrollmentInternal(
+    {...data, creationIntent: 'transition'},
+    actor,
+    String(data.transitionOperationId || '').trim(),
+  );
+}
 
 type CourseTransitionState =
   | 'validated'

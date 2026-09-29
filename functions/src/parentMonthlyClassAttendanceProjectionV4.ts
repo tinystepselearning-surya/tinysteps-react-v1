@@ -447,17 +447,17 @@ export const recordParentClassAttendanceV4Telemetry = async (
     await docRef.set(
       {
         dayKey,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        totalEvents: admin.firestore.FieldValue.increment(1),
-        [`byLiveOutcome.${liveOutcome}`]: admin.firestore.FieldValue.increment(1),
-        [`byLiveReason.${liveReason}`]: admin.firestore.FieldValue.increment(1),
-        [`byShadowOutcome.${shadowOutcome}`]: admin.firestore.FieldValue.increment(1),
-        [`byShadowReason.${shadowReason}`]: admin.firestore.FieldValue.increment(1),
-        incrementalEnabledEvents: admin.firestore.FieldValue.increment(
+        updatedAt: FieldValue.serverTimestamp(),
+        totalEvents: FieldValue.increment(1),
+        [`byLiveOutcome.${liveOutcome}`]: FieldValue.increment(1),
+        [`byLiveReason.${liveReason}`]: FieldValue.increment(1),
+        [`byShadowOutcome.${shadowOutcome}`]: FieldValue.increment(1),
+        [`byShadowReason.${shadowReason}`]: FieldValue.increment(1),
+        incrementalEnabledEvents: FieldValue.increment(
           input.incrementalEnabled ? 1 : 0,
         ),
-        shadowEnabledEvents: admin.firestore.FieldValue.increment(input.shadowEnabled ? 1 : 0),
-        targetCountTotal: admin.firestore.FieldValue.increment(input.result.targetCount),
+        shadowEnabledEvents: FieldValue.increment(input.shadowEnabled ? 1 : 0),
+        targetCountTotal: FieldValue.increment(input.result.targetCount),
         lastEvent: {
           eventId: input.eventId,
           sessionId: input.sessionId,

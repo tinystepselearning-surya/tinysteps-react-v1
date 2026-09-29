@@ -4,7 +4,7 @@ import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/ht
 import {ensureAdmin} from '../helpers/adminGuard';
 import {normalizeEnrollmentStatus} from '../helpers/status';
 import {
-  createEnrollment as legacyCreateEnrollment,
+  createTransitionEnrollmentInternal,
   setEnrollmentStatus as legacySetEnrollmentStatus,
 } from '../lifecycle';
 import {
@@ -235,11 +235,9 @@ export const transitionEnrollmentCourse = onCall(
       updatedBy: actor,
     }, {merge: true});
 
-    const creation = await runCallable(legacyCreateEnrollment, {
-      ...request,
-      data: {
+    const creation = await createTransitionEnrollmentInternal(
+      {
         operationId: `rolling-transition-create-${operationId}`,
-        creationIntent: 'transition',
         transitionOperationId: operationId,
         kidId,
         courseId: newCourseId,
@@ -252,13 +250,13 @@ export const transitionEnrollmentCourse = onCall(
         currency: text(data.currency) || text(oldEnrollment.currency) || 'INR',
         billingCycle: text(data.billingCycle) || text(oldEnrollment.billingCycle) || 'monthly',
       },
-    });
+      actor,
+    );
     const newEnrollmentId = text(creation.enrollmentId);
     if (!newEnrollmentId) throw new HttpsError('internal', 'Next enrollment creation did not return an enrollmentId');
 
     const newEnrollmentRef = db.collection('enrollments').doc(newEnrollmentId);
-    const inheritedJoinUrl = text(data.joinUrl)
-      || text(oldEnrollment.joinUrl)
+    const inheritedJoinUrl = text(oldEnrollment.joinUrl)
       || text(oldEnrollment.meetingLink)
       || text(oldEnrollment.classLink)
       || null;
@@ -346,7 +344,12 @@ export const transitionEnrollmentCourse = onCall(
         cancelledSessionsCount = Number(terminal.cancelledSessionsCount || 0);
         await db.collection('enrollments').doc(oldEnrollmentId).set({
           ...(transitionType === 'progression'
-            ? {nextEnrollmentId: newEnrollmentId}
+            ? {
+                nextEnrollmentId: newEnrollmentId,
+                completedAt: FieldValue.serverTimestamp(),
+                completedBy: actor,
+                completionReason: reason,
+              }
             : {
                 correctedAt: FieldValue.serverTimestamp(),
                 correctedBy: actor,
@@ -369,7 +372,8 @@ export const transitionEnrollmentCourse = onCall(
       preserved: materialized.existingCount + materialized.raceAlreadyExistsCount,
       nextMaterializationDueYmd: materialized.materialization.nextMaterializationDueYmd,
     };
-    await transitionRef.set({
+    const completionBatch = db.batch();
+    completionBatch.set(transitionRef, {
       state: 'complete',
       transitionType,
       newEnrollmentId,
@@ -379,6 +383,21 @@ export const transitionEnrollmentCourse = onCall(
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
     }, {merge: true});
+    completionBatch.set(db.collection('auditLogs').doc(`course-transition-${operationId}`), {
+      type: 'enrollment_course_transition_completed',
+      action: 'transition',
+      operationId,
+      transitionType,
+      oldEnrollmentId,
+      newEnrollmentId,
+      kidId,
+      oldCourseId: text(oldEnrollment.courseId) || null,
+      newCourseId,
+      reason,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: actor,
+    });
+    await completionBatch.commit();
 
     return {
       ok: true,

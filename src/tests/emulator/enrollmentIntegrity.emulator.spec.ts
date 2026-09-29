@@ -187,6 +187,41 @@ describe('createEnrollment authorization and validation', () => {
 });
 
 describe('createEnrollment creation intent invariants', () => {
+  it('replays the exact same creation request without a second enrollment', async () => {
+    const payload = validEnrollmentPayload({ operationId: 'intent-exact-replay' });
+    const first = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', payload);
+    const replay = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', payload);
+    expect(replay.enrollmentId).toBe(first.enrollmentId);
+    expect((await adminDb.collection('enrollments').where('kidId', '==', ids.kidId).get()).size).toBe(1);
+  });
+
+  it('rejects transition creation through the public callable for admins and Learning Partners', async () => {
+    const operationId = 'public-transition-attempt';
+    await adminDb.collection('enrollmentCourseTransitions').doc(operationId).set({
+      kidId: ids.kidId,
+      newCourseId: ids.phonicsCourseId,
+      rolling: true,
+      state: 'creating_rolling_enrollment',
+    });
+    const payload = validEnrollmentPayload({
+      operationId: `rolling-transition-create-${operationId}`,
+      creationIntent: 'transition',
+      transitionOperationId: operationId,
+    });
+    await expect(callFunction('createEnrollment', payload)).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'permission-denied');
+      return true;
+    });
+    const lpId = `transition-lp-${fixtureSequence}`;
+    await adminDb.collection('kids').doc(ids.kidId).update({ lpId, assignedLPs: [lpId] });
+    await signInFixtureUser({ uid: lpId, role: 'learningPartner' });
+    await expect(callFunction('createEnrollment', payload)).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'permission-denied');
+      return true;
+    });
+    expect((await adminDb.collection('enrollments').get()).empty).toBe(true);
+  });
+
   it('rejects initial_course when the child already has another operational enrollment', async () => {
     await createEnrollment({
       operationId: 'intent-existing-phonics',
@@ -469,7 +504,7 @@ describe('Firestore Emulator course transition state machine', () => {
       weeklySlots: [{ weekday: 3, time: '19:00', durationMinutes: 40 }],
       weeksAhead: 3,
     },
-    classesStartDate: '2099-08-05',
+    classesStartDate: '2020-08-05',
     creditsTotal: 16,
     ratePerSession: 600,
     teacherPayPerSession: 300,
@@ -479,8 +514,14 @@ describe('Firestore Emulator course transition state machine', () => {
   it('transitions Foundations, preserves protected history, and isolates Grammar', async () => {
     const operationId = 'transition-complete';
     const { foundationsId, grammarId } = await seedTransitionContext(operationId);
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      joinUrl: 'https://teams.example.test/server-owned-class',
+    });
     const result = await callFunction<Record<string, unknown>, { state: string; newEnrollmentId: string }>(
-      'transitionEnrollmentCourse', transitionInput(operationId, foundationsId),
+      'transitionEnrollmentCourse', {
+        ...transitionInput(operationId, foundationsId),
+        joinUrl: 'https://teams.example.test/untrusted-override',
+      },
     );
 
     expect(result.state).toBe('complete');
@@ -497,6 +538,7 @@ describe('Firestore Emulator course transition state machine', () => {
     expect(foundations.data()?.completedAt).toBeDefined();
     expect(early.data()).toMatchObject({
       status: 'active', courseId: ids.earlyCourseId, teacherId: ids.teacherBId, previousEnrollmentId: foundationsId,
+      joinUrl: 'https://teams.example.test/server-owned-class',
     });
     expect(future.data()?.status).toBe('cancelled');
     expect(historical.data()).toMatchObject({ status: 'completed', attendance: { [ids.kidId]: { status: 'present' } } });
@@ -584,6 +626,28 @@ describe('Firestore Emulator course transition state machine', () => {
     });
   });
 
+  it('calculates correction carryover for legacy enrollments missing creditsRemaining', async () => {
+    const operationId = 'transition-legacy-credits';
+    const foundationsId = await createEnrollment({
+      operationId: `${operationId}-old`, courseId: ids.foundationsCourseId, creditsTotal: 16,
+    });
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      creditsUsed: 7,
+      creditsRemaining: admin.firestore.FieldValue.delete(),
+    });
+    const result = await callFunction<Record<string, unknown>, { newEnrollmentId: string }>(
+      'transitionEnrollmentCourse',
+      { ...transitionInput(operationId, foundationsId), transitionType: 'correction' },
+    );
+    const corrected = await adminDb.collection('enrollments').doc(result.newEnrollmentId).get();
+    expect(corrected.data()).toMatchObject({
+      creditsTotal: 9,
+      creditsUsed: 0,
+      creditsRemaining: 9,
+      creditCarryoverAmount: 9,
+    });
+  });
+
   it('replays a completed transition idempotently without duplicate enrollment, sessions, or audit', async () => {
     const operationId = 'transition-replay';
     const { foundationsId } = await seedTransitionContext(operationId);
@@ -625,7 +689,7 @@ describe('Firestore Emulator course transition state machine', () => {
         newCourseId: ids.earlyCourseId,
         newTeacherId: ids.teacherBId,
         newSchedule: transitionInput(operationId, foundationsId).newSchedule,
-        classesStartDate: '2099-08-05',
+        classesStartDate: '2020-08-05',
         ratePerSession: 600,
         teacherPayPerSession: 300,
         creditsTotal: 16,
@@ -633,6 +697,8 @@ describe('Firestore Emulator course transition state machine', () => {
         billingCycle: 'monthly',
         reason: 'Completed Foundations in emulator validation',
         state: 'old_sessions_reconciled',
+        rolling: true,
+        transitionType: 'progression',
         retryable: true,
       }),
     ]);
@@ -786,13 +852,19 @@ describe('Firestore Emulator exact completion and financial identity', () => {
       durationMinutes: 35,
       status: 'scheduled',
       feeAmount: 500,
+      financialTermsSnapshotVersion: 1,
+      billingRateSnapshot: 500,
+      teacherPayRateSnapshot: 250,
+      financialTermsCurrency: 'INR',
     });
     await callFunction('onSessionComplete', {
       sessionId,
       attendance: { [ids.kidId]: { status: 'present' } },
     });
-    const charge = await waitForDocument('billingCharges', sessionId);
-    const earning = await waitForDocument('teacherEarnings', sessionId);
+    const [charge, earning] = await Promise.all([
+      waitForDocument('billingCharges', sessionId, () => true, 90_000),
+      waitForDocument('teacherEarnings', sessionId, () => true, 90_000),
+    ]);
     const [phonics, grammar] = await Promise.all([
       adminDb.collection('enrollments').doc(phonicsId).get(),
       adminDb.collection('enrollments').doc(grammarId).get(),
