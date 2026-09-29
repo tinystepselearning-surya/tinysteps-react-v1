@@ -2,7 +2,10 @@
 
 import * as admin from 'firebase-admin';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { isSessionCanonicalForEnrollment } from '../../lib/sessionScheduleIntegrity';
+import {
+  doesEnrollmentOccupyCourseSlot,
+  isSessionCanonicalForEnrollment,
+} from '../../lib/sessionScheduleIntegrity';
 import {
   adminDb,
   callFunction,
@@ -38,9 +41,18 @@ async function createEnrollment(args: {
   teacherId?: string;
   schedule?: Record<string, unknown>;
   creditsTotal?: number;
+  creationIntent?: 'initial_course' | 'additional_course';
 }): Promise<string> {
+  let creationIntent = args.creationIntent;
+  if (!creationIntent) {
+    const existing = await adminDb.collection('enrollments').where('kidId', '==', ids.kidId).get();
+    creationIntent = existing.docs.some((row) =>
+      doesEnrollmentOccupyCourseSlot((row.data() || {}) as Record<string, unknown>),
+    ) ? 'additional_course' : 'initial_course';
+  }
   const result = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', {
     operationId: args.operationId,
+    creationIntent,
     kidId: ids.kidId,
     courseId: args.courseId,
     teacherId: args.teacherId || ids.teacherAId,
@@ -64,6 +76,7 @@ async function sessionsForEnrollment(enrollmentId: string) {
 function validEnrollmentPayload(overrides: Record<string, unknown> = {}) {
   return {
     operationId: `authorization-${fixtureSequence}`,
+    creationIntent: 'initial_course',
     kidId: ids.kidId,
     courseId: ids.phonicsCourseId,
     creditsTotal: 4,
@@ -170,6 +183,58 @@ describe('createEnrollment authorization and validation', () => {
     const operations = await adminDb.collection('enrollmentCreationOperations').get();
     expect(enrollments.empty).toBe(true);
     expect(operations.empty).toBe(true);
+  });
+});
+
+describe('createEnrollment creation intent invariants', () => {
+  it('rejects initial_course when the child already has another operational enrollment', async () => {
+    await createEnrollment({
+      operationId: 'intent-existing-phonics',
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'initial_course',
+    });
+    await expect(createEnrollment({
+      operationId: 'intent-invalid-second-initial',
+      courseId: ids.grammarCourseId,
+      creationIntent: 'initial_course',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'failed-precondition');
+      return true;
+    });
+  });
+
+  it('rejects additional_course when the child has no operational enrollment', async () => {
+    await expect(createEnrollment({
+      operationId: 'intent-invalid-first-additional',
+      courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'failed-precondition');
+      return true;
+    });
+  });
+
+  it('allows a different additional course but still blocks a duplicate same course', async () => {
+    const phonicsId = await createEnrollment({
+      operationId: 'intent-first-course',
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'initial_course',
+    });
+    const grammarId = await createEnrollment({
+      operationId: 'intent-additional-course',
+      courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
+    });
+    expect(grammarId).not.toBe(phonicsId);
+
+    await expect(createEnrollment({
+      operationId: 'intent-duplicate-additional',
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'additional_course',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'already-exists');
+      return true;
+    });
   });
 });
 
@@ -355,6 +420,7 @@ describe('Firestore Emulator course transition state machine', () => {
   const transitionInput = (operationId: string, foundationsId: string) => ({
     operationId,
     oldEnrollmentId: foundationsId,
+    transitionType: 'progression',
     newCourseId: ids.earlyCourseId,
     newTeacherId: ids.teacherBId,
     newSchedule: {
@@ -405,6 +471,76 @@ describe('Firestore Emulator course transition state machine', () => {
     expect(transition.data()?.state).toBe('complete');
     const audits = await adminDb.collection('auditLogs').where('operationId', '==', operationId).get();
     expect(audits.docs.some((row) => row.data().type === 'enrollment_course_transition_completed')).toBe(true);
+  });
+
+  it('corrects a wrong course without completing it and carries only unused credits', async () => {
+    const operationId = 'transition-correction';
+    const foundationsId = await createEnrollment({
+      operationId: `${operationId}-wrong`,
+      courseId: ids.foundationsCourseId,
+      creditsTotal: 16,
+      creationIntent: 'initial_course',
+    });
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      creditsTotal: 16,
+      creditsUsed: 7,
+      creditsRemaining: 9,
+      topicProgress: { wrong_course_progress: { completed: true } },
+    });
+    await adminDb.collection('classSessions').doc(`${operationId}-history`).set({
+      enrollmentId: foundationsId,
+      kidId: ids.kidId,
+      courseId: ids.foundationsCourseId,
+      teacherId: ids.teacherAId,
+      date: '2026-06-01',
+      startTime: '17:00',
+      status: 'completed',
+      attendance: { [ids.kidId]: { status: 'present' } },
+    });
+
+    const input = {
+      ...transitionInput(operationId, foundationsId),
+      transitionType: 'correction',
+      reason: 'Wrong course assigned during admission',
+    };
+    const result = await callFunction<Record<string, unknown>, { newEnrollmentId: string; transitionType: string }>(
+      'transitionEnrollmentCourse',
+      input,
+    );
+
+    const [oldEnrollment, correctedEnrollment, history] = await Promise.all([
+      adminDb.collection('enrollments').doc(foundationsId).get(),
+      adminDb.collection('enrollments').doc(result.newEnrollmentId).get(),
+      adminDb.collection('classSessions').doc(`${operationId}-history`).get(),
+    ]);
+
+    expect(result.transitionType).toBe('correction');
+    expect(oldEnrollment.data()).toMatchObject({
+      status: 'discontinued',
+      transitionType: 'correction',
+      correctedToEnrollmentId: result.newEnrollmentId,
+      creditsUsed: 7,
+      creditsRemaining: 9,
+    });
+    expect(oldEnrollment.data()?.completedAt).toBeUndefined();
+    expect(oldEnrollment.data()?.topicProgress).toEqual({ wrong_course_progress: { completed: true } });
+
+    expect(correctedEnrollment.data()).toMatchObject({
+      status: 'active',
+      courseId: ids.earlyCourseId,
+      transitionType: 'correction',
+      correctedFromEnrollmentId: foundationsId,
+      creditsTotal: 9,
+      creditsUsed: 0,
+      creditsRemaining: 9,
+      creditCarryoverAmount: 9,
+    });
+    expect(correctedEnrollment.data()?.topicProgress).toEqual({});
+    expect(history.data()).toMatchObject({
+      enrollmentId: foundationsId,
+      courseId: ids.foundationsCourseId,
+      status: 'completed',
+    });
   });
 
   it('replays a completed transition idempotently without duplicate enrollment, sessions, or audit', async () => {
@@ -469,6 +605,20 @@ describe('Firestore Emulator course transition state machine', () => {
     });
     expect((await adminDb.collection('operationalEnrollmentKeys').doc(newKeyId).get()).data()?.enrollmentId)
       .toBe(result.newEnrollmentId);
+  });
+
+  it('rejects retrying the same transition operation with a different transition type', async () => {
+    const operationId = 'transition-type-mismatch';
+    const { foundationsId } = await seedTransitionContext(operationId);
+    const progression = transitionInput(operationId, foundationsId);
+    await callFunction('transitionEnrollmentCourse', progression);
+    await expect(callFunction('transitionEnrollmentCourse', {
+      ...progression,
+      transitionType: 'correction',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'already-exists');
+      return true;
+    });
   });
 
   it('rejects an existing operational target before completing Foundations', async () => {
