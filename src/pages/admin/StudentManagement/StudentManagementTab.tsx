@@ -231,7 +231,7 @@ export default function StudentManagementTab() {
       const activeEnrollments = latestEnrollments.filter((enrollment) => isOperationalEnrollment(enrollment));
       const activeEnrolledStudentIds = new Set<string>();
 
-      courseSlotEnrollments.forEach((enrollment) => {
+      activeEnrollments.forEach((enrollment) => {
         collectEnrollmentStudentIds(enrollment).forEach((studentId) => {
           if (activeStudentIds.has(studentId)) activeEnrolledStudentIds.add(studentId);
         });
@@ -308,7 +308,7 @@ export default function StudentManagementTab() {
 
   const activeEnrollmentsByStudentId = useMemo(() => {
     const map = new Map<string, EnrollmentRecord[]>();
-    activeEnrollments.forEach((enrollment) => {
+    courseSlotEnrollments.forEach((enrollment) => {
       collectEnrollmentStudentIds(enrollment).forEach((studentId) => {
         const current = map.get(studentId) || [];
         current.push(enrollment);
