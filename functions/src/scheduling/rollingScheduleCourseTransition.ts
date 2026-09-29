@@ -103,10 +103,14 @@ export const transitionEnrollmentCourse = onCall(
     const newCourseId = text(data.newCourseId);
     const newTeacherId = text(data.newTeacherId);
     const reason = text(data.reason);
+    const transitionType = text(data.transitionType);
+    if (transitionType !== 'progression' && transitionType !== 'correction') {
+      throw new HttpsError('invalid-argument', 'transitionType must be progression or correction');
+    }
     if (!operationId || !oldEnrollmentId || !newCourseId || !newTeacherId || !reason) {
       throw new HttpsError(
         'invalid-argument',
-        'operationId, oldEnrollmentId, newCourseId, newTeacherId, and reason are required',
+        'operationId, oldEnrollmentId, newCourseId, newTeacherId, reason, and transitionType are required',
       );
     }
 
@@ -119,6 +123,7 @@ export const transitionEnrollmentCourse = onCall(
       if (
         String(priorData.oldEnrollmentId || '') !== oldEnrollmentId
         || String(priorData.newCourseId || '') !== newCourseId
+        || (String(priorData.transitionType || '') && String(priorData.transitionType || '') !== transitionType)
       ) {
         throw new HttpsError('already-exists', 'operationId belongs to a different course transition');
       }
@@ -133,6 +138,7 @@ export const transitionEnrollmentCourse = onCall(
           reconciliation: priorData.reconciliation || null,
           idempotentReplay: true,
           rolling: Boolean(priorData.rolling),
+          transitionType,
         };
       }
       if (priorData.rolling !== true) {
@@ -145,12 +151,22 @@ export const transitionEnrollmentCourse = onCall(
 
     const oldEnrollment = await readEnrollment(oldEnrollmentId);
     const oldStatus = normalizeEnrollmentStatus(oldEnrollment.status);
+    const expectedTerminalForRetry =
+      prior.exists
+      && prior.data()?.rolling === true
+      && (
+        (transitionType === 'progression' && oldStatus === 'completed')
+        || (transitionType === 'correction' && oldStatus === 'discontinued')
+      );
     if (
-      oldStatus === 'discontinued'
-      || oldStatus === 'expired'
-      || oldStatus === 'cancelled'
-      || oldStatus === 'archived'
-      || oldStatus === 'inactive'
+      !expectedTerminalForRetry
+      && (
+        oldStatus === 'discontinued'
+        || oldStatus === 'expired'
+        || oldStatus === 'cancelled'
+        || oldStatus === 'archived'
+        || oldStatus === 'inactive'
+      )
     ) {
       throw new HttpsError('failed-precondition', 'Current enrollment is already terminal');
     }
@@ -191,14 +207,27 @@ export const transitionEnrollmentCourse = onCall(
     if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
       throw new HttpsError('failed-precondition', 'Next course teacher rate is invalid');
     }
+    const explicitCreditsRemaining = Number(oldEnrollment.creditsRemaining);
+    const oldCreditsTotal = Math.max(0, Math.floor(Number(oldEnrollment.creditsTotal ?? 0)));
+    const oldCreditsUsed = Math.max(0, Math.floor(Number(oldEnrollment.creditsUsed ?? 0)));
+    const oldCreditsRemaining = Number.isFinite(explicitCreditsRemaining)
+      ? Math.max(0, Math.floor(explicitCreditsRemaining))
+      : Math.max(0, oldCreditsTotal - oldCreditsUsed);
+    const requestedProgressionCredits = Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
+    const destinationCreditsTotal =
+      transitionType === 'correction' ? oldCreditsRemaining : requestedProgressionCredits;
 
     await transitionRef.set({
       operationId,
       oldEnrollmentId,
       oldCourseId: text(oldEnrollment.courseId) || null,
+      kidId,
       newCourseId,
       newTeacherId,
+      transitionType,
       reason,
+      sourceCreditsRemaining: oldCreditsRemaining,
+      destinationCreditsTotal,
       state: 'creating_rolling_enrollment',
       rolling: true,
       createdAt: prior.exists ? (prior.data()?.createdAt || FieldValue.serverTimestamp()) : FieldValue.serverTimestamp(),
@@ -210,6 +239,8 @@ export const transitionEnrollmentCourse = onCall(
       ...request,
       data: {
         operationId: `rolling-transition-create-${operationId}`,
+        creationIntent: 'transition',
+        transitionOperationId: operationId,
         kidId,
         courseId: newCourseId,
         teacherId: newTeacherId,
@@ -217,7 +248,7 @@ export const transitionEnrollmentCourse = onCall(
         classesStartDate: classesStartDateYmd,
         ratePerSession,
         teacherPayPerSession,
-        creditsTotal: Math.max(0, Math.floor(Number(data.creditsTotal ?? 0))),
+        creditsTotal: destinationCreditsTotal,
         currency: text(data.currency) || text(oldEnrollment.currency) || 'INR',
         billingCycle: text(data.billingCycle) || text(oldEnrollment.billingCycle) || 'monthly',
       },
@@ -235,6 +266,14 @@ export const transitionEnrollmentCourse = onCall(
       joinUrl: inheritedJoinUrl,
       previousEnrollmentId: oldEnrollmentId,
       transitionOperationId: operationId,
+      transitionType,
+      ...(transitionType === 'correction'
+        ? {
+            correctedFromEnrollmentId: oldEnrollmentId,
+            creditCarryoverFromEnrollmentId: oldEnrollmentId,
+            creditCarryoverAmount: destinationCreditsTotal,
+          }
+        : {}),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
     }, {merge: true});
@@ -248,40 +287,75 @@ export const transitionEnrollmentCourse = onCall(
     let cancelledSessionsCount = 0;
     const freshOld = await readEnrollment(oldEnrollmentId);
     const freshOldStatus = normalizeEnrollmentStatus(freshOld.status);
-    if (freshOldStatus !== 'completed') {
+    const desiredOldStatus = transitionType === 'correction' ? 'discontinued' : 'completed';
+    if (freshOldStatus !== desiredOldStatus) {
       if (isCanonicalRollingEnrollment(freshOld)) {
         const stopped = await runCallable(setRollingEnrollmentLifecycle, {
           ...request,
           data: {
             enrollmentId: oldEnrollmentId,
             status: 'discontinued',
-            reason: `course_transition:${reason}`,
+            reason: transitionType === 'correction'
+              ? `course_assignment_correction:${reason}`
+              : `course_transition:${reason}`,
           },
         });
         cancelledSessionsCount = Number(stopped.cancelledSessionsCount || 0);
-        await db.collection('enrollments').doc(oldEnrollmentId).set({
-          status: 'completed',
-          completedAt: FieldValue.serverTimestamp(),
-          completedBy: actor,
-          completionReason: reason,
-          endedAt: FieldValue.serverTimestamp(),
-          nextEnrollmentId: newEnrollmentId,
-          transitionOperationId: operationId,
-          'scheduleMaterialization.lifecycleState': 'completed',
-          'scheduleMaterialization.nextOccurrenceYmd': null,
-          'scheduleMaterialization.nextMaterializationDueYmd': null,
-          updatedAt: FieldValue.serverTimestamp(),
-          updatedBy: actor,
-        }, {merge: true});
+        if (transitionType === 'progression') {
+          await db.collection('enrollments').doc(oldEnrollmentId).set({
+            status: 'completed',
+            completedAt: FieldValue.serverTimestamp(),
+            completedBy: actor,
+            completionReason: reason,
+            endedAt: FieldValue.serverTimestamp(),
+            nextEnrollmentId: newEnrollmentId,
+            transitionOperationId: operationId,
+            transitionType,
+            'scheduleMaterialization.lifecycleState': 'completed',
+            'scheduleMaterialization.nextOccurrenceYmd': null,
+            'scheduleMaterialization.nextMaterializationDueYmd': null,
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: actor,
+          }, {merge: true});
+        } else {
+          await db.collection('enrollments').doc(oldEnrollmentId).set({
+            status: 'discontinued',
+            correctedAt: FieldValue.serverTimestamp(),
+            correctedBy: actor,
+            correctionReason: reason,
+            correctedToEnrollmentId: newEnrollmentId,
+            supersededByEnrollmentId: newEnrollmentId,
+            transitionOperationId: operationId,
+            transitionType,
+            'scheduleMaterialization.lifecycleState': 'discontinued',
+            'scheduleMaterialization.nextOccurrenceYmd': null,
+            'scheduleMaterialization.nextMaterializationDueYmd': null,
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: actor,
+          }, {merge: true});
+        }
       } else {
-        const completed = await runCallable(legacySetEnrollmentStatus, {
+        const terminal = await runCallable(legacySetEnrollmentStatus, {
           ...request,
-          data: {enrollmentId: oldEnrollmentId, status: 'completed', reason},
+          data: {
+            enrollmentId: oldEnrollmentId,
+            status: desiredOldStatus,
+            reason: transitionType === 'correction' ? `course_assignment_correction:${reason}` : reason,
+          },
         });
-        cancelledSessionsCount = Number(completed.cancelledSessionsCount || 0);
+        cancelledSessionsCount = Number(terminal.cancelledSessionsCount || 0);
         await db.collection('enrollments').doc(oldEnrollmentId).set({
-          nextEnrollmentId: newEnrollmentId,
+          ...(transitionType === 'progression'
+            ? {nextEnrollmentId: newEnrollmentId}
+            : {
+                correctedAt: FieldValue.serverTimestamp(),
+                correctedBy: actor,
+                correctionReason: reason,
+                correctedToEnrollmentId: newEnrollmentId,
+                supersededByEnrollmentId: newEnrollmentId,
+              }),
           transitionOperationId: operationId,
+          transitionType,
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actor,
         }, {merge: true});
@@ -297,6 +371,7 @@ export const transitionEnrollmentCourse = onCall(
     };
     await transitionRef.set({
       state: 'complete',
+      transitionType,
       newEnrollmentId,
       cancelledSessionsCount,
       reconciliation,
@@ -315,6 +390,7 @@ export const transitionEnrollmentCourse = onCall(
       reconciliation,
       idempotentReplay: false,
       rolling: true,
+      transitionType,
     };
   },
 );
