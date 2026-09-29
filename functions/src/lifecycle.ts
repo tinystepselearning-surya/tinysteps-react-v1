@@ -194,6 +194,27 @@ export function buildOperationalEnrollmentKeyId(kidId: string, courseId: string)
   return `${encodeURIComponent(kidId.trim())}__${encodeURIComponent(courseId.trim())}`;
 }
 
+type EnrollmentCreationIntent = 'initial_course' | 'additional_course' | 'transition';
+
+async function findOperationalEnrollmentIdsForKid(args: {
+  db: FirebaseFirestore.Firestore;
+  kidId: string;
+  excludeEnrollmentId?: string;
+}): Promise<string[]> {
+  const { db, kidId, excludeEnrollmentId } = args;
+  const snapshots = await Promise.all([
+    db.collection('enrollments').where('kidId', '==', kidId).get(),
+    db.collection('enrollments').where('studentId', '==', kidId).get(),
+    db.collection('enrollments').where('kidIds', 'array-contains', kidId).get(),
+  ]);
+  const matches = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  snapshots.forEach((snapshot) => snapshot.docs.forEach((docSnap) => matches.set(docSnap.id, docSnap)));
+  return Array.from(matches.values())
+    .filter((docSnap) => docSnap.id !== excludeEnrollmentId)
+    .filter((docSnap) => doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>))
+    .map((docSnap) => docSnap.id);
+}
+
 async function findOperationalSameCourseEnrollmentIds(args: {
   db: FirebaseFirestore.Firestore;
   kidId: string;
@@ -217,22 +238,52 @@ async function findOperationalSameCourseEnrollmentIds(args: {
 async function createEnrollmentInternal(
   data: Record<string, unknown>,
   actor: string,
-  reservedByOperationId?: string,
+  options: {
+    reservedByOperationId?: string;
+    creationIntentOverride?: EnrollmentCreationIntent;
+  } = {},
 ) {
   const operationId = String(data.operationId || '').trim();
   const requestedKidId = String(data.kidId || data.studentId || '').trim();
   const requestedCourseId = String(data.courseId || '').trim();
+  const requestedCreationIntent = String(
+    options.creationIntentOverride || data.creationIntent || '',
+  ).trim() as EnrollmentCreationIntent;
+  const creationIntent: EnrollmentCreationIntent | null =
+    requestedCreationIntent === 'initial_course'
+    || requestedCreationIntent === 'additional_course'
+    || requestedCreationIntent === 'transition'
+      ? requestedCreationIntent
+      : null;
   if (!operationId || !requestedKidId || !requestedCourseId) {
     throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
   }
+  if (!creationIntent) {
+    throw new HttpsError(
+      'invalid-argument',
+      'creationIntent must be initial_course or additional_course',
+    );
+  }
+  if (creationIntent === 'transition' && options.creationIntentOverride !== 'transition') {
+    throw new HttpsError(
+      'permission-denied',
+      'Course transitions must use transitionEnrollmentCourse',
+    );
+  }
   if (operationId.length > 150) throw new HttpsError('invalid-argument', 'operationId is too long');
+  const requestedSetupPending = data.setupPending === true && creationIntent !== 'transition';
 
   const db = admin.firestore();
   const operationRef = db.collection(ENROLLMENT_CREATION_OPERATIONS_COLLECTION).doc(operationId);
   const existingOperation = await operationRef.get();
   if (existingOperation.exists) {
     const data = existingOperation.data() || {};
-    if (data.kidId !== requestedKidId || data.courseId !== requestedCourseId) {
+    if (
+      data.kidId !== requestedKidId
+      || data.courseId !== requestedCourseId
+      || (data.creationIntent != null && data.creationIntent !== creationIntent)
+      || (data.setupPending != null && Boolean(data.setupPending) !== requestedSetupPending)
+    ) {
       throw new HttpsError('already-exists', 'operationId was already used for a different enrollment request');
     }
     return { ok: true, enrollmentId: String(data.enrollmentId || ''), idempotentReplay: true };
@@ -251,15 +302,33 @@ async function createEnrollmentInternal(
   if (String(course.status || '').trim().toLowerCase() !== 'active') {
     throw new HttpsError('failed-precondition', 'Selected course is not active and cannot be assigned');
   }
-  const existingOperational = await findOperationalSameCourseEnrollmentIds({
-    db,
-    kidId: canonicalKidId,
-    courseId: canonicalCourseId,
-  });
+  const [existingOperational, operationalForKid] = await Promise.all([
+    findOperationalSameCourseEnrollmentIds({
+      db,
+      kidId: canonicalKidId,
+      courseId: canonicalCourseId,
+    }),
+    findOperationalEnrollmentIdsForKid({
+      db,
+      kidId: canonicalKidId,
+    }),
+  ]);
   if (existingOperational.length > 0) {
     throw new HttpsError(
       'already-exists',
       `An operational enrollment already exists for this child and course: ${existingOperational[0]}`,
+    );
+  }
+  if (creationIntent === 'initial_course' && operationalForKid.length > 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'This student already has an operational enrollment. Use Add Additional Course or Change Course.',
+    );
+  }
+  if (creationIntent === 'additional_course' && operationalForKid.length === 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'This student has no existing operational enrollment. Use Assign Course instead.',
     );
   }
 
@@ -268,11 +337,17 @@ async function createEnrollmentInternal(
     const teacherSnap = await db.collection('users').doc(teacherId).get();
     if (!teacherSnap.exists) throw new HttpsError('not-found', 'Selected teacher was not found');
   }
-  const ratePerSession = Number(data.ratePerSession ?? data.feePerClass ?? course.ratePerSession ?? 0);
+  const setupPending = requestedSetupPending;
+  const ratePerSession = Number(data.ratePerSession ?? data.feePerClass ?? (setupPending ? 0 : course.ratePerSession) ?? 0);
   const teacherPayPerSession = Number(data.teacherPayPerSession ?? 0);
   const creditsTotal = Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
-  if (!Number.isFinite(ratePerSession) || ratePerSession <= 0) {
-    throw new HttpsError('invalid-argument', 'fee per class must be a positive number');
+  if (!Number.isFinite(ratePerSession) || ratePerSession < 0 || (!setupPending && ratePerSession <= 0)) {
+    throw new HttpsError(
+      'invalid-argument',
+      setupPending
+        ? 'fee per class must be a non-negative number during setup'
+        : 'fee per class must be a positive number',
+    );
   }
   if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
     throw new HttpsError('invalid-argument', 'teacherPayPerSession must be a non-negative number');
@@ -301,7 +376,7 @@ async function createEnrollmentInternal(
     if (operationCheck.exists) return;
     const keyData = keySnap.data() || {};
     const ownsReservation = Boolean(
-      reservedByOperationId && keyData.reservationOperationId === reservedByOperationId,
+      options.reservedByOperationId && keyData.reservationOperationId === options.reservedByOperationId,
     );
     if (keySnap.exists && !ownsReservation) {
       throw new HttpsError('already-exists', 'Another operational enrollment already reserves this child and course');
@@ -321,7 +396,9 @@ async function createEnrollmentInternal(
       courseName,
       ...buildEnrollmentTeacherWriteFields(teacherId),
       lpId: assignedLpId,
-      status: 'active',
+      status: setupPending ? 'setup_pending' : 'active',
+      creationIntent,
+      setupPending,
       ratePerSession,
       feePerClass: ratePerSession,
       teacherPayPerSession,
@@ -332,6 +409,7 @@ async function createEnrollmentInternal(
       creditsRemaining: creditsTotal,
       topicProgress: {},
       ...(schedule ? { schedule } : {}),
+      ...(toOptionalId(data.joinUrl) ? { joinUrl: toOptionalId(data.joinUrl) } : {}),
       ...(toOptionalId(data.classesStartDate) ? { classesStartDateYmd: toOptionalId(data.classesStartDate) } : {}),
       enrollmentDate: FieldValue.serverTimestamp(),
       createdAt: FieldValue.serverTimestamp(),
@@ -353,6 +431,8 @@ async function createEnrollmentInternal(
       enrollmentId: enrollmentRef.id,
       kidId: canonicalKidId,
       courseId: canonicalCourseId,
+      creationIntent,
+      setupPending,
       state: 'complete',
       createdAt: FieldValue.serverTimestamp(),
       createdBy: actor,
@@ -364,6 +444,8 @@ async function createEnrollmentInternal(
       kidId: canonicalKidId,
       courseId: canonicalCourseId,
       operationId,
+      creationIntent,
+      setupPending,
       createdAt: FieldValue.serverTimestamp(),
       createdBy: actor,
     });
@@ -388,6 +470,178 @@ export const createEnrollment = onCall({ region: REGION }, async (request) => {
     data,
     request.auth?.uid || 'admin',
   );
+});
+
+export async function createEnrollmentForCourseTransitionInternal(
+  data: Record<string, unknown>,
+  actor: string,
+) {
+  return createEnrollmentInternal(
+    data,
+    actor,
+    { creationIntentOverride: 'transition' },
+  );
+}
+
+export const saveEnrollmentSetupDraft = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  const enrollmentId = String(request.data?.enrollmentId || '').trim();
+  const resumeStep = String(request.data?.resumeStep || '').trim();
+  const allowedSteps = new Set(['fees', 'teacher', 'schedule', 'review']);
+  if (!enrollmentId || !allowedSteps.has(resumeStep)) {
+    throw new HttpsError(
+      'invalid-argument',
+      'enrollmentId and a valid resumeStep are required',
+    );
+  }
+
+  const scheduleDraftRaw = request.data?.scheduleDraft;
+  if (
+    scheduleDraftRaw != null
+    && (typeof scheduleDraftRaw !== 'object' || Array.isArray(scheduleDraftRaw))
+  ) {
+    throw new HttpsError('invalid-argument', 'scheduleDraft must be an object');
+  }
+
+  const scheduleDraft: Record<string, unknown> | null = scheduleDraftRaw
+    ? removeUndefinedDeep({
+        enrollmentStartDate: toOptionalId((scheduleDraftRaw as Record<string, unknown>).enrollmentStartDate),
+        classesStartDate: toOptionalId((scheduleDraftRaw as Record<string, unknown>).classesStartDate),
+        joinUrl: toOptionalId((scheduleDraftRaw as Record<string, unknown>).joinUrl),
+        weeklySlots: Array.isArray((scheduleDraftRaw as Record<string, unknown>).weeklySlots)
+          ? ((scheduleDraftRaw as Record<string, unknown>).weeklySlots as unknown[])
+              .map((row) => {
+                const slot = row && typeof row === 'object' && !Array.isArray(row)
+                  ? row as Record<string, unknown>
+                  : {};
+                return {
+                  weekday: Number(slot.weekday),
+                  time: String(slot.time || '').trim(),
+                  durationMinutes: Number(slot.durationMinutes ?? 35),
+                };
+              })
+          : [],
+      }) as Record<string, unknown>
+    : null;
+
+  if (scheduleDraft) {
+    const weeklySlots = Array.isArray(scheduleDraft.weeklySlots)
+      ? scheduleDraft.weeklySlots as Array<Record<string, unknown>>
+      : [];
+    for (const slot of weeklySlots) {
+      const weekday = Number(slot.weekday);
+      const time = String(slot.time || '');
+      const durationMinutes = Number(slot.durationMinutes);
+      if (
+        !Number.isInteger(weekday)
+        || weekday < 0
+        || weekday > 6
+        || !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)
+        || !Number.isFinite(durationMinutes)
+        || durationMinutes < 10
+        || durationMinutes > 180
+      ) {
+        throw new HttpsError('invalid-argument', 'scheduleDraft contains an invalid weekly slot');
+      }
+    }
+  }
+
+  const db = admin.firestore();
+  const ref = db.collection('enrollments').doc(enrollmentId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Enrollment not found');
+  const enrollment = (snap.data() || {}) as Record<string, unknown>;
+  if (normalizeEnrollmentStatus(enrollment.status) !== 'setup_pending') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Setup drafts can only be saved while the enrollment is setup_pending',
+    );
+  }
+
+  const actor = request.auth?.uid || 'admin';
+  await ref.set({
+    setupDraft: removeUndefinedDeep({
+      resumeStep,
+      ...(scheduleDraft ? {scheduleDraft} : {}),
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: actor,
+    }),
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor,
+  }, { merge: true });
+
+  return { ok: true, enrollmentId, resumeStep };
+});
+
+export const updateEnrollmentFinancialTerms = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  const enrollmentId = String(request.data?.enrollmentId || '').trim();
+  const ratePerSession = Number(request.data?.ratePerSession ?? request.data?.feePerClass);
+  const teacherPayPerSession = Number(request.data?.teacherPayPerSession ?? 0);
+  const currency = String(request.data?.currency || 'INR').trim() || 'INR';
+  const billingCycle = String(request.data?.billingCycle || 'monthly').trim() || 'monthly';
+
+  if (!enrollmentId) {
+    throw new HttpsError('invalid-argument', 'enrollmentId is required');
+  }
+  if (!Number.isFinite(ratePerSession) || ratePerSession <= 0) {
+    throw new HttpsError('invalid-argument', 'ratePerSession must be a positive number');
+  }
+  if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
+    throw new HttpsError('invalid-argument', 'teacherPayPerSession must be a non-negative number');
+  }
+
+  const db = admin.firestore();
+  const ref = db.collection('enrollments').doc(enrollmentId);
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Enrollment not found');
+  const enrollment = (snap.data() || {}) as Record<string, unknown>;
+  const normalizedStatus = normalizeEnrollmentStatus(enrollment.status);
+  if (normalizedStatus !== 'setup_pending') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Setup financial terms can only be changed while the enrollment is setup_pending',
+    );
+  }
+
+  const actor = request.auth?.uid || 'admin';
+  const auditRef = ref.collection('financialTermChanges').doc();
+  const batch = db.batch();
+  batch.set(ref, {
+    ratePerSession,
+    feePerSession: ratePerSession,
+    feePerClass: ratePerSession,
+    teacherPayPerSession,
+    currency,
+    billingCycle,
+    'setup.financialTermsComplete': true,
+    'setup.financialTermsCompletedAt': FieldValue.serverTimestamp(),
+    'setup.financialTermsCompletedBy': actor,
+    updatedAt: FieldValue.serverTimestamp(),
+    updatedBy: actor,
+  }, { merge: true });
+  batch.create(auditRef, {
+    enrollmentId,
+    previousRatePerSession: Number(enrollment.ratePerSession ?? enrollment.feePerClass ?? 0),
+    previousTeacherPayPerSession: Number(enrollment.teacherPayPerSession ?? 0),
+    ratePerSession,
+    teacherPayPerSession,
+    currency,
+    billingCycle,
+    changedAt: FieldValue.serverTimestamp(),
+    changedBy: actor,
+    reason: 'admission_setup',
+  });
+  await batch.commit();
+
+  return {
+    ok: true,
+    enrollmentId,
+    ratePerSession,
+    teacherPayPerSession,
+    currency,
+    billingCycle,
+  };
 });
 
 type CourseTransitionState =
@@ -560,7 +814,7 @@ export const transitionEnrollmentCourse = onCall({ region: REGION }, async (requ
         creditsTotal: transition.creditsTotal,
         currency: transition.currency,
         billingCycle: transition.billingCycle,
-      }, actor, operationId);
+      }, actor, { reservedByOperationId: operationId, creationIntentOverride: 'transition' });
       const newEnrollmentId = enrollmentResult.enrollmentId;
       await Promise.all([
         db.collection('enrollments').doc(oldEnrollmentId).set({

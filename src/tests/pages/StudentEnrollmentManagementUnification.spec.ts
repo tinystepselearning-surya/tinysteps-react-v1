@@ -47,13 +47,15 @@ describe('unified student and enrollment management', () => {
     expect(studentManagementSource).toContain("focus: 'without-enrollment'");
   });
 
-  it('provides direct lifecycle-safe actions for students who need enrollment review', () => {
+  it('provides progressive setup and explicit multi-course management actions', () => {
     expect(studentManagementSource).toContain('Students Needing Enrollment Review');
-    expect(studentManagementSource).toContain("'Create enrollment'");
-    expect(studentManagementSource).toContain("'Add enrollment'");
-    expect(studentManagementSource).toContain('Manage enrollment');
+    expect(studentManagementSource).toContain("'Set Up Admission'");
+    expect(studentManagementSource).toContain("'Continue Setup'");
+    expect(studentManagementSource).toContain("'Manage Courses'");
+    expect(studentManagementSource).toContain('Add Additional Course');
+    expect(studentManagementSource).toContain('Manage / Change Course');
+    expect(studentManagementSource).toContain('AdmissionSetupWizard');
     expect(studentManagementSource).toContain('EnrollmentDetailView');
-    expect(studentManagementSource).toContain('Historical records are preserved.');
   });
 
   it('removes duplicate enrollment summaries while keeping repair tools only when needed', () => {
@@ -92,8 +94,9 @@ describe('unified student and enrollment management', () => {
   it('keeps teacher reassignment and course changes on lifecycle-safe backend callables', () => {
     expect(assignTeacherSource).toContain("httpsCallable(functions, 'reassignEnrollmentTeacher')");
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
-    expect(enrollmentDetailSource).toContain('Historical records were preserved.');
+    expect(enrollmentDetailSource).toContain('historical records were preserved');
+    expect(enrollmentDetailSource).toContain("courseTransitionType === 'correction'");
     expect(studentManagementSource).toContain('teacher reassignment updates eligible future classes only');
-    expect(studentManagementSource).toContain('creates a linked next enrollment');
+    expect(studentManagementSource).toContain('course progression completes the old enrollment');
   });
 });

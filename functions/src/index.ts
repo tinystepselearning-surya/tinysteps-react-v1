@@ -223,6 +223,8 @@ export { notFoundRoute } from "./notFoundRoute";
 // Enrollment lifecycle helpers not replaced by the compatibility surface.
 export {
   reassignEnrollmentTeacher,
+  updateEnrollmentFinancialTerms,
+  saveEnrollmentSetupDraft,
   repairEnrollmentTeacherSessionConsistency,
   archiveKid,
   createAdminManualSession,

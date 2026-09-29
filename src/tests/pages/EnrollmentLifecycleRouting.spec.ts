@@ -30,6 +30,10 @@ const enrollmentDetailSource = readFileSync(
   join(process.cwd(), 'src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx'),
   'utf8',
 );
+const admissionSetupSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/StudentManagement/AdmissionSetupWizard.tsx'),
+  'utf8',
+);
 
 describe('admin lifecycle routing', () => {
   it('does not directly write enrollment status transitions from the enrollment list', () => {
@@ -74,24 +78,29 @@ describe('admin lifecycle routing', () => {
     expect(assignCourseSource).toContain('getCreateEnrollmentErrorMessage(err)');
   });
 
-  it('keeps course progression recoverable while presenting simple defaults with optional overrides', () => {
+  it('keeps course changes explicit, idempotent, and server-authoritative', () => {
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
-    expect(enrollmentDetailSource).toContain('Move to Next Course');
-    expect(enrollmentDetailSource).toContain('By default, the current teacher, class schedule, rates and class link continue automatically.');
-    expect(enrollmentDetailSource).toContain("getDocs(collection(db, 'courses'))");
-    expect(enrollmentDetailSource).toContain("where('role', '==', 'teacher')");
-    expect(enrollmentDetailSource).toContain('Change teacher for next course');
-    expect(enrollmentDetailSource).toContain('Use a different class link');
+    expect(enrollmentDetailSource).toContain('Change Course');
+    expect(enrollmentDetailSource).toContain("courseTransitionType === 'progression'");
+    expect(enrollmentDetailSource).toContain("courseTransitionType === 'correction'");
+    expect(enrollmentDetailSource).toContain('Wrong course assigned — correct it');
+    expect(enrollmentDetailSource).toContain('Course completed — move forward');
     expect(enrollmentDetailSource).toContain('const newSchedule = enrollment.schedule;');
-    expect(enrollmentDetailSource).toContain('const operationId = `course-transition-${String(enrollment.id || enrollmentId).trim()}`;');
-    expect(enrollmentDetailSource).not.toContain('crypto.randomUUID()');
-    expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
-    expect(enrollmentDetailSource).toContain('inheritedFields.joinUrl = nextClassLink.trim()');
-    expect(enrollmentDetailSource).toContain('inheritedFields.meetingLink = nextClassLink.trim()');
-    expect(enrollmentDetailSource).toContain('inheritedFields.classLink = nextClassLink.trim()');
+    expect(enrollmentDetailSource).toContain('const operationId = `course-${courseTransitionType}-${String(enrollment.id || enrollmentId).trim()}-${newCourseId}`;');
+    expect(enrollmentDetailSource).toContain('transitionType: courseTransitionType');
+    expect(enrollmentDetailSource).toContain('joinUrl: nextClassLink || null');
+    expect(enrollmentDetailSource).not.toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
+    expect(enrollmentDetailSource).not.toContain('inheritedFields.joinUrl');
     expect(enrollmentDetailSource).not.toContain("window.prompt('Next canonical course ID?')");
-    expect(enrollmentDetailSource).not.toContain("window.prompt('Next teacher user ID?')");
-    expect(enrollmentDetailSource).not.toContain('Next schedule JSON');
-    expect(enrollmentDetailSource).not.toContain('Transition operation ID');
+  });
+
+  it('keeps incomplete admissions non-operational until final schedule activation', () => {
+    expect(admissionSetupSource).toContain("setupPending: true");
+    expect(admissionSetupSource).toContain("httpsCallable(regionalFunctions, 'updateEnrollmentFinancialTerms')");
+    expect(admissionSetupSource).toContain("httpsCallable(regionalFunctions, 'saveEnrollmentSetupDraft')");
+    expect(admissionSetupSource).toContain("httpsCallable(regionalFunctions, 'reassignEnrollmentTeacher')");
+    expect(admissionSetupSource).toContain("httpsCallable(regionalFunctions, 'saveRollingEnrollmentSchedule')");
+    expect(admissionSetupSource).toContain('Save & Exit');
+    expect(admissionSetupSource).toContain('Complete Setup');
   });
 });

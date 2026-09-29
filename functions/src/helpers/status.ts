@@ -2,6 +2,7 @@ export type EnrollmentStatus =
   | 'active'
   | 'trial'
   | 'paused'
+  | 'setup_pending'
   | 'pending_teacher'
   | 'pending_payment'
   | 'completed'
@@ -41,6 +42,7 @@ export function isFinanciallyEarnedAttendanceStatus(value: unknown): boolean {
 export function normalizeEnrollmentStatus(value: unknown): EnrollmentStatus {
   const raw = normalizeLowerStatus(value);
   if (!raw) return 'active';
+  if (raw === 'setup_pending') return 'setup_pending';
   if (raw === 'pending_teacher') return 'trial';
   if (raw === 'pending_payment') return 'active';
   if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
@@ -49,6 +51,7 @@ export function normalizeEnrollmentStatus(value: unknown): EnrollmentStatus {
     raw === 'active' ||
     raw === 'trial' ||
     raw === 'paused' ||
+    raw === 'setup_pending' ||
     raw === 'pending_teacher' ||
     raw === 'pending_payment' ||
     raw === 'completed' ||

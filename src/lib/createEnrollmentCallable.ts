@@ -1,8 +1,12 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebaseConfig';
 
+export type EnrollmentCreationIntent = 'initial_course' | 'additional_course';
+
 export type CreateEnrollmentPayload = {
   operationId: string;
+  creationIntent: EnrollmentCreationIntent;
+  setupPending?: boolean;
   kidId: string;
   courseId: string;
   feePerClass?: number;

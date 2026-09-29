@@ -4,7 +4,7 @@ import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/ht
 import {ensureAdmin} from '../helpers/adminGuard';
 import {normalizeEnrollmentStatus} from '../helpers/status';
 import {
-  createEnrollment as legacyCreateEnrollment,
+  createEnrollmentForCourseTransitionInternal,
   setEnrollmentStatus as legacySetEnrollmentStatus,
 } from '../lifecycle';
 import {
@@ -24,6 +24,7 @@ if (!admin.apps.length) admin.initializeApp();
 const REGION = 'asia-south1';
 
 type RecordLike = Record<string, unknown>;
+type CourseTransitionType = 'progression' | 'correction';
 
 const text = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();
@@ -103,10 +104,15 @@ export const transitionEnrollmentCourse = onCall(
     const newCourseId = text(data.newCourseId);
     const newTeacherId = text(data.newTeacherId);
     const reason = text(data.reason);
-    if (!operationId || !oldEnrollmentId || !newCourseId || !newTeacherId || !reason) {
+    const transitionTypeRaw = text(data.transitionType).toLowerCase();
+    const transitionType: CourseTransitionType | null =
+      transitionTypeRaw === 'progression' || transitionTypeRaw === 'correction'
+        ? transitionTypeRaw
+        : null;
+    if (!operationId || !oldEnrollmentId || !newCourseId || !newTeacherId || !reason || !transitionType) {
       throw new HttpsError(
         'invalid-argument',
-        'operationId, oldEnrollmentId, newCourseId, newTeacherId, and reason are required',
+        'operationId, oldEnrollmentId, newCourseId, newTeacherId, reason, and transitionType are required',
       );
     }
 
@@ -119,6 +125,7 @@ export const transitionEnrollmentCourse = onCall(
       if (
         String(priorData.oldEnrollmentId || '') !== oldEnrollmentId
         || String(priorData.newCourseId || '') !== newCourseId
+        || String(priorData.transitionType || '') !== transitionType
       ) {
         throw new HttpsError('already-exists', 'operationId belongs to a different course transition');
       }
@@ -133,6 +140,7 @@ export const transitionEnrollmentCourse = onCall(
           reconciliation: priorData.reconciliation || null,
           idempotentReplay: true,
           rolling: Boolean(priorData.rolling),
+          transitionType,
         };
       }
       if (priorData.rolling !== true) {
@@ -153,6 +161,12 @@ export const transitionEnrollmentCourse = onCall(
       || oldStatus === 'inactive'
     ) {
       throw new HttpsError('failed-precondition', 'Current enrollment is already terminal');
+    }
+    if (transitionType === 'correction' && oldStatus === 'completed') {
+      throw new HttpsError(
+        'failed-precondition',
+        'A completed enrollment cannot be corrected as an active-course assignment',
+      );
     }
 
     const kidId = resolveKidId(oldEnrollment);
@@ -185,6 +199,9 @@ export const transitionEnrollmentCourse = onCall(
       ?? 0,
     );
     const teacherPayPerSession = Number(data.teacherPayPerSession ?? oldEnrollment.teacherPayPerSession ?? 0);
+    const destinationCreditsTotal = transitionType === 'correction'
+      ? Math.max(0, Math.floor(Number(oldEnrollment.creditsRemaining ?? 0)))
+      : Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
     if (!Number.isFinite(ratePerSession) || ratePerSession <= 0) {
       throw new HttpsError('failed-precondition', 'Next course requires a positive parent session rate');
     }
@@ -198,7 +215,12 @@ export const transitionEnrollmentCourse = onCall(
       oldCourseId: text(oldEnrollment.courseId) || null,
       newCourseId,
       newTeacherId,
+      transitionType,
       reason,
+      destinationCreditsTotal,
+      sourceCreditsTotal: Math.max(0, Math.floor(Number(oldEnrollment.creditsTotal ?? 0))),
+      sourceCreditsUsed: Math.max(0, Math.floor(Number(oldEnrollment.creditsUsed ?? 0))),
+      sourceCreditsRemaining: Math.max(0, Math.floor(Number(oldEnrollment.creditsRemaining ?? 0))),
       state: 'creating_rolling_enrollment',
       rolling: true,
       createdAt: prior.exists ? (prior.data()?.createdAt || FieldValue.serverTimestamp()) : FieldValue.serverTimestamp(),
@@ -206,35 +228,43 @@ export const transitionEnrollmentCourse = onCall(
       updatedBy: actor,
     }, {merge: true});
 
-    const creation = await runCallable(legacyCreateEnrollment, {
-      ...request,
-      data: {
-        operationId: `rolling-transition-create-${operationId}`,
-        kidId,
-        courseId: newCourseId,
-        teacherId: newTeacherId,
-        schedule: canonical.schedule,
-        classesStartDate: classesStartDateYmd,
-        ratePerSession,
-        teacherPayPerSession,
-        creditsTotal: Math.max(0, Math.floor(Number(data.creditsTotal ?? 0))),
-        currency: text(data.currency) || text(oldEnrollment.currency) || 'INR',
-        billingCycle: text(data.billingCycle) || text(oldEnrollment.billingCycle) || 'monthly',
-      },
-    });
-    const newEnrollmentId = text(creation.enrollmentId);
-    if (!newEnrollmentId) throw new HttpsError('internal', 'Next enrollment creation did not return an enrollmentId');
-
-    const newEnrollmentRef = db.collection('enrollments').doc(newEnrollmentId);
     const inheritedJoinUrl = text(data.joinUrl)
       || text(oldEnrollment.joinUrl)
       || text(oldEnrollment.meetingLink)
       || text(oldEnrollment.classLink)
       || null;
+    const creation = await createEnrollmentForCourseTransitionInternal({
+      operationId: `rolling-transition-create-${operationId}`,
+      kidId,
+      courseId: newCourseId,
+      teacherId: newTeacherId,
+      schedule: canonical.schedule,
+      classesStartDate: classesStartDateYmd,
+      ratePerSession,
+      teacherPayPerSession,
+      creditsTotal: destinationCreditsTotal,
+      currency: text(data.currency) || text(oldEnrollment.currency) || 'INR',
+      billingCycle: text(data.billingCycle) || text(oldEnrollment.billingCycle) || 'monthly',
+      joinUrl: inheritedJoinUrl,
+    }, actor);
+    const newEnrollmentId = text(creation.enrollmentId);
+    if (!newEnrollmentId) throw new HttpsError('internal', 'Next enrollment creation did not return an enrollmentId');
+
+    const newEnrollmentRef = db.collection('enrollments').doc(newEnrollmentId);
     await newEnrollmentRef.set({
       joinUrl: inheritedJoinUrl,
       previousEnrollmentId: oldEnrollmentId,
       transitionOperationId: operationId,
+      transitionType,
+      ...(transitionType === 'correction'
+        ? {
+            correctedFromEnrollmentId: oldEnrollmentId,
+            creditCarryoverFromEnrollmentId: oldEnrollmentId,
+            creditCarryoverAmount: destinationCreditsTotal,
+          }
+        : {
+            progressedFromEnrollmentId: oldEnrollmentId,
+          }),
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
     }, {merge: true});
@@ -248,40 +278,64 @@ export const transitionEnrollmentCourse = onCall(
     let cancelledSessionsCount = 0;
     const freshOld = await readEnrollment(oldEnrollmentId);
     const freshOldStatus = normalizeEnrollmentStatus(freshOld.status);
-    if (freshOldStatus !== 'completed') {
+    const targetOldStatus = transitionType === 'progression' ? 'completed' : 'discontinued';
+    if (freshOldStatus !== targetOldStatus) {
       if (isCanonicalRollingEnrollment(freshOld)) {
         const stopped = await runCallable(setRollingEnrollmentLifecycle, {
           ...request,
           data: {
             enrollmentId: oldEnrollmentId,
             status: 'discontinued',
-            reason: `course_transition:${reason}`,
+            reason: transitionType === 'progression'
+              ? `course_progression:${reason}`
+              : `course_assignment_correction:${reason}`,
           },
         });
         cancelledSessionsCount = Number(stopped.cancelledSessionsCount || 0);
         await db.collection('enrollments').doc(oldEnrollmentId).set({
-          status: 'completed',
-          completedAt: FieldValue.serverTimestamp(),
-          completedBy: actor,
-          completionReason: reason,
+          status: targetOldStatus,
           endedAt: FieldValue.serverTimestamp(),
           nextEnrollmentId: newEnrollmentId,
           transitionOperationId: operationId,
-          'scheduleMaterialization.lifecycleState': 'completed',
+          transitionType,
+          ...(transitionType === 'progression'
+            ? {
+                completedAt: FieldValue.serverTimestamp(),
+                completedBy: actor,
+                completionReason: reason,
+              }
+            : {
+                correctedAt: FieldValue.serverTimestamp(),
+                correctedBy: actor,
+                correctionReason: reason,
+                correctedToEnrollmentId: newEnrollmentId,
+                supersededByEnrollmentId: newEnrollmentId,
+              }),
+          'scheduleMaterialization.lifecycleState': targetOldStatus,
           'scheduleMaterialization.nextOccurrenceYmd': null,
           'scheduleMaterialization.nextMaterializationDueYmd': null,
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actor,
         }, {merge: true});
       } else {
-        const completed = await runCallable(legacySetEnrollmentStatus, {
+        const ended = await runCallable(legacySetEnrollmentStatus, {
           ...request,
-          data: {enrollmentId: oldEnrollmentId, status: 'completed', reason},
+          data: {enrollmentId: oldEnrollmentId, status: targetOldStatus, reason},
         });
-        cancelledSessionsCount = Number(completed.cancelledSessionsCount || 0);
+        cancelledSessionsCount = Number(ended.cancelledSessionsCount || 0);
         await db.collection('enrollments').doc(oldEnrollmentId).set({
           nextEnrollmentId: newEnrollmentId,
           transitionOperationId: operationId,
+          transitionType,
+          ...(transitionType === 'correction'
+            ? {
+                correctedAt: FieldValue.serverTimestamp(),
+                correctedBy: actor,
+                correctionReason: reason,
+                correctedToEnrollmentId: newEnrollmentId,
+                supersededByEnrollmentId: newEnrollmentId,
+              }
+            : {}),
           updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actor,
         }, {merge: true});
@@ -295,8 +349,11 @@ export const transitionEnrollmentCourse = onCall(
       preserved: materialized.existingCount + materialized.raceAlreadyExistsCount,
       nextMaterializationDueYmd: materialized.materialization.nextMaterializationDueYmd,
     };
-    await transitionRef.set({
+    const transitionAuditRef = db.collection('auditLogs').doc();
+    const completionBatch = db.batch();
+    completionBatch.set(transitionRef, {
       state: 'complete',
+      transitionType,
       newEnrollmentId,
       cancelledSessionsCount,
       reconciliation,
@@ -304,6 +361,24 @@ export const transitionEnrollmentCourse = onCall(
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
     }, {merge: true});
+    completionBatch.create(transitionAuditRef, {
+      type: transitionType === 'progression'
+        ? 'enrollment_course_progression_completed'
+        : 'enrollment_course_correction_completed',
+      action: 'transition',
+      transitionType,
+      operationId,
+      kidId,
+      oldEnrollmentId,
+      oldCourseId: text(oldEnrollment.courseId) || null,
+      newEnrollmentId,
+      newCourseId,
+      reason,
+      creditCarryoverAmount: transitionType === 'correction' ? destinationCreditsTotal : null,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: actor,
+    });
+    await completionBatch.commit();
 
     return {
       ok: true,
@@ -315,6 +390,7 @@ export const transitionEnrollmentCourse = onCall(
       reconciliation,
       idempotentReplay: false,
       rolling: true,
+      transitionType,
     };
   },
 );
