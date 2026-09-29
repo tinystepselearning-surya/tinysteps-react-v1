@@ -38,9 +38,13 @@ async function createEnrollment(args: {
   teacherId?: string;
   schedule?: Record<string, unknown>;
   creditsTotal?: number;
+  creationIntent?: 'initial_course' | 'additional_course';
+  setupPending?: boolean;
 }): Promise<string> {
   const result = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', {
     operationId: args.operationId,
+    creationIntent: args.creationIntent || 'initial_course',
+    setupPending: args.setupPending === true,
     kidId: ids.kidId,
     courseId: args.courseId,
     teacherId: args.teacherId || ids.teacherAId,
@@ -64,6 +68,7 @@ async function sessionsForEnrollment(enrollmentId: string) {
 function validEnrollmentPayload(overrides: Record<string, unknown> = {}) {
   return {
     operationId: `authorization-${fixtureSequence}`,
+    creationIntent: 'initial_course',
     kidId: ids.kidId,
     courseId: ids.phonicsCourseId,
     creditsTotal: 4,
@@ -86,6 +91,50 @@ afterAll(async () => {
 });
 
 describe('createEnrollment authorization and validation', () => {
+  it('requires an explicit creation intent', async () => {
+    const payload = validEnrollmentPayload();
+    delete (payload as Record<string, unknown>).creationIntent;
+    await expect(callFunction('createEnrollment', payload))
+      .rejects.toSatisfy((error: unknown) => {
+        expectCallableErrorCode(error, 'invalid-argument');
+        return true;
+      });
+  });
+
+  it('permits a non-operational setup_pending reservation with zero financial rate', async () => {
+    const result = await callFunction<Record<string, unknown>, { enrollmentId: string }>(
+      'createEnrollment',
+      validEnrollmentPayload({
+        operationId: `setup-pending-${fixtureSequence}`,
+        setupPending: true,
+        ratePerSession: 0,
+        teacherPayPerSession: 0,
+      }),
+    );
+    const enrollment = await adminDb.collection('enrollments').doc(result.enrollmentId).get();
+    expect(enrollment.data()).toMatchObject({
+      status: 'setup_pending',
+      setupPending: true,
+      creationIntent: 'initial_course',
+      ratePerSession: 0,
+      courseId: ids.phonicsCourseId,
+    });
+    expect((await sessionsForEnrollment(result.enrollmentId)).empty).toBe(true);
+    const key = await adminDb.collection('operationalEnrollmentKeys')
+      .where('enrollmentId', '==', result.enrollmentId).get();
+    expect(key.size).toBe(1);
+  });
+
+  it('rejects additional_course when the student has no operational enrollment', async () => {
+    await expect(callFunction('createEnrollment', validEnrollmentPayload({
+      operationId: `invalid-additional-${fixtureSequence}`,
+      creationIntent: 'additional_course',
+    }))).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'failed-precondition');
+      return true;
+    });
+  });
+
   it('rejects unauthenticated callers with a structured code', async () => {
     await signOutFixtureUser();
     await expect(callFunction('createEnrollment', validEnrollmentPayload()))
@@ -174,6 +223,32 @@ describe('createEnrollment authorization and validation', () => {
 });
 
 describe('Firestore Emulator enrollment uniqueness and simultaneous courses', () => {
+  it('blocks initial_course once an operational course exists and permits an explicit additional course', async () => {
+    const firstId = await createEnrollment({
+      operationId: 'intent-first',
+      courseId: ids.phonicsCourseId,
+    });
+    await expect(createEnrollment({
+      operationId: 'intent-wrong-second',
+      courseId: ids.earlyCourseId,
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'failed-precondition');
+      return true;
+    });
+
+    const secondId = await createEnrollment({
+      operationId: 'intent-additional',
+      courseId: ids.earlyCourseId,
+      creationIntent: 'additional_course',
+    });
+    expect(secondId).not.toBe(firstId);
+    expect((await adminDb.collection('enrollments').doc(secondId).get()).data()).toMatchObject({
+      courseId: ids.earlyCourseId,
+      creationIntent: 'additional_course',
+      status: 'active',
+    });
+  });
+
   it('allows different courses and preserves independent teacher and schedule identity', async () => {
     const phonicsId = await createEnrollment({
       operationId: 'different-courses-phonics',
@@ -184,6 +259,7 @@ describe('Firestore Emulator enrollment uniqueness and simultaneous courses', ()
     const grammarId = await createEnrollment({
       operationId: 'different-courses-grammar',
       courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
       teacherId: ids.teacherBId,
       schedule: tuesdayGrammarSchedule,
     });
@@ -194,7 +270,8 @@ describe('Firestore Emulator enrollment uniqueness and simultaneous courses', ()
       adminDb.collection('enrollments').doc(grammarId).get(),
     ]);
     expect(phonics.data()).toMatchObject({ courseId: ids.phonicsCourseId, teacherId: ids.teacherAId, status: 'active' });
-    expect(grammar.data()).toMatchObject({ courseId: ids.grammarCourseId, teacherId: ids.teacherBId, status: 'active' });
+    expect(grammar.data()).toMatchObject({ courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course', teacherId: ids.teacherBId, status: 'active' });
     expect(phonics.data()?.schedule).toEqual(mondayPhonicsSchedule);
     expect(grammar.data()?.schedule).toEqual(tuesdayGrammarSchedule);
   });
@@ -260,7 +337,8 @@ describe('Firestore Emulator enrollment uniqueness and simultaneous courses', ()
       operationId: 'same-time-phonics', courseId: ids.phonicsCourseId, schedule: sameTimeSchedule,
     });
     const grammarId = await createEnrollment({
-      operationId: 'same-time-grammar', courseId: ids.grammarCourseId, schedule: sameTimeSchedule,
+      operationId: 'same-time-grammar', courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course', schedule: sameTimeSchedule,
       teacherId: ids.teacherBId,
     });
     await Promise.all([
@@ -295,6 +373,7 @@ describe('Firestore Emulator course transition state machine', () => {
     const grammarId = await createEnrollment({
       operationId: `${operationId}-grammar`,
       courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
       teacherId: ids.teacherBId,
       schedule: tuesdayGrammarSchedule,
       creditsTotal: 9,
@@ -342,6 +421,7 @@ describe('Firestore Emulator course transition state machine', () => {
       kidId: ids.kidId,
       kidIds: [ids.kidId],
       courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
       teacherId: ids.teacherBId,
       date: '2099-08-04',
       startTime: '18:00',
@@ -367,6 +447,7 @@ describe('Firestore Emulator course transition state machine', () => {
     ratePerSession: 600,
     teacherPayPerSession: 300,
     reason: 'Completed Foundations in emulator validation',
+    transitionType: 'progression' as const,
   });
 
   it('transitions Foundations, preserves protected history, and isolates Grammar', async () => {
@@ -404,7 +485,61 @@ describe('Firestore Emulator course transition state machine', () => {
     const transition = await adminDb.collection('enrollmentCourseTransitions').doc(operationId).get();
     expect(transition.data()?.state).toBe('complete');
     const audits = await adminDb.collection('auditLogs').where('operationId', '==', operationId).get();
-    expect(audits.docs.some((row) => row.data().type === 'enrollment_course_transition_completed')).toBe(true);
+    expect(audits.docs.some((row) => row.data().type === 'enrollment_course_progression_completed')).toBe(true);
+  });
+
+  it('corrects a wrong course without completion semantics and carries only remaining credits', async () => {
+    const operationId = 'transition-correction';
+    const { foundationsId, grammarId } = await seedTransitionContext(operationId);
+    await adminDb.collection('enrollments').doc(foundationsId).set({
+      creditsTotal: 16,
+      creditsUsed: 7,
+      creditsRemaining: 9,
+      topicProgress: { legacyFoundationSkill: { status: 'complete' } },
+    }, { merge: true });
+
+    const input = {
+      ...transitionInput(operationId, foundationsId),
+      transitionType: 'correction' as const,
+      reason: 'Wrong course assigned during admission',
+    };
+    const result = await callFunction<Record<string, unknown>, { state: string; newEnrollmentId: string }>(
+      'transitionEnrollmentCourse',
+      input,
+    );
+
+    const [oldEnrollment, correctedEnrollment, grammar] = await Promise.all([
+      adminDb.collection('enrollments').doc(foundationsId).get(),
+      adminDb.collection('enrollments').doc(result.newEnrollmentId).get(),
+      adminDb.collection('enrollments').doc(grammarId).get(),
+    ]);
+
+    expect(oldEnrollment.data()).toMatchObject({
+      status: 'discontinued',
+      correctedToEnrollmentId: result.newEnrollmentId,
+      supersededByEnrollmentId: result.newEnrollmentId,
+      creditsUsed: 7,
+      creditsRemaining: 9,
+    });
+    expect(oldEnrollment.data()?.completedAt).toBeUndefined();
+    expect(correctedEnrollment.data()).toMatchObject({
+      status: 'active',
+      courseId: ids.earlyCourseId,
+      previousEnrollmentId: foundationsId,
+      correctedFromEnrollmentId: foundationsId,
+      creditCarryoverFromEnrollmentId: foundationsId,
+      creditCarryoverAmount: 9,
+      creditsTotal: 9,
+      creditsUsed: 0,
+      creditsRemaining: 9,
+      topicProgress: {},
+    });
+    expect(grammar.data()).toMatchObject({
+      status: 'active',
+      courseId: ids.grammarCourseId,
+    });
+    const audits = await adminDb.collection('auditLogs').where('operationId', '==', operationId).get();
+    expect(audits.docs.some((row) => row.data().type === 'enrollment_course_correction_completed')).toBe(true);
   });
 
   it('replays a completed transition idempotently without duplicate enrollment, sessions, or audit', async () => {
@@ -455,6 +590,7 @@ describe('Firestore Emulator course transition state machine', () => {
         currency: 'INR',
         billingCycle: 'monthly',
         reason: 'Completed Foundations in emulator validation',
+        transitionType: 'progression',
         state: 'old_sessions_reconciled',
         retryable: true,
       }),
@@ -473,7 +609,11 @@ describe('Firestore Emulator course transition state machine', () => {
 
   it('rejects an existing operational target before completing Foundations', async () => {
     const foundationsId = await createEnrollment({ operationId: 'blocked-old', courseId: ids.foundationsCourseId });
-    const existingEarlyId = await createEnrollment({ operationId: 'blocked-existing', courseId: ids.earlyCourseId });
+    const existingEarlyId = await createEnrollment({
+      operationId: 'blocked-existing',
+      courseId: ids.earlyCourseId,
+      creationIntent: 'additional_course',
+    });
     await expect(callFunction('transitionEnrollmentCourse', transitionInput('blocked-transition', foundationsId)))
       .rejects.toSatisfy((error: unknown) => {
         expectCallableErrorCode(error, 'already-exists');
@@ -579,7 +719,8 @@ describe('Firestore Emulator exact completion and financial identity', () => {
       operationId: 'finance-phonics', courseId: ids.phonicsCourseId, creditsTotal: 8,
     });
     const grammarId = await createEnrollment({
-      operationId: 'finance-grammar', courseId: ids.grammarCourseId, teacherId: ids.teacherBId,
+      operationId: 'finance-grammar', courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course', teacherId: ids.teacherBId,
       schedule: tuesdayGrammarSchedule, creditsTotal: 11,
     });
     const sessionId = 'exact-phonics-completion';
