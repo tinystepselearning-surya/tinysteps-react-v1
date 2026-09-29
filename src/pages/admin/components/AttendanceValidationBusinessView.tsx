@@ -59,6 +59,7 @@ interface Props {
 }
 
 type OperatorBusinessOutcome = Exclude<AvsBusinessOutcome, 'not_evaluable'>;
+type VerifiedFilter = 'all' | 'present_match' | 'zero_match' | 'admin';
 
 const BUSINESS_TABS: Array<{
   value: OperatorBusinessOutcome;
@@ -124,6 +125,7 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
   const navigate = useNavigate();
   const [activeTab, setActiveTab] =
     useState<OperatorBusinessOutcome>('verified');
+  const [verifiedFilter, setVerifiedFilter] = useState<VerifiedFilter>('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
@@ -179,10 +181,28 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
     ).length,
   }), [teacherScopedGroups]);
 
+  const verifiedCounts = useMemo(() => ({
+    present_match: teacherScopedGroups.filter(
+      (group) => group.outcome === 'verified' && group.verifiedCategory === 'present_match',
+    ).length,
+    zero_match: teacherScopedGroups.filter(
+      (group) => group.outcome === 'verified' && group.verifiedCategory === 'zero_match',
+    ).length,
+    admin: teacherScopedGroups.filter(
+      (group) => group.outcome === 'verified' && group.verifiedCategory === 'admin',
+    ).length,
+  }), [teacherScopedGroups]);
+
   const visibleGroups = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     return (showTechnical ? technicalGroups : teacherScopedGroups).filter((group) => {
       if (!showTechnical && group.outcome !== activeTab) return false;
+      if (
+        !showTechnical
+        && activeTab === 'verified'
+        && verifiedFilter !== 'all'
+        && group.verifiedCategory !== verifiedFilter
+      ) return false;
       if (!normalizedSearch) return true;
 
       return [
@@ -195,7 +215,7 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
         ...group.cases.map((item) => item.classSessionId || item.id),
       ].some((value) => value?.toLowerCase().includes(normalizedSearch));
     });
-  }, [activeTab, search, teacherScopedGroups, technicalGroups, showTechnical]);
+  }, [activeTab, search, teacherScopedGroups, technicalGroups, showTechnical, verifiedFilter]);
 
   const runAction = async (id: string, action: () => Promise<void>) => {
     setBusyId(id);
@@ -238,6 +258,7 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
               onClick={() => {
                 setShowTechnical(false);
                 setActiveTab(tab.value);
+                setVerifiedFilter('all');
                 setExpandedKey(null);
               }}
               className="shrink-0"
@@ -247,6 +268,29 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
           );
         })}
       </div>
+
+      {activeTab === 'verified' && !showTechnical && (
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" size="sm" variant={verifiedFilter === 'all' ? 'secondary' : 'outline'}
+            onClick={() => { setVerifiedFilter('all'); setExpandedKey(null); }}>
+            All Verified ({tabCounts.verified})
+          </Button>
+          <Button type="button" size="sm" variant={verifiedFilter === 'present_match' ? 'secondary' : 'outline'}
+            onClick={() => { setVerifiedFilter('present_match'); setExpandedKey(null); }}>
+            Present Match ({verifiedCounts.present_match})
+          </Button>
+          <Button type="button" size="sm" variant={verifiedFilter === 'zero_match' ? 'secondary' : 'outline'}
+            onClick={() => { setVerifiedFilter('zero_match'); setExpandedKey(null); }}>
+            Zero Match ({verifiedCounts.zero_match})
+          </Button>
+          {verifiedCounts.admin > 0 && (
+            <Button type="button" size="sm" variant={verifiedFilter === 'admin' ? 'secondary' : 'outline'}
+              onClick={() => { setVerifiedFilter('admin'); setExpandedKey(null); }}>
+              Admin Verified ({verifiedCounts.admin})
+            </Button>
+          )}
+        </div>
+      )}
 
       {technicalGroups.length > 0 && (
         <button type="button" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900"
@@ -370,6 +414,29 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
                       <TableRow>
                         <TableCell colSpan={8} className="bg-slate-50">
                           <div className="space-y-2 p-2 text-xs text-slate-600">
+                            {(() => {
+                              const overlapSeconds = group.cases
+                                .map((item) => item.sameDayCoverageSeconds)
+                                .find((value): value is number => typeof value === 'number' && Number.isFinite(value));
+                              if (group.outcome === 'not_evaluable') return null;
+                              return (
+                                <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+                                  <span className="font-medium text-slate-800">
+                                    Teams summary: {group.teamsSupportedPresentCount ?? 0} Present
+                                  </span>
+                                  {overlapSeconds !== undefined && (
+                                    <span> · {Math.round(overlapSeconds / 60)} min verified overlap</span>
+                                  )}
+                                  {group.outcome === 'false_absent' && (
+                                    <div className="mt-1 font-medium text-orange-700">
+                                      Tiny Steps has {group.tinyStepsPresentCount ?? 0} Present.
+                                      {' '}Choose {group.differenceCount} row{group.differenceCount === 1 ? '' : 's'} below to mark Present.
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+
                             {group.cases.map((item) => (
                               <div
                                 key={item.id}
