@@ -49,9 +49,11 @@ describe('unified student and enrollment management', () => {
 
   it('provides direct lifecycle-safe actions for students who need enrollment review', () => {
     expect(studentManagementSource).toContain('Students Needing Enrollment Review');
-    expect(studentManagementSource).toContain("'Create enrollment'");
-    expect(studentManagementSource).toContain("'Add enrollment'");
-    expect(studentManagementSource).toContain('Manage enrollment');
+    expect(studentManagementSource).toContain("'Set Up Admission'");
+    expect(studentManagementSource).toContain("'Manage Courses'");
+    expect(studentManagementSource).toContain('Add Additional Course');
+    expect(studentManagementSource).toContain('Continue Setup');
+    expect(studentManagementSource).toContain('Change / Manage Course');
     expect(studentManagementSource).toContain('EnrollmentDetailView');
     expect(studentManagementSource).toContain('Historical records are preserved.');
   });
@@ -93,7 +95,7 @@ describe('unified student and enrollment management', () => {
     expect(assignTeacherSource).toContain("httpsCallable(functions, 'reassignEnrollmentTeacher')");
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
     expect(enrollmentDetailSource).toContain('Historical records were preserved.');
-    expect(studentManagementSource).toContain('teacher reassignment updates eligible future classes only');
-    expect(studentManagementSource).toContain('creates a linked next enrollment');
+    expect(studentManagementSource).toContain('teacher/schedule setup is resumable');
+    expect(studentManagementSource).toContain('creates a linked enrollment');
   });
 });
