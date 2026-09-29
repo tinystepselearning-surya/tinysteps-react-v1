@@ -16,7 +16,7 @@ function evidence(id = presentId, seconds = 3900) {
   item.session.joinUrlHash = hashAttendanceEvidenceValue('https://teams.example/meeting');
   return item;
 }
-async function run(rows = [row(presentId), row(extraId, false)], cached = [evidence()], fresh = vi.fn(async () => evidence())) {
+async function run(rows = [row(presentId), row(extraId, false)], cached = [evidence()], fresh = vi.fn(async (target: { id: string }) => evidence(target.id))) {
   const persisted = new Map<string, Av53ValidationCaseDocument>();
   // Reproduce the old wrong saved business outcome; normal validation must replace it.
   persisted.set(extraId, { teamsSupportedPresentCount: 2, tinyStepsPresentCount: 1, businessOutcome: 'false_absent' } as Av53ValidationCaseDocument);
@@ -46,9 +46,55 @@ describe('group-first AVS business validation', () => {
     const { result } = await run([row(presentId, false)], [evidence(presentId, 1800)]);
     expect(result.cases[0]).toMatchObject({ tinyStepsPresentCount: 0, teamsSupportedPresentCount: 1, businessOutcome: 'false_absent', businessDifferenceCount: 1 });
   });
-  it.each(['cancelled', 'rescheduled'])('excludes a %s slot from zero-Present capacity', async (status) => {
-    const { result } = await run([row(presentId, false), row(extraId, false, { status })]);
-    expect(result.cases.every((item) => item.teamsSupportedPresentCount === 1)).toBe(true);
+
+  it('collects Teams evidence for a rescheduled-only zero-Present group and verifies 0 / 0 when no occurrence exists', async () => {
+    const noOccurrence = evidence(presentId, 0);
+    noOccurrence.attendanceReports = [];
+    noOccurrence.artifactAvailability.attendanceReportAvailable = false;
+    const fresh = vi.fn(async (target: { id: string }) => ({
+      ...noOccurrence,
+      id: `ev_${target.id}`,
+      session: { ...noOccurrence.session, classSessionId: target.id },
+    }));
+    const { result } = await run(
+      [row(presentId, false, { status: 'rescheduled' })],
+      [],
+      fresh,
+    );
+    expect(fresh).toHaveBeenCalledTimes(1);
+    expect(result.cases[0]).toMatchObject({
+      teamsSupportedPresentCount: 0,
+      tinyStepsPresentCount: 0,
+      businessOutcome: 'verified',
+      businessDifferenceCount: 0,
+    });
+  });
+
+  it('collects Teams evidence for a rescheduled-only row and detects a real same-day class', async () => {
+    const fresh = vi.fn(async (target: { id: string }) => evidence(target.id, 1800));
+    const { result } = await run(
+      [row(presentId, false, { status: 'rescheduled' })],
+      [],
+      fresh,
+    );
+    expect(fresh).toHaveBeenCalledTimes(1);
+    expect(result.cases[0]).toMatchObject({
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 0,
+      businessOutcome: 'false_absent',
+      businessDifferenceCount: 1,
+    });
+  });
+  it.each(['cancelled', 'rescheduled'])('keeps a %s row available as a zero-Present correction candidate', async (status) => {
+    const { result } = await run(
+      [row(presentId, false), row(extraId, false, { status })],
+      [evidence(presentId, 3900), evidence(extraId, 3900)],
+    );
+    expect(result.cases.every((item) =>
+      item.teamsSupportedPresentCount === 2
+      && item.tinyStepsPresentCount === 0
+      && item.businessOutcome === 'false_absent'
+      && item.businessDifferenceCount === 2)).toBe(true);
   });
   it.each(['cancelled', 'rescheduled'])(
     'keeps explicit Present authoritative when lifecycle is %s',

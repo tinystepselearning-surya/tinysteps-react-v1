@@ -402,24 +402,44 @@ export class MicrosoftGraphClient {
     const joinUrlQuery = new URLSearchParams({
       '$filter': `JoinWebUrl eq '${odataString(joinUrl)}'`,
     });
-    let page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
-      `/users/${organizer}/onlineMeetings?${joinUrlQuery.toString()}`,
-    );
+    const meetingId = teamsMeetingIdFromJoinUrl(joinUrl);
+    const resolveByNumericMeetingId = async () => {
+      if (!meetingId) return null;
+      const meetingIdQuery = new URLSearchParams({
+        '$filter': `joinMeetingIdSettings/joinMeetingId eq '${odataString(meetingId)}'`,
+      });
+      return this.graphJson<GraphCollection<GraphOnlineMeeting>>(
+        `/users/${organizer}/onlineMeetings?${meetingIdQuery.toString()}`,
+      );
+    };
 
-    // Some tenants may not retain the short routing URL as JoinWebUrl. If the
-    // exact URL is a clean miss, fall back to the documented joinMeetingId
-    // filter. Do not fall back after an HTTP/Graph error because that would hide
-    // a real authorization/configuration/request failure.
+    let page: GraphCollection<GraphOnlineMeeting>;
+    try {
+      page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
+        `/users/${organizer}/onlineMeetings?${joinUrlQuery.toString()}`,
+      );
+    } catch (error) {
+      // Microsoft Graph has returned HTTP 400 for some otherwise-valid newer
+      // /meet/{numericId}?p=... routing URLs when filtered by JoinWebUrl. For
+      // that narrow, parseable short-link case only, retry with the documented
+      // numeric joinMeetingId filter. Authorization/configuration failures and
+      // non-short links still fail closed without a fallback.
+      const canFallbackAfterBadRequest =
+        meetingId !== null
+        && error instanceof MicrosoftGraphError
+        && error.status === 400
+        && error.kind === 'graph_error';
+      if (!canFallbackAfterBadRequest) throw error;
+      const fallback = await resolveByNumericMeetingId();
+      if (!fallback) throw error;
+      page = fallback;
+    }
+
+    // Some tenants may not retain the short routing URL as JoinWebUrl. A clean
+    // exact miss also falls back to the numeric joinMeetingId when available.
     if (page.value.length === 0) {
-      const meetingId = teamsMeetingIdFromJoinUrl(joinUrl);
-      if (meetingId) {
-        const meetingIdQuery = new URLSearchParams({
-          '$filter': `joinMeetingIdSettings/joinMeetingId eq '${odataString(meetingId)}'`,
-        });
-        page = await this.graphJson<GraphCollection<GraphOnlineMeeting>>(
-          `/users/${organizer}/onlineMeetings?${meetingIdQuery.toString()}`,
-        );
-      }
+      const fallback = await resolveByNumericMeetingId();
+      if (fallback) page = fallback;
     }
 
     if (page.value.length === 0) return null;
