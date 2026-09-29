@@ -58,40 +58,38 @@ describe('admin lifecycle routing', () => {
     expect(sessionsManagementSource).toContain("httpsCallable(getFunctions(), 'cancelAdminManualSession')");
   });
 
-  it('routes both enrollment creation UIs through the centralized backend invariant', () => {
+  it('routes enrollment creation through explicit first/additional intent and the admission wizard', () => {
     expect(createEnrollmentSource).toContain('createEnrollment({');
     expect(assignCourseSource).toContain('createEnrollment({');
-    expect(createEnrollmentSource).toContain("from '../../../lib/createEnrollmentCallable'");
-    expect(assignCourseSource).toContain("from '../../../lib/createEnrollmentCallable'");
+    expect(createEnrollmentSource).toContain("creationIntent: 'initial_course'");
+    expect(assignCourseSource).toContain('creationIntent,');
+    expect(assignCourseSource).toContain("type WizardStep = 1 | 2 | 3 | 4 | 5");
+    expect(assignCourseSource).toContain("Course");
+    expect(assignCourseSource).toContain("Fees");
+    expect(assignCourseSource).toContain("Teacher");
+    expect(assignCourseSource).toContain("Schedule");
+    expect(assignCourseSource).toContain("Review");
+    expect(assignCourseSource).toContain("Save & Exit");
+    expect(assignCourseSource).toContain("reassignEnrollmentTeacher");
+    expect(assignCourseSource).toContain("saveRollingEnrollmentSchedule");
     expect(createEnrollmentSource).not.toContain("setDoc(enrollmentRef");
     expect(assignCourseSource).not.toContain("setDoc(enrollmentRef");
-    expect(assignCourseSource).toContain('disabled={!canAssign || saving || !selected || coursesLoading}');
-    expect(assignCourseSource).toContain("description: 'Course assigned to student.'");
-    expect(assignCourseSource.indexOf('onAssigned?.()')).toBeGreaterThan(
-      assignCourseSource.indexOf("description: 'Course assigned to student.'"),
-    );
-    expect(assignCourseSource.indexOf('onClose();')).toBeGreaterThan(assignCourseSource.indexOf('onAssigned?.()'));
-    expect(assignCourseSource).toContain('getCreateEnrollmentErrorMessage(err)');
   });
 
-  it('keeps course progression recoverable while presenting simple defaults with optional overrides', () => {
+  it('requires explicit progression or correction and keeps transition continuity server-authoritative', () => {
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
-    expect(enrollmentDetailSource).toContain('Move to Next Course');
-    expect(enrollmentDetailSource).toContain('By default, the current teacher, class schedule, rates and class link continue automatically.');
-    expect(enrollmentDetailSource).toContain("getDocs(collection(db, 'courses'))");
-    expect(enrollmentDetailSource).toContain("where('role', '==', 'teacher')");
-    expect(enrollmentDetailSource).toContain('Change teacher for next course');
-    expect(enrollmentDetailSource).toContain('Use a different class link');
+    expect(enrollmentDetailSource).toContain("Course completed — move to next course");
+    expect(enrollmentDetailSource).toContain("Wrong course assigned — correct admission");
+    expect(enrollmentDetailSource).toContain("transitionType === 'progression'");
+    expect(enrollmentDetailSource).toContain("transitionType === 'correction'");
+    expect(enrollmentDetailSource).toContain('transitionType,');
+    expect(enrollmentDetailSource).toContain('joinUrl: nextClassLink || null');
     expect(enrollmentDetailSource).toContain('const newSchedule = enrollment.schedule;');
-    expect(enrollmentDetailSource).toContain('const operationId = `course-transition-${String(enrollment.id || enrollmentId).trim()}`;');
-    expect(enrollmentDetailSource).not.toContain('crypto.randomUUID()');
-    expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
-    expect(enrollmentDetailSource).toContain('inheritedFields.joinUrl = nextClassLink.trim()');
-    expect(enrollmentDetailSource).toContain('inheritedFields.meetingLink = nextClassLink.trim()');
-    expect(enrollmentDetailSource).toContain('inheritedFields.classLink = nextClassLink.trim()');
+    expect(enrollmentDetailSource).toContain('const operationId = `course-${transitionType}-');
+    expect(enrollmentDetailSource).not.toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
+    expect(enrollmentDetailSource).not.toContain('inheritedFields.joinUrl');
     expect(enrollmentDetailSource).not.toContain("window.prompt('Next canonical course ID?')");
     expect(enrollmentDetailSource).not.toContain("window.prompt('Next teacher user ID?')");
-    expect(enrollmentDetailSource).not.toContain('Next schedule JSON');
-    expect(enrollmentDetailSource).not.toContain('Transition operation ID');
   });
+
 });
