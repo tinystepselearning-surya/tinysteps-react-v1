@@ -214,25 +214,6 @@ async function findOperationalSameCourseEnrollmentIds(args: {
     .map((docSnap) => docSnap.id);
 }
 
-async function findOperationalEnrollmentIdsForKid(args: {
-  db: FirebaseFirestore.Firestore;
-  kidId: string;
-  excludeEnrollmentId?: string;
-}): Promise<string[]> {
-  const {db, kidId, excludeEnrollmentId} = args;
-  const snapshots = await Promise.all([
-    db.collection('enrollments').where('kidId', '==', kidId).get(),
-    db.collection('enrollments').where('studentId', '==', kidId).get(),
-    db.collection('enrollments').where('kidIds', 'array-contains', kidId).get(),
-  ]);
-  const matches = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-  snapshots.forEach((snapshot) => snapshot.docs.forEach((docSnap) => matches.set(docSnap.id, docSnap)));
-  return Array.from(matches.values())
-    .filter((docSnap) => docSnap.id !== excludeEnrollmentId)
-    .filter((docSnap) => doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>))
-    .map((docSnap) => docSnap.id);
-}
-
 type EnrollmentCreationIntent = 'initial_course' | 'additional_course' | 'transition';
 
 function requireEnrollmentCreationIntent(value: unknown): EnrollmentCreationIntent {
@@ -285,36 +266,6 @@ async function createEnrollmentInternal(
   const canonicalCourseId = courseSnap.id;
   if (String(course.status || '').trim().toLowerCase() !== 'active') {
     throw new HttpsError('failed-precondition', 'Selected course is not active and cannot be assigned');
-  }
-  const [existingOperational, allOperational] = await Promise.all([
-    findOperationalSameCourseEnrollmentIds({
-      db,
-      kidId: canonicalKidId,
-      courseId: canonicalCourseId,
-    }),
-    findOperationalEnrollmentIdsForKid({
-      db,
-      kidId: canonicalKidId,
-    }),
-  ]);
-  if (existingOperational.length > 0) {
-    throw new HttpsError(
-      'already-exists',
-      `An operational enrollment already exists for this child and course: ${existingOperational[0]}`,
-    );
-  }
-
-  if (creationIntent === 'initial_course' && allOperational.length > 0) {
-    throw new HttpsError(
-      'failed-precondition',
-      'This child already has an operational enrollment. Use Add Additional Course or Change Course.',
-    );
-  }
-  if (creationIntent === 'additional_course' && allOperational.length === 0) {
-    throw new HttpsError(
-      'failed-precondition',
-      'This child has no operational enrollment. Use Assign Course for the first course.',
-    );
   }
   if (creationIntent === 'transition') {
     const transitionOperationId = String(data.transitionOperationId || '').trim();
@@ -394,6 +345,16 @@ async function createEnrollmentInternal(
       .filter((docSnap) =>
         doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>),
       );
+    const transactionalSameCourse = transactionalOperational.find((docSnap) => {
+      const enrollmentData = (docSnap.data() || {}) as Record<string, unknown>;
+      return String(enrollmentData.courseId || '').trim() === canonicalCourseId;
+    });
+    if (transactionalSameCourse) {
+      throw new HttpsError(
+        'already-exists',
+        `An operational enrollment already exists for this child and course: ${transactionalSameCourse.id}`,
+      );
+    }
 
     if (creationIntent === 'initial_course' && transactionalOperational.length > 0) {
       throw new HttpsError(
