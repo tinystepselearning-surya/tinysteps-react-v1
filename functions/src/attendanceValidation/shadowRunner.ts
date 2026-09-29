@@ -635,8 +635,20 @@ function baseCase(params: {
 
 function registryIssueKinds(
   snapshot: Av3StaffRegistrySnapshot,
+  staffIds: readonly (string | null | undefined)[],
 ): Av3StaffRegistryIssueKind[] {
-  return [...new Set(snapshot.issues.map((issue) => issue.kind))];
+  const relevantStaffIds = new Set(
+    staffIds
+      .map((value) => text(value))
+      .filter((value): value is string => Boolean(value)),
+  );
+  return [...new Set(
+    snapshot.issues
+      .filter((issue) =>
+        issue.staffIds.length === 0
+        || issue.staffIds.some((staffId) => relevantStaffIds.has(staffId)))
+      .map((issue) => issue.kind),
+  )];
 }
 
 function caseFromMissingEvidence(params: {
@@ -922,7 +934,6 @@ export async function runAv53Shadow(
   );
   const loaded = await deps.store.loadWorkItems(workItems);
   const observedAt = (deps.now ?? (() => new Date()))().toISOString();
-  const staffRegistryIssues = registryIssueKinds(deps.staffRegistry);
   const cases: Av53ValidationCaseDocument[] = [];
   const skipped: Av53ShadowRunResult['skipped'] = [];
 
@@ -940,23 +951,28 @@ export async function runAv53Shadow(
     if (!groupKey) continue;
 
     const kidId = evidence?.session.kidId || sessionKidId(session);
-    if (!isAvsPresentCapEligibleSession(session, kidId)) continue;
+    const presentCapEligible = isAvsPresentCapEligibleSession(session, kidId);
 
-    inferredSessionCountByGroup.set(
-      groupKey,
-      (inferredSessionCountByGroup.get(groupKey) ?? 0) + 1,
-    );
-
-    const attendance = normalizeTinyStepsAttendance(
-      attendanceEntryForKid(session, kidId),
-    );
-    if (attendance === 'present') {
-      inferredPresentCountByGroup.set(
+    if (presentCapEligible) {
+      inferredSessionCountByGroup.set(
         groupKey,
-        (inferredPresentCountByGroup.get(groupKey) ?? 0) + 1,
+        (inferredSessionCountByGroup.get(groupKey) ?? 0) + 1,
       );
+
+      const attendance = normalizeTinyStepsAttendance(
+        attendanceEntryForKid(session, kidId),
+      );
+      if (attendance === 'present') {
+        inferredPresentCountByGroup.set(
+          groupKey,
+          (inferredPresentCountByGroup.get(groupKey) ?? 0) + 1,
+        );
+      }
     }
 
+    // Evidence observation is independent of Tiny Steps lifecycle eligibility.
+    // A cancelled/rescheduled row may still carry the Teams occurrence needed to
+    // prove a zero match or a same-day class that actually happened.
     if (
       evidence
       && evidence.session.classSessionId === loadedItem.item.classSessionId
@@ -1015,6 +1031,13 @@ export async function runAv53Shadow(
 
   for (const loadedItem of loaded) {
     const { item, session, evidence } = loadedItem;
+    const staffRegistryIssues = registryIssueKinds(
+      deps.staffRegistry,
+      [
+        session ? sessionTeacherId(session) : null,
+        evidence?.session.teacherId ?? null,
+      ],
+    );
 
     if (!session && !evidence) {
       skipped.push({
