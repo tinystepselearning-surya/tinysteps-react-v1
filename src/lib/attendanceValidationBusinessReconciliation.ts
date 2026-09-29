@@ -17,6 +17,9 @@ export interface AvsBusinessCaseInput {
   tinyStepsPresentCount: number | null;
   businessDifferenceCount: number | null;
   sameDayEvidenceEvaluable: boolean | null;
+  resolutionDecision?: string | null;
+  manualVerificationReason?: string | null;
+  sourceBusinessOutcome?: AvsBusinessOutcome | null;
 }
 
 export interface AvsBusinessGroup<T extends AvsBusinessCaseInput = AvsBusinessCaseInput> {
@@ -31,6 +34,7 @@ export interface AvsBusinessGroup<T extends AvsBusinessCaseInput = AvsBusinessCa
   tinyStepsPresentCount: number | null;
   differenceCount: number;
   outcome: AvsBusinessOutcome;
+  manualVerified: boolean;
   cases: T[];
 }
 
@@ -67,6 +71,11 @@ function resolvedOutcome(
       || item.businessOutcome === null
       || item.businessOutcome === 'not_evaluable')
   ) {
+    return 'not_evaluable';
+  }
+
+  if (sameNullableNumber(cases.map((item) => item.teamsSupportedPresentCount)) === null
+    || sameNullableNumber(cases.map((item) => item.tinyStepsPresentCount)) === null) {
     return 'not_evaluable';
   }
 
@@ -129,6 +138,7 @@ export function groupPersistedAvsBusinessOutcomes<T extends AvsBusinessCaseInput
           outcome === 'not_evaluable' ? null : tinyStepsPresentCount,
         differenceCount,
         outcome,
+        manualVerified: outcome === 'verified' && cases.every((item) => item.resolutionDecision === 'manual_verified'),
         cases,
       };
     })

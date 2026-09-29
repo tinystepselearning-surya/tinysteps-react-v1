@@ -76,6 +76,8 @@ export { adminRepairRollingScheduleMaterialization } from "./scheduling/rollingS
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export { runAttendanceValidationRange } from "./attendanceValidation/runValidationCallable";
+export { revalidateAttendanceValidationGroupCached } from "./attendanceValidation/cachedGroupRevalidationCallable";
+export { adminVerifyAttendanceValidationGroup } from "./attendanceValidation/manualVerificationCallable";
 export { onAttendanceValidationHistoricalSessionCreated } from "./attendanceValidation/classSessionCreateDirtyTrigger";
 export { runAttendanceValidationLatestCheck } from "./attendanceValidation/latestCheckCallable";
 export { forceRefreshAttendanceValidationEvidence } from "./attendanceValidation/forceFreshEvidenceCallable";

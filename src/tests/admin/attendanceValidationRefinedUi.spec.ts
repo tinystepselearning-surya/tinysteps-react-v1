@@ -20,11 +20,9 @@ describe('AVS Brick 5 refined admin operator model', () => {
     expect(dashboard).not.toContain('Run First-Time Baseline');
   });
 
-  it('keeps expensive Teams re-fetch under Advanced', () => {
-    expect(dashboard).toContain('Advanced');
-    expect(dashboard).toContain('Re-fetch Teams Data');
-    expect(dashboard).toContain('Retry Failed Re-fetches');
-    expect(dashboard).toContain('Continue Re-fetch');
+  it('removes the broad range re-fetch control from the dashboard', () => {
+    expect(dashboard).not.toContain('onClick={() => void forceFreshSelectedRange()}');
+    expect(dashboard).toContain('onRefetch={async (item) =>');
   });
 
   it('keeps the row-level re-fetch action and no realtime behavior', () => {

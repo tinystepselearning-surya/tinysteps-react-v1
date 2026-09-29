@@ -20,6 +20,31 @@ import { getAvsScopedDocuments } from './parentScope';
 
 export interface AvsRangeCursor { date: string; sessionId: string }
 export interface GroupSession { id: string; data: Record<string, unknown> }
+
+/** Resolve one exact session to its bounded canonical same-day business group. */
+export async function loadAvsBusinessGroupForSession(db: Firestore, classSessionId: string, kidId?: string): Promise<GroupSession[]> {
+  const session = await db.collection('classSessions').doc(classSessionId).get();
+  if (!session.exists) throw new HttpsError('not-found', 'Class session not found.');
+  const data = session.data() as Record<string, unknown>;
+  const date = String(data.date ?? '');
+  const descriptor = sameDayGroupDescriptor(date, data, null);
+  if (!descriptor || (kidId && descriptor.kidId !== kidId)) {
+    throw new HttpsError('failed-precondition', 'Session does not match a canonical AVS student and teacher group.');
+  }
+  const byId = new Map<string, GroupSession>([[classSessionId, { id: classSessionId, data }]]);
+  for (const [field, op] of [['kidId', '=='], ['kidIds', 'array-contains'], ['studentId', '=='], ['childId', '==']] as const) {
+    const found = await db.collection('classSessions').where('date', '==', date)
+      .where(field, op, descriptor.kidId).limit(101).get();
+    if (found.size >= 101) throw new HttpsError('failed-precondition', 'Same-day student context exceeds the 100-session safety bound.');
+    for (const doc of found.docs) {
+      if (sameDayGroupDescriptor(date, doc.data(), null)?.key === descriptor.key) {
+        byId.set(doc.id, { id: doc.id, data: doc.data() });
+      }
+    }
+  }
+  if (byId.size > 100) throw new HttpsError('failed-precondition', 'Business group exceeds the 100-session safety bound.');
+  return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
+}
 export function normalizeAvsRangeCursor(value: unknown, from: string, to: string): AvsRangeCursor | null {
   if (value == null) return null;
   const cursor = value as AvsRangeCursor;
@@ -207,14 +232,32 @@ export async function persistAvsGroupCases(db: Firestore, rows: GroupSession[], 
   await db.runTransaction(async (transaction) => {
     const sessionRefs = rows.map((row) => db.collection('classSessions').doc(row.id));
     const markerRefs = rows.map((row) => db.collection(ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION).doc(row.id));
-    const snapshots = await transaction.getAll(...sessionRefs, ...markerRefs);
+    const caseRefs = rows.map((row) => db.collection('attendanceValidationCases').doc(row.id));
+    const snapshots = await transaction.getAll(...sessionRefs, ...markerRefs, ...caseRefs);
     const current = snapshots.slice(0, rows.length);
     if (current.some((doc, index) => !doc.exists || !isDeepStrictEqual(doc.data(), rows[index].data))) {
       throw new HttpsError('aborted', 'Attendance changed during validation. Run Validation again.');
     }
-    for (const item of cases) transaction.set(db.collection('attendanceValidationCases').doc(item.id), item);
+    const priorCases = snapshots.slice(rows.length * 2).map((doc) => doc.data() as Record<string, unknown> | undefined);
+    const keepManualDecision = cases.length === rows.length && cases.every((item, index) =>
+      priorCases[index]?.resolutionDecision === 'manual_verified'
+      && priorCases[index]?.inputFingerprint === item.inputFingerprint
+      && priorCases[index]?.sourceBusinessOutcome === item.businessOutcome);
+    for (const [index, item] of cases.entries()) {
+      const prior = priorCases[index];
+      transaction.set(caseRefs[index], keepManualDecision && prior ? {
+        ...item, businessOutcome: 'verified', businessDifferenceCount: 0,
+        resolutionStatus: 'resolved', resolutionDecision: 'manual_verified',
+        resolutionId: prior.resolutionId, manualVerificationReason: prior.manualVerificationReason,
+        sourceBusinessOutcome: prior.sourceBusinessOutcome,
+        sourceTeamsSupportedPresentCount: prior.sourceTeamsSupportedPresentCount,
+        sourceTinyStepsPresentCount: prior.sourceTinyStepsPresentCount,
+        resolvedByUid: prior.resolvedByUid, resolvedByName: prior.resolvedByName,
+        resolvedByEmail: prior.resolvedByEmail, resolvedAt: prior.resolvedAt,
+      } : item);
+    }
     if (cases.length === rows.length && cases.every((item) => item.businessOutcome && item.businessOutcome !== 'not_evaluable')) {
-      snapshots.slice(rows.length).forEach((marker, index) => {
+      snapshots.slice(rows.length, rows.length * 2).forEach((marker, index) => {
         if (marker.exists) transaction.delete(markerRefs[index]);
       });
     }

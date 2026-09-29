@@ -107,4 +107,33 @@ describe('AVS persisted three-outcome business grouping', () => {
 
     expect(group.outcome).toBe('not_evaluable');
   });
+
+  it('reproduces the one-line re-fetch visibility regression', () => {
+    const [group] = groupPersistedAvsBusinessOutcomes([
+      avsCase('janvika-first', { businessOutcome: 'verified', teamsSupportedPresentCount: 1, tinyStepsPresentCount: 1 }),
+      avsCase('janvika-second', { businessOutcome: 'false_absent', teamsSupportedPresentCount: 2, tinyStepsPresentCount: 1 }),
+    ]);
+    expect(group.outcome).toBe('not_evaluable');
+    expect(['verified', 'false_present', 'false_absent']).not.toContain(group.outcome);
+  });
+
+  it('counts inconsistent saved values as inspectable technical work', () => {
+    const groups = groupPersistedAvsBusinessOutcomes([
+      avsCase('kavinaya-first'),
+      avsCase('kavinaya-second', { teamsSupportedPresentCount: 2 }),
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].outcome).toBe('not_evaluable');
+    expect(groups[0].cases).toHaveLength(2);
+  });
+
+  it('keeps a manual decision visibly verified with its source discrepancy', () => {
+    const [group] = groupPersistedAvsBusinessOutcomes([
+      avsCase('manual', { resolutionDecision: 'manual_verified',
+        sourceBusinessOutcome: 'false_present', manualVerificationReason: 'Compensated next lesson' }),
+    ]);
+    expect(group.outcome).toBe('verified');
+    expect(group.manualVerified).toBe(true);
+    expect(group.cases[0].sourceBusinessOutcome).toBe('false_present');
+  });
 });

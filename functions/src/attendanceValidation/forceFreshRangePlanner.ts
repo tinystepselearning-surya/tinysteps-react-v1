@@ -5,7 +5,8 @@ import {
 export const AVS_FORCE_FRESH_RANGE_MAX_CASES = 100;
 export const AVS_FORCE_FRESH_RANGE_QUERY_LIMIT =
   AVS_FORCE_FRESH_RANGE_MAX_CASES + 1;
-export const AVS_FORCE_FRESH_RANGE_CONCURRENCY = 5;
+// Legacy range generations serialize group commits so sibling refreshes cannot race.
+export const AVS_FORCE_FRESH_RANGE_CONCURRENCY = 1;
 
 export const ATTENDANCE_VALIDATION_FORCE_FRESH_RUNS_COLLECTION =
   'attendanceValidationForceFreshRuns';

@@ -14,7 +14,7 @@ import {
   firstBlockingEvidenceFailure,
   summarizeAvsEvidenceIssues,
 } from './errorTaxonomy';
-import { buildFreshEvidenceSessionSnapshot } from './freshEvidenceSession';
+import { buildBaselineEvidenceSessionSnapshot, buildFreshEvidenceSessionSnapshot } from './freshEvidenceSession';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
 import {
@@ -27,10 +27,7 @@ import {
   type AttendanceValidationEvidenceDocument,
   type TeamsEvidenceGraphClient,
 } from './teamsEvidenceCollector';
-import {
-  ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION,
-} from './dirtySessionMarker';
-import { runAv53ShadowWithFirestore } from './shadowRunner';
+import { loadAvsBusinessGroupForSession, loadAvsGroupEvidence, persistAvsGroupCases, validateAvsBusinessGroup } from './groupValidation';
 import type { Av3StaffRegistrySnapshot } from './staffIdentityRegistry';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -154,20 +151,15 @@ export async function refreshAttendanceValidationCaseEvidence(
       );
     }
 
-    const previousEvidenceId = cleanId(
-      validationCase.evidenceId,
-      'evidenceId',
-    );
+    const previousEvidenceId = typeof validationCase.evidenceId === 'string'
+      && validationCase.evidenceId.trim()
+      ? cleanId(validationCase.evidenceId, 'evidenceId') : null;
     const sessionRef = db.collection('classSessions').doc(classSessionId);
-    const previousEvidenceRef = db
-      .collection('attendanceValidationEvidence')
-      .doc(previousEvidenceId);
-    const dirtyRef = db
-      .collection(ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION)
-      .doc(classSessionId);
-
-    const [sessionSnapshot, previousEvidenceSnapshot, dirtySnapshot] =
-      await db.getAll(sessionRef, previousEvidenceRef, dirtyRef);
+    const previousEvidenceRef = previousEvidenceId
+      ? db.collection('attendanceValidationEvidence').doc(previousEvidenceId) : null;
+    const [sessionSnapshot, previousEvidenceSnapshot] = previousEvidenceRef
+      ? await db.getAll(sessionRef, previousEvidenceRef)
+      : [await sessionRef.get(), null];
 
     if (!sessionSnapshot.exists) {
       throw new HttpsError(
@@ -175,15 +167,8 @@ export async function refreshAttendanceValidationCaseEvidence(
         'Operational class session no longer exists.',
       );
     }
-    if (!previousEvidenceSnapshot.exists) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Previous Teams evidence is missing. A first-time baseline run is required.',
-      );
-    }
-
-    const previousEvidence =
-      previousEvidenceSnapshot.data() as AttendanceValidationEvidenceDocument;
+    const previousEvidence = previousEvidenceSnapshot?.exists
+      ? previousEvidenceSnapshot.data() as AttendanceValidationEvidenceDocument : null;
     let organizerResolution = deps.organizerResolution;
     if (!organizerResolution) {
       try {
@@ -205,11 +190,9 @@ export async function refreshAttendanceValidationCaseEvidence(
 
     const currentSession =
       (sessionSnapshot.data() || {}) as Record<string, unknown>;
-    const expectedSession = buildFreshEvidenceSessionSnapshot(
-      classSessionId,
-      currentSession,
-      previousEvidence,
-    );
+    const expectedSession = previousEvidence
+      ? buildFreshEvidenceSessionSnapshot(classSessionId, currentSession, previousEvidence)
+      : buildBaselineEvidenceSessionSnapshot(classSessionId, currentSession);
 
     const runId = `fresh_${Date.now().toString(36)}_${caseId.slice(0, 24)}`;
     const graphClient = createOccurrenceSelectingTeamsEvidenceGraphClient(
@@ -245,51 +228,26 @@ export async function refreshAttendanceValidationCaseEvidence(
       staffRegistry: deps.staffRegistry,
     });
 
-    const av53Result = await runAv53ShadowWithFirestore(
-      db,
-      {
-        runId: `${runId}_case`,
-        workItems: [{
-          classSessionId,
-          evidenceId: evidenceResult.evidence.id,
-        }],
-      },
-      () => new Date(),
-      identityBinding.staffRegistry,
-    );
-
-    if (
-      av53Result.persistedCaseCount !== 1
-      || av53Result.skippedCount !== 0
-    ) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Fresh Teams evidence was stored but the AVS case could not be rebuilt safely.',
-      );
-    }
-
-    let dirtyMarkerCleared = false;
-    let concurrentMarkerChangeDetected = false;
-    if (dirtySnapshot.exists && dirtySnapshot.updateTime) {
-      try {
-        await dirtyRef.delete({
-          lastUpdateTime: dirtySnapshot.updateTime,
-        });
-        dirtyMarkerCleared = true;
-      } catch (error) {
-        concurrentMarkerChangeDetected = true;
-        logger.warn('AVS force-fresh kept a newer dirty marker', {
-          caseId,
-          classSessionId,
-          errorName: error instanceof Error ? error.name : 'unknown',
-        });
-      }
+    const rows = await loadAvsBusinessGroupForSession(db, classSessionId);
+    const loaded = await loadAvsGroupEvidence(db, rows);
+    loaded.evidenceBySession.set(classSessionId, evidenceResult.evidence);
+    const groupResult = await validateAvsBusinessGroup({
+      rows, evidenceBySession: loaded.evidenceBySession,
+      registry: identityBinding.staffRegistry,
+      runId: `${runId}_group`,
+      // This action deliberately collects one session only. Siblings use saved evidence.
+      collectFresh: async () => { throw new Error('Sibling Teams evidence requires its own explicit line-item re-fetch.'); },
+      saveCases: (cases) => persistAvsGroupCases(db, rows, cases),
+    });
+    if (groupResult.cases.length !== rows.length) {
+      throw new HttpsError('failed-precondition', 'Fresh Teams evidence was stored but the full business group could not be rebuilt.');
     }
 
     return {
       ok: true,
       caseId,
       classSessionId,
+      classSessionIds: rows.map((row) => row.id),
       evidenceId: evidenceResult.evidence.id,
       collectionStatus: evidenceResult.evidence.collectionStatus,
       issueKinds: evidenceResult.evidence.issues.map((issue) => issue.kind),
@@ -316,24 +274,24 @@ export async function refreshAttendanceValidationCaseEvidence(
       teacherIdentityMappingWritten: identityBinding.overrideWrite,
       teacherIdentityClaimWritten: identityBinding.claimWrite,
       operationalMutationAllowed: false as const,
-      dirtyMarkerCleared,
-      concurrentMarkerChangeDetected,
+      dirtyMarkerCleared: groupResult.cases.every((item) => item.businessOutcome !== 'not_evaluable'),
+      concurrentMarkerChangeDetected: false,
       readBudget: {
         validationCaseReads: 1,
         sessionReads: 1,
-        previousEvidenceReads: 1,
-        dirtyMarkerReads: 1,
+        previousEvidenceReads: previousEvidenceRef ? 1 : 0,
+        dirtyMarkerReads: rows.length,
         organizerConfigReads: organizerResolution.firestoreReadCount,
-        av53PointReads: av53Result.pointReadDocumentBudget,
-        sameDayContextReads: av53Result.sameDayContextReadDocumentBudget,
+        av53PointReads: loaded.readCount,
+        sameDayContextReads: rows.length,
         teacherIdentityTransactionReads: identityBinding.transactionReadCount,
         sharedStaffRegistryLoaded: true,
         boundedReadsExcludingStaffRegistry:
-          4
+          2
           + organizerResolution.firestoreReadCount
           + identityBinding.transactionReadCount
-          + av53Result.pointReadDocumentBudget
-          + av53Result.sameDayContextReadDocumentBudget,
+          + loaded.readCount
+          + rows.length,
       },
     };
   } catch (error) {
