@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { appendFile, readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
-import { resolveFunctionsImpact } from './deployment/functions-impact-lib.mjs';
+import { classifyArtifactChanges, resolveFunctionsImpact } from './deployment/functions-impact-lib.mjs';
 import { SCHOOL_BROWSER_CALLABLES } from './school-callable-contract.mjs';
 import { AVS_BROWSER_CALLABLES } from './avs-callable-contract.mjs';
 
@@ -9,13 +9,31 @@ const args = new Map();
 for (let index = 2; index < process.argv.length; index += 2) args.set(process.argv[index], process.argv[index + 1]);
 const before = args.get('--before');
 const functionsBefore = args.get('--functions-before') || before;
+const hostingBefore = args.get('--hosting-before') || before;
+const firestoreRulesBefore = args.get('--firestore-rules-before') || before;
+const firestoreIndexesBefore = args.get('--firestore-indexes-before') || before;
 const forceFunctionsFull = args.get('--force-functions-full') === 'true';
-if (!/^[a-f0-9]{40}$/.test(before || '') || /^0{40}$/.test(before || '')) throw new Error('A non-zero 40-character --before SHA is required');
-if (!/^[a-f0-9]{40}$/.test(functionsBefore || '') || /^0{40}$/.test(functionsBefore || '')) throw new Error('A non-zero 40-character --functions-before SHA is required');
+const forceHosting = args.get('--force-hosting') === 'true';
+const forceFirestoreRules = args.get('--force-firestore-rules') === 'true';
+const forceFirestoreIndexes = args.get('--force-firestore-indexes') === 'true';
 const sha = args.get('--sha');
-if (!/^[a-f0-9]{40}$/.test(sha || '')) throw new Error('A 40-character --sha is required');
-execFileSync('git', ['merge-base', '--is-ancestor', before, sha], { stdio: 'ignore' });
-execFileSync('git', ['merge-base', '--is-ancestor', functionsBefore, sha], { stdio: 'ignore' });
+
+function requireSha(value, label, { allowZero = false } = {}) {
+  if (!/^[a-f0-9]{40}$/.test(value || '') || (!allowZero && /^0{40}$/.test(value || ''))) {
+    throw new Error(`A ${allowZero ? '' : 'non-zero '}40-character ${label} SHA is required`);
+  }
+}
+
+requireSha(before, '--before');
+requireSha(functionsBefore, '--functions-before');
+requireSha(hostingBefore, '--hosting-before');
+requireSha(firestoreRulesBefore, '--firestore-rules-before');
+requireSha(firestoreIndexesBefore, '--firestore-indexes-before');
+requireSha(sha, '--sha', { allowZero: true });
+
+for (const baseline of [before, functionsBefore, hostingBefore, firestoreRulesBefore, firestoreIndexesBefore]) {
+  execFileSync('git', ['merge-base', '--is-ancestor', baseline, sha], { stdio: 'ignore' });
+}
 
 function gitText(parameters) {
   return execFileSync('git', parameters, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
@@ -44,20 +62,41 @@ function firebaseAt(revision) {
 
 const changedFiles = changedPaths(before, sha);
 const functionsChangedFiles = changedPaths(functionsBefore, sha);
+const hostingChangedFiles = changedPaths(hostingBefore, sha);
+const firestoreRulesChangedFiles = changedPaths(firestoreRulesBefore, sha);
+const firestoreIndexesChangedFiles = changedPaths(firestoreIndexesBefore, sha);
+const currentFirebase = firebaseAt(sha);
+
 const artifactResult = resolveFunctionsImpact({
   changedFiles,
   beforeSources: sourceSnapshot(before),
   afterSources: sourceSnapshot(sha),
   beforeFirebase: firebaseAt(before),
-  afterFirebase: firebaseAt(sha),
+  afterFirebase: currentFirebase,
 });
 const functionsResult = resolveFunctionsImpact({
   changedFiles: functionsChangedFiles,
   beforeSources: sourceSnapshot(functionsBefore),
   afterSources: sourceSnapshot(sha),
   beforeFirebase: firebaseAt(functionsBefore),
-  afterFirebase: firebaseAt(sha),
+  afterFirebase: currentFirebase,
 });
+const hostingResult = classifyArtifactChanges(
+  hostingChangedFiles,
+  firebaseAt(hostingBefore),
+  currentFirebase,
+);
+const firestoreRulesResult = classifyArtifactChanges(
+  firestoreRulesChangedFiles,
+  firebaseAt(firestoreRulesBefore),
+  currentFirebase,
+);
+const firestoreIndexesResult = classifyArtifactChanges(
+  firestoreIndexesChangedFiles,
+  firebaseAt(firestoreIndexesBefore),
+  currentFirebase,
+);
+
 const result = {
   ...artifactResult,
   functionsSourceChanged: functionsResult.functionsSourceChanged,
@@ -65,6 +104,19 @@ const result = {
     artifactResult.functionsValidationRequired
     || functionsResult.functionsValidationRequired
     || forceFunctionsFull,
+  frontendValidationRequired:
+    artifactResult.frontendValidationRequired
+    || hostingResult.frontendValidationRequired
+    || forceHosting,
+  firestoreValidationRequired:
+    artifactResult.firestoreValidationRequired
+    || firestoreRulesResult.firestoreValidationRequired
+    || firestoreIndexesResult.firestoreValidationRequired
+    || forceFirestoreRules
+    || forceFirestoreIndexes,
+  hostingChanged: hostingResult.hostingChanged || forceHosting,
+  firestoreRulesChanged: firestoreRulesResult.firestoreRulesChanged || forceFirestoreRules,
+  firestoreIndexesChanged: firestoreIndexesResult.firestoreIndexesChanged || forceFirestoreIndexes,
   functionsDeploymentRequired:
     functionsResult.functionsDeploymentRequired || forceFunctionsFull,
   fullDeployment: functionsResult.fullDeployment || forceFunctionsFull,
@@ -104,6 +156,15 @@ const lines = [
   `- Functions production baseline: ${functionsBefore}`,
   `- Functions baseline differs from event parent: ${functionsBefore !== before}`,
   `- Functions force-full recovery: ${forceFunctionsFull}`,
+  `- Hosting production baseline: ${hostingBefore}`,
+  `- Hosting baseline differs from event parent: ${hostingBefore !== before}`,
+  `- Hosting forced recovery: ${forceHosting}`,
+  `- Firestore rules production baseline: ${firestoreRulesBefore}`,
+  `- Firestore rules baseline differs from event parent: ${firestoreRulesBefore !== before}`,
+  `- Firestore rules forced recovery: ${forceFirestoreRules}`,
+  `- Firestore indexes production baseline: ${firestoreIndexesBefore}`,
+  `- Firestore indexes baseline differs from event parent: ${firestoreIndexesBefore !== before}`,
+  `- Firestore indexes forced recovery: ${forceFirestoreIndexes}`,
   `- Functions source changed: ${result.functionsSourceChanged}`,
   `- Functions validation required: ${result.functionsValidationRequired}`,
   `- Functions deployment required: ${result.functionsDeploymentRequired}`,
@@ -131,6 +192,15 @@ if (result.impactedFunctions.length) {
 lines.push('', '### Event changed files', '', ...changedFiles.map(file => `- \`${file}\``), '');
 if (functionsBefore !== before || forceFunctionsFull) {
   lines.push('', '### Functions-baseline changed files', '', ...functionsChangedFiles.map(file => `- \`${file}\``), '');
+}
+if (hostingBefore !== before || forceHosting) {
+  lines.push('', '### Hosting-baseline changed files', '', ...hostingChangedFiles.map(file => `- \`${file}\``), '');
+}
+if (firestoreRulesBefore !== before || forceFirestoreRules) {
+  lines.push('', '### Firestore-rules-baseline changed files', '', ...firestoreRulesChangedFiles.map(file => `- \`${file}\``), '');
+}
+if (firestoreIndexesBefore !== before || forceFirestoreIndexes) {
+  lines.push('', '### Firestore-indexes-baseline changed files', '', ...firestoreIndexesChangedFiles.map(file => `- \`${file}\``), '');
 }
 const summary = `${lines.join('\n')}\n`;
 process.stdout.write(summary);
