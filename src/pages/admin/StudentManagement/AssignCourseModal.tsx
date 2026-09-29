@@ -26,6 +26,7 @@ import { db } from '../../../lib/firebaseConfig';
 import {
   createEnrollment,
   getCreateEnrollmentErrorMessage,
+  type EnrollmentCreationIntent,
 } from '../../../lib/createEnrollmentCallable';
 import { useCourses } from '../../../hooks/useData';
 import { toast } from '@components/hooks/use-toast';
@@ -36,6 +37,7 @@ interface Props {
   student: Student;
   onClose: () => void;
   onAssigned?: () => void;
+  creationIntent?: EnrollmentCreationIntent;
 }
 
 type Course = {
@@ -79,6 +81,7 @@ export default function AssignCourseModal({
   student,
   onClose,
   onAssigned,
+  creationIntent = 'initial_course',
 }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selected, setSelected] = useState<string>('');
@@ -310,6 +313,7 @@ export default function AssignCourseModal({
       const creditsTotal = sessionsPerMonth; // 1-month worth of sessions
       await createEnrollment({
         operationId: `assign-course-${crypto.randomUUID()}`,
+        creationIntent,
         kidId: selectedKidId,
         courseId: selected,
         feePerClass,
