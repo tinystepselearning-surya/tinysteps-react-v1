@@ -44,10 +44,18 @@ export interface AttendanceValidationBusinessCase {
   proofIssues: string[];
   identityIssues: string[];
   staffRegistryIssues: string[];
+  resolutionDecision?: string | null;
+  manualVerificationReason?: string | null;
+  sourceBusinessOutcome?: AvsBusinessOutcome | null;
+  sameDayCoverageSeconds?: number | null;
+  sameDayRequiredOverlapSeconds?: number | null;
 }
 
 interface Props {
   cases: AttendanceValidationBusinessCase[];
+  onRecheck?: (item: AttendanceValidationBusinessCase) => Promise<void>;
+  onRefetch?: (item: AttendanceValidationBusinessCase) => Promise<void>;
+  onVerify?: (item: AttendanceValidationBusinessCase, reason: string) => Promise<void>;
 }
 
 type OperatorBusinessOutcome = Exclude<AvsBusinessOutcome, 'not_evaluable'>;
@@ -112,13 +120,15 @@ function teacherFilterKey(
   return null;
 }
 
-export default function AttendanceValidationBusinessView({ cases }: Props) {
+export default function AttendanceValidationBusinessView({ cases, onRecheck, onRefetch, onVerify }: Props) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] =
     useState<OperatorBusinessOutcome>('verified');
   const [teacherFilter, setTeacherFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [showTechnical, setShowTechnical] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const groups = useMemo(
     () => groupPersistedAvsBusinessOutcomes(cases),
@@ -129,6 +139,7 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
     () => groups.filter((group) => isOperatorBusinessOutcome(group.outcome)),
     [groups],
   );
+  const technicalGroups = useMemo(() => groups.filter((group) => group.outcome === 'not_evaluable'), [groups]);
 
   const teacherOptions = useMemo(() => {
     const counts = new Map<string, { label: string; count: number }>();
@@ -170,8 +181,8 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
 
   const visibleGroups = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    return teacherScopedGroups.filter((group) => {
-      if (group.outcome !== activeTab) return false;
+    return (showTechnical ? technicalGroups : teacherScopedGroups).filter((group) => {
+      if (!showTechnical && group.outcome !== activeTab) return false;
       if (!normalizedSearch) return true;
 
       return [
@@ -184,7 +195,12 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
         ...group.cases.map((item) => item.classSessionId || item.id),
       ].some((value) => value?.toLowerCase().includes(normalizedSearch));
     });
-  }, [activeTab, search, teacherScopedGroups]);
+  }, [activeTab, search, teacherScopedGroups, technicalGroups, showTechnical]);
+
+  const runAction = async (id: string, action: () => Promise<void>) => {
+    setBusyId(id);
+    try { await action(); } finally { setBusyId(null); }
+  };
 
   const openAttendanceCorrection = (
     item: AttendanceValidationBusinessCase,
@@ -220,6 +236,7 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
               role="tab"
               aria-selected={active}
               onClick={() => {
+                setShowTechnical(false);
                 setActiveTab(tab.value);
                 setExpandedKey(null);
               }}
@@ -230,6 +247,14 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
           );
         })}
       </div>
+
+      {technicalGroups.length > 0 && (
+        <button type="button" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900"
+          onClick={() => { setShowTechnical((value) => !value); setExpandedKey(null); }}>
+          Unresolved technical cases: {technicalGroups.length} groups · {technicalGroups.reduce((count, group) => count + group.cases.length, 0)} cases
+          {showTechnical ? ' · Hide' : ' · Inspect'}
+        </button>
+      )}
 
       <div className="grid gap-3 md:grid-cols-[280px_1fr]">
         <div className="space-y-1">
@@ -291,7 +316,7 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
                   ? `${group.differenceCount} extra Present`
                   : group.outcome === 'false_absent'
                     ? `${group.differenceCount} missing Present`
-                    : 'Matched';
+                  : group.outcome === 'not_evaluable' ? 'Needs technical review' : 'Matched';
 
                 return (
                   <Fragment key={group.key}>
@@ -321,7 +346,7 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
                           variant="outline"
                           className={outcomeTone(group.outcome)}
                         >
-                          {humanize(group.outcome)}
+                          {group.manualVerified ? 'Verified · Admin' : humanize(group.outcome)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -357,6 +382,21 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
                                   {' '}· Tiny Steps: <span className="font-medium">
                                     {humanize(item.tinyStepsAttendance)}
                                   </span>
+                                  {group.outcome === 'not_evaluable' && (
+                                    <div className="mt-1 text-amber-800">{[
+                                      ...item.reasons, ...item.proofIssues, ...item.identityIssues,
+                                      ...item.staffRegistryIssues,
+                                    ].join(', ') || 'Sibling outcomes or saved counts disagree; recheck this group.'}</div>
+                                  )}
+                                  {group.manualVerified && (
+                                    <div className="mt-1">Source: {humanize(item.sourceBusinessOutcome ?? null)} · Teams Present: {item.teamsSupportedPresentCount ?? '—'} · Tiny Steps Present: {item.tinyStepsPresentCount ?? '—'}
+                                      {item.sameDayCoverageSeconds !== null && item.sameDayCoverageSeconds !== undefined
+                                        ? ` · Teams overlap: ${Math.round(item.sameDayCoverageSeconds / 60)} minutes` : ''}
+                                      {item.sameDayRequiredOverlapSeconds !== null && item.sameDayRequiredOverlapSeconds !== undefined
+                                        ? ` · Threshold: ${Math.round(item.sameDayRequiredOverlapSeconds / 60)} minutes` : ''}
+                                      <div>Admin override reason: {item.manualVerificationReason}</div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {group.outcome !== 'verified' && item.classSessionId && item.kidId && (
@@ -381,8 +421,22 @@ export default function AttendanceValidationBusinessView({ cases }: Props) {
                                     </Button>
                                   </div>
                                 )}
+                                {item.classSessionId && item.kidId && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {onRecheck && <Button type="button" size="sm" variant="outline" disabled={busyId !== null}
+                                      onClick={() => void runAction(item.id, () => onRecheck(item))}>Refresh Tiny Steps</Button>}
+                                    {onRefetch && <Button type="button" size="sm" variant="outline" disabled={busyId !== null}
+                                      onClick={() => void runAction(item.id, () => onRefetch(item))}>Advanced: Re-fetch Teams Evidence</Button>}
+                                  </div>
+                                )}
                               </div>
                             ))}
+                            {onVerify && (group.outcome === 'false_present' || group.outcome === 'false_absent') && group.cases[0]?.classSessionId && (
+                              <Button type="button" size="sm" disabled={busyId !== null} onClick={() => {
+                                const reason = window.prompt('Reason for admin verification (5–500 characters):')?.trim();
+                                if (reason) void runAction(group.key, () => onVerify(group.cases[0], reason));
+                              }}>Mark Verified</Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

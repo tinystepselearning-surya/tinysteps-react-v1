@@ -115,8 +115,8 @@ describe('AVS Force Fresh generation planner', () => {
       },
     );
 
-    expect(AVS_FORCE_FRESH_RANGE_CONCURRENCY).toBe(5);
-    expect(peak).toBe(5);
+    expect(AVS_FORCE_FRESH_RANGE_CONCURRENCY).toBe(1);
+    expect(peak).toBe(1);
     expect(result).toHaveLength(20);
   });
 });

@@ -91,6 +91,16 @@ describe('group-first AVS business validation', () => {
     expect(fresh.mock.calls[0][0].id).toBe(presentId);
     expect(result.cases[0].businessOutcome).toBe('verified');
   });
+  it('reconciles a Janvika/Kavinaya-style two-line re-fetch with fresh selected and cached sibling evidence', async () => {
+    const fresh = vi.fn(async () => { throw new Error('Sibling Graph collection must not run'); });
+    const selectedFresh = evidence(presentId, 2700);
+    const siblingCached = evidence(extraId, 2700);
+    const { result } = await run([row(presentId), row(extraId)], [selectedFresh, siblingCached], fresh);
+    expect(fresh).not.toHaveBeenCalled();
+    expect(result.cases).toHaveLength(2);
+    expect(result.cases.every((item) => item.businessOutcome === 'false_present'
+      && item.teamsSupportedPresentCount === 1 && item.tinyStepsPresentCount === 2)).toBe(true);
+  });
   it('does not reuse stale evidence after the teacher changes', async () => {
     const fresh = vi.fn(async () => { throw new Error('Graph failed'); });
     const { result } = await run([row(presentId, true, { teacherId: 'new-teacher' })], [evidence()], fresh);
@@ -113,6 +123,32 @@ describe('group-first AVS business validation', () => {
 });
 
 describe('atomic group case persistence', () => {
+  it('retains a manual decision only while the source fingerprint remains identical', async () => {
+    const rows = [row(presentId)];
+    const { result } = await run(rows, [evidence(presentId, 600)]);
+    expect(result.cases[0].businessOutcome).toBe('false_present');
+    let prior: Record<string, unknown> = {
+      ...result.cases[0], businessOutcome: 'verified', resolutionDecision: 'manual_verified',
+      sourceBusinessOutcome: 'false_present', resolutionId: 'manual-audit',
+      manualVerificationReason: 'Compensated in next lesson',
+    };
+    const db = {
+      collection: (name: string) => ({ doc: (id: string) => `${name}/${id}` }),
+      runTransaction: async (callback: (transaction: unknown) => Promise<void>) => callback({
+        getAll: async () => [{ exists: true, data: () => rows[0].data }, { exists: false },
+          { exists: true, data: () => prior }],
+        set: (_ref: string, data: Record<string, unknown>) => { prior = data; },
+        delete: () => undefined,
+      }),
+    } as unknown as Firestore;
+    await persistAvsGroupCases(db, rows, result.cases);
+    expect(prior).toMatchObject({ businessOutcome: 'verified', resolutionDecision: 'manual_verified',
+      sourceBusinessOutcome: 'false_present', resolutionId: 'manual-audit' });
+    prior.inputFingerprint = 'changed-source';
+    await persistAvsGroupCases(db, rows, result.cases);
+    expect(prior.businessOutcome).toBe('false_present');
+    expect(prior.resolutionDecision).toBeUndefined();
+  });
   it('refuses a changed operational snapshot and never writes operational collections', async () => {
     const writes: string[] = [];
     const deletes: string[] = [];

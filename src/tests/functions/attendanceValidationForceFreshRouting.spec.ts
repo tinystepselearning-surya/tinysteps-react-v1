@@ -38,16 +38,18 @@ describe('AVS force-fresh Teams evidence routing', () => {
     expect(source).toContain('buildFreshEvidenceSessionSnapshot');
   });
 
-  it('collects fresh Graph evidence then reruns AV5.3 for exactly that class', () => {
+  it('collects fresh Graph evidence for one class then rebuilds the whole group', () => {
     expect(source).toContain('collectTeamsEvidence(');
     expect(source).toContain(
       'createOccurrenceSelectingTeamsEvidenceGraphClient',
     );
     expect(source).toContain('bindTeacherIdentityFromFreshEvidence');
     expect(source).toContain('identityBinding.staffRegistry');
-    expect(source).toContain('runAv53ShadowWithFirestore');
+    expect(source).toContain('loadAvsBusinessGroupForSession(db, classSessionId)');
+    expect(source).toContain('validateAvsBusinessGroup({');
+    expect(source).toContain('persistAvsGroupCases(db, rows, cases)');
     expect(source).toContain('classSessionId,');
-    expect(source).toContain('evidenceId: evidenceResult.evidence.id');
+    expect(source).toContain('loaded.evidenceBySession.set(classSessionId, evidenceResult.evidence)');
   });
 
   it('writes only AVS sidecars and does not expose operational writers', () => {
@@ -59,15 +61,13 @@ describe('AVS force-fresh Teams evidence routing', () => {
     expect(source).toContain('operationalMutationAllowed: false');
   });
 
-  it('uses guarded dirty-marker cleanup and exposes read/Graph costs', () => {
-    expect(source).toContain('await dirtyRef.delete({');
-    expect(source).toContain('lastUpdateTime: dirtySnapshot.updateTime');
+  it('uses guarded group persistence and exposes read/Graph costs', () => {
+    expect(source).toContain('persistAvsGroupCases(db, rows, cases)');
     expect(source).toContain('graphLogicalCalls: counted.count()');
     expect(source).toContain('issueDetails: evidenceResult.evidence.issues.map');
     expect(source).toContain('httpStatus: issue.httpStatus');
     expect(source).toContain('graphCode: issue.graphCode');
     expect(source).toContain('sameDayContextReads');
-    expect(source).toContain('sameDayContextReadDocumentBudget');
     expect(source).toContain('boundedReadsExcludingStaffRegistry');
     expect(source).toContain('concurrentMarkerChangeDetected');
   });

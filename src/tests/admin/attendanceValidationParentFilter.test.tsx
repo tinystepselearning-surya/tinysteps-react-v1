@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ getDocs: vi.fn(), call: vi.fn() }));
@@ -53,7 +54,7 @@ async function selectParent() {
 
 describe('Attendance Validation Parent selector', () => {
   it('lazily reads the canonical parent directory once and performs no automatic validation', async () => {
-    render(<AttendanceValidationDashboard />);
+    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
     expect(mocks.getDocs).not.toHaveBeenCalled();
     await selectParent();
     fireEvent.focus(screen.getByLabelText('Search parents'));
@@ -63,7 +64,7 @@ describe('Attendance Validation Parent selector', () => {
     expect(mocks.call).not.toHaveBeenCalled();
   });
   it('loads only Parent A enrollment cases and clears results on parent change', async () => {
-    render(<AttendanceValidationDashboard />);
+    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
     await selectParent();
     fireEvent.click(screen.getByRole('button', { name: /Load Results/ }));
     await waitFor(() => expect(screen.getByTestId('cases')).toHaveTextContent('case-a'));
@@ -73,9 +74,9 @@ describe('Attendance Validation Parent selector', () => {
     expect(mocks.call).not.toHaveBeenCalled();
   });
   it('retains parent and cursor on Continue, resets summary on parent change, and disables broad re-fetch', async () => {
-    render(<AttendanceValidationDashboard />);
+    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
     await selectParent();
-    expect(screen.getByRole('button', { name: /Re-fetch Teams Data/, hidden: true })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Re-fetch Teams Data/, hidden: true })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Run Validation/ }));
     await waitFor(() => expect(screen.getByRole('button', { name: /Continue Validation/ })).toBeEnabled());
     expect(mocks.call).toHaveBeenLastCalledWith('runAttendanceValidationRange', expect.objectContaining({ parentId: 'parent-a', cursor: null }));
@@ -88,7 +89,7 @@ describe('Attendance Validation Parent selector', () => {
     expect(mocks.call).toHaveBeenCalledTimes(2);
   });
   it('All parents loads the existing full range', async () => {
-    render(<AttendanceValidationDashboard />);
+    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
     fireEvent.click(screen.getByRole('button', { name: /Load Results/ }));
     await waitFor(() => expect(screen.getByTestId('cases')).toHaveTextContent('case-a,case-b'));
   });
