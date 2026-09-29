@@ -1,0 +1,59 @@
+name: Blog Authority Template Batch 2
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/pages/BlogPostPage.tsx'
+      - 'src/tests/seo/authorityBlogPilotTemplate.spec.ts'
+      - 'src/tests/seo/authorityBlogBatch2Template.spec.ts'
+      - 'scripts/audit-authority-blog-batch2.mjs'
+      - 'docs/seo/blog-bricks/BLOG_AUTHORITY_TEMPLATE_BATCH_2.md'
+      - '.github/workflows/blog-authority-template-batch2.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  blog-authority-template-batch2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run authority-template regressions
+        run: >
+          npx vitest run
+          src/tests/seo/authorityBlogPilotTemplate.spec.ts
+          src/tests/seo/authorityBlogBatch2Template.spec.ts
+          src/tests/seo/blogTitleOptimization.spec.ts
+          src/tests/seo/blogParentAuthorityPillars.spec.ts
+          src/tests/seo/blogB9GrammarSpeakingAuthority.spec.ts
+      - name: Audit Batch 2 source contract
+        run: node scripts/audit-authority-blog-batch2.mjs
+      - name: Regenerate RSS and discovery snapshots
+        run: npm run generate:rss
+      - name: Audit blog consolidation
+        run: npm run seo:blog-consolidation
+      - name: Run type check
+        run: npm run typecheck
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Build and prerender site
+        run: npm run build
+      - name: Verify rendered Batch 2 contract
+        run: node scripts/audit-authority-blog-batch2.mjs --dist
+      - name: Enforce public bundle guard
+        run: npm run bundle:public-check
