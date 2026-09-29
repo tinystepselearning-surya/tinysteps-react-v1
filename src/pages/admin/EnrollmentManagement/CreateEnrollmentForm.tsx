@@ -202,6 +202,7 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
       const credits = calculateCredits();
       await createEnrollment({
         operationId: `admin-create-${crypto.randomUUID()}`,
+        creationIntent: 'initial_course',
         kidId: canonicalKidId,
         courseId: selectedCourseId,
         ratePerSession,
