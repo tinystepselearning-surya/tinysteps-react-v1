@@ -207,7 +207,12 @@ export const transitionEnrollmentCourse = onCall(
     if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
       throw new HttpsError('failed-precondition', 'Next course teacher rate is invalid');
     }
-    const oldCreditsRemaining = Math.max(0, Math.floor(Number(oldEnrollment.creditsRemaining ?? 0)));
+    const explicitCreditsRemaining = Number(oldEnrollment.creditsRemaining);
+    const oldCreditsTotal = Math.max(0, Math.floor(Number(oldEnrollment.creditsTotal ?? 0)));
+    const oldCreditsUsed = Math.max(0, Math.floor(Number(oldEnrollment.creditsUsed ?? 0)));
+    const oldCreditsRemaining = Number.isFinite(explicitCreditsRemaining)
+      ? Math.max(0, Math.floor(explicitCreditsRemaining))
+      : Math.max(0, oldCreditsTotal - oldCreditsUsed);
     const requestedProgressionCredits = Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
     const destinationCreditsTotal =
       transitionType === 'correction' ? oldCreditsRemaining : requestedProgressionCredits;
@@ -216,6 +221,7 @@ export const transitionEnrollmentCourse = onCall(
       operationId,
       oldEnrollmentId,
       oldCourseId: text(oldEnrollment.courseId) || null,
+      kidId,
       newCourseId,
       newTeacherId,
       transitionType,
