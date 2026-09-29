@@ -224,6 +224,7 @@ export { notFoundRoute } from "./notFoundRoute";
 export {
   reassignEnrollmentTeacher,
   updateEnrollmentFinancialTerms,
+  saveEnrollmentSetupDraft,
   repairEnrollmentTeacherSessionConsistency,
   archiveKid,
   createAdminManualSession,
