@@ -138,6 +138,61 @@ describe('MicrosoftGraphClient', () => {
     );
   });
 
+  it('falls back to numeric joinMeetingId when exact short-link lookup returns Graph HTTP 400', async () => {
+    const shortUrl = 'https://teams.microsoft.com/meet/48543659205152?p=example';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(jsonResponse({
+        error: { code: 'BadRequest', message: 'Invalid filter clause' },
+      }, 400))
+      .mockResolvedValueOnce(jsonResponse({
+        value: [{ id: 'meeting-short-after-400' }],
+      }));
+
+    const client = new MicrosoftGraphClient({
+      credentials,
+      fetchImpl: asFetch(fetchMock),
+      now: () => 1_000,
+    });
+
+    const meeting = await client.resolveOnlineMeetingByJoinUrl(
+      'organizer',
+      shortUrl,
+    );
+
+    expect(meeting?.id).toBe('meeting-short-after-400');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const fallbackGraphUrl = new URL(String(fetchMock.mock.calls[2][0]));
+    expect(fallbackGraphUrl.searchParams.get('$filter')).toBe(
+      "joinMeetingIdSettings/joinMeetingId eq '48543659205152'",
+    );
+  });
+
+  it('does not hide Graph HTTP 400 for a non-short Teams link', async () => {
+    const legacyUrl = 'https://teams.microsoft.com/l/meetup-join/legacy-reference';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(jsonResponse({
+        error: { code: 'BadRequest', message: 'Invalid filter clause' },
+      }, 400));
+
+    const client = new MicrosoftGraphClient({
+      credentials,
+      fetchImpl: asFetch(fetchMock),
+      now: () => 1_000,
+    });
+
+    await expect(client.resolveOnlineMeetingByJoinUrl(
+      'organizer',
+      legacyUrl,
+    )).rejects.toMatchObject({
+      kind: 'graph_error',
+      status: 400,
+      graphCode: 'BadRequest',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('reuses the cached token across transcript and attendance artifact reads', async () => {
     const intervals = [
       {
