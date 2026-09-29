@@ -403,6 +403,7 @@ async function createEnrollmentInternal(
       creditsRemaining: creditsTotal,
       topicProgress: {},
       ...(schedule ? { schedule } : {}),
+      ...(toOptionalId(data.joinUrl) ? { joinUrl: toOptionalId(data.joinUrl) } : {}),
       ...(toOptionalId(data.classesStartDate) ? { classesStartDateYmd: toOptionalId(data.classesStartDate) } : {}),
       enrollmentDate: FieldValue.serverTimestamp(),
       createdAt: FieldValue.serverTimestamp(),
