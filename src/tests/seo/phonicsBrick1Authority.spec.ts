@@ -52,6 +52,9 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
     expect(page).toContain('Want a deeper provider comparison?');
     expect(page).toContain('This programme page stays focused on how Tiny Steps phonics works.');
 
+    expect(page).toContain('Trusted by parents in India and internationally');
+    expect(page).toContain('Tiny Steps is a trusted choice for families in India and internationally');
+    expect(page).toContain('PUBLIC_LEARNER_REACH_LABEL');
     expect(page).not.toContain("Tiny Steps is India's #1");
     expect(page).not.toContain('Tiny Steps is the best phonics');
   });
