@@ -13,7 +13,6 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, functions } from '../../../lib/firebaseConfig';
-import { buildCanonicalEnrollmentTeacherWriteFields } from '../../../lib/teacherIdentity';
 import {
   Card,
   CardHeader,
