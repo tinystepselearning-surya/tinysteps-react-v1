@@ -78,3 +78,13 @@ Non-mutating analysis and validation complete before that production lock is
 entered. Deployment reports are uploaded with `if: always()` and contain the
 commit, selected plan, plan hash, attempted batches, completed targets,
 failed/uncertain targets, and final status.
+
+## Storage rules follow-up
+
+`firebase.json` also references `storage.rules`, but the current production
+workflow has no automated Storage Rules mutation. The source file has not
+changed since 2026-05-10, so the 2026-09-29 Hosting incident does not establish a
+current missed Storage Rules release. Do not add a fail-safe Storage deployment
+blindly: first verify the live Storage Rules against the repository contract,
+then add an explicit validation/deployment baseline in a separately reviewed
+change if automation is desired.
