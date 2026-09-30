@@ -581,17 +581,29 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         : 0;
       const currentFreshness = Math.max(current.updatedAtMs, current.createdAtMs);
       const nextFreshness = Math.max(row.updatedAtMs, row.createdAtMs);
-      if (
-        nextDemoFreshness > currentDemoFreshness ||
-        (nextDemoFreshness === currentDemoFreshness && bucketRank[row.bucket] > bucketRank[current.bucket]) ||
-        (
-          nextDemoFreshness === currentDemoFreshness &&
-          bucketRank[row.bucket] === bucketRank[current.bucket] &&
-          nextFreshness > currentFreshness
-        )
-      ) {
-        distinct.set(identity, row);
-      }
+      const eitherHasDemo = Boolean(current.demo || row.demo);
+      const shouldReplace = eitherHasDemo
+        ? (
+            nextDemoFreshness > currentDemoFreshness ||
+            (
+              nextDemoFreshness === currentDemoFreshness &&
+              (
+                bucketRank[row.bucket] > bucketRank[current.bucket] ||
+                (
+                  bucketRank[row.bucket] === bucketRank[current.bucket] &&
+                  nextFreshness > currentFreshness
+                )
+              )
+            )
+          )
+        : (
+            nextFreshness > currentFreshness ||
+            (
+              nextFreshness === currentFreshness &&
+              bucketRank[row.bucket] > bucketRank[current.bucket]
+            )
+          );
+      if (shouldReplace) distinct.set(identity, row);
     });
     return Array.from(distinct.values());
   }, [demoPhones, demos, leads]);
