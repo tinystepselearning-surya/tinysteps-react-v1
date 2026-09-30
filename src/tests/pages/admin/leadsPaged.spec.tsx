@@ -39,7 +39,6 @@ import {
   type LeadQueryBucket,
   type PagedLeadRecord,
 } from '../../../pages/admin/leadsPaged';
-import type { SimpleLeadBucket } from '../../../pages/admin/leadsWorkflowBuckets';
 
 type TestLead = PagedLeadRecord & { status?: string; source?: string };
 
