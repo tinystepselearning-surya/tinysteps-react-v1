@@ -23,6 +23,7 @@ const NEW_LEAD_WATCH_SIZE = 5;
 const RECENT_NOTIFICATION_WINDOW_MS = 2 * 60 * 1000;
 
 export type LeadPageSize = 10 | 25 | 50 | 100 | 'all';
+export type LeadQueryBucket = SimpleLeadBucket | 'all';
 export const LEAD_PAGE_SIZE_OPTIONS: readonly Exclude<LeadPageSize, 'all'>[] = [10, 25, 50, 100];
 
 export const LEAD_STATUSES_BY_BUCKET: Record<SimpleLeadBucket, readonly string[]> = {
@@ -47,7 +48,7 @@ export interface PagedLeadRecord {
 }
 
 export interface UsePagedLeadsOptions<T extends PagedLeadRecord> {
-  bucket: SimpleLeadBucket;
+  bucket: LeadQueryBucket;
   pageSize: LeadPageSize;
   dateFromMs?: number;
   dateToMs?: number;
@@ -301,6 +302,13 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         return;
       }
 
+      // The range-first Leads workspace asks for bucket='all' and derives distinct
+      // workflow counts after demo reconciliation. Avoid four unnecessary count reads.
+      if (bucket === 'all') {
+        setBucketCounts({ ...EMPTY_COUNTS });
+        return;
+      }
+
       const [open, inProgress, adminReview, closed] = await Promise.all([
         getBucketCount('open'),
         getBucketCount('in_progress'),
@@ -314,7 +322,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     } finally {
       setCountsLoading(false);
     }
-  }, [hasDateFilter, invalidDateRange, loadReceivedRangeDocs]);
+  }, [bucket, hasDateFilter, invalidDateRange, loadReceivedRangeDocs]);
 
   useEffect(() => {
     void refreshCounts();
@@ -360,8 +368,10 @@ export function usePagedLeads<T extends PagedLeadRecord>({
       try {
         if (hasDateFilter) {
           const rangeDocs = await loadReceivedRangeDocs();
-          const matching = rangeDocs.filter((docSnapshot) =>
-            leadStatusBelongsToBucket(docSnapshot.data().status, bucket));
+          const matching = bucket === 'all'
+            ? rangeDocs
+            : rangeDocs.filter((docSnapshot) =>
+                leadStatusBelongsToBucket(docSnapshot.data().status, bucket));
           const start = pageSize === 'all' ? 0 : effectivePageIndex * pageSize;
           const pageDocs = pageSize === 'all' ? matching : matching.slice(start, start + pageSize);
           setFilteredTotal(matching.length);
@@ -370,10 +380,12 @@ export function usePagedLeads<T extends PagedLeadRecord>({
           return;
         }
 
-        const statuses = [...LEAD_STATUSES_BY_BUCKET[bucket]];
+        const statuses = bucket === 'all' ? [] : [...LEAD_STATUSES_BY_BUCKET[bucket]];
 
         if (pageSize === 'all') {
-          const docs = await getBucketDocs(bucket);
+          const docs = bucket === 'all'
+            ? (await getDocs(collection(db, LEADS_COLLECTION))).docs
+            : await getBucketDocs(bucket);
           setFilteredTotal(null);
           publish([...docs].sort(sortLeadDocsByReceivedAtDesc));
           return;
@@ -381,7 +393,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
 
         // With Teacher / Admin Review / Closed are normally small operational queues.
         // For <=100 rows, fetch the exact status-filtered queue once and paginate locally.
-        if (bucket !== 'open') {
+        if (bucket !== 'open' && bucket !== 'all') {
           let cached = smallBucketCacheRef.current.get(bucket);
           if (!cached) {
             const count = await getBucketCount(bucket);
@@ -424,7 +436,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
 
           for (const docSnapshot of snapshot.docs) {
             cursor = docSnapshot;
-            if (!leadStatusBelongsToBucket(docSnapshot.data().status, bucket)) continue;
+            if (bucket !== 'all' && !leadStatusBelongsToBucket(docSnapshot.data().status, bucket)) continue;
             matchingDocs.push(docSnapshot);
             if (matchingDocs.length === pageSize) {
               pageBoundaryCursor = docSnapshot;
@@ -499,7 +511,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         void refreshCounts();
         const rangeIncludesNow =
           (!dateFromMs || now >= dateFromMs) && (!dateToMs || now <= dateToMs);
-        if (bucket === 'open' && effectivePageIndex === 0 && rangeIncludesNow) {
+        if ((bucket === 'open' || bucket === 'all') && effectivePageIndex === 0 && rangeIncludesNow) {
           pageStartCursorsRef.current = [null];
           setReloadVersion((current) => current + 1);
         }
@@ -509,7 +521,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   }, [bucket, dateFromMs, dateToMs, effectivePageIndex, refreshCounts]);
 
   const reloadPage = useCallback((resetToFirst = false) => {
-    smallBucketCacheRef.current.delete(bucket);
+    if (bucket !== 'all') smallBucketCacheRef.current.delete(bucket);
     receivedRangeCacheRef.current = null;
     if (resetToFirst) {
       pageStartCursorsRef.current = [null];
@@ -521,7 +533,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     setReloadVersion((current) => current + 1);
   }, [bucket, effectivePageIndex, optionKey]);
 
-  const currentTotal = bucketCounts[bucket];
+  const currentTotal = bucket === 'all' ? leads.length : bucketCounts[bucket];
   const exactFilteredTotal = hasDateFilter && !countsLoading
     ? currentTotal
     : filteredTotal;
