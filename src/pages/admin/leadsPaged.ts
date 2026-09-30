@@ -297,15 +297,16 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         return;
       }
 
-      if (hasDateFilter) {
-        setBucketCounts(countDocsByBucket(await loadReceivedRangeDocs()));
+      // The range-first Leads workspace asks for bucket='all' and derives distinct
+      // workflow counts after demo reconciliation. Skip count reads in both bounded
+      // and all-history modes; the workspace never consumes these raw status counts.
+      if (bucket === 'all') {
+        setBucketCounts({ ...EMPTY_COUNTS });
         return;
       }
 
-      // The range-first Leads workspace asks for bucket='all' and derives distinct
-      // workflow counts after demo reconciliation. Avoid four unnecessary count reads.
-      if (bucket === 'all') {
-        setBucketCounts({ ...EMPTY_COUNTS });
+      if (hasDateFilter) {
+        setBucketCounts(countDocsByBucket(await loadReceivedRangeDocs()));
         return;
       }
 
