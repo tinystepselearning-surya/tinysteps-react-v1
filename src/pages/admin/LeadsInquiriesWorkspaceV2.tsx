@@ -573,11 +573,22 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         distinct.set(identity, row);
         return;
       }
+      const currentDemoFreshness = current.demo
+        ? toMs(current.demo.lastUpdatedAt || current.demo.createdAt)
+        : 0;
+      const nextDemoFreshness = row.demo
+        ? toMs(row.demo.lastUpdatedAt || row.demo.createdAt)
+        : 0;
       const currentFreshness = Math.max(current.updatedAtMs, current.createdAtMs);
       const nextFreshness = Math.max(row.updatedAtMs, row.createdAtMs);
       if (
-        nextFreshness > currentFreshness ||
-        (nextFreshness === currentFreshness && bucketRank[row.bucket] > bucketRank[current.bucket])
+        nextDemoFreshness > currentDemoFreshness ||
+        (nextDemoFreshness === currentDemoFreshness && bucketRank[row.bucket] > bucketRank[current.bucket]) ||
+        (
+          nextDemoFreshness === currentDemoFreshness &&
+          bucketRank[row.bucket] === bucketRank[current.bucket] &&
+          nextFreshness > currentFreshness
+        )
       ) {
         distinct.set(identity, row);
       }
