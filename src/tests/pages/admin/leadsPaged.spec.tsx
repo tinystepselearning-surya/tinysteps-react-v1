@@ -36,9 +36,9 @@ import {
   leadStatusBelongsToBucket,
   usePagedLeads,
   type LeadPageSize,
+  type LeadQueryBucket,
   type PagedLeadRecord,
 } from '../../../pages/admin/leadsPaged';
-import type { SimpleLeadBucket } from '../../../pages/admin/leadsWorkflowBuckets';
 
 type TestLead = PagedLeadRecord & { status?: string; source?: string };
 
@@ -92,7 +92,7 @@ function Harness({
   dateFromMs = 0,
   dateToMs = 0,
 }: {
-  bucket?: SimpleLeadBucket;
+  bucket?: LeadQueryBucket;
   pageSize?: LeadPageSize;
   dateFromMs?: number;
   dateToMs?: number;
@@ -160,6 +160,26 @@ describe('lead pagination status mapping', () => {
     expect(leadStatusBelongsToBucket('demo_completed', 'admin_review')).toBe(true);
     expect(leadStatusBelongsToBucket('no_response', 'closed')).toBe(true);
     expect(LEAD_STATUSES_BY_BUCKET.open).not.toContain('demo_booked');
+  });
+});
+
+describe('all-bucket range loading', () => {
+  it('returns every workflow status in a selected range without four bucket-count reads', async () => {
+    const open = makeDoc('open', 'demo_pending_schedule', 9_000, 'manual', 2_000);
+    const teacher = makeDoc('teacher', 'demo_booked', 9_100, 'manual', 2_500);
+    const review = makeDoc('review', 'demo_completed', 9_200, 'manual', 3_000);
+    const closed = makeDoc('closed', 'no_response', 9_300, 'manual', 3_500);
+
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([open, teacher, review, closed]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]));
+
+    render(<Harness bucket="all" pageSize="all" dateFromMs={1_000} dateToMs={5_000} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('ids')).toHaveTextContent('closed,review,teacher,open');
+    expect(firestoreMocks.getCountFromServer).not.toHaveBeenCalled();
   });
 });
 
