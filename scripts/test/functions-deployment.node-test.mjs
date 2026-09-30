@@ -11,7 +11,7 @@ import {
   normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
   remainingTargets, retryProvider404, validateCheckpoint,
 } from '../deployment/functions-deployment-lib.mjs';
-import { buildDependencyGraph, resolveFunctionsImpact } from '../deployment/functions-impact-lib.mjs';
+import { buildDependencyGraph, classifyArtifactChanges, resolveFunctionsImpact } from '../deployment/functions-impact-lib.mjs';
 
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
@@ -399,6 +399,7 @@ test('main pushes compare Functions against the last deployed Functions marker',
 
 test('successful Functions rollout advances the production baseline only after transport verification', () => {
   const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const markerUpdater = readFileSync('.github/scripts/advance-production-marker.sh', 'utf8');
   const deployIndex = workflow.indexOf('Deploy Cloud Functions in bounded batches');
   const avsVerifyIndex = workflow.indexOf('Verify AVS callable transport');
   const markerIndex = workflow.indexOf('Advance Functions production baseline');
@@ -407,8 +408,84 @@ test('successful Functions rollout advances the production baseline only after t
   assert.ok(avsVerifyIndex > deployIndex);
   assert.ok(markerIndex > avsVerifyIndex);
   assert.match(workflow, /permissions:\n\s+contents: write/);
-  assert.match(workflow, /refs\/heads\/ci\/functions-production/);
-  assert.match(workflow, /\\\"force\\\":false/);
+  assert.match(workflow, /advance-production-marker\.sh ci\/functions-production/);
+  assert.match(markerUpdater, /ci\/functions-production\|ci\/hosting-production\|ci\/firestore-rules-production\|ci\/firestore-indexes-production/);
+  assert.match(markerUpdater, /\\\"force\\\":true/);
+});
+
+test('main pushes compare Hosting and Firestore against their last successful production markers', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const resolver = readFileSync('scripts/resolve-deployment-impact.mjs', 'utf8');
+
+  assert.match(workflow, /Resolve deployed Hosting and Firestore baselines/);
+  for (const marker of [
+    'ci/hosting-production',
+    'ci/firestore-rules-production',
+    'ci/firestore-indexes-production',
+  ]) {
+    assert.match(workflow, new RegExp(marker.replace('/', '\\/')));
+  }
+
+  assert.match(workflow, /--hosting-before "\$\{\{ steps\.artifact-baselines\.outputs\.hosting_sha \}\}"/);
+  assert.match(workflow, /--force-hosting "\$\{\{ steps\.artifact-baselines\.outputs\.hosting_force \}\}"/);
+  assert.match(workflow, /--firestore-rules-before "\$\{\{ steps\.artifact-baselines\.outputs\.firestore_rules_sha \}\}"/);
+  assert.match(workflow, /--force-firestore-rules "\$\{\{ steps\.artifact-baselines\.outputs\.firestore_rules_force \}\}"/);
+  assert.match(workflow, /--firestore-indexes-before "\$\{\{ steps\.artifact-baselines\.outputs\.firestore_indexes_sha \}\}"/);
+  assert.match(workflow, /--force-firestore-indexes "\$\{\{ steps\.artifact-baselines\.outputs\.firestore_indexes_force \}\}"/);
+
+  assert.match(resolver, /const hostingChangedFiles = changedPaths\(hostingBefore, sha\)/);
+  assert.match(resolver, /const firestoreRulesChangedFiles = changedPaths\(firestoreRulesBefore, sha\)/);
+  assert.match(resolver, /const firestoreIndexesChangedFiles = changedPaths\(firestoreIndexesBefore, sha\)/);
+  assert.match(resolver, /hostingChanged: hostingResult\.hostingChanged \|\| forceHosting/);
+  assert.match(resolver, /firestoreRulesChanged: firestoreRulesResult\.firestoreRulesChanged \|\| forceFirestoreRules/);
+  assert.match(resolver, /firestoreIndexesChanged: firestoreIndexesResult\.firestoreIndexesChanged \|\| forceFirestoreIndexes/);
+});
+
+test('artifact baselines retain missed frontend and Firestore changes across a later Functions-only commit', () => {
+  const eventOnly = classifyArtifactChanges(['functions/src/example.ts']);
+  assert.equal(eventOnly.hostingChanged, false);
+  assert.equal(eventOnly.firestoreRulesChanged, false);
+  assert.equal(eventOnly.firestoreIndexesChanged, false);
+
+  const hostingSinceProduction = classifyArtifactChanges([
+    'src/pages/grammar.tsx',
+    'src/pages/speaking.tsx',
+    'functions/src/example.ts',
+  ]);
+  assert.equal(hostingSinceProduction.hostingChanged, true);
+  assert.equal(hostingSinceProduction.frontendValidationRequired, true);
+
+  const rulesSinceProduction = classifyArtifactChanges([
+    'firestore.rules',
+    'functions/src/example.ts',
+  ]);
+  assert.equal(rulesSinceProduction.firestoreRulesChanged, true);
+
+  const indexesSinceProduction = classifyArtifactChanges([
+    'firestore.indexes.json',
+    'functions/src/example.ts',
+  ]);
+  assert.equal(indexesSinceProduction.firestoreIndexesChanged, true);
+});
+
+test('artifact markers advance only after the corresponding production mutation succeeds', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+
+  const rulesDeploy = workflow.indexOf('Deploy Firestore Security Rules');
+  const rulesMarker = workflow.indexOf('Advance Firestore rules production baseline');
+  const indexesDeploy = workflow.indexOf('Deploy Firestore Composite Indexes');
+  const indexesMarker = workflow.indexOf('Advance Firestore indexes production baseline');
+  const hostingDeploy = workflow.indexOf('Deploy to Firebase Production');
+  const hostingVerify = workflow.indexOf('Verify live deployment integrity and build identity');
+  const hostingMarker = workflow.indexOf('Advance Hosting production baseline');
+
+  assert.ok(rulesDeploy >= 0 && rulesMarker > rulesDeploy);
+  assert.ok(indexesDeploy >= 0 && indexesMarker > indexesDeploy);
+  assert.ok(hostingDeploy >= 0 && hostingVerify > hostingDeploy && hostingMarker > hostingVerify);
+
+  assert.match(workflow, /advance-production-marker\.sh ci\/firestore-rules-production/);
+  assert.match(workflow, /advance-production-marker\.sh ci\/firestore-indexes-production/);
+  assert.match(workflow, /advance-production-marker\.sh ci\/hosting-production/);
 });
 
 test('automated full-fleet mutation requires an explicit known-global decision', () => {

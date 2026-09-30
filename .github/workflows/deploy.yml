@@ -77,6 +77,51 @@ jobs:
           echo "force_full=${force_full}" >> "${GITHUB_OUTPUT}"
           echo "Functions baseline: ${baseline} (${source}); force_full=${force_full}"
 
+      - name: Resolve deployed Hosting and Firestore baselines
+        id: artifact-baselines
+        shell: bash
+        env:
+          EVENT_BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}
+        run: |
+          set -euo pipefail
+
+          resolve_baseline() {
+            local label="$1"
+            local marker="$2"
+            local prefix="$3"
+            local baseline="${EVENT_BEFORE}"
+            local force="false"
+            local source="event-parent"
+            local remote_ref="refs/remotes/origin/${marker}"
+
+            if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/main" ]]; then
+              if git fetch origin "refs/heads/${marker}:${remote_ref}" --force --quiet 2>/dev/null; then
+                local candidate
+                candidate="$(git rev-parse "${remote_ref}")"
+                if git merge-base --is-ancestor "${candidate}" "${GITHUB_SHA}"; then
+                  baseline="${candidate}"
+                  source="production-marker"
+                else
+                  force="true"
+                  source="invalid-production-marker"
+                  echo "::warning::${label} production marker is not an ancestor of ${GITHUB_SHA}; forcing one recovery deployment."
+                fi
+              else
+                force="true"
+                source="missing-production-marker"
+                echo "::warning::${label} production marker is missing; forcing one recovery deployment."
+              fi
+            fi
+
+            echo "${prefix}_sha=${baseline}" >> "${GITHUB_OUTPUT}"
+            echo "${prefix}_force=${force}" >> "${GITHUB_OUTPUT}"
+            echo "${label} baseline: ${baseline} (${source}); force=${force}"
+          }
+
+          resolve_baseline "Hosting" "ci/hosting-production" "hosting"
+          resolve_baseline "Firestore rules" "ci/firestore-rules-production" "firestore_rules"
+          resolve_baseline "Firestore indexes" "ci/firestore-indexes-production" "firestore_indexes"
+
       - name: Resolve artifact and Function impact
         id: impact
         run: >-
@@ -84,6 +129,12 @@ jobs:
           --before "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}"
           --functions-before "${{ steps.functions-baseline.outputs.sha }}"
           --force-functions-full "${{ steps.functions-baseline.outputs.force_full }}"
+          --hosting-before "${{ steps.artifact-baselines.outputs.hosting_sha }}"
+          --force-hosting "${{ steps.artifact-baselines.outputs.hosting_force }}"
+          --firestore-rules-before "${{ steps.artifact-baselines.outputs.firestore_rules_sha }}"
+          --force-firestore-rules "${{ steps.artifact-baselines.outputs.firestore_rules_force }}"
+          --firestore-indexes-before "${{ steps.artifact-baselines.outputs.firestore_indexes_sha }}"
+          --force-firestore-indexes "${{ steps.artifact-baselines.outputs.firestore_indexes_force }}"
           --sha "${{ github.sha }}"
 
   build-and-test:
@@ -485,6 +536,12 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
+      - name: Advance Firestore rules production baseline
+        if: needs.analyze-changes.outputs.firestore_rules_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/advance-production-marker.sh ci/firestore-rules-production "${GITHUB_SHA}"
+
       - name: Deploy Firestore Composite Indexes
         if: needs.analyze-changes.outputs.firestore_indexes_changed == 'true'
         run: >-
@@ -494,6 +551,12 @@ jobs:
           --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+
+      - name: Advance Firestore indexes production baseline
+        if: needs.analyze-changes.outputs.firestore_indexes_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/advance-production-marker.sh ci/firestore-indexes-production "${GITHUB_SHA}"
 
       - name: Verify School callable transport
         if: needs.analyze-changes.outputs.school_transport_required == 'true'
@@ -531,27 +594,9 @@ jobs:
 
       - name: Advance Functions production baseline
         if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
-        shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs/heads/ci/functions-production"
-          create_api="https://api.github.com/repos/${GITHUB_REPOSITORY}/git/refs"
-          status="$(curl -sS -o /tmp/functions-production-ref.json -w "%{http_code}"             -H "Authorization: Bearer ${GITHUB_TOKEN}"             -H "Accept: application/vnd.github+json"             "${api}")"
-
-          if [[ "${status}" == "200" ]]; then
-            curl -fsS -X PATCH               -H "Authorization: Bearer ${GITHUB_TOKEN}"               -H "Accept: application/vnd.github+json"               -H "Content-Type: application/json"               -d "{\"sha\":\"${GITHUB_SHA}\",\"force\":false}"               "${api}" >/dev/null
-          elif [[ "${status}" == "404" ]]; then
-            curl -fsS -X POST               -H "Authorization: Bearer ${GITHUB_TOKEN}"               -H "Accept: application/vnd.github+json"               -H "Content-Type: application/json"               -d "{\"ref\":\"refs/heads/ci/functions-production\",\"sha\":\"${GITHUB_SHA}\"}"               "${create_api}" >/dev/null
-          else
-            cat /tmp/functions-production-ref.json >&2 || true
-            echo "Unable to read Functions production baseline ref (HTTP ${status})." >&2
-            exit 1
-          fi
-
-          echo "Functions production baseline advanced to ${GITHUB_SHA}."
+        run: bash .github/scripts/advance-production-marker.sh ci/functions-production "${GITHUB_SHA}"
 
       - name: Validate Ask Tiny Steps production build configuration
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
@@ -570,6 +615,12 @@ jobs:
           --origin https://tinystepslearning.com
           --expected-sha "${{ github.sha }}"
           --report artifacts/live-deployment-verification.md
+
+      - name: Advance Hosting production baseline
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/advance-production-marker.sh ci/hosting-production "${GITHUB_SHA}"
 
       - name: Upload live deployment verification report
         if: always() && needs.analyze-changes.outputs.hosting_changed == 'true'
