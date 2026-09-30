@@ -687,13 +687,13 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   };
 
   const updateDateFrom = (value: string) => {
-    setMonthFilter('custom');
     setDateFrom(value);
+    setMonthFilter(value || dateTo ? 'custom' : 'today');
   };
 
   const updateDateTo = (value: string) => {
-    setMonthFilter('custom');
     setDateTo(value);
+    setMonthFilter(value || dateFrom ? 'custom' : 'today');
   };
 
   const openAssign = (row: SimpleRow) => {
@@ -869,11 +869,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
     <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
       <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course, teacher or attribution" className="pl-9" /></div>
-      <div><Label className="mb-1 block text-xs text-slate-500">Enquiry period</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry period"><SelectValue placeholder="Today" /></SelectTrigger><SelectContent><SelectItem value="today">Today</SelectItem><SelectItem value="all">All months</SelectItem><SelectItem value="custom">Custom dates</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
+      <div><Label className="mb-1 block text-xs text-slate-500">Enquiry period</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry period"><SelectValue placeholder="Today" /></SelectTrigger><SelectContent><SelectItem value="today">Today</SelectItem><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">Enquiry from</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Selecting a month, All months, or custom dates fetches that range. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Selecting a month, All months, or entering custom dates fetches that range. Clearing both custom dates returns to Today. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
