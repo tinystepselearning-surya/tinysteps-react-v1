@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import {
   MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
   buildParentMonthClassAttendanceProjection,
@@ -411,7 +412,7 @@ export const recomputeParentClassAttendanceAuthoritativeBaselines = async (input
         builtBaselines.push(built);
       }
 
-      const committedAt = admin.firestore.FieldValue.serverTimestamp();
+      const committedAt = FieldValue.serverTimestamp();
       for (let index = 0; index < builtBaselines.length; index += 1) {
         const built = builtBaselines[index];
         const source = sourceSnapshots[index];
@@ -423,7 +424,7 @@ export const recomputeParentClassAttendanceAuthoritativeBaselines = async (input
             attendance: {
               ...attendance,
               incrementalAuthoritativeCommittedAt: committedAt,
-              refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+              refreshedAt: FieldValue.serverTimestamp(),
             },
           },
           { merge: true },

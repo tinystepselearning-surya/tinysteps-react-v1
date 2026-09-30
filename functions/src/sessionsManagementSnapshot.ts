@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {DocumentReference, FieldValue, GeoPoint, Timestamp} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
@@ -157,9 +158,9 @@ const toJsonSafe = (value: unknown): unknown => {
     return value;
   }
   if (value instanceof Date) return value.toISOString();
-  if (value instanceof admin.firestore.Timestamp) return value.toDate().toISOString();
-  if (value instanceof admin.firestore.DocumentReference) return value.path;
-  if (value instanceof admin.firestore.GeoPoint) {
+  if (value instanceof Timestamp) return value.toDate().toISOString();
+  if (value instanceof DocumentReference) return value.path;
+  if (value instanceof GeoPoint) {
     return { latitude: value.latitude, longitude: value.longitude };
   }
   if (Array.isArray(value)) return value.map(toJsonSafe);
@@ -417,13 +418,13 @@ async function persistProjectionDelta(delta: PendingProjectionDelta): Promise<bo
       schemaVersion: SCHEMA_VERSION,
       ...delta,
       revision: nextRevision,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
     tx.set(stateRef, {
       schemaVersion: SCHEMA_VERSION,
       revision: nextRevision,
       updatedAtMs: delta.eventTimeMs,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     return true;
   });
@@ -554,7 +555,7 @@ async function acquireLease(actor: string): Promise<string | null> {
     tx.set(leaseRef, {
       token,
       actor,
-      acquiredAt: admin.firestore.FieldValue.serverTimestamp(),
+      acquiredAt: FieldValue.serverTimestamp(),
       expiresAtMs: now + LEASE_MS,
     });
     return token;
@@ -569,7 +570,7 @@ async function releaseLease(token: string): Promise<void> {
     tx.set(leaseRef, {
       token: null,
       actor: null,
-      releasedAt: admin.firestore.FieldValue.serverTimestamp(),
+      releasedAt: FieldValue.serverTimestamp(),
       expiresAtMs: 0,
     }, { merge: true });
   });
@@ -749,13 +750,13 @@ async function rebuildSnapshot(
     publishBatch.set(currentRef, {
       ...meta,
       snapshotPath: `${SNAPSHOT_COLLECTION}/${payload.snapshotId}`,
-      publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      publishedAt: FieldValue.serverTimestamp(),
     });
     publishBatch.set(projectionStateRef, {
       schemaVersion: SCHEMA_VERSION,
       snapshotId: payload.snapshotId,
       baselineBuildStartedAtMs: payload.buildStartedAtMs,
-      snapshotPublishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      snapshotPublishedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
     await publishBatch.commit();
 

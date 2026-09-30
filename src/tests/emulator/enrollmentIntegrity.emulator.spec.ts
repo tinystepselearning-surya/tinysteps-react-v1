@@ -2,7 +2,10 @@
 
 import * as admin from 'firebase-admin';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { isSessionCanonicalForEnrollment } from '../../lib/sessionScheduleIntegrity';
+import {
+  doesEnrollmentOccupyCourseSlot,
+  isSessionCanonicalForEnrollment,
+} from '../../lib/sessionScheduleIntegrity';
 import {
   adminDb,
   callFunction,
@@ -38,9 +41,18 @@ async function createEnrollment(args: {
   teacherId?: string;
   schedule?: Record<string, unknown>;
   creditsTotal?: number;
+  creationIntent?: 'initial_course' | 'additional_course';
 }): Promise<string> {
+  let creationIntent = args.creationIntent;
+  if (!creationIntent) {
+    const existing = await adminDb.collection('enrollments').where('kidId', '==', ids.kidId).get();
+    creationIntent = existing.docs.some((row) =>
+      doesEnrollmentOccupyCourseSlot((row.data() || {}) as Record<string, unknown>),
+    ) ? 'additional_course' : 'initial_course';
+  }
   const result = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', {
     operationId: args.operationId,
+    creationIntent,
     kidId: ids.kidId,
     courseId: args.courseId,
     teacherId: args.teacherId || ids.teacherAId,
@@ -64,6 +76,7 @@ async function sessionsForEnrollment(enrollmentId: string) {
 function validEnrollmentPayload(overrides: Record<string, unknown> = {}) {
   return {
     operationId: `authorization-${fixtureSequence}`,
+    creationIntent: 'initial_course',
     kidId: ids.kidId,
     courseId: ids.phonicsCourseId,
     creditsTotal: 4,
@@ -170,6 +183,134 @@ describe('createEnrollment authorization and validation', () => {
     const operations = await adminDb.collection('enrollmentCreationOperations').get();
     expect(enrollments.empty).toBe(true);
     expect(operations.empty).toBe(true);
+  });
+});
+
+describe('createEnrollment creation intent invariants', () => {
+  it('replays the exact same creation request without a second enrollment', async () => {
+    const payload = validEnrollmentPayload({ operationId: 'intent-exact-replay' });
+    const first = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', payload);
+    const replay = await callFunction<Record<string, unknown>, { enrollmentId: string }>('createEnrollment', payload);
+    expect(replay.enrollmentId).toBe(first.enrollmentId);
+    expect((await adminDb.collection('enrollments').where('kidId', '==', ids.kidId).get()).size).toBe(1);
+  });
+
+  it('rejects transition creation through the public callable for admins and Learning Partners', async () => {
+    const operationId = 'public-transition-attempt';
+    await adminDb.collection('enrollmentCourseTransitions').doc(operationId).set({
+      kidId: ids.kidId,
+      newCourseId: ids.phonicsCourseId,
+      rolling: true,
+      state: 'creating_rolling_enrollment',
+    });
+    const payload = validEnrollmentPayload({
+      operationId: `rolling-transition-create-${operationId}`,
+      creationIntent: 'transition',
+      transitionOperationId: operationId,
+    });
+    await expect(callFunction('createEnrollment', payload)).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'permission-denied');
+      return true;
+    });
+    const lpId = `transition-lp-${fixtureSequence}`;
+    await adminDb.collection('kids').doc(ids.kidId).update({ lpId, assignedLPs: [lpId] });
+    await signInFixtureUser({ uid: lpId, role: 'learningPartner' });
+    await expect(callFunction('createEnrollment', payload)).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'permission-denied');
+      return true;
+    });
+    expect((await adminDb.collection('enrollments').get()).empty).toBe(true);
+  });
+
+  it('rejects initial_course when the child already has another operational enrollment', async () => {
+    await createEnrollment({
+      operationId: 'intent-existing-phonics',
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'initial_course',
+    });
+    await expect(createEnrollment({
+      operationId: 'intent-invalid-second-initial',
+      courseId: ids.grammarCourseId,
+      creationIntent: 'initial_course',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'failed-precondition');
+      return true;
+    });
+  });
+
+  it('serializes concurrent different first-course assignments so only one initial_course succeeds', async () => {
+    const results = await Promise.allSettled([
+      createEnrollment({
+        operationId: 'intent-concurrent-first-phonics',
+        courseId: ids.phonicsCourseId,
+        creationIntent: 'initial_course',
+      }),
+      createEnrollment({
+        operationId: 'intent-concurrent-first-grammar',
+        courseId: ids.grammarCourseId,
+        creationIntent: 'initial_course',
+      }),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    const enrollments = await adminDb.collection('enrollments').where('kidId', '==', ids.kidId).get();
+    expect(enrollments.size).toBe(1);
+  });
+
+  it('rejects additional_course when the child has no operational enrollment', async () => {
+    await expect(createEnrollment({
+      operationId: 'intent-invalid-first-additional',
+      courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'failed-precondition');
+      return true;
+    });
+  });
+
+  it('rejects reusing an enrollment operation ID with a different creation intent', async () => {
+    const operationId = 'intent-idempotency-mismatch';
+    await createEnrollment({
+      operationId,
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'initial_course',
+    });
+    await expect(callFunction('createEnrollment', {
+      operationId,
+      creationIntent: 'additional_course',
+      kidId: ids.kidId,
+      courseId: ids.phonicsCourseId,
+      ratePerSession: 500,
+      teacherPayPerSession: 250,
+      creditsTotal: 4,
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'already-exists');
+      return true;
+    });
+  });
+
+  it('allows a different additional course but still blocks a duplicate same course', async () => {
+    const phonicsId = await createEnrollment({
+      operationId: 'intent-first-course',
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'initial_course',
+    });
+    const grammarId = await createEnrollment({
+      operationId: 'intent-additional-course',
+      courseId: ids.grammarCourseId,
+      creationIntent: 'additional_course',
+    });
+    expect(grammarId).not.toBe(phonicsId);
+
+    await expect(createEnrollment({
+      operationId: 'intent-duplicate-additional',
+      courseId: ids.phonicsCourseId,
+      creationIntent: 'additional_course',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'already-exists');
+      return true;
+    });
   });
 });
 
@@ -355,6 +496,7 @@ describe('Firestore Emulator course transition state machine', () => {
   const transitionInput = (operationId: string, foundationsId: string) => ({
     operationId,
     oldEnrollmentId: foundationsId,
+    transitionType: 'progression',
     newCourseId: ids.earlyCourseId,
     newTeacherId: ids.teacherBId,
     newSchedule: {
@@ -362,7 +504,7 @@ describe('Firestore Emulator course transition state machine', () => {
       weeklySlots: [{ weekday: 3, time: '19:00', durationMinutes: 40 }],
       weeksAhead: 3,
     },
-    classesStartDate: '2099-08-05',
+    classesStartDate: '2020-08-05',
     creditsTotal: 16,
     ratePerSession: 600,
     teacherPayPerSession: 300,
@@ -372,8 +514,12 @@ describe('Firestore Emulator course transition state machine', () => {
   it('transitions Foundations, preserves protected history, and isolates Grammar', async () => {
     const operationId = 'transition-complete';
     const { foundationsId, grammarId } = await seedTransitionContext(operationId);
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      joinUrl: 'https://teams.example.test/server-owned-class',
+    });
     const result = await callFunction<Record<string, unknown>, { state: string; newEnrollmentId: string }>(
-      'transitionEnrollmentCourse', transitionInput(operationId, foundationsId),
+      'transitionEnrollmentCourse',
+      transitionInput(operationId, foundationsId),
     );
 
     expect(result.state).toBe('complete');
@@ -390,6 +536,7 @@ describe('Firestore Emulator course transition state machine', () => {
     expect(foundations.data()?.completedAt).toBeDefined();
     expect(early.data()).toMatchObject({
       status: 'active', courseId: ids.earlyCourseId, teacherId: ids.teacherBId, previousEnrollmentId: foundationsId,
+      joinUrl: 'https://teams.example.test/server-owned-class',
     });
     expect(future.data()?.status).toBe('cancelled');
     expect(historical.data()).toMatchObject({ status: 'completed', attendance: { [ids.kidId]: { status: 'present' } } });
@@ -405,6 +552,136 @@ describe('Firestore Emulator course transition state machine', () => {
     expect(transition.data()?.state).toBe('complete');
     const audits = await adminDb.collection('auditLogs').where('operationId', '==', operationId).get();
     expect(audits.docs.some((row) => row.data().type === 'enrollment_course_transition_completed')).toBe(true);
+  });
+
+  it('uses a new Teams link when the admin supplies a valid replacement', async () => {
+    const operationId = 'transition-new-teams-link';
+    const { foundationsId } = await seedTransitionContext(operationId);
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      joinUrl: 'https://teams.example.test/existing-class',
+    });
+
+    const result = await callFunction<Record<string, unknown>, { newEnrollmentId: string }>(
+      'transitionEnrollmentCourse',
+      {
+        ...transitionInput(operationId, foundationsId),
+        joinUrl: 'https://teams.example.test/new-course-class',
+      },
+    );
+
+    const destination = await adminDb.collection('enrollments').doc(result.newEnrollmentId).get();
+    expect(destination.data()?.joinUrl).toBe('https://teams.example.test/new-course-class');
+
+    const transition = await adminDb.collection('enrollmentCourseTransitions').doc(operationId).get();
+    expect(transition.data()?.destinationJoinUrl).toBe('https://teams.example.test/new-course-class');
+  });
+
+  it('rejects an invalid replacement Teams link without changing the enrollment', async () => {
+    const operationId = 'transition-invalid-teams-link';
+    const { foundationsId } = await seedTransitionContext(operationId);
+
+    await expect(callFunction('transitionEnrollmentCourse', {
+      ...transitionInput(operationId, foundationsId),
+      joinUrl: 'ftp://invalid.example.test/class',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'invalid-argument');
+      return true;
+    });
+
+    expect((await adminDb.collection('enrollments').doc(foundationsId).get()).data()?.status).toBe('active');
+    expect((await adminDb.collection('enrollmentCourseTransitions').doc(operationId).get()).exists).toBe(false);
+  });
+
+  it('corrects a wrong course without completing it and carries only unused credits', async () => {
+    const operationId = 'transition-correction';
+    const foundationsId = await createEnrollment({
+      operationId: `${operationId}-wrong`,
+      courseId: ids.foundationsCourseId,
+      creditsTotal: 16,
+      creationIntent: 'initial_course',
+    });
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      creditsTotal: 16,
+      creditsUsed: 7,
+      creditsRemaining: 9,
+      topicProgress: { wrong_course_progress: { completed: true } },
+    });
+    await adminDb.collection('classSessions').doc(`${operationId}-history`).set({
+      enrollmentId: foundationsId,
+      kidId: ids.kidId,
+      courseId: ids.foundationsCourseId,
+      teacherId: ids.teacherAId,
+      date: '2026-06-01',
+      startTime: '17:00',
+      status: 'completed',
+      attendance: { [ids.kidId]: { status: 'present' } },
+    });
+
+    const input = {
+      ...transitionInput(operationId, foundationsId),
+      transitionType: 'correction',
+      reason: 'Wrong course assigned during admission',
+    };
+    const result = await callFunction<Record<string, unknown>, { newEnrollmentId: string; transitionType: string }>(
+      'transitionEnrollmentCourse',
+      input,
+    );
+
+    const [oldEnrollment, correctedEnrollment, history] = await Promise.all([
+      adminDb.collection('enrollments').doc(foundationsId).get(),
+      adminDb.collection('enrollments').doc(result.newEnrollmentId).get(),
+      adminDb.collection('classSessions').doc(`${operationId}-history`).get(),
+    ]);
+
+    expect(result.transitionType).toBe('correction');
+    expect(oldEnrollment.data()).toMatchObject({
+      status: 'discontinued',
+      transitionType: 'correction',
+      correctedToEnrollmentId: result.newEnrollmentId,
+      creditsUsed: 7,
+      creditsRemaining: 9,
+    });
+    expect(oldEnrollment.data()?.completedAt).toBeUndefined();
+    expect(oldEnrollment.data()?.topicProgress).toEqual({ wrong_course_progress: { completed: true } });
+
+    expect(correctedEnrollment.data()).toMatchObject({
+      status: 'active',
+      courseId: ids.earlyCourseId,
+      transitionType: 'correction',
+      correctedFromEnrollmentId: foundationsId,
+      creditsTotal: 9,
+      creditsUsed: 0,
+      creditsRemaining: 9,
+      creditCarryoverAmount: 9,
+    });
+    expect(correctedEnrollment.data()?.topicProgress).toEqual({});
+    expect(history.data()).toMatchObject({
+      enrollmentId: foundationsId,
+      courseId: ids.foundationsCourseId,
+      status: 'completed',
+    });
+  });
+
+  it('calculates correction carryover for legacy enrollments missing creditsRemaining', async () => {
+    const operationId = 'transition-legacy-credits';
+    const foundationsId = await createEnrollment({
+      operationId: `${operationId}-old`, courseId: ids.foundationsCourseId, creditsTotal: 16,
+    });
+    await adminDb.collection('enrollments').doc(foundationsId).update({
+      creditsUsed: 7,
+      creditsRemaining: admin.firestore.FieldValue.delete(),
+    });
+    const result = await callFunction<Record<string, unknown>, { newEnrollmentId: string }>(
+      'transitionEnrollmentCourse',
+      { ...transitionInput(operationId, foundationsId), transitionType: 'correction' },
+    );
+    const corrected = await adminDb.collection('enrollments').doc(result.newEnrollmentId).get();
+    expect(corrected.data()).toMatchObject({
+      creditsTotal: 9,
+      creditsUsed: 0,
+      creditsRemaining: 9,
+      creditCarryoverAmount: 9,
+    });
   });
 
   it('replays a completed transition idempotently without duplicate enrollment, sessions, or audit', async () => {
@@ -448,7 +725,7 @@ describe('Firestore Emulator course transition state machine', () => {
         newCourseId: ids.earlyCourseId,
         newTeacherId: ids.teacherBId,
         newSchedule: transitionInput(operationId, foundationsId).newSchedule,
-        classesStartDate: '2099-08-05',
+        classesStartDate: '2020-08-05',
         ratePerSession: 600,
         teacherPayPerSession: 300,
         creditsTotal: 16,
@@ -456,6 +733,8 @@ describe('Firestore Emulator course transition state machine', () => {
         billingCycle: 'monthly',
         reason: 'Completed Foundations in emulator validation',
         state: 'old_sessions_reconciled',
+        rolling: true,
+        transitionType: 'progression',
         retryable: true,
       }),
     ]);
@@ -469,6 +748,20 @@ describe('Firestore Emulator course transition state machine', () => {
     });
     expect((await adminDb.collection('operationalEnrollmentKeys').doc(newKeyId).get()).data()?.enrollmentId)
       .toBe(result.newEnrollmentId);
+  });
+
+  it('rejects retrying the same transition operation with a different transition type', async () => {
+    const operationId = 'transition-type-mismatch';
+    const { foundationsId } = await seedTransitionContext(operationId);
+    const progression = transitionInput(operationId, foundationsId);
+    await callFunction('transitionEnrollmentCourse', progression);
+    await expect(callFunction('transitionEnrollmentCourse', {
+      ...progression,
+      transitionType: 'correction',
+    })).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'already-exists');
+      return true;
+    });
   });
 
   it('rejects an existing operational target before completing Foundations', async () => {
@@ -595,13 +888,19 @@ describe('Firestore Emulator exact completion and financial identity', () => {
       durationMinutes: 35,
       status: 'scheduled',
       feeAmount: 500,
+      financialTermsSnapshotVersion: 1,
+      billingRateSnapshot: 500,
+      teacherPayRateSnapshot: 250,
+      financialTermsCurrency: 'INR',
     });
     await callFunction('onSessionComplete', {
       sessionId,
       attendance: { [ids.kidId]: { status: 'present' } },
     });
-    const charge = await waitForDocument('billingCharges', sessionId);
-    const earning = await waitForDocument('teacherEarnings', sessionId);
+    const [charge, earning] = await Promise.all([
+      waitForDocument('billingCharges', sessionId, () => true, 90_000),
+      waitForDocument('teacherEarnings', sessionId, () => true, 90_000),
+    ]);
     const [phonics, grammar] = await Promise.all([
       adminDb.collection('enrollments').doc(phonicsId).get(),
       adminDb.collection('enrollments').doc(grammarId).get(),

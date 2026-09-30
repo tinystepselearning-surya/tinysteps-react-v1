@@ -33,6 +33,16 @@ describe('rolling schedule production hardening contracts', () => {
     expect(transitionSource).not.toContain('legacyTransitionEnrollmentCourse');
   });
 
+  it('keeps Teams-link continuity server-authoritative while allowing an explicit validated replacement', () => {
+    expect(transitionSource).toContain('validateOptionalClassLink(data.joinUrl)');
+    expect(transitionSource).toContain("parsed.protocol !== 'https:' && parsed.protocol !== 'http:'");
+    expect(transitionSource).toContain('const destinationJoinUrl =');
+    expect(transitionSource).toContain('|| requestedJoinUrl');
+    expect(transitionSource).toContain('|| existingJoinUrl');
+    expect(transitionSource).toContain('destinationJoinUrl,');
+    expect(transitionSource).toContain('joinUrl: destinationJoinUrl');
+  });
+
   it('transactionally fences edge creation and pointer advancement against lifecycle/revision races', () => {
     expect(workerSource).toContain('db.runTransaction(async (tx) =>');
     expect(workerSource).toContain('const enrollmentSnap = await tx.get(enrollmentRef)');

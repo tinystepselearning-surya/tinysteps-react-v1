@@ -214,6 +214,17 @@ async function findOperationalSameCourseEnrollmentIds(args: {
     .map((docSnap) => docSnap.id);
 }
 
+type EnrollmentCreationIntent = 'initial_course' | 'additional_course' | 'transition';
+
+function requireEnrollmentCreationIntent(value: unknown): EnrollmentCreationIntent {
+  const intent = String(value || '').trim();
+  if (intent === 'initial_course' || intent === 'additional_course' || intent === 'transition') return intent;
+  throw new HttpsError(
+    'invalid-argument',
+    'creationIntent must be initial_course, additional_course, or transition',
+  );
+}
+
 async function createEnrollmentInternal(
   data: Record<string, unknown>,
   actor: string,
@@ -222,6 +233,7 @@ async function createEnrollmentInternal(
   const operationId = String(data.operationId || '').trim();
   const requestedKidId = String(data.kidId || data.studentId || '').trim();
   const requestedCourseId = String(data.courseId || '').trim();
+  const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
   if (!operationId || !requestedKidId || !requestedCourseId) {
     throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
   }
@@ -232,7 +244,11 @@ async function createEnrollmentInternal(
   const existingOperation = await operationRef.get();
   if (existingOperation.exists) {
     const data = existingOperation.data() || {};
-    if (data.kidId !== requestedKidId || data.courseId !== requestedCourseId) {
+    if (
+      data.kidId !== requestedKidId
+      || data.courseId !== requestedCourseId
+      || (data.creationIntent && data.creationIntent !== creationIntent)
+    ) {
       throw new HttpsError('already-exists', 'operationId was already used for a different enrollment request');
     }
     return { ok: true, enrollmentId: String(data.enrollmentId || ''), idempotentReplay: true };
@@ -251,16 +267,20 @@ async function createEnrollmentInternal(
   if (String(course.status || '').trim().toLowerCase() !== 'active') {
     throw new HttpsError('failed-precondition', 'Selected course is not active and cannot be assigned');
   }
-  const existingOperational = await findOperationalSameCourseEnrollmentIds({
-    db,
-    kidId: canonicalKidId,
-    courseId: canonicalCourseId,
-  });
-  if (existingOperational.length > 0) {
-    throw new HttpsError(
-      'already-exists',
-      `An operational enrollment already exists for this child and course: ${existingOperational[0]}`,
-    );
+  if (creationIntent === 'transition') {
+    const transitionOperationId = String(data.transitionOperationId || '').trim();
+    if (!transitionOperationId) {
+      throw new HttpsError('invalid-argument', 'transitionOperationId is required for transition enrollment creation');
+    }
+    const transitionSnap = await db.collection(ENROLLMENT_TRANSITIONS_COLLECTION).doc(transitionOperationId).get();
+    const transitionData = transitionSnap.data() || {};
+    if (
+      !transitionSnap.exists
+      || String(transitionData.kidId || '').trim() !== canonicalKidId
+      || String(transitionData.newCourseId || '').trim() !== canonicalCourseId
+    ) {
+      throw new HttpsError('failed-precondition', 'Transition enrollment creation is not backed by a valid course transition');
+    }
   }
 
   const teacherId = toOptionalId(data.teacherId);
@@ -297,8 +317,58 @@ async function createEnrollmentInternal(
     .doc(buildOperationalEnrollmentKeyId(canonicalKidId, canonicalCourseId));
   const auditRef = db.collection('auditLogs').doc();
   await db.runTransaction(async (tx) => {
-    const [operationCheck, keySnap] = await Promise.all([tx.get(operationRef), tx.get(keyRef)]);
-    if (operationCheck.exists) return;
+    const enrollmentCollection = db.collection('enrollments');
+    const [operationCheck, keySnap, kidIdSnap, studentIdSnap, kidIdsSnap] = await Promise.all([
+      tx.get(operationRef),
+      tx.get(keyRef),
+      tx.get(enrollmentCollection.where('kidId', '==', canonicalKidId)),
+      tx.get(enrollmentCollection.where('studentId', '==', canonicalKidId)),
+      tx.get(enrollmentCollection.where('kidIds', 'array-contains', canonicalKidId)),
+    ]);
+    if (operationCheck.exists) {
+      const operationData = operationCheck.data() || {};
+      if (
+        operationData.kidId !== canonicalKidId
+        || operationData.courseId !== canonicalCourseId
+        || (operationData.creationIntent && operationData.creationIntent !== creationIntent)
+      ) {
+        throw new HttpsError('already-exists', 'operationId collision detected');
+      }
+      return;
+    }
+
+    const transactionalMatches = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+    [kidIdSnap, studentIdSnap, kidIdsSnap].forEach((snapshot) => {
+      snapshot.docs.forEach((docSnap) => transactionalMatches.set(docSnap.id, docSnap));
+    });
+    const transactionalOperational = Array.from(transactionalMatches.values())
+      .filter((docSnap) =>
+        doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>),
+      );
+    const transactionalSameCourse = transactionalOperational.find((docSnap) => {
+      const enrollmentData = (docSnap.data() || {}) as Record<string, unknown>;
+      return String(enrollmentData.courseId || '').trim() === canonicalCourseId;
+    });
+    if (transactionalSameCourse) {
+      throw new HttpsError(
+        'already-exists',
+        `An operational enrollment already exists for this child and course: ${transactionalSameCourse.id}`,
+      );
+    }
+
+    if (creationIntent === 'initial_course' && transactionalOperational.length > 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'This child already has an operational enrollment. Use Add Additional Course or Change Course.',
+      );
+    }
+    if (creationIntent === 'additional_course' && transactionalOperational.length === 0) {
+      throw new HttpsError(
+        'failed-precondition',
+        'This child has no operational enrollment. Use Assign Course for the first course.',
+      );
+    }
+
     const keyData = keySnap.data() || {};
     const ownsReservation = Boolean(
       reservedByOperationId && keyData.reservationOperationId === reservedByOperationId,
@@ -339,6 +409,10 @@ async function createEnrollmentInternal(
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
       creationOperationId: operationId,
+      creationIntent,
+      ...(creationIntent === 'transition'
+        ? { transitionOperationId: String(data.transitionOperationId || '').trim() }
+        : {}),
     });
     tx.create(enrollmentRef, enrollmentPayload);
     tx.set(keyRef, {
@@ -353,6 +427,7 @@ async function createEnrollmentInternal(
       enrollmentId: enrollmentRef.id,
       kidId: canonicalKidId,
       courseId: canonicalCourseId,
+      creationIntent,
       state: 'complete',
       createdAt: FieldValue.serverTimestamp(),
       createdBy: actor,
@@ -364,6 +439,7 @@ async function createEnrollmentInternal(
       kidId: canonicalKidId,
       courseId: canonicalCourseId,
       operationId,
+      creationIntent,
       createdAt: FieldValue.serverTimestamp(),
       createdBy: actor,
     });
@@ -383,12 +459,24 @@ export const createEnrollment = onCall({ region: REGION }, async (request) => {
   if (request.auth?.uid && !requestedKidId) {
     throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
   }
+  const creationIntent = requireEnrollmentCreationIntent(data.creationIntent);
+  if (creationIntent === 'transition') {
+    throw new HttpsError('permission-denied', 'Transition enrollments must be created through the course transition flow');
+  }
   await ensureEnrollmentCreator(request.auth, requestedKidId);
   return createEnrollmentInternal(
     data,
     request.auth?.uid || 'admin',
   );
 });
+
+export async function createTransitionEnrollmentInternal(data: Record<string, unknown>, actor: string) {
+  return createEnrollmentInternal(
+    {...data, creationIntent: 'transition'},
+    actor,
+    String(data.transitionOperationId || '').trim(),
+  );
+}
 
 type CourseTransitionState =
   | 'validated'

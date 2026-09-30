@@ -13,7 +13,6 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, functions } from '../../../lib/firebaseConfig';
-import { buildCanonicalEnrollmentTeacherWriteFields } from '../../../lib/teacherIdentity';
 import {
   Card,
   CardHeader,
@@ -201,6 +200,7 @@ export default function EnrollmentDetailView({
   const [teacherRateInput, setTeacherRateInput] = useState('');
   const [rateSaving, setRateSaving] = useState(false);
   const [courseTransitionOpen, setCourseTransitionOpen] = useState(false);
+  const [transitionType, setTransitionType] = useState<'progression' | 'correction'>('progression');
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [courseOptionsLoading, setCourseOptionsLoading] = useState(false);
   const [selectedNextCourseId, setSelectedNextCourseId] = useState('__none__');
@@ -589,6 +589,7 @@ export default function EnrollmentDetailView({
     const nextOpen = !courseTransitionOpen;
     setCourseTransitionOpen(nextOpen);
     if (!nextOpen) return;
+    setTransitionType('progression');
     setSelectedNextCourseId('__none__');
     setChangeTeacherForNextCourse(!currentTeacherId);
     setSelectedNextTeacherId('__none__');
@@ -666,17 +667,24 @@ export default function EnrollmentDetailView({
       : currentTeacherLabel;
     const nextClassLink = changeClassLinkForNextCourse ? trimmedNextClassLink : currentClassLink;
     const confirmation = [
-      `Move ${resolvedStudentName} from ${currentCourseLabel} to ${nextCourseLabel}?`,
+      transitionType === 'progression'
+        ? `Complete ${currentCourseLabel} and move ${resolvedStudentName} to ${nextCourseLabel}?`
+        : `Correct ${resolvedStudentName}'s course from ${currentCourseLabel} to ${nextCourseLabel}?`,
       '',
+      `Change type: ${transitionType === 'progression' ? 'Course progression' : 'Wrong-course correction'}`,
       `Teacher: ${nextTeacherLabel}${changeTeacherForNextCourse ? ' (changed)' : ' (same)'}`,
-      `Class link: ${changeClassLinkForNextCourse ? 'new link will be used' : currentClassLink ? 'same link' : 'no link currently set'}`,
+      `Teams link: ${changeClassLinkForNextCourse ? 'new Teams link will be used' : currentClassLink ? 'existing Teams link will be kept' : 'no Teams link currently set'}`,
       'Class schedule and rates will continue automatically.',
-      'Previous attendance, completed classes, payments and billing history will remain unchanged.',
+      transitionType === 'progression'
+        ? 'The previous enrollment will be marked Completed; its historical attendance, payments and billing remain unchanged.'
+        : 'The wrong enrollment will be discontinued/superseded, not completed; historical records remain unchanged and only unused credits carry forward.',
     ].join('\n');
     if (!window.confirm(confirmation)) return;
 
-    const operationId = `course-transition-${String(enrollment.id || enrollmentId).trim()}`;
-    const reason = `Completed ${currentCourseLabel} and moved to ${nextCourseLabel}`;
+    const operationId = `course-${transitionType}-${String(enrollment.id || enrollmentId).trim()}-${newCourseId}`;
+    const reason = transitionType === 'progression'
+      ? `Completed ${currentCourseLabel} and moved to ${nextCourseLabel}`
+      : `Corrected wrong course assignment from ${currentCourseLabel} to ${nextCourseLabel}`;
 
     try {
       setActionBusy('transition');
@@ -684,6 +692,7 @@ export default function EnrollmentDetailView({
       const response = await fn({
         operationId,
         oldEnrollmentId: enrollment.id,
+        transitionType,
         newCourseId,
         newTeacherId,
         newSchedule,
@@ -693,72 +702,21 @@ export default function EnrollmentDetailView({
         creditsTotal: Number(enrollment.creditsTotal || 0),
         currency: enrollment.currency || 'INR',
         billingCycle: enrollment.billingCycle || 'monthly',
+        joinUrl: nextClassLink || null,
         reason,
       });
 
       const result = (response.data || {}) as Record<string, unknown>;
       const newEnrollmentId = String(result.newEnrollmentId || '').trim();
-      let continuitySyncWarning: string | null = null;
-      if (newEnrollmentId) {
-        const inheritedTeacherName = changeTeacherForNextCourse
-          ? pickFirstReadableName(selectedNextTeacher?.displayName, selectedNextTeacher?.name)
-          : pickFirstReadableName(
-              teacher?.displayName,
-              teacher?.name,
-              enrollment.teacherName,
-              enrollment.teacherDisplayName,
-            );
-        const inheritedTeacherEmail = changeTeacherForNextCourse
-          ? String(selectedNextTeacher?.email || '').trim()
-          : String(teacher?.email || enrollment.teacherEmail || '').trim();
-        const inheritedFields: Record<string, unknown> = {
-          ...buildCanonicalEnrollmentTeacherWriteFields(newTeacherId),
-          schedule: newSchedule,
-          updatedAt: serverTimestamp(),
-        };
-        if (inheritedTeacherName) inheritedFields.teacherName = inheritedTeacherName;
-        if (inheritedTeacherEmail) inheritedFields.teacherEmail = inheritedTeacherEmail;
-        if (nextClassLink) {
-          inheritedFields.joinUrl = nextClassLink.trim();
-        }
-        if (changeClassLinkForNextCourse && nextClassLink) {
-          inheritedFields.meetingLink = nextClassLink.trim();
-          inheritedFields.classLink = nextClassLink.trim();
-        } else {
-          if (typeof enrollment.meetingLink === 'string' && enrollment.meetingLink.trim()) {
-            inheritedFields.meetingLink = enrollment.meetingLink.trim();
-          }
-          if (typeof enrollment.classLink === 'string' && enrollment.classLink.trim()) {
-            inheritedFields.classLink = enrollment.classLink.trim();
-          }
-        }
-
-        try {
-          await updateDoc(doc(db, 'enrollments', newEnrollmentId), inheritedFields);
-          const repairFn = httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule');
-          await repairFn({ enrollmentId: newEnrollmentId, dryRun: false });
-        } catch (syncError) {
-          continuitySyncWarning = extractCallableErrorMessage(
-            syncError,
-            'The new course is active, but teacher/link continuity could not be fully refreshed.',
-          );
-        }
-      } else {
-        continuitySyncWarning = 'The course transition completed, but the new enrollment could not be confirmed for continuity checks.';
+      if (!newEnrollmentId) {
+        throw new Error('Course transition completed without a destination enrollment ID.');
       }
-
-      if (continuitySyncWarning) {
-        toast({
-          title: 'Course moved; continuity check needs attention',
-          description: continuitySyncWarning,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Moved to next course',
-          description: `${nextCourseLabel} is now active. Selected teacher/link choices were applied. Historical records were preserved.`,
-        });
-      }
+      toast({
+        title: transitionType === 'progression' ? 'Moved to next course' : 'Course assignment corrected',
+        description: transitionType === 'progression'
+          ? `${nextCourseLabel} is now active. Historical records were preserved.`
+          : `${nextCourseLabel} is now active. The wrong enrollment was superseded and unused credits were carried safely.`,
+      });
       setCourseTransitionOpen(false);
       setSelectedNextCourseId('__none__');
       setChangeTeacherForNextCourse(false);
@@ -768,7 +726,7 @@ export default function EnrollmentDetailView({
       await loadEnrollment();
     } catch (error) {
       toast({
-        title: 'Course move could not be completed',
+        title: transitionType === 'progression' ? 'Course move could not be completed' : 'Course correction could not be completed',
         description: extractCallableErrorMessage(error, 'Please try again. No manual IDs are required.'),
         variant: 'destructive',
       });
@@ -1007,7 +965,7 @@ export default function EnrollmentDetailView({
               onClick={() => void handleOpenCourseTransition()}
               disabled={actionBusy !== null}
             >
-              Move to Next Course
+              Change Course
             </Button>
             <Button
               variant="outline"
@@ -1041,11 +999,37 @@ export default function EnrollmentDetailView({
           {courseTransitionOpen ? (
             <div className="rounded-xl border bg-slate-50 p-4 space-y-4">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Move to the next course</div>
+                <div className="text-sm font-semibold text-slate-900">Change course</div>
                 <div className="mt-1 text-xs text-slate-600">
-                  Select the next course. By default, the current teacher, class schedule, rates and class link continue automatically.
-                  Previous attendance and payment history stay attached to the completed course.
+                  First choose why the course is changing. Progression completes the current course; correction supersedes a wrong assignment without calling it completed.
                 </div>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-2">
+                <label className={`cursor-pointer rounded-lg border p-3 text-sm ${transitionType === 'progression' ? 'border-blue-400 bg-blue-50' : 'bg-white'}`}>
+                  <input
+                    type="radio"
+                    name="transitionType"
+                    value="progression"
+                    checked={transitionType === 'progression'}
+                    onChange={() => setTransitionType('progression')}
+                    className="mr-2"
+                  />
+                  <span className="font-medium">Course completed — move to next course</span>
+                  <span className="mt-1 block text-xs text-slate-500">Current enrollment becomes Completed. Historical records remain attached to it.</span>
+                </label>
+                <label className={`cursor-pointer rounded-lg border p-3 text-sm ${transitionType === 'correction' ? 'border-amber-400 bg-amber-50' : 'bg-white'}`}>
+                  <input
+                    type="radio"
+                    name="transitionType"
+                    value="correction"
+                    checked={transitionType === 'correction'}
+                    onChange={() => setTransitionType('correction')}
+                    className="mr-2"
+                  />
+                  <span className="font-medium">Wrong course assigned — correct admission</span>
+                  <span className="mt-1 block text-xs text-slate-500">Current enrollment is superseded/discontinued. Only unused credits carry to the corrected enrollment.</span>
+                </label>
               </div>
 
               <div className="max-w-xl space-y-1">
@@ -1132,16 +1116,16 @@ export default function EnrollmentDetailView({
                     disabled={actionBusy !== null}
                   />
                   <span>
-                    <span className="font-medium">Use a different class link</span>
+                    <span className="font-medium">Use a new Teams link</span>
                     <span className="block text-xs text-slate-500">
-                      Leave this off to keep the existing class link. Turn it on to add or replace the link for the next course.
+                      Leave this off to keep the existing Teams link. Turn it on only when the new course should use a different Teams link.
                     </span>
                   </span>
                 </label>
 
                 {changeClassLinkForNextCourse ? (
                   <div className="ml-7 max-w-xl space-y-1">
-                    <label className="text-sm font-medium">New class link</label>
+                    <label className="text-sm font-medium">New Teams link</label>
                     <Input
                       type="url"
                       placeholder="https://..."
@@ -1153,9 +1137,9 @@ export default function EnrollmentDetailView({
                       <div className="text-xs text-red-600">Enter a complete http:// or https:// link.</div>
                     ) : null}
                     {currentClassLink ? (
-                      <div className="text-xs text-slate-500">The current link remains unchanged unless you confirm the course move.</div>
+                      <div className="text-xs text-slate-500">The existing Teams link will be replaced only for the new enrollment.</div>
                     ) : (
-                      <div className="text-xs text-slate-500">No existing class link is set; this will add one to the next course.</div>
+                      <div className="text-xs text-slate-500">No Teams link is currently set; this will add one to the new enrollment.</div>
                     )}
                   </div>
                 ) : null}
@@ -1163,7 +1147,7 @@ export default function EnrollmentDetailView({
 
               <div className="rounded-lg bg-white px-3 py-2 text-xs text-slate-600">
                 <div><strong>Teacher:</strong> {changeTeacherForNextCourse ? getTeacherLabel(selectedNextTeacher) : currentTeacherLabel}</div>
-                <div><strong>Class link:</strong> {changeClassLinkForNextCourse ? 'New link' : currentClassLink ? 'Keep current link' : 'No link'}</div>
+                <div><strong>Teams link:</strong> {changeClassLinkForNextCourse ? 'Use new Teams link' : currentClassLink ? 'Keep existing Teams link' : 'No Teams link'}</div>
                 <div><strong>Schedule & rates:</strong> Continue unchanged</div>
               </div>
 

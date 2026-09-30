@@ -30,6 +30,7 @@ describe('createEnrollment callable integration', () => {
   it('uses the shared regional Functions instance and forwards the validated payload', async () => {
     const payload = {
       operationId: 'assign-course-operation-1',
+      creationIntent: 'initial_course' as const,
       kidId: 'kid-1',
       courseId: 'course-1',
       feePerClass: 599,
