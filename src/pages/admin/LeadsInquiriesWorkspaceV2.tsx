@@ -202,12 +202,9 @@ const EMPTY_EDIT_FORM: LeadEditFormState = {
 
 const normalizeText = (value: unknown): string => String(value || '').trim();
 const phoneDigits = (value: unknown): string => normalizeText(value).replace(/[^\d]/g, '');
-const normalizeIdentityPhone = (value: unknown): string => {
-  const digits = phoneDigits(value);
-  if (digits.length === 14 && digits.startsWith('0091')) return digits.slice(4);
-  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
-  return digits;
-};
+// Dashboard distinctness is deliberately conservative: formatting is ignored, but
+// different digit strings are different leads. We do not guess/correct country codes.
+const normalizeIdentityPhone = (value: unknown): string => phoneDigits(value);
 const normalizeIdentityChild = (value: unknown): string =>
   normalizeText(value)
     .normalize('NFKD')
@@ -250,6 +247,19 @@ const dateBoundaryMs = (value: string, endOfDay = false): number => {
   const suffix = endOfDay ? 'T23:59:59.999+05:30' : 'T00:00:00.000+05:30';
   const parsed = Date.parse(`${value}${suffix}`);
   return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const todayDateInputIST = (): string => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+  return year && month && day ? `${year}-${month}-${day}` : '';
 };
 
 const monthKeyFromMs = (ms: number): string => {
@@ -338,9 +348,10 @@ const rowTeacherWasAssigned = (row: SimpleRow): boolean => Boolean(row.demo?.ass
 export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange }: LeadsInquiriesWorkspaceProps) {
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
-  const [pageSize, setPageSize] = useState<LeadPageSize>(10);
+  const [pageSize, setPageSize] = useState<LeadPageSize>(25);
+  const [pageIndex, setPageIndex] = useState(0);
   const [search, setSearch] = useState('');
-  const [monthFilter, setMonthFilter] = useState('all');
+  const [monthFilter, setMonthFilter] = useState('today');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [demos, setDemos] = useState<DemoSession[]>([]);
@@ -361,31 +372,27 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
 
   const serverDateRange = useMemo(() => {
-    if (monthFilter !== 'all') return monthDateRangeMs(monthFilter);
-    return {
-      fromMs: dateBoundaryMs(dateFrom),
-      toMs: dateBoundaryMs(dateTo, true),
-    };
+    if (monthFilter === 'today') {
+      const today = todayDateInputIST();
+      return { fromMs: dateBoundaryMs(today), toMs: dateBoundaryMs(today, true) };
+    }
+    if (monthFilter === 'all') return { fromMs: 0, toMs: 0 };
+    if (monthFilter === 'custom') {
+      return {
+        fromMs: dateBoundaryMs(dateFrom),
+        toMs: dateBoundaryMs(dateTo, true),
+      };
+    }
+    return monthDateRangeMs(monthFilter);
   }, [dateFrom, dateTo, monthFilter]);
 
   const {
     leads,
     isLoading: leadsLoading,
-    bucketCounts,
-    countsLoading,
-    filteredTotal,
-    dateFilterActive,
-    pageNumber,
-    totalPages,
-    hasPrevious,
-    hasNext,
-    previousPage,
-    nextPage,
     reloadPage,
-    refreshCounts,
   } = usePagedLeads<LeadRecord>({
-    bucket,
-    pageSize,
+    bucket: 'all',
+    pageSize: 'all',
     dateFromMs: serverDateRange.fromMs,
     dateToMs: serverDateRange.toMs,
     onNewWebsiteLeads: (newLeads) => {
@@ -439,11 +446,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   }, [privatePhoneDemoIdsKey]);
 
   const refreshWorkflowSoon = useCallback(() => {
-    window.setTimeout(() => {
-      void refreshCounts();
-      reloadPage();
-    }, 800);
-  }, [refreshCounts, reloadPage]);
+    window.setTimeout(() => reloadPage(), 500);
+  }, [reloadPage]);
 
   const loadTeachersIfNeeded = useCallback(async () => {
     if (teachersLoaded || teachersLoading) return;
@@ -551,7 +555,34 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       if (effectiveLeadId && leadById.has(effectiveLeadId)) return;
       next.push(buildRow(null, demo, `demo_${demo.id}`));
     });
-    return next;
+
+    // One visible workflow row per exact phone-digits + child identity. This removes
+    // stale duplicate lead documents from the operational tiles without guessing that
+    // a different phone number (including a mistyped/double country code) is the same lead.
+    const bucketRank: Record<SimpleLeadBucket, number> = {
+      open: 1,
+      in_progress: 2,
+      admin_review: 3,
+      closed: 4,
+    };
+    const distinct = new Map<string, SimpleRow>();
+    next.forEach((row) => {
+      const identity = buildLeadDemoUiIdentity(row.parentPhone, row.childName) || `row:${row.id}`;
+      const current = distinct.get(identity);
+      if (!current) {
+        distinct.set(identity, row);
+        return;
+      }
+      const currentFreshness = Math.max(current.updatedAtMs, current.createdAtMs);
+      const nextFreshness = Math.max(row.updatedAtMs, row.createdAtMs);
+      if (
+        nextFreshness > currentFreshness ||
+        (nextFreshness === currentFreshness && bucketRank[row.bucket] > bucketRank[current.bucket])
+      ) {
+        distinct.set(identity, row);
+      }
+    });
+    return Array.from(distinct.values());
   }, [demoPhones, demos, leads]);
 
   const monthOptions = useMemo(() => buildRecentMonthOptions(), []);
@@ -577,9 +608,9 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         .includes(needle));
   }, [rows, search]);
 
-  const dateFiltersActive = Boolean(monthFilter !== 'all' || dateFrom || dateTo);
+  const dateFiltersActive = monthFilter !== 'all';
   const textSearchActive = Boolean(search.trim());
-  const filtersActive = Boolean(textSearchActive || dateFiltersActive);
+  const filtersActive = Boolean(textSearchActive || monthFilter !== 'today' || dateFrom || dateTo);
 
   const actionForRow = (row: SimpleRow): SimpleLeadAction => resolveSimpleLeadAction({
     leadStatus: row.lead?.status,
@@ -589,10 +620,21 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     hasFollowUp: row.followUpAtMs > 0,
   });
 
-  const visibleRows = useMemo(() => {
+  const stageCounts = useMemo(() => {
+    const counts: Record<SimpleLeadBucket, number> = {
+      open: 0,
+      in_progress: 0,
+      admin_review: 0,
+      closed: 0,
+    };
+    rows.forEach((row) => { counts[row.bucket] += 1; });
+    return counts;
+  }, [rows]);
+
+  const sortedRows = useMemo(() => {
     const list = filteredRows.filter((row) => row.bucket === bucket);
     const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, awaiting_demo: 2, wait_teacher: 3, view_outcome: 4 };
-    return list.sort((a, b) => {
+    return [...list].sort((a, b) => {
       if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
       if (bucket === 'closed') return b.updatedAtMs - a.updatedAtMs;
       const actionDiff = rank[actionForRow(a)] - rank[actionForRow(b)];
@@ -602,23 +644,44 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     });
   }, [bucket, filteredRows]);
 
-  const clearFilters = () => { setSearch(''); setMonthFilter('all'); setDateFrom(''); setDateTo(''); };
+  const currentTotal = sortedRows.length;
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(currentTotal / pageSize));
+  const pageNumber = Math.min(pageIndex + 1, totalPages);
+  const visibleRows = useMemo(() => {
+    if (pageSize === 'all') return sortedRows;
+    const start = (pageNumber - 1) * pageSize;
+    return sortedRows.slice(start, start + pageSize);
+  }, [pageNumber, pageSize, sortedRows]);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [bucket, dateFrom, dateTo, monthFilter, pageSize, search]);
+
+  const previousPage = () => setPageIndex((current) => Math.max(0, current - 1));
+  const nextPage = () => setPageIndex((current) => Math.min(totalPages - 1, current + 1));
+  const hasPrevious = pageNumber > 1;
+  const hasNext = pageNumber < totalPages;
+
+  const clearFilters = () => {
+    setSearch('');
+    setMonthFilter('today');
+    setDateFrom('');
+    setDateTo('');
+  };
 
   const selectMonth = (value: string) => {
     setMonthFilter(value);
-    if (value !== 'all') {
-      setDateFrom('');
-      setDateTo('');
-    }
+    setDateFrom('');
+    setDateTo('');
   };
 
   const updateDateFrom = (value: string) => {
-    setMonthFilter('all');
+    setMonthFilter('custom');
     setDateFrom(value);
   };
 
   const updateDateTo = (value: string) => {
-    setMonthFilter('all');
+    setMonthFilter('custom');
     setDateTo(value);
   };
 
@@ -735,7 +798,6 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     setDeletingRowId(row.id);
     try {
       await adminDeleteLeadWorkflowRecord({ leadId: row.lead?.id || null, demoId: row.demo?.id || null });
-      void refreshCounts();
       reloadPage();
       toast({ title: 'Lead deleted', description: 'The record was removed from the active leads workflow.' });
     } catch (error: any) {
@@ -764,19 +826,14 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   }
 
   const loading = leadsLoading || !demosLoaded;
-  const currentTotal = bucketCounts[bucket];
-  const pageLabel = totalPages ? `Page ${pageNumber} of ${totalPages}` : `Page ${pageNumber}`;
+  const pageLabel = `Page ${pageNumber} of ${totalPages}`;
   const listSummary = loading
     ? 'Checking workflow…'
     : textSearchActive
-      ? `${visibleRows.length} text match${visibleRows.length === 1 ? '' : 'es'} on ${pageLabel}${dateFilterActive && filteredTotal !== null ? ` · ${filteredTotal} in selected date range` : ''}`
-      : dateFilterActive
-        ? filteredTotal !== null
-          ? `Showing ${visibleRows.length} of ${filteredTotal} in selected date range · ${pageLabel}`
-          : `Showing ${visibleRows.length} in selected date range · ${pageLabel}`
-        : pageSize === 'all'
-          ? `${visibleRows.length} of ${currentTotal} leads loaded`
-          : `Showing ${visibleRows.length} of ${currentTotal} · ${pageLabel}`;
+      ? `${currentTotal} text match${currentTotal === 1 ? '' : 'es'} · ${pageLabel}`
+      : pageSize === 'all'
+        ? `${currentTotal} distinct lead${currentTotal === 1 ? '' : 's'}`
+        : `Showing ${visibleRows.length} of ${currentTotal} · ${pageLabel}`;
 
   return <div className="space-y-4">
     <Card className="p-5">
@@ -784,11 +841,15 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         <div><h1 className="text-xl font-bold text-slate-950">Leads & Enquiries</h1><p className="mt-1 text-sm text-slate-600">Open → With Teacher → Admin Review → Closed.</p></div>
         <Button variant="outline" className="gap-2" onClick={() => onViewChange?.('demos')}><Settings2 className="h-4 w-4" /> Legacy / bulk tools</Button>
       </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left text-slate-950">
+          <div className="flex items-center justify-between gap-3"><div className="font-semibold">Total Leads</div><span className="text-2xl font-bold">{loading ? '—' : rows.length}</span></div>
+          <p className="mt-2 text-sm text-slate-600">Distinct phone + child for selected range</p>
+        </div>
         {(['open', 'in_progress', 'admin_review', 'closed'] as SimpleLeadBucket[]).map((item) => {
           const meta = bucketMeta[item]; const Icon = meta.icon;
           return <button key={item} type="button" onClick={() => setBucket(item)} className={`rounded-xl border p-4 text-left transition ${meta.accent} ${bucket === item ? 'ring-2 ring-slate-900/10 shadow-sm' : 'hover:shadow-sm'}`}>
-            <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 font-semibold"><Icon className="h-5 w-5" />{meta.title}</div><span className="text-2xl font-bold">{countsLoading ? '—' : bucketCounts[item]}</span></div>
+            <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 font-semibold"><Icon className="h-5 w-5" />{meta.title}</div><span className="text-2xl font-bold">{loading ? '—' : stageCounts[item]}</span></div>
             <p className="mt-2 text-sm opacity-75">{meta.subtitle}</p>
           </button>;
         })}
@@ -797,11 +858,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
     <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
       <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course, teacher or attribution" className="pl-9" /></div>
-      <div><Label className="mb-1 block text-xs text-slate-500">Enquiry month</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry month"><SelectValue placeholder="All months" /></SelectTrigger><SelectContent><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
+      <div><Label className="mb-1 block text-xs text-slate-500">Enquiry period</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry period"><SelectValue placeholder="Today" /></SelectTrigger><SelectContent><SelectItem value="today">Today</SelectItem><SelectItem value="all">All months</SelectItem><SelectItem value="custom">Custom dates</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">Enquiry from</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">Enquiry month and custom-date filters use the enquiry-created date, not the last-updated date. They query the full <span className="font-medium text-slate-700">{bucketMeta[bucket].title}</span> list on Firestore without loading every lead. Text search applies to the loaded page; choose <span className="font-medium text-slate-700">All</span> only when you intentionally need full-list text search.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Selecting a month, All months, or custom dates fetches that range. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
@@ -838,7 +899,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           </div>
         </div>)}</div>}
         {currentTotal > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-slate-50/60 px-4 py-3">
-          <div className="flex items-center gap-2"><Label className="text-xs text-slate-500">Rows per page</Label><Select value={String(pageSize)} onValueChange={(value) => setPageSize(value === 'all' ? 'all' : Number(value) as LeadPageSize)}><SelectTrigger className="h-9 w-[130px] bg-white" aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent>{LEAD_PAGE_SIZE_OPTIONS.map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}<SelectItem value="all">{dateFilterActive ? 'All matching' : `All (${currentTotal})`}</SelectItem></SelectContent></Select></div>
+          <div className="flex items-center gap-2"><Label className="text-xs text-slate-500">Rows per page</Label><Select value={String(pageSize)} onValueChange={(value) => setPageSize(value === 'all' ? 'all' : Number(value) as LeadPageSize)}><SelectTrigger className="h-9 w-[130px] bg-white" aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent>{LEAD_PAGE_SIZE_OPTIONS.map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}<SelectItem value="all">All ({currentTotal})</SelectItem></SelectContent></Select></div>
           <div className="flex items-center gap-2"><Button type="button" size="sm" variant="outline" onClick={previousPage} disabled={!hasPrevious || leadsLoading}>Previous</Button><span className="min-w-[92px] text-center text-xs font-medium text-slate-600">{pageLabel}</span><Button type="button" size="sm" variant="outline" onClick={nextPage} disabled={!hasNext || leadsLoading}>Next</Button></div>
         </div>}
       </>}
