@@ -2285,7 +2285,7 @@ export default function TodaysNotifications() {
               Today
               {mode === 'today' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
-                  {sortedRows.length}
+                  {isTeacherUpdatesMode ? teacherDailyGroups.length : sortedRows.length}
                 </span>
               )}
             </Button>
@@ -2298,7 +2298,7 @@ export default function TodaysNotifications() {
               Tomorrow / Date
               {mode === 'upcoming' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
-                  {sortedRows.length}
+                  {isTeacherUpdatesMode ? teacherDailyGroups.length : sortedRows.length}
                 </span>
               )}
             </Button>
