@@ -2268,9 +2268,11 @@ export default function TodaysNotifications() {
             : mode === 'upcoming'
               ? `Date: ${upcomingSpecificDate || tomorrowDateKey} (${TIMEZONE})`
               : 'Active admissions with teacher/schedule readiness'}{' '}
-          {isNotificationActionsEnabled
-            ? '| Open WhatsApp, then manually tick notified.'
-            : '| Admissions operations view.'}
+          {isTeacherUpdatesMode
+            ? '| One daily WhatsApp schedule per teacher.'
+            : isNotificationActionsEnabled
+              ? '| Open WhatsApp, then manually tick notified.'
+              : '| Admissions operations view.'}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center rounded-md border bg-white p-0.5">
