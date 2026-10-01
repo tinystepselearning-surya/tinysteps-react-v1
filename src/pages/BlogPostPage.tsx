@@ -290,6 +290,14 @@ const AUTHORITY_BLOG_BATCH_2_SLUGS = new Set([
   'child-gives-one-word-answers',
 ]);
 
+const AUTHORITY_BLOG_BATCH_3_SLUGS = new Set([
+  'phonics-tricky-words',
+  'grammar-editing-camp',
+  'cvc-words-explained-for-parents',
+  'phonics-blending-club',
+  'how-children-recognise-words-automatically-after-phonics',
+]);
+
 const AUTHORITY_PILOT_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
   'what-is-phonics-for-kids': [
     { label: 'Understand', value: 'Sound → print', detail: 'See how phonemes, graphemes and blending fit together in one parent-friendly model.' },
@@ -343,6 +351,34 @@ const AUTHORITY_BATCH_2_HERO_POINTS: Record<string, Array<{ label: string; value
     { label: 'Separate', value: 'Idea vs response length', detail: 'Check whether the child lacks an idea, vocabulary, sentence structure or simply needs more processing time.' },
     { label: 'Expand', value: 'One idea at a time', detail: 'Build fuller responses with a reason, example or detail instead of demanding a long answer immediately.' },
     { label: 'Fade', value: 'Smallest prompt → independence', detail: 'Use temporary scaffolds, then reduce them as the child begins to respond more independently.' },
+  ],
+};
+
+const AUTHORITY_BATCH_3_HERO_POINTS: Record<string, Array<{ label: string; value: string; detail: string }>> = {
+  'phonics-tricky-words': [
+    { label: 'Separate', value: 'Regular parts • tricky parts', detail: 'Analyse what the spelling already explains and isolate only the unexpected part instead of treating the whole word as a visual exception.' },
+    { label: 'Teach', value: 'Map the print, do not guess', detail: 'Keep attention on the complete spelling, pronunciation and meaning so familiarity grows from accurate word reading.' },
+    { label: 'Check', value: 'Read • spell • fresh context', detail: 'Look for independent recognition and spelling beyond the original practice card or sentence.' },
+  ],
+  'grammar-editing-camp': [
+    { label: 'Find', value: 'One editing target', detail: 'Narrow attention to the most useful grammar or punctuation pattern before asking the child to correct a whole paragraph.' },
+    { label: 'Explain', value: 'Why the change works', detail: 'Build editing judgement by naming the sentence-level reason rather than simply replacing the error.' },
+    { label: 'Transfer', value: 'Fix → reread → fresh writing', detail: 'Check whether the same editing decision appears independently in a new sentence or paragraph.' },
+  ],
+  'cvc-words-explained-for-parents': [
+    { label: 'Decode', value: 'Sound → blend → word', detail: 'Use secure sound–spelling knowledge to read the complete short word from left to right.' },
+    { label: 'Practise', value: 'Short vowels + fresh words', detail: 'Vary consonants and vowels so a memorised word family does not hide a blending gap.' },
+    { label: 'Progress', value: 'Read • spell • transfer', detail: 'Move beyond CVC words when decoding and encoding remain accurate on new examples and matched text.' },
+  ],
+  'phonics-blending-club': [
+    { label: 'Prepare', value: 'Secure the sounds first', detail: 'Check the required correspondences before treating a recall problem as a blending problem.' },
+    { label: 'Blend', value: 'See → sound → sweep → say', detail: 'Keep attention moving through the printed word with as little pause between sounds as the child needs.' },
+    { label: 'Transfer', value: 'Fresh words + matched text', detail: 'Use new regular words and short connected reading to check that blending is becoming usable beyond practice.' },
+  ],
+  'how-children-recognise-words-automatically-after-phonics': [
+    { label: 'Decode', value: 'Use the complete print', detail: 'Accurate grapheme–phoneme analysis gives an unfamiliar word a reliable route into spoken language.' },
+    { label: 'Map', value: 'Spelling ↔ pronunciation ↔ meaning', detail: 'Repeated accurate encounters strengthen specific word knowledge rather than a vague visual shape.' },
+    { label: 'Automate', value: 'Accuracy → familiarity → fluency', detail: 'Look for familiar words becoming quicker while fresh words still remain controlled by phonics and complete print.' },
   ],
 };
 
@@ -449,6 +485,59 @@ const AUTHORITY_BATCH_2_TOC_PREFIXES: Record<string, string[]> = {
     'A short home routine that keeps conversation natural',
     'How to measure progress without counting words alone',
     'Evidence and references',
+  ],
+};
+
+const AUTHORITY_BATCH_3_TOC_PREFIXES: Record<string, string[]> = {
+  'phonics-tricky-words': [
+    'Quick answer:',
+    'Tricky words, high-frequency words and sight words are not the same thing',
+    'The Tiny Steps six-step tricky-word routine',
+    'Worked example: teaching “said”',
+    'Choose words by teaching stage',
+    'Practice ideas that keep attention on print',
+    'The Tiny Steps four-signal mastery check',
+    'Sources and evidence behind this approach',
+  ],
+  'grammar-editing-camp': [
+    'Quick answer:',
+    'Editing, revising and proofreading are related',
+    'The Tiny Steps editing cycle:',
+    'Use an editing ladder',
+    'Five high-value grammar editing activities',
+    'Worked example: edit a short paragraph',
+    'How to know whether editing is becoming independent',
+    'Evidence and sources reviewed',
+  ],
+  'cvc-words-explained-for-parents': [
+    'Quick answer:',
+    'CVC is a word structure',
+    'What should be in place before CVC words become useful?',
+    'The Tiny Steps six-step CVC decoding ladder',
+    'A parent-friendly CVC practice sequence',
+    'Common CVC mistakes',
+    'How do you know CVC decoding is becoming secure?',
+    'Evidence behind this CVC decoding guide',
+  ],
+  'phonics-blending-club': [
+    'Quick answer:',
+    'Who this routine is for',
+    'First check the sounds before asking the child to blend',
+    'The Tiny Steps five-part blending routine',
+    'A simple daily routine without a fixed timer or word quota',
+    'What to say when blending breaks down',
+    'How to know whether the routine is helping',
+    'Evidence behind the routine',
+  ],
+  'how-children-recognise-words-automatically-after-phonics': [
+    'Quick answer:',
+    'Three different behaviours can look like',
+    'What orthographic mapping means in parent-friendly language',
+    'Why strong phonics knowledge helps words become familiar',
+    'Why repeated reading can help',
+    'How parents can support the transition without pushing speed',
+    'What parents can observe',
+    'Evidence and source boundary',
   ],
 };
 
@@ -703,6 +792,7 @@ const BlogPostPage: FC = () => {
   const isSatpinGuide = slug === 'satpin-phonics-guide';
   const isAuthorityPilot = Boolean(slug && AUTHORITY_BLOG_PILOT_SLUGS.has(slug));
   const isAuthorityBatch2 = Boolean(slug && AUTHORITY_BLOG_BATCH_2_SLUGS.has(slug));
+  const isAuthorityBatch3 = Boolean(slug && AUTHORITY_BLOG_BATCH_3_SLUGS.has(slug));
   const isAuthorityArticle = Boolean(post);
   const useAuthorityLayout = isSatpinGuide || isAuthorityArticle;
   const [MdxComp, setMdxComp] = useState<any>(null);
@@ -982,15 +1072,18 @@ function buildMetaDescription(src: any) {
   const sidebarConfig = isSchoolConversion ? SCHOOL_RESEARCH_SIDEBAR : categoryConfig;
   const pilotHeroPoints = slug ? AUTHORITY_PILOT_HERO_POINTS[slug] : undefined;
   const batch2HeroPoints = slug ? AUTHORITY_BATCH_2_HERO_POINTS[slug] : undefined;
+  const batch3HeroPoints = slug ? AUTHORITY_BATCH_3_HERO_POINTS[slug] : undefined;
   const resolvedHeroPoints = isSatpinGuide
     ? SATPIN_HERO_POINTS
     : isAuthorityPilot && pilotHeroPoints
       ? pilotHeroPoints
       : isAuthorityBatch2 && batch2HeroPoints
         ? batch2HeroPoints
-        : isSchoolConversion
-          ? SCHOOL_RESEARCH_HERO_POINTS
-          : categoryConfig.heroPoints;
+        : isAuthorityBatch3 && batch3HeroPoints
+          ? batch3HeroPoints
+          : isSchoolConversion
+            ? SCHOOL_RESEARCH_HERO_POINTS
+            : categoryConfig.heroPoints;
   const recommendedPrimaryAction = isSchoolConversion
     ? blogConversionConfig?.primaryAction
     : blogConversionConfig?.secondaryAction || primaryAction;
@@ -1078,8 +1171,15 @@ function buildMetaDescription(src: any) {
         .filter(Boolean);
     }
 
+    if (isAuthorityBatch3 && slug) {
+      const priorityPrefixes = AUTHORITY_BATCH_3_TOC_PREFIXES[slug] || [];
+      return priorityPrefixes
+        .map((prefix) => h2Items.find((item) => item.title.startsWith(prefix)))
+        .filter(Boolean);
+    }
+
     return h2Items.slice(0, 9);
-  }, [headingItems, isAuthorityBatch2, isAuthorityPilot, isSatpinGuide, slug]);
+  }, [headingItems, isAuthorityBatch2, isAuthorityBatch3, isAuthorityPilot, isSatpinGuide, slug]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
 
