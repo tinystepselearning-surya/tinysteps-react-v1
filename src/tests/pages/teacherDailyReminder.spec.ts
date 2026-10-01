@@ -7,7 +7,7 @@ import {
 } from '../../pages/admin/teacherDailyReminder';
 
 describe('teacher daily reminder aggregation', () => {
-  it('groups strictly by teacherRef, sorts classes by time, and preserves double sessions', () => {
+  it('groups by canonical resolved teacher identity, sorts classes by time, and preserves double sessions', () => {
     const groups = buildTeacherDailyReminderGroups([
       {
         id: 'ria-late',
@@ -53,6 +53,56 @@ describe('teacher daily reminder aggregation', () => {
     const secondRia = groups.find((group) => group.teacherRef === 'teacher-ria-2');
     expect(secondRia?.classes).toHaveLength(1);
     expect(secondRia?.teacherWhatsappDigits).toBe('918888888888');
+  });
+
+  it('collapses UID and document-ID aliases for the same resolved teacher into one row', () => {
+    const groups = buildTeacherDailyReminderGroups([
+      {
+        id: 'doc-ref-session',
+        teacherRef: 'teacher-doc-123',
+        teacherUserDocId: 'teacher-doc-123',
+        teacherName: 'Ria',
+        childName: 'Aarav',
+        startTime: '15:00',
+        sessionDateKey: '2026-10-02',
+      },
+      {
+        id: 'uid-ref-session',
+        teacherRef: 'firebase-auth-uid-ria',
+        teacherUserDocId: 'teacher-doc-123',
+        teacherName: 'Ria',
+        childName: 'Diya',
+        startTime: '16:00',
+        sessionDateKey: '2026-10-02',
+      },
+    ], '2026-10-02');
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0].teacherRef).toBe('teacher-doc-123');
+    expect(groups[0].classes.map((item) => item.sessionId)).toEqual([
+      'doc-ref-session',
+      'uid-ref-session',
+    ]);
+  });
+
+  it('uses the full student label for sibling/shared sessions', () => {
+    const [group] = buildTeacherDailyReminderGroups([
+      {
+        id: 'siblings',
+        teacherRef: 'teacher-ria',
+        teacherUserDocId: 'teacher-ria',
+        teacherName: 'Ria',
+        childName: 'Saanvika',
+        studentLabel: 'Saanvika, Rihana',
+        startTime: '17:00',
+        sessionDateKey: '2026-10-02',
+      },
+    ], '2026-10-02');
+
+    expect(group.classes[0].childName).toBe('Saanvika, Rihana');
+    expect(buildTeacherDailyReminderMessage(group)).toContain(
+      'Saanvika, Rihana — 5:00 PM',
+    );
   });
 
   it('keeps only the selected date and ignores rows without a stable teacher identity', () => {
