@@ -190,7 +190,7 @@ const COUNTRY_OPTIONS = [
   { id: 'NO', code: '+47', label: 'Norway (+47)' },
 ] as const;
 const CUSTOM_COUNTRY_ID = 'CUSTOM';
-const DEFAULT_PARENT_TEMPLATE = `Hello!\n\nQuick reminder: [Child Name] has Tiny Steps class today at [Time].\n\nPlease join on time for a fun and focused session.\n\nKindly inform us in advance for any changes/cancellations. Repeated no-shows may be penalised.\n\n- Tiny Steps`;
+const DEFAULT_PARENT_TEMPLATE = `Hello!\n\nQuick reminder: [Child Name] has Tiny Steps class today at [Time] with [Teacher Name].\n\nPlease join on time for a fun and focused session.\n\nKindly inform us in advance for any changes/cancellations. Repeated no-shows may be penalised.\n\n- Tiny Steps`;
 const DEFAULT_TEACHER_TEMPLATE = `Hello [Teacher Name],\n\nReminder: [Child Name] has Tiny Steps class today at [Time].\n\nPlease join on time.\n\nTiny Steps`;
 const ALL_TEACHERS_FILTER = 'ALL_TEACHERS';
 const ALL_STATUSES_FILTER = 'ALL_STATUSES';
