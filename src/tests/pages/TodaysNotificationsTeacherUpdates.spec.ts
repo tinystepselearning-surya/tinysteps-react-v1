@@ -30,6 +30,23 @@ describe('Sessions Management teacher updates UI', () => {
     );
   });
 
+  it('feeds the canonical resolved teacher document ID into the aggregation rows', () => {
+    expect(pageSource).toContain(
+      "teacherUserDocId: teacherUserResolved?.docId || '',",
+    );
+    expect(pageSource).toContain(
+      '() => buildTeacherDailyReminderGroups(rows, activeReminderDateKey)',
+    );
+  });
+
+  it('uses teacher-group counts in the date badge while Teacher Updates is active', () => {
+    expect(
+      pageSource.match(
+        /isTeacherUpdatesMode \? teacherDailyGroups\.length : sortedRows\.length/g,
+      ),
+    ).toHaveLength(2);
+  });
+
   it('shows one teacher row with class count and schedule entries', () => {
     expect(pageSource).toContain('{teacherDailyGroups.map((group) => {');
     expect(pageSource).toContain('{group.classes.length}');
