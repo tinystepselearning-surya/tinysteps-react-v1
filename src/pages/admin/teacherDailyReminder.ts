@@ -1,6 +1,7 @@
 export interface TeacherDailyReminderSourceRow {
   id: string;
   teacherRef?: string;
+  teacherUserDocId?: string;
   teacherName?: string;
   teacherWhatsappDigits?: string;
   childName?: string;
@@ -101,7 +102,8 @@ export const buildTeacherDailyReminderGroups = (
 
   rows.forEach((row) => {
     const teacherRef = normalizeText(row.teacherRef);
-    if (!teacherRef) return;
+    const canonicalTeacherKey = normalizeText(row.teacherUserDocId) || teacherRef;
+    if (!canonicalTeacherKey) return;
 
     const dateKey = resolveRowDateKey(row);
     if (normalizedDateKey && dateKey !== normalizedDateKey) return;
@@ -109,15 +111,15 @@ export const buildTeacherDailyReminderGroups = (
     const teacherName = normalizeText(row.teacherName) || 'Teacher';
     const teacherWhatsappDigits = normalizeText(row.teacherWhatsappDigits).replace(/\D/g, '');
     const childName =
-      normalizeText(row.childName) ||
       normalizeText(row.studentLabel) ||
+      normalizeText(row.childName) ||
       'Student';
     const time = resolveTeacherClassTime(row);
 
-    const existing = groups.get(teacherRef);
+    const existing = groups.get(canonicalTeacherKey);
     if (!existing) {
-      groups.set(teacherRef, {
-        teacherRef,
+      groups.set(canonicalTeacherKey, {
+        teacherRef: canonicalTeacherKey,
         teacherName,
         teacherWhatsappDigits,
         classes: [
