@@ -112,12 +112,6 @@ function participantReconnectKey(
   participant: AttendanceParticipantEvidence,
   classification: ParticipantBusinessClassification,
 ): string {
-  // For learner-side reconnects, a normalized display-name hash is the most
-  // useful privacy-safe fallback because Teams may emit a new attendance-record
-  // id (and sometimes a new guest identity) after a reconnect.
-  if (classification === 'learner_side' && participant.displayNameHash) {
-    return `learner-name:${participant.displayNameHash}`;
-  }
   if (participant.emailAddressHash) {
     return `email:${participant.emailAddressHash}`;
   }
@@ -128,8 +122,11 @@ function participantReconnectKey(
   if (stableIdentityHashes.length > 0) {
     return `identity:${stableIdentityHashes.join(',')}`;
   }
+  // Unverified Teams guests may reconnect as separate attendance records with
+  // no stable id/email. Only in that fallback case use the normalized name
+  // hash to correlate reconnects; the raw display name is never persisted.
   if (participant.displayNameHash) {
-    return `name:${participant.displayNameHash}`;
+    return `${classification === 'learner_side' ? 'learner' : 'participant'}-name:${participant.displayNameHash}`;
   }
   return `record:${participant.participantRecordId}`;
 }
