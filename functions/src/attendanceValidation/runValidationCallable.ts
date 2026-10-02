@@ -15,6 +15,10 @@ import { collectTeamsEvidence, type TeamsEvidenceGraphClient } from './teamsEvid
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
 import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import { AvsEvidenceInfrastructureError, classifyAvsFailure, emptyAvsFailureSummary, firstBlockingEvidenceFailure, mergeAvsFailureSummaries, summarizeAvsEvidenceIssues, summarizeAvsFailures, type AvsFailureDescriptor } from './errorTaxonomy';
+import {
+  resolveAvsSessionJoinUrl,
+  type AvsEnrollmentJoinUrlCache,
+} from './sessionJoinUrlFallback';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -51,10 +55,27 @@ export const runAttendanceValidationRange = onCall({
   let cachedCount = 0;
   let unsafeCount = 0;
   let evidenceReads = 0;
+  let enrollmentJoinUrlFallbackReads = 0;
+  let enrollmentJoinUrlFallbackUses = 0;
+  const enrollmentJoinUrlCache: AvsEnrollmentJoinUrlCache = new Map();
   let evidenceIssueSummary = emptyAvsFailureSummary();
   const freshOutcomes: Array<{ sessionId: string; failure: AvsFailureDescriptor | null }> = [];
   const failures: AvsFailureDescriptor[] = [];
   for (const [index, rows] of plan.groups.entries()) {
+    for (const row of rows) {
+      const joinUrlResolution = await resolveAvsSessionJoinUrl(
+        db,
+        row.data,
+        enrollmentJoinUrlCache,
+      );
+      enrollmentJoinUrlFallbackReads +=
+        joinUrlResolution.enrollmentFallbackReadCount;
+      if (joinUrlResolution.source === 'enrollment') {
+        enrollmentJoinUrlFallbackUses += 1;
+      }
+      row.data = joinUrlResolution.session;
+    }
+
     const loaded = await loadAvsGroupEvidence(db, rows);
     existingCount += loaded.existingCount;
     evidenceReads += loaded.readCount;
@@ -105,7 +126,16 @@ export const runAttendanceValidationRange = onCall({
   }
   const hasMore = plan.hasMore;
   const failureSummary = summarizeAvsFailures(failures);
-  logger.info('AVS group-first validation completed', { ...range, parentId, processedSessionCount: plan.processedSessionCount, persistedCount, graphLogicalCalls, hasMore });
+  logger.info('AVS group-first validation completed', {
+    ...range,
+    parentId,
+    processedSessionCount: plan.processedSessionCount,
+    persistedCount,
+    graphLogicalCalls,
+    enrollmentJoinUrlFallbackReads,
+    enrollmentJoinUrlFallbackUses,
+    hasMore,
+  });
   return {
     ok: true, ...range, parentId, nextCursor: hasMore ? plan.nextCursor : null,
     maxSessionsPerInvocation: 100, processedSessionCount: plan.processedSessionCount,
@@ -118,9 +148,18 @@ export const runAttendanceValidationRange = onCall({
     baselineAlreadyComplete: false, baselineBatchSessionCount: plan.processedSessionCount,
     baselineExistingCaseCount: existingCount, baselineFreshEvidenceCount: 0,
     baselinePersistedCaseCount: 0, groupRebuiltCount: persistedCount, baselineBlockedCount: 0,
-    baselineDeferred: false, graphLogicalCalls, identityMappingsWritten, identityClaimsWritten,
+    baselineDeferred: false, graphLogicalCalls,
+    enrollmentJoinUrlFallbackReads, enrollmentJoinUrlFallbackUses,
+    identityMappingsWritten, identityClaimsWritten,
     concurrentMarkerChangeDetected: false, hasMore, continueValidation: hasMore,
     operationalMutationAllowed: false,
-    readBudget: { ...plan.readBudget, parentEnrollments: enrollmentIds?.length ?? 0, evidenceReads, sessionGuardReads: plan.processedSessionCount, dirtyMarkerGuardReads: plan.processedSessionCount },
+    readBudget: {
+      ...plan.readBudget,
+      parentEnrollments: enrollmentIds?.length ?? 0,
+      evidenceReads,
+      enrollmentJoinUrlFallbackReads,
+      sessionGuardReads: plan.processedSessionCount,
+      dirtyMarkerGuardReads: plan.processedSessionCount,
+    },
   };
 });
