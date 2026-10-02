@@ -31,6 +31,7 @@ const JOB_VALID_THROUGH = '2026-12-31T23:59:59+05:30';
 const CAREERS_TITLE = 'Online English Teacher Jobs in India | Tiny Steps Learning';
 const CAREERS_DESCRIPTION =
   'Apply for remote online English teacher jobs in India with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.';
+const PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY = 'ts_pending_teacher_application_id_v1';
 
 const buildGeneralWhatsAppLink = () => {
   const message = [
@@ -286,11 +287,15 @@ function buildApplicationWhatsAppLink(values: ApplicationValues) {
 function CareerApplicationForm() {
   const [values, setValues] = useState<ApplicationValues>(applicationInitialValues);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const hasTrackedStart = useRef(false);
+  const pendingApplicationIdRef = useRef<string | null>(null);
 
   const update = (field: keyof ApplicationValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
     setSubmitted(false);
+    setSubmitError('');
   };
 
   const trackStart = () => {
@@ -303,18 +308,107 @@ function CareerApplicationForm() {
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
 
-    trackEvent('career_application_whatsapp_submit', {
-      page_path: CAREERS_PATH,
-      role: 'online_english_teacher',
-      specialization: values.specialization.toLowerCase().replace(/\s+/g, '_'),
-      application_channel: 'whatsapp',
-    });
+    setSubmitted(false);
+    setSubmitError('');
+    setIsSubmitting(true);
 
-    setSubmitted(true);
-    window.open(buildApplicationWhatsAppLink(values), '_blank', 'noopener,noreferrer');
+    const submittedValues = { ...values };
+    const whatsappUrl = buildApplicationWhatsAppLink(submittedValues);
+    const whatsappWindow = window.open('', '_blank');
+    if (whatsappWindow) {
+      try {
+        whatsappWindow.opener = null;
+      } catch {
+        // Browser security policy may prevent changing opener; navigation still works.
+      }
+    }
+
+    const openWhatsapp = () => {
+      if (whatsappWindow && !whatsappWindow.closed) {
+        whatsappWindow.location.href = whatsappUrl;
+        return;
+      }
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    try {
+      const [{ collection, doc, serverTimestamp, setDoc }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../../lib/firebaseConfig'),
+      ]);
+
+      if (!pendingApplicationIdRef.current) {
+        try {
+          pendingApplicationIdRef.current = window.sessionStorage.getItem(
+            PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY,
+          );
+        } catch {
+          // Storage may be disabled. The in-memory id is enough for same-page retries.
+        }
+      }
+
+      const applicationRef = pendingApplicationIdRef.current
+        ? doc(db, 'teacherInquiries', pendingApplicationIdRef.current)
+        : doc(collection(db, 'teacherInquiries'));
+
+      pendingApplicationIdRef.current = applicationRef.id;
+      try {
+        window.sessionStorage.setItem(
+          PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY,
+          applicationRef.id,
+        );
+      } catch {
+        // Storage may be disabled. The in-memory id still prevents same-page duplicates.
+      }
+
+      await setDoc(applicationRef, {
+        candidateName: submittedValues.name.trim(),
+        phone: submittedValues.phone.trim(),
+        email: submittedValues.email.trim(),
+        location: submittedValues.location.trim(),
+        experience: submittedValues.experience.trim(),
+        specialization: submittedValues.specialization.trim(),
+        currentContext: submittedValues.currentContext.trim(),
+        availability: submittedValues.availability.trim(),
+        candidateNote: submittedValues.note.trim(),
+        stage: 'open',
+        source: 'careers_page',
+        sourcePath: CAREERS_PATH,
+        requestedAt: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      pendingApplicationIdRef.current = null;
+      try {
+        window.sessionStorage.removeItem(PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY);
+      } catch {
+        // Storage may be disabled.
+      }
+
+      trackEvent('career_application_whatsapp_submit', {
+        page_path: CAREERS_PATH,
+        role: 'online_english_teacher',
+        specialization: submittedValues.specialization.toLowerCase().replace(/\s+/g, '_'),
+        application_channel: 'whatsapp',
+        submission_id: applicationRef.id,
+      });
+
+      setSubmitted(true);
+      openWhatsapp();
+    } catch (error) {
+      console.error('[CareersPage] teacher application save failed', error);
+      setSubmitError(
+        'We could not save your application on the website, but WhatsApp is opening with your completed details. Please send the message so our team receives it.',
+      );
+      openWhatsapp();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -433,9 +527,10 @@ function CareerApplicationForm() {
         <Button
           type="submit"
           size="lg"
+          disabled={isSubmitting}
           className="group w-full rounded-2xl bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 px-7 text-white shadow-lg shadow-blue-950/10 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
         >
-          Continue application on WhatsApp
+          {isSubmitting ? 'Saving application...' : 'Continue application on WhatsApp'}
           <Send className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
         </Button>
         <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
@@ -444,7 +539,13 @@ function CareerApplicationForm() {
 
         {submitted ? (
           <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
-            WhatsApp opened with your application details. Review the message, attach any documents you want to share, and send it to Tiny Steps Learning.
+            Your application was saved and WhatsApp opened with your details. Review the message, attach any documents you want to share, and send it to Tiny Steps Learning.
+          </div>
+        ) : null}
+
+        {submitError ? (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+            {submitError}
           </div>
         ) : null}
       </div>
