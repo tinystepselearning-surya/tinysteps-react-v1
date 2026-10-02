@@ -1806,6 +1806,14 @@ function teacherProgressIdentityUnchanged() {
       allow create, update, delete: if false;
     }
 
+    // Monthly AVS review progress is workflow metadata only. Browser clients may
+    // read it for the admin tracker, but all mutations go through the guarded
+    // updateAttendanceValidationMonthlyParentProgress callable.
+    match /attendanceValidationMonthlyParentProgress/{progressId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
     // Changed-session queue is backend-only. It exists solely to avoid polling
     // or rescanning unchanged operational sessions during AVS latest checks.
     match /attendanceValidationDirtySessions/{sessionId} {
