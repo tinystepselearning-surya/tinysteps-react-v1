@@ -529,7 +529,8 @@ const shadowResultFromParity = (
   if (parity.mode === 'mismatch') {
     return {
       shadowOutcome: 'mismatch',
-      shadowReason: `parity_mismatch_${parity.mismatchedTargetKeys.join('_')}`,
+      // Keep aggregate telemetry low-cardinality and free of parent/month identifiers.
+      shadowReason: `parity_mismatch_target_count_${parity.mismatchedTargetKeys.length}`,
     };
   }
   return { shadowOutcome: 'not_evaluable', shadowReason: parity.reason };
@@ -644,6 +645,49 @@ export const processParentClassAttendanceV4Write = async (input: {
       targets,
       nowMs,
     });
+    // Production evidence (30 days / 4,037 events) showed that covered events and
+    // projection-equivalent planner no-ops represented almost half of shadow traffic.
+    // Neither case needs a parent-month classSessions rescan: a covered event is already
+    // represented by the transaction-certified baseline, while a planner no-op has no
+    // effect on the canonical attendance projection.
+    if (preview.mode === 'covered') {
+      const result: ParentClassAttendanceV4ProcessingResult = {
+        liveOutcome: 'noop',
+        liveReason: 'shadow_certified_baseline_already_covers_event',
+        shadowOutcome: 'covered',
+        shadowReason: `authoritative_covered_${preview.targetCount}`,
+        targetCount: targets.length,
+      };
+      await dependencies.recordTelemetry({
+        db: input.db,
+        eventId,
+        sessionId,
+        incrementalEnabled,
+        shadowEnabled,
+        result,
+      });
+      return result;
+    }
+
+    if (preview.mode === 'not_evaluable' && preview.reason === 'incremental_planner_noop') {
+      const result: ParentClassAttendanceV4ProcessingResult = {
+        liveOutcome: 'noop',
+        liveReason: 'shadow_projection_equivalent_event',
+        shadowOutcome: 'not_evaluable',
+        shadowReason: preview.reason,
+        targetCount: targets.length,
+      };
+      await dependencies.recordTelemetry({
+        db: input.db,
+        eventId,
+        sessionId,
+        incrementalEnabled,
+        shadowEnabled,
+        result,
+      });
+      return result;
+    }
+
     const authoritative = await dependencies.authoritativeRecompute({
       db: input.db,
       targets,
