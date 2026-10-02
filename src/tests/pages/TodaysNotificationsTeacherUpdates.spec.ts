@@ -101,7 +101,7 @@ describe('Sessions Management teacher updates UI', () => {
     expect(group.teacherRef).toBe('teacher-doc-current');
     expect(group.teacherName).toBe('Current Teacher');
     expect(group.teacherWhatsappDigits).toBe('919222222222');
-    expect(buildTeacherDailyReminderMessage(group)).toContain('Hello Current Teacher,');
+    expect(buildTeacherDailyReminderMessage(group)).toContain("Hello Current Teacher ma'am,");
   });
 
   it('uses enrollment-aware teacher resolution in the row builder', () => {
@@ -112,6 +112,12 @@ describe('Sessions Management teacher updates UI', () => {
     expect(pageSource).toContain('}, [enrollmentMap, sessions, usersMap]);');
     expect(pageSource).not.toContain(
       "resolvePreferredSessionTeacherRef(\n          session as unknown as Record<string, unknown>,\n          [],",
+    );
+  });
+
+  it('uses the respectful teacher name only for teacher-recipient messages', () => {
+    expect(pageSource).toContain(
+      "type === 'teacher'\n          ? formatRespectfulTeacherName(row.teacherName)\n          : row.teacherName || 'Teacher'",
     );
   });
 
