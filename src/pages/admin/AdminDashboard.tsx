@@ -597,6 +597,11 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
       return;
     }
 
+    if (!isFounderPortal && location.pathname.startsWith('/surya/attendance-validation')) {
+      setSelectedTab('attendance-validation');
+      return;
+    }
+
     if (!isFounderPortal && location.pathname.includes('/surya/analytics')) {
       setSelectedTab('analytics');
       return;
