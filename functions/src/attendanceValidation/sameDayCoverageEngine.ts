@@ -13,6 +13,7 @@ import type {
 
 export const AVS_SAME_DAY_EVIDENCE_CALCULATION_VERSION = 2;
 export const AVS_SAME_DAY_IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+export const AVS_SINGLE_SESSION_INCIDENTAL_PARTICIPANT_SECONDS = 5 * 60;
 
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -196,9 +197,24 @@ function singleSessionLearnerCoverage(
     && group.classifications.has('learner_side'));
 
   if (staffGroups.length > 0) {
-    if (learnerGroups.length === 0) return { intervals: [], ambiguous: false };
-    if (learnerGroups.length === 1) {
-      return { intervals: learnerGroups[0].intervals, ambiguous: false };
+    // A Tiny Steps organizer/admin may briefly join a live class to test
+    // audio/video or support the teacher. Once at least one staff-side
+    // participant is positively recognized, learner-side groups at or below
+    // five minutes cannot satisfy the production >25 minute Present rule and
+    // are treated as incidental noise. Longer extra learner-side groups remain
+    // ambiguous and require review.
+    const materialLearnerGroups = learnerGroups.filter(
+      (group) =>
+        group.seconds > AVS_SINGLE_SESSION_INCIDENTAL_PARTICIPANT_SECONDS,
+    );
+    if (materialLearnerGroups.length === 0) {
+      return { intervals: [], ambiguous: false };
+    }
+    if (materialLearnerGroups.length === 1) {
+      return {
+        intervals: materialLearnerGroups[0].intervals,
+        ambiguous: false,
+      };
     }
     return { intervals: [], ambiguous: true };
   }

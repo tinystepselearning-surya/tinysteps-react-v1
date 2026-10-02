@@ -187,6 +187,50 @@ describe('AV3 enrollment identity bridge', () => {
     expect(result.participantClassifications[2].classification).toBe('other_staff');
   });
 
+  it('recognizes the canonical Teams organizer as staff-side even without a staff-registry entry', () => {
+    const input = evidence();
+    input.attendanceReports[0].participantRecords.push({
+      participantRecordId: 'organizer-record',
+      role: 'Presenter',
+      emailAddressHash: null,
+      identityHints: [
+        {
+          kind: 'user',
+          idHash: hashAttendanceEvidenceValue(input.organizerUserId),
+        },
+      ],
+      microsoftTotalAttendanceInSeconds: 143,
+      rawAttendanceIntervals: [],
+      metrics: {
+        sourceIntervalCount: 1,
+        validIntervalCount: 1,
+        mergedIntervalCount: 1,
+        firstJoinDateTime: '2026-09-16T14:40:00.000Z',
+        lastLeaveDateTime: '2026-09-16T14:42:23.000Z',
+        totalDwellSeconds: 143,
+        scheduledOverlapSeconds: 143,
+        scheduledDwellPercentage: 6.81,
+      },
+    });
+
+    const registryWithoutOrganizer = staffRegistry.filter(
+      (entry) => entry.staffId !== 'admin-priya',
+    );
+    const result = bridgeEnrollmentIdentity(
+      input,
+      registryWithoutOrganizer,
+    );
+
+    expect(result.expectedTeacherPresent).toBe(true);
+    expect(result.learnerSideParticipantCount).toBe(1);
+    expect(result.unexpectedStaffPresent).toBe(false);
+    expect(result.participantClassifications[2]).toEqual({
+      participantRecordId: 'organizer-record',
+      classification: 'other_staff',
+      matchedStaffIds: [],
+    });
+  });
+
   it('requires review if the expected teacher has no registered Microsoft identity', () => {
     const result = bridgeEnrollmentIdentity(evidence(), [
       {
