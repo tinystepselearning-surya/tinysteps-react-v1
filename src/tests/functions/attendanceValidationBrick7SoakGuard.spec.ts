@@ -54,11 +54,14 @@ describe('AVS Brick 7 production soak guardrails', () => {
       expect(summary).not.toContain(forbidden);
     }
 
-    expect(
+    const attendanceValidationCallables =
       callableContract.match(/'[^']+'/g)?.filter((value) =>
         value.includes('AttendanceValidation'),
-      ),
-    ).toHaveLength(5);
+      ) ?? [];
+    expect(attendanceValidationCallables).toHaveLength(6);
+    expect(attendanceValidationCallables).toContain(
+      "'updateAttendanceValidationMonthlyParentProgress'",
+    );
   });
 
   it('derives current re-fetch health from latest case checkpoints', () => {
