@@ -105,10 +105,10 @@ export function parentMonthCloseBillingSnapshot(
     ),
     billedAmount,
   );
-  const dueAmount = Math.min(
-    amount(data.dueAmount ?? data.outstandingAmount ?? totals.dueAmount ?? totals.outstandingAmount),
-    billedAmount,
-  );
+  const rawDue = data.dueAmount ?? data.outstandingAmount ?? totals.dueAmount ?? totals.outstandingAmount;
+  const dueAmount = rawDue == null
+    ? Math.max(billedAmount - settledAmount, 0)
+    : Math.min(amount(rawDue), billedAmount);
   const chargeIds = uniqueSortedStrings(data.chargeIds ?? totals.chargeIds);
   return {
     parentId,
