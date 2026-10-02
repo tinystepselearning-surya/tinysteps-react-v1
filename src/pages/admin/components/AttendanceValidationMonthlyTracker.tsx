@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, ClipboardCheck, Loader2, Search } from 'lucide-react';
+import { ClipboardCheck, Loader2, Search } from 'lucide-react';
 import type { AvsParentOption } from '../../../lib/attendanceValidationParentScope';
 import {
   completedMonthOptions,
@@ -9,7 +9,14 @@ import {
   previousCompletedMonthKey,
   type AvsMonthlyParentProgress,
   type AvsMonthlyParentProgressStatus,
+  type AvsMonthlyParentSessionScope,
 } from '../../../lib/attendanceValidationMonthlyParentProgress';
+import {
+  deriveParentMonthCloseNextAction,
+  parentMonthCloseNextActionLabel,
+  parentMonthClosePaymentLabel,
+  type ParentMonthCloseNextAction,
+} from '../../../lib/parentMonthClose';
 import { callFunction } from '../../../lib/callFunctions';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -35,31 +42,57 @@ interface ProgressMutationResponse {
   completedAt: string | null;
 }
 
-type TrackerFilter = 'all' | AvsMonthlyParentProgressStatus;
+type TrackerFilter =
+  | 'all'
+  | 'attendance_pending'
+  | 'billing_review'
+  | 'ready_to_send'
+  | 'awaiting_payment'
+  | 'partial_payment'
+  | 'closed';
+
 type TrackerScope = 'with_sessions' | 'all_parents';
 
-function formatUpdatedAt(value: string | null): string {
-  if (!value) return '';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '';
-  return new Intl.DateTimeFormat('en-IN', {
-    timeZone: 'Asia/Kolkata',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(parsed);
-}
+const emptyProgress = (
+  parentId: string,
+  monthKey: string,
+  status: Exclude<AvsMonthlyParentProgressStatus, 'not_started'>,
+): AvsMonthlyParentProgress => ({
+  parentId,
+  monthKey,
+  status,
+  updatedAt: null,
+  completedAt: null,
+  billingReviewedAt: null,
+  billingReviewedBy: null,
+  billingReviewedFingerprint: null,
+  invoiceSentAt: null,
+  invoiceSentBy: null,
+  sentBillingFingerprint: null,
+  invoiceSentClassCount: null,
+  invoiceSentBilledAmount: null,
+  invoiceSentDueAmount: null,
+});
 
-function statusLabel(status: AvsMonthlyParentProgressStatus): string {
+function attendanceLabel(status: AvsMonthlyParentProgressStatus): string {
   if (status === 'completed') return 'Completed';
   if (status === 'in_progress') return 'In Progress';
   return 'Not Started';
 }
 
-function statusClass(status: AvsMonthlyParentProgressStatus): string {
+function attendanceClass(status: AvsMonthlyParentProgressStatus): string {
   if (status === 'completed') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
   if (status === 'in_progress') return 'border-amber-200 bg-amber-50 text-amber-700';
   return 'border-slate-200 bg-slate-50 text-slate-600';
+}
+
+function bucketFor(action: ParentMonthCloseNextAction): Exclude<TrackerFilter, 'all'> {
+  if (action === 'review_attendance' || action === 'continue_attendance') return 'attendance_pending';
+  if (action === 'review_billing') return 'billing_review';
+  if (action === 'send_invoice' || action === 'send_revised_invoice') return 'ready_to_send';
+  if (action === 'partial_payment') return 'partial_payment';
+  if (action === 'await_payment') return 'awaiting_payment';
+  return 'closed';
 }
 
 export default function AttendanceValidationMonthlyTracker({
@@ -77,7 +110,8 @@ export default function AttendanceValidationMonthlyTracker({
   );
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, AvsMonthlyParentProgress>>({});
-  const [sessionCountByParent, setSessionCountByParent] = useState<Record<string, number>>({});
+  const [billingByParent, setBillingByParent] =
+    useState<Record<string, AvsMonthlyParentSessionScope>>({});
   const [scope, setScope] = useState<TrackerScope>('with_sessions');
   const [filter, setFilter] = useState<TrackerFilter>('all');
   const [search, setSearch] = useState('');
@@ -88,29 +122,42 @@ export default function AttendanceValidationMonthlyTracker({
   const statusFor = (parentId: string): AvsMonthlyParentProgressStatus =>
     progress[parentId]?.status ?? 'not_started';
 
+  const nextActionFor = (parentId: string): ParentMonthCloseNextAction =>
+    deriveParentMonthCloseNextAction({
+      progress: progress[parentId] ?? { status: 'not_started' },
+      billing: billingByParent[parentId] ?? null,
+    });
+
   const scopedParents = useMemo(() => {
     if (scope === 'all_parents') return parents;
-    const includedIds = new Set(Object.keys(sessionCountByParent));
+    const includedIds = new Set(Object.keys(billingByParent));
     Object.keys(progress).forEach((parentId) => includedIds.add(parentId));
     return parents.filter((parent) => includedIds.has(parent.id));
-  }, [parents, progress, scope, sessionCountByParent]);
+  }, [billingByParent, parents, progress, scope]);
 
   const summary = useMemo(() => {
-    const counts = { not_started: 0, in_progress: 0, completed: 0 };
+    const counts = {
+      attendance_pending: 0,
+      billing_review: 0,
+      ready_to_send: 0,
+      awaiting_payment: 0,
+      partial_payment: 0,
+      closed: 0,
+    };
     scopedParents.forEach((parent) => {
-      counts[progress[parent.id]?.status ?? 'not_started'] += 1;
+      counts[bucketFor(nextActionFor(parent.id))] += 1;
     });
     return counts;
-  }, [progress, scopedParents]);
+  }, [billingByParent, progress, scopedParents]);
 
   const visibleParents = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return scopedParents.filter((parent) => {
-      const status = progress[parent.id]?.status ?? 'not_started';
-      if (filter !== 'all' && status !== filter) return false;
+      const bucket = bucketFor(nextActionFor(parent.id));
+      if (filter !== 'all' && bucket !== filter) return false;
       return !needle || parent.label.toLowerCase().includes(needle);
     });
-  }, [filter, progress, scopedParents, search]);
+  }, [billingByParent, filter, progress, scopedParents, search]);
 
   const loadTracker = useCallback(async () => {
     setLoading(true);
@@ -122,12 +169,12 @@ export default function AttendanceValidationMonthlyTracker({
         loadAvsMonthlyParentsWithSessions(selectedMonth),
       ]);
       setProgress(Object.fromEntries(saved.map((item) => [item.parentId, item])));
-      setSessionCountByParent(Object.fromEntries(
-        parentsWithSessions.map((item) => [item.parentId, item.sessionCount]),
+      setBillingByParent(Object.fromEntries(
+        parentsWithSessions.map((item) => [item.parentId, item]),
       ));
       setLoadedMonth(selectedMonth);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load monthly tracker.');
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load monthly close tracker.');
     } finally {
       setLoading(false);
     }
@@ -159,8 +206,7 @@ export default function AttendanceValidationMonthlyTracker({
           delete next[parentId];
         } else {
           next[parentId] = {
-            parentId,
-            monthKey: selectedMonth,
+            ...(current[parentId] ?? emptyProgress(parentId, selectedMonth, result.status)),
             status: result.status,
             updatedAt: result.updatedAt,
             completedAt: result.completedAt,
@@ -172,7 +218,7 @@ export default function AttendanceValidationMonthlyTracker({
     } catch (mutationError) {
       setError(mutationError instanceof Error
         ? mutationError.message
-        : 'Unable to update monthly validation status.');
+        : 'Unable to update monthly attendance review status.');
       return false;
     } finally {
       setSavingParentId(null);
@@ -196,19 +242,18 @@ export default function AttendanceValidationMonthlyTracker({
         <div>
           <div className="flex items-center gap-2">
             <ClipboardCheck className="h-5 w-5 text-sky-700" aria-hidden="true" />
-            <h3 className="text-base font-semibold text-slate-900">
-              Monthly Parent Validation Tracker
-            </h3>
+            <h3 className="text-base font-semibold text-slate-900">Monthly Close Tracker</h3>
           </div>
           <p className="mt-1 text-xs text-slate-500">
-            Track review progress by parent and month. Not Started is implicit and creates no Firestore record.
+            Attendance, billing, invoice communication, and payment are managed as one parent-month workflow.
           </p>
         </div>
+
         <div className="flex flex-wrap items-end gap-2">
           <label className="space-y-1 text-xs font-medium text-slate-600">
             <span>Month</span>
             <select
-              aria-label="Validation tracker month"
+              aria-label="Month close tracker month"
               className="h-10 min-w-[180px] rounded-md border bg-white px-3"
               value={selectedMonth}
               disabled={disabled || loading || savingParentId !== null}
@@ -216,7 +261,7 @@ export default function AttendanceValidationMonthlyTracker({
                 setSelectedMonth(event.target.value);
                 setLoadedMonth(null);
                 setProgress({});
-                setSessionCountByParent({});
+                setBillingByParent({});
                 setScope('with_sessions');
                 setFilter('all');
                 setError(null);
@@ -227,10 +272,11 @@ export default function AttendanceValidationMonthlyTracker({
               ))}
             </select>
           </label>
+
           <label className="space-y-1 text-xs font-medium text-slate-600">
             <span>Parents</span>
             <select
-              aria-label="Validation tracker parent scope"
+              aria-label="Month close tracker parent scope"
               className="h-10 min-w-[190px] rounded-md border bg-white px-3"
               value={scope}
               disabled={disabled || loading || savingParentId !== null}
@@ -243,6 +289,7 @@ export default function AttendanceValidationMonthlyTracker({
               <option value="all_parents">All parents</option>
             </select>
           </label>
+
           <Button
             type="button"
             variant="outline"
@@ -268,9 +315,12 @@ export default function AttendanceValidationMonthlyTracker({
           <div className="mt-4 flex flex-wrap gap-2">
             {([
               ['all', 'All', scopedParents.length],
-              ['not_started', 'Not Started', summary.not_started],
-              ['in_progress', 'In Progress', summary.in_progress],
-              ['completed', 'Completed', summary.completed],
+              ['attendance_pending', 'Attendance pending', summary.attendance_pending],
+              ['billing_review', 'Billing review', summary.billing_review],
+              ['ready_to_send', 'Ready to send', summary.ready_to_send],
+              ['awaiting_payment', 'Awaiting payment', summary.awaiting_payment],
+              ['partial_payment', 'Partial', summary.partial_payment],
+              ['closed', 'Closed', summary.closed],
             ] as Array<[TrackerFilter, string, number]>).map(([value, label, count]) => (
               <button
                 key={value}
@@ -290,14 +340,14 @@ export default function AttendanceValidationMonthlyTracker({
           {scope === 'with_sessions' && (
             <p className="mt-3 text-xs text-slate-500">
               Showing {scopedParents.length} parents with sessions in {formatMonthKey(selectedMonth)}.
-              This scope uses the canonical parent-month attendance read model and does not scan raw class sessions.
+              Attendance and finance status reuse the existing canonical parent-month read model.
             </p>
           )}
 
-          <div className="mt-3 relative">
+          <div className="relative mt-3">
             <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
             <Input
-              aria-label="Search monthly tracker parents"
+              aria-label="Search monthly close parents"
               className="pl-9"
               placeholder="Search parent..."
               value={search}
@@ -305,22 +355,35 @@ export default function AttendanceValidationMonthlyTracker({
             />
           </div>
 
-          <div className="mt-3 max-h-[430px] overflow-auto rounded-lg border">
-            <table className="w-full min-w-[720px] text-sm">
+          <div className="mt-3 max-h-[470px] overflow-auto rounded-lg border">
+            <table className="w-full min-w-[1060px] text-sm">
               <thead className="sticky top-0 bg-slate-50 text-left text-xs text-slate-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">Parent</th>
-                  <th className="px-3 py-2 font-medium">Sessions</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                  <th className="px-3 py-2 font-medium">Updated</th>
-                  <th className="px-3 py-2 text-right font-medium">Action</th>
+                  <th className="px-3 py-2 font-medium">Classes</th>
+                  <th className="px-3 py-2 font-medium">Attendance</th>
+                  <th className="px-3 py-2 font-medium">Billing</th>
+                  <th className="px-3 py-2 font-medium">Invoice</th>
+                  <th className="px-3 py-2 font-medium">Payment</th>
+                  <th className="px-3 py-2 font-medium">Next action</th>
+                  <th className="px-3 py-2 text-right font-medium">Open</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleParents.map((parent) => {
                   const status = statusFor(parent.id);
                   const saved = progress[parent.id];
+                  const billing = billingByParent[parent.id] ?? null;
+                  const nextAction = nextActionFor(parent.id);
+                  const billingCurrent = status === 'completed'
+                    && !!billing
+                    && !!saved?.billingReviewedAt
+                    && saved.billingReviewedFingerprint === billing.fingerprint;
+                  const invoiceCurrent = billingCurrent
+                    && !!saved?.invoiceSentAt
+                    && saved.sentBillingFingerprint === billing?.fingerprint;
                   const saving = savingParentId === parent.id;
+
                   return (
                     <tr key={parent.id} className="border-t">
                       <td className="px-3 py-2.5 font-medium text-slate-800">
@@ -333,18 +396,31 @@ export default function AttendanceValidationMonthlyTracker({
                           {parent.label}
                         </button>
                       </td>
-                      <td className="px-3 py-2.5 text-sm tabular-nums text-slate-600">
-                        {sessionCountByParent[parent.id] ?? '—'}
+                      <td className="px-3 py-2.5 tabular-nums text-slate-600">
+                        {billing?.billedClassCount || billing?.sessionCount || '—'}
                       </td>
                       <td className="px-3 py-2.5">
-                        <span className={`rounded-full border px-2 py-1 text-xs font-medium ${statusClass(status)}`}>
-                          {statusLabel(status)}
+                        <span className={`rounded-full border px-2 py-1 text-xs font-medium ${attendanceClass(status)}`}>
+                          {attendanceLabel(status)}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-xs text-slate-500">
-                        {saved?.completedAt
-                          ? `Completed ${formatUpdatedAt(saved.completedAt)}`
-                          : formatUpdatedAt(saved?.updatedAt ?? null) || '—'}
+                      <td className="px-3 py-2.5 text-xs text-slate-600">
+                        {status !== 'completed' ? '—' : billingCurrent ? 'Reviewed' : 'Review'}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-slate-600">
+                        {status !== 'completed' || !billingCurrent
+                          ? '—'
+                          : invoiceCurrent
+                            ? 'Sent'
+                            : saved?.invoiceSentAt
+                              ? 'Revised needed'
+                              : 'Ready'}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-slate-600">
+                        {status === 'completed' ? parentMonthClosePaymentLabel(billing) : '—'}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs font-medium text-slate-700">
+                        {parentMonthCloseNextActionLabel(nextAction)}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <Button
@@ -365,9 +441,10 @@ export default function AttendanceValidationMonthlyTracker({
                     </tr>
                   );
                 })}
+
                 {visibleParents.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-500">
+                    <td colSpan={8} className="px-3 py-8 text-center text-sm text-slate-500">
                       No parents match this filter.
                     </td>
                   </tr>
@@ -376,9 +453,9 @@ export default function AttendanceValidationMonthlyTracker({
             </table>
           </div>
 
-          <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Starting a parent moves the review to In Progress. Complete or reopen the review from the parent review page.
+          <p className="mt-2 text-xs text-slate-500">
+            Only essential human decisions are stored: attendance reviewed, billing reviewed, and invoice sent.
+            Payment and close status are derived from existing finance data.
           </p>
         </>
       )}
