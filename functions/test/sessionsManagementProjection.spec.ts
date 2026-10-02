@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   applySessionsManagementProjectionDeltas,
   isOperationalSessionsManagementEnrollment,
+  shouldRefreshSessionsManagementEnrollmentProjection,
+  shouldRefreshSessionsManagementSessionProjection,
   type SessionsManagementProjectionDelta,
   type SessionsManagementProjectionSnapshot,
 } from '../src/helpers/sessionsManagementProjection';
@@ -179,6 +181,81 @@ describe('Sessions Management live delta projection', () => {
     expect(projected.enrollments.map((row) => row.id)).toEqual([
       'enrollment-paused',
     ]);
+  });
+
+  it('skips finance-only classSession writes while preserving operational changes', () => {
+    const before = {
+      status: 'completed',
+      date: '2026-09-21',
+      attendance: { 'kid-1': { status: 'present' } },
+      updatedAt: 'before',
+    };
+    const financeOnlyAfter = {
+      ...before,
+      updatedAt: 'after',
+      revenueAccrued: true,
+      accruedAmount: 400,
+      accruedMonthKey: '2026-09',
+      accruedAt: 'after',
+      billingRateSnapshot: 400,
+      teacherPayRateSnapshot: 175,
+      financialTermsSnapshotVersion: 1,
+      financialTermsCurrency: 'INR',
+      financialTermsCapturedAt: 'after',
+      financialTermsSnapshotSource: 'session_creation_or_first_finance_touch',
+    };
+
+    expect(
+      shouldRefreshSessionsManagementSessionProjection(before, financeOnlyAfter),
+    ).toBe(false);
+    expect(
+      shouldRefreshSessionsManagementSessionProjection(before, {
+        ...financeOnlyAfter,
+        status: 'cancelled',
+      }),
+    ).toBe(true);
+    expect(
+      shouldRefreshSessionsManagementSessionProjection(before, {
+        ...financeOnlyAfter,
+        parentNotified: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('skips finance-only enrollment metrics while preserving scheduling changes', () => {
+    const before = {
+      status: 'active',
+      teacherId: 'teacher-1',
+      updatedAt: 'before',
+    };
+    const financeOnlyAfter = {
+      ...before,
+      updatedAt: 'after',
+      metrics: {
+        completedSessionsCount: 8,
+        expectedRevenueAccrued: 3200,
+        lastCompletedAt: 'after',
+      },
+    };
+
+    expect(
+      shouldRefreshSessionsManagementEnrollmentProjection(before, financeOnlyAfter),
+    ).toBe(false);
+    expect(
+      shouldRefreshSessionsManagementEnrollmentProjection(before, {
+        ...financeOnlyAfter,
+        teacherId: 'teacher-2',
+      }),
+    ).toBe(true);
+    expect(
+      shouldRefreshSessionsManagementEnrollmentProjection(before, {
+        ...financeOnlyAfter,
+        metrics: {
+          ...financeOnlyAfter.metrics,
+          operationalFlag: true,
+        },
+      }),
+    ).toBe(true);
   });
 
   it('keeps legacy operational enrollment aliases aligned with the admin read model', () => {
