@@ -11,6 +11,10 @@ import {
   type SessionsManagementProjectionDelta,
   type SessionsManagementProjectionRows,
 } from './helpers/sessionsManagementProjection';
+import {
+  hasSessionsManagementEnrollmentProjectionChange,
+  hasSessionsManagementSessionProjectionChange,
+} from './helpers/sessionsManagementProjectionRelevance';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -953,13 +957,35 @@ export const onSessionsManagementEnrollmentWrite = onDocumentWritten(
     if (!entityId) return;
     const eventTimeMs = projectionEventTimeMs(event.time);
     const eventId = String(event.id || `enrollment:${entityId}:${eventTimeMs}`);
+    const beforeExists = change.before.exists;
     const afterExists = change.after.exists;
+    const beforeData = beforeExists
+      ? (change.before.data() || {}) as Record<string, unknown>
+      : null;
     const afterData = afterExists
       ? (change.after.data() || {}) as Record<string, unknown>
       : null;
+    const beforeOperational = Boolean(
+      beforeData && isOperationalEnrollmentForSnapshot(beforeData),
+    );
+    const afterOperational = Boolean(
+      afterData && isOperationalEnrollmentForSnapshot(afterData),
+    );
+
+    // Revenue accrual updates enrollment.metrics and updatedAt after a class completes.
+    // Those finance-only writes do not change Sessions Management, so do not create a
+    // projection delta/revision (which would also wake the admin snapshot listener).
+    if (!beforeOperational && !afterOperational) return;
+    if (
+      beforeOperational &&
+      afterOperational &&
+      !hasSessionsManagementEnrollmentProjectionChange(beforeData, afterData)
+    ) {
+      return;
+    }
 
     let delta: PendingProjectionDelta;
-    if (afterExists && afterData && isOperationalEnrollmentForSnapshot(afterData)) {
+    if (afterExists && afterData && afterOperational) {
       const row = rowFromSnapshot(change.after);
       const related = await collectRelatedRows([], [row]);
       delta = {
@@ -1022,6 +1048,19 @@ export const onSessionsManagementClassSessionWrite = onDocumentWritten(
     );
 
     if (!beforeRelevant && !afterRelevant) return;
+
+    // Completion finance writes (revenue accrual + immutable rate snapshot metadata)
+    // can immediately follow the operational status/attendance write. They do not
+    // change the Sessions Management UI contract, so suppress the redundant delta.
+    if (
+      beforeRelevant &&
+      afterRelevant &&
+      beforeData &&
+      afterData &&
+      !hasSessionsManagementSessionProjectionChange(beforeData, afterData)
+    ) {
+      return;
+    }
 
     let delta: PendingProjectionDelta;
     if (afterRelevant && change.after.exists) {
