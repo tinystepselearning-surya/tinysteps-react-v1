@@ -3,12 +3,14 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
+  collectionGroup: vi.fn(),
   getDocs: vi.fn(),
   limit: vi.fn(),
   query: vi.fn(),
   where: vi.fn(),
 }));
 import {
+  avsMonthlyReadModelHasSessions,
   completedMonthOptions,
   formatMonthKey,
   monthDateRange,
@@ -37,5 +39,35 @@ describe('attendance validation monthly tracker month helpers', () => {
     expect(completedMonthOptions(new Date('2026-12-10T00:00:00.000Z')))
       .toEqual(['2026-11', '2026-10', '2026-09']);
     expect(formatMonthKey('2026-09')).toBe('September 2026');
+  });
+
+  it('identifies parent-month read models with real session coverage', () => {
+    expect(avsMonthlyReadModelHasSessions({
+      attendance: {
+        schemaVersion: 3,
+        modelType: 'class_attendance_v3',
+        sourceSessionCount: 2,
+        totals: { totalSessions: 2, total: 2 },
+      },
+    })).toBe(true);
+    expect(avsMonthlyReadModelHasSessions({
+      attendance: {
+        schemaVersion: 1,
+        modelType: 'attendance_v1',
+        totals: { total: 1 },
+      },
+    })).toBe(true);
+    expect(avsMonthlyReadModelHasSessions({
+      attendance: {
+        schemaVersion: 3,
+        modelType: 'class_attendance_v3',
+        sourceSessionCount: 0,
+        totals: { totalSessions: 0, total: 0 },
+      },
+    })).toBe(false);
+    expect(avsMonthlyReadModelHasSessions({
+      billedClassCount: 8,
+      dueAmount: 1200,
+    })).toBe(false);
   });
 });

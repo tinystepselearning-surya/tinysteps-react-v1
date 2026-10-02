@@ -1,4 +1,4 @@
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
+import { collection, collectionGroup, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export const AVS_MONTHLY_PARENT_PROGRESS_COLLECTION =
@@ -88,6 +88,44 @@ function timestampIso(value: unknown): string | null {
   if (typeof candidate.toDate !== 'function') return null;
   const date = candidate.toDate();
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+export function avsMonthlyReadModelHasSessions(data: Record<string, unknown>): boolean {
+  const attendance = data.attendance;
+  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return false;
+  const attendanceRow = attendance as Record<string, unknown>;
+  const sourceCount = Number(
+    attendanceRow.sourceSessionCount ?? attendanceRow.sourceSessionRecords,
+  );
+  if (Number.isFinite(sourceCount) && sourceCount > 0) return true;
+  const totals = attendanceRow.totals;
+  if (!totals || typeof totals !== 'object' || Array.isArray(totals)) return false;
+  const totalsRow = totals as Record<string, unknown>;
+  const totalSessions = Number(totalsRow.totalSessions ?? totalsRow.total);
+  return Number.isFinite(totalSessions) && totalSessions > 0;
+}
+
+export async function loadAvsMonthlyParentsWithSessions(
+  selectedMonth: string,
+): Promise<string[]> {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+    throw new Error('Invalid attendance validation month.');
+  }
+  const snapshot = await getDocs(query(
+    collectionGroup(db, 'months'),
+    where('monthKey', '==', selectedMonth),
+    limit(2001),
+  ));
+  if (snapshot.docs.length > 2000) {
+    throw new Error('Monthly parent read-model scope exceeds the 2,000-record safety bound.');
+  }
+  const parentIds = new Set<string>();
+  snapshot.docs.forEach((docSnapshot) => {
+    const data = docSnapshot.data() as Record<string, unknown>;
+    const parentId = typeof data.parentId === 'string' ? data.parentId.trim() : '';
+    if (parentId && avsMonthlyReadModelHasSessions(data)) parentIds.add(parentId);
+  });
+  return Array.from(parentIds);
 }
 
 export async function loadAvsMonthlyParentProgress(

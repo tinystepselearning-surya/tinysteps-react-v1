@@ -5,6 +5,7 @@ import {
   completedMonthOptions,
   formatMonthKey,
   loadAvsMonthlyParentProgress,
+  loadAvsMonthlyParentsWithSessions,
   monthDateRange,
   previousCompletedMonthKey,
   type AvsMonthlyParentProgress,
@@ -36,6 +37,7 @@ interface ProgressMutationResponse {
 }
 
 type TrackerFilter = 'all' | AvsMonthlyParentProgressStatus;
+type TrackerScope = 'with_sessions' | 'all_parents';
 
 function formatUpdatedAt(value: string | null): string {
   if (!value) return '';
@@ -73,6 +75,8 @@ export default function AttendanceValidationMonthlyTracker({
   );
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, AvsMonthlyParentProgress>>({});
+  const [sessionParentIds, setSessionParentIds] = useState<Set<string>>(new Set());
+  const [scope, setScope] = useState<TrackerScope>('with_sessions');
   const [filter, setFilter] = useState<TrackerFilter>('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,32 +86,41 @@ export default function AttendanceValidationMonthlyTracker({
   const statusFor = (parentId: string): AvsMonthlyParentProgressStatus =>
     progress[parentId]?.status ?? 'not_started';
 
+  const scopedParents = useMemo(() => {
+    if (scope === 'all_parents') return parents;
+    const includedIds = new Set(sessionParentIds);
+    Object.keys(progress).forEach((parentId) => includedIds.add(parentId));
+    return parents.filter((parent) => includedIds.has(parent.id));
+  }, [parents, progress, scope, sessionParentIds]);
+
   const summary = useMemo(() => {
     const counts = { not_started: 0, in_progress: 0, completed: 0 };
-    parents.forEach((parent) => {
+    scopedParents.forEach((parent) => {
       counts[progress[parent.id]?.status ?? 'not_started'] += 1;
     });
     return counts;
-  }, [parents, progress]);
+  }, [progress, scopedParents]);
 
   const visibleParents = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return parents.filter((parent) => {
+    return scopedParents.filter((parent) => {
       const status = progress[parent.id]?.status ?? 'not_started';
       if (filter !== 'all' && status !== filter) return false;
       return !needle || parent.label.toLowerCase().includes(needle);
     });
-  }, [filter, parents, progress, search]);
+  }, [filter, progress, scopedParents, search]);
 
   const loadTracker = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [, saved] = await Promise.all([
+      const [, saved, parentsWithSessions] = await Promise.all([
         loadParents(),
         loadAvsMonthlyParentProgress(selectedMonth),
+        loadAvsMonthlyParentsWithSessions(selectedMonth),
       ]);
       setProgress(Object.fromEntries(saved.map((item) => [item.parentId, item])));
+      setSessionParentIds(new Set(parentsWithSessions));
       setLoadedMonth(selectedMonth);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load monthly tracker.');
@@ -195,6 +208,8 @@ export default function AttendanceValidationMonthlyTracker({
                 setSelectedMonth(event.target.value);
                 setLoadedMonth(null);
                 setProgress({});
+                setSessionParentIds(new Set());
+                setScope('with_sessions');
                 setFilter('all');
                 setError(null);
               }}
@@ -202,6 +217,22 @@ export default function AttendanceValidationMonthlyTracker({
               {monthOptions.map((value) => (
                 <option key={value} value={value}>{formatMonthKey(value)}</option>
               ))}
+            </select>
+          </label>
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            <span>Parents</span>
+            <select
+              aria-label="Validation tracker parent scope"
+              className="h-10 min-w-[190px] rounded-md border bg-white px-3"
+              value={scope}
+              disabled={disabled || loading || savingParentId !== null}
+              onChange={(event) => {
+                setScope(event.target.value as TrackerScope);
+                setFilter('all');
+              }}
+            >
+              <option value="with_sessions">With sessions this month</option>
+              <option value="all_parents">All parents</option>
             </select>
           </label>
           <Button
@@ -228,7 +259,7 @@ export default function AttendanceValidationMonthlyTracker({
         <>
           <div className="mt-4 flex flex-wrap gap-2">
             {([
-              ['all', 'All', parents.length],
+              ['all', 'All', scopedParents.length],
               ['not_started', 'Not Started', summary.not_started],
               ['in_progress', 'In Progress', summary.in_progress],
               ['completed', 'Completed', summary.completed],
@@ -247,6 +278,13 @@ export default function AttendanceValidationMonthlyTracker({
               </button>
             ))}
           </div>
+
+          {scope === 'with_sessions' && (
+            <p className="mt-3 text-xs text-slate-500">
+              Showing {scopedParents.length} parents with sessions in {formatMonthKey(selectedMonth)}.
+              This scope uses the canonical parent-month attendance read model and does not scan raw class sessions.
+            </p>
+          )}
 
           <div className="mt-3 relative">
             <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-slate-400" />
