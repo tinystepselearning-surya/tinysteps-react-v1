@@ -276,6 +276,139 @@ describe('parent class-attendance Brick 1E V4 wiring', () => {
     });
   });
 
+  it('skips the authoritative rescan when the certified baseline already covers the event', async () => {
+    let authoritativeCalls = 0;
+    let v3Calls = 0;
+    const result = await processParentClassAttendanceV4Write({
+      db: {} as admin.firestore.Firestore,
+      eventId: 'event-shadow-covered',
+      sessionId: 'session-1',
+      eventUpdateTime: 2_000,
+      before: scheduled,
+      after: completed,
+      incrementalEnabled: false,
+      shadowEnabled: true,
+      nowMs: NOW,
+      dependencies: {
+        shadowPreview: async () => ({ mode: 'covered', targetCount: 1 }),
+        authoritativeRecompute: async () => {
+          authoritativeCalls += 1;
+          return { mode: 'fallback', reason: 'unexpected' };
+        },
+        v3RecomputeTarget: async () => {
+          v3Calls += 1;
+          return noOpV3Recompute();
+        },
+        recordTelemetry: noOpTelemetry,
+      },
+    });
+
+    expect(authoritativeCalls).toBe(0);
+    expect(v3Calls).toBe(0);
+    expect(result).toMatchObject({
+      liveOutcome: 'noop',
+      liveReason: 'shadow_certified_baseline_already_covers_event',
+      shadowOutcome: 'covered',
+      shadowReason: 'authoritative_covered_1',
+      targetCount: 1,
+    });
+  });
+
+  it('skips the authoritative rescan when the incremental planner proves the event is projection-equivalent', async () => {
+    let authoritativeCalls = 0;
+    let v3Calls = 0;
+    const result = await processParentClassAttendanceV4Write({
+      db: {} as admin.firestore.Firestore,
+      eventId: 'event-shadow-noop',
+      sessionId: 'session-1',
+      eventUpdateTime: 2_000,
+      before: scheduled,
+      after: completed,
+      incrementalEnabled: false,
+      shadowEnabled: true,
+      nowMs: NOW,
+      dependencies: {
+        shadowPreview: async () => ({
+          mode: 'not_evaluable',
+          reason: 'incremental_planner_noop',
+        }),
+        authoritativeRecompute: async () => {
+          authoritativeCalls += 1;
+          return { mode: 'fallback', reason: 'unexpected' };
+        },
+        v3RecomputeTarget: async () => {
+          v3Calls += 1;
+          return noOpV3Recompute();
+        },
+        recordTelemetry: noOpTelemetry,
+      },
+    });
+
+    expect(authoritativeCalls).toBe(0);
+    expect(v3Calls).toBe(0);
+    expect(result).toMatchObject({
+      liveOutcome: 'noop',
+      liveReason: 'shadow_projection_equivalent_event',
+      shadowOutcome: 'not_evaluable',
+      shadowReason: 'incremental_planner_noop',
+      targetCount: 1,
+    });
+  });
+
+  it('records parity mismatches without parent/month identifiers in aggregate telemetry keys', async () => {
+    const baseline = certifiedReadModel({ sessions: [scheduled], commitMs: 1_000 });
+    let telemetryResult: { shadowOutcome: string; shadowReason?: string } | null = null;
+
+    const result = await processParentClassAttendanceV4Write({
+      db: {} as admin.firestore.Firestore,
+      eventId: 'event-shadow-mismatch',
+      sessionId: 'session-1',
+      eventUpdateTime: 2_000,
+      before: scheduled,
+      after: completed,
+      incrementalEnabled: false,
+      shadowEnabled: true,
+      nowMs: NOW,
+      dependencies: {
+        shadowPreview: async () => ({
+          mode: 'candidate',
+          baselines: [{
+            target: { parentId: 'parent-1', monthKey: '2026-09' },
+            readModel: baseline,
+          }],
+        }),
+        authoritativeRecompute: async () => ({
+          mode: 'certified',
+          baselines: [{
+            target: { parentId: 'parent-1', monthKey: '2026-09' },
+            projection: buildParentMonthClassAttendanceProjection([scheduled], '2026-09', NOW),
+            revisionAfter: 2,
+            baselineEpochAfter: 2,
+            sourceDocumentsRead: 1,
+          }],
+        }),
+        v3RecomputeTarget: async () => noOpV3Recompute(),
+        recordTelemetry: async ({ result: row }) => {
+          telemetryResult = {
+            shadowOutcome: row.shadowOutcome,
+            shadowReason: row.shadowReason,
+          };
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      shadowOutcome: 'mismatch',
+      shadowReason: 'parity_mismatch_target_count_1',
+    });
+    expect(telemetryResult).toEqual({
+      shadowOutcome: 'mismatch',
+      shadowReason: 'parity_mismatch_target_count_1',
+    });
+    expect(result.shadowReason).not.toContain('parent-1');
+    expect(result.shadowReason).not.toContain('2026-09');
+  });
+
   it('certifies a first shadow baseline even when the prior baseline is not yet evaluable', async () => {
     let authoritativeCalls = 0;
     const result = await processParentClassAttendanceV4Write({
