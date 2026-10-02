@@ -469,7 +469,13 @@ const getEnrollmentParentRefs = (enrollmentLike: Record<string, any> | undefined
 const getEnrollmentTeacherRefs = (enrollmentLike: Record<string, any> | undefined): string[] => {
   if (!enrollmentLike) return [];
   const fromIds = Array.isArray(enrollmentLike.teacherIds) ? enrollmentLike.teacherIds : [];
-  const fromSingles = [enrollmentLike.teacherId];
+  const fromSingles = [
+    enrollmentLike.teacherId,
+    enrollmentLike.assignedTeacherId,
+    enrollmentLike.primaryTeacherId,
+    enrollmentLike.teacherUid,
+    enrollmentLike.teacher_id,
+  ];
   return Array.from(
     new Set(
       // Canonical enrollment ownership must win over stale legacy aliases after reassignment.
@@ -508,6 +514,11 @@ const isCountryCodeInputValid = (value: string): boolean => {
 
 const digitsOnly = (value: string): string => {
   return String(value || '').replace(/\D/g, '');
+};
+
+const isValidWhatsAppDigits = (value: string): boolean => {
+  const length = digitsOnly(value).length;
+  return length >= 8 && length <= 15;
 };
 
 const looksLikeInternationalWithPlus = (value: string): boolean => {
@@ -590,15 +601,15 @@ const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {
     const builtDigits = `${digitsOnly(countryCode)}${phoneDigits}`;
     const whatsappDigits = whatsappE164Digits || builtDigits;
     return {
-      status: whatsappDigits.length >= 8 ? 'ok' : 'missing',
+      status: isValidWhatsAppDigits(whatsappDigits) ? 'ok' : 'missing',
       display: `${countryCode} ${phoneDigits}`,
-      whatsappDigits: whatsappDigits.length >= 8 ? whatsappDigits : '',
+      whatsappDigits: isValidWhatsAppDigits(whatsappDigits) ? whatsappDigits : '',
       editCountryCode: countryCode,
       editPhone: phoneDigits,
     };
   }
 
-  if (whatsappE164Digits.length >= 8) {
+  if (isValidWhatsAppDigits(whatsappE164Digits)) {
     const inferredCode = inferCountryCodeFromInternationalDigits(whatsappE164Digits);
     return {
       status: 'ok',
@@ -683,7 +694,7 @@ const resolveCountryCodeFromUser = (userLike: UserDoc | undefined): string => {
   if (structuredCountryCode) return structuredCountryCode;
 
   const whatsappE164Digits = digitsOnly(String(userLike?.whatsappE164 || ''));
-  if (whatsappE164Digits.length >= 8) {
+  if (isValidWhatsAppDigits(whatsappE164Digits)) {
     const inferred = inferCountryCodeFromInternationalDigits(whatsappE164Digits);
     if (inferred) return inferred;
   }
@@ -1528,9 +1539,11 @@ export default function TodaysNotifications() {
         const classTime = formatSessionTime(session);
         const statusLabel = String(session.status || '').trim();
         const parentRef = getPrimaryParentId(session);
+        const enrollmentId = normalizeLookupId(session.enrollmentId);
+        const enrollment = enrollmentId ? enrollmentMap[enrollmentId] : undefined;
         const teacherRef = resolvePreferredSessionTeacherRef(
           session as unknown as Record<string, unknown>,
-          [],
+          getEnrollmentTeacherRefs(enrollment),
         );
         const parentUserResolved = parentRef ? usersMap[parentRef] : undefined;
         const teacherUserResolved = teacherRef ? usersMap[teacherRef] : undefined;
@@ -1634,7 +1647,7 @@ export default function TodaysNotifications() {
         };
       })
       .filter((row): row is any => Boolean(row));
-  }, [sessions, usersMap]);
+  }, [enrollmentMap, sessions, usersMap]);
 
   const teacherDailyGroups = useMemo(
     () => buildTeacherDailyReminderGroups(rows, activeReminderDateKey),
