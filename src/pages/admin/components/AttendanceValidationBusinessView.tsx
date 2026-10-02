@@ -53,6 +53,7 @@ export interface AttendanceValidationBusinessCase {
 
 interface Props {
   cases: AttendanceValidationBusinessCase[];
+  returnTo?: string;
   onRecheck?: (item: AttendanceValidationBusinessCase) => Promise<void>;
   onRefetch?: (item: AttendanceValidationBusinessCase) => Promise<void>;
   onVerify?: (item: AttendanceValidationBusinessCase, reason: string) => Promise<void>;
@@ -121,7 +122,7 @@ function teacherFilterKey(
   return null;
 }
 
-export default function AttendanceValidationBusinessView({ cases, onRecheck, onRefetch, onVerify }: Props) {
+export default function AttendanceValidationBusinessView({ cases, returnTo, onRecheck, onRefetch, onVerify }: Props) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] =
     useState<OperatorBusinessOutcome>('verified');
@@ -235,6 +236,7 @@ export default function AttendanceValidationBusinessView({ cases, onRecheck, onR
     params.set('kidId', item.kidId);
     if (item.enrollmentId) params.set('enrollmentId', item.enrollmentId);
     params.set('newStatus', newStatus);
+    if (returnTo) params.set('avsReturn', returnTo);
     navigate(`/surya?${params.toString()}`);
   };
 
