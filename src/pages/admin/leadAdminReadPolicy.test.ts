@@ -28,6 +28,9 @@ describe('Leads admin read/write guardrails', () => {
     expect(source).toContain('Enquiry from');
     expect(source).toContain('Enquiry to');
     expect(source).toContain('The workspace opens on Today and fetches only that enquiry range.');
+    expect(source).toContain('Apply filter');
+    expect(source).toContain('select Apply filter to fetch that range.');
+    expect(source).toContain('reloadPage(true)');
     expect(source).toContain('Clearing both custom dates returns to Today.');
     expect(source).toContain('Enquired {formatUpdated(row.createdAtMs)}');
     expect(source).toContain('Updated {formatUpdated(row.updatedAtMs)}');

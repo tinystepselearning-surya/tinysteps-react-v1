@@ -354,6 +354,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [monthFilter, setMonthFilter] = useState('today');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [appliedRange, setAppliedRange] = useState({
+    monthFilter: 'today',
+    dateFrom: '',
+    dateTo: '',
+  });
   const [demos, setDemos] = useState<DemoSession[]>([]);
   const [demosLoaded, setDemosLoaded] = useState(false);
   const [demoPhones, setDemoPhones] = useState<Record<string, string>>({});
@@ -372,19 +377,19 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
 
   const serverDateRange = useMemo(() => {
-    if (monthFilter === 'today') {
+    if (appliedRange.monthFilter === 'today') {
       const today = todayDateInputIST();
       return { fromMs: dateBoundaryMs(today), toMs: dateBoundaryMs(today, true) };
     }
-    if (monthFilter === 'all') return { fromMs: 0, toMs: 0 };
-    if (monthFilter === 'custom') {
+    if (appliedRange.monthFilter === 'all') return { fromMs: 0, toMs: 0 };
+    if (appliedRange.monthFilter === 'custom') {
       return {
-        fromMs: dateBoundaryMs(dateFrom),
-        toMs: dateBoundaryMs(dateTo, true),
+        fromMs: dateBoundaryMs(appliedRange.dateFrom),
+        toMs: dateBoundaryMs(appliedRange.dateTo, true),
       };
     }
-    return monthDateRangeMs(monthFilter);
-  }, [dateFrom, dateTo, monthFilter]);
+    return monthDateRangeMs(appliedRange.monthFilter);
+  }, [appliedRange]);
 
   const {
     leads,
@@ -631,9 +636,17 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         .includes(needle));
   }, [rows, search]);
 
-  const dateFiltersActive = monthFilter !== 'all';
+  const dateFiltersActive = appliedRange.monthFilter !== 'all';
   const textSearchActive = Boolean(search.trim());
-  const filtersActive = Boolean(textSearchActive || monthFilter !== 'today' || dateFrom || dateTo);
+  const filtersActive = Boolean(
+    textSearchActive ||
+    monthFilter !== 'today' ||
+    dateFrom ||
+    dateTo ||
+    appliedRange.monthFilter !== 'today' ||
+    appliedRange.dateFrom ||
+    appliedRange.dateTo
+  );
 
   const actionForRow = (row: SimpleRow): SimpleLeadAction => resolveSimpleLeadAction({
     leadStatus: row.lead?.status,
@@ -678,18 +691,51 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
   useEffect(() => {
     setPageIndex(0);
-  }, [bucket, dateFrom, dateTo, monthFilter, pageSize, search]);
+  }, [bucket, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
 
   const previousPage = () => setPageIndex((current) => Math.max(0, current - 1));
   const nextPage = () => setPageIndex((current) => Math.min(totalPages - 1, current + 1));
   const hasPrevious = pageNumber > 1;
   const hasNext = pageNumber < totalPages;
 
+  const applyFilters = () => {
+    const nextMonthFilter = monthFilter === 'custom' && !dateFrom && !dateTo ? 'today' : monthFilter;
+    const nextDateFrom = nextMonthFilter === 'custom' ? dateFrom : '';
+    const nextDateTo = nextMonthFilter === 'custom' ? dateTo : '';
+    const fromMs = dateBoundaryMs(nextDateFrom);
+    const toMs = dateBoundaryMs(nextDateTo, true);
+
+    if (fromMs && toMs && fromMs > toMs) {
+      toast({
+        title: 'Check enquiry dates',
+        description: 'The From date must be on or before the To date.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const unchanged =
+      appliedRange.monthFilter === nextMonthFilter &&
+      appliedRange.dateFrom === nextDateFrom &&
+      appliedRange.dateTo === nextDateTo;
+
+    setAppliedRange({
+      monthFilter: nextMonthFilter,
+      dateFrom: nextDateFrom,
+      dateTo: nextDateTo,
+    });
+    setPageIndex(0);
+
+    // A deliberate second click on the same filter still forces a fresh server read.
+    if (unchanged) reloadPage(true);
+  };
+
   const clearFilters = () => {
     setSearch('');
     setMonthFilter('today');
     setDateFrom('');
     setDateTo('');
+    setAppliedRange({ monthFilter: 'today', dateFrom: '', dateTo: '' });
   };
 
   const selectMonth = (value: string) => {
@@ -879,13 +925,14 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       </div>
     </Card>
 
-    <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
+    <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto_auto] lg:items-end">
       <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course, teacher or attribution" className="pl-9" /></div>
       <div><Label className="mb-1 block text-xs text-slate-500">Enquiry period</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry period"><SelectValue placeholder="Today" /></SelectTrigger><SelectContent><SelectItem value="today">Today</SelectItem><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">Enquiry from</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
+      <Button type="button" onClick={applyFilters} disabled={leadsLoading}>{leadsLoading ? 'Applying…' : 'Apply filter'}</Button>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Selecting a month, All months, or entering custom dates fetches that range. Clearing both custom dates returns to Today. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Choose a month, All months, or custom dates, then select Apply filter to fetch that range. Clearing both custom dates returns to Today. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
