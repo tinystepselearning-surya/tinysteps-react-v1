@@ -1,4 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
+vi.mock('firebase/firestore', () => ({
+  collection: vi.fn(),
+  getDocs: vi.fn(),
+  limit: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+}));
 import {
   completedMonthOptions,
   formatMonthKey,
