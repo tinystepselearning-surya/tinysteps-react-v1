@@ -1626,9 +1626,13 @@ export default function AttendanceValidationDashboard() {
       ) : !loadedRange ? (
         <Card className="p-8 text-center">
           <CheckCircle2 className="mx-auto h-7 w-7 text-slate-400" />
-          <p className="mt-2 font-medium text-slate-700">Choose a date range</p>
+          <p className="mt-2 font-medium text-slate-700">
+            {isParentReviewMode ? 'Saved results not loaded' : 'Choose a date range'}
+          </p>
           <p className="mt-1 text-sm text-slate-500">
-            Click Load Results to read cached AVS cases. Opening this page does not read them automatically.
+            {isParentReviewMode
+              ? 'Refresh saved results or run validation to continue this parent review.'
+              : 'Load results reads cached AVS cases only; no Microsoft Graph request is made.'}
           </p>
         </Card>
       ) : cases.length === 0 ? (
