@@ -24,11 +24,17 @@ function cleanMonth(value: unknown): string {
   if (!MONTH_RE.test(text) || text < START_MONTH) {
     throw new HttpsError('invalid-argument', 'monthKey must be a completed AVS month from 2026-09 onward.');
   }
-  const currentMonth = new Intl.DateTimeFormat('en-CA', {
+  const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
     year: 'numeric',
     month: '2-digit',
-  }).format(new Date());
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value;
+  const month = parts.find((part) => part.type === 'month')?.value;
+  const currentMonth = year && month ? `${year}-${month}` : '';
+  if (!MONTH_RE.test(currentMonth)) {
+    throw new HttpsError('internal', 'Unable to resolve the current IST month.');
+  }
   if (text >= currentMonth) {
     throw new HttpsError('failed-precondition', 'Only fully completed months can be tracked.');
   }
