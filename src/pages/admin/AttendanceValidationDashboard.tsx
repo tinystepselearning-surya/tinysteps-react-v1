@@ -1642,6 +1642,7 @@ export default function AttendanceValidationDashboard() {
       ) : (
         <Card className="p-4">
           <AttendanceValidationBusinessView cases={cases}
+            returnTo={detailReturnTo}
             onRecheck={async (item) => {
               if (!item.classSessionId || !item.kidId) return;
               try {
