@@ -6,13 +6,13 @@ import {
   PUBLIC_ROUTE_MANIFEST,
 } from '../src/lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { LEGACY_WEEK_BLOG_PATH_REDIRECTS } from '../src/lib/blogWeekRenames.js';
+import { RETIRED_BLOG_PATH_REDIRECTS } from './blog-consolidation-map.mjs';
 
 const ROOT = process.cwd();
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DIST_DIR = path.join(ROOT, 'dist');
 const FIREBASE_PATH = path.join(ROOT, 'firebase.json');
-const NOT_FOUND_PATH = path.join(ROOT, 'functions', 'src', 'notFoundRoute.ts');
-const FUNCTIONS_INDEX_PATH = path.join(ROOT, 'functions', 'src', 'index.ts');
 const SITE_ORIGIN = 'https://tinystepslearning.com';
 
 const REQUIRED_SPA_REWRITE_SOURCES = [
@@ -335,55 +335,63 @@ async function validateFirebase() {
     }
   }
 
-  const finalRewrite = rewrites.at(-1);
-  if (finalRewrite?.source !== '**') fail('Final Firebase rewrite is not the universal catch-all');
-  if (finalRewrite?.function?.functionId !== 'notFoundRoute') {
-    fail('Final Firebase catch-all does not route to notFoundRoute');
-  }
-  if (finalRewrite?.function?.region !== 'asia-south1') {
-    fail(`Final Firebase catch-all region mismatch: ${finalRewrite?.function?.region || '(missing)'}`);
-  }
-
-  const finalIndex = rewrites.length - 1;
   const apiIndex = rewrites.findIndex((entry) => entry.source === '/api/contact');
-  if (apiIndex < 0 || apiIndex >= finalIndex) fail('/api/contact rewrite is missing or occurs after the final catch-all');
+  if (apiIndex < 0) fail('/api/contact rewrite is missing');
 
   for (const source of REQUIRED_SPA_REWRITE_SOURCES) {
     const rewriteIndex = rewrites.findIndex(
       (entry) => entry.source === source && entry.destination === '/index.html',
     );
     if (rewriteIndex < 0) fail(`Private SPA rewrite is missing: ${source}`);
-    else if (rewriteIndex >= finalIndex) fail(`Private SPA rewrite occurs after final catch-all: ${source}`);
   }
 
   for (const rewrite of rewrites) {
-    if (rewrite.source === '**' && rewrite.destination === '/index.html') {
-      fail('Universal /index.html fallback still exists');
+    if (rewrite.source === '**') {
+      fail('Universal Hosting rewrite still exists; unmatched public requests must fall through to static 404.html');
     }
   }
 
-  pass('Firebase redirects, SPA rewrites, and final 404 catch-all checked');
+  const nativeRedirects = {
+    ...RETIRED_BLOG_PATH_REDIRECTS,
+    ...LEGACY_WEEK_BLOG_PATH_REDIRECTS,
+  };
+  for (const [source, destination] of Object.entries(nativeRedirects)) {
+    const redirect = redirects.find((entry) => entry.source === source);
+    if (!redirect) {
+      fail(`Native Hosting redirect is missing: ${source}`);
+      continue;
+    }
+    if (redirect.destination !== destination || redirect.type !== 301) {
+      fail(`Native Hosting redirect mismatch for ${source}: expected 301 -> ${destination}`);
+    }
+  }
+
+  pass('Firebase redirects, explicit SPA rewrites, and native 404 fallthrough checked');
 }
 
-async function validateNotFoundFunction() {
-  const source = await fs.readFile(NOT_FOUND_PATH, 'utf8');
-  const indexSource = await fs.readFile(FUNCTIONS_INDEX_PATH, 'utf8');
-
-  if (!/response\.status\(\s*404\s*\)/.test(source)) fail('notFoundRoute does not set HTTP status 404');
-  if (!/X-Robots-Tag[\s\S]*noindex/i.test(source)) fail('notFoundRoute lacks an X-Robots-Tag noindex directive');
-  if (!/<meta\s+name=["']robots["'][^>]*noindex/i.test(source)) fail('notFoundRoute lacks a noindex robots meta tag');
-  if (!/Cache-Control[\s\S]*no-store/i.test(source)) fail('notFoundRoute lacks a no-store cache policy');
-  const escapesRequestPathDirectly = /escapeHtml\(\s*request\.(?:path|originalUrl)/.test(source);
-  const escapesNormalizedRequestPath = /const\s+rawPath\s*=\s*normalizePath\([^;]{0,160}request\.(?:path|originalUrl)/.test(source)
-    && /escapeHtml\(\s*rawPath\s*\)/.test(source);
-  if (!escapesRequestPathDirectly && !escapesNormalizedRequestPath) {
-    fail('notFoundRoute does not escape the displayed request path');
-  }
-  if (!/export\s+\{\s*notFoundRoute\s*\}\s+from\s+["']\.\/notFoundRoute["']/.test(indexSource)) {
-    fail('functions/src/index.ts does not export notFoundRoute');
+async function validateStatic404() {
+  const filePath = path.join(PUBLIC_DIR, '404.html');
+  if (!(await fileExists(filePath))) {
+    fail('public/404.html is missing');
+    return;
   }
 
-  pass('Genuine 404 function status, robots, cache, escaping, and export checked');
+  const html = await fs.readFile(filePath, 'utf8');
+  const robots = findMetaContent(html, 'robots');
+  if (!isNoindex(robots)) fail('public/404.html lacks a noindex robots meta tag');
+  if (!/<title\b[^>]*>[^<]*404/i.test(html)) fail('public/404.html lacks a clear 404 title');
+
+  const firebase = JSON.parse(await fs.readFile(FIREBASE_PATH, 'utf8'));
+  const headerRule = (firebase?.hosting?.headers || []).find((entry) => entry.source === '404.html');
+  const headerMap = new Map((headerRule?.headers || []).map((entry) => [entry.key, entry.value]));
+  if (!/no-store/i.test(headerMap.get('Cache-Control') || '')) {
+    fail('404.html cache policy is not no-store');
+  }
+  if (!/noindex/i.test(headerMap.get('X-Robots-Tag') || '')) {
+    fail('404.html lacks X-Robots-Tag noindex');
+  }
+
+  pass('Static Hosting 404 status surface, robots, and cache policy checked');
 }
 
 async function main() {
@@ -392,7 +400,7 @@ async function main() {
   await validateSitemaps();
   await validatePrerenderOutput();
   await validateFirebase();
-  await validateNotFoundFunction();
+  await validateStatic404();
 
   if (failureCount > 0) {
     console.error(`\nSEO route integrity failed with ${failureCount} invariant violation(s).`);
