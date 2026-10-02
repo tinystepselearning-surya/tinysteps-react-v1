@@ -34,8 +34,13 @@ const parseClockMinutes = (value: unknown): number | null => {
   const raw = normalizeText(value);
   if (!raw) return null;
 
-  const match = raw.match(/(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
+  const match = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*([AaPp][Mm])?/);
   if (!match) return null;
+
+  const remainder = raw.slice(match[0].length).trim();
+  if (remainder && !/^(?:[-–—]|(?:IST|UTC|GMT)\b)/i.test(remainder)) {
+    return null;
+  }
 
   let hours = Number(match[1]);
   const minutes = Number(match[2] || '0');
@@ -83,10 +88,9 @@ const resolveTeacherClassTime = (
     }
   }
 
-  const fallback = normalizeText(row.classTimeIst || row.classTime || row.startTime) || 'Time TBD';
   return {
     startMinutes: Number.MAX_SAFE_INTEGER,
-    timeLabel: fallback,
+    timeLabel: 'Time TBD',
   };
 };
 
