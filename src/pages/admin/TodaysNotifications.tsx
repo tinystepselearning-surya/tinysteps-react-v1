@@ -73,6 +73,7 @@ import {
 import {
   buildTeacherDailyReminderGroups,
   buildTeacherDailyReminderMessage,
+  formatRespectfulTeacherName,
 } from './teacherDailyReminder';
 
 interface ClassSessionDoc {
@@ -2131,7 +2132,10 @@ export default function TodaysNotifications() {
         : row.classTimeIst || row.classTime || 'Time TBD';
     const context = {
       parentName: row.parentName || 'Parent',
-      teacherName: row.teacherName || 'Teacher',
+      teacherName:
+        type === 'teacher'
+          ? formatRespectfulTeacherName(row.teacherName)
+          : row.teacherName || 'Teacher',
       childName: row.childName || 'your child',
       time: resolvedTime,
       course:
