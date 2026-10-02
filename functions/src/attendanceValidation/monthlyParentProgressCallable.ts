@@ -217,6 +217,12 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
           'Billing changed after review. Review billing again before marking the invoice as sent.',
         );
       }
+      if (billing.billedAmount <= 0.01) {
+        throw new HttpsError(
+          'failed-precondition',
+          'This month has no billable amount and does not require an invoice.',
+        );
+      }
 
       tx.set(ref, {
         schemaVersion: 2,
