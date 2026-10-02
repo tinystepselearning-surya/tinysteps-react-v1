@@ -5,6 +5,7 @@ import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 import { buildMissionReturnHref } from "./missionNavigation";
 
 const BASE = "/games/phonics/sound-detective";
+const IMAGE_BASE = "/games/phonics/shared/images";
 const CONFETTI_SFX_SRC = "/confetti.mp3";
 
 type LevelDef = { id: number; title: string; focus: string[] };
@@ -21,32 +22,32 @@ const LEVELS: LevelDef[] = [
 const TOTAL_ROUNDS = 8;
 
 const IMAGE_CATALOG = [
-  { id: "apple", letter: "a", img: `${BASE}/apple.png` },
-  { id: "ball", letter: "b", img: `${BASE}/ball.png` },
-  { id: "cat", letter: "c", img: `${BASE}/cat.png` },
-  { id: "dog", letter: "d", img: `${BASE}/dog.png` },
-  { id: "elephant", letter: "e", img: `${BASE}/elephant.png` },
-  { id: "fish", letter: "f", img: `${BASE}/fish.png` },
-  { id: "girl", letter: "g", img: `${BASE}/girl.png` },
-  { id: "hat", letter: "h", img: `${BASE}/hat.png` },
-  { id: "igloo", letter: "i", img: `${BASE}/igloo.png` },
-  { id: "juice", letter: "j", img: `${BASE}/juice.png` },
-  { id: "kangaroo", letter: "k", img: `${BASE}/kangaroo.png` },
-  { id: "lion", letter: "l", img: `${BASE}/lion.png` },
-  { id: "monkey", letter: "m", img: `${BASE}/monkey.png` },
-  { id: "nose", letter: "n", img: `${BASE}/nose.png` },
-  { id: "orange", letter: "o", img: `${BASE}/orange.png` },
-  { id: "pig", letter: "p", img: `${BASE}/pig.png` },
-  { id: "queen", letter: "q", img: `${BASE}/queen.png` },
-  { id: "ring", letter: "r", img: `${BASE}/ring.png` },
-  { id: "sun", letter: "s", img: `${BASE}/sun.png` },
-  { id: "train", letter: "t", img: `${BASE}/train.png` },
-  { id: "umbrella", letter: "u", img: `${BASE}/umbrella.png` },
-  { id: "van", letter: "v", img: `${BASE}/van.png` },
-  { id: "watch", letter: "w", img: `${BASE}/watch.png` },
-  { id: "box", letter: "x", img: `${BASE}/box.png` },
-  { id: "yoyo", letter: "y", img: `${BASE}/yoyo.png` },
-  { id: "zoo", letter: "z", img: `${BASE}/zoo.png` },
+  { id: "apple", letter: "a", img: `${IMAGE_BASE}/apple.webp` },
+  { id: "ball", letter: "b", img: `${IMAGE_BASE}/ball.webp` },
+  { id: "cat", letter: "c", img: `${IMAGE_BASE}/cat.webp` },
+  { id: "dog", letter: "d", img: `${IMAGE_BASE}/dog.webp` },
+  { id: "elephant", letter: "e", img: `${IMAGE_BASE}/elephant.webp` },
+  { id: "fish", letter: "f", img: `${IMAGE_BASE}/fish.webp` },
+  { id: "girl", letter: "g", img: `${IMAGE_BASE}/girl.webp` },
+  { id: "hat", letter: "h", img: `${IMAGE_BASE}/hat.webp` },
+  { id: "igloo", letter: "i", img: `${IMAGE_BASE}/igloo.webp` },
+  { id: "juice", letter: "j", img: `${IMAGE_BASE}/juice.webp` },
+  { id: "kangaroo", letter: "k", img: `${IMAGE_BASE}/kangaroo.webp` },
+  { id: "lion", letter: "l", img: `${IMAGE_BASE}/lion.webp` },
+  { id: "monkey", letter: "m", img: `${IMAGE_BASE}/monkey.webp` },
+  { id: "nose", letter: "n", img: `${IMAGE_BASE}/nose.webp` },
+  { id: "orange", letter: "o", img: `${IMAGE_BASE}/orange.webp` },
+  { id: "pig", letter: "p", img: `${IMAGE_BASE}/pig.webp` },
+  { id: "queen", letter: "q", img: `${IMAGE_BASE}/queen.webp` },
+  { id: "ring", letter: "r", img: `${IMAGE_BASE}/ring.webp` },
+  { id: "sun", letter: "s", img: `${IMAGE_BASE}/sun.webp` },
+  { id: "train", letter: "t", img: `${IMAGE_BASE}/train.webp` },
+  { id: "umbrella", letter: "u", img: `${IMAGE_BASE}/umbrella.webp` },
+  { id: "van", letter: "v", img: `${IMAGE_BASE}/van.webp` },
+  { id: "watch", letter: "w", img: `${IMAGE_BASE}/watch.webp` },
+  { id: "box", letter: "x", img: `${IMAGE_BASE}/box.webp` },
+  { id: "yoyo", letter: "y", img: `${IMAGE_BASE}/yoyo.webp` },
+  { id: "zoo", letter: "z", img: `${IMAGE_BASE}/zoo.webp` },
 ];
 
 const ALPHABET_LETTERS = IMAGE_CATALOG.map((item) => item.letter);
@@ -88,9 +89,9 @@ function buildOptions(letter: string, levelIndex: number, roundIndex: number): O
   const correct = getCorrectOption(letter);
   if (!correct) {
     return [
-      { id: "missing", imgSrc: `${BASE}/sun.png` },
-      { id: "missing2", imgSrc: `${BASE}/apple.png` },
-      { id: "missing3", imgSrc: `${BASE}/ball.png` },
+      { id: "missing", imgSrc: `${IMAGE_BASE}/sun.webp` },
+      { id: "missing2", imgSrc: `${IMAGE_BASE}/apple.webp` },
+      { id: "missing3", imgSrc: `${IMAGE_BASE}/ball.webp` },
     ];
   }
 
@@ -887,7 +888,7 @@ export default function SoundDetectiveGame({
                   disabled={isComplete}
                 >
                   <img
-                    src={`${BASE}/headphones.png`}
+                    src={`${IMAGE_BASE}/headphones.webp`}
                     alt="Headphones"
                     className="w-full h-full object-contain select-none opacity-100"
                     draggable={false}
