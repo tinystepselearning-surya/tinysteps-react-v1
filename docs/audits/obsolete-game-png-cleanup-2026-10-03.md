@@ -13,9 +13,15 @@ Total removed: **74 PNG files / 6.88 MiB**.
 
 Canonical replacements retained:
 
-- `public/games/phonics/shared/images/*.webp`: 37 files / 0.65 MiB
+- `public/games/phonics/shared/images/*.webp`: 37 files / about 0.65 MiB
 
-The nested Make-A-Word assets under `public/games/maw/at/` and `public/games/maw/in/` are intentionally untouched.
+## Make-A-Word boundary
+
+Current source still contains nested Make-A-Word URL references under `/games/maw/at/` and `/games/maw/in/`.
+
+The current `main` tree does **not** contain corresponding nested asset files under `public/games/maw/at/` or `public/games/maw/in/`. That is pre-existing repository state and is not introduced by this cleanup.
+
+This cleanup deletes only direct top-level `public/games/maw/*.png` files and does not rewrite those nested source references.
 
 ## Safety evidence
 
@@ -26,6 +32,6 @@ Before deletion:
 - all 37 canonical WebPs were present on `main`;
 - the user manually verified Sound Detective, Letter Tracing, and Letter Tracing + Sounds in production;
 - repository search found no active `/games/phonics/sound-detective/*.png` source references;
-- Make-A-Word source references use nested `/games/maw/at/*.png` and `/games/maw/in/*.png`, not the removed top-level PNGs.
+- Make-A-Word source references remain nested under `/games/maw/at/` and `/games/maw/in/`, not the deleted direct top-level PNG paths.
 
-A regression test protects the canonical WebP set and the nested Make-A-Word assets.
+A regression test protects the canonical WebP set and verifies that Make-A-Word source references are not redirected to the deleted top-level PNG paths.

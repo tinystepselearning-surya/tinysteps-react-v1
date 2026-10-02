@@ -43,8 +43,17 @@ describe('obsolete phonics game PNG cleanup', () => {
     expect(tracingWithSounds).toContain('const exts = ["webp", "png", "jpg"];');
   });
 
-  it('does not remove nested Make-A-Word at/in assets', () => {
-    expect(fs.existsSync(path.join(root, 'public/games/maw/at/cat.png'))).toBe(true);
-    expect(fs.existsSync(path.join(root, 'public/games/maw/in/fin.png'))).toBe(true);
+  it('does not redirect Make-A-Word nested asset references to deleted top-level PNGs', () => {
+    const makeAWordSources = [
+      'src/pages/kids/games/phonics/MakeAWordAtGame.tsx',
+      'src/pages/kids/games/phonics/CvcWordReader/CvcWordReaderGame.tsx',
+      'src/pages/kids/games/phonics/CvcWordReader/MakeAWordRimeGame.tsx',
+    ]
+      .map((file) => fs.readFileSync(path.join(root, file), 'utf8'))
+      .join('\n');
+
+    expect(makeAWordSources).toContain('/games/maw/at/');
+    expect(makeAWordSources).toContain('/games/maw/in/');
+    expect(makeAWordSources).not.toMatch(/\/games\/maw\/[^/]+\.png/);
   });
 });
