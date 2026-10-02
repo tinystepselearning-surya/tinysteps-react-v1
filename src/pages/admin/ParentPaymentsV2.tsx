@@ -830,6 +830,13 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     Math.abs(invoiceTotals.settled - invoiceRow.selectedMonthSettled) > EPSILON ||
     Math.abs(invoiceTotals.due - invoiceRow.selectedMonthDue) > EPSILON
   );
+  const invoiceIntegrityReady = Boolean(
+    invoiceRow
+    && !invoiceIntegrityLoading
+    && invoiceCharges.length > 0
+    && invoiceAnomalies.length === 0
+    && !invoiceTotalsDifferFromLedger
+  );
 
   const downloadInvoice = async () => {
     if (!invoiceRow) return;
@@ -1345,12 +1352,19 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
               <p className="text-xs text-muted-foreground">
                 This invoice is based on {monthLabel(selectedMonth)} service-month charges and allocations. Historical receipts entered later are reflected after allocation to these charges.
               </p>
+              {!invoiceIntegrityLoading && !invoiceIntegrityReady && (
+                <p className="text-xs font-medium text-amber-700">
+                  Download is blocked until the invoice rows and canonical monthly ledger agree.
+                </p>
+              )}
             </div>
           ) : null}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setInvoiceOpen(false)}>Close</Button>
-            <Button onClick={downloadInvoice} disabled={!invoiceRow || invoiceSaving || invoiceIntegrityLoading}>{invoiceSaving ? 'Preparing…' : 'Download PDF'}</Button>
+            <Button onClick={downloadInvoice} disabled={!invoiceIntegrityReady || invoiceSaving}>
+              {invoiceSaving ? 'Preparing…' : 'Download PDF'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
