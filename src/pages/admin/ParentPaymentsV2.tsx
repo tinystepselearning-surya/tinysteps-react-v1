@@ -376,7 +376,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     setRefreshing(true);
     setError('');
     try {
-      if (!selectedSearchParent) {
+      if (!selectedSearchParent && !handoffMode) {
         const startCursor = pageStartCursors[pageNumber - 1] || null;
         const page = await fetchMonthPage(selectedMonth, startCursor);
         setPageIds(page.ids);
@@ -390,7 +390,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     } finally {
       setRefreshing(false);
     }
-  }, [loading, pageNumber, pageStartCursors, refreshing, selectedMonth, selectedSearchParent]);
+  }, [handoffMode, loading, pageNumber, pageStartCursors, refreshing, selectedMonth, selectedSearchParent]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -792,7 +792,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     handoffOpenedRef.current = key;
     if (action === 'invoice') void openInvoice(row);
     else openReceive(row);
-  }, [handoffAction, handoffMode, rows, selectedMonth, selectedSearchParent]);
+  }, [handoffAction, handoffMode, openInvoice, openReceive, rows, selectedMonth, selectedSearchParent]);
 
   const invoiceIntegrityRows = useMemo(() => {
     if (!invoiceRow) return [];
