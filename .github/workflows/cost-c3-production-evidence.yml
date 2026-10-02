@@ -1,0 +1,162 @@
+name: Cost C3 production evidence
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cost-c3-production-evidence.yml'
+      - 'functions/src/scripts/auditParentClassAttendanceV4.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cost-c3-production-evidence
+  cancel-in-progress: false
+
+env:
+  FIREBASE_PROJECT_ID: tinysteps-react-v1
+  REGION: asia-south1
+
+jobs:
+  retire-notfoundroute:
+    name: Retire notFoundRoute
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Refuse stale cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          current_main_sha="$(git rev-parse origin/main)"
+          if [[ "${GITHUB_SHA}" != "${current_main_sha}" ]]; then
+            echo "::error::Refusing stale production cleanup. Workflow=${GITHUB_SHA}; main=${current_main_sha}"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete retired notFoundRoute Function
+        shell: bash
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: |
+          set -euo pipefail
+
+          set +e
+          describe_output="$(gcloud functions describe notFoundRoute             --gen2             --region="${REGION}"             --project="${FIREBASE_PROJECT_ID}"             --format='value(name)' 2>&1)"
+          describe_status=$?
+          set -e
+
+          if [[ ${describe_status} -eq 0 ]]; then
+            echo "Retired Function still exists: ${describe_output}"
+            npx --yes firebase-tools@15.30.0 functions:delete notFoundRoute               --region "${REGION}"               --project "${FIREBASE_PROJECT_ID}"               --force
+          elif grep -qiE 'NOT_FOUND|not found|does not exist' <<<"${describe_output}"; then
+            echo "notFoundRoute is already absent from Cloud Functions."
+          else
+            echo "${describe_output}"
+            echo "::error::Unable to prove whether notFoundRoute exists."
+            exit ${describe_status}
+          fi
+
+      - name: Verify Function and Cloud Run service are absent
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gcloud functions describe notFoundRoute             --gen2             --region="${REGION}"             --project="${FIREBASE_PROJECT_ID}" >/dev/null 2>&1; then
+            echo "::error::notFoundRoute still exists in Cloud Functions after cleanup."
+            exit 1
+          fi
+
+          for attempt in {1..12}; do
+            if ! gcloud run services describe notfoundroute               --region="${REGION}"               --project="${FIREBASE_PROJECT_ID}" >/dev/null 2>&1; then
+              echo "Verified: Cloud Function and backing Cloud Run service are absent."
+              exit 0
+            fi
+            echo "Cloud Run service still settling after Function deletion (attempt ${attempt}/12)."
+            sleep 10
+          done
+
+          echo "::error::Backing Cloud Run service notfoundroute still exists after cleanup timeout."
+          exit 1
+
+  audit-v4-parity:
+    name: Audit V4 attendance parity
+    needs: retire-notfoundroute
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions scripts
+        run: npm --prefix functions run build
+
+      - name: Read production V4 parity telemetry
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GCLOUD_PROJECT: tinysteps-react-v1
+          V4_PARITY_LOOKBACK_DAYS: '30'
+          V4_PARITY_OUTPUT_PATH: artifacts/parent-class-attendance-v4-parity.json
+        run: |
+          mkdir -p artifacts
+          node functions/lib/scripts/auditParentClassAttendanceV4.js | tee artifacts/parent-class-attendance-v4-parity.log
+
+      - name: Publish sanitized audit summary
+        shell: bash
+        run: |
+          {
+            echo '## Parent class-attendance V4 parity'
+            echo
+            echo 'Production aggregate telemetry only; no learner or parent PII is emitted.'
+            echo
+            echo '```json'
+            cat artifacts/parent-class-attendance-v4-parity.json
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload C3 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: c3-parent-class-attendance-v4-parity-${{ github.sha }}
+          path: |
+            artifacts/parent-class-attendance-v4-parity.json
+            artifacts/parent-class-attendance-v4-parity.log
+          if-no-files-found: error
+          retention-days: 14
