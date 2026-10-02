@@ -337,6 +337,42 @@ describe('Sessions Management authoritative snapshot loading', () => {
     );
   });
 
+  it('resolves reminder teacher ownership against the current enrollment before profile lookup', () => {
+    expect(pageSource).toContain(
+      'const enrollment = enrollmentId ? enrollmentMap[enrollmentId] : undefined;',
+    );
+    expect(pageSource).toContain('getEnrollmentTeacherRefs(enrollment)');
+    expect(pageSource).toContain('}, [enrollmentMap, sessions, usersMap]);');
+    expect(pageSource).not.toContain(
+      "resolvePreferredSessionTeacherRef(\n          session as unknown as Record<string, unknown>,\n          [],",
+    );
+  });
+
+  it('accepts only WhatsApp numbers within the existing 8-digit floor and E.164 15-digit ceiling', () => {
+    expect(pageSource).toContain('return length >= 8 && length <= 15;');
+  });
+
+  it('adds the already-resolved teacher name to the parent reminder without send-time reads', () => {
+    expect(pageSource).toContain(
+      'Quick reminder: [Child Name] has Tiny Steps class today at [Time] with [Teacher Name].',
+    );
+
+    const builderStart = pageSource.indexOf('const buildResolvedRowMessage =');
+    const builderEnd = pageSource.indexOf('const openMessageEditor =', builderStart);
+    const builderSource = pageSource.slice(builderStart, builderEnd);
+    expect(builderSource).toContain("teacherName: row.teacherName || 'Teacher'");
+    expect(builderSource).not.toContain('getDoc(');
+    expect(builderSource).not.toContain('getDocs(');
+    expect(builderSource).not.toContain('httpsCallable(');
+
+    const sendStart = pageSource.indexOf('const openWhatsApp =');
+    const sendEnd = pageSource.indexOf('const openMeetingLink =', sendStart);
+    const sendSource = pageSource.slice(sendStart, sendEnd);
+    expect(sendSource).not.toContain('getDoc(');
+    expect(sendSource).not.toContain('getDocs(');
+    expect(sendSource).not.toContain('httpsCallable(');
+  });
+
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {
     const deps = makeDeps();
     deps.fetchSessionsForDate.mockImplementation(async (dateKey: string) => [

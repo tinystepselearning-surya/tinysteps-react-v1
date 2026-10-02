@@ -29,6 +29,15 @@ describe('TodaysNotifications teacher alias resolution', () => {
     expect(resolvePreferredSessionTeacherRef(session, ['teacher-aditi'])).toBe('teacher-aditi');
     expect(resolvePreferredSessionTeacherRef(session, ['someone-else', 'teacher-aditi'])).toBe('teacher-aditi');
   });
+
+  it('prefers the current enrollment teacher over a stale primary session alias', () => {
+    const session = {
+      teacherId: 'teacher-former',
+      teacherIds: ['teacher-former', 'teacher-current'],
+    };
+
+    expect(resolvePreferredSessionTeacherRef(session, ['teacher-current'])).toBe('teacher-current');
+  });
 });
 
 describe('TodaysNotifications manual reminder loading', () => {
