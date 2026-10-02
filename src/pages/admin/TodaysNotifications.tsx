@@ -520,7 +520,7 @@ const looksLikeInternationalWithPlus = (value: string): boolean => {
   const trimmed = String(value || '').trim();
   if (!trimmed.startsWith('+')) return false;
   const digits = digitsOnly(trimmed);
-  return digits.length >= 8;
+  return digits.length >= 8 && digits.length <= 15;
 };
 
 const inferCountryCodeFromInternationalDigits = (value: string): string => {
