@@ -290,6 +290,128 @@ describe('AVS same-day attendance coverage', () => {
     expect(aggregate.totalOverlapSeconds).toBe(2100);
   });
 
+
+  it('merges split reconnect records for the same single-session learner before thresholding', () => {
+    const reconnectReport = report(
+      'report-reconnect',
+      '2026-09-18T14:00:00.000Z',
+      '2026-09-18T14:46:47.000Z',
+    );
+    const teacher = participant(
+      'teacher-record',
+      '2026-09-18T14:08:33.000Z',
+      '2026-09-18T14:46:47.000Z',
+    );
+    teacher.displayNameHash = 'teacher-name-hash';
+    const learnerFirst = participant(
+      'learner-record-a',
+      '2026-09-18T14:08:33.000Z',
+      '2026-09-18T14:23:41.000Z',
+    );
+    learnerFirst.displayNameHash = 'bhuvika-name-hash';
+    const learnerSecond = participant(
+      'learner-record-b',
+      '2026-09-18T14:25:18.000Z',
+      '2026-09-18T14:46:47.000Z',
+    );
+    learnerSecond.displayNameHash = 'bhuvika-name-hash';
+    reconnectReport.participantRecords = [
+      teacher,
+      learnerFirst,
+      learnerSecond,
+    ];
+
+    const unresolvedIdentity = identity();
+    unresolvedIdentity.identityConfidence = 'review';
+    unresolvedIdentity.expectedTeacherPresent = false;
+    unresolvedIdentity.participantClassifications = [
+      {
+        participantRecordId: 'teacher-record',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+      {
+        participantRecordId: 'learner-record-a',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+      {
+        participantRecordId: 'learner-record-b',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+    ];
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([reconnectReport]),
+      unresolvedIdentity,
+      '2026-09-18',
+      'single_session_learner_attendance',
+    );
+    const aggregate = aggregateSameDayCoverage([observation]);
+
+    expect(observation.status).toBe('measured');
+    expect(aggregate.totalOverlapSeconds).toBe(2197);
+  });
+
+  it('does not combine different learner aliases in a single-session report', () => {
+    const ambiguousReport = report(
+      'report-multiple-learners',
+      '2026-09-18T14:00:00.000Z',
+      '2026-09-18T14:40:00.000Z',
+    );
+    const teacher = participant(
+      'teacher-record',
+      '2026-09-18T14:00:00.000Z',
+      '2026-09-18T14:40:00.000Z',
+    );
+    teacher.displayNameHash = 'teacher-name-hash';
+    const learnerA = participant(
+      'learner-record-a',
+      '2026-09-18T14:02:00.000Z',
+      '2026-09-18T14:32:00.000Z',
+    );
+    learnerA.displayNameHash = 'learner-a-hash';
+    const learnerB = participant(
+      'learner-record-b',
+      '2026-09-18T14:05:00.000Z',
+      '2026-09-18T14:35:00.000Z',
+    );
+    learnerB.displayNameHash = 'learner-b-hash';
+    ambiguousReport.participantRecords = [teacher, learnerA, learnerB];
+
+    const resolvedIdentity = identity();
+    resolvedIdentity.participantClassifications = [
+      {
+        participantRecordId: 'teacher-record',
+        classification: 'expected_teacher',
+        matchedStaffIds: ['teacher-1'],
+      },
+      {
+        participantRecordId: 'learner-record-a',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+      {
+        participantRecordId: 'learner-record-b',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+    ];
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([ambiguousReport]),
+      resolvedIdentity,
+      '2026-09-18',
+      'single_session_learner_attendance',
+    );
+
+    expect(observation.status).toBe('review');
+    expect(observation.issues).toContain(
+      'single_session_learner_reconnect_ambiguous',
+    );
+  });
+
   it('single-session learner mode treats a teacher-only meeting as zero learner attendance', () => {
     const unresolvedIdentity = identity();
     unresolvedIdentity.identityConfidence = 'review';
