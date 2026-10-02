@@ -102,10 +102,10 @@ function currentBillingSnapshot(data: Record<string, unknown>): {
     ),
     billedAmount,
   );
-  const dueAmount = Math.min(
-    amount(data.dueAmount ?? data.outstandingAmount ?? totals.dueAmount ?? totals.outstandingAmount),
-    billedAmount,
-  );
+  const rawDue = data.dueAmount ?? data.outstandingAmount ?? totals.dueAmount ?? totals.outstandingAmount;
+  const dueAmount = rawDue == null
+    ? Math.max(billedAmount - settledAmount, 0)
+    : Math.min(amount(rawDue), billedAmount);
   const rawChargeIds = Array.isArray(data.chargeIds ?? totals.chargeIds)
     ? (data.chargeIds ?? totals.chargeIds) as unknown[]
     : [];
