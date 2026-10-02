@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 const {
   collectionMock,
@@ -97,6 +98,15 @@ vi.mock('@components/ui/select', () => ({
 vi.mock('@components/ui/textarea', () => ({ Textarea: (props: any) => <textarea {...props} /> }));
 
 import ParentPaymentsV2 from '../../pages/admin/ParentPaymentsV2';
+
+const renderPayments = (
+  element: React.ReactElement = <ParentPaymentsV2 />,
+  entry = '/surya?tab=parent-payments',
+) => render(
+  <MemoryRouter initialEntries={[entry]}>
+    {element}
+  </MemoryRouter>,
+);
 
 const makeDoc = (id: string, data: Record<string, unknown>) => ({
   id,
@@ -236,8 +246,51 @@ describe('ParentPaymentsV2', () => {
     vi.useRealTimers();
   });
 
+
+  it('uses an exact low-read parent handoff from Parent Month Close', async () => {
+    getDocMock.mockImplementation(async (ref: any) => {
+      const args = ref?.args || [];
+      if (args[1] === 'users' && args[2] === 'parent-1') {
+        return makeDoc('parent-1', {
+          displayName: 'Parent One',
+          email: 'parent@example.com',
+          role: 'parent',
+        });
+      }
+      if (args[1] === 'parentMonthlyReadModels' && args[2] === 'parent-1') {
+        return makeDoc('2026-09', {
+          parentId: 'parent-1',
+          monthKey: '2026-09',
+          billedAmount: 1125,
+          billedClassCount: 3,
+          settledAmount: 0,
+          dueAmount: 1125,
+          status: 'unpaid',
+        });
+      }
+      return { exists: () => false, data: () => null, id: '' };
+    });
+
+    renderPayments(
+      <ParentPaymentsV2 />,
+      '/surya?tab=parent-payments&month=2026-09&parentId=parent-1&returnTo=%2Fsurya%2Fattendance-validation%2Fparent-1%3Fmonth%3D2026-09',
+    );
+
+    await waitFor(() => expect(screen.getByText('Viewing')).toBeTruthy());
+    expect(screen.getByRole('button', { name: 'Back to Parent Month Close' })).toBeTruthy();
+    expect(getAggregateFromServerMock).not.toHaveBeenCalled();
+    expect(
+      getDocsMock.mock.calls.some(([input]) =>
+        input?.kind === 'query'
+        && input.args[0]?.kind === 'collectionGroup'
+        && input.args[0]?.args?.[1] === 'months'
+        && hasLimit(input, 11)
+      ),
+    ).toBe(false);
+  });
+
   it('loads a clean month-scoped dashboard using the stable outstanding order and month-wide KPIs', async () => {
-    render(<ParentPaymentsV2 />);
+    renderPayments();
 
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     expect(screen.getAllByText('₹5,800').length).toBeGreaterThan(0);
@@ -263,7 +316,7 @@ describe('ParentPaymentsV2', () => {
   });
 
   it('refreshes the month page, summary and visible payment scope without reopening the screen', async () => {
-    render(<ParentPaymentsV2 />);
+    renderPayments();
 
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     const monthPageCallsBefore = getDocsMock.mock.calls.filter(([input]) =>
@@ -305,7 +358,7 @@ describe('ParentPaymentsV2', () => {
       id: '2026-08',
     });
 
-    render(<ParentPaymentsV2 />);
+    renderPayments();
 
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     expect(screen.getByText('Unpaid')).toBeTruthy();
@@ -315,7 +368,7 @@ describe('ParentPaymentsV2', () => {
 
   it('exposes financial tools as a secondary header action when provided', async () => {
     const openMaintenance = vi.fn();
-    render(<ParentPaymentsV2 onOpenMaintenance={openMaintenance} />);
+    renderPayments(<ParentPaymentsV2 onOpenMaintenance={openMaintenance} />);
 
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Financial tools' }));
@@ -323,7 +376,7 @@ describe('ParentPaymentsV2', () => {
   });
 
   it('renders the linked service date in the invoice instead of the charge creation date', async () => {
-    const { container } = render(<ParentPaymentsV2 />);
+    const { container } = renderPayments();
     selectBillingMonth(container, '2026-08');
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
@@ -335,7 +388,7 @@ describe('ParentPaymentsV2', () => {
 
   it('excludes a service-month mismatch and warns when verified totals differ from the ledger', async () => {
     invoiceServiceDate = '2026-09-10';
-    const { container } = render(<ParentPaymentsV2 />);
+    const { container } = renderPayments();
     selectBillingMonth(container, '2026-08');
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
@@ -348,7 +401,7 @@ describe('ParentPaymentsV2', () => {
   });
 
   it('uses one direct search picker and narrows the page to the selected parent', async () => {
-    render(<ParentPaymentsV2 />);
+    renderPayments();
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
 
     fireEvent.change(screen.getByPlaceholderText('Search name, email, phone, or ID'), {
