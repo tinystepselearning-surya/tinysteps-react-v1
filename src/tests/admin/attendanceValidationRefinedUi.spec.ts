@@ -12,9 +12,9 @@ const dashboard = fs.readFileSync(
 
 describe('AVS Brick 5 refined admin operator model', () => {
   it('keeps exactly two normal range actions', () => {
-    expect(dashboard).toContain('Load Results');
-    expect(dashboard).toContain('Run Validation');
-    expect(dashboard).toContain('Continue Validation');
+    expect(dashboard).toContain('Load results');
+    expect(dashboard).toContain('Run validation');
+    expect(dashboard).toContain('Continue validation');
     expect(dashboard).not.toContain('Run Latest Check');
     expect(dashboard).not.toContain('Sync Teacher Identities');
     expect(dashboard).not.toContain('Run First-Time Baseline');
@@ -27,7 +27,7 @@ describe('AVS Brick 5 refined admin operator model', () => {
 
   it('keeps the row-level re-fetch action and no realtime behavior', () => {
     expect(dashboard).toContain('Re-fetch this case');
-    expect(dashboard).toContain('Nothing refreshes automatically.');
+    expect(dashboard).toContain('Microsoft Graph is never called by opening the page');
     expect(dashboard).not.toContain('onSnapshot(');
   });
 
