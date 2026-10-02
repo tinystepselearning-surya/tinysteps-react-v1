@@ -1,6 +1,6 @@
-import { loadAvsParentOptions, loadAvsParentEnrollmentIds, loadAvsParentCases, type AvsParentOption } from '../../lib/attendanceValidationParentScope';
+import { loadAvsParentOptionById, loadAvsParentOptions, loadAvsParentEnrollmentIds, loadAvsParentCases, type AvsParentOption } from '../../lib/attendanceValidationParentScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   collection,
   doc,
@@ -15,12 +15,19 @@ import {
   type DocumentData,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, RefreshCw, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
 import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
 import AttendanceValidationMonthlyTracker from './components/AttendanceValidationMonthlyTracker';
 import type { AvsBusinessOutcome } from '../../lib/attendanceValidationBusinessReconciliation';
+import {
+  formatMonthKey,
+  loadAvsMonthlyParentProgressForParent,
+  monthDateRange,
+  previousCompletedMonthKey,
+  type AvsMonthlyParentProgressStatus,
+} from '../../lib/attendanceValidationMonthlyParentProgress';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -692,8 +699,20 @@ function issueSummary(item: Av6ValidationCase): string[] {
 }
 
 export default function AttendanceValidationDashboard() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { parentId: routeParentId } = useParams<{ parentId?: string }>();
   const [searchParams] = useSearchParams();
-  const [parentId, setParentId] = useState('all');
+  const isAdvancedMode = location.pathname.endsWith('/attendance-validation/advanced');
+  const isParentReviewMode = Boolean(routeParentId) && !isAdvancedMode;
+  const isTrackerMode = !isAdvancedMode && !isParentReviewMode;
+  const requestedMonth = searchParams.get('month');
+  const detailMonthKey = requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)
+    ? requestedMonth
+    : previousCompletedMonthKey();
+  const detailRange = monthDateRange(detailMonthKey);
+
+  const [parentId, setParentId] = useState(routeParentId ?? 'all');
   const [parentSearch, setParentSearch] = useState('');
   const [parents, setParents] = useState<AvsParentOption[]>([]);
   const parentListPromise = useRef<Promise<AvsParentOption[]> | null>(null);
@@ -701,7 +720,7 @@ export default function AttendanceValidationDashboard() {
     parentListPromise.current ??= loadAvsParentOptions();
     void parentListPromise.current.then(setParents).catch((error: Error) => setError(error.message));
   };
-  const loadParentsForTracker = async (): Promise<AvsParentOption[]> => {
+  const loadParentsForTracker = useCallback(async (): Promise<AvsParentOption[]> => {
     parentListPromise.current ??= loadAvsParentOptions();
     try {
       const items = await parentListPromise.current;
@@ -712,10 +731,10 @@ export default function AttendanceValidationDashboard() {
       setError(message);
       throw error;
     }
-  };
+  }, []);
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
-  const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
-  const [toDate, setToDate] = useState(yesterdayIstYmd);
+  const [fromDate, setFromDate] = useState(isParentReviewMode ? detailRange.fromDate : AV6_VALIDATION_START_YMD);
+  const [toDate, setToDate] = useState(isParentReviewMode ? detailRange.toDate : yesterdayIstYmd);
   const [loadedRange, setLoadedRange] = useState<{ from: string; to: string } | null>(null);
   const [cursor, setCursor] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -738,18 +757,28 @@ export default function AttendanceValidationDashboard() {
     useState<{ runId: string; fromDate: string; toDate: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
+  const [detailParentLabel, setDetailParentLabel] = useState('');
+  const [detailProgressStatus, setDetailProgressStatus] =
+    useState<AvsMonthlyParentProgressStatus>('not_started');
+  const [detailProgressSaving, setDetailProgressSaving] = useState(false);
   const loadedRecheckToken = useRef<string | null>(null);
-  const validationWorkspaceRef = useRef<HTMLDivElement | null>(null);
+  const detailAutoLoadKey = useRef<string | null>(null);
 
   const openParentMonthFromTracker = (input: {
     parentId: string;
-    fromDate: string;
-    toDate: string;
+    monthKey: string;
   }) => {
-    setParentId(input.parentId);
+    navigate(
+      `/surya/attendance-validation/${encodeURIComponent(input.parentId)}?month=${encodeURIComponent(input.monthKey)}`,
+    );
+  };
+
+  useEffect(() => {
+    if (!isParentReviewMode || !routeParentId) return;
+    setParentId(routeParentId);
     setParentSearch('');
-    setFromDate(input.fromDate);
-    setToDate(input.toDate);
+    setFromDate(detailRange.fromDate);
+    setToDate(detailRange.toDate);
     setCases([]);
     setCursor(null);
     setHasMore(false);
@@ -763,13 +792,24 @@ export default function AttendanceValidationDashboard() {
     setForceFreshResult(null);
     setForceFreshCompletedAt(null);
     setError(null);
-    window.requestAnimationFrame(() => {
-      validationWorkspaceRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    detailAutoLoadKey.current = null;
+
+    void Promise.all([
+      loadAvsParentOptionById(routeParentId),
+      loadAvsMonthlyParentProgressForParent(routeParentId, detailMonthKey),
+    ]).then(([parent, progress]) => {
+      setDetailParentLabel(parent.label);
+      setDetailProgressStatus(progress?.status ?? 'not_started');
+    }).catch((loadError: unknown) => {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load parent review.');
     });
-  };
+  }, [
+    detailMonthKey,
+    detailRange.fromDate,
+    detailRange.toDate,
+    isParentReviewMode,
+    routeParentId,
+  ]);
 
   const reloadExactCases = useCallback(async (ids: string[]) => {
     const unique = [...new Set(ids)].filter((id) => id && !id.includes('/')).slice(0, 100);
