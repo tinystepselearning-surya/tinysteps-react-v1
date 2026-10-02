@@ -534,7 +534,7 @@ function CareerApplicationForm() {
           <Send className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
         </Button>
         <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
-          This form simply prepares your application in WhatsApp. Review the pre-filled message, attach any supporting documents you want to share, and send it to Tiny Steps Learning.
+          Your application is saved for our admin team, then WhatsApp opens with the same details pre-filled. Review the message, attach any supporting documents you want to share, and send it to Tiny Steps Learning.
         </p>
 
         {submitted ? (
