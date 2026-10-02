@@ -1346,7 +1346,7 @@ export async function runAv53ShadowWithFirestore(
 
   for (const group of sameDayGroups.values()) {
     const contextSnapshots = await Promise.all(
-      ([['kidId', '=='], ['kidIds', 'array-contains'], ['studentId', '=='], ['childId', '==']] as const)
+      ([['kidId', '=='], ['kidIds', 'array-contains']] as const)
         .map(([field, operator]) => db.collection('classSessions')
           .where('date', '==', group.serviceDateYmd)
           .where(field, operator, group.kidId)
