@@ -15,7 +15,7 @@ import {
   type DocumentData,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
-import { AlertTriangle, ArrowLeft, CheckCircle2, RefreshCw, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, CreditCard, MessageCircle, RefreshCw, ReceiptText, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
 import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
@@ -24,13 +24,40 @@ import type { AvsBusinessOutcome } from '../../lib/attendanceValidationBusinessR
 import {
   formatMonthKey,
   loadAvsMonthlyParentProgressForParent,
+  loadParentMonthCloseBillingForParent,
   monthDateRange,
   previousCompletedMonthKey,
+  type AvsMonthlyParentProgress,
   type AvsMonthlyParentProgressStatus,
 } from '../../lib/attendanceValidationMonthlyParentProgress';
+import {
+  deriveParentMonthCloseNextAction,
+  parentMonthCloseNextActionLabel,
+  parentMonthClosePaymentLabel,
+  type ParentMonthCloseBillingSnapshot,
+} from '../../lib/parentMonthClose';
+import { buildWhatsAppUrl } from '../../lib/whatsAppUrl';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
+
+
+function formatMoney(value: unknown): string {
+  const amount = Number(value);
+  return `₹${(Number.isFinite(amount) ? Math.round(amount) : 0).toLocaleString('en-IN')}`;
+}
+
+function formatWorkflowDate(value: string | null): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
 
 export const AV6_CASE_READ_LIMIT = 100;
 export const AV6_VALIDATION_START_YMD = '2026-09-01';
@@ -758,9 +785,13 @@ export default function AttendanceValidationDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
   const [detailParentLabel, setDetailParentLabel] = useState('');
+  const [detailParentPhone, setDetailParentPhone] = useState('');
+  const [detailProgress, setDetailProgress] = useState<AvsMonthlyParentProgress | null>(null);
   const [detailProgressStatus, setDetailProgressStatus] =
     useState<AvsMonthlyParentProgressStatus>('not_started');
+  const [detailBilling, setDetailBilling] = useState<ParentMonthCloseBillingSnapshot | null>(null);
   const [detailProgressSaving, setDetailProgressSaving] = useState(false);
+  const [detailWorkflowSaving, setDetailWorkflowSaving] = useState<'billing' | 'invoice' | null>(null);
   const loadedRecheckToken = useRef<string | null>(null);
   const detailAutoLoadKey = useRef<string | null>(null);
 
@@ -797,9 +828,13 @@ export default function AttendanceValidationDashboard() {
     void Promise.all([
       loadAvsParentOptionById(routeParentId),
       loadAvsMonthlyParentProgressForParent(routeParentId, detailMonthKey),
-    ]).then(([parent, progress]) => {
+      loadParentMonthCloseBillingForParent(routeParentId, detailMonthKey),
+    ]).then(([parent, progress, billing]) => {
       setDetailParentLabel(parent.label);
+      setDetailParentPhone(parent.phone ?? '');
+      setDetailProgress(progress);
       setDetailProgressStatus(progress?.status ?? 'not_started');
+      setDetailBilling(billing);
     }).catch((loadError: unknown) => {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load parent review.');
     });
@@ -1133,6 +1168,30 @@ export default function AttendanceValidationDashboard() {
         status,
       });
       setDetailProgressStatus(result.status);
+      setDetailProgress((current) => {
+        if (result.status === 'not_started') return null;
+        return {
+          ...(current ?? {
+            parentId: routeParentId,
+            monthKey: detailMonthKey,
+            status: result.status,
+            updatedAt: null,
+            completedAt: null,
+            billingReviewedAt: null,
+            billingReviewedBy: null,
+            billingReviewedFingerprint: null,
+            invoiceSentAt: null,
+            invoiceSentBy: null,
+            sentBillingFingerprint: null,
+            invoiceSentClassCount: null,
+            invoiceSentBilledAmount: null,
+            invoiceSentDueAmount: null,
+          }),
+          status: result.status as Exclude<AvsMonthlyParentProgressStatus, 'not_started'>,
+          updatedAt: result.updatedAt,
+          completedAt: result.completedAt,
+        };
+      });
     } catch (progressError) {
       setError(progressError instanceof Error
         ? progressError.message
@@ -1142,9 +1201,110 @@ export default function AttendanceValidationDashboard() {
     }
   };
 
+
+  const updateMonthCloseWorkflow = async (workflowAction: 'billing_reviewed' | 'invoice_sent') => {
+    if (!isParentReviewMode || !routeParentId || !detailBilling) return;
+    setDetailWorkflowSaving(workflowAction === 'billing_reviewed' ? 'billing' : 'invoice');
+    setError(null);
+    try {
+      const result = await callFunction<
+        {
+          ok: boolean;
+          workflowAction: 'billing_reviewed' | 'invoice_sent';
+          billingReviewedAt?: string;
+          billingReviewedFingerprint?: string;
+          invoiceSentAt?: string;
+          sentBillingFingerprint?: string;
+          invoiceSentClassCount?: number;
+          invoiceSentBilledAmount?: number;
+          invoiceSentDueAmount?: number;
+        },
+        {
+          parentId: string;
+          monthKey: string;
+          workflowAction: 'billing_reviewed' | 'invoice_sent';
+        }
+      >('updateAttendanceValidationMonthlyParentProgress', {
+        parentId: routeParentId,
+        monthKey: detailMonthKey,
+        workflowAction,
+      });
+
+      setDetailProgress((current) => {
+        if (!current) return current;
+        if (workflowAction === 'billing_reviewed') {
+          return {
+            ...current,
+            billingReviewedAt: result.billingReviewedAt ?? new Date().toISOString(),
+            billingReviewedFingerprint:
+              result.billingReviewedFingerprint ?? detailBilling.fingerprint,
+          };
+        }
+        return {
+          ...current,
+          invoiceSentAt: result.invoiceSentAt ?? new Date().toISOString(),
+          sentBillingFingerprint: result.sentBillingFingerprint ?? detailBilling.fingerprint,
+          invoiceSentClassCount:
+            result.invoiceSentClassCount ?? detailBilling.billedClassCount,
+          invoiceSentBilledAmount:
+            result.invoiceSentBilledAmount ?? detailBilling.billedAmount,
+          invoiceSentDueAmount:
+            result.invoiceSentDueAmount ?? detailBilling.dueAmount,
+        };
+      });
+    } catch (workflowError) {
+      setError(workflowError instanceof Error
+        ? workflowError.message
+        : 'Unable to update the parent month close workflow.');
+    } finally {
+      setDetailWorkflowSaving(null);
+    }
+  };
+
   const detailReturnTo = isParentReviewMode && routeParentId
     ? `/surya/attendance-validation/${encodeURIComponent(routeParentId)}?month=${encodeURIComponent(detailMonthKey)}`
     : undefined;
+
+  const detailNextAction = deriveParentMonthCloseNextAction({
+    progress: detailProgress ?? { status: detailProgressStatus },
+    billing: detailBilling,
+  });
+  const detailBillingReviewedCurrent = detailProgressStatus === 'completed'
+    && !!detailBilling
+    && !!detailProgress?.billingReviewedAt
+    && detailProgress.billingReviewedFingerprint === detailBilling.fingerprint;
+  const detailInvoiceSentCurrent = detailBillingReviewedCurrent
+    && !!detailProgress?.invoiceSentAt
+    && detailProgress.sentBillingFingerprint === detailBilling?.fingerprint;
+
+  const parentPaymentsUrl = (action?: 'invoice' | 'receive') => {
+    if (!routeParentId || !detailReturnTo) return '/surya?tab=parent-payments';
+    const params = new URLSearchParams({
+      tab: 'parent-payments',
+      month: detailMonthKey,
+      parentId: routeParentId,
+      returnTo: detailReturnTo,
+    });
+    if (action) params.set('action', action);
+    return `/surya?${params.toString()}`;
+  };
+
+  const openParentWhatsApp = (kind: 'invoice' | 'reminder') => {
+    if (!detailParentPhone) {
+      setError('This parent does not have a WhatsApp phone number in the canonical parent account.');
+      return;
+    }
+    const due = formatMoney(detailBilling?.dueAmount ?? 0);
+    const message = kind === 'invoice'
+      ? `Hello Dear Parent, please find attached the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The amount due is ${due}. Kindly review it and complete the payment. Thank you.`
+      : `Hello Dear Parent, this is a gentle reminder regarding the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The pending amount is ${due}. Kindly let us know once the payment is completed. Thank you.`;
+    const url = buildWhatsAppUrl(detailParentPhone, message);
+    if (!url) {
+      setError('Unable to prepare the WhatsApp message for this parent.');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   if (isTrackerMode) {
     return (
