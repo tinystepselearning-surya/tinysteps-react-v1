@@ -96,7 +96,7 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'teacher-inquiries', label: 'Teachers', icon: BriefcaseBusiness },
   { id: 'enrollments', label: 'Enroll', icon: ClipboardList },
   { id: 'attendance-corrections', label: 'Attendance', icon: ClipboardList },
-  { id: 'attendance-validation', label: 'AVS', icon: ShieldCheck },
+  { id: 'attendance-validation', label: 'Month Close', icon: ShieldCheck },
   { id: 'relationships', label: 'Relations', icon: Handshake },
   { id: 'courses', label: 'Courses', icon: BookCopy },
   { id: 'today-notifications', label: 'Sessions', icon: BellDot },

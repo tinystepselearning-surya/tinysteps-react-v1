@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   collection,
   collectionGroup,
@@ -260,7 +261,27 @@ async function fetchMonthPage(selectedMonth: string, cursor: MonthCursor): Promi
 }
 
 export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2Props): JSX.Element {
-  const [selectedMonth, setSelectedMonth] = useState(() => monthKeyFromDate(new Date()));
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const handoffParentId = String(searchParams.get('parentId') || '').trim();
+  const handoffMonth = String(searchParams.get('month') || '').trim();
+  const handoffAction = searchParams.get('action');
+  const handoffReturnTo = String(searchParams.get('returnTo') || '').trim();
+  const validReturnTo = handoffReturnTo.startsWith('/surya/attendance-validation/')
+    ? handoffReturnTo
+    : '';
+  const handoffMode = Boolean(handoffParentId);
+  const [selectedMonth, setSelectedMonth] = useState(() =>
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(handoffMonth)
+      ? handoffMonth
+      : monthKeyFromDate(new Date()),
+  );
+
+  useEffect(() => {
+    if (/^\d{4}-(0[1-9]|1[0-2])$/.test(handoffMonth) && handoffMonth !== selectedMonth) {
+      setSelectedMonth(handoffMonth);
+    }
+  }, [handoffMonth, selectedMonth]);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageIds, setPageIds] = useState<string[]>([]);
   const [pageCursor, setPageCursor] = useState<MonthCursor>(null);
@@ -314,11 +335,35 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
   const [invoiceSaving, setInvoiceSaving] = useState(false);
   const [invoiceIntegrityLoading, setInvoiceIntegrityLoading] = useState(false);
   const invoiceLoadRequestRef = useRef(0);
+  const handoffOpenedRef = useRef<string | null>(null);
 
   const activeIds = useMemo(
     () => (selectedSearchParent ? [selectedSearchParent.id] : pageIds),
     [pageIds, selectedSearchParent],
   );
+
+  useEffect(() => {
+    if (!handoffParentId) return;
+    let active = true;
+    setLoading(true);
+    getDoc(doc(db, 'users', handoffParentId))
+      .then((snapshot) => {
+        if (!active) return;
+        if (!snapshot.exists()) throw new Error('Parent account was not found.');
+        const user = { id: snapshot.id, ...(snapshot.data() as Omit<ParentUser, 'id'>) };
+        if (!isParentUser(user)) throw new Error('Selected account is not a parent.');
+        setSelectedSearchParent(user);
+        setSearchTerm(parentName(user));
+        setSearchResults([]);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : 'Unable to load parent.');
+      })
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [handoffParentId]);
 
   const refreshPayments = useCallback(async (source: 'manual' | 'focus' = 'manual') => {
     if (loading || refreshing) return;
@@ -331,7 +376,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     setRefreshing(true);
     setError('');
     try {
-      if (!selectedSearchParent) {
+      if (!selectedSearchParent && !handoffMode) {
         const startCursor = pageStartCursors[pageNumber - 1] || null;
         const page = await fetchMonthPage(selectedMonth, startCursor);
         setPageIds(page.ids);
@@ -345,7 +390,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     } finally {
       setRefreshing(false);
     }
-  }, [loading, pageNumber, pageStartCursors, refreshing, selectedMonth, selectedSearchParent]);
+  }, [handoffMode, loading, pageNumber, pageStartCursors, refreshing, selectedMonth, selectedSearchParent]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -360,11 +405,23 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     let active = true;
     setLoading(true);
     setError('');
-    setSelectedSearchParent(null);
-    setSearchTerm('');
+    if (!handoffMode) {
+      setSelectedSearchParent(null);
+      setSearchTerm('');
+    }
     setSearchResults([]);
     setPageNumber(1);
     setPageStartCursors([null]);
+
+    if (handoffMode) {
+      setPageIds([]);
+      setPageCursor(null);
+      setHasMore(false);
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
 
     fetchMonthPage(selectedMonth, null)
       .then((page) => {
@@ -382,10 +439,16 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     return () => {
       active = false;
     };
-  }, [selectedMonth]);
+  }, [handoffMode, selectedMonth]);
 
   useEffect(() => {
     let active = true;
+    if (handoffMode) {
+      setSummaryLoading(false);
+      return () => {
+        active = false;
+      };
+    }
     setSummaryLoading(true);
     const monthRows = collectionGroup(db, 'months');
     const monthFilter = where('monthKey', '==', selectedMonth);
@@ -426,7 +489,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     return () => {
       active = false;
     };
-  }, [selectedMonth, refreshKey]);
+  }, [handoffMode, selectedMonth, refreshKey]);
 
   useEffect(() => {
     if (!activeIds.length) {
@@ -446,13 +509,14 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       setError('');
       try {
         const nextUsers: Record<string, ParentUser> = {};
-        for (const ids of chunkIds(activeIds)) {
+        if (selectedSearchParent) nextUsers[selectedSearchParent.id] = selectedSearchParent;
+        const missingUserIds = activeIds.filter((id) => !nextUsers[id]);
+        for (const ids of chunkIds(missingUserIds)) {
           const snapshot = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', ids)));
           snapshot.docs.forEach((item) => {
             nextUsers[item.id] = { id: item.id, ...(item.data() as Omit<ParentUser, 'id'>) };
           });
         }
-        if (selectedSearchParent) nextUsers[selectedSearchParent.id] = selectedSearchParent;
 
         const nextCharges: Array<Record<string, unknown> & { id: string }> = [];
         for (const ids of chunkIds(activeIds)) {
@@ -671,6 +735,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       });
       setReceiveOpen(false);
       setRefreshKey((value) => value + 1);
+      if (validReturnTo) navigate(validReturnTo);
     } catch (err: any) {
       setReceiveError(err?.message || 'Unable to record this payment.');
     } finally {
@@ -687,7 +752,11 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     setInvoiceIntegrityCharges([]);
     setSessionsById({});
     try {
-      const chargeSnapshot = await getDocs(query(collection(db, 'billingCharges'), where('parentId', '==', row.parentId)));
+      const chargeSnapshot = await getDocs(query(
+        collection(db, 'billingCharges'),
+        where('parentId', '==', row.parentId),
+        where('monthKey', '==', selectedMonth),
+      ));
       const parentCharges: Array<Record<string, unknown> & { id: string }> = chargeSnapshot.docs
         .map((item) => ({ id: item.id, ...(item.data() as Record<string, unknown>) } as Record<string, unknown> & { id: string }))
         .filter((charge) => charge.archived !== true);
@@ -713,6 +782,21 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       if (invoiceLoadRequestRef.current === requestId) setInvoiceIntegrityLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!handoffMode || !selectedSearchParent || rows.length === 0) return;
+    const row = rows.find((item) => item.parentId === selectedSearchParent.id);
+    if (!row) return;
+    const action = handoffAction === 'invoice' || handoffAction === 'receive'
+      ? handoffAction
+      : '';
+    if (!action) return;
+    const key = `${selectedMonth}|${row.parentId}|${action}`;
+    if (handoffOpenedRef.current === key) return;
+    handoffOpenedRef.current = key;
+    if (action === 'invoice') void openInvoice(row);
+    else openReceive(row);
+  }, [handoffAction, handoffMode, openInvoice, openReceive, rows, selectedMonth, selectedSearchParent]);
 
   const invoiceIntegrityRows = useMemo(() => {
     if (!invoiceRow) return [];
@@ -749,6 +833,13 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     Math.abs(invoiceTotals.billed - invoiceRow.selectedMonthCharges) > EPSILON ||
     Math.abs(invoiceTotals.settled - invoiceRow.selectedMonthSettled) > EPSILON ||
     Math.abs(invoiceTotals.due - invoiceRow.selectedMonthDue) > EPSILON
+  );
+  const invoiceIntegrityReady = Boolean(
+    invoiceRow
+    && !invoiceIntegrityLoading
+    && invoiceCharges.length > 0
+    && invoiceAnomalies.length === 0
+    && !invoiceTotalsDifferFromLedger
   );
 
   const downloadInvoice = async () => {
@@ -887,15 +978,23 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Parent Payments</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Track monthly dues, record payments, and generate invoices.
+            {handoffMode
+              ? 'Review the selected month, download the invoice, or record payment.'
+              : 'Track monthly dues, record payments, and generate invoices.'}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {validReturnTo ? (
+            <Button variant="outline" size="sm" onClick={() => navigate(validReturnTo)}>
+              Back to Parent Month Close
+            </Button>
+          ) : null}
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Month</label>
             <Input
               type="month"
               value={selectedMonth}
+              disabled={handoffMode}
               onChange={(event) => setSelectedMonth(event.target.value)}
               className="h-9 w-[170px] bg-white"
             />
@@ -908,7 +1007,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
           >
             {refreshing ? 'Refreshing…' : 'Refresh'}
           </Button>
-          {onOpenMaintenance ? (
+          {onOpenMaintenance && !handoffMode ? (
             <Button variant="outline" size="sm" onClick={onOpenMaintenance}>
               Financial tools
             </Button>
@@ -916,6 +1015,21 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
         </div>
       </div>
 
+      {handoffMode ? (
+        <Card className="p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Parent Month Close finance review</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                This view is locked to {monthLabel(selectedMonth)} and the selected parent.
+              </p>
+            </div>
+            <span className="rounded-lg border bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-900">
+              {selectedSearchParent ? parentName(selectedSearchParent) : 'Loading parent…'}
+            </span>
+          </div>
+        </Card>
+      ) : (
       <Card className="p-3">
         <div ref={searchContainerRef} className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="shrink-0 text-sm font-medium">Find parent</label>
@@ -970,7 +1084,9 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
           ) : null}
         </div>
       </Card>
+      )}
 
+      {!handoffMode ? (
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Card className="p-3">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Billed</div>
@@ -993,6 +1109,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
           <div className="mt-1 text-xs text-muted-foreground">{summaryLoading ? '—' : `${summary.paidParents} paid · ${summary.partialParents} partial`}</div>
         </Card>
       </div>
+      ) : null}
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5">
@@ -1239,12 +1356,19 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
               <p className="text-xs text-muted-foreground">
                 This invoice is based on {monthLabel(selectedMonth)} service-month charges and allocations. Historical receipts entered later are reflected after allocation to these charges.
               </p>
+              {!invoiceIntegrityLoading && !invoiceIntegrityReady && (
+                <p className="text-xs font-medium text-amber-700">
+                  Download is blocked until the invoice rows and canonical monthly ledger agree.
+                </p>
+              )}
             </div>
           ) : null}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setInvoiceOpen(false)}>Close</Button>
-            <Button onClick={downloadInvoice} disabled={!invoiceRow || invoiceSaving || invoiceIntegrityLoading}>{invoiceSaving ? 'Preparing…' : 'Download PDF'}</Button>
+            <Button onClick={downloadInvoice} disabled={!invoiceIntegrityReady || invoiceSaving}>
+              {invoiceSaving ? 'Preparing…' : 'Download PDF'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

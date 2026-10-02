@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildParentMonthlyBillingReadModel,
+  billingCompositionFingerprint,
   resolveParentMonthlyChargePaidAmount,
   resolveServiceMonthStatus,
 } from '../../../functions/src/parentMonthlyBillingReadModel';
@@ -16,6 +17,19 @@ const charge = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('buildParentMonthlyBillingReadModel', () => {
+  it('uses charge identity for composition and ignores settlement changes', () => {
+    const make = (ids: string[], paidAmount: number) => buildParentMonthlyBillingReadModel({
+      parentId: 'parent-1', monthKey: '2026-05', now: NOW,
+      charges: ids.map((id) => ({ id, monthKey: '2026-05', amount: 375, paidAmount })),
+    });
+    const original = make(['charge-a', 'charge-b'], 0);
+    expect(make(['charge-b', 'charge-a'], 0).billingCompositionFingerprint).toBe(original.billingCompositionFingerprint);
+    expect(make(['charge-a', 'charge-b'], 375).billingCompositionFingerprint).toBe(original.billingCompositionFingerprint);
+    expect(make(['charge-a', 'charge-c'], 0).billingCompositionFingerprint).not.toBe(original.billingCompositionFingerprint);
+    expect(original.billingCompositionFingerprint).toBe(billingCompositionFingerprint({
+      billedClassCount: 2, billedAmount: 750, chargeIds: ['charge-b', 'charge-a'],
+    }));
+  });
   it('treats a June receipt clearing May as May service-month settlement', () => {
     const model = buildParentMonthlyBillingReadModel({
       parentId: 'parent-1',

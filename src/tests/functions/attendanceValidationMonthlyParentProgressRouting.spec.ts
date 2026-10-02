@@ -21,6 +21,10 @@ describe('AVS monthly parent tracker routing', () => {
     expect(callable).toContain("const COLLECTION = 'attendanceValidationMonthlyParentProgress'");
     expect(callable).not.toContain("collection('classSessions')");
     expect(callable).not.toContain("collection('billingCharges')");
+    expect(callable).toContain("collection('parentMonthlyReadModels')");
+    expect(callable).toContain("workflowAction === 'billing_reviewed'");
+    expect(callable).toContain('alreadySentCurrentInvoice(progressData, billing.fingerprint)');
+    expect(callable).toContain("{ merge: true }");
     expect(callable).not.toContain("collection('teacherEarnings')");
   });
 
@@ -46,7 +50,7 @@ describe('AVS monthly parent tracker routing', () => {
 
   it('uses a monthly task queue that opens dedicated parent review routes', () => {
     expect(dashboard).toContain('AttendanceValidationMonthlyTracker');
-    expect(tracker).toContain('Monthly Parent Validation Tracker');
+    expect(tracker).toContain('Monthly Close Tracker');
     expect(tracker).toContain("'updateAttendanceValidationMonthlyParentProgress'");
     expect(tracker).toContain("currentStatus === 'not_started'");
     expect(tracker).toContain("updateStatus(parentId, 'in_progress')");
@@ -54,10 +58,16 @@ describe('AVS monthly parent tracker routing', () => {
     expect(tracker).toContain('loadAvsMonthlyParentProgress(selectedMonth)');
     expect(tracker).toContain('loadAvsMonthlyParentsWithSessions(selectedMonth)');
     expect(tracker).toContain('void loadTracker()');
-    expect(tracker).toContain('sessionCountByParent[parent.id]');
+    expect(tracker).toContain('billingByParent[parent.id]');
     expect(tracker).not.toContain('aria-label={`Status for ${parent.label}`}');
     expect(tracker).toContain('With sessions this month');
     expect(tracker).toContain('All parents');
+    expect(tracker).toContain('Attendance pending');
+    expect(tracker).toContain('Billing review');
+    expect(tracker).toContain('Ready to send');
+    expect(tracker).toContain('Awaiting payment');
+    expect(tracker).toContain('Partial');
+    expect(tracker).toContain('Closed');
     expect(tracker).toContain("useState<TrackerScope>('with_sessions')");
     expect(monthlyProgress).toContain("collectionGroup(db, 'months')");
     expect(monthlyProgress).toContain("where('monthKey', '==', selectedMonth)");
@@ -66,7 +76,7 @@ describe('AVS monthly parent tracker routing', () => {
     expect(dashboard).toContain('/surya/attendance-validation/${encodeURIComponent(input.parentId)}');
     expect(dashboard).toContain('isParentReviewMode');
     expect(dashboard).toContain('isTrackerMode');
-    expect(dashboard).toContain('Advanced validation');
+    expect(dashboard).toContain('Advanced attendance validation');
     expect(routes).toContain("{ path: 'attendance-validation/advanced', element: <AdminDashboard /> }");
     expect(routes).toContain("{ path: 'attendance-validation/:parentId', element: <AdminDashboard /> }");
     expect(adminDashboard).toContain("location.pathname.startsWith('/surya/attendance-validation')");

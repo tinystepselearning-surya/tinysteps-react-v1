@@ -19,7 +19,7 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   // navigation now enters the unified Students & Enrollments workspace.
   enrollments: 'Students & Enrollments',
   'attendance-corrections': 'Attendance Corrections',
-  'attendance-validation': 'Attendance Validation',
+  'attendance-validation': 'Parent Month Close',
   relationships: 'Relationship Management',
   courses: 'Course Management',
   'today-notifications': 'Sessions Management',
@@ -41,6 +41,7 @@ const resolveSectionTitle = (
   search: string,
   portal: 'admin' | 'founder',
 ) => {
+  if (pathname.startsWith('/surya/attendance-validation')) return 'Parent Month Close';
   if (pathname.includes('/surya/analytics')) return 'Analytics';
   const fallback = portal === 'founder' ? 'editorial-reviews' : 'users';
   const tab = new URLSearchParams(search).get('tab') || fallback;

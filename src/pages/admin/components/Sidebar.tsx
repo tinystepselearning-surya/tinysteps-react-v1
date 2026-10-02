@@ -37,7 +37,7 @@ export const ADMIN_SIDEBAR_TABS: AdminSidebarTab[] = [
     { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
     { id: 'teacher-inquiries', label: 'Teacher Enquiries', icon: BriefcaseBusiness },
     { id: 'attendance-corrections', label: 'Attendance Corrections', icon: ClipboardList },
-    { id: 'attendance-validation', label: 'Attendance Validation', icon: ShieldCheck },
+    { id: 'attendance-validation', label: 'Parent Month Close', icon: ShieldCheck },
     { id: 'relationships', label: 'Relationship Management', icon: Handshake },
     { id: 'courses', label: 'Course Management', icon: BookCopy },
     { id: 'today-notifications', label: 'Sessions Management', icon: BellDot },
