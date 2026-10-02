@@ -19,6 +19,7 @@ import { AlertTriangle, CheckCircle2, RefreshCw, ShieldCheck } from 'lucide-reac
 import { db } from '../../lib/firebaseConfig';
 import { callFunction } from '../../lib/callFunctions';
 import AttendanceValidationBusinessView from './components/AttendanceValidationBusinessView';
+import AttendanceValidationMonthlyTracker from './components/AttendanceValidationMonthlyTracker';
 import type { AvsBusinessOutcome } from '../../lib/attendanceValidationBusinessReconciliation';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -700,6 +701,18 @@ export default function AttendanceValidationDashboard() {
     parentListPromise.current ??= loadAvsParentOptions();
     void parentListPromise.current.then(setParents).catch((error: Error) => setError(error.message));
   };
+  const loadParentsForTracker = async (): Promise<AvsParentOption[]> => {
+    parentListPromise.current ??= loadAvsParentOptions();
+    try {
+      const items = await parentListPromise.current;
+      setParents(items);
+      return items;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to load parents.';
+      setError(message);
+      throw error;
+    }
+  };
   const [cases, setCases] = useState<Av6ValidationCase[]>([]);
   const [fromDate, setFromDate] = useState(AV6_VALIDATION_START_YMD);
   const [toDate, setToDate] = useState(yesterdayIstYmd);
@@ -726,6 +739,37 @@ export default function AttendanceValidationDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [loadedAt, setLoadedAt] = useState<Date | null>(null);
   const loadedRecheckToken = useRef<string | null>(null);
+  const validationWorkspaceRef = useRef<HTMLDivElement | null>(null);
+
+  const openParentMonthFromTracker = (input: {
+    parentId: string;
+    fromDate: string;
+    toDate: string;
+  }) => {
+    setParentId(input.parentId);
+    setParentSearch('');
+    setFromDate(input.fromDate);
+    setToDate(input.toDate);
+    setCases([]);
+    setCursor(null);
+    setHasMore(false);
+    setLoadedRange(null);
+    setLoadedAt(null);
+    setValidationResult(null);
+    setValidationCompletedAt(null);
+    setForceFreshRangeResult(null);
+    setForceFreshRangeGeneration(null);
+    setForceFreshRangeCompletedAt(null);
+    setForceFreshResult(null);
+    setForceFreshCompletedAt(null);
+    setError(null);
+    window.requestAnimationFrame(() => {
+      validationWorkspaceRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  };
 
   const reloadExactCases = useCallback(async (ids: string[]) => {
     const unique = [...new Set(ids)].filter((id) => id && !id.includes('/')).slice(0, 100);
@@ -1029,6 +1073,20 @@ export default function AttendanceValidationDashboard() {
         </div>
       </Card>
 
+      <AttendanceValidationMonthlyTracker
+        parents={parents}
+        loadParents={loadParentsForTracker}
+        disabled={
+          loading
+          || loadingMore
+          || validationRunning
+          || forceFreshRangeRunning
+          || forceFreshCaseId !== null
+        }
+        onOpenParentMonth={openParentMonthFromTracker}
+      />
+
+      <div ref={validationWorkspaceRef}>
       <Card className="p-4">
         <div className="grid gap-3 lg:grid-cols-[240px_150px_150px_auto] lg:items-end">
           <div className="space-y-1 text-xs font-medium text-slate-600">
@@ -1128,6 +1186,7 @@ export default function AttendanceValidationDashboard() {
           </p>
         )}
       </Card>
+      </div>
 
       {validationResult && (
         <Card className="border-emerald-200 bg-emerald-50 p-4">
