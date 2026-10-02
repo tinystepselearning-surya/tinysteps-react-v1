@@ -1,6 +1,7 @@
-import type {
-  AttendanceParticipantEvidence,
-  AttendanceValidationEvidenceDocument,
+import {
+  hashAttendanceEvidenceValue,
+  type AttendanceParticipantEvidence,
+  type AttendanceValidationEvidenceDocument,
 } from './teamsEvidenceCollector';
 
 export const AV3_IDENTITY_SCHEMA_VERSION = 1;
@@ -128,6 +129,7 @@ function uniqueIssueList(issues: Av3IdentityIssueKind[]): Av3IdentityIssueKind[]
  * Official Tiny Steps precedence:
  * - the class session already identifies enrollment + kid + assigned teacher;
  * - a stable Microsoft/Entra identity match is authoritative when Graph supplies one;
+ * - the canonical meeting organizer identity is staff-side even when it is not in the staff registry;
  * - email hash is a secondary fallback only when Graph supplies no stable identity;
  * - stable identity and email disagreement is never silently accepted: it requires REVIEW;
  * - recognized Tiny Steps Microsoft identities are STAFF SIDE;
@@ -147,6 +149,9 @@ export function bridgeEnrollmentIdentity(
   if (!teacherId) issues.push('missing_teacher_id');
 
   const normalizedRegistry = staffRegistry.map(normalizeRegistryEntry);
+  const organizerIdentityHash = evidence.organizerUserId.trim()
+    ? normalizeHash(hashAttendanceEvidenceValue(evidence.organizerUserId.trim()))
+    : null;
 
   const expectedTeacherEntries = teacherId
     ? normalizedRegistry.filter(({ entry }) => entry.staffId === teacherId)
@@ -211,6 +216,17 @@ export function bridgeEnrollmentIdentity(
           authoritativeStaffId,
           teacherId,
         );
+      }
+
+      if (
+        organizerIdentityHash
+        && participantStableIds.has(organizerIdentityHash)
+      ) {
+        return {
+          participantRecordId: participant.participantRecordId,
+          classification: 'other_staff' as const,
+          matchedStaffIds: [],
+        };
       }
 
       if (participantStableIds.size > 0) {
