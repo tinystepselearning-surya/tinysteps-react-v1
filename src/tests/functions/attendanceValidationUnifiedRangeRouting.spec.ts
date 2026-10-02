@@ -33,6 +33,21 @@ describe('AVS unified Run Validation backend routing', () => {
     expect(source).not.toContain('runAttendanceValidationFirstTimeBaselineBatch(');
   });
 
+  it('falls back to the linked enrollment Teams URL before freshness and Graph collection', () => {
+    const fallback = read(
+      'functions/src/attendanceValidation/sessionJoinUrlFallback.ts',
+    );
+    expect(source).toContain('resolveAvsSessionJoinUrl(');
+    expect(source).toContain('enrollmentJoinUrlCache');
+    expect(source).toContain('row.data = joinUrlResolution.session');
+    expect(source).toContain('enrollmentJoinUrlFallbackReads');
+    expect(fallback).toContain("collection('enrollments')");
+    expect(fallback).toContain('.doc(enrollmentId)');
+    expect(fallback).not.toContain('.where(');
+    expect(fallback).not.toContain('.set(');
+    expect(fallback).not.toContain('.update(');
+  });
+
   it('uses the canonical occurrence selector, identity binding, and evidence store for fresh work', () => {
     expect(source).toContain('createOccurrenceSelectingTeamsEvidenceGraphClient(graph, session)');
     expect(source).toContain('collectTeamsEvidence(');
