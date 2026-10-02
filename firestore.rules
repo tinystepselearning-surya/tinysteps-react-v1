@@ -396,6 +396,10 @@ service cloud.firestore {
       allow read: if isFounder();
     }
 
+    match /teacherInquiries/{document=**} {
+      allow read: if isFounder();
+    }
+
     match /demoSessions/{document=**} {
       allow read: if isFounder();
     }
@@ -1552,6 +1556,84 @@ function teacherProgressIdentityUnchanged() {
       allow read: if isAdmin()
         || (isTeacher() && resource.data.teacherUid == request.auth.uid);
       allow create, update, delete: if false;
+    }
+
+
+    // ----------------------------
+    // TEACHER ENQUIRIES
+    // ----------------------------
+    match /teacherInquiries/{inquiryId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasOnly([
+          'candidateName',
+          'phone',
+          'email',
+          'location',
+          'experience',
+          'specialization',
+          'currentContext',
+          'availability',
+          'candidateNote',
+          'stage',
+          'source',
+          'sourcePath',
+          'requestedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'candidateName',
+          'phone',
+          'email',
+          'location',
+          'experience',
+          'specialization',
+          'currentContext',
+          'availability',
+          'candidateNote',
+          'stage',
+          'source',
+          'sourcePath',
+          'requestedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.candidateName is string
+        && request.resource.data.candidateName.size() >= 2
+        && request.resource.data.candidateName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 8
+        && request.resource.data.phone.size() <= 30
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 150
+        && request.resource.data.location is string
+        && request.resource.data.location.size() >= 2
+        && request.resource.data.location.size() <= 120
+        && request.resource.data.experience is string
+        && request.resource.data.experience.size() >= 1
+        && request.resource.data.experience.size() <= 300
+        && request.resource.data.specialization in [
+          'Phonics',
+          'Grammar',
+          'Public Speaking',
+          'Spoken English',
+          'Multiple areas'
+        ]
+        && request.resource.data.currentContext is string
+        && request.resource.data.currentContext.size() <= 300
+        && request.resource.data.availability is string
+        && request.resource.data.availability.size() >= 1
+        && request.resource.data.availability.size() <= 200
+        && request.resource.data.candidateNote is string
+        && request.resource.data.candidateNote.size() <= 1000
+        && request.resource.data.stage == 'open'
+        && request.resource.data.source == 'careers_page'
+        && request.resource.data.sourcePath == '/careers'
+        && request.resource.data.requestedAt is timestamp
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+      );
     }
 
     // ----------------------------
