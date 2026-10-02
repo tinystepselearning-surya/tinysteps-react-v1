@@ -112,6 +112,16 @@ function participantReconnectKey(
   participant: AttendanceParticipantEvidence,
   classification: ParticipantBusinessClassification,
 ): string {
+  // For learner-side Teams guests, reconnects can receive different transient
+  // guest ids while keeping the same display name. In a canonical one-learner
+  // session, use the privacy-safe normalized name hash first so those reconnect
+  // rows are correlated. Staff-side identities never use this shortcut.
+  if (
+    classification === 'learner_side'
+    && participant.displayNameHash
+  ) {
+    return `learner-name:${participant.displayNameHash}`;
+  }
   if (participant.emailAddressHash) {
     return `email:${participant.emailAddressHash}`;
   }
@@ -122,11 +132,8 @@ function participantReconnectKey(
   if (stableIdentityHashes.length > 0) {
     return `identity:${stableIdentityHashes.join(',')}`;
   }
-  // Unverified Teams guests may reconnect as separate attendance records with
-  // no stable id/email. Only in that fallback case use the normalized name
-  // hash to correlate reconnects; the raw display name is never persisted.
   if (participant.displayNameHash) {
-    return `${classification === 'learner_side' ? 'learner' : 'participant'}-name:${participant.displayNameHash}`;
+    return `participant-name:${participant.displayNameHash}`;
   }
   return `record:${participant.participantRecordId}`;
 }
