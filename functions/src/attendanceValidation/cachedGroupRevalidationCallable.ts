@@ -6,6 +6,10 @@ import {
   loadAvsBusinessGroupForSession, loadAvsGroupEvidence,
   persistAvsGroupCases, validateAvsBusinessGroup,
 } from './groupValidation';
+import {
+  resolveAvsSessionJoinUrl,
+  type AvsEnrollmentJoinUrlCache,
+} from './sessionJoinUrlFallback';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -20,6 +24,18 @@ export function exactAvsId(value: unknown, name: string): string {
 export async function revalidateAvsGroupCached(db: FirebaseFirestore.Firestore, classSessionId: string, kidId: string,
   registryOverride?: Av3StaffRegistrySnapshot) {
   const rows = await loadAvsBusinessGroupForSession(db, classSessionId, kidId);
+  const enrollmentJoinUrlCache: AvsEnrollmentJoinUrlCache = new Map();
+  let enrollmentJoinUrlFallbackReads = 0;
+  for (const row of rows) {
+    const joinUrlResolution = await resolveAvsSessionJoinUrl(
+      db,
+      row.data,
+      enrollmentJoinUrlCache,
+    );
+    enrollmentJoinUrlFallbackReads +=
+      joinUrlResolution.enrollmentFallbackReadCount;
+    row.data = joinUrlResolution.session;
+  }
   const loaded = await loadAvsGroupEvidence(db, rows);
   const registry = registryOverride ?? await loadProductionStaffIdentityRegistry(db);
   let freshRequired = false;
@@ -35,7 +51,8 @@ export async function revalidateAvsGroupCached(db: FirebaseFirestore.Firestore, 
   if (freshRequired || result.unsafeCount || result.cases.length !== rows.length
     || result.cases.some((item) => item.businessOutcome === 'not_evaluable' || !item.businessOutcome)) {
     return { ok: false, status: 'fresh_teams_evidence_required' as const,
-      classSessionIds: rows.map((row) => row.id), graphLogicalCalls: 0 };
+      classSessionIds: rows.map((row) => row.id), graphLogicalCalls: 0,
+      enrollmentJoinUrlFallbackReads };
   }
   await persistAvsGroupCases(db, rows, result.cases);
   const first = result.cases[0];
@@ -44,7 +61,8 @@ export async function revalidateAvsGroupCached(db: FirebaseFirestore.Firestore, 
     businessOutcome: first.businessOutcome,
     teamsSupportedPresentCount: first.teamsSupportedPresentCount,
     tinyStepsPresentCount: first.tinyStepsPresentCount,
-    graphLogicalCalls: 0 };
+    graphLogicalCalls: 0,
+    enrollmentJoinUrlFallbackReads };
 }
 
 export const revalidateAttendanceValidationGroupCached = onCall({
