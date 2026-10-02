@@ -16,6 +16,9 @@ describe('AV6 admin attendance validation dashboard', () => {
   const businessView = readRepoFile(
     'src/pages/admin/components/AttendanceValidationBusinessView.tsx',
   );
+  const correctionPanel = readRepoFile(
+    'src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx',
+  );
   const businessReconciliation = readRepoFile(
     'src/lib/attendanceValidationBusinessReconciliation.ts',
   );
@@ -270,6 +273,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
     );
+  });
+
+
+  it('returns attendance corrections to the exact parent-month review', () => {
+    expect(businessView).toContain("params.set('avsReturn', returnTo)");
+    expect(correctionPanel).toContain("searchParams.get('avsReturn')");
+    expect(correctionPanel).toContain("value.startsWith('/surya/attendance-validation/')");
+    expect(correctionPanel).toContain("navigate(queryString ? `${returnPath}?${queryString}` : returnPath");
+    expect(correctionPanel).toContain("navigate(avsReturnTo || '/surya?tab=attendance-validation')");
   });
 
   it('classifies Firebase transport failures without weakening the safe failure boundary', () => {
