@@ -98,6 +98,118 @@ function mergeNormalizedIntervals(
   ).intervals;
 }
 
+type ParticipantBusinessClassification =
+  Av3EnrollmentIdentityResult['participantClassifications'][number]['classification'];
+
+interface ParticipantCoverageGroup {
+  key: string;
+  classifications: Set<ParticipantBusinessClassification>;
+  intervals: NormalizedEvidenceInterval[];
+  seconds: number;
+}
+
+function participantReconnectKey(
+  participant: AttendanceParticipantEvidence,
+  classification: ParticipantBusinessClassification,
+): string {
+  // For learner-side reconnects, a normalized display-name hash is the most
+  // useful privacy-safe fallback because Teams may emit a new attendance-record
+  // id (and sometimes a new guest identity) after a reconnect.
+  if (classification === 'learner_side' && participant.displayNameHash) {
+    return `learner-name:${participant.displayNameHash}`;
+  }
+  if (participant.emailAddressHash) {
+    return `email:${participant.emailAddressHash}`;
+  }
+  const stableIdentityHashes = participant.identityHints
+    .map((hint) => hint.idHash)
+    .filter(Boolean)
+    .sort();
+  if (stableIdentityHashes.length > 0) {
+    return `identity:${stableIdentityHashes.join(',')}`;
+  }
+  if (participant.displayNameHash) {
+    return `name:${participant.displayNameHash}`;
+  }
+  return `record:${participant.participantRecordId}`;
+}
+
+function singleSessionLearnerCoverage(
+  participants: readonly AttendanceParticipantEvidence[],
+  identity: Av3EnrollmentIdentityResult,
+  day: { startDateTime: string; endDateTime: string },
+): { intervals: NormalizedEvidenceInterval[]; ambiguous: boolean } {
+  const classificationById = new Map(
+    identity.participantClassifications.map((item) => [
+      item.participantRecordId,
+      item.classification,
+    ] as const),
+  );
+  const groups = new Map<string, ParticipantCoverageGroup>();
+
+  for (const participant of participants) {
+    const classification =
+      classificationById.get(participant.participantRecordId) ?? 'learner_side';
+    const intervals = mergeNormalizedIntervals(
+      clipNormalizedIntervalsToWindow(
+        participantIntervals(participant),
+        day.startDateTime,
+        day.endDateTime,
+      ),
+    );
+    const seconds = sumNormalizedIntervalSeconds(intervals);
+    if (!(seconds > 0)) continue;
+
+    const key = participantReconnectKey(participant, classification);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.classifications.add(classification);
+      existing.intervals = mergeNormalizedIntervals([
+        ...existing.intervals,
+        ...intervals,
+      ]);
+      existing.seconds = sumNormalizedIntervalSeconds(existing.intervals);
+    } else {
+      groups.set(key, {
+        key,
+        classifications: new Set([classification]),
+        intervals,
+        seconds,
+      });
+    }
+  }
+
+  const ordered = [...groups.values()].sort((left, right) =>
+    right.seconds - left.seconds || left.key.localeCompare(right.key));
+
+  const staffGroups = ordered.filter((group) =>
+    [...group.classifications].some((classification) =>
+      classification === 'expected_teacher'
+      || classification === 'other_staff'
+      || classification === 'ambiguous_staff'));
+  const learnerGroups = ordered.filter((group) =>
+    group.classifications.size === 1
+    && group.classifications.has('learner_side'));
+
+  if (staffGroups.length > 0) {
+    if (learnerGroups.length === 0) return { intervals: [], ambiguous: false };
+    if (learnerGroups.length === 1) {
+      return { intervals: learnerGroups[0].intervals, ambiguous: false };
+    }
+    return { intervals: [], ambiguous: true };
+  }
+
+  // If teacher mapping is unavailable, preserve the Tiny Steps operational
+  // invariant that the authorised teacher conducts the meeting. One participant
+  // is teacher-only; two correlated participant groups are teacher + learner.
+  // More than two unresolved people cannot be attributed safely.
+  if (ordered.length <= 1) return { intervals: [], ambiguous: false };
+  if (ordered.length === 2) {
+    return { intervals: ordered[1].intervals, ambiguous: false };
+  }
+  return { intervals: [], ambiguous: true };
+}
+
 function attendanceEvidenceComplete(
   evidence: AttendanceValidationEvidenceDocument,
 ): boolean {
@@ -187,40 +299,22 @@ export function buildSameDayCoverageObservation(
   const day = serviceDayWindowUtc(serviceDateYmd);
   const meetingId = evidence.meeting?.onlineMeetingId ?? 'unknown-meeting';
 
+  let singleSessionLearnerAmbiguous = false;
   const reportCoverages: SameDayReportCoverage[] = evidence.attendanceReports.map(
     (report) => {
       const learners = report.participantRecords.filter((participant) =>
         learnerIds.has(participant.participantRecordId));
 
       if (mode === 'single_session_learner_attendance') {
-        // Tiny Steps operationally guarantees that the authorised teacher is the
-        // meeting host/conductor. Without depending on a separate teacher-identity
-        // registry, require a second participant to prove learner attendance.
-        // Teacher-only meetings therefore measure zero learner attendance.
-        const participantCoverage = report.participantRecords
-          .map((participant) => {
-            const intervals = mergeNormalizedIntervals(
-              clipNormalizedIntervalsToWindow(
-                participantIntervals(participant),
-                day.startDateTime,
-                day.endDateTime,
-              ),
-            );
-            return {
-              participantRecordId: participant.participantRecordId,
-              intervals,
-              seconds: sumNormalizedIntervalSeconds(intervals),
-            };
-          })
-          .filter((item) => item.seconds > 0)
-          .sort((left, right) =>
-            right.seconds - left.seconds
-            || left.participantRecordId.localeCompare(right.participantRecordId));
-
-        const learnerProxy = participantCoverage[1];
+        const learnerCoverage = singleSessionLearnerCoverage(
+          report.participantRecords,
+          identity,
+          day,
+        );
+        if (learnerCoverage.ambiguous) singleSessionLearnerAmbiguous = true;
         return {
           reportKey: `${meetingId}:${report.reportId}`,
-          overlapIntervals: learnerProxy?.intervals ?? [],
+          overlapIntervals: learnerCoverage.intervals,
         };
       }
 
@@ -248,6 +342,22 @@ export function buildSameDayCoverageObservation(
       };
     },
   );
+
+  if (
+    mode === 'single_session_learner_attendance'
+    && singleSessionLearnerAmbiguous
+  ) {
+    return {
+      status: 'review',
+      evidenceId: evidence.id,
+      calculationVersion: evidence.calculationVersion,
+      attendanceEvidenceComplete: true,
+      identityVerified,
+      sameDayOccurrenceCount: evidence.attendanceReports.length,
+      reportCoverages: [],
+      issues: ['single_session_learner_reconnect_ambiguous'],
+    };
+  }
 
   return {
     status: 'measured',
