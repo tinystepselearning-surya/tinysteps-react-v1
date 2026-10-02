@@ -158,37 +158,75 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
   const ref = db.collection(COLLECTION).doc(progressId);
 
   if (workflowAction) {
-    const [progressSnapshot, billingSnapshot] = await Promise.all([
-      ref.get(),
-      db.collection('parentMonthlyReadModels').doc(parentId).collection('months').doc(monthKey).get(),
-    ]);
-    if (!progressSnapshot.exists || progressSnapshot.data()?.status !== 'completed') {
-      throw new HttpsError(
-        'failed-precondition',
-        'Complete the attendance review before continuing the month close workflow.',
-      );
-    }
-    if (!billingSnapshot.exists) {
-      throw new HttpsError(
-        'failed-precondition',
-        'The canonical monthly billing read model is not available.',
-      );
-    }
+    const billingRef = db
+      .collection('parentMonthlyReadModels')
+      .doc(parentId)
+      .collection('months')
+      .doc(monthKey);
 
-    const progressData = progressSnapshot.data() as Record<string, unknown>;
-    const billing = currentBillingSnapshot(
-      billingSnapshot.data() as Record<string, unknown>,
-    );
-    const now = admin.firestore.Timestamp.now();
-    const email = actorEmail(request.auth);
+    return db.runTransaction(async (tx) => {
+      const [progressSnapshot, billingSnapshot] = await Promise.all([
+        tx.get(ref),
+        tx.get(billingRef),
+      ]);
+      if (!progressSnapshot.exists || progressSnapshot.data()?.status !== 'completed') {
+        throw new HttpsError(
+          'failed-precondition',
+          'Complete the attendance review before continuing the month close workflow.',
+        );
+      }
+      if (!billingSnapshot.exists) {
+        throw new HttpsError(
+          'failed-precondition',
+          'The canonical monthly billing read model is not available.',
+        );
+      }
 
-    if (workflowAction === 'billing_reviewed') {
-      await ref.set({
+      const progressData = progressSnapshot.data() as Record<string, unknown>;
+      const billing = currentBillingSnapshot(
+        billingSnapshot.data() as Record<string, unknown>,
+      );
+      const now = admin.firestore.Timestamp.now();
+      const email = actorEmail(request.auth);
+
+      if (workflowAction === 'billing_reviewed') {
+        tx.set(ref, {
+          schemaVersion: 2,
+          billingReviewedAt: now,
+          billingReviewedByUid: uid,
+          billingReviewedByEmail: email,
+          billingReviewedFingerprint: billing.fingerprint,
+          updatedAt: now,
+          updatedByUid: uid,
+          updatedByEmail: email,
+        }, { merge: true });
+        return {
+          ok: true,
+          parentId,
+          monthKey,
+          workflowAction,
+          billingReviewedAt: now.toDate().toISOString(),
+          billingReviewedFingerprint: billing.fingerprint,
+          billing,
+        };
+      }
+
+      if (progressData.billingReviewedFingerprint !== billing.fingerprint) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Billing changed after review. Review billing again before marking the invoice as sent.',
+        );
+      }
+
+      tx.set(ref, {
         schemaVersion: 2,
-        billingReviewedAt: now,
-        billingReviewedByUid: uid,
-        billingReviewedByEmail: email,
-        billingReviewedFingerprint: billing.fingerprint,
+        invoiceSentAt: now,
+        invoiceSentByUid: uid,
+        invoiceSentByEmail: email,
+        sentBillingFingerprint: billing.fingerprint,
+        invoiceSentClassCount: billing.billedClassCount,
+        invoiceSentBilledAmount: billing.billedAmount,
+        invoiceSentDueAmount: billing.dueAmount,
         updatedAt: now,
         updatedByUid: uid,
         updatedByEmail: email,
@@ -198,44 +236,14 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
         parentId,
         monthKey,
         workflowAction,
-        billingReviewedAt: now.toDate().toISOString(),
-        billingReviewedFingerprint: billing.fingerprint,
+        invoiceSentAt: now.toDate().toISOString(),
+        sentBillingFingerprint: billing.fingerprint,
+        invoiceSentClassCount: billing.billedClassCount,
+        invoiceSentBilledAmount: billing.billedAmount,
+        invoiceSentDueAmount: billing.dueAmount,
         billing,
       };
-    }
-
-    if (progressData.billingReviewedFingerprint !== billing.fingerprint) {
-      throw new HttpsError(
-        'failed-precondition',
-        'Billing changed after review. Review billing again before marking the invoice as sent.',
-      );
-    }
-
-    await ref.set({
-      schemaVersion: 2,
-      invoiceSentAt: now,
-      invoiceSentByUid: uid,
-      invoiceSentByEmail: email,
-      sentBillingFingerprint: billing.fingerprint,
-      invoiceSentClassCount: billing.billedClassCount,
-      invoiceSentBilledAmount: billing.billedAmount,
-      invoiceSentDueAmount: billing.dueAmount,
-      updatedAt: now,
-      updatedByUid: uid,
-      updatedByEmail: email,
-    }, { merge: true });
-    return {
-      ok: true,
-      parentId,
-      monthKey,
-      workflowAction,
-      invoiceSentAt: now.toDate().toISOString(),
-      sentBillingFingerprint: billing.fingerprint,
-      invoiceSentClassCount: billing.billedClassCount,
-      invoiceSentBilledAmount: billing.billedAmount,
-      invoiceSentDueAmount: billing.dueAmount,
-      billing,
-    };
+    });
   }
 
   const status = cleanStatus(request.data?.status);
