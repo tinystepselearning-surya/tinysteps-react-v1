@@ -380,6 +380,19 @@
             "value": "public, max-age=31536000, immutable"
           }
         ]
+      },
+      {
+        "source": "404.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
       }
     ],
     "redirects": [
@@ -475,6 +488,46 @@
       { "source": "/main/parents/common-mistakes", "destination": "/parents/common-mistakes", "type": 301 },
       { "source": "/main/resources", "destination": "/resources", "type": 301 },
       { "source": "/main/resources/", "destination": "/resources", "type": 301 },
+      { "source": "/blog/child-knows-letter-sounds-but-cannot-read", "destination": "/blog/why-child-knows-letter-sounds-but-cannot-read-words", "type": 301 },
+      { "source": "/blog/can-child-master-english-in-10-days", "destination": "/blog/can-child-improve-english-in-10-days", "type": 301 },
+      { "source": "/blog/why-child-answers-only-in-one-word", "destination": "/blog/child-gives-one-word-answers", "type": 301 },
+      { "source": "/blog/child-reads-words-but-does-not-understand-story", "destination": "/blog/why-child-reads-words-but-does-not-understand-story", "type": 301 },
+      { "source": "/blog/june-school-readiness-english-revision-plan", "destination": "/blog/june-school-reopening-english-readiness-plan", "type": 301 },
+      { "source": "/blog/how-long-does-it-take-child-to-learn-phonics", "destination": "/blog/how-long-does-phonics-take", "type": 301 },
+      { "source": "/blog/how-to-choose-phonics-classes", "destination": "/best-online-phonics-classes-for-kids-in-india", "type": 301 },
+      { "source": "/blog/best-online-phonics-classes-for-kids", "destination": "/best-online-phonics-classes-for-kids-in-india", "type": 301 },
+      { "source": "/blog/best-phonics-classes-for-kids", "destination": "/best-online-phonics-classes-for-kids-in-india", "type": 301 },
+      { "source": "/blog/phonics-grammar-speaking-connected-english-communication", "destination": "/blog/how-phonics-grammar-and-communication-work-together", "type": 301 },
+      { "source": "/blog/engage-children-phonics-grammar-speaking-at-home", "destination": "/blog/how-to-engage-kids-in-english-learning-at-home", "type": 301 },
+      { "source": "/blog/best-age-to-start-phonics-classes-for-kids", "destination": "/blog/what-age-to-start-phonics", "type": 301 },
+      { "source": "/blog/how-tiny-steps-builds-reading-confidence", "destination": "/blog/how-phonics-builds-reading-confidence", "type": 301 },
+      { "source": "/blog/week-1-phonics-satpin-launch", "destination": "/blog/phonics-satpin-launch", "type": 301 },
+      { "source": "/blog/week-2-phonics-blending-club", "destination": "/blog/phonics-blending-club", "type": 301 },
+      { "source": "/blog/week-3-phonics-tricky-words", "destination": "/blog/phonics-tricky-words", "type": 301 },
+      { "source": "/blog/week-4-phonics-long-vowels", "destination": "/blog/phonics-long-vowels", "type": 301 },
+      { "source": "/blog/week-5-phonics-r-controlled", "destination": "/blog/phonics-r-controlled", "type": 301 },
+      { "source": "/blog/week-6-phonics-comprehension", "destination": "/blog/phonics-comprehension", "type": 301 },
+      { "source": "/blog/week-16-phonics-summer-plan", "destination": "/blog/phonics-summer-plan", "type": 301 },
+      { "source": "/blog/week-19-phonics-multisyllabic", "destination": "/blog/phonics-multisyllabic", "type": 301 },
+      { "source": "/blog/week-22-phonics-diagnostics", "destination": "/blog/phonics-diagnostics", "type": 301 },
+      { "source": "/blog/week-27-prevent-summer-slide-reading", "destination": "/blog/prevent-summer-slide-reading", "type": 301 },
+      { "source": "/blog/week-7-grammar-nouns-to-paragraphs", "destination": "/blog/grammar-nouns-to-paragraphs", "type": 301 },
+      { "source": "/blog/week-8-grammar-tenses", "destination": "/blog/grammar-tenses", "type": 301 },
+      { "source": "/blog/week-9-grammar-conjunctions", "destination": "/blog/grammar-conjunctions", "type": 301 },
+      { "source": "/blog/week-10-grammar-subject-verb", "destination": "/blog/grammar-subject-verb", "type": 301 },
+      { "source": "/blog/week-11-grammar-creative-writing", "destination": "/blog/grammar-creative-writing", "type": 301 },
+      { "source": "/blog/week-17-grammar-assessment", "destination": "/blog/grammar-assessment", "type": 301 },
+      { "source": "/blog/week-20-grammar-editing-camp", "destination": "/blog/grammar-editing-camp", "type": 301 },
+      { "source": "/blog/week-23-grammar-speaking-bridge", "destination": "/blog/grammar-speaking-bridge", "type": 301 },
+      { "source": "/blog/week-12-speaking-confidence-seeds", "destination": "/blog/speaking-confidence-seeds", "type": 301 },
+      { "source": "/blog/week-13-speaking-structure", "destination": "/blog/speaking-structure", "type": 301 },
+      { "source": "/blog/week-14-speaking-visual-aids", "destination": "/blog/speaking-visual-aids", "type": 301 },
+      { "source": "/blog/week-15-speaking-debate-starters", "destination": "/blog/speaking-debate-starters", "type": 301 },
+      { "source": "/blog/week-18-speaking-video-feedback", "destination": "/blog/speaking-video-feedback", "type": 301 },
+      { "source": "/blog/week-21-speaking-competition-prep", "destination": "/blog/speaking-competition-prep", "type": 301 },
+      { "source": "/blog/week-24-speaking-family-showcase", "destination": "/blog/speaking-family-showcase", "type": 301 },
+      { "source": "/blog/week-25-back-to-school-plan", "destination": "/blog/back-to-school-english-confidence-plan", "type": 301 },
+      { "source": "/blog/week-26-screen-smart-summer-routine", "destination": "/blog/screen-smart-summer-routine-for-kids", "type": 301 },
       { "regex": "/main/?$", "destination": "/", "type": 301 }
     ],
     "rewrites": [
@@ -604,13 +657,6 @@
       {
         "source": "/school/**",
         "destination": "/index.html"
-      },
-      {
-        "source": "**",
-        "function": {
-          "functionId": "notFoundRoute",
-          "region": "asia-south1"
-        }
       }
     ],
     "cleanUrls": true,
