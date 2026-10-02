@@ -29,6 +29,7 @@ import {
 } from './teamsEvidenceCollector';
 import { loadAvsBusinessGroupForSession, loadAvsGroupEvidence, persistAvsGroupCases, validateAvsBusinessGroup } from './groupValidation';
 import type { Av3StaffRegistrySnapshot } from './staffIdentityRegistry';
+import { resolveAvsSessionJoinUrl } from './sessionJoinUrlFallback';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -190,9 +191,36 @@ export async function refreshAttendanceValidationCaseEvidence(
 
     const currentSession =
       (sessionSnapshot.data() || {}) as Record<string, unknown>;
+    const sessionForJoinResolution = {
+      ...currentSession,
+      enrollmentId:
+        currentSession.enrollmentId
+        || validationCase.enrollmentId
+        || previousEvidence?.session.enrollmentId
+        || null,
+    };
+    const joinUrlResolution = await resolveAvsSessionJoinUrl(
+      db,
+      sessionForJoinResolution,
+    );
+    logger.info('AVS force-fresh Teams join URL resolved', {
+      caseId,
+      classSessionId,
+      source: joinUrlResolution.source,
+      enrollmentId: joinUrlResolution.enrollmentId,
+      enrollmentFallbackReadCount:
+        joinUrlResolution.enrollmentFallbackReadCount,
+    });
     const expectedSession = previousEvidence
-      ? buildFreshEvidenceSessionSnapshot(classSessionId, currentSession, previousEvidence)
-      : buildBaselineEvidenceSessionSnapshot(classSessionId, currentSession);
+      ? buildFreshEvidenceSessionSnapshot(
+          classSessionId,
+          joinUrlResolution.session,
+          previousEvidence,
+        )
+      : buildBaselineEvidenceSessionSnapshot(
+          classSessionId,
+          joinUrlResolution.session,
+        );
 
     const runId = `fresh_${Date.now().toString(36)}_${caseId.slice(0, 24)}`;
     const graphClient = createOccurrenceSelectingTeamsEvidenceGraphClient(
@@ -268,6 +296,9 @@ export async function refreshAttendanceValidationCaseEvidence(
           0,
         ),
       graphLogicalCalls: counted.count(),
+      joinUrlSource: joinUrlResolution.source,
+      enrollmentJoinUrlFallbackReads:
+        joinUrlResolution.enrollmentFallbackReadCount,
       evidenceIssueSummary,
       teacherIdentityDecision: identityBinding.decision?.status ?? null,
       teacherIdentityBinding: identityBinding.bindingStatus,
@@ -282,6 +313,8 @@ export async function refreshAttendanceValidationCaseEvidence(
         previousEvidenceReads: previousEvidenceRef ? 1 : 0,
         dirtyMarkerReads: rows.length,
         organizerConfigReads: organizerResolution.firestoreReadCount,
+        enrollmentJoinUrlFallbackReads:
+          joinUrlResolution.enrollmentFallbackReadCount,
         av53PointReads: loaded.readCount,
         sameDayContextReads: rows.length,
         teacherIdentityTransactionReads: identityBinding.transactionReadCount,
@@ -289,6 +322,7 @@ export async function refreshAttendanceValidationCaseEvidence(
         boundedReadsExcludingStaffRegistry:
           2
           + organizerResolution.firestoreReadCount
+          + joinUrlResolution.enrollmentFallbackReadCount
           + identityBinding.transactionReadCount
           + loaded.readCount
           + rows.length,
