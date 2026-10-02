@@ -1,5 +1,6 @@
 import { collection, collectionGroup, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { parentMonthCloseBillingSnapshot, type ParentMonthCloseBillingSnapshot } from './parentMonthClose';
 
 export const AVS_MONTHLY_PARENT_PROGRESS_COLLECTION =
   'attendanceValidationMonthlyParentProgress';
@@ -16,6 +17,15 @@ export interface AvsMonthlyParentProgress {
   status: Exclude<AvsMonthlyParentProgressStatus, 'not_started'>;
   updatedAt: string | null;
   completedAt: string | null;
+  billingReviewedAt: string | null;
+  billingReviewedBy: string | null;
+  billingReviewedFingerprint: string | null;
+  invoiceSentAt: string | null;
+  invoiceSentBy: string | null;
+  sentBillingFingerprint: string | null;
+  invoiceSentClassCount: number | null;
+  invoiceSentBilledAmount: number | null;
+  invoiceSentDueAmount: number | null;
 }
 
 function monthPartsInIst(now: Date): { year: number; month: number } {
@@ -90,26 +100,10 @@ function timestampIso(value: unknown): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-export interface AvsMonthlyParentSessionScope {
-  parentId: string;
-  sessionCount: number;
-}
+export interface AvsMonthlyParentSessionScope extends ParentMonthCloseBillingSnapshot {}
 
 export function avsMonthlyReadModelSessionCount(data: Record<string, unknown>): number {
-  const attendance = data.attendance;
-  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return 0;
-  const attendanceRow = attendance as Record<string, unknown>;
-  const sourceCount = Number(
-    attendanceRow.sourceSessionCount ?? attendanceRow.sourceSessionRecords,
-  );
-  if (Number.isFinite(sourceCount) && sourceCount > 0) return Math.floor(sourceCount);
-  const totals = attendanceRow.totals;
-  if (!totals || typeof totals !== 'object' || Array.isArray(totals)) return 0;
-  const totalsRow = totals as Record<string, unknown>;
-  const totalSessions = Number(totalsRow.totalSessions ?? totalsRow.total);
-  return Number.isFinite(totalSessions) && totalSessions > 0
-    ? Math.floor(totalSessions)
-    : 0;
+  return parentMonthCloseBillingSnapshot(data).sessionCount;
 }
 
 export function avsMonthlyReadModelHasSessions(data: Record<string, unknown>): boolean {
@@ -130,23 +124,50 @@ export async function loadAvsMonthlyParentsWithSessions(
   if (snapshot.docs.length > 2000) {
     throw new Error('Monthly parent read-model scope exceeds the 2,000-record safety bound.');
   }
-  const countsByParentId = new Map<string, number>();
+  const rowsByParentId = new Map<string, AvsMonthlyParentSessionScope>();
   snapshot.docs.forEach((docSnapshot) => {
     const data = docSnapshot.data() as Record<string, unknown>;
-    const parentId = typeof data.parentId === 'string' ? data.parentId.trim() : '';
-    const sessionCount = avsMonthlyReadModelSessionCount(data);
-    if (!parentId || sessionCount <= 0) return;
-    countsByParentId.set(
-      parentId,
-      Math.max(countsByParentId.get(parentId) ?? 0, sessionCount),
-    );
+    const row = parentMonthCloseBillingSnapshot(data);
+    if (!row.parentId || row.sessionCount <= 0) return;
+    const existing = rowsByParentId.get(row.parentId);
+    if (!existing || row.sessionCount >= existing.sessionCount) {
+      rowsByParentId.set(row.parentId, row);
+    }
   });
-  return Array.from(countsByParentId, ([parentId, sessionCount]) => ({
-    parentId,
-    sessionCount,
-  }));
+  return Array.from(rowsByParentId.values());
 }
 
+
+function parseProgressData(
+  data: Record<string, unknown>,
+  parentId: string,
+  selectedMonth: string,
+): AvsMonthlyParentProgress | null {
+  const status = data.status;
+  if (status !== 'in_progress' && status !== 'completed') return null;
+  const numberOrNull = (value: unknown): number | null => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const stringOrNull = (value: unknown): string | null =>
+    typeof value === 'string' && value.trim() ? value.trim() : null;
+  return {
+    parentId,
+    monthKey: selectedMonth,
+    status,
+    updatedAt: timestampIso(data.updatedAt),
+    completedAt: timestampIso(data.completedAt),
+    billingReviewedAt: timestampIso(data.billingReviewedAt),
+    billingReviewedBy: stringOrNull(data.billingReviewedByEmail ?? data.billingReviewedByUid),
+    billingReviewedFingerprint: stringOrNull(data.billingReviewedFingerprint),
+    invoiceSentAt: timestampIso(data.invoiceSentAt),
+    invoiceSentBy: stringOrNull(data.invoiceSentByEmail ?? data.invoiceSentByUid),
+    sentBillingFingerprint: stringOrNull(data.sentBillingFingerprint),
+    invoiceSentClassCount: numberOrNull(data.invoiceSentClassCount),
+    invoiceSentBilledAmount: numberOrNull(data.invoiceSentBilledAmount),
+    invoiceSentDueAmount: numberOrNull(data.invoiceSentDueAmount),
+  };
+}
 
 export async function loadAvsMonthlyParentProgressForParent(
   parentId: string,
@@ -166,15 +187,34 @@ export async function loadAvsMonthlyParentProgressForParent(
   ));
   if (!snapshot.exists()) return null;
   const data = snapshot.data() as Record<string, unknown>;
-  const status = data.status;
-  if (status !== 'in_progress' && status !== 'completed') return null;
-  return {
-    parentId: normalizedParentId,
-    monthKey: selectedMonth,
-    status,
-    updatedAt: timestampIso(data.updatedAt),
-    completedAt: timestampIso(data.completedAt),
-  };
+  return parseProgressData(data, normalizedParentId, selectedMonth);
+}
+
+
+export async function loadParentMonthCloseBillingForParent(
+  parentId: string,
+  selectedMonth: string,
+): Promise<ParentMonthCloseBillingSnapshot | null> {
+  const normalizedParentId = String(parentId || '').trim();
+  if (!normalizedParentId || normalizedParentId.includes('/')) {
+    throw new Error('Invalid parent month close parent.');
+  }
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+    throw new Error('Invalid parent month close month.');
+  }
+  const snapshot = await getDoc(doc(
+    db,
+    'parentMonthlyReadModels',
+    normalizedParentId,
+    'months',
+    selectedMonth,
+  ));
+  if (!snapshot.exists()) return null;
+  return parentMonthCloseBillingSnapshot(
+    snapshot.data() as Record<string, unknown>,
+    normalizedParentId,
+    selectedMonth,
+  );
 }
 
 export async function loadAvsMonthlyParentProgress(
@@ -193,16 +233,9 @@ export async function loadAvsMonthlyParentProgress(
   }
   return snapshot.docs.flatMap((docSnapshot) => {
     const data = docSnapshot.data() as Record<string, unknown>;
-    const status = data.status;
-    if (status !== 'in_progress' && status !== 'completed') return [];
     const parentId = typeof data.parentId === 'string' ? data.parentId.trim() : '';
     if (!parentId) return [];
-    return [{
-      parentId,
-      monthKey: selectedMonth,
-      status,
-      updatedAt: timestampIso(data.updatedAt),
-      completedAt: timestampIso(data.completedAt),
-    }];
+    const parsed = parseProgressData(data, parentId, selectedMonth);
+    return parsed ? [parsed] : [];
   });
 }
