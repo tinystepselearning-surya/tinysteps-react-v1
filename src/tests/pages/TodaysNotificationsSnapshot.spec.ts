@@ -337,6 +337,21 @@ describe('Sessions Management authoritative snapshot loading', () => {
     );
   });
 
+  it('resolves reminder teacher ownership against the current enrollment before profile lookup', () => {
+    expect(pageSource).toContain(
+      'const enrollment = enrollmentId ? enrollmentMap[enrollmentId] : undefined;',
+    );
+    expect(pageSource).toContain('getEnrollmentTeacherRefs(enrollment)');
+    expect(pageSource).toContain('}, [enrollmentMap, sessions, usersMap]);');
+    expect(pageSource).not.toContain(
+      "resolvePreferredSessionTeacherRef(\n          session as unknown as Record<string, unknown>,\n          [],",
+    );
+  });
+
+  it('accepts only WhatsApp numbers within the existing 8-digit floor and E.164 15-digit ceiling', () => {
+    expect(pageSource).toContain('return length >= 8 && length <= 15;');
+  });
+
   it('adds the already-resolved teacher name to the parent reminder without send-time reads', () => {
     expect(pageSource).toContain(
       'Quick reminder: [Child Name] has Tiny Steps class today at [Time] with [Teacher Name].',
