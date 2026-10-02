@@ -118,6 +118,12 @@ describe('collectTeamsEvidence', () => {
     expect(participants[0].identityHints).toEqual([
       { kind: 'user', idHash: hashAttendanceEvidenceValue('aad-user-1') },
     ]);
+    expect(participants[0].displayNameHash).toBe(
+      hashAttendanceEvidenceValue('ignored name'),
+    );
+    expect(participants[1].displayNameHash).toBe(
+      hashAttendanceEvidenceValue('ignored child name'),
+    );
     expect(participants[0].metrics.scheduledDwellPercentage).toBe(100);
     expect(participants[1].metrics.scheduledDwellPercentage).toBe(91.43);
     expect(graphClient.listTranscripts).not.toHaveBeenCalled();

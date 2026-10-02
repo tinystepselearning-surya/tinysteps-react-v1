@@ -103,6 +103,11 @@ export interface AttendanceParticipantEvidence {
   participantRecordId: string;
   role: string | null;
   emailAddressHash: string | null;
+  /**
+   * Privacy-safe reconnect correlation only. Never use this hash as staff
+   * identity proof or as an attendance decision by itself.
+   */
+  displayNameHash?: string | null;
   identityHints: StoredIdentityHint[];
   microsoftTotalAttendanceInSeconds: number | null;
   rawAttendanceIntervals: StoredRawAttendanceInterval[];
@@ -353,17 +358,47 @@ function identityHints(identity: unknown): StoredIdentityHint[] {
   return hints;
 }
 
+function normalizedDisplayName(identity: unknown): string | null {
+  if (!identity || typeof identity !== 'object' || Array.isArray(identity)) return null;
+  const record = identity as Record<string, unknown>;
+  const candidates: string[] = [];
+
+  if (typeof record.displayName === 'string') candidates.push(record.displayName);
+  for (const kind of Object.keys(record).sort()) {
+    const candidate = record[kind];
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) continue;
+    const nested = candidate as Record<string, unknown>;
+    if (typeof nested.displayName === 'string') candidates.push(nested.displayName);
+  }
+
+  for (const candidate of candidates) {
+    const normalized = candidate
+      .normalize('NFKC')
+      .trim()
+      .replace(/\s+/g, ' ')
+      .replace(/\s*\(unverified\)\s*$/i, '')
+      .trim()
+      .toLowerCase();
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
 function participantEvidence(
   record: GraphAttendanceRecord,
   scheduledStartDateTime: string,
   scheduledEndDateTime: string,
 ): AttendanceParticipantEvidence {
   const normalizedEmail = optionalText(record.emailAddress)?.toLowerCase() ?? null;
+  const displayName = normalizedDisplayName(record.identity);
   return {
     participantRecordId: requireText(record.id, 'participantRecordId'),
     role: optionalText(record.role),
     emailAddressHash: normalizedEmail
       ? hashAttendanceEvidenceValue(normalizedEmail)
+      : null,
+    displayNameHash: displayName
+      ? hashAttendanceEvidenceValue(displayName)
       : null,
     identityHints: identityHints(record.identity),
     microsoftTotalAttendanceInSeconds: finiteNumber(record.totalAttendanceInSeconds),
