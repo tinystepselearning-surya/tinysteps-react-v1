@@ -65,6 +65,8 @@ import {
   isActiveBillingCharge,
   type InvoiceChargeRow,
 } from '../../../functions/src/helpers/serviceDate';
+import { resolveParentMonthlyChargePaidAmount } from '../../../functions/src/parentMonthlyBillingReadModel';
+import { parentMonthCloseBillingSnapshot } from '../../lib/parentMonthClose';
 
 const PAGE_SIZE = 10;
 const EPSILON = 0.01;
@@ -752,11 +754,14 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     setInvoiceIntegrityCharges([]);
     setSessionsById({});
     try {
-      const chargeSnapshot = await getDocs(query(
-        collection(db, 'billingCharges'),
-        where('parentId', '==', row.parentId),
-        where('monthKey', '==', selectedMonth),
-      ));
+      const [chargeSnapshot, readModelSnapshot] = await Promise.all([
+        getDocs(query(
+          collection(db, 'billingCharges'),
+          where('parentId', '==', row.parentId),
+          where('monthKey', '==', selectedMonth),
+        )),
+        getDoc(doc(db, 'parentMonthlyReadModels', row.parentId, 'months', selectedMonth)),
+      ]);
       const parentCharges: Array<Record<string, unknown> & { id: string }> = chargeSnapshot.docs
         .map((item) => ({ id: item.id, ...(item.data() as Record<string, unknown>) } as Record<string, unknown> & { id: string }))
         .filter((charge) => charge.archived !== true);
@@ -772,6 +777,22 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
         if (!(sessionId in nextSessionsById)) nextSessionsById[sessionId] = null;
       });
       if (invoiceLoadRequestRef.current !== requestId) return;
+      if (readModelSnapshot.exists()) {
+        const exactBilling = parentMonthCloseBillingSnapshot(
+          readModelSnapshot.data() as Record<string, unknown>,
+          row.parentId,
+          selectedMonth,
+        );
+        setInvoiceRow((current) => current && current.parentId === row.parentId
+          ? {
+            ...current,
+            billedClasses: exactBilling.billedClassCount,
+            selectedMonthCharges: exactBilling.billedAmount,
+            selectedMonthSettled: exactBilling.settledAmount,
+            selectedMonthDue: exactBilling.dueAmount,
+          }
+          : current);
+      }
       setInvoiceIntegrityCharges(parentCharges);
       setSessionsById(nextSessionsById);
     } catch (err) {
@@ -820,7 +841,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
   );
   const invoiceTotals = invoiceCharges.reduce((totals, row) => {
     const amount = Math.max(Number(row.charge.amount) || 0, 0);
-    const paid = resolveChargePaidAmount(row.charge, amount);
+    const paid = resolveParentMonthlyChargePaidAmount(row.charge, amount);
     return {
       classes: totals.classes + 1,
       billed: totals.billed + amount,
@@ -830,9 +851,9 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
   }, { classes: 0, billed: 0, settled: 0, due: 0 });
   const invoiceTotalsDifferFromLedger = !invoiceIntegrityLoading && !!invoiceRow && (
     invoiceTotals.classes !== invoiceRow.billedClasses ||
-    Math.abs(invoiceTotals.billed - invoiceRow.selectedMonthCharges) > EPSILON ||
-    Math.abs(invoiceTotals.settled - invoiceRow.selectedMonthSettled) > EPSILON ||
-    Math.abs(invoiceTotals.due - invoiceRow.selectedMonthDue) > EPSILON
+    Math.abs(Math.round(invoiceTotals.billed * 100) - Math.round(invoiceRow.selectedMonthCharges * 100)) > 1 ||
+    Math.abs(Math.round(invoiceTotals.settled * 100) - Math.round(invoiceRow.selectedMonthSettled * 100)) > 1 ||
+    Math.abs(Math.round(invoiceTotals.due * 100) - Math.round(invoiceRow.selectedMonthDue * 100)) > 1
   );
   const invoiceIntegrityReady = Boolean(
     invoiceRow
