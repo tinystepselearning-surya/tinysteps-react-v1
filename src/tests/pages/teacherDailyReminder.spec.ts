@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTeacherDailyReminderGroups,
   buildTeacherDailyReminderMessage,
+  formatRespectfulTeacherName,
 } from '../../pages/admin/teacherDailyReminder';
 
 describe('teacher daily reminder aggregation', () => {
@@ -228,7 +229,7 @@ describe('teacher daily reminder aggregation', () => {
 
     expect(buildTeacherDailyReminderMessage(group, '3 Oct 2026')).toBe(
       [
-        'Hello Ria,',
+        "Hello Ria ma'am,",
         '',
         'Your classes for 3 Oct 2026:',
         'Aarav — 3:00 PM',
@@ -239,6 +240,12 @@ describe('teacher daily reminder aggregation', () => {
         'Tiny Steps',
       ].join('\n'),
     );
+  });
+
+  it('formats teacher names respectfully without duplicating an existing ma\'am honorific', () => {
+    expect(formatRespectfulTeacherName('Ria Nagpal')).toBe("Ria Nagpal ma'am");
+    expect(formatRespectfulTeacherName("Aditi Ma'am")).toBe("Aditi Ma'am");
+    expect(formatRespectfulTeacherName('Sejal ma’am')).toBe('Sejal ma’am');
   });
 
   it('remains a pure in-memory helper with no Firebase or network read path', () => {

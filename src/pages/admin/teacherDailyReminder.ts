@@ -30,6 +30,14 @@ export interface TeacherDailyReminderGroup {
 
 const normalizeText = (value: unknown): string => String(value || '').trim();
 
+export const formatRespectfulTeacherName = (value: unknown): string => {
+  const teacherName = normalizeText(value) || 'Teacher';
+  if (/\b(?:ma['’]?am|mam)\.?$/i.test(teacherName)) {
+    return teacherName;
+  }
+  return `${teacherName} ma'am`;
+};
+
 const parseClockMinutes = (value: unknown): number | null => {
   const raw = normalizeText(value);
   if (!raw) return null;
@@ -187,7 +195,7 @@ export const buildTeacherDailyReminderMessage = (
   );
 
   return [
-    `Hello ${group.teacherName || 'Teacher'},`,
+    `Hello ${formatRespectfulTeacherName(group.teacherName)},`,
     '',
     `Your classes for ${resolvedScheduleLabel}:`,
     ...classLines,
