@@ -1117,7 +1117,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => navigate('/surya?tab=attendance-validation')}
+            onClick={() => navigate(avsReturnTo || '/surya?tab=attendance-validation')}
             disabled={saving}
           >
             Back to Attendance Validation
