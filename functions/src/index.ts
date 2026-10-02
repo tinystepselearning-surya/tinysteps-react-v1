@@ -219,7 +219,7 @@ export { getParentWorksheetResources } from "./getParentWorksheetResources";
 export { contactForm } from "./contactForm";
 export { enrichPublicLeadAttribution } from "./enrichPublicLeadAttribution";
 export { onWebsiteLeadIdentityWrite } from "./websiteLeadDeduplication";
-export { notFoundRoute } from "./notFoundRoute";
+// notFoundRoute retired after C1 moved public 404 handling and legacy redirects to Firebase Hosting.
 
 // Enrollment lifecycle helpers not replaced by the compatibility surface.
 export {
