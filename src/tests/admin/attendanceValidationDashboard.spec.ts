@@ -187,10 +187,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain("value: 'false_absent', label: 'False Absent'");
   });
 
-  it('shows the refined normal operator surface with only Load Results and Run Validation', () => {
-    expect(dashboard).toContain('Load Results');
-    expect(dashboard).toContain('Run Validation');
-    expect(dashboard).toContain('Continue Validation');
+  it('shows the refined operator surfaces with saved-result and validation actions', () => {
+    expect(dashboard).toContain('Load results');
+    expect(dashboard).toContain('Run validation');
+    expect(dashboard).toContain('Continue validation');
     expect(dashboard).toContain(
       "'runAttendanceValidationRange'",
     );
