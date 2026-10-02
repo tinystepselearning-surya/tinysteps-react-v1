@@ -122,11 +122,14 @@ export default function AttendanceValidationMonthlyTracker({
   const statusFor = (parentId: string): AvsMonthlyParentProgressStatus =>
     progress[parentId]?.status ?? 'not_started';
 
-  const nextActionFor = (parentId: string): ParentMonthCloseNextAction =>
-    deriveParentMonthCloseNextAction({
-      progress: progress[parentId] ?? { status: 'not_started' },
-      billing: billingByParent[parentId] ?? null,
-    });
+  const nextActionFor = useCallback(
+    (parentId: string): ParentMonthCloseNextAction =>
+      deriveParentMonthCloseNextAction({
+        progress: progress[parentId] ?? { status: 'not_started' },
+        billing: billingByParent[parentId] ?? null,
+      }),
+    [billingByParent, progress],
+  );
 
   const scopedParents = useMemo(() => {
     if (scope === 'all_parents') return parents;
@@ -148,7 +151,7 @@ export default function AttendanceValidationMonthlyTracker({
       counts[bucketFor(nextActionFor(parent.id))] += 1;
     });
     return counts;
-  }, [billingByParent, progress, scopedParents]);
+  }, [nextActionFor, scopedParents]);
 
   const visibleParents = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -157,7 +160,7 @@ export default function AttendanceValidationMonthlyTracker({
       if (filter !== 'all' && bucket !== filter) return false;
       return !needle || parent.label.toLowerCase().includes(needle);
     });
-  }, [billingByParent, filter, progress, scopedParents, search]);
+  }, [filter, nextActionFor, scopedParents, search]);
 
   const loadTracker = useCallback(async () => {
     setLoading(true);
