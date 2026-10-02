@@ -1187,136 +1187,245 @@ export default function AttendanceValidationDashboard() {
 
   return (
     <div className="space-y-4">
-      <Card className="border-sky-200 bg-sky-50 p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="mt-0.5 h-5 w-5 text-sky-700" aria-hidden="true" />
+      {isParentReviewMode ? (
+        <Card className="p-4">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="-ml-2 mb-2"
+            onClick={() => navigate(`/surya?tab=attendance-validation&month=${encodeURIComponent(detailMonthKey)}`)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to ${formatMonthKey(detailMonthKey)} tracker
+          </Button>
+
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">
-                Attendance Validation
-              </h2>
-              <p className="mt-1 text-sm text-slate-700">
-                Review saved AVS results and validate completed sessions from {AV6_VALIDATION_START_YMD} onward.
-                Attendance can be corrected from an inspected session line by an explicit admin action.
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Attendance Validation / ${formatMonthKey(detailMonthKey)}
               </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Results load only when requested, in pages of up to {AV6_CASE_READ_LIMIT}.
-                No realtime listener. Display names may use bounded enrollment and teacher-user reads only; no student, billing, earnings, or class-session fallback lookups.
+              <h2 className="mt-1 text-xl font-semibold text-slate-900">
+                {detailParentLabel || 'Parent review'}
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Review period: {formatServiceDate(detailRange.fromDate)} – {formatServiceDate(detailRange.toDate)}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
+                detailProgressStatus === 'completed'
+                  ? 'border-slate-200 bg-white text-slate-600'
+                  : detailProgressStatus === 'in_progress'
+                    ? 'border-amber-200 bg-amber-50 text-amber-700'
+                    : 'border-slate-200 bg-slate-50 text-slate-600'
+              }`}>
+                {detailProgressStatus === 'completed'
+                  ? 'Completed'
+                  : detailProgressStatus === 'in_progress'
+                    ? 'In Progress'
+                    : 'Not Started'}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant={detailProgressStatus === 'completed' ? 'outline' : 'default'}
+                disabled={detailProgressSaving}
+                onClick={() => void updateDetailProgress(
+                  detailProgressStatus === 'completed'
+                    ? 'in_progress'
+                    : detailProgressStatus === 'in_progress'
+                      ? 'completed'
+                      : 'in_progress',
+                )}
+              >
+                {detailProgressSaving
+                  ? 'Saving…'
+                  : detailProgressStatus === 'completed'
+                    ? 'Reopen review'
+                    : detailProgressStatus === 'in_progress'
+                      ? 'Mark review complete'
+                      : 'Start review'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-4">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="-ml-2 mb-2"
+            onClick={() => navigate('/surya?tab=attendance-validation')}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to monthly tracker
+          </Button>
+          <div className="flex items-start gap-3">
+            <SlidersHorizontal className="mt-0.5 h-5 w-5 text-sky-700" aria-hidden="true" />
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Advanced validation</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Use a custom parent and date range when the normal monthly parent-review workflow is not suitable.
               </p>
             </div>
           </div>
+        </Card>
+      )}
 
-          <div className="text-xs text-slate-500">
-            Nothing refreshes automatically. Choose a range below.
-          </div>
-        </div>
-      </Card>
-
-      <AttendanceValidationMonthlyTracker
-        parents={parents}
-        loadParents={loadParentsForTracker}
-        disabled={
-          loading
-          || loadingMore
-          || validationRunning
-          || forceFreshRangeRunning
-          || forceFreshCaseId !== null
-        }
-        onOpenParentMonth={openParentMonthFromTracker}
-      />
-
-      <div ref={validationWorkspaceRef}>
       <Card className="p-4">
-        <div className="grid gap-3 lg:grid-cols-[240px_150px_150px_auto] lg:items-end">
-          <div className="space-y-1 text-xs font-medium text-slate-600">
-            <label htmlFor="avs-parent">Parent</label>
-            <Input aria-label="Search parents" placeholder="Search parents…" value={parentSearch}
-              onFocus={loadParentsOnce} onChange={(event) => setParentSearch(event.target.value)} />
-            <select id="avs-parent" className="h-10 w-full rounded-md border bg-white px-2"
-              value={parentId} onFocus={loadParentsOnce}
-              disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
-              onChange={(event) => {
-                setParentId(event.target.value);
-                setCases([]); setCursor(null); setHasMore(false); setLoadedRange(null); setLoadedAt(null);
-                setValidationResult(null); setValidationCompletedAt(null);
-                setForceFreshRangeResult(null); setForceFreshRangeGeneration(null); setForceFreshRangeCompletedAt(null);
-                setForceFreshResult(null); setForceFreshCompletedAt(null); setError(null);
-              }}>
-              <option value="all">All parents</option>
-              {parents.filter((parent) => parent.id === parentId || parent.label.toLowerCase().includes(parentSearch.toLowerCase()))
-                .map((parent) => <option key={parent.id} value={parent.id}>{parent.label}</option>)}
-            </select>
+        {isParentReviewMode ? (
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-800">
+                ${formatMonthKey(detailMonthKey)} saved AVS results
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Saved cases load when this review opens. Microsoft Graph is never called by opening the page;
+                fresh Teams reads occur only when you explicitly run validation or re-fetch a case.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void loadSavedCases(false, false)}
+                disabled={
+                  loading
+                  || loadingMore
+                  || validationRunning
+                  || forceFreshRangeRunning
+                  || forceFreshCaseId !== null
+                }
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Loading…' : 'Refresh saved results'}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void runValidation()}
+                disabled={
+                  loading
+                  || loadingMore
+                  || validationRunning
+                  || forceFreshRangeRunning
+                  || forceFreshCaseId !== null
+                }
+                title="Validate this completed parent month using cached Teams evidence when safe and fresh Teams reads only when required."
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${validationRunning ? 'animate-spin' : ''}`} />
+                {validationRunning
+                  ? 'Running validation…'
+                  : validationResult?.fromDate === fromDate
+                    && validationResult?.toDate === toDate
+                    && validationResult.continueValidation
+                    ? 'Continue validation'
+                    : 'Run validation'}
+              </Button>
+            </div>
           </div>
-          <label className="space-y-1 text-xs font-medium text-slate-600">
-            <span>From</span>
-            <Input
-              disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning}
-              type="date"
-              min={AV6_VALIDATION_START_YMD}
-              max={yesterdayIstYmd()}
-              value={fromDate}
-              onChange={(event) => setFromDate(event.target.value)}
-            />
-          </label>
-          <label className="space-y-1 text-xs font-medium text-slate-600">
-            <span>To</span>
-            <Input
-              disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning}
-              type="date"
-              min={AV6_VALIDATION_START_YMD}
-              max={yesterdayIstYmd()}
-              value={toDate}
-              onChange={(event) => setToDate(event.target.value)}
-            />
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() => void loadSavedCases(false, false)}
-              disabled={
-                loading
-                || loadingMore
-                || validationRunning
-                || forceFreshRangeRunning
-                || forceFreshCaseId !== null
-              }
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Loading results…' : 'Load Results'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void runValidation()}
-              disabled={
-                loading
-                || loadingMore
-                || validationRunning
-                || forceFreshRangeRunning
-                || forceFreshCaseId !== null
-              }
-              title="Validate the selected completed range using cached Teams evidence when safe and fresh Teams reads only when required."
-            >
-              <RefreshCw
-                className={`mr-2 h-4 w-4 ${validationRunning ? 'animate-spin' : ''}`}
-              />
-              {validationRunning
-                ? 'Running validation…'
-                : validationResult?.fromDate === fromDate
-                  && validationResult?.toDate === toDate
-                  && validationResult.continueValidation
-                  ? 'Continue Validation'
-                  : 'Run Validation'}
-            </Button>
-          </div>
-        </div>
-
-        <p className="mt-2 text-xs text-slate-500">
-          Load Results reads cached AVS cases only. Run Validation automatically decides whether each session needs cached revalidation, first-time Teams evidence, or a fresh Teams re-fetch. Nothing runs automatically.
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Run Validation is capped at 31 completed service days and 100 sessions per invocation. Fresh Microsoft Graph reads occur only when the unified backend determines they are required.
-        </p>
+        ) : (
+          <>
+            <div className="grid gap-3 lg:grid-cols-[240px_150px_150px_auto] lg:items-end">
+              <div className="space-y-1 text-xs font-medium text-slate-600">
+                <label htmlFor="avs-parent">Parent</label>
+                <Input
+                  aria-label="Search parents"
+                  placeholder="Search parents…"
+                  value={parentSearch}
+                  onFocus={loadParentsOnce}
+                  onChange={(event) => setParentSearch(event.target.value)}
+                />
+                <select
+                  id="avs-parent"
+                  className="h-10 w-full rounded-md border bg-white px-2"
+                  value={parentId}
+                  onFocus={loadParentsOnce}
+                  disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning || forceFreshCaseId !== null}
+                  onChange={(event) => {
+                    setParentId(event.target.value);
+                    setCases([]); setCursor(null); setHasMore(false); setLoadedRange(null); setLoadedAt(null);
+                    setValidationResult(null); setValidationCompletedAt(null);
+                    setForceFreshRangeResult(null); setForceFreshRangeGeneration(null); setForceFreshRangeCompletedAt(null);
+                    setForceFreshResult(null); setForceFreshCompletedAt(null); setError(null);
+                  }}
+                >
+                  <option value="all">All parents</option>
+                  {parents
+                    .filter((parent) => parent.id === parentId || parent.label.toLowerCase().includes(parentSearch.toLowerCase()))
+                    .map((parent) => <option key={parent.id} value={parent.id}>{parent.label}</option>)}
+                </select>
+              </div>
+              <label className="space-y-1 text-xs font-medium text-slate-600">
+                <span>From</span>
+                <Input
+                  disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning}
+                  type="date"
+                  min={AV6_VALIDATION_START_YMD}
+                  max={yesterdayIstYmd()}
+                  value={fromDate}
+                  onChange={(event) => setFromDate(event.target.value)}
+                />
+              </label>
+              <label className="space-y-1 text-xs font-medium text-slate-600">
+                <span>To</span>
+                <Input
+                  disabled={loading || loadingMore || validationRunning || forceFreshRangeRunning}
+                  type="date"
+                  min={AV6_VALIDATION_START_YMD}
+                  max={yesterdayIstYmd()}
+                  value={toDate}
+                  onChange={(event) => setToDate(event.target.value)}
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={() => void loadSavedCases(false, false)}
+                  disabled={
+                    loading
+                    || loadingMore
+                    || validationRunning
+                    || forceFreshRangeRunning
+                    || forceFreshCaseId !== null
+                  }
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? 'Loading results…' : 'Load results'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void runValidation()}
+                  disabled={
+                    loading
+                    || loadingMore
+                    || validationRunning
+                    || forceFreshRangeRunning
+                    || forceFreshCaseId !== null
+                  }
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${validationRunning ? 'animate-spin' : ''}`} />
+                  {validationRunning
+                    ? 'Running validation…'
+                    : validationResult?.fromDate === fromDate
+                      && validationResult?.toDate === toDate
+                      && validationResult.continueValidation
+                      ? 'Continue validation'
+                      : 'Run validation'}
+                </Button>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Load results reads cached AVS cases only. Run validation decides whether cached evidence can be reused or fresh Teams evidence is required.
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Run validation is capped at 31 completed service days and 100 sessions per invocation.
+            </p>
+          </>
+        )}
 
         {loadedRange && loadedAt && (
           <p className="mt-2 text-xs text-slate-500">
@@ -1325,7 +1434,6 @@ export default function AttendanceValidationDashboard() {
           </p>
         )}
       </Card>
-      </div>
 
       {validationResult && (
         <Card className="border-emerald-200 bg-emerald-50 p-4">
