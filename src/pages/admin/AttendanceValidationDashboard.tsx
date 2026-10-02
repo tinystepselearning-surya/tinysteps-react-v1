@@ -37,6 +37,7 @@ import {
   type ParentMonthCloseBillingSnapshot,
 } from '../../lib/parentMonthClose';
 import { buildWhatsAppUrl } from '../../lib/whatsAppUrl';
+import { downloadParentMonthInvoice } from '../../lib/parentMonthInvoice';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -793,6 +794,7 @@ export default function AttendanceValidationDashboard() {
   const [detailBilling, setDetailBilling] = useState<ParentMonthCloseBillingSnapshot | null>(null);
   const [detailProgressSaving, setDetailProgressSaving] = useState(false);
   const [detailWorkflowSaving, setDetailWorkflowSaving] = useState<'billing' | 'invoice' | null>(null);
+  const [detailInvoiceDownloading, setDetailInvoiceDownloading] = useState(false);
   const [confirmInvoiceSentOpen, setConfirmInvoiceSentOpen] = useState(false);
   const loadedRecheckToken = useRef<string | null>(null);
   const detailAutoLoadKey = useRef<string | null>(null);
@@ -1303,6 +1305,37 @@ export default function AttendanceValidationDashboard() {
     return `/surya?${params.toString()}`;
   };
 
+  const downloadInvoiceFromMonthClose = async () => {
+    if (
+      !routeParentId
+      || !detailBilling
+      || !detailBillingReviewedCurrent
+      || detailBilling.billedAmount <= 0.01
+    ) {
+      return;
+    }
+
+    setDetailInvoiceDownloading(true);
+    setError(null);
+    try {
+      await downloadParentMonthInvoice({
+        db,
+        parentId: routeParentId,
+        parentName: detailParentLabel || routeParentId,
+        monthKey: detailMonthKey,
+        expectedFingerprint: detailBilling.fingerprint,
+      });
+    } catch (invoiceError) {
+      setError(
+        invoiceError instanceof Error
+          ? invoiceError.message
+          : 'Unable to prepare the invoice. Refresh billing and try again.',
+      );
+    } finally {
+      setDetailInvoiceDownloading(false);
+    }
+  };
+
   const openParentWhatsApp = (kind: 'invoice' | 'reminder') => {
     if (!detailParentPhone) {
       setError('A normalized WhatsApp number is not available for this parent.');
@@ -1596,10 +1629,14 @@ export default function AttendanceValidationDashboard() {
                         type="button"
                         size="sm"
                         variant="outline"
-                        disabled={!detailBillingReviewedCurrent || detailBilling.billedAmount <= 0.01}
-                        onClick={() => navigate(parentPaymentsUrl('invoice'))}
+                        disabled={
+                          !detailBillingReviewedCurrent
+                          || detailBilling.billedAmount <= 0.01
+                          || detailInvoiceDownloading
+                        }
+                        onClick={() => void downloadInvoiceFromMonthClose()}
                       >
-                        Download invoice
+                        {detailInvoiceDownloading ? 'Preparing…' : 'Download invoice'}
                       </Button>
                       <Button
                         type="button"
