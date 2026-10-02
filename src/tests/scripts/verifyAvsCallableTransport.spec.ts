@@ -14,6 +14,7 @@ describe('AVS callable transport contract', () => {
   it('covers every browser-called AVS callable', () => {
     expect(AVS_BROWSER_CALLABLES).toEqual([
       'runAttendanceValidationRange',
+      'updateAttendanceValidationMonthlyParentProgress',
       'revalidateAttendanceValidationGroupCached',
       'adminVerifyAttendanceValidationGroup',
       'forceRefreshAttendanceValidationEvidence',
