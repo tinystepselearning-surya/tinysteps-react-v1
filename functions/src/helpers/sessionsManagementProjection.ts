@@ -67,6 +67,90 @@ export const isOperationalSessionsManagementEnrollment = (
   return normalized === 'active' || normalized === 'trial';
 };
 
+const SESSION_PROJECTION_FINANCE_ONLY_FIELDS = new Set([
+  'updatedAt',
+  'billingRateSnapshot',
+  'teacherPayRateSnapshot',
+  'financialTermsSnapshotVersion',
+  'financialTermsCurrency',
+  'financialTermsCapturedAt',
+  'financialTermsSnapshotSource',
+  'revenueAccrued',
+  'accruedAmount',
+  'accruedMonthKey',
+  'accruedAt',
+  'revenueRepairRequired',
+  'revenueRepairDetectedAt',
+  'revenueRepairReason',
+]);
+
+const ENROLLMENT_PROJECTION_FINANCE_METRIC_FIELDS = new Set([
+  'completedSessionsCount',
+  'expectedRevenueAccrued',
+  'lastCompletedAt',
+]);
+
+const withoutTopLevelFields = (
+  value: Record<string, unknown> | null,
+  fields: Set<string>,
+): Record<string, unknown> | null => {
+  if (!value) return null;
+  const next = { ...value };
+  fields.forEach((field) => {
+    delete next[field];
+  });
+  return next;
+};
+
+const sessionProjectionComparable = (
+  value: Record<string, unknown> | null,
+): Record<string, unknown> | null =>
+  withoutTopLevelFields(value, SESSION_PROJECTION_FINANCE_ONLY_FIELDS);
+
+const enrollmentProjectionComparable = (
+  value: Record<string, unknown> | null,
+): Record<string, unknown> | null => {
+  const next = withoutTopLevelFields(value, new Set(['updatedAt']));
+  if (!next) return null;
+
+  const metrics = next.metrics;
+  if (metrics && typeof metrics === 'object' && !Array.isArray(metrics)) {
+    const nextMetrics = { ...(metrics as Record<string, unknown>) };
+    ENROLLMENT_PROJECTION_FINANCE_METRIC_FIELDS.forEach((field) => {
+      delete nextMetrics[field];
+    });
+    if (Object.keys(nextMetrics).length) {
+      next.metrics = nextMetrics;
+    } else {
+      delete next.metrics;
+    }
+  }
+
+  return next;
+};
+
+/**
+ * Finance bookkeeping writes to classSessions must not fan out into a Sessions
+ * Management delta rebuild. Any operational field change still compares unequal.
+ */
+export const shouldRefreshSessionsManagementSessionProjection = (
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): boolean =>
+  JSON.stringify(sessionProjectionComparable(before)) !==
+  JSON.stringify(sessionProjectionComparable(after));
+
+/**
+ * Enrollment revenue counters are finance-only metadata. Ignore those counters
+ * and updatedAt while preserving every operational enrollment field.
+ */
+export const shouldRefreshSessionsManagementEnrollmentProjection = (
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): boolean =>
+  JSON.stringify(enrollmentProjectionComparable(before)) !==
+  JSON.stringify(enrollmentProjectionComparable(after));
+
 const rowsToMap = (
   rows: SessionsManagementProjectionRow[],
 ): Map<string, SessionsManagementProjectionRow> =>
