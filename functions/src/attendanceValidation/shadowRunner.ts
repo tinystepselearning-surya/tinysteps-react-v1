@@ -785,10 +785,11 @@ function caseFromEvidence(params: {
   const tinyStepsAttendance = normalizeTinyStepsAttendance(rawAttendance);
   const sameDay = params.sameDayCoverage;
 
+  const singleSession = (sameDay?.sessionCount ?? 0) <= 1;
   const evidenceEvaluable = Boolean(
     sameDay
       && sameDay.hasSameDayV2Evidence
-      && !sameDay.contextIncomplete
+      && (singleSession || !sameDay.contextIncomplete)
       && sameDay.aggregate.status !== 'review'
       && params.meaningfulOverlapSeconds !== null,
   );
@@ -847,7 +848,7 @@ function caseFromEvidence(params: {
         if (!sameDay.hasSameDayV2Evidence) {
           technicalReasons.push('same_day_evidence_version_unsupported');
         }
-        if (sameDay.contextIncomplete) {
+        if (sameDay.contextIncomplete && !singleSession) {
           technicalReasons.push('same_day_context_incomplete');
         }
         if (sameDay.aggregate.status === 'review') {
@@ -941,6 +942,8 @@ export async function runAv53Shadow(
   const inferredPresentCountByGroup = new Map<string, number>();
   const observationsByGroup = new Map<string, ReturnType<typeof buildSameDayCoverageObservation>[]>();
 
+  // First establish whether each learner/date group is truly single-session or
+  // multi-session. Evidence interpretation happens only after this count is known.
   for (const loadedItem of loaded) {
     const { session, evidence } = loadedItem;
     if (!session) continue;
@@ -952,49 +955,63 @@ export async function runAv53Shadow(
 
     const kidId = evidence?.session.kidId || sessionKidId(session);
     const presentCapEligible = isAvsPresentCapEligibleSession(session, kidId);
+    if (!presentCapEligible) continue;
 
-    if (presentCapEligible) {
-      inferredSessionCountByGroup.set(
+    inferredSessionCountByGroup.set(
+      groupKey,
+      (inferredSessionCountByGroup.get(groupKey) ?? 0) + 1,
+    );
+
+    const attendance = normalizeTinyStepsAttendance(
+      attendanceEntryForKid(session, kidId),
+    );
+    if (attendance === 'present') {
+      inferredPresentCountByGroup.set(
         groupKey,
-        (inferredSessionCountByGroup.get(groupKey) ?? 0) + 1,
+        (inferredPresentCountByGroup.get(groupKey) ?? 0) + 1,
       );
-
-      const attendance = normalizeTinyStepsAttendance(
-        attendanceEntryForKid(session, kidId),
-      );
-      if (attendance === 'present') {
-        inferredPresentCountByGroup.set(
-          groupKey,
-          (inferredPresentCountByGroup.get(groupKey) ?? 0) + 1,
-        );
-      }
     }
+  }
 
-    // Evidence observation is independent of Tiny Steps lifecycle eligibility.
-    // A cancelled/rescheduled row may still carry the Teams occurrence needed to
-    // prove a zero match or a same-day class that actually happened.
+  for (const loadedItem of loaded) {
+    const { session, evidence } = loadedItem;
+    if (!session || !evidence) continue;
+
+    const scope = scopeDecision(session, evidence);
+    if (scope.kind !== 'in_scope') continue;
+    const groupKey = sameDayGroupKey(scope.serviceDateYmd, session, evidence);
+    if (!groupKey) continue;
+
     if (
-      evidence
-      && evidence.session.classSessionId === loadedItem.item.classSessionId
-      && sessionReferencesMatchEvidence(
+      evidence.session.classSessionId !== loadedItem.item.classSessionId
+      || !sessionReferencesMatchEvidence(
         loadedItem.item.classSessionId,
         session,
         evidence,
       )
     ) {
-      const identity = bridgeEnrollmentIdentity(
-        evidence,
-        deps.staffRegistry.entries,
-      );
-      const observation = buildSameDayCoverageObservation(
-        evidence,
-        identity,
-        scope.serviceDateYmd,
-      );
-      const existing = observationsByGroup.get(groupKey) ?? [];
-      existing.push(observation);
-      observationsByGroup.set(groupKey, existing);
+      continue;
     }
+
+    const identity = bridgeEnrollmentIdentity(
+      evidence,
+      deps.staffRegistry.entries,
+    );
+    const sessionCount = Math.max(
+      inferredSessionCountByGroup.get(groupKey) ?? 0,
+      deps.sameDaySessionCountByGroup?.get(groupKey) ?? 0,
+    );
+    const observation = buildSameDayCoverageObservation(
+      evidence,
+      identity,
+      scope.serviceDateYmd,
+      sessionCount <= 1
+        ? 'single_session_learner_attendance'
+        : 'teacher_learner_overlap',
+    );
+    const existing = observationsByGroup.get(groupKey) ?? [];
+    existing.push(observation);
+    observationsByGroup.set(groupKey, existing);
   }
 
   const sameDayCoverageByGroup = new Map<string, Av53SameDayCoverageContext>();
@@ -1329,7 +1346,7 @@ export async function runAv53ShadowWithFirestore(
 
   for (const group of sameDayGroups.values()) {
     const contextSnapshots = await Promise.all(
-      ([['kidId', '=='], ['kidIds', 'array-contains'], ['studentId', '=='], ['childId', '==']] as const)
+      ([['kidId', '=='], ['kidIds', 'array-contains']] as const)
         .map(([field, operator]) => db.collection('classSessions')
           .where('date', '==', group.serviceDateYmd)
           .where(field, operator, group.kidId)

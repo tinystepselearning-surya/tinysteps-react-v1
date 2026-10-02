@@ -264,6 +264,58 @@ describe('AVS same-day attendance coverage', () => {
     expect(aggregate.occurrenceCount).toBe(1);
   });
 
+
+  it('single-session learner mode does not block on unresolved teacher identity', () => {
+    const unresolvedIdentity = identity();
+    unresolvedIdentity.identityConfidence = 'review';
+    unresolvedIdentity.expectedTeacherPresent = false;
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([
+        report(
+          'report-single-unresolved-teacher',
+          '2026-09-18T10:00:00.000Z',
+          '2026-09-18T10:35:00.000Z',
+        ),
+      ]),
+      unresolvedIdentity,
+      '2026-09-18',
+      'single_session_learner_attendance',
+    );
+    const aggregate = aggregateSameDayCoverage([observation]);
+
+    expect(observation.status).toBe('measured');
+    expect(observation.identityVerified).toBe(false);
+    expect(observation.issues).toEqual([]);
+    expect(aggregate.totalOverlapSeconds).toBe(2100);
+  });
+
+  it('single-session learner mode treats a teacher-only meeting as zero learner attendance', () => {
+    const unresolvedIdentity = identity();
+    unresolvedIdentity.identityConfidence = 'review';
+    unresolvedIdentity.expectedTeacherPresent = false;
+
+    const teacherOnly = report(
+      'report-teacher-only',
+      '2026-09-18T10:00:00.000Z',
+      '2026-09-18T10:35:00.000Z',
+    );
+    teacherOnly.participantRecords = [
+      teacherOnly.participantRecords[0],
+    ];
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([teacherOnly]),
+      unresolvedIdentity,
+      '2026-09-18',
+      'single_session_learner_attendance',
+    );
+    const aggregate = aggregateSameDayCoverage([observation]);
+
+    expect(observation.status).toBe('measured');
+    expect(aggregate.totalOverlapSeconds).toBe(0);
+  });
+
   it('requires verified teacher and learner identity before measuring coverage', () => {
     const unresolvedIdentity = identity();
     unresolvedIdentity.identityConfidence = 'review';

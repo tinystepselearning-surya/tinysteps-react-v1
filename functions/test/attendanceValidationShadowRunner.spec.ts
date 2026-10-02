@@ -986,6 +986,78 @@ describe('AV5.3 bounded shadow runner', () => {
     });
   });
 
+
+  it('does not let same-day context incompleteness block a genuine single-session case', async () => {
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: session(),
+        evidence: evidence(),
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-single-context-incomplete',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+      },
+      {
+        store,
+        staffRegistry: registry,
+        sameDayContextIncompleteGroups: new Set([
+          '2026-09-18|kid-1|teacher-1',
+        ]),
+      },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      classification: 'VERIFIED',
+      businessOutcome: 'verified',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 1,
+      sameDayEvidenceEvaluable: true,
+    });
+    expect(store.saved[0].reasons).not.toContain('same_day_context_incomplete');
+  });
+
+  it('classifies a single-session False Absent even when teacher identity mapping is unavailable', async () => {
+    const noTeacherRegistry: Av3StaffRegistrySnapshot = {
+      ...registry,
+      entries: [],
+    };
+    const store = new FakeStore([
+      {
+        item: { classSessionId: 'session-1', evidenceId: 'evidence-1' },
+        session: {
+          ...session({ 'kid-1': { status: 'absent' } }),
+          status: 'completed',
+        },
+        evidence: evidence(),
+      },
+    ]);
+
+    await runAv53Shadow(
+      {
+        runId: 'shadow-single-unmapped-teacher',
+        workItems: [{ classSessionId: 'session-1', evidenceId: 'evidence-1' }],
+      },
+      {
+        store,
+        staffRegistry: noTeacherRegistry,
+      },
+    );
+
+    expect(store.saved[0]).toMatchObject({
+      classification: 'MISSING_ATTENDANCE',
+      validationDecision: 'present',
+      businessOutcome: 'false_absent',
+      teamsSupportedPresentCount: 1,
+      tinyStepsPresentCount: 0,
+      sameDayEvidenceEvaluable: true,
+    });
+    expect(store.saved[0].reasons).not.toContain('same_day_identity_not_verified');
+  });
+
   it('creates MISSING_TEAMS_EVIDENCE when an explicitly requested session has no evidence document', async () => {
     const store = new FakeStore([
       {
