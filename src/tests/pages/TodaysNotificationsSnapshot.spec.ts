@@ -360,7 +360,9 @@ describe('Sessions Management authoritative snapshot loading', () => {
     const builderStart = pageSource.indexOf('const buildResolvedRowMessage =');
     const builderEnd = pageSource.indexOf('const openMessageEditor =', builderStart);
     const builderSource = pageSource.slice(builderStart, builderEnd);
-    expect(builderSource).toContain("teacherName: row.teacherName || 'Teacher'");
+    expect(builderSource).toContain("type === 'teacher'");
+    expect(builderSource).toContain('formatRespectfulTeacherName(row.teacherName)');
+    expect(builderSource).toContain("row.teacherName || 'Teacher'");
     expect(builderSource).not.toContain('getDoc(');
     expect(builderSource).not.toContain('getDocs(');
     expect(builderSource).not.toContain('httpsCallable(');
