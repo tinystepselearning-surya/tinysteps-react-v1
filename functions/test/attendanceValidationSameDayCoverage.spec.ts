@@ -309,12 +309,18 @@ describe('AVS same-day attendance coverage', () => {
       '2026-09-18T14:23:41.000Z',
     );
     learnerFirst.displayNameHash = 'bhuvika-name-hash';
+    learnerFirst.identityHints = [
+      { kind: 'guest', idHash: 'transient-guest-id-a' },
+    ];
     const learnerSecond = participant(
       'learner-record-b',
       '2026-09-18T14:25:18.000Z',
       '2026-09-18T14:46:47.000Z',
     );
     learnerSecond.displayNameHash = 'bhuvika-name-hash';
+    learnerSecond.identityHints = [
+      { kind: 'guest', idHash: 'transient-guest-id-b' },
+    ];
     reconnectReport.participantRecords = [
       teacher,
       learnerFirst,
