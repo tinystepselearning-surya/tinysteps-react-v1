@@ -18,6 +18,7 @@ import { Input } from '@components/ui/input';
 interface Props {
   parents: AvsParentOption[];
   loadParents: () => Promise<AvsParentOption[]>;
+  initialMonth?: string;
   disabled: boolean;
   onOpenParentMonth: (input: {
     parentId: string;
@@ -64,12 +65,15 @@ function statusClass(status: AvsMonthlyParentProgressStatus): string {
 export default function AttendanceValidationMonthlyTracker({
   parents,
   loadParents,
+  initialMonth,
   disabled,
   onOpenParentMonth,
 }: Props) {
   const monthOptions = useMemo(() => completedMonthOptions(), []);
   const [selectedMonth, setSelectedMonth] = useState(
-    monthOptions[0] ?? previousCompletedMonthKey(),
+    initialMonth && monthOptions.includes(initialMonth)
+      ? initialMonth
+      : monthOptions[0] ?? previousCompletedMonthKey(),
   );
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, AvsMonthlyParentProgress>>({});
