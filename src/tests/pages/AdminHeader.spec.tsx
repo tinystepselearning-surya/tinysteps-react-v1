@@ -21,6 +21,10 @@ const renderHeader = (entry = '/surya?tab=users', onOpenMenu = vi.fn()) => {
         element: <Header onOpenMenu={onOpenMenu} />,
       },
       {
+        path: '/surya/attendance-validation/:parentId',
+        element: <Header onOpenMenu={onOpenMenu} />,
+      },
+      {
         path: '/surya/login',
         element: <div>Admin login</div>,
       },
@@ -55,6 +59,12 @@ describe('admin Header', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open admin navigation' }));
     expect(onOpenMenu).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('shows Parent Month Close on dedicated parent workflow routes', () => {
+    renderHeader('/surya/attendance-validation/parent-1?month=2026-09');
+    expect(screen.getByRole('heading', { name: 'Parent Month Close' })).toBeTruthy();
   });
 
   it('logs out through the shared auth flow and returns to the admin login page', async () => {
