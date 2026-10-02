@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Av3EnrollmentIdentityResult } from '../src/attendanceValidation/enrollmentIdentityBridge';
 import {
   aggregateSameDayCoverage,
+  AVS_SINGLE_SESSION_INCIDENTAL_PARTICIPANT_SECONDS,
   buildSameDayCoverageObservation,
   serviceDayWindowUtc,
 } from '../src/attendanceValidation/sameDayCoverageEngine';
@@ -358,6 +359,121 @@ describe('AVS same-day attendance coverage', () => {
 
     expect(observation.status).toBe('measured');
     expect(aggregate.totalOverlapSeconds).toBe(2197);
+  });
+
+  it('ignores a brief unresolved extra joiner only when staff is already recognized', () => {
+    expect(AVS_SINGLE_SESSION_INCIDENTAL_PARTICIPANT_SECONDS).toBe(300);
+
+    const mixedReport = report(
+      'report-brief-organizer',
+      '2026-09-18T10:00:00.000Z',
+      '2026-09-18T10:40:00.000Z',
+    );
+    const teacher = participant(
+      'teacher-record',
+      '2026-09-18T10:03:00.000Z',
+      '2026-09-18T10:39:00.000Z',
+    );
+    const learner = participant(
+      'learner-record',
+      '2026-09-18T10:01:00.000Z',
+      '2026-09-18T10:39:00.000Z',
+    );
+    learner.displayNameHash = 'learner-name-hash';
+    const briefExtra = participant(
+      'brief-extra-record',
+      '2026-09-18T10:00:00.000Z',
+      '2026-09-18T10:02:23.000Z',
+    );
+    briefExtra.displayNameHash = 'brief-extra-name-hash';
+    mixedReport.participantRecords = [teacher, learner, briefExtra];
+
+    const resolvedIdentity = identity();
+    resolvedIdentity.participantClassifications = [
+      {
+        participantRecordId: 'teacher-record',
+        classification: 'expected_teacher',
+        matchedStaffIds: ['teacher-1'],
+      },
+      {
+        participantRecordId: 'learner-record',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+      {
+        participantRecordId: 'brief-extra-record',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+    ];
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([mixedReport]),
+      resolvedIdentity,
+      '2026-09-18',
+      'single_session_learner_attendance',
+    );
+    const aggregate = aggregateSameDayCoverage([observation]);
+
+    expect(observation.status).toBe('measured');
+    expect(aggregate.totalOverlapSeconds).toBe(2280);
+  });
+
+  it('still requires review when the extra unresolved participant stays longer than five minutes', () => {
+    const mixedReport = report(
+      'report-material-third-person',
+      '2026-09-18T10:00:00.000Z',
+      '2026-09-18T10:40:00.000Z',
+    );
+    const teacher = participant(
+      'teacher-record',
+      '2026-09-18T10:03:00.000Z',
+      '2026-09-18T10:39:00.000Z',
+    );
+    const learner = participant(
+      'learner-record',
+      '2026-09-18T10:01:00.000Z',
+      '2026-09-18T10:39:00.000Z',
+    );
+    learner.displayNameHash = 'learner-name-hash';
+    const materialExtra = participant(
+      'material-extra-record',
+      '2026-09-18T10:00:00.000Z',
+      '2026-09-18T10:05:01.000Z',
+    );
+    materialExtra.displayNameHash = 'material-extra-name-hash';
+    mixedReport.participantRecords = [teacher, learner, materialExtra];
+
+    const resolvedIdentity = identity();
+    resolvedIdentity.participantClassifications = [
+      {
+        participantRecordId: 'teacher-record',
+        classification: 'expected_teacher',
+        matchedStaffIds: ['teacher-1'],
+      },
+      {
+        participantRecordId: 'learner-record',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+      {
+        participantRecordId: 'material-extra-record',
+        classification: 'learner_side',
+        matchedStaffIds: [],
+      },
+    ];
+
+    const observation = buildSameDayCoverageObservation(
+      evidence([mixedReport]),
+      resolvedIdentity,
+      '2026-09-18',
+      'single_session_learner_attendance',
+    );
+
+    expect(observation.status).toBe('review');
+    expect(observation.issues).toContain(
+      'single_session_learner_reconnect_ambiguous',
+    );
   });
 
   it('does not combine different learner aliases in a single-session report', () => {
