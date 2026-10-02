@@ -1172,6 +1172,7 @@ export default function AttendanceValidationDashboard() {
         <AttendanceValidationMonthlyTracker
           parents={parents}
           loadParents={loadParentsForTracker}
+          initialMonth={detailMonthKey}
           disabled={
             loading
             || loadingMore
@@ -1197,13 +1198,13 @@ export default function AttendanceValidationDashboard() {
             onClick={() => navigate(`/surya?tab=attendance-validation&month=${encodeURIComponent(detailMonthKey)}`)}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to ${formatMonthKey(detailMonthKey)} tracker
+            Back to {formatMonthKey(detailMonthKey)} tracker
           </Button>
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Attendance Validation / ${formatMonthKey(detailMonthKey)}
+                Attendance Validation / {formatMonthKey(detailMonthKey)}
               </p>
               <h2 className="mt-1 text-xl font-semibold text-slate-900">
                 {detailParentLabel || 'Parent review'}
@@ -1280,7 +1281,7 @@ export default function AttendanceValidationDashboard() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-medium text-slate-800">
-                ${formatMonthKey(detailMonthKey)} saved AVS results
+                {formatMonthKey(detailMonthKey)} saved AVS results
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Saved cases load when this review opens. Microsoft Graph is never called by opening the page;
