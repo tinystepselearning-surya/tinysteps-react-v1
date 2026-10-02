@@ -254,10 +254,10 @@ describe('SEO infrastructure', () => {
       { source: '/free-games-for-kids', destination: '/free-english-games-for-kids', type: 301 },
     ]);
     expect(firebaseConfigRaw.indexOf('"redirects"')).toBeLessThan(firebaseConfigRaw.indexOf('"rewrites"'));
-    expect(firebaseConfig.hosting.rewrites.at(-1)).toEqual({
-      source: '**',
-      function: { functionId: 'notFoundRoute', region: 'asia-south1' },
-    });
+    expect(
+      firebaseConfig.hosting.rewrites.some((entry: { source?: string }) => entry.source === '**'),
+    ).toBe(false);
+    expect(fs.existsSync(path.join(repoRoot, 'public', '404.html'))).toBe(true);
     expect(firebaseConfig.hosting.trailingSlash).toBe(false);
     expect(redirects.some((entry) => entry.source === '/free-english-games-for-kids')).toBe(false);
   });
@@ -363,11 +363,11 @@ describe('SEO infrastructure', () => {
     // Verify redirects appear before the SPA rewrite
     expect(firebaseConfigRaw.indexOf('"redirects"')).toBeLessThan(firebaseConfigRaw.indexOf('"rewrites"'));
 
-    // Verify the genuine 404 function is the final catch-all.
-    expect(firebaseConfig.hosting.rewrites.at(-1)).toEqual({
-      source: '**',
-      function: { functionId: 'notFoundRoute', region: 'asia-south1' },
-    });
+    // Verify unmatched public requests fall through to Firebase Hosting's static 404.
+    expect(
+      firebaseConfig.hosting.rewrites.some((entry: { source?: string }) => entry.source === '**'),
+    ).toBe(false);
+    expect(fs.existsSync(path.join(repoRoot, 'public', '404.html'))).toBe(true);
   });
 
   it('keeps game alias URLs out of indexable and prerender inventories', async () => {
