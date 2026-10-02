@@ -12,6 +12,7 @@ import {
   BookOpen,
   BookOpenCheck,
   Building2,
+  BriefcaseBusiness,
   CalendarDays,
   ClipboardList,
   ContactRound,
@@ -53,6 +54,7 @@ import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManageme
 import ClassSamplesManagement from './ClassSamplesManagement';
 import TestimonialsManagement from './TestimonialsManagement';
 import LeadsInquiriesWorkspace, { type LeadsWorkspaceView } from './LeadsInquiriesWorkspace';
+import TeacherInquiriesWorkspace from './TeacherInquiriesWorkspace';
 import TodaysNotifications from './TodaysNotifications';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
@@ -91,6 +93,7 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'schools', label: 'Schools', icon: Building2 },
   { id: 'students', label: 'Students', icon: GraduationCap },
   { id: 'leads', label: 'Leads', icon: ContactRound },
+  { id: 'teacher-inquiries', label: 'Teachers', icon: BriefcaseBusiness },
   { id: 'enrollments', label: 'Enroll', icon: ClipboardList },
   { id: 'attendance-corrections', label: 'Attendance', icon: ClipboardList },
   { id: 'attendance-validation', label: 'AVS', icon: ShieldCheck },
@@ -111,6 +114,7 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
 
 const FOUNDER_BLOCKED_ADMIN_TABS = new Set([
   'users',
+  'teacher-inquiries',
   'attendance-corrections',
   'today-notifications',
   'settings',
@@ -127,6 +131,7 @@ const ADMIN_VALID_TABS = new Set([
   'schools',
   'students',
   'leads',
+  'teacher-inquiries',
   'enrollments',
   'attendance-corrections',
   'attendance-validation',
@@ -705,6 +710,10 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
                 view={leadsWorkspaceView}
                 onViewChange={handleLeadsWorkspaceViewChange}
               />
+            </TabsContent>
+
+            <TabsContent value="teacher-inquiries" className="mt-0">
+              <TeacherInquiriesWorkspace />
             </TabsContent>
 
             {/* ✅ FIXED: pass required prop */}
