@@ -12,6 +12,7 @@ describe('AVS monthly parent tracker routing', () => {
   const contract = read('scripts/avs-callable-contract.mjs');
   const dashboard = read('src/pages/admin/AttendanceValidationDashboard.tsx');
   const tracker = read('src/pages/admin/components/AttendanceValidationMonthlyTracker.tsx');
+  const monthlyProgress = read('src/lib/attendanceValidationMonthlyParentProgress.ts');
 
   it('uses an admin-only callable and writes only monthly workflow metadata', () => {
     expect(callable).toContain('await ensureAdmin(request.auth)');
@@ -49,6 +50,13 @@ describe('AVS monthly parent tracker routing', () => {
     expect(tracker).toContain("updateStatus(parentId, 'in_progress')");
     expect(tracker).toContain("status === 'completed'");
     expect(tracker).toContain('loadAvsMonthlyParentProgress(selectedMonth)');
+    expect(tracker).toContain('loadAvsMonthlyParentsWithSessions(selectedMonth)');
+    expect(tracker).toContain('With sessions this month');
+    expect(tracker).toContain('All parents');
+    expect(tracker).toContain("useState<TrackerScope>('with_sessions')");
+    expect(monthlyProgress).toContain("collectionGroup(db, 'months')");
+    expect(monthlyProgress).toContain("where('monthKey', '==', selectedMonth)");
+    expect(monthlyProgress).not.toContain("collection(db, 'classSessions')");
     expect(tracker).not.toContain('runAttendanceValidationRange');
   });
 });
