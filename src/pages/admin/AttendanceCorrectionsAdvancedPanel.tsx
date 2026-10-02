@@ -224,6 +224,12 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     () => parseAvsAdminCorrectionContext(searchParams),
     [searchParams],
   );
+  const avsReturnTo = useMemo(() => {
+    const value = String(searchParams.get('avsReturn') || '').trim();
+    return value.startsWith('/surya/attendance-validation/')
+      ? value
+      : null;
+  }, [searchParams]);
   const hasLockedPrefill = Boolean(av7Context || avsAdminContext);
   const saveInFlightRef = useRef(false);
   const [mode, setMode] = useState<AttendanceCorrectionMode>('existing');
@@ -931,9 +937,17 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       resetTeacherPayHandling();
       setReloadKey((value) => value + 1);
       if (av7Context || avsAdminContext) {
-        const params = new URLSearchParams({ tab: 'attendance-validation' });
-        if (avsRecheckIds?.length) params.set('avsRechecked', avsRecheckIds.join(','));
-        navigate(`/surya?${params.toString()}`, { replace: true });
+        if (avsReturnTo) {
+          const [returnPath, returnQuery = ''] = avsReturnTo.split('?');
+          const params = new URLSearchParams(returnQuery);
+          if (avsRecheckIds?.length) params.set('avsRechecked', avsRecheckIds.join(','));
+          const queryString = params.toString();
+          navigate(queryString ? `${returnPath}?${queryString}` : returnPath, { replace: true });
+        } else {
+          const params = new URLSearchParams({ tab: 'attendance-validation' });
+          if (avsRecheckIds?.length) params.set('avsRechecked', avsRecheckIds.join(','));
+          navigate(`/surya?${params.toString()}`, { replace: true });
+        }
       }
     } catch (err) {
       const error = formatFunctionsError(err);
@@ -1077,7 +1091,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => navigate('/surya?tab=attendance-validation')}
+            onClick={() => navigate(avsReturnTo || '/surya?tab=attendance-validation')}
             disabled={saving}
           >
             Back to Attendance Validation
