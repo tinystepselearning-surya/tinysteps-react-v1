@@ -32,10 +32,14 @@ export async function loadAvsBusinessGroupForSession(db: Firestore, classSession
     throw new HttpsError('failed-precondition', 'Session does not match a canonical AVS student and teacher group.');
   }
   const byId = new Map<string, GroupSession>([[classSessionId, { id: classSessionId, data }]]);
-  for (const [field, op] of [['kidId', '=='], ['kidIds', 'array-contains'], ['studentId', '=='], ['childId', '==']] as const) {
+  // Canonical Tiny Steps sessions identify learners with kidId/kidIds. Legacy
+  // studentId/childId aliases are intentionally excluded from live AVS grouping
+  // because they can fan out to unrelated historical rows and falsely mark a
+  // normal one-class day as incomplete.
+  for (const [field, op] of [['kidId', '=='], ['kidIds', 'array-contains']] as const) {
     const found = await db.collection('classSessions').where('date', '==', date)
       .where(field, op, descriptor.kidId).limit(101).get();
-    if (found.size >= 101) throw new HttpsError('failed-precondition', 'Same-day student context exceeds the 100-session safety bound.');
+    if (found.size >= 101) throw new HttpsError('failed-precondition', 'Same-day canonical learner context exceeds the 100-session safety bound.');
     for (const doc of found.docs) {
       if (sameDayGroupDescriptor(date, doc.data(), null)?.key === descriptor.key) {
         byId.set(doc.id, { id: doc.id, data: doc.data() });
@@ -81,13 +85,14 @@ export async function discoverAvsRangeGroups(
       let members = [candidate];
       if (descriptor) {
         const byId = new Map<string, QueryDocumentSnapshot>();
-        // Canonical producers write kidId/kidIds; include the aliases accepted by the evidence snapshot contract.
-        for (const [field, op] of [['kidId', '=='], ['kidIds', 'array-contains'], ['studentId', '=='], ['childId', '==']] as const) {
+        // Live AVS grouping uses only canonical learner identifiers. Legacy
+        // aliases remain available to historical migration tooling, not business
+        // reconciliation.
+        for (const [field, op] of [['kidId', '=='], ['kidIds', 'array-contains']] as const) {
           const found = await getAvsScopedDocuments(db.collection('classSessions')
             .where('date', '==', date).where(field, op, descriptor.kidId), enrollmentIds, 101);
           contextReads += found.length;
-          // Never reconcile a partial group when any context query reached its bound.
-          if (found.length >= 101) throw new HttpsError('failed-precondition', 'Same-day student context exceeds the 100-session safety bound.');
+          if (found.length >= 101) throw new HttpsError('failed-precondition', 'Same-day canonical learner context exceeds the 100-session safety bound.');
           for (const doc of found) byId.set(doc.id, doc);
         }
         byId.set(candidate.id, candidate);
@@ -145,7 +150,14 @@ export async function validateAvsBusinessGroup(params: {
     if (freshness.decision === 'unsafe_review') unsafe.add(row.id);
   }
   const observation = (evidence: AttendanceValidationEvidenceDocument) =>
-    buildSameDayCoverageObservation(evidence, bridgeEnrollmentIdentity(evidence, registry.entries), date);
+    buildSameDayCoverageObservation(
+      evidence,
+      bridgeEnrollmentIdentity(evidence, registry.entries),
+      date,
+      rows.length <= 1
+        ? 'single_session_learner_attendance'
+        : 'teacher_learner_overlap',
+    );
   const sufficient = () => {
     const aggregate = aggregateSameDayCoverage([...compatible.values()].map(observation));
     return tinyStepsPresentCount > 0 && aggregate.status === 'measured'
