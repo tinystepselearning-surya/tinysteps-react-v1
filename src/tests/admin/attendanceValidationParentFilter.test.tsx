@@ -64,9 +64,9 @@ describe('Attendance Validation Parent selector', () => {
     expect(mocks.call).not.toHaveBeenCalled();
   });
   it('loads only Parent A enrollment cases and clears results on parent change', async () => {
-    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
+    render(<MemoryRouter initialEntries={['/surya/attendance-validation/advanced']}><AttendanceValidationDashboard /></MemoryRouter>);
     await selectParent();
-    fireEvent.click(screen.getByRole('button', { name: /Load Results/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Load results/i }));
     await waitFor(() => expect(screen.getByTestId('cases')).toHaveTextContent('case-a'));
     expect(screen.getByTestId('cases')).not.toHaveTextContent('case-b');
     fireEvent.change(screen.getByLabelText('Parent'), { target: { value: 'parent-b' } });
@@ -74,23 +74,23 @@ describe('Attendance Validation Parent selector', () => {
     expect(mocks.call).not.toHaveBeenCalled();
   });
   it('retains parent and cursor on Continue, resets summary on parent change, and disables broad re-fetch', async () => {
-    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
+    render(<MemoryRouter initialEntries={['/surya/attendance-validation/advanced']}><AttendanceValidationDashboard /></MemoryRouter>);
     await selectParent();
     expect(screen.queryByRole('button', { name: /Re-fetch Teams Data/, hidden: true })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Run Validation/ }));
-    await waitFor(() => expect(screen.getByRole('button', { name: /Continue Validation/ })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /Run validation/i }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Continue validation/i })).toBeEnabled());
     expect(mocks.call).toHaveBeenLastCalledWith('runAttendanceValidationRange', expect.objectContaining({ parentId: 'parent-a', cursor: null }));
-    fireEvent.click(screen.getByRole('button', { name: /Continue Validation/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Continue validation/i }));
     await waitFor(() => expect(mocks.call).toHaveBeenCalledTimes(2));
     expect(mocks.call).toHaveBeenLastCalledWith('runAttendanceValidationRange', expect.objectContaining({ parentId: 'parent-a', cursor: response.nextCursor }));
     await waitFor(() => expect(screen.getByLabelText('Parent')).toBeEnabled());
     fireEvent.change(screen.getByLabelText('Parent'), { target: { value: 'all' } });
-    expect(screen.getByRole('button', { name: /Run Validation/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Run validation/i })).toBeInTheDocument();
     expect(mocks.call).toHaveBeenCalledTimes(2);
   });
   it('All parents loads the existing full range', async () => {
-    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: /Load Results/ }));
+    render(<MemoryRouter initialEntries={['/surya/attendance-validation/advanced']}><AttendanceValidationDashboard /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /Load results/i }));
     await waitFor(() => expect(screen.getByTestId('cases')).toHaveTextContent('case-a,case-b'));
   });
 });
