@@ -910,6 +910,29 @@ export default function AttendanceValidationDashboard() {
     }
   }, [cursor, fromDate, loadedRange, toDate, parentId]);
 
+  useEffect(() => {
+    if (!isParentReviewMode || !routeParentId) return;
+    if (
+      parentId !== routeParentId
+      || fromDate !== detailRange.fromDate
+      || toDate !== detailRange.toDate
+    ) return;
+    const key = `${routeParentId}|${detailMonthKey}`;
+    if (detailAutoLoadKey.current === key) return;
+    detailAutoLoadKey.current = key;
+    void loadSavedCases(false, true);
+  }, [
+    detailMonthKey,
+    detailRange.fromDate,
+    detailRange.toDate,
+    fromDate,
+    isParentReviewMode,
+    loadSavedCases,
+    parentId,
+    routeParentId,
+    toDate,
+  ]);
+
   const runValidation = useCallback(async () => {
     if (!validDateRange(fromDate, toDate)) {
       setError(
@@ -1085,6 +1108,82 @@ export default function AttendanceValidationDashboard() {
     toDate,
   ]);
 
+  const updateDetailProgress = async (status: AvsMonthlyParentProgressStatus) => {
+    if (!isParentReviewMode || !routeParentId) return;
+    setDetailProgressSaving(true);
+    setError(null);
+    try {
+      const result = await callFunction<
+        {
+          ok: boolean;
+          parentId: string;
+          monthKey: string;
+          status: AvsMonthlyParentProgressStatus;
+          updatedAt: string | null;
+          completedAt: string | null;
+        },
+        {
+          parentId: string;
+          monthKey: string;
+          status: AvsMonthlyParentProgressStatus;
+        }
+      >('updateAttendanceValidationMonthlyParentProgress', {
+        parentId: routeParentId,
+        monthKey: detailMonthKey,
+        status,
+      });
+      setDetailProgressStatus(result.status);
+    } catch (progressError) {
+      setError(progressError instanceof Error
+        ? progressError.message
+        : 'Unable to update parent review status.');
+    } finally {
+      setDetailProgressSaving(false);
+    }
+  };
+
+  const detailReturnTo = isParentReviewMode && routeParentId
+    ? `/surya/attendance-validation/${encodeURIComponent(routeParentId)}?month=${encodeURIComponent(detailMonthKey)}`
+    : undefined;
+
+  if (isTrackerMode) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-sky-700" aria-hidden="true" />
+              <h2 className="text-xl font-semibold text-slate-900">Attendance Validation</h2>
+            </div>
+            <p className="mt-1 text-sm text-slate-600">
+              Review each parent month as a separate task, then complete the review when you are satisfied with the saved AVS results.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/surya/attendance-validation/advanced')}
+          >
+            <SlidersHorizontal className="mr-2 h-4 w-4" />
+            Advanced validation
+          </Button>
+        </div>
+
+        <AttendanceValidationMonthlyTracker
+          parents={parents}
+          loadParents={loadParentsForTracker}
+          disabled={
+            loading
+            || loadingMore
+            || validationRunning
+            || forceFreshRangeRunning
+            || forceFreshCaseId !== null
+          }
+          onOpenParentMonth={openParentMonthFromTracker}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
