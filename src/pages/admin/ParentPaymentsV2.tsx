@@ -276,6 +276,12 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       ? handoffMonth
       : monthKeyFromDate(new Date()),
   );
+
+  useEffect(() => {
+    if (/^\d{4}-(0[1-9]|1[0-2])$/.test(handoffMonth) && handoffMonth !== selectedMonth) {
+      setSelectedMonth(handoffMonth);
+    }
+  }, [handoffMonth, selectedMonth]);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageIds, setPageIds] = useState<string[]>([]);
   const [pageCursor, setPageCursor] = useState<MonthCursor>(null);
@@ -961,7 +967,9 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Parent Payments</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Track monthly dues, record payments, and generate invoices.
+            {handoffMode
+              ? 'Review the selected month, download the invoice, or record payment.'
+              : 'Track monthly dues, record payments, and generate invoices.'}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -975,6 +983,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
             <Input
               type="month"
               value={selectedMonth}
+              disabled={handoffMode}
               onChange={(event) => setSelectedMonth(event.target.value)}
               className="h-9 w-[170px] bg-white"
             />
@@ -987,7 +996,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
           >
             {refreshing ? 'Refreshing…' : 'Refresh'}
           </Button>
-          {onOpenMaintenance ? (
+          {onOpenMaintenance && !handoffMode ? (
             <Button variant="outline" size="sm" onClick={onOpenMaintenance}>
               Financial tools
             </Button>
@@ -995,6 +1004,21 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
         </div>
       </div>
 
+      {handoffMode ? (
+        <Card className="p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Parent Month Close finance review</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                This view is locked to {monthLabel(selectedMonth)} and the selected parent.
+              </p>
+            </div>
+            <span className="rounded-lg border bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-900">
+              {selectedSearchParent ? parentName(selectedSearchParent) : 'Loading parent…'}
+            </span>
+          </div>
+        </Card>
+      ) : (
       <Card className="p-3">
         <div ref={searchContainerRef} className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <label className="shrink-0 text-sm font-medium">Find parent</label>
@@ -1049,6 +1073,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
           ) : null}
         </div>
       </Card>
+      )}
 
       {!handoffMode ? (
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
