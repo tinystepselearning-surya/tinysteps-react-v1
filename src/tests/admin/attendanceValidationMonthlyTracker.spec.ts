@@ -4,6 +4,8 @@ vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
   collectionGroup: vi.fn(),
+  doc: vi.fn(),
+  getDoc: vi.fn(),
   getDocs: vi.fn(),
   limit: vi.fn(),
   query: vi.fn(),
@@ -11,6 +13,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 import {
   avsMonthlyReadModelHasSessions,
+  avsMonthlyReadModelSessionCount,
   completedMonthOptions,
   formatMonthKey,
   monthDateRange,
@@ -42,14 +45,16 @@ describe('attendance validation monthly tracker month helpers', () => {
   });
 
   it('identifies parent-month read models with real session coverage', () => {
-    expect(avsMonthlyReadModelHasSessions({
+    const canonical = {
       attendance: {
         schemaVersion: 3,
         modelType: 'class_attendance_v3',
         sourceSessionCount: 2,
         totals: { totalSessions: 2, total: 2 },
       },
-    })).toBe(true);
+    };
+    expect(avsMonthlyReadModelHasSessions(canonical)).toBe(true);
+    expect(avsMonthlyReadModelSessionCount(canonical)).toBe(2);
     expect(avsMonthlyReadModelHasSessions({
       attendance: {
         schemaVersion: 1,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, ClipboardCheck, Loader2, Search } from 'lucide-react';
 import type { AvsParentOption } from '../../../lib/attendanceValidationParentScope';
 import {
@@ -6,7 +6,6 @@ import {
   formatMonthKey,
   loadAvsMonthlyParentProgress,
   loadAvsMonthlyParentsWithSessions,
-  monthDateRange,
   previousCompletedMonthKey,
   type AvsMonthlyParentProgress,
   type AvsMonthlyParentProgressStatus,
@@ -19,11 +18,11 @@ import { Input } from '@components/ui/input';
 interface Props {
   parents: AvsParentOption[];
   loadParents: () => Promise<AvsParentOption[]>;
+  initialMonth?: string;
   disabled: boolean;
   onOpenParentMonth: (input: {
     parentId: string;
-    fromDate: string;
-    toDate: string;
+    monthKey: string;
   }) => void;
 }
 
@@ -66,16 +65,19 @@ function statusClass(status: AvsMonthlyParentProgressStatus): string {
 export default function AttendanceValidationMonthlyTracker({
   parents,
   loadParents,
+  initialMonth,
   disabled,
   onOpenParentMonth,
 }: Props) {
   const monthOptions = useMemo(() => completedMonthOptions(), []);
   const [selectedMonth, setSelectedMonth] = useState(
-    monthOptions[0] ?? previousCompletedMonthKey(),
+    initialMonth && monthOptions.includes(initialMonth)
+      ? initialMonth
+      : monthOptions[0] ?? previousCompletedMonthKey(),
   );
   const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, AvsMonthlyParentProgress>>({});
-  const [sessionParentIds, setSessionParentIds] = useState<Set<string>>(new Set());
+  const [sessionCountByParent, setSessionCountByParent] = useState<Record<string, number>>({});
   const [scope, setScope] = useState<TrackerScope>('with_sessions');
   const [filter, setFilter] = useState<TrackerFilter>('all');
   const [search, setSearch] = useState('');
@@ -88,10 +90,10 @@ export default function AttendanceValidationMonthlyTracker({
 
   const scopedParents = useMemo(() => {
     if (scope === 'all_parents') return parents;
-    const includedIds = new Set(sessionParentIds);
+    const includedIds = new Set(Object.keys(sessionCountByParent));
     Object.keys(progress).forEach((parentId) => includedIds.add(parentId));
     return parents.filter((parent) => includedIds.has(parent.id));
-  }, [parents, progress, scope, sessionParentIds]);
+  }, [parents, progress, scope, sessionCountByParent]);
 
   const summary = useMemo(() => {
     const counts = { not_started: 0, in_progress: 0, completed: 0 };
@@ -110,7 +112,7 @@ export default function AttendanceValidationMonthlyTracker({
     });
   }, [filter, progress, scopedParents, search]);
 
-  const loadTracker = async () => {
+  const loadTracker = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -120,14 +122,20 @@ export default function AttendanceValidationMonthlyTracker({
         loadAvsMonthlyParentsWithSessions(selectedMonth),
       ]);
       setProgress(Object.fromEntries(saved.map((item) => [item.parentId, item])));
-      setSessionParentIds(new Set(parentsWithSessions));
+      setSessionCountByParent(Object.fromEntries(
+        parentsWithSessions.map((item) => [item.parentId, item.sessionCount]),
+      ));
       setLoadedMonth(selectedMonth);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load monthly tracker.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadParents, selectedMonth]);
+
+  useEffect(() => {
+    void loadTracker();
+  }, [loadTracker]);
 
   const updateStatus = async (
     parentId: string,
@@ -177,7 +185,7 @@ export default function AttendanceValidationMonthlyTracker({
       const updated = await updateStatus(parentId, 'in_progress');
       if (!updated) return;
     }
-    onOpenParentMonth({ parentId, ...monthDateRange(selectedMonth) });
+    onOpenParentMonth({ parentId, monthKey: selectedMonth });
   };
 
   const trackerReady = loadedMonth === selectedMonth;
@@ -208,7 +216,7 @@ export default function AttendanceValidationMonthlyTracker({
                 setSelectedMonth(event.target.value);
                 setLoadedMonth(null);
                 setProgress({});
-                setSessionParentIds(new Set());
+                setSessionCountByParent({});
                 setScope('with_sessions');
                 setFilter('all');
                 setError(null);
@@ -244,7 +252,7 @@ export default function AttendanceValidationMonthlyTracker({
             {loading
               ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               : <ClipboardCheck className="mr-2 h-4 w-4" />}
-            {trackerReady ? 'Reload tracker' : 'Load tracker'}
+            {trackerReady ? 'Refresh tracker' : 'Loading tracker…'}
           </Button>
         </div>
       </div>
@@ -302,6 +310,7 @@ export default function AttendanceValidationMonthlyTracker({
               <thead className="sticky top-0 bg-slate-50 text-left text-xs text-slate-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">Parent</th>
+                  <th className="px-3 py-2 font-medium">Sessions</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium">Updated</th>
                   <th className="px-3 py-2 text-right font-medium">Action</th>
@@ -314,27 +323,23 @@ export default function AttendanceValidationMonthlyTracker({
                   const saving = savingParentId === parent.id;
                   return (
                     <tr key={parent.id} className="border-t">
-                      <td className="px-3 py-2.5 font-medium text-slate-800">{parent.label}</td>
+                      <td className="px-3 py-2.5 font-medium text-slate-800">
+                        <button
+                          type="button"
+                          className="text-left hover:text-sky-700 hover:underline"
+                          disabled={disabled || saving}
+                          onClick={() => void openParent(parent.id)}
+                        >
+                          {parent.label}
+                        </button>
+                      </td>
+                      <td className="px-3 py-2.5 text-sm tabular-nums text-slate-600">
+                        {sessionCountByParent[parent.id] ?? '—'}
+                      </td>
                       <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`rounded-full border px-2 py-1 text-xs font-medium ${statusClass(status)}`}>
-                            {statusLabel(status)}
-                          </span>
-                          <select
-                            aria-label={`Status for ${parent.label}`}
-                            className="h-8 rounded-md border bg-white px-2 text-xs"
-                            value={status}
-                            disabled={disabled || saving}
-                            onChange={(event) => void updateStatus(
-                              parent.id,
-                              event.target.value as AvsMonthlyParentProgressStatus,
-                            )}
-                          >
-                            <option value="not_started">Not Started</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                          </select>
-                        </div>
+                        <span className={`rounded-full border px-2 py-1 text-xs font-medium ${statusClass(status)}`}>
+                          {statusLabel(status)}
+                        </span>
                       </td>
                       <td className="px-3 py-2.5 text-xs text-slate-500">
                         {saved?.completedAt
@@ -362,7 +367,7 @@ export default function AttendanceValidationMonthlyTracker({
                 })}
                 {visibleParents.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-3 py-8 text-center text-sm text-slate-500">
+                    <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-500">
                       No parents match this filter.
                     </td>
                   </tr>
@@ -373,7 +378,7 @@ export default function AttendanceValidationMonthlyTracker({
 
           <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            Completed status is manual. Starting a Not Started parent changes that month to In Progress automatically.
+            Starting a parent moves the review to In Progress. Complete or reopen the review from the parent review page.
           </p>
         </>
       )}

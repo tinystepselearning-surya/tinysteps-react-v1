@@ -16,6 +16,9 @@ describe('AV6 admin attendance validation dashboard', () => {
   const businessView = readRepoFile(
     'src/pages/admin/components/AttendanceValidationBusinessView.tsx',
   );
+  const correctionPanel = readRepoFile(
+    'src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx',
+  );
   const businessReconciliation = readRepoFile(
     'src/lib/attendanceValidationBusinessReconciliation.ts',
   );
@@ -37,13 +40,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('await getDocs(casesQuery)');
   });
 
-  it('does not auto-read AVS cases merely because the admin page opens', () => {
+  it('keeps the tracker landing separate while a parent review auto-loads only cached AVS cases', () => {
+    expect(dashboard).toContain('if (isTrackerMode)');
+    expect(dashboard).toContain('AttendanceValidationMonthlyTracker');
+    expect(dashboard).toContain('if (!isParentReviewMode || !routeParentId) return;');
+    expect(dashboard).toContain('void loadSavedCases(false, true)');
+    expect(dashboard).toContain('Saved cases load when this review opens.');
+    expect(dashboard).toContain('Microsoft Graph is never called by opening the page');
     expect(dashboard).toContain("searchParams.get('avsRechecked')");
     expect(dashboard).toContain("getDoc(doc(db, 'attendanceValidationCases', id))");
-    expect(dashboard).toContain('Nothing refreshes automatically. Choose a range below.');
-    expect(dashboard).toContain('Opening this page does not read them automatically.');
-    expect(dashboard).toContain('Display names may use bounded enrollment and teacher-user reads only');
-    expect(dashboard).toContain('Load Results');
   });
 
   it('shows exactly three primary business outcome tabs', () => {
@@ -116,16 +121,18 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).not.toContain('deleteDoc(');
     expect(dashboard).not.toContain('addDoc(');
     expect(dashboard).not.toContain('writeBatch(');
-    expect(dashboard).toContain('Attendance can be corrected from an inspected session line by an explicit admin action');
+    expect(dashboard).toContain('returnTo={detailReturnTo}');
     expect(businessView).toContain("params.set('tab', 'attendance-corrections')");
     expect(businessView).toContain("params.set('avsAdmin', '1')");
     expect(businessView).toContain('Mark Present');
     expect(businessView).toContain('Mark Absent');
   });
 
-  it('shows the permanent September 2026 validation scope', () => {
+  it('keeps the September 2026 AVS floor while monthly reviews use fixed month boundaries', () => {
     expect(dashboard).toContain("export const AV6_VALIDATION_START_YMD = '2026-09-01'");
-    expect(dashboard).toContain('Review saved AVS results and validate completed sessions from {AV6_VALIDATION_START_YMD} onward');
+    expect(dashboard).toContain('const detailRange = monthDateRange(detailMonthKey)');
+    expect(dashboard).toContain('Review period: {formatServiceDate(detailRange.fromDate)}');
+    expect(dashboard).toContain('previousCompletedMonthKey()');
   });
 
   it('is wired into desktop, mobile, tab and route navigation', () => {
@@ -140,6 +147,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
     expect(routes).toContain(
       `{ path: 'attendance-validation', element: <Navigate to="/surya?tab=attendance-validation" replace /> }`,
+    );
+    expect(routes).toContain(
+      `{ path: 'attendance-validation/advanced', element: <AdminDashboard /> }`,
+    );
+    expect(routes).toContain(
+      `{ path: 'attendance-validation/:parentId', element: <AdminDashboard /> }`,
+    );
+    expect(adminDashboard).toContain(
+      "location.pathname.startsWith('/surya/attendance-validation')",
     );
   });
 
@@ -171,10 +187,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain("value: 'false_absent', label: 'False Absent'");
   });
 
-  it('shows the refined normal operator surface with only Load Results and Run Validation', () => {
-    expect(dashboard).toContain('Load Results');
-    expect(dashboard).toContain('Run Validation');
-    expect(dashboard).toContain('Continue Validation');
+  it('shows the refined operator surfaces with saved-result and validation actions', () => {
+    expect(dashboard).toContain('Load results');
+    expect(dashboard).toContain('Run validation');
+    expect(dashboard).toContain('Continue validation');
     expect(dashboard).toContain(
       "'runAttendanceValidationRange'",
     );
@@ -204,10 +220,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     );
     expect(dashboard).toContain('max={yesterdayIstYmd()}');
     expect(dashboard).toContain(
-      'cached revalidation, first-time Teams evidence, or a fresh Teams re-fetch',
+      'fresh Teams reads occur only when you explicitly run validation or re-fetch a case.',
     );
     expect(dashboard).toContain(
-      'Fresh Microsoft Graph reads occur only when the unified backend determines they are required.',
+      'Run validation decides whether cached evidence can be reused or fresh Teams evidence is required.',
     );
   });
 
@@ -257,6 +273,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(callFunctions).toContain(
       "forceRefreshAttendanceValidationEvidence: 'asia-south1'",
     );
+  });
+
+
+  it('returns attendance corrections to the exact parent-month review', () => {
+    expect(businessView).toContain("params.set('avsReturn', returnTo)");
+    expect(correctionPanel).toContain("searchParams.get('avsReturn')");
+    expect(correctionPanel).toContain("value.startsWith('/surya/attendance-validation/')");
+    expect(correctionPanel).toContain("navigate(queryString ? `${returnPath}?${queryString}` : returnPath");
+    expect(correctionPanel).toContain("navigate(avsReturnTo || '/surya?tab=attendance-validation')");
   });
 
   it('classifies Firebase transport failures without weakening the safe failure boundary', () => {

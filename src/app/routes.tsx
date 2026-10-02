@@ -685,6 +685,8 @@ const router = createBrowserRouter(
             { path: 'analytics', element: <AdminDashboard /> },
             { path: 'attendance-corrections', element: <Navigate to="/surya?tab=attendance-corrections" replace /> },
             { path: 'attendance-validation', element: <Navigate to="/surya?tab=attendance-validation" replace /> },
+            { path: 'attendance-validation/advanced', element: <AdminDashboard /> },
+            { path: 'attendance-validation/:parentId', element: <AdminDashboard /> },
             { path: 'leads', element: <Navigate to="/surya?tab=leads" replace /> },
             { path: 'class-samples', element: <Navigate to="/surya?tab=class-samples" replace /> },
             { path: 'testimonials', element: <Navigate to="/surya?tab=testimonials" replace /> },
