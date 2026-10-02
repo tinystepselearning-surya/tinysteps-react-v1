@@ -137,13 +137,13 @@ describe('AV6 admin attendance validation dashboard', () => {
 
   it('is wired into desktop, mobile, tab and route navigation', () => {
     expect(adminDashboard).toContain("import AttendanceValidationDashboard from './AttendanceValidationDashboard'");
-    expect(adminDashboard).toContain("{ id: 'attendance-validation', label: 'AVS', icon: ShieldCheck }");
+    expect(adminDashboard).toContain("{ id: 'attendance-validation', label: 'Month Close', icon: ShieldCheck }");
     expect(adminDashboard).toContain("'attendance-validation'");
     expect(adminDashboard).toContain('<TabsContent value="attendance-validation"');
     expect(adminDashboard).toContain('<AttendanceValidationDashboard />');
 
     expect(sidebar).toContain(
-      "{ id: 'attendance-validation', label: 'Attendance Validation', icon: ShieldCheck }",
+      "{ id: 'attendance-validation', label: 'Parent Month Close', icon: ShieldCheck }",
     );
     expect(routes).toContain(
       `{ path: 'attendance-validation', element: <Navigate to="/surya?tab=attendance-validation" replace /> }`,
@@ -157,6 +157,21 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(adminDashboard).toContain(
       "location.pathname.startsWith('/surya/attendance-validation')",
     );
+  });
+
+
+  it('integrates attendance, billing, invoice communication and payment without duplicating finance truth', () => {
+    expect(dashboard).toContain('Parent Month Close');
+    expect(dashboard).toContain('Billing, invoice & payment');
+    expect(dashboard).toContain("updateMonthCloseWorkflow('billing_reviewed')");
+    expect(dashboard).toContain("updateMonthCloseWorkflow('invoice_sent')");
+    expect(dashboard).toContain("navigate(parentPaymentsUrl('invoice'))");
+    expect(dashboard).toContain("navigate(parentPaymentsUrl('receive'))");
+    expect(dashboard).toContain("openParentWhatsApp('invoice')");
+    expect(dashboard).toContain("openParentWhatsApp('reminder')");
+    expect(dashboard).toContain('No duplicate payment state is stored here.');
+    expect(dashboard).not.toContain("collection(db, 'billingCharges')");
+    expect(dashboard).not.toContain("collection(db, 'payments')");
   });
 
   it('allows admin-only browser reads and denies all browser writes to AVS cases', () => {
