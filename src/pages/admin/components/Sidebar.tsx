@@ -7,6 +7,7 @@ import {
   BookOpen,
   BookOpenCheck,
   Building2,
+  BriefcaseBusiness,
   ClipboardList,
   ContactRound,
   CreditCard,
@@ -34,6 +35,7 @@ export const ADMIN_SIDEBAR_TABS: AdminSidebarTab[] = [
     { id: 'schools', label: 'School Partnerships', icon: Building2 },
     { id: 'students', label: 'Students & Enrollments', icon: GraduationCap },
     { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
+    { id: 'teacher-inquiries', label: 'Teacher Enquiries', icon: BriefcaseBusiness },
     { id: 'attendance-corrections', label: 'Attendance Corrections', icon: ClipboardList },
     { id: 'attendance-validation', label: 'Parent Month Close', icon: ShieldCheck },
     { id: 'relationships', label: 'Relationship Management', icon: Handshake },
@@ -54,7 +56,7 @@ export const ADMIN_SIDEBAR_TABS: AdminSidebarTab[] = [
 const FOUNDER_SIDEBAR_TABS: AdminSidebarTab[] = [
   { id: 'editorial-reviews', label: 'Editorial Reviews', icon: BookOpenCheck },
   ...ADMIN_SIDEBAR_TABS.filter((tab) =>
-    !['users', 'attendance-corrections', 'today-notifications', 'settings', 'relationships'].includes(tab.id),
+    !['users', 'teacher-inquiries', 'attendance-corrections', 'today-notifications', 'settings', 'relationships'].includes(tab.id),
   ),
 ];
 

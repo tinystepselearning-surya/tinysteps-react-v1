@@ -14,6 +14,7 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   schools: 'School Partnerships',
   students: 'Students & Enrollments',
   leads: 'Leads & Enquiries',
+  'teacher-inquiries': 'Teacher Enquiries',
   // Keep the old query-param title aligned for existing bookmarks while
   // navigation now enters the unified Students & Enrollments workspace.
   enrollments: 'Students & Enrollments',
