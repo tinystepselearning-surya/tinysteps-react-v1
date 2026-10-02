@@ -479,7 +479,7 @@ const TRACE_AUDIO_SRC = "/tracing.mp3";
 // 🔊 Confetti sound (put confetti.mp3 in /public)
 const CONFETTI_AUDIO_SRC = "/confetti.mp3";
 // ▶️ Next arrow image (same as the newer tracing game)
-const NEXT_ARROW_SRC = "/games/phonics/sound-detective/nextarrow.png";
+const NEXT_ARROW_SRC = "/games/phonics/shared/images/nextarrow.webp";
 // ⭐ sizes (reduce here)
 const STAR_START_SIZE = 18;
 const STAR_GUIDE_SIZE = 16;
