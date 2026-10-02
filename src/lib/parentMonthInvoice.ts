@@ -127,7 +127,10 @@ async function loadExactInvoiceScope(input: {
   );
 
   const charges: ChargeRow[] = chargeSnapshot.docs
-    .map((item) => ({ id: item.id, ...(item.data() as Record<string, unknown>) }))
+    .map((item): ChargeRow => ({
+      id: item.id,
+      ...(item.data() as Record<string, unknown>),
+    }))
     .filter((charge) => charge.archived !== true);
 
   const sessionIds = Array.from(new Set(
