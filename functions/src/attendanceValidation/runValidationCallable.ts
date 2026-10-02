@@ -62,6 +62,7 @@ export const runAttendanceValidationRange = onCall({
   const freshOutcomes: Array<{ sessionId: string; failure: AvsFailureDescriptor | null }> = [];
   const failures: AvsFailureDescriptor[] = [];
   for (const [index, rows] of plan.groups.entries()) {
+    const persistenceRows = rows.map((row) => ({ id: row.id, data: row.data }));
     for (const row of rows) {
       const joinUrlResolution = await resolveAvsSessionJoinUrl(
         db,
@@ -82,7 +83,7 @@ export const runAttendanceValidationRange = onCall({
     const result = await validateAvsBusinessGroup({
       rows, evidenceBySession: loaded.evidenceBySession, registry: registry!,
       runId: `group_${Date.now().toString(36)}_${index}`,
-      saveCases: (cases) => persistAvsGroupCases(db, rows, cases),
+      saveCases: (cases) => persistAvsGroupCases(db, persistenceRows, cases),
       collectFresh: async (row) => {
         try {
           if (!organizerUserId) organizerUserId = (await resolveAttendanceValidationOrganizerUserId(db)).organizerUserId;
