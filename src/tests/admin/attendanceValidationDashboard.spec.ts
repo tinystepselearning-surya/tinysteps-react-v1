@@ -8,6 +8,7 @@ function readRepoFile(relativePath: string): string {
 
 describe('AV6 admin attendance validation dashboard', () => {
   const dashboard = readRepoFile('src/pages/admin/AttendanceValidationDashboard.tsx');
+  const tracker = readRepoFile('src/pages/admin/components/AttendanceValidationMonthlyTracker.tsx');
   const adminDashboard = readRepoFile('src/pages/admin/AdminDashboard.tsx');
   const sidebar = readRepoFile('src/pages/admin/components/Sidebar.tsx');
   const routes = readRepoFile('src/app/routes.tsx');
@@ -172,6 +173,22 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('No duplicate payment state is stored here.');
     expect(dashboard).not.toContain("collection(db, 'billingCharges')");
     expect(dashboard).not.toContain("collection(db, 'payments')");
+  });
+
+  it('refreshes the exact billing model after correction and attendance completion and uses verified callable billing', () => {
+    expect(dashboard).toContain('Promise.all([reloadExactCases(ids), refreshDetailBilling()])');
+    expect(dashboard).toContain("if (result.status === 'completed') await refreshDetailBilling()");
+    expect(dashboard).toContain('await reloadExactCases(result.classSessionIds);\n                await refreshDetailBilling();');
+    expect(dashboard).toContain('setDetailBilling(verifiedBilling)');
+    expect(dashboard).toContain('setDetailBilling(null)');
+  });
+
+  it('shows zero-charge months without an invoice and distinguishes sessions from billable classes', () => {
+    expect(tracker).toContain("billing?.billedAmount <= 0.01");
+    expect(tracker).toContain("? 'Not required'");
+    expect(tracker).toContain('Sessions · Billable');
+    expect(tracker).toContain('`${billing.sessionCount} sessions · ${billing.billedClassCount} billed`');
+    expect(dashboard).toContain("? 'Not required'");
   });
 
   it('allows admin-only browser reads and denies all browser writes to AVS cases', () => {

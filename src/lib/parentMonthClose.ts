@@ -119,7 +119,9 @@ export function parentMonthCloseBillingSnapshot(
     settledAmount,
     dueAmount,
     chargeIds,
-    fingerprint: buildParentMonthCloseBillingFingerprint({
+    fingerprint: typeof data.billingCompositionFingerprint === 'string' && data.billingCompositionFingerprint
+      ? data.billingCompositionFingerprint
+      : buildParentMonthCloseBillingFingerprint({
       billedClassCount,
       billedAmount,
       chargeIds,

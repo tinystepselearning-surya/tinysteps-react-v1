@@ -48,6 +48,8 @@ describe('Parent Month Close derived workflow', () => {
     });
     expect(left).toBe(right);
     expect(left).toBe(billing.fingerprint);
+    expect(parentMonthCloseBillingSnapshot({ ...billing, settledAmount: 500, dueAmount: 625 }).fingerprint).toBe(left);
+    expect(buildParentMonthCloseBillingFingerprint({ billedClassCount: 3, billedAmount: 1125, chargeIds: ['charge-1', 'charge-2', 'charge-4'] })).not.toBe(left);
   });
 
   it('requires only the essential human workflow decisions', () => {

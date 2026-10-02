@@ -68,6 +68,7 @@ export type ParentMonthlyBillingReadModelOutput = {
   lastPaymentId: string | null;
   allocationRefs: string[];
   chargeIds: string[];
+  billingCompositionFingerprint: string;
   totals: {
     chargesCount: number;
     billedAmount: number;
@@ -100,6 +101,20 @@ function normalizeNumber(value: unknown): number {
 function roundCurrency(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.round(value * 100) / 100;
+}
+
+export function billingCompositionFingerprint(input: { billedClassCount: number; billedAmount: number; chargeIds: string[] }): string {
+  const normalized = [
+    Math.max(Math.floor(input.billedClassCount), 0),
+    Math.round(Math.max(input.billedAmount, 0) * 100),
+    ...uniqueSorted(input.chargeIds),
+  ].join('|');
+  let hash = 2166136261;
+  for (let index = 0; index < normalized.length; index += 1) {
+    hash ^= normalized.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `v1:${(hash >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 function toDate(value: unknown): Date | null {
@@ -438,6 +453,7 @@ export function buildParentMonthlyBillingReadModel(
     lastPaymentId,
     allocationRefs: sortedAllocationRefs,
     chargeIds: sortedChargeIds,
+    billingCompositionFingerprint: billingCompositionFingerprint({ billedClassCount, billedAmount: roundedBilledAmount, chargeIds: sortedChargeIds }),
     totals: {
       chargesCount: billedClassCount,
       billedAmount: roundedBilledAmount,

@@ -290,6 +290,24 @@ describe('ParentPaymentsV2', () => {
     ).toBe(false);
   });
 
+  it('never reads historical billing charges for a September 2026 invoice', async () => {
+    getDocMock.mockImplementation(async (ref: any) => {
+      const args = ref?.args || [];
+      if (args[1] === 'users') return makeDoc('parent-1', { displayName: 'Parent One', role: 'parent' });
+      if (args[1] === 'parentMonthlyReadModels') return makeDoc('2026-09', {
+        parentId: 'parent-1', monthKey: '2026-09', billedAmount: 1125,
+        billedClassCount: 3, settledAmount: 0, dueAmount: 1125,
+      });
+      return { exists: () => false, data: () => null, id: '' };
+    });
+    renderPayments(<ParentPaymentsV2 />, '/surya?tab=parent-payments&month=2026-09&parentId=parent-1&action=invoice');
+    await waitFor(() => expect(getDocsMock.mock.calls.some(([input]) =>
+      collectionName(input) === 'billingCharges' && hasWhere(input, 'parentId', '=='))).toBe(true));
+    const invoiceQueries = getDocsMock.mock.calls.map(([input]) => input).filter((input) =>
+      collectionName(input) === 'billingCharges' && hasWhere(input, 'parentId', '=='));
+    expect(invoiceQueries.every((input) => hasWhere(input, 'monthKey', '==', (value) => value === '2026-09'))).toBe(true);
+  });
+
   it('loads a clean month-scoped dashboard using the stable outstanding order and month-wide KPIs', async () => {
     renderPayments();
 
@@ -383,6 +401,10 @@ describe('ParentPaymentsV2', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
 
     expect(await screen.findByText('17 Aug')).toBeTruthy();
+    const invoiceChargeQueries = getDocsMock.mock.calls.map(([input]) => input).filter((input) =>
+      collectionName(input) === 'billingCharges' && hasWhere(input, 'parentId', '=='));
+    expect(invoiceChargeQueries.length).toBeGreaterThan(0);
+    expect(invoiceChargeQueries.every((input) => hasWhere(input, 'monthKey', '==', (value) => value === '2026-08'))).toBe(true);
     expect(screen.queryByText('10 Sep')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -399,6 +421,7 @@ describe('ParentPaymentsV2', () => {
     expect(alert.textContent).toContain('Verified invoice totals differ from the canonical monthly ledger');
     expect(screen.queryByText('10 Sep')).toBeNull();
     expect(screen.getByText('No verified charge rows available.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download PDF' }).hasAttribute('disabled')).toBe(true);
   });
 
   it('uses one direct search picker and narrows the page to the selected parent', async () => {

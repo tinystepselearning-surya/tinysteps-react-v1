@@ -363,7 +363,7 @@ export default function AttendanceValidationMonthlyTracker({
               <thead className="sticky top-0 bg-slate-50 text-left text-xs text-slate-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">Parent</th>
-                  <th className="px-3 py-2 font-medium">Classes</th>
+                  <th className="px-3 py-2 font-medium">Sessions · Billable</th>
                   <th className="px-3 py-2 font-medium">Attendance</th>
                   <th className="px-3 py-2 font-medium">Billing</th>
                   <th className="px-3 py-2 font-medium">Invoice</th>
@@ -400,7 +400,7 @@ export default function AttendanceValidationMonthlyTracker({
                         </button>
                       </td>
                       <td className="px-3 py-2.5 tabular-nums text-slate-600">
-                        {billing ? billing.billedClassCount : '—'}
+                        {billing ? `${billing.sessionCount} sessions · ${billing.billedClassCount} billed` : '—'}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className={`rounded-full border px-2 py-1 text-xs font-medium ${attendanceClass(status)}`}>
@@ -413,7 +413,9 @@ export default function AttendanceValidationMonthlyTracker({
                       <td className="px-3 py-2.5 text-xs text-slate-600">
                         {status !== 'completed' || !billingCurrent
                           ? '—'
-                          : invoiceCurrent
+                          : billing?.billedAmount <= 0.01
+                            ? 'Not required'
+                            : invoiceCurrent
                             ? 'Sent'
                             : saved?.invoiceSentAt
                               ? 'Revised needed'

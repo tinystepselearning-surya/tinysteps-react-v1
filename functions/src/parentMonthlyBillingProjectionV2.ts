@@ -366,6 +366,7 @@ function buildProjectionPatch(
     lastPaymentId: billingModel.lastPaymentId,
     allocationRefs: billingModel.allocationRefs,
     chargeIds: billingModel.chargeIds,
+    billingCompositionFingerprint: billingModel.billingCompositionFingerprint,
     totals: billingModel.totals,
     byKid: billingModel.byKid,
   };

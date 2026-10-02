@@ -23,7 +23,7 @@ describe('AVS monthly parent tracker routing', () => {
     expect(callable).not.toContain("collection('billingCharges')");
     expect(callable).toContain("collection('parentMonthlyReadModels')");
     expect(callable).toContain("workflowAction === 'billing_reviewed'");
-    expect(callable).toContain("workflowAction === 'invoice_sent'");
+    expect(callable).toContain('alreadySentCurrentInvoice(progressData, billing.fingerprint)');
     expect(callable).toContain("{ merge: true }");
     expect(callable).not.toContain("collection('teacherEarnings')");
   });

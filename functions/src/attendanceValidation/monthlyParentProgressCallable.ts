@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
-import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
+import { alreadyReviewedCurrentBilling, alreadySentCurrentInvoice } from './monthlyParentWorkflowDecisions';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -81,10 +82,12 @@ function stableHash(value: string): string {
 }
 
 function currentBillingSnapshot(data: Record<string, unknown>): {
+  sessionCount: number;
   billedClassCount: number;
   billedAmount: number;
   settledAmount: number;
   dueAmount: number;
+  chargeIds: string[];
   fingerprint: string;
 } {
   const totals = data.totals && typeof data.totals === 'object' && !Array.isArray(data.totals)
@@ -112,17 +115,27 @@ function currentBillingSnapshot(data: Record<string, unknown>): {
   const chargeIds = Array.from(new Set(
     rawChargeIds.map((item) => String(item || '').trim()).filter(Boolean),
   )).sort();
+  const attendance = data.attendance && typeof data.attendance === 'object'
+    ? data.attendance as Record<string, unknown> : {};
+  const attendanceTotals = attendance.totals && typeof attendance.totals === 'object'
+    ? attendance.totals as Record<string, unknown> : {};
+  const sessionCount = integer(attendance.sourceSessionCount ?? attendance.sourceSessionRecords
+    ?? attendanceTotals.totalSessions ?? attendanceTotals.total);
   const normalized = [
     billedClassCount,
     Math.round(billedAmount * 100),
     ...chargeIds,
   ].join('|');
   return {
+    sessionCount,
     billedClassCount,
     billedAmount,
     settledAmount,
     dueAmount,
-    fingerprint: `v1:${stableHash(normalized)}`,
+    chargeIds,
+    fingerprint: typeof data.billingCompositionFingerprint === 'string' && data.billingCompositionFingerprint
+      ? data.billingCompositionFingerprint
+      : `v1:${stableHash(normalized)}`,
   };
 }
 
@@ -138,7 +151,12 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
   labels: { 'avs-public-invoker': 'true' },
   timeoutSeconds: 60,
   maxInstances: 2,
-}, async (request) => {
+}, (request) => handleMonthlyParentProgress(request));
+
+export async function handleMonthlyParentProgress(
+  request: CallableRequest<Record<string, unknown>>,
+  db: admin.firestore.Firestore = admin.firestore(),
+) {
   await ensureAdmin(request.auth);
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in as an admin.');
@@ -146,7 +164,6 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
   const parentId = cleanId(request.data?.parentId, 'parentId');
   const monthKey = cleanMonth(request.data?.monthKey);
   const workflowAction = cleanWorkflowAction(request.data?.workflowAction);
-  const db = admin.firestore();
 
   const parentSnapshot = await db.collection('users').doc(parentId).get();
   const parentRole = String(parentSnapshot.data()?.role ?? '').trim().toLowerCase();
@@ -190,6 +207,14 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
       const email = actorEmail(request.auth);
 
       if (workflowAction === 'billing_reviewed') {
+        if (alreadyReviewedCurrentBilling(progressData, billing.fingerprint)) {
+          return {
+            ok: true, parentId, monthKey, workflowAction,
+            billingReviewedAt: (progressData.billingReviewedAt as admin.firestore.Timestamp).toDate().toISOString(),
+            billingReviewedFingerprint: billing.fingerprint,
+            billing,
+          };
+        }
         tx.set(ref, {
           schemaVersion: 2,
           billingReviewedAt: now,
@@ -224,15 +249,21 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
         );
       }
 
+      if (alreadySentCurrentInvoice(progressData, billing.fingerprint)) {
+        return {
+          ok: true, parentId, monthKey, workflowAction,
+          invoiceSentAt: (progressData.invoiceSentAt as admin.firestore.Timestamp).toDate().toISOString(),
+          sentBillingFingerprint: billing.fingerprint,
+          billing,
+        };
+      }
+
       tx.set(ref, {
         schemaVersion: 2,
         invoiceSentAt: now,
         invoiceSentByUid: uid,
         invoiceSentByEmail: email,
         sentBillingFingerprint: billing.fingerprint,
-        invoiceSentClassCount: billing.billedClassCount,
-        invoiceSentBilledAmount: billing.billedAmount,
-        invoiceSentDueAmount: billing.dueAmount,
         updatedAt: now,
         updatedByUid: uid,
         updatedByEmail: email,
@@ -244,9 +275,6 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
         workflowAction,
         invoiceSentAt: now.toDate().toISOString(),
         sentBillingFingerprint: billing.fingerprint,
-        invoiceSentClassCount: billing.billedClassCount,
-        invoiceSentBilledAmount: billing.billedAmount,
-        invoiceSentDueAmount: billing.dueAmount,
         billing,
       };
     });
@@ -297,4 +325,4 @@ export const updateAttendanceValidationMonthlyParentProgress = onCall({
     updatedAt: now.toDate().toISOString(),
     completedAt: completedAt?.toDate().toISOString() ?? null,
   };
-});
+}

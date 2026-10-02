@@ -752,7 +752,11 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     setInvoiceIntegrityCharges([]);
     setSessionsById({});
     try {
-      const chargeSnapshot = await getDocs(query(collection(db, 'billingCharges'), where('parentId', '==', row.parentId)));
+      const chargeSnapshot = await getDocs(query(
+        collection(db, 'billingCharges'),
+        where('parentId', '==', row.parentId),
+        where('monthKey', '==', selectedMonth),
+      ));
       const parentCharges: Array<Record<string, unknown> & { id: string }> = chargeSnapshot.docs
         .map((item) => ({ id: item.id, ...(item.data() as Record<string, unknown>) } as Record<string, unknown> & { id: string }))
         .filter((charge) => charge.archived !== true);

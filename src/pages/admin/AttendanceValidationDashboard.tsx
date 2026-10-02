@@ -40,6 +40,7 @@ import { buildWhatsAppUrl } from '../../lib/whatsAppUrl';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
 
 
 function formatMoney(value: unknown): string {
@@ -792,6 +793,7 @@ export default function AttendanceValidationDashboard() {
   const [detailBilling, setDetailBilling] = useState<ParentMonthCloseBillingSnapshot | null>(null);
   const [detailProgressSaving, setDetailProgressSaving] = useState(false);
   const [detailWorkflowSaving, setDetailWorkflowSaving] = useState<'billing' | 'invoice' | null>(null);
+  const [confirmInvoiceSentOpen, setConfirmInvoiceSentOpen] = useState(false);
   const loadedRecheckToken = useRef<string | null>(null);
   const detailAutoLoadKey = useRef<string | null>(null);
 
@@ -856,14 +858,21 @@ export default function AttendanceValidationDashboard() {
     setLoadedAt(new Date());
   }, [fromDate, toDate]);
 
+  const refreshDetailBilling = useCallback(async () => {
+    if (!isParentReviewMode || !routeParentId) return;
+    setDetailBilling(null);
+    setDetailBilling(await loadParentMonthCloseBillingForParent(routeParentId, detailMonthKey));
+  }, [detailMonthKey, isParentReviewMode, routeParentId]);
+
   useEffect(() => {
     const token = searchParams.get('avsRechecked');
     if (!token || token === loadedRecheckToken.current) return;
     loadedRecheckToken.current = token;
     const ids = token.split(',').filter(Boolean);
     if (!ids.length) return;
-    void reloadExactCases(ids).catch((error) => setError(safeLoadResultsFailureMessage(error)));
-  }, [searchParams, reloadExactCases]);
+    void Promise.all([reloadExactCases(ids), refreshDetailBilling()])
+      .catch((error) => setError(safeLoadResultsFailureMessage(error)));
+  }, [searchParams, reloadExactCases, refreshDetailBilling]);
 
   const loadSavedCases = useCallback(async (
     append = false,
@@ -1192,6 +1201,7 @@ export default function AttendanceValidationDashboard() {
           completedAt: result.completedAt,
         };
       });
+      if (result.status === 'completed') await refreshDetailBilling();
     } catch (progressError) {
       setError(progressError instanceof Error
         ? progressError.message
@@ -1218,6 +1228,7 @@ export default function AttendanceValidationDashboard() {
           invoiceSentClassCount?: number;
           invoiceSentBilledAmount?: number;
           invoiceSentDueAmount?: number;
+          billing: ParentMonthCloseBillingSnapshot;
         },
         {
           parentId: string;
@@ -1230,6 +1241,9 @@ export default function AttendanceValidationDashboard() {
         workflowAction,
       });
 
+      const verifiedBilling = { ...detailBilling, ...result.billing, parentId: routeParentId, monthKey: detailMonthKey };
+      setDetailBilling(verifiedBilling);
+
       setDetailProgress((current) => {
         if (!current) return current;
         if (workflowAction === 'billing_reviewed') {
@@ -1237,19 +1251,19 @@ export default function AttendanceValidationDashboard() {
             ...current,
             billingReviewedAt: result.billingReviewedAt ?? new Date().toISOString(),
             billingReviewedFingerprint:
-              result.billingReviewedFingerprint ?? detailBilling.fingerprint,
+              result.billingReviewedFingerprint ?? verifiedBilling.fingerprint,
           };
         }
         return {
           ...current,
           invoiceSentAt: result.invoiceSentAt ?? new Date().toISOString(),
-          sentBillingFingerprint: result.sentBillingFingerprint ?? detailBilling.fingerprint,
+          sentBillingFingerprint: result.sentBillingFingerprint ?? verifiedBilling.fingerprint,
           invoiceSentClassCount:
-            result.invoiceSentClassCount ?? detailBilling.billedClassCount,
+            result.invoiceSentClassCount ?? verifiedBilling.billedClassCount,
           invoiceSentBilledAmount:
-            result.invoiceSentBilledAmount ?? detailBilling.billedAmount,
+            result.invoiceSentBilledAmount ?? verifiedBilling.billedAmount,
           invoiceSentDueAmount:
-            result.invoiceSentDueAmount ?? detailBilling.dueAmount,
+            result.invoiceSentDueAmount ?? verifiedBilling.dueAmount,
         };
       });
     } catch (workflowError) {
@@ -1291,7 +1305,7 @@ export default function AttendanceValidationDashboard() {
 
   const openParentWhatsApp = (kind: 'invoice' | 'reminder') => {
     if (!detailParentPhone) {
-      setError('This parent does not have a WhatsApp phone number in the canonical parent account.');
+      setError('A normalized WhatsApp number is not available for this parent.');
       return;
     }
     const due = formatMoney(detailBilling?.dueAmount ?? 0);
@@ -1300,7 +1314,7 @@ export default function AttendanceValidationDashboard() {
       : `Hello Dear Parent, this is a gentle reminder regarding the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The pending amount is ${due}. Kindly let us know once the payment is completed. Thank you.`;
     const url = buildWhatsAppUrl(detailParentPhone, message);
     if (!url) {
-      setError('Unable to prepare the WhatsApp message for this parent.');
+      setError('A normalized WhatsApp number is not available for this parent.');
       return;
     }
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -1604,7 +1618,7 @@ export default function AttendanceValidationDashboard() {
                           type="button"
                           size="sm"
                           disabled={detailWorkflowSaving !== null}
-                          onClick={() => void updateMonthCloseWorkflow('invoice_sent')}
+                          onClick={() => setConfirmInvoiceSentOpen(true)}
                         >
                           {detailWorkflowSaving === 'invoice' ? 'Saving…' : 'Mark invoice sent'}
                         </Button>
@@ -2041,6 +2055,7 @@ export default function AttendanceValidationDashboard() {
                   return;
                 }
                 await reloadExactCases(result.classSessionIds);
+                await refreshDetailBilling();
               } catch (recheckError) { setError(safeRunValidationFailureMessage(recheckError)); }
             }}
             onRefetch={async (item) => {
@@ -2074,6 +2089,19 @@ export default function AttendanceValidationDashboard() {
           </Button>
         </div>
       )}
+      <Dialog open={confirmInvoiceSentOpen} onOpenChange={setConfirmInvoiceSentOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Confirm invoice sent</DialogTitle></DialogHeader>
+          <p>Confirm that the invoice PDF was attached and sent to the parent on WhatsApp.</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmInvoiceSentOpen(false)}>Cancel</Button>
+            <Button type="button" disabled={detailWorkflowSaving !== null} onClick={() => {
+              setConfirmInvoiceSentOpen(false);
+              void updateMonthCloseWorkflow('invoice_sent');
+            }}>Confirm sent</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
