@@ -1,7 +1,18 @@
 import { collection, doc, getDoc, getDocs, limit, query, where, type Query, type DocumentData } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
-export interface AvsParentOption { id: string; label: string }
+export interface AvsParentOption { id: string; label: string; phone?: string }
+
+
+function parentPhone(data: Record<string, unknown>): string {
+  return [
+    data.phoneNormalized,
+    data.whatsappNumber,
+    data.phone,
+    data.phoneLocal,
+    data.primaryPhone,
+  ].find((value) => typeof value === 'string' && value.trim()) as string || '';
+}
 
 function parentLabel(id: string, data: Record<string, unknown>): string {
   return [data.displayName, data.fullName, data.name, data.email]
@@ -17,7 +28,7 @@ export async function loadAvsParentOptionById(parentId: string): Promise<AvsPare
   if (!snapshot.exists()) throw new Error('Parent account was not found.');
   const data = snapshot.data() as Record<string, unknown>;
   if (data.role !== 'parent') throw new Error('Selected account is not a parent.');
-  return { id: snapshot.id, label: parentLabel(snapshot.id, data) };
+  return { id: snapshot.id, label: parentLabel(snapshot.id, data), phone: parentPhone(data) || undefined };
 }
 
 export async function loadAvsParentOptions(): Promise<AvsParentOption[]> {
@@ -25,7 +36,7 @@ export async function loadAvsParentOptions(): Promise<AvsParentOption[]> {
   if (snapshot.docs.length > 2000) throw new Error('Parent directory exceeds the 2,000-parent selector bound.');
   return snapshot.docs.map((doc) => {
     const data = doc.data() as Record<string, unknown>;
-    return { id: doc.id, label: parentLabel(doc.id, data) };
+    return { id: doc.id, label: parentLabel(doc.id, data), phone: parentPhone(data) || undefined };
   }).sort((a, b) => a.label.localeCompare(b.label));
 }
 
