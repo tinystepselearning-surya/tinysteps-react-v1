@@ -10,6 +10,8 @@ describe('AVS monthly parent tracker routing', () => {
   const client = read('src/lib/callFunctions.ts');
   const rules = read('firestore.rules');
   const contract = read('scripts/avs-callable-contract.mjs');
+  const dashboard = read('src/pages/admin/AttendanceValidationDashboard.tsx');
+  const tracker = read('src/pages/admin/components/AttendanceValidationMonthlyTracker.tsx');
 
   it('uses an admin-only callable and writes only monthly workflow metadata', () => {
     expect(callable).toContain('await ensureAdmin(request.auth)');
@@ -37,5 +39,16 @@ describe('AVS monthly parent tracker routing', () => {
     expect(rules).toContain('match /attendanceValidationMonthlyParentProgress/{progressId}');
     expect(rules).toContain('allow read: if isAdmin();');
     expect(rules).toContain('allow create, update, delete: if false;');
+  });
+
+  it('adds an explicit-load monthly tracker without changing AVS business logic', () => {
+    expect(dashboard).toContain('AttendanceValidationMonthlyTracker');
+    expect(tracker).toContain('Monthly Parent Validation Tracker');
+    expect(tracker).toContain("'updateAttendanceValidationMonthlyParentProgress'");
+    expect(tracker).toContain("currentStatus === 'not_started'");
+    expect(tracker).toContain("updateStatus(parentId, 'in_progress')");
+    expect(tracker).toContain("status === 'completed'");
+    expect(tracker).toContain('loadAvsMonthlyParentProgress(selectedMonth)');
+    expect(tracker).not.toContain('runAttendanceValidationRange');
   });
 });
