@@ -100,7 +100,7 @@ function timestampIso(value: unknown): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-export interface AvsMonthlyParentSessionScope extends ParentMonthCloseBillingSnapshot {}
+export type AvsMonthlyParentSessionScope = ParentMonthCloseBillingSnapshot;
 
 export function avsMonthlyReadModelSessionCount(data: Record<string, unknown>): number {
   return parentMonthCloseBillingSnapshot(data).sessionCount;
