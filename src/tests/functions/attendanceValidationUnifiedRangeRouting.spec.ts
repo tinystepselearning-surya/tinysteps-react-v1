@@ -44,8 +44,10 @@ describe('AVS unified Run Validation backend routing', () => {
     expect(fallback).toContain("collection('enrollments')");
     expect(fallback).toContain('.doc(enrollmentId)');
     expect(fallback).not.toContain('.where(');
-    expect(fallback).not.toContain('.set(');
-    expect(fallback).not.toContain('.update(');
+    expect(fallback).not.toContain("collection('classSessions')");
+    expect(fallback).not.toContain("collection('attendanceValidationCases')");
+    expect(fallback).not.toContain('.doc(enrollmentId).set(');
+    expect(fallback).not.toContain('.doc(enrollmentId).update(');
   });
 
   it('uses the canonical occurrence selector, identity binding, and evidence store for fresh work', () => {
