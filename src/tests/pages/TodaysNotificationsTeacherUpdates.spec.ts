@@ -68,7 +68,10 @@ describe('Sessions Management teacher updates UI', () => {
     const teacherRef = resolvePreferredSessionTeacherRef(session, ['teacher-current']);
     expect(teacherRef).toBe('teacher-current');
 
-    const resolvedUsers = {
+    const resolvedUsers: Record<
+      string,
+      { docId: string; name: string; whatsappDigits: string }
+    > = {
       'teacher-former': {
         docId: 'teacher-doc-former',
         name: 'Former Teacher',
