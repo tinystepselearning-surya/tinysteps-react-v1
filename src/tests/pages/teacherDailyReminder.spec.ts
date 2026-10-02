@@ -138,6 +138,47 @@ describe('teacher daily reminder aggregation', () => {
     expect(groups[0].classes[0].timeLabel).toBe('5:00 PM');
   });
 
+  it('rejects malformed time prefixes and uses a safe TBD fallback', () => {
+    const [group] = buildTeacherDailyReminderGroups([
+      {
+        id: 'malformed',
+        teacherRef: 'teacher-a',
+        teacherName: 'Aditi',
+        childName: 'Mira',
+        classTimeIst: 'bad 5:00 PM',
+        sessionDateKey: '2026-10-03',
+      },
+    ], '2026-10-03');
+
+    expect(group.classes[0].timeLabel).toBe('Time TBD');
+  });
+
+  it('handles midnight, noon and formatted IST ranges correctly', () => {
+    const [group] = buildTeacherDailyReminderGroups([
+      {
+        id: 'midnight',
+        teacherRef: 'teacher-a',
+        teacherName: 'Aditi',
+        childName: 'Mira',
+        classTimeIst: '12:00 AM - 12:35 AM IST',
+        sessionDateKey: '2026-10-03',
+      },
+      {
+        id: 'noon',
+        teacherRef: 'teacher-a',
+        teacherName: 'Aditi',
+        childName: 'Noah',
+        classTimeIst: '12:00 PM - 12:35 PM IST',
+        sessionDateKey: '2026-10-03',
+      },
+    ], '2026-10-03');
+
+    expect(group.classes.map((item) => item.timeLabel)).toEqual([
+      '12:00 AM',
+      '12:00 PM',
+    ]);
+  });
+
   it('fills teacher display data from another row in the same teacher group without another lookup', () => {
     const groups = buildTeacherDailyReminderGroups([
       {
