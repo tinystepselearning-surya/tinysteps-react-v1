@@ -193,15 +193,34 @@ export function buildSameDayCoverageObservation(
         learnerIds.has(participant.participantRecordId));
 
       if (mode === 'single_session_learner_attendance') {
-        const learnerIntervals = learners.flatMap((learner) =>
-          clipNormalizedIntervalsToWindow(
-            participantIntervals(learner),
-            day.startDateTime,
-            day.endDateTime,
-          ));
+        // Tiny Steps operationally guarantees that the authorised teacher is the
+        // meeting host/conductor. Without depending on a separate teacher-identity
+        // registry, require a second participant to prove learner attendance.
+        // Teacher-only meetings therefore measure zero learner attendance.
+        const participantCoverage = report.participantRecords
+          .map((participant) => {
+            const intervals = mergeNormalizedIntervals(
+              clipNormalizedIntervalsToWindow(
+                participantIntervals(participant),
+                day.startDateTime,
+                day.endDateTime,
+              ),
+            );
+            return {
+              participantRecordId: participant.participantRecordId,
+              intervals,
+              seconds: sumNormalizedIntervalSeconds(intervals),
+            };
+          })
+          .filter((item) => item.seconds > 0)
+          .sort((left, right) =>
+            right.seconds - left.seconds
+            || left.participantRecordId.localeCompare(right.participantRecordId));
+
+        const learnerProxy = participantCoverage[1];
         return {
           reportKey: `${meetingId}:${report.reportId}`,
-          overlapIntervals: mergeNormalizedIntervals(learnerIntervals),
+          overlapIntervals: learnerProxy?.intervals ?? [],
         };
       }
 
