@@ -154,7 +154,7 @@ export async function validateAvsBusinessGroup(params: {
       evidence,
       bridgeEnrollmentIdentity(evidence, registry.entries),
       date,
-      rows.length <= 1
+      presentCapEligible.length <= 1
         ? 'single_session_learner_attendance'
         : 'teacher_learner_overlap',
     );
