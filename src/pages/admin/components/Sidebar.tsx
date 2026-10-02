@@ -35,7 +35,7 @@ export const ADMIN_SIDEBAR_TABS: AdminSidebarTab[] = [
     { id: 'students', label: 'Students & Enrollments', icon: GraduationCap },
     { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
     { id: 'attendance-corrections', label: 'Attendance Corrections', icon: ClipboardList },
-    { id: 'attendance-validation', label: 'Attendance Validation', icon: ShieldCheck },
+    { id: 'attendance-validation', label: 'Parent Month Close', icon: ShieldCheck },
     { id: 'relationships', label: 'Relationship Management', icon: Handshake },
     { id: 'courses', label: 'Course Management', icon: BookCopy },
     { id: 'today-notifications', label: 'Sessions Management', icon: BellDot },
