@@ -1,6 +1,7 @@
 import type { Firestore } from 'firebase-admin/firestore';
 
 export type AvsJoinUrlSource = 'session' | 'enrollment' | 'missing';
+export type AvsEnrollmentJoinUrlCache = Map<string, string | null>;
 
 export interface AvsSessionJoinUrlResolution {
   session: Record<string, unknown>;
@@ -36,6 +37,7 @@ export function resolveJoinUrlFromRecord(
 export async function resolveAvsSessionJoinUrl(
   db: Firestore,
   session: Record<string, unknown>,
+  enrollmentCache?: AvsEnrollmentJoinUrlCache,
 ): Promise<AvsSessionJoinUrlResolution> {
   const directJoinUrl = resolveJoinUrlFromRecord(session);
   const enrollmentId = text(session.enrollmentId);
@@ -60,15 +62,23 @@ export async function resolveAvsSessionJoinUrl(
     };
   }
 
-  const enrollmentSnapshot = await db
-    .collection('enrollments')
-    .doc(enrollmentId)
-    .get();
-  const enrollmentJoinUrl = enrollmentSnapshot.exists
-    ? resolveJoinUrlFromRecord(
-        (enrollmentSnapshot.data() || {}) as Record<string, unknown>,
-      )
-    : null;
+  let enrollmentJoinUrl: string | null;
+  let enrollmentFallbackReadCount = 0;
+  if (enrollmentCache?.has(enrollmentId)) {
+    enrollmentJoinUrl = enrollmentCache.get(enrollmentId) ?? null;
+  } else {
+    const enrollmentSnapshot = await db
+      .collection('enrollments')
+      .doc(enrollmentId)
+      .get();
+    enrollmentFallbackReadCount = 1;
+    enrollmentJoinUrl = enrollmentSnapshot.exists
+      ? resolveJoinUrlFromRecord(
+          (enrollmentSnapshot.data() || {}) as Record<string, unknown>,
+        )
+      : null;
+    enrollmentCache?.set(enrollmentId, enrollmentJoinUrl);
+  }
 
   if (!enrollmentJoinUrl) {
     return {
@@ -76,7 +86,7 @@ export async function resolveAvsSessionJoinUrl(
       joinUrl: null,
       source: 'missing',
       enrollmentId,
-      enrollmentFallbackReadCount: 1,
+      enrollmentFallbackReadCount,
     };
   }
 
@@ -88,6 +98,6 @@ export async function resolveAvsSessionJoinUrl(
     joinUrl: enrollmentJoinUrl,
     source: 'enrollment',
     enrollmentId,
-    enrollmentFallbackReadCount: 1,
+    enrollmentFallbackReadCount,
   };
 }
