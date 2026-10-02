@@ -39,12 +39,12 @@ describe('Parent Month Close derived workflow', () => {
     const left = buildParentMonthCloseBillingFingerprint({
       billedClassCount: 3,
       billedAmount: 1125,
-      chargeIds: ['b', 'a', 'c'],
+      chargeIds: ['charge-3', 'charge-1', 'charge-2'],
     });
     const right = buildParentMonthCloseBillingFingerprint({
       billedClassCount: 3,
       billedAmount: 1125,
-      chargeIds: ['c', 'b', 'a'],
+      chargeIds: ['charge-2', 'charge-3', 'charge-1'],
     });
     expect(left).toBe(right);
     expect(left).toBe(billing.fingerprint);
