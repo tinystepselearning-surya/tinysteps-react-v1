@@ -1,4 +1,4 @@
-import { collection, collectionGroup, getDocs, limit, query, where } from 'firebase/firestore';
+import { collection, collectionGroup, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from './firebaseConfig';
 
 export const AVS_MONTHLY_PARENT_PROGRESS_COLLECTION =
@@ -90,24 +90,35 @@ function timestampIso(value: unknown): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-export function avsMonthlyReadModelHasSessions(data: Record<string, unknown>): boolean {
+export interface AvsMonthlyParentSessionScope {
+  parentId: string;
+  sessionCount: number;
+}
+
+export function avsMonthlyReadModelSessionCount(data: Record<string, unknown>): number {
   const attendance = data.attendance;
-  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return false;
+  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return 0;
   const attendanceRow = attendance as Record<string, unknown>;
   const sourceCount = Number(
     attendanceRow.sourceSessionCount ?? attendanceRow.sourceSessionRecords,
   );
-  if (Number.isFinite(sourceCount) && sourceCount > 0) return true;
+  if (Number.isFinite(sourceCount) && sourceCount > 0) return Math.floor(sourceCount);
   const totals = attendanceRow.totals;
-  if (!totals || typeof totals !== 'object' || Array.isArray(totals)) return false;
+  if (!totals || typeof totals !== 'object' || Array.isArray(totals)) return 0;
   const totalsRow = totals as Record<string, unknown>;
   const totalSessions = Number(totalsRow.totalSessions ?? totalsRow.total);
-  return Number.isFinite(totalSessions) && totalSessions > 0;
+  return Number.isFinite(totalSessions) && totalSessions > 0
+    ? Math.floor(totalSessions)
+    : 0;
+}
+
+export function avsMonthlyReadModelHasSessions(data: Record<string, unknown>): boolean {
+  return avsMonthlyReadModelSessionCount(data) > 0;
 }
 
 export async function loadAvsMonthlyParentsWithSessions(
   selectedMonth: string,
-): Promise<string[]> {
+): Promise<AvsMonthlyParentSessionScope[]> {
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
     throw new Error('Invalid attendance validation month.');
   }
@@ -119,13 +130,51 @@ export async function loadAvsMonthlyParentsWithSessions(
   if (snapshot.docs.length > 2000) {
     throw new Error('Monthly parent read-model scope exceeds the 2,000-record safety bound.');
   }
-  const parentIds = new Set<string>();
+  const countsByParentId = new Map<string, number>();
   snapshot.docs.forEach((docSnapshot) => {
     const data = docSnapshot.data() as Record<string, unknown>;
     const parentId = typeof data.parentId === 'string' ? data.parentId.trim() : '';
-    if (parentId && avsMonthlyReadModelHasSessions(data)) parentIds.add(parentId);
+    const sessionCount = avsMonthlyReadModelSessionCount(data);
+    if (!parentId || sessionCount <= 0) return;
+    countsByParentId.set(
+      parentId,
+      Math.max(countsByParentId.get(parentId) ?? 0, sessionCount),
+    );
   });
-  return Array.from(parentIds);
+  return Array.from(countsByParentId, ([parentId, sessionCount]) => ({
+    parentId,
+    sessionCount,
+  }));
+}
+
+
+export async function loadAvsMonthlyParentProgressForParent(
+  parentId: string,
+  selectedMonth: string,
+): Promise<AvsMonthlyParentProgress | null> {
+  const normalizedParentId = String(parentId || '').trim();
+  if (!normalizedParentId || normalizedParentId.includes('/')) {
+    throw new Error('Invalid attendance validation parent.');
+  }
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+    throw new Error('Invalid attendance validation month.');
+  }
+  const snapshot = await getDoc(doc(
+    db,
+    AVS_MONTHLY_PARENT_PROGRESS_COLLECTION,
+    `${selectedMonth}__${normalizedParentId}`,
+  ));
+  if (!snapshot.exists()) return null;
+  const data = snapshot.data() as Record<string, unknown>;
+  const status = data.status;
+  if (status !== 'in_progress' && status !== 'completed') return null;
+  return {
+    parentId: normalizedParentId,
+    monthKey: selectedMonth,
+    status,
+    updatedAt: timestampIso(data.updatedAt),
+    completedAt: timestampIso(data.completedAt),
+  };
 }
 
 export async function loadAvsMonthlyParentProgress(
