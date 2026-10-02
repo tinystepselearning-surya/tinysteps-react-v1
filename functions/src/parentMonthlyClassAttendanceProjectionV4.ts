@@ -709,11 +709,6 @@ export const processParentClassAttendanceV4Write = async (input: {
             nowMs,
           }),
         );
-      } else if (preview.mode === 'covered') {
-        shadow = {
-          shadowOutcome: 'covered',
-          shadowReason: `authoritative_covered_${preview.targetCount}`,
-        };
       } else {
         shadow = { shadowOutcome: 'not_evaluable', shadowReason: preview.reason };
       }
