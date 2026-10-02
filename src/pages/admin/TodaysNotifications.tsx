@@ -70,6 +70,10 @@ import {
   getCachedSessionsManagementSnapshot,
   loadSessionsManagementSnapshot,
 } from '../../lib/sessionsManagementSnapshot';
+import {
+  buildTeacherDailyReminderGroups,
+  buildTeacherDailyReminderMessage,
+} from './teacherDailyReminder';
 
 interface ClassSessionDoc {
   id: string;
@@ -153,6 +157,7 @@ type CourseDoc = Record<string, any>;
 type UserPhoneField = 'phone' | 'mobile' | 'contactNumber' | 'whatsappPhone';
 type MessageRecipient = 'parent' | 'teacher';
 type NotificationMode = 'today' | 'upcoming' | 'overall-admissions';
+type UpdatesAudience = 'students' | 'teachers';
 interface ResolvedUserDoc {
   docId: string;
   uid: string;
@@ -1172,6 +1177,7 @@ export default function TodaysNotifications() {
   const [savingPhoneKey, setSavingPhoneKey] = useState<string | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [mode, setMode] = useState<NotificationMode>('today');
+  const [updatesAudience, setUpdatesAudience] = useState<UpdatesAudience>('students');
   const [upcomingSpecificDate, setUpcomingSpecificDate] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>(ALL_TEACHERS_FILTER);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_FILTER);
@@ -1196,6 +1202,17 @@ export default function TodaysNotifications() {
       dateStyle: 'full',
     }).format(baselineDate);
   }, [todayDateKey]);
+
+  const activeReminderDateKey =
+    mode === 'today'
+      ? todayDateKey
+      : String(upcomingSpecificDate || '').trim() || tomorrowDateKey;
+  const isTeacherUpdatesMode =
+    mode !== 'overall-admissions' && updatesAudience === 'teachers';
+  const teacherReminderScheduleLabel =
+    mode === 'today'
+      ? 'today'
+      : formatKolkataShortDateFromDateKey(activeReminderDateKey);
 
   useEffect(() => {
     removeExpiredManualReminderCaches();
@@ -1631,6 +1648,11 @@ export default function TodaysNotifications() {
       })
       .filter((row): row is any => Boolean(row));
   }, [enrollmentMap, sessions, usersMap]);
+
+  const teacherDailyGroups = useMemo(
+    () => buildTeacherDailyReminderGroups(rows, activeReminderDateKey),
+    [activeReminderDateKey, rows],
+  );
 
   const operationalAdmissionsCount = useMemo(
     () =>
@@ -2240,10 +2262,14 @@ export default function TodaysNotifications() {
   };
 
   const isOverallAdmissionsMode = mode === 'overall-admissions';
-  const visibleRowsCount = isOverallAdmissionsMode ? sortedAdmissionsRows.length : sortedRows.length;
+  const visibleRowsCount = isOverallAdmissionsMode
+    ? sortedAdmissionsRows.length
+    : isTeacherUpdatesMode
+      ? teacherDailyGroups.length
+      : sortedRows.length;
   const hasOperationalFilters =
     teacherFilter !== ALL_TEACHERS_FILTER ||
-    (!isOverallAdmissionsMode && statusFilter !== ALL_STATUSES_FILTER);
+    (!isOverallAdmissionsMode && !isTeacherUpdatesMode && statusFilter !== ALL_STATUSES_FILTER);
 
   return (
     <div className="space-y-3">
@@ -2255,9 +2281,11 @@ export default function TodaysNotifications() {
             : mode === 'upcoming'
               ? `Date: ${upcomingSpecificDate || tomorrowDateKey} (${TIMEZONE})`
               : 'Active admissions with teacher/schedule readiness'}{' '}
-          {isNotificationActionsEnabled
-            ? '| Open WhatsApp, then manually tick notified.'
-            : '| Admissions operations view.'}
+          {isTeacherUpdatesMode
+            ? '| One daily WhatsApp schedule per teacher.'
+            : isNotificationActionsEnabled
+              ? '| Open WhatsApp, then manually tick notified.'
+              : '| Admissions operations view.'}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center rounded-md border bg-white p-0.5">
@@ -2270,7 +2298,7 @@ export default function TodaysNotifications() {
               Today
               {mode === 'today' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
-                  {sortedRows.length}
+                  {isTeacherUpdatesMode ? teacherDailyGroups.length : sortedRows.length}
                 </span>
               )}
             </Button>
@@ -2283,7 +2311,7 @@ export default function TodaysNotifications() {
               Tomorrow / Date
               {mode === 'upcoming' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
-                  {sortedRows.length}
+                  {isTeacherUpdatesMode ? teacherDailyGroups.length : sortedRows.length}
                 </span>
               )}
             </Button>
@@ -2301,22 +2329,49 @@ export default function TodaysNotifications() {
               )}
             </Button>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">Teacher</span>
-            <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-              <SelectTrigger className="h-7 w-[180px] text-xs">
-                <SelectValue placeholder="All Teachers" />
-              </SelectTrigger>
-              <SelectContent>
-                {teacherOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {mode !== 'overall-admissions' && teacherFilter !== ALL_TEACHERS_FILTER ? (
+          {mode !== 'overall-admissions' ? (
+            <div className="inline-flex items-center rounded-md border bg-white p-0.5">
+              <Button
+                size="sm"
+                className="h-7 px-3 text-xs"
+                variant={updatesAudience === 'students' ? 'default' : 'ghost'}
+                onClick={() => setUpdatesAudience('students')}
+              >
+                Student Updates
+              </Button>
+              <Button
+                size="sm"
+                className="h-7 px-3 text-xs"
+                variant={updatesAudience === 'teachers' ? 'default' : 'ghost'}
+                onClick={() => setUpdatesAudience('teachers')}
+              >
+                Teacher Updates
+                {updatesAudience === 'teachers' ? (
+                  <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
+                    {teacherDailyGroups.length}
+                  </span>
+                ) : null}
+              </Button>
+            </div>
+          ) : null}
+          {!isTeacherUpdatesMode ? (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">Teacher</span>
+              <Select value={teacherFilter} onValueChange={setTeacherFilter}>
+                <SelectTrigger className="h-7 w-[180px] text-xs">
+                  <SelectValue placeholder="All Teachers" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+          {mode !== 'overall-admissions' && !isTeacherUpdatesMode && teacherFilter !== ALL_TEACHERS_FILTER ? (
             <Button
               size="sm"
               variant="outline"
@@ -2346,7 +2401,7 @@ export default function TodaysNotifications() {
               Refresh admissions
             </Button>
           )}
-          {mode !== 'overall-admissions' ? (
+          {mode !== 'overall-admissions' && !isTeacherUpdatesMode ? (
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">Status</span>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -2408,6 +2463,9 @@ export default function TodaysNotifications() {
                   ? 'No admissions for selected filters.'
                   : 'No active admissions.';
               }
+              if (isTeacherUpdatesMode) {
+                return 'No teacher schedules available for this date.';
+              }
               if (mode === 'today') {
                 return hasOperationalFilters
                   ? 'No sessions for selected filters.'
@@ -2466,6 +2524,74 @@ export default function TodaysNotifications() {
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      ) : isTeacherUpdatesMode ? (
+        <Card className="p-0">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[900px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-2 [&_td]:py-2 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[190px] whitespace-nowrap">Teacher</TableHead>
+                  <TableHead className="w-[90px] whitespace-nowrap">Classes</TableHead>
+                  <TableHead className="w-[420px] whitespace-nowrap">Schedule</TableHead>
+                  <TableHead className="w-[120px] whitespace-nowrap">WhatsApp</TableHead>
+                  <TableHead className="w-[150px] whitespace-nowrap">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="[&_tr:nth-child(even)]:bg-slate-50/35">
+                {teacherDailyGroups.map((group) => {
+                  const teacherMessage = buildTeacherDailyReminderMessage(
+                    group,
+                    teacherReminderScheduleLabel,
+                  );
+                  return (
+                    <TableRow key={group.teacherRef}>
+                      <TableCell className="align-top whitespace-nowrap font-medium">
+                        <div className="max-w-[185px] truncate" title={group.teacherName}>
+                          {group.teacherName}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top whitespace-nowrap tabular-nums">
+                        {group.classes.length}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="space-y-1">
+                          {group.classes.map((item) => (
+                            <div
+                              key={item.sessionId}
+                              className="flex items-center gap-2 text-sm leading-5"
+                            >
+                              <span className="font-medium">{item.childName}</span>
+                              <span className="text-muted-foreground">— {item.timeLabel}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top whitespace-nowrap">
+                        {group.teacherWhatsappDigits ? (
+                          <span className="text-emerald-700">Ready</span>
+                        ) : (
+                          <span className="text-destructive">Missing</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="align-top whitespace-nowrap">
+                        <Button
+                          size="sm"
+                          className="h-8 px-3 text-xs"
+                          disabled={!group.teacherWhatsappDigits}
+                          onClick={() =>
+                            openWhatsApp(group.teacherWhatsappDigits, teacherMessage)
+                          }
+                        >
+                          Send Message
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
