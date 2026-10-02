@@ -38,6 +38,14 @@ describe('AVS force-fresh Teams evidence routing', () => {
     expect(source).toContain('buildFreshEvidenceSessionSnapshot');
   });
 
+  it('uses the linked enrollment Teams URL when a historical session link is missing', () => {
+    expect(source).toContain('resolveAvsSessionJoinUrl(');
+    expect(source).toContain('sessionForJoinResolution');
+    expect(source).toContain('joinUrlResolution.session');
+    expect(source).toContain('enrollmentJoinUrlFallbackReads');
+    expect(source).toContain('row.data = siblingJoinUrlResolution.session');
+  });
+
   it('collects fresh Graph evidence for one class then rebuilds the whole group', () => {
     expect(source).toContain('collectTeamsEvidence(');
     expect(source).toContain(

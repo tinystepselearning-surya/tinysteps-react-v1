@@ -29,6 +29,10 @@ import {
 } from './teamsEvidenceCollector';
 import { loadAvsBusinessGroupForSession, loadAvsGroupEvidence, persistAvsGroupCases, validateAvsBusinessGroup } from './groupValidation';
 import type { Av3StaffRegistrySnapshot } from './staffIdentityRegistry';
+import {
+  resolveAvsSessionJoinUrl,
+  type AvsEnrollmentJoinUrlCache,
+} from './sessionJoinUrlFallback';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -190,9 +194,40 @@ export async function refreshAttendanceValidationCaseEvidence(
 
     const currentSession =
       (sessionSnapshot.data() || {}) as Record<string, unknown>;
+    const sessionForJoinResolution = {
+      ...currentSession,
+      enrollmentId:
+        currentSession.enrollmentId
+        || validationCase.enrollmentId
+        || previousEvidence?.session.enrollmentId
+        || null,
+    };
+    const enrollmentJoinUrlCache: AvsEnrollmentJoinUrlCache = new Map();
+    const joinUrlResolution = await resolveAvsSessionJoinUrl(
+      db,
+      sessionForJoinResolution,
+      enrollmentJoinUrlCache,
+    );
+    let enrollmentJoinUrlFallbackReads =
+      joinUrlResolution.enrollmentFallbackReadCount;
+    logger.info('AVS force-fresh Teams join URL resolved', {
+      caseId,
+      classSessionId,
+      source: joinUrlResolution.source,
+      enrollmentId: joinUrlResolution.enrollmentId,
+      enrollmentFallbackReadCount:
+        joinUrlResolution.enrollmentFallbackReadCount,
+    });
     const expectedSession = previousEvidence
-      ? buildFreshEvidenceSessionSnapshot(classSessionId, currentSession, previousEvidence)
-      : buildBaselineEvidenceSessionSnapshot(classSessionId, currentSession);
+      ? buildFreshEvidenceSessionSnapshot(
+          classSessionId,
+          joinUrlResolution.session,
+          previousEvidence,
+        )
+      : buildBaselineEvidenceSessionSnapshot(
+          classSessionId,
+          joinUrlResolution.session,
+        );
 
     const runId = `fresh_${Date.now().toString(36)}_${caseId.slice(0, 24)}`;
     const graphClient = createOccurrenceSelectingTeamsEvidenceGraphClient(
@@ -229,6 +264,20 @@ export async function refreshAttendanceValidationCaseEvidence(
     });
 
     const rows = await loadAvsBusinessGroupForSession(db, classSessionId);
+    for (const row of rows) {
+      if (row.id === classSessionId) {
+        row.data = joinUrlResolution.session;
+        continue;
+      }
+      const siblingJoinUrlResolution = await resolveAvsSessionJoinUrl(
+        db,
+        row.data,
+        enrollmentJoinUrlCache,
+      );
+      enrollmentJoinUrlFallbackReads +=
+        siblingJoinUrlResolution.enrollmentFallbackReadCount;
+      row.data = siblingJoinUrlResolution.session;
+    }
     const loaded = await loadAvsGroupEvidence(db, rows);
     loaded.evidenceBySession.set(classSessionId, evidenceResult.evidence);
     const groupResult = await validateAvsBusinessGroup({
@@ -268,6 +317,8 @@ export async function refreshAttendanceValidationCaseEvidence(
           0,
         ),
       graphLogicalCalls: counted.count(),
+      joinUrlSource: joinUrlResolution.source,
+      enrollmentJoinUrlFallbackReads,
       evidenceIssueSummary,
       teacherIdentityDecision: identityBinding.decision?.status ?? null,
       teacherIdentityBinding: identityBinding.bindingStatus,
@@ -282,6 +333,7 @@ export async function refreshAttendanceValidationCaseEvidence(
         previousEvidenceReads: previousEvidenceRef ? 1 : 0,
         dirtyMarkerReads: rows.length,
         organizerConfigReads: organizerResolution.firestoreReadCount,
+        enrollmentJoinUrlFallbackReads,
         av53PointReads: loaded.readCount,
         sameDayContextReads: rows.length,
         teacherIdentityTransactionReads: identityBinding.transactionReadCount,
@@ -289,6 +341,7 @@ export async function refreshAttendanceValidationCaseEvidence(
         boundedReadsExcludingStaffRegistry:
           2
           + organizerResolution.firestoreReadCount
+          + enrollmentJoinUrlFallbackReads
           + identityBinding.transactionReadCount
           + loaded.readCount
           + rows.length,
