@@ -36,6 +36,30 @@ const numericMap = (value: unknown): NumericMap => {
   return output;
 };
 
+/**
+ * Production telemetry has existed across two Firestore field-shape conventions:
+ * nested maps (for example byShadowOutcome.match) and literal dotted top-level
+ * field names (for example "byShadowOutcome.match"). Read both so the audit
+ * cannot silently report zero parity when telemetry is present.
+ */
+const metricMap = (
+  data: Record<string, unknown>,
+  root: string,
+): NumericMap => {
+  const output = numericMap(data[root]);
+  const prefix = root + '.';
+
+  Object.entries(data).forEach(([key, raw]) => {
+    if (!key.startsWith(prefix)) return;
+    const metricKey = key.slice(prefix.length).trim();
+    if (!metricKey) return;
+    const count = finiteNonNegative(raw);
+    if (count > 0) output[metricKey] = (output[metricKey] || 0) + count;
+  });
+
+  return output;
+};
+
 const addMaps = (target: NumericMap, source: NumericMap): void => {
   Object.entries(source).forEach(([key, value]) => {
     target[key] = (target[key] || 0) + value;
@@ -68,10 +92,10 @@ async function main(): Promise<void> {
         shadowEnabledEvents: finiteNonNegative(data.shadowEnabledEvents),
         incrementalEnabledEvents: finiteNonNegative(data.incrementalEnabledEvents),
         targetCountTotal: finiteNonNegative(data.targetCountTotal),
-        byLiveOutcome: numericMap(data.byLiveOutcome),
-        byLiveReason: numericMap(data.byLiveReason),
-        byShadowOutcome: numericMap(data.byShadowOutcome),
-        byShadowReason: numericMap(data.byShadowReason),
+        byLiveOutcome: metricMap(data, 'byLiveOutcome'),
+        byLiveReason: metricMap(data, 'byLiveReason'),
+        byShadowOutcome: metricMap(data, 'byShadowOutcome'),
+        byShadowReason: metricMap(data, 'byShadowReason'),
       };
     })
     .sort((a, b) => a.dayKey.localeCompare(b.dayKey))
@@ -138,6 +162,33 @@ async function main(): Promise<void> {
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
 
   console.log(JSON.stringify(report, null, 2));
+
+  // Flat lines remain readable in GitHub logs even when nested objects are sanitized.
+  console.log(
+    [
+      'C3_V4_PARITY',
+      'totalEvents=' + totals.totalEvents,
+      'shadowEnabledEvents=' + totals.shadowEnabledEvents,
+      'incrementalEnabledEvents=' + totals.incrementalEnabledEvents,
+      'match=' + match,
+      'mismatch=' + mismatch,
+      'covered=' + covered,
+      'notEvaluable=' + notEvaluable,
+      'skipped=' + skipped,
+      'parityComparable=' + parityComparable,
+    ].join(' '),
+  );
+  Object.entries(totals.byShadowReason)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .forEach(([reason, count]) => {
+      console.log('C3_V4_SHADOW_REASON ' + reason + '=' + count);
+    });
+  Object.entries(totals.byLiveReason)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .forEach(([reason, count]) => {
+      console.log('C3_V4_LIVE_REASON ' + reason + '=' + count);
+    });
+
   console.log('V4 parity report written to ' + outputPath);
 }
 
