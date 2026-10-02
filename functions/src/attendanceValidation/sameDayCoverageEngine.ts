@@ -47,6 +47,10 @@ export interface SameDayCoverageAggregate {
   issues: string[];
 }
 
+export type SameDayCoverageMode =
+  | 'teacher_learner_overlap'
+  | 'single_session_learner_attendance';
+
 function parseYmd(value: string): number {
   if (!YMD_RE.test(value)) {
     throw new TypeError('serviceDateYmd must use YYYY-MM-DD.');
@@ -118,6 +122,7 @@ export function buildSameDayCoverageObservation(
   evidence: AttendanceValidationEvidenceDocument,
   identity: Av3EnrollmentIdentityResult,
   serviceDateYmd: string,
+  mode: SameDayCoverageMode = 'teacher_learner_overlap',
 ): SameDayCoverageObservation {
   const complete = attendanceEvidenceComplete(evidence);
 
@@ -147,15 +152,16 @@ export function buildSameDayCoverageObservation(
     };
   }
 
-  // For the three-outcome business reconciliation, verified teacher identity
-  // plus complete attendance records are sufficient to measure the learner side.
-  // If no learner-side participant exists, that is a measurable zero Present
-  // overlap rather than an ambiguous business outcome.
+  // Multi-session reconciliation keeps the strict historical teacher + learner
+  // overlap proof. For a normal single-session day, Tiny Steps' operational
+  // invariant is that the class link is conducted by the authorised teacher, so
+  // teacher identity mapping is diagnostic rather than a classification gate.
+  // In that single-session mode we measure learner-side attendance directly.
   const identityVerified =
     identity.identityConfidence === 'verified'
     && identity.expectedTeacherPresent;
 
-  if (!identityVerified) {
+  if (mode === 'teacher_learner_overlap' && !identityVerified) {
     return {
       status: 'review',
       evidenceId: evidence.id,
@@ -183,11 +189,24 @@ export function buildSameDayCoverageObservation(
 
   const reportCoverages: SameDayReportCoverage[] = evidence.attendanceReports.map(
     (report) => {
-      const teachers = report.participantRecords.filter((participant) =>
-        teacherIds.has(participant.participantRecordId));
       const learners = report.participantRecords.filter((participant) =>
         learnerIds.has(participant.participantRecordId));
 
+      if (mode === 'single_session_learner_attendance') {
+        const learnerIntervals = learners.flatMap((learner) =>
+          clipNormalizedIntervalsToWindow(
+            participantIntervals(learner),
+            day.startDateTime,
+            day.endDateTime,
+          ));
+        return {
+          reportKey: `${meetingId}:${report.reportId}`,
+          overlapIntervals: mergeNormalizedIntervals(learnerIntervals),
+        };
+      }
+
+      const teachers = report.participantRecords.filter((participant) =>
+        teacherIds.has(participant.participantRecordId));
       const pairIntervals: NormalizedEvidenceInterval[] = [];
       for (const teacher of teachers) {
         const teacherIntervals = participantIntervals(teacher);
@@ -216,7 +235,7 @@ export function buildSameDayCoverageObservation(
     evidenceId: evidence.id,
     calculationVersion: evidence.calculationVersion,
     attendanceEvidenceComplete: true,
-    identityVerified: true,
+    identityVerified,
     sameDayOccurrenceCount: evidence.attendanceReports.length,
     reportCoverages,
     issues: [],
