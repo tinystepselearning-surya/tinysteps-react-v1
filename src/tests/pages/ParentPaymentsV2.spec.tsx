@@ -276,7 +276,8 @@ describe('ParentPaymentsV2', () => {
       '/surya?tab=parent-payments&month=2026-09&parentId=parent-1&returnTo=%2Fsurya%2Fattendance-validation%2Fparent-1%3Fmonth%3D2026-09',
     );
 
-    await waitFor(() => expect(screen.getByText('Viewing')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Parent Month Close finance review')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     expect(screen.getByRole('button', { name: 'Back to Parent Month Close' })).toBeTruthy();
     expect(getAggregateFromServerMock).not.toHaveBeenCalled();
     expect(
