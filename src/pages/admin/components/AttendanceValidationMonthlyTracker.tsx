@@ -397,7 +397,7 @@ export default function AttendanceValidationMonthlyTracker({
                         </button>
                       </td>
                       <td className="px-3 py-2.5 tabular-nums text-slate-600">
-                        {billing?.billedClassCount || billing?.sessionCount || '—'}
+                        {billing ? billing.billedClassCount : '—'}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className={`rounded-full border px-2 py-1 text-xs font-medium ${attendanceClass(status)}`}>
