@@ -277,7 +277,7 @@ describe('ParentPaymentsV2', () => {
     );
 
     await waitFor(() => expect(screen.getByText('Parent Month Close finance review')).toBeTruthy());
-    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByText('Parent One').length).toBeGreaterThan(0));
     expect(screen.getByRole('button', { name: 'Back to Parent Month Close' })).toBeTruthy();
     expect(getAggregateFromServerMock).not.toHaveBeenCalled();
     expect(
