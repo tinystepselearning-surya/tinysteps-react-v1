@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
+import {
+  buildTeacherDailyReminderGroups,
+  buildTeacherDailyReminderMessage,
+} from '../../pages/admin/teacherDailyReminder';
 
 const pageSource = readFileSync(
   resolve(process.cwd(), 'src/pages/admin/TodaysNotifications.tsx'),
@@ -55,23 +60,81 @@ describe('Sessions Management teacher updates UI', () => {
     expect(pageSource).toContain('— {item.timeLabel}');
   });
 
-  it('compiles one teacher WhatsApp message and opens it without notification fan-out writes', () => {
-    const teacherViewStart = pageSource.indexOf(') : isTeacherUpdatesMode ? (');
-    const teacherViewEnd = pageSource.indexOf('      ) : (', teacherViewStart + 1);
-    expect(teacherViewStart).toBeGreaterThan(-1);
-    expect(teacherViewEnd).toBeGreaterThan(teacherViewStart);
+  it('resolves a reassigned session through the current enrollment teacher to the final WhatsApp destination', () => {
+    const session = {
+      teacherId: 'teacher-former',
+      teacherIds: ['teacher-former', 'teacher-current'],
+    };
+    const teacherRef = resolvePreferredSessionTeacherRef(session, ['teacher-current']);
+    expect(teacherRef).toBe('teacher-current');
 
-    const teacherViewSource = pageSource.slice(teacherViewStart, teacherViewEnd);
-    expect(teacherViewSource).toContain('buildTeacherDailyReminderMessage(');
-    expect(teacherViewSource).toContain(
+    const resolvedUsers = {
+      'teacher-former': {
+        docId: 'teacher-doc-former',
+        name: 'Former Teacher',
+        whatsappDigits: '919111111111',
+      },
+      'teacher-current': {
+        docId: 'teacher-doc-current',
+        name: 'Current Teacher',
+        whatsappDigits: '919222222222',
+      },
+    };
+    const resolvedTeacher = resolvedUsers[teacherRef];
+
+    const [group] = buildTeacherDailyReminderGroups([
+      {
+        id: 'reassigned-session',
+        teacherRef,
+        teacherUserDocId: resolvedTeacher.docId,
+        teacherName: resolvedTeacher.name,
+        teacherWhatsappDigits: resolvedTeacher.whatsappDigits,
+        studentLabel: 'Aarav',
+        startTime: '15:00',
+        sessionDateKey: '2026-10-03',
+      },
+    ], '2026-10-03');
+
+    expect(group.teacherRef).toBe('teacher-doc-current');
+    expect(group.teacherName).toBe('Current Teacher');
+    expect(group.teacherWhatsappDigits).toBe('919222222222');
+    expect(buildTeacherDailyReminderMessage(group)).toContain('Hello Current Teacher,');
+  });
+
+  it('uses enrollment-aware teacher resolution in the row builder', () => {
+    expect(pageSource).toContain(
+      'const enrollment = enrollmentId ? enrollmentMap[enrollmentId] : undefined;',
+    );
+    expect(pageSource).toContain('getEnrollmentTeacherRefs(enrollment)');
+    expect(pageSource).toContain('}, [enrollmentMap, sessions, usersMap]);');
+    expect(pageSource).not.toContain(
+      "resolvePreferredSessionTeacherRef(\n          session as unknown as Record<string, unknown>,\n          [],",
+    );
+  });
+
+  it('compiles one teacher WhatsApp message and opens it through a read/write-free client path', () => {
+    expect(pageSource).toContain('buildTeacherDailyReminderMessage(');
+    expect(pageSource).toContain(
       'openWhatsApp(group.teacherWhatsappDigits, teacherMessage)',
     );
-    expect(teacherViewSource).not.toContain('setDoc(');
-    expect(teacherViewSource).not.toContain('handleNotifiedToggle(');
-    expect(teacherViewSource).not.toContain('getDoc(');
-    expect(teacherViewSource).not.toContain('getDocs(');
-    expect(teacherViewSource).not.toContain('httpsCallable(');
-    expect(teacherViewSource).not.toContain('onSnapshot(');
+
+    const openStart = pageSource.indexOf('const openWhatsApp =');
+    const openEnd = pageSource.indexOf('const openMeetingLink =', openStart);
+    expect(openStart).toBeGreaterThan(-1);
+    expect(openEnd).toBeGreaterThan(openStart);
+
+    const openSource = pageSource.slice(openStart, openEnd);
+    expect(openSource).toContain('window.open(');
+    expect(openSource).not.toContain('setDoc(');
+    expect(openSource).not.toContain('handleNotifiedToggle(');
+    expect(openSource).not.toContain('getDoc(');
+    expect(openSource).not.toContain('getDocs(');
+    expect(openSource).not.toContain('httpsCallable(');
+    expect(openSource).not.toContain('onSnapshot(');
+  });
+
+  it('requires a WhatsApp-ready number to stay within the E.164 digit limit', () => {
+    expect(pageSource).toContain('return length >= 8 && length <= 15;');
   });
 
   it('uses today for the current day and an explicit date label for another selected date', () => {
