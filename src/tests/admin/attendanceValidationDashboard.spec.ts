@@ -29,6 +29,7 @@ describe('AV6 admin attendance validation dashboard', () => {
   const shadowRunner = readRepoFile(
     'functions/src/attendanceValidation/shadowRunner.ts',
   );
+  const monthCloseInvoice = readRepoFile('src/lib/parentMonthInvoice.ts');
 
   it('loads saved AVS cases only for the selected service-date range with a hard page cap', () => {
     expect(dashboard).toContain('export const AV6_CASE_READ_LIMIT = 100');
@@ -166,13 +167,28 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain('Billing, invoice & payment');
     expect(dashboard).toContain("updateMonthCloseWorkflow('billing_reviewed')");
     expect(dashboard).toContain("updateMonthCloseWorkflow('invoice_sent')");
-    expect(dashboard).toContain("navigate(parentPaymentsUrl('invoice'))");
+    expect(dashboard).toContain('downloadParentMonthInvoice({');
+    expect(dashboard).not.toContain("navigate(parentPaymentsUrl('invoice'))");
     expect(dashboard).toContain("navigate(parentPaymentsUrl('receive'))");
     expect(dashboard).toContain("openParentWhatsApp('invoice')");
     expect(dashboard).toContain("openParentWhatsApp('reminder')");
     expect(dashboard).toContain('No duplicate payment state is stored here.');
     expect(dashboard).not.toContain("collection(db, 'billingCharges')");
     expect(dashboard).not.toContain("collection(db, 'payments')");
+  });
+
+  it('downloads invoices directly from Month Close using exact month-bounded integrity reads', () => {
+    expect(dashboard).toContain('downloadInvoiceFromMonthClose');
+    expect(dashboard).toContain('expectedFingerprint: detailBilling.fingerprint');
+    expect(dashboard).toContain("openParentWhatsApp('invoice')");
+    expect(monthCloseInvoice).toContain("where('parentId', '==', parentId)");
+    expect(monthCloseInvoice).toContain("where('monthKey', '==', monthKey)");
+    expect(monthCloseInvoice).toContain("collection(db, 'classSessions')");
+    expect(monthCloseInvoice).toContain("where(documentId(), 'in', ids)");
+    expect(monthCloseInvoice).toContain('resolveParentMonthlyChargePaidAmount');
+    expect(monthCloseInvoice).toContain('assertInvoiceMatchesBilling');
+    expect(monthCloseInvoice).toContain('pdf.save(filename)');
+    expect(monthCloseInvoice).not.toContain("collection(db, 'payments')");
   });
 
   it('refreshes the exact billing model after correction and attendance completion and uses verified callable billing', () => {
