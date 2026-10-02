@@ -11,6 +11,8 @@ describe('AVS monthly parent tracker routing', () => {
   const rules = read('firestore.rules');
   const contract = read('scripts/avs-callable-contract.mjs');
   const dashboard = read('src/pages/admin/AttendanceValidationDashboard.tsx');
+  const routes = read('src/app/routes.tsx');
+  const adminDashboard = read('src/pages/admin/AdminDashboard.tsx');
   const tracker = read('src/pages/admin/components/AttendanceValidationMonthlyTracker.tsx');
   const monthlyProgress = read('src/lib/attendanceValidationMonthlyParentProgress.ts');
 
@@ -42,7 +44,7 @@ describe('AVS monthly parent tracker routing', () => {
     expect(rules).toContain('allow create, update, delete: if false;');
   });
 
-  it('adds an explicit-load monthly tracker without changing AVS business logic', () => {
+  it('uses a monthly task queue that opens dedicated parent review routes', () => {
     expect(dashboard).toContain('AttendanceValidationMonthlyTracker');
     expect(tracker).toContain('Monthly Parent Validation Tracker');
     expect(tracker).toContain("'updateAttendanceValidationMonthlyParentProgress'");
@@ -51,6 +53,9 @@ describe('AVS monthly parent tracker routing', () => {
     expect(tracker).toContain("status === 'completed'");
     expect(tracker).toContain('loadAvsMonthlyParentProgress(selectedMonth)');
     expect(tracker).toContain('loadAvsMonthlyParentsWithSessions(selectedMonth)');
+    expect(tracker).toContain('void loadTracker()');
+    expect(tracker).toContain('sessionCountByParent[parent.id]');
+    expect(tracker).not.toContain('aria-label={`Status for ${parent.label}`}');
     expect(tracker).toContain('With sessions this month');
     expect(tracker).toContain('All parents');
     expect(tracker).toContain("useState<TrackerScope>('with_sessions')");
@@ -58,5 +63,12 @@ describe('AVS monthly parent tracker routing', () => {
     expect(monthlyProgress).toContain("where('monthKey', '==', selectedMonth)");
     expect(monthlyProgress).not.toContain("collection(db, 'classSessions')");
     expect(tracker).not.toContain('runAttendanceValidationRange');
+    expect(dashboard).toContain('/surya/attendance-validation/${encodeURIComponent(input.parentId)}');
+    expect(dashboard).toContain('isParentReviewMode');
+    expect(dashboard).toContain('isTrackerMode');
+    expect(dashboard).toContain('Advanced validation');
+    expect(routes).toContain("{ path: 'attendance-validation/advanced', element: <AdminDashboard /> }");
+    expect(routes).toContain("{ path: 'attendance-validation/:parentId', element: <AdminDashboard /> }");
+    expect(adminDashboard).toContain("location.pathname.startsWith('/surya/attendance-validation')");
   });
 });
