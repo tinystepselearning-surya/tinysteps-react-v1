@@ -8,6 +8,8 @@ import { ensureAdmin } from './helpers/adminGuard';
 import {
   applySessionsManagementProjectionDeltas,
   isOperationalSessionsManagementEnrollment,
+  shouldRefreshSessionsManagementEnrollmentProjection,
+  shouldRefreshSessionsManagementSessionProjection,
   type SessionsManagementProjectionDelta,
   type SessionsManagementProjectionRows,
 } from './helpers/sessionsManagementProjection';
@@ -953,10 +955,17 @@ export const onSessionsManagementEnrollmentWrite = onDocumentWritten(
     if (!entityId) return;
     const eventTimeMs = projectionEventTimeMs(event.time);
     const eventId = String(event.id || `enrollment:${entityId}:${eventTimeMs}`);
+    const beforeData = change.before.exists
+      ? (change.before.data() || {}) as Record<string, unknown>
+      : null;
     const afterExists = change.after.exists;
     const afterData = afterExists
       ? (change.after.data() || {}) as Record<string, unknown>
       : null;
+
+    if (!shouldRefreshSessionsManagementEnrollmentProjection(beforeData, afterData)) {
+      return;
+    }
 
     let delta: PendingProjectionDelta;
     if (afterExists && afterData && isOperationalEnrollmentForSnapshot(afterData)) {
@@ -1022,6 +1031,9 @@ export const onSessionsManagementClassSessionWrite = onDocumentWritten(
     );
 
     if (!beforeRelevant && !afterRelevant) return;
+    if (!shouldRefreshSessionsManagementSessionProjection(beforeData, afterData)) {
+      return;
+    }
 
     let delta: PendingProjectionDelta;
     if (afterRelevant && change.after.exists) {
