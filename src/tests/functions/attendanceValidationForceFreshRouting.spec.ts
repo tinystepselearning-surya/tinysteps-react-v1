@@ -55,7 +55,7 @@ describe('AVS force-fresh Teams evidence routing', () => {
     expect(source).toContain('identityBinding.staffRegistry');
     expect(source).toContain('loadAvsBusinessGroupForSession(db, classSessionId)');
     expect(source).toContain('validateAvsBusinessGroup({');
-    expect(source).toContain('persistAvsGroupCases(db, rows, cases)');
+    expect(source).toContain('persistAvsGroupCases(db, persistenceRows, cases)');
     expect(source).toContain('classSessionId,');
     expect(source).toContain('loaded.evidenceBySession.set(classSessionId, evidenceResult.evidence)');
   });
@@ -70,7 +70,7 @@ describe('AVS force-fresh Teams evidence routing', () => {
   });
 
   it('uses guarded group persistence and exposes read/Graph costs', () => {
-    expect(source).toContain('persistAvsGroupCases(db, rows, cases)');
+    expect(source).toContain('persistAvsGroupCases(db, persistenceRows, cases)');
     expect(source).toContain('graphLogicalCalls: counted.count()');
     expect(source).toContain('issueDetails: evidenceResult.evidence.issues.map');
     expect(source).toContain('httpStatus: issue.httpStatus');

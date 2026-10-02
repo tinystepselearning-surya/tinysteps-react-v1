@@ -264,6 +264,7 @@ export async function refreshAttendanceValidationCaseEvidence(
     });
 
     const rows = await loadAvsBusinessGroupForSession(db, classSessionId);
+    const persistenceRows = rows.map((row) => ({ id: row.id, data: row.data }));
     for (const row of rows) {
       if (row.id === classSessionId) {
         row.data = joinUrlResolution.session;
@@ -286,7 +287,7 @@ export async function refreshAttendanceValidationCaseEvidence(
       runId: `${runId}_group`,
       // This action deliberately collects one session only. Siblings use saved evidence.
       collectFresh: async () => { throw new Error('Sibling Teams evidence requires its own explicit line-item re-fetch.'); },
-      saveCases: (cases) => persistAvsGroupCases(db, rows, cases),
+      saveCases: (cases) => persistAvsGroupCases(db, persistenceRows, cases),
     });
     if (groupResult.cases.length !== rows.length) {
       throw new HttpsError('failed-precondition', 'Fresh Teams evidence was stored but the full business group could not be rebuilt.');

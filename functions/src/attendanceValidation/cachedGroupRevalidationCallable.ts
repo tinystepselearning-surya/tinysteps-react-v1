@@ -24,6 +24,7 @@ export function exactAvsId(value: unknown, name: string): string {
 export async function revalidateAvsGroupCached(db: FirebaseFirestore.Firestore, classSessionId: string, kidId: string,
   registryOverride?: Av3StaffRegistrySnapshot) {
   const rows = await loadAvsBusinessGroupForSession(db, classSessionId, kidId);
+  const persistenceRows = rows.map((row) => ({ id: row.id, data: row.data }));
   const enrollmentJoinUrlCache: AvsEnrollmentJoinUrlCache = new Map();
   let enrollmentJoinUrlFallbackReads = 0;
   for (const row of rows) {
@@ -54,7 +55,7 @@ export async function revalidateAvsGroupCached(db: FirebaseFirestore.Firestore, 
       classSessionIds: rows.map((row) => row.id), graphLogicalCalls: 0,
       enrollmentJoinUrlFallbackReads };
   }
-  await persistAvsGroupCases(db, rows, result.cases);
+  await persistAvsGroupCases(db, persistenceRows, result.cases);
   const first = result.cases[0];
   return { ok: true, status: 'revalidated' as const,
     classSessionIds: rows.map((row) => row.id),
