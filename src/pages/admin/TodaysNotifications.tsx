@@ -2531,12 +2531,12 @@ export default function TodaysNotifications() {
       ) : isTeacherUpdatesMode ? (
         <Card className="p-0">
           <div className="overflow-x-auto">
-            <Table className="min-w-[900px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-2 [&_td]:py-2 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100">
+            <Table className="min-w-[740px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-2 [&_td]:py-2 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[190px] whitespace-nowrap">Teacher</TableHead>
                   <TableHead className="w-[90px] whitespace-nowrap">Classes</TableHead>
-                  <TableHead className="w-[420px] whitespace-nowrap">Schedule</TableHead>
+                  <TableHead className="w-[190px] whitespace-nowrap">Schedule</TableHead>
                   <TableHead className="w-[120px] whitespace-nowrap">WhatsApp</TableHead>
                   <TableHead className="w-[150px] whitespace-nowrap">Action</TableHead>
                 </TableRow>
@@ -2558,17 +2558,22 @@ export default function TodaysNotifications() {
                         {group.classes.length}
                       </TableCell>
                       <TableCell className="align-top">
-                        <div className="space-y-1">
-                          {group.classes.map((item) => (
-                            <div
-                              key={item.sessionId}
-                              className="flex items-center gap-2 text-sm leading-5"
-                            >
-                              <span className="font-medium">{item.childName}</span>
-                              <span className="text-muted-foreground">— {item.timeLabel}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <details className="group">
+                          <summary className="cursor-pointer select-none whitespace-nowrap text-sm font-medium text-slate-700">
+                            View schedule
+                          </summary>
+                          <div className="mt-2 space-y-1 border-l-2 border-slate-200 pl-2">
+                            {group.classes.map((item) => (
+                              <div
+                                key={item.sessionId}
+                                className="flex items-center gap-2 text-sm leading-5"
+                              >
+                                <span className="font-medium">{item.childName}</span>
+                                <span className="text-muted-foreground">— {item.timeLabel}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
                       </TableCell>
                       <TableCell className="align-top whitespace-nowrap">
                         {group.teacherWhatsappDigits ? (
@@ -2602,9 +2607,9 @@ export default function TodaysNotifications() {
             <Table
               className={
                 mode === 'today'
-                  ? 'min-w-[1280px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
+                  ? 'min-w-[1220px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
                   : isNotificationActionsEnabled
-                    ? 'min-w-[1280px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
+                    ? 'min-w-[1220px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
                     : 'min-w-[980px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
               }
             >
@@ -2616,19 +2621,20 @@ export default function TodaysNotifications() {
                       <TableHead className="w-[102px] whitespace-nowrap">Date</TableHead>
                     </>
                   ) : null}
-                  <TableHead className="w-[188px] whitespace-nowrap">Class Time</TableHead>
-                  <TableHead className="w-[150px] whitespace-nowrap">Student</TableHead>
-                  <TableHead className="w-[178px] whitespace-nowrap">Parent</TableHead>
-                  <TableHead className="w-[178px] whitespace-nowrap">Teacher</TableHead>
-                  <TableHead className="w-[146px] whitespace-nowrap">Course / Subject</TableHead>
-                  <TableHead className="w-[102px] whitespace-nowrap">Session Status</TableHead>
-                  <TableHead className="w-[110px] whitespace-nowrap">Session Type</TableHead>
+                  <TableHead className="w-[165px] whitespace-nowrap">Class Time</TableHead>
+                  <TableHead className="w-[140px] whitespace-nowrap">Student</TableHead>
+                  <TableHead className="w-[160px] whitespace-nowrap">Parent</TableHead>
                   {isNotificationActionsEnabled ? (
                     <>
-                      <TableHead className="w-[400px] whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[120px] whitespace-nowrap">Send Message</TableHead>
+                      <TableHead className="w-[96px] whitespace-nowrap">Actions</TableHead>
                       <TableHead className="w-[88px] whitespace-nowrap">Notified</TableHead>
                     </>
                   ) : null}
+                  <TableHead className="w-[102px] whitespace-nowrap">Session Status</TableHead>
+                  <TableHead className="w-[110px] whitespace-nowrap">Session Type</TableHead>
+                  <TableHead className="w-[150px] whitespace-nowrap">Teacher</TableHead>
+                  <TableHead className="w-[130px] whitespace-nowrap">Course / Subject</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="[&_tr:nth-child(even)]:bg-slate-50/35">
@@ -2792,6 +2798,150 @@ export default function TodaysNotifications() {
                           </div>
                         )}
                       </TableCell>
+
+                      {isNotificationActionsEnabled ? (
+                        <>
+                          <TableCell className="align-top whitespace-nowrap">
+                            <Button
+                              size="sm"
+                              className="h-8 px-3 text-xs"
+                              onClick={() => openWhatsApp(parentPhoneDigits, parentMessage)}
+                              disabled={!parentPhoneDigits}
+                            >
+                              Notify Parent
+                            </Button>
+                          </TableCell>
+                          <TableCell className="align-top whitespace-nowrap">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
+                                  Actions
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem
+                                  onSelect={() => void handleJoinClass(row)}
+                                  disabled={!canJoinClass || joiningSessionId === row.id}
+                                >
+                                  {joiningSessionId === row.id ? 'Opening Class…' : 'Join Class'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() => void handleCopyTeamsLink(row)}
+                                  disabled={!canCopyTeamsLink}
+                                >
+                                  Copy Teams Link
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    openWhatsApp(parentPhoneDigits, parentMessage);
+                                  }}
+                                  disabled={!parentPhoneDigits}
+                                >
+                                  Notify Parent
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() => openMessageEditor(row.id, 'parent')}
+                                >
+                                  Edit Parent Message
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() =>
+                                    handleStartPhoneEdit(
+                                      parentPhoneEditKey,
+                                      row.parentUserDocId,
+                                      row.parentEditCountryCode || '',
+                                      row.parentEditPhone || '',
+                                    )
+                                  }
+                                  disabled={!row.parentUserDocId || row.parentUserMissing}
+                                >
+                                  Add/Edit Parent Phone
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onSelect={(event) => {
+                                    event.preventDefault();
+                                    openWhatsApp(teacherPhoneDigits, teacherMessage);
+                                  }}
+                                  disabled={!teacherPhoneDigits}
+                                >
+                                  Notify Teacher
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() => openMessageEditor(row.id, 'teacher')}
+                                >
+                                  Edit Teacher Message
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() =>
+                                    handleStartPhoneEdit(
+                                      teacherPhoneEditKey,
+                                      row.teacherUserDocId,
+                                      row.teacherEditCountryCode || '',
+                                      row.teacherEditPhone || '',
+                                    )
+                                  }
+                                  disabled={!row.teacherUserDocId || row.teacherUserMissing}
+                                >
+                                  Add/Edit Teacher Phone
+                                </DropdownMenuItem>
+                                {isManualSession(row as unknown as Record<string, unknown>) ? (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onSelect={() => void handleCancelManualSession(row)}
+                                      disabled={cancellingManualSessionId === row.id}
+                                    >
+                                      {cancellingManualSessionId === row.id ? 'Cancelling…' : 'Cancel Manual Session'}
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : null}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                          <TableCell className="align-top whitespace-nowrap">
+                            <div className="flex items-center gap-3 text-xs">
+                              <label className="inline-flex items-center gap-1">
+                                <span className="font-medium text-muted-foreground">P</span>
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-slate-300 align-middle"
+                                  checked={Boolean(row.parentNotified)}
+                                  disabled={savingParent}
+                                  onChange={(event) =>
+                                    void handleNotifiedToggle(row.id, 'parent', event.target.checked)
+                                  }
+                                />
+                              </label>
+                              <label className="inline-flex items-center gap-1">
+                                <span className="font-medium text-muted-foreground">T</span>
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-slate-300 align-middle"
+                                  checked={Boolean(row.teacherNotified)}
+                                  disabled={savingTeacher}
+                                  onChange={(event) =>
+                                    void handleNotifiedToggle(row.id, 'teacher', event.target.checked)
+                                  }
+                                />
+                              </label>
+                            </div>
+                          </TableCell>
+                        </>
+                      ) : null}
+                      <TableCell className="align-top whitespace-nowrap capitalize">{row.statusLabel}</TableCell>
+                      <TableCell className="align-top whitespace-nowrap">
+                        <span
+                          title={row.sessionTypeReason || 'fallback: no special markers'}
+                          className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium ${toSessionTypeStyle(
+                            row.sessionTypeLabel || 'Regular',
+                          )}`}
+                        >
+                          {row.sessionTypeLabel || 'Regular'}
+                        </span>
+                      </TableCell>
                       <TableCell className="align-top whitespace-nowrap">
                         {isNotificationActionsEnabled ? (
                           <div className="space-y-1">
@@ -2901,146 +3051,6 @@ export default function TodaysNotifications() {
                           {row.courseLabel}
                         </div>
                       </TableCell>
-                      <TableCell className="align-top whitespace-nowrap capitalize">{row.statusLabel}</TableCell>
-                      <TableCell className="align-top whitespace-nowrap">
-                        <span
-                          title={row.sessionTypeReason || 'fallback: no special markers'}
-                          className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium ${toSessionTypeStyle(
-                            row.sessionTypeLabel || 'Regular',
-                          )}`}
-                        >
-                          {row.sessionTypeLabel || 'Regular'}
-                        </span>
-                      </TableCell>
-                      {isNotificationActionsEnabled ? (
-                        <>
-                          <TableCell className="align-top whitespace-nowrap">
-                            <div className="flex items-start gap-2">
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className="h-8 px-3 text-xs"
-                                onClick={() => void handleJoinClass(row)}
-                                disabled={!canJoinClass || joiningSessionId === row.id}
-                              >
-                                {joiningSessionId === row.id ? 'Opening…' : 'Join Class'}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-8 px-3 text-xs"
-                                onClick={() => void handleCopyTeamsLink(row)}
-                                disabled={!canCopyTeamsLink}
-                              >
-                                Copy Teams Link
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
-                                    Actions
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56">
-                                  <DropdownMenuItem
-                                    onSelect={(event) => {
-                                      event.preventDefault();
-                                      openWhatsApp(parentPhoneDigits, parentMessage);
-                                    }}
-                                    disabled={!parentPhoneDigits}
-                                  >
-                                    Notify Parent
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onSelect={() => openMessageEditor(row.id, 'parent')}
-                                  >
-                                    Edit Parent Message
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onSelect={() =>
-                                      handleStartPhoneEdit(
-                                        parentPhoneEditKey,
-                                        row.parentUserDocId,
-                                        row.parentEditCountryCode || '',
-                                        row.parentEditPhone || '',
-                                      )
-                                    }
-                                    disabled={!row.parentUserDocId || row.parentUserMissing}
-                                  >
-                                    Add/Edit Parent Phone
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem
-                                    onSelect={(event) => {
-                                      event.preventDefault();
-                                      openWhatsApp(teacherPhoneDigits, teacherMessage);
-                                    }}
-                                    disabled={!teacherPhoneDigits}
-                                  >
-                                    Notify Teacher
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onSelect={() => openMessageEditor(row.id, 'teacher')}
-                                  >
-                                    Edit Teacher Message
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onSelect={() =>
-                                      handleStartPhoneEdit(
-                                        teacherPhoneEditKey,
-                                        row.teacherUserDocId,
-                                        row.teacherEditCountryCode || '',
-                                        row.teacherEditPhone || '',
-                                      )
-                                    }
-                                    disabled={!row.teacherUserDocId || row.teacherUserMissing}
-                                  >
-                                    Add/Edit Teacher Phone
-                                  </DropdownMenuItem>
-                                  {isManualSession(row as unknown as Record<string, unknown>) ? (
-                                    <>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onSelect={() => void handleCancelManualSession(row)}
-                                        disabled={cancellingManualSessionId === row.id}
-                                      >
-                                        {cancellingManualSessionId === row.id ? 'Cancelling…' : 'Cancel Manual Session'}
-                                      </DropdownMenuItem>
-                                    </>
-                                  ) : null}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </TableCell>
-                          <TableCell className="align-top whitespace-nowrap">
-                            <div className="flex items-center gap-3 text-xs">
-                              <label className="inline-flex items-center gap-1">
-                                <span className="font-medium text-muted-foreground">P</span>
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 rounded border-slate-300 align-middle"
-                                  checked={Boolean(row.parentNotified)}
-                                  disabled={savingParent}
-                                  onChange={(event) =>
-                                    void handleNotifiedToggle(row.id, 'parent', event.target.checked)
-                                  }
-                                />
-                              </label>
-                              <label className="inline-flex items-center gap-1">
-                                <span className="font-medium text-muted-foreground">T</span>
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 rounded border-slate-300 align-middle"
-                                  checked={Boolean(row.teacherNotified)}
-                                  disabled={savingTeacher}
-                                  onChange={(event) =>
-                                    void handleNotifiedToggle(row.id, 'teacher', event.target.checked)
-                                  }
-                                />
-                              </label>
-                            </div>
-                          </TableCell>
-                        </>
-                      ) : null}
                     </TableRow>
                   );
                 })}
