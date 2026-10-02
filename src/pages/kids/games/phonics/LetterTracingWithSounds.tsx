@@ -53,10 +53,10 @@ const TRACE_AUDIO_SRC = "/tracing.mp3";
 // 🔊 confetti sound in /public/confetti.mp3
 const CONFETTI_AUDIO_SRC = "/confetti.mp3";
 // ▶️ next arrow asset
-const NEXT_ARROW_SRC = "/games/phonics/sound-detective/nextarrow.png";
+const NEXT_ARROW_SRC = "/games/phonics/shared/images/nextarrow.webp";
 
 // 🖼️ reward image best-effort — prefer the sound-detective folder used by existing assets
-const SOUND_DETECTIVE_DIR = "/games/phonics/sound-detective";
+const SOUND_DETECTIVE_DIR = "/games/phonics/shared/images";
 
 const STROKE_COLORS = [
   "#2563EB",
@@ -781,7 +781,7 @@ function getLetterImageCandidates(letterId: LetterId | null): string[] {
   const ch = String(letterId).trim().charAt(0).toLowerCase();
   if (!/^[a-z]$/.test(ch)) return [];
 
-  const exts = ["png", "webp", "jpg"];
+  const exts = ["webp", "png", "jpg"];
   const fileBase = LETTER_IMAGE_FILE[ch] ?? ch;
 
   const rewardSlug =
