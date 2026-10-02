@@ -1313,10 +1313,10 @@ export default function AttendanceValidationDashboard() {
           <div>
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-sky-700" aria-hidden="true" />
-              <h2 className="text-xl font-semibold text-slate-900">Attendance Validation</h2>
+              <h2 className="text-xl font-semibold text-slate-900">Parent Month Close</h2>
             </div>
             <p className="mt-1 text-sm text-slate-600">
-              Review each parent month as a separate task, then complete the review when you are satisfied with the saved AVS results.
+              Close each parent month through attendance review, billing review, invoice communication, and payment.
             </p>
           </div>
           <Button
@@ -1325,7 +1325,7 @@ export default function AttendanceValidationDashboard() {
             onClick={() => navigate('/surya/attendance-validation/advanced')}
           >
             <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Advanced validation
+            Advanced attendance validation
           </Button>
         </div>
 
@@ -1364,10 +1364,10 @@ export default function AttendanceValidationDashboard() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                Attendance Validation / {formatMonthKey(detailMonthKey)}
+                Parent Month Close / {formatMonthKey(detailMonthKey)}
               </p>
               <h2 className="mt-1 text-xl font-semibold text-slate-900">
-                {detailParentLabel || 'Parent review'}
+                {detailParentLabel || 'Parent month close'}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
                 Review period: {formatServiceDate(detailRange.fromDate)} – {formatServiceDate(detailRange.toDate)}
@@ -1383,10 +1383,10 @@ export default function AttendanceValidationDashboard() {
                     : 'border-slate-200 bg-slate-50 text-slate-600'
               }`}>
                 {detailProgressStatus === 'completed'
-                  ? 'Completed'
+                  ? 'Attendance Completed'
                   : detailProgressStatus === 'in_progress'
-                    ? 'In Progress'
-                    : 'Not Started'}
+                    ? 'Attendance In Progress'
+                    : 'Attendance Not Started'}
               </span>
               <Button
                 type="button"
@@ -1404,10 +1404,10 @@ export default function AttendanceValidationDashboard() {
                 {detailProgressSaving
                   ? 'Saving…'
                   : detailProgressStatus === 'completed'
-                    ? 'Reopen review'
+                    ? 'Reopen attendance'
                     : detailProgressStatus === 'in_progress'
-                      ? 'Mark review complete'
-                      : 'Start review'}
+                      ? 'Mark attendance complete'
+                      : 'Start attendance review'}
               </Button>
             </div>
           </div>
@@ -1436,12 +1436,235 @@ export default function AttendanceValidationDashboard() {
         </Card>
       )}
 
+      {isParentReviewMode && (
+        <>
+          <Card className="p-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="rounded-lg border bg-slate-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Attendance</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {detailProgressStatus === 'completed'
+                    ? 'Completed'
+                    : detailProgressStatus === 'in_progress'
+                      ? 'In progress'
+                      : 'Not started'}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-slate-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Billing</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {detailProgressStatus !== 'completed'
+                    ? 'Locked'
+                    : detailBillingReviewedCurrent
+                      ? 'Reviewed'
+                      : 'Review required'}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-slate-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Invoice</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {!detailBillingReviewedCurrent
+                    ? '—'
+                    : detailBilling?.billedAmount === 0
+                      ? 'Not required'
+                      : detailInvoiceSentCurrent
+                        ? 'Sent'
+                        : detailProgress?.invoiceSentAt
+                          ? 'Revised invoice needed'
+                          : 'Ready'}
+                </p>
+              </div>
+              <div className="rounded-lg border bg-slate-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Payment</p>
+                <p className="mt-1 font-semibold text-slate-900">
+                  {detailProgressStatus === 'completed'
+                    ? parentMonthClosePaymentLabel(detailBilling)
+                    : '—'}
+                </p>
+                {detailBilling && detailBilling.dueAmount > 0.01 && (
+                  <p className="mt-0.5 text-xs text-slate-500">{formatMoney(detailBilling.dueAmount)} due</p>
+                )}
+              </div>
+              <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-sky-700">Next action</p>
+                <p className="mt-1 font-semibold text-sky-950">
+                  {parentMonthCloseNextActionLabel(detailNextAction)}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-sky-700" aria-hidden="true" />
+                  <h3 className="font-semibold text-slate-900">Billing, invoice & payment</h3>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Financial amounts come from the canonical parent-month read model. No duplicate payment state is stored here.
+                </p>
+              </div>
+              {detailBillingReviewedCurrent && detailProgress?.billingReviewedAt && (
+                <span className="text-xs text-slate-500">
+                  Billing reviewed {formatWorkflowDate(detailProgress.billingReviewedAt)}
+                </span>
+              )}
+            </div>
+
+            {detailProgressStatus !== 'completed' ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+                Complete the attendance review before approving billing or sending the invoice.
+              </div>
+            ) : !detailBilling ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+                Canonical billing data is not available for this parent and month yet.
+              </div>
+            ) : (
+              <>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-slate-500">Billable classes</p>
+                    <p className="mt-1 text-lg font-semibold">{detailBilling.billedClassCount}</p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-slate-500">Billed</p>
+                    <p className="mt-1 text-lg font-semibold">{formatMoney(detailBilling.billedAmount)}</p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-slate-500">Paid / applied</p>
+                    <p className="mt-1 text-lg font-semibold text-emerald-700">{formatMoney(detailBilling.settledAmount)}</p>
+                  </div>
+                  <div className="rounded-lg border p-3">
+                    <p className="text-xs text-slate-500">Amount due</p>
+                    <p className="mt-1 text-lg font-semibold">{formatMoney(detailBilling.dueAmount)}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                  <div className="rounded-lg border p-3">
+                    <p className="text-sm font-semibold text-slate-900">1. Review billing</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Review detailed charges in Parent Payments, then approve this billing snapshot.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(parentPaymentsUrl())}
+                      >
+                        Review billing details
+                      </Button>
+                      {!detailBillingReviewedCurrent && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={detailWorkflowSaving !== null}
+                          onClick={() => void updateMonthCloseWorkflow('billing_reviewed')}
+                        >
+                          {detailWorkflowSaving === 'billing' ? 'Saving…' : 'Mark billing reviewed'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border p-3">
+                    <div className="flex items-center gap-2">
+                      <ReceiptText className="h-4 w-4 text-slate-600" aria-hidden="true" />
+                      <p className="text-sm font-semibold text-slate-900">2. Invoice & WhatsApp</p>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Download the PDF locally, open WhatsApp, attach the downloaded file manually, then confirm it was sent.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!detailBillingReviewedCurrent || detailBilling.billedAmount <= 0.01}
+                        onClick={() => navigate(parentPaymentsUrl('invoice'))}
+                      >
+                        Download invoice
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={!detailBillingReviewedCurrent || detailBilling.billedAmount <= 0.01}
+                        onClick={() => openParentWhatsApp('invoice')}
+                      >
+                        <MessageCircle className="mr-1.5 h-4 w-4" />
+                        Open WhatsApp
+                      </Button>
+                      {detailBillingReviewedCurrent
+                        && detailBilling.billedAmount > 0.01
+                        && !detailInvoiceSentCurrent && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={detailWorkflowSaving !== null}
+                          onClick={() => void updateMonthCloseWorkflow('invoice_sent')}
+                        >
+                          {detailWorkflowSaving === 'invoice' ? 'Saving…' : 'Mark invoice sent'}
+                        </Button>
+                      )}
+                    </div>
+                    {detailInvoiceSentCurrent && detailProgress?.invoiceSentAt && (
+                      <p className="mt-2 text-xs font-medium text-emerald-700">
+                        Sent {formatWorkflowDate(detailProgress.invoiceSentAt)}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="rounded-lg border p-3">
+                    <p className="text-sm font-semibold text-slate-900">3. Payment</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Payment status is derived from existing finance data; no separate Paid or Closed write is created.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(parentPaymentsUrl())}
+                      >
+                        Review payments
+                      </Button>
+                      {detailBilling.dueAmount > 0.01 && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => navigate(parentPaymentsUrl('receive'))}
+                        >
+                          Record payment
+                        </Button>
+                      )}
+                      {detailInvoiceSentCurrent && detailBilling.dueAmount > 0.01 && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openParentWhatsApp('reminder')}
+                        >
+                          Send reminder
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </Card>
+        </>
+      )}
+
       <Card className="p-4">
         {isParentReviewMode ? (
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-sm font-medium text-slate-800">
-                {formatMonthKey(detailMonthKey)} saved AVS results
+                Attendance review · {formatMonthKey(detailMonthKey)}
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Saved cases load when this review opens. Microsoft Graph is never called by opening the page;
