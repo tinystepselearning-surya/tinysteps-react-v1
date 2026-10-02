@@ -54,7 +54,7 @@ async function selectParent() {
 
 describe('Attendance Validation Parent selector', () => {
   it('lazily reads the canonical parent directory once and performs no automatic validation', async () => {
-    render(<MemoryRouter><AttendanceValidationDashboard /></MemoryRouter>);
+    render(<MemoryRouter initialEntries={['/surya/attendance-validation/advanced']}><AttendanceValidationDashboard /></MemoryRouter>);
     expect(mocks.getDocs).not.toHaveBeenCalled();
     await selectParent();
     fireEvent.focus(screen.getByLabelText('Search parents'));
