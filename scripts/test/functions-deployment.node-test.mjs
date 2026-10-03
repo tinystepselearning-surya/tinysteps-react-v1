@@ -548,3 +548,32 @@ test('--plan resolves the exact regression batch without invoking deployment mod
   assert.match(stdout, /5 targets in 1 sequential batch/);
   assert.match(stdout, new RegExp(`Batch 1: ${targets.join(', ')}`));
 });
+
+
+test('CI deployment uses a prevalidated Firebase config without repeated predeploy hooks', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const deployer = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  const hostingDeploy = readFileSync('.github/scripts/firebase-hosting-deploy.sh', 'utf8');
+
+  assert.match(workflow, /FIREBASE_DEPLOY_CONFIG: \.firebase\.ci\.json/);
+  assert.match(workflow, /Prepare prevalidated Firebase deployment config[\s\S]*prepare-firebase-ci-config\.mjs/);
+  assert.match(deployer, /FIREBASE_DEPLOY_CONFIG = process\.env\.FIREBASE_DEPLOY_CONFIG \|\| 'firebase\.json'/);
+  assert.match(deployer, /'--config', FIREBASE_DEPLOY_CONFIG/);
+  assert.match(hostingDeploy, /CONFIG_PATH="\$\{FIREBASE_DEPLOY_CONFIG:-firebase\.json\}"/);
+  assert.match(hostingDeploy, /--config "\$CONFIG_PATH"/);
+});
+
+test('Hosting deployment reuses the validated dist artifact instead of rebuilding in deploy job', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const deployStart = workflow.indexOf('  deploy-to-firebase:');
+  const recoveryStart = workflow.indexOf('  recover-functions-manually:');
+  assert.ok(deployStart >= 0 && recoveryStart > deployStart);
+  const deployJob = workflow.slice(deployStart, recoveryStart);
+
+  assert.match(workflow, /Upload validated Hosting artifact[\s\S]*hosting-dist-\$\{\{ github\.sha \}\}/);
+  assert.match(deployJob, /Download validated Hosting artifact/);
+  assert.match(deployJob, /Verify validated Hosting artifact identity/);
+  assert.doesNotMatch(deployJob, /Install Playwright Chromium for Hosting prerender/);
+  assert.doesNotMatch(deployJob, /Cache Playwright browsers for Hosting prerender/);
+  assert.doesNotMatch(deployJob, /run: npm ci\n/);
+});
