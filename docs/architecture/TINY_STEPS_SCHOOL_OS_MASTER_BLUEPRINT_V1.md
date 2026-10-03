@@ -40,6 +40,7 @@ The blueprint must support:
 11. **Architecture boundary does not equal build commitment.**
 12. **Preserve proven working systems unless a canonical boundary requires convergence.**
 13. **Shared experience before bespoke UI.** Reuse common page shells, navigation, templates and components wherever the information architecture and interaction pattern are materially the same; variation should normally come from configuration, content and scoped slots rather than copied page frameworks.
+14. **Premium simplicity by default.** Tiny Steps experiences should follow an Apple-inspired design direction: clear hierarchy, generous whitespace, restrained colour, precise typography, polished interaction, purposeful motion and minimal visual noise. The product should feel premium, professional and calm rather than decorative, crowded, generic or template-like. Tiny Steps keeps its own brand identity and does not copy Apple assets or trade dress.
 
 ## 3. Six-layer architecture
 
@@ -78,6 +79,36 @@ A role or domain may configure the shared shell and expose different navigation/
 The existing blog authority architecture is the reference pattern: a shared site-wide renderer/layout carries common structure while article-specific content and curated configuration vary on top. The wider web app should apply the same principle to operational and learning experiences.
 
 A shared component does **not** mean every screen must look identical. It means repeated interaction patterns have one maintained implementation and controlled variants.
+
+### Visual Design Direction
+
+Across public pages and authenticated products, the default aesthetic is **premium, professional, minimal and calm**, taking strong inspiration from Apple's design simplicity while remaining distinctly Tiny Steps.
+
+Prefer:
+
+- strong information hierarchy and one obvious primary action;
+- generous whitespace and breathing room;
+- restrained, intentional colour rather than rainbow or decorative palettes;
+- excellent typography, spacing and alignment;
+- fewer, higher-quality surfaces instead of many competing cards;
+- subtle borders, depth and motion only when they clarify structure or interaction;
+- high-quality imagery and illustration with clear purpose;
+- concise copy and progressive disclosure rather than showing everything at once;
+- consistent responsive behaviour across desktop, tablet and mobile;
+- polished loading, empty, error, success and transition states;
+- accessibility as part of the premium experience, not a separate visual mode.
+
+Avoid:
+
+- crowded dashboards;
+- excessive cards, pills, badges, gradients or shadows;
+- decorative UI that competes with the task;
+- inconsistent spacing, typography, icon styles or navigation;
+- dense "admin template" aesthetics;
+- novelty effects or animation without functional value;
+- visual complexity added merely to make a page feel feature-rich.
+
+Simplicity must not remove necessary information or functionality. The goal is **reduced cognitive load with high craft**, not emptiness.
 
 ### Layer 2 — Business Domains
 
@@ -496,7 +527,10 @@ Do not introduce:
 - permanent legacy dual-write paths;
 - a microservice/Kubernetes migration without demonstrated need;
 - duplicate portal shells, navigation systems or page-template implementations where a shared configurable experience would satisfy the same interaction need;
-- one-off copies of shared forms, tables, cards, loading/error states or interaction primitives without a documented exception.
+- one-off copies of shared forms, tables, cards, loading/error states or interaction primitives without a documented exception;
+- visually noisy or "feature-rich" UI created through unnecessary cards, gradients, badges, shadows, colours or motion;
+- inconsistent page aesthetics that make Tiny Steps feel like multiple unrelated products;
+- low-fidelity generic admin-template styling when a simpler, more polished composition can serve the same task.
 
 ## 18. Architecture decision gate
 
@@ -513,8 +547,9 @@ Every significant new feature must answer:
 9. Does AI remain outside canonical authority?
 10. Is the feature being built now, or merely supported by the blueprint?
 11. Can the experience reuse an existing shared shell, navigation, template or component before creating a new implementation?
+12. Does the visual design meet the Tiny Steps premium-simplicity standard: clear hierarchy, restraint, consistency, accessibility and minimal cognitive load?
 
-If ownership is ambiguous, or a bespoke UI duplicates an existing shared interaction without justification, the feature is not architecturally ready.
+If ownership is ambiguous, a bespoke UI duplicates an existing shared interaction without justification, or the experience introduces unnecessary visual complexity, the feature is not architecturally ready.
 
 ## 19. What v1.0 does not require
 
