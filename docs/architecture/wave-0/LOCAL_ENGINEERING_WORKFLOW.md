@@ -22,12 +22,20 @@ Run:
 npm run preflight:full
 ```
 
-## Full certification
+## Deep certification
 
 Run only when deliberately requested:
 
 ```bash
 npm run preflight:full
+```
+
+This remains impact-scoped; it deepens only the areas that changed.
+
+For an intentionally repository-wide unit run:
+
+```bash
+npm run test:full
 ```
 
 Optional coverage:
