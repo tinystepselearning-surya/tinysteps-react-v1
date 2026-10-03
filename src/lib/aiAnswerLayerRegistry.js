@@ -16,7 +16,7 @@ const item = (config) => freeze({
   practicePaths: freezeList(config.practicePaths),
 });
 
-export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv6';
+export const AI_ANSWER_LAYER_REVISION = '2026-10-03-speaking-authority-v2';
 export const AI_ANSWER_LAYER_MACHINE_JSON_PATH = '/ai-resource-index.json';
 export const AI_ANSWER_LAYER_MACHINE_TEXT_PATH = '/ai-resource-index.txt';
 
@@ -235,6 +235,41 @@ const CURATED_CONCEPTS = [
     query: 'Why is public speaking important for kids?',
     canonicalPath: '/blog/why-public-speaking-is-important-for-kids',
     supportingPaths: ['/resources/speaking', '/speaking', '/blog/conversation-skills-for-kids'],
+  },
+  {
+    id: 'concept-public-speaking-start-age',
+    subject: 'speaking-communication',
+    query: 'What age should children start public speaking?',
+    canonicalPath: '/blog/why-public-speaking-is-important-for-kids',
+    supportingPaths: ['/speaking', '/resources/speaking', '/courses/public-speaking-foundations'],
+  },
+  {
+    id: 'concept-public-speaking-age-four',
+    subject: 'speaking-communication',
+    query: 'Is age 4 too young for public speaking classes?',
+    canonicalPath: '/blog/why-public-speaking-is-important-for-kids',
+    supportingPaths: ['/speaking', '/courses/public-speaking-foundations'],
+  },
+  {
+    id: 'concept-public-speaking-vs-spoken-english',
+    subject: 'speaking-communication',
+    query: 'What is the difference between public speaking and Spoken English for kids?',
+    canonicalPath: '/blog/why-public-speaking-is-important-for-kids',
+    supportingPaths: ['/speaking', '/spoken-english-classes-for-kids-online', '/resources/speaking'],
+  },
+  {
+    id: 'concept-communication-ai-era',
+    subject: 'speaking-communication',
+    query: 'Why do communication skills matter for children in the AI era?',
+    canonicalPath: '/blog/why-public-speaking-is-important-for-kids',
+    supportingPaths: ['/speaking', '/resources/speaking'],
+  },
+  {
+    id: 'concept-public-speaking-class-choice',
+    subject: 'speaking-communication',
+    query: 'What should parents look for in public speaking classes for kids?',
+    canonicalPath: '/speaking',
+    supportingPaths: ['/blog/why-public-speaking-is-important-for-kids', '/class-samples', '/speaking-progress-framework'],
   },
   {
     id: 'concept-conversation-skills',
