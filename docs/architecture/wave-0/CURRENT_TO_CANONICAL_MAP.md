@@ -1,6 +1,6 @@
 # School OS Wave 0 — Current to Canonical Map
 
-**Status:** ACADEMIC & ENROLLMENT AUDIT COMPLETE — LIVE STRUCTURE VERIFIED  
+**Status:** SHARED EXPERIENCE INVENTORY COMPLETE — PORTAL/SHELL OWNERSHIP FROZEN  
 **Wave:** 0 — Architecture Contracts  
 **Source branch baseline:** `main` after School OS v1.0 freeze  
 **Purpose:** Document current production concepts and their intended School OS ownership before any schema migration.
@@ -171,6 +171,9 @@ Wave 0 treats the following as assets rather than rewrite targets:
 - admin analytics grain/period discipline;
 - school portal foundations;
 - reusable blog authority template;
+- shared UI primitive layer under `src/components/ui`;
+- `MobileTabBar`, `TinyStepsBrand`, `AppShellHeader`, Messages and Holiday Calendar shared components;
+- Parent native/safe-area layout behaviour;
 - local `preflight` validation plus the deployment-only GitHub workflow.
 
 ## 5. Verified academic/enrollment state and remaining unresolved items
@@ -191,15 +194,28 @@ Verified production facts:
 - all 5 enrollment course transitions are complete and internally resolved;
 - no standalone Programme/CurriculumVersion/DeliveryOffering/LearningGroup/GroupPlacement/TeachingAssignment/SchedulePlan production collections exist yet.
 
-Non-academic items that remain unresolved for later work packages:
+Shared Experience decisions are recorded in [SHARED_EXPERIENCE_DESIGN_SYSTEM_INVENTORY.md](./SHARED_EXPERIENCE_DESIGN_SYSTEM_INVENTORY.md).
+
+Verified UI architecture facts:
+
+- 1,558 source/style files and 580 TSX/JSX component files were inventoried;
+- `MobileTabBar` is already shared by 4/5 authenticated portals;
+- Parent and Learning Partner already use `AppShellHeader`; Admin, Teacher and School remain bespoke variants;
+- `src/components/ui/*` is broadly adopted and remains the canonical primitive foundation;
+- public common Header/Footer are the canonical public shell; legacy `src/components/Layout.tsx` still has live references and cannot be deleted yet;
+- Parent legacy Sidebar and Teacher layout Header have no inbound static source reference and are registered as retirement candidates;
+- School Admin is the clearest bespoke-shell convergence target;
+- Loading/error/empty state handling is widespread but not standardized;
+- Tailwind/global CSS/JS token layers overlap and require convergence, not wholesale replacement.
+
+Non-UI items that remain unresolved for later domain waves:
 
 - `progress` record taxonomy;
 - `parentWallets` canonical/subledger/projection classification;
 - `rescheduleCredits` ownership;
 - generic `cases`;
 - generic game `sessions` / `transactions`;
-- recording retention/evidence semantics;
-- Shared Experience / design-system ownership and reuse inventory.
+- recording retention/evidence semantics.
 
 No production migration is authorized merely because Wave 0 ownership is now defined.
 
@@ -220,17 +236,16 @@ Future mapping updates use these labels:
 
 ## 7. Next Wave 0 work
 
-Identity/reference and Academic/Enrollment work packages are complete.
+Identity/reference, Academic/Enrollment and Shared Experience work packages are complete.
 
-The next Wave 0 work package is **Shared Experience / Design-System Inventory**:
+The final Wave 0 work package is **Migration Standard & Wave 0 Exit Review**:
 
-- application shells and portal frames;
-- desktop/mobile navigation;
-- shared page/header/breadcrumb patterns;
-- list/detail/workspace templates;
-- tables, filters, forms, dialogs and status components;
-- responsive/accessibility/loading/empty/error patterns;
-- duplicated feature-specific UI that should become controlled variants;
-- design tokens and visual-governance ownership.
+- freeze migration metadata and evidence fields;
+- define compatibility-path registration;
+- define exception ownership and reconciliation requirements;
+- define read-switch / legacy-write-stop / retirement gates;
+- verify all six Wave 0 packages satisfy the master blueprint;
+- record any items intentionally deferred to later domain waves;
+- make the formal GO / NO-GO decision for Wave 1 — Identity & Relationships.
 
-No runtime UI rewrite begins merely because the inventory exists.
+No Wave 1 production migration begins until the Wave 0 exit review is complete.
