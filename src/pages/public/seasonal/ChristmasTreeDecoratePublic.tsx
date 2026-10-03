@@ -102,13 +102,26 @@ const TREE_ANCHORS: Array<{ x: number; y: number }> = [
   { x: 0.64, y: 0.66 },
 ];
 
+// Preserve all 16 logical decoration IDs while serving a single canonical
+// byte-identical asset for duplicate artwork.
+const DECORATION_ASSET_NUMBER: Readonly<Record<number, number>> = {
+  5: 4,
+  11: 9,
+  12: 1,
+  13: 3,
+  14: 10,
+  15: 8,
+  16: 7,
+};
+
 const DEFAULT_DECORATIONS: Decoration[] = Array.from({ length: 16 }).map((_, i) => {
   const n = i + 1;
+  const assetNumber = DECORATION_ASSET_NUMBER[n] ?? n;
   return {
     id: `d${n}`,
     label: `Decoration ${n}`,
-    src: `/seasonal/christmas/${n}.PNG`,
-    srcFallback: `/seasonal/christmas/${n}.png`,
+    src: `/seasonal/christmas/${assetNumber}.PNG`,
+    srcFallback: `/seasonal/christmas/${assetNumber}.png`,
     preferredAnchor: n === 1 ? 0 : undefined,
     anchorId: null,
     homeIndex: i,
