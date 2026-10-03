@@ -52,11 +52,11 @@ export const ROUTE_SEO_REGISTRY = {
   '/speaking': {
     title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+      'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
     canonicalPath: '/speaking',
     ogType: 'website',
     keywords:
-      'public speaking classes for kids online,public speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
+      'public speaking classes for kids online,public speaking classes for kids,public speaking course for kids,public speaking for kids,online speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
   '/speaking-progress-framework': {
     title: 'How Tiny Steps Measures Speaking Progress | 10-Skill Framework',
