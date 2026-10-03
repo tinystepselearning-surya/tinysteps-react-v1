@@ -17,13 +17,13 @@ describe('Speaking growth Brick 4 flagship page', () => {
       "const seoTitle = 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps';",
     );
     expect(speaking).toContain(
-      'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+      'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
     );
     expect(speaking).toContain("const canonicalPath = '/speaking';");
 
     expect(c4).toContain("title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps'");
     expect(c4).toContain(
-      'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+      'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
     );
   });
 
@@ -74,7 +74,7 @@ describe('Speaking growth Brick 4 flagship page', () => {
   });
 
   it('keeps the assessment as the decision mechanism instead of promising automatic placement', () => {
-    expect(speaking).toContain('let the free 1:1 assessment confirm the best pathway');
+    expect(speaking).toContain('then uses the free 1:1 assessment to confirm the pathway');
     expect(speaking).toContain('Tiny Steps uses assessment-first placement');
     expect(speaking).toContain('pricing-and-assessment');
     expect(speaking).toContain('Ready to check the right speaking path for your child?');
