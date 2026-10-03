@@ -2,6 +2,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
+import { ensureAdmin } from "../helpers/adminGuard";
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -97,27 +98,7 @@ const RETIRED_PATHS = [
 // Admin check helpers
 // --------------------
 async function assertAdmin(request: any) {
-  if (!request.auth?.uid) {
-    throw new HttpsError("unauthenticated", "Login required.");
-  }
-
-  const uid = request.auth.uid;
-
-  // Prefer custom claims if you use them
-  const tokenRole = request.auth.token?.role;
-  const tokenIsAdmin = request.auth.token?.admin === true;
-  if (tokenIsAdmin || tokenRole === "admin" || tokenRole === "superadmin") return;
-
-  // Fallback: users/{uid}.role in Firestore
-  try {
-    const snap = await admin.firestore().doc(`users/${uid}`).get();
-    const role = snap.exists ? (snap.data() as any)?.role : null;
-    if (role === "admin" || role === "superadmin") return;
-  } catch (e) {
-    logger.warn("refreshPublicKb: admin role check failed", e);
-  }
-
-  throw new HttpsError("permission-denied", "Admin only.");
+  await ensureAdmin(request.auth);
 }
 
 // --------------------

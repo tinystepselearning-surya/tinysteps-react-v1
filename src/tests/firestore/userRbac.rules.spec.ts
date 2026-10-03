@@ -361,6 +361,123 @@ suite(
     );
 
     it(
+      'rejects an orphan Admin custom claim without a current user document',
+      async () => {
+        await seedUsers();
+
+        await testEnv
+          .withSecurityRulesDisabled(
+            async (context) => {
+              await setDoc(
+                doc(
+                  context.firestore(),
+                  'config',
+                  'insights',
+                ),
+                {
+                  enabled: true,
+                },
+              );
+            },
+          );
+
+        const orphanAdminDb =
+          testEnv
+            .authenticatedContext(
+              'orphan-admin',
+              {
+                role: 'admin',
+                admin: true,
+              },
+            )
+            .firestore();
+
+        await assertFails(
+          updateDoc(
+            doc(
+              orphanAdminDb,
+              'users',
+              'parent-1',
+            ),
+            {
+              roles: ['admin'],
+            },
+          ),
+        );
+
+        await assertFails(
+          getDoc(
+            doc(
+              orphanAdminDb,
+              'config',
+              'insights',
+            ),
+          ),
+        );
+      },
+    );
+
+    it(
+      'keeps Wave 1 canonical identity collections backend-only during EXPAND',
+      async () => {
+        await seedUsers();
+
+        await testEnv
+          .withSecurityRulesDisabled(
+            async (context) => {
+              await setDoc(
+                doc(
+                  context.firestore(),
+                  'people',
+                  'admin-1',
+                ),
+                {
+                  personId: 'admin-1',
+                  schemaVersion: 1,
+                  status: 'active',
+                },
+              );
+            },
+          );
+
+        const adminDb =
+          testEnv
+            .authenticatedContext(
+              'admin-1',
+              {
+                role: 'admin',
+              },
+            )
+            .firestore();
+
+        await assertFails(
+          getDoc(
+            doc(
+              adminDb,
+              'people',
+              'admin-1',
+            ),
+          ),
+        );
+
+        await assertFails(
+          setDoc(
+            doc(
+              adminDb,
+              'people',
+              'new-person',
+            ),
+            {
+              personId: 'new-person',
+              schemaVersion: 1,
+              status: 'active',
+            },
+          ),
+        );
+      },
+    );
+
+    it(
       'accepts legacy School Admin token alias for compatibility',
       async () => {
         await seedUsers();

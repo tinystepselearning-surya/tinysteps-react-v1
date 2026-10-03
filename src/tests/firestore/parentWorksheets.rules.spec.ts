@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
-import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, it } from 'vitest';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 const suite = emulatorHost ? describe : describe.skip;
@@ -19,6 +19,19 @@ beforeAll(async () => {
 });
 afterEach(async () => testEnv && testEnv.clearFirestore());
 afterAll(async () => testEnv?.cleanup());
+
+async function seedCurrentUsers() {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await Promise.all([
+      setDoc(doc(db, 'users', 'admin-a'), { role: 'admin', status: 'active' }),
+      setDoc(doc(db, 'users', 'parent-a'), { role: 'parent', status: 'active' }),
+      setDoc(doc(db, 'users', 'teacher-a'), { role: 'teacher', status: 'active' }),
+    ]);
+  });
+}
+
+beforeEach(seedCurrentUsers);
 
 async function seed() {
   await testEnv.withSecurityRulesDisabled(async (context) => {

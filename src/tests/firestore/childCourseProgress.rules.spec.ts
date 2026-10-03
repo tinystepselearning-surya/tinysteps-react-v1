@@ -9,7 +9,7 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
-import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, it } from 'vitest';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 const suite = emulatorHost ? describe : describe.skip;
@@ -30,6 +30,20 @@ beforeAll(async () => {
 
 afterEach(async () => testEnv && testEnv.clearFirestore());
 afterAll(async () => testEnv?.cleanup());
+
+async function seedCurrentUsers() {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await Promise.all([
+      setDoc(doc(db, 'users', 'parent-1'), { role: 'parent', status: 'active' }),
+      setDoc(doc(db, 'users', 'parent-2'), { role: 'parent', status: 'active' }),
+      setDoc(doc(db, 'users', 'teacher-1'), { role: 'teacher', status: 'active' }),
+      setDoc(doc(db, 'users', 'admin-1'), { role: 'admin', status: 'active' }),
+    ]);
+  });
+}
+
+beforeEach(seedCurrentUsers);
 
 async function seedProjection() {
   await testEnv.withSecurityRulesDisabled(async (context) => {

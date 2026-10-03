@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { ensureAdmin } from './helpers/adminGuard';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
@@ -60,19 +61,7 @@ async function ensureCanonicalPhonicsCurriculum(options?: {
   return { updated: true, topicCount: CANONICAL_PHONICS_TOPICS.length };
 }
 
-async function assertAdmin(uid: string, tokenRole?: unknown): Promise<void> {
-  const userSnap = await admin.firestore().collection('users').doc(uid).get();
-  const userData = userSnap.exists ? userSnap.data() || {} : {};
-  const databaseRole = String(userData.role || '').trim().toLowerCase();
-  const tokenRoleNormalized = String(tokenRole || '').trim().toLowerCase();
-  const databaseStatus = String(userData.status || '').trim().toLowerCase();
-  const isActive = userData.active !== false && databaseStatus !== 'inactive';
-  const effectiveRole = userSnap.exists ? databaseRole : tokenRoleNormalized;
 
-  if (!isActive || effectiveRole !== 'admin') {
-    throw new HttpsError('permission-denied', 'Admin access required.');
-  }
-}
 
 /**
  * Admin/manual seed. Student Management calls this on mount so an already-stale
@@ -83,7 +72,7 @@ export const adminSyncCanonicalPhonicsCurriculum = onCall(
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-    await assertAdmin(uid, request.auth?.token?.role);
+    await ensureAdmin(request.auth);
 
     return ensureCanonicalPhonicsCurriculum({
       actorUid: uid,

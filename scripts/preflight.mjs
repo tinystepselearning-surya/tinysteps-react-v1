@@ -166,6 +166,40 @@ const enrollmentChanged = changed.some((path) => matchesAny(path, [
   'vitest.emulator.config.ts',
 ]));
 
+const wave1IdentityFoundationChanged = changed.some((path) => matchesAny(path, [
+  'functions/src/schoolOS/identity/',
+  'functions/src/helpers/adminGuard.ts',
+  'functions/src/lifecycle.ts',
+  'functions/src/createMakeupSessionFromCredit.ts',
+  'functions/src/ai/refreshPublicKb.ts',
+  'functions/src/messaging/sendMessage.ts',
+  'functions/src/messaging/createOrSyncMessageThread.ts',
+  'functions/src/phonicsCurriculumEnforcer.ts',
+  'functions/src/createLessonAccessSession.ts',
+  'functions/src/games/recordLevelResult.ts',
+  'functions/src/parentStudents.ts',
+  'functions/src/adminLeadWorkflow.ts',
+  'functions/src/onSessionComplete.ts',
+  'functions/src/getParentWorksheetResources.ts',
+  'functions/src/getAdminTeacherPayWithholdings.ts',
+  'functions/src/demoSessionsLegacy.ts',
+  'functions/src/notifications/classReminders.ts',
+  'functions/src/getAdminTeacherEarningAdjustments.ts',
+  'functions/src/saveTeacherSessionProgress.ts',
+  'functions/src/bootstrapParentClassAttendanceV2.ts',
+  'functions/src/parentCanonicalProjectionBootstrap.ts',
+  'functions/src/adminAttendanceCorrectionTeacherPayDecision.ts',
+  'firestore.rules',
+  'storage.rules',
+  'scripts/wave1-identity-foundation-dry-run.mjs',
+  'scripts/test/wave1-identity-foundation.node-test.mjs',
+  'src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts',
+  'src/tests/firestore/',
+  'docs/architecture/wave-1/',
+  'docs/architecture/wave-0/WAVE_0_EXIT_REVIEW.md',
+  'docs/architecture/wave-0/MIGRATION_EXECUTION_STANDARD_V1.md',
+]));
+
 const sharedExperienceAuditChanged = changed.some((path) => matchesAny(path, [
   'scripts/audit-shared-experience.mjs',
   'scripts/test/shared-experience-inventory.node-test.mjs',
@@ -242,6 +276,10 @@ if (academicEnrollmentAuditChanged) {
 
 if (sharedExperienceAuditChanged) {
   run('Shared experience inventory tests', 'npm', ['run', 'test:shared-experience-inventory']);
+}
+
+if (wave1IdentityFoundationChanged) {
+  run('Wave 1 identity foundation tests', 'npm', ['run', 'test:wave1-identity-foundation']);
 }
 
 if (deploymentChanged) {

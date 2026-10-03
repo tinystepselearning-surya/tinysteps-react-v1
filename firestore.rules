@@ -25,81 +25,6 @@ service cloud.firestore {
           : '';
     }
 
-    function isAdmin() {
-      return isSignedIn() && (
-        request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3' ||
-        (request.auth.token != null && request.auth.token.role.lower() == 'admin') ||
-        (
-          request.auth.token != null
-          && request.auth.token.email is string
-          && request.auth.token.email.lower() == 'suryaz@tinysteps.com'
-        ) ||
-        (
-          userDocExists(request.auth.uid)
-          && ('superUser' in get(userDocPath(request.auth.uid)).data)
-          && get(userDocPath(request.auth.uid)).data.superUser == true
-        ) ||
-        (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'admin')
-      );
-    }
-
-    function tokenRole() {
-      return isSignedIn()
-        && request.auth.token != null
-        && request.auth.token.role is string
-        ? request.auth.token.role.lower()
-        : '';
-    }
-
-    function isAdminToken() {
-      return tokenRole() == 'admin';
-    }
-
-    function isTeacherToken() {
-      return tokenRole() == 'teacher';
-    }
-
-    function isParentToken() {
-      return tokenRole() == 'parent';
-    }
-
-    function isLPToken() {
-      return
-        tokenRole() == 'learningpartner'
-        || tokenRole() == 'learning-partner';
-    }
-
-    function isSchoolAdminToken() {
-      return
-        tokenRole() == 'schooladmin'
-        || tokenRole() == 'school-admin';
-    }
-
-    function isFounder() {
-      return isSignedIn() && (
-        tokenRole() == 'founder'
-        || (
-          userDocExists(request.auth.uid)
-          && userRole(request.auth.uid) == 'founder'
-        )
-      );
-    }
-
-    function isSchoolAdmin() {
-      return isSignedIn() && (
-        isSchoolAdminToken()
-        || (
-          userDocExists(request.auth.uid)
-          && (
-            userRole(request.auth.uid)
-              == 'schooladmin'
-            || userRole(request.auth.uid)
-              == 'school-admin'
-          )
-        )
-      );
-    }
-
     function userIsActiveOrLegacy(uid) {
       return
         userDocExists(uid)
@@ -118,6 +43,64 @@ service cloud.firestore {
               userDocPath(uid)
             ).data.status.lower()
               == 'active'
+          )
+        );
+    }
+
+    function isAdmin() {
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3'
+          || (
+            request.auth.token != null
+            && request.auth.token.email is string
+            && request.auth.token.email.lower() == 'suryaz@tinysteps.com'
+          )
+          || (
+            ('superUser' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.superUser == true
+          )
+          || userRole(request.auth.uid) == 'admin'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && ('admin' in get(userDocPath(request.auth.uid)).data.roles)
+          )
+        );
+    }
+
+    function isFounder() {
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          userRole(request.auth.uid) == 'founder'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && ('founder' in get(userDocPath(request.auth.uid)).data.roles)
+          )
+        );
+    }
+
+    function isSchoolAdmin() {
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          userRole(request.auth.uid)
+            == 'schooladmin'
+          || userRole(request.auth.uid)
+            == 'school-admin'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && (
+              ('schoolAdmin' in get(userDocPath(request.auth.uid)).data.roles)
+              || ('school-admin' in get(userDocPath(request.auth.uid)).data.roles)
+            )
           )
         );
     }
@@ -230,15 +213,18 @@ service cloud.firestore {
         );
     }
 
-    function isKidToken() {
-      return tokenRole() == 'kid';
-    }
-
     function isTeacher() {
-      return isSignedIn() && (
-        isTeacherToken()
-        || (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'teacher')
-      );
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          userRole(request.auth.uid) == 'teacher'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && ('teacher' in get(userDocPath(request.auth.uid)).data.roles)
+          )
+        );
     }
 
     function isTeacherOrAdmin() {
@@ -246,29 +232,49 @@ service cloud.firestore {
     }
 
     function isParent() {
-      return isSignedIn() && (
-        isParentToken()
-        || (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'parent')
-      );
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          userRole(request.auth.uid) == 'parent'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && ('parent' in get(userDocPath(request.auth.uid)).data.roles)
+          )
+        );
     }
 
     function isLP() {
-      return isSignedIn() && (
-        isLPToken()
-        || (
-          userDocExists(request.auth.uid) && (
-            userRole(request.auth.uid) == 'learningpartner' ||
-            userRole(request.auth.uid) == 'learning-partner'
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          userRole(request.auth.uid) == 'learningpartner'
+          || userRole(request.auth.uid) == 'learning-partner'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && (
+              ('learningPartner' in get(userDocPath(request.auth.uid)).data.roles)
+              || ('learning-partner' in get(userDocPath(request.auth.uid)).data.roles)
+            )
           )
-        )
-      );
+        );
     }
 
     function isKid() {
-      return isSignedIn() && (
-        isKidToken()
-        || (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'kid')
-      );
+      return
+        isSignedIn()
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          userRole(request.auth.uid) == 'kid'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && ('kid' in get(userDocPath(request.auth.uid)).data.roles)
+          )
+        );
     }
 
     function touchesProtectedUserFields() {
@@ -664,7 +670,9 @@ function teacherCanAccessProgressData(kidId, data) {
     && (data.courseId is string)
     && data.courseId.size() > 0
     && enrollmentExists(data.enrollmentId)
-    && teacherOwnsCanonicalDoc(enrollmentDoc(data.enrollmentId))
+    && ('teacherId' in enrollmentDoc(data.enrollmentId))
+    && (enrollmentDoc(data.enrollmentId).teacherId is string)
+    && enrollmentDoc(data.enrollmentId).teacherId == request.auth.uid
     && enrollmentBelongsToKidCanonicalFirst(enrollmentDoc(data.enrollmentId), kidId)
     && ('courseId' in enrollmentDoc(data.enrollmentId))
     && (enrollmentDoc(data.enrollmentId).courseId is string)
@@ -1110,8 +1118,8 @@ function teacherProgressIdentityUnchanged() {
 
       allow list: if isAdmin()
         || teacherOwnsCanonicalDoc(resource.data)
-        || (isParentToken() && resource.data.parentId == request.auth.uid)
-        || (isKidToken() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
+        || (isParent() && resource.data.parentId == request.auth.uid)
+        || (isKid() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
 
       allow create: if isValidClassSession(request.resource.data)
         && isAdmin();

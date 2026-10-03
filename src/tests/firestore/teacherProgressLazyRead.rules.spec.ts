@@ -17,7 +17,7 @@ import {
   setDoc,
   where,
 } from 'firebase/firestore';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 const suite = emulatorHost ? describe : describe.skip;
@@ -45,6 +45,18 @@ beforeAll(async () => {
 
 afterEach(async () => testEnv && testEnv.clearFirestore());
 afterAll(async () => testEnv?.cleanup());
+
+async function seedCurrentUsers() {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await Promise.all([
+      setDoc(doc(db, 'users', teacherId), { role: 'teacher', status: 'active' }),
+      setDoc(doc(db, 'users', otherTeacherId), { role: 'teacher', status: 'active' }),
+    ]);
+  });
+}
+
+beforeEach(seedCurrentUsers);
 
 async function seedProgress() {
   await testEnv.withSecurityRulesDisabled(async (context) => {

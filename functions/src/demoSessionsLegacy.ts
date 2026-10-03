@@ -383,7 +383,20 @@ async function getCallerProfile(auth: any): Promise<CallerProfile> {
   }
 
   const userData = userSnap.data() || {};
-  const role = normalizeRole(userData.role) || normalizeRole(auth?.token?.role);
+  const status = normalizeStatusValue(userData.status);
+  if (status && status !== 'active') {
+    throw new HttpsError('permission-denied', 'User profile is not active');
+  }
+
+  const role =
+    normalizeRole(userData.role) ||
+    (
+      Array.isArray(userData.roles)
+        ? userData.roles
+            .map((value: unknown) => normalizeRole(value))
+            .find((value: CallerProfile['role'] | null) => Boolean(value)) || null
+        : null
+    );
 
   if (!role) {
     throw new HttpsError('permission-denied', 'User role not found');

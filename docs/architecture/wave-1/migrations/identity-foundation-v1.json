@@ -1,0 +1,212 @@
+{
+  "migrationId": "wave1-identity-foundation-v1",
+  "wave": 1,
+  "domain": "Identity & Relationships",
+  "canonicalOwner": "Identity & Authentication / Learner Identity / Organisation Membership",
+  "title": "Wave 1 Identity Foundation",
+  "status": "expanded",
+  "sourceBaselineCommit": "570bfef5fd99857e1f7df9529c46e593f77dcec0",
+  "implementationCommit": "1ad3a468100ea750a231c666bb8ba8b39106ec39",
+  "schemaVersion": 1,
+  "environment": "production",
+  "scope": {
+    "sourcePaths": [
+      "users",
+      "kids",
+      "parents",
+      "teachers",
+      "learningPartners",
+      "admins",
+      "schools",
+      "schoolUsers",
+      "Firebase Authentication user directory"
+    ],
+    "targetPaths": [
+      "people",
+      "authIdentities",
+      "roleAssignments",
+      "learnerProfiles",
+      "guardianRelationships",
+      "organisations",
+      "organisationMemberships"
+    ],
+    "sourceFilter": "All current identity/reference records eligible under verified ID and relationship rules",
+    "excludedScopes": [
+      "Household creation/backfill until household boundary rule is explicitly defined",
+      "Role-specific profile migration",
+      "Teacher assignment migration",
+      "Enrollment/Scheduling/Attendance/Finance/Commerce migration",
+      "Historical record deletion"
+    ],
+    "compatibilityPaths": [
+      "users",
+      "kids",
+      "role mirror collections",
+      "schools",
+      "schoolUsers",
+      "Firebase Authentication"
+    ]
+  },
+  "authority": {
+    "sourceAuthorityBefore": [
+      "users for auth-backed person/profile/role compatibility",
+      "kids for learner identity compatibility",
+      "schools for school organisation compatibility",
+      "schoolUsers for school-admin membership compatibility",
+      "Firebase Authentication for provider identity"
+    ],
+    "targetAuthorityAfter": [
+      "people",
+      "authIdentities",
+      "roleAssignments",
+      "learnerProfiles",
+      "guardianRelationships",
+      "organisations",
+      "organisationMemberships"
+    ],
+    "readAuthorityDuringMigration": "legacy compatibility paths until SWITCH READS gate",
+    "writeAuthorityDuringMigration": "legacy compatibility paths until canonical write cutover",
+    "projectionDependencies": []
+  },
+  "safety": {
+    "dryRunRequired": true,
+    "maxWritesPerBatch": 100,
+    "maxRecordsPerRun": 250,
+    "checkpointStrategy": "Per-source-collection document-ID cursor with explicit completed checkpoint and resumable next cursor",
+    "idempotencyKey": "Deterministic canonical document ID per identity/relationship record",
+    "retryPolicy": "Retry only idempotent bounded batches; failed/unresolved records remain visible and are not silently skipped",
+    "rollbackStrategy": "Prefer read/write switch reversal and forward reconciliation; do not delete canonical records automatically",
+    "secretsPolicy": "Use managed production credentials only; never commit service-account JSON; reports omit raw IDs by default"
+  },
+  "verification": {
+    "sourceEligibleCount": null,
+    "attemptedCount": null,
+    "createdCount": null,
+    "updatedCount": null,
+    "unchangedCount": null,
+    "skippedCount": null,
+    "failedCount": null,
+    "unresolvedCount": null,
+    "reconciledCount": null,
+    "mismatchCount": null,
+    "invariantChecks": [
+      "Existing users document ID adoption does not contradict uid/userId",
+      "Eligible auth-backed people resolve to Firebase Auth UID",
+      "No user/kid Person-ID collision",
+      "Guardian references resolve and do not contradict primary-parent rules",
+      "School memberships resolve to both Person and Organisation sources",
+      "schoolAdmin roles are organisation-scoped",
+      "Deterministic target IDs do not collide across different source records",
+      "Canonical target collections are understood before write mode"
+    ]
+  },
+  "cutover": {
+    "readSwitchCriteria": [
+      "BACKFILL complete and reconciled",
+      "No blocking identity/reference mismatch",
+      "Canonical authorization/read adapters verified",
+      "Fallback usage observable and bounded"
+    ],
+    "readSwitchedAt": null,
+    "observationCriteria": [
+      "Firebase login unchanged",
+      "Parent/teacher/admin/school access unchanged",
+      "No material read/performance regression",
+      "No unexplained canonical/legacy divergence"
+    ],
+    "observationStartedAt": null,
+    "observationCompletedAt": null,
+    "legacyWriteStopCriteria": [
+      "Canonical write commands cover all active identity/relationship mutations",
+      "No current workflow relies on legacy relationship write authority",
+      "Any retained compatibility mirror is one-way from canonical"
+    ],
+    "legacyWritesStoppedAt": null,
+    "retirementCriteria": [
+      "No active legacy reads/writes remain for the migrated fact",
+      "Historical/profile compatibility obligations are understood",
+      "Temporary migration tools/tests have explicit retirement action"
+    ],
+    "retiredAt": null
+  },
+  "ownership": {
+    "exceptionOwner": "Wave 1 Identity migration owner",
+    "operationalOwner": "Tiny Steps platform operations",
+    "reviewer": "School OS architecture review",
+    "retirementOwner": "Wave 1 Identity migration owner"
+  },
+  "dryRun": {
+    "runId": 37141121843,
+    "executedAt": "2026-10-03T17:37:47Z",
+    "result": "success",
+    "writesPerformed": 0,
+    "sourceCounts": {
+      "users": 223,
+      "firebaseAuthUsers": 225,
+      "kids": 194,
+      "schools": 1,
+      "schoolUsers": 1
+    },
+    "exactUserAuthUidCoverage": {
+      "matched": 223,
+      "total": 223
+    },
+    "userKidPersonIdCollisions": 0,
+    "authOnlyAccountsExcluded": 2,
+    "authClaimRoleMismatchesForCurrentUsers": 0,
+    "adminClaimRoleMismatchesForCurrentUsers": 0,
+    "plannedCanonicalDocuments": 1253,
+    "plannedByCollection": {
+      "people": 417,
+      "authIdentities": 223,
+      "roleAssignments": 223,
+      "learnerProfiles": 194,
+      "guardianRelationships": 194,
+      "organisations": 1,
+      "organisationMemberships": 1,
+      "households": 0
+    },
+    "existingCanonicalTargetCounts": {
+      "people": 0,
+      "authIdentities": 0,
+      "roleAssignments": 0,
+      "learnerProfiles": 0,
+      "guardianRelationships": 0,
+      "households": 0,
+      "organisations": 0,
+      "organisationMemberships": 0
+    },
+    "blockingConflicts": 0,
+    "nonBlockingExceptions": {
+      "authOnlyAccounts": 2,
+      "expectedRoleMirrorGap": 1
+    },
+    "readyForBoundedBackfillReview": true
+  },
+  "securityPreconditions": {
+    "tokenOnlyAdminAuthorityRemovedInExpand": true,
+    "orphanAuthAccountsAutoMigrated": false,
+    "orphanAuthAccountsDeletedOrDisabled": false,
+    "canonicalClientReadSwitch": false
+  },
+  "finalValidation": {
+    "runId": 37141121843,
+    "result": "success",
+    "validatedImplementationCommit": "1ad3a468100ea750a231c666bb8ba8b39106ec39",
+    "functionsBuild": "passed",
+    "identityFoundationTests": "passed",
+    "authorizationHardeningTests": {
+      "passed": 8,
+      "total": 8
+    },
+    "firestoreRulesEmulatorTests": {
+      "passed": 81,
+      "total": 81,
+      "suitesPassed": 13,
+      "suitesTotal": 13
+    },
+    "storageRulesCompilation": "passed",
+    "productionDryRun": "passed",
+    "temporaryWorkflowRetired": true
+  }
+}

@@ -507,11 +507,20 @@ export const bootstrapParentClassAttendance = onCall({ region: REGION }, async (
   const parentId = text(request.auth?.uid);
   if (!parentId) throw new HttpsError('unauthenticated', 'Sign in as a parent to repair class totals.');
 
-  const tokenRole = text(request.auth?.token?.role).toLowerCase();
-  const userRole = tokenRole || text(
-    (await admin.firestore().collection('users').doc(parentId).get()).data()?.role,
-  ).toLowerCase();
-  if (userRole !== 'parent') {
+  const userSnap = await admin.firestore().collection('users').doc(parentId).get();
+  if (!userSnap.exists) {
+    throw new HttpsError('permission-denied', 'Parent access is required.');
+  }
+  const user = userSnap.data() || {};
+  const userStatus = text(user.status).toLowerCase();
+  if (userStatus && userStatus !== 'active') {
+    throw new HttpsError('permission-denied', 'Parent access is required.');
+  }
+  const userRole = text(user.role).toLowerCase();
+  const userRoles = Array.isArray(user.roles)
+    ? user.roles.map((value: unknown) => text(value).toLowerCase())
+    : [];
+  if (userRole !== 'parent' && !userRoles.includes('parent')) {
     throw new HttpsError('permission-denied', 'Parent access is required.');
   }
 
