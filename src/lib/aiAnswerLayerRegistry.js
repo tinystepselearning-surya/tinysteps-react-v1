@@ -230,6 +230,13 @@ const CURATED_CONCEPTS = [
     supportingPaths: ['/blog/how-to-teach-paragraph-writing-to-kids', '/resources/grammar'],
   },
   {
+    id: 'concept-public-speaking-importance',
+    subject: 'speaking-communication',
+    query: 'Why is public speaking important for kids?',
+    canonicalPath: '/blog/why-public-speaking-is-important-for-kids',
+    supportingPaths: ['/resources/speaking', '/speaking', '/blog/conversation-skills-for-kids'],
+  },
+  {
     id: 'concept-conversation-skills',
     subject: 'speaking-communication',
     query: 'How can children build better conversation skills?',
