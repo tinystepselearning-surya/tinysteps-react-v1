@@ -72,11 +72,28 @@ async function ensureEnrollmentCreator(auth: any, kidId: string): Promise<void> 
     throw new HttpsError('unauthenticated', 'Authentication required');
   }
 
-  if (auth.token?.role === 'admin' || auth.token?.admin === true) return;
-
   const db = admin.firestore();
   const userSnap = await db.collection('users').doc(auth.uid).get();
+  if (!userSnap.exists) {
+    throw new HttpsError(
+      'permission-denied',
+      'Current user record was not found',
+    );
+  }
   const user = userSnap.data() || {};
+  if (
+    user.status !== undefined &&
+    user.status !== null &&
+    (
+      typeof user.status !== 'string' ||
+      user.status.trim().toLowerCase() !== 'active'
+    )
+  ) {
+    throw new HttpsError(
+      'permission-denied',
+      'Current user is not active',
+    );
+  }
   const roles = Array.isArray(user.roles) ? user.roles.map((role: unknown) => String(role)) : [];
   const isAdmin = user.role === 'admin' || roles.includes('admin');
   if (isAdmin) return;
