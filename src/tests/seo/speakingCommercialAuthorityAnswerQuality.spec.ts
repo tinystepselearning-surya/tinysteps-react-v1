@@ -27,7 +27,7 @@ describe('Speaking Commercial Authority v2 — final parent-answer quality harde
     expect(speaking).toContain('Yes—communication remains important in an AI-enabled world');
     expect(speaking).toContain('The right programme depends on the actual speaking problem, not on a generic “confidence” label.');
     expect(article).toContain('**Yes, public speaking is important for children because it teaches them to organise ideas and make those ideas understandable to other people.**');
-    expect(article).toContain('**Children can begin public-speaking development from about age four when the work is communication-focused and developmentally appropriate.**');
+    expect(article).toContain('**At Tiny Steps, children can begin age-appropriate public-speaking development from about age four when the work is communication-focused and developmentally appropriate.**');
     expect(article).toContain('**Communication remains important in an AI-enabled world because generating information is not the same as judging, organising, explaining, questioning, listening, or responding.**');
   });
 
