@@ -95,6 +95,8 @@ async function sessionsForEnrollment(db, enrollmentId) {
 
 function summarizeSessions(rows, kidIds, teacherIds) {
   const buckets = { past: 0, today: 0, future: 0, missing: 0 };
+  let latestPastDate = null;
+  let earliestFutureDate = null;
   let canonicalTeacherResolvedFuture = 0;
   let canonicalTeacherMissingFuture = 0;
   let learnerResolvedFuture = 0;
@@ -106,6 +108,10 @@ function summarizeSessions(rows, kidIds, teacherIds) {
     const date = text(entry.data.date);
     const bucket = dateBucket(date);
     buckets[bucket] += 1;
+    if (bucket === 'past' && (!latestPastDate || date > latestPastDate)) latestPastDate = date;
+    if ((bucket === 'today' || bucket === 'future') && (!earliestFutureDate || date < earliestFutureDate)) {
+      earliestFutureDate = date;
+    }
     if (bucket !== 'today' && bucket !== 'future') continue;
 
     const canonicalTeacherId = text(entry.data.teacherId);
@@ -124,6 +130,8 @@ function summarizeSessions(rows, kidIds, teacherIds) {
   return {
     total: rows.length,
     byDate: buckets,
+    latestPastDate,
+    earliestFutureDate,
     futureOrToday: buckets.today + buckets.future,
     canonicalTeacherResolvedFuture,
     canonicalTeacherMissingFuture,
@@ -187,7 +195,7 @@ async function main() {
     read(db, 'learningPartners', ['userId', 'status']),
     read(db, 'admins', ['userId', 'status']),
     read(db, 'kids', ['status', 'teacherId', 'teacherIds', 'parentId', 'parentIds', 'primaryParentId', 'lpId']),
-    read(db, 'enrollments', ['status', 'kidId', 'studentId', 'childId', 'kidIds', 'parentId', 'parentIds', 'teacherId', 'teacherIds', 'lpId']),
+    read(db, 'enrollments', ['status', 'kidId', 'studentId', 'childId', 'kidIds', 'parentId', 'parentIds', 'teacherId', 'teacherIds', 'lpId', 'creditsTotal', 'creditsUsed', 'creditsRemaining', 'createdAt', 'updatedAt']),
     read(db, 'demoSessions', ['status', 'assignedTeacherId', 'completedByTeacherId', 'teacherConfirmedDate', 'assignedAt', 'completedAt', 'createdAt']),
     read(db, 'schools', ['status', 'learningPartnerId']),
   ]);
@@ -247,6 +255,13 @@ async function main() {
       enrollmentToken: token(enrollment.id),
       status: text(enrollment.data.status).toLowerCase() || null,
       activeLike: isActiveLike(enrollment.data.status),
+      createdAt: timestampIso(enrollment.data.createdAt),
+      updatedAt: timestampIso(enrollment.data.updatedAt),
+      credits: {
+        total: Number.isFinite(Number(enrollment.data.creditsTotal)) ? Number(enrollment.data.creditsTotal) : null,
+        used: Number.isFinite(Number(enrollment.data.creditsUsed)) ? Number(enrollment.data.creditsUsed) : null,
+        remaining: Number.isFinite(Number(enrollment.data.creditsRemaining)) ? Number(enrollment.data.creditsRemaining) : null,
+      },
       learner: {
         refTokens: learner.map(token).sort(),
         resolvedRefs: learner.filter((id) => kidIds.has(id)).length,
