@@ -46,6 +46,39 @@ function changedFiles(base) {
   )].sort();
 }
 
+function packageManifestHasMaterialDependencyChange(base) {
+  const beforeText = git(['show', `${base}:package.json`], { allowFailure: true });
+  if (!beforeText) return true;
+
+  try {
+    const before = JSON.parse(beforeText);
+    const current = JSON.parse(
+      execFileSync(process.execPath, ['-e', "process.stdout.write(require('fs').readFileSync('package.json','utf8'))"], { encoding: 'utf8' }),
+    );
+
+    const effectivePackages = (pkg) => {
+      const merged = {};
+      for (const section of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']) {
+        for (const [name, version] of Object.entries(pkg[section] || {})) {
+          merged[name] = version;
+        }
+      }
+      return Object.fromEntries(Object.entries(merged).sort(([a], [b]) => a.localeCompare(b)));
+    };
+
+    const material = (pkg) => ({
+      packages: effectivePackages(pkg),
+      engines: pkg.engines || {},
+      packageManager: pkg.packageManager || '',
+      type: pkg.type || '',
+    });
+
+    return JSON.stringify(material(before)) !== JSON.stringify(material(current));
+  } catch {
+    return true;
+  }
+}
+
 function matchesAny(path, patterns) {
   return patterns.some((pattern) => (
     typeof pattern === 'string'
@@ -71,42 +104,42 @@ function run(label, command, commandArgs, options = {}) {
 const base = resolveBase();
 const changed = changedFiles(base);
 
+const packageManifestChanged = changed.includes('package.json');
+const packageMaterialChange = packageManifestChanged
+  ? packageManifestHasMaterialDependencyChange(base)
+  : false;
+
 const globalTestImpact = changed.some((path) => (
-  path === 'package.json' ||
   path === 'package-lock.json' ||
   path === 'vitest.config.ts' ||
   path === 'vite.config.ts' ||
   path === 'tsconfig.json' ||
   path.startsWith('tsconfig.')
+)) || packageMaterialChange;
+
+const frontendChanged = changed.some((path) => (
+  (path.startsWith('src/') && !path.startsWith('src/tests/')) ||
+  path.startsWith('public/') ||
+  path === 'index.html' ||
+  path === 'vite.config.ts' ||
+  path === 'package-lock.json' ||
+  packageMaterialChange
 ));
 
-const frontendChanged = full || changed.some((path) => matchesAny(path, [
-  'src/',
-  'public/',
-  'scripts/',
-  'index.html',
-  'vite.config.ts',
-  'package.json',
-  'package-lock.json',
-]));
-
-const functionsChanged = full || changed.some((path) => (
-  path.startsWith('functions/') ||
-  [
-    'firebase.json',
-    'scripts/deploy-functions-batched.mjs',
-    'scripts/deployment/functions-deployment-lib.mjs',
-    'scripts/deployment/functions-impact-lib.mjs',
-  ].includes(path)
+const changedFrontendTests = changed.filter((path) => (
+  path.startsWith('src/tests/') &&
+  !path.endsWith('blogContentCiRouting.spec.ts')
 ));
 
-const firestoreChanged = full || changed.some((path) => (
+const functionsChanged = changed.some((path) => path.startsWith('functions/'));
+
+const firestoreChanged = changed.some((path) => (
   path === 'firestore.rules' ||
   path === 'firestore.indexes.json' ||
   path.startsWith('src/tests/firestore/')
 ));
 
-const deploymentChanged = full || changed.some((path) => (
+const deploymentChanged = changed.some((path) => (
   path === '.github/workflows/deploy.yml' ||
   path.startsWith('.github/scripts/') ||
   path === 'firebase.json' ||
@@ -115,10 +148,13 @@ const deploymentChanged = full || changed.some((path) => (
     'scripts/deploy-functions-batched.mjs',
     'scripts/resolve-deployment-impact.mjs',
     'scripts/prepare-firebase-ci-config.mjs',
+    'scripts/preflight.mjs',
+    'scripts/test/functions-deployment.node-test.mjs',
+    'scripts/test/firebase-ci-config.node-test.mjs',
   ].includes(path)
 ));
 
-const enrollmentChanged = full || changed.some((path) => matchesAny(path, [
+const enrollmentChanged = changed.some((path) => matchesAny(path, [
   'functions/src/lifecycle.ts',
   'functions/src/scheduling/rollingScheduleCourseTransition.ts',
   'functions/src/scheduling/rollingScheduleLifecycle.ts',
@@ -130,7 +166,7 @@ const enrollmentChanged = full || changed.some((path) => matchesAny(path, [
   'vitest.emulator.config.ts',
 ]));
 
-const r8Changed = full || changed.some((path) => matchesAny(path, [
+const r8Changed = changed.some((path) => matchesAny(path, [
   'src/content/phonicsKnowledge/',
   'src/content/phonicsCurriculum/',
   'src/tests/seo/resourcesR',
@@ -159,11 +195,6 @@ if (!full && !changed.length) {
   process.exit(0);
 }
 
-if (!full && globalTestImpact) {
-  console.error('\nGlobal test/build configuration changed.');
-  console.error('Run: npm run preflight:full');
-  process.exit(2);
-}
 
 const functionsCompileRequired = functionsChanged || deploymentChanged;
 
@@ -207,11 +238,19 @@ if (enrollmentChanged) {
   run('Enrollment integrity emulator', 'npm', ['run', 'test:emulator:enrollment-integrity']);
 }
 
+if (changedFrontendTests.length) {
+  run('Changed frontend test files', 'npx', [
+    'vitest',
+    'run',
+    ...changedFrontendTests,
+  ]);
+}
+
 if (frontendChanged) {
   run('Frontend lint', 'npm', ['run', 'lint']);
   run('Type check', 'npm', ['run', 'typecheck']);
 
-  if (full) {
+  if (full || globalTestImpact) {
     run('Full unit suite', 'npm', ['run', 'test:full']);
   } else {
     run('Affected unit tests', 'npx', [
@@ -241,9 +280,9 @@ if (r8Changed) {
 
 if (frontendChanged) {
   run(
-    full ? 'Full local production build + audits' : 'Local deploy-artifact build',
+    (full || globalTestImpact) ? 'Deep local production build + audits' : 'Local deploy-artifact build',
     'npm',
-    ['run', full ? 'build' : 'build:deploy'],
+    ['run', (full || globalTestImpact) ? 'build' : 'build:deploy'],
   );
 }
 
