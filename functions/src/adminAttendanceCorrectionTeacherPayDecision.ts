@@ -30,10 +30,6 @@ function clean(value: unknown, maxLen = 500): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLen) : '';
 }
 
-function normalizeRole(value: unknown): string {
-  const raw = clean(value, 80).toLowerCase();
-  return raw === 'learningpartner' ? 'learning-partner' : raw;
-}
 
 function normalizeStatus(value: unknown): string {
   return clean(value, 80).toLowerCase();
