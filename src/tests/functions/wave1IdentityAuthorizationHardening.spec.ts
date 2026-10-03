@@ -89,7 +89,7 @@ describe('Wave 1 current-user authorization invariant', () => {
       parentAttendance,
       parentProgress,
     ]) {
-      expect(source).toContain("collection('users')");
+      expect(source).toMatch(/collection\((['"])users\1\)/);
     }
 
     expect(parentStudents).not.toContain('Prefer custom claims (faster)');
