@@ -76,7 +76,7 @@ describe('Speaking growth Brick 4 flagship page', () => {
   it('keeps the assessment as the decision mechanism instead of promising automatic placement', () => {
     expect(speaking).toContain('let the free 1:1 assessment confirm the best pathway');
     expect(speaking).toContain('Tiny Steps uses assessment-first placement');
-    expect(speaking).toContain('What happens in the free speaking assessment?');
-    expect(speaking).toContain('Not sure which speaking path fits your child?');
+    expect(speaking).toContain('pricing-and-assessment');
+    expect(speaking).toContain('Ready to check the right speaking path for your child?');
   });
 });
