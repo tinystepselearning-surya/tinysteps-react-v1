@@ -25,6 +25,7 @@ Each wave may contain several PRs and may overlap in limited, controlled ways. A
 10. **Architecture work and feature work should remain separable whenever possible.**
 11. **Converge repeated UI before adding another variant.** New and migrated experiences should reuse shared shells, navigation, templates and components wherever the interaction model is materially the same.
 12. **Use premium simplicity as the visual default.** New and migrated experiences should converge on an Apple-inspired Tiny Steps design language: clear hierarchy, generous whitespace, restrained colour, precise typography, purposeful motion and minimal visual noise.
+13. **Treat accessibility, performance, privacy and public discoverability as migration gates.** These qualities must not regress while canonical data and UI structures are being changed.
 
 ## 3. Standard migration lifecycle
 
@@ -65,7 +66,9 @@ Freeze the language and ownership rules before changing production data structur
 - identify canonical vs projection vs legacy compatibility concepts;
 - establish architecture decision review for new features;
 - define the shared experience-system contract for app shells, navigation, templates, components and controlled variants;
-- define the premium/minimal visual design contract and the design tokens/principles needed to enforce it consistently.
+- define the premium/minimal visual design contract and the design tokens/principles needed to enforce it consistently;
+- define cross-cutting accessibility, performance, child/family privacy and public discoverability contracts;
+- define design-system governance so shared components gain controlled variants instead of parallel copies.
 
 ## Deliverables
 
@@ -74,7 +77,9 @@ Freeze the language and ownership rules before changing production data structur
 - canonical terminology glossary where needed;
 - legacy-to-canonical mapping maintained as migration work begins;
 - shared experience/design-system contract, using the existing reusable blog authority layout as the precedent for configuration-driven page families;
-- visual direction contract for premium, professional, Apple-inspired simplicity while preserving Tiny Steps' own brand identity.
+- visual direction contract for premium, professional, Apple-inspired simplicity while preserving Tiny Steps' own brand identity;
+- product-quality contracts for accessibility, performance, privacy and public discoverability;
+- shared-first design-system governance contract.
 
 ## Exit gate
 
@@ -86,7 +91,8 @@ Wave 0 is complete when new architectural work can answer:
 - what is legacy;
 - whether a proposed schema change conforms to v1.0;
 - whether a new or migrated web experience can reuse an existing shared shell/template/component before a bespoke implementation is approved;
-- whether the proposed experience meets the premium-simplicity standard rather than introducing unnecessary visual complexity.
+- whether the proposed experience meets the premium-simplicity standard rather than introducing unnecessary visual complexity;
+- whether accessibility, performance, child/family privacy and intended public discoverability are preserved.
 
 **No production data migration is required to complete Wave 0.**
 
@@ -453,7 +459,10 @@ It is complete when:
 9. critical reads remain bounded as the platform grows;
 10. repeated user experiences use maintained shared shells/templates/components wherever appropriate;
 11. public and authenticated surfaces present a coherent premium, professional, minimal Tiny Steps visual language;
-12. remaining legacy compatibility is intentional and documented.
+12. accessibility and performance do not regress during migration;
+13. child/family data follows purpose-bound privacy and retention rules;
+14. public pages preserve intended crawlability, canonical ownership and search/AI discoverability;
+15. remaining legacy compatibility is intentional and documented.
 
 ## 9. Change control
 
