@@ -58,9 +58,15 @@ describe('blog content CI routing hardening', () => {
 
     expect(r5).not.toContain("src/content/blog/posts/**");
 
-    expect(r8).not.toContain("src/content/**");
-    expect(r8).toContain("src/content/phonicsKnowledge/**");
-    expect(r8).toContain("src/content/phonicsCurriculum/**");
+    expect(r8).toContain('workflow_dispatch:');
+    expect(r8).not.toContain('pull_request:');
+
+    const deploy = read('.github/workflows/deploy.yml');
+    expect(deploy).toContain('r8_validation_required');
+    expect(deploy).toContain('Run R8 phonics knowledge specialist validation');
+    expect(deploy).toContain('Run rendered R8 specialist validation');
+    expect(deploy).toContain('src/content/phonicsKnowledge/*');
+    expect(deploy).toContain('src/content/phonicsCurriculum/*');
 
     expect(r14).not.toContain("src/content/blog/**");
     expect(r15).not.toContain("src/content/blog/");
