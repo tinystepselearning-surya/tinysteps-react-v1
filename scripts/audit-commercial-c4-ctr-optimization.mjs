@@ -109,7 +109,7 @@ if (exists(routeSeoPath)) {
     },
     '/speaking': {
       title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
-      description: 'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+      description: 'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
     },
     '/online-english-classes-hyderabad': {
       title: 'Online English Classes for Kids in Hyderabad | Tiny Steps',
