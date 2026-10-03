@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  PUBLIC_AGE_RANGE_LABEL,
   PUBLIC_LEARNER_REACH_LABEL,
   PUBLIC_SESSION_DURATION_LABEL,
   PUBLIC_SITE_FACTS,
@@ -208,7 +209,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
       description:
         'Live 1:1 online confidence building classes for children whose primary barrier is speaking comfort, participation confidence, response initiation, or independent expression.',
       url: canonicalUrl,
-      educationalLevel: 'School-age confidence support with assessment-led placement',
+      educationalLevel: `${PUBLIC_AGE_RANGE_LABEL}; assessment-led confidence support`,
       teaches: [
         'speaking comfort',
         'participation confidence',
@@ -247,15 +248,16 @@ export default function ConfidenceBuildingProgramKidsPage() {
               Tiny Steps supports children who have ideas to share but hesitate to begin, participate less than they can, or depend heavily on adult prompting when speaking.
             </p>
             <p className="mt-3">
-              This is a narrow confidence-and-participation pathway. It is not a second general Public Speaking course: the goal is to help the child enter, stay in, and recover within real communication with gradually less support.
+              This is a narrow confidence-and-participation pathway. It is not a second general Speaking & Communication programme: the goal is to help the child enter, stay in, and recover within real communication with gradually less support.
             </p>
           </>
         }
         trustChips={[
-          { label: PUBLIC_LEARNER_REACH_LABEL, tone: 'warm' as const },
-          { label: `Live 1:1 • ${PUBLIC_SESSION_DURATION_LABEL}`, tone: 'cool' as const },
-          { label: 'Assessment-led placement', tone: 'neutral' as const },
-          { label: 'India + worldwide', tone: 'mint' as const },
+          { label: PUBLIC_AGE_RANGE_LABEL, tone: 'warm' as const },
+          { label: PUBLIC_LEARNER_REACH_LABEL, tone: 'cool' as const },
+          { label: `Live 1:1 • ${PUBLIC_SESSION_DURATION_LABEL}`, tone: 'neutral' as const },
+          { label: 'Assessment-led placement', tone: 'mint' as const },
+          { label: 'India + worldwide', tone: 'warm' as const },
         ]}
         stats={[
           { label: 'Free assessment', value: `${demoMinutes} min`, helper: '1:1 programme-fit check' },
