@@ -593,13 +593,13 @@ test('ordinary PR CI uses affected tests plus critical regressions without cover
   assert.match(pkg.scripts['test:critical'], /ParentPaymentAllocator\.spec\.ts/);
 });
 
-test('full unit coverage is isolated to scheduled or manual certification', () => {
+test('full unit coverage is isolated to manual certification', () => {
   const workflow = readFileSync('.github/workflows/full-regression-certification.yml', 'utf8');
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 
-  assert.match(workflow, /schedule:/);
-  assert.match(workflow, /cron: '30 0 \* \* \*'/);
   assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /schedule:/);
+  assert.doesNotMatch(workflow, /cron:/);
   assert.match(workflow, /npm run test:full:coverage/);
   assert.match(workflow, /codecov\/codecov-action/);
   assert.equal(pkg.scripts['test:full:coverage'], 'vitest run --coverage');
