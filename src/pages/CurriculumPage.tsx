@@ -6,6 +6,11 @@ import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { getRouteConfig } from '../lib/seo';
+import {
+  SPEAKING_COMMUNICATION_DIMENSIONS,
+  SPEAKING_COURSES,
+  SPEAKING_PEDAGOGY_PRINCIPLES,
+} from '../content/speakingCurriculum';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
 
@@ -103,7 +108,7 @@ const quickAnswers = [
   {
     question: 'Where can I see the exact lesson sequence?',
     answer:
-      'Use the detailed course pages for the exact lesson-by-lesson sequence. This curriculum page stays focused on the full roadmap, progression logic, and how the programs connect.',
+      'The Speaking & Communication tab now shows the complete stage and lesson sequence on this page. Detailed course pages mirror the same canonical curriculum. Phonics and Grammar lesson sequences remain available on their detailed course pages.',
   },
 ];
 
@@ -210,29 +215,30 @@ const programs: Record<Tab, RoadmapProgram> = {
     label: 'Speaking & Communication',
     programPath: '/speaking',
     summary:
-      'Build organised ideas, storytelling, presentation structure, clear expression, audience awareness, and stronger delivery through guided speaking practice.',
-    sequence: 'Understand the prompt → choose and organise an idea → add useful detail → shape for the audience → deliver, retry, and reflect',
+      'Build communication from reciprocal interaction and listening through questioning, clarification, explanation, reasoning, perspective, collaborative dialogue, presentation, and responsible AI-era communication.',
+    sequence: 'Connect → listen → ask → clarify → explain → reason → collaborate → present → reflect → transfer',
     steps: [
-      'Understand the speaking task and choose a relevant idea.',
-      'Organise the response so the listener can follow it.',
-      'Add useful detail, sequence, reason, example, or story structure.',
-      'Shape the response for the task, presentation, or audience.',
-      'Deliver, receive feedback, retry, and reduce support over time.',
+      'Enter a real back-and-forth exchange and listen for meaning.',
+      'Ask relevant questions, clarify confusion, and respond to what was actually said.',
+      'Expand and organise ideas through description, explanation, story, reason, and evidence.',
+      'Build on another person’s contribution and adapt communication for purpose and audience.',
+      'Present prepared and spontaneous ideas with intelligible, flexible delivery.',
+      'Reflect, reduce support, and transfer the skill to a fresh task or communication setting.',
     ],
     courses: [
       {
         name: 'Public Speaking Foundations',
         path: speakingFacts.levels.beginner.canonicalCoursePath,
         lessons: `${speakingFacts.levels.beginner.lessonCount} lessons`,
-        bestFor: `${speakingFacts.levels.beginner.ageRange.label}; children who can communicate basic ideas but need more organisation, picture talk, show-and-tell, storytelling foundations, and short presentation structure.`,
-        focus: 'Build organised short responses, clear expression, storytelling foundations, and readiness for guided presentations.',
+        bestFor: `${speakingFacts.levels.beginner.ageRange.label}; children building reciprocal conversation, listening, useful questions, clarification, description, explanation, storytelling, and short audience-facing communication.`,
+        focus: 'Build the foundations of two-way communication first, then organise those skills into stories, explanations, short talks, Q&A, and independent transfer.',
       },
       {
         name: 'Public Speaking Excellence',
         path: speakingFacts.levels.advanced.canonicalCoursePath,
         lessons: `${speakingFacts.levels.advanced.lessonCount} lessons`,
-        bestFor: `${speakingFacts.levels.advanced.ageRange.label}; children ready for longer talks, richer storytelling, presentations, impromptu speaking, opinion sharing, and guided debate.`,
-        focus: 'Strengthen speech organisation, audience awareness, reasoning, expression, delivery, and independent presentation skills.',
+        bestFor: `${speakingFacts.levels.advanced.ageRange.label}; children ready for purposeful dialogue, stronger questioning, reasoning, explanation, perspective, mediation, discussion, presentations, and supervised AI-era communication.`,
+        focus: 'Strengthen independent communication across dialogue, evidence-based reasoning, impromptu response, constructive disagreement, presentation, information judgement, and responsible AI use.',
       },
     ],
   },
@@ -491,6 +497,116 @@ const CurriculumPage: FC = () => {
             </article>
           ))}
         </div>
+
+        {tab === 'speaking' ? (
+          <div className="mt-10 space-y-8">
+            <section className="overflow-hidden rounded-[32px] border border-violet-200/60 bg-[radial-gradient(circle_at_0%_0%,rgba(196,181,253,0.22),transparent_35%),radial-gradient(circle_at_100%_20%,rgba(125,211,252,0.18),transparent_32%),linear-gradient(135deg,#111827_0%,#172554_55%,#312e81_100%)] p-6 text-white shadow-[0_24px_64px_rgba(30,41,59,0.18)] md:p-8">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-200">Speaking & Communication Curriculum v2</p>
+              <h3 className="mt-3 max-w-4xl text-2xl font-black tracking-[-0.025em] sm:text-3xl">Communication is the spine. Public speaking is one application.</h3>
+              <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-200 md:text-base">
+                Both levels develop reciprocal interaction, listening, questioning, clarification, explanation, storytelling, reasoning, perspective, audience awareness, independence, and fresh-task transfer. Excellence extends this into mediation, evidence-based discussion, presentations, information judgement, and responsible AI-era communication.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {SPEAKING_COMMUNICATION_DIMENSIONS.map((dimension) => (
+                  <span key={dimension} className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-100">
+                    {dimension}
+                  </span>
+                ))}
+              </div>
+            </section>
+
+            {([
+              {
+                course: SPEAKING_COURSES['basic-public-speaking'],
+                path: speakingFacts.levels.beginner.canonicalCoursePath,
+                eyebrow: 'Level 1 · Foundations',
+                description: 'For younger or foundation-stage communicators: interaction and listening come before performance. Children learn to ask, clarify, describe, explain, narrate, consider another viewpoint, speak to a listener, and transfer the skill to a fresh task.',
+              },
+              {
+                course: SPEAKING_COURSES['advanced-public-speaking'],
+                path: speakingFacts.levels.advanced.canonicalCoursePath,
+                eyebrow: 'Level 2 · Excellence',
+                description: 'For children ready for deeper communication: purposeful dialogue, questioning, reasoning, explanation, perspective, mediation, discussion, presentations, and supervised AI-era communication.',
+              },
+            ] as const).map(({ course, path, eyebrow, description }) => (
+              <section key={course.id} className="rounded-[32px] border border-slate-200 bg-white/95 p-5 shadow-[0_16px_48px_rgba(15,23,42,0.07)] sm:p-7">
+                <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-700">{eyebrow}</p>
+                    <h3 className="mt-2 text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-3xl">{course.publicLabel}</h3>
+                    <p className="mt-2 text-sm font-semibold text-slate-500">{course.ageGuide} • 36 lessons • assessment-led placement</p>
+                    <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-700 md:text-base">{description}</p>
+                  </div>
+                  <Link to={path} className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-bold text-slate-900 transition hover:bg-slate-50">
+                    Open detailed course
+                  </Link>
+                </div>
+
+                <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                  {course.stages.map((stage) => (
+                    <details key={stage.stageOrder} className="group rounded-3xl border border-slate-200 bg-slate-50/70 p-5 open:bg-white open:shadow-sm">
+                      <summary className="cursor-pointer list-none">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Lessons {stage.start}–{stage.end}</p>
+                            <h4 className="mt-1 text-lg font-bold text-slate-950">{stage.label}</h4>
+                            <p className="mt-2 text-sm leading-6 text-slate-700">{stage.goal.replace(/^Goal:\s*/i, '')}</p>
+                          </div>
+                          <span className="mt-1 text-xl font-bold text-slate-400 transition group-open:rotate-45">+</span>
+                        </div>
+                      </summary>
+
+                      <div className="mt-5 border-t border-slate-200 pt-5">
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">What develops</p>
+                        <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                          {stage.learningOutcomes.map((outcome) => (
+                            <li key={outcome} className="flex gap-2">
+                              <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                              <span>{outcome}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        <p className="mt-5 text-xs font-black uppercase tracking-[0.14em] text-slate-500">Lesson sequence</p>
+                        <ol className="mt-3 space-y-2">
+                          {course.lessons
+                            .filter((lesson) => lesson.stageOrder === stage.stageOrder)
+                            .map((lesson) => (
+                              <li key={lesson.id} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm leading-5 text-slate-800">
+                                <span className="font-bold text-slate-500">{lesson.order}.</span>{' '}
+                                {lesson.label}
+                              </li>
+                            ))}
+                        </ol>
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="rounded-[28px] border border-emerald-200 bg-emerald-50/60 p-6">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-800">How the lessons are taught</p>
+                <h3 className="mt-2 text-xl font-bold text-slate-950">Child-responsive pedagogy, not speech drills</h3>
+                <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {SPEAKING_PEDAGOGY_PRINCIPLES.map((principle) => (
+                    <li key={principle} className="rounded-2xl border border-emerald-200/80 bg-white/80 p-4 text-sm leading-6 text-slate-700">
+                      {principle}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-[28px] border border-sky-200 bg-sky-50/65 p-6">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-800">AI-era communication</p>
+                <h3 className="mt-2 text-xl font-bold text-slate-950">Human judgement comes before prompting.</h3>
+                <p className="mt-4 text-sm leading-7 text-slate-700">
+                  Foundations develops the prerequisites: clear questions, instructions, checking an answer, and knowing when something is uncertain. Excellence adds supervised AI literacy only after those human communication skills: capabilities and limits, privacy, clear requests, follow-up questions, evidence, missing context, possible bias, and responsibility for the final judgement.
+                </p>
+              </div>
+            </section>
+          </div>
+        ) : null}
       </section>
 
       <IBAlignmentSection />
