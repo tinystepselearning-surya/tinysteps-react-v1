@@ -127,7 +127,7 @@ describe('Speaking growth Brick 6 programme architecture', () => {
     expect(curriculum).toContain('speakingFacts.levels.beginner.canonicalCoursePath');
     expect(curriculum).toContain('speakingFacts.levels.advanced.canonicalCoursePath');
     expect(curriculum).toContain('Connect → listen → ask → clarify → explain → reason → collaborate → present → reflect → transfer');
-    expect(curriculum).toContain('Speaking & Communication Curriculum v2');
+    expect(curriculum).toContain('Speaking &amp; Communication Curriculum v2');
     expect(curriculum).not.toContain("bestFor: 'Children who give short answers, hesitate, or need guided full-sentence speaking practice.'");
 
     expect(coursesPage).toContain("title: 'Public Speaking Foundations'");
