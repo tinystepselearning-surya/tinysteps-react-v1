@@ -116,19 +116,19 @@ The preflight script:
 npm run preflight:plan
 ```
 
-### Deliberate full certification
+### Deliberate deep certification
 
 ```bash
 npm run preflight:full
 ```
 
-This is the explicit deep path. It may run:
+This deepens validation **only for impacted areas**. It does not automatically enable unrelated Functions, Firestore, enrollment, Resources/R8 or frontend suites.
 
-- complete unit suite;
-- Functions validation;
-- emulator validation;
-- specialist validations;
-- the existing deep audit-heavy production build.
+If a true repository-wide unit run is specifically wanted, use:
+
+```bash
+npm run test:full
+```
 
 It is **not scheduled**.
 
