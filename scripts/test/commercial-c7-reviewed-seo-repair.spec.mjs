@@ -19,6 +19,10 @@ const freeGamesPath = 'src/pages/public/FreeEnglishGamesHubPage.tsx';
 const vocabularyHubPath = 'src/pages/VocabularyHubPage.tsx';
 const vocabularyKnowledgePath = 'src/pages/VocabularyKnowledgePage.tsx';
 const speakingPath = 'src/pages/speaking.tsx';
+const courseDetailPath = 'src/pages/CourseDetailPage.tsx';
+const testimonialsPath = 'src/pages/TestimonialsPage.tsx';
+const confidenceBuildingPath = 'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx';
+const speakingProgressPath = 'src/pages/public/SpeakingProgressFrameworkPage.tsx';
 const speakingArticlePath = 'src/content/blog/posts/public-speaking/why-public-speaking-is-important-for-kids.ts';
 const c4Path = 'src/lib/commercialC4CtrOptimization.ts';
 const conversionFamiliesPath = 'src/content/blog/shared/conversionFamilies.ts';
@@ -42,6 +46,10 @@ const reviewedPaths = [
   vocabularyHubPath,
   vocabularyKnowledgePath,
   speakingPath,
+  courseDetailPath,
+  testimonialsPath,
+  confidenceBuildingPath,
+  speakingProgressPath,
   speakingArticlePath,
   c4Path,
   conversionFamiliesPath,
@@ -62,6 +70,10 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [canonicalOwnershipPath]: 'e7bbdb67b3840a10813bbb3a95e7270e2b502956',
       [c4Path]: '62ec23c3b0c76440ea386f4f23fde4a292b93099',
       [speakingPath]: 'a3913ca4c4d79cfdbd8412339920fbae1495d83a',
+      [courseDetailPath]: 'd038d3c2f546c73a6071570688c1fd539bb78a18',
+      [testimonialsPath]: '228cccac38b5a893153c90081421108ca2322b44',
+      [confidenceBuildingPath]: '919fcfd52e110f4d129b1b2614ecb5cfee54958c',
+      [speakingProgressPath]: 'e434d0fa31dc67809d3bad044d515071d9dac7c3',
       [speakingArticlePath]: '584cc647fd76ddff5d018798517f8db57b25684f',
       [conversionFamiliesPath]: 'c6bbe00f36e62fe6f7ba41d42291faee13b51c03',
       [heroFamiliesPath]: '892b0db34c5f3597a3c005e185e5398cf2baeb7c',
