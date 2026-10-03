@@ -1,9 +1,7 @@
-name: CI/CD Deploy to Firebase
+name: Deploy to Firebase
 
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -13,8 +11,8 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: firebase-main-pipeline-${{ github.ref }}
+  cancel-in-progress: false
 # Global environment variables
 env:
   FIREBASE_PROJECT_ID: tinysteps-react-v1
@@ -23,21 +21,15 @@ jobs:
   analyze-changes:
     runs-on: ubuntu-latest
     outputs:
-      functions_validation_required: ${{ steps.impact.outputs.functions_validation_required }}
       functions_deployment_required: ${{ steps.impact.outputs.functions_deployment_required }}
       functions_full_deployment: ${{ steps.impact.outputs.functions_full_deployment }}
       functions_targets: ${{ steps.impact.outputs.functions_targets }}
-      frontend_validation_required: ${{ steps.impact.outputs.frontend_validation_required }}
-      content_only_validation: ${{ steps.impact.outputs.content_only_validation }}
       hosting_changed: ${{ steps.impact.outputs.hosting_changed }}
-      firestore_validation_required: ${{ steps.impact.outputs.firestore_validation_required }}
       firestore_rules_changed: ${{ steps.impact.outputs.firestore_rules_changed }}
       firestore_indexes_changed: ${{ steps.impact.outputs.firestore_indexes_changed }}
       school_transport_required: ${{ steps.impact.outputs.school_transport_required }}
       avs_transport_required: ${{ steps.impact.outputs.avs_transport_required }}
       lead_iam_required: ${{ steps.impact.outputs.lead_iam_required }}
-      r8_validation_required: ${{ steps.specialist-impact.outputs.r8_validation_required }}
-      enrollment_integrity_required: ${{ steps.specialist-impact.outputs.enrollment_integrity_required }}
     steps:
       - name: Checkout repository history
         uses: actions/checkout@v4
@@ -139,328 +131,16 @@ jobs:
           --force-firestore-indexes "${{ steps.artifact-baselines.outputs.firestore_indexes_force }}"
           --sha "${{ github.sha }}"
 
-      - name: Resolve specialist validation impact
-        id: specialist-impact
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}
-        run: |
-          set -euo pipefail
-
-          changed_file_list="$(git diff --name-only "${BASE_SHA}" "${GITHUB_SHA}")"
-
-          r8="false"
-          enrollment="false"
-
-          while IFS= read -r path; do
-            [[ -z "${path}" ]] && continue
-            case "${path}" in
-              src/content/phonicsKnowledge/*|src/content/phonicsCurriculum/*|src/tests/seo/resourcesR*|functions/src/phonicsCurriculumConfig.ts|src/lib/resourcesArchitectureRegistry.js|src/lib/publicRouteManifest.js|src/lib/routeSeoRegistry.js|src/app/routes.tsx|scripts/audit-resources-r8-phonics-knowledge.mjs|scripts/audit-resources-r7-aeo-geo.mjs|scripts/audit-resources-r0.mjs|scripts/audit-resources-r0-rendered.mjs|scripts/audit-semantic-internal-links.mjs|scripts/audit-canonical-topic-ownership.mjs|docs/seo/resources-architecture/*)
-                r8="true"
-                ;;
-            esac
-            case "${path}" in
-              functions/src/lifecycle.ts|functions/src/scheduling/rollingScheduleCourseTransition.ts|functions/src/scheduling/rollingScheduleLifecycle.ts|functions/src/scheduling/rollingScheduleMaterializer.ts|src/lib/createEnrollmentCallable.ts|src/pages/admin/EnrollmentManagement/*|src/pages/admin/StudentManagement/*|src/tests/emulator/*|vitest.emulator.config.ts)
-                enrollment="true"
-                ;;
-            esac
-          done <<< "${changed_file_list}"
-
-          echo "r8_validation_required=${r8}" >> "${GITHUB_OUTPUT}"
-          echo "enrollment_integrity_required=${enrollment}" >> "${GITHUB_OUTPUT}"
-          echo "R8 specialist validation: ${r8}"
-          echo "Enrollment integrity validation: ${enrollment}"
-
-  build-and-test:
-    needs: analyze-changes
-    if: >-
-      needs.analyze-changes.outputs.functions_validation_required == 'true' ||
-      needs.analyze-changes.outputs.frontend_validation_required == 'true' ||
-      needs.analyze-changes.outputs.firestore_validation_required == 'true' ||
-      (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
-    runs-on: ubuntu-latest
-    env:
-      VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
-      VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN }}
-      VITE_ASK_TINY_STEPS_FIREBASE_PROJECT_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_PROJECT_ID }}
-      VITE_ASK_TINY_STEPS_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_STORAGE_BUCKET }}
-      VITE_ASK_TINY_STEPS_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_MESSAGING_SENDER_ID }}
-      VITE_ASK_TINY_STEPS_FIREBASE_APP_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_APP_ID }}
-      VITE_ASK_TINY_STEPS_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_RECAPTCHA_ENTERPRISE_SITE_KEY }}
-    strategy:
-      matrix:
-        node-version: [22.x]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            functions/package-lock.json
-
-      - name: Install dependencies
-        if: >-
-          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' ||
-          needs.analyze-changes.outputs.firestore_validation_required == 'true'
-        run: npm ci
-
-      - name: Install Functions dependencies
-        if: >-
-          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
-          needs.analyze-changes.outputs.firestore_validation_required == 'true' ||
-          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
-        run: npm ci --prefix functions --include=dev
-
-      - name: Lint Cloud Functions
-        if: >-
-          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
-          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
-        run: npm --prefix functions run lint
-
-      - name: Build Cloud Functions
-        if: >-
-          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
-          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
-        run: npm --prefix functions run build
-
-      - name: Run Cloud Functions unit tests
-        if: needs.analyze-changes.outputs.functions_validation_required == 'true'
-        run: npm --prefix functions test
-
-      - name: Run Functions impact resolver tests
-        if: needs.analyze-changes.outputs.functions_validation_required == 'true'
-        run: node --test scripts/test/functions-impact.node-test.mjs
-
-      - name: Run bounded Functions deployment tests
-        if: needs.analyze-changes.outputs.functions_validation_required == 'true'
-        run: node --test scripts/test/functions-deployment.node-test.mjs
-
-      - name: Run prevalidated Firebase config tests
-        if: >-
-          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' ||
-          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
-        run: node --test scripts/test/firebase-ci-config.node-test.mjs
-
-      - name: Validate bounded Functions deployment plan (zero mutation)
-        if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
-        run: node scripts/deploy-functions-batched.mjs --plan
-        env:
-          FUNCTIONS_DEPLOY_ONLY: ${{ needs.analyze-changes.outputs.functions_targets }}
-
-      - name: Run teacher progress enrollment audit classifier tests
-        if: >-
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
-          (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
-        run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
-
-      - name: Setup Java for emulator validation
-        if: >-
-          needs.analyze-changes.outputs.firestore_validation_required == 'true' ||
-          needs.analyze-changes.outputs.enrollment_integrity_required == 'true'
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
-      - name: Run Firestore rules tests
-        if: needs.analyze-changes.outputs.firestore_validation_required == 'true'
-        run: >-
-          npx firebase-tools@15.30.0 emulators:exec
-          --project ${{ env.FIREBASE_PROJECT_ID }}
-          --only firestore
-          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts src/tests/firestore/teacherProgressAuthorization.rules.spec.ts src/tests/firestore/childCourseProgress.rules.spec.ts"
-
-      - name: Run website lead deduplication transaction tests
-        if: needs.analyze-changes.outputs.firestore_validation_required == 'true'
-        run: >-
-          npx firebase-tools@15.30.0 emulators:exec
-          --project ${{ env.FIREBASE_PROJECT_ID }}
-          --only firestore
-          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --config functions/vitest.config.ts functions/test/websiteLeadDeduplication.emulator.spec.ts"
-
-      - name: Run enrollment integrity emulator suite
-        if: >-
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.enrollment_integrity_required == 'true'
-        run: npm run test:emulator:enrollment-integrity
-
-      - name: Cache Playwright browsers
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Run linter
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: npm run lint
-
-      - name: Run type check
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: npm run typecheck
-
-      - name: Run content-only blog and ownership tests
-        if: >-
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.content_only_validation == 'true'
-        run: >-
-          npx vitest run
-          src/tests/seo/blog
-          src/tests/content
-          src/tests/seo/resourcesR5CanonicalTopicOwnership.spec.js
-          src/tests/seo/resourcesR8PhonicsKnowledgeDataset.spec.js
-          src/tests/seo/resourcesR15
-          src/tests/seo/resourcesR18
-          src/tests/seo/resourcesR19
-          src/tests/seo/resourcesR21
-          src/tests/seo/resourcesR22
-          src/tests/seo/resourcesSP6
-          src/tests/seo/grammarWritingGr
-
-      - name: Audit canonical ownership for content-only PR
-        if: >-
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.content_only_validation == 'true'
-        run: node scripts/audit-canonical-topic-ownership.mjs
-
-      - name: Audit phonics knowledge collisions for content-only PR
-        if: >-
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.content_only_validation == 'true'
-        run: node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
-
-      - name: Audit controlled reading, grammar and speaking content for content-only PR
-        if: >-
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.content_only_validation == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/audit-resources-r15-high-value-reading-content.mjs --report
-          node scripts/audit-grammar-writing-gr1-taxonomy.mjs --report
-          node scripts/audit-grammar-writing-gr2-tenses.mjs --report
-          node scripts/audit-grammar-writing-gr3-writing-progression.mjs --report
-          node scripts/audit-grammar-writing-gr4-parent-problems.mjs --report
-          node scripts/audit-resources-r18-high-value-grammar-writing-content.mjs --report
-          node scripts/audit-resources-r19-grammar-writing-semantic-journeys.mjs --report
-          node scripts/audit-resources-r21-high-value-speaking-content.mjs --report
-          node scripts/audit-resources-r22-speaking-communication-semantic-journeys.mjs --report
-          node scripts/audit-resources-sp6-speaking-communication-closure.mjs --report
-
-      - name: Run affected unit tests
-        if: >-
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.content_only_validation != 'true'
-        run: >-
-          npx vitest run
-          --changed "${{ github.event.pull_request.base.sha }}"
-          --passWithNoTests
-
-      - name: Run critical regression pack
-        if: >-
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
-          needs.analyze-changes.outputs.content_only_validation != 'true'
-        run: npm run test:critical
-
-      - name: Run R8 phonics knowledge specialist validation
-        if: >-
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.r8_validation_required == 'true'
-        shell: bash
-        env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_REF: ${{ github.head_ref }}
-        run: |
-          set -euo pipefail
-          npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
-          if [[ "${PR_HEAD_REF}" == seo/resources-r8* || "${PR_HEAD_REF}" == seo/resources-r9* ]]; then
-            node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --base "${PR_BASE_SHA}" --report
-          else
-            node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
-          fi
-          node scripts/audit-semantic-internal-links.mjs
-          node scripts/audit-canonical-topic-ownership.mjs
-          node scripts/audit-resources-r7-aeo-geo.mjs
-          node scripts/audit-resources-r0.mjs
-
-      - name: Validate Ask Tiny Steps production build configuration
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: node scripts/validate-ask-tiny-steps-build-env.mjs
-
-      - name: Build app
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: npm run build
-
-      - name: Run rendered R8 specialist validation
-        if: >-
-          github.event_name == 'pull_request' &&
-          needs.analyze-changes.outputs.r8_validation_required == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
-          node scripts/audit-resources-r0-rendered.mjs --strict
-
-      - name: Run SEO smoke test
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: npm run seo:smoke
-
-      - name: Run prerender and dead-URL regression tests
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: >-
-          node --test
-          scripts/test/prerender-browser.test.mjs
-          scripts/test/recovery-internal-links-build.test.mjs
-          scripts/test/prerender-output.test.mjs
-
-      - name: Certify crawl and discovery graph
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: node scripts/seo-crawl-discovery-guard.mjs
-
-      - name: Audit dead URLs and soft 404s
-        if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
-        run: node scripts/seo-dead-url-guard.mjs
-
-      - name: Upload validated Hosting artifact
-        if: >-
-          github.event_name == 'push' &&
-          github.ref == 'refs/heads/main' &&
-          needs.analyze-changes.outputs.hosting_changed == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: hosting-dist-${{ github.sha }}
-          path: dist
-          if-no-files-found: error
-          retention-days: 1
-
 
   deploy-to-firebase:
-    # Only enter the project mutation lock when at least one Firebase artifact changed.
+    # GitHub Actions is deployment-only. Development validation happens locally on the Mac.
     if: >-
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       (needs.analyze-changes.outputs.functions_deployment_required == 'true' ||
        needs.analyze-changes.outputs.hosting_changed == 'true' ||
        needs.analyze-changes.outputs.firestore_rules_changed == 'true' ||
        needs.analyze-changes.outputs.firestore_indexes_changed == 'true')
-    needs: [analyze-changes, build-and-test]
+    needs: analyze-changes
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -497,14 +177,32 @@ jobs:
             package-lock.json
             functions/package-lock.json
 
-      - name: Download validated Hosting artifact
+      - name: Install Hosting dependencies
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: hosting-dist-${{ github.sha }}
-          path: dist
+        run: npm ci
 
-      - name: Verify validated Hosting artifact identity
+      - name: Cache Playwright browser for production build
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Chromium for production build
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate production build configuration
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        run: node scripts/validate-ask-tiny-steps-build-env.mjs
+
+      - name: Build production Hosting artifact
+        if: needs.analyze-changes.outputs.hosting_changed == 'true'
+        run: npm run build:deploy
+
+      - name: Verify production artifact identity
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
         shell: bash
         run: |
@@ -513,9 +211,9 @@ jobs:
           import fs from 'node:fs';
           const info = JSON.parse(fs.readFileSync('dist/build-info.json', 'utf8'));
           if (info.gitSha !== process.env.GITHUB_SHA) {
-            throw new Error(`Validated Hosting artifact SHA mismatch: expected ${process.env.GITHUB_SHA}, got ${info.gitSha || '<missing>'}`);
+            throw new Error(`Production Hosting artifact SHA mismatch: expected ${process.env.GITHUB_SHA}, got ${info.gitSha || '<missing>'}`);
           }
-          console.log(`Validated Hosting artifact matches ${info.gitSha}`);
+          console.log(`Production Hosting artifact matches ${info.gitSha}`);
           NODE
 
       - name: Prepare prevalidated Firebase deployment config
@@ -774,7 +472,6 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       github.ref == 'refs/heads/main' &&
       inputs.functions_only != ''
-    needs: build-and-test
     runs-on: ubuntu-latest
     concurrency:
       group: firebase-deployment-tinysteps-react-v1
