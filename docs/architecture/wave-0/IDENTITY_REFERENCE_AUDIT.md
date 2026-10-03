@@ -1,6 +1,6 @@
 # Wave 0 — Identity & References Audit
 
-**Status:** LIVE READ-ONLY AUDIT COMPLETE — BOUNDED EXCEPTIONS IDENTIFIED  
+**Status:** COMPLETE — LIVE AUDIT VERIFIED, EXCEPTIONS CLASSIFIED AND REGISTERED  
 **Wave:** 0 — Architecture Contracts  
 **Runtime changes:** None  
 **Production writes:** Forbidden in this work package
@@ -427,18 +427,32 @@ The temporary GitHub workflow was deleted immediately after the run; it is not p
 
 These results support preserving current opaque user document-ID values for existing Person IDs and preserving current `kids` IDs for learner identity.
 
-### 7.2 Current-state exceptions requiring explicit review before Wave 1
+### 7.2 Current-state exceptions — final disposition
 
-The audit identified a small set of current canonical/reference problems:
+A second read-only drill-down was executed after the broad audit. It confirmed that the current-looking exceptions are bounded migration/workflow debt, not live scheduling blockers.
 
-1. **One active enrollment references a learner ID that no longer resolves to a current `kids` document.**
-2. **Two active kids reference a teacher ID that does not resolve to a current user/teacher mirror.**
-3. **One active enrollment references a teacher ID that does not resolve to a current user/teacher mirror.**
-4. **Two demo-session teacher references do not resolve to current teacher identity; these require workflow/status review.**
-5. **Two active `learningPartners` mirror documents have no matching `users` document.**
-6. **One active admin-role user has no matching `admins` mirror.**
+| Exception | Drill-down evidence | Final classification | Required action before Wave 1 identity writes |
+|---|---|---|---|
+| 1 active enrollment references a missing learner | 40 sessions exist, all past; latest session **2026-09-17**; no today/future sessions; parent `childIds[]` does not retain the missing learner ID | **STALE ACTIVE ENROLLMENT** | Resolve business truth and archive/repair the enrollment before identity backfill. Do not recreate a learner from the orphan ID. |
+| 1 active kid + its active enrollment reference a missing teacher | 40 sessions exist, all past; latest session **2026-06-17**; no today/future sessions | **STALE ACTIVE KID/ENROLLMENT ASSIGNMENT** | Resolve business truth; archive/close or reassign only if the learner is genuinely active. Do not carry the missing teacher ID into TeachingAssignment. |
+| 1 demo remains `assigned` to a missing teacher | confirmed demo date **2026-09-14**, already past; no completion timestamp | **STALE ADMISSIONS WORKFLOW STATE** | Review actual outcome and close/cancel/release/reassign according to admissions truth before migration. |
+| 1 completed demo references a missing assigned teacher | completed **2026-03-18** | **HISTORICAL ATTRIBUTION EXCEPTION** | Preserve historical record; no current assignment repair required. |
+| 2 active `learningPartners` mirrors have no `users` document | zero references from kids, enrollments or schools | **ORPHAN ROLE MIRRORS** | Safe retirement candidates after final migration dry-run confirms zero references. |
+| 1 active admin-role user has no `admins` mirror | repository has no active application reader that uses the `admins` collection for authorization; user/custom claims remain the authorization path | **ROLE-MIRROR CONSISTENCY GAP** | Repair mirror if retained for consistency, or retire the mirror requirement in Wave 1. Not an auth blocker. |
 
-These are bounded exceptions; they do not invalidate the canonical ID strategy.
+The drill-down used no names, email addresses, phone numbers or raw IDs in its report.
+
+### 7.2.1 Important correction to the broad-audit headline
+
+The broad audit originally made the teacher exception count look larger because it included historical aliases.
+
+The focused drill-down found:
+
+- **4** kids with unresolved canonical `teacherId`: 3 archived + 1 stale active;
+- **4** enrollments with unresolved canonical `teacherId`: 3 archived + 1 stale active;
+- **2** demo records with unresolved teacher references: 1 stale assigned + 1 historical completed.
+
+No current/future class session has a missing canonical teacher identity target.
 
 ### 7.3 Historical/compatibility debt
 
@@ -487,7 +501,7 @@ students namespaces:
 currently empty in production and therefore not competing identity authorities
 ```
 
-Wave 1 identity migration must first resolve or formally register the bounded current-state exceptions above.
+The bounded exceptions above are now formally registered. Wave 1 must resolve the two stale active enrollment/learner-teacher cases and the stale assigned demo before those records participate in canonical writes. Historical exceptions may remain preserved with explicit compatibility metadata.
 
 ## 8. Audit-tool retirement decision
 
@@ -504,13 +518,21 @@ Do not create a scheduled GitHub workflow for this audit.
 
 ## 9. Exit gate
 
-This work package is complete only when the read-only report has been reviewed and every non-zero ambiguity/orphan category is one of:
+This work package is now complete because the read-only report and focused drill-down have been reviewed and every non-zero category is classified as:
 
-- corrected before migration;
-- mapped by an explicit compatibility rule;
-- registered as a bounded migration exception with an owner.
+- stale current-state data requiring bounded cleanup before Wave 1 canonical writes;
+- historical compatibility debt to preserve;
+- orphan role-mirror data eligible for later retirement;
+- non-blocking mirror consistency debt.
 
-No production backfill is authorized by this document.
+Ownership is assigned by domain:
+
+- **Learner/enrollment stale records:** Learner & Enrollment migration preflight;
+- **Teacher assignment stale records:** Faculty + Enrollment migration preflight;
+- **Demo stale workflow state:** Admissions cleanup;
+- **Learning Partner/Admin mirrors:** Identity & RoleAssignment migration.
+
+No production backfill or cleanup write is authorized by this document.
 
 ## 10. Next work package
 
