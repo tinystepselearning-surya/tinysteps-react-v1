@@ -119,6 +119,11 @@ const faqItems = [
       `Yes. Standard Tiny Steps 1:1 classes are live online and run for ${PUBLIC_SESSION_DURATION_LABEL}. Small-group options may also be available for selected schedules or programme fits.`,
   },
   {
+    question: 'How much do Tiny Steps public speaking classes cost?',
+    answer:
+      `The standard live 1:1 price is ${speakingClassPriceLabel} for a ${PUBLIC_SESSION_DURATION_LABEL} class. Tiny Steps starts with one free ${demoMinutes}-minute 1:1 assessment before enrolment. The Pricing page remains the canonical source for current fees and any other available formats.`,
+  },
+  {
     question: 'Can families outside India join public speaking classes?',
     answer:
       'Yes. Tiny Steps supports families in India and worldwide, including NRI families and families in the UAE, United States, United Kingdom, Australia, Singapore, and other locations, subject to compatible teacher timings and learning fit.',
@@ -382,6 +387,44 @@ const speakingAiEraReferences = [
   },
 ] as const;
 
+const speakingDecisionEvidence = [
+  {
+    step: '01',
+    title: 'Inspect the curriculum',
+    detail: 'See the speaking roadmap and the existing Foundations and Excellence pathways before deciding.',
+    path: '/curriculum?tab=speaking',
+    cta: 'View curriculum',
+  },
+  {
+    step: '02',
+    title: 'Watch a real class',
+    detail: 'Use class samples to inspect the teaching style, prompting, child participation, correction, and retry process.',
+    path: '/class-samples',
+    cta: 'Watch class samples',
+  },
+  {
+    step: '03',
+    title: 'See how progress is measured',
+    detail: 'Review the Speaking Progress Framework, including support-to-independence bands and fresh-task transfer.',
+    path: SPEAKING_PROGRESS_FRAMEWORK_PATH,
+    cta: 'View progress framework',
+  },
+  {
+    step: '04',
+    title: 'Read parent evidence',
+    detail: 'Read bounded first-party feedback as one decision signal alongside the curriculum, class evidence, and your child’s own assessment.',
+    path: '/testimonials',
+    cta: 'Read parent feedback',
+  },
+  {
+    step: '05',
+    title: 'Check the price',
+    detail: `Standard live 1:1 classes are ${speakingClassPriceLabel}. The free ${demoMinutes}-minute 1:1 assessment comes before enrolment.`,
+    path: '/pricing',
+    cta: 'See full pricing',
+  },
+] as const;
+
 export default function SpeakingPage() {
   const canonicalPath = '/speaking';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
@@ -496,6 +539,25 @@ export default function SpeakingPage() {
       })),
     };
 
+    const speakingDecisionEvidenceSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#parent-decision-evidence`,
+      name: 'What parents can inspect before enrolling in Tiny Steps Speaking',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: speakingDecisionEvidence.length,
+      itemListElement: speakingDecisionEvidence.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'WebPage',
+          name: item.title,
+          url: item.path.startsWith('http') ? item.path : `${PUBLIC_FACTS.primaryWebsite}${item.path.split('?')[0]}`,
+          description: item.detail,
+        },
+      })),
+    };
+
     const speakingAiEraCapabilitiesSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -576,7 +638,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingAiEraCapabilitiesSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingDecisionEvidenceSchema, speakingAiEraCapabilitiesSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -974,6 +1036,47 @@ export default function SpeakingPage() {
         </div>
       </section>
 
+      <section id="before-enrolment" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
+          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-10">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Before you enrol</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                Five things parents can verify before choosing Tiny Steps Speaking
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                You do not need to decide from marketing copy alone. Inspect the curriculum, teaching approach, progress method, first-party parent feedback, and current pricing—then use the free assessment to decide whether the programme and level fit your child.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to="/book-demo" className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                  Book Free Assessment
+                </Link>
+                <Link to="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                  {speakingClassPriceLabel} • See Pricing
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-2.5">
+              {speakingDecisionEvidence.map((item) => (
+                <Link
+                  key={item.step}
+                  to={item.path}
+                  className="grid gap-2 rounded-[18px] border border-slate-200 bg-slate-50/55 p-4 transition hover:-translate-y-0.5 hover:border-violet-200 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-4"
+                >
+                  <span className="text-[10px] font-bold tracking-[0.16em] text-violet-700">{item.step}</span>
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">{item.detail}</span>
+                  </span>
+                  <span className="text-xs font-semibold text-slate-800 underline underline-offset-3">{item.cta} ↗</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <ResponsiveTeachingSection
         appearance="premium"
         id="teacher-delivery"
@@ -1075,25 +1178,43 @@ export default function SpeakingPage() {
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+      <section id="pricing-and-assessment" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[26px] bg-slate-950 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.12)] md:p-7">
           <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">Free 1:1 starting check</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">What happens in the free speaking assessment?</h2>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">Transparent starting point</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
+                {speakingClassPriceLabel} for standard live 1:1 classes. Start with a free assessment.
+              </h2>
               <p className="mt-3 text-sm leading-6 text-slate-300 md:text-[15px]">
-                The teacher may check how your child answers questions, organises ideas, tells a short story, responds to prompts, handles show-and-tell or presentation-style tasks, and speaks with confidence. Based on this, Tiny Steps recommends the right speaking, communication, spoken-English, grammar, or specialist confidence path.
+                Standard Tiny Steps 1:1 classes run for {PUBLIC_SESSION_DURATION_LABEL}. Before enrolment, the free {demoMinutes}-minute 1:1 assessment checks how your child answers questions, organises ideas, tells a story, responds to prompts, handles presentation-style tasks, and how much support is needed.
               </p>
-              <Link to="/book-demo" className="mt-5 inline-flex min-h-[46px] items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
-                Book Free {demoMinutes}-Minute Demo
-              </Link>
+              <p className="mt-3 text-sm leading-6 text-slate-400">
+                The assessment is used for programme and level fit; it is not a clinical diagnosis and does not guarantee a fixed improvement timeline.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link to="/book-demo" className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
+                  Book Free Assessment
+                </Link>
+                <Link to="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+                  View Full Pricing
+                </Link>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2.5 text-sm">
-              {['Response structure', 'Idea organisation', 'Storytelling', 'Presentation readiness', 'Prompt independence', 'Speaking confidence'].map((item) => (
-                <div key={item} className="rounded-[16px] border border-white/10 bg-white/5 px-3 py-3 text-slate-200">
-                  {item}
-                </div>
-              ))}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">What the assessment may observe</p>
+              <div className="mt-3 grid grid-cols-2 gap-2.5 text-sm">
+                {['Response structure', 'Idea organisation', 'Storytelling', 'Presentation readiness', 'Prompt independence', 'Speaking confidence'].map((item) => (
+                  <div key={item} className="rounded-[16px] border border-white/10 bg-white/5 px-3 py-3 text-slate-200">
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                <Link to="/class-samples" className="font-semibold text-slate-200 underline underline-offset-3">Watch class samples</Link>
+                <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold text-slate-200 underline underline-offset-3">See progress method</Link>
+                <Link to="/testimonials" className="font-semibold text-slate-200 underline underline-offset-3">Read parent feedback</Link>
+              </div>
             </div>
           </div>
         </div>
@@ -1124,16 +1245,16 @@ export default function SpeakingPage() {
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f5f3ff_0%,#ffffff_52%,#fff7ed_100%)] p-6 text-center sm:p-8 md:p-9">
-          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Not sure which speaking path fits your child?</h2>
+          <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Ready to check the right speaking path for your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-slate-600 md:text-base">
-            Book one free {demoMinutes}-minute 1:1 online demo assessment class and let Tiny Steps identify whether the best next step is public speaking and communication, everyday spoken English, grammar support, or specialist confidence-building support.
+            Start with the free {demoMinutes}-minute 1:1 assessment. If Speaking is the right fit, standard live 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL} at {speakingClassPriceLabel}; if another pathway fits better, the assessment should identify that before enrolment.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-950 px-7 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-              Book Free {demoMinutes}-Minute Demo
+              Book Free Assessment
             </Link>
-            <Link to="/pricing" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-              See Pricing
+            <Link to="/class-samples" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+              Watch a Real Class
             </Link>
           </div>
         </div>
