@@ -24,7 +24,7 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/lib/commercialC4CtrOptimization.ts': '62ec23c3b0c76440ea386f4f23fde4a292b93099',
   'src/pages/speaking.tsx': 'a3913ca4c4d79cfdbd8412339920fbae1495d83a',
   // Reviewed Speaking-ecosystem destination/navigation surfaces: exact bytes only.
-  'src/pages/CourseDetailPage.tsx': '1b01d7fa7fb855688787475e24f4c921e3e6c07e',
+  'src/pages/CourseDetailPage.tsx': '8b2608266bc8ae522f8a89edda7ff1e0f0675458',
   'src/pages/CurriculumPage.tsx': 'bbdd0490226bc028d8c2dd4f6a33e21cb9cb9291',
   'src/pages/TestimonialsPage.tsx': '228cccac38b5a893153c90081421108ca2322b44',
   'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': '919fcfd52e110f4d129b1b2614ecb5cfee54958c',
