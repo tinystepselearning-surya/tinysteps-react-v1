@@ -11,6 +11,7 @@ import {
 } from './unreadState';
 import { hasApnsConfiguration } from '../lib/sendApnsAlert';
 import { deliverPushToUser } from '../notifications/pushDelivery';
+import { isCurrentAdmin } from '../helpers/adminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -78,22 +79,11 @@ function toEmailPrefix(value: unknown): string | null {
   return email.slice(0, atIndex).trim() || null;
 }
 
-function isTokenAdmin(token: Record<string, unknown> | undefined): boolean {
-  if (!token) return false;
-  if (token.admin === true) return true;
-  return String(token.role || '').trim().toLowerCase() === 'admin';
-}
-
 async function isAdminUser(
-  db: admin.firestore.Firestore,
+  _db: admin.firestore.Firestore,
   auth: AuthLike,
 ): Promise<boolean> {
-  if (isTokenAdmin(auth.token)) return true;
-  const userSnap = await db.collection('users').doc(auth.uid).get();
-  if (!userSnap.exists) return false;
-  const user = userSnap.data() || {};
-  if (user.superUser === true) return true;
-  return String(user.role || '').trim().toLowerCase() === 'admin';
+  return isCurrentAdmin(auth);
 }
 
 function buildLastMessagePreview(text: string): string {
