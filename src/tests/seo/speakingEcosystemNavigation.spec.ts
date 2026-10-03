@@ -20,7 +20,7 @@ describe('Speaking ecosystem navigation', () => {
     expect(vite).not.toContain('LEGACY_CURRICULUM_PROGRAM_LINKS');
     expect(curriculum).toContain("type Tab = 'phonics' | 'reading' | 'grammar' | 'speaking'");
     expect(curriculum).toContain("const requestedTab = searchParams.get('tab');");
-    expect(curriculum).toContain("safeTab(requestedTab)");
+    expect(curriculum).toContain(\n      "const tab = requestedCourse ? inferTabFromCourse(requestedCourse) : safeTab(requestedTab);",\n    );
     expect(curriculum).toContain('id="course-levels"');
     expect(curriculum).toContain('id="speaking-curriculum-v2"');
     expect(speaking).toContain('/curriculum?tab=speaking#course-levels');
