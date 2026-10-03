@@ -144,6 +144,25 @@ OrganisationMembership
 
 Convenience fields such as `teacherId`, `childIds[]`, `assignedKids[]` or `teacherIds[]` may exist temporarily for compatibility or projection use, but must not become competing authoritative relationship models.
 
+
+### 5.1 Academic and enrollment adoption rules
+
+The Academic & Enrollment audit freezes these migration rules:
+
+1. Existing Course IDs are preserved where they continue to represent stable academic Course identity.
+2. Programme is introduced above Course; current Course `area`/`track` values are migration inputs rather than permanent Programme authority.
+3. CurriculumVersion is introduced as immutable/versioned academic definition. Mutable legacy Course fields such as `topics[]` must not become the final curriculum authority.
+4. DeliveryOffering is introduced between Course and Enrollment to own delivery form/context such as 1:1, group or institutional delivery. Commercial price remains outside DeliveryOffering.
+5. Enrollment remains one learner participating in one DeliveryOffering over a lifecycle. Existing Enrollment IDs and lifecycle history are preserved.
+6. Expected teacher responsibility migrates from `enrollment.teacherId` to TeachingAssignment. Actual session staff remains a ClassSession-level relationship.
+7. Recurring timetable intent migrates from `enrollment.schedule` to SchedulePlan. `scheduleMaterialization` remains projection/workflow state.
+8. LearningGroup and GroupPlacement are not inferred from learner arrays, Course capacity defaults or School Sections. They are introduced only for genuine multi-learner delivery.
+9. Course progression/correction continues to create a new Enrollment linked to the previous Enrollment; historical Course identity is never rewritten in place.
+10. Enrollment price, teacher-pay, billing-cycle and credit fields are preserved as historical/operational snapshots while authority moves to Commerce, Entitlement, Finance and Faculty domains.
+11. Past ClassSessions whose historical Enrollment was retired/missing remain historical evidence; migrations must not fabricate Enrollments solely to satisfy a foreign-key shape.
+12. Production Course documents currently do not populate numeric `level`; canonical academic sequencing must be defined explicitly rather than blindly backfilling the legacy form field.
+
+
 ## 6. Lifecycle contract
 
 1. Each domain owns its own lifecycle vocabulary.
@@ -292,7 +311,7 @@ Wave 0 uses six bounded work packages:
 1. **Engineering delivery baseline** — local-first development validation, deployment-only GitHub Actions, and test/workflow retirement rules.
 2. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
 3. **Identity/reference audit — COMPLETE** — code-level decisions, live read-only verification and bounded exception dispositions are recorded in `IDENTITY_REFERENCE_AUDIT.md`.
-4. **Academic/enrollment audit** — map Course/Enrollment/group/teacher/schedule concepts and their current ownership.
+4. **Academic/enrollment audit — COMPLETE** — code-level ownership decisions, live read-only verification and migration-debt classification are recorded in `ACADEMIC_ENROLLMENT_AUDIT.md`.
 5. **Shared experience/design-system inventory** — identify reusable shells/templates/components and controlled variants.
 6. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
 
