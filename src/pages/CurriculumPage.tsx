@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { FC } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
@@ -7,12 +7,12 @@ import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/s
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { getRouteConfig } from '../lib/seo';
 
-type Tab = 'phonics' | 'grammar' | 'speaking';
+type Tab = 'phonics' | 'reading' | 'grammar' | 'speaking';
 
 type RoadmapCourse = {
   name: string;
   path: string;
-  lessons: string;
+  badge: string;
   bestFor: string;
   focus: string;
 };
@@ -20,6 +20,7 @@ type RoadmapCourse = {
 type RoadmapProgram = {
   key: Tab;
   label: string;
+  shortLabel: string;
   programPath: string;
   summary: string;
   sequence: string;
@@ -36,9 +37,9 @@ const curriculumSeo = getRouteConfig('/curriculum');
 const curriculumSeoTitle = curriculumSeo?.title ?? 'English Curriculum for Kids Ages 3–12 | Tiny Steps Learning';
 const curriculumSeoDescription =
   curriculumSeo?.description ??
-  'See the complete Tiny Steps learning roadmap for ages 3–12 across phonics, reading, grammar, sentence building, speaking, and communication.';
+  'Explore the Tiny Steps English curriculum for kids ages 3–12 across phonics, reading, grammar, sentence building, speaking, and communication with assessment-led placement.';
 const curriculumCanonicalPath = curriculumSeo?.canonicalPath ?? '/curriculum';
-const curriculumCanonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${curriculumCanonicalPath}`;
+const curriculumCanonicalUrl = PUBLIC_FACTS.primaryWebsite + curriculumCanonicalPath;
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 
 const curriculumFaqItems = [
@@ -53,9 +54,9 @@ const curriculumFaqItems = [
       'We use a free 35-minute 1:1 online demo assessment class to identify the child’s current reading, grammar, sentence-formation, and speaking needs before recommending a starting level.',
   },
   {
-    question: 'How are Phonics, Grammar, and Speaking connected?',
+    question: 'Does every child start with phonics?',
     answer:
-      'Phonics supports accurate word reading, grammar helps children build and control sentences, and speaking practice helps them organise and express those ideas clearly. Children can enter at the pathway that matches their current need.',
+      'No. A child who already decodes words accurately may need reading fluency, comprehension, grammar, sentence formation, or speaking support instead. The assessment is used to identify the most useful entry point.',
   },
   {
     question: 'What is the difference between curriculum and teaching methodology?',
@@ -68,9 +69,19 @@ const curriculumFaqItems = [
       'Teachers begin from the child’s assessed starting point, secure prerequisites when needed, model the target skill, guide practice and retries, give specific correction, then reduce support as the child becomes more accurate and independent.',
   },
   {
+    question: 'How is the roadmap taught in a live class?',
+    answer:
+      'Teachers follow the shared learning objective and progression, then adapt modelling, prompts, examples, repetition, practice time, and pace to the child’s current response.',
+  },
+  {
+    question: 'Where can I see the exact lesson sequence?',
+    answer:
+      'Use the detailed course pages for the exact lesson-by-lesson sequence. This curriculum page stays focused on the full roadmap, progression logic, and how the programs connect.',
+  },
+  {
     question: 'How long is each live class?',
     answer:
-      `Each live online class runs for ${PUBLIC_FACTS.sessionDuration}, with guided teaching, practice, and teacher feedback.`,
+      'Each live online class runs for ' + PUBLIC_FACTS.sessionDuration + ', with guided teaching, practice, and teacher feedback.',
   },
   {
     question: 'Do you support children from CBSE, ICSE, IB, Cambridge, and other schools?',
@@ -81,29 +92,6 @@ const curriculumFaqItems = [
     question: 'How do parents track progress?',
     answer:
       'Parents receive progress updates showing what has been practised, what is becoming secure, what still needs reinforcement, and the next learning focus.',
-  },
-];
-
-const quickAnswers = [
-  {
-    question: 'What does the complete Tiny Steps learning roadmap include?',
-    answer:
-      'The roadmap connects phonics and reading foundations, grammar and sentence building, and speaking and communication so parents can see the relationship between the three core pathways.',
-  },
-  {
-    question: 'Does every child start with phonics?',
-    answer:
-      'No. A child who already reads may start with grammar, sentence formation, reading fluency, or speaking support. The assessment is used to identify the most useful entry point.',
-  },
-  {
-    question: 'How is the roadmap taught in a live class?',
-    answer:
-      'Teachers follow the shared learning objective and progression, then adapt modelling, prompts, examples, repetition, practice time, and pace to the child’s current response.',
-  },
-  {
-    question: 'Where can I see the exact lesson sequence?',
-    answer:
-      'Use the detailed course pages for the exact lesson-by-lesson sequence. This curriculum page stays focused on the full roadmap, progression logic, and how the programs connect.',
   },
 ];
 
@@ -138,45 +126,79 @@ const teachingMethodSteps: TeachingMethodStep[] = [
 const programs: Record<Tab, RoadmapProgram> = {
   phonics: {
     key: 'phonics',
-    label: 'Phonics & Reading',
+    label: 'Phonics',
+    shortLabel: 'Phonics',
     programPath: '/phonics',
     summary:
-      'Build accurate sound-letter knowledge, blending, decoding, spelling-pattern awareness, and increasingly independent reading.',
+      'Build sound–spelling knowledge, blending, decoding, and spelling-pattern awareness so unfamiliar words can be read more accurately.',
     sequence: 'Hear → identify → connect sound to grapheme → blend → decode → apply in connected reading',
     steps: [
       'Hear and identify the target sound accurately.',
       'Connect the sound to the written grapheme.',
       'Blend sounds into words instead of guessing.',
-      'Decode words with progressively less prompting.',
-      'Apply decoding in sentences and connected reading.',
+      'Decode unfamiliar words with progressively less prompting.',
+      'Apply taught decoding in sentences and connected reading.',
     ],
     courses: [
       {
         name: 'Phonics Foundations',
         path: '/courses/phonics-foundation',
-        lessons: '31 lessons',
+        badge: '31 lessons',
         bestFor: 'Children beginning letter sounds, short vowels, early blending, and first CVC words.',
         focus: 'Build the sound-to-word foundation before more complex spelling patterns.',
       },
       {
         name: 'Early Phonics',
         path: '/courses/phonics-brush-up',
-        lessons: '40 lessons',
+        badge: '40 lessons',
         bestFor: 'Children who know basic sounds but need stronger digraph, vowel-team, and decoding habits.',
         focus: 'Move from basic sound recall into patterned word reading and stronger fluency.',
       },
       {
         name: 'Advanced Phonics',
         path: '/courses/phonics-advanced',
-        lessons: '30 lessons',
+        badge: '30 lessons',
         bestFor: 'Children ready for advanced vowel patterns, longer words, spelling rules, and smoother reading.',
         focus: 'Strengthen complex decoding and connected-reading accuracy.',
+      },
+    ],
+  },
+  reading: {
+    key: 'reading',
+    label: 'Reading',
+    shortLabel: 'Reading',
+    programPath: '/reading-classes-for-kids',
+    summary:
+      'Develop connected-text accuracy, phrasing, fluency, vocabulary, comprehension, retelling, and reading confidence after decoding is reasonably secure.',
+    sequence: 'Read accurately → phrase smoothly → build fluency → understand vocabulary → explain meaning → read with confidence',
+    steps: [
+      'Read appropriately matched connected text accurately.',
+      'Use phrasing and punctuation to make sentences easier to follow.',
+      'Develop smoother pace and stamina without turning reading into a speed race.',
+      'Build useful vocabulary from the text being read.',
+      'Explain, retell, and respond to meaning with increasing independence.',
+    ],
+    courses: [
+      {
+        name: 'Reading Classes for Kids',
+        path: '/reading-classes-for-kids',
+        badge: 'Core reading support',
+        bestFor: 'Children whose decoding is reasonably secure but who need broader support across connected reading, fluency, vocabulary, or comprehension.',
+        focus: 'Build accurate connected reading, phrasing, vocabulary, comprehension, retelling, and reading confidence.',
+      },
+      {
+        name: 'Reading Fluency Programme',
+        path: '/reading-fluency-program',
+        badge: 'Specialist fluency support',
+        bestFor: 'Children who read words accurately but connected reading remains slow, hesitant, or choppy.',
+        focus: 'Improve smoother pace, phrasing, expression, and stamina while continuing to check meaning.',
       },
     ],
   },
   grammar: {
     key: 'grammar',
     label: 'Grammar & Sentence Building',
+    shortLabel: 'Grammar',
     programPath: '/grammar',
     summary:
       'Help children move from knowing grammar terms to building accurate sentences and applying language rules in meaningful speaking and writing.',
@@ -192,14 +214,14 @@ const programs: Record<Tab, RoadmapProgram> = {
       {
         name: 'Beginner Grammar',
         path: '/courses/grammar',
-        lessons: '36 lessons',
+        badge: '36 lessons',
         bestFor: 'Children who read but need stronger grammar basics, punctuation, and sentence formation.',
         focus: 'Build usable sentence control before advanced grammar and writing tasks.',
       },
       {
         name: 'Advanced Grammar',
         path: '/courses/grammar-mastery',
-        lessons: '36 lessons',
+        badge: '36 lessons',
         bestFor: 'Children who know grammar basics but need stronger tense control, editing, and paragraph-level writing.',
         focus: 'Apply grammar more consistently in complex sentences, editing, and connected writing.',
       },
@@ -208,6 +230,7 @@ const programs: Record<Tab, RoadmapProgram> = {
   speaking: {
     key: 'speaking',
     label: 'Speaking & Communication',
+    shortLabel: 'Speaking',
     programPath: '/speaking',
     summary:
       'Build organised ideas, storytelling, presentation structure, clear expression, audience awareness, and stronger delivery through guided speaking practice.',
@@ -223,26 +246,96 @@ const programs: Record<Tab, RoadmapProgram> = {
       {
         name: 'Public Speaking Foundations',
         path: speakingFacts.levels.beginner.canonicalCoursePath,
-        lessons: `${speakingFacts.levels.beginner.lessonCount} lessons`,
-        bestFor: `${speakingFacts.levels.beginner.ageRange.label}; children who can communicate basic ideas but need more organisation, picture talk, show-and-tell, storytelling foundations, and short presentation structure.`,
+        badge: speakingFacts.levels.beginner.lessonCount + ' lessons',
+        bestFor:
+          speakingFacts.levels.beginner.ageRange.label +
+          '; children who can communicate basic ideas but need more organisation, picture talk, show-and-tell, storytelling foundations, and short presentation structure.',
         focus: 'Build organised short responses, clear expression, storytelling foundations, and readiness for guided presentations.',
       },
       {
         name: 'Public Speaking Excellence',
         path: speakingFacts.levels.advanced.canonicalCoursePath,
-        lessons: `${speakingFacts.levels.advanced.lessonCount} lessons`,
-        bestFor: `${speakingFacts.levels.advanced.ageRange.label}; children ready for longer talks, richer storytelling, presentations, impromptu speaking, opinion sharing, and guided debate.`,
+        badge: speakingFacts.levels.advanced.lessonCount + ' lessons',
+        bestFor:
+          speakingFacts.levels.advanced.ageRange.label +
+          '; children ready for longer talks, richer storytelling, presentations, impromptu speaking, opinion sharing, and guided debate.',
         focus: 'Strengthen speech organisation, audience awareness, reasoning, expression, delivery, and independent presentation skills.',
       },
     ],
   },
 };
 
+const pathwaySignals: Array<{ tab: Tab; signal: string; helper: string }> = [
+  {
+    tab: 'phonics',
+    signal: 'Knows letters or sounds but cannot reliably blend unfamiliar words.',
+    helper: 'Check sound–spelling knowledge, blending, and decoding.',
+  },
+  {
+    tab: 'reading',
+    signal: 'Reads words, but connected reading is slow, choppy, or hard to understand.',
+    helper: 'Check fluency, phrasing, vocabulary, and comprehension.',
+  },
+  {
+    tab: 'grammar',
+    signal: 'Can read, but sentences are incomplete, inaccurate, or difficult to expand.',
+    helper: 'Check sentence formation, grammar control, and correction.',
+  },
+  {
+    tab: 'speaking',
+    signal: 'Has ideas, but answers are short, disorganised, or difficult to present clearly.',
+    helper: 'Check idea organisation, detail, storytelling, and delivery.',
+  },
+];
+
+const heroPathFocus: Record<Tab, string> = {
+  phonics: 'Sounds · blending · decoding',
+  reading: 'Fluency · vocabulary · comprehension',
+  grammar: 'Sentences · grammar control · correction',
+  speaking: 'Ideas · storytelling · presentation',
+};
+
+const curriculumNavItems = [
+  { id: 'find-your-path', label: 'Find your path' },
+  { id: 'program-roadmap', label: 'Pathways' },
+  { id: 'progression', label: 'Progression' },
+  { id: 'course-levels', label: 'Levels' },
+  { id: 'assessment', label: 'Assessment' },
+  { id: 'teaching-method', label: 'Teaching' },
+  { id: 'faq', label: 'FAQs' },
+] as const;
+
+const placementSteps = [
+  {
+    title: 'Understand',
+    description: 'Start with what the parent and child are currently noticing.',
+  },
+  {
+    title: 'Assess',
+    description: 'Check the skills most relevant to the current difficulty.',
+  },
+  {
+    title: 'Identify',
+    description: 'Find the main gap and any prerequisite that is not yet secure.',
+  },
+  {
+    title: 'Place',
+    description: 'Choose the pathway and level that match the assessed starting point.',
+  },
+  {
+    title: 'Progress',
+    description: 'Move forward as accuracy, independence, and transfer become more secure.',
+  },
+];
+
 const safeTab = (value: string | null): Tab =>
-  value === 'grammar' || value === 'speaking' || value === 'phonics' ? value : 'phonics';
+  value === 'reading' || value === 'grammar' || value === 'speaking' || value === 'phonics'
+    ? value
+    : 'phonics';
 
 const inferTabFromCourse = (course: string | null): Tab => {
   const normalized = String(course || '').toLowerCase();
+  if (normalized.includes('reading')) return 'reading';
   if (normalized.includes('grammar')) return 'grammar';
   if (normalized.includes('speaking')) return 'speaking';
   return 'phonics';
@@ -251,8 +344,41 @@ const inferTabFromCourse = (course: string | null): Tab => {
 const CurriculumPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCourse = searchParams.get('course');
-  const tab = requestedCourse ? inferTabFromCourse(requestedCourse) : safeTab(searchParams.get('tab'));
+  const requestedTab = searchParams.get('tab');
+  const tab = requestedCourse ? inferTabFromCourse(requestedCourse) : safeTab(requestedTab);
   const selectedProgram = programs[tab];
+  const hasExplicitPath = Boolean(requestedCourse || requestedTab);
+  const [activeSection, setActiveSection] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return window.location.hash.replace('#', '');
+  });
+
+  useEffect(() => {
+    const sections = curriculumNavItems
+      .map((item) => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (!sections.length || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visible[0]?.target?.id) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      {
+        rootMargin: '-22% 0px -58% 0px',
+        threshold: [0, 0.08, 0.2, 0.4],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
 
   const setTab = (next: Tab) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -261,40 +387,50 @@ const CurriculumPage: FC = () => {
     setSearchParams(nextParams, { replace: true });
   };
 
+  const focusPath = (next: Tab) => {
+    setTab(next);
+    window.requestAnimationFrame(() => {
+      document.getElementById('course-levels')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+  };
+
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: `${PUBLIC_FACTS.primaryWebsite}/` },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: PUBLIC_FACTS.primaryWebsite + '/' },
       { '@type': 'ListItem', position: 2, name: 'Curriculum', item: curriculumCanonicalUrl },
     ],
   };
 
   const webpageSchema = createWebPageSchema({
-    name: 'Tiny Steps English Curriculum and Learning Roadmap (Ages 3–12)',
+    name: 'English Curriculum for Kids Ages 3–12',
     description:
-      'The complete Tiny Steps learning roadmap connecting phonics and reading foundations, grammar and sentence building, and speaking and communication through assessment-led progression and child-responsive live teaching.',
+      'The complete Tiny Steps learning roadmap across phonics, reading, grammar and sentence building, and speaking and communication, with assessment-led progression and child-responsive live teaching.',
     url: curriculumCanonicalUrl,
   });
 
   const roadmapSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    '@id': `${curriculumCanonicalUrl}#program-roadmap`,
-    name: 'Tiny Steps core learning roadmap',
-    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    '@id': curriculumCanonicalUrl + '#program-roadmap',
+    name: 'Tiny Steps English learning pathways',
+    itemListOrder: 'https://schema.org/ItemListUnordered',
     itemListElement: Object.values(programs).map((program, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       name: program.label,
-      url: `${PUBLIC_FACTS.primaryWebsite}${program.programPath}`,
+      url: PUBLIC_FACTS.primaryWebsite + program.programPath,
     })),
   };
 
   const teachingMethodSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    '@id': `${curriculumCanonicalUrl}#teaching-method`,
+    '@id': curriculumCanonicalUrl + '#teaching-method',
     name: 'Tiny Steps curriculum-to-classroom teaching method',
     itemListOrder: 'https://schema.org/ItemListOrderAscending',
     itemListElement: teachingMethodSteps.map((step, index) => ({
@@ -307,11 +443,11 @@ const CurriculumPage: FC = () => {
 
   const faqSchema = {
     ...createFAQPageSchema(curriculumFaqItems),
-    '@id': `${curriculumCanonicalUrl}#faq`,
+    '@id': curriculumCanonicalUrl + '#faq',
   };
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_58%,#f8fbff_100%)] pb-24 text-slate-950">
+    <div className="min-h-screen overflow-x-clip bg-[#fbfaf7] pb-24 text-slate-950">
       <Meta
         title={curriculumSeoTitle}
         description={curriculumSeoDescription}
@@ -319,215 +455,532 @@ const CurriculumPage: FC = () => {
         jsonLd={[breadcrumbSchema, webpageSchema, roadmapSchema, teachingMethodSchema, faqSchema]}
       />
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 pt-10 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[32px] border border-orange-100/80 bg-white/95 px-5 py-9 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-8 sm:py-12">
-          <div className="mx-auto mb-4 inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">Ages 3–12 • Assessment-led placement</div>
-          <h1 className="font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[3.6rem]">The complete Tiny Steps learning roadmap</h1>
-          <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
-            See how Phonics & Reading, Grammar & Sentence Building, and Speaking & Communication connect, how skills progress, and which detailed course fits the next level of learning.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link to="/courses" className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-              Compare All Courses
-            </Link>
-            <Link to="/book-demo" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-              Book Free 35-Minute Demo
-            </Link>
-          </div>
-        </div>
-      </section>
+      <section className="mx-auto max-w-7xl px-4 pb-9 pt-8 sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
+        <div className="grid items-center gap-9 lg:grid-cols-[1.03fr_0.97fr] lg:gap-10">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">
+              <span className="h-2 w-2 rounded-full bg-orange-500" aria-hidden="true" />
+              Ages 3–12 · Assessment-led placement
+            </div>
+            <p className="mt-5 text-sm font-semibold text-slate-500">The complete Tiny Steps learning roadmap</p>
+            <h1 className="mt-2 max-w-4xl font-heading text-[2.7rem] font-black leading-[0.98] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-[4.2rem]">
+              English Curriculum for Kids Ages 3–12
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg md:leading-8">
+              A structured learning roadmap across Phonics, Reading, Grammar &amp; Sentence Building, and
+              Speaking &amp; Communication — with placement based on your child&apos;s current skills, not age
+              alone.
+            </p>
 
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
-        <div className="rounded-[28px] border border-slate-200/90 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.045)] md:p-8">
-          <h2 className="text-2xl font-semibold text-gray-900">Quick answers before you explore</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-700">
-            This page shows the relationship between programs and levels. Use the detailed course pages when you want the exact lesson-by-lesson sequence.
-          </p>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {quickAnswers.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-gray-200 bg-white/85 p-5 shadow-sm">
-                <h3 className="text-base font-semibold text-gray-900">{item.question}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-700">{item.answer}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="program-roadmap" className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="programs-heading">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Step 1 · See how the programs connect</p>
-          <h2 id="programs-heading" className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Three core learning pathways</h2>
-          <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-gray-700 md:text-base">
-            Children do not have to complete every pathway in a fixed age order. Assessment identifies the current gap, then the matching program becomes the main learning path.
-          </p>
-        </div>
-        <div className="mt-7 grid gap-5 md:grid-cols-3">
-          {Object.values(programs).map((program, index) => (
-            <article key={program.key} className="rounded-3xl border border-gray-200 bg-white/90 p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-gray-500">Pathway {index + 1}</p>
-              <h3 className="mt-2 text-xl font-semibold text-gray-900">{program.label}</h3>
-              <p className="mt-3 text-sm leading-6 text-gray-700">{program.summary}</p>
-              <Link to={program.programPath} className="mt-5 inline-flex font-semibold text-primary-600 underline underline-offset-4">
-                Explore the {program.label} program
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a
+                href="#find-your-path"
+                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+              >
+                Explore the learning paths
+              </a>
+              <Link
+                to="/book-demo"
+                className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+              >
+                Book Free 35-Minute Assessment
               </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+            </div>
 
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6" aria-labelledby="method-heading">
-        <div className="rounded-[32px] border border-slate-200 bg-slate-950 p-6 text-white shadow-xl md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Step 2 · See how skills develop</p>
-          <h2 id="method-heading" className="mt-2 text-2xl font-semibold md:text-3xl">What progression looks like inside each pathway</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-200 md:text-base">
-            Each pathway moves from supported recognition and practice toward more accurate, independent application in reading, writing, or speaking.
-          </p>
-          <div className="mt-7 grid gap-5 lg:grid-cols-3">
-            {Object.values(programs).map((program) => (
-              <article key={program.key} className="rounded-3xl border border-white/15 bg-white/5 p-5">
-                <h3 className="text-lg font-semibold text-white">{program.label}</h3>
-                <p className="mt-3 text-sm font-semibold leading-6 text-orange-200">{program.sequence}</p>
-                <ol className="mt-4 space-y-2 text-sm leading-6 text-slate-200">
-                  {program.steps.map((step, index) => (
-                    <li key={step} className="flex gap-3">
-                      <span className="font-semibold text-white">{index + 1}.</span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </article>
-            ))}
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200 pt-5 text-xs font-semibold text-slate-600 sm:text-sm">
+              <span>Live teacher-guided learning</span>
+              <span>Assessment-led starting point</span>
+              <span>{PUBLIC_FACTS.sessionDuration} 1:1 classes</span>
+            </div>
           </div>
-        </div>
-      </section>
 
-      <section id="teaching-method" className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="teaching-method-heading">
-        <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm md:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Step 3 · See how the roadmap becomes a live lesson</p>
-              <h2 id="teaching-method-heading" className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Structured sequence, responsive teaching</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-700 md:text-base">
-                The curriculum explains <strong>what</strong> children learn and which prerequisites come first. In class, the teacher models the target skill, guides practice, corrects errors, adjusts support, and helps the child apply it with increasing independence.
+          <div className="relative overflow-hidden rounded-[30px] bg-slate-950 p-5 text-white shadow-[0_26px_70px_rgba(15,23,42,0.22)] sm:p-6">
+            <div className="absolute -right-16 -top-20 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
+            <div className="absolute -bottom-20 -left-16 h-44 w-44 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true" />
+
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-400">Learning map</p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight">
+                    {hasExplicitPath ? 'Viewing ' + selectedProgram.label : 'Four connected learning pathways'}
+                  </h2>
+                </div>
+                <span className="whitespace-nowrap rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
+                  Skill-led placement
+                </span>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {(Object.keys(programs) as Tab[]).map((key, index) => {
+                  const program = programs[key];
+                  const active = hasExplicitPath && tab === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => focusPath(key)}
+                      aria-current={active ? 'step' : undefined}
+                      className={
+                        'group min-h-[126px] rounded-2xl border p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ' +
+                        (active
+                          ? 'border-orange-300/70 bg-white text-slate-950 shadow-lg'
+                          : 'border-white/10 bg-white/[0.045] text-white hover:-translate-y-0.5 hover:border-orange-300/35 hover:bg-white/[0.08]')
+                      }
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span
+                          className={
+                            'flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ' +
+                            (active ? 'bg-orange-100 text-orange-800' : 'bg-white/10 text-slate-300')
+                          }
+                        >
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                        <span className={'text-lg transition group-hover:translate-x-0.5 ' + (active ? 'text-orange-600' : 'text-slate-500')} aria-hidden="true">
+                          →
+                        </span>
+                      </div>
+                      <span className="mt-4 block text-base font-bold leading-5">{program.label}</span>
+                      <span className={'mt-2 block text-xs font-semibold leading-5 ' + (active ? 'text-slate-600' : 'text-slate-400')}>
+                        {heroPathFocus[key]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-slate-400">
+                Four connected pathways, not four fixed age stages. Assessment identifies the most useful starting point.
               </p>
             </div>
-            <p className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-6 text-slate-700">
-              The sequence stays structured, but the pace is responsive. A child can spend longer on a prerequisite or move forward when the underlying skill is secure.
+          </div>
+        </div>
+      </section>
+
+      <nav
+        aria-label="Curriculum sections"
+        className="sticky top-[72px] z-30 hidden border-y border-slate-200/80 bg-[#fbfaf7]/95 backdrop-blur md:block"
+      >
+        <div className="mx-auto flex max-w-7xl items-center gap-7 overflow-x-auto px-6 py-3 text-xs font-bold text-slate-600 lg:px-8">
+          {curriculumNavItems.map((item) => {
+            const active = activeSection === item.id;
+            return (
+              <a
+                key={item.id}
+                href={'#' + item.id}
+                onClick={() => setActiveSection(item.id)}
+                aria-current={active ? 'location' : undefined}
+                className={
+                  'relative whitespace-nowrap py-1 transition hover:text-slate-950 ' +
+                  (active
+                    ? 'text-slate-950 after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-orange-500'
+                    : '')
+                }
+              >
+                {item.label}
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+
+      <section id="find-your-path" className="scroll-mt-32 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-labelledby="find-path-heading">
+        <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-14">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Start with the child you know</p>
+            <h2 id="find-path-heading" className="mt-3 max-w-lg text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+              What are you noticing right now?
+            </h2>
+            <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600 md:text-base">
+              Parents usually arrive with a problem, not a curriculum label. Use the closest signal below to
+              understand which pathway is worth exploring first.
+            </p>
+            <p className="mt-5 text-sm font-semibold text-slate-900">
+              Not sure? That is exactly what the assessment is for.
             </p>
           </div>
 
-          <ol className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {teachingMethodSteps.map((step, index) => (
-              <li key={step.title} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">{index + 1}</span>
-                <h3 className="mt-4 text-base font-semibold text-slate-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{step.description}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-7 flex flex-wrap gap-3 border-t border-slate-200 pt-6 text-sm font-semibold">
-            <Link to="/team" className="text-primary-600 underline underline-offset-4">
-              Meet the Tiny Steps team
-            </Link>
-            <Link to="/class-samples" className="text-primary-600 underline underline-offset-4">
-              Watch real class samples
-            </Link>
-            <Link to="/phonics" className="text-primary-600 underline underline-offset-4">
-              Explore the Phonics & Reading program
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-white/50 bg-white/90" id="course-levels">
-        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Step 4 · Choose a pathway and compare its levels</p>
-          <p className="mt-2 text-sm font-semibold text-gray-900">Select a pathway</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(Object.keys(programs) as Tab[]).map((key) => (
+          <div className="grid border-y border-slate-200 sm:grid-cols-2">
+            {pathwaySignals.map((item, index) => (
               <button
-                key={key}
+                key={item.tab}
                 type="button"
-                onClick={() => setTab(key)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 ${
-                  tab === key ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow' : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                onClick={() => focusPath(item.tab)}
+                className={
+                  'group p-5 text-left transition hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-300 sm:p-6 ' +
+                  (index % 2 === 0 ? 'sm:border-r sm:border-slate-200 ' : '') +
+                  (index < 2 ? 'border-b border-slate-200 ' : index === 2 ? 'border-b border-slate-200 sm:border-b-0 ' : '')
+                }
               >
-                {programs[key].label}
+                <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                  {programs[item.tab].shortLabel}
+                </span>
+                <span className="mt-2 block text-lg font-bold leading-6 text-slate-950">{item.signal}</span>
+                <span className="mt-2 block text-sm leading-6 text-slate-600">{item.helper}</span>
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-orange-700">
+                  See this pathway <span className="transition group-hover:translate-x-0.5" aria-hidden="true">→</span>
+                </span>
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="levels-heading">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Detailed course levels</p>
-            <h2 id="levels-heading" className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">{selectedProgram.label} levels</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-700 md:text-base">
-              This roadmap shows where each level fits. Open the detailed course page for the exact lesson sequence, level-specific FAQs, and course outcomes.
+      <section id="program-roadmap" className="scroll-mt-32 border-y border-slate-200 bg-white" aria-labelledby="programs-heading">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">One connected learning system</p>
+              <h2 id="programs-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+                Four learning pathways, one clear roadmap
+              </h2>
+            </div>
+            <p className="max-w-2xl text-sm leading-7 text-slate-600 md:text-base lg:justify-self-end">
+              Children do not have to complete every pathway in a fixed age order. Assessment identifies the
+              current gap, then the matching pathway becomes the main learning focus.
             </p>
           </div>
-          <Link to={selectedProgram.programPath} className="text-sm font-semibold text-primary-600 underline underline-offset-4">
-            View the full {selectedProgram.label} program
-          </Link>
+
+          <div className="mt-9 grid border-y border-slate-200 md:grid-cols-2 xl:grid-cols-4 xl:divide-x xl:divide-slate-200">
+            {Object.values(programs).map((program, index) => (
+              <article
+                key={program.key}
+                className={
+                  'px-1 py-6 md:px-6 xl:px-6 ' +
+                  (index < 2 ? 'border-b border-slate-200 xl:border-b-0 ' : '') +
+                  (index % 2 === 0 ? 'md:border-r md:border-slate-200 xl:border-r-0 ' : '')
+                }
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                    Learning area {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="h-2.5 w-2.5 rounded-full bg-orange-400" aria-hidden="true" />
+                </div>
+                <h3 className="mt-4 text-xl font-bold text-slate-950">{program.label}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{program.summary}</p>
+                <Link
+                  to={program.programPath}
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-orange-500"
+                >
+                  Explore {program.shortLabel}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="progression" className="scroll-mt-32 bg-slate-950 text-white" aria-labelledby="progression-heading">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">How skills develop</p>
+            <h2 id="progression-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
+              Progression should feel visible, not mysterious
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-300 md:text-base">
+              Each pathway moves from supported recognition and practice toward more accurate, independent
+              application. The sequence stays clear while the pace responds to the child.
+            </p>
+            <p className="mt-4 hidden text-xs font-bold uppercase tracking-[0.14em] text-slate-500 lg:block">
+              Hover to trace a pathway · Open progression detail for the teaching checkpoints
+            </p>
+          </div>
+
+          <div className="mt-8 divide-y divide-white/10 border-y border-white/10">
+            {Object.values(programs).map((program) => {
+              const sequenceParts = program.sequence.split(' → ');
+              return (
+                <article key={program.key} className="group/progression grid gap-4 rounded-2xl px-3 py-6 transition duration-200 hover:bg-white/[0.035] lg:grid-cols-[220px_1fr] lg:gap-8 lg:px-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{program.label}</h3>
+                    <Link to={program.programPath} className="mt-2 inline-flex text-xs font-bold text-orange-300 underline underline-offset-4">
+                      Open pathway
+                    </Link>
+                  </div>
+
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {sequenceParts.map((part, index) => (
+                        <span key={part} className="contents">
+                          <span
+                            className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100 transition duration-200 motion-reduce:transition-none group-hover/progression:-translate-y-0.5 group-hover/progression:border-orange-300/55 group-hover/progression:bg-orange-300/[0.11] hover:border-orange-300/80 hover:bg-orange-300/15"
+                            style={{ transitionDelay: (index * 45) + 'ms' }}
+                          >
+                            {part}
+                          </span>
+                          {index < sequenceParts.length - 1 && (
+                            <span
+                              className="text-slate-500 transition duration-200 motion-reduce:transition-none group-hover/progression:text-orange-300"
+                              style={{ transitionDelay: (index * 45 + 20) + 'ms' }}
+                              aria-hidden="true"
+                            >
+                              →
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+
+                    <details className="group mt-4">
+                      <summary className="inline-flex cursor-pointer list-none items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-orange-300/40 hover:bg-orange-300/[0.08] hover:text-white">
+                        <span className="group-open:hidden">View progression detail +</span>
+                        <span className="hidden group-open:inline">Hide progression detail −</span>
+                      </summary>
+                      <ol className="mt-4 grid gap-x-6 gap-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs leading-5 text-slate-300 sm:grid-cols-2 xl:grid-cols-5">
+                        {program.steps.map((step, index) => (
+                          <li key={step} className="flex gap-2">
+                            <span className="font-black text-orange-300">{index + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </details>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="course-levels" className="scroll-mt-32 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-labelledby="levels-heading">
+        <div className="grid gap-8 lg:grid-cols-[0.56fr_1fr] lg:gap-12">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Compare levels &amp; routes</p>
+            <h2 id="levels-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+              Explore levels within each pathway
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-600 md:text-base">
+              This roadmap shows where each option fits. Open the detailed course page for the exact lesson
+              sequence, level-specific FAQs, and course outcomes where a detailed course page exists.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-2" aria-label="Curriculum pathways">
+              {(Object.keys(programs) as Tab[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  aria-pressed={tab === key}
+                  className={
+                    'rounded-full px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 ' +
+                    (tab === key
+                      ? 'bg-slate-950 text-white'
+                      : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-950')
+                  }
+                >
+                  {programs[key].shortLabel}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-7 border-l-2 border-orange-400 pl-4">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Selected pathway</p>
+              <p className="mt-1 text-lg font-bold text-slate-950">{selectedProgram.label}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{selectedProgram.summary}</p>
+              <Link
+                to={selectedProgram.programPath}
+                className="mt-3 inline-flex text-sm font-bold text-orange-700 underline underline-offset-4"
+              >
+                View the full {selectedProgram.label} program
+              </Link>
+            </div>
+          </div>
+
+          <div className="border-y border-slate-200 bg-white">
+            {selectedProgram.courses.map((course, index) => (
+              <article
+                key={course.path}
+                className={
+                  'grid gap-4 px-5 py-6 md:grid-cols-[0.9fr_1fr_1fr] md:items-start md:gap-6 md:px-6 ' +
+                  (index < selectedProgram.courses.length - 1 ? 'border-b border-slate-200' : '')
+                }
+              >
+                <div>
+                  <div className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-slate-600">
+                    {course.badge}
+                  </div>
+                  <h3 className="mt-3 text-lg font-bold text-slate-950">{course.name}</h3>
+                  <Link
+                    to={course.path}
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-orange-500"
+                  >
+                    View details
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Best for</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{course.bestFor}</p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">Learning focus</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{course.focus}</p>
+                </div>
+
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="assessment" className="scroll-mt-32 border-y border-slate-200 bg-white" aria-labelledby="assessment-heading">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Assessment-led placement</p>
+              <h2 id="assessment-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+                We do not place children by age alone
+              </h2>
+            </div>
+            <p className="max-w-2xl text-sm leading-7 text-slate-600 md:text-base lg:justify-self-end">
+              Age helps frame expectations, but the starting point comes from the child&apos;s current response.
+              The aim is to identify the most useful next teaching priority before enrolment.
+            </p>
+          </div>
+
+          <ol className="mt-9 grid border-y border-slate-200 md:grid-cols-5 md:divide-x md:divide-slate-200">
+            {placementSteps.map((step, index) => (
+              <li key={step.title} className="border-b border-slate-200 px-1 py-5 last:border-b-0 md:border-b-0 md:px-5 md:py-6">
+                <span className="text-xs font-black text-orange-600">{String(index + 1).padStart(2, '0')}</span>
+                <h3 className="mt-2 text-lg font-bold text-slate-950">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
+            <p className="max-w-2xl text-sm leading-6 text-slate-600">
+              If the main bottleneck is unclear, assessment is more useful than choosing a course from age,
+              popularity, or lesson count alone.
+            </p>
+            <Link
+              to="/book-demo"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+            >
+              Book Free 35-Minute Assessment
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="teaching-method" className="scroll-mt-32 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-labelledby="teaching-method-heading">
+        <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:gap-14">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
+              How the roadmap becomes a live lesson
+            </p>
+            <h2 id="teaching-method-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+              Structured sequence, responsive teaching
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-600 md:text-base">
+              The curriculum explains <strong>what</strong> children learn and which prerequisites come first. In
+              class, the teacher models the target skill, guides practice, corrects errors, adjusts support, and
+              helps the child apply it with increasing independence.
+            </p>
+            <p className="mt-5 border-l-2 border-emerald-400 pl-4 text-sm leading-6 text-slate-700">
+              The sequence stays structured, but the pace is responsive. A child can spend longer on a
+              prerequisite or move forward when the underlying skill is secure.
+            </p>
+          </div>
+
+          <ol className="divide-y divide-slate-200 border-y border-slate-200">
+            {teachingMethodSteps.map((step, index) => (
+              <li key={step.title} className="grid gap-3 py-5 sm:grid-cols-[48px_190px_1fr] sm:items-start sm:gap-5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 text-xs font-black text-white">
+                  {index + 1}
+                </span>
+                <h3 className="text-base font-bold text-slate-950">{step.title}</h3>
+                <p className="text-sm leading-6 text-slate-600">{step.description}</p>
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div className="mt-7 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {selectedProgram.courses.map((course) => (
-            <article key={course.path} className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white/90 p-6 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-xl font-semibold text-gray-900">{course.name}</h3>
-                <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{course.lessons}</span>
-              </div>
-              <p className="mt-4 text-sm leading-6 text-gray-700"><strong>Best for:</strong> {course.bestFor}</p>
-              <p className="mt-3 text-sm leading-6 text-gray-700"><strong>Learning focus:</strong> {course.focus}</p>
-              <Link to={course.path} className="mt-5 inline-flex font-semibold text-primary-600 underline underline-offset-4">
-                View detailed course
-              </Link>
-            </article>
-          ))}
+        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-200 pt-6 text-sm font-bold">
+          <Link to="/team" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
+            Meet the Tiny Steps team
+          </Link>
+          <Link to="/class-samples" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
+            Watch real class samples
+          </Link>
+          <Link to="/phonics" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
+            Explore the Phonics program
+          </Link>
         </div>
       </section>
 
       <IBAlignmentSection />
 
-      <section className="mx-auto max-w-4xl px-4 py-10" aria-labelledby="who-heading">
-        <h2 id="who-heading" className="text-2xl font-semibold text-gray-900">Who this roadmap helps</h2>
-        <ul className="mt-5 space-y-3 text-gray-700">
-          <li>• A child knows letters but cannot blend words confidently.</li>
-          <li>• A child reads but needs stronger accuracy, fluency, or spelling-pattern knowledge.</li>
-          <li>• A child can read but struggles to build correct or complete sentences.</li>
-          <li>• A child understands English but gives short answers or hesitates to speak.</li>
-          <li>• A parent wants a structured next step instead of random worksheets or disconnected topics.</li>
-        </ul>
-        <p className="mt-5 text-sm leading-6 text-gray-700">
-          If you are unsure which pathway fits, use the free assessment to identify the current learning gap before choosing a course.
-        </p>
-        <Link to="/book-demo" className="mt-4 inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2">
-          Book Free 35-Minute Demo
-        </Link>
+      <section id="faq" className="scroll-mt-32 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-16" aria-labelledby="faq-heading">
+        <div className="grid gap-7 lg:grid-cols-[0.58fr_1.42fr] lg:gap-12">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Before you decide</p>
+            <h2 id="faq-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-[2.1rem]">
+              Curriculum questions parents ask most
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-600">
+              The curriculum page explains the full learning roadmap. Detailed course pages own the exact
+              lesson-by-lesson sequence.
+            </p>
+          </div>
+
+          <div className="divide-y divide-slate-200 border-y border-slate-200">
+            {curriculumFaqItems.map((item) => (
+              <details key={item.question} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 font-bold text-slate-950">
+                  <span>{item.question}</span>
+                  <span className="text-slate-400 group-open:hidden" aria-hidden="true">+</span>
+                  <span className="hidden text-slate-400 group-open:inline" aria-hidden="true">−</span>
+                </summary>
+                <div className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{item.answer}</div>
+              </details>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-4 py-10" aria-labelledby="faq-heading">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Before you decide</p>
-        <h2 id="faq-heading" className="mt-2 text-2xl font-semibold text-gray-900">Frequently asked questions</h2>
-        <div className="mt-6 space-y-4">
-          {curriculumFaqItems.map((item) => (
-            <details key={item.question} className="rounded-2xl border border-gray-200 bg-white/85 p-4">
-              <summary className="cursor-pointer font-medium text-gray-900">{item.question}</summary>
-              <div className="mt-2 text-sm leading-6 text-gray-700">{item.answer}</div>
-            </details>
-          ))}
+      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="grid gap-6 rounded-[30px] bg-slate-950 px-6 py-8 text-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10 lg:py-10">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">Not sure where to begin?</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] sm:text-3xl">
+              Start with the child&apos;s current skills, then choose the path.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+              The free 1:1 assessment is designed to identify the current learning gap before a programme or level
+              is recommended.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3 lg:justify-end">
+            <Link
+              to="/book-demo"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-slate-100"
+            >
+              Book Free 35-Minute Assessment
+            </Link>
+            <Link
+              to="/courses"
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-white/20 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              Compare All Courses
+            </Link>
+          </div>
         </div>
       </section>
 
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white/95 p-4 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
-        <Link to="/book-demo" className="mx-auto block min-h-[48px] w-full max-w-md rounded-full bg-slate-950 py-3 text-center font-bold text-white">
-          Book Free 35-Minute Demo
+        <Link
+          to="/book-demo"
+          className="mx-auto block min-h-[48px] w-full max-w-md rounded-full bg-slate-950 py-3 text-center font-bold text-white"
+        >
+          Book Free 35-Minute Assessment
         </Link>
       </div>
     </div>

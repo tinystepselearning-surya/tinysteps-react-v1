@@ -27,7 +27,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/curriculum': {
     title: 'English Curriculum for Kids Ages 3–12 | Tiny Steps Learning',
     description:
-      'See the complete Tiny Steps learning roadmap for ages 3–12: phonics and reading foundations, grammar and sentence building, then speaking and communication progression.',
+      'Explore the Tiny Steps English curriculum for kids ages 3–12 across phonics, reading, grammar and sentence building, and speaking and communication, with assessment-led placement.',
     canonicalPath: '/curriculum',
     ogType: 'website',
   },
