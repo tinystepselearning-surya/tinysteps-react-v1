@@ -708,18 +708,12 @@ export default function SpeakingPage() {
             </div>
 
             <div className="relative lg:-mr-3 xl:-mr-7">
-              <div className="pointer-events-none absolute -inset-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.72)_0%,rgba(242,236,255,0.26)_48%,rgba(255,242,232,0.18)_68%,transparent_82%)] blur-2xl" />
-              <div className="relative h-[300px] w-full sm:h-[350px] lg:h-[405px] xl:h-[440px]">
+              <div className="pointer-events-none absolute -inset-12 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.72)_0%,rgba(242,236,255,0.26)_46%,rgba(255,242,232,0.18)_68%,transparent_84%)] blur-2xl" />
+              <div className="relative h-[300px] w-full overflow-hidden sm:h-[350px] lg:h-[405px] xl:h-[440px]">
                 <img
                   src="/blog/hero-families/Tiny_Steps_Speaking.webp"
                   alt="Child practising public speaking online at home"
                   className="h-full w-full object-cover object-[61%_center]"
-                  style={{
-                    WebkitMaskImage:
-                      'radial-gradient(ellipse 58% 56% at 52% 50%, #000 68%, rgba(0,0,0,0.94) 76%, rgba(0,0,0,0.68) 86%, rgba(0,0,0,0.22) 95%, transparent 100%)',
-                    maskImage:
-                      'radial-gradient(ellipse 58% 56% at 52% 50%, #000 68%, rgba(0,0,0,0.94) 76%, rgba(0,0,0,0.68) 86%, rgba(0,0,0,0.22) 95%, transparent 100%)',
-                  }}
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
@@ -730,6 +724,16 @@ export default function SpeakingPage() {
                     }
                   }}
                 />
+
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-[18%] bg-gradient-to-r from-[#fbfbfd] via-[#fbfbfd]/92 via-55% to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-[16%] bg-gradient-to-l from-[#fbfbfd] via-[#fbfbfd]/88 via-55% to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[18%] bg-gradient-to-b from-[#fbfbfd] via-[#fbfbfd]/84 via-55% to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[20%] bg-gradient-to-t from-[#fbfbfd] via-[#fbfbfd]/86 via-55% to-transparent" />
+
+                <div className="pointer-events-none absolute left-0 top-0 h-[30%] w-[28%] bg-[radial-gradient(circle_at_top_left,rgba(251,251,253,0.98)_0%,rgba(251,251,253,0.72)_44%,rgba(251,251,253,0.24)_68%,transparent_84%)]" />
+                <div className="pointer-events-none absolute right-0 top-0 h-[28%] w-[24%] bg-[radial-gradient(circle_at_top_right,rgba(251,251,253,0.96)_0%,rgba(251,251,253,0.64)_44%,rgba(251,251,253,0.20)_68%,transparent_84%)]" />
+                <div className="pointer-events-none absolute left-0 bottom-0 h-[30%] w-[28%] bg-[radial-gradient(circle_at_bottom_left,rgba(251,251,253,0.96)_0%,rgba(251,251,253,0.64)_44%,rgba(251,251,253,0.20)_68%,transparent_84%)]" />
+                <div className="pointer-events-none absolute right-0 bottom-0 h-[32%] w-[28%] bg-[radial-gradient(circle_at_bottom_right,rgba(251,251,253,0.98)_0%,rgba(251,251,253,0.66)_44%,rgba(251,251,253,0.20)_68%,transparent_84%)]" />
               </div>
             </div>
           </div>
