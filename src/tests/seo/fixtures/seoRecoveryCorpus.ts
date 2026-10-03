@@ -1,5 +1,5 @@
-// Independently frozen at 8bda454ee12bc29933306e79c308bcaa4053c3ac after approved Brick 4 retirement.
-// Change deliberately when an approved content migration changes this corpus.
+// Recovery corpus expanded deliberately on 2026-10-03 for the approved Speaking Commercial Authority v2 pillar.
+// Historical Brick 4 retirement remains preserved; this manifest changes only because one new canonical article was approved.
 export const EXPECTED_RECOVERY_SOURCE_PATHS = [
   "src/content/blog/posts/grammar/how-to-teach-paragraph-writing-to-kids.ts",
   "src/content/blog/posts/grammar/punctuation-and-capital-letters-for-kids.ts",
@@ -72,6 +72,7 @@ export const EXPECTED_RECOVERY_SOURCE_PATHS = [
   "src/content/blog/posts/public-speaking/week-18-speaking-video-feedback.ts",
   "src/content/blog/posts/public-speaking/week-21-speaking-competition-prep.ts",
   "src/content/blog/posts/public-speaking/week-24-speaking-family-showcase.ts",
+  "src/content/blog/posts/public-speaking/why-public-speaking-is-important-for-kids.ts",
   "src/content/blog/posts/research/cbse-phonics-curriculum-vs-systematic-phonics-programme.ts",
   "src/content/blog/posts/research/does-cbse-include-phonics-ncf-foundational-literacy.ts",
   "src/content/blog/posts/research/how-children-recognise-words-automatically-after-phonics.ts",
@@ -169,7 +170,8 @@ export const EXPECTED_RECOVERY_BLOG_SLUGS = [
   "why-child-knows-letter-sounds-but-cannot-read-words",
   "why-child-reads-words-but-does-not-understand-story",
   "why-letter-sounds-are-not-enough-to-read",
-  "why-parents-choose-online-phonics"
+  "why-parents-choose-online-phonics",
+  "why-public-speaking-is-important-for-kids"
 ] as const;
 
 export const RECOVERY_CTR_TITLES: Readonly<Record<string, string>> = Object.freeze({
