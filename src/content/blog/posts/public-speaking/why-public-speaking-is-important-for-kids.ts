@@ -120,7 +120,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        '**Children can begin public-speaking development from about age four when the work is communication-focused and developmentally appropriate.** At that age, the goal is description, storytelling, show-and-tell, listening, turn-taking, questions, and short connected responses—not formal speeches. There is no universal international rule that sets one starting age, so age should change the task, the length of the speaking turn, the amount of adult support, and the type of audience.',
+        '**At Tiny Steps, children can begin age-appropriate public-speaking development from about age four when the work is communication-focused and developmentally appropriate.** At that age, the goal is description, storytelling, show-and-tell, listening, turn-taking, questions, and short connected responses—not formal speeches. There is no universal international rule that sets one starting age, so age should change the task, the length of the speaking turn, the amount of adult support, and the type of audience.',
     },
     {
       type: 'h3',
@@ -350,7 +350,7 @@ const post: BlogPost = {
     {
       question: 'What is the right age to start public speaking?',
       answer:
-        'Children can start from about age four when the programme focuses on communication foundations rather than formal speech performance. At 4–5, appropriate work includes short connected answers, description, storytelling, show-and-tell, listening, turn-taking and simple questions. Formal speeches, debate and longer presentations belong later.',
+        'At Tiny Steps, children can start from about age four when the programme focuses on communication foundations rather than formal speech performance. At 4–5, appropriate work includes short connected answers, description, storytelling, show-and-tell, listening, turn-taking and simple questions. Formal speeches, debate and longer presentations belong later.',
     },
     {
       question: 'Is age 4 too young for public speaking classes?',
