@@ -50,8 +50,8 @@ const indexableRenamedSlugs = new Set([
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
-  it('keeps all 83 post-Brick-4 articles while exposing unique, week-free public slugs', () => {
-    expect(blogPosts).toHaveLength(83);
+  it('keeps all 84 current articles while exposing unique, week-free public slugs', () => {
+    expect(blogPosts).toHaveLength(84);
     expect(new Set(blogPosts.map((post) => post.slug)).size).toBe(83);
     expect(LEGACY_WEEK_SOURCE_SLUGS).toHaveLength(27);
     expect(LEGACY_WEEK_PUBLIC_SLUGS).toHaveLength(27);
