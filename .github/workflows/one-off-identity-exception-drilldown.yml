@@ -1,0 +1,52 @@
+name: One-off Identity Exception Drilldown
+
+on:
+  push:
+    branches:
+      - wave0/identity-reference-audit
+
+permissions:
+  contents: read
+
+jobs:
+  identity-exception-drilldown:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout drilldown branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate drilldown script syntax
+        run: node --check scripts/drilldown-identity-reference-exceptions.mjs
+
+      - name: Authenticate read-only drilldown process to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run read-only identity exception drilldown
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: node scripts/drilldown-identity-reference-exceptions.mjs
+
+      - name: Upload drilldown report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-reference-exception-drilldown-${{ github.sha }}
+          path: reports/identity-reference-exception-drilldown.json
+          if-no-files-found: error
+          retention-days: 1
