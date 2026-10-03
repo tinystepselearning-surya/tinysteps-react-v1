@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { FC } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
@@ -295,6 +295,16 @@ const heroPathFocus: Record<Tab, string> = {
   speaking: 'Ideas · storytelling · presentation',
 };
 
+const curriculumNavItems = [
+  { id: 'find-your-path', label: 'Find your path' },
+  { id: 'program-roadmap', label: 'Pathways' },
+  { id: 'progression', label: 'Progression' },
+  { id: 'course-levels', label: 'Levels' },
+  { id: 'assessment', label: 'Assessment' },
+  { id: 'teaching-method', label: 'Teaching' },
+  { id: 'faq', label: 'FAQs' },
+] as const;
+
 const placementSteps = [
   {
     title: 'Understand',
@@ -338,6 +348,37 @@ const CurriculumPage: FC = () => {
   const tab = requestedCourse ? inferTabFromCourse(requestedCourse) : safeTab(requestedTab);
   const selectedProgram = programs[tab];
   const hasExplicitPath = Boolean(requestedCourse || requestedTab);
+  const [activeSection, setActiveSection] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return window.location.hash.replace('#', '');
+  });
+
+  useEffect(() => {
+    const sections = curriculumNavItems
+      .map((item) => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (!sections.length || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visible[0]?.target?.id) {
+          setActiveSection(visible[0].target.id);
+        }
+      },
+      {
+        rootMargin: '-22% 0px -58% 0px',
+        threshold: [0, 0.08, 0.2, 0.4],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
 
   const setTab = (next: Tab) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -465,8 +506,8 @@ const CurriculumPage: FC = () => {
                     {hasExplicitPath ? 'Viewing ' + selectedProgram.label : 'Four connected learning pathways'}
                   </h2>
                 </div>
-                <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
-                  Start from current skill
+                <span className="whitespace-nowrap rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
+                  Skill-led placement
                 </span>
               </div>
 
@@ -522,13 +563,25 @@ const CurriculumPage: FC = () => {
         className="sticky top-[72px] z-30 hidden border-y border-slate-200/80 bg-[#fbfaf7]/95 backdrop-blur md:block"
       >
         <div className="mx-auto flex max-w-7xl items-center gap-7 overflow-x-auto px-6 py-3 text-xs font-bold text-slate-600 lg:px-8">
-          <a href="#find-your-path" className="whitespace-nowrap transition hover:text-slate-950">Find your path</a>
-          <a href="#program-roadmap" className="whitespace-nowrap transition hover:text-slate-950">Pathways</a>
-          <a href="#progression" className="whitespace-nowrap transition hover:text-slate-950">Progression</a>
-          <a href="#course-levels" className="whitespace-nowrap transition hover:text-slate-950">Levels</a>
-          <a href="#assessment" className="whitespace-nowrap transition hover:text-slate-950">Assessment</a>
-          <a href="#teaching-method" className="whitespace-nowrap transition hover:text-slate-950">Teaching</a>
-          <a href="#faq" className="whitespace-nowrap transition hover:text-slate-950">FAQs</a>
+          {curriculumNavItems.map((item) => {
+            const active = activeSection === item.id;
+            return (
+              <a
+                key={item.id}
+                href={'#' + item.id}
+                onClick={() => setActiveSection(item.id)}
+                aria-current={active ? 'location' : undefined}
+                className={
+                  'relative whitespace-nowrap py-1 transition hover:text-slate-950 ' +
+                  (active
+                    ? 'text-slate-950 after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-orange-500'
+                    : '')
+                }
+              >
+                {item.label}
+              </a>
+            );
+          })}
         </div>
       </nav>
 
@@ -631,7 +684,7 @@ const CurriculumPage: FC = () => {
               Each pathway moves from supported recognition and practice toward more accurate, independent
               application. The sequence stays clear while the pace responds to the child.
             </p>
-            <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+            <p className="mt-4 hidden text-xs font-bold uppercase tracking-[0.14em] text-slate-500 lg:block">
               Hover to trace a pathway · Open progression detail for the teaching checkpoints
             </p>
           </div>
@@ -652,11 +705,20 @@ const CurriculumPage: FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       {sequenceParts.map((part, index) => (
                         <span key={part} className="contents">
-                          <span className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100 transition duration-200 group-hover/progression:border-orange-300/30 group-hover/progression:bg-orange-300/[0.07] hover:-translate-y-0.5 hover:border-orange-300/70 hover:bg-orange-300/15">
+                          <span
+                            className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100 transition duration-200 motion-reduce:transition-none group-hover/progression:-translate-y-0.5 group-hover/progression:border-orange-300/55 group-hover/progression:bg-orange-300/[0.11] hover:border-orange-300/80 hover:bg-orange-300/15"
+                            style={{ transitionDelay: (index * 45) + 'ms' }}
+                          >
                             {part}
                           </span>
                           {index < sequenceParts.length - 1 && (
-                            <span className="text-slate-500 transition group-hover/progression:text-orange-300" aria-hidden="true">→</span>
+                            <span
+                              className="text-slate-500 transition duration-200 motion-reduce:transition-none group-hover/progression:text-orange-300"
+                              style={{ transitionDelay: (index * 45 + 20) + 'ms' }}
+                              aria-hidden="true"
+                            >
+                              →
+                            </span>
                           )}
                         </span>
                       ))}
@@ -689,7 +751,7 @@ const CurriculumPage: FC = () => {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Compare levels &amp; routes</p>
             <h2 id="levels-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
-              Choose a pathway to inspect
+              Explore levels within each pathway
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-600 md:text-base">
               This roadmap shows where each option fits. Open the detailed course page for the exact lesson
