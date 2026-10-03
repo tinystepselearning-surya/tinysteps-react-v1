@@ -23,6 +23,7 @@ Each wave may contain several PRs and may overlap in limited, controlled ways. A
 8. **Finance and historical evidence are migrated conservatively and append-safely.**
 9. **No legacy path is removed until its replacement is verified in production.**
 10. **Architecture work and feature work should remain separable whenever possible.**
+11. **Converge repeated UI before adding another variant.** New and migrated experiences should reuse shared shells, navigation, templates and components wherever the interaction model is materially the same.
 
 ## 3. Standard migration lifecycle
 
@@ -61,14 +62,16 @@ Freeze the language and ownership rules before changing production data structur
 - define ID, lifecycle, relationship, time and money conventions;
 - define migration/versioning standards;
 - identify canonical vs projection vs legacy compatibility concepts;
-- establish architecture decision review for new features.
+- establish architecture decision review for new features;
+- define the shared experience-system contract for app shells, navigation, templates, components and controlled variants.
 
 ## Deliverables
 
 - Master Blueprint v1.0;
 - this Migration Roadmap;
 - canonical terminology glossary where needed;
-- legacy-to-canonical mapping maintained as migration work begins.
+- legacy-to-canonical mapping maintained as migration work begins;
+- shared experience/design-system contract, using the existing reusable blog authority layout as the precedent for configuration-driven page families.
 
 ## Exit gate
 
@@ -78,7 +81,8 @@ Wave 0 is complete when new architectural work can answer:
 - what is canonical;
 - what is derived;
 - what is legacy;
-- whether a proposed schema change conforms to v1.0.
+- whether a proposed schema change conforms to v1.0;
+- whether a new or migrated web experience can reuse an existing shared shell/template/component before a bespoke implementation is approved.
 
 **No production data migration is required to complete Wave 0.**
 
@@ -302,14 +306,16 @@ Move remaining business capabilities onto the canonical foundations without crea
 - resources use common metadata/alignment/access concepts;
 - mastery is evidence-derived;
 - school programmes use Organisation foundations;
-- safeguarding remains more restricted than ordinary support.
+- safeguarding remains more restricted than ordinary support;
+- Parent, Teacher, Admin, School, Learning Partner and learning experiences converge on shared application shells, navigation primitives and reusable workspace/page templates wherever role-specific requirements do not require a genuinely different interaction model.
 
 ## Exit gate
 
 - every active business capability has a documented canonical owner;
 - duplicated lifecycle/state models are reduced rather than expanded;
 - B2C and B2B share foundations while retaining different workflows;
-- no new domain introduces its own identity, finance, scheduling or entitlement system.
+- no new domain introduces its own identity, finance, scheduling or entitlement system;
+- repeated page structures and interaction patterns no longer create parallel UI frameworks when a shared configurable template/component can own them.
 
 ---
 
@@ -404,6 +410,7 @@ The migration should reuse strong current work, especially where it already alig
 - bounded parent monthly projections;
 - admin analytics grain/period contracts;
 - school portal foundations;
+- the reusable blog authority renderer/layout pattern as the model for shared-template + per-page configuration;
 - existing CI and regression guards.
 
 The goal is **convergence**, not replacement for its own sake.
@@ -438,7 +445,8 @@ It is complete when:
 7. analytics use canonical semantics;
 8. AI cannot bypass business authority;
 9. critical reads remain bounded as the platform grows;
-10. remaining legacy compatibility is intentional and documented.
+10. repeated user experiences use maintained shared shells/templates/components wherever appropriate;
+11. remaining legacy compatibility is intentional and documented.
 
 ## 9. Change control
 
