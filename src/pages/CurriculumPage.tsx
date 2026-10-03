@@ -251,12 +251,16 @@ const inferTabFromCourse = (course: string | null): Tab => {
 const CurriculumPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedCourse = searchParams.get('course');
-  const tab = requestedCourse ? inferTabFromCourse(requestedCourse) : safeTab(searchParams.get('tab'));
+  const requestedPathway = searchParams.get('pathway');
+  const tab = requestedCourse
+    ? inferTabFromCourse(requestedCourse)
+    : safeTab(requestedPathway ?? searchParams.get('tab'));
   const selectedProgram = programs[tab];
 
   const setTab = (next: Tab) => {
     const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('tab', next);
+    nextParams.set('pathway', next);
+    nextParams.delete('tab');
     nextParams.delete('course');
     setSearchParams(nextParams, { replace: true });
   };
