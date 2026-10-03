@@ -1,6 +1,6 @@
 # Wave 1 — Identity Foundation Expand
 
-**Status:** EXPAND IMPLEMENTATION — DRY-RUN VERIFICATION PENDING  
+**Status:** EXPAND IMPLEMENTED — FINAL BUILD / EMULATOR VALIDATION PENDING  
 **Wave:** 1 — Identity & Relationships  
 **Migration phase:** EXPAND  
 **Production writes:** None in this brick  
@@ -339,7 +339,159 @@ The report is written to ignored:
 reports/wave1-identity-foundation-dry-run.json
 ~~~
 
-## 14. Backfill gate
+## 14. Production dry-run findings
+
+Read-only production dry run:
+
+~~~text
+GitHub Actions run: 37139126536
+Result: success
+Firestore/Auth writes: 0
+~~~
+
+Source reconciliation:
+
+~~~text
+users                  223
+Firebase Auth users    225
+kids                   194
+schools                  1
+schoolUsers               1
+
+users backed by exact Auth UID     223 / 223
+user/kid Person-ID collisions       0
+~~~
+
+Canonical target collections before BACKFILL:
+
+~~~text
+people                     0
+authIdentities             0
+roleAssignments            0
+learnerProfiles            0
+guardianRelationships      0
+households                  0
+organisations               0
+organisationMemberships     0
+~~~
+
+Planned deterministic canonical documents:
+
+~~~text
+people                    417
+authIdentities            223
+roleAssignments           223
+learnerProfiles           194
+guardianRelationships     194
+organisations               1
+organisationMemberships     1
+--------------------------------
+total                    1,253
+~~~
+
+Household creation remains deliberately deferred.
+
+### Non-blocking exceptions
+
+The dry run has **0 blocking migration conflicts**.
+
+Three non-blocking exceptions remain:
+
+1. **2 Firebase Auth accounts have no `users` document.**
+   - both are enabled;
+   - neither has a role mirror;
+   - neither has School membership;
+   - neither resolves to a learner source;
+   - one carries an Admin role hint/claim;
+   - the other has no canonical role hint.
+   - both are excluded from Person/AuthIdentity backfill.
+
+2. **1 current user lacks its expected role mirror.**
+   - this is compatibility/profile-mirror debt, not Person/RoleAssignment identity ambiguity;
+   - Wave 0 already registered the admin mirror consistency gap.
+
+No account is deleted or disabled by this EXPAND brick.
+
+### Auth claim reconciliation
+
+For the 223 current Firestore users:
+
+~~~text
+Auth role-hint mismatches with Firestore roles: 0
+Admin role-hint mismatches:                  0
+~~~
+
+Therefore current custom claims agree with business-role records for all current users.
+
+## 15. Pre-backfill authorization hardening
+
+The dry run exposed an important security condition:
+
+> an enabled Firebase Auth account can retain an old Admin custom claim after its `users/{uid}` business record is absent.
+
+Before this brick, several generic paths treated the token Admin claim as sufficient authority.
+
+This EXPAND brick hardens that boundary.
+
+### Backend callable authority
+
+`ensureAdmin` now requires:
+
+~~~text
+authenticated UID
++
+current users/{uid} document
++
+active or legacy-no-status account
++
+Admin role / roles[] / existing superUser compatibility
+~~~
+
+A custom claim is no longer sufficient by itself.
+
+Direct token-first exceptions in:
+
+- Enrollment creation;
+- makeup-session caller-role resolution;
+- public-KB refresh;
+- messaging;
+- message-thread creation/sync
+
+are routed through current Firestore-backed identity before Admin privilege is granted.
+
+### Firestore Rules authority
+
+Generic portal role predicates now require a current active/legacy `users/{uid}` record before treating the caller as:
+
+- Admin;
+- Founder;
+- Teacher;
+- Parent;
+- Learning Partner;
+- School Admin;
+- Kid.
+
+Custom claims remain authentication/cache evidence but are not standalone Tiny Steps business authority.
+
+The existing owner compatibility UID/email exceptions remain temporarily supported **only when a current active/legacy user record exists**.
+
+### Security disposition of the Auth-only accounts
+
+The two Auth-only accounts remain outside automatic Person migration.
+
+The account carrying an Admin claim is treated as:
+
+~~~text
+Auth orphan
+→ no Person auto-create
+→ no RoleAssignment auto-create
+→ current-user authorization required
+→ separate authorized account-cleanup review
+~~~
+
+This avoids both unsafe identity inference and continued token-only business authorization.
+
+## 16. Backfill gate
 
 A bounded BACKFILL may be proposed only after the dry run shows:
 
@@ -354,7 +506,7 @@ A bounded BACKFILL may be proposed only after the dry run shows:
 
 A clean dry run does **not** itself perform or authorize writes.
 
-## 15. Migration manifest
+## 17. Migration manifest
 
 The checked-in manifest is:
 
@@ -364,7 +516,7 @@ docs/architecture/wave-1/migrations/identity-foundation-v1.json
 
 It follows Migration Execution Standard v1.
 
-## 16. Test posture
+## 18. Test posture
 
 Permanent candidate invariants introduced here:
 
@@ -388,7 +540,7 @@ Retirement decision:
 - dry-run script retires after canonical cutover/observation unless retained as a permanent integrity audit;
 - temporary GitHub workflows are removed immediately after each bounded run.
 
-## 17. EXPAND exit criteria
+## 19. EXPAND exit criteria
 
 This brick reaches EXPAND-complete when:
 
