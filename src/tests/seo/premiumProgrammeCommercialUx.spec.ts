@@ -27,7 +27,7 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
     expect(speaking).toContain('bg-[#fbfbfd]');
     expect(speaking).toContain('ProgrammeIntentBoundary');
     expect(speaking).toContain('/blog/hero-families/Tiny_Steps_Speaking.webp');
-    expect(speaking).toContain("lg:grid-cols-[minmax(0,1.85fr)_minmax(320px,1fr)]");
+    expect(speaking).toContain("lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,1fr)]");
     expect(speaking).not.toContain('appearance="glass-overlay"');
 
     expect(snapshot).toContain("variant?: 'reading' | 'grammar' | 'speaking'");
