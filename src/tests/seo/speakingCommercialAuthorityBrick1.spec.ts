@@ -40,8 +40,11 @@ describe('Speaking Commercial Authority v2 — Brick 1 acquisition layer', () =>
     expect(c4).toContain("initiative: 'speaking-commercial-authority-v2'");
   });
 
-  it('does not introduce Brick 2+ concepts into the Brick 1 acquisition layer', () => {
-    expect(speaking).not.toContain('Communication Foundations (Ages 4–5)');
-    expect(speaking).not.toContain('ASK → THINK → ORGANISE → EXPLAIN → LISTEN → RESPOND');
+  it('keeps Brick 1 acquisition assertions independent of later content bricks', () => {
+    expect(speaking).toContain('Book Free Assessment');
+    expect(speaking).toContain('Watch a Real Class');
+    expect(speaking).toContain('View Curriculum');
+    expect(speaking).toContain('speakingAgeRangeLabel');
+    expect(speaking).toContain('speakingClassPriceLabel');
   });
 });
