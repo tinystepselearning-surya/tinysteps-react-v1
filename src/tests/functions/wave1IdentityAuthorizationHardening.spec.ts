@@ -12,6 +12,19 @@ describe('Wave 1 current-user authorization invariant', () => {
   const refreshPublicKb = read('functions/src/ai/refreshPublicKb.ts');
   const sendMessage = read('functions/src/messaging/sendMessage.ts');
   const createThread = read('functions/src/messaging/createOrSyncMessageThread.ts');
+  const parentStudents = read('functions/src/parentStudents.ts');
+  const sessionComplete = read('functions/src/onSessionComplete.ts');
+  const parentWorksheets = read('functions/src/getParentWorksheetResources.ts');
+  const classReminders = read('functions/src/notifications/classReminders.ts');
+  const teacherProgress = read('functions/src/saveTeacherSessionProgress.ts');
+  const parentAttendance = read('functions/src/bootstrapParentClassAttendanceV2.ts');
+  const parentProgress = read('functions/src/parentCanonicalProjectionBootstrap.ts');
+  const payWithholdings = read('functions/src/getAdminTeacherPayWithholdings.ts');
+  const earningAdjustments = read('functions/src/getAdminTeacherEarningAdjustments.ts');
+  const attendanceCorrection = read('functions/src/adminAttendanceCorrectionTeacherPayDecision.ts');
+  const leadWorkflow = read('functions/src/adminLeadWorkflow.ts');
+  const demoWorkflow = read('functions/src/demoSessionsLegacy.ts');
+  const phonicsEnforcer = read('functions/src/phonicsCurriculumEnforcer.ts');
   const rules = read('firestore.rules');
 
   it('requires a current users document for callable Admin authorization', () => {
@@ -22,19 +35,17 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(adminGuard).not.toContain('if (isAdmin) return;');
   });
 
-  it('removes direct token-only Admin bypasses from mixed-role callables', () => {
+  it('removes direct token-only Admin bypasses from known callable guards', () => {
     expect(lifecycle).not.toContain(
       "if (auth.token?.role === 'admin' || auth.token?.admin === true) return;",
     );
 
-    const userLookup = makeup.indexOf(
+    expect(makeup).toContain(
       "collection('users').doc(auth.uid).get()",
     );
-    const tokenFallback = makeup.indexOf(
+    expect(makeup).not.toContain(
       'const tokenRole = normalizeRole(auth.token?.role)',
     );
-    expect(userLookup).toBeGreaterThanOrEqual(0);
-    expect(tokenFallback).toBeGreaterThan(userLookup);
 
     expect(refreshPublicKb).toContain(
       'await ensureAdmin(request.auth);',
@@ -43,20 +54,78 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(createThread).toContain('return isCurrentAdmin(auth);');
     expect(sendMessage).not.toContain('function isTokenAdmin');
     expect(createThread).not.toContain('function isTokenAdmin');
+
+    for (const source of [
+      payWithholdings,
+      earningAdjustments,
+      attendanceCorrection,
+      phonicsEnforcer,
+    ]) {
+      expect(source).toContain('ensureAdmin');
+      expect(source).not.toMatch(
+        /if\s*\([^\n]*token[^\n]*(?:role|admin)[^\n]*\)\s*return/,
+      );
+    }
   });
 
-  it('does not treat an Admin role custom claim as Firestore business authority', () => {
-    const adminStart = rules.indexOf('function isAdmin()');
-    const tokenRoleStart = rules.indexOf('function tokenRole()');
-    expect(adminStart).toBeGreaterThanOrEqual(0);
-    expect(tokenRoleStart).toBeGreaterThan(adminStart);
+  it('requires current Firestore identity before parent/teacher/role actions', () => {
+    for (const source of [
+      parentStudents,
+      sessionComplete,
+      parentWorksheets,
+      classReminders,
+      teacherProgress,
+      parentAttendance,
+      parentProgress,
+    ]) {
+      expect(source).toContain("collection('users')");
+    }
 
-    const adminBlock = rules.slice(adminStart, tokenRoleStart);
+    expect(parentStudents).not.toContain('Prefer custom claims (faster)');
+    expect(sessionComplete).not.toContain(
+      'const tokenRole = normalizeCallerRole(auth?.token?.role)',
+    );
+    expect(classReminders).not.toContain(
+      'const roleFromToken = normalizeRole(auth.token?.role)',
+    );
+    expect(teacherProgress).not.toContain(
+      'const tokenRole = normalizeRole(auth?.token?.role)',
+    );
+    expect(parentAttendance).not.toContain(
+      'const tokenRole = text(request.auth?.token?.role)',
+    );
+    expect(parentProgress).not.toContain(
+      'const tokenRole = text(request.auth?.token?.role)',
+    );
+  });
+
+  it('does not fall back to token roles after a business user record is loaded', () => {
+    expect(leadWorkflow).not.toContain(
+      'normalizeRole(data.role || auth?.token?.role)',
+    );
+    expect(demoWorkflow).not.toContain(
+      'normalizeRole(userData.role) || normalizeRole(auth?.token?.role)',
+    );
+  });
+
+  it('does not treat custom role claims as Firestore business authority', () => {
+    expect(rules).not.toContain('function tokenRole()');
+    expect(rules).not.toContain('function isAdminToken()');
+    expect(rules).not.toContain('function isTeacherToken()');
+    expect(rules).not.toContain('function isParentToken()');
+    expect(rules).not.toContain('function isLPToken()');
+    expect(rules).not.toContain('function isSchoolAdminToken()');
+    expect(rules).not.toContain('function isKidToken()');
+
+    const adminStart = rules.indexOf('function isAdmin()');
+    const founderStart = rules.indexOf('function isFounder()');
+    expect(adminStart).toBeGreaterThanOrEqual(0);
+    expect(founderStart).toBeGreaterThan(adminStart);
+
+    const adminBlock = rules.slice(adminStart, founderStart);
     expect(adminBlock).toContain('userIsActiveOrLegacy(request.auth.uid)');
     expect(adminBlock).toContain("userRole(request.auth.uid) == 'admin'");
-    expect(adminBlock).not.toContain(
-      "request.auth.token.role.lower() == 'admin'",
-    );
+    expect(adminBlock).not.toContain('request.auth.token.role');
   });
 
   it('requires current Firestore identity for generic portal role predicates', () => {
@@ -76,5 +145,20 @@ describe('Wave 1 current-user authorization invariant', () => {
         'userIsActiveOrLegacy(request.auth.uid)',
       );
     }
+  });
+
+  it('uses current role predicates for class-session list authorization', () => {
+    const start = rules.indexOf('match /classSessions/{sessionId}');
+    const end = rules.indexOf(
+      '// RESCHEDULE CREDITS COLLECTION',
+      start,
+    );
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(end).toBeGreaterThan(start);
+    const block = rules.slice(start, end);
+    expect(block).toContain('isParent()');
+    expect(block).toContain('isKid()');
+    expect(block).not.toContain('isParentToken()');
+    expect(block).not.toContain('isKidToken()');
   });
 });
