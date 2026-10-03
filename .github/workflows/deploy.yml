@@ -160,6 +160,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -320,11 +322,21 @@ jobs:
           node scripts/audit-resources-r22-speaking-communication-semantic-journeys.mjs --report
           node scripts/audit-resources-sp6-speaking-communication-closure.mjs --report
 
-      - name: Run full unit tests
+      - name: Run affected unit tests
         if: >-
           needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
-          (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
-        run: npm run test:unit -- --coverage
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.content_only_validation != 'true'
+        run: >-
+          npx vitest run
+          --changed "${{ github.event.pull_request.base.sha }}"
+          --passWithNoTests
+
+      - name: Run critical regression pack
+        if: >-
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
+          needs.analyze-changes.outputs.content_only_validation != 'true'
+        run: npm run test:critical
 
       - name: Validate Ask Tiny Steps production build configuration
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
@@ -350,13 +362,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Upload coverage to Codecov
-        if: >-
-          needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
-          (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/coverage-final.json
 
   deploy-to-firebase:
     # Only enter the project mutation lock when at least one Firebase artifact changed.
