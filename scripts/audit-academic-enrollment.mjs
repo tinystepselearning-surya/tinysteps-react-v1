@@ -181,11 +181,19 @@ function makeIssues(sampleSize) {
 
 function auditCourses(courses, issues) {
   let academicFieldsComplete = 0;
+  let namePresent = 0;
+  let areaOrTrackPresent = 0;
+  let levelPresent = 0;
+  let activeLevelPresent = 0;
   let hasEmbeddedPrice = 0;
   let hasEmbeddedTopics = 0;
+  let hasDurationMinutes = 0;
+  let hasSessionFrequency = 0;
+  let hasMaxStudentsPerSession = 0;
   let hasDeliveryDefaults = 0;
   let maxStudentsGreaterThanOne = 0;
   let activeCourses = 0;
+  const activeAreaTrackValues = [];
 
   for (const course of courses) {
     const data = course.data;
@@ -195,17 +203,23 @@ function auditCourses(courses, issues) {
     const name = text(data.name) || text(data.title) || text(data.courseName);
     const area = text(data.area) || text(data.track);
     const level = Number(data.level);
-    if (name && area && Number.isFinite(level)) academicFieldsComplete += 1;
+    const levelIsPresent = Number.isFinite(level);
+    if (name) namePresent += 1;
+    if (area) areaOrTrackPresent += 1;
+    if (levelIsPresent) levelPresent += 1;
+    if (status === 'active' && levelIsPresent) activeLevelPresent += 1;
+    if (status === 'active' && area) activeAreaTrackValues.push(area);
+    if (name && area && levelIsPresent) academicFieldsComplete += 1;
 
     if (Number.isFinite(Number(data.ratePerSession)) && Number(data.ratePerSession) > 0) hasEmbeddedPrice += 1;
     if (Array.isArray(data.topics) && data.topics.length > 0) hasEmbeddedTopics += 1;
-    if (
-      Number.isFinite(Number(data.durationMinutes)) ||
-      text(data.sessionFrequency) ||
-      Number.isFinite(Number(data.maxStudentsPerSession))
-    ) {
-      hasDeliveryDefaults += 1;
-    }
+    const durationPresent = Number.isFinite(Number(data.durationMinutes));
+    const frequencyPresent = Boolean(text(data.sessionFrequency));
+    const maxStudentsPresent = Number.isFinite(Number(data.maxStudentsPerSession));
+    if (durationPresent) hasDurationMinutes += 1;
+    if (frequencyPresent) hasSessionFrequency += 1;
+    if (maxStudentsPresent) hasMaxStudentsPerSession += 1;
+    if (durationPresent || frequencyPresent || maxStudentsPresent) hasDeliveryDefaults += 1;
     if (Number(data.maxStudentsPerSession) > 1) maxStudentsGreaterThanOne += 1;
 
     if (status === 'active' && !name) issues.add('active_course_missing_name', course, ['name', 'title', 'courseName']);
@@ -217,9 +231,17 @@ function auditCourses(courses, issues) {
     total: courses.length,
     activeCourses,
     statusDistribution: countBy(courses.map((course) => courseStatus(course.data))),
+    activeAreaTrackDistribution: countBy(activeAreaTrackValues),
     academicFieldsComplete,
+    namePresent,
+    areaOrTrackPresent,
+    levelPresent,
+    activeLevelPresent,
     hasEmbeddedPrice,
     hasEmbeddedTopics,
+    hasDurationMinutes,
+    hasSessionFrequency,
+    hasMaxStudentsPerSession,
     hasDeliveryDefaults,
     maxStudentsGreaterThanOne,
   };
@@ -237,7 +259,10 @@ function auditEnrollments(enrollments, coursesById, issues) {
   let transitionLinks = 0;
 
   const scheduleSources = { canonical_rolling: 0, legacy_compatible: 0, unconfigured: 0 };
+  const activeLikeScheduleSources = { canonical_rolling: 0, legacy_compatible: 0, unconfigured: 0 };
   let legacyFiniteScheduleFields = 0;
+  let activeLikeLegacyFiniteScheduleFields = 0;
+  let activeLikeMissingTeacherId = 0;
 
   for (const enrollment of enrollments) {
     const data = enrollment.data;
@@ -251,6 +276,7 @@ function auditEnrollments(enrollments, coursesById, issues) {
     else issues.add('enrollment_missing_courseId', enrollment, ['courseId']);
 
     if (text(data.teacherId)) teacherIdPresent += 1;
+    else if (isActiveLike(status)) activeLikeMissingTeacherId += 1;
 
     const hasRate = Number.isFinite(Number(data.ratePerSession ?? data.feePerClass)) &&
       Number(data.ratePerSession ?? data.feePerClass) > 0;
@@ -267,7 +293,11 @@ function auditEnrollments(enrollments, coursesById, issues) {
 
     const source = scheduleSource(data.schedule);
     scheduleSources[source] += 1;
-    if (hasLegacyFiniteScheduleFields(data.schedule)) legacyFiniteScheduleFields += 1;
+    if (isActiveLike(status)) activeLikeScheduleSources[source] += 1;
+    if (hasLegacyFiniteScheduleFields(data.schedule)) {
+      legacyFiniteScheduleFields += 1;
+      if (isActiveLike(status)) activeLikeLegacyFiniteScheduleFields += 1;
+    }
 
     if (text(data.previousEnrollmentId) || text(data.nextEnrollmentId)) previousNextLinks += 1;
     if (text(data.transitionOperationId) || text(data.transitionType)) transitionLinks += 1;
@@ -288,11 +318,14 @@ function auditEnrollments(enrollments, coursesById, issues) {
     courseResolved,
     courseResolutionPct: percentage(courseResolved, enrollments.length),
     teacherIdPresent,
+    activeLikeMissingTeacherId,
     moneySnapshotPresent,
     creditsPresent,
     topicProgressPresent,
     scheduleSources,
+    activeLikeScheduleSources,
     legacyFiniteScheduleFields,
+    activeLikeLegacyFiniteScheduleFields,
     previousNextLinks,
     transitionLinks,
   };
@@ -304,9 +337,12 @@ function auditSessions(sessions, enrollmentsById, coursesById, issues) {
   let courseResolved = 0;
   let multiLearner = 0;
   let futureOrToday = 0;
+  let missingEnrollmentTotal = 0;
+  let missingEnrollmentPast = 0;
   let futureWithoutEnrollment = 0;
   let futureMultiLearner = 0;
   let hasFinancialSnapshot = 0;
+  let futureMissingFinancialSnapshot = 0;
 
   const sourceDistribution = countBy(sessions.map((session) => session.data.source));
 
@@ -316,7 +352,11 @@ function auditSessions(sessions, enrollmentsById, coursesById, issues) {
     if (enrollmentId) {
       withEnrollmentId += 1;
       if (enrollmentsById.has(enrollmentId)) enrollmentResolved += 1;
-      else if (text(data.date) >= TODAY_YMD) issues.add('future_session_missing_enrollment', session, ['enrollmentId']);
+      else {
+        missingEnrollmentTotal += 1;
+        if (text(data.date) && text(data.date) < TODAY_YMD) missingEnrollmentPast += 1;
+        if (text(data.date) >= TODAY_YMD) issues.add('future_session_missing_enrollment', session, ['enrollmentId']);
+      }
     }
 
     const courseId = text(data.courseId);
@@ -337,7 +377,9 @@ function auditSessions(sessions, enrollmentsById, coursesById, issues) {
     }
 
     const fee = Number(data.ratePerSession ?? data.feeAmount);
-    if (Number.isFinite(fee) && fee > 0 && text(data.currency)) hasFinancialSnapshot += 1;
+    const financialSnapshotPresent = Number.isFinite(fee) && fee > 0 && Boolean(text(data.currency));
+    if (financialSnapshotPresent) hasFinancialSnapshot += 1;
+    else if (date && date >= TODAY_YMD) futureMissingFinancialSnapshot += 1;
   }
 
   return {
@@ -345,12 +387,15 @@ function auditSessions(sessions, enrollmentsById, coursesById, issues) {
     withEnrollmentId,
     enrollmentResolved,
     enrollmentResolutionPct: percentage(enrollmentResolved, withEnrollmentId),
+    missingEnrollmentTotal,
+    missingEnrollmentPast,
     courseResolved,
     multiLearner,
     futureOrToday,
     futureWithoutEnrollment,
     futureMultiLearner,
     hasFinancialSnapshot,
+    futureMissingFinancialSnapshot,
     sourceDistribution,
   };
 }
