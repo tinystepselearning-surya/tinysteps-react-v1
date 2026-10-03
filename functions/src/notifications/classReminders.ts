@@ -125,14 +125,25 @@ async function resolveUserRole(
   db: admin.firestore.Firestore,
   auth: AuthLike,
 ): Promise<string | null> {
-  const roleFromToken = normalizeRole(auth.token?.role);
-  if (roleFromToken) return roleFromToken;
-
   const userSnap = await db.collection('users').doc(auth.uid).get();
   if (!userSnap.exists) return null;
 
   const userData = userSnap.data() || {};
-  return normalizeRole((userData as Record<string, unknown>).role);
+  const status = String(userData.status || '').trim().toLowerCase();
+  if (status && status !== 'active') return null;
+
+  const primaryRole = normalizeRole(
+    (userData as Record<string, unknown>).role,
+  );
+  if (primaryRole) return primaryRole;
+
+  const roles = Array.isArray(userData.roles) ? userData.roles : [];
+  for (const role of roles) {
+    const normalized = normalizeRole(role);
+    if (normalized) return normalized;
+  }
+
+  return null;
 }
 
 async function fetchActiveTokensForUsers(
