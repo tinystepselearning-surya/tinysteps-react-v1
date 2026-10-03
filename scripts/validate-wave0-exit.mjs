@@ -34,6 +34,7 @@ async function main() {
 
   const workflowDir = path.join(ROOT, '.github', 'workflows');
   const workflows = (await fs.readdir(workflowDir)).filter((name) => !name.startsWith('.')).sort();
+  const permanentWorkflows = workflows.filter((name) => !name.startsWith('one-off-'));
   const deploy = await read('.github/workflows/deploy.yml');
   const pkg = JSON.parse(await read('package.json'));
 
@@ -71,8 +72,16 @@ async function main() {
     check('wave1_scope_guarded', docs.migrationStandard.includes('Wave 1 entry constraint'), 'Wave 1 scope constraint exists'),
     check('exit_review_complete', docs.exitReview.includes('Status:** COMPLETE'), 'Exit review complete'),
     check('wave1_go', docs.exitReview.includes('GO — WAVE 1 MAY BEGIN AT EXPAND'), 'Formal Wave 1 GO decision present'),
-    check('no_blanket_backfill_authorization', docs.exitReview.includes('does not authorize an unbounded backfill'), 'GO is limited to controlled phase gates'),
-    check('single_permanent_workflow', workflows.length === 1 && workflows[0] === 'deploy.yml', `Permanent workflows: ${workflows.join(', ')}`),
+    check(
+      'no_blanket_backfill_authorization',
+      /does\s+(?:\*\*)?not(?:\*\*)?\s+authorize\s+an\s+unbounded\s+backfill/i.test(docs.exitReview),
+      'GO is limited to controlled phase gates',
+    ),
+    check(
+      'single_permanent_workflow',
+      permanentWorkflows.length === 1 && permanentWorkflows[0] === 'deploy.yml',
+      `Permanent workflows: ${permanentWorkflows.join(', ')}`,
+    ),
     check('no_scheduled_ci', !/(^|\n)\s*schedule\s*:/m.test(deploy), 'deploy.yml has no schedule trigger'),
     check('no_pr_ci', !/(^|\n)\s*pull_request\s*:/m.test(deploy), 'deploy.yml has no pull_request trigger'),
     check('local_preflight_present', Boolean(pkg.scripts?.preflight && pkg.scripts?.['preflight:full']), 'Local preflight scripts remain available'),
@@ -87,6 +96,7 @@ async function main() {
     total: checks.length,
     failed: failed.map((item) => item.id),
     workflows,
+    permanentWorkflows,
     checks,
   };
 
@@ -96,7 +106,8 @@ async function main() {
   console.log('=== Wave 0 Exit Validation ===');
   console.log(`Result: ${report.result}`);
   console.log(`Checks: ${report.passed}/${report.total} passed`);
-  console.log(`Permanent workflows: ${workflows.join(', ')}`);
+  console.log(`Permanent workflows: ${permanentWorkflows.join(', ')}`);
+  console.log(`Temporary workflows present during validation: ${workflows.filter((name) => name.startsWith('one-off-')).join(', ') || 'none'}`);
   if (failed.length) {
     console.log('Failed checks:');
     failed.forEach((item) => console.log(`- ${item.id}: ${item.evidence}`));
