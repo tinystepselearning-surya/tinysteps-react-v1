@@ -703,7 +703,7 @@ export default function SpeakingPage() {
               </div>
 
               <p className="mt-5 text-xs font-semibold tracking-[0.01em] text-slate-500 sm:text-sm">
-                ${PUBLIC_LEARNER_REACH_LABEL} • Parent progress updates
+                {PUBLIC_LEARNER_REACH_LABEL} • Parent progress updates
               </p>
             </div>
 
@@ -729,6 +729,8 @@ export default function SpeakingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
       <section className="px-4 py-5 sm:px-5 md:py-7 lg:px-6">
         <div className="mx-auto grid max-w-6xl gap-4 border-y border-slate-200/80 py-5 md:grid-cols-[0.28fr_0.72fr] md:items-start md:gap-8 md:py-6">
