@@ -361,6 +361,63 @@ suite(
     );
 
     it(
+      'rejects an orphan Admin custom claim without a current user document',
+      async () => {
+        await seedUsers();
+
+        await testEnv
+          .withSecurityRulesDisabled(
+            async (context) => {
+              await setDoc(
+                doc(
+                  context.firestore(),
+                  'config',
+                  'insights',
+                ),
+                {
+                  enabled: true,
+                },
+              );
+            },
+          );
+
+        const orphanAdminDb =
+          testEnv
+            .authenticatedContext(
+              'orphan-admin',
+              {
+                role: 'admin',
+                admin: true,
+              },
+            )
+            .firestore();
+
+        await assertFails(
+          updateDoc(
+            doc(
+              orphanAdminDb,
+              'users',
+              'parent-1',
+            ),
+            {
+              roles: ['admin'],
+            },
+          ),
+        );
+
+        await assertFails(
+          getDoc(
+            doc(
+              orphanAdminDb,
+              'config',
+              'insights',
+            ),
+          ),
+        );
+      },
+    );
+
+    it(
       'accepts legacy School Admin token alias for compatibility',
       async () => {
         await seedUsers();
