@@ -672,7 +672,7 @@ export default function SpeakingPage() {
             </ol>
           </nav>
 
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.85fr)_minmax(320px,1fr)] lg:items-center lg:gap-12">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,1fr)] lg:items-center lg:gap-10 xl:gap-12">
             <div className="max-w-[820px]">
               <p className="inline-flex rounded-full border border-violet-200/80 bg-white/78 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-800 shadow-[0_8px_22px_rgba(124,58,237,0.07)] backdrop-blur">
                 Live 1:1 Public Speaking & Communication
@@ -707,13 +707,19 @@ export default function SpeakingPage() {
               </p>
             </div>
 
-            <div className="relative lg:justify-self-end">
-              <div className="pointer-events-none absolute -inset-6 rounded-[42px] bg-[radial-gradient(circle_at_58%_34%,rgba(255,255,255,0.95),rgba(236,230,255,0.48)_48%,transparent_74%)] blur-2xl" />
-              <div className="relative h-[300px] w-full overflow-hidden rounded-[30px] bg-white/35 shadow-[0_28px_76px_rgba(15,23,42,0.12)] sm:h-[340px] lg:h-[390px] lg:w-[390px] xl:h-[420px] xl:w-[430px]">
+            <div className="relative lg:-mr-3 xl:-mr-7">
+              <div className="pointer-events-none absolute -inset-10 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.72)_0%,rgba(242,236,255,0.26)_48%,rgba(255,242,232,0.18)_68%,transparent_82%)] blur-2xl" />
+              <div className="relative h-[300px] w-full sm:h-[350px] lg:h-[405px] xl:h-[440px]">
                 <img
                   src="/blog/hero-families/Tiny_Steps_Speaking.webp"
                   alt="Child practising public speaking online at home"
-                  className="h-full w-full object-cover object-[62%_center]"
+                  className="h-full w-full object-cover object-[61%_center]"
+                  style={{
+                    WebkitMaskImage:
+                      'radial-gradient(ellipse 58% 56% at 52% 50%, #000 68%, rgba(0,0,0,0.94) 76%, rgba(0,0,0,0.68) 86%, rgba(0,0,0,0.22) 95%, transparent 100%)',
+                    maskImage:
+                      'radial-gradient(ellipse 58% 56% at 52% 50%, #000 68%, rgba(0,0,0,0.94) 76%, rgba(0,0,0,0.68) 86%, rgba(0,0,0,0.22) 95%, transparent 100%)',
+                  }}
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
@@ -724,8 +730,6 @@ export default function SpeakingPage() {
                     }
                   }}
                 />
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-[12%] bg-gradient-to-r from-[#fbfbfd]/88 via-[#fbfbfd]/26 to-transparent" />
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_40%,rgba(23,32,51,0.035))]" />
               </div>
             </div>
           </div>
