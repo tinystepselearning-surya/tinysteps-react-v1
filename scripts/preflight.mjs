@@ -166,6 +166,14 @@ const enrollmentChanged = changed.some((path) => matchesAny(path, [
   'vitest.emulator.config.ts',
 ]));
 
+const sharedExperienceAuditChanged = changed.some((path) => matchesAny(path, [
+  'scripts/audit-shared-experience.mjs',
+  'scripts/test/shared-experience-inventory.node-test.mjs',
+  'docs/architecture/wave-0/SHARED_EXPERIENCE_DESIGN_SYSTEM_INVENTORY.md',
+  'docs/architecture/wave-0/CURRENT_TO_CANONICAL_MAP.md',
+  'docs/architecture/wave-0/WAVE_0_ARCHITECTURE_CONTRACTS.md',
+]));
+
 const academicEnrollmentAuditChanged = changed.some((path) => matchesAny(path, [
   'scripts/audit-academic-enrollment.mjs',
   'scripts/test/academic-enrollment-audit.node-test.mjs',
@@ -230,6 +238,10 @@ if (identityReferenceAuditChanged) {
 
 if (academicEnrollmentAuditChanged) {
   run('Academic/enrollment audit tests', 'npm', ['run', 'test:academic-enrollment-audit']);
+}
+
+if (sharedExperienceAuditChanged) {
+  run('Shared experience inventory tests', 'npm', ['run', 'test:shared-experience-inventory']);
 }
 
 if (deploymentChanged) {
