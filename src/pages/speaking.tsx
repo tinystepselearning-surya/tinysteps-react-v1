@@ -33,6 +33,9 @@ const seoDescription =
 const SPEAKING_SEO_KEYWORDS = [
   'public speaking classes for kids online',
   'public speaking classes for kids',
+  'public speaking course for kids',
+  'public speaking for kids',
+  'online speaking classes for kids',
   'communication skills classes for kids online',
   'communication classes for kids',
   '1 to 1 public speaking classes for kids',
@@ -76,22 +79,22 @@ const faqItems = [
   {
     question: 'What do public speaking and communication classes for kids teach?',
     answer:
-      'Tiny Steps focuses on structured answers, storytelling, show-and-tell, presentation skills, audience awareness, clear expression, listening, idea organisation, and communication confidence through guided live speaking practice.',
+      'Tiny Steps teaches children to organise ideas and communicate them clearly for a listener or audience. In practice, the programme develops structured answers, storytelling, show-and-tell, presentation skills, audience awareness, listening and response, idea organisation, and increasingly independent speaking through guided live practice.',
   },
   {
     question: 'What is the difference between spoken English and public speaking classes?',
     answer:
-      'Spoken English focuses mainly on everyday conversation, fuller sentences, response fluency, and comfortable English speaking. Public speaking and communication classes add structured answers, storytelling, presentations, show-and-tell, audience awareness, and school communication. Children whose main need is conversational fluency should use the dedicated Spoken English programme.',
+      'They solve different problems. Spoken English focuses on everyday conversation, fuller responses, vocabulary in use, and conversational fluency. Public Speaking & Communication focuses on organising ideas for a listener or audience through structured answers, storytelling, presentations, show-and-tell, discussion, and audience awareness. If the main difficulty is everyday fluency, the dedicated Spoken English programme is the stronger first fit.',
   },
   {
     question: 'Are communication-skills classes included in the Tiny Steps Speaking programme?',
     answer:
-      'Yes. General communication-skills work such as organising ideas, answering clearly, listening and responding, storytelling, classroom participation, and presentation confidence is part of the Tiny Steps Speaking & Communication pathway.',
+      'Yes. Communication skills are part of the Tiny Steps Speaking & Communication pathway, not an add-on. Children practise organising ideas, answering clearly, listening and responding, storytelling, classroom participation, questioning, presentations, and adapting what they say for a listener or audience.',
   },
   {
     question: 'Why do communication skills matter in an AI-enabled world?',
     answer:
-      'AI can make information easier to generate, but children still need to decide what to ask, what to question, how to organise ideas, how to explain their reasoning, how to listen to another viewpoint, and how to respond responsibly. Tiny Steps develops these human communication habits through age-appropriate speaking practice; it does not present the Speaking programme as an AI or prompt-engineering course.',
+      'Yes—communication remains important in an AI-enabled world because generating information is not the same as judging, organising, explaining, questioning, listening, or responding. Tiny Steps develops those human communication habits through age-appropriate speaking practice. The programme is not positioned as an AI or prompt-engineering course.',
   },
   {
     question: 'Does Tiny Steps teach children prompt engineering in Public Speaking classes?',
@@ -101,7 +104,7 @@ const faqItems = [
   {
     question: 'When is the confidence-building programme a better fit?',
     answer:
-      'If the primary difficulty is hesitation, participation confidence, or speaking comfort across situations rather than public-speaking structure or communication skills, the dedicated Confidence Building programme may be the better starting point. The free assessment helps separate these needs.',
+      'Confidence Building is the stronger fit when the child can already form and organise language adequately but participation comfort, hesitation, or dependence on reassurance is the main barrier. Public Speaking is the stronger fit when the child needs better organisation, storytelling, presentation structure, audience awareness, or longer speaking turns. The free assessment confirms which pattern is actually present.',
   },
   {
     question: 'What ages are the Tiny Steps Public Speaking levels for?',
@@ -111,7 +114,7 @@ const faqItems = [
   {
     question: 'Is age 4 too young to start public speaking classes?',
     answer:
-      'Age 4 can be appropriate when the programme is really communication foundations: short answers, description, storytelling, show-and-tell, listening, turn-taking, and simple questions. Tiny Steps does not expect four-year-olds to give formal speeches or debate. The activities and level of support change with age and readiness.',
+      'No—age four is not too young when public speaking is taught as communication foundations rather than adult-style speech performance. At this age, appropriate work includes short connected answers, description, storytelling, show-and-tell, listening, turn-taking, and simple questions. Tiny Steps does not expect four-year-olds to deliver formal speeches or debate; the task and support change with age and readiness.',
   },
   {
     question: 'Are Tiny Steps public speaking classes live and 1:1?',
@@ -131,7 +134,7 @@ const faqItems = [
   {
     question: 'How can parents see speaking progress?',
     answer:
-      'Compare fresh speaking tasks over time. Look for longer and clearer responses, better idea organisation, stronger storytelling or presentation structure, less prompting, more confident delivery, and the ability to transfer the same skill to a new speaking task.',
+      'Speaking progress should be visible in what the child can do with less help. Compare fresh tasks over time for clearer and more relevant responses, stronger idea organisation, better storytelling or presentation structure, less prompting, more purposeful delivery, and transfer of the same skill to a new topic or audience.',
   },
   {
     question: 'Why do parents choose Tiny Steps for public speaking and communication?',
@@ -142,6 +145,16 @@ const faqItems = [
     question: 'Can parents see a Tiny Steps class sample before enrolling?',
     answer:
       'Yes. The class samples page shows how Tiny Steps live classes are structured and how teachers guide children through speaking, reading, grammar, and other learning tasks. A sample helps parents understand the teaching style, while the free 1:1 assessment is used to understand the individual child.',
+  },
+  {
+    question: 'What should parents look for in an online public speaking course for kids?',
+    answer:
+      'Look for substantial child speaking time, age-appropriate tasks, clear progression, specific teacher feedback, guided retries, audience-aware communication, and a way to see whether the child can transfer the skill to a fresh task. Tiny Steps makes the curriculum, class samples, progress framework, pricing, and free assessment available so parents can inspect those points before enrolling.',
+  },
+  {
+    question: 'Is Public Speaking the same as personality development for kids?',
+    answer:
+      'No. Public Speaking & Communication has a narrower educational focus: organising ideas, storytelling, presentations, discussion, questioning, audience awareness, listening and response. “Personality development” can include much broader areas such as behaviour, grooming, leadership, or social development, so Tiny Steps does not use it as a substitute label for the Speaking programme.',
   },
 ];
 
@@ -756,10 +769,10 @@ export default function SpeakingPage() {
                 What public speaking should look like at different ages
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                There is no single global rule that says children should begin public speaking at one exact age. Tiny Steps uses developmental communication evidence and primary-school speaking-and-listening frameworks as reference points, then adjusts the task to the child.
+                Children can begin public-speaking development as early as age four when the work is communication-focused and developmentally appropriate. Tiny Steps starts younger children with description, storytelling, show-and-tell, listening, turn-taking, and short connected responses—not adult-style speeches. There is no single global starting-age rule, so recognised developmental communication evidence and primary-school spoken-language frameworks are used as reference points while the task is adjusted to the child.
               </p>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
-                Age four can be a suitable starting point for communication foundations—but not for adult-style speeches.
+                Tiny Steps position: age four is a valid starting point for communication foundations; formal speech and debate come later.
               </p>
             </div>
 
@@ -843,7 +856,7 @@ export default function SpeakingPage() {
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Start with the real difficulty</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What is your child struggling with?</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                Similar-looking speaking problems can need different support. Tiny Steps looks at the task the child is finding difficult—everyday conversation, sentence control, participation comfort, idea organisation, presentation structure, or advanced speaking—then uses the free 1:1 assessment to confirm the pathway.
+                The right programme depends on the actual speaking problem, not on a generic “confidence” label. Tiny Steps separates everyday conversation, sentence control, participation comfort, idea organisation, presentation structure, and advanced speaking, then uses the free 1:1 assessment to confirm the pathway.
               </p>
               <div className="mt-4 rounded-[18px] border border-violet-100 bg-violet-50/55 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">Core Speaking fit</p>
@@ -920,10 +933,10 @@ export default function SpeakingPage() {
                 Communication skills matter even more when information is easy to generate
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                AI tools can help generate information quickly. Children still need to decide what question matters, what needs checking, how ideas fit together, how to explain their reasoning, how to listen to another person, and how to respond responsibly.
+                Communication remains a core human skill in an AI-enabled world. AI tools can help generate information quickly, but children still need to decide what question matters, what needs checking, how ideas fit together, how to explain their reasoning, how to listen to another person, and how to respond responsibly.
               </p>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
-                Tiny Steps treats better questioning as part of better communication—not as a prompt-engineering course.
+                Tiny Steps develops those habits through speaking practice and treats better questioning as part of better communication—not as a prompt-engineering course.
               </p>
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 This does not mean young children need to use AI tools. The same habits can be practised through ordinary, age-appropriate conversation, storytelling, explanation, discussion, and questioning.
