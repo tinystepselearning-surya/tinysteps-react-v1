@@ -18,9 +18,11 @@ const vite = read('vite.config.js');
 describe('Speaking ecosystem navigation', () => {
   it('keeps programme-specific curriculum views working in production', () => {
     expect(vite).not.toContain('LEGACY_CURRICULUM_PROGRAM_LINKS');
-    expect(curriculum).toContain("type Tab = 'phonics' | 'grammar' | 'speaking'");
-    expect(curriculum).toContain("safeTab(searchParams.get('tab'))");
+    expect(curriculum).toContain("type Tab = 'phonics' | 'reading' | 'grammar' | 'speaking'");
+    expect(curriculum).toContain("const requestedTab = searchParams.get('tab');");
+    expect(curriculum).toContain("safeTab(requestedTab)");
     expect(curriculum).toContain('id="course-levels"');
+    expect(curriculum).toContain('id="speaking-curriculum-v2"');
     expect(speaking).toContain('/curriculum?tab=speaking#course-levels');
     expect(courseDetail).toContain("'/curriculum?tab=speaking#course-levels'");
   });
