@@ -323,7 +323,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Parents can inspect the [Speaking & Communication programme](/speaking), [Speaking resources hub](/resources/speaking), [class samples](/class-samples), [curriculum](/curriculum?tab=speaking), [progress framework](/speaking-progress-framework) and [pricing](/pricing) before deciding.',
+        'Parents can inspect the [Speaking & Communication programme](/speaking), [Speaking resources hub](/resources/speaking), [class samples](/class-samples), [curriculum](/curriculum?pathway=speaking#course-levels), [progress framework](/speaking-progress-framework) and [pricing](/pricing) before deciding.',
     },
 
     {
