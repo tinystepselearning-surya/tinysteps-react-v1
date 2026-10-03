@@ -1,6 +1,6 @@
 # School OS Wave 0 — Current to Canonical Map
 
-**Status:** IDENTITY AUDIT COMPLETE — EXCEPTIONS CLASSIFIED AND REGISTERED  
+**Status:** ACADEMIC & ENROLLMENT AUDIT COMPLETE — LIVE STRUCTURE VERIFIED  
 **Wave:** 0 — Architecture Contracts  
 **Source branch baseline:** `main` after School OS v1.0 freeze  
 **Purpose:** Document current production concepts and their intended School OS ownership before any schema migration.
@@ -36,10 +36,13 @@ This is a Wave 0 ownership map, not a physical Firestore schema proposal.
 | `teachers` | Role mirror created at `teachers/{uid}` plus derived monthly `teachers/{id}/earnings/{month}` read model | Person + FacultyProfile / FacultyEngagement; monthly earnings child = projection | **CONVERGE/PRESERVE.** Teacher mirror is not separate Person authority; preserve the shared ID value after live verification and keep monthly earnings rebuildable. |
 | `schools` / `SchoolRecord` | School profile, status, contact/location, LP assignment, current academic year | Organisation + School Partnerships | **Strong foundation.** Converge role/assignment fields without replacing working school identity. |
 | `schoolUsers` / `SchoolUserAccess` | School-admin access keyed by user ID with `schoolIds[]` and `primarySchoolId` | OrganisationMembership + RoleAssignment | **CONVERGE.** Preserve verified user/person and school IDs; replace array authority with membership records while keeping access uninterrupted. |
-| School academic year/grade/section models | School structure and current progress/evidence structures | Organisation/Campus + AcademicYear + Grade + Section + School Partnerships | **Mostly aligned.** Review `teacherIds[]` relationship arrays and snapshot semantics. |
-| `enrollments` / `Enrollment` | Mixed aggregate; existing hardening already treats `kidId`, `parentId`, `teacherId` as canonical operational scalars with `studentId`, `kidIds[]`, `parentIds[]`, `teacherIds[]` retained for compatibility | Enrollment + TeachingAssignment + relationships + Commerce/Finance | **CONVERGE.** Preserve enrollment IDs and canonical scalar references where valid; refuse ambiguous alias states and split domain ownership gradually. |
-| `courses` / `Course` | Academic course plus duration/frequency/rate/topics | Course + CurriculumVersion + DeliveryOffering + Product/CommercialOffer where commercial | **Academic/commercial mix.** Price must leave academic ownership over time. |
-| `classSessions` / `TeacherSession` | Session plus learner aliases/arrays, time, attendance, finance snapshots and teacher identity where `teacherId` is canonical for new writes; older teacher aliases remain readable | ClassSession + SessionParticipant + SessionStaff + Attendance + finance/commercial snapshots as required | **CONVERGE.** Preserve working scheduling system and canonical `teacherId`; classify alias mismatches before later physical cleanup in Wave 3. |
+| School academic year/grade/section models | Live footprint: 1 school, 1 academic year, no grades/sections/teachers/progress rows yet | Organisation/Campus + AcademicYear + Grade + Section + School Partnerships | **PRESERVE foundation.** No current migration conflict; keep Section distinct from general LearningGroup unless explicitly bridged later. |
+| `enrollments` / `Enrollment` | 209 live docs; all resolve to Course and retain rate/currency/credits/topicProgress; teacher + schedule + finance/entitlement concerns remain embedded | Enrollment + DeliveryOffering relation + TeachingAssignment + SchedulePlan + Commerce/Entitlement/Finance | **PRESERVE ID/LIFECYCLE, NARROW OWNERSHIP.** 136 active-like; current-looking missing-teacher/unconfigured rows have no future sessions. |
+| `courses` / `Course` | 9 live docs (7 active); all have name + track/area + duration; production currently has no numeric level, embedded price, topics, frequency or capacity fields | Programme + Course + CurriculumVersion + DeliveryOffering defaults where applicable | **CONVERGE.** Preserve Course IDs. Numeric level is a normalization gap, not a required existing invariant. Commercial ownership stays outside Course. |
+| `classSessions` / `TeacherSession` | 14,257 physical occurrences; all 4,495 today/future rows resolve to Enrollment + Course and have financial snapshots; zero multi-learner sessions | ClassSession + SessionParticipant + SessionStaff + Attendance + historical finance/commercial snapshots where required | **PRESERVE occurrence history + CONVERGE relationships.** 161 missing Enrollment refs are all past-dated historical debt; no current/future orphan. |
+| `operationalEnrollmentKeys` | 70 uniqueness reservations; all 70 resolve to Enrollment | Enrollment uniqueness/idempotency workflow state | **WORKFLOW asset.** Preserve until canonical Enrollment creation owns equivalent uniqueness guarantees. |
+| `enrollmentCreationOperations` | 79 idempotency operation records | Command/idempotency evidence | **WORKFLOW/EVIDENCE.** Preserve migration-safe replay semantics. |
+| `enrollmentCourseTransitions` | 5 completed transition records; all source/destination Enrollment and destination Course refs resolve | Enrollment lifecycle transition evidence | **PRESERVE EVIDENCE.** Keep new-enrollment-on-course-change behavior. |
 | `leads` | Prospect/lead records | Lead in Growth & CRM | **Canonical direction clear.** Preserve lead history through admission/enrollment. |
 | `demoSessions` | Admission scheduling, teacher assignment, observed child level, outcome, follow-up/conversion data | AdmissionsCase + AdmissionAssessment + shared scheduling capability | **Mixed admissions aggregate.** Do not force into academic ClassSession. |
 | `demoSessionsPrivate` | Parent phone/private admission data sidecar | Admissions private/PII boundary | **Good pattern to preserve.** Reinforces sensitive-data separation. |
@@ -99,7 +102,7 @@ Both `kids` and `students` exist with overlapping learner semantics.
 
 Repository evidence makes `kids/{kidId}` the canonical learner-ID candidate. Root `students` and nested `parents/{parentId}/students/{studentId}` must be reconciled as projection/compatibility/legacy rows. The live audit must determine which rows share the canonical kid ID and which require an explicit link. No collection or learner record is deleted or merged by naming alone.
 
-### C. Enrollment mixes domains
+### C. Enrollment mixes domains — ownership decision recorded
 
 Current Enrollment includes:
 
@@ -124,7 +127,7 @@ Commerce
 Finance
 ```
 
-This is a major migration boundary, not an immediate refactor.
+Live audit confirms this is a migration boundary, not a data-integrity failure: all 209 Enrollment→Course references resolve, all 209 retain money/credit snapshots, and the working idempotency/transition safeguards are consistent. Preserve Enrollment identity/history while extracting TeachingAssignment, SchedulePlan, Commerce/Entitlement/Finance ownership.
 
 ### D. ClassSession mixes delivery, relationships, attendance and finance
 
@@ -142,19 +145,19 @@ Financial/commercial snapshots where required
 
 The existing rolling-schedule/session system should be preserved and incrementally converged.
 
-### E. Course mixes academic and commercial concerns
+### E. Course / curriculum / delivery ownership — decision recorded
 
-Current Course includes academic structure and `ratePerSession`.
-
-Target ownership:
+Legacy code supports academic, delivery and commercial Course fields, but live production Course documents are leaner: all 9 have name/track/duration, while none currently populate price, topics, frequency, capacity or numeric level. Target ownership remains:
 
 ```text
-Course / CurriculumVersion / DeliveryOffering
-                  +
-Product / CommercialOffer
+Programme → Course → CurriculumVersion
+                    ↓
+             DeliveryOffering
+                    +
+         Product / CommercialOffer
 ```
 
-Academic structure must not become dependent on market price.
+Do not backfill a numeric level merely because an older admin form expected one; define explicit academic sequence metadata during canonical migration.
 
 ## 4. Existing architecture to protect
 
@@ -170,20 +173,25 @@ Wave 0 treats the following as assets rather than rewrite targets:
 - reusable blog authority template;
 - local `preflight` validation plus the deployment-only GitHub workflow.
 
-## 5. Live verification and remaining unresolved items
+## 5. Verified academic/enrollment state and remaining unresolved items
 
-The code-level identity direction is now documented in [IDENTITY_REFERENCE_AUDIT.md](./IDENTITY_REFERENCE_AUDIT.md).
+Identity decisions are recorded in [IDENTITY_REFERENCE_AUDIT.md](./IDENTITY_REFERENCE_AUDIT.md).
 
-The read-only production audit must still verify:
+Academic/enrollment decisions and live evidence are recorded in [ACADEMIC_ENROLLMENT_AUDIT.md](./ACADEMIC_ENROLLMENT_AUDIT.md).
 
-- 1:1 consistency of `users/{id}` with populated `uid`/`userId`;
-- completeness/consistency of parent, teacher, LP and admin role mirrors;
-- `kids` vs root/nested `students` overlap and explicit mappings;
-- guardian backlink drift between `users.childIds[]` and learner parent references;
-- enrollment/session orphan and alias ambiguity counts;
-- school membership reference integrity.
+Verified production facts:
 
-Non-identity items that remain unresolved for later work packages:
+- 9 Courses, 7 active;
+- 209 Enrollments; 209/209 Course references resolve;
+- 51 active-like canonical rolling schedules, 83 active-like legacy-compatible schedules, 2 active-like unconfigured rows with no future sessions;
+- 14,257 ClassSessions; 4,495 today/future rows all have Enrollment, Course and financial snapshot coverage;
+- zero multi-learner ClassSessions;
+- 161 missing Enrollment references exist only on past ClassSessions;
+- all 70 operational enrollment keys resolve;
+- all 5 enrollment course transitions are complete and internally resolved;
+- no standalone Programme/CurriculumVersion/DeliveryOffering/LearningGroup/GroupPlacement/TeachingAssignment/SchedulePlan production collections exist yet.
+
+Non-academic items that remain unresolved for later work packages:
 
 - `progress` record taxonomy;
 - `parentWallets` canonical/subledger/projection classification;
@@ -191,9 +199,9 @@ Non-identity items that remain unresolved for later work packages:
 - generic `cases`;
 - generic game `sessions` / `transactions`;
 - recording retention/evidence semantics;
-- precise school teacher/section relationship migration.
+- Shared Experience / design-system ownership and reuse inventory.
 
-No runtime migration is authorized until live identity exceptions are understood.
+No production migration is authorized merely because Wave 0 ownership is now defined.
 
 ## 6. Migration posture labels
 
@@ -212,15 +220,17 @@ Future mapping updates use these labels:
 
 ## 7. Next Wave 0 work
 
-The read-only production audit and focused exception drill-down have completed successfully. Identity exceptions are classified and registered in `IDENTITY_REFERENCE_AUDIT.md`. Stale current-state records must be resolved before they participate in Wave 1 canonical writes; historical exceptions remain compatibility debt.
+Identity/reference and Academic/Enrollment work packages are complete.
 
-The next Wave 0 work package is **Academic & Enrollment Audit**:
+The next Wave 0 work package is **Shared Experience / Design-System Inventory**:
 
-- Course vs CurriculumVersion vs DeliveryOffering ownership;
-- Enrollment lifecycle and canonical references;
-- TeachingAssignment scope;
-- LearningGroup / GroupPlacement;
-- schedule-plan and class-session boundaries;
-- remaining academic/commercial mixing.
+- application shells and portal frames;
+- desktop/mobile navigation;
+- shared page/header/breadcrumb patterns;
+- list/detail/workspace templates;
+- tables, filters, forms, dialogs and status components;
+- responsive/accessibility/loading/empty/error patterns;
+- duplicated feature-specific UI that should become controlled variants;
+- design tokens and visual-governance ownership.
 
-No runtime identity migration begins merely because this audit code exists.
+No runtime UI rewrite begins merely because the inventory exists.
