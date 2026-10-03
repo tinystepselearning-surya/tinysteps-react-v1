@@ -230,7 +230,11 @@ if (r8Changed) {
 }
 
 if (frontendChanged) {
-  run('Local production build + audits', 'npm', ['run', 'build']);
+  run(
+    full ? 'Full local production build + audits' : 'Local deploy-artifact build',
+    'npm',
+    ['run', full ? 'build' : 'build:deploy'],
+  );
 }
 
 if (r8Changed) {
