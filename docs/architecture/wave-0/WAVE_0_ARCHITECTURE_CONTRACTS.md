@@ -272,13 +272,14 @@ Every significant new feature or migration must identify:
 
 ## 14. Wave 0 work packages
 
-Wave 0 is intentionally limited to five documentation/decision work packages:
+Wave 0 uses six bounded work packages:
 
-1. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
-2. **Identity/reference audit** — determine which existing IDs/aliases can remain canonical and where relationship duplication exists.
-3. **Academic/enrollment audit** — map Course/Enrollment/group/teacher/schedule concepts and their current ownership.
-4. **Shared experience/design-system inventory** — identify reusable shells/templates/components and controlled variants.
-5. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
+1. **Engineering delivery baseline** — local-first development validation, deployment-only GitHub Actions, and test/workflow retirement rules.
+2. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
+3. **Identity/reference audit** — determine which existing IDs/aliases can remain canonical and where relationship duplication exists.
+4. **Academic/enrollment audit** — map Course/Enrollment/group/teacher/schedule concepts and their current ownership.
+5. **Shared experience/design-system inventory** — identify reusable shells/templates/components and controlled variants.
+6. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
 
 These are planning packages, not five new runtime systems.
 
