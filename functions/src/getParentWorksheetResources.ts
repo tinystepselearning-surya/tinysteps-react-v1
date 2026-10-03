@@ -132,9 +132,18 @@ export async function loadParentWorksheetResources(
 
 export const getParentWorksheetResources = onCall({ region: 'asia-south1' }, async (request) => {
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Sign in as a parent to view worksheets.');
-  const tokenRole = String(request.auth.token?.role || '').trim().toLowerCase();
-  const userRole = tokenRole || String((await admin.firestore().collection('users').doc(request.auth.uid).get()).data()?.role || '').trim().toLowerCase();
-  if (userRole !== 'parent') throw new HttpsError('permission-denied', 'Parent access is required.');
+  const userSnap = await admin.firestore().collection('users').doc(request.auth.uid).get();
+  if (!userSnap.exists) throw new HttpsError('permission-denied', 'Parent access is required.');
+  const user = userSnap.data() || {};
+  const status = String(user.status || '').trim().toLowerCase();
+  if (status && status !== 'active') throw new HttpsError('permission-denied', 'Parent access is required.');
+  const userRole = String(user.role || '').trim().toLowerCase();
+  const userRoles = Array.isArray(user.roles)
+    ? user.roles.map((value: unknown) => String(value || '').trim().toLowerCase())
+    : [];
+  if (userRole !== 'parent' && !userRoles.includes('parent')) {
+    throw new HttpsError('permission-denied', 'Parent access is required.');
+  }
   const kidId = String((request.data as { kidId?: unknown } | undefined)?.kidId || '').trim();
   if (!kidId || kidId.length > 200) throw new HttpsError('invalid-argument', 'A valid kidId is required.');
 
