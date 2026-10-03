@@ -25,13 +25,35 @@ async function resolveCallerRole(
 ): Promise<CallerRole> {
   if (!auth?.uid) return 'unknown';
 
-  const tokenRole = normalizeRole(auth.token?.role);
-  if (tokenRole !== 'unknown') return tokenRole;
-  if (auth.token?.admin === true) return 'admin';
-
   try {
     const userDoc = await admin.firestore().collection('users').doc(auth.uid).get();
-    return normalizeRole(userDoc.data()?.role);
+    if (!userDoc.exists) return 'unknown';
+
+    const user = userDoc.data() || {};
+    if (
+      user.status !== undefined &&
+      user.status !== null &&
+      (
+        typeof user.status !== 'string' ||
+        user.status.trim().toLowerCase() !== 'active'
+      )
+    ) {
+      return 'unknown';
+    }
+
+    const currentRole = normalizeRole(user.role);
+    if (currentRole !== 'unknown') return currentRole;
+
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    for (const role of roles) {
+      const normalized = normalizeRole(role);
+      if (normalized !== 'unknown') return normalized;
+    }
+
+    const tokenRole = normalizeRole(auth.token?.role);
+    if (tokenRole !== 'unknown') return tokenRole;
+    if (auth.token?.admin === true) return 'admin';
+    return 'unknown';
   } catch (err) {
     logger.warn('createMakeupSessionFromCredit: failed to resolve caller role', {
       uid: auth.uid,
