@@ -1158,6 +1158,22 @@ export default function SpeakingPage() {
       </section>
 
       <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">Parent evidence</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What speaking parents noticed first</h2>
+          <div className="mt-5">
+            <TestimonialSnippets courseTag="speaking" title="Parent feedback from speaking families" />
+          </div>
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            These are curated first-party comments from individual families, not a promise that another child will have the same result. Review them together with <Link to="/class-samples" className="font-semibold underline underline-offset-2">class samples</Link>, the <Link to="/curriculum" className="font-semibold underline underline-offset-2">curriculum</Link>, the <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold underline underline-offset-2">Speaking Progress Framework</Link>, and your child&apos;s own assessment.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            Some families may notice greater confidence as speaking structure improves. Confidence-only barriers remain owned by the dedicated <Link to="/confidence-building-program-kids" className="font-semibold underline underline-offset-2">Confidence Building programme</Link>; this page stays focused on structured and audience-facing communication.
+          </p>
+        </div>
+      </section>
+
+      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200 bg-white p-5 md:p-7">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Decision support</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What parents should compare before choosing speaking classes</h2>
@@ -1217,22 +1233,6 @@ export default function SpeakingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">Parent evidence</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What speaking parents noticed first</h2>
-          <div className="mt-5">
-            <TestimonialSnippets courseTag="speaking" title="Parent feedback from speaking families" />
-          </div>
-          <p className="mt-4 text-sm leading-6 text-slate-600">
-            These are curated first-party comments from individual families, not a promise that another child will have the same result. Review them together with <Link to="/class-samples" className="font-semibold underline underline-offset-2">class samples</Link>, the <Link to="/curriculum" className="font-semibold underline underline-offset-2">curriculum</Link>, the <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold underline underline-offset-2">Speaking Progress Framework</Link>, and your child&apos;s own assessment.
-          </p>
-          <p className="mt-2 text-xs leading-5 text-slate-500">
-            Some families may notice greater confidence as speaking structure improves. Confidence-only barriers remain owned by the dedicated <Link to="/confidence-building-program-kids" className="font-semibold underline underline-offset-2">Confidence Building programme</Link>; this page stays focused on structured and audience-facing communication.
-          </p>
         </div>
       </section>
 
