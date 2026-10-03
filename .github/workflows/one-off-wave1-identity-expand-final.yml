@@ -1,0 +1,58 @@
+name: One-off Wave 1 Identity Expand Final Gate
+
+on:
+  push:
+    branches:
+      - wave1/identity-foundation-expand
+
+permissions:
+  contents: read
+
+jobs:
+  identity-expand-final:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Wave 1 branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Run identity foundation build and invariant tests
+        run: npm run test:wave1-identity-foundation
+
+      - name: Run Firestore identity authorization emulator tests
+        run: npm run test:wave1-identity-rules
+
+      - name: Authenticate production read-only dry run
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run production identity dry run
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: node scripts/wave1-identity-foundation-dry-run.mjs
+
+      - name: Upload final EXPAND evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wave1-identity-expand-final-${{ github.sha }}
+          path: reports/wave1-identity-foundation-dry-run.json
+          if-no-files-found: error
+          retention-days: 1
