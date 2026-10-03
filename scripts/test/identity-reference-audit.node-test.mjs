@@ -60,7 +60,9 @@ function healthySnapshot() {
 test('healthy canonical references produce no identity issues', () => {
   const report = auditIdentitySnapshot(healthySnapshot(), { sampleSize: 10 });
   assert.equal(report.issues.total, 0);
-  assert.equal(report.authBackedIdentity.usersDocumentIdEqualsUidOrUidMissing, 2);
+  assert.equal(report.authBackedIdentity.usersUidPresent, 2);
+  assert.equal(report.authBackedIdentity.usersUidMatchesDocumentId, 2);
+  assert.equal(report.authBackedIdentity.usersUidMatchPct, 100);
   assert.equal(report.learners.kidRelationships.usersChildIdsBacklinkPresent, 1);
   assert.equal(report.operationalReferences.enrollments.ambiguousLearnerIdentity, 0);
 });
@@ -90,4 +92,40 @@ test('ambiguous aliases are surfaced without exposing raw IDs', () => {
   ]) {
     assert.equal(serialized.includes(rawId), false);
   }
+});
+
+
+test('legacy student namespaces require an explicit kid mapping', () => {
+  const snapshot = healthySnapshot();
+  snapshot.students = [
+    entry('students', 'student-projection-secret', { parentId: 'parent-secret-001' }),
+  ];
+  snapshot.nestedStudents = [
+    {
+      id: 'legacy-nested-secret',
+      path: 'parents/parent-secret-001/students/legacy-nested-secret',
+      data: { parentId: 'parent-secret-001' },
+    },
+  ];
+
+  const report = auditIdentitySnapshot(snapshot, { sampleSize: 10 });
+  assert.equal(report.learners.rootStudentCompatibility.withoutKidMapping, 1);
+  assert.equal(report.learners.nestedStudentCompatibility.withoutKidMapping, 1);
+  assert.equal(report.issues.byCode.root_student_without_kid_mapping, 1);
+  assert.equal(report.issues.byCode.nested_student_without_kid_mapping, 1);
+});
+
+test('audit implementation has no awaited Firestore mutation calls', async () => {
+  const source = await import('node:fs/promises').then((fs) =>
+    fs.readFile(new URL('../audit-identity-references.mjs', import.meta.url), 'utf8'),
+  );
+
+  assert.doesNotMatch(
+    source,
+    /await\s+[^;\n]*\.(?:set|update|delete|create|add)\s*\(/,
+  );
+  assert.doesNotMatch(source, /\brunTransaction\s*\(/);
+  assert.doesNotMatch(source, /\bbulkWriter\s*\(/);
+  assert.doesNotMatch(source, /\bwriteBatch\s*\(/);
+  assert.doesNotMatch(source, /\bdb\.batch\s*\(/);
 });
