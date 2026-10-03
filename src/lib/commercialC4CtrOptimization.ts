@@ -163,7 +163,7 @@ export const COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS: Readonly<Record<string, Read
 export const COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES: Readonly<Record<string, Readonly<CommercialC4ControlSnippet>>> = freeze({
   '/speaking': freeze({
     title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
-    description: 'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+    description: 'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
   }),
 });
 
