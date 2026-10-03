@@ -126,6 +126,7 @@ const CourseDetailPage: FC = () => {
   }, [slug]);
   const programPath = courseTrack === 'phonics' ? '/phonics' : courseTrack === 'grammar' ? '/grammar' : '/speaking';
   const programLabel = courseTrack === 'phonics' ? 'Phonics' : courseTrack === 'grammar' ? 'Grammar' : 'Speaking & Communication';
+  const curriculumRoadmapPath = courseTrack === 'speaking' ? '/curriculum?pathway=speaking#course-levels' : '/curriculum';
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const usedHrefs = useMemo(() => new Set<string>(), []);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[normalizedRawSlug || ''] || {};
@@ -319,7 +320,7 @@ const CourseDetailPage: FC = () => {
                     program: courseTrack,
                   }),
               },
-              { label: 'View Full Curriculum Roadmap', to: '/curriculum', variant: 'ghost' },
+              { label: 'View Full Curriculum Roadmap', to: curriculumRoadmapPath, variant: 'ghost' },
             ]}
             renderLink={(item, className) =>
               item.to ? (
@@ -342,6 +343,41 @@ const CourseDetailPage: FC = () => {
           />
         }
       />
+
+      {courseTrack === 'speaking' ? (
+        <section className="px-6 pb-4 lg:px-8" aria-label="Speaking programme context">
+          <div className="mx-auto grid max-w-7xl gap-4 rounded-[1.75rem] border border-violet-100 bg-[linear-gradient(135deg,#f7f5ff_0%,#ffffff_55%,#fff8ef_100%)] p-5 shadow-[0_14px_36px_rgba(15,23,42,0.05)] lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Part of the Tiny Steps Speaking pathway</p>
+              <h2 className="mt-2 text-xl font-bold tracking-[-0.02em] text-slate-950">
+                {course.slug === 'basic-public-speaking'
+                  ? 'Foundations builds the structure before advanced speaking.'
+                  : 'Excellence is the advanced level after Foundations or equivalent readiness.'}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Placement is assessment-led. Ages are a guide; the useful decision is whether the child needs organised short responses and presentation foundations, or is ready for longer talks, impromptu speaking, persuasion and guided debate.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Link to="/speaking" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:border-violet-200">
+                Speaking programme overview
+              </Link>
+              <Link
+                to={course.slug === 'basic-public-speaking' ? '/courses/public-speaking-excellence' : '/courses/public-speaking-foundations'}
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:border-violet-200"
+              >
+                {course.slug === 'basic-public-speaking' ? 'Compare Excellence' : 'Compare Foundations'}
+              </Link>
+              <Link to="/curriculum?pathway=speaking#course-levels" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:border-violet-200">
+                Speaking curriculum roadmap
+              </Link>
+              <Link to="/speaking-progress-framework" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:border-violet-200">
+                How progress is measured
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="px-6 pb-3 lg:px-8" aria-label="How to use this course page">
         <div className="mx-auto max-w-7xl rounded-[1.75rem] border border-slate-200/90 bg-white/90 p-3 shadow-[0_14px_36px_rgba(15,23,42,0.07)] backdrop-blur sm:p-4">
