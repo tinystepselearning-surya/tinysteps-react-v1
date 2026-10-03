@@ -15,6 +15,7 @@ const PROJECT = process.env.FIREBASE_PROJECT_ID || 'tinysteps-react-v1';
 const EXPECTED_REPOSITORY = 'tinystepselearning-surya/tinysteps-react-v1';
 const EXPECTED_DEPLOY_PRINCIPAL = 'github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com';
 const FIREBASE_CLI = '15.30.0';
+const FIREBASE_DEPLOY_CONFIG = process.env.FIREBASE_DEPLOY_CONFIG || 'firebase.json';
 const REPORT_PATH = resolve('artifacts/functions-deployment-report.json');
 const MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
 const SETTLE_TIMEOUT_MS = 10 * 60 * 1000;
@@ -121,6 +122,7 @@ try {
         '--yes', `firebase-tools@${FIREBASE_CLI}`, 'deploy',
         '--only', pending.map(target => target.selector).join(','),
         '--project', PROJECT,
+        '--config', FIREBASE_DEPLOY_CONFIG,
         '--non-interactive',
       ]);
       const outputMeta = digestBoundedOutput(result.output);
