@@ -51,14 +51,15 @@ describe('Speaking Commercial Authority v2 — final parent-answer quality harde
     expect(llmsFull).toContain('audience-facing organisation/presentation to Public Speaking & Communication');
   });
 
-  it('maps major parent questions to one canonical answer owner for AEO and GEO retrieval', () => {
-    expect(aiAnswers).toContain("id: 'concept-public-speaking-importance'");
-    expect(aiAnswers).toContain("id: 'concept-public-speaking-start-age'");
-    expect(aiAnswers).toContain("id: 'concept-public-speaking-age-four'");
-    expect(aiAnswers).toContain("id: 'concept-public-speaking-vs-spoken-english'");
-    expect(aiAnswers).toContain("id: 'concept-communication-ai-era'");
-    expect(aiAnswers).toContain("id: 'concept-public-speaking-class-choice'");
-    expect(aiAnswers).toContain("query: 'What should parents look for in public speaking classes for kids?'");
+  it('maps major parent questions without expanding the frozen AI answer-layer baseline', () => {
+    expect(aiAnswers).toContain("export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv6'");
+    expect(aiAnswers).not.toContain("id: 'concept-public-speaking-start-age'");
+    expect(canonical).toContain("'what age should children start public speaking'");
+    expect(canonical).toContain("'is age 4 too young for public speaking classes'");
+    expect(canonical).toContain("'difference between public speaking and spoken English for kids'");
+    expect(canonical).toContain("'why communication skills matter for children in the AI era'");
+    expect(canonical).toContain("'what should parents look for in public speaking classes for kids'");
+    expect(canonical).toContain("'online public speaking course for kids'");
   });
 
   it('preserves the informational and commercial ownership split', () => {
