@@ -18,20 +18,21 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
   it('uses one premium visual system across the three non-Phonics owners', () => {
     expect(reading).toContain('variant="reading"');
     expect(grammar).toContain('variant="grammar"');
-    expect(speaking).toContain('variant="speaking"');
-
-    for (const source of [reading, grammar, speaking]) {
+    for (const source of [reading, grammar]) {
       expect(source).toContain('bg-[#fbfbfd]');
       expect(source).toContain('title="What this programme builds"');
       expect(source).toContain('ProgrammeIntentBoundary');
     }
 
+    expect(speaking).toContain('bg-[#fbfbfd]');
+    expect(speaking).toContain('ProgrammeIntentBoundary');
+    expect(speaking).toContain('/blog/hero-families/Tiny_Steps_Speaking.webp');
+    expect(speaking).toContain("lg:grid-cols-[minmax(0,1.85fr)_minmax(320px,1fr)]");
+    expect(speaking).not.toContain('appearance="glass-overlay"');
+
     expect(snapshot).toContain("variant?: 'reading' | 'grammar' | 'speaking'");
-    expect(snapshot).toContain("appearance?: 'default' | 'glass-overlay'");
     expect(snapshot).toContain('data-premium-programme-visual={variant}');
     expect(snapshot).toContain('Read → understand → explain');
-    expect(speaking).toContain('/blog/hero-families/Tiny_Steps_Speaking.webp');
-    expect(speaking).toContain('appearance="glass-overlay"');
     expect(snapshot).toContain('Notice → correct → apply');
     expect(snapshot).toContain('Think → organise → speak');
   });

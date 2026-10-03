@@ -9,7 +9,6 @@ import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js'
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 import ProgrammeIntentBoundary from '../components/programs/ProgrammeIntentBoundary';
-import ProgrammeHeroSnapshot from '../components/programs/ProgrammeHeroSnapshot';
 import ProgrammeFaqAccordion from '../components/programs/ProgrammeFaqAccordion';
 import { getProgrammeAiVisibility } from '../lib/programmeAiVisibility';
 import {
@@ -673,26 +672,29 @@ export default function SpeakingPage() {
             </ol>
           </nav>
 
-          <div className="grid gap-7 lg:grid-cols-[1.06fr_0.94fr] lg:items-center lg:gap-10">
-            <div>
-              <p className="inline-flex rounded-full border border-violet-200/80 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-800 shadow-[0_8px_22px_rgba(124,58,237,0.08)] backdrop-blur">
-                Live 1:1 public speaking & communication
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.85fr)_minmax(320px,1fr)] lg:items-center lg:gap-12">
+            <div className="max-w-[820px]">
+              <p className="inline-flex rounded-full border border-violet-200/80 bg-white/78 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-800 shadow-[0_8px_22px_rgba(124,58,237,0.07)] backdrop-blur">
+                Live 1:1 Public Speaking & Communication
               </p>
-              <h1 className="mt-5 max-w-[790px] text-[clamp(2.65rem,8vw,4.65rem)] font-black leading-[0.95] tracking-[-0.055em] text-[#172033]">
+
+              <h1 className="mt-5 text-[clamp(2.55rem,6vw,4.2rem)] font-black leading-[0.97] tracking-[-0.052em] text-[#172033]">
                 Online Public Speaking Classes for Kids
               </h1>
-              <p className="mt-5 max-w-[700px] text-base font-medium leading-7 text-slate-700 md:text-[1.08rem] md:leading-8">
-                Live 1:1 public speaking and communication coaching for {speakingAgeRangeLabel}. Children practise structured answers, storytelling, show-and-tell, presentations, audience awareness, and clearer expression through guided speaking practice.
+
+              <p className="mt-5 max-w-[760px] text-base font-medium leading-7 text-slate-700 md:text-[1.05rem] md:leading-8">
+                Structured speaking practice for {speakingAgeRangeLabel}: clear answers, storytelling, presentations, audience awareness, and confident communication.
               </p>
-              <p className="mt-3 max-w-[680px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
-                Standard classes are {PUBLIC_SESSION_DURATION_LABEL} at {speakingClassPriceLabel}. Start with one free {demoMinutes}-minute 1:1 assessment so we can separate public-speaking needs from Spoken English, Grammar, or confidence-only barriers before placement.
+
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600 md:text-[15px]">
+                {PUBLIC_SESSION_DURATION_LABEL} • {speakingClassPriceLabel} • Free {demoMinutes}-min assessment
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#182338] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(23,32,51,0.18)] transition hover:bg-[#111b2d]">
+                <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#182338] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(23,32,51,0.16)] transition hover:bg-[#111b2d]">
                   Book Free Assessment
                 </Link>
-                <Link to="/class-samples" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300/80 bg-white/85 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-white">
+                <Link to="/class-samples" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300/80 bg-white/82 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-white">
                   Watch a Real Class
                 </Link>
                 <Link to="/curriculum?tab=speaking" className="inline-flex min-h-[46px] items-center justify-center px-2 py-2.5 text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4 transition hover:text-violet-950">
@@ -700,30 +702,18 @@ export default function SpeakingPage() {
                 </Link>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-2" aria-label="Speaking programme facts">
-                {[
-                  speakingAgeRangeLabel,
-                  speakingClassPriceLabel,
-                  `${PUBLIC_SESSION_DURATION_LABEL} • Live 1:1`,
-                  `Free ${demoMinutes}-min assessment`,
-                  `Tiny Steps: ${PUBLIC_LEARNER_REACH_LABEL}`,
-                  'Parent progress updates',
-                ].map((chip) => (
-                  <span key={chip} className="rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 backdrop-blur sm:px-3.5 sm:text-sm">
-                    {chip}
-                  </span>
-                ))}
-              </div>
+              <p className="mt-5 text-xs font-semibold tracking-[0.01em] text-slate-500 sm:text-sm">
+                ${PUBLIC_LEARNER_REACH_LABEL} • Parent progress updates
+              </p>
             </div>
 
-            <div className="relative min-h-[430px] sm:min-h-[505px] lg:min-h-[560px]">
-              <div className="pointer-events-none absolute -inset-8 rounded-[48px] bg-[radial-gradient(circle_at_64%_30%,rgba(255,255,255,0.95),rgba(233,226,255,0.54)_44%,transparent_72%)] blur-2xl" />
-
-              <div className="relative h-[365px] overflow-hidden rounded-[34px] bg-white/45 shadow-[0_34px_90px_rgba(15,23,42,0.13)] ring-1 ring-white/70 sm:h-[440px] lg:h-[520px]">
+            <div className="relative lg:justify-self-end">
+              <div className="pointer-events-none absolute -inset-6 rounded-[42px] bg-[radial-gradient(circle_at_58%_34%,rgba(255,255,255,0.95),rgba(236,230,255,0.48)_48%,transparent_74%)] blur-2xl" />
+              <div className="relative h-[300px] w-full overflow-hidden rounded-[30px] bg-white/35 shadow-[0_28px_76px_rgba(15,23,42,0.12)] sm:h-[340px] lg:h-[390px] lg:w-[390px] xl:h-[420px] xl:w-[430px]">
                 <img
                   src="/blog/hero-families/Tiny_Steps_Speaking.webp"
                   alt="Child practising public speaking online at home"
-                  className="h-full w-full object-cover object-[58%_center]"
+                  className="h-full w-full object-cover object-[62%_center]"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
@@ -734,33 +724,11 @@ export default function SpeakingPage() {
                     }
                   }}
                 />
-
-                <div className="pointer-events-none absolute inset-y-0 left-0 w-[22%] bg-gradient-to-r from-[#fbfbfd] via-[#fbfbfd]/55 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#fbfbfd]/90 via-[#fbfbfd]/28 to-transparent" />
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.22),transparent_38%,rgba(23,32,51,0.06))]" />
-              </div>
-
-              <div className="relative z-10 -mt-16 px-3 sm:-mt-20 sm:px-6 lg:absolute lg:inset-x-6 lg:bottom-3 lg:mt-0 lg:px-0">
-                <ProgrammeHeroSnapshot
-                  variant="speaking"
-                  appearance="glass-overlay"
-                  eyebrow="Speaking programme focus"
-                  title="What this programme builds"
-                  summary="Structured, audience-facing communication through guided speaking practice."
-                  items={[
-                    'Structured answers',
-                    'Storytelling',
-                    'Show-and-tell',
-                    'Presentations',
-                    'Audience awareness',
-                    'Clear communication',
-                  ]}
-                />
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-[12%] bg-gradient-to-r from-[#fbfbfd]/88 via-[#fbfbfd]/26 to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_40%,rgba(23,32,51,0.035))]" />
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
       <section className="px-4 py-5 sm:px-5 md:py-7 lg:px-6">
         <div className="mx-auto grid max-w-6xl gap-4 border-y border-slate-200/80 py-5 md:grid-cols-[0.28fr_0.72fr] md:items-start md:gap-8 md:py-6">
