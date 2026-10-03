@@ -344,7 +344,7 @@ reports/wave1-identity-foundation-dry-run.json
 Read-only production dry run:
 
 ~~~text
-GitHub Actions run: 37139816228
+GitHub Actions run: 37141121843
 Result: success
 Firestore/Auth writes: 0
 ~~~
@@ -449,15 +449,18 @@ Admin role / roles[] / existing superUser compatibility
 
 A custom claim is no longer sufficient by itself.
 
-Direct token-first exceptions in:
+Direct token-first or claim-only exceptions were removed or hardened across the audited privileged surface, including:
 
 - Enrollment creation;
 - makeup-session caller-role resolution;
+- lesson-access role resolution;
+- game-result Admin bypass;
 - public-KB refresh;
-- messaging;
-- message-thread creation/sync
+- messaging and message-thread creation/sync;
+- lead/demo/admin finance/curriculum callables;
+- Storage writes for game images and pronunciation audio.
 
-are routed through current Firestore-backed identity before Admin privilege is granted.
+Privileged authority is now routed through current Firestore-backed Tiny Steps identity before Admin access is granted.
 
 ### Firestore Rules authority
 
@@ -545,8 +548,8 @@ Retirement decision:
 Final one-off validation:
 
 ~~~text
-GitHub Actions run: 37139816228
-Validated implementation commit: 0188161e8719db830111493626ab9742d41ec036
+GitHub Actions run: 37141121843
+Validated implementation commit: 1ad3a468100ea750a231c666bb8ba8b39106ec39
 Result: success
 Production writes: 0
 ~~~
@@ -555,8 +558,9 @@ Gate results:
 
 - Functions contracts/build: **PASS**
 - Wave 1 identity foundation invariants: **PASS**
-- authorization-hardening source invariants: **4/4 PASS**
-- Firestore RBAC emulator tests: **7/7 PASS**
+- authorization-hardening source invariants: **8/8 PASS**
+- full Firestore Rules emulator suite: **81/81 PASS across 13 suites**
+- Cloud Storage Rules compilation: **PASS**
 - production Firestore/Auth dry run: **PASS**
 - current Firestore users backed by exact Firebase Auth UID: **223/223**
 - Auth claim-role mismatches among current users: **0**
@@ -575,7 +579,7 @@ The three non-blocking exceptions are:
 
 One Auth-only account carries an Admin claim. The authorization hardening in this brick ensures that the claim alone is no longer accepted as current Tiny Steps business authority.
 
-The one-off validation workflow was removed after the passing run. Permanent GitHub workflow architecture remains deployment-only.
+The one-off validation workflow was removed after the passing run. Permanent GitHub workflow architecture remains deployment-only (`deploy.yml`).
 
 ## 20. EXPAND exit criteria
 
