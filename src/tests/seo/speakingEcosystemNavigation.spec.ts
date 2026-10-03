@@ -24,6 +24,7 @@ describe('Speaking ecosystem navigation', () => {
       "const tab = requestedCourse ? inferTabFromCourse(requestedCourse) : safeTab(requestedTab);",
     );
     expect(curriculum).toContain('id="course-levels"');
+    expect(curriculum).toContain('id="speaking-curriculum-v2"');
     expect(speaking).toContain('/curriculum?tab=speaking#course-levels');
     expect(courseDetail).toContain("'/curriculum?tab=speaking#course-levels'");
   });

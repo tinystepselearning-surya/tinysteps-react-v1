@@ -538,236 +538,254 @@
     "basic-public-speaking": {
       "weeks": [
         {
-          "title": "Stage 1 — Comfort + Routine",
-          "focus": "Feel comfortable speaking in class routines.",
+          "title": "Stage 1 — Connect & Communicate",
+          "focus": "Enter a reciprocal conversation, respond to another person, and communicate a complete idea with growing independence.",
           "learns": [
-            "Practice warm-ups",
-            "Use eye contact and posture",
-            "Speak with a friendly voice"
+            "Participate in short back-and-forth exchanges",
+            "Respond to the listener rather than only recite prepared language",
+            "Use an audible, comfortable pace and a complete spoken response",
+            "Take turns and continue an interaction with less prompting"
           ],
           "activities": [
-            "Warm-up routines",
-            "Intro practice",
-            "Confidence games"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Practice a simple intro",
-            "Confidence check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Speaks comfortably in class"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 2 — Clear Speaking",
-          "focus": "Speak clearly with pace, volume, and full words.",
+          "title": "Stage 2 — Ask, Listen & Clarify",
+          "focus": "Use questions to learn, listen for meaning, and repair misunderstandings.",
           "learns": [
-            "Use full sentences",
-            "Speak clearly and slowly",
-            "Pause between ideas"
+            "Use age-appropriate question words to seek information",
+            "Ask questions that are relevant to the topic",
+            "Answer the question that was actually asked",
+            "Ask a follow-up or clarification question when more information is needed"
           ],
           "activities": [
-            "Clear speech drills",
-            "Volume practice",
-            "Pacing games"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Read 3 sentences clearly",
-            "Pacing check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Speaks clearly and at a steady pace"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 3 — Describe + Show & Tell",
-          "focus": "Describe objects with details and expression.",
+          "title": "Stage 3 — Describe & Explain",
+          "focus": "Expand an idea with useful detail, sequence, comparison, and simple reasons.",
           "learns": [
-            "Give 2–3 details",
-            "Use describing words",
-            "Add simple gestures"
+            "Describe with relevant detail",
+            "Choose more precise vocabulary",
+            "Explain a simple sequence",
+            "Give a reason and make simple comparisons"
           ],
           "activities": [
-            "Picture talk",
-            "Detail building",
-            "Show & tell practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Describe an object with details",
-            "Detail check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Describes with clear details"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 4 — Mini Talks + Q&A",
-          "focus": "Give short talks and answer simple questions.",
+          "title": "Stage 4 — Story & Perspective",
+          "focus": "Tell and retell coherent stories while beginning to consider another person's perspective.",
           "learns": [
-            "Speak for 30–60 seconds",
-            "Use sequence words",
-            "Answer simple questions"
+            "Use a clear beginning, middle, and end",
+            "Include character, setting, problem, feeling, and relevant detail",
+            "Retell without depending on a memorised script",
+            "Consider what another character may know, feel, or think"
           ],
           "activities": [
-            "Mini talk practice",
-            "Q&A drills",
-            "Sequence practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a short talk",
-            "Answer 2 questions"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Gives short talks and answers questions"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 5 — Story Basics",
-          "focus": "Tell a short story in order.",
+          "title": "Stage 5 — Short Talks & Audience",
+          "focus": "Organise a short message for a listener and respond to simple audience questions.",
           "learns": [
-            "Use beginning-middle-end",
-            "Add a character voice",
-            "Emphasize key words"
+            "Choose a clear topic and key message",
+            "Support the message with relevant details",
+            "Use a visual or prop without becoming dependent on it",
+            "Adjust pace, emphasis, and information for the listener",
+            "Answer simple questions after a short talk"
           ],
           "activities": [
-            "Story sequencing",
-            "Voice practice",
-            "Audience practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Tell a short story",
-            "Story order check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Tells a short story in order"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 6 — Presentation Readiness",
-          "focus": "Practice presentations with confidence.",
+          "title": "Stage 6 — Independent Communication & Smart Questioning",
+          "focus": "Plan, communicate, question, check information, and reflect with less adult construction of the response.",
           "learns": [
-            "Present with a prop/visual",
-            "Handle small mistakes calmly",
-            "Show confidence"
+            "Plan an idea before speaking",
+            "Ask for help or clarification without giving up",
+            "Give clear instructions another person can follow",
+            "Recognise that better questions can produce better information",
+            "Distinguish a supported fact from a guess or uncertain answer",
+            "Transfer communication skills to a fresh task"
           ],
           "activities": [
-            "Presentation practice",
-            "Mistake recovery drills",
-            "Showcase"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a mini presentation",
-            "Confidence check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Presents confidently with clarity"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         }
       ]
     },
     "advanced-public-speaking": {
       "weeks": [
         {
-          "title": "Stage 1 — Presence + Engagement",
-          "focus": "Engage the audience with confident presence.",
+          "title": "Stage 1 — Purpose, Audience & Delivery",
+          "focus": "Shape a clear spoken message according to purpose, audience, and task.",
           "learns": [
-            "Strong opening lines",
-            "Audience engagement",
-            "Clear articulation"
+            "Distinguish informing, explaining, and persuading",
+            "Adapt content and detail for the listener or audience",
+            "Open clearly and answer the core question before expanding",
+            "Use articulation, pace, pausing, and emphasis to support meaning"
           ],
           "activities": [
-            "Presence drills",
-            "Opening practice",
-            "Engagement cues"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a strong opening",
-            "Engagement check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Opens with confidence and presence"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 2 — Structure + Supporting Details",
-          "focus": "Structure talks with strong openings and details.",
+          "title": "Stage 2 — Questioning, Listening & Dialogue",
+          "focus": "Use questioning and active listening to sustain purposeful two-way communication.",
           "learns": [
-            "Use hook-body-close",
-            "Add supporting details",
-            "Stay on message"
+            "Choose open, closed, clarifying, follow-up, and probing questions for a purpose",
+            "Paraphrase another speaker accurately before responding",
+            "Build on another person's idea",
+            "Sustain an interview or dialogue across several turns"
           ],
           "activities": [
-            "Structure practice",
-            "Detail building",
-            "Transition practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a structured talk",
-            "Structure check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Speaks with clear structure"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 3 — Story Performance",
-          "focus": "Perform stories with voice and emotion.",
+          "title": "Stage 3 — Reasoning & Explanation",
+          "focus": "Explain thinking clearly and support claims with reasons, examples, and appropriately checked information.",
           "learns": [
-            "Use emotion in storytelling",
-            "Add character voice",
-            "Use pauses for effect"
+            "Use claim → reason → example structure",
+            "Explain cause, effect, sequence, process, and trade-offs",
+            "Distinguish fact, opinion, and inference",
+            "Ask how a claim is known and what evidence or source supports it"
           ],
           "activities": [
-            "Story performance practice",
-            "Voice variety drills",
-            "Pause practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Perform a short story",
-            "Expression check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Performs stories with expression"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 4 — Impromptu + Q&A",
-          "focus": "Handle impromptu questions calmly.",
+          "title": "Stage 4 — Story, Perspective & Impromptu Thinking",
+          "focus": "Communicate flexibly when the topic, viewpoint, or question is not fully rehearsed.",
           "learns": [
-            "Use thinking time strategies",
-            "Answer tough questions",
-            "Stay clear under pressure"
+            "Build a coherent story with a purposeful hook and arc",
+            "Shift perspective and recognise that viewpoints can differ",
+            "Use a simple structure for impromptu responses",
+            "Use thinking time, brief notes, clarification, and recovery strategies",
+            "State uncertainty rather than inventing an answer"
           ],
           "activities": [
-            "Impromptu practice",
-            "Q&A drills",
-            "Confidence resets"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Answer 3 impromptu prompts",
-            "Clarity check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Handles impromptu Q&A clearly"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 5 — Persuasion + Debate",
-          "focus": "Use persuasion and debate skills.",
+          "title": "Stage 5 — Discussion, Persuasion & Mediation",
+          "focus": "Participate constructively in discussion, persuasion, disagreement, and mediation of another person's ideas.",
           "learns": [
-            "Make a claim and reason",
-            "Rebut politely",
-            "Close strongly"
+            "Match persuasive reasons and evidence to an audience need",
+            "Agree and disagree respectfully while addressing the idea",
+            "Recognise and respond to a counterargument",
+            "Summarise or rephrase another person's idea fairly",
+            "Use discussion to refine thinking rather than only to win"
           ],
           "activities": [
-            "Debate practice",
-            "Rebuttal drills",
-            "Conclusion practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a short persuasive talk",
-            "Rebuttal check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Uses persuasion and rebuttal"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 6 — Presentation Mastery",
-          "focus": "Deliver polished presentations.",
+          "title": "Stage 6 — Presentation & AI-Era Communication",
+          "focus": "Present independently and use AI-era communication skills with critical judgement, privacy awareness, and human responsibility.",
           "learns": [
-            "Use visuals and notes",
-            "Manage timing and pacing",
-            "Engage the audience"
+            "Plan a presentation around purpose, message, notes, visuals, and likely questions",
+            "Recognise useful AI capabilities and important limitations",
+            "Protect private information and keep human responsibility for decisions",
+            "Give a clear AI request using goal, context, and constraints when supervised use is appropriate",
+            "Evaluate an AI answer for relevance, evidence, missing context, possible bias, and uncertainty"
           ],
           "activities": [
-            "Full presentation rehearsal",
-            "Timing drills",
-            "Audience engagement"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a full presentation",
-            "Final showcase"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Delivers a polished presentation"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         }
       ]
     },
@@ -955,236 +973,254 @@
     "public-speaking-foundations": {
       "weeks": [
         {
-          "title": "Stage 1 — Comfort + Routine",
-          "focus": "Feel comfortable speaking in class routines.",
+          "title": "Stage 1 — Connect & Communicate",
+          "focus": "Enter a reciprocal conversation, respond to another person, and communicate a complete idea with growing independence.",
           "learns": [
-            "Practice warm-ups",
-            "Use eye contact and posture",
-            "Speak with a friendly voice"
+            "Participate in short back-and-forth exchanges",
+            "Respond to the listener rather than only recite prepared language",
+            "Use an audible, comfortable pace and a complete spoken response",
+            "Take turns and continue an interaction with less prompting"
           ],
           "activities": [
-            "Warm-up routines",
-            "Intro practice",
-            "Confidence games"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Practice a simple intro",
-            "Confidence check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Speaks comfortably in class"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 2 — Clear Speaking",
-          "focus": "Speak clearly with pace, volume, and full words.",
+          "title": "Stage 2 — Ask, Listen & Clarify",
+          "focus": "Use questions to learn, listen for meaning, and repair misunderstandings.",
           "learns": [
-            "Use full sentences",
-            "Speak clearly and slowly",
-            "Pause between ideas"
+            "Use age-appropriate question words to seek information",
+            "Ask questions that are relevant to the topic",
+            "Answer the question that was actually asked",
+            "Ask a follow-up or clarification question when more information is needed"
           ],
           "activities": [
-            "Clear speech drills",
-            "Volume practice",
-            "Pacing games"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Read 3 sentences clearly",
-            "Pacing check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Speaks clearly and at a steady pace"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 3 — Describe + Show & Tell",
-          "focus": "Describe objects with details and expression.",
+          "title": "Stage 3 — Describe & Explain",
+          "focus": "Expand an idea with useful detail, sequence, comparison, and simple reasons.",
           "learns": [
-            "Give 2–3 details",
-            "Use describing words",
-            "Add simple gestures"
+            "Describe with relevant detail",
+            "Choose more precise vocabulary",
+            "Explain a simple sequence",
+            "Give a reason and make simple comparisons"
           ],
           "activities": [
-            "Picture talk",
-            "Detail building",
-            "Show & tell practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Describe an object with details",
-            "Detail check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Describes with clear details"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 4 — Mini Talks + Q&A",
-          "focus": "Give short talks and answer simple questions.",
+          "title": "Stage 4 — Story & Perspective",
+          "focus": "Tell and retell coherent stories while beginning to consider another person's perspective.",
           "learns": [
-            "Speak for 30–60 seconds",
-            "Use sequence words",
-            "Answer simple questions"
+            "Use a clear beginning, middle, and end",
+            "Include character, setting, problem, feeling, and relevant detail",
+            "Retell without depending on a memorised script",
+            "Consider what another character may know, feel, or think"
           ],
           "activities": [
-            "Mini talk practice",
-            "Q&A drills",
-            "Sequence practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a short talk",
-            "Answer 2 questions"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Gives short talks and answers questions"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 5 — Story Basics",
-          "focus": "Tell a short story in order.",
+          "title": "Stage 5 — Short Talks & Audience",
+          "focus": "Organise a short message for a listener and respond to simple audience questions.",
           "learns": [
-            "Use beginning-middle-end",
-            "Add a character voice",
-            "Emphasize key words"
+            "Choose a clear topic and key message",
+            "Support the message with relevant details",
+            "Use a visual or prop without becoming dependent on it",
+            "Adjust pace, emphasis, and information for the listener",
+            "Answer simple questions after a short talk"
           ],
           "activities": [
-            "Story sequencing",
-            "Voice practice",
-            "Audience practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Tell a short story",
-            "Story order check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Tells a short story in order"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 6 — Presentation Readiness",
-          "focus": "Practice presentations with confidence.",
+          "title": "Stage 6 — Independent Communication & Smart Questioning",
+          "focus": "Plan, communicate, question, check information, and reflect with less adult construction of the response.",
           "learns": [
-            "Present with a prop/visual",
-            "Handle small mistakes calmly",
-            "Show confidence"
+            "Plan an idea before speaking",
+            "Ask for help or clarification without giving up",
+            "Give clear instructions another person can follow",
+            "Recognise that better questions can produce better information",
+            "Distinguish a supported fact from a guess or uncertain answer",
+            "Transfer communication skills to a fresh task"
           ],
           "activities": [
-            "Presentation practice",
-            "Mistake recovery drills",
-            "Showcase"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a mini presentation",
-            "Confidence check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Presents confidently with clarity"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         }
       ]
     },
     "public-speaking-excellence": {
       "weeks": [
         {
-          "title": "Stage 1 — Presence + Engagement",
-          "focus": "Engage the audience with confident presence.",
+          "title": "Stage 1 — Purpose, Audience & Delivery",
+          "focus": "Shape a clear spoken message according to purpose, audience, and task.",
           "learns": [
-            "Strong opening lines",
-            "Audience engagement",
-            "Clear articulation"
+            "Distinguish informing, explaining, and persuading",
+            "Adapt content and detail for the listener or audience",
+            "Open clearly and answer the core question before expanding",
+            "Use articulation, pace, pausing, and emphasis to support meaning"
           ],
           "activities": [
-            "Presence drills",
-            "Opening practice",
-            "Engagement cues"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a strong opening",
-            "Engagement check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Opens with confidence and presence"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 2 — Structure + Supporting Details",
-          "focus": "Structure talks with strong openings and details.",
+          "title": "Stage 2 — Questioning, Listening & Dialogue",
+          "focus": "Use questioning and active listening to sustain purposeful two-way communication.",
           "learns": [
-            "Use hook-body-close",
-            "Add supporting details",
-            "Stay on message"
+            "Choose open, closed, clarifying, follow-up, and probing questions for a purpose",
+            "Paraphrase another speaker accurately before responding",
+            "Build on another person's idea",
+            "Sustain an interview or dialogue across several turns"
           ],
           "activities": [
-            "Structure practice",
-            "Detail building",
-            "Transition practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a structured talk",
-            "Structure check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Speaks with clear structure"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 3 — Story Performance",
-          "focus": "Perform stories with voice and emotion.",
+          "title": "Stage 3 — Reasoning & Explanation",
+          "focus": "Explain thinking clearly and support claims with reasons, examples, and appropriately checked information.",
           "learns": [
-            "Use emotion in storytelling",
-            "Add character voice",
-            "Use pauses for effect"
+            "Use claim → reason → example structure",
+            "Explain cause, effect, sequence, process, and trade-offs",
+            "Distinguish fact, opinion, and inference",
+            "Ask how a claim is known and what evidence or source supports it"
           ],
           "activities": [
-            "Story performance practice",
-            "Voice variety drills",
-            "Pause practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Perform a short story",
-            "Expression check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Performs stories with expression"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 4 — Impromptu + Q&A",
-          "focus": "Handle impromptu questions calmly.",
+          "title": "Stage 4 — Story, Perspective & Impromptu Thinking",
+          "focus": "Communicate flexibly when the topic, viewpoint, or question is not fully rehearsed.",
           "learns": [
-            "Use thinking time strategies",
-            "Answer tough questions",
-            "Stay clear under pressure"
+            "Build a coherent story with a purposeful hook and arc",
+            "Shift perspective and recognise that viewpoints can differ",
+            "Use a simple structure for impromptu responses",
+            "Use thinking time, brief notes, clarification, and recovery strategies",
+            "State uncertainty rather than inventing an answer"
           ],
           "activities": [
-            "Impromptu practice",
-            "Q&A drills",
-            "Confidence resets"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Answer 3 impromptu prompts",
-            "Clarity check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Handles impromptu Q&A clearly"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 5 — Persuasion + Debate",
-          "focus": "Use persuasion and debate skills.",
+          "title": "Stage 5 — Discussion, Persuasion & Mediation",
+          "focus": "Participate constructively in discussion, persuasion, disagreement, and mediation of another person's ideas.",
           "learns": [
-            "Make a claim and reason",
-            "Rebut politely",
-            "Close strongly"
+            "Match persuasive reasons and evidence to an audience need",
+            "Agree and disagree respectfully while addressing the idea",
+            "Recognise and respond to a counterargument",
+            "Summarise or rephrase another person's idea fairly",
+            "Use discussion to refine thinking rather than only to win"
           ],
           "activities": [
-            "Debate practice",
-            "Rebuttal drills",
-            "Conclusion practice"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a short persuasive talk",
-            "Rebuttal check"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Uses persuasion and rebuttal"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         },
         {
-          "title": "Stage 6 — Presentation Mastery",
-          "focus": "Deliver polished presentations.",
+          "title": "Stage 6 — Presentation & AI-Era Communication",
+          "focus": "Present independently and use AI-era communication skills with critical judgement, privacy awareness, and human responsibility.",
           "learns": [
-            "Use visuals and notes",
-            "Manage timing and pacing",
-            "Engage the audience"
+            "Plan a presentation around purpose, message, notes, visuals, and likely questions",
+            "Recognise useful AI capabilities and important limitations",
+            "Protect private information and keep human responsibility for decisions",
+            "Give a clear AI request using goal, context, and constraints when supervised use is appropriate",
+            "Evaluate an AI answer for relevance, evidence, missing context, possible bias, and uncertainty"
           ],
           "activities": [
-            "Full presentation rehearsal",
-            "Timing drills",
-            "Audience engagement"
+            "Guided communication practice",
+            "Authentic speaking/listening task",
+            "Fresh-task transfer check"
           ],
           "homework": [
-            "Deliver a full presentation",
-            "Final showcase"
+            "Short real-life communication practice",
+            "Reflect on one thing that became easier"
           ],
-          "mastery": "Delivers a polished presentation"
+          "mastery": "Uses the stage skill with less prompting on a fresh task"
         }
       ]
     }

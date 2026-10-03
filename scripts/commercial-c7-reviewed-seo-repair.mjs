@@ -10,7 +10,8 @@ import { Buffer } from 'node:buffer';
 // Speaking Commercial Authority v2 adds a reviewed informational article, its
 // subject-hub link, a distinct canonical owner, and the authorized /speaking C4
 // override. The /speaking pin also includes the reviewed post-merge hero blend
-// and ecosystem-navigation handoffs; only those exact approved source bytes are allowed. Commercial
+// and ecosystem-navigation handoffs. The curriculum pin covers the reviewed Speaking & Communication v2
+// publication on the existing /curriculum owner; only those exact approved source bytes are allowed. Commercial
 // C2/C5/C6 ownership and conversion boundaries remain frozen; further edits
 // to any pinned file fail closed.
 export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
@@ -23,7 +24,8 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/lib/commercialC4CtrOptimization.ts': '62ec23c3b0c76440ea386f4f23fde4a292b93099',
   'src/pages/speaking.tsx': 'a3913ca4c4d79cfdbd8412339920fbae1495d83a',
   // Reviewed Speaking-ecosystem destination/navigation surfaces: exact bytes only.
-  'src/pages/CourseDetailPage.tsx': '6ae22be614dd38ea1e89069b2468171e790299de',
+  'src/pages/CourseDetailPage.tsx': '8b2608266bc8ae522f8a89edda7ff1e0f0675458',
+  'src/pages/CurriculumPage.tsx': 'bbdd0490226bc028d8c2dd4f6a33e21cb9cb9291',
   'src/pages/TestimonialsPage.tsx': '228cccac38b5a893153c90081421108ca2322b44',
   'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': '919fcfd52e110f4d129b1b2614ecb5cfee54958c',
   'src/pages/public/SpeakingProgressFrameworkPage.tsx': 'e434d0fa31dc67809d3bad044d515071d9dac7c3',

@@ -34,7 +34,10 @@ export default function FloatingAssistant() {
   if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
   const isCareersPage = pathname === '/careers';
-  const showExpandedAssistant = isExpanded && !isCareersPage;
+  const isDenseSpeakingCourse =
+    pathname === '/courses/public-speaking-foundations' ||
+    pathname === '/courses/public-speaking-excellence';
+  const showExpandedAssistant = isExpanded && !isCareersPage && !isDenseSpeakingCourse;
 
   const trackSafely = (fn: () => void) => {
     try {

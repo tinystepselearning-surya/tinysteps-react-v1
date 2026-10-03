@@ -129,7 +129,7 @@ export const SEMANTIC_FACTS = {
     speaking: {
       label: 'Speaking & Communication',
       commercialPath: '/speaking',
-      claim: 'Structured speaking, vocabulary, communication and public-speaking progression.',
+      claim: 'Structured listening, questioning, speaking, reasoning, communication and public-speaking progression, with responsible AI-era communication in the advanced level.',
       levels: {
         beginner: {
           courseId: 'basic-public-speaking',

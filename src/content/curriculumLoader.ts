@@ -27,6 +27,10 @@ const AUTHORITATIVE_SOURCE_OVERRIDE_KEYS = new Set([
   'grammar',
   'grammar-essentials',
   'basic-grammar',
+  'public-speaking-foundations',
+  'public-speaking-excellence',
+  'basic-public-speaking',
+  'advanced-public-speaking',
 ]);
 
 const withoutSourceOwnedOverrides = (
@@ -51,9 +55,9 @@ export async function loadCurriculumOverrides(): Promise<CurriculumOverride | nu
     if (!res.ok) return null;
     const data = (await res.json()) as CurriculumOverride;
 
-    // Phonics and both Grammar courses are maintained in source curriculum modules.
-    // Ignore legacy runtime JSON for these routes so older six-stage payloads cannot
-    // overwrite approved lesson sequences, stage goals, outcomes, or public-page structure.
+    // Phonics, Grammar, and Speaking Curriculum v2 are maintained in source curriculum modules.
+    // Ignore legacy runtime JSON for these routes so older payloads cannot overwrite
+    // approved lesson sequences, stage goals, outcomes, or public-page structure.
     return withoutSourceOwnedOverrides(data);
   } catch (err) {
     console.warn('[curriculumLoader] Failed to load overrides', err);

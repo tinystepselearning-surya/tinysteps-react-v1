@@ -32,13 +32,15 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     expect(new Set(routePaths).size).toBe(canonicalCoursePaths.length);
   });
 
-  it('makes /curriculum the roadmap owner without duplicating lesson-by-lesson course content', () => {
+  it('keeps /curriculum as the roadmap owner while publishing the canonical Speaking v2 sequence', () => {
     const page = read('src/pages/CurriculumPage.tsx');
 
     expect(page).toContain('The complete Tiny Steps learning roadmap');
     expect(page).toContain('Hear → identify → connect sound to grapheme → blend → decode → apply in connected reading');
     expect(page).toContain('Notice the pattern → build a complete sentence → apply in context → correct errors → expand');
-    expect(page).toContain('Understand the prompt → choose and organise an idea → add useful detail → shape for the audience → deliver, retry, and reflect');
+    expect(page).toContain('Connect → listen → ask → clarify → explain → reason → collaborate → present → reflect → transfer');
+    expect(page).toContain('Speaking &amp; Communication Curriculum v2');
+    expect(page).toContain('Communication is the spine. Public speaking is one application.');
 
     expect(page).not.toContain('WeekAccordion');
     expect(page).not.toContain('loadCurriculumOverrides');

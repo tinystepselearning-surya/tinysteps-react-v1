@@ -49,6 +49,19 @@ describe('FloatingAssistant', () => {
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
   })
 
+  it('stays compact on dense Speaking curriculum course pages', async () => {
+    await renderWidget('/courses/public-speaking-foundations')
+
+    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
+    expect(screen.queryByText('Live assistant')).toBeNull()
+
+    act(() => {
+      vi.advanceTimersByTime(20000)
+    })
+    expect(screen.queryByText('Live assistant')).toBeNull()
+  })
+
   it('auto-collapses and auto-expands every 10 seconds', async () => {
     await renderWidget()
 
