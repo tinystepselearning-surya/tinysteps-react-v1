@@ -25,7 +25,10 @@ describe('Wave 1 current-user authorization invariant', () => {
   const leadWorkflow = read('functions/src/adminLeadWorkflow.ts');
   const demoWorkflow = read('functions/src/demoSessionsLegacy.ts');
   const phonicsEnforcer = read('functions/src/phonicsCurriculumEnforcer.ts');
+  const lessonAccess = read('functions/src/createLessonAccessSession.ts');
+  const recordLevelResult = read('functions/src/games/recordLevelResult.ts');
   const rules = read('firestore.rules');
+  const storageRules = read('storage.rules');
 
   it('requires a current users document for callable Admin authorization', () => {
     expect(adminGuard).toContain("collection('users')");
@@ -54,6 +57,14 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(createThread).toContain('return isCurrentAdmin(auth);');
     expect(sendMessage).not.toContain('function isTokenAdmin');
     expect(createThread).not.toContain('function isTokenAdmin');
+
+    expect(lessonAccess).toContain('collection("users").doc(auth.uid).get()');
+    expect(lessonAccess).not.toContain('auth.token?.role');
+
+    expect(recordLevelResult).toContain(
+      'const isAdmin = await isCurrentAdmin(request.auth);',
+    );
+    expect(recordLevelResult).not.toContain('isAdminClaim');
 
     for (const source of [
       payWithholdings,
@@ -105,6 +116,17 @@ describe('Wave 1 current-user authorization invariant', () => {
     );
     expect(demoWorkflow).not.toContain(
       'normalizeRole(userData.role) || normalizeRole(auth?.token?.role)',
+    );
+  });
+
+  it('requires current Firestore-backed Admin identity for privileged Storage writes', () => {
+    expect(storageRules).toContain('function isCurrentAdmin()');
+    expect(storageRules).toContain('firestore.exists(');
+    expect(storageRules).toContain('firestore.get(');
+    expect(storageRules).toContain('userIsActiveOrLegacy(request.auth.uid)');
+    expect(storageRules).toContain('allow write: if isCurrentAdmin();');
+    expect(storageRules).not.toContain(
+      'allow write: if request.auth != null && request.auth.token.admin == true;',
     );
   });
 

@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { normalizeGameIdentity } from "./helpers/normalizeGameIdentity";
+import { isCurrentAdmin } from "../helpers/adminGuard";
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -146,7 +147,7 @@ function isAlreadyExistsErr(err: any): boolean {
 /**
  * recordLevelResult (Callable)
  * ✅ region: asia-south1 (matches client)
- * ✅ permission check: only linked users (or admin claim) can write kid sessions
+ * ✅ permission check: only linked users (or a current Admin user) can write kid sessions
  * ✅ writes: kids/{kidId}/gameSessions/{eventId}
  * ✅ stores BOTH durationSec and timeSpentSec for compatibility
  * ✅ accepts accuracy OR accuracyPct, durationSec OR timeSpentSec/timeSpentMs
@@ -183,9 +184,9 @@ export const recordLevelResult = onCall({ region: "asia-south1" }, async (reques
 
   // ✅ Permission check (Callable bypasses Firestore rules, so we must do it here)
   const uid = request.auth.uid;
-  const isAdminClaim = Boolean((request.auth.token as any)?.admin) || String((request.auth.token as any)?.role || "") === "admin";
+  const isAdmin = await isCurrentAdmin(request.auth);
 
-  if (!isAdminClaim) {
+  if (!isAdmin) {
     const kidRef = db.doc(`kids/${kidId}`);
     const kidSnap = await kidRef.get();
     if (!kidSnap.exists) throw new HttpsError("not-found", "Kid not found");

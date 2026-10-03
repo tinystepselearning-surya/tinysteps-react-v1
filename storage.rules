@@ -1,6 +1,82 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function userDocExists(uid) {
+      return firestore.exists(
+        /databases/(default)/documents/users/$(uid)
+      );
+    }
+
+    function userRole(uid) {
+      return
+        userDocExists(uid)
+        && firestore.get(
+          /databases/(default)/documents/users/$(uid)
+        ).data.role is string
+          ? firestore.get(
+              /databases/(default)/documents/users/$(uid)
+            ).data.role.lower()
+          : '';
+    }
+
+    function userIsActiveOrLegacy(uid) {
+      return
+        userDocExists(uid)
+        && (
+          !(
+            'status'
+            in firestore.get(
+              /databases/(default)/documents/users/$(uid)
+            ).data
+          )
+          || (
+            firestore.get(
+              /databases/(default)/documents/users/$(uid)
+            ).data.status is string
+            && firestore.get(
+              /databases/(default)/documents/users/$(uid)
+            ).data.status.lower() == 'active'
+          )
+        );
+    }
+
+    function isCurrentAdmin() {
+      return
+        request.auth != null
+        && userIsActiveOrLegacy(request.auth.uid)
+        && (
+          request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3'
+          || (
+            request.auth.token != null
+            && request.auth.token.email is string
+            && request.auth.token.email.lower() == 'suryaz@tinysteps.com'
+          )
+          || (
+            ('superUser' in firestore.get(
+              /databases/(default)/documents/users/$(request.auth.uid)
+            ).data)
+            && firestore.get(
+              /databases/(default)/documents/users/$(request.auth.uid)
+            ).data.superUser == true
+          )
+          || userRole(request.auth.uid) == 'admin'
+          || (
+            ('roles' in firestore.get(
+              /databases/(default)/documents/users/$(request.auth.uid)
+            ).data)
+            && firestore.get(
+              /databases/(default)/documents/users/$(request.auth.uid)
+            ).data.roles is list
+            && (
+              'admin'
+              in firestore.get(
+                /databases/(default)/documents/users/$(request.auth.uid)
+              ).data.roles
+            )
+          )
+        );
+    }
+
     // Public learners rollup JSON (safe aggregated country-level data only)
     match /public-stats/global-learners.json {
       allow read: if true;
@@ -10,13 +86,13 @@ service firebase.storage {
     // Game images - public read, admin write
     match /images/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+      allow write: if isCurrentAdmin();
     }
 
     // Pronunciation audio - public read, admin write
     match /pronunciations/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.admin == true;
+      allow write: if isCurrentAdmin();
     }
 
     // Student recordings - owner scoped, size-limited upload

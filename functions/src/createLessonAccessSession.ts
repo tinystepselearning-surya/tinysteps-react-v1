@@ -101,12 +101,33 @@ function timestampToMs(value: unknown): number {
 }
 
 async function resolveCallerRole(auth: CallerAuth): Promise<string> {
-  const tokenRole = normalizeRole(auth.token?.role);
-  if (tokenRole) return tokenRole;
-
   const userSnap = await admin.firestore().collection("users").doc(auth.uid).get();
-  const roleFromDoc = normalizeRole(userSnap.data()?.role);
-  return roleFromDoc;
+  if (!userSnap.exists) return "";
+
+  const user = userSnap.data() || {};
+  if (
+    user.status !== undefined &&
+    user.status !== null &&
+    (
+      typeof user.status !== "string" ||
+      user.status.trim().toLowerCase() !== "active"
+    )
+  ) {
+    return "";
+  }
+
+  if (user.superUser === true) return "admin";
+
+  const primaryRole = normalizeRole(user.role);
+  if (primaryRole) return primaryRole;
+
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  for (const role of roles) {
+    const normalized = normalizeRole(role);
+    if (normalized) return normalized;
+  }
+
+  return "";
 }
 
 function ensureTeacherOrAdminRole(role: string): void {

@@ -42,6 +42,13 @@ jobs:
       - name: Run all Firestore rules suites
         run: npm run test:wave1-identity-rules
 
+      - name: Validate Cloud Storage rules compile
+        run: >-
+          npx firebase-tools@latest emulators:exec
+          --project tinysteps-react-v1
+          --only firestore,storage
+          "echo storage-rules-ok"
+
       - name: Authenticate production read-only dry run
         id: gcp-auth
         uses: google-github-actions/auth@v2
