@@ -326,7 +326,7 @@ const CourseDetailPage: FC = () => {
                   }),
               },
               {
-                label: courseTrack === 'speaking' ? 'View Speaking Curriculum' : 'View Full Curriculum Roadmap',
+                label: 'View Full Curriculum Roadmap',
                 to: curriculumRoadmapPath,
                 variant: 'ghost',
               },
