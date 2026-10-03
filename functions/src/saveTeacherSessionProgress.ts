@@ -324,12 +324,26 @@ async function hasPendingRescheduleCredit(
 }
 
 async function resolveCallerRole(auth: { uid?: string; token?: Record<string, unknown> }): Promise<string> {
-  const tokenRole = normalizeRole(auth?.token?.role);
-  if (tokenRole) return tokenRole;
   const uid = String(auth?.uid || '').trim();
   if (!uid) return '';
+
   const userSnap = await admin.firestore().collection('users').doc(uid).get();
-  return normalizeRole(userSnap.data()?.role);
+  if (!userSnap.exists) return '';
+
+  const user = userSnap.data() || {};
+  const status = String(user.status || '').trim().toLowerCase();
+  if (status && status !== 'active') return '';
+
+  const primaryRole = normalizeRole(user.role);
+  if (primaryRole) return primaryRole;
+
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  for (const role of roles) {
+    const normalized = normalizeRole(role);
+    if (normalized) return normalized;
+  }
+
+  return '';
 }
 
 function assertCanSaveSession(
