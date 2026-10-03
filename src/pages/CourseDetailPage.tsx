@@ -533,7 +533,12 @@ const CourseDetailPage: FC = () => {
           </p>
           {weeksState && weeksState.length ? (
             <div className="mt-5">
-              <WeekAccordion items={weeksState} defaultOpenFirst />
+              <WeekAccordion
+                items={weeksState}
+                defaultOpenFirst
+                variant={courseTrack === 'speaking' ? 'editorial' : 'default'}
+                outcomesLabel={courseTrack === 'speaking' ? 'What the child develops' : 'What we learn'}
+              />
             </div>
           ) : (
             <p className="mt-4 text-sm text-slate-700">Detailed lesson-by-lesson curriculum coming soon.</p>
