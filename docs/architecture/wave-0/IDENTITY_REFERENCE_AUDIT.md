@@ -1,6 +1,6 @@
 # Wave 0 — Identity & References Audit
 
-**Status:** CODE AUDIT COMPLETE — LIVE READ-ONLY VERIFICATION PENDING  
+**Status:** LIVE READ-ONLY AUDIT COMPLETE — BOUNDED EXCEPTIONS IDENTIFIED  
 **Wave:** 0 — Architecture Contracts  
 **Runtime changes:** None  
 **Production writes:** Forbidden in this work package
@@ -390,7 +390,106 @@ Before the Identity & References work package is marked complete:
    - enrollment and class-session orphan references are identified;
    - ambiguities are either zero or explicitly registered as migration exceptions.
 
-## 7. Audit-tool retirement decision
+## 7. Live Firestore audit findings
+
+A read-only audit was executed in GitHub Actions on 3 October 2026. The final diagnostic run was:
+
+```text
+One-off Identity Reference Audit
+Run ID: 37131418457
+Result: success
+Source: Firestore
+Writes performed: 0
+```
+
+The temporary GitHub workflow was deleted immediately after the run; it is not part of the permanent CI/CD architecture.
+
+### 7.1 Strongly verified identity invariants
+
+| Area | Result |
+|---|---:|
+| `users` documents | 223 |
+| populated `uid` values matching document ID | 76 / 76 — 100% |
+| populated `userId` values matching document ID | 222 / 222 — 100% |
+| parent users with matching parent mirror | 188 / 188 |
+| teacher users with matching teacher mirror | 30 / 30 |
+| learners in `kids` | 194 |
+| root `students` | 0 |
+| nested `parents/*/students/*` | 0 |
+| kids with canonical parent shape | 194 / 194 |
+| parent `childIds[]` backlinks resolving to kids | 194 / 194 |
+| enrollments with `kidId` | 209 / 209 |
+| enrollments with `parentId` | 209 / 209 |
+| ambiguous enrollment learner identity | 0 |
+| ambiguous enrollment parent identity | 0 |
+| ambiguous enrollment teacher identity | 0 |
+| school membership records with valid user/school relationship | 1 / 1 |
+
+These results support preserving current opaque user document-ID values for existing Person IDs and preserving current `kids` IDs for learner identity.
+
+### 7.2 Current-state exceptions requiring explicit review before Wave 1
+
+The audit identified a small set of current canonical/reference problems:
+
+1. **One active enrollment references a learner ID that no longer resolves to a current `kids` document.**
+2. **Two active kids reference a teacher ID that does not resolve to a current user/teacher mirror.**
+3. **One active enrollment references a teacher ID that does not resolve to a current user/teacher mirror.**
+4. **Two demo-session teacher references do not resolve to current teacher identity; these require workflow/status review.**
+5. **Two active `learningPartners` mirror documents have no matching `users` document.**
+6. **One active admin-role user has no matching `admins` mirror.**
+
+These are bounded exceptions; they do not invalidate the canonical ID strategy.
+
+### 7.3 Historical/compatibility debt
+
+The audit also found historical reference debt that is not equivalent to current identity corruption:
+
+- 161 `classSessions` reference enrollment IDs that no longer exist — **all are past-dated**.
+- 460 unresolved learner alias references in `classSessions` — **all are past-dated**.
+- 214 missing parent-user/mirror references in `classSessions` — **all are past-dated**.
+- 353 missing teacher-user/mirror references in `classSessions` — **all are past-dated**.
+- 130 teacher alias mismatches occur on past sessions.
+- 107 teacher alias mismatches occur on future sessions.
+
+For future sessions, the audit found **no future missing teacher identity targets**. The 107 future cases are stale/mismatched legacy teacher aliases while canonical `teacherId` remains present. They are compatibility debt and must not override canonical ownership.
+
+### 7.4 Enrollment historical exceptions
+
+Four enrollments reference learner IDs that do not resolve to current `kids` documents:
+
+- 1 active;
+- 3 archived.
+
+Four enrollments reference teacher IDs that do not resolve to current teacher identity:
+
+- 1 active;
+- 3 archived.
+
+The active records must be resolved before Wave 1 writes begin. Archived records may be preserved as bounded migration exceptions if historical semantics are intentionally retained.
+
+### 7.5 Decision from the live audit
+
+The identity strategy is now supported by production evidence:
+
+```text
+Existing auth-backed people:
+preserve current users/{documentId} value as Person.id
++
+separate Firebase UID into AuthIdentity
+
+Learners:
+preserve kids/{kidId} as canonical learner identity
+
+Parents / teachers / LPs / admins:
+role mirrors, not independent Person identities
+
+students namespaces:
+currently empty in production and therefore not competing identity authorities
+```
+
+Wave 1 identity migration must first resolve or formally register the bounded current-state exceptions above.
+
+## 8. Audit-tool retirement decision
 
 The audit implementation is migration scaffolding, not a new permanent service.
 
@@ -403,7 +502,7 @@ The audit implementation is migration scaffolding, not a new permanent service.
 
 Do not create a scheduled GitHub workflow for this audit.
 
-## 8. Exit gate
+## 9. Exit gate
 
 This work package is complete only when the read-only report has been reviewed and every non-zero ambiguity/orphan category is one of:
 
@@ -413,7 +512,7 @@ This work package is complete only when the read-only report has been reviewed a
 
 No production backfill is authorized by this document.
 
-## 9. Next work package
+## 10. Next work package
 
 After the live identity report is reviewed, Wave 0 proceeds to:
 
