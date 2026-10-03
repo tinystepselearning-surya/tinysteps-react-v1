@@ -23,10 +23,10 @@ const EXPECTED_CATEGORIES = new Map([
 ]);
 
 describe('authority blog template batch 3', () => {
-  it('curates exactly five GSC-backed articles without changing the global 83-blog rollout', () => {
+  it('curates exactly five GSC-backed articles within the now 84-blog global rollout', () => {
     const page = read('src/pages/BlogPostPage.tsx');
 
-    expect(blogPosts).toHaveLength(83);
+    expect(blogPosts).toHaveLength(84);
     expect(BATCH_3).toHaveLength(5);
     expect(new Set(BATCH_3).size).toBe(5);
     expect(page).toContain('AUTHORITY_BLOG_BATCH_3_SLUGS');
