@@ -1,102 +1,232 @@
-# Wave 0 — CI/CD Cleanup Baseline
+# Wave 0 — Local-First Engineering & Deployment Baseline
 
-**Status:** ACTIVE  
-**Goal:** Reduce GitHub Actions runtime, repeated builds, repeated installs and unnecessary deployment work without weakening production safety.
+**Status:** IMPLEMENTED IN PR #566  
+**Goal:** Keep ongoing engineering validation on the local Mac and keep GitHub Actions focused on production deployment.
 
-## Repository baseline
+## 1. Final operating model
 
-The current workflow inventory shows:
+Tiny Steps uses a **local-first engineering workflow**.
 
-- **64** workflow files containing `npm ci`;
-- **56** workflow files containing `npm run build`;
-- **57** workflow files installing Playwright Chromium;
-- **62** workflow files wired to `pull_request`;
-- **8** workflow files wired to `push`;
-- **64** workflow files exposing `workflow_dispatch`.
+### Mac / ChatGPT Desktop / Codex
 
-These counts are structural repository counts, not a claim that all workflows execute for every change. Path filters reduce execution, but the architecture still contains substantial duplicated setup/build logic across historical brick workflows.
+Owns development validation:
 
-## Main deploy duplication found
+- impact-aware unit tests;
+- critical regressions;
+- lint;
+- typecheck;
+- Functions lint/build/tests;
+- Firestore emulator checks when relevant;
+- enrollment emulator checks when relevant;
+- Resources/R8 checks when relevant;
+- local build verification;
+- deliberate full regression/coverage when requested.
 
-Before Phase 1, a Hosting deployment could perform expensive work repeatedly:
+### GitHub
 
-1. `build-and-test` installs dependencies, installs Playwright and runs the full application build/prerender.
-2. `deploy-to-firebase` installs root dependencies and Playwright again.
-3. Firebase Hosting staging deployment reads `firebase.json`, whose `hosting.predeploy` runs `npm run build` again.
-4. Firebase Hosting production deployment invokes the same `hosting.predeploy` again.
+Owns:
 
-The bounded Functions deployer also invokes Firebase CLI once per batch of up to five Functions. Because canonical `firebase.json` has Functions predeploy lint/build hooks, those hooks can be repeated for each deployment batch even though the job already compiled the Functions.
+- repository history;
+- branches and pull requests;
+- canonical `main`;
+- Firebase deployment;
+- deployment provenance;
+- production markers;
+- stale-main protection;
+- production verification;
+- explicit Functions recovery.
 
-## Phase 1 contract — build once, deploy validated output
+GitHub Actions is **not** the normal development test runner.
 
-Phase 1 changes the CI deployment path so:
+## 2. Why this replaced the previous CI model
 
-- validation remains fail-closed;
-- Hosting builds once in `build-and-test`;
-- the validated `dist` artifact is uploaded on deployable main pushes;
-- the deployment job downloads and verifies that artifact's `build-info.json` SHA;
-- staging and production deploy the same validated `dist`;
-- a generated `.firebase.ci.json` removes only predeploy hooks for CI deployment;
-- canonical `firebase.json` remains unchanged, so local/manual Firebase deploys retain their normal safety hooks;
-- Functions are linted/built during validation and built once in the deployment job after dependency installation;
-- bounded Firebase CLI batches use the generated CI config so they do not re-run lint/build predeploy hooks per batch;
-- docs/no-impact changes can skip the heavy `build-and-test` job after impact analysis;
-- ordinary frontend PRs run Vitest's dependency-aware affected tests plus a small critical regression pack instead of the complete unit suite;
-- the complete unit suite with coverage runs only in a separate manual certification workflow rather than on every PR/main deployment.
+Before cleanup, the repository had dozens of historical brick workflows. Structural inventory found:
 
-## Unit-test execution policy
+- 64 workflow files containing `npm ci`;
+- 56 workflow files containing `npm run build`;
+- 57 workflow files installing Playwright Chromium;
+- 62 workflow files wired to pull requests.
 
-### Pull requests
+Many workflows represented temporary construction scaffolding for completed Resources, Grammar, Commercial, SEO, migration and hardening bricks.
 
-For ordinary frontend PRs:
+That caused:
 
-1. run lint and typecheck;
-2. run content-specialist tests when the change is content-only;
-3. otherwise run `vitest --changed <PR base SHA>` so Vitest selects tests affected by changed modules;
-4. always run the small critical regression pack for scheduling/session integrity, attendance reconciliation, parent payment allocation/billing, upcoming sessions and teacher/student delivery views;
-5. do **not** instrument the normal PR suite for coverage.
+- repeated dependency installs;
+- repeated Chromium installs;
+- repeated builds/prerenders;
+- overlapping regression suites;
+- thousands of unrelated tests per ordinary change;
+- many workflow rows for a single PR;
+- tests that asserted historical CI structure rather than product invariants.
 
-Dependency/test-runner changes that can affect the whole test graph (for example `package.json` or Vitest configuration) may still cause Vitest's changed-mode safety behavior to run the full suite. This is intentional and should remain rare.
+## 3. GitHub Actions after cleanup
 
-Functions and Firestore continue to use their own focused validation/emulator lanes when impacted.
+`.github/workflows/` contains one workflow:
 
-### Main deployment
+```text
+deploy.yml
+```
 
-Main deployment retains the critical regression pack, build/prerender and production verification. It does not repeat the complete ~repository-wide unit suite that was already exercised by affected PR testing and the certification lane.
+It runs automatically only when code reaches `main`.
 
-### Full certification
+The deployment pipeline:
 
-The complete unit suite with coverage runs **only when explicitly started through `workflow_dispatch`** for a release, audit or deliberate full certification.
+```text
+main push
+   ↓
+deployment impact analysis
+   ↓
+build only affected deployment artifacts
+   ↓
+stale-main verification
+   ↓
+staging Hosting when needed
+   ↓
+bounded Functions / Firestore deployment when needed
+   ↓
+production Hosting when needed
+   ↓
+live production verification
+   ↓
+advance production markers
+```
 
-There is no scheduled/cron full-suite run. Coverage publishing occurs only in this manual certification workflow.
+A manual `workflow_dispatch` path remains for explicit surgical Functions recovery.
 
-This keeps comprehensive safety evidence while removing thousands of unrelated test executions from ordinary development iterations.
+## 4. Local commands
 
-## Safety retained
+### Normal work
 
-Phase 1 does **not** remove:
+```bash
+npm run preflight
+```
 
-- unit tests;
-- Functions impact analysis;
+The preflight script:
+
+- compares the branch and working tree against `origin/main` / `main`;
+- determines affected domains;
+- runs relevant tests only;
+- runs the critical regression pack for frontend changes;
+- runs specialist emulator/resource checks only when affected;
+- creates the deploy artifact locally when frontend code changed.
+
+### Preview what would run
+
+```bash
+npm run preflight:plan
+```
+
+### Deliberate full certification
+
+```bash
+npm run preflight:full
+```
+
+This is the explicit deep path. It may run:
+
+- complete unit suite;
+- Functions validation;
+- emulator validation;
+- specialist validations;
+- the existing deep audit-heavy production build.
+
+It is **not scheduled**.
+
+### Coverage when specifically needed
+
+```bash
+npm run test:full:coverage
+```
+
+Coverage is also local/on-demand.
+
+## 5. Build separation
+
+The repository now distinguishes:
+
+### Local quality build
+
+```bash
+npm run build
+```
+
+This retains the existing deep SEO/content/audit pipeline.
+
+### Deployment artifact build
+
+```bash
+npm run build:deploy
+```
+
+This performs only artifact-producing work required for production:
+
+- RSS generation;
+- sitemap generation;
+- Vite production build;
+- build identity metadata;
+- prerendering;
+- IndexNow key generation when configured.
+
+GitHub uses `build:deploy`, not the audit-heavy development build.
+
+## 6. Test-retirement rule
+
+Every future feature/migration brick must include a retirement decision at stabilization.
+
+Temporary construction assets should not become permanent by default:
+
+- brick-specific workflows;
+- migration-only tests;
+- one-time backfill checks;
+- temporary canaries;
+- rollout assertions;
+- duplicate regression suites;
+- CI-implementation assertions;
+- proof scripts no longer used operationally.
+
+At stabilization:
+
+```text
+temporary build tests
+      ↓
+identify permanent business invariant
+      ↓
+retain the smallest useful canonical regression
+      ↓
+retire temporary workflow/test/script scaffolding
+```
+
+The target is not the maximum number of tests. The target is the **minimum high-value test estate that provides strong confidence**.
+
+## 7. Deployment safety retained
+
+The cleanup preserves:
+
+- deployed-artifact impact analysis;
+- production baseline markers;
 - bounded Functions deployment;
-- Firestore emulator/rules tests;
-- staging Hosting deployment;
+- Functions deployment metadata verification;
 - stale-main refusal;
-- production Hosting verification;
-- callable transport verification;
-- production deployment markers;
+- Google/Firebase authentication;
+- callable transport/IAM enforcement;
+- Firestore rules/index deployment;
+- staging Hosting preview;
+- live production SHA verification;
+- deployment reports;
 - IndexNow verification/submission;
-- Firebase authentication/IAM controls.
+- explicit surgical Functions recovery.
 
-## Phase 2 — workflow consolidation
+These are deployment controls, so they remain in GitHub.
 
-After Phase 1 is green, audit the historical feature/SEO brick workflows and classify each as:
+## 8. Engineering rule
 
-1. **CORE PR GATE** — must remain automatic;
-2. **PATH-SCOPED SPECIALIST GATE** — automatic only for narrow owned paths;
-3. **MANUAL/DIAGNOSTIC** — `workflow_dispatch` only;
-4. **RETIRED HISTORICAL BRICK** — remove after its invariant is covered by consolidated tests/build gates.
+> **Local Mac provides development confidence. GitHub provides deployment confidence.**
 
-The target is a small set of continuously active workflows, not dozens of permanent brick-specific CI pipelines.
+Do not add a new GitHub Actions test workflow for a feature brick.
 
-No historical workflow should be disabled solely because it is old; its unique invariant must first be proven covered or intentionally moved to a consolidated gate.
+If a permanent invariant needs automation:
+
+1. add it to the local preflight system or an existing canonical test suite;
+2. keep it impact-aware where possible;
+3. document when it can be retired;
+4. leave GitHub Actions deployment-only unless the check proves something that can only be known during/after deployment.
