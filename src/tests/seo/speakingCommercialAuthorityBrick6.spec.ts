@@ -82,13 +82,13 @@ describe('Speaking Commercial Authority v2 — Brick 6 authority article and rec
     expect(technicalAuthority).toContain("role: 'pillar'");
   });
 
-  it('connects the authority article from the commercial page, resources hub and AI answer layer', () => {
+  it('connects the authority article without expanding frozen B7 or AI baselines', () => {
     expect(speaking).toContain('to="/blog/why-public-speaking-is-important-for-kids"');
     expect(resources).toContain("to: '/blog/why-public-speaking-is-important-for-kids'");
-    expect(aiAnswers).toContain("id: 'concept-public-speaking-importance'");
-    expect(aiAnswers).toContain("canonicalPath: '/blog/why-public-speaking-is-important-for-kids'");
-    expect(authorityLinking).toContain("slug: 'why-public-speaking-is-important-for-kids'");
-    expect(authorityLinking).toContain("to: '/speaking'");
+    expect(aiAnswers).toContain("export const AI_ANSWER_LAYER_REVISION = '2026-09-27-gv6'");
+    expect(aiAnswers).not.toContain("id: 'concept-public-speaking-importance'");
+    expect(canonical).toContain("'what age should children start public speaking'");
+    expect(authorityLinking).not.toContain("slug: 'why-public-speaking-is-important-for-kids'");
   });
 
   it('preserves the frozen specialist speaking knowledge cluster instead of forcing the new pillar into it', () => {
