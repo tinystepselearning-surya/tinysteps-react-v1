@@ -35,8 +35,8 @@ const PROTECTED_FAMILIES = {
 } as const;
 
 describe('B11 blog lead conversion and attribution guardrails', () => {
-  it('keeps the post-Brick-4 83-source corpus and routes protected owners to the correct conversion family', () => {
-    expect(blogPosts).toHaveLength(83);
+  it('keeps the approved 84-source corpus and routes protected owners to the correct conversion family', () => {
+    expect(blogPosts).toHaveLength(84);
 
     for (const [slug, [family, programRoute]] of Object.entries(PROTECTED_FAMILIES)) {
       const post = bySlug.get(slug);
@@ -48,6 +48,17 @@ describe('B11 blog lead conversion and attribution guardrails', () => {
       expect(config.secondaryAction?.to, slug).toBe(programRoute);
       expect(isParentDemoConversion(config), slug).toBe(true);
     }
+  });
+
+  it('routes the new broad Public Speaking authority guide to the programme funnel, not the short-answer confidence funnel', () => {
+    const post = bySlug.get('why-public-speaking-is-important-for-kids');
+    expect(post).toBeTruthy();
+    const config = getBlogConversionConfig(post!);
+    expect(config.family).toBe('speaking-programme');
+    expect(config.program).toBe('speaking');
+    expect(config.primaryAction.to).toBe('/book-demo');
+    expect(config.secondaryAction?.to).toBe('/speaking');
+    expect(config.heading).toContain('Public Speaking & Communication');
   });
 
   it('keeps Schools & Research outside the parent demo funnel', () => {
