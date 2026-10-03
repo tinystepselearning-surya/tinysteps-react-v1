@@ -76,14 +76,6 @@ async function getCallerRole(
 ): Promise<CallerRole> {
   if (!auth?.uid) return 'unknown';
 
-  // Prefer custom claims (faster)
-  const tokenRole = auth.token?.role as CallerRole | undefined;
-  if (tokenRole) {
-    logger.debug('getCallerRole: using token role', { uid: auth.uid, role: tokenRole });
-    return tokenRole;
-  }
-
-  // Fallback to Firestore users doc
   try {
     const userDoc = await admin.firestore().collection('users').doc(auth.uid).get();
     if (!userDoc.exists) {
@@ -91,11 +83,42 @@ async function getCallerRole(
       return 'unknown';
     }
 
-    const data = userDoc.data();
-    const role = data?.role as CallerRole | undefined;
+    const data = userDoc.data() || {};
+    if (
+      data.status !== undefined &&
+      data.status !== null &&
+      (
+        typeof data.status !== 'string' ||
+        data.status.trim().toLowerCase() !== 'active'
+      )
+    ) {
+      logger.warn('getCallerRole: inactive user rejected', {
+        uid: auth.uid,
+        status: data.status,
+      });
+      return 'unknown';
+    }
 
-    logger.debug('getCallerRole: using Firestore role', { uid: auth.uid, role });
-    return role || 'unknown';
+    const role = data.role as CallerRole | undefined;
+    if (role) {
+      logger.debug('getCallerRole: using Firestore role', { uid: auth.uid, role });
+      return role;
+    }
+
+    const roles = Array.isArray(data.roles) ? data.roles : [];
+    const firstRole = roles.find(
+      (value: unknown): value is CallerRole =>
+        typeof value === 'string' &&
+        [
+          'admin',
+          'teacher',
+          'parent',
+          'learningPartner',
+          'learning-partner',
+        ].includes(value),
+    );
+
+    return firstRole || 'unknown';
   } catch (err) {
     logger.warn('getCallerRole: failed to read users doc', {
       uid: auth.uid,
