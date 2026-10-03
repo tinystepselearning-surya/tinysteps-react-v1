@@ -418,6 +418,66 @@ suite(
     );
 
     it(
+      'keeps Wave 1 canonical identity collections backend-only during EXPAND',
+      async () => {
+        await seedUsers();
+
+        await testEnv
+          .withSecurityRulesDisabled(
+            async (context) => {
+              await setDoc(
+                doc(
+                  context.firestore(),
+                  'people',
+                  'admin-1',
+                ),
+                {
+                  personId: 'admin-1',
+                  schemaVersion: 1,
+                  status: 'active',
+                },
+              );
+            },
+          );
+
+        const adminDb =
+          testEnv
+            .authenticatedContext(
+              'admin-1',
+              {
+                role: 'admin',
+              },
+            )
+            .firestore();
+
+        await assertFails(
+          getDoc(
+            doc(
+              adminDb,
+              'people',
+              'admin-1',
+            ),
+          ),
+        );
+
+        await assertFails(
+          setDoc(
+            doc(
+              adminDb,
+              'people',
+              'new-person',
+            ),
+            {
+              personId: 'new-person',
+              schemaVersion: 1,
+              status: 'active',
+            },
+          ),
+        );
+      },
+    );
+
+    it(
       'accepts legacy School Admin token alias for compatibility',
       async () => {
         await seedUsers();
