@@ -1,6 +1,6 @@
 # School OS Wave 0 — Architecture Contracts
 
-**Status:** ACTIVE  
+**Status:** COMPLETE — WAVE 0 CLOSED; WAVE 1 EXPAND AUTHORIZED  
 **Wave:** 0 — Architecture Contracts  
 **Architecture source of truth:** [../TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md](../TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md)  
 **Migration roadmap:** [../SCHOOL_OS_MIGRATION_ROADMAP_V1.md](../SCHOOL_OS_MIGRATION_ROADMAP_V1.md)
@@ -329,26 +329,28 @@ Every significant new feature or migration must identify:
 
 Wave 0 uses six bounded work packages:
 
-1. **Engineering delivery baseline** — local-first development validation, deployment-only GitHub Actions, and test/workflow retirement rules.
-2. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
+1. **Engineering delivery baseline — COMPLETE** — local-first development validation, deployment-only GitHub Actions, and test/workflow retirement rules.
+2. **Contracts & current-state map — COMPLETE** — canonical terminology, ownership and legacy-to-canonical inventory are frozen for Wave 1 entry.
 3. **Identity/reference audit — COMPLETE** — code-level decisions, live read-only verification and bounded exception dispositions are recorded in `IDENTITY_REFERENCE_AUDIT.md`.
 4. **Academic/enrollment audit — COMPLETE** — code-level ownership decisions, live read-only verification and migration-debt classification are recorded in `ACADEMIC_ENROLLMENT_AUDIT.md`.
 5. **Shared experience/design-system inventory — COMPLETE** — portal shells, shared primitives, token ownership, page-template/state contracts and retirement candidates are recorded in `SHARED_EXPERIENCE_DESIGN_SYSTEM_INVENTORY.md`.
-6. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
+6. **Migration standard & Wave 0 exit review — COMPLETE** — `MIGRATION_EXECUTION_STANDARD_V1.md` and `WAVE_0_EXIT_REVIEW.md` freeze migration metadata, compatibility, cutover/retirement gates and the formal Wave 1 entry decision.
 
 These are planning packages, not six new runtime systems.
 
 ## 15. Wave 0 exit gate
 
-Wave 0 is complete when:
+**Result: PASS — Wave 0 is complete.**
+
+Verified in [WAVE_0_EXIT_REVIEW.md](./WAVE_0_EXIT_REVIEW.md):
 
 - canonical terminology is stable;
 - every high-value current collection/model has a documented canonical destination or explicit unresolved status;
-- identity/ID reuse rules are agreed;
+- identity/ID reuse rules are agreed and production-verified;
 - relationship duplication is understood;
-- current projections are distinguished from canonical truth;
+- projections/workflow/evidence are distinguished from canonical truth;
 - shared experience/design-system governance is documented;
-- migration evidence and retirement gates are agreed;
+- migration evidence, compatibility, read-switch, legacy-write-stop and retirement gates are frozen;
 - no unresolved ownership contradiction blocks Wave 1.
 
-Until then, Wave 1 production migration should not begin.
+**Wave 1 may begin at EXPAND.** This does not authorize an unbounded backfill, read switch, legacy deletion or unrelated domain rewrite. Each later migration phase must satisfy [MIGRATION_EXECUTION_STANDARD_V1.md](./MIGRATION_EXECUTION_STANDARD_V1.md).
