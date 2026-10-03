@@ -173,6 +173,12 @@ export default function ConfidenceBuildingProgramKidsPage() {
             >
               See Class Pricing
             </Link>
+            <Link
+              to="/speaking"
+              className="inline-flex min-h-[48px] items-center justify-center px-3 py-3 font-semibold text-sky-800 underline decoration-sky-300 underline-offset-4 transition hover:text-sky-950"
+            >
+              Compare Public Speaking
+            </Link>
           </div>
         </section>
 

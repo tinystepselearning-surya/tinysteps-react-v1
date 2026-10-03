@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import {
   STATIC_TESTIMONIALS_BY_PROGRAM,
@@ -8,6 +8,11 @@ import {
 import { createFAQPageSchema, createWebPageSchema } from '../lib/schemas';
 
 const CANONICAL_URL = 'https://tinystepslearning.com/testimonials';
+
+const SPEAKING_TESTIMONIAL_PROGRAMS: readonly StaticTestimonialProgram[] = [
+  'Basic Public Speaking',
+  'Advanced Public Speaking',
+];
 
 const faqItems = [
   {
@@ -127,25 +132,58 @@ function ReviewCard({ item }: { item: StaticTestimonial }) {
 }
 
 export default function TestimonialsPage() {
+  const [searchParams] = useSearchParams();
+  const speakingFocused = searchParams.get('program') === 'speaking';
+  const programOrder: readonly StaticTestimonialProgram[] = speakingFocused
+    ? SPEAKING_TESTIMONIAL_PROGRAMS
+    : TESTIMONIAL_PROGRAM_ORDER;
+  const metaTitle = speakingFocused
+    ? 'Public Speaking Parent Feedback | Tiny Steps Learning'
+    : 'Tiny Steps Learning Reviews and Parent Feedback';
+  const metaDescription = speakingFocused
+    ? 'Read bounded first-party parent feedback from Tiny Steps Public Speaking Foundations and Excellence, then compare the curriculum, progress framework and free assessment.'
+    : 'Read curated first-party parent feedback across Tiny Steps phonics, grammar and public speaking programs, then compare class samples, curriculum and pricing before deciding.';
+
   return (
     <main className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_58%,#f8fbff_100%)] text-slate-950">
       <Meta
-        title="Tiny Steps Learning Reviews and Parent Feedback"
-        description="Read curated first-party parent feedback across Tiny Steps phonics, grammar and public speaking programs, then compare class samples, curriculum and pricing before deciding."
+        title={metaTitle}
+        description={metaDescription}
         canonical={CANONICAL_URL}
         jsonLd={[breadcrumbSchema, webpageSchema, reviewDecisionSchema, faqSchema]}
       />
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <div className="rounded-[32px] border border-orange-100/80 bg-white/95 p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:p-8 md:p-10">
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-700">Parent Feedback</p>
-        <h1 className="mt-3 max-w-4xl font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl">Parent Feedback and Tiny Steps Learning Reviews</h1>
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-700">
+          {speakingFocused ? 'Speaking parent feedback' : 'Parent Feedback'}
+        </p>
+        <h1 className="mt-3 max-w-4xl font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl">
+          {speakingFocused ? 'Parent Feedback for Tiny Steps Public Speaking' : 'Parent Feedback and Tiny Steps Learning Reviews'}
+        </h1>
         <p className="mt-4 max-w-4xl text-base leading-7 text-slate-700 sm:text-lg">
-          Read curated first-party feedback excerpts from Tiny Steps families across phonics, grammar, and public speaking programs. Use these experiences as one part of your decision—not as a guarantee of the result another child will have.
+          {speakingFocused
+            ? 'These excerpts come from families in Public Speaking Foundations and Public Speaking Excellence. Use them as bounded first-party evidence alongside the Speaking curriculum, progress framework, class samples, and your child’s own assessment.'
+            : 'Read curated first-party feedback excerpts from Tiny Steps families across phonics, grammar, and public speaking programs. Use these experiences as one part of your decision—not as a guarantee of the result another child will have.'}
         </p>
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm leading-6 text-slate-700">
           <strong className="text-slate-900">How to read this page:</strong> individual children start at different levels and progress at different speeds. Compare the themes in parent feedback with the teaching you can observe in class samples, the curriculum roadmap, current pricing, and your child’s own demo assessment.
         </div>
+
+        {speakingFocused ? (
+          <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/70 p-4">
+            <p className="text-sm font-semibold text-violet-950">You are viewing Speaking-specific parent feedback.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-700">
+              Foundations and Excellence remain separate readiness-based levels inside the same Speaking & Communication programme.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+              <Link to="/speaking" className="text-violet-900 underline underline-offset-4">Speaking programme</Link>
+              <Link to="/curriculum?tab=speaking#course-levels" className="text-violet-900 underline underline-offset-4">Speaking curriculum</Link>
+              <Link to="/speaking-progress-framework" className="text-violet-900 underline underline-offset-4">Progress framework</Link>
+              <Link to="/testimonials" className="text-violet-900 underline underline-offset-4">View all parent feedback</Link>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
@@ -202,8 +240,8 @@ export default function TestimonialsPage() {
           </div>
         </section>
 
-        <div className="mt-10 space-y-10">
-          {TESTIMONIAL_PROGRAM_ORDER.map((program) => {
+        <div id={speakingFocused ? 'speaking-feedback' : undefined} className="mt-10 scroll-mt-24 space-y-10">
+          {programOrder.map((program) => {
             const items = STATIC_TESTIMONIALS_BY_PROGRAM[program].slice(0, 5);
             return (
               <section key={program}>
