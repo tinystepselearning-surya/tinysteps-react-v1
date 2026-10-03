@@ -41,6 +41,11 @@ The blueprint must support:
 12. **Preserve proven working systems unless a canonical boundary requires convergence.**
 13. **Shared experience before bespoke UI.** Reuse common page shells, navigation, templates and components wherever the information architecture and interaction pattern are materially the same; variation should normally come from configuration, content and scoped slots rather than copied page frameworks.
 14. **Premium simplicity by default.** Tiny Steps experiences should follow an Apple-inspired design direction: clear hierarchy, generous whitespace, restrained colour, precise typography, polished interaction, purposeful motion and minimal visual noise. The product should feel premium, professional and calm rather than decorative, crowded, generic or template-like. Tiny Steps keeps its own brand identity and does not copy Apple assets or trade dress.
+15. **Accessibility is product quality.** User-facing experiences should target WCAG 2.2 AA unless a newer adopted accessibility standard supersedes it.
+16. **Performance is part of the experience.** Public and authenticated surfaces should be engineered and monitored for fast rendering, responsive interaction and visual stability; exact thresholds belong in the maintained performance standard rather than this blueprint.
+17. **Child and family data is private by design.** Collect only what is necessary, bind it to a defined purpose, scope access, govern consent/retention and support appropriate deletion or anonymisation without weakening auditable financial, safeguarding or evidence obligations.
+18. **Public discoverability is protected architecture.** Public pages intended for discovery must remain semantically structured, crawlable/indexable by design, stable in URL/canonical ownership and compatible with search, answer engines and AI retrieval.
+19. **Design-system governance is shared-first.** New UI primitives, templates and variants should extend the maintained shared system before creating parallel implementations; exceptions require a genuine interaction, accessibility, security or product need.
 
 ## 3. Six-layer architecture
 
@@ -495,7 +500,69 @@ Normal Domain Command
 
 AI does not silently own attendance, finance, enrollment, teacher pay, safeguarding or final academic truth.
 
-## 16. Architecture standards
+## 16. Product quality contracts
+
+### Accessibility
+
+Accessibility is part of the default experience, not a separate mode. User-facing surfaces should target WCAG 2.2 AA, with keyboard operability, visible focus, sufficient contrast, clear labels, understandable forms and accessible tables/charts where applicable.
+
+### Performance
+
+Performance is a product-quality requirement. Public and authenticated experiences should preserve:
+
+- fast initial rendering;
+- responsive interaction;
+- visual stability;
+- sensible image, font and bundle loading;
+- bounded client work and network activity;
+- field monitoring and regression detection on important journeys.
+
+Exact Core Web Vitals or other numeric thresholds belong in the maintained web-performance standard so they can evolve without changing this blueprint.
+
+### Child and family data privacy by design
+
+For child, guardian and household data:
+
+- collect only what is needed for a defined educational, operational, safeguarding, legal or commercial purpose;
+- restrict access to the minimum appropriate scope;
+- record consent where required;
+- separate especially sensitive data where practical;
+- define retention by purpose and jurisdiction;
+- support appropriate deletion or anonymisation while preserving records that must remain auditable;
+- prevent AI features from receiving broader child/family context than the authorized task requires.
+
+### Public Web Discoverability Contract
+
+Public pages intended to acquire or educate families must preserve:
+
+- semantic HTML and meaningful information hierarchy;
+- deliberate crawl/index policy;
+- stable canonical URLs and canonical topic ownership;
+- metadata and structured data where appropriate;
+- internal navigation/link discoverability;
+- server/prerendered or otherwise reliably retrievable critical content;
+- search, answer-engine and AI-retrieval compatibility;
+- verification before SEO/AEO-critical redesigns or routing changes.
+
+Visual redesign must not trade away discoverability.
+
+### Design-system governance
+
+Shared UI follows a **shared-first, controlled-variant** model:
+
+```text
+Shared primitive / template
+        ↓
+documented variant or configuration
+        ↓
+role/domain-specific experience
+```
+
+Before introducing a new button, card, table, form, modal, navigation model, page shell or status treatment, first determine whether the maintained design system can support the need.
+
+Bespoke experiences are appropriate for genuinely different interactions such as learning games, classroom tools or specialized workflows; they are exceptions, not the default.
+
+## 17. Architecture standards
 
 The detailed implementation rules live outside this master blueprint as standards or code-level decisions. Examples include:
 
@@ -506,11 +573,15 @@ The detailed implementation rules live outside this master blueprint as standard
 - integration standards;
 - finance ledger standards;
 - observability and cost standards;
-- shared UI / design-system standards.
+- shared UI / design-system standards;
+- accessibility standards;
+- web-performance standards;
+- privacy/retention standards;
+- public discoverability/SEO/AEO standards.
 
 This keeps the master blueprint stable and concise.
 
-## 17. Prohibited architectural patterns
+## 18. Prohibited architectural patterns
 
 Do not introduce:
 
@@ -532,7 +603,7 @@ Do not introduce:
 - inconsistent page aesthetics that make Tiny Steps feel like multiple unrelated products;
 - low-fidelity generic admin-template styling when a simpler, more polished composition can serve the same task.
 
-## 18. Architecture decision gate
+## 19. Architecture decision gate
 
 Every significant new feature must answer:
 
@@ -548,10 +619,13 @@ Every significant new feature must answer:
 10. Is the feature being built now, or merely supported by the blueprint?
 11. Can the experience reuse an existing shared shell, navigation, template or component before creating a new implementation?
 12. Does the visual design meet the Tiny Steps premium-simplicity standard: clear hierarchy, restraint, consistency, accessibility and minimal cognitive load?
+13. Does it meet the applicable accessibility and performance contract?
+14. Does it minimize child/family data and preserve required privacy/consent boundaries?
+15. If public, does it preserve intended search/answer-engine/AI discoverability?
 
-If ownership is ambiguous, a bespoke UI duplicates an existing shared interaction without justification, or the experience introduces unnecessary visual complexity, the feature is not architecturally ready.
+If ownership is ambiguous, a bespoke UI duplicates an existing shared interaction without justification, the experience introduces unnecessary visual complexity, or it weakens accessibility, performance, privacy or intended discoverability, the feature is not architecturally ready.
 
-## 19. What v1.0 does not require
+## 20. What v1.0 does not require
 
 This blueprint does **not** require:
 
@@ -568,7 +642,7 @@ This blueprint does **not** require:
 
 Logical modularity is the goal. Physical decomposition is introduced only when evidence requires it.
 
-## 20. Change control
+## 21. Change control
 
 This document is the architecture source of truth for School OS v1.0.
 
