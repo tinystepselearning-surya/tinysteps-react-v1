@@ -302,6 +302,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
             <LeadSectionHeading
               eyebrow="Quick answer"
               title="Choose Confidence Building when confidence itself is the bottleneck"
+              tone="dark"
               description="The child may know the answer, understand the topic, or have an idea to share—but participation drops because starting, continuing, or recovering feels difficult."
             />
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
