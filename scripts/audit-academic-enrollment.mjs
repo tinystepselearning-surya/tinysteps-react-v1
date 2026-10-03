@@ -247,7 +247,7 @@ function auditCourses(courses, issues) {
   };
 }
 
-function auditEnrollments(enrollments, coursesById, issues) {
+function auditEnrollments(enrollments, coursesById, futureSessionCountsByEnrollment, issues) {
   let activeLike = 0;
   let terminal = 0;
   let courseResolved = 0;
@@ -263,6 +263,10 @@ function auditEnrollments(enrollments, coursesById, issues) {
   let legacyFiniteScheduleFields = 0;
   let activeLikeLegacyFiniteScheduleFields = 0;
   let activeLikeMissingTeacherId = 0;
+  let activeLikeMissingTeacherIdWithFutureSessions = 0;
+  let activeLikeUnconfiguredScheduleWithFutureSessions = 0;
+  let activeLikeUnconfiguredScheduleWithoutFutureSessions = 0;
+  let activeLikeLegacyScheduleWithFutureSessions = 0;
 
   for (const enrollment of enrollments) {
     const data = enrollment.data;
@@ -275,8 +279,12 @@ function auditEnrollments(enrollments, coursesById, issues) {
     else if (courseId) issues.add('enrollment_missing_course', enrollment, ['courseId']);
     else issues.add('enrollment_missing_courseId', enrollment, ['courseId']);
 
+    const futureSessionCount = futureSessionCountsByEnrollment.get(enrollment.id) || 0;
     if (text(data.teacherId)) teacherIdPresent += 1;
-    else if (isActiveLike(status)) activeLikeMissingTeacherId += 1;
+    else if (isActiveLike(status)) {
+      activeLikeMissingTeacherId += 1;
+      if (futureSessionCount > 0) activeLikeMissingTeacherIdWithFutureSessions += 1;
+    }
 
     const hasRate = Number.isFinite(Number(data.ratePerSession ?? data.feePerClass)) &&
       Number(data.ratePerSession ?? data.feePerClass) > 0;
@@ -293,7 +301,16 @@ function auditEnrollments(enrollments, coursesById, issues) {
 
     const source = scheduleSource(data.schedule);
     scheduleSources[source] += 1;
-    if (isActiveLike(status)) activeLikeScheduleSources[source] += 1;
+    if (isActiveLike(status)) {
+      activeLikeScheduleSources[source] += 1;
+      if (source === 'unconfigured') {
+        if (futureSessionCount > 0) activeLikeUnconfiguredScheduleWithFutureSessions += 1;
+        else activeLikeUnconfiguredScheduleWithoutFutureSessions += 1;
+      }
+      if (source === 'legacy_compatible' && futureSessionCount > 0) {
+        activeLikeLegacyScheduleWithFutureSessions += 1;
+      }
+    }
     if (hasLegacyFiniteScheduleFields(data.schedule)) {
       legacyFiniteScheduleFields += 1;
       if (isActiveLike(status)) activeLikeLegacyFiniteScheduleFields += 1;
@@ -319,6 +336,10 @@ function auditEnrollments(enrollments, coursesById, issues) {
     courseResolutionPct: percentage(courseResolved, enrollments.length),
     teacherIdPresent,
     activeLikeMissingTeacherId,
+    activeLikeMissingTeacherIdWithFutureSessions,
+    activeLikeUnconfiguredScheduleWithFutureSessions,
+    activeLikeUnconfiguredScheduleWithoutFutureSessions,
+    activeLikeLegacyScheduleWithFutureSessions,
     moneySnapshotPresent,
     creditsPresent,
     topicProgressPresent,
@@ -487,9 +508,24 @@ export function auditAcademicEnrollmentSnapshot(snapshot, options = {}) {
 
   const coursesById = mapById(snapshot.courses);
   const enrollmentsById = mapById(snapshot.enrollments);
+  const futureSessionCountsByEnrollment = new Map();
+  snapshot.classSessions.forEach((session) => {
+    const enrollmentId = text(session.data.enrollmentId);
+    const date = text(session.data.date);
+    if (!enrollmentId || !date || date < TODAY_YMD) return;
+    futureSessionCountsByEnrollment.set(
+      enrollmentId,
+      (futureSessionCountsByEnrollment.get(enrollmentId) || 0) + 1,
+    );
+  });
 
   const courses = auditCourses(snapshot.courses, issues);
-  const enrollments = auditEnrollments(snapshot.enrollments, coursesById, issues);
+  const enrollments = auditEnrollments(
+    snapshot.enrollments,
+    coursesById,
+    futureSessionCountsByEnrollment,
+    issues,
+  );
   const sessions = auditSessions(snapshot.classSessions, enrollmentsById, coursesById, issues);
   const operationalKeys = auditOperationalKeys(snapshot.operationalEnrollmentKeys, enrollmentsById, issues);
   const transitions = auditTransitions(snapshot.enrollmentCourseTransitions, enrollmentsById, coursesById, issues);
