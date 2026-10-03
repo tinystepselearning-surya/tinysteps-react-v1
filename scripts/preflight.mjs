@@ -166,6 +166,14 @@ const enrollmentChanged = changed.some((path) => matchesAny(path, [
   'vitest.emulator.config.ts',
 ]));
 
+const identityReferenceAuditChanged = changed.some((path) => matchesAny(path, [
+  'scripts/audit-identity-references.mjs',
+  'scripts/test/identity-reference-audit.node-test.mjs',
+  'docs/architecture/wave-0/IDENTITY_REFERENCE_AUDIT.md',
+  'docs/architecture/wave-0/CURRENT_TO_CANONICAL_MAP.md',
+  'docs/architecture/wave-0/WAVE_0_ARCHITECTURE_CONTRACTS.md',
+]));
+
 const r8Changed = changed.some((path) => matchesAny(path, [
   'src/content/phonicsKnowledge/',
   'src/content/phonicsCurriculum/',
@@ -206,6 +214,10 @@ if (functionsCompileRequired) {
   // Deployment contract tests inspect functions/lib, so compile first to avoid
   // comparing current source exports against stale local build output.
   run('Functions build', 'npm', ['--prefix', 'functions', 'run', 'build']);
+}
+
+if (identityReferenceAuditChanged) {
+  run('Identity/reference audit tests', 'npm', ['run', 'test:identity-reference-audit']);
 }
 
 if (deploymentChanged) {
