@@ -28,7 +28,7 @@ describe('Speaking Commercial Authority v2 — Brick 1 acquisition layer', () =>
 
   it('keeps the route registry aligned with the live-page acquisition snippet', () => {
     expect(registry).toContain("title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps'");
-    expect(registry).toContain('₹400/class; free 35-minute assessment.');
+    expect(registry).toContain('₹400/class; free assessment.');
     expect(registry).toContain("canonicalPath: '/speaking'");
   });
 
