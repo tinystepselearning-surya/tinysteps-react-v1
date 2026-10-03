@@ -1,6 +1,6 @@
 # School OS Wave 0 — Current to Canonical Map
 
-**Status:** IDENTITY LIVE AUDIT COMPLETE — BOUNDED CURRENT EXCEPTIONS REQUIRE REVIEW  
+**Status:** IDENTITY AUDIT COMPLETE — EXCEPTIONS CLASSIFIED AND REGISTERED  
 **Wave:** 0 — Architecture Contracts  
 **Source branch baseline:** `main` after School OS v1.0 freeze  
 **Purpose:** Document current production concepts and their intended School OS ownership before any schema migration.
@@ -212,7 +212,7 @@ Future mapping updates use these labels:
 
 ## 7. Next Wave 0 work
 
-The read-only production audit has completed successfully. Current identity exceptions are documented in `IDENTITY_REFERENCE_AUDIT.md` and must be resolved or explicitly registered before Wave 1 identity writes.
+The read-only production audit and focused exception drill-down have completed successfully. Identity exceptions are classified and registered in `IDENTITY_REFERENCE_AUDIT.md`. Stale current-state records must be resolved before they participate in Wave 1 canonical writes; historical exceptions remain compatibility debt.
 
 The next Wave 0 work package is **Academic & Enrollment Audit**:
 
