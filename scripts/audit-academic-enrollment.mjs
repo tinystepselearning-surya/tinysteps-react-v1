@@ -224,7 +224,6 @@ function auditCourses(courses, issues) {
 
     if (status === 'active' && !name) issues.add('active_course_missing_name', course, ['name', 'title', 'courseName']);
     if (status === 'active' && !area) issues.add('active_course_missing_area', course, ['area', 'track']);
-    if (status === 'active' && !Number.isFinite(level)) issues.add('active_course_missing_level', course, ['level']);
   }
 
   return {
@@ -244,6 +243,11 @@ function auditCourses(courses, issues) {
     hasMaxStudentsPerSession,
     hasDeliveryDefaults,
     maxStudentsGreaterThanOne,
+    normalizationGaps: {
+      activeCoursesWithoutLevel: Math.max(0, activeCourses - activeLevelPresent),
+      note:
+        'Production Course documents do not currently populate numeric level even though the legacy admin Course form requires it. This is a schema-normalization gap, not a broken Course reference.',
+    },
   };
 }
 
