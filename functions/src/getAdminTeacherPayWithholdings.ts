@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { ensureAdmin } from './helpers/adminGuard';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -43,11 +44,7 @@ function toMillis(value: unknown): number {
 async function assertAdmin(auth: { uid?: string; token?: Record<string, unknown> } | undefined): Promise<string> {
   const uid = clean(auth?.uid, 160);
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-  if (normalizeRole(auth?.token?.role) === 'admin') return uid;
-  const userSnap = await admin.firestore().collection('users').doc(uid).get();
-  if (normalizeRole(userSnap.data()?.role) !== 'admin') {
-    throw new HttpsError('permission-denied', 'Admin access required.');
-  }
+  await ensureAdmin(auth);
   return uid;
 }
 
