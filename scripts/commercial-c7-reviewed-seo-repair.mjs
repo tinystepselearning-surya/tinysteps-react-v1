@@ -22,6 +22,11 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/lib/canonicalTopicOwnershipRegistry.js': 'e7bbdb67b3840a10813bbb3a95e7270e2b502956',
   'src/lib/commercialC4CtrOptimization.ts': '62ec23c3b0c76440ea386f4f23fde4a292b93099',
   'src/pages/speaking.tsx': 'a3913ca4c4d79cfdbd8412339920fbae1495d83a',
+  // Reviewed Speaking-ecosystem destination/navigation surfaces: exact bytes only.
+  'src/pages/CourseDetailPage.tsx': 'd038d3c2f546c73a6071570688c1fd539bb78a18',
+  'src/pages/TestimonialsPage.tsx': '228cccac38b5a893153c90081421108ca2322b44',
+  'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': '919fcfd52e110f4d129b1b2614ecb5cfee54958c',
+  'src/pages/public/SpeakingProgressFrameworkPage.tsx': 'e434d0fa31dc67809d3bad044d515071d9dac7c3',
   'src/content/blog/posts/public-speaking/why-public-speaking-is-important-for-kids.ts': '584cc647fd76ddff5d018798517f8db57b25684f',
   'src/content/blog/shared/conversionFamilies.ts': 'c6bbe00f36e62fe6f7ba41d42291faee13b51c03',
   'src/content/blog/shared/heroFamilies.ts': '892b0db34c5f3597a3c005e185e5398cf2baeb7c',
