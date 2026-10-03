@@ -168,8 +168,17 @@ const enrollmentChanged = changed.some((path) => matchesAny(path, [
 
 const wave1IdentityFoundationChanged = changed.some((path) => matchesAny(path, [
   'functions/src/schoolOS/identity/',
+  'functions/src/helpers/adminGuard.ts',
+  'functions/src/lifecycle.ts',
+  'functions/src/createMakeupSessionFromCredit.ts',
+  'functions/src/ai/refreshPublicKb.ts',
+  'functions/src/messaging/sendMessage.ts',
+  'functions/src/messaging/createOrSyncMessageThread.ts',
+  'firestore.rules',
   'scripts/wave1-identity-foundation-dry-run.mjs',
   'scripts/test/wave1-identity-foundation.node-test.mjs',
+  'src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts',
+  'src/tests/firestore/userRbac.rules.spec.ts',
   'docs/architecture/wave-1/',
   'docs/architecture/wave-0/WAVE_0_EXIT_REVIEW.md',
   'docs/architecture/wave-0/MIGRATION_EXECUTION_STANDARD_V1.md',
