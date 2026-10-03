@@ -57,7 +57,9 @@
     "preflight": "node scripts/preflight.mjs",
     "preflight:plan": "node scripts/preflight.mjs --plan",
     "preflight:full": "node scripts/preflight.mjs --full",
-    "test:full": "vitest run"
+    "test:full": "vitest run",
+    "audit:identity-references": "node scripts/audit-identity-references.mjs --project tinysteps-react-v1",
+    "test:identity-reference-audit": "node --test scripts/test/identity-reference-audit.node-test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
