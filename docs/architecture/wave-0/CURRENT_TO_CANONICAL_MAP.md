@@ -1,6 +1,6 @@
 # School OS Wave 0 — Current to Canonical Map
 
-**Status:** SHARED EXPERIENCE INVENTORY COMPLETE — PORTAL/SHELL OWNERSHIP FROZEN  
+**Status:** WAVE 0 COMPLETE — OWNERSHIP MAP FROZEN FOR WAVE 1 ENTRY  
 **Wave:** 0 — Architecture Contracts  
 **Source branch baseline:** `main` after School OS v1.0 freeze  
 **Purpose:** Document current production concepts and their intended School OS ownership before any schema migration.
@@ -234,18 +234,21 @@ Future mapping updates use these labels:
 | UNRESOLVED | More current-state evidence required before assigning ownership |
 | RETIRE LATER | Confirmed obsolete only after migration and verification |
 
-## 7. Next Wave 0 work
+## 7. Wave 0 closeout
 
-Identity/reference, Academic/Enrollment and Shared Experience work packages are complete.
+Wave 0 is complete.
 
-The final Wave 0 work package is **Migration Standard & Wave 0 Exit Review**:
+Final standards:
 
-- freeze migration metadata and evidence fields;
-- define compatibility-path registration;
-- define exception ownership and reconciliation requirements;
-- define read-switch / legacy-write-stop / retirement gates;
-- verify all six Wave 0 packages satisfy the master blueprint;
-- record any items intentionally deferred to later domain waves;
-- make the formal GO / NO-GO decision for Wave 1 — Identity & Relationships.
+- [MIGRATION_EXECUTION_STANDARD_V1.md](./MIGRATION_EXECUTION_STANDARD_V1.md)
+- [WAVE_0_EXIT_REVIEW.md](./WAVE_0_EXIT_REVIEW.md)
 
-No Wave 1 production migration begins until the Wave 0 exit review is complete.
+Formal decision:
+
+~~~text
+GO — Wave 1 may begin at EXPAND
+~~~
+
+The current-to-canonical map remains a maintained migration reference. An item marked UNRESOLVED is not permission to invent ownership during implementation; it must be resolved in the relevant later domain wave.
+
+The first Wave 1 brick is **Identity Foundation Expand**. No broad production backfill/read switch is authorized by Wave 0 closeout alone.
