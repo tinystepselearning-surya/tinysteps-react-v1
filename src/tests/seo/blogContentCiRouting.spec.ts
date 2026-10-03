@@ -6,87 +6,57 @@ const root = process.cwd();
 const read = (relativePath: string) =>
   fs.readFileSync(path.join(root, relativePath), 'utf8');
 
-const workflows = [
-  '.github/workflows/deploy.yml',
-  '.github/workflows/seo-crawl-discovery.yml',
-  '.github/workflows/seo-dead-url-guard.yml',
-  '.github/workflows/resources-r5-topic-ownership.yml',
-  '.github/workflows/resources-r8-phonics-knowledge.yml',
-  '.github/workflows/resources-r14-reading-knowledge-architecture.yml',
-  '.github/workflows/resources-r15-high-value-reading-content.yml',
-  '.github/workflows/resources-r18-high-value-grammar-writing-content.yml',
-  '.github/workflows/resources-r21-high-value-speaking-content.yml',
-  '.github/workflows/session-c-speaking-communication-completion.yml',
-  '.github/workflows/gr2-grammar-tense-architecture.yml',
-  '.github/workflows/gr3-grammar-writing-progression.yml',
-  '.github/workflows/gr4-grammar-parent-problems.yml',
-] as const;
-
-describe('blog content CI routing hardening', () => {
-  it('uses a narrow content-only PR lane without weakening main-branch validation', () => {
+describe('local-first engineering workflow', () => {
+  it('keeps GitHub Actions deployment-only', () => {
     const deploy = read('.github/workflows/deploy.yml');
 
-    expect(deploy).toContain('content_only_validation');
-    expect(deploy).toContain('Run content-only blog and ownership tests');
-    expect(deploy).toContain('Audit canonical ownership for content-only PR');
-    expect(deploy).toContain('Audit phonics knowledge collisions for content-only PR');
-    expect(deploy).toContain('Audit controlled reading, grammar and speaking content for content-only PR');
-    expect(deploy).toContain('Run affected unit tests');
-    expect(deploy).toContain('Run critical regression pack');
+    expect(deploy).toContain('push:');
+    expect(deploy).toContain('branches: [main]');
+    expect(deploy).toContain('workflow_dispatch:');
+    expect(deploy).not.toContain('pull_request:');
+    expect(deploy).not.toContain('Run affected unit tests');
+    expect(deploy).not.toContain('Run critical regression pack');
     expect(deploy).not.toContain('Run full unit tests');
-    expect(deploy).toContain("github.event_name == 'pull_request'");
-    expect(deploy).toContain("needs.analyze-changes.outputs.content_only_validation != 'true'");
-    expect(deploy).toContain('npm run build');
-    expect(deploy).toContain('npm run seo:smoke');
+    expect(deploy).not.toContain('npm run lint');
+    expect(deploy).not.toContain('npm run typecheck');
+    expect(deploy).toContain('Build production Hosting artifact');
+    expect(deploy).toContain('npm run build:deploy');
+    expect(deploy).toContain('Deploy Cloud Functions in bounded batches');
+    expect(deploy).toContain('Verify live deployment integrity and build identity');
 
-    // Production Firebase mutation protection remains independent and non-cancellable.
+    // Production Firebase mutation protection remains non-cancellable.
     expect(deploy).toContain('group: firebase-deployment-tinysteps-react-v1');
     expect(deploy).toContain('cancel-in-progress: false');
   });
 
-  it('does not launch cumulative brick workflows for routine blog-post edits', () => {
-    const r5 = read('.github/workflows/resources-r5-topic-ownership.yml');
-    const r8 = read('.github/workflows/resources-r8-phonics-knowledge.yml');
-    const r14 = read('.github/workflows/resources-r14-reading-knowledge-architecture.yml');
-    const r15 = read('.github/workflows/resources-r15-high-value-reading-content.yml');
-    const r18 = read('.github/workflows/resources-r18-high-value-grammar-writing-content.yml');
-    const r21 = read('.github/workflows/resources-r21-high-value-speaking-content.yml');
-    const sessionC = read('.github/workflows/session-c-speaking-communication-completion.yml');
-    const gr2 = read('.github/workflows/gr2-grammar-tense-architecture.yml');
-    const gr3 = read('.github/workflows/gr3-grammar-writing-progression.yml');
-    const gr4 = read('.github/workflows/gr4-grammar-parent-problems.yml');
+  it('keeps ongoing engineering validation on the local Mac', () => {
+    const pkg = JSON.parse(read('package.json'));
+    const preflight = read('scripts/preflight.mjs');
 
-    expect(r5).not.toContain("src/content/blog/posts/**");
+    expect(pkg.scripts.preflight).toBe('node scripts/preflight.mjs');
+    expect(pkg.scripts['preflight:plan']).toBe('node scripts/preflight.mjs --plan');
+    expect(pkg.scripts['preflight:full']).toBe('node scripts/preflight.mjs --full');
+    expect(pkg.scripts['test:full']).toBe('vitest run');
 
-    expect(r8).toContain('workflow_dispatch:');
-    expect(r8).not.toContain('pull_request:');
-
-    const deploy = read('.github/workflows/deploy.yml');
-    expect(deploy).toContain('r8_validation_required');
-    expect(deploy).toContain('Run R8 phonics knowledge specialist validation');
-    expect(deploy).toContain('Run rendered R8 specialist validation');
-    expect(deploy).toContain('src/content/phonicsKnowledge/*');
-    expect(deploy).toContain('src/content/phonicsCurriculum/*');
-
-    expect(r14).not.toContain("src/content/blog/**");
-    expect(r15).not.toContain("src/content/blog/");
-    expect(r18).not.toContain("src/content/blog/posts/");
-    expect(r21).not.toContain("src/content/blog/posts/");
-    expect(sessionC).not.toContain("src/content/blog/posts/");
-    expect(gr2).not.toContain("src/content/blog/posts/");
-    expect(gr3).not.toContain("src/content/blog/posts/");
-    expect(gr4).not.toContain("src/content/blog/posts/");
+    expect(preflight).toContain('Affected unit tests');
+    expect(preflight).toContain('Critical regression pack');
+    expect(preflight).toContain('Functions unit tests');
+    expect(preflight).toContain('Enrollment integrity emulator');
+    expect(preflight).toContain('Firestore rules emulator tests');
+    expect(preflight).toContain('R8 phonics/resource tests');
+    expect(preflight).toContain('Local production build + audits');
   });
 
-  it('cancels stale PR validation runs while preserving production deployment completion', () => {
-    for (const workflow of workflows) {
-      const source = read(workflow);
-      expect(source, workflow).toContain(
-        'group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}',
-      );
-      expect(source, workflow).toContain(
-        "cancel-in-progress: ${{ github.event_name == 'pull_request' }}",
-      );
-    }
+  it('separates deployment artifact generation from local quality audits', () => {
+    const pkg = JSON.parse(read('package.json'));
+
+    expect(pkg.scripts['build:deploy']).toContain('generate:rss');
+    expect(pkg.scripts['build:deploy']).toContain('gen:sitemaps');
+    expect(pkg.scripts['build:deploy']).toContain('vite build');
+    expect(pkg.scripts['build:deploy']).toContain('write-build-info.mjs');
+    expect(pkg.scripts['build:deploy']).toContain('prerender.mjs');
+    expect(pkg.scripts['build:deploy']).not.toContain('seo:smoke');
+    expect(pkg.scripts['build:deploy']).not.toContain('seo:rendered-check');
+    expect(pkg.scripts['build:deploy']).not.toContain('content:offer-consistency');
   });
 });
