@@ -1,13 +1,39 @@
 import { collection, doc, getDoc, getDocs, limit, query, where, type Query, type DocumentData } from 'firebase/firestore';
 import { db } from './firebaseConfig';
+import { buildPhoneFromParts } from './phone';
 
 export interface AvsParentOption { id: string; label: string; phone?: string }
 
+const E164_PHONE = /^\+[1-9]\d{7,14}$/;
+
+function normalizeExplicitInternationalPhone(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('+')) return '';
+
+  const digits = trimmed.slice(1).replace(/\D/g, '');
+  const normalized = digits ? `+${digits}` : '';
+  return E164_PHONE.test(normalized) ? normalized : '';
+}
 
 export function normalizedParentWhatsAppPhone(data: Record<string, unknown>): string {
-  return [
+  const explicitInternationalPhone = [
     data.phoneNormalized,
-  ].find((value) => typeof value === 'string' && /^\+[1-9]\d{7,14}$/.test(value.trim())) as string || '';
+    data.phone,
+    data.whatsappE164,
+    data.whatsappPhone,
+  ]
+    .map(normalizeExplicitInternationalPhone)
+    .find(Boolean);
+
+  if (explicitInternationalPhone) return explicitInternationalPhone;
+
+  const fromCanonicalParts = buildPhoneFromParts(
+    typeof data.phoneCountryCode === 'string' ? data.phoneCountryCode : '',
+    typeof data.phoneLocal === 'string' ? data.phoneLocal : '',
+  );
+
+  return E164_PHONE.test(fromCanonicalParts) ? fromCanonicalParts : '';
 }
 
 function parentLabel(id: string, data: Record<string, unknown>): string {
