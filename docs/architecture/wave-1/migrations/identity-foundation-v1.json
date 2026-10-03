@@ -4,9 +4,9 @@
   "domain": "Identity & Relationships",
   "canonicalOwner": "Identity & Authentication / Learner Identity / Organisation Membership",
   "title": "Wave 1 Identity Foundation",
-  "status": "expanded_pending_final_validation",
+  "status": "expanded",
   "sourceBaselineCommit": "570bfef5fd99857e1f7df9529c46e593f77dcec0",
-  "implementationCommit": null,
+  "implementationCommit": "0188161e8719db830111493626ab9742d41ec036",
   "schemaVersion": 1,
   "environment": "production",
   "scope": {
@@ -136,8 +136,8 @@
     "retirementOwner": "Wave 1 Identity migration owner"
   },
   "dryRun": {
-    "runId": 37139126536,
-    "executedAt": "2026-10-03T17:04:39Z",
+    "runId": 37139816228,
+    "executedAt": "2026-10-03T17:16:38Z",
     "result": "success",
     "writesPerformed": 0,
     "sourceCounts": {
@@ -188,5 +188,22 @@
     "orphanAuthAccountsAutoMigrated": false,
     "orphanAuthAccountsDeletedOrDisabled": false,
     "canonicalClientReadSwitch": false
+  },
+  "finalValidation": {
+    "runId": 37139816228,
+    "result": "success",
+    "validatedImplementationCommit": "0188161e8719db830111493626ab9742d41ec036",
+    "functionsBuild": "passed",
+    "identityFoundationTests": "passed",
+    "authorizationHardeningTests": {
+      "passed": 4,
+      "total": 4
+    },
+    "firestoreRbacEmulatorTests": {
+      "passed": 7,
+      "total": 7
+    },
+    "productionDryRun": "passed",
+    "temporaryWorkflowRetired": true
   }
 }
