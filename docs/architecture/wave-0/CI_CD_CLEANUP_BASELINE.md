@@ -42,7 +42,7 @@ Phase 1 changes the CI deployment path so:
 - bounded Firebase CLI batches use the generated CI config so they do not re-run lint/build predeploy hooks per batch;
 - docs/no-impact changes can skip the heavy `build-and-test` job after impact analysis;
 - ordinary frontend PRs run Vitest's dependency-aware affected tests plus a small critical regression pack instead of the complete unit suite;
-- the complete unit suite with coverage runs in a separate daily/manual certification workflow rather than on every PR/main deployment.
+- the complete unit suite with coverage runs only in a separate manual certification workflow rather than on every PR/main deployment.
 
 ## Unit-test execution policy
 
@@ -66,12 +66,9 @@ Main deployment retains the critical regression pack, build/prerender and produc
 
 ### Full certification
 
-The complete unit suite with coverage runs:
+The complete unit suite with coverage runs **only when explicitly started through `workflow_dispatch`** for a release, audit or deliberate full certification.
 
-- daily at **06:00 IST**;
-- manually through `workflow_dispatch` whenever a release/audit needs explicit full certification.
-
-Coverage publishing moves to this certification workflow.
+There is no scheduled/cron full-suite run. Coverage publishing occurs only in this manual certification workflow.
 
 This keeps comprehensive safety evidence while removing thousands of unrelated test executions from ordinary development iterations.
 
