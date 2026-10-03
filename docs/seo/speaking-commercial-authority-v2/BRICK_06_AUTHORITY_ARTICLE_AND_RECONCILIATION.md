@@ -251,7 +251,7 @@ Protected commercial owner remains:
 - query: public speaking classes for kids in India
 - high-commercial intent
 
-The new informational owner explicitly lists `/speaking` as a forbidden competing owner for its informational intent.
+The informational and commercial owners are kept distinct by separate canonical topic records: the article owns the broad informational question, while `/speaking` retains the high-commercial class query. The existing R5 registry contract is preserved; no non-hub path is inserted into `forbiddenCompetingOwners`.
 
 ## Frozen knowledge-cluster safeguard
 
@@ -269,7 +269,7 @@ Instead the new article sits one level above as a broad explanatory authority gu
 Inbound:
 - `/speaking` → new authority article;
 - `/resources/speaking` → new authority article;
-- AI answer layer → new authority article.
+- canonical query aliases and LLM retrieval guidance point broad parent questions to the article without expanding the frozen AI answer-layer corpus.
 
 Outbound from article:
 - `/speaking`;
@@ -291,11 +291,11 @@ Outbound from article:
 ## AI / retrieval surfaces
 
 Added:
-- AI answer-layer canonical query mapping;
+- canonical query aliases for broad parent questions;
 - `public/llms.txt`;
 - `public/llms-full.txt`.
 
-The frozen 14-URL Speaking Knowledge Cluster heading remains unchanged.
+The frozen AI answer-layer revision and concept count remain unchanged, and the frozen 14-URL Speaking Knowledge Cluster heading remains unchanged.
 
 ## Discovery
 
@@ -326,7 +326,6 @@ Major Brick 6 files:
 - `src/content/blog/shared/authorityLinking.ts`
 - `src/content/blog/shared/heroFamilies.ts`
 - `src/lib/canonicalTopicOwnershipRegistry.js`
-- `src/lib/aiAnswerLayerRegistry.js`
 - `src/pages/SubjectResourcesPage.tsx`
 - `src/pages/speaking.tsx`
 - `public/llms.txt`
