@@ -1,10 +1,6 @@
 export type TeacherInquiryStage = 'open' | 'admin_review' | 'closed';
 
-export type TeacherInquiryFinalStatus =
-  | 'selected'
-  | 'not_selected'
-  | 'no_response'
-  | 'withdrawn';
+export type TeacherInquiryFinalStatus = 'selected' | 'not_selected';
 
 export const TEACHER_INQUIRY_STAGE_OPTIONS: Array<{
   value: TeacherInquiryStage;
@@ -32,10 +28,8 @@ export const TEACHER_INQUIRY_FINAL_STATUS_OPTIONS: Array<{
   value: TeacherInquiryFinalStatus;
   label: string;
 }> = [
-  { value: 'selected', label: 'Selected' },
-  { value: 'not_selected', label: 'Not Selected' },
-  { value: 'no_response', label: 'No Response' },
-  { value: 'withdrawn', label: 'Withdrawn' },
+  { value: 'selected', label: 'Selected & Closed' },
+  { value: 'not_selected', label: 'Not Selected & Closed' },
 ];
 
 const STAGES = new Set<TeacherInquiryStage>(
@@ -54,8 +48,13 @@ export function normalizeTeacherInquiryStage(value: unknown): TeacherInquiryStag
 export function normalizeTeacherInquiryFinalStatus(
   value: unknown,
 ): TeacherInquiryFinalStatus | '' {
-  const normalized = String(value || '').trim().toLowerCase() as TeacherInquiryFinalStatus;
-  return FINAL_STATUSES.has(normalized) ? normalized : '';
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'no_response' || normalized === 'withdrawn') {
+    return 'not_selected';
+  }
+  return FINAL_STATUSES.has(normalized as TeacherInquiryFinalStatus)
+    ? (normalized as TeacherInquiryFinalStatus)
+    : '';
 }
 
 export function canCloseTeacherInquiry(value: unknown): boolean {

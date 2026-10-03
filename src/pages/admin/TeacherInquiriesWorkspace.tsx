@@ -94,7 +94,7 @@ const STAGE_META: Record<
   },
   closed: {
     title: 'Closed',
-    subtitle: 'Final decision saved',
+    subtitle: 'Selected / Not Selected',
     icon: CheckCircle2,
     className: 'border-emerald-200 bg-emerald-50/70 text-emerald-950',
   },
@@ -104,6 +104,7 @@ export default function TeacherInquiriesWorkspace() {
   const { toast } = useToast();
   const [records, setRecords] = useState<TeacherInquiryRecord[]>([]);
   const [stage, setStage] = useState<TeacherInquiryStage>('open');
+  const [closedFilter, setClosedFilter] = useState<TeacherInquiryFinalStatus>('selected');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<TeacherInquiryRecord | null>(null);
@@ -166,10 +167,25 @@ export default function TeacherInquiriesWorkspace() {
     [records],
   );
 
+  const closedCounts = useMemo(
+    () =>
+      records.reduce<Record<TeacherInquiryFinalStatus, number>>(
+        (acc, item) => {
+          if (item.stage === 'closed' && item.finalStatus) {
+            acc[item.finalStatus] += 1;
+          }
+          return acc;
+        },
+        { selected: 0, not_selected: 0 },
+      ),
+    [records],
+  );
+
   const visibleRecords = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return records.filter((item) => {
       if (item.stage !== stage) return false;
+      if (stage === 'closed' && item.finalStatus !== closedFilter) return false;
       if (!needle) return true;
       return [
         item.candidateName,
@@ -182,7 +198,7 @@ export default function TeacherInquiriesWorkspace() {
         item.adminNotes,
       ].some((value) => value.toLowerCase().includes(needle));
     });
-  }, [records, search, stage]);
+  }, [closedFilter, records, search, stage]);
 
   const openEditor = (record: TeacherInquiryRecord) => {
     setSelected(record);
@@ -193,10 +209,11 @@ export default function TeacherInquiriesWorkspace() {
 
   const saveSelected = async () => {
     if (!selected) return;
-    if (editStage === 'closed' && !canCloseTeacherInquiry(finalStatus)) {
+    const closedStatus = normalizeTeacherInquiryFinalStatus(finalStatus);
+    if (editStage === 'closed' && !canCloseTeacherInquiry(closedStatus)) {
       toast({
-        title: 'Select a final status',
-        description: 'Closed applications require Selected, Not Selected, No Response or Withdrawn.',
+        title: 'Select a closed outcome',
+        description: 'Choose Selected & Closed or Not Selected & Closed.',
         variant: 'destructive',
       });
       return;
@@ -211,7 +228,7 @@ export default function TeacherInquiriesWorkspace() {
       };
 
       if (editStage === 'closed') {
-        update.finalStatus = finalStatus;
+        update.finalStatus = closedStatus;
         update.closedAt = serverTimestamp();
       } else {
         update.finalStatus = deleteField();
@@ -223,6 +240,9 @@ export default function TeacherInquiriesWorkspace() {
       setSelected(null);
       await load();
       setStage(editStage);
+      if (editStage === 'closed' && closedStatus) {
+        setClosedFilter(closedStatus);
+      }
     } catch (error: any) {
       toast({
         title: 'Could not save teacher enquiry',
@@ -258,7 +278,7 @@ export default function TeacherInquiriesWorkspace() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-slate-950">Teacher Enquiries</h1>
-            <p className="mt-1 text-sm text-slate-600">Open → Admin Review → Closed.</p>
+            <p className="mt-1 text-sm text-slate-600">Open → Admin Review → Selected & Closed / Not Selected & Closed.</p>
           </div>
           <Button type="button" variant="outline" className="gap-2" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -308,6 +328,30 @@ export default function TeacherInquiriesWorkspace() {
             />
           </div>
         </div>
+
+        {stage === 'closed' ? (
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {TEACHER_INQUIRY_FINAL_STATUS_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setClosedFilter(option.value)}
+                className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                  closedFilter === option.value
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>{option.label}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs ${
+                  closedFilter === option.value ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {closedCounts[option.value]}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
           {loading ? (
@@ -394,14 +438,32 @@ export default function TeacherInquiriesWorkspace() {
               </div>
 
               <label className="block text-sm font-semibold text-slate-800">
-                Stage
+                Workflow status
                 <select
-                  value={editStage}
-                  onChange={(event) => setEditStage(event.target.value as TeacherInquiryStage)}
+                  value={
+                    editStage === 'closed' && finalStatus
+                      ? `closed:${finalStatus}`
+                      : editStage
+                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (value.startsWith('closed:')) {
+                      setEditStage('closed');
+                      setFinalStatus(
+                        normalizeTeacherInquiryFinalStatus(value.slice('closed:'.length)),
+                      );
+                      return;
+                    }
+                    setEditStage(value as TeacherInquiryStage);
+                    setFinalStatus('');
+                  }}
                   className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
                 >
-                  {TEACHER_INQUIRY_STAGE_OPTIONS.map((option) => (
+                  {TEACHER_INQUIRY_STAGE_OPTIONS.filter((option) => option.value !== 'closed').map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                  {TEACHER_INQUIRY_FINAL_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={`closed:${option.value}`}>{option.label}</option>
                   ))}
                 </select>
               </label>
@@ -416,22 +478,6 @@ export default function TeacherInquiriesWorkspace() {
                   placeholder="Enter whatever the admin needs to remember about this application..."
                 />
               </label>
-
-              {editStage === 'closed' ? (
-                <label className="block text-sm font-semibold text-slate-800">
-                  Final status
-                  <select
-                    value={finalStatus}
-                    onChange={(event) => setFinalStatus(event.target.value as TeacherInquiryFinalStatus)}
-                    className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm"
-                  >
-                    <option value="">Select final status</option>
-                    {TEACHER_INQUIRY_FINAL_STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setSelected(null)} disabled={saving}>
