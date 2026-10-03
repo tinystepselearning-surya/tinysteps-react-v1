@@ -1,19 +1,6 @@
 name: Enrollment Integrity Emulator
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - "functions/src/lifecycle.ts"
-      - "functions/src/scheduling/rollingScheduleCourseTransition.ts"
-      - "functions/src/scheduling/rollingScheduleLifecycle.ts"
-      - "functions/src/scheduling/rollingScheduleMaterializer.ts"
-      - "src/lib/createEnrollmentCallable.ts"
-      - "src/pages/admin/EnrollmentManagement/**"
-      - "src/pages/admin/StudentManagement/**"
-      - "src/tests/emulator/**"
-      - "vitest.emulator.config.ts"
-      - ".github/workflows/enrollment-integrity-emulator.yml"
   workflow_dispatch:
 
 concurrency:
