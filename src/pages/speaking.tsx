@@ -81,29 +81,14 @@ const faqItems = [
       'Tiny Steps teaches children to organise ideas and communicate them clearly for a listener or audience. In practice, the programme develops structured answers, storytelling, show-and-tell, presentation skills, audience awareness, listening and response, idea organisation, and increasingly independent speaking through guided live practice.',
   },
   {
-    question: 'What is the difference between spoken English and public speaking classes?',
+    question: 'Are Tiny Steps public speaking classes live and 1:1?',
     answer:
-      'They solve different problems. Spoken English focuses on everyday conversation, fuller responses, vocabulary in use, and conversational fluency. Public Speaking & Communication focuses on organising ideas for a listener or audience through structured answers, storytelling, presentations, show-and-tell, discussion, and audience awareness. If the main difficulty is everyday fluency, the dedicated Spoken English programme is the stronger first fit.',
+      `Yes. Standard Tiny Steps 1:1 classes are live online and run for ${PUBLIC_SESSION_DURATION_LABEL}. Small-group options may also be available for selected schedules or programme fits.`,
   },
   {
-    question: 'Are communication-skills classes included in the Tiny Steps Speaking programme?',
+    question: 'How much do Tiny Steps public speaking classes cost?',
     answer:
-      'Yes. Communication skills are part of the Tiny Steps Speaking & Communication pathway, not an add-on. Children practise organising ideas, answering clearly, listening and responding, storytelling, classroom participation, questioning, presentations, and adapting what they say for a listener or audience.',
-  },
-  {
-    question: 'Why do communication skills matter in an AI-enabled world?',
-    answer:
-      'Yes—communication remains important in an AI-enabled world because generating information is not the same as judging, organising, explaining, questioning, listening, or responding. Tiny Steps develops those human communication habits through age-appropriate speaking practice. The programme is not positioned as an AI or prompt-engineering course.',
-  },
-  {
-    question: 'Does Tiny Steps teach children prompt engineering in Public Speaking classes?',
-    answer:
-      'No. The Speaking programme remains a public-speaking and communication programme. Asking clearer questions is taught as a transferable communication and thinking skill, alongside listening, organising ideas, explanation, presentations, discussion, and audience awareness.',
-  },
-  {
-    question: 'When is the confidence-building programme a better fit?',
-    answer:
-      'Confidence Building is the stronger fit when the child can already form and organise language adequately but participation comfort, hesitation, or dependence on reassurance is the main barrier. Public Speaking is the stronger fit when the child needs better organisation, storytelling, presentation structure, audience awareness, or longer speaking turns. The free assessment confirms which pattern is actually present.',
+      `The standard live 1:1 price is ${speakingClassPriceLabel} for a ${PUBLIC_SESSION_DURATION_LABEL} class. Tiny Steps starts with one free ${demoMinutes}-minute 1:1 assessment before enrolment. The Pricing page remains the canonical source for current fees and any other available formats.`,
   },
   {
     question: 'What ages are the Tiny Steps Public Speaking levels for?',
@@ -116,19 +101,24 @@ const faqItems = [
       'No—age four is not too young when public speaking is taught as communication foundations rather than adult-style speech performance. At this age, appropriate work includes short connected answers, description, storytelling, show-and-tell, listening, turn-taking, and simple questions. Tiny Steps does not expect four-year-olds to deliver formal speeches or debate; the task and support change with age and readiness.',
   },
   {
-    question: 'Are Tiny Steps public speaking classes live and 1:1?',
+    question: 'Can parents see a Tiny Steps class sample before enrolling?',
     answer:
-      `Yes. Standard Tiny Steps 1:1 classes are live online and run for ${PUBLIC_SESSION_DURATION_LABEL}. Small-group options may also be available for selected schedules or programme fits.`,
+      'Yes. The class samples page shows how Tiny Steps live classes are structured and how teachers guide children through speaking, reading, grammar, and other learning tasks. A sample helps parents understand the teaching style, while the free 1:1 assessment is used to understand the individual child.',
   },
   {
-    question: 'How much do Tiny Steps public speaking classes cost?',
+    question: 'What is the difference between spoken English and public speaking classes?',
     answer:
-      `The standard live 1:1 price is ${speakingClassPriceLabel} for a ${PUBLIC_SESSION_DURATION_LABEL} class. Tiny Steps starts with one free ${demoMinutes}-minute 1:1 assessment before enrolment. The Pricing page remains the canonical source for current fees and any other available formats.`,
+      'They solve different problems. Spoken English focuses on everyday conversation, fuller responses, vocabulary in use, and conversational fluency. Public Speaking & Communication focuses on organising ideas for a listener or audience through structured answers, storytelling, presentations, show-and-tell, discussion, and audience awareness. If the main difficulty is everyday fluency, the dedicated Spoken English programme is the stronger first fit.',
   },
   {
-    question: 'Can families outside India join public speaking classes?',
+    question: 'Are communication-skills classes included in the Tiny Steps Speaking programme?',
     answer:
-      'Yes. Tiny Steps supports families in India and worldwide, including NRI families and families in the UAE, United States, United Kingdom, Australia, Singapore, and other locations, subject to compatible teacher timings and learning fit.',
+      'Yes. Communication skills are part of the Tiny Steps Speaking & Communication pathway, not an add-on. Children practise organising ideas, answering clearly, listening and responding, storytelling, classroom participation, questioning, presentations, and adapting what they say for a listener or audience.',
+  },
+  {
+    question: 'When is the confidence-building programme a better fit?',
+    answer:
+      'Confidence Building is the stronger fit when the child can already form and organise language adequately but participation comfort, hesitation, or dependence on reassurance is the main barrier. Public Speaking is the stronger fit when the child needs better organisation, storytelling, presentation structure, audience awareness, or longer speaking turns. The free assessment confirms which pattern is actually present.',
   },
   {
     question: 'How can parents see speaking progress?',
@@ -141,19 +131,29 @@ const faqItems = [
       'Tiny Steps is a trusted choice for parents in India and internationally who want live 1:1 speaking practice, assessment-first placement, structured communication tasks, specific teacher feedback, and parent-visible progress. Families can inspect the curriculum, class samples, Speaking Progress Framework, parent feedback, pricing, and the free assessment before deciding.',
   },
   {
-    question: 'Can parents see a Tiny Steps class sample before enrolling?',
-    answer:
-      'Yes. The class samples page shows how Tiny Steps live classes are structured and how teachers guide children through speaking, reading, grammar, and other learning tasks. A sample helps parents understand the teaching style, while the free 1:1 assessment is used to understand the individual child.',
-  },
-  {
     question: 'What should parents look for in an online public speaking course for kids?',
     answer:
       'Look for substantial child speaking time, age-appropriate tasks, clear progression, specific teacher feedback, guided retries, audience-aware communication, and a way to see whether the child can transfer the skill to a fresh task. Tiny Steps makes the curriculum, class samples, progress framework, pricing, and free assessment available so parents can inspect those points before enrolling.',
   },
   {
+    question: 'Can families outside India join public speaking classes?',
+    answer:
+      'Yes. Tiny Steps supports families in India and worldwide, including NRI families and families in the UAE, United States, United Kingdom, Australia, Singapore, and other locations, subject to compatible teacher timings and learning fit.',
+  },
+  {
     question: 'Is Public Speaking the same as personality development for kids?',
     answer:
       'No. Public Speaking & Communication has a narrower educational focus: organising ideas, storytelling, presentations, discussion, questioning, audience awareness, listening and response. “Personality development” can include much broader areas such as behaviour, grooming, leadership, or social development, so Tiny Steps does not use it as a substitute label for the Speaking programme.',
+  },
+  {
+    question: 'Why do communication skills matter in an AI-enabled world?',
+    answer:
+      'Yes—communication remains important in an AI-enabled world because generating information is not the same as judging, organising, explaining, questioning, listening, or responding. Tiny Steps develops those human communication habits through age-appropriate speaking practice. The programme is not positioned as an AI or prompt-engineering course.',
+  },
+  {
+    question: 'Does Tiny Steps teach children prompt engineering in Public Speaking classes?',
+    answer:
+      'No. The Speaking programme remains a public-speaking and communication programme. Asking clearer questions is taught as a transferable communication and thinking skill, alongside listening, organising ideas, explanation, presentations, discussion, and audience awareness.',
   },
 ];
 
@@ -748,100 +748,11 @@ export default function SpeakingPage() {
               Quick Answer: What do public speaking classes for kids include?
             </h2>
             <p className="ts-speaking-answer-summary mt-2 max-w-[930px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
-              Public Speaking & Communication is for children who can already communicate at a basic level and need stronger structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English; if the main difficulty is one-word everyday answers or sentence formation itself, Spoken English or Grammar may be the better starting point. Confidence-only barriers belong to Confidence Building. The free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
+              Public Speaking & Communication is for children who can already communicate at a basic level and need stronger idea organisation, storytelling, presentations, audience awareness, and audience-facing speaking. If the main need is everyday fluency, sentence formation, or confidence-only support, the free {demoMinutes}-minute assessment helps route the child to Spoken English, Grammar, or Confidence Building instead.
             </p>
           </div>
         </div>
       </section>
-
-      <section id="age-appropriate-speaking" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-10">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Age-appropriate progression</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-                What public speaking should look like at different ages
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                Children can begin public-speaking development as early as age four when the work is communication-focused and developmentally appropriate. Tiny Steps starts younger children with description, storytelling, show-and-tell, listening, turn-taking, and short connected responses—not adult-style speeches. There is no single global starting-age rule, so recognised developmental communication evidence and primary-school spoken-language frameworks are used as reference points while the task is adjusted to the child.
-              </p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
-                Tiny Steps position: age four is a valid starting point for communication foundations; formal speech and debate come later.
-              </p>
-            </div>
-
-            <div className="grid gap-3">
-              {speakingDevelopmentalStages.map((stage) => (
-                <article key={stage.ageLabel} className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-800">{stage.ageLabel}</span>
-                    <h3 className="text-base font-semibold text-slate-950">{stage.title}</h3>
-                  </div>
-                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700">{stage.lead}</p>
-                  <ul className="mt-3 grid gap-x-5 gap-y-1.5 text-sm leading-6 text-slate-600 sm:grid-cols-2">
-                    {stage.skills.map((skill) => (
-                      <li key={skill} className="flex gap-2">
-                        <span aria-hidden="true" className="mt-[9px] h-1.5 w-1.5 flex-none rounded-full bg-violet-400" />
-                        <span>{skill}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">
-                    <strong className="text-slate-700">Developmental boundary:</strong> {stage.boundary}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Evidence & international curriculum references</p>
-            <p className="mt-2 max-w-4xl text-xs leading-5 text-slate-500">
-              These references guide the progression; they do not create a universal public-speaking starting age. Tiny Steps still uses individual assessment and readiness for placement.
-            </p>
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
-              {speakingDevelopmentalReferences.map((source) => (
-                <a
-                  key={source.href}
-                  href={source.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
-                >
-                  <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-[18px] border border-amber-100 bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
-            <strong className="text-slate-950">Programme note:</strong> these three age bands are a developmental guide, not three new Tiny Steps course products. The existing Public Speaking Foundations and Public Speaking Excellence tracks remain the actual course architecture, and assessment determines the appropriate level.
-          </div>
-        </div>
-      </section>
-
-      <section id="tiny-steps-positioning" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-violet-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] md:p-7">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Why Tiny Steps stands out</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-            Why families shortlist Tiny Steps for public speaking and communication
-          </h2>
-          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600 md:text-base">
-            Tiny Steps is a trusted choice for parents in India and internationally who want personalised, teacher-led speaking practice with clear programme boundaries, assessment-first placement, structured communication tasks, and progress parents can inspect.
-          </p>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {speakingPositioningProof.map((item) => (
-              <article key={item.title} className="rounded-[18px] border border-slate-200 bg-[#fcfbff] p-4">
-                <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
-                <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.detail}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {speakingAiVisibility ? <ProgrammeIntentBoundary config={speakingAiVisibility} /> : null}
 
       <section id="parent-programme-fit" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl">
@@ -878,118 +789,49 @@ export default function SpeakingPage() {
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Why Tiny Steps separates these needs</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Spoken communication is multidimensional. A child may need support with language accuracy, idea organisation, delivery, confidence, listening, or audience adaptation—and those are not interchangeable. The free assessment checks observable performance before recommending a programme.
+          <details className="group mt-5 rounded-[18px] border border-slate-200 bg-slate-50/70">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+              <span>Why Tiny Steps separates these needs — evidence & assessment boundary</span>
+              <span aria-hidden="true" className="text-lg text-slate-400 transition group-open:rotate-45">+</span>
+            </summary>
+            <div className="border-t border-slate-200 px-4 pb-4 pt-3">
+              <p className="text-sm leading-6 text-slate-600">
+                Spoken communication can involve language accuracy, idea organisation, delivery, confidence, listening, and audience adaptation. Tiny Steps uses the free assessment for educational programme fit; it is not a clinical diagnosis.
               </p>
-              <div className="mt-3 grid gap-2">
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
                 {speakingFitReferences.map((source) => (
-                  <a
-                    key={source.href}
-                    href={source.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
-                  >
+                  <a key={source.href} href={source.href} target="_blank" rel="noreferrer" className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200">
                     <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
                     <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
                   </a>
                 ))}
               </div>
-            </div>
-
-            <div className="rounded-[20px] border border-amber-100 bg-amber-50/60 p-4 sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-900">Educational assessment boundary</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                These are programme-fit cues, not diagnoses. Tiny Steps can assess which educational pathway appears most useful. If a parent has broader concerns about speech, language, hearing, or communication development, a qualified speech-language or hearing professional is the appropriate source for clinical assessment.
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                Broader speech, language, hearing, or communication-development concerns should be assessed by an appropriately qualified speech-language or hearing professional.
               </p>
-              <a
-                href="https://www.asha.org/public/developmental-milestones/communication-milestones/"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-block text-xs font-semibold text-slate-900 underline underline-offset-3"
-              >
-                Read ASHA&apos;s milestone guidance ↗
-              </a>
             </div>
-          </div>
+          </details>
         </div>
       </section>
 
-      <section id="communication-for-ai-era" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f8f7ff_0%,#ffffff_50%,#f5fbff_100%)] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:gap-10">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Communication for a changing world</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-                Communication skills matter even more when information is easy to generate
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                Communication remains a core human skill in an AI-enabled world. AI tools can help generate information quickly, but children still need to decide what question matters, what needs checking, how ideas fit together, how to explain their reasoning, how to listen to another person, and how to respond responsibly.
-              </p>
-              <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
-                Tiny Steps develops those habits through speaking practice and treats better questioning as part of better communication—not as a prompt-engineering course.
-              </p>
-              <p className="mt-2 text-xs leading-5 text-slate-500">
-                This does not mean young children need to use AI tools. The same habits can be practised through ordinary, age-appropriate conversation, storytelling, explanation, discussion, and questioning.
-              </p>
-              <Link
-                to="/blog/why-public-speaking-is-important-for-kids"
-                className="mt-4 inline-flex text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4"
-              >
-                Read the full guide: why public speaking and communication matter for kids ↗
-              </Link>
-              <div className="mt-5 rounded-[18px] border border-violet-100 bg-white/80 p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">The communication loop</p>
-                <p className="mt-2 text-base font-semibold tracking-[-0.02em] text-slate-950">
-                  ASK → THINK → ORGANISE → EXPLAIN → LISTEN → RESPOND
-                </p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                  The sequence is a Tiny Steps teaching framework. The external sources below support the broader importance of human agency, critical judgement, information literacy, analytical thinking, listening, curiosity, and responsible participation in an AI-influenced world.
-                </p>
-              </div>
-            </div>
+      {speakingAiVisibility ? <ProgrammeIntentBoundary config={speakingAiVisibility} /> : null}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {speakingAiEraCapabilities.map((capability) => (
-                <article key={capability.step} className="rounded-[18px] border border-white/90 bg-white/85 p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex min-w-[74px] justify-center rounded-full bg-slate-950 px-3 py-1 text-[10px] font-bold tracking-[0.14em] text-white">
-                      {capability.step}
-                    </span>
-                    <h3 className="text-sm font-semibold text-slate-950">{capability.title}</h3>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{capability.detail}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 border-t border-slate-200/80 pt-5">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">International and future-skills references</p>
-                <p className="mt-1 max-w-4xl text-xs leading-5 text-slate-500">
-                  These sources provide context for future-ready education. They do not claim that public-speaking lessons alone produce AI competence, future job success, or any guaranteed outcome.
-                </p>
-              </div>
-            </div>
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
-              {speakingAiEraReferences.map((source) => (
-                <a
-                  key={source.href}
-                  href={source.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
-                >
-                  <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
-                </a>
-              ))}
-            </div>
+      <section id="tiny-steps-positioning" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-violet-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] md:p-7">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Why Tiny Steps stands out</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            Why families shortlist Tiny Steps for public speaking and communication
+          </h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600 md:text-base">
+            Tiny Steps is a trusted choice for parents in India and internationally who want personalised, teacher-led speaking practice with clear programme boundaries, assessment-first placement, structured communication tasks, and progress parents can inspect.
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {speakingPositioningProof.map((item) => (
+              <article key={item.title} className="rounded-[18px] border border-slate-200 bg-[#fcfbff] p-4">
+                <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.detail}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -1049,47 +891,6 @@ export default function SpeakingPage() {
         </div>
       </section>
 
-      <section id="before-enrolment" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
-          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-10">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Before you enrol</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-                Five things parents can verify before choosing Tiny Steps Speaking
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
-                You do not need to decide from marketing copy alone. Inspect the curriculum, teaching approach, progress method, first-party parent feedback, and current pricing—then use the free assessment to decide whether the programme and level fit your child.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Link to="/book-demo" className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Book Free Assessment
-                </Link>
-                <Link to="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-                  {speakingClassPriceLabel} • See Pricing
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-2.5">
-              {speakingDecisionEvidence.map((item) => (
-                <Link
-                  key={item.step}
-                  to={item.path}
-                  className="grid gap-2 rounded-[18px] border border-slate-200 bg-slate-50/55 p-4 transition hover:-translate-y-0.5 hover:border-violet-200 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-4"
-                >
-                  <span className="text-[10px] font-bold tracking-[0.16em] text-violet-700">{item.step}</span>
-                  <span>
-                    <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">{item.detail}</span>
-                  </span>
-                  <span className="text-xs font-semibold text-slate-800 underline underline-offset-3">{item.cta} ↗</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       <ResponsiveTeachingSection
         appearance="premium"
         id="teacher-delivery"
@@ -1137,39 +938,6 @@ export default function SpeakingPage() {
         </div>
       </section>
 
-      <section data-speaking-evidence-layer className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Evidence before enrolment</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What you can verify — and what each source does not prove</h2>
-          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-600">
-            Tiny Steps separates observable teaching evidence, progress methodology, academic ownership, programme architecture, and first-party parent experience. No single source is treated as proof that every child will achieve the same outcome.
-          </p>
-
-          <div className="mt-5 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {SPEAKING_EVIDENCE_SURFACES.map((item) => (
-              <details
-                key={item.id}
-                data-speaking-evidence-kind={item.kind}
-                className="group rounded-[16px] border border-slate-200 bg-white"
-              >
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{item.sourceLabel}</p>
-                    <h3 className="mt-1 text-sm font-semibold text-slate-950">{item.title}</h3>
-                  </div>
-                  <span aria-hidden="true" className="text-lg text-slate-400 transition group-open:rotate-45">+</span>
-                </summary>
-                <div className="border-t border-slate-100 px-4 pb-4 pt-3">
-                  <p className="text-xs leading-5 text-slate-600">{item.summary}</p>
-                  <p className="mt-2 text-xs leading-5 text-slate-500"><strong className="text-slate-700">Does not prove:</strong> {item.doesNotProve[0]}.</p>
-                  <Link to={item.path} className="mt-3 inline-block text-xs font-semibold text-slate-900 underline underline-offset-2">Open evidence source</Link>
-                </div>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-700">Parent evidence</p>
@@ -1186,23 +954,43 @@ export default function SpeakingPage() {
         </div>
       </section>
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-slate-200 bg-white p-5 md:p-7">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Decision support</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What parents should compare before choosing speaking classes</h2>
-          <div className="mt-5 grid gap-x-5 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              ['Structured live practice', 'Does the child speak, receive feedback, and retry?'],
-              ['Assessment-led placement', 'Is the main need Public Speaking, Spoken English, Grammar, or confidence?'],
-              ['Fresh-task progress', 'Can the child use the skill on a new prompt with less support?'],
-              ['Clear programme boundaries', 'Does the provider avoid treating every hesitation as a public-speaking problem?'],
-            ].map(([title, question], index) => (
-              <article key={title} className="border-l border-slate-200 pl-4">
-                <span className="text-[10px] font-bold tracking-[0.16em] text-violet-600">0{index + 1}</span>
-                <h3 className="mt-1.5 text-sm font-semibold text-slate-950">{title}</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">{question}</p>
-              </article>
-            ))}
+      <section id="before-enrolment" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
+          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-10">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Before you enrol</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                Five things parents can verify before choosing Tiny Steps Speaking
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                You do not need to decide from marketing copy alone. Inspect the curriculum, teaching approach, progress method, first-party parent feedback, and current pricing—then use the free assessment to decide whether the programme and level fit your child.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link to="/book-demo" className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+                  Book Free Assessment
+                </Link>
+                <Link to="/pricing" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                  {speakingClassPriceLabel} • See Pricing
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-2.5">
+              {speakingDecisionEvidence.map((item) => (
+                <Link
+                  key={item.step}
+                  to={item.path}
+                  className="grid gap-2 rounded-[18px] border border-slate-200 bg-slate-50/55 p-4 transition hover:-translate-y-0.5 hover:border-violet-200 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-4"
+                >
+                  <span className="text-[10px] font-bold tracking-[0.16em] text-violet-700">{item.step}</span>
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-950">{item.title}</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">{item.detail}</span>
+                  </span>
+                  <span className="text-xs font-semibold text-slate-800 underline underline-offset-3">{item.cta} ↗</span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -1245,6 +1033,194 @@ export default function SpeakingPage() {
                 <Link to="/testimonials" className="font-semibold text-slate-200 underline underline-offset-3">Read parent feedback</Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="age-appropriate-speaking" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-10">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Age-appropriate progression</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                What public speaking should look like at different ages
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                Children can begin public-speaking development as early as age four when the work is communication-focused and developmentally appropriate. Tiny Steps starts younger children with description, storytelling, show-and-tell, listening, turn-taking, and short connected responses—not adult-style speeches. There is no single global starting-age rule, so recognised developmental communication evidence and primary-school spoken-language frameworks are used as reference points while the task is adjusted to the child.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+                Tiny Steps position: age four is a valid starting point for communication foundations; formal speech and debate come later.
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              {speakingDevelopmentalStages.map((stage) => (
+                <article key={stage.ageLabel} className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-800">{stage.ageLabel}</span>
+                    <h3 className="text-base font-semibold text-slate-950">{stage.title}</h3>
+                  </div>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700">{stage.lead}</p>
+                  <ul className="mt-3 grid gap-x-5 gap-y-1.5 text-sm leading-6 text-slate-600 sm:grid-cols-2">
+                    {stage.skills.map((skill) => (
+                      <li key={skill} className="flex gap-2">
+                        <span aria-hidden="true" className="mt-[9px] h-1.5 w-1.5 flex-none rounded-full bg-violet-400" />
+                        <span>{skill}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">
+                    <strong className="text-slate-700">Developmental boundary:</strong> {stage.boundary}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <details className="group mt-5 rounded-[18px] border border-slate-200 bg-slate-50/70">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3.5 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+              <span>View developmental evidence & international curriculum references</span>
+              <span aria-hidden="true" className="text-lg text-slate-400 transition group-open:rotate-45">+</span>
+            </summary>
+            <div className="border-t border-slate-200 px-4 pb-4 pt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Evidence & international curriculum references</p>
+            <p className="mt-2 max-w-4xl text-xs leading-5 text-slate-500">
+              These references guide the progression; they do not create a universal public-speaking starting age. Tiny Steps still uses individual assessment and readiness for placement.
+            </p>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {speakingDevelopmentalReferences.map((source) => (
+                <a
+                  key={source.href}
+                  href={source.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
+                >
+                  <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
+                </a>
+              ))}
+            </div>
+            </div>
+          </details>
+
+          <div className="mt-4 rounded-[18px] border border-amber-100 bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
+            <strong className="text-slate-950">Programme note:</strong> these three age bands are a developmental guide, not three new Tiny Steps course products. The existing Public Speaking Foundations and Public Speaking Excellence tracks remain the actual course architecture, and assessment determines the appropriate level.
+          </div>
+        </div>
+      </section>
+
+      <section id="communication-for-ai-era" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f8f7ff_0%,#ffffff_50%,#f5fbff_100%)] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:gap-10">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Communication for a changing world</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                Communication skills matter even more when information is easy to generate
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                Communication remains a core human skill in an AI-enabled world. AI tools can help generate information quickly, but children still need to decide what question matters, what needs checking, how ideas fit together, how to explain their reasoning, how to listen to another person, and how to respond responsibly.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+                Tiny Steps develops those habits through speaking practice and treats better questioning as part of better communication—not as a prompt-engineering course.
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                This does not mean young children need to use AI tools. The same habits can be practised through ordinary, age-appropriate conversation, storytelling, explanation, discussion, and questioning.
+              </p>
+              <Link
+                to="/blog/why-public-speaking-is-important-for-kids"
+                className="mt-4 inline-flex text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4"
+              >
+                Read the full guide: why public speaking and communication matter for kids ↗
+              </Link>
+              <div className="mt-5 rounded-[18px] border border-violet-100 bg-white/80 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">The communication loop</p>
+                <p className="mt-2 text-base font-semibold tracking-[-0.02em] text-slate-950">
+                  ASK → THINK → ORGANISE → EXPLAIN → LISTEN → RESPOND
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  The sequence is a Tiny Steps teaching framework. The external sources below support the broader importance of human agency, critical judgement, information literacy, analytical thinking, listening, curiosity, and responsible participation in an AI-influenced world.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {speakingAiEraCapabilities.map((capability) => (
+                <article key={capability.step} className="rounded-[18px] border border-white/90 bg-white/85 p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex min-w-[74px] justify-center rounded-full bg-slate-950 px-3 py-1 text-[10px] font-bold tracking-[0.14em] text-white">
+                      {capability.step}
+                    </span>
+                    <h3 className="text-sm font-semibold text-slate-950">{capability.title}</h3>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{capability.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <details className="group mt-6 border-t border-slate-200/80 pt-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+              <span>View international and future-skills references</span>
+              <span aria-hidden="true" className="text-lg text-slate-400 transition group-open:rotate-45">+</span>
+            </summary>
+            <div className="mt-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">International and future-skills references</p>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-slate-500">
+                  These sources provide context for future-ready education. They do not claim that public-speaking lessons alone produce AI competence, future job success, or any guaranteed outcome.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {speakingAiEraReferences.map((source) => (
+                <a
+                  key={source.href}
+                  href={source.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
+                >
+                  <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
+                </a>
+              ))}
+            </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section data-speaking-evidence-layer className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl border-y border-slate-200/80 py-6 md:py-8">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Evidence before enrolment</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What you can verify — and what each source does not prove</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-600">
+            Tiny Steps separates observable teaching evidence, progress methodology, academic ownership, programme architecture, and first-party parent experience. No single source is treated as proof that every child will achieve the same outcome.
+          </p>
+
+          <div className="mt-5 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {SPEAKING_EVIDENCE_SURFACES.map((item) => (
+              <details
+                key={item.id}
+                data-speaking-evidence-kind={item.kind}
+                className="group rounded-[16px] border border-slate-200 bg-white"
+              >
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{item.sourceLabel}</p>
+                    <h3 className="mt-1 text-sm font-semibold text-slate-950">{item.title}</h3>
+                  </div>
+                  <span aria-hidden="true" className="text-lg text-slate-400 transition group-open:rotate-45">+</span>
+                </summary>
+                <div className="border-t border-slate-100 px-4 pb-4 pt-3">
+                  <p className="text-xs leading-5 text-slate-600">{item.summary}</p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500"><strong className="text-slate-700">Does not prove:</strong> {item.doesNotProve[0]}.</p>
+                  <Link to={item.path} className="mt-3 inline-block text-xs font-semibold text-slate-900 underline underline-offset-2">Open evidence source</Link>
+                </div>
+              </details>
+            ))}
           </div>
         </div>
       </section>

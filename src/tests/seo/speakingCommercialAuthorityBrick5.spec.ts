@@ -33,15 +33,22 @@ describe('Speaking Commercial Authority v2 — Brick 5 evidence and conversion',
     expect(speaking).toContain('does not guarantee a fixed improvement timeline');
   });
 
-  it('orders detailed evidence before the pricing and assessment conversion block', () => {
+  it('orders high-intent proof before pricing and moves research-heavy authority deeper', () => {
+    const parentFit = speaking.indexOf('id="parent-programme-fit"');
     const progress = speaking.indexOf('How parents see speaking progress');
     const parentEvidence = speaking.indexOf('What speaking parents noticed first');
-    const comparison = speaking.indexOf('What parents should compare before choosing speaking classes');
+    const beforeEnrolment = speaking.indexOf('id="before-enrolment"');
     const pricing = speaking.indexOf('id="pricing-and-assessment"');
-    expect(progress).toBeGreaterThan(-1);
+    const age = speaking.indexOf('id="age-appropriate-speaking"');
+    const aiEra = speaking.indexOf('id="communication-for-ai-era"');
+    expect(parentFit).toBeGreaterThan(-1);
+    expect(progress).toBeGreaterThan(parentFit);
     expect(parentEvidence).toBeGreaterThan(progress);
-    expect(comparison).toBeGreaterThan(parentEvidence);
-    expect(pricing).toBeGreaterThan(comparison);
+    expect(beforeEnrolment).toBeGreaterThan(parentEvidence);
+    expect(pricing).toBeGreaterThan(beforeEnrolment);
+    expect(age).toBeGreaterThan(pricing);
+    expect(aiEra).toBeGreaterThan(age);
+    expect(speaking).not.toContain('What parents should compare before choosing speaking classes');
   });
 
   it('keeps the free assessment as the conversion mechanism and does not introduce a second purchase owner', () => {

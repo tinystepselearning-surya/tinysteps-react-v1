@@ -68,9 +68,9 @@ describe('Speaking growth Brick 4 flagship page', () => {
     expect(speaking).not.toContain('Approved parent feedback from speaking families');
     expect((speaking.match(/<TestimonialSnippets/g) ?? [])).toHaveLength(1);
     expect((speaking.match(/<ResponsiveTeachingSection/g) ?? [])).toHaveLength(1);
-    expect(speaking).toContain('What parents should compare before choosing speaking classes');
-    expect(speaking).toContain('Structured live practice');
-    expect(speaking).toContain('Fresh-task progress');
+    expect(speaking).toContain('Five things parents can verify before choosing Tiny Steps Speaking');
+    expect(speaking).toContain('Watch a real class');
+    expect(speaking).toContain('See how progress is measured');
   });
 
   it('keeps the assessment as the decision mechanism instead of promising automatic placement', () => {
