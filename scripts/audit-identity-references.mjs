@@ -121,6 +121,11 @@ function intersectionSize(left, right) {
   return count;
 }
 
+function percentage(part, total) {
+  if (!total) return 100;
+  return Math.round((Number(part || 0) / total) * 10000) / 100;
+}
+
 function mirrorSummary(mirrorRows, usersById, expectedRole, issues) {
   let idMatchesUserId = 0;
   let hasUser = 0;
@@ -210,6 +215,100 @@ function checkLearnerRef(id, source, fields, context, issues) {
   if (learnerTargetKinds(id, context).length === 0) {
     issues.add('learner_reference_missing_all_known_targets', source, fields);
   }
+}
+
+function auditExpectedRoleMirrors(users, context, issues) {
+  const result = {
+    parentUsers: 0,
+    parentMirrorPresent: 0,
+    teacherUsers: 0,
+    teacherMirrorPresent: 0,
+    learningPartnerUsers: 0,
+    learningPartnerMirrorPresent: 0,
+    adminUsers: 0,
+    adminMirrorPresent: 0,
+  };
+
+  for (const entry of users) {
+    const role = normalizedRole(entry.data.role);
+    if (role === 'parent') {
+      result.parentUsers += 1;
+      if (context.parentIds.has(entry.id)) result.parentMirrorPresent += 1;
+      else issues.add('user_parent_role_missing_parent_mirror', entry, ['role']);
+    } else if (role === 'teacher') {
+      result.teacherUsers += 1;
+      if (context.teacherIds.has(entry.id)) result.teacherMirrorPresent += 1;
+      else issues.add('user_teacher_role_missing_teacher_mirror', entry, ['role']);
+    } else if (role === 'learningpartner') {
+      result.learningPartnerUsers += 1;
+      if (context.learningPartnerIds.has(entry.id)) result.learningPartnerMirrorPresent += 1;
+      else issues.add('user_learningPartner_role_missing_role_mirror', entry, ['role']);
+    } else if (role === 'admin') {
+      result.adminUsers += 1;
+      if (context.adminIds.has(entry.id)) result.adminMirrorPresent += 1;
+      else issues.add('user_admin_role_missing_admin_mirror', entry, ['role']);
+    }
+  }
+
+  return result;
+}
+
+function auditStudentCompatibility(rows, kind, context, issues) {
+  let sameIdKidMatch = 0;
+  let explicitAliasKidMatch = 0;
+  let withoutKidMapping = 0;
+  let parentReferencePresent = 0;
+  let nestedPathParentMismatch = 0;
+
+  for (const entry of rows) {
+    const sameIdMatch = context.kidIds.has(entry.id);
+    if (sameIdMatch) sameIdKidMatch += 1;
+
+    const aliasIds = idList(
+      entry.data.kidId,
+      entry.data.studentId,
+      entry.data.studentUid,
+      entry.data.childId,
+      entry.data.linkedStudentId,
+    ).filter((value) => value !== entry.id);
+    const aliasKidMatch = aliasIds.some((value) => context.kidIds.has(value));
+    if (!sameIdMatch && aliasKidMatch) explicitAliasKidMatch += 1;
+
+    if (!sameIdMatch && !aliasKidMatch) {
+      withoutKidMapping += 1;
+      issues.add(`${kind}_student_without_kid_mapping`, entry, [
+        'kidId', 'studentId', 'studentUid', 'childId', 'linkedStudentId',
+      ]);
+    }
+
+    const parentRefs = idList(entry.data.primaryParentId, entry.data.parentId, entry.data.parentIds);
+    if (parentRefs.length > 0) parentReferencePresent += 1;
+    parentRefs.forEach((value) =>
+      checkParentRef(value, entry, ['primaryParentId', 'parentId', 'parentIds'], context, issues));
+
+    if (kind === 'nested') {
+      const parts = entry.path.split('/');
+      const pathParentId = parts.length >= 4 && parts[0] === 'parents' ? parts[1] : '';
+      if (pathParentId) {
+        checkParentRef(pathParentId, entry, ['pathParentId'], context, issues);
+        const dataParentId = normalizeId(entry.data.parentId);
+        if (dataParentId && dataParentId !== pathParentId) {
+          nestedPathParentMismatch += 1;
+          issues.add('nested_student_parentId_path_mismatch', entry, ['parentId']);
+        }
+      }
+    }
+  }
+
+  return {
+    total: rows.length,
+    sameIdKidMatch,
+    explicitAliasKidMatch,
+    withoutKidMapping,
+    parentReferencePresent,
+    nestedPathParentMismatch,
+    mappedToKidPct: percentage(sameIdKidMatch + explicitAliasKidMatch, rows.length),
+  };
 }
 
 function auditKidRelationships(kids, context, issues) {
@@ -491,6 +590,7 @@ export function auditIdentitySnapshot(snapshot, options = {}) {
     parentIds: setOfIds(snapshot.parents),
     teacherIds: setOfIds(snapshot.teachers),
     learningPartnerIds: setOfIds(snapshot.learningPartners),
+    adminIds: setOfIds(snapshot.admins),
     kidIds: setOfIds(snapshot.kids),
     rootStudentIds: setOfIds(snapshot.students),
     nestedStudentIds: setOfIds(snapshot.nestedStudents),
@@ -498,17 +598,25 @@ export function auditIdentitySnapshot(snapshot, options = {}) {
     schoolIds: setOfIds(snapshot.schools),
   };
 
-  let usersDocIdEqualsUid = 0;
-  let usersDocIdEqualsUserId = 0;
+  let usersUidPresent = 0;
+  let usersUidMatchesDocumentId = 0;
+  let usersUserIdPresent = 0;
+  let usersUserIdMatchesDocumentId = 0;
   let usersRoleArrayContainsRole = 0;
   for (const entry of snapshot.users) {
     const uid = normalizeId(entry.data.uid);
     const userId = normalizeId(entry.data.userId);
-    if (!uid || uid === entry.id) usersDocIdEqualsUid += 1;
-    else issues.add('users_documentId_uid_mismatch', entry, ['uid']);
+    if (uid) {
+      usersUidPresent += 1;
+      if (uid === entry.id) usersUidMatchesDocumentId += 1;
+      else issues.add('users_documentId_uid_mismatch', entry, ['uid']);
+    }
 
-    if (!userId || userId === entry.id) usersDocIdEqualsUserId += 1;
-    else issues.add('users_documentId_userId_mismatch', entry, ['userId']);
+    if (userId) {
+      usersUserIdPresent += 1;
+      if (userId === entry.id) usersUserIdMatchesDocumentId += 1;
+      else issues.add('users_documentId_userId_mismatch', entry, ['userId']);
+    }
 
     const role = normalizedRole(entry.data.role);
     const roles = idList(entry.data.roles).map(normalizedRole);
@@ -529,7 +637,10 @@ export function auditIdentitySnapshot(snapshot, options = {}) {
     if (parents.size > 1) nestedStudentIdsUnderMultipleParents += 1;
   }
 
+  const expectedRoleMirrors = auditExpectedRoleMirrors(snapshot.users, context, issues);
   const kidRelationships = auditKidRelationships(snapshot.kids, context, issues);
+  const rootStudentCompatibility = auditStudentCompatibility(snapshot.students, 'root', context, issues);
+  const nestedStudentCompatibility = auditStudentCompatibility(snapshot.nestedStudents, 'nested', context, issues);
   const userChildLinks = auditUserChildLinks(snapshot.users, context, issues);
   const enrollments = auditEnrollmentReferences(snapshot.enrollments, context, issues);
   const classSessions = auditSessionReferences(snapshot.classSessions, context, issues);
@@ -570,9 +681,14 @@ export function auditIdentitySnapshot(snapshot, options = {}) {
       demoSessions: snapshot.demoSessions.length,
     },
     authBackedIdentity: {
-      usersDocumentIdEqualsUidOrUidMissing: usersDocIdEqualsUid,
-      usersDocumentIdEqualsUserIdOrUserIdMissing: usersDocIdEqualsUserId,
+      usersUidPresent,
+      usersUidMatchesDocumentId,
+      usersUidMatchPct: percentage(usersUidMatchesDocumentId, usersUidPresent),
+      usersUserIdPresent,
+      usersUserIdMatchesDocumentId,
+      usersUserIdMatchPct: percentage(usersUserIdMatchesDocumentId, usersUserIdPresent),
       usersRoleArrayContainsRoleOrLegacyMissing: usersRoleArrayContainsRole,
+      expectedRoleMirrors,
       roleMirrors,
     },
     learners: {
@@ -584,6 +700,8 @@ export function auditIdentitySnapshot(snapshot, options = {}) {
       rootStudentsNestedStudentsIdOverlap: intersectionSize(context.rootStudentIds, context.nestedStudentIds),
       nestedStudentIdsUnderMultipleParents,
       kidRelationships,
+      rootStudentCompatibility,
+      nestedStudentCompatibility,
       userChildLinks,
     },
     operationalReferences: {
