@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
+import { ensureAdmin } from './helpers/adminGuard';
 import * as logger from 'firebase-functions/logger';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import { normalizeTeacherPayDisposition, type TeacherPayDisposition } from './helpers/sessionFinancialRates';
@@ -56,14 +57,7 @@ function isPaidOrPartiallyPaidEarning(data: Record<string, unknown>): boolean {
 async function assertAdmin(auth: { uid?: string; token?: Record<string, unknown> } | undefined): Promise<string> {
   const uid = clean(auth?.uid, 160);
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-
-  const tokenRole = normalizeRole(auth?.token?.role);
-  if (tokenRole === 'admin') return uid;
-
-  const userSnap = await admin.firestore().collection('users').doc(uid).get();
-  if (normalizeRole(userSnap.data()?.role) !== 'admin') {
-    throw new HttpsError('permission-denied', 'Admin access required.');
-  }
+  await ensureAdmin(auth);
   return uid;
 }
 
