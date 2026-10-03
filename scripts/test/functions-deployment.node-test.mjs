@@ -579,6 +579,15 @@ test('Hosting deployment builds the production artifact exactly once inside the 
   assert.equal((deployJob.match(/npm run build:deploy/g) ?? []).length, 1);
 });
 
+test('deep local preflight does not force unrelated specialist suites', () => {
+  const preflight = readFileSync('scripts/preflight.mjs', 'utf8');
+  assert.doesNotMatch(preflight, /const functionsChanged = full \|\|/);
+  assert.doesNotMatch(preflight, /const firestoreChanged = full \|\|/);
+  assert.doesNotMatch(preflight, /const enrollmentChanged = full \|\|/);
+  assert.doesNotMatch(preflight, /const r8Changed = full \|\|/);
+  assert.doesNotMatch(preflight, /const frontendChanged = full \|\|/);
+});
+
 test('local preflight compiles Functions before deployment contract tests', () => {
   const preflight = readFileSync('scripts/preflight.mjs', 'utf8');
   const buildIndex = preflight.indexOf("run('Functions build'");
