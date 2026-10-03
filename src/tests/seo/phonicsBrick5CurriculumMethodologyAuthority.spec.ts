@@ -30,7 +30,7 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
   it('makes the curriculum-versus-methodology distinction explicit for parents', () => {
     const curriculum = read(curriculumPath);
 
-    expect(curriculum).toContain('Step 3 · See how the roadmap becomes a live lesson');
+    expect(curriculum).toContain('How the roadmap becomes a live lesson');
     expect(curriculum).toContain('The curriculum explains <strong>what</strong> children learn');
     expect(curriculum).toContain('the teacher models the target skill, guides practice, corrects errors, adjusts support');
     expect(curriculum).toContain('The sequence stays structured, but the pace is responsive.');
@@ -62,7 +62,7 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
 
     expect(curriculum).toContain('Meet the Tiny Steps team');
     expect(curriculum).toContain('Watch real class samples');
-    expect(curriculum).toContain('Explore the Phonics & Reading program');
+    expect(curriculum).toContain('Explore the Phonics program');
   });
 
   it('adds AEO answers about methodology without turning /curriculum into the detailed academic-design page', () => {
@@ -83,7 +83,7 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
   it('adds machine-readable teaching-method semantics while preserving the organization entity graph', () => {
     const curriculum = read(curriculumPath);
 
-    expect(curriculum).toContain("'@id': `${curriculumCanonicalUrl}#teaching-method`");
+    expect(curriculum).toContain("'@id': curriculumCanonicalUrl + '#teaching-method'");
     expect(curriculum).toContain("name: 'Tiny Steps curriculum-to-classroom teaching method'");
     expect(curriculum).toContain("'@type': 'ItemList'");
     expect(curriculum).toContain('itemListElement: teachingMethodSteps.map');
