@@ -130,6 +130,7 @@ export const BLOG_HERO_FAMILY_BY_SLUG: Readonly<Record<string, BlogHeroFamily>> 
   'how-to-teach-storytelling-to-kids': 'conversation-and-storytelling',
 
   // 18. Presenting With Confidence
+  'why-public-speaking-is-important-for-kids': 'presenting-with-confidence',
   'speaking-debate-starters': 'presenting-with-confidence',
   'speaking-visual-aids': 'presenting-with-confidence',
   'speaking-structure': 'presenting-with-confidence',

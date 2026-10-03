@@ -6,15 +6,25 @@ import { Buffer } from 'node:buffer';
 // The original entries preserve independently reviewed recovery work. The
 // Resources/Grammar entries pin only the exact reviewed snapshots required for
 // the central Resources gateway, governed grammar guides, retired-blog listing,
-// reciprocal discovery links and the exact GV4 Vocabulary publication snapshots. Commercial C2/C4/C5/C6 ownership and
-// conversion boundaries remain frozen; any further byte change fails closed.
+// reciprocal discovery links and the exact GV4 Vocabulary publication snapshots.
+// Speaking Commercial Authority v2 adds a reviewed informational article, its
+// subject-hub link, a distinct canonical owner, and the authorized /speaking C4
+// override. The exact approved source bytes are pinned below. Commercial
+// C2/C5/C6 ownership and conversion boundaries remain frozen; further edits
+// to any pinned file fail closed.
 export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/content/blog/shared/authorityLinking.ts': 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
   'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx': '023cb60613ffe88e7c221d4d7b8698d34e5a91f8',
-  'src/pages/SubjectResourcesPage.tsx': '665c15035d57085afe9ffc7d194753da506b824a',
+  'src/pages/SubjectResourcesPage.tsx': 'a32b47fec82372c013e8a9d323dde80283f3e008',
   'src/pages/phonics.tsx': '9b37d26b928789ec2bb224ab0d7e8ffd33aa3dbb',
   'src/pages/founder/FounderEditorialReviewsPanel.tsx': '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-  'src/lib/canonicalTopicOwnershipRegistry.js': 'bdf87da7f1ee8c48fa897d5487a54730c18e9dbd',
+  'src/lib/canonicalTopicOwnershipRegistry.js': 'e7bbdb67b3840a10813bbb3a95e7270e2b502956',
+  'src/lib/commercialC4CtrOptimization.ts': '62ec23c3b0c76440ea386f4f23fde4a292b93099',
+  'src/pages/speaking.tsx': 'b5e79f4111986d23e91230bd6abe5eddee9f757a',
+  'src/content/blog/posts/public-speaking/why-public-speaking-is-important-for-kids.ts': '584cc647fd76ddff5d018798517f8db57b25684f',
+  'src/content/blog/shared/conversionFamilies.ts': 'c6bbe00f36e62fe6f7ba41d42291faee13b51c03',
+  'src/content/blog/shared/heroFamilies.ts': '892b0db34c5f3597a3c005e185e5398cf2baeb7c',
+  'src/content/blog/shared/technicalAuthority.ts': 'fb622b631b1578f05e038476d201fa035deefd42',
   'src/pages/ForSchoolsPage.tsx': '7be826c4fb422a5d022884607f340d3179d9ee25',
   'src/pages/GrammarKnowledgePage.tsx': '80190e0e6da35419d90bf22d3da534d3547f4415',
   'src/pages/ResourcesPage.tsx': '9bae80879eb765f6ff33154ed64f58cbb886ce5a',

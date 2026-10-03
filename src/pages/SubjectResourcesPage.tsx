@@ -161,6 +161,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
         title: 'Build from short responses into organised communication',
         description: 'Start with the communication stage rather than treating confidence as the only explanation.',
         links: [
+          { title: 'Why public speaking matters for kids', description: 'Start with the broad case for organised communication, the right age to begin, and why questioning, reasoning and explanation still matter in an AI-enabled world.', to: '/blog/why-public-speaking-is-important-for-kids', label: 'Start with why it matters' },
           { title: 'Speaking confidence progression', description: 'Understand how confidence grows through repeated, structured speaking opportunities.', to: '/blog/speaking-confidence-seeds', label: 'Build speaking confidence' },
           { title: 'Child gives one-word answers', description: 'See how to move from minimal responses into fuller spoken sentences.', to: '/blog/child-gives-one-word-answers', label: 'Expand spoken answers' },
           { title: 'Understands English but does not speak', description: 'Separate language knowledge, retrieval and confidence before choosing the next step.', to: '/blog/child-understands-english-but-does-not-speak', label: 'Understand the speaking gap' },

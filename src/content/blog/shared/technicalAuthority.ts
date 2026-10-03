@@ -81,6 +81,11 @@ export const BLOG_TECHNICAL_AUTHORITY = Object.freeze({
     role: 'diagnostic-owner',
     topics: ['grammar rule transfer', 'grammar mistakes', 'spontaneous grammar use', 'self-correction'],
   },
+  'why-public-speaking-is-important-for-kids': {
+    cluster: 'Speaking & Communication',
+    role: 'pillar',
+    topics: ['why public speaking is important for kids', 'communication skills for kids', 'public speaking benefits', 'communication in the AI era', 'age-appropriate public speaking'],
+  },
   'speaking-confidence-seeds': {
     cluster: 'Speaking & Communication',
     role: 'pillar',

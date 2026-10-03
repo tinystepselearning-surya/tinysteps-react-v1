@@ -11,11 +11,12 @@ const hasCI = (content, token) => content.toLowerCase().includes(token.toLowerCa
 
 const c3Path = 'src/lib/commercialC3OwnerPageAudit.ts';
 const c2Path = 'src/lib/commercialC2KeywordOwnership.ts';
+const c4Path = 'src/lib/commercialC4CtrOptimization.ts';
 const routeSeoPath = 'src/lib/routeSeoRegistry.js';
 const routeManifestPath = 'src/lib/publicRouteManifest.js';
 const vitePath = 'vite.config.js';
 
-for (const required of [c3Path, c2Path, routeSeoPath, routeManifestPath, vitePath]) {
+for (const required of [c3Path, c2Path, c4Path, routeSeoPath, routeManifestPath, vitePath]) {
   if (!exists(required)) failures.push(`${required} is missing`);
 }
 
@@ -84,6 +85,18 @@ if (exists(c2Path)) {
   if (!c2.includes("COMMERCIAL_C2_STATUS = 'ownership-complete'")) failures.push('C2 ownership is not complete');
 }
 
+if (exists(c4Path)) {
+  const c4 = read(c4Path);
+  for (const token of [
+    "title: 'Public Speaking & Communication Classes for Kids | Tiny Steps'",
+    'COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES',
+    "title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps'",
+    "initiative: 'speaking-commercial-authority-v2'",
+  ]) {
+    if (!c4.includes(token)) failures.push(`Speaking C4 control or authorized override missing ${JSON.stringify(token)}`);
+  }
+}
+
 const sourceSignals = {
   'src/pages/phonics.tsx': ['Online Phonics Classes for Kids', '/best-online-phonics-classes-for-kids-in-india', '/phonics-fees-india'],
   'src/pages/public/BestOnlinePhonicsClassesIndiaPage.tsx': ['Best Online Phonics Classes for Kids in India', '/phonics-fees-india'],
@@ -93,7 +106,7 @@ const sourceSignals = {
   'src/pages/grammar.tsx': ['Online Grammar Classes for Kids', '/writing-classes-for-kids', '/spoken-english-classes-for-kids-online'],
   'src/pages/public/WritingClassesForKidsPage.tsx': ['Creative Writing Classes for Kids Online', '/grammar'],
   'src/pages/public/SpokenEnglishClassesForKidsPage.tsx': ['Spoken English Classes for Kids Online', '/speaking', '/confidence-building-program-kids'],
-  'src/pages/speaking.tsx': ['Public Speaking & Communication Classes for Kids', '/spoken-english-classes-for-kids-online', '/confidence-building-program-kids'],
+  'src/pages/speaking.tsx': ['Online Public Speaking Classes for Kids', '/spoken-english-classes-for-kids-online', '/confidence-building-program-kids'],
   'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': ['Confidence Building Classes for Kids', '/speaking', '/shy-child-speaking-confidence'],
   'src/pages/public/OnlineEnglishClassesForKidsPage.tsx': ['Online English Classes for Kids', 'online English tutor for kids', '1 to 1 English tutor for kids online', '/online-english-classes-hyderabad'],
   'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx': ['Online English Classes for Kids in Hyderabad', '/online-english-classes-for-kids'],
@@ -159,7 +172,7 @@ if (exists(routeSeoPath)) {
     ['/grammar', 'Online Grammar Classes for Kids'],
     ['/writing-classes-for-kids', 'Creative Writing Classes for Kids Online'],
     ['/spoken-english-classes-for-kids-online', 'Spoken English Classes for Kids Online'],
-    ['/speaking', 'Public Speaking & Communication Classes for Kids'],
+    ['/speaking', 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps'],
     ['/confidence-building-program-kids', 'Confidence Building Classes for Kids'],
     ['/online-english-classes-for-kids', 'Online English Classes for Kids'],
     ['/online-english-classes-hyderabad', 'Online English Classes for Kids in Hyderabad'],

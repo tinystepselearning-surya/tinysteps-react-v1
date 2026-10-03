@@ -160,6 +160,21 @@ export const COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS: Readonly<Record<string, Read
   }),
 });
 
+export const COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES: Readonly<Record<string, Readonly<CommercialC4ControlSnippet>>> = freeze({
+  '/speaking': freeze({
+    title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
+    description: 'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
+  }),
+});
+
+export const COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDE_META = freeze({
+  '/speaking': freeze({
+    authorizedOn: '2026-10-03',
+    initiative: 'speaking-commercial-authority-v2',
+    reason: 'A new speaking acquisition initiative intentionally supersedes the September C4 snippet control while preserving the same canonical owner and query-intent boundary.',
+  }),
+});
+
 const descriptionCandidates: Readonly<Record<string, string>> = freeze({
   '/phonics':
     'Live 1:1 online phonics classes for kids ages 3–12. Build blending, decoding, spelling and reading fluency. Free 35-minute assessment; India + worldwide.',
@@ -309,6 +324,7 @@ export const COMMERCIAL_C4_POLICY = freeze({
   historicalEvidencePredatesC3: true,
   currentSnippetIsControl: true,
   controlTitleAndDescriptionFrozen: true,
+  authorizedOwnerOverrides: freezeList(Object.keys(COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES)),
   deployCandidateBeforeFreshEvidence: false,
   minimumFreshObservationDays: 14,
   minimumFreshPageImpressions: 200,

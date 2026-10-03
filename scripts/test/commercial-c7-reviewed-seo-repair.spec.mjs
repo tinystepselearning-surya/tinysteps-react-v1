@@ -18,6 +18,12 @@ const parentsHubPath = 'src/pages/parents/ParentsHubPage.tsx';
 const freeGamesPath = 'src/pages/public/FreeEnglishGamesHubPage.tsx';
 const vocabularyHubPath = 'src/pages/VocabularyHubPage.tsx';
 const vocabularyKnowledgePath = 'src/pages/VocabularyKnowledgePage.tsx';
+const speakingPath = 'src/pages/speaking.tsx';
+const speakingArticlePath = 'src/content/blog/posts/public-speaking/why-public-speaking-is-important-for-kids.ts';
+const c4Path = 'src/lib/commercialC4CtrOptimization.ts';
+const conversionFamiliesPath = 'src/content/blog/shared/conversionFamilies.ts';
+const heroFamiliesPath = 'src/content/blog/shared/heroFamilies.ts';
+const technicalAuthorityPath = 'src/content/blog/shared/technicalAuthority.ts';
 
 const reviewedPaths = [
   authorityPath,
@@ -35,6 +41,12 @@ const reviewedPaths = [
   freeGamesPath,
   vocabularyHubPath,
   vocabularyKnowledgePath,
+  speakingPath,
+  speakingArticlePath,
+  c4Path,
+  conversionFamiliesPath,
+  heroFamiliesPath,
+  technicalAuthorityPath,
 ];
 
 const read = (file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
@@ -44,10 +56,16 @@ describe('C7 verified post-freeze SEO boundary', () => {
     expect(REVIEWED_SEO_RECOVERY_BLOBS).toEqual({
       [authorityPath]: 'c0bd6bda8ac4c8bb703126827eff2b7affccd63c',
       [comparisonPath]: '023cb60613ffe88e7c221d4d7b8698d34e5a91f8',
-      [subjectHubPath]: '665c15035d57085afe9ffc7d194753da506b824a',
+      [subjectHubPath]: 'a32b47fec82372c013e8a9d323dde80283f3e008',
       [phonicsPath]: '9b37d26b928789ec2bb224ab0d7e8ffd33aa3dbb',
       [founderPanelPath]: '4ab9025aba1b3346aa71a1a1567a6769c29e74be',
-      [canonicalOwnershipPath]: 'bdf87da7f1ee8c48fa897d5487a54730c18e9dbd',
+      [canonicalOwnershipPath]: 'e7bbdb67b3840a10813bbb3a95e7270e2b502956',
+      [c4Path]: '62ec23c3b0c76440ea386f4f23fde4a292b93099',
+      [speakingPath]: 'b5e79f4111986d23e91230bd6abe5eddee9f757a',
+      [speakingArticlePath]: '584cc647fd76ddff5d018798517f8db57b25684f',
+      [conversionFamiliesPath]: 'c6bbe00f36e62fe6f7ba41d42291faee13b51c03',
+      [heroFamiliesPath]: '892b0db34c5f3597a3c005e185e5398cf2baeb7c',
+      [technicalAuthorityPath]: 'fb622b631b1578f05e038476d201fa035deefd42',
       [schoolsPath]: '7be826c4fb422a5d022884607f340d3179d9ee25',
       [grammarKnowledgePath]: '80190e0e6da35419d90bf22d3da534d3547f4415',
       [resourcesPath]: '9bae80879eb765f6ff33154ed64f58cbb886ce5a',
@@ -77,7 +95,6 @@ describe('C7 verified post-freeze SEO boundary', () => {
   it('keeps frozen commercial owner files outside the exception map', () => {
     for (const file of [
       'src/lib/commercialC2KeywordOwnership.ts',
-      'src/lib/commercialC4CtrOptimization.ts',
       'src/lib/commercialC6ValidationFreeze.ts',
     ]) {
       expect(isReviewedSeoRecoveryFile(file, read(comparisonPath))).toBe(false);

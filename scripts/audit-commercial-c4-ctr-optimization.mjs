@@ -108,8 +108,8 @@ if (exists(routeSeoPath)) {
       description: 'Live 1:1 online grammar classes for kids in India and worldwide. Build sentence formation, tenses, punctuation, grammar accuracy and clearer school answers with assessment-first placement.',
     },
     '/speaking': {
-      title: 'Public Speaking & Communication Classes for Kids | Tiny Steps',
-      description: 'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
+      title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
+      description: 'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
     },
     '/online-english-classes-hyderabad': {
       title: 'Online English Classes for Kids in Hyderabad | Tiny Steps',

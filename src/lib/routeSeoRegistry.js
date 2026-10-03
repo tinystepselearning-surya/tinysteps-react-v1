@@ -50,13 +50,13 @@ export const ROUTE_SEO_REGISTRY = {
       'online grammar classes for kids,grammar classes for kids,grammar classes for kids India,English grammar classes for kids,1 to 1 grammar classes online,online grammar tutor for kids,sentence formation classes for kids,grammar classes for sentence formation,grammar classes to improve school answers,grammar correction classes for kids,online grammar classes in India,online grammar classes for kids worldwide',
   },
   '/speaking': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps',
+    title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
+      'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
     canonicalPath: '/speaking',
     ogType: 'website',
     keywords:
-      'public speaking classes for kids online,public speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
+      'public speaking classes for kids online,public speaking classes for kids,public speaking course for kids,public speaking for kids,online speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
   '/speaking-progress-framework': {
     title: 'How Tiny Steps Measures Speaking Progress | 10-Skill Framework',

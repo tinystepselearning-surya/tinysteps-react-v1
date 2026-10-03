@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { REVIEWED_SEO_RECOVERY_BLOBS, isReviewedSeoRecoveryFile } from './commercial-c7-reviewed-seo-repair.mjs';
 
 const root = process.cwd();
 const errors = [];
@@ -63,16 +64,19 @@ if (baseRef) {
       .map((value) => value.trim())
       .filter(Boolean);
 
-    const forbidden = changed.filter((file) =>
-      file.startsWith('src/content/blog/posts/')
+    const forbidden = changed.filter((file) => {
+      // The Speaking v2 article and its shared discovery records are separately
+      // reviewed and pinned byte-for-byte; Batch 2's own five posts stay frozen.
+      if (Object.hasOwn(REVIEWED_SEO_RECOVERY_BLOBS, file) && isReviewedSeoRecoveryFile(file, fs.readFileSync(path.join(root, file)))) return false;
+      return file.startsWith('src/content/blog/posts/')
       || file === 'src/content/blog/shared/technicalAuthority.ts'
       || file === 'src/content/blog/shared/authorityLinking.ts'
       || file === 'src/content/blog/shared/conversionFamilies.ts'
       || file === 'src/content/blog/shared/heroFamilies.ts'
       || file === 'src/lib/blogIndexingPolicy.js'
       || file === 'src/lib/canonicalTopicOwnershipRegistry.js'
-      || file === 'src/config/seoRecoveryBrick10CtrExperiments.ts',
-    );
+      || file === 'src/config/seoRecoveryBrick10CtrExperiments.ts';
+    });
     if (forbidden.length) fail('protected-content-diff', forbidden.join(','));
   } catch (error) {
     fail('git-diff', error instanceof Error ? error.message : String(error));
