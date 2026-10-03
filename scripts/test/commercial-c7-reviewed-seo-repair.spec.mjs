@@ -75,7 +75,7 @@ describe('C7 verified post-freeze SEO boundary', () => {
       [courseDetailPath]: '8b2608266bc8ae522f8a89edda7ff1e0f0675458',
       [curriculumPath]: 'bbdd0490226bc028d8c2dd4f6a33e21cb9cb9291',
       [testimonialsPath]: '228cccac38b5a893153c90081421108ca2322b44',
-      [confidenceBuildingPath]: 'd165d243c1c8a195fd5d2587d4b1ac52202a9bb5',
+      [confidenceBuildingPath]: 'e33b7f617cb661b4a805d1651bd0c5d1d0966e40',
       [speakingProgressPath]: 'e434d0fa31dc67809d3bad044d515071d9dac7c3',
       [speakingArticlePath]: '584cc647fd76ddff5d018798517f8db57b25684f',
       [conversionFamiliesPath]: 'c6bbe00f36e62fe6f7ba41d42291faee13b51c03',
