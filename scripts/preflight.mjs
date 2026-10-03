@@ -165,6 +165,18 @@ if (!full && globalTestImpact) {
   process.exit(2);
 }
 
+const functionsCompileRequired = functionsChanged || deploymentChanged;
+
+if (functionsChanged) {
+  run('Functions lint', 'npm', ['--prefix', 'functions', 'run', 'lint']);
+}
+
+if (functionsCompileRequired) {
+  // Deployment contract tests inspect functions/lib, so compile first to avoid
+  // comparing current source exports against stale local build output.
+  run('Functions build', 'npm', ['--prefix', 'functions', 'run', 'build']);
+}
+
 if (deploymentChanged) {
   run('Deployment contract tests', 'node', [
     '--test',
@@ -176,8 +188,6 @@ if (deploymentChanged) {
 }
 
 if (functionsChanged) {
-  run('Functions lint', 'npm', ['--prefix', 'functions', 'run', 'lint']);
-  run('Functions build', 'npm', ['--prefix', 'functions', 'run', 'build']);
   run('Functions unit tests', 'npm', ['--prefix', 'functions', 'test']);
 }
 
