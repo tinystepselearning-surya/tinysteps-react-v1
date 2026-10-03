@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 
 export const EXPECTED_REGION = 'asia-south1';
 export const EXPECTED_RUNTIME = 'nodejs22';
-export const BATCH_SIZE = 5;
+export const BATCH_SIZE = 10;
 
 export function discoverEndpointPlan(exported) {
   const seen = new Set();
