@@ -404,7 +404,7 @@ const speakingDecisionEvidence = [
     step: '01',
     title: 'Inspect the curriculum',
     detail: 'See the speaking roadmap and the existing Foundations and Excellence pathways before deciding.',
-    path: '/curriculum?tab=speaking',
+    path: '/curriculum?pathway=speaking#course-levels',
     cta: 'View curriculum',
   },
   {
@@ -425,8 +425,8 @@ const speakingDecisionEvidence = [
     step: '04',
     title: 'Read parent evidence',
     detail: 'Read bounded first-party feedback as one decision signal alongside the curriculum, class evidence, and your child’s own assessment.',
-    path: '/testimonials',
-    cta: 'Read parent feedback',
+    path: '/testimonials?program=speaking#speaking-reviews',
+    cta: 'Read speaking parent feedback',
   },
   {
     step: '05',
@@ -703,7 +703,7 @@ export default function SpeakingPage() {
                 <Link to="/class-samples" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300/80 bg-white/82 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-white">
                   Watch a Real Class
                 </Link>
-                <Link to="/curriculum?tab=speaking" className="inline-flex min-h-[46px] items-center justify-center px-2 py-2.5 text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4 transition hover:text-violet-950">
+                <Link to="/curriculum?pathway=speaking#course-levels" className="inline-flex min-h-[46px] items-center justify-center px-2 py-2.5 text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4 transition hover:text-violet-950">
                   View Curriculum
                 </Link>
               </div>
@@ -1043,7 +1043,7 @@ export default function SpeakingPage() {
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs">
                 <Link to="/class-samples" className="font-semibold text-slate-200 underline underline-offset-3">Watch class samples</Link>
                 <Link to={SPEAKING_PROGRESS_FRAMEWORK_PATH} className="font-semibold text-slate-200 underline underline-offset-3">See progress method</Link>
-                <Link to="/testimonials" className="font-semibold text-slate-200 underline underline-offset-3">Read parent feedback</Link>
+                <Link to="/testimonials?program=speaking#speaking-reviews" className="font-semibold text-slate-200 underline underline-offset-3">Read speaking parent feedback</Link>
               </div>
             </div>
           </div>
