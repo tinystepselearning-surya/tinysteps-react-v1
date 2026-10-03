@@ -28,7 +28,7 @@ const speakingAgeRangeLabel = `Ages ${speakingFacts.levels.beginner.ageRange.min
 const speakingClassPriceLabel = `₹${formatPublicInr(PUBLIC_SITE_FACTS.standardOffer.oneToOnePerClassInr)}/class`;
 const seoTitle = 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps';
 const seoDescription =
-  'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.';
+  'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.';
 
 const SPEAKING_SEO_KEYWORDS = [
   'public speaking classes for kids online',
@@ -109,7 +109,7 @@ const faqItems = [
   {
     question: 'What ages are the Tiny Steps Public Speaking levels for?',
     answer:
-      `Basic Public Speaking is designed for ${speakingFacts.levels.beginner.ageRange.label} and has ${speakingFacts.levels.beginner.lessonCount} lessons. Advanced Public Speaking is designed for ${speakingFacts.levels.advanced.ageRange.label} and has ${speakingFacts.levels.advanced.lessonCount} lessons. The ranges overlap at age 7, so placement also considers speaking readiness and current skill level.`,
+      `Public Speaking Foundations is designed for ${speakingFacts.levels.beginner.ageRange.label} and has ${speakingFacts.levels.beginner.lessonCount} lessons. Public Speaking Excellence is designed for ${speakingFacts.levels.advanced.ageRange.label} and has ${speakingFacts.levels.advanced.lessonCount} lessons. The ranges overlap at age 7, so placement also considers speaking readiness and current skill level.`,
   },
   {
     question: 'Is age 4 too young to start public speaking classes?',
@@ -1033,14 +1033,14 @@ export default function SpeakingPage() {
           <div className="mt-7 grid gap-3 md:grid-cols-3">
             <article className="rounded-[20px] border border-amber-100 bg-white p-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-800">{speakingFacts.levels.beginner.ageRange.label}</span>
-              <h3 className="mt-2 font-semibold text-slate-950">{speakingFacts.levels.beginner.label}</h3>
+              <h3 className="mt-2 font-semibold text-slate-950">Public Speaking Foundations</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">{speakingFacts.levels.beginner.lessonCount} lessons for structured responses, picture talk, show-and-tell, storytelling foundations, and short presentation readiness.</p>
               <Link to={speakingFacts.levels.beginner.canonicalCoursePath} className="mt-2 inline-block text-xs font-semibold underline underline-offset-2">View Foundations details</Link>
             </article>
 
             <article className="rounded-[20px] border border-sky-100 bg-white p-4">
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-sky-800">{speakingFacts.levels.advanced.ageRange.label}</span>
-              <h3 className="mt-2 font-semibold text-slate-950">{speakingFacts.levels.advanced.label}</h3>
+              <h3 className="mt-2 font-semibold text-slate-950">Public Speaking Excellence</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">{speakingFacts.levels.advanced.lessonCount} lessons for longer structured talks, storytelling, presentations, opinions, audience awareness, and stronger delivery.</p>
               <Link to={speakingFacts.levels.advanced.canonicalCoursePath} className="mt-2 inline-block text-xs font-semibold underline underline-offset-2">View Excellence details</Link>
             </article>
