@@ -161,21 +161,53 @@ function mirrorSummary(mirrorRows, usersById, expectedRole, issues) {
 function makeIssueCollector(sampleSize) {
   const counts = {};
   const samples = {};
+  const bySource = {};
+  const byStatus = {};
+  const byFields = {};
+
+  const bump = (bucket, code, key) => {
+    if (!bucket[code]) bucket[code] = {};
+    bucket[code][key] = (bucket[code][key] || 0) + 1;
+  };
+
+  const sourceKind = (source) => {
+    const parts = String(source?.path || '').split('/').filter(Boolean);
+    if (parts[0] === 'parents' && parts[2] === 'students') return 'parent_students';
+    return parts[0] || 'unknown';
+  };
 
   return {
     add(code, source, fields = []) {
       counts[code] = (counts[code] || 0) + 1;
+      const normalizedFields = [...new Set(fields)].sort();
+      bump(bySource, code, sourceKind(source));
+      bump(byStatus, code, normalizeId(source?.data?.status).toLowerCase() || '(missing)');
+      bump(byFields, code, normalizedFields.join('+') || '(none)');
+
       if (!samples[code]) samples[code] = [];
       if (samples[code].length >= sampleSize) return;
       samples[code].push({
         sourceToken: token(source?.path || source?.id || code),
-        fields: [...new Set(fields)].sort(),
+        sourceKind: sourceKind(source),
+        status: normalizeId(source?.data?.status).toLowerCase() || null,
+        fields: normalizedFields,
       });
     },
     result() {
+      const sortNested = (bucket) => Object.fromEntries(
+        Object.entries(bucket)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([code, values]) => [
+            code,
+            Object.fromEntries(Object.entries(values).sort(([a], [b]) => a.localeCompare(b))),
+          ]),
+      );
       return {
         total: Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0),
         byCode: Object.fromEntries(Object.entries(counts).sort(([a], [b]) => a.localeCompare(b))),
+        bySource: sortNested(bySource),
+        byStatus: sortNested(byStatus),
+        byFields: sortNested(byFields),
         samples: Object.fromEntries(Object.entries(samples).sort(([a], [b]) => a.localeCompare(b))),
       };
     },
@@ -495,23 +527,22 @@ function auditSessionReferences(sessions, context, issues) {
       }
     }
 
-    const learnerRefs = idList(
-      entry.data.kidId,
-      entry.data.kidIds,
-      entry.data.studentId,
-      entry.data.studentIds,
-      entry.data.childId,
-      entry.data.childIds,
-      entry.data.childrenIds,
-    );
-    learnerRefs.forEach((value) =>
-      checkLearnerRef(value, entry, ['kidId', 'kidIds', 'studentId', 'studentIds', 'childId', 'childIds', 'childrenIds'], context, issues));
+    const learnerFields = ['kidId', 'kidIds', 'studentId', 'studentIds', 'childId', 'childIds', 'childrenIds'];
+    learnerFields.forEach((field) => {
+      idList(entry.data[field]).forEach((value) =>
+        checkLearnerRef(value, entry, [field], context, issues));
+    });
 
-    idList(entry.data.parentId, entry.data.parentIds).forEach((value) =>
-      checkParentRef(value, entry, ['parentId', 'parentIds'], context, issues));
+    const parentId = normalizeId(entry.data.parentId);
+    if (parentId) checkParentRef(parentId, entry, ['parentId'], context, issues);
+    idList(entry.data.parentIds).forEach((value) =>
+      checkParentRef(value, entry, ['parentIds'], context, issues));
 
     const canonicalTeacherId = normalizeId(entry.data.teacherId);
-    if (canonicalTeacherId) canonicalTeacherIdPresent += 1;
+    if (canonicalTeacherId) {
+      canonicalTeacherIdPresent += 1;
+      checkTeacherRef(canonicalTeacherId, entry, ['teacherId'], context, issues);
+    }
     const aliasFields = ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'];
     const legacyRefs = idList(...aliasFields.map((field) => entry.data[field]));
     if (legacyRefs.length > 0) legacyTeacherAliasesPresent += 1;
@@ -521,8 +552,10 @@ function auditSessionReferences(sessions, context, issues) {
       issues.add('classSession_teacher_alias_mismatch', entry, ['teacherId', ...aliasFields]);
     }
 
-    idList(canonicalTeacherId, legacyRefs).forEach((value) =>
-      checkTeacherRef(value, entry, ['teacherId', ...aliasFields], context, issues));
+    aliasFields.forEach((field) => {
+      idList(entry.data[field]).forEach((value) =>
+        checkTeacherRef(value, entry, [field], context, issues));
+    });
   }
 
   return {
