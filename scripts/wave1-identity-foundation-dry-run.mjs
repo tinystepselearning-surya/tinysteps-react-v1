@@ -248,6 +248,7 @@ async function main() {
   const kidIds = new Set(kids.map((entry) => entry.id));
   const schoolIds = new Set(schools.map((entry) => entry.id));
   const authUidSet = new Set(authUsers.map((entry) => entry.uid));
+  const authUsersByUid = new Map(authUsers.map((entry) => [entry.uid, entry]));
 
   const schoolUserPersonIds = new Set(
     schoolUsers.map((entry) => text(entry.data.userId) || entry.id),
@@ -270,6 +271,13 @@ async function main() {
       );
     }
   }
+
+  const authClaimRoleComparisons = {
+    authUsersWithRoleHint: 0,
+    roleHintMatchesFirestoreRoleSet: 0,
+    roleHintMismatch: 0,
+    adminRoleHintMismatch: 0,
+  };
 
   for (const user of users) {
     const data = user.data;
@@ -327,6 +335,26 @@ async function main() {
     ]
       .map(normalizeRole)
       .filter(Boolean);
+
+    const authDirectoryUser = authUsersByUid.get(user.id);
+    const roleHint = authDirectoryUser?.roleHint || null;
+    if (roleHint) {
+      authClaimRoleComparisons.authUsersWithRoleHint += 1;
+      if (new Set(roles).has(roleHint)) {
+        authClaimRoleComparisons.roleHintMatchesFirestoreRoleSet += 1;
+      } else {
+        authClaimRoleComparisons.roleHintMismatch += 1;
+        if (roleHint === 'admin') {
+          authClaimRoleComparisons.adminRoleHintMismatch += 1;
+        }
+        issues.add(
+          'auth_claim_role_not_in_firestore_roles',
+          user.path,
+          ['role', 'roles', 'authClaims'],
+          roleHint === 'admin',
+        );
+      }
+    }
 
     for (const role of new Set(roles)) {
       const mirrorCollection = expectedRoleMirrorCollection(role);
@@ -549,6 +577,7 @@ async function main() {
         .length,
     },
     authOnlyAccounts,
+    authClaimRoleComparisons,
     expectedTransformations: {
       organisationScopedSchoolAdminAssignments: schoolUsers.length,
       householdBackfillDeferred: true,
@@ -596,6 +625,7 @@ async function main() {
   console.log(`Kids: ${report.sourceCounts.kids}; Schools: ${report.sourceCounts.schools}; School users: ${report.sourceCounts.schoolUsers}`);
   console.log(`User↔Auth direct UID coverage: ${report.sourceCoverage.firestoreUsersBackedByFirebaseAuth}/${report.sourceCounts.users}`);
   console.log(`Auth-only accounts excluded from Person backfill: ${report.sourceCoverage.authOnlyAccounts}`);
+  console.log(`Auth claim role mismatches for current users: ${report.authClaimRoleComparisons.roleHintMismatch}; admin mismatches: ${report.authClaimRoleComparisons.adminRoleHintMismatch}`);
   console.log(`Planned canonical documents: ${report.planned.totalDocuments}`);
   console.log(`Planned by collection: ${JSON.stringify(report.planned.byCollection)}`);
   console.log(`Existing canonical target counts: ${JSON.stringify(report.targetExistingCounts)}`);
