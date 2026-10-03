@@ -134,8 +134,17 @@ async function requireAdmin(auth: any): Promise<AdminCaller> {
   if (!userSnap.exists) throw new HttpsError('permission-denied', 'Admin profile not found.');
 
   const data = userSnap.data() || {};
-  const role = normalizeRole(data.role || auth?.token?.role);
-  if (role !== 'admin') throw new HttpsError('permission-denied', 'Only admin can manage leads.');
+  const status = cleanText(data.status, 80).toLowerCase();
+  if (status && status !== 'active') {
+    throw new HttpsError('permission-denied', 'Only admin can manage leads.');
+  }
+  const roles = Array.isArray(data.roles)
+    ? data.roles.map((value: unknown) => normalizeRole(value))
+    : [];
+  const role = normalizeRole(data.role);
+  if (role !== 'admin' && !roles.includes('admin')) {
+    throw new HttpsError('permission-denied', 'Only admin can manage leads.');
+  }
 
   return {
     uid,
