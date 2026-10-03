@@ -190,9 +190,6 @@ export const catalogs: CourseCatalogItem[] = [
   },
 ];
 
-const buildLessonTitles = (labels: string[]) =>
-  labels.map((label, idx) => `Lesson ${idx + 1} — ${label}`);
-
 type CurriculumStageDefinition = {
   title: string;
   start: number;
