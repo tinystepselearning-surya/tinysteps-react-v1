@@ -63,7 +63,9 @@
     "audit:academic-enrollment": "node scripts/audit-academic-enrollment.mjs --project tinysteps-react-v1",
     "test:academic-enrollment-audit": "node --test scripts/test/academic-enrollment-audit.node-test.mjs",
     "audit:shared-experience": "node scripts/audit-shared-experience.mjs",
-    "test:shared-experience-inventory": "node --test scripts/test/shared-experience-inventory.node-test.mjs"
+    "test:shared-experience-inventory": "node --test scripts/test/shared-experience-inventory.node-test.mjs",
+    "test:wave1-identity-foundation": "npm --prefix functions run build && node --test scripts/test/wave1-identity-foundation.node-test.mjs",
+    "audit:wave1-identity-foundation": "npm --prefix functions run build && node scripts/wave1-identity-foundation-dry-run.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
