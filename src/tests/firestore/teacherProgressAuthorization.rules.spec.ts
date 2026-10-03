@@ -20,7 +20,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, it } from 'vitest';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
 const suite = emulatorHost ? describe : describe.skip;
@@ -69,6 +69,23 @@ beforeAll(async () => {
 
 afterEach(async () => testEnv && testEnv.clearFirestore());
 afterAll(async () => testEnv?.cleanup());
+
+async function seedCurrentUsers() {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await Promise.all([
+      setDoc(doc(db, 'users', teacherA), { role: 'teacher', status: 'active' }),
+      setDoc(doc(db, 'users', teacherB), { role: 'teacher', status: 'active' }),
+      setDoc(doc(db, 'users', teacherOld), { role: 'teacher', status: 'active' }),
+      setDoc(doc(db, 'users', teacherOther), { role: 'teacher', status: 'active' }),
+      setDoc(doc(db, 'users', parentA), { role: 'parent', status: 'active' }),
+      setDoc(doc(db, 'users', parentB), { role: 'parent', status: 'active' }),
+      setDoc(doc(db, 'users', adminId), { role: 'admin', status: 'active' }),
+    ]);
+  });
+}
+
+beforeEach(seedCurrentUsers);
 
 function teacherDb(uid: string) {
   return testEnv.authenticatedContext(uid, { role: 'teacher' }).firestore();
