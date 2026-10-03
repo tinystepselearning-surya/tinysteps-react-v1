@@ -549,7 +549,8 @@ export function auditIdentitySnapshot(snapshot, options = {}) {
     generatedAt: new Date().toISOString(),
     mode: 'read_only_identity_reference_audit',
     privacy: {
-      piiRead: false,
+      directContactFieldsRead: false,
+      referenceIdsReadInMemory: true,
       rawIdsInReport: false,
       sampleReferences: 'sha256 tokens only',
     },
