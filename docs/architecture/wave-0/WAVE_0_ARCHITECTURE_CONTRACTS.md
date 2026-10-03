@@ -238,6 +238,27 @@ New and migrated interfaces follow the School OS Shared Experience System:
 
 The existing reusable blog authority layout is the reference precedent: common structure is maintained once while page-specific content/configuration varies on top.
 
+
+### 10.1 Shared experience adoption rules
+
+The Shared Experience inventory freezes these rules:
+
+1. `src/components/ui/*` remains the canonical low-level product UI primitive foundation.
+2. `MobileTabBar` is the canonical mobile bottom-navigation primitive for authenticated portals.
+3. `TinyStepsBrand` remains the shared brand primitive.
+4. `AppShellHeader` is preserved and extended through controlled variants/slots rather than copied role-specific headers.
+5. Future authenticated portal structure converges on one `AuthenticatedAppShell` composition containing shared header, desktop side navigation, mobile drawer/tab navigation and workspace viewport behaviour.
+6. Portal navigation content, permissions and business workflows remain role/domain-owned configuration; the visual shell does not own authorization.
+7. Parent native/safe-area/keyboard behaviour is preserved and elevated into reusable shell capability where needed; it must not be copied ad hoc.
+8. Public `src/components/common/Header.tsx` and `Footer.tsx` are the canonical public shell. Legacy `src/components/Layout.tsx` is compatibility-only until remaining consumers migrate.
+9. Authenticated feature pages converge incrementally on Workspace, List, Detail and Form composition templates.
+10. Loading, Empty, Error, Access and semantic Status treatments become shared product components while domain wording/lifecycle remain domain-owned.
+11. Tailwind theme plus semantic CSS variables are the canonical token layer. Feature semantic aliases may exist, but parallel independent colour/spacing/motion authorities should retire.
+12. Legacy shell/header/sidebar files are never removed based on static inventory alone; runtime/import verification is required before retirement.
+13. Shared shell migration is incremental: Learning Partner → School → Teacher → Admin/Founder → Parent, with Parent last because it has the most specialized native/mobile behaviour.
+14. Shared components own accessibility defaults including focus visibility, navigation semantics, reduced motion, touch targets, safe areas and responsive overflow.
+
+
 ## 11. Visual and product-quality contract
 
 Tiny Steps uses a premium, professional, minimal, Apple-inspired visual direction while remaining its own brand.
@@ -312,7 +333,7 @@ Wave 0 uses six bounded work packages:
 2. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
 3. **Identity/reference audit — COMPLETE** — code-level decisions, live read-only verification and bounded exception dispositions are recorded in `IDENTITY_REFERENCE_AUDIT.md`.
 4. **Academic/enrollment audit — COMPLETE** — code-level ownership decisions, live read-only verification and migration-debt classification are recorded in `ACADEMIC_ENROLLMENT_AUDIT.md`.
-5. **Shared experience/design-system inventory** — identify reusable shells/templates/components and controlled variants.
+5. **Shared experience/design-system inventory — COMPLETE** — portal shells, shared primitives, token ownership, page-template/state contracts and retirement candidates are recorded in `SHARED_EXPERIENCE_DESIGN_SYSTEM_INVENTORY.md`.
 6. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
 
 These are planning packages, not six new runtime systems.

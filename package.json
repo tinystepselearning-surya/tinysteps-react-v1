@@ -61,7 +61,9 @@
     "audit:identity-references": "node scripts/audit-identity-references.mjs --project tinysteps-react-v1",
     "test:identity-reference-audit": "node --test scripts/test/identity-reference-audit.node-test.mjs",
     "audit:academic-enrollment": "node scripts/audit-academic-enrollment.mjs --project tinysteps-react-v1",
-    "test:academic-enrollment-audit": "node --test scripts/test/academic-enrollment-audit.node-test.mjs"
+    "test:academic-enrollment-audit": "node --test scripts/test/academic-enrollment-audit.node-test.mjs",
+    "audit:shared-experience": "node scripts/audit-shared-experience.mjs",
+    "test:shared-experience-inventory": "node --test scripts/test/shared-experience-inventory.node-test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
