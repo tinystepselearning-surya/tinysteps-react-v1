@@ -99,7 +99,9 @@ The supporting evidence and limitations remain after these answer-first statemen
 
 ## AEO / GEO question-owner mappings
 
-Added explicit answer-layer queries:
+The existing AI answer-layer corpus is frozen and remains unchanged.
+
+The six high-value parent formulations are represented additively as canonical query aliases and LLM retrieval guidance:
 
 1. Why is public speaking important for kids?
 2. What age should children start public speaking?
@@ -112,7 +114,7 @@ Ownership:
 - broad informational questions → `/blog/why-public-speaking-is-important-for-kids`;
 - parent provider/class-choice question → `/speaking`.
 
-This prevents the authority article from stealing the commercial class intent.
+This preserves the frozen machine-answer architecture while still giving retrieval systems explicit query-to-owner guidance and prevents the authority article from stealing commercial class intent.
 
 ## LLM retrieval guidance
 
@@ -140,7 +142,7 @@ It protects:
 - three supporting commercial keyword variants;
 - the non-targeting of personality-development keywords;
 - programme boundaries;
-- six question-owner mappings;
+- six query-to-owner aliases without expanding the frozen AI answer-layer baseline;
 - informational vs commercial canonical ownership;
 - LLM answer-first rules;
 - no AI-course or personality-development route drift.
