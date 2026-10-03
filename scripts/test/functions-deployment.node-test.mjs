@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import {
-  discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
+  BATCH_SIZE, discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, enforcePartition, filterEndpointPlan, functionsChangeDecision,
   firebaseCliDiagnosticExcerpt,
   normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
@@ -78,8 +78,22 @@ test('fails closed on unexpected region or platform', () => {
   assert.throws(() => discoverEndpointPlan({ a: fn('a', ['asia-south1'], 'gcfv1') }), /Unsupported platform/);
 });
 
-test('batches deterministically in groups of five', () => {
-  assert.deepEqual(batch([1,2,3,4,5,6,7,8,9,10,11]), [[1,2,3,4,5],[6,7,8,9,10],[11]]);
+test('batches deterministically at the documented Firebase ceiling of ten', () => {
+  assert.deepEqual(
+    batch([1,2,3,4,5,6,7,8,9,10,11], BATCH_SIZE),
+    [[1,2,3,4,5,6,7,8,9,10],[11]],
+  );
+});
+
+test('bounded deployer starts successful batches immediately and backs off only on retries', () => {
+  const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  assert.equal(BATCH_SIZE, 10);
+  assert.match(source, /const RETRY_BACKOFF_SECONDS = \[60, 120, 240\];/);
+  assert.match(source, /const MAX_ATTEMPTS = RETRY_BACKOFF_SECONDS\.length \+ 1;/);
+  assert.match(source, /const groups = batch\(plan, BATCH_SIZE\);/);
+  assert.match(source, /if \(attempt > 0\) \{\s*await sleepWithJitter\(RETRY_BACKOFF_SECONDS\[attempt - 1\]\);\s*\}/);
+  assert.doesNotMatch(source, /await sleepWithJitter\(RETRY_BACKOFF_SECONDS\[attempt\]\)/);
+  assert.match(source, /Retry backoff: waiting at least/);
 });
 
 test('normalizes short and fully-qualified Cloud Run revision identifiers', () => {

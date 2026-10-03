@@ -12,10 +12,10 @@ This change does **not** repair, mutate, or authorize any Sessions Management da
 
 - Discover deployable functions from the compiled `functions/lib/index.js` exports carrying Firebase `__endpoint` metadata. New exports are therefore included automatically.
 - Require the verified Gen 2, Node 22, `asia-south1` topology and fail closed on an unexpected platform, runtime, region, duplicate, or unsafe selector.
-- Because this repository has no explicit Firebase `codebase` annotation, deploy documented `functions:<export>` selectors in deterministic sequential groups of five.
+- Because this repository has no explicit Firebase `codebase` annotation, deploy only the dependency-resolved `functions:<export>` selectors in deterministic sequential groups of at most ten, matching Firebase's published guidance for large deployments.
 - Pin the production Functions mutation CLI to Firebase CLI `15.30.0` for reproducibility.
 - Preserve the existing production concurrency lock and the explicit retired-function allowlist. No active function is deleted/recreated by this repair.
-- Wait at least 60 seconds plus jitter before the first mutation attempt for every batch. Retry waits are 120 and 240 seconds plus jitter.
+- Start the first attempt for each settled batch immediately. There is no fixed sleep on a healthy path. Only an attributed transient deployment failure enters bounded retry backoff: 60, 120, then 240 seconds plus jitter.
 - Check unfinished Cloud Functions v2 regional operations, with pagination and a ten-minute settlement bound, before and after deployment attempts.
 - On a non-zero Firebase CLI exit, retry only terminal failed targets and only when the captured failure is attributable to a transient 429/rate/quota/resource-exhaustion class. Unknown, truncated, mixed, permission, invalid-argument, and build failures stop immediately.
 - Recheck the live `main` SHA immediately before every mutation attempt. A stale workflow stops before starting another mutation; an already-running Firebase CLI process is never cancelled by this script.
@@ -30,7 +30,7 @@ The report is diagnostic only. It is not a resume token and never authorizes par
 
 ## Limits
 
-Batching and backoff reduce deployment-time mutation bursts; they cannot create persistent regional CPU or project quota. If bounded retries still fail with explicit quota evidence, quota/capacity must be reviewed separately. This repair does not automatically lower function CPU, change `maxInstances`, move regions, or broaden IAM.
+Dependency-aware target selection, groups of at most ten, regional-operation settlement checks, and failure-driven backoff reduce deployment-time mutation bursts without adding fixed delay to successful batches. They cannot create persistent regional CPU or project quota. If bounded retries still fail with explicit quota evidence, quota/capacity must be reviewed separately. This repair does not automatically lower function CPU, change `maxInstances`, move regions, or broaden IAM.
 
 Read verification requires the existing deployment identity to be able to read Cloud Functions operations/functions and Cloud Run services. Missing permissions fail closed; this change grants no IAM permissions.
 
