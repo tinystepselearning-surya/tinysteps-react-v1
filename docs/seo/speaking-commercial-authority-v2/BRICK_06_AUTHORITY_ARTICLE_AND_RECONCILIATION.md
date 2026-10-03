@@ -12,7 +12,7 @@ Brick 6 closes the Speaking Commercial Authority v2 build with one broad evergre
 
 Title:
 
-**Why Public Speaking Is Important for Kids: Communication Skills in the AI Era**
+**Why Public Speaking Is Important for Kids**
 
 This page owns the informational question **why public speaking is important for kids**.
 
