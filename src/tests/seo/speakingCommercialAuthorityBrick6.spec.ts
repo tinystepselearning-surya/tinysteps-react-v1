@@ -21,7 +21,7 @@ const rss = read('public/rss.xml');
 describe('Speaking Commercial Authority v2 — Brick 6 authority article and reconciliation', () => {
   it('publishes one broad informational authority article for why public speaking matters', () => {
     expect(article).toContain("slug: 'why-public-speaking-is-important-for-kids'");
-    expect(article).toContain("title: 'Why Public Speaking Is Important for Kids: Communication Skills in the AI Era'");
+    expect(article).toContain("title: 'Why Public Speaking Is Important for Kids'");
     expect(article).toContain("category: 'Public Speaking'");
     expect(article).toContain("discoveryCategory: 'Speaking & Communication'");
     expect(article).toContain("date: '2026-10-03'");
