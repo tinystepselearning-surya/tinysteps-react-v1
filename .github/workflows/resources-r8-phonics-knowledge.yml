@@ -1,25 +1,6 @@
 name: Resources R8 Phonics Knowledge Dataset
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/content/phonicsKnowledge/**'
-      - 'src/content/phonicsCurriculum/**'
-      - 'src/tests/seo/resourcesR*'
-      - 'functions/src/phonicsCurriculumConfig.ts'
-      - 'src/lib/resourcesArchitectureRegistry.js'
-      - 'src/lib/publicRouteManifest.js'
-      - 'src/lib/routeSeoRegistry.js'
-      - 'src/app/routes.tsx'
-      - 'scripts/audit-resources-r8-phonics-knowledge.mjs'
-      - 'scripts/audit-resources-r7-aeo-geo.mjs'
-      - 'scripts/audit-resources-r0.mjs'
-      - 'scripts/audit-resources-r0-rendered.mjs'
-      - 'scripts/audit-semantic-internal-links.mjs'
-      - 'scripts/audit-canonical-topic-ownership.mjs'
-      - 'docs/seo/resources-architecture/**'
-      - '.github/workflows/resources-r8-phonics-knowledge.yml'
   workflow_dispatch:
 
 concurrency:
