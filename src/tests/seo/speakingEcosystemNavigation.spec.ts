@@ -45,9 +45,9 @@ describe('Speaking ecosystem navigation', () => {
     expect(progress).toContain('/curriculum?tab=speaking#course-levels');
   });
 
-  it('keeps Confidence Building and Spoken English separate while linking back to Public Speaking', () => {
+  it('keeps Confidence Building and Spoken English separate while linking back to Speaking & Communication', () => {
     expect(confidence).toContain('Confidence Building Classes for Kids');
-    expect(confidence).toContain('Compare Public Speaking');
+    expect(confidence).toContain('Compare Speaking & Communication');
     expect(spoken).toContain('Spoken English Classes for Kids Online');
     expect(spoken).toContain('Compare Public Speaking Support');
     expect(spoken).toContain('/speaking');
