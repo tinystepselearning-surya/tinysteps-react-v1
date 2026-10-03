@@ -166,6 +166,15 @@ const enrollmentChanged = changed.some((path) => matchesAny(path, [
   'vitest.emulator.config.ts',
 ]));
 
+const wave1IdentityFoundationChanged = changed.some((path) => matchesAny(path, [
+  'functions/src/schoolOS/identity/',
+  'scripts/wave1-identity-foundation-dry-run.mjs',
+  'scripts/test/wave1-identity-foundation.node-test.mjs',
+  'docs/architecture/wave-1/',
+  'docs/architecture/wave-0/WAVE_0_EXIT_REVIEW.md',
+  'docs/architecture/wave-0/MIGRATION_EXECUTION_STANDARD_V1.md',
+]));
+
 const sharedExperienceAuditChanged = changed.some((path) => matchesAny(path, [
   'scripts/audit-shared-experience.mjs',
   'scripts/test/shared-experience-inventory.node-test.mjs',
@@ -242,6 +251,10 @@ if (academicEnrollmentAuditChanged) {
 
 if (sharedExperienceAuditChanged) {
   run('Shared experience inventory tests', 'npm', ['run', 'test:shared-experience-inventory']);
+}
+
+if (wave1IdentityFoundationChanged) {
+  run('Wave 1 identity foundation tests', 'npm', ['run', 'test:wave1-identity-foundation']);
 }
 
 if (deploymentChanged) {
