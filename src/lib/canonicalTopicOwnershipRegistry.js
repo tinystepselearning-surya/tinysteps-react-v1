@@ -391,6 +391,16 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     queryIntent: 'Tiny Steps speaking and communication resources',
     supportingPaths: ['/resources', '/blog?topic=Speaking%20%26%20Communication'],
   }),
+  topic('why-public-speaking-matters-for-kids', {
+    subject: 'speaking-communication',
+    intent: 'informational',
+    ownerPath: '/blog/why-public-speaking-is-important-for-kids',
+    ownerRole: 'editorial-pillar',
+    hubPath: '/resources/speaking',
+    queryIntent: 'why public speaking is important for kids',
+    supportingPaths: ['/resources/speaking', '/speaking', '/blog/conversation-skills-for-kids', '/blog/public-speaking-delivery-for-kids'],
+    forbiddenCompetingOwners: ['/speaking'],
+  }),
   topic('live-public-speaking-classes', {
     subject: 'speaking-communication',
     intent: 'high-commercial',
