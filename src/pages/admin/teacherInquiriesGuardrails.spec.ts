@@ -21,6 +21,8 @@ describe('teacher enquiries admin and public guardrails', () => {
     expect(source).not.toContain('with_hr');
     expect(source).not.toContain('with_auditor');
     expect(source).not.toContain('mock_demo_pending');
+    expect(source).toContain("{ value: 'selected', label: 'Selected & Closed' }");
+    expect(source).toContain("{ value: 'not_selected', label: 'Not Selected & Closed' }");
   });
 
   it('saves public Careers applications without public admin fields', async () => {
