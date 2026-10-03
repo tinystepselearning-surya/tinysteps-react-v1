@@ -291,7 +291,7 @@ Wave 0 uses six bounded work packages:
 
 1. **Engineering delivery baseline** — local-first development validation, deployment-only GitHub Actions, and test/workflow retirement rules.
 2. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
-3. **Identity/reference audit** — code-level decisions are recorded in `IDENTITY_REFERENCE_AUDIT.md`; completion requires the read-only live reference report and exception review.
+3. **Identity/reference audit — COMPLETE** — code-level decisions, live read-only verification and bounded exception dispositions are recorded in `IDENTITY_REFERENCE_AUDIT.md`.
 4. **Academic/enrollment audit** — map Course/Enrollment/group/teacher/schedule concepts and their current ownership.
 5. **Shared experience/design-system inventory** — identify reusable shells/templates/components and controlled variants.
 6. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
