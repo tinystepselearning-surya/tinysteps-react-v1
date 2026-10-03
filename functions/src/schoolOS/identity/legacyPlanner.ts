@@ -206,12 +206,6 @@ export function planLegacyUserExpansion(
 
   for (const role of roles) {
     if (role === 'schoolAdmin') {
-      conflicts.push({
-        code: 'school_admin_role_requires_organisation_scope',
-        sourcePath,
-        fields: ['role', 'roles'],
-        blocksBackfill: false,
-      });
       continue;
     }
     if (!GLOBAL_ROLES.has(role)) continue;
