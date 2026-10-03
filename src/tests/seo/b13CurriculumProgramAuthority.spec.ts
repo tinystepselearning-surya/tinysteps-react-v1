@@ -60,7 +60,7 @@ describe('B13 curriculum, program and course authority guardrails', () => {
       '/courses/public-speaking-excellence',
     );
 
-    for (const programPath of ['/phonics', '/grammar', '/speaking']) {
+    for (const programPath of ['/phonics', '/reading-classes-for-kids', '/grammar', '/speaking']) {
       expect(page, programPath).toContain(`programPath: '${programPath}'`);
     }
   });
