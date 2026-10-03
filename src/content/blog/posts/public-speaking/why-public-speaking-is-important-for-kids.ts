@@ -21,12 +21,12 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Public speaking matters because it gives children repeated practice in turning ideas into a message another person can follow. For children, that includes **asking useful questions, organising thoughts, explaining clearly, listening to another viewpoint, telling stories, giving short presentations, supporting an opinion, and adapting to a listener**. Stage performance is only one part of the picture.',
+        '**Yes, public speaking is important for children because it teaches them to organise ideas and make those ideas understandable to other people.** For children, that means practising useful questions, clear explanations, listening and response, storytelling, short presentations, opinions with reasons, and adapting a message to a listener or audience. Stage performance is only one part of the skill.',
     },
     {
       type: 'p',
       content:
-        'This article owns the broad **why public speaking matters for kids** question. If you are choosing live classes, use the [Tiny Steps Public Speaking & Communication programme](/speaking). If the problem is mainly everyday conversational fluency, use [Spoken English](/spoken-english-classes-for-kids-online). If sentence accuracy is the main barrier, use [Grammar](/grammar).',
+        'Tiny Steps treats public speaking for kids as organised, audience-aware communication—not as memorising a stage speech. If you are comparing an **online public speaking course for kids**, use the [Tiny Steps Public Speaking & Communication programme](/speaking). If the main problem is everyday conversational fluency, use [Spoken English](/spoken-english-classes-for-kids-online). If sentence accuracy is the main barrier, use [Grammar](/grammar).',
     },
 
     {
@@ -120,7 +120,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'There is **no universal international rule** that says public speaking should start at one exact age. The more useful question is: **What kind of speaking task is developmentally appropriate now?** Age should change the task, the length of the speaking turn, the amount of adult support, and the type of audience.',
+        '**Children can begin public-speaking development from about age four when the work is communication-focused and developmentally appropriate.** At that age, the goal is description, storytelling, show-and-tell, listening, turn-taking, questions, and short connected responses—not formal speeches. There is no universal international rule that sets one starting age, so age should change the task, the length of the speaking turn, the amount of adult support, and the type of audience.',
     },
     {
       type: 'h3',
@@ -162,7 +162,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'AI can make information easier to generate. That does not remove the need for communication; it changes what good communication demands. A child still has to decide **what to ask, what to question, what to verify, how to organise information, how to explain a conclusion, how to listen to another person, and how to respond responsibly**.',
+        '**Communication remains important in an AI-enabled world because generating information is not the same as judging, organising, explaining, questioning, listening, or responding.** A child still has to decide what to ask, what to question, what to verify, how to organise information, how to explain a conclusion, how to listen to another person, and how to respond responsibly.',
     },
     {
       type: 'p',
@@ -238,7 +238,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        '**Spoken English** focuses mainly on everyday conversation, fuller responses, vocabulary in use and comfortable English speaking. **Public Speaking & Communication** adds message organisation, storytelling, show-and-tell, presentations, audience awareness, opinions, discussion and longer speaking turns. **Grammar** may be the first need when sentence formation itself is consistently limiting clarity. **Confidence Building** may be more appropriate when language and structure are already adequate but participation comfort is the main barrier.',
+        '**The programmes solve different problems.** Spoken English focuses mainly on everyday conversation, fuller responses, vocabulary in use and conversational fluency. Public Speaking & Communication focuses on organising a message for a listener or audience through storytelling, show-and-tell, presentations, opinions, discussion and longer speaking turns. Grammar is the stronger first route when sentence formation itself is consistently limiting clarity. Confidence Building is the stronger fit when language and structure are already adequate but participation comfort is the main barrier.',
     },
     {
       type: 'p',
@@ -303,7 +303,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'A public-speaking programme is not the right explanation for every communication concern. If the child mainly gives one-word everyday answers, [Spoken English](/spoken-english-classes-for-kids-online) may be the first educational route to inspect. If sentence formation is the main issue, [Grammar](/grammar) may need attention. If the child speaks well in comfortable settings but participation changes sharply by context, [Confidence Building](/confidence-building-program-kids) may be relevant.',
+        '**Public Speaking is the right first route when the main gap is organising and delivering ideas for a listener or audience.** If the child mainly gives one-word everyday answers, [Spoken English](/spoken-english-classes-for-kids-online) is the stronger first route to inspect. If sentence formation is the main issue, [Grammar](/grammar) should be checked first. If the child speaks well in comfortable settings but participation changes sharply by context, [Confidence Building](/confidence-building-program-kids) is the more relevant pathway to inspect.',
     },
     {
       type: 'p',
@@ -345,12 +345,12 @@ const post: BlogPost = {
     {
       question: 'Why is public speaking important for kids?',
       answer:
-        'Public speaking gives children structured practice organising ideas, explaining clearly, storytelling, presenting, listening, responding to questions, supporting opinions and adapting a message for a listener or audience.',
+        'Public speaking is important because it teaches children to organise ideas and make them understandable to a listener or audience. It develops explanation, storytelling, presentations, listening and response, opinions with reasons, questioning, and increasingly independent speaking.',
     },
     {
       question: 'What is the right age to start public speaking?',
       answer:
-        'There is no universal starting age. Age four can be appropriate for communication foundations such as short answers, description, storytelling, show-and-tell, listening and simple questions. Formal speeches, debate and longer presentations belong later in the progression.',
+        'Children can start from about age four when the programme focuses on communication foundations rather than formal speech performance. At 4–5, appropriate work includes short connected answers, description, storytelling, show-and-tell, listening, turn-taking and simple questions. Formal speeches, debate and longer presentations belong later.',
     },
     {
       question: 'Is age 4 too young for public speaking classes?',
@@ -365,7 +365,7 @@ const post: BlogPost = {
     {
       question: 'Why do communication skills matter in the AI era?',
       answer:
-        'AI can generate information quickly, but children still need to decide what to ask, what to verify, how to organise ideas, how to explain reasoning, how to listen to another viewpoint and how to respond responsibly.',
+        'Communication remains important in the AI era because AI can generate information but cannot remove the child’s need to decide what to ask, what to verify, how to organise ideas, how to explain reasoning, how to listen to another viewpoint and how to respond responsibly.',
     },
     {
       question: 'Should young children learn prompt engineering?',
@@ -373,9 +373,14 @@ const post: BlogPost = {
         'Tiny Steps does not treat prompt engineering as a public-speaking goal. Young children can practise better questioning, explanation, listening and reasoning through ordinary age-appropriate communication without using AI tools.',
     },
     {
+      question: 'What should parents look for in public speaking classes for kids?',
+      answer:
+        'Look for substantial child speaking time, age-appropriate tasks, organised progression, specific teacher feedback, guided retries, listener or audience awareness, and evidence that the child can use the skill on a fresh topic rather than only repeat a memorised script.',
+    },
+    {
       question: 'How can parents tell whether public-speaking classes are the right fit?',
       answer:
-        'Look at the actual difficulty. Public Speaking & Communication is a stronger fit when the child can already communicate at a basic level but needs better organisation, storytelling, presentations, audience awareness, opinions or longer speaking turns. Everyday fluency, grammar accuracy or confidence-only barriers may need a different pathway.',
+        'Public Speaking & Communication is the stronger fit when the child can already communicate at a basic level but needs better idea organisation, storytelling, presentations, audience awareness, opinions with reasons, or longer speaking turns. Everyday fluency belongs first with Spoken English; persistent sentence-formation accuracy belongs with Grammar; confidence-only barriers belong with Confidence Building.',
     },
   ],
 };
