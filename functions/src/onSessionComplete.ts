@@ -176,12 +176,34 @@ function canCallerOverrideAttendanceTime(role: string): boolean {
 async function resolveCallerRoleFromAuth(
   auth: { uid?: string; token?: Record<string, unknown> } | null,
 ): Promise<string> {
-  const tokenRole = normalizeCallerRole(auth?.token?.role);
-  if (tokenRole) return tokenRole;
   const uid = String(auth?.uid || "").trim();
   if (!uid) return "";
+
   const userSnap = await admin.firestore().collection("users").doc(uid).get();
-  return normalizeCallerRole(userSnap.data()?.role);
+  if (!userSnap.exists) return "";
+
+  const user = userSnap.data() || {};
+  if (
+    user.status !== undefined &&
+    user.status !== null &&
+    (
+      typeof user.status !== "string" ||
+      user.status.trim().toLowerCase() !== "active"
+    )
+  ) {
+    return "";
+  }
+
+  const primaryRole = normalizeCallerRole(user.role);
+  if (primaryRole) return primaryRole;
+
+  const roles = Array.isArray(user.roles) ? user.roles : [];
+  for (const role of roles) {
+    const normalized = normalizeCallerRole(role);
+    if (normalized) return normalized;
+  }
+
+  return "";
 }
 
 function resolveEnrollmentKidIds(enrollment: any): string[] {
