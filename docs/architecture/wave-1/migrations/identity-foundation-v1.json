@@ -4,7 +4,7 @@
   "domain": "Identity & Relationships",
   "canonicalOwner": "Identity & Authentication / Learner Identity / Organisation Membership",
   "title": "Wave 1 Identity Foundation",
-  "status": "expanded_pending_dry_run",
+  "status": "expanded_pending_final_validation",
   "sourceBaselineCommit": "570bfef5fd99857e1f7df9529c46e593f77dcec0",
   "implementationCommit": null,
   "schemaVersion": 1,
@@ -134,5 +134,59 @@
     "operationalOwner": "Tiny Steps platform operations",
     "reviewer": "School OS architecture review",
     "retirementOwner": "Wave 1 Identity migration owner"
+  },
+  "dryRun": {
+    "runId": 37139126536,
+    "executedAt": "2026-10-03T17:04:39Z",
+    "result": "success",
+    "writesPerformed": 0,
+    "sourceCounts": {
+      "users": 223,
+      "firebaseAuthUsers": 225,
+      "kids": 194,
+      "schools": 1,
+      "schoolUsers": 1
+    },
+    "exactUserAuthUidCoverage": {
+      "matched": 223,
+      "total": 223
+    },
+    "userKidPersonIdCollisions": 0,
+    "authOnlyAccountsExcluded": 2,
+    "authClaimRoleMismatchesForCurrentUsers": 0,
+    "adminClaimRoleMismatchesForCurrentUsers": 0,
+    "plannedCanonicalDocuments": 1253,
+    "plannedByCollection": {
+      "people": 417,
+      "authIdentities": 223,
+      "roleAssignments": 223,
+      "learnerProfiles": 194,
+      "guardianRelationships": 194,
+      "organisations": 1,
+      "organisationMemberships": 1,
+      "households": 0
+    },
+    "existingCanonicalTargetCounts": {
+      "people": 0,
+      "authIdentities": 0,
+      "roleAssignments": 0,
+      "learnerProfiles": 0,
+      "guardianRelationships": 0,
+      "households": 0,
+      "organisations": 0,
+      "organisationMemberships": 0
+    },
+    "blockingConflicts": 0,
+    "nonBlockingExceptions": {
+      "authOnlyAccounts": 2,
+      "expectedRoleMirrorGap": 1
+    },
+    "readyForBoundedBackfillReview": true
+  },
+  "securityPreconditions": {
+    "tokenOnlyAdminAuthorityRemovedInExpand": true,
+    "orphanAuthAccountsAutoMigrated": false,
+    "orphanAuthAccountsDeletedOrDisabled": false,
+    "canonicalClientReadSwitch": false
   }
 }
