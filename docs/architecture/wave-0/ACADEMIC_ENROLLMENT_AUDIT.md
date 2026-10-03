@@ -1,6 +1,6 @@
 # Wave 0 — Academic & Enrollment Audit
 
-**Status:** CODE AUDIT COMPLETE — LIVE READ-ONLY VERIFICATION PENDING  
+**Status:** COMPLETE — LIVE READ-ONLY AUDIT VERIFIED  
 **Wave:** 0 — Architecture Contracts  
 **Runtime changes:** None  
 **Production writes:** Forbidden in this work package
@@ -510,20 +510,220 @@ reports/academic-enrollment-audit.json
 
 Raw IDs are not included in issue samples.
 
-## 7. Live verification questions
+## 7. Live Firestore audit findings
 
-The production audit must establish:
+The final read-only verification ran successfully in GitHub Actions on 3 October 2026:
 
-1. how many Course documents are active and which mixed fields are actually populated;
-2. whether every Enrollment resolves to an existing Course;
-3. current Enrollment lifecycle/status distribution;
-4. rolling vs legacy/unconfigured schedule coverage;
-5. operational enrollment-key integrity;
-6. transition-link integrity;
-7. whether live/future sessions show genuine multi-learner delivery;
-8. whether future sessions resolve to Enrollment and Course;
-9. whether any standalone Programme/CurriculumVersion/DeliveryOffering/LearningGroup/etc. collections already exist;
-10. actual School academic structure footprint.
+```text
+One-off Academic Enrollment Audit
+Run ID: 37134664236
+Result: success
+Source: Firestore
+Writes performed: 0
+```
+
+The temporary workflow was deleted immediately after the run.
+
+### 7.1 Course population
+
+Production currently contains:
+
+```text
+9 courses
+  7 active
+  2 archived
+```
+
+Active programme/track distribution:
+
+```text
+phonics   3
+grammar   2
+speaking  2
+```
+
+Observed field coverage:
+
+- all 9 have a name/title;
+- all 9 have area/track;
+- all 9 have `durationMinutes`;
+- 0 currently populate numeric `level`;
+- 0 currently populate `ratePerSession`;
+- 0 currently populate embedded `topics[]`;
+- 0 currently populate `sessionFrequency`;
+- 0 currently populate `maxStudentsPerSession`.
+
+This is important because the older admin Course form supports more fields than the current production documents actually use.
+
+**Classification:** the missing numeric `level` is a schema-normalization gap, not a broken Course reference. Canonical Course migration must define explicit programme/course sequence metadata rather than assuming the legacy form's numeric level exists in production.
+
+The live data also shows that price and topic arrays are **not currently embedded in production Course documents**, even though legacy code supports them. That reduces migration risk, but the architectural rule remains: Course must not own commercial price.
+
+### 7.2 Enrollment population
+
+Production contains:
+
+```text
+209 enrollments
+  135 active
+  1 paused
+  57 archived
+  8 completed
+  8 discontinued
+```
+
+Key integrity results:
+
+- **209 / 209** resolve to an existing Course;
+- **209 / 209** carry money/currency snapshots;
+- **209 / 209** carry credit fields;
+- **209 / 209** carry `topicProgress` containers;
+- 204 have `teacherId`;
+- 2 active-like enrollments lack `teacherId`, and **neither has a current/future session**.
+
+Therefore the missing-teacher rows are bounded stale/unconfigured records, not live delivery blockers. They must be classified before TeachingAssignment backfill but do not require Wave 0 runtime repair.
+
+### 7.3 Schedule-plan coverage
+
+Across all enrollments:
+
+```text
+canonical rolling     57
+legacy compatible    141
+unconfigured          11
+```
+
+Among the 136 active-like enrollments:
+
+```text
+canonical rolling     51
+legacy compatible     83
+unconfigured           2
+```
+
+Additional evidence:
+
+- 80 of the 83 active-like legacy-compatible schedules currently have future sessions;
+- the 2 active-like unconfigured enrollments have **zero future sessions**;
+- 83 active-like enrollments still contain legacy finite-schedule fields.
+
+**Classification:** rolling SchedulePlan migration is incomplete but operationally healthy. The 83 live legacy-compatible schedules are migration compatibility debt and must be converted through the proven rolling-schedule migration path, not rewritten ad hoc.
+
+The 2 unconfigured current-looking rows are bounded stale/unconfigured exceptions.
+
+### 7.4 Session integrity and group evidence
+
+Production contains:
+
+```text
+14,257 classSessions
+4,495 today/future sessions
+```
+
+Current/future integrity is strong:
+
+- every current/future session has an Enrollment reference;
+- every current/future session resolves to an existing Course;
+- every current/future session has the required financial snapshot;
+- **0 current/future sessions are multi-learner**;
+- **0 historical or future sessions are multi-learner** across the entire audited collection.
+
+There are 161 session rows whose referenced Enrollment no longer exists, but **all 161 are past-dated**.
+
+**Classification:** these 161 rows are historical compatibility debt, not current scheduling corruption. Preserve them as historical session evidence; do not fabricate replacement Enrollments merely to satisfy a foreign-key shape.
+
+The absence of any multi-learner ClassSession is strong production evidence that Tiny Steps does **not currently have a real general group-delivery model** in this scheduling path.
+
+Therefore LearningGroup/GroupPlacement should be introduced for future genuine group delivery rather than "migrating" inferred groups that do not exist.
+
+### 7.5 Enrollment workflow integrity
+
+Current workflow/evidence collections:
+
+```text
+operationalEnrollmentKeys       70
+enrollmentCreationOperations    79
+enrollmentCourseTransitions      5
+```
+
+Verification:
+
+- **70 / 70** operational enrollment keys resolve to existing Enrollments;
+- **5 / 5** course transitions are complete;
+- **5 / 5** transition source Enrollments resolve;
+- **5 / 5** destination Enrollments resolve;
+- **5 / 5** destination Courses resolve.
+
+These should be preserved as working uniqueness/idempotency/lifecycle safeguards during canonical migration.
+
+### 7.6 Canonical collections do not yet exist
+
+The audit found zero production documents in:
+
+```text
+programmes
+curriculumVersions
+deliveryOfferings
+learningGroups
+groupPlacements
+teachingAssignments
+schedulePlans
+```
+
+This confirms that these are genuinely new canonical concepts rather than alternate live authorities that must be reconciled.
+
+### 7.7 School academic structure footprint
+
+Production currently contains:
+
+```text
+1 school
+1 academic year
+0 grades
+0 sections
+0 school teachers
+0 section curriculum-progress rows
+0 teacher-training rows
+```
+
+The institutional academic structure is therefore a valid foundation but is not yet populated deeply enough to create migration conflicts with B2C Enrollment/Session architecture.
+
+### 7.8 Final audit conclusion
+
+There is **no Wave 0 academic/enrollment blocker**.
+
+Production evidence supports the frozen model:
+
+```text
+Programme
+  ↓
+Course
+  ↓
+CurriculumVersion
+  ↓
+DeliveryOffering
+  ↓
+Enrollment
+  ├─ TeachingAssignment
+  ├─ SchedulePlan
+  └─ optional GroupPlacement → LearningGroup
+
+SchedulePlan
+  ↓ materializes
+ClassSession
+  ├─ SessionParticipant
+  └─ SessionStaff
+```
+
+Migration debt is bounded and understood:
+
+- 83 active-like legacy-compatible schedules;
+- 2 active-like unconfigured Enrollments with no future sessions;
+- 2 active-like Enrollments without teacherId and no future sessions;
+- 161 past ClassSessions whose historical Enrollment no longer exists;
+- Course sequence/level metadata must be normalized explicitly because production does not populate numeric `level`.
+
+None of these require production writes to finish Wave 0.
 
 ## 8. Migration posture
 
@@ -562,14 +762,17 @@ No scheduled GitHub workflow should be created for this audit.
 
 ## 10. Exit gate
 
-This work package is complete when:
+This work package is **complete**.
+
+Exit conditions are satisfied:
 
 - live Course/Enrollment/schedule/session structure is verified;
 - mixed academic/commercial/delivery ownership is classified;
-- current operational invariants are explicitly protected;
-- any active orphan/missing references are classified;
-- group-delivery evidence is understood rather than inferred;
-- future canonical ownership is frozen;
-- no production write is required merely to complete Wave 0.
+- operational enrollment keys, idempotency and transition history are protected;
+- current-looking schedule/teacher exceptions are bounded and have no future sessions;
+- historical orphan session references are classified as preserved compatibility debt;
+- group-delivery evidence was checked directly and is absent in the current ClassSession population;
+- canonical ownership is frozen;
+- no production write is required to complete Wave 0.
 
-After completion, Wave 0 proceeds to **Shared Experience / Design-System Inventory**.
+Next: **Wave 0 Work Package 5 — Shared Experience / Design-System Inventory**.
