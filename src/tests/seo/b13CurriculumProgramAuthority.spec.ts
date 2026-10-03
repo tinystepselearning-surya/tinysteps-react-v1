@@ -82,7 +82,7 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     }
 
     expect(alignment).toContain('independent learning provider');
-    expect(alignment).toContain('CBSE, ICSE, IB, Cambridge');
+    expect(alignment).toMatch(/CBSE,\s*ICSE,\s*IB,\s*Cambridge/);
   });
 
   it('routes program and detailed course pages back to the full curriculum roadmap', () => {
