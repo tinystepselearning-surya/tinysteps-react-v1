@@ -25,11 +25,12 @@ describe('Confidence Building programme v2', () => {
 
     expect(source).toContain('Specialist confidence pathway • live 1:1');
     expect(source).toContain('Confidence Building Classes for Kids');
+    expect(source).toContain('PUBLIC_AGE_RANGE_LABEL');
   });
 
   it('keeps Confidence Building narrow and distinct from broader communication owners', () => {
     expect(source).toContain('confidence-and-participation pathway');
-    expect(source).toContain('It is not a second general Public Speaking course');
+    expect(source).toContain('It is not a second general Speaking & Communication programme');
     expect(source).toContain('/speaking');
     expect(source).toContain('/spoken-english-classes-for-kids-online');
     expect(source).toContain('/grammar');
