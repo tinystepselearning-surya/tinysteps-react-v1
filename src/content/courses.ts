@@ -6,6 +6,7 @@ import {
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { PHONICS_LESSONS_BY_COURSE, PHONICS_STAGE_DEFINITIONS } from './phonicsCurriculum';
 import { buildPublicGrammarStages } from './grammarCurriculum';
+import { buildPublicSpeakingStages } from './speakingCurriculum';
 
 // Lightweight course catalog and deep curriculum samples
 export type CourseTrack = 'phonics' | 'grammar' | 'speaking';
@@ -160,8 +161,8 @@ export const catalogs: CourseCatalogItem[] = [
     duration: lessonDuration(speakingFacts.beginner.lessonCount),
     frequency: 'Flexible pace',
     level: 'Basic',
-    overview: ['Confidence & posture', 'Clear speech', 'Show & tell', 'Mini talks + Q&A'],
-    outcomes: ['30–60s short talks', 'Eye contact & voice control', 'Simple structure'],
+    overview: ['Conversation & turn-taking', 'Questions + clarification', 'Description + explanation', 'Storytelling + short talks'],
+    outcomes: ['Sustain short back-and-forth exchanges', 'Ask and answer relevant questions', 'Organise and explain ideas for a listener', 'Deliver a short talk and respond to simple Q&A'],
     price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Communication & Social skills (spoken interactions, empathy building)',
@@ -178,8 +179,8 @@ export const catalogs: CourseCatalogItem[] = [
     duration: lessonDuration(speakingFacts.advanced.lessonCount),
     frequency: 'Flexible pace',
     level: 'Advanced',
-    overview: ['Presence & engagement', 'Structure + details', 'Impromptu + debate', 'Presentation mastery'],
-    outcomes: ['1–2 minute speeches', 'Confident Q&A handling', 'Polished presentations'],
+    overview: ['Purpose + audience', 'Questioning + dialogue', 'Reasoning + evidence', 'Discussion + AI-era communication'],
+    outcomes: ['Adapt communication for purpose and audience', 'Ask, clarify, paraphrase, and build on ideas', 'Explain and support reasoning with evidence', 'Evaluate information and AI outputs with human judgement', 'Deliver independent presentations and handle Q&A'],
     price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Communication & Self-management (speech planning, rehearsals, feedback journals)',
@@ -221,85 +222,6 @@ const ADVANCED_PHONICS_LESSONS = PHONICS_LESSONS_BY_COURSE['advanced-phonics'].m
   (lesson) => lesson.displayTitle,
 );
 
-const SPEAKING_BASIC_LABELS = [
-  'Warm-up routine',
-  'Eye contact basics',
-  'Posture + body stillness',
-  'Friendly voice volume',
-  'Simple self-introduction',
-  'Revision: confidence routine',
-  'Speak in full sentences',
-  'Clear speech: slow pace',
-  'Clear word endings',
-  'Volume control',
-  'Pause between ideas',
-  'Revision: clear speaking',
-  'Picture talk (what do you see?)',
-  'Describe with 3 details',
-  'Use describing words',
-  'Simple gestures',
-  'Emotion words',
-  'Revision: describe + show & tell',
-  'Answer questions in full sentences',
-  'One-minute talk',
-  'Sequence words: first/next/last',
-  'Voice variety',
-  'Revision: mini talks + Q&A',
-  'Tell a short story',
-  'Beginning–middle–end',
-  'Character voice (light)',
-  'Emphasis on key words',
-  'Small audience practice',
-  'Revision: story basics',
-  'Presentation practice',
-  'Speaking with a prop/visual',
-  'Handling mistakes calmly',
-  'Clarity check',
-  'Final mini speech',
-  'Showcase + reflection',
-];
-
-const SPEAKING_ADVANCED_LABELS = [
-  'Strong opening lines',
-  'Audience engagement',
-  'Stage presence',
-  'Clear speech (articulation)',
-  'Pacing for impact',
-  'Revision: presence check',
-  'Hook-body-close',
-  'Supporting details',
-  'Evidence and examples',
-  'Sequence + transitions',
-  'Stay on message',
-  'Revision: structure',
-  'Storytelling with emotion',
-  'Character voices',
-  'Scene setting',
-  'Pause for effect',
-  'Voice variety',
-  'Revision: story performance',
-  'Impromptu speaking',
-  'Thinking time strategies',
-  'Answering tough questions',
-  'Clarity under pressure',
-  'Confidence reset',
-  'Revision: impromptu',
-  'Persuasion basics',
-  'Agree/disagree politely',
-  'Rebuttal practice',
-  'Strong conclusion',
-  'Audience Q&A',
-  'Revision: debate',
-  'Presentation with visuals',
-  'Speaking with notes',
-  'Timing and pacing',
-  'Engaging the audience',
-  'Final capstone speech',
-  'Revision: showcase',
-];
-
-const SPEAKING_BASIC_LESSONS = buildLessonTitles(SPEAKING_BASIC_LABELS);
-const SPEAKING_ADVANCED_LESSONS = buildLessonTitles(SPEAKING_ADVANCED_LABELS);
 
 const toPublicPhonicsStages = (
   stages: Array<{ stageOrder: number; label: string; start: number; end: number }>,
@@ -321,23 +243,6 @@ const ADVANCED_PHONICS_STAGES = toPublicPhonicsStages(
   PHONICS_STAGE_DEFINITIONS['advanced-phonics'],
 );
 
-const SPEAKING_BASIC_STAGES = [
-  { title: 'Stage 1 — Comfort + Routine', start: 1, end: 6, focus: 'Feel comfortable speaking in class routines.' },
-  { title: 'Stage 2 — Clear Speaking', start: 7, end: 12, focus: 'Speak clearly with pace, volume, and full words.' },
-  { title: 'Stage 3 — Describe + Show & Tell', start: 13, end: 18, focus: 'Describe objects with details and expression.' },
-  { title: 'Stage 4 — Mini Talks + Q&A', start: 19, end: 24, focus: 'Give short talks and answer simple questions.' },
-  { title: 'Stage 5 — Story Basics', start: 25, end: 30, focus: 'Tell a short story in order.' },
-  { title: 'Stage 6 — Presentation Readiness', start: 31, end: 36, focus: 'Practice presentations with confidence.' },
-];
-
-const SPEAKING_ADVANCED_STAGES = [
-  { title: 'Stage 1 — Presence + Engagement', start: 1, end: 6, focus: 'Engage the audience with confident presence.' },
-  { title: 'Stage 2 — Structure + Supporting Details', start: 7, end: 12, focus: 'Structure talks with strong openings and details.' },
-  { title: 'Stage 3 — Story Performance', start: 13, end: 18, focus: 'Perform stories with voice and emotion.' },
-  { title: 'Stage 4 — Impromptu + Q&A', start: 19, end: 24, focus: 'Handle impromptu questions calmly.' },
-  { title: 'Stage 5 — Persuasion + Debate', start: 25, end: 30, focus: 'Use persuasion and debate skills.' },
-  { title: 'Stage 6 — Presentation Mastery', start: 31, end: 36, focus: 'Deliver polished presentations.' },
-];
 
 type CurriculumWeek = {
   title: string;
@@ -367,10 +272,10 @@ export const curriculumBySlug: Record<string, { weeks?: CurriculumWeek[] }> = {
     weeks: buildPublicGrammarStages('grammar-mastery'),
   },
   'public-speaking-foundations': {
-    weeks: buildStageItems(SPEAKING_BASIC_LESSONS, SPEAKING_BASIC_STAGES),
+    weeks: buildPublicSpeakingStages('basic-public-speaking'),
   },
   'public-speaking-excellence': {
-    weeks: buildStageItems(SPEAKING_ADVANCED_LESSONS, SPEAKING_ADVANCED_STAGES),
+    weeks: buildPublicSpeakingStages('advanced-public-speaking'),
   },
   // Internal aliases to keep curriculum links stable
   'phonics-foundations': {
@@ -389,9 +294,9 @@ export const curriculumBySlug: Record<string, { weeks?: CurriculumWeek[] }> = {
     weeks: buildPublicGrammarStages('advanced-grammar'),
   },
   'basic-public-speaking': {
-    weeks: buildStageItems(SPEAKING_BASIC_LESSONS, SPEAKING_BASIC_STAGES),
+    weeks: buildPublicSpeakingStages('basic-public-speaking'),
   },
   'advanced-public-speaking': {
-    weeks: buildStageItems(SPEAKING_ADVANCED_LESSONS, SPEAKING_ADVANCED_STAGES),
+    weeks: buildPublicSpeakingStages('advanced-public-speaking'),
   },
 };
