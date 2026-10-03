@@ -53,6 +53,10 @@ A wave is not complete because new code exists. It is complete only when canonic
 
 # Wave 0 — Architecture Contracts
 
+**Implementation status:** COMPLETE — Wave 0 exit review passed.  
+**Entry decision:** Wave 1 may begin at EXPAND. See `wave-0/WAVE_0_EXIT_REVIEW.md` and `wave-0/MIGRATION_EXECUTION_STANDARD_V1.md`.
+
+
 ## Objective
 
 Freeze the language and ownership rules before changing production data structures.
