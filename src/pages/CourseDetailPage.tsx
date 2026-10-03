@@ -63,13 +63,13 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
   'basic-public-speaking': {
     name: 'Public Speaking Foundations',
     description:
-      'Beginner Public Speaking level for ages 4–7 focused on organised responses, picture talk, show-and-tell, storytelling foundations, clear expression, and short presentations.',
+      'Beginner Speaking & Communication level for ages 4–7 focused on reciprocal conversation, listening, questioning, clarification, explanation, storytelling, audience awareness, and short presentations.',
     educationalLevel: 'Beginner Public Speaking; ages 4–7; assessment-led placement',
   },
   'advanced-public-speaking': {
     name: 'Public Speaking Excellence',
     description:
-      'Advanced Public Speaking level for ages 7–12 focused on structured speeches, storytelling, presentations, impromptu speaking, guided debate, audience awareness, and delivery.',
+      'Advanced Speaking & Communication level for ages 7–12 focused on purposeful dialogue, questioning, reasoning, evidence, perspective, mediation, impromptu communication, presentations, and responsible AI-era communication.',
     educationalLevel: 'Advanced Public Speaking; ages 7–12; assessment-led placement',
   },
 };
