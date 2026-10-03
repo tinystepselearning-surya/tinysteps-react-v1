@@ -27,7 +27,7 @@ export const REVIEWED_SEO_RECOVERY_BLOBS = Object.freeze({
   'src/pages/CourseDetailPage.tsx': '8b2608266bc8ae522f8a89edda7ff1e0f0675458',
   'src/pages/CurriculumPage.tsx': 'bbdd0490226bc028d8c2dd4f6a33e21cb9cb9291',
   'src/pages/TestimonialsPage.tsx': '228cccac38b5a893153c90081421108ca2322b44',
-  'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': '919fcfd52e110f4d129b1b2614ecb5cfee54958c',
+  'src/pages/public/ConfidenceBuildingProgramKidsPage.tsx': 'd1627b49c72d3503d07393cb843ac40e601c9713',
   'src/pages/public/SpeakingProgressFrameworkPage.tsx': 'e434d0fa31dc67809d3bad044d515071d9dac7c3',
   'src/content/blog/posts/public-speaking/why-public-speaking-is-important-for-kids.ts': '584cc647fd76ddff5d018798517f8db57b25684f',
   'src/content/blog/shared/conversionFamilies.ts': 'c6bbe00f36e62fe6f7ba41d42291faee13b51c03',
