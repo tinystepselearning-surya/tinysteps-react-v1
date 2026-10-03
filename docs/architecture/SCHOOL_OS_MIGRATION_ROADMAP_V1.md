@@ -24,6 +24,7 @@ Each wave may contain several PRs and may overlap in limited, controlled ways. A
 9. **No legacy path is removed until its replacement is verified in production.**
 10. **Architecture work and feature work should remain separable whenever possible.**
 11. **Converge repeated UI before adding another variant.** New and migrated experiences should reuse shared shells, navigation, templates and components wherever the interaction model is materially the same.
+12. **Use premium simplicity as the visual default.** New and migrated experiences should converge on an Apple-inspired Tiny Steps design language: clear hierarchy, generous whitespace, restrained colour, precise typography, purposeful motion and minimal visual noise.
 
 ## 3. Standard migration lifecycle
 
@@ -63,7 +64,8 @@ Freeze the language and ownership rules before changing production data structur
 - define migration/versioning standards;
 - identify canonical vs projection vs legacy compatibility concepts;
 - establish architecture decision review for new features;
-- define the shared experience-system contract for app shells, navigation, templates, components and controlled variants.
+- define the shared experience-system contract for app shells, navigation, templates, components and controlled variants;
+- define the premium/minimal visual design contract and the design tokens/principles needed to enforce it consistently.
 
 ## Deliverables
 
@@ -71,7 +73,8 @@ Freeze the language and ownership rules before changing production data structur
 - this Migration Roadmap;
 - canonical terminology glossary where needed;
 - legacy-to-canonical mapping maintained as migration work begins;
-- shared experience/design-system contract, using the existing reusable blog authority layout as the precedent for configuration-driven page families.
+- shared experience/design-system contract, using the existing reusable blog authority layout as the precedent for configuration-driven page families;
+- visual direction contract for premium, professional, Apple-inspired simplicity while preserving Tiny Steps' own brand identity.
 
 ## Exit gate
 
@@ -82,7 +85,8 @@ Wave 0 is complete when new architectural work can answer:
 - what is derived;
 - what is legacy;
 - whether a proposed schema change conforms to v1.0;
-- whether a new or migrated web experience can reuse an existing shared shell/template/component before a bespoke implementation is approved.
+- whether a new or migrated web experience can reuse an existing shared shell/template/component before a bespoke implementation is approved;
+- whether the proposed experience meets the premium-simplicity standard rather than introducing unnecessary visual complexity.
 
 **No production data migration is required to complete Wave 0.**
 
@@ -307,7 +311,8 @@ Move remaining business capabilities onto the canonical foundations without crea
 - mastery is evidence-derived;
 - school programmes use Organisation foundations;
 - safeguarding remains more restricted than ordinary support;
-- Parent, Teacher, Admin, School, Learning Partner and learning experiences converge on shared application shells, navigation primitives and reusable workspace/page templates wherever role-specific requirements do not require a genuinely different interaction model.
+- Parent, Teacher, Admin, School, Learning Partner and learning experiences converge on shared application shells, navigation primitives and reusable workspace/page templates wherever role-specific requirements do not require a genuinely different interaction model;
+- migrated experiences converge visually on the same premium, restrained Tiny Steps design language instead of retaining unrelated legacy aesthetics.
 
 ## Exit gate
 
@@ -315,7 +320,8 @@ Move remaining business capabilities onto the canonical foundations without crea
 - duplicated lifecycle/state models are reduced rather than expanded;
 - B2C and B2B share foundations while retaining different workflows;
 - no new domain introduces its own identity, finance, scheduling or entitlement system;
-- repeated page structures and interaction patterns no longer create parallel UI frameworks when a shared configurable template/component can own them.
+- repeated page structures and interaction patterns no longer create parallel UI frameworks when a shared configurable template/component can own them;
+- migrated surfaces meet the premium-simplicity visual standard without sacrificing information density required by the workflow.
 
 ---
 
@@ -446,7 +452,8 @@ It is complete when:
 8. AI cannot bypass business authority;
 9. critical reads remain bounded as the platform grows;
 10. repeated user experiences use maintained shared shells/templates/components wherever appropriate;
-11. remaining legacy compatibility is intentional and documented.
+11. public and authenticated surfaces present a coherent premium, professional, minimal Tiny Steps visual language;
+12. remaining legacy compatibility is intentional and documented.
 
 ## 9. Change control
 
