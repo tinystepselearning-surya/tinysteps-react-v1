@@ -13,7 +13,7 @@ describe('Phonics Brick 5 curriculum and methodology authority guardrails', () =
     const curriculum = read(curriculumPath);
 
     expect(curriculum).toContain('The complete Tiny Steps learning roadmap');
-    expect(curriculum).toContain('Open the detailed course page for the exact lesson sequence');
+    expect(curriculum).toMatch(/Open the detailed course page for the exact lesson\s+sequence/);
     expect(curriculum).not.toContain('WeekAccordion');
     expect(curriculum).not.toContain('loadCurriculumOverrides');
     expect(curriculum).not.toContain('getCourseWeeksOverride');
