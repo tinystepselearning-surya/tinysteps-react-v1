@@ -86,6 +86,7 @@ export const B7_BLOG_AUTHORITY_PLANS: readonly BlogAuthorityPlan[] = Object.free
   { number: 49, slug: 'screen-smart-summer-routine-for-kids', intent: 'parent-routine', primary: { label: 'use the Parents Hub for balanced home-learning routines', to: '/parents' }, secondary: { label: 'browse free English learning games for purposeful practice', to: '/free-english-games-for-kids' } },
   { number: 50, slug: 'why-child-knows-letter-sounds-but-cannot-read-words', intent: 'phonics-diagnostic', primary: { label: 'see the structured Tiny Steps phonics pathway', to: PHONICS }, secondary: { label: 'review the Foundation Phonics stage', to: FOUNDATION } },
   { number: 51, slug: 'why-child-reads-words-but-does-not-understand-story', intent: 'reading', primary: { label: 'explore reading support when comprehension is the main need', to: READING }, secondary: { label: 'review the curriculum roadmap', to: '/curriculum' } },
+  { number: 52, slug: 'why-public-speaking-is-important-for-kids', intent: 'speaking', primary: { label: 'explore the Tiny Steps Public Speaking & Communication programme', to: '/speaking' }, secondary: { label: 'browse the Speaking & Communication resource hub', to: '/resources/speaking' } },
 ]);
 
 export const B7_PHONICS_FEATURED_GUIDES = Object.freeze([
