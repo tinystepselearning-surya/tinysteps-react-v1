@@ -145,7 +145,6 @@
     "form-data": "^4.0.4",
     "hersheytext": "^2.0.0",
     "jsdom": "^22.1.0",
-    "papaparse": "^5.4.1",
     "patch-package": "^8.0.1",
     "playwright": "^1.40.0",
     "postcss": "^8.5.6",
