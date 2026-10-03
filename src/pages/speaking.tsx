@@ -252,6 +252,70 @@ const speakingDevelopmentalReferences = [
   },
 ] as const;
 
+const speakingParentFitScenarios = [
+  {
+    signal: 'Mostly one-word or very short everyday answers',
+    observe: 'The child may know some English but struggles to sustain everyday back-and-forth conversation or expand a response.',
+    routeName: 'Spoken English',
+    routePath: '/spoken-english-classes-for-kids-online',
+    fit: 'Likely first check: conversational fluency',
+    cta: 'Check Spoken English',
+  },
+  {
+    signal: 'Ideas are present, but sentence formation is often inaccurate or incomplete',
+    observe: 'Word order, tense, articles, prepositions, or sentence control may be limiting how clearly the child can express an idea.',
+    routeName: 'Grammar',
+    routePath: '/grammar',
+    fit: 'Likely support: sentence formation and accuracy',
+    cta: 'Check Grammar support',
+  },
+  {
+    signal: 'Speaks comfortably one-to-one but avoids class, group, or unfamiliar speaking situations',
+    observe: 'If language and idea structure are already adequate, participation comfort or hesitation may be the more important barrier.',
+    routeName: 'Confidence Building',
+    routePath: '/confidence-building-program-kids',
+    fit: 'Likely first check: speaking comfort and participation',
+    cta: 'Check Confidence Building',
+  },
+  {
+    signal: 'Has ideas but answers wander, jump around, or end without a clear point',
+    observe: 'The child may need help organising ideas into complete, relevant, listener-friendly responses.',
+    routeName: 'Speaking & Communication',
+    routePath: '/book-demo',
+    fit: 'Best fit: this Speaking programme',
+    cta: 'Check the right speaking level',
+  },
+  {
+    signal: 'Can answer questions but struggles with storytelling, show-and-tell, or short presentations',
+    observe: 'The next step may be structured speaking practice: sequencing, relevant detail, delivery, and awareness of the listener.',
+    routeName: 'Public Speaking Foundations',
+    routePath: speakingFacts.levels.beginner.canonicalCoursePath,
+    fit: 'Likely fit: foundational public speaking',
+    cta: 'View Foundations details',
+  },
+  {
+    signal: 'Ready for longer talks, opinions, impromptu speaking, persuasion, or guided debate',
+    observe: 'The child may be ready for greater independence, stronger reasoning, audience adaptation, and more demanding speaking tasks.',
+    routeName: 'Public Speaking Excellence',
+    routePath: speakingFacts.levels.advanced.canonicalCoursePath,
+    fit: 'Likely fit: advanced public speaking',
+    cta: 'View Excellence details',
+  },
+] as const;
+
+const speakingFitReferences = [
+  {
+    label: 'Oracy Cambridge — Oracy Skills Framework',
+    href: 'https://oracycambridge.org/wp-content/uploads/2020/06/The-Oracy-Skills-Framework-and-Glossary.pdf',
+    note: 'Frames spoken communication across physical, linguistic, cognitive, and social/emotional dimensions; it is designed for targets and formative feedback, not as a diagnostic assessment.',
+  },
+  {
+    label: 'ASHA — Communication Milestones',
+    href: 'https://www.asha.org/public/developmental-milestones/communication-milestones/',
+    note: 'States that children develop uniquely and that milestone information is not a screening or diagnostic tool; broader speech, language, or hearing concerns need qualified professional assessment.',
+  },
+] as const;
+
 export default function SpeakingPage() {
   const canonicalPath = '/speaking';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
@@ -366,6 +430,24 @@ export default function SpeakingPage() {
       })),
     };
 
+    const speakingParentFitSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#parent-programme-fit`,
+      name: 'Tiny Steps parent speaking-needs routing guide',
+      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      numberOfItems: speakingParentFitScenarios.length,
+      itemListElement: speakingParentFitScenarios.map((scenario, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: scenario.signal,
+          description: `${scenario.observe} Suggested Tiny Steps pathway to inspect: ${scenario.routeName}. Final placement is assessment-led.`,
+        },
+      })),
+    };
+
     const speakingDevelopmentalStagesSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -410,7 +492,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -608,44 +690,76 @@ export default function SpeakingPage() {
 
       {speakingAiVisibility ? <ProgrammeIntentBoundary config={speakingAiVisibility} /> : null}
 
-      <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+      <section id="parent-programme-fit" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr] md:gap-8">
+          <div className="grid gap-5 lg:grid-cols-[0.68fr_1.32fr] lg:items-start lg:gap-10">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Start with the real difficulty</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">What is your child struggling with?</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Similar-looking speaking problems can need different support. Use these signs as a starting point, then let the free 1:1 assessment confirm the best pathway.
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                Similar-looking speaking problems can need different support. Tiny Steps looks at the task the child is finding difficult—everyday conversation, sentence control, participation comfort, idea organisation, presentation structure, or advanced speaking—then uses the free 1:1 assessment to confirm the pathway.
               </p>
+              <div className="mt-4 rounded-[18px] border border-violet-100 bg-violet-50/55 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">Core Speaking fit</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  Public Speaking & Communication is the strongest fit for children who can already communicate at a basic level but need to organise ideas, tell stories, present, explain opinions, adapt to a listener, or speak with less prompting.
+                </p>
+              </div>
             </div>
 
-            <div className="grid gap-2.5 sm:grid-cols-2">
-              <Link to="/spoken-english-classes-for-kids-online" className="rounded-[18px] border border-emerald-100 bg-emerald-50/60 px-4 py-3.5 transition hover:-translate-y-0.5">
-                <h3 className="text-sm font-semibold text-slate-950">Mostly one-word or very short everyday answers</h3>
-                <p className="mt-1 text-sm leading-5 text-slate-600">Everyday conversation, fuller responses, and response fluency may be the first priority.</p>
-                <span className="mt-2 inline-block text-xs font-semibold text-emerald-800">Check Spoken English ↗</span>
-              </Link>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {speakingParentFitScenarios.map((scenario) => (
+                <article key={scenario.signal} className="flex h-full flex-col rounded-[20px] border border-slate-200 bg-white p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">What parents may notice</p>
+                  <h3 className="mt-1.5 text-sm font-semibold leading-5 text-slate-950">{scenario.signal}</h3>
+                  <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{scenario.observe}</p>
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <p className="text-xs font-semibold text-violet-800">{scenario.fit}</p>
+                    <p className="mt-1 text-xs text-slate-500">Pathway to inspect: {scenario.routeName}</p>
+                    <Link to={scenario.routePath} className="mt-2 inline-flex min-h-[40px] items-center text-xs font-semibold text-slate-900 underline underline-offset-3">
+                      {scenario.cta} ↗
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
 
-              <Link to="/grammar" className="rounded-[18px] border border-violet-100 bg-violet-50/60 px-4 py-3.5 transition hover:-translate-y-0.5">
-                <h3 className="text-sm font-semibold text-slate-950">Sentence formation is inaccurate or incomplete</h3>
-                <p className="mt-1 text-sm leading-5 text-slate-600">Tense, word order, articles, prepositions, or sentence control may need Grammar support.</p>
-                <span className="mt-2 inline-block text-xs font-semibold text-violet-800">Check Grammar support ↗</span>
-              </Link>
-
-              <Link to="/confidence-building-program-kids" className="rounded-[18px] border border-amber-100 bg-amber-50/65 px-4 py-3.5 transition hover:-translate-y-0.5">
-                <h3 className="text-sm font-semibold text-slate-950">Speaks well one-to-one but hesitates in class or groups</h3>
-                <p className="mt-1 text-sm leading-5 text-slate-600">If language is adequate and hesitation itself is the barrier, specialist confidence support may fit better.</p>
-                <span className="mt-2 inline-block text-xs font-semibold text-amber-800">Check Confidence Building ↗</span>
-              </Link>
-
-              <div className="rounded-[18px] border border-sky-100 bg-sky-50/65 px-4 py-3.5">
-                <h3 className="text-sm font-semibold text-slate-950">Has ideas but cannot organise a clear answer</h3>
-                <p className="mt-1 text-sm leading-5 text-slate-600">Complete responses, idea organisation, storytelling, and audience-facing communication are core Speaking territory.</p>
-                <p className="mt-2 text-xs font-semibold text-sky-800">Best fit: this Speaking programme</p>
-                <Link to="/book-demo" className="mt-2 inline-block text-xs font-semibold text-slate-700 underline underline-offset-2">
-                  Check the right speaking level
-                </Link>
+          <div className="mt-5 grid gap-3 md:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Why Tiny Steps separates these needs</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Spoken communication is multidimensional. A child may need support with language accuracy, idea organisation, delivery, confidence, listening, or audience adaptation—and those are not interchangeable. The free assessment checks observable performance before recommending a programme.
+              </p>
+              <div className="mt-3 grid gap-2">
+                {speakingFitReferences.map((source) => (
+                  <a
+                    key={source.href}
+                    href={source.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
+                  >
+                    <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
+                  </a>
+                ))}
               </div>
+            </div>
+
+            <div className="rounded-[20px] border border-amber-100 bg-amber-50/60 p-4 sm:p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-900">Educational assessment boundary</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                These are programme-fit cues, not diagnoses. Tiny Steps can assess which educational pathway appears most useful. If a parent has broader concerns about speech, language, hearing, or communication development, a qualified speech-language or hearing professional is the appropriate source for clinical assessment.
+              </p>
+              <a
+                href="https://www.asha.org/public/developmental-milestones/communication-milestones/"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-block text-xs font-semibold text-slate-900 underline underline-offset-3"
+              >
+                Read ASHA&apos;s milestone guidance ↗
+              </a>
             </div>
           </div>
         </div>
