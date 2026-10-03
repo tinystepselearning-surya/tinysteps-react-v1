@@ -60,6 +60,7 @@ async function readAuthDirectory(auth) {
     users.push(...result.users.map((user) => ({
       uid: user.uid,
       disabled: user.disabled,
+      roleHint: extractAuthRoleHint(user.customClaims || {}),
     })));
     pageToken = result.pageToken;
   } while (pageToken);
@@ -162,6 +163,27 @@ function normalizeRole(value) {
   return map[key] || null;
 }
 
+function extractAuthRoleHint(claims) {
+  const direct = normalizeRole(claims?.role) || normalizeRole(claims?.rawRole);
+  if (direct) return direct;
+
+  const candidates = [
+    ['admin', 'admin'],
+    ['founder', 'founder'],
+    ['teacher', 'teacher'],
+    ['parent', 'parent'],
+    ['kid', 'kid'],
+    ['learningPartner', 'learningPartner'],
+    ['learning-partner', 'learningPartner'],
+    ['schoolAdmin', 'schoolAdmin'],
+    ['school-admin', 'schoolAdmin'],
+  ];
+  for (const [claimKey, role] of candidates) {
+    if (claims?.[claimKey] === true) return role;
+  }
+  return null;
+}
+
 async function main() {
   if (!getApps().length) {
     initializeApp({
@@ -226,6 +248,10 @@ async function main() {
   const kidIds = new Set(kids.map((entry) => entry.id));
   const schoolIds = new Set(schools.map((entry) => entry.id));
   const authUidSet = new Set(authUsers.map((entry) => entry.uid));
+
+  const schoolUserPersonIds = new Set(
+    schoolUsers.map((entry) => text(entry.data.userId) || entry.id),
+  );
 
   const roleMirrorIds = {
     parents: new Set(parents.map((entry) => entry.id)),
@@ -315,9 +341,22 @@ async function main() {
           false,
         );
       }
+
+      if (
+        role === 'schoolAdmin' &&
+        !schoolUserPersonIds.has(user.id)
+      ) {
+        issues.add(
+          'school_admin_missing_school_user_scope',
+          user.path,
+          ['role', 'roles'],
+          true,
+        );
+      }
     }
   }
 
+  const authOnlyAccounts = [];
   for (const authUser of authUsers) {
     if (!userIds.has(authUser.uid)) {
       issues.add(
@@ -326,6 +365,29 @@ async function main() {
         ['uid'],
         false,
       );
+
+      const mirrorCollections = Object.entries(roleMirrorIds)
+        .filter(([, ids]) => ids.has(authUser.uid))
+        .map(([name]) => name)
+        .sort();
+      const schoolUserPresent = schoolUserPersonIds.has(authUser.uid);
+      const learnerSourcePresent = kidIds.has(authUser.uid);
+      const hasBusinessReference =
+        mirrorCollections.length > 0 ||
+        schoolUserPresent ||
+        learnerSourcePresent;
+
+      authOnlyAccounts.push({
+        sourceToken: token(`firebaseAuth/${authUser.uid}`),
+        disabled: Boolean(authUser.disabled),
+        roleHint: authUser.roleHint || null,
+        mirrorCollections,
+        schoolUserPresent,
+        learnerSourcePresent,
+        disposition: hasBusinessReference
+          ? 'auth_only_account_with_business_reference_requires_manual_mapping'
+          : 'auth_orphan_excluded_from_person_backfill_pending_account_cleanup_review',
+      });
     }
   }
 
@@ -481,9 +543,15 @@ async function main() {
       firebaseAuthUsersBackedByFirestoreUser: authUsers.filter((entry) =>
         userIds.has(entry.uid),
       ).length,
+      authOnlyAccounts: authOnlyAccounts.length,
       userKidDocumentIdCollisions: [...userIds]
         .filter((id) => kidIds.has(id))
         .length,
+    },
+    authOnlyAccounts,
+    expectedTransformations: {
+      organisationScopedSchoolAdminAssignments: schoolUsers.length,
+      householdBackfillDeferred: true,
     },
     targetExistingCounts,
     planned: {
@@ -527,6 +595,7 @@ async function main() {
   console.log(`Users: ${report.sourceCounts.users}; Firebase Auth users: ${report.sourceCounts.firebaseAuthUsers}`);
   console.log(`Kids: ${report.sourceCounts.kids}; Schools: ${report.sourceCounts.schools}; School users: ${report.sourceCounts.schoolUsers}`);
   console.log(`User↔Auth direct UID coverage: ${report.sourceCoverage.firestoreUsersBackedByFirebaseAuth}/${report.sourceCounts.users}`);
+  console.log(`Auth-only accounts excluded from Person backfill: ${report.sourceCoverage.authOnlyAccounts}`);
   console.log(`Planned canonical documents: ${report.planned.totalDocuments}`);
   console.log(`Planned by collection: ${JSON.stringify(report.planned.byCollection)}`);
   console.log(`Existing canonical target counts: ${JSON.stringify(report.targetExistingCounts)}`);
