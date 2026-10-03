@@ -114,6 +114,21 @@ The output is a migration-safe contract, not a rewrite.
 6. A migration may introduce a new canonical ID only when the current ID represents the wrong concept or cannot safely remain stable.
 7. Legacy aliases may remain readable during migration but must have one documented canonical destination.
 
+
+### 4.1 Existing identity adoption rules
+
+Repository identity audit establishes these migration rules:
+
+1. Existing auth-backed users may preserve the current `users` document-ID **value** as their initial `Person.id` after live 1:1 verification.
+2. Preserving that opaque value does not preserve semantic coupling to Firebase. Firebase UID is represented separately as `AuthIdentity.providerSubject`.
+3. A later auth-provider/UID change must not change `Person.id`.
+4. New Person IDs are Tiny Steps generated and are not derived from Firebase UID, email or phone.
+5. Existing `parents/{id}`, `teachers/{id}`, `learningPartners/{id}` and `admins/{id}` are role/profile mirrors, not separate Person authorities.
+6. Existing `kids/{kidId}` is the canonical learner-ID candidate. Root/nested `students` require explicit compatibility/projection classification before retirement.
+7. Existing IDs are never merged based only on name, email similarity or collection naming.
+8. Identity adoption requires a read-only reconciliation report before any backfill/write migration.
+
+
 ## 5. Relationship contract
 
 If a relationship can change independently, it is modeled as a relationship record rather than authoritative convenience fields/arrays.
@@ -276,12 +291,12 @@ Wave 0 uses six bounded work packages:
 
 1. **Engineering delivery baseline** — local-first development validation, deployment-only GitHub Actions, and test/workflow retirement rules.
 2. **Contracts & current-state map** — establish this contract and verified legacy-to-canonical inventory.
-3. **Identity/reference audit** — determine which existing IDs/aliases can remain canonical and where relationship duplication exists.
+3. **Identity/reference audit** — code-level decisions are recorded in `IDENTITY_REFERENCE_AUDIT.md`; completion requires the read-only live reference report and exception review.
 4. **Academic/enrollment audit** — map Course/Enrollment/group/teacher/schedule concepts and their current ownership.
 5. **Shared experience/design-system inventory** — identify reusable shells/templates/components and controlled variants.
 6. **Migration standard & Wave 0 exit review** — freeze migration metadata, compatibility and review gates before Wave 1.
 
-These are planning packages, not five new runtime systems.
+These are planning packages, not six new runtime systems.
 
 ## 15. Wave 0 exit gate
 
