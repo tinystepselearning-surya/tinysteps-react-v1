@@ -52,7 +52,12 @@
     "audit:avs-soak": "node scripts/avs-production-soak-audit.mjs",
     "audit:avs-soak-compare": "node scripts/avs-production-soak-compare.mjs",
     "test:critical": "vitest run src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/admin/attendanceValidationBusinessReconciliation.spec.ts src/tests/functions/ParentPaymentAllocator.spec.ts src/tests/functions/parentMonthlyBillingReadModel.spec.ts src/tests/hooks/useUpcomingSessions.spec.tsx src/tests/pages/TeacherMyStudentsV2.spec.tsx",
-    "test:full:coverage": "vitest run --coverage"
+    "test:full:coverage": "vitest run --coverage",
+    "build:deploy": "npm run generate:rss && npm run gen:sitemaps && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && node scripts/write-indexnow-key.mjs",
+    "preflight": "node scripts/preflight.mjs",
+    "preflight:plan": "node scripts/preflight.mjs --plan",
+    "preflight:full": "node scripts/preflight.mjs --full",
+    "test:full": "vitest run"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
