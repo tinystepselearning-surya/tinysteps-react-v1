@@ -24,13 +24,13 @@ const SPEAKING_LEVEL_SEQUENCE = [
     name: 'Public Speaking Foundations',
     routePath: '/courses/public-speaking-foundations',
     level: 'Basic',
-    summary: 'Build organised responses, picture talk, show-and-tell, simple storytelling, clear expression, and short presentation readiness.',
+    summary: 'Build reciprocal conversation, listening, questioning, clarification, description, explanation, storytelling, and short audience-facing communication.',
   },
   {
     name: 'Public Speaking Excellence',
     routePath: '/courses/public-speaking-excellence',
     level: 'Advanced',
-    summary: 'Extend into longer structured talks, storytelling, presentations, guided debate, audience awareness, and stronger delivery.',
+    summary: 'Extend into purposeful dialogue, reasoning, evidence, perspective, mediation, constructive discussion, presentation, and responsible AI-era communication.',
   },
 ];
 
@@ -447,13 +447,14 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     track: 'speaking',
     breadcrumbName: 'Public Speaking Foundations',
     teaches: [
-      'organised spoken responses',
-      'picture talk',
-      'show and tell',
-      'simple storytelling',
-      'clear voice and expression',
-      'short presentation structure',
-      'guided question and answer',
+      'reciprocal conversation and turn-taking',
+      'listening and response relevance',
+      'questioning, follow-up, and clarification',
+      'description and explanation',
+      'storytelling and simple perspective',
+      'audience awareness and intelligible delivery',
+      'short talks and guided question and answer',
+      'independent communication on fresh tasks',
     ],
     areaServed: ['India', 'Worldwide'],
     keywords: [
@@ -466,36 +467,37 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     stageAuthority: {
       title: 'Is Public Speaking Foundations the right starting level for my child?',
       directAnswer:
-        'Public Speaking Foundations is the first Tiny Steps Public Speaking level for children who can communicate basic ideas but need more structure, organisation, expression, and practice with picture talk, show-and-tell, storytelling, and short presentations. Placement is based on readiness as well as age.',
+        'Public Speaking Foundations is the first Tiny Steps Speaking & Communication level for children building stronger reciprocal conversation, listening, useful questions, clarification, organised responses, explanation, storytelling, and short presentations. Placement is based on readiness as well as age.',
       prerequisiteNote:
         'No previous Public Speaking course is required. The child should have enough spoken language to attempt familiar responses. If everyday conversation, sentence formation, or speaking confidence itself is the main barrier, the assessment may recommend Spoken English, Grammar, or the specialist Confidence Building pathway before or alongside Public Speaking.',
       entrySignals: [
         'Can communicate familiar ideas in short spoken responses, with or without light prompting.',
         'Needs help organising an answer instead of giving disconnected details.',
-        'Is ready to practise picture talk, show-and-tell, simple storytelling, and short speaking tasks.',
+        'Is ready to practise listening, useful questions, picture talk, explanation, storytelling, and short speaking tasks.',
         'Benefits from clear models, guided retries, and predictable presentation structure.',
       ],
       skillsBuilt: [
-        'Organise short responses around one clear idea.',
-        'Use picture talk and show-and-tell to add relevant detail.',
-        'Sequence simple stories with a clearer beginning, middle, and end.',
-        'Use voice, pace, posture, and eye contact more intentionally.',
-        'Deliver short prepared or guided talks and handle simple follow-up questions.',
+        'Sustain short back-and-forth exchanges and respond to what was actually said.',
+        'Ask relevant questions, follow up, and clarify when meaning is unclear.',
+        'Describe, explain, compare, and give simple reasons with useful detail.',
+        'Sequence simple stories and consider another person’s perspective.',
+        'Use intelligible pace, volume, emphasis, and listener awareness without treating eye contact or accent as a mastery requirement.',
+        'Deliver short prepared or guided talks, handle simple questions, and transfer the skill to a fresh task.',
       ],
       exitSignals: [
         'Can sustain a short 30–60 second talk on a familiar topic with less prompting.',
         'Organises familiar ideas into a simple sequence or structure.',
         'Uses clearer delivery and can respond to simple follow-up questions.',
-        'Is ready for longer speeches, richer storytelling, presentations, impromptu speaking, and guided debate.',
+        'Is ready for deeper dialogue, questioning, reasoning, perspective, presentations, impromptu speaking, and constructive discussion.',
       ],
       sequence: SPEAKING_LEVEL_SEQUENCE,
       progressionTitle: 'Tiny Steps Public Speaking progression',
       progressionDescription:
-        'Foundations and Excellence are readiness-based Public Speaking levels. Age is a guide, while assessment considers response organisation, storytelling, presentation readiness, delivery, and how much prompting the child needs.',
+        'Foundations and Excellence are readiness-based Speaking & Communication levels. Age is a guide, while assessment considers interaction, listening, questioning, organisation, reasoning, storytelling, audience communication, and how much prompting the child needs.',
       providerNote:
         'Live classes are delivered by Tiny Steps teachers within the Tiny Steps academic system. Teacher assignment can vary by schedule and learning fit; the curriculum and progression stay shared.',
       teachingMethod:
-        'Teachers model the speaking task, guide one attempt, give specific feedback, invite a retry, and gradually reduce support as the child becomes more independent.',
+        'Teachers use responsive conversation, modelling, dialogic picture or story work, role-play, guided practice, specific feedback, retries, and fresh-task transfer. Support is gradually faded as communication becomes more independent.',
     },
     relatedLinks: [
       { label: 'See the complete Speaking & Communication programme', to: '/speaking' },
@@ -550,14 +552,14 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     track: 'speaking',
     breadcrumbName: 'Public Speaking Excellence',
     teaches: [
-      'structured speeches',
-      'storytelling and retelling',
-      'presentation planning',
-      'impromptu speaking',
-      'guided debate and opinion speaking',
-      'audience awareness',
-      'voice modulation and delivery',
-      'question and answer handling',
+      'purposeful dialogue and active listening',
+      'clarifying, follow-up, and probing questions',
+      'reasoning, explanation, evidence, and source awareness',
+      'storytelling, perspective, and impromptu speaking',
+      'mediation, constructive disagreement, and guided debate',
+      'presentation planning and audience adaptation',
+      'intelligible delivery and question-and-answer handling',
+      'responsible AI-era communication, privacy, evaluation, and prompting',
     ],
     areaServed: ['India', 'Worldwide'],
     keywords: [
@@ -570,21 +572,23 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     stageAuthority: {
       title: 'Is Public Speaking Excellence the right level for my child?',
       directAnswer:
-        'Public Speaking Excellence is the advanced Tiny Steps Public Speaking level for children who can already organise familiar responses and are ready for longer speeches, richer storytelling, presentations, impromptu speaking, guided debate, and stronger audience-facing delivery.',
+        'Public Speaking Excellence is the advanced Tiny Steps Speaking & Communication level for children who can already organise familiar responses and are ready for purposeful dialogue, stronger questioning, reasoning with evidence, perspective, mediation, presentations, impromptu speaking, constructive debate, and responsible AI-era communication.',
       prerequisiteNote:
         'Children may arrive from Public Speaking Foundations or demonstrate equivalent readiness during assessment. The useful prerequisite is not a certificate from the earlier level; it is the ability to communicate organised ideas, sustain a short talk, and respond to feedback with growing independence.',
       entrySignals: [
         'Can sustain a short organised talk on a familiar topic.',
         'Can sequence a simple story or explanation with reasonable clarity.',
         'Can respond to basic follow-up questions without needing the full answer supplied.',
-        'Is ready for longer talks, presentations, impromptu prompts, opinion speaking, and guided debate.',
+        'Is ready for deeper dialogue, reasoning, presentations, impromptu prompts, perspective-taking, mediation, and constructive debate.',
       ],
       skillsBuilt: [
-        'Plan and deliver longer structured speeches with clearer openings, details, and conclusions.',
-        'Use storytelling, examples, and reasons to develop ideas for an audience.',
-        'Practise presentations, impromptu speaking, opinion sharing, and guided debate.',
-        'Use voice modulation, pace, eye contact, and audience awareness more deliberately.',
-        'Handle follow-up questions and adjust a response after feedback.',
+        'Adapt communication to purpose, audience, and context.',
+        'Ask, clarify, paraphrase, probe, and build on another person’s ideas.',
+        'Explain reasoning with claims, reasons, examples, evidence, and source awareness.',
+        'Use storytelling, perspective, mediation, persuasion, and constructive disagreement.',
+        'Use intelligible pace, pausing, emphasis, and audience awareness without accent conformity.',
+        'Evaluate information and supervised AI outputs while protecting privacy and keeping human responsibility for the final judgement.',
+        'Plan and deliver presentations, handle Q&A, and transfer communication skills to fresh tasks.',
       ],
       exitSignals: [
         'Can plan and deliver a structured 1–2 minute talk with less teacher prompting.',
@@ -599,7 +603,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
       providerNote:
         'Live classes are delivered by Tiny Steps teachers within the Tiny Steps academic system. Teacher assignment can vary by schedule and learning fit; the curriculum and progression stay shared.',
       teachingMethod:
-        'Teachers model structure and delivery, use guided practice and feedback, ask the child to retry, and then move the skill into fresh speeches, stories, presentations, questions, or debate-style prompts.',
+        'Teachers use purposeful dialogue, sustained shared thinking, modelling, planning, guided practice, feedback, retries, and fresh-task transfer across interviews, explanations, stories, discussions, presentations, and supervised AI-literacy tasks.',
     },
     relatedLinks: [
       { label: 'Review Public Speaking Foundations', to: '/courses/public-speaking-foundations' },
