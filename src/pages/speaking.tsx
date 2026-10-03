@@ -99,6 +99,11 @@ const faqItems = [
       `Basic Public Speaking is designed for ${speakingFacts.levels.beginner.ageRange.label} and has ${speakingFacts.levels.beginner.lessonCount} lessons. Advanced Public Speaking is designed for ${speakingFacts.levels.advanced.ageRange.label} and has ${speakingFacts.levels.advanced.lessonCount} lessons. The ranges overlap at age 7, so placement also considers speaking readiness and current skill level.`,
   },
   {
+    question: 'Is age 4 too young to start public speaking classes?',
+    answer:
+      'Age 4 can be appropriate when the programme is really communication foundations: short answers, description, storytelling, show-and-tell, listening, turn-taking, and simple questions. Tiny Steps does not expect four-year-olds to give formal speeches or debate. The activities and level of support change with age and readiness.',
+  },
+  {
     question: 'Are Tiny Steps public speaking classes live and 1:1?',
     answer:
       `Yes. Standard Tiny Steps 1:1 classes are live online and run for ${PUBLIC_SESSION_DURATION_LABEL}. Small-group options may also be available for selected schedules or programme fits.`,
@@ -178,6 +183,74 @@ const speakingSpecialistPathways = [
     description: 'Use when speaking comfort, participation, hesitation, or dependence on prompting is the primary barrier.',
   },
 ];
+
+const speakingDevelopmentalStages = [
+  {
+    ageLabel: 'Ages 4–5',
+    title: 'Communication Foundations',
+    lead: 'At this age, public speaking begins with communication—not podium speeches.',
+    skills: [
+      'Answer familiar questions in connected ideas',
+      'Describe pictures, people, experiences, and choices',
+      'Retell simple stories with a clear sequence',
+      'Use show-and-tell and role play with prompts',
+      'Listen, take turns, and ask simple questions',
+    ],
+    boundary:
+      'Keep speaking turns playful, short, and heavily supported. Formal speeches, debate, and sustained presentation performance are not the goal.',
+  },
+  {
+    ageLabel: 'Ages 6–8',
+    title: 'Public Speaking Foundations',
+    lead: 'Children can begin organising ideas for a listener and speaking for a clear purpose.',
+    skills: [
+      'Build complete, structured answers',
+      'Use beginning–middle–end storytelling',
+      'Give short prepared presentations',
+      'State opinions and support them with reasons',
+      'Practise question-and-answer, pace, clarity, and audience awareness',
+    ],
+    boundary:
+      'Tasks stay concrete and age-appropriate, with modelling and guided retries before longer or more formal speaking is expected.',
+  },
+  {
+    ageLabel: 'Ages 9–12',
+    title: 'Advanced Communication & Public Speaking',
+    lead: 'Older primary learners can work with more formal, persuasive, and audience-aware speaking tasks.',
+    skills: [
+      'Plan and deliver structured presentations',
+      'Practise impromptu and extempore speaking',
+      'Develop persuasive speaking and guided debate',
+      'Use reasons, examples, and evidence to justify a viewpoint',
+      'Adapt language to audience and respond thoughtfully to questions',
+    ],
+    boundary:
+      'Advanced work should increase independence, reasoning, audience adaptation, and discussion skills without turning every lesson into a memorised speech.',
+  },
+] as const;
+
+const speakingDevelopmentalReferences = [
+  {
+    label: 'ASHA communication milestones: ages 4–5',
+    href: 'https://www.asha.org/public/developmental-milestones/communication-milestones-4-to-5-years/',
+    note: 'Supports longer, more complex sentences, connected storytelling, directions, description, and conversational participation at this stage.',
+  },
+  {
+    label: 'NAEYC: Developmentally Appropriate Practice',
+    href: 'https://www.naeyc.org/node/3807',
+    note: 'Supports strengths-based, play-based teaching that is appropriate to each child’s developmental, cultural, linguistic, and ability profile.',
+  },
+  {
+    label: 'England National Curriculum: Spoken language, Years 1–6',
+    href: 'https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study',
+    note: 'Includes relevant questioning, structured explanations, presentations, discussion, debate, audience awareness, and adapting communication to context.',
+  },
+  {
+    label: 'Australian Curriculum v9: English',
+    href: 'https://www.australiancurriculum.edu.au/curriculum-information/understand-this-learning-area/english',
+    note: 'Progresses listening, interacting, speaking, audience awareness, and spoken presentations across the primary years.',
+  },
+] as const;
 
 export default function SpeakingPage() {
   const canonicalPath = '/speaking';
@@ -293,6 +366,24 @@ export default function SpeakingPage() {
       })),
     };
 
+    const speakingDevelopmentalStagesSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#developmental-speaking-stages`,
+      name: 'Tiny Steps age-appropriate public speaking and communication progression',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: speakingDevelopmentalStages.length,
+      itemListElement: speakingDevelopmentalStages.map((stage, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: `${stage.ageLabel}: ${stage.title}`,
+          description: `${stage.lead} ${stage.boundary}`,
+        },
+      })),
+    };
+
     const speakingEvidenceSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -319,7 +410,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -424,6 +515,73 @@ export default function SpeakingPage() {
             <p className="ts-speaking-answer-summary mt-2 max-w-[930px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
               Public Speaking & Communication is for children who can already communicate at a basic level and need stronger structured answers, idea organisation, storytelling, show-and-tell, presentations, audience awareness, and audience-facing communication practice. Everyday conversational fluency belongs to Spoken English; if the main difficulty is one-word everyday answers or sentence formation itself, Spoken English or Grammar may be the better starting point. Confidence-only barriers belong to Confidence Building. The free {demoMinutes}-minute 1:1 assessment helps separate these needs before placement.
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="age-appropriate-speaking" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-10">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Age-appropriate progression</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                What public speaking should look like at different ages
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                There is no single global rule that says children should begin public speaking at one exact age. Tiny Steps uses developmental communication evidence and primary-school speaking-and-listening frameworks as reference points, then adjusts the task to the child.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+                Age four can be a suitable starting point for communication foundations—but not for adult-style speeches.
+              </p>
+            </div>
+
+            <div className="grid gap-3">
+              {speakingDevelopmentalStages.map((stage) => (
+                <article key={stage.ageLabel} className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-800">{stage.ageLabel}</span>
+                    <h3 className="text-base font-semibold text-slate-950">{stage.title}</h3>
+                  </div>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700">{stage.lead}</p>
+                  <ul className="mt-3 grid gap-x-5 gap-y-1.5 text-sm leading-6 text-slate-600 sm:grid-cols-2">
+                    {stage.skills.map((skill) => (
+                      <li key={skill} className="flex gap-2">
+                        <span aria-hidden="true" className="mt-[9px] h-1.5 w-1.5 flex-none rounded-full bg-violet-400" />
+                        <span>{skill}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">
+                    <strong className="text-slate-700">Developmental boundary:</strong> {stage.boundary}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">Evidence & international curriculum references</p>
+            <p className="mt-2 max-w-4xl text-xs leading-5 text-slate-500">
+              These references guide the progression; they do not create a universal public-speaking starting age. Tiny Steps still uses individual assessment and readiness for placement.
+            </p>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {speakingDevelopmentalReferences.map((source) => (
+                <a
+                  key={source.href}
+                  href={source.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
+                >
+                  <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-[18px] border border-amber-100 bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
+            <strong className="text-slate-950">Programme note:</strong> these three age bands are a developmental guide, not three new Tiny Steps course products. The existing Public Speaking Foundations and Public Speaking Excellence tracks remain the actual course architecture, and assessment determines the appropriate level.
           </div>
         </div>
       </section>
