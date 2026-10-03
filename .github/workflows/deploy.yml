@@ -36,6 +36,8 @@ jobs:
       school_transport_required: ${{ steps.impact.outputs.school_transport_required }}
       avs_transport_required: ${{ steps.impact.outputs.avs_transport_required }}
       lead_iam_required: ${{ steps.impact.outputs.lead_iam_required }}
+      r8_validation_required: ${{ steps.specialist-impact.outputs.r8_validation_required }}
+      enrollment_integrity_required: ${{ steps.specialist-impact.outputs.enrollment_integrity_required }}
     steps:
       - name: Checkout repository history
         uses: actions/checkout@v4
@@ -137,6 +139,38 @@ jobs:
           --force-firestore-indexes "${{ steps.artifact-baselines.outputs.firestore_indexes_force }}"
           --sha "${{ github.sha }}"
 
+      - name: Resolve specialist validation impact
+        id: specialist-impact
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}
+        run: |
+          set -euo pipefail
+
+          changed_file_list="$(git diff --name-only "${BASE_SHA}" "${GITHUB_SHA}")"
+
+          r8="false"
+          enrollment="false"
+
+          while IFS= read -r path; do
+            [[ -z "${path}" ]] && continue
+            case "${path}" in
+              src/content/phonicsKnowledge/*|src/content/phonicsCurriculum/*|src/tests/seo/resourcesR*|functions/src/phonicsCurriculumConfig.ts|src/lib/resourcesArchitectureRegistry.js|src/lib/publicRouteManifest.js|src/lib/routeSeoRegistry.js|src/app/routes.tsx|scripts/audit-resources-r8-phonics-knowledge.mjs|scripts/audit-resources-r7-aeo-geo.mjs|scripts/audit-resources-r0.mjs|scripts/audit-resources-r0-rendered.mjs|scripts/audit-semantic-internal-links.mjs|scripts/audit-canonical-topic-ownership.mjs|docs/seo/resources-architecture/*)
+                r8="true"
+                ;;
+            esac
+            case "${path}" in
+              functions/src/lifecycle.ts|functions/src/scheduling/rollingScheduleCourseTransition.ts|functions/src/scheduling/rollingScheduleLifecycle.ts|functions/src/scheduling/rollingScheduleMaterializer.ts|src/lib/createEnrollmentCallable.ts|src/pages/admin/EnrollmentManagement/*|src/pages/admin/StudentManagement/*|src/tests/emulator/*|vitest.emulator.config.ts)
+                enrollment="true"
+                ;;
+            esac
+          done <<< "${changed_file_list}"
+
+          echo "r8_validation_required=${r8}" >> "${GITHUB_OUTPUT}"
+          echo "enrollment_integrity_required=${enrollment}" >> "${GITHUB_OUTPUT}"
+          echo "R8 specialist validation: ${r8}"
+          echo "Enrollment integrity validation: ${enrollment}"
+
   build-and-test:
     needs: analyze-changes
     if: >-
@@ -229,8 +263,10 @@ jobs:
           (github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true')
         run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
 
-      - name: Setup Java for Firestore emulator
-        if: needs.analyze-changes.outputs.firestore_validation_required == 'true'
+      - name: Setup Java for emulator validation
+        if: >-
+          needs.analyze-changes.outputs.firestore_validation_required == 'true' ||
+          needs.analyze-changes.outputs.enrollment_integrity_required == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -251,6 +287,12 @@ jobs:
           --project ${{ env.FIREBASE_PROJECT_ID }}
           --only firestore
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --config functions/vitest.config.ts functions/test/websiteLeadDeduplication.emulator.spec.ts"
+
+      - name: Run enrollment integrity emulator suite
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.enrollment_integrity_required == 'true'
+        run: npm run test:emulator:enrollment-integrity
 
       - name: Cache Playwright browsers
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
@@ -338,6 +380,27 @@ jobs:
           needs.analyze-changes.outputs.content_only_validation != 'true'
         run: npm run test:critical
 
+      - name: Run R8 phonics knowledge specialist validation
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.r8_validation_required == 'true'
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          npx vitest run src/tests/seo/resourcesR src/content/phonicsCurriculum
+          if [[ "${PR_HEAD_REF}" == seo/resources-r8* || "${PR_HEAD_REF}" == seo/resources-r9* ]]; then
+            node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --base "${PR_BASE_SHA}" --report
+          else
+            node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --report
+          fi
+          node scripts/audit-semantic-internal-links.mjs
+          node scripts/audit-canonical-topic-ownership.mjs
+          node scripts/audit-resources-r7-aeo-geo.mjs
+          node scripts/audit-resources-r0.mjs
+
       - name: Validate Ask Tiny Steps production build configuration
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: node scripts/validate-ask-tiny-steps-build-env.mjs
@@ -345,6 +408,16 @@ jobs:
       - name: Build app
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run build
+
+      - name: Run rendered R8 specialist validation
+        if: >-
+          github.event_name == 'pull_request' &&
+          needs.analyze-changes.outputs.r8_validation_required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-resources-r8-phonics-knowledge.mjs --r9-approved --dist
+          node scripts/audit-resources-r0-rendered.mjs --strict
 
       - name: Run SEO smoke test
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
