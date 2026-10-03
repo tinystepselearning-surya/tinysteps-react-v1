@@ -2,7 +2,7 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'why-public-speaking-is-important-for-kids',
-  title: 'Why Public Speaking Is Important for Kids: Communication Skills in the AI Era',
+  title: 'Why Public Speaking Is Important for Kids',
   category: 'Public Speaking',
   author: 'Priya',
   date: '2026-10-03',
