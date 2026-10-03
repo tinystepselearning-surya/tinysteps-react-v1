@@ -4,7 +4,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
-  EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
+  BATCH_SIZE, EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan, firebaseCliDiagnosticExcerpt,
   functionsChangeDecision, normalizeRevisionId, parseDeploymentArgs,
   remainingTargets, retryProvider404, validateCheckpoint,
@@ -20,7 +20,6 @@ const REPORT_PATH = resolve('artifacts/functions-deployment-report.json');
 const MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
 const SETTLE_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_MS = 15 * 1000;
-const MAX_BATCH_SIZE = 10;
 const RETRY_BACKOFF_SECONDS = [60, 120, 240];
 const MAX_ATTEMPTS = RETRY_BACKOFF_SECONDS.length + 1;
 
@@ -65,15 +64,15 @@ try {
   report.targetCount = plan.length;
   report.targets = plan.map(({ id, selector }) => ({ id, selector }));
   report.planHash = deploymentPlanHash({ project: PROJECT, region: EXPECTED_REGION, codebase, targets: report.targets });
-  const groups = batch(plan, MAX_BATCH_SIZE);
-  report.batchSize = MAX_BATCH_SIZE;
+  const groups = batch(plan, BATCH_SIZE);
+  report.batchSize = BATCH_SIZE;
   report.retryBackoffSeconds = RETRY_BACKOFF_SECONDS;
   report.batchCount = groups.length;
 
   if (options.mode === '--plan') {
     report.status = 'planned';
     report.finishedAt = new Date().toISOString();
-    console.log(`Functions deployment plan ${report.planHash}: ${plan.length} targets in ${groups.length} sequential batch(es) of at most ${MAX_BATCH_SIZE}.`);
+    console.log(`Functions deployment plan ${report.planHash}: ${plan.length} targets in ${groups.length} sequential batch(es) of at most ${BATCH_SIZE}.`);
     groups.forEach((group, index) => console.log(`Batch ${index + 1}: ${group.map(target => target.id).join(', ')}`));
     await persistReport();
     process.exit(0);
