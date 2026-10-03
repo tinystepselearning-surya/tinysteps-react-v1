@@ -577,3 +577,30 @@ test('Hosting deployment reuses the validated dist artifact instead of rebuildin
   assert.doesNotMatch(deployJob, /Cache Playwright browsers for Hosting prerender/);
   assert.doesNotMatch(deployJob, /run: npm ci\n/);
 });
+
+
+test('ordinary PR CI uses affected tests plus critical regressions without coverage', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+
+  assert.match(workflow, /Run affected unit tests[\s\S]*--changed "\$\{\{ github\.event\.pull_request\.base\.sha \}\}"[\s\S]*--passWithNoTests/);
+  assert.match(workflow, /Run critical regression pack[\s\S]*npm run test:critical/);
+  assert.doesNotMatch(workflow, /Run full unit tests/);
+  assert.doesNotMatch(workflow, /test:unit -- --coverage/);
+  assert.doesNotMatch(workflow, /codecov\/codecov-action/);
+  assert.match(pkg.scripts['test:critical'], /sessionScheduleIntegrity\.spec\.ts/);
+  assert.match(pkg.scripts['test:critical'], /attendanceValidationBusinessReconciliation\.spec\.ts/);
+  assert.match(pkg.scripts['test:critical'], /ParentPaymentAllocator\.spec\.ts/);
+});
+
+test('full unit coverage is isolated to scheduled or manual certification', () => {
+  const workflow = readFileSync('.github/workflows/full-regression-certification.yml', 'utf8');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+
+  assert.match(workflow, /schedule:/);
+  assert.match(workflow, /cron: '30 0 \* \* \*'/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /npm run test:full:coverage/);
+  assert.match(workflow, /codecov\/codecov-action/);
+  assert.equal(pkg.scripts['test:full:coverage'], 'vitest run --coverage');
+});
