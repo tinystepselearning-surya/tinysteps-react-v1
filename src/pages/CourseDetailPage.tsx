@@ -126,6 +126,12 @@ const CourseDetailPage: FC = () => {
   }, [slug]);
   const programPath = courseTrack === 'phonics' ? '/phonics' : courseTrack === 'grammar' ? '/grammar' : '/speaking';
   const programLabel = courseTrack === 'phonics' ? 'Phonics' : courseTrack === 'grammar' ? 'Grammar' : 'Speaking & Communication';
+  const curriculumRoadmapPath =
+    courseTrack === 'speaking'
+      ? '/curriculum?tab=speaking#course-levels'
+      : courseTrack === 'grammar'
+        ? '/curriculum?tab=grammar#course-levels'
+        : '/curriculum?tab=phonics#course-levels';
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const usedHrefs = useMemo(() => new Set<string>(), []);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[normalizedRawSlug || ''] || {};
@@ -319,7 +325,11 @@ const CourseDetailPage: FC = () => {
                     program: courseTrack,
                   }),
               },
-              { label: 'View Full Curriculum Roadmap', to: '/curriculum', variant: 'ghost' },
+              {
+                label: 'View Full Curriculum Roadmap',
+                to: curriculumRoadmapPath,
+                variant: 'ghost',
+              },
             ]}
             renderLink={(item, className) =>
               item.to ? (
@@ -517,7 +527,7 @@ const CourseDetailPage: FC = () => {
           />
           <p className="mt-3 text-sm leading-6 text-slate-700">
             See the detailed lesson sequence for this level below. For the relationship between Phonics, Grammar, and Speaking, see the{' '}
-            <Link to="/curriculum" className="font-semibold text-slate-900 underline underline-offset-4">
+            <Link to={curriculumRoadmapPath} className="font-semibold text-slate-900 underline underline-offset-4">
               complete Tiny Steps curriculum roadmap
             </Link>.
           </p>
@@ -591,13 +601,13 @@ const CourseDetailPage: FC = () => {
                 Book Free 35-Minute Demo
               </Link>
               <Link
-                to="/curriculum"
+                to={curriculumRoadmapPath}
                 onClick={() =>
                   trackCoursePageCtaClick({
                     page_path: canonicalPath,
                     cta_label: 'View Curriculum Roadmap',
                     cta_location: 'footer',
-                    destination_path: '/curriculum',
+                    destination_path: curriculumRoadmapPath,
                     program: courseTrack,
                   })
                 }

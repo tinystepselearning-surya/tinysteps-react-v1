@@ -10,12 +10,6 @@ const LEGACY_PHONICS_PROGRESS_COPY =
 const LEGACY_PHONICS_SUPPORT_COPY =
   'If progress is not becoming more independent despite consistent, stage-matched instruction and practice, review placement, teaching sequence, correction quality and text difficulty. Involve the child’s school and an appropriate qualified professional when broader speech, language, hearing or learning concerns are also present.';
 
-const LEGACY_CURRICULUM_PROGRAM_LINKS = Object.freeze({
-  '/curriculum?tab=phonics': '/phonics',
-  '/curriculum?tab=grammar': '/grammar',
-  '/curriculum?tab=speaking': '/speaking',
-});
-
 function canonicalInternalBlogLinks() {
   return {
     name: 'canonical-internal-blog-links-and-public-proof',
@@ -27,15 +21,9 @@ function canonicalInternalBlogLinks() {
         transformed = transformed.split(source).join(destination);
       }
 
-      // Legacy curriculum tab URLs all render the same roadmap document. Route
-      // programme exploration directly to the canonical programme owner pages.
-      // Keep test source unchanged so source-inspection tests still read the
-      // repository exactly as committed.
-      if (!id.includes('/src/tests/')) {
-        for (const [source, destination] of Object.entries(LEGACY_CURRICULUM_PROGRAM_LINKS)) {
-          transformed = transformed.split(source).join(destination);
-        }
-      }
+      // Programme-specific curriculum query links are intentionally preserved.
+      // CurriculumPage keeps /curriculum as canonical while useSearchParams
+      // selects the requested pathway for parents.
 
       // P0 public-fact normalization for remaining source-level migrations.
       // Commercial owner pages are now canonical in source and must not rely on
