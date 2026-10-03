@@ -36,6 +36,7 @@ const SELECT_FIELDS = {
     'lpId', 'status',
   ],
   classSessions: [
+    'date',
     'enrollmentId',
     'kidId', 'kidIds', 'studentId', 'studentIds', 'childId', 'childIds', 'childrenIds',
     'parentId', 'parentIds',
@@ -164,6 +165,8 @@ function makeIssueCollector(sampleSize) {
   const bySource = {};
   const byStatus = {};
   const byFields = {};
+  const byDateBucket = {};
+  const todayYmd = new Date().toISOString().slice(0, 10);
 
   const bump = (bucket, code, key) => {
     if (!bucket[code]) bucket[code] = {};
@@ -183,6 +186,15 @@ function makeIssueCollector(sampleSize) {
       bump(bySource, code, sourceKind(source));
       bump(byStatus, code, normalizeId(source?.data?.status).toLowerCase() || '(missing)');
       bump(byFields, code, normalizedFields.join('+') || '(none)');
+      const serviceDate = normalizeId(source?.data?.date);
+      const dateBucket = !serviceDate
+        ? '(missing)'
+        : serviceDate < todayYmd
+          ? 'past'
+          : serviceDate === todayYmd
+            ? 'today'
+            : 'future';
+      bump(byDateBucket, code, dateBucket);
 
       if (!samples[code]) samples[code] = [];
       if (samples[code].length >= sampleSize) return;
@@ -208,6 +220,7 @@ function makeIssueCollector(sampleSize) {
         bySource: sortNested(bySource),
         byStatus: sortNested(byStatus),
         byFields: sortNested(byFields),
+        byDateBucket: sortNested(byDateBucket),
         samples: Object.fromEntries(Object.entries(samples).sort(([a], [b]) => a.localeCompare(b))),
       };
     },
