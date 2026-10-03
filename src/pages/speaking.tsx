@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
-import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../config/publicFacts';
+import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS, formatPublicInr } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
 import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
@@ -24,9 +24,11 @@ import {
 const speakingFacts = SEMANTIC_FACTS.programmes.speaking;
 const demoMinutes = PUBLIC_SITE_FACTS.standardOffer.demoDurationMinutes;
 const speakingAiVisibility = getProgrammeAiVisibility('/speaking');
-const seoTitle = 'Public Speaking & Communication Classes for Kids | Tiny Steps';
+const speakingAgeRangeLabel = `Ages ${speakingFacts.levels.beginner.ageRange.min}–${speakingFacts.levels.advanced.ageRange.max}`;
+const speakingClassPriceLabel = `₹${formatPublicInr(PUBLIC_SITE_FACTS.standardOffer.oneToOnePerClassInr)}/class`;
+const seoTitle = 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps';
 const seoDescription =
-  'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.';
+  'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.';
 
 const SPEAKING_SEO_KEYWORDS = [
   'public speaking classes for kids online',
@@ -194,7 +196,7 @@ export default function SpeakingPage() {
 
     const webpageSchema = {
       ...createWebPageSchema({
-        name: 'Public Speaking & Communication Classes for Kids',
+        name: 'Online Public Speaking Classes for Kids',
         description: seoDescription,
         url: canonicalUrl,
       }),
@@ -342,30 +344,40 @@ export default function SpeakingPage() {
           <div className="grid gap-7 lg:grid-cols-[1.06fr_0.94fr] lg:items-center lg:gap-10">
             <div>
               <p className="inline-flex rounded-full border border-violet-200/80 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-800 shadow-[0_8px_22px_rgba(124,58,237,0.08)] backdrop-blur">
-                Structured speaking for children
+                Live 1:1 public speaking & communication
               </p>
               <h1 className="mt-5 max-w-[790px] text-[clamp(2.65rem,8vw,4.65rem)] font-black leading-[0.95] tracking-[-0.055em] text-[#172033]">
-                Public Speaking & Communication Classes for Kids
+                Online Public Speaking Classes for Kids
               </h1>
               <p className="mt-5 max-w-[700px] text-base font-medium leading-7 text-slate-700 md:text-[1.08rem] md:leading-8">
-                Trusted by parents in India and internationally, Tiny Steps delivers live 1:1 public speaking and communication classes that build structured answers, storytelling, show-and-tell, presentations, audience awareness, and clearer communication.
+                Live 1:1 public speaking and communication coaching for {speakingAgeRangeLabel}. Children practise structured answers, storytelling, show-and-tell, presentations, audience awareness, and clearer expression through guided speaking practice.
               </p>
               <p className="mt-3 max-w-[680px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
-                Standard live 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}. Assessment separates public-speaking structure from everyday spoken-English, grammar, or confidence-only needs before placement.
+                Standard classes are {PUBLIC_SESSION_DURATION_LABEL} at {speakingClassPriceLabel}. Start with one free {demoMinutes}-minute 1:1 assessment so we can separate public-speaking needs from Spoken English, Grammar, or confidence-only barriers before placement.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#182338] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(23,32,51,0.18)] transition hover:bg-[#111b2d]">
-                  Book Free {demoMinutes}-Minute Demo
+                  Book Free Assessment
                 </Link>
-                <Link to="/curriculum?tab=speaking" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300/80 bg-white/85 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-white">
-                  View Full Curriculum Roadmap
+                <Link to="/class-samples" className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-300/80 bg-white/85 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-white">
+                  Watch a Real Class
+                </Link>
+                <Link to="/curriculum?tab=speaking" className="inline-flex min-h-[46px] items-center justify-center px-2 py-2.5 text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4 transition hover:text-violet-950">
+                  View Curriculum
                 </Link>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {['Structured answers', 'Storytelling & presentations', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, 'Trusted in India & internationally', PUBLIC_LEARNER_REACH_LABEL].map((chip) => (
-                  <span key={chip} className="rounded-full border border-slate-200/80 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-600 backdrop-blur sm:px-3.5 sm:text-sm">
+              <div className="mt-5 flex flex-wrap gap-2" aria-label="Speaking programme facts">
+                {[
+                  speakingAgeRangeLabel,
+                  speakingClassPriceLabel,
+                  `${PUBLIC_SESSION_DURATION_LABEL} • Live 1:1`,
+                  `Free ${demoMinutes}-min assessment`,
+                  `Tiny Steps: ${PUBLIC_LEARNER_REACH_LABEL}`,
+                  'Parent progress updates',
+                ].map((chip) => (
+                  <span key={chip} className="rounded-full border border-slate-200/80 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 backdrop-blur sm:px-3.5 sm:text-sm">
                     {chip}
                   </span>
                 ))}
