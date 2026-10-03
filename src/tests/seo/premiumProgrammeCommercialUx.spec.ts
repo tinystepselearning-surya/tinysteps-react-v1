@@ -27,8 +27,11 @@ describe('Premium commercial UX for Reading, Grammar and Speaking', () => {
     }
 
     expect(snapshot).toContain("variant?: 'reading' | 'grammar' | 'speaking'");
+    expect(snapshot).toContain("appearance?: 'default' | 'glass-overlay'");
     expect(snapshot).toContain('data-premium-programme-visual={variant}');
     expect(snapshot).toContain('Read → understand → explain');
+    expect(speaking).toContain('/blog/hero-families/Tiny_Steps_Speaking.webp');
+    expect(speaking).toContain('appearance="glass-overlay"');
     expect(snapshot).toContain('Notice → correct → apply');
     expect(snapshot).toContain('Think → organise → speak');
   });

@@ -716,32 +716,48 @@ export default function SpeakingPage() {
               </div>
             </div>
 
-            <ProgrammeHeroSnapshot
-              variant="speaking"
-              eyebrow="Speaking programme focus"
-              title="What this programme builds"
-              summary="This pathway develops structured and audience-facing communication rather than ordinary conversational fluency alone."
-              items={[
-                'Structured answers',
-                'Storytelling',
-                'Show-and-tell',
-                'Presentations',
-                'Audience awareness',
-                'Clear communication',
-              ]}
-              footer={
-                <>
-                  Everyday conversation belongs to{' '}
-                  <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline underline-offset-2">
-                    Spoken English
-                  </Link>
-                  ; confidence-only barriers belong to{' '}
-                  <Link to="/confidence-building-program-kids" className="font-semibold text-slate-900 underline underline-offset-2">
-                    Confidence Building
-                  </Link>.
-                </>
-              }
-            />
+            <div className="relative min-h-[430px] sm:min-h-[505px] lg:min-h-[560px]">
+              <div className="pointer-events-none absolute -inset-8 rounded-[48px] bg-[radial-gradient(circle_at_64%_30%,rgba(255,255,255,0.95),rgba(233,226,255,0.54)_44%,transparent_72%)] blur-2xl" />
+
+              <div className="relative h-[365px] overflow-hidden rounded-[34px] bg-white/45 shadow-[0_34px_90px_rgba(15,23,42,0.13)] ring-1 ring-white/70 sm:h-[440px] lg:h-[520px]">
+                <img
+                  src="/blog/hero-families/Tiny_Steps_Speaking.webp"
+                  alt="Child practising public speaking online at home"
+                  className="h-full w-full object-cover object-[58%_center]"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  onError={(event) => {
+                    const image = event.currentTarget;
+                    if (!image.src.endsWith('/presenting-with-confidence.webp')) {
+                      image.src = '/blog/hero-families/presenting-with-confidence.webp';
+                    }
+                  }}
+                />
+
+                <div className="pointer-events-none absolute inset-y-0 left-0 w-[22%] bg-gradient-to-r from-[#fbfbfd] via-[#fbfbfd]/55 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#fbfbfd]/90 via-[#fbfbfd]/28 to-transparent" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.22),transparent_38%,rgba(23,32,51,0.06))]" />
+              </div>
+
+              <div className="relative z-10 -mt-16 px-3 sm:-mt-20 sm:px-6 lg:absolute lg:inset-x-6 lg:bottom-3 lg:mt-0 lg:px-0">
+                <ProgrammeHeroSnapshot
+                  variant="speaking"
+                  appearance="glass-overlay"
+                  eyebrow="Speaking programme focus"
+                  title="What this programme builds"
+                  summary="Structured, audience-facing communication through guided speaking practice."
+                  items={[
+                    'Structured answers',
+                    'Storytelling',
+                    'Show-and-tell',
+                    'Presentations',
+                    'Audience awareness',
+                    'Clear communication',
+                  ]}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>

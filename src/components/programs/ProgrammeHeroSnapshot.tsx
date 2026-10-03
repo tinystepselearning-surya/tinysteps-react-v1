@@ -8,6 +8,7 @@ type ProgrammeHeroSnapshotProps = {
   items: readonly string[];
   footer?: ReactNode;
   variant?: 'reading' | 'grammar' | 'speaking';
+  appearance?: 'default' | 'glass-overlay';
 };
 
 const visualConfig = {
@@ -41,9 +42,43 @@ export default function ProgrammeHeroSnapshot({
   items,
   footer,
   variant = 'grammar',
+  appearance = 'default',
 }: ProgrammeHeroSnapshotProps) {
   const visual = visualConfig[variant];
   const VisualIcon = visual.icon;
+
+  if (appearance === 'glass-overlay') {
+    return (
+      <aside
+        data-premium-programme-visual={variant}
+        className="w-full rounded-[24px] border border-white/75 bg-white/72 p-4 shadow-[0_22px_64px_rgba(15,23,42,0.12)] backdrop-blur-2xl sm:p-5"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-slate-950 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)]">
+            <VisualIcon className="h-4.5 w-4.5" aria-hidden="true" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p>
+            <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">{visual.label}</p>
+          </div>
+        </div>
+
+        <h2 className="mt-3 text-lg font-semibold tracking-[-0.025em] text-slate-950 sm:text-xl">{title}</h2>
+        <p className="mt-1.5 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">{summary}</p>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {items.slice(0, 5).map((item) => (
+            <span
+              key={item}
+              className="rounded-full border border-white/85 bg-white/74 px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside
