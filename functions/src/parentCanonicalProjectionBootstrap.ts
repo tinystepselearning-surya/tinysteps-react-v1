@@ -269,10 +269,21 @@ export const bootstrapParentCourseProgress = onCall({ region: REGION }, async (r
   const parentId = text(request.auth?.uid);
   if (!parentId) throw new HttpsError('unauthenticated', 'Sign in as a parent to repair course progress.');
 
-  const tokenRole = text(request.auth?.token?.role).toLowerCase();
   const db = admin.firestore();
-  const userRole = tokenRole || text((await db.collection('users').doc(parentId).get()).data()?.role).toLowerCase();
-  if (userRole !== 'parent') throw new HttpsError('permission-denied', 'Parent access is required.');
+  const userSnap = await db.collection('users').doc(parentId).get();
+  if (!userSnap.exists) throw new HttpsError('permission-denied', 'Parent access is required.');
+  const user = userSnap.data() || {};
+  const userStatus = text(user.status).toLowerCase();
+  if (userStatus && userStatus !== 'active') {
+    throw new HttpsError('permission-denied', 'Parent access is required.');
+  }
+  const userRole = text(user.role).toLowerCase();
+  const userRoles = Array.isArray(user.roles)
+    ? user.roles.map((value: unknown) => text(value).toLowerCase())
+    : [];
+  if (userRole !== 'parent' && !userRoles.includes('parent')) {
+    throw new HttpsError('permission-denied', 'Parent access is required.');
+  }
 
   const payload = (request.data || {}) as { kidId?: unknown; courseId?: unknown };
   const kidId = text(payload.kidId);
