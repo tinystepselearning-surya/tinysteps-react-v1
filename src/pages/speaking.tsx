@@ -928,6 +928,12 @@ export default function SpeakingPage() {
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 This does not mean young children need to use AI tools. The same habits can be practised through ordinary, age-appropriate conversation, storytelling, explanation, discussion, and questioning.
               </p>
+              <Link
+                to="/blog/why-public-speaking-is-important-for-kids"
+                className="mt-4 inline-flex text-sm font-semibold text-violet-800 underline decoration-violet-300 underline-offset-4"
+              >
+                Read the full guide: why public speaking and communication matter for kids ↗
+              </Link>
               <div className="mt-5 rounded-[18px] border border-violet-100 bg-white/80 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">The communication loop</p>
                 <p className="mt-2 text-base font-semibold tracking-[-0.02em] text-slate-950">
