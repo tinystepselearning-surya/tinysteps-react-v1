@@ -89,6 +89,16 @@ const faqItems = [
       'Yes. General communication-skills work such as organising ideas, answering clearly, listening and responding, storytelling, classroom participation, and presentation confidence is part of the Tiny Steps Speaking & Communication pathway.',
   },
   {
+    question: 'Why do communication skills matter in an AI-enabled world?',
+    answer:
+      'AI can make information easier to generate, but children still need to decide what to ask, what to question, how to organise ideas, how to explain their reasoning, how to listen to another viewpoint, and how to respond responsibly. Tiny Steps develops these human communication habits through age-appropriate speaking practice; it does not present the Speaking programme as an AI or prompt-engineering course.',
+  },
+  {
+    question: 'Does Tiny Steps teach children prompt engineering in Public Speaking classes?',
+    answer:
+      'No. The Speaking programme remains a public-speaking and communication programme. Asking clearer questions is taught as a transferable communication and thinking skill, alongside listening, organising ideas, explanation, presentations, discussion, and audience awareness.',
+  },
+  {
     question: 'When is the confidence-building programme a better fit?',
     answer:
       'If the primary difficulty is hesitation, participation confidence, or speaking comfort across situations rather than public-speaking structure or communication skills, the dedicated Confidence Building programme may be the better starting point. The free assessment helps separate these needs.',
@@ -316,6 +326,62 @@ const speakingFitReferences = [
   },
 ] as const;
 
+const speakingAiEraCapabilities = [
+  {
+    step: 'ASK',
+    title: 'Ask useful questions',
+    detail: 'Clarify the task, identify what is missing, and ask follow-up questions instead of accepting the first answer.',
+  },
+  {
+    step: 'THINK',
+    title: 'Think before accepting',
+    detail: 'Compare ideas, notice assumptions, decide what needs checking, and separate a plausible answer from a well-supported one.',
+  },
+  {
+    step: 'ORGANISE',
+    title: 'Organise ideas',
+    detail: 'Put information into a logical order so another person can follow the reasoning, story, explanation, or argument.',
+  },
+  {
+    step: 'EXPLAIN',
+    title: 'Explain clearly',
+    detail: 'Use the child’s own words, examples, reasons, and audience-appropriate language to make thinking understandable.',
+  },
+  {
+    step: 'LISTEN',
+    title: 'Listen and understand',
+    detail: 'Pay attention to another viewpoint, identify what was actually said, and ask for clarification when needed.',
+  },
+  {
+    step: 'RESPOND',
+    title: 'Respond thoughtfully',
+    detail: 'Adapt the next answer to new information, feedback, evidence, the audience, and the purpose of the conversation.',
+  },
+] as const;
+
+const speakingAiEraReferences = [
+  {
+    label: 'UNESCO — AI Competency Framework for Students',
+    href: 'https://www.unesco.org/en/articles/ai-competency-framework-students',
+    note: 'Emphasises a human-centred mindset, responsible and creative participation, and critical judgement of AI solutions. Tiny Steps uses this as future-facing education context, not as a public-speaking curriculum standard.',
+  },
+  {
+    label: 'OECD — Learning Compass 2030',
+    href: 'https://www.oecd.org/en/data/tools/oecd-learning-compass-2030.html',
+    note: 'Frames student agency and the ability to navigate unfamiliar contexts as important future competencies. It is globally informed and intended to be locally contextualised.',
+  },
+  {
+    label: 'UNICEF Innocenti — Skills for an AI World',
+    href: 'https://www.unicef.org/innocenti/reports/skills-ai-world',
+    note: 'Its 2026 child-centred work highlights critical thinking, information literacy, autonomy, moderation in AI use, and the importance of human relationships. The consultation sample was ages 9–17, so it is not used as a preschool-development standard.',
+  },
+  {
+    label: 'World Economic Forum — Future of Jobs Report 2025',
+    href: 'https://www.weforum.org/publications/the-future-of-jobs-report-2025/in-full/3-skills-outlook/',
+    note: 'Employer research identifies analytical thinking as a leading core skill and also highlights technological literacy, empathy and active listening, curiosity, and creative thinking. This is labour-market context, not a child-development benchmark.',
+  },
+] as const;
+
 export default function SpeakingPage() {
   const canonicalPath = '/speaking';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
@@ -430,6 +496,24 @@ export default function SpeakingPage() {
       })),
     };
 
+    const speakingAiEraCapabilitiesSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#communication-for-ai-era`,
+      name: 'Tiny Steps communication capabilities for an AI-enabled world',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: speakingAiEraCapabilities.length,
+      itemListElement: speakingAiEraCapabilities.map((capability, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: `${capability.step}: ${capability.title}`,
+          description: capability.detail,
+        },
+      })),
+    };
+
     const speakingParentFitSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -492,7 +576,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingAiEraCapabilitiesSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -760,6 +844,73 @@ export default function SpeakingPage() {
               >
                 Read ASHA&apos;s milestone guidance ↗
               </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="communication-for-ai-era" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f8f7ff_0%,#ffffff_50%,#f5fbff_100%)] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
+          <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:gap-10">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Communication for a changing world</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+                Communication skills matter even more when information is easy to generate
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
+                AI tools can help generate information quickly. Children still need to decide what question matters, what needs checking, how ideas fit together, how to explain their reasoning, how to listen to another person, and how to respond responsibly.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
+                Tiny Steps treats better questioning as part of better communication—not as a prompt-engineering course.
+              </p>
+              <div className="mt-5 rounded-[18px] border border-violet-100 bg-white/80 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">The communication loop</p>
+                <p className="mt-2 text-base font-semibold tracking-[-0.02em] text-slate-950">
+                  ASK → THINK → ORGANISE → EXPLAIN → LISTEN → RESPOND
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  The sequence is a Tiny Steps teaching framework. The external sources below support the broader importance of human agency, critical judgement, information literacy, analytical thinking, listening, curiosity, and responsible participation in an AI-influenced world.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {speakingAiEraCapabilities.map((capability) => (
+                <article key={capability.step} className="rounded-[18px] border border-white/90 bg-white/85 p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex min-w-[74px] justify-center rounded-full bg-slate-950 px-3 py-1 text-[10px] font-bold tracking-[0.14em] text-white">
+                      {capability.step}
+                    </span>
+                    <h3 className="text-sm font-semibold text-slate-950">{capability.title}</h3>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{capability.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 border-t border-slate-200/80 pt-5">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">International and future-skills references</p>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-slate-500">
+                  These sources provide context for future-ready education. They do not claim that public-speaking lessons alone produce AI competence, future job success, or any guaranteed outcome.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {speakingAiEraReferences.map((source) => (
+                <a
+                  key={source.href}
+                  href={source.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-[14px] border border-slate-200 bg-white px-3.5 py-3 transition hover:border-violet-200"
+                >
+                  <span className="text-xs font-semibold text-slate-900">{source.label} ↗</span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">{source.note}</span>
+                </a>
+              ))}
             </div>
           </div>
         </div>
