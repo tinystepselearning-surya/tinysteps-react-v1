@@ -41,7 +41,7 @@ jobs:
         id: functions-baseline
         shell: bash
         env:
-          EVENT_BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}
+          EVENT_BEFORE: ${{ github.event.before || github.sha }}
         run: |
           set -euo pipefail
 
@@ -75,7 +75,7 @@ jobs:
         id: artifact-baselines
         shell: bash
         env:
-          EVENT_BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}
+          EVENT_BEFORE: ${{ github.event.before || github.sha }}
         run: |
           set -euo pipefail
 
@@ -120,7 +120,7 @@ jobs:
         id: impact
         run: >-
           node scripts/resolve-deployment-impact.mjs
-          --before "${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before || github.sha }}"
+          --before "${{ github.event.before || github.sha }}"
           --functions-before "${{ steps.functions-baseline.outputs.sha }}"
           --force-functions-full "${{ steps.functions-baseline.outputs.force_full }}"
           --hosting-before "${{ steps.artifact-baselines.outputs.hosting_sha }}"
