@@ -166,6 +166,14 @@ const enrollmentChanged = changed.some((path) => matchesAny(path, [
   'vitest.emulator.config.ts',
 ]));
 
+const academicEnrollmentAuditChanged = changed.some((path) => matchesAny(path, [
+  'scripts/audit-academic-enrollment.mjs',
+  'scripts/test/academic-enrollment-audit.node-test.mjs',
+  'docs/architecture/wave-0/ACADEMIC_ENROLLMENT_AUDIT.md',
+  'docs/architecture/wave-0/CURRENT_TO_CANONICAL_MAP.md',
+  'docs/architecture/wave-0/WAVE_0_ARCHITECTURE_CONTRACTS.md',
+]));
+
 const identityReferenceAuditChanged = changed.some((path) => matchesAny(path, [
   'scripts/audit-identity-references.mjs',
   'scripts/test/identity-reference-audit.node-test.mjs',
@@ -218,6 +226,10 @@ if (functionsCompileRequired) {
 
 if (identityReferenceAuditChanged) {
   run('Identity/reference audit tests', 'npm', ['run', 'test:identity-reference-audit']);
+}
+
+if (academicEnrollmentAuditChanged) {
+  run('Academic/enrollment audit tests', 'npm', ['run', 'test:academic-enrollment-audit']);
 }
 
 if (deploymentChanged) {
