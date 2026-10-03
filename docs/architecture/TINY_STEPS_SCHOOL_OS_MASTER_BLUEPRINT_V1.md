@@ -39,6 +39,7 @@ The blueprint must support:
 10. **Migration is incremental. No big-bang rewrite.**
 11. **Architecture boundary does not equal build commitment.**
 12. **Preserve proven working systems unless a canonical boundary requires convergence.**
+13. **Shared experience before bespoke UI.** Reuse common page shells, navigation, templates and components wherever the information architecture and interaction pattern are materially the same; variation should normally come from configuration, content and scoped slots rather than copied page frameworks.
 
 ## 3. Six-layer architecture
 
@@ -55,6 +56,28 @@ Consumers of business domains:
 - Learning Partner
 - School Admin / Principal
 - Future Partner / API consumers
+
+### Shared Experience System
+
+The Experience layer must converge on a reusable application design system rather than independently designed page families.
+
+Prefer shared:
+
+- application shells and authenticated portal frames;
+- desktop/mobile navigation patterns;
+- headers, breadcrumbs and page titles;
+- list/detail/workspace templates;
+- cards, tables, filters, tabs and status treatments;
+- forms, validation, dialogs and empty/loading/error states;
+- responsive layout primitives;
+- accessibility and interaction behaviour;
+- typography, spacing, colour and design tokens.
+
+A role or domain may configure the shared shell and expose different navigation/items, but should not fork the underlying framework without a genuine interaction or security requirement.
+
+The existing blog authority architecture is the reference pattern: a shared site-wide renderer/layout carries common structure while article-specific content and curated configuration vary on top. The wider web app should apply the same principle to operational and learning experiences.
+
+A shared component does **not** mean every screen must look identical. It means repeated interaction patterns have one maintained implementation and controlled variants.
 
 ### Layer 2 — Business Domains
 
@@ -451,7 +474,8 @@ The detailed implementation rules live outside this master blueprint as standard
 - migration standards;
 - integration standards;
 - finance ledger standards;
-- observability and cost standards.
+- observability and cost standards;
+- shared UI / design-system standards.
 
 This keeps the master blueprint stable and concise.
 
@@ -470,7 +494,9 @@ Do not introduce:
 - destructive rewriting of financial/evidence history;
 - big-bang schema migrations;
 - permanent legacy dual-write paths;
-- a microservice/Kubernetes migration without demonstrated need.
+- a microservice/Kubernetes migration without demonstrated need;
+- duplicate portal shells, navigation systems or page-template implementations where a shared configurable experience would satisfy the same interaction need;
+- one-off copies of shared forms, tables, cards, loading/error states or interaction primitives without a documented exception.
 
 ## 18. Architecture decision gate
 
@@ -486,8 +512,9 @@ Every significant new feature must answer:
 8. Can migration occur incrementally?
 9. Does AI remain outside canonical authority?
 10. Is the feature being built now, or merely supported by the blueprint?
+11. Can the experience reuse an existing shared shell, navigation, template or component before creating a new implementation?
 
-If ownership is ambiguous, the feature is not architecturally ready.
+If ownership is ambiguous, or a bespoke UI duplicates an existing shared interaction without justification, the feature is not architecturally ready.
 
 ## 19. What v1.0 does not require
 
