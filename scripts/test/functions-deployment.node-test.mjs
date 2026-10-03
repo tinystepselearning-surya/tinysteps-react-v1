@@ -498,10 +498,11 @@ test('Functions deployment report upload survives a failed deployment step', () 
   assert.match(workflow, /Upload bounded Functions deployment report\n\s+if: always\(\) && needs\.analyze-changes\.outputs\.functions_deployment_required == 'true'/);
 });
 
-test('backend-only validation does not install Playwright or build Hosting', () => {
+test('Hosting build work is conditional on Hosting deployment impact', () => {
   const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
-  assert.match(workflow, /Install Playwright browsers\n\s+if: needs\.analyze-changes\.outputs\.frontend_validation_required == 'true'/);
-  assert.match(workflow, /Build app\n\s+if: needs\.analyze-changes\.outputs\.frontend_validation_required == 'true'/);
+  assert.match(workflow, /Install Playwright Chromium for production build\n\s+if: needs\.analyze-changes\.outputs\.hosting_changed == 'true'/);
+  assert.match(workflow, /Build production Hosting artifact\n\s+if: needs\.analyze-changes\.outputs\.hosting_changed == 'true'/);
+  assert.match(workflow, /npm run build:deploy/);
 });
 
 test('stale-main guard is checked only at the first Functions mutation boundary', () => {
@@ -548,3 +549,74 @@ test('--plan resolves the exact regression batch without invoking deployment mod
   assert.match(stdout, /5 targets in 1 sequential batch/);
   assert.match(stdout, new RegExp(`Batch 1: ${targets.join(', ')}`));
 });
+
+
+test('CI deployment uses a prevalidated Firebase config without repeated predeploy hooks', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const deployer = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  const hostingDeploy = readFileSync('.github/scripts/firebase-hosting-deploy.sh', 'utf8');
+
+  assert.match(workflow, /FIREBASE_DEPLOY_CONFIG: \.firebase\.ci\.json/);
+  assert.match(workflow, /Prepare prevalidated Firebase deployment config[\s\S]*prepare-firebase-ci-config\.mjs/);
+  assert.match(deployer, /FIREBASE_DEPLOY_CONFIG = process\.env\.FIREBASE_DEPLOY_CONFIG \|\| 'firebase\.json'/);
+  assert.match(deployer, /'--config', FIREBASE_DEPLOY_CONFIG/);
+  assert.match(hostingDeploy, /CONFIG_PATH="\$\{FIREBASE_DEPLOY_CONFIG:-firebase\.json\}"/);
+  assert.match(hostingDeploy, /--config "\$CONFIG_PATH"/);
+});
+
+test('Hosting deployment builds the production artifact exactly once inside the deployment job', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const deployStart = workflow.indexOf('  deploy-to-firebase:');
+  const recoveryStart = workflow.indexOf('  recover-functions-manually:');
+  assert.ok(deployStart >= 0 && recoveryStart > deployStart);
+  const deployJob = workflow.slice(deployStart, recoveryStart);
+
+  assert.match(deployJob, /Build production Hosting artifact/);
+  assert.match(deployJob, /npm run build:deploy/);
+  assert.match(deployJob, /Verify production artifact identity/);
+  assert.doesNotMatch(deployJob, /Download validated Hosting artifact/);
+  assert.doesNotMatch(workflow, /Upload validated Hosting artifact/);
+  assert.equal((deployJob.match(/npm run build:deploy/g) ?? []).length, 1);
+});
+
+test('deep local preflight does not force unrelated specialist suites', () => {
+  const preflight = readFileSync('scripts/preflight.mjs', 'utf8');
+  assert.doesNotMatch(preflight, /const functionsChanged = full \|\|/);
+  assert.doesNotMatch(preflight, /const firestoreChanged = full \|\|/);
+  assert.doesNotMatch(preflight, /const enrollmentChanged = full \|\|/);
+  assert.doesNotMatch(preflight, /const r8Changed = full \|\|/);
+  assert.doesNotMatch(preflight, /const frontendChanged = full \|\|/);
+});
+
+test('local preflight compiles Functions before deployment contract tests', () => {
+  const preflight = readFileSync('scripts/preflight.mjs', 'utf8');
+  const buildIndex = preflight.indexOf("run('Functions build'");
+  const contractIndex = preflight.indexOf("run('Deployment contract tests'");
+  assert.ok(buildIndex >= 0);
+  assert.ok(contractIndex >= 0);
+  assert.ok(buildIndex < contractIndex);
+});
+
+test('GitHub Actions has no pull-request development test lane', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+
+  assert.doesNotMatch(workflow, /pull_request:/);
+  assert.doesNotMatch(workflow, /Run affected unit tests/);
+  assert.doesNotMatch(workflow, /Run critical regression pack/);
+  assert.doesNotMatch(workflow, /npm run lint/);
+  assert.doesNotMatch(workflow, /npm run typecheck/);
+  assert.match(pkg.scripts.preflight, /preflight\.mjs/);
+  assert.match(pkg.scripts['preflight:full'], /--full/);
+});
+
+test('full unit testing and coverage remain local-only commands', () => {
+  const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+
+  assert.doesNotMatch(workflow, /test:full/);
+  assert.doesNotMatch(workflow, /coverage/);
+  assert.equal(pkg.scripts['test:full'], 'vitest run');
+  assert.equal(pkg.scripts['test:full:coverage'], 'vitest run --coverage');
+});
+

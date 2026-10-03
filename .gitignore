@@ -27,6 +27,7 @@ coverage/
 
 # Firebase / emulators / debug
 .firebase/
+.firebase.ci.json
 firebase-debug.log
 firestore-debug.log
 emu*.log
