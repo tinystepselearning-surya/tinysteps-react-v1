@@ -4,6 +4,7 @@ import {
   STATIC_TESTIMONIALS_BY_PROGRAM,
   TESTIMONIAL_PROGRAM_ORDER,
   type StaticTestimonial,
+  type StaticTestimonialProgram,
 } from '../lib/staticTestimonials';
 import { createFAQPageSchema, createWebPageSchema } from '../lib/schemas';
 
