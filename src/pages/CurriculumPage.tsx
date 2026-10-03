@@ -288,6 +288,13 @@ const pathwaySignals: Array<{ tab: Tab; signal: string; helper: string }> = [
   },
 ];
 
+const heroPathFocus: Record<Tab, string> = {
+  phonics: 'Sounds · blending · decoding',
+  reading: 'Fluency · vocabulary · comprehension',
+  grammar: 'Sentences · grammar control · correction',
+  speaking: 'Ideas · storytelling · presentation',
+};
+
 const placementSteps = [
   {
     title: 'Understand',
@@ -407,8 +414,8 @@ const CurriculumPage: FC = () => {
         jsonLd={[breadcrumbSchema, webpageSchema, roadmapSchema, teachingMethodSchema, faqSchema]}
       />
 
-      <section className="mx-auto max-w-7xl px-4 pb-10 pt-8 sm:px-6 lg:px-8 lg:pb-14 lg:pt-12">
-        <div className="grid items-center gap-9 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14">
+      <section className="mx-auto max-w-7xl px-4 pb-9 pt-8 sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
+        <div className="grid items-center gap-9 lg:grid-cols-[1.03fr_0.97fr] lg:gap-10">
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">
               <span className="h-2 w-2 rounded-full bg-orange-500" aria-hidden="true" />
@@ -463,7 +470,7 @@ const CurriculumPage: FC = () => {
                 </span>
               </div>
 
-              <div className="mt-6 space-y-2">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {(Object.keys(programs) as Tab[]).map((key, index) => {
                   const program = programs[key];
                   const active = hasExplicitPath && tab === key;
@@ -474,37 +481,36 @@ const CurriculumPage: FC = () => {
                       onClick={() => focusPath(key)}
                       aria-current={active ? 'step' : undefined}
                       className={
-                        'group flex w-full items-center gap-4 rounded-2xl border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ' +
+                        'group min-h-[126px] rounded-2xl border p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ' +
                         (active
-                          ? 'border-orange-300/70 bg-white text-slate-950'
-                          : 'border-white/10 bg-white/[0.045] text-white hover:border-white/25 hover:bg-white/[0.075]')
+                          ? 'border-orange-300/70 bg-white text-slate-950 shadow-lg'
+                          : 'border-white/10 bg-white/[0.045] text-white hover:-translate-y-0.5 hover:border-orange-300/35 hover:bg-white/[0.08]')
                       }
                     >
-                      <span
-                        className={
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black ' +
-                          (active ? 'bg-orange-100 text-orange-800' : 'bg-white/10 text-slate-300')
-                        }
-                      >
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-bold">{program.label}</span>
-                        <span className={'mt-0.5 block text-xs leading-5 ' + (active ? 'text-slate-600' : 'text-slate-400')}>
-                          {program.summary}
+                      <div className="flex items-center justify-between gap-3">
+                        <span
+                          className={
+                            'flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ' +
+                            (active ? 'bg-orange-100 text-orange-800' : 'bg-white/10 text-slate-300')
+                          }
+                        >
+                          {String(index + 1).padStart(2, '0')}
                         </span>
-                      </span>
-                      <span className={'text-lg transition group-hover:translate-x-0.5 ' + (active ? 'text-orange-600' : 'text-slate-400')} aria-hidden="true">
-                        →
+                        <span className={'text-lg transition group-hover:translate-x-0.5 ' + (active ? 'text-orange-600' : 'text-slate-500')} aria-hidden="true">
+                          →
+                        </span>
+                      </div>
+                      <span className="mt-4 block text-base font-bold leading-5">{program.label}</span>
+                      <span className={'mt-2 block text-xs font-semibold leading-5 ' + (active ? 'text-slate-600' : 'text-slate-400')}>
+                        {heroPathFocus[key]}
                       </span>
                     </button>
                   );
                 })}
               </div>
 
-              <p className="mt-5 border-t border-white/10 pt-4 text-xs leading-5 text-slate-400">
-                These are not rigid age stages. Assessment identifies the strongest current learning gap and the
-                most useful starting point.
+              <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-5 text-slate-400">
+                Four connected pathways, not four fixed age stages. Assessment identifies the most useful starting point.
               </p>
             </div>
           </div>
@@ -517,11 +523,11 @@ const CurriculumPage: FC = () => {
       >
         <div className="mx-auto flex max-w-7xl items-center gap-7 overflow-x-auto px-6 py-3 text-xs font-bold text-slate-600 lg:px-8">
           <a href="#find-your-path" className="whitespace-nowrap transition hover:text-slate-950">Find your path</a>
-          <a href="#program-roadmap" className="whitespace-nowrap transition hover:text-slate-950">Learning system</a>
+          <a href="#program-roadmap" className="whitespace-nowrap transition hover:text-slate-950">Pathways</a>
           <a href="#progression" className="whitespace-nowrap transition hover:text-slate-950">Progression</a>
-          <a href="#course-levels" className="whitespace-nowrap transition hover:text-slate-950">Levels &amp; routes</a>
+          <a href="#course-levels" className="whitespace-nowrap transition hover:text-slate-950">Levels</a>
           <a href="#assessment" className="whitespace-nowrap transition hover:text-slate-950">Assessment</a>
-          <a href="#teaching-method" className="whitespace-nowrap transition hover:text-slate-950">Live teaching</a>
+          <a href="#teaching-method" className="whitespace-nowrap transition hover:text-slate-950">Teaching</a>
           <a href="#faq" className="whitespace-nowrap transition hover:text-slate-950">FAQs</a>
         </div>
       </nav>
@@ -625,13 +631,16 @@ const CurriculumPage: FC = () => {
               Each pathway moves from supported recognition and practice toward more accurate, independent
               application. The sequence stays clear while the pace responds to the child.
             </p>
+            <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+              Hover to trace a pathway · Open progression detail for the teaching checkpoints
+            </p>
           </div>
 
           <div className="mt-8 divide-y divide-white/10 border-y border-white/10">
             {Object.values(programs).map((program) => {
               const sequenceParts = program.sequence.split(' → ');
               return (
-                <article key={program.key} className="grid gap-4 py-6 lg:grid-cols-[220px_1fr] lg:gap-8">
+                <article key={program.key} className="group/progression grid gap-4 rounded-2xl px-3 py-6 transition duration-200 hover:bg-white/[0.035] lg:grid-cols-[220px_1fr] lg:gap-8 lg:px-4">
                   <div>
                     <h3 className="text-lg font-bold text-white">{program.label}</h3>
                     <Link to={program.programPath} className="mt-2 inline-flex text-xs font-bold text-orange-300 underline underline-offset-4">
@@ -643,22 +652,22 @@ const CurriculumPage: FC = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       {sequenceParts.map((part, index) => (
                         <span key={part} className="contents">
-                          <span className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100">
+                          <span className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100 transition duration-200 group-hover/progression:border-orange-300/30 group-hover/progression:bg-orange-300/[0.07] hover:-translate-y-0.5 hover:border-orange-300/70 hover:bg-orange-300/15">
                             {part}
                           </span>
                           {index < sequenceParts.length - 1 && (
-                            <span className="text-slate-500" aria-hidden="true">→</span>
+                            <span className="text-slate-500 transition group-hover/progression:text-orange-300" aria-hidden="true">→</span>
                           )}
                         </span>
                       ))}
                     </div>
 
                     <details className="group mt-4">
-                      <summary className="cursor-pointer list-none text-xs font-bold text-slate-400 transition hover:text-white">
+                      <summary className="inline-flex cursor-pointer list-none items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-orange-300/40 hover:bg-orange-300/[0.08] hover:text-white">
                         <span className="group-open:hidden">View progression detail +</span>
                         <span className="hidden group-open:inline">Hide progression detail −</span>
                       </summary>
-                      <ol className="mt-4 grid gap-x-6 gap-y-2 text-xs leading-5 text-slate-300 sm:grid-cols-2 xl:grid-cols-5">
+                      <ol className="mt-4 grid gap-x-6 gap-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs leading-5 text-slate-300 sm:grid-cols-2 xl:grid-cols-5">
                         {program.steps.map((step, index) => (
                           <li key={step} className="flex gap-2">
                             <span className="font-black text-orange-300">{index + 1}.</span>
@@ -676,7 +685,7 @@ const CurriculumPage: FC = () => {
       </section>
 
       <section id="course-levels" className="scroll-mt-32 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-labelledby="levels-heading">
-        <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:gap-12">
+        <div className="grid gap-8 lg:grid-cols-[0.56fr_1fr] lg:gap-12">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Compare levels &amp; routes</p>
             <h2 id="levels-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
@@ -724,7 +733,7 @@ const CurriculumPage: FC = () => {
               <article
                 key={course.path}
                 className={
-                  'grid gap-4 px-5 py-6 md:grid-cols-[1.05fr_0.95fr_0.95fr_auto] md:items-start md:gap-6 md:px-6 ' +
+                  'grid gap-4 px-5 py-6 md:grid-cols-[0.9fr_1fr_1fr] md:items-start md:gap-6 md:px-6 ' +
                   (index < selectedProgram.courses.length - 1 ? 'border-b border-slate-200' : '')
                 }
               >
@@ -733,6 +742,13 @@ const CurriculumPage: FC = () => {
                     {course.badge}
                   </div>
                   <h3 className="mt-3 text-lg font-bold text-slate-950">{course.name}</h3>
+                  <Link
+                    to={course.path}
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-orange-500"
+                  >
+                    View details
+                    <span aria-hidden="true">→</span>
+                  </Link>
                 </div>
 
                 <div>
@@ -745,13 +761,6 @@ const CurriculumPage: FC = () => {
                   <p className="mt-2 text-sm leading-6 text-slate-600">{course.focus}</p>
                 </div>
 
-                <Link
-                  to={course.path}
-                  className="inline-flex shrink-0 items-center gap-2 self-center text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-orange-500"
-                >
-                  View details
-                  <span aria-hidden="true">→</span>
-                </Link>
               </article>
             ))}
           </div>
@@ -802,7 +811,7 @@ const CurriculumPage: FC = () => {
         <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:gap-14">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-              Step 3 · See how the roadmap becomes a live lesson
+              How the roadmap becomes a live lesson
             </p>
             <h2 id="teaching-method-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
               Structured sequence, responsive teaching
@@ -839,7 +848,7 @@ const CurriculumPage: FC = () => {
             Watch real class samples
           </Link>
           <Link to="/phonics" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
-            Explore the Phonics &amp; Reading program
+            Explore the Phonics program
           </Link>
         </div>
       </section>
@@ -847,10 +856,10 @@ const CurriculumPage: FC = () => {
       <IBAlignmentSection />
 
       <section id="faq" className="scroll-mt-32 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-16" aria-labelledby="faq-heading">
-        <div className="grid gap-7 lg:grid-cols-[0.72fr_1.28fr] lg:gap-12">
+        <div className="grid gap-7 lg:grid-cols-[0.58fr_1.42fr] lg:gap-12">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Before you decide</p>
-            <h2 id="faq-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+            <h2 id="faq-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-[2.1rem]">
               Curriculum questions parents ask most
             </h2>
             <p className="mt-4 text-sm leading-7 text-slate-600">
