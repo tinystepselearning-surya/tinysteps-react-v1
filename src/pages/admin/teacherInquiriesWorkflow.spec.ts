@@ -15,12 +15,15 @@ describe('teacher enquiries three-stage workflow', () => {
     expect(normalizeTeacherInquiryStage('with_auditor')).toBe('open');
   });
 
-  it('keeps final statuses intentionally small', () => {
+  it('keeps only selected and not-selected as current closed outcomes', () => {
     expect(normalizeTeacherInquiryFinalStatus('selected')).toBe('selected');
     expect(normalizeTeacherInquiryFinalStatus('not_selected')).toBe('not_selected');
-    expect(normalizeTeacherInquiryFinalStatus('no_response')).toBe('no_response');
-    expect(normalizeTeacherInquiryFinalStatus('withdrawn')).toBe('withdrawn');
     expect(normalizeTeacherInquiryFinalStatus('mock_demo_pending')).toBe('');
+  });
+
+  it('maps legacy closed outcomes into not selected so historical records stay visible', () => {
+    expect(normalizeTeacherInquiryFinalStatus('no_response')).toBe('not_selected');
+    expect(normalizeTeacherInquiryFinalStatus('withdrawn')).toBe('not_selected');
   });
 
   it('requires a final status before an application can close', () => {
@@ -29,10 +32,10 @@ describe('teacher enquiries three-stage workflow', () => {
     expect(canCloseTeacherInquiry('')).toBe(false);
   });
 
-  it('formats final decisions for the admin UI', () => {
-    expect(teacherInquiryFinalStatusLabel('selected')).toBe('Selected');
-    expect(teacherInquiryFinalStatusLabel('not_selected')).toBe('Not Selected');
-    expect(teacherInquiryFinalStatusLabel('no_response')).toBe('No Response');
-    expect(teacherInquiryFinalStatusLabel('withdrawn')).toBe('Withdrawn');
+  it('formats the two closed decisions for the admin UI', () => {
+    expect(teacherInquiryFinalStatusLabel('selected')).toBe('Selected & Closed');
+    expect(teacherInquiryFinalStatusLabel('not_selected')).toBe('Not Selected & Closed');
+    expect(teacherInquiryFinalStatusLabel('no_response')).toBe('Not Selected & Closed');
+    expect(teacherInquiryFinalStatusLabel('withdrawn')).toBe('Not Selected & Closed');
   });
 });
