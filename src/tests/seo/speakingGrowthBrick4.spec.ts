@@ -12,18 +12,18 @@ const c4 = fs.readFileSync(c4Path, 'utf8');
 const speakingEvidence = fs.readFileSync(speakingEvidencePath, 'utf8');
 
 describe('Speaking growth Brick 4 flagship page', () => {
-  it('preserves the frozen /speaking SEO control while rebuilding the body journey', () => {
+  it('keeps /speaking as the canonical owner after the Brick 1 snippet upgrade', () => {
     expect(speaking).toContain(
-      "const seoTitle = 'Public Speaking & Communication Classes for Kids | Tiny Steps';",
+      "const seoTitle = 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps';",
     );
     expect(speaking).toContain(
-      'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
+      'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
     );
     expect(speaking).toContain("const canonicalPath = '/speaking';");
 
-    expect(c4).toContain("title: 'Public Speaking & Communication Classes for Kids | Tiny Steps'");
+    expect(c4).toContain("title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps'");
     expect(c4).toContain(
-      'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
+      'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
     );
   });
 
