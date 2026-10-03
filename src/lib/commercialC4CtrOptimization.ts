@@ -147,8 +147,8 @@ export const COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS: Readonly<Record<string, Read
     description: 'Live online English classes for kids ages 3–12 in Hyderabad. Start with a free 35-minute 1:1 assessment, then choose the right phonics, reading, grammar, writing or speaking path.',
   }),
   '/speaking': freeze({
-    title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
-    description: 'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps',
+    description: 'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
   }),
   '/pricing': freeze({
     title: 'Online English Classes for Kids Fees & Pricing | Tiny Steps',
@@ -157,6 +157,21 @@ export const COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS: Readonly<Record<string, Read
   '/grammar': freeze({
     title: 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps',
     description: 'Live 1:1 online grammar classes for kids in India and worldwide. Build sentence formation, tenses, punctuation, grammar accuracy and clearer school answers with assessment-first placement.',
+  }),
+});
+
+export const COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES: Readonly<Record<string, Readonly<CommercialC4ControlSnippet>>> = freeze({
+  '/speaking': freeze({
+    title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
+    description: 'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
+  }),
+});
+
+export const COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDE_META = freeze({
+  '/speaking': freeze({
+    authorizedOn: '2026-10-03',
+    initiative: 'speaking-commercial-authority-v2',
+    reason: 'A new speaking acquisition initiative intentionally supersedes the September C4 snippet control while preserving the same canonical owner and query-intent boundary.',
   }),
 });
 
@@ -309,6 +324,7 @@ export const COMMERCIAL_C4_POLICY = freeze({
   historicalEvidencePredatesC3: true,
   currentSnippetIsControl: true,
   controlTitleAndDescriptionFrozen: true,
+  authorizedOwnerOverrides: freezeList(Object.keys(COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES)),
   deployCandidateBeforeFreshEvidence: false,
   minimumFreshObservationDays: 14,
   minimumFreshPageImpressions: 200,
