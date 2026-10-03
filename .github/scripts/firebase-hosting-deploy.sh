@@ -5,6 +5,12 @@ set -euo pipefail
 MODE="${1:-}"
 CHANNEL_ID="${2:-}"
 PROJECT_ID="${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID is required}"
+CONFIG_PATH="${FIREBASE_DEPLOY_CONFIG:-firebase.json}"
+
+if [[ ! -f "$CONFIG_PATH" ]]; then
+  echo "Firebase deploy config not found: $CONFIG_PATH" >&2
+  exit 66
+fi
 
 run_with_log() {
   : >"$TMP_LOG"
@@ -40,7 +46,7 @@ trap cleanup EXIT
 
 if [[ "$MODE" == "channel" ]]; then
   echo "Deploying Firebase Hosting to ${TARGET_DESCRIPTION}..."
-  if run_with_log npx firebase-tools@15.30.0 hosting:channel:deploy "$CHANNEL_ID" --project "$PROJECT_ID" --non-interactive; then
+  if run_with_log npx firebase-tools@15.30.0 hosting:channel:deploy "$CHANNEL_ID" --project "$PROJECT_ID" --config "$CONFIG_PATH" --non-interactive; then
     echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} succeeded."
     exit 0
   fi
@@ -57,7 +63,7 @@ if [[ "$MODE" == "channel" ]]; then
 fi
 
 echo "Deploying Firebase Hosting to ${TARGET_DESCRIPTION}..."
-if run_with_log npx firebase-tools@15.30.0 deploy --only hosting --project "$PROJECT_ID" --non-interactive; then
+if run_with_log npx firebase-tools@15.30.0 deploy --only hosting --project "$PROJECT_ID" --config "$CONFIG_PATH" --non-interactive; then
   echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} succeeded."
   exit 0
 fi
