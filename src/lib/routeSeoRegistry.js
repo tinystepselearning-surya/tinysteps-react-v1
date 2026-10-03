@@ -50,9 +50,9 @@ export const ROUTE_SEO_REGISTRY = {
       'online grammar classes for kids,grammar classes for kids,grammar classes for kids India,English grammar classes for kids,1 to 1 grammar classes online,online grammar tutor for kids,sentence formation classes for kids,grammar classes for sentence formation,grammar classes to improve school answers,grammar correction classes for kids,online grammar classes in India,online grammar classes for kids worldwide',
   },
   '/speaking': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps',
+    title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
     description:
-      'Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.',
+      'Live 1:1 online public speaking and communication classes for kids ages 4–12. Build structured answers, storytelling and presentations. ₹400/class; free 35-minute assessment.',
     canonicalPath: '/speaking',
     ogType: 'website',
     keywords:
