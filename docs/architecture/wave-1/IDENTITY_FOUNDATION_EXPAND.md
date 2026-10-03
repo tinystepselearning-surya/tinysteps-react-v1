@@ -1,6 +1,6 @@
 # Wave 1 — Identity Foundation Expand
 
-**Status:** EXPAND IMPLEMENTED — FINAL BUILD / EMULATOR VALIDATION PENDING  
+**Status:** EXPAND COMPLETE — FINAL BUILD, EMULATOR AUTHORIZATION TESTS AND PRODUCTION DRY RUN PASSED  
 **Wave:** 1 — Identity & Relationships  
 **Migration phase:** EXPAND  
 **Production writes:** None in this brick  
@@ -344,7 +344,7 @@ reports/wave1-identity-foundation-dry-run.json
 Read-only production dry run:
 
 ~~~text
-GitHub Actions run: 37139126536
+GitHub Actions run: 37139816228
 Result: success
 Firestore/Auth writes: 0
 ~~~
@@ -540,7 +540,44 @@ Retirement decision:
 - dry-run script retires after canonical cutover/observation unless retained as a permanent integrity audit;
 - temporary GitHub workflows are removed immediately after each bounded run.
 
-## 19. EXPAND exit criteria
+## 19. Final EXPAND validation
+
+Final one-off validation:
+
+~~~text
+GitHub Actions run: 37139816228
+Validated implementation commit: 0188161e8719db830111493626ab9742d41ec036
+Result: success
+Production writes: 0
+~~~
+
+Gate results:
+
+- Functions contracts/build: **PASS**
+- Wave 1 identity foundation invariants: **PASS**
+- authorization-hardening source invariants: **4/4 PASS**
+- Firestore RBAC emulator tests: **7/7 PASS**
+- production Firestore/Auth dry run: **PASS**
+- current Firestore users backed by exact Firebase Auth UID: **223/223**
+- Auth claim-role mismatches among current users: **0**
+- Admin claim-role mismatches among current users: **0**
+- user/kid Person-ID collisions: **0**
+- existing canonical target documents: **0**
+- planned canonical documents: **1,253**
+- blocking migration conflicts: **0**
+- non-blocking exceptions: **3**
+- bounded-backfill review gate: **READY**
+
+The three non-blocking exceptions are:
+
+1. two Firebase Auth-only accounts excluded from automatic Person migration;
+2. one existing role-mirror consistency gap already registered in Wave 0.
+
+One Auth-only account carries an Admin claim. The authorization hardening in this brick ensures that the claim alone is no longer accepted as current Tiny Steps business authority.
+
+The one-off validation workflow was removed after the passing run. Permanent GitHub workflow architecture remains deployment-only.
+
+## 20. EXPAND exit criteria
 
 This brick reaches EXPAND-complete when:
 
@@ -554,4 +591,8 @@ This brick reaches EXPAND-complete when:
 - security/index requirements are documented;
 - migration manifest is complete enough to govern BACKFILL planning.
 
-Only after that review should a separate **Wave 1 Identity Backfill** brick be proposed.
+All EXPAND exit criteria are now satisfied.
+
+**EXPAND is complete.**
+
+The next migration phase is a separate **Wave 1 Identity Backfill** brick. That brick must begin with a reviewed bounded-write manifest/plan and must not include a read switch, legacy-write stop or deletion.
