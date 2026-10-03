@@ -398,8 +398,13 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     ownerRole: 'editorial-pillar',
     hubPath: '/resources/speaking',
     queryIntent: 'why public speaking is important for kids',
+    queryAliases: [
+      'what age should children start public speaking',
+      'is age 4 too young for public speaking classes',
+      'difference between public speaking and spoken English for kids',
+      'why communication skills matter for children in the AI era',
+    ],
     supportingPaths: ['/resources/speaking', '/speaking', '/blog/conversation-skills-for-kids', '/blog/public-speaking-delivery-for-kids'],
-    forbiddenCompetingOwners: ['/speaking'],
   }),
   topic('live-public-speaking-classes', {
     subject: 'speaking-communication',
@@ -408,6 +413,7 @@ export const CANONICAL_TOPIC_OWNERSHIP = Object.freeze([
     ownerRole: 'commercial-programme',
     hubPath: '/resources/speaking',
     queryIntent: 'public speaking classes for kids in India',
+    queryAliases: ['what should parents look for in public speaking classes for kids', 'online public speaking course for kids'],
     supportingPaths: ['/resources/speaking'],
     forbiddenCompetingOwners: ['/resources/speaking'],
   }),
