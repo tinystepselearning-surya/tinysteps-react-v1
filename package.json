@@ -50,7 +50,9 @@
     "dev:emulator": "VITE_USE_FIRESTORE_EMULATOR=true VITE_USE_AUTH_EMULATOR=true VITE_USE_FUNCTIONS_EMULATOR=true VITE_FIREBASE_EMULATOR_HOST=127.0.0.1 VITE_FIREBASE_AUTH_EMULATOR_PORT=9099 VITE_FIREBASE_FIRESTORE_EMULATOR_PORT=8085 VITE_FIREBASE_FUNCTIONS_EMULATOR_PORT=5001 vite",
     "pw:install": "playwright install --with-deps chromium",
     "audit:avs-soak": "node scripts/avs-production-soak-audit.mjs",
-    "audit:avs-soak-compare": "node scripts/avs-production-soak-compare.mjs"
+    "audit:avs-soak-compare": "node scripts/avs-production-soak-compare.mjs",
+    "test:critical": "vitest run src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/admin/attendanceValidationBusinessReconciliation.spec.ts src/tests/functions/ParentPaymentAllocator.spec.ts src/tests/functions/parentMonthlyBillingReadModel.spec.ts src/tests/hooks/useUpcomingSessions.spec.tsx src/tests/pages/TeacherMyStudentsV2.spec.tsx",
+    "test:full:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
