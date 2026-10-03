@@ -1,6 +1,6 @@
 # School OS Wave 0 — Current to Canonical Map
 
-**Status:** INITIAL VERIFIED BASELINE  
+**Status:** IDENTITY AUDIT IN PROGRESS — CODE DECISIONS RECORDED, LIVE VERIFY PENDING  
 **Wave:** 0 — Architecture Contracts  
 **Source branch baseline:** `main` after School OS v1.0 freeze  
 **Purpose:** Document current production concepts and their intended School OS ownership before any schema migration.
@@ -28,17 +28,18 @@ This is a Wave 0 ownership map, not a physical Firestore schema proposal.
 
 | Current concept / collection | What exists today | Canonical destination | Classification / migration posture |
 |---|---|---|---|
-| `users` / `User` | Auth UID, profile, single role, contact fields, `childIds[]`, `assignedKids[]` | Person + AuthIdentity + RoleAssignment + canonical relationships | **Mixed legacy/current.** Preserve auth compatibility; split relationship authority later. |
-| `kids` / `Kid` | Learner profile plus parent IDs, teacher/LP fields and summary metrics | LearnerProfile + GuardianRelationship + TeachingAssignment/other relationships + projections | **Mixed.** Learner identity can be preserved; embedded relationships/summary become non-authoritative. |
-| `students` / `Student` | Second learner-shaped model with parent IDs and summary | LearnerProfile + GuardianRelationship + projections | **Overlapping learner model.** Do not delete until identity audit determines canonical ID mapping. |
-| `parents` | Root collection exists; parent-facing DTOs also exist separately | Person + GuardianRelationship + Household | **Needs schema inventory.** Do not assume collection semantics from name alone. |
-| `teachers` | Teacher records plus derived monthly `teachers/{id}/earnings/{month}` read model | FacultyProfile / FacultyEngagement; monthly earnings child = projection | **Preserve.** Separate workforce identity/engagement from finance projections. |
+| `users` / `User` | Auth-backed profile keyed today by Firebase UID; document also stores `uid`/`userId`, role and relationship arrays | Person + AuthIdentity + RoleAssignment + canonical relationships | **CONVERGE.** For existing people, preserve the current document-ID value as Person ID after live 1:1 verification, but model Firebase UID separately as AuthIdentity. Future Person IDs are not provider-derived. |
+| `kids` / `Kid` | Primary learner creation path uses an auto-generated `kids` ID; parent/teacher/LP aliases and summary metrics are embedded | Person + LearnerProfile + GuardianRelationship + TeachingAssignment/other relationships + projections | **CONVERGE / canonical learner-ID candidate.** Preserve `kids` ID where live references reconcile; extract relationship authority and keep summary fields rebuildable. |
+| root `students/{id}` | Learner-shaped namespace also used for learner-scoped progress/projection documents | LearnerProfile compatibility + learning projections | **COMPATIBILITY / PROJECTION until live classification.** Must not become a second Person authority; same-ID rows may remain learner-scoped projections keyed by canonical kid ID. |
+| `parents/{parentId}/students/{studentId}` | Legacy student-creation path with its own auto-generated student ID | Legacy compatibility → explicit link to Person/LearnerProfile | **COMPATIBILITY.** Students are not Auth users. Link each meaningful legacy row to a canonical kid/person before retirement; never merge by name. |
+| `parents` | Role mirror created at `parents/{uid}` for parent users; contains parent-specific profile/preferences | Person + RoleAssignment + guardian/household profile | **CONVERGE.** Role mirror, not independent Person authority. Preserve ID value where it matches the user/person ID. |
+| `teachers` | Role mirror created at `teachers/{uid}` plus derived monthly `teachers/{id}/earnings/{month}` read model | Person + FacultyProfile / FacultyEngagement; monthly earnings child = projection | **CONVERGE/PRESERVE.** Teacher mirror is not separate Person authority; preserve the shared ID value after live verification and keep monthly earnings rebuildable. |
 | `schools` / `SchoolRecord` | School profile, status, contact/location, LP assignment, current academic year | Organisation + School Partnerships | **Strong foundation.** Converge role/assignment fields without replacing working school identity. |
-| `schoolUsers` / `SchoolUserAccess` | School-admin access with `schoolIds[]` and primary school | OrganisationMembership + RoleAssignment | **Relationship model to normalize.** Preserve access during migration. |
+| `schoolUsers` / `SchoolUserAccess` | School-admin access keyed by user ID with `schoolIds[]` and `primarySchoolId` | OrganisationMembership + RoleAssignment | **CONVERGE.** Preserve verified user/person and school IDs; replace array authority with membership records while keeping access uninterrupted. |
 | School academic year/grade/section models | School structure and current progress/evidence structures | Organisation/Campus + AcademicYear + Grade + Section + School Partnerships | **Mostly aligned.** Review `teacherIds[]` relationship arrays and snapshot semantics. |
-| `enrollments` / `Enrollment` | Learner/course plus teacher, LP, parent, rate, billing cycle and credit fields | Enrollment + TeachingAssignment + relationships + Commerce/Finance | **High-value mixed aggregate.** Preserve IDs where valid; split ownership gradually. |
+| `enrollments` / `Enrollment` | Mixed aggregate; existing hardening already treats `kidId`, `parentId`, `teacherId` as canonical operational scalars with `studentId`, `kidIds[]`, `parentIds[]`, `teacherIds[]` retained for compatibility | Enrollment + TeachingAssignment + relationships + Commerce/Finance | **CONVERGE.** Preserve enrollment IDs and canonical scalar references where valid; refuse ambiguous alias states and split domain ownership gradually. |
 | `courses` / `Course` | Academic course plus duration/frequency/rate/topics | Course + CurriculumVersion + DeliveryOffering + Product/CommercialOffer where commercial | **Academic/commercial mix.** Price must leave academic ownership over time. |
-| `classSessions` / `TeacherSession` | Session plus teacher aliases, learner aliases/arrays, time, attendance map, fee and reschedule links | ClassSession + SessionParticipant + SessionStaff + Attendance + finance/commercial snapshots as required | **High-value mixed aggregate.** Preserve working scheduling system; converge in Wave 3. |
+| `classSessions` / `TeacherSession` | Session plus learner aliases/arrays, time, attendance, finance snapshots and teacher identity where `teacherId` is canonical for new writes; older teacher aliases remain readable | ClassSession + SessionParticipant + SessionStaff + Attendance + finance/commercial snapshots as required | **CONVERGE.** Preserve working scheduling system and canonical `teacherId`; classify alias mismatches before later physical cleanup in Wave 3. |
 | `leads` | Prospect/lead records | Lead in Growth & CRM | **Canonical direction clear.** Preserve lead history through admission/enrollment. |
 | `demoSessions` | Admission scheduling, teacher assignment, observed child level, outcome, follow-up/conversion data | AdmissionsCase + AdmissionAssessment + shared scheduling capability | **Mixed admissions aggregate.** Do not force into academic ClassSession. |
 | `demoSessionsPrivate` | Parent phone/private admission data sidecar | Admissions private/PII boundary | **Good pattern to preserve.** Reinforces sensitive-data separation. |
@@ -70,7 +71,7 @@ This is a Wave 0 ownership map, not a physical Firestore schema proposal.
 
 ## 3. Confirmed ownership conflicts to resolve later
 
-### A. User identity vs role/relationships
+### A. User identity vs role/relationships — code decision recorded
 
 Current `User` contains both authentication/profile data and relationship arrays such as:
 
@@ -90,20 +91,13 @@ GuardianRelationship
 TeachingAssignment
 ```
 
-Wave 1 should migrate authority without breaking current Firebase login behaviour.
+Existing auth-backed users may preserve their current `users` document-ID value as the initial Person ID **only after the live audit confirms 1:1 consistency**. Firebase UID then becomes an AuthIdentity provider subject rather than the semantic Person owner. Wave 1 must migrate authority without breaking current Firebase login behaviour.
 
-### B. Duplicate learner shapes
+### B. Duplicate learner shapes — canonical direction recorded
 
 Both `kids` and `students` exist with overlapping learner semantics.
 
-Wave 0 must determine:
-
-- whether both remain active;
-- which IDs are referenced by current sessions/enrollments;
-- whether one is canonical and one compatibility;
-- whether any records must be linked rather than merged.
-
-No collection should be deleted based on naming alone.
+Repository evidence makes `kids/{kidId}` the canonical learner-ID candidate. Root `students` and nested `parents/{parentId}/students/{studentId}` must be reconciled as projection/compatibility/legacy rows. The live audit must determine which rows share the canonical kid ID and which require an explicit link. No collection or learner record is deleted or merged by naming alone.
 
 ### C. Enrollment mixes domains
 
@@ -174,15 +168,23 @@ Wave 0 treats the following as assets rather than rewrite targets:
 - admin analytics grain/period discipline;
 - school portal foundations;
 - reusable blog authority template;
-- current CI/regression guards.
+- local `preflight` validation plus the deployment-only GitHub workflow.
 
-## 5. Explicitly unresolved before further audit
+## 5. Live verification and remaining unresolved items
 
-The following should remain marked **UNRESOLVED** until their record semantics are inspected:
+The code-level identity direction is now documented in [IDENTITY_REFERENCE_AUDIT.md](./IDENTITY_REFERENCE_AUDIT.md).
 
-- exact canonical Person ID reuse strategy;
-- `kids` vs `students` canonical linkage;
-- current `parents` collection authority;
+The read-only production audit must still verify:
+
+- 1:1 consistency of `users/{id}` with populated `uid`/`userId`;
+- completeness/consistency of parent, teacher, LP and admin role mirrors;
+- `kids` vs root/nested `students` overlap and explicit mappings;
+- guardian backlink drift between `users.childIds[]` and learner parent references;
+- enrollment/session orphan and alias ambiguity counts;
+- school membership reference integrity.
+
+Non-identity items that remain unresolved for later work packages:
+
 - `progress` record taxonomy;
 - `parentWallets` canonical/subledger/projection classification;
 - `rescheduleCredits` ownership;
@@ -191,7 +193,7 @@ The following should remain marked **UNRESOLVED** until their record semantics a
 - recording retention/evidence semantics;
 - precise school teacher/section relationship migration.
 
-Wave 0 must resolve or explicitly defer each item before Wave 1 if it can affect identity or canonical ownership.
+No runtime migration is authorized until live identity exceptions are understood.
 
 ## 6. Migration posture labels
 
@@ -210,11 +212,21 @@ Future mapping updates use these labels:
 
 ## 7. Next Wave 0 work
 
-The next Wave 0 review should focus on **Identity & References**:
+Immediate completion step for this work package:
 
-- inventory current UID/document-ID usage across `users`, `kids`, `students`, `teachers`, `parents`, schools and enrollments;
-- identify which IDs can be safely preserved;
-- identify duplicate relationship authority;
-- define compatibility rules without changing production data.
+```bash
+npm run audit:identity-references
+```
 
-No runtime migration should begin until that audit is complete.
+Review the local read-only report and register/correct every ambiguity or orphan category.
+
+After that review, the next Wave 0 work package is **Academic & Enrollment Audit**:
+
+- Course vs CurriculumVersion vs DeliveryOffering ownership;
+- Enrollment lifecycle and canonical references;
+- TeachingAssignment scope;
+- LearningGroup / GroupPlacement;
+- schedule-plan and class-session boundaries;
+- remaining academic/commercial mixing.
+
+No runtime identity migration begins merely because this audit code exists.
