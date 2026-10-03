@@ -31,8 +31,11 @@ describe('blog content CI routing hardening', () => {
     expect(deploy).toContain('Audit canonical ownership for content-only PR');
     expect(deploy).toContain('Audit phonics knowledge collisions for content-only PR');
     expect(deploy).toContain('Audit controlled reading, grammar and speaking content for content-only PR');
-    expect(deploy).toContain('Run full unit tests');
-    expect(deploy).toContain("github.event_name != 'pull_request' || needs.analyze-changes.outputs.content_only_validation != 'true'");
+    expect(deploy).toContain('Run affected unit tests');
+    expect(deploy).toContain('Run critical regression pack');
+    expect(deploy).not.toContain('Run full unit tests');
+    expect(deploy).toContain("github.event_name == 'pull_request'");
+    expect(deploy).toContain("needs.analyze-changes.outputs.content_only_validation != 'true'");
     expect(deploy).toContain('npm run build');
     expect(deploy).toContain('npm run seo:smoke');
 
