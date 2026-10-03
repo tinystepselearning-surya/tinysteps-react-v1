@@ -579,6 +579,15 @@ test('Hosting deployment builds the production artifact exactly once inside the 
   assert.equal((deployJob.match(/npm run build:deploy/g) ?? []).length, 1);
 });
 
+test('local preflight compiles Functions before deployment contract tests', () => {
+  const preflight = readFileSync('scripts/preflight.mjs', 'utf8');
+  const buildIndex = preflight.indexOf("run('Functions build'");
+  const contractIndex = preflight.indexOf("run('Deployment contract tests'");
+  assert.ok(buildIndex >= 0);
+  assert.ok(contractIndex >= 0);
+  assert.ok(buildIndex < contractIndex);
+});
+
 test('GitHub Actions has no pull-request development test lane', () => {
   const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
