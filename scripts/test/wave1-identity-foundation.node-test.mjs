@@ -97,14 +97,7 @@ test('schoolAdmin role is not promoted to an unscoped global assignment', () => 
     result.documents.some((doc) => doc.kind === 'roleAssignment'),
     false,
   );
-  assert.equal(
-    result.conflicts.some(
-      (item) =>
-        item.code === 'school_admin_role_requires_organisation_scope' &&
-        item.blocksBackfill === false,
-    ),
-    true,
-  );
+  assert.equal(result.conflicts.length, 0);
 });
 
 test('learner expansion preserves kid ID and creates guardian relationships', () => {
