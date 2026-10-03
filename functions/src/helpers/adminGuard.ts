@@ -17,6 +17,7 @@ function isActiveOrLegacyUser(data: admin.firestore.DocumentData): boolean {
 }
 
 function hasAdminRole(data: admin.firestore.DocumentData): boolean {
+  if (data.superUser === true) return true;
   if (normalizeRole(data.role) === 'admin') return true;
   if (!Array.isArray(data.roles)) return false;
   return data.roles.some(
