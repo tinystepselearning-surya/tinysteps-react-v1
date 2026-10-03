@@ -40,7 +40,38 @@ Phase 1 changes the CI deployment path so:
 - canonical `firebase.json` remains unchanged, so local/manual Firebase deploys retain their normal safety hooks;
 - Functions are linted/built during validation and built once in the deployment job after dependency installation;
 - bounded Firebase CLI batches use the generated CI config so they do not re-run lint/build predeploy hooks per batch;
-- docs/no-impact changes can skip the heavy `build-and-test` job after impact analysis.
+- docs/no-impact changes can skip the heavy `build-and-test` job after impact analysis;
+- ordinary frontend PRs run Vitest's dependency-aware affected tests plus a small critical regression pack instead of the complete unit suite;
+- the complete unit suite with coverage runs in a separate daily/manual certification workflow rather than on every PR/main deployment.
+
+## Unit-test execution policy
+
+### Pull requests
+
+For ordinary frontend PRs:
+
+1. run lint and typecheck;
+2. run content-specialist tests when the change is content-only;
+3. otherwise run `vitest --changed <PR base SHA>` so Vitest selects tests affected by changed modules;
+4. always run the small critical regression pack for scheduling/session integrity, attendance reconciliation, parent payment allocation/billing, upcoming sessions and teacher/student delivery views;
+5. do **not** instrument the normal PR suite for coverage.
+
+Functions and Firestore continue to use their own focused validation/emulator lanes when impacted.
+
+### Main deployment
+
+Main deployment retains the critical regression pack, build/prerender and production verification. It does not repeat the complete ~repository-wide unit suite that was already exercised by affected PR testing and the certification lane.
+
+### Full certification
+
+The complete unit suite with coverage runs:
+
+- daily at **06:00 IST**;
+- manually through `workflow_dispatch` whenever a release/audit needs explicit full certification.
+
+Coverage publishing moves to this certification workflow.
+
+This keeps comprehensive safety evidence while removing thousands of unrelated test executions from ordinary development iterations.
 
 ## Safety retained
 
