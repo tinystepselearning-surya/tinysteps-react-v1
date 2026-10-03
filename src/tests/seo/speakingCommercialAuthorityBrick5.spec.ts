@@ -9,10 +9,10 @@ describe('Speaking Commercial Authority v2 — Brick 5 evidence and conversion',
   it('creates one compact pre-enrolment decision rail from verified Tiny Steps surfaces', () => {
     expect(speaking).toContain('const speakingDecisionEvidence = [');
     expect(speaking).toContain('Five things parents can verify before choosing Tiny Steps Speaking');
-    expect(speaking).toContain("path: '/curriculum?tab=speaking'");
+    expect(speaking).toContain("path: '/curriculum?tab=speaking#course-levels'");
     expect(speaking).toContain("path: '/class-samples'");
     expect(speaking).toContain('path: SPEAKING_PROGRESS_FRAMEWORK_PATH');
-    expect(speaking).toContain("path: '/testimonials'");
+    expect(speaking).toContain("path: '/testimonials?program=speaking#speaking-feedback'");
     expect(speaking).toContain("path: '/pricing'");
   });
 

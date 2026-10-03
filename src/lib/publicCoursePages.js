@@ -500,6 +500,9 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'See the complete Speaking & Communication programme', to: '/speaking' },
       { label: 'Continue to Public Speaking Excellence', to: '/courses/public-speaking-excellence' },
+      { label: 'View the Speaking curriculum roadmap', to: '/curriculum?tab=speaking#course-levels' },
+      { label: 'See how speaking progress is measured', to: '/speaking-progress-framework' },
+      { label: 'Read Public Speaking parent feedback', to: '/testimonials?program=speaking#speaking-feedback' },
       { label: 'Everyday conversation support: Spoken English', to: '/spoken-english-classes-for-kids-online' },
       { label: 'Specialist confidence support', to: '/confidence-building-program-kids' },
       { label: 'View real class samples', to: '/class-samples' },
@@ -601,6 +604,9 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Review Public Speaking Foundations', to: '/courses/public-speaking-foundations' },
       { label: 'See the complete Speaking & Communication programme', to: '/speaking' },
+      { label: 'View the Speaking curriculum roadmap', to: '/curriculum?tab=speaking#course-levels' },
+      { label: 'See how speaking progress is measured', to: '/speaking-progress-framework' },
+      { label: 'Read Public Speaking parent feedback', to: '/testimonials?program=speaking#speaking-feedback' },
       { label: 'Everyday conversation support: Spoken English', to: '/spoken-english-classes-for-kids-online' },
       { label: 'Specialist confidence support', to: '/confidence-building-program-kids' },
       { label: 'View real class samples', to: '/class-samples' },

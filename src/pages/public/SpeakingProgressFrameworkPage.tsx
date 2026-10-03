@@ -213,6 +213,22 @@ export default function SpeakingProgressFrameworkPage() {
         </div>
       </section>
 
+      <section className="px-4 pb-4 sm:px-6 lg:px-8" aria-label="Speaking programme context">
+        <div className="mx-auto grid max-w-6xl gap-2 rounded-2xl border border-violet-100 bg-white/90 p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ['/speaking', 'Speaking & Communication', 'Programme overview'],
+            ['/courses/public-speaking-foundations', 'Foundations', 'Ages 4–7 • 36 lessons'],
+            ['/courses/public-speaking-excellence', 'Excellence', 'Ages 7–12 • 36 lessons'],
+            ['/curriculum?tab=speaking#course-levels', 'Speaking curriculum', 'Compare both levels'],
+          ].map(([to, label, detail]) => (
+            <Link key={to} to={to} className="rounded-xl px-3 py-2.5 transition hover:bg-violet-50">
+              <span className="block text-sm font-bold text-slate-950">{label}</span>
+              <span className="mt-0.5 block text-xs text-slate-500">{detail}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="px-4 pb-10 sm:px-6 md:pb-14 lg:px-8" aria-labelledby="framework-quick-answer">
         <div className="mx-auto max-w-6xl rounded-3xl border border-sky-100 bg-sky-50/60 p-6 sm:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-800">Quick answer</p>
