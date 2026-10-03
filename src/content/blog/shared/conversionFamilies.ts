@@ -8,6 +8,7 @@ export type BlogConversionFamily =
   | 'grammar-diagnostic'
   | 'sentence-building'
   | 'speaking-confidence'
+  | 'speaking-programme'
   | 'general-english'
   | 'schools-partnership';
 
@@ -48,6 +49,7 @@ const EXPLICIT_FAMILY_BY_SLUG: Partial<Record<string, BlogConversionFamily>> = {
   'child-understands-english-but-does-not-speak': 'speaking-confidence',
   'child-gives-one-word-answers': 'speaking-confidence',
   'speaking-confidence-seeds': 'speaking-confidence',
+  'why-public-speaking-is-important-for-kids': 'speaking-programme',
 };
 
 const FAMILY_COPY: Record<BlogConversionFamily, Omit<BlogConversionConfig, 'family' | 'authorityCluster' | 'intentCluster'>> = {
@@ -149,6 +151,23 @@ const FAMILY_COPY: Record<BlogConversionFamily, Omit<BlogConversionConfig, 'fami
     },
     secondaryAction: {
       label: 'Explore Tiny Steps speaking classes',
+      to: '/speaking',
+      kind: 'program',
+    },
+  },
+  'speaking-programme': {
+    program: 'speaking',
+    eyebrow: 'When your child needs stronger audience-facing communication',
+    heading: 'See whether Public Speaking & Communication is the right next step',
+    description:
+      'Tiny Steps can assess how your child organises ideas, tells stories, presents, responds to questions and handles audience-facing speaking, then recommend the appropriate speaking level or a different pathway if another need comes first.',
+    primaryAction: {
+      label: 'Book a free speaking assessment',
+      to: '/book-demo',
+      kind: 'demo',
+    },
+    secondaryAction: {
+      label: 'Explore Public Speaking & Communication',
       to: '/speaking',
       kind: 'program',
     },
