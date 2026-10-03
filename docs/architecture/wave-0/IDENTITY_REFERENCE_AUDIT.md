@@ -390,7 +390,20 @@ Before the Identity & References work package is marked complete:
    - enrollment and class-session orphan references are identified;
    - ambiguities are either zero or explicitly registered as migration exceptions.
 
-## 7. Exit gate
+## 7. Audit-tool retirement decision
+
+The audit implementation is migration scaffolding, not a new permanent service.
+
+| Asset | Current status | Retirement rule |
+|---|---|---|
+| `scripts/audit-identity-references.mjs` | KEEP through identity migration | Retire after Wave 1 identity cutover/observation if no recurring operational integrity need remains. If retained, narrow it to permanent identity invariants only. |
+| `scripts/test/identity-reference-audit.node-test.mjs` | KEEP while audit script exists | Retire with the audit script, or reduce to permanent invariant tests if the audit becomes an ongoing supported tool. |
+| `npm run audit:identity-references` | KEEP through identity migration | Remove when the audit script retires. |
+| Identity architecture documents | PERMANENT | Remain as architecture/migration record. |
+
+Do not create a scheduled GitHub workflow for this audit.
+
+## 8. Exit gate
 
 This work package is complete only when the read-only report has been reviewed and every non-zero ambiguity/orphan category is one of:
 
@@ -400,7 +413,7 @@ This work package is complete only when the read-only report has been reviewed a
 
 No production backfill is authorized by this document.
 
-## 8. Next work package
+## 9. Next work package
 
 After the live identity report is reviewed, Wave 0 proceeds to:
 
