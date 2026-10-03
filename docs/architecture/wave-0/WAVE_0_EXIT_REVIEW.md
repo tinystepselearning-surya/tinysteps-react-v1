@@ -271,7 +271,36 @@ One-off audit workflows created during Wave 0 were removed after use.
 
 Wave 1 must not recreate multiple permanent CI workflows.
 
-## 6. Formal decision
+## 6. Automated exit validation
+
+A one-off repository fitness check ran in GitHub Actions after all Wave 0 completion updates:
+
+~~~text
+Run ID: 37137966683
+Result: PASS
+Checks: 26 / 26
+Permanent workflows detected: deploy.yml only
+Wave 1 entry decision: GO at EXPAND
+~~~
+
+The validator checked:
+
+- frozen blueprint status;
+- Wave 0 completion in the roadmap/contracts/map;
+- all six package completion markers;
+- Identity, Academic/Enrollment and Shared Experience audit completion;
+- complete seven-phase migration lifecycle;
+- migration manifest, compatibility registry, exception registry and rollback standard;
+- explicit Wave 1 scope guard;
+- formal GO language without blanket backfill authorization;
+- local preflight availability;
+- no scheduled CI;
+- no pull-request CI;
+- only one permanent GitHub workflow.
+
+The temporary validator script and one-off workflow were deleted after the successful run.
+
+## 7. Formal decision
 
 # GO — WAVE 1 MAY BEGIN
 
@@ -285,7 +314,7 @@ Wave 1 — Identity Foundation Expand
 
 The first brick may define the physical canonical identity/relationship schema and compatibility contracts.
 
-## 7. What this GO authorizes
+## 8. What this GO authorizes
 
 Authorized:
 
@@ -298,7 +327,7 @@ Authorized:
 - add bounded migration reports/tests;
 - perform read-only production audits required to finalize backfill scope.
 
-## 8. What this GO does not authorize
+## 9. What this GO does not authorize
 
 Not yet authorized:
 
@@ -313,7 +342,7 @@ Not yet authorized:
 
 Each later phase requires its own migration gate.
 
-## 9. Wave 1 entry invariants
+## 10. Wave 1 entry invariants
 
 Wave 1 must preserve:
 
@@ -328,7 +357,7 @@ Wave 1 must preserve:
 9. Bounded Firestore reads/writes.
 10. Compatibility until canonical read/write cutover is verified.
 
-## 10. Recommended first Wave 1 brick
+## 11. Recommended first Wave 1 brick
 
 ### Wave 1 — Identity Foundation Expand
 
@@ -357,7 +386,7 @@ Non-goals for the first brick:
 - no UI redesign;
 - no scheduling/finance rewrite.
 
-## 11. Wave 0 completion statement
+## 12. Wave 0 completion statement
 
 Wave 0 is complete when measured against both the Migration Roadmap and the Wave 0 Architecture Contracts.
 
