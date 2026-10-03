@@ -474,16 +474,16 @@ export function auditAcademicEnrollmentSnapshot(snapshot, options = {}) {
     operationalKeys,
     transitions,
     schoolStructure,
-    explicitAbsences: {
-      programmeCollectionObserved: false,
-      curriculumVersionCollectionObserved: false,
-      deliveryOfferingCollectionObserved: false,
-      learningGroupCollectionObserved: false,
-      groupPlacementCollectionObserved: false,
-      teachingAssignmentCollectionObserved: false,
-      schedulePlanCollectionObserved: false,
+    canonicalCollectionInventory: {
+      programmes: snapshot.programmes.length,
+      curriculumVersions: snapshot.curriculumVersions.length,
+      deliveryOfferings: snapshot.deliveryOfferings.length,
+      learningGroups: snapshot.learningGroups.length,
+      groupPlacements: snapshot.groupPlacements.length,
+      teachingAssignments: snapshot.teachingAssignments.length,
+      schedulePlans: snapshot.schedulePlans.length,
       note:
-        'The repository does not currently define these as standalone canonical collections. Equivalent responsibilities are embedded in Course, Enrollment, school structure, and enrollment rolling-schedule fields.',
+        'Zero counts support the repository finding that these canonical concepts are not yet standalone production collections. Their current responsibilities are embedded in Course, Enrollment, school structure, and enrollment rolling-schedule fields.',
     },
     issues: issueResult,
     canonicalDecisions: {
@@ -564,6 +564,13 @@ async function collectSnapshot(db) {
     operationalEnrollmentKeys,
     enrollmentCreationOperations,
     enrollmentCourseTransitions,
+    programmes,
+    curriculumVersions,
+    deliveryOfferings,
+    learningGroups,
+    groupPlacements,
+    teachingAssignments,
+    schedulePlans,
     schoolStructure,
   ] = await Promise.all([
     readCollection(db, 'courses', COURSE_FIELDS),
@@ -572,6 +579,13 @@ async function collectSnapshot(db) {
     readCollection(db, 'operationalEnrollmentKeys', ['enrollmentId', 'kidId', 'courseId']),
     readCollection(db, 'enrollmentCreationOperations', ['enrollmentId', 'kidId', 'courseId', 'creationIntent', 'state']),
     readCollection(db, 'enrollmentCourseTransitions', ['oldEnrollmentId', 'newEnrollmentId', 'oldCourseId', 'newCourseId', 'state', 'transitionType', 'rolling']),
+    readCollection(db, 'programmes', ['schemaVersion']),
+    readCollection(db, 'curriculumVersions', ['schemaVersion']),
+    readCollection(db, 'deliveryOfferings', ['schemaVersion']),
+    readCollection(db, 'learningGroups', ['schemaVersion']),
+    readCollection(db, 'groupPlacements', ['schemaVersion']),
+    readCollection(db, 'teachingAssignments', ['schemaVersion']),
+    readCollection(db, 'schedulePlans', ['schemaVersion']),
     readSchoolStructure(db),
   ]);
 
@@ -582,6 +596,13 @@ async function collectSnapshot(db) {
     operationalEnrollmentKeys,
     enrollmentCreationOperations,
     enrollmentCourseTransitions,
+    programmes,
+    curriculumVersions,
+    deliveryOfferings,
+    learningGroups,
+    groupPlacements,
+    teachingAssignments,
+    schedulePlans,
     schoolStructure,
   };
 }
