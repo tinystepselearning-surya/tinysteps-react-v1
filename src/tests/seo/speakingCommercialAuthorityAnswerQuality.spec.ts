@@ -32,7 +32,7 @@ describe('Speaking Commercial Authority v2 — final parent-answer quality harde
   });
 
   it('states Tiny Steps programme positions confidently without unsupported guarantees', () => {
-    expect(speaking).toContain('Tiny Steps position: age four is a valid starting point for communication foundations; formal speech and debate come later.');
+    expect(speaking).toContain('Tiny Steps position: age four is a valid starting point for communication foundations when the work is age-appropriate—but not for adult-style speeches.');
     expect(speaking).toContain('Tiny Steps develops those habits through speaking practice');
     expect(article).toContain('Tiny Steps treats public speaking for kids as organised, audience-aware communication—not as memorising a stage speech.');
     expect(article).toContain('**Public Speaking is the right first route when the main gap is organising and delivering ideas for a listener or audience.**');

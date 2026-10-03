@@ -37,7 +37,7 @@ describe('Commercial owner content hardening', () => {
   });
 
   it('routes ambiguous Speaking placement to assessment instead of assuming the advanced level', () => {
-    expect(speaking).toContain('Has ideas but cannot organise a clear answer');
+    expect(speaking).toContain('Has ideas but answers wander, jump around, or end without a clear point');
     expect(speaking).toContain('Check the right speaking level');
     expect(speaking).toContain('to="/book-demo"');
     expect(speaking).toContain('Not sure which speaking path fits your child?');

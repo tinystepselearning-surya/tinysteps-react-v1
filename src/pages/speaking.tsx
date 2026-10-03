@@ -763,6 +763,9 @@ export default function SpeakingPage() {
               <p className="mt-3 text-sm leading-6 text-slate-600 md:text-base md:leading-7">
                 The right programme depends on the actual speaking problem, not on a generic “confidence” label. Tiny Steps separates everyday conversation, sentence control, participation comfort, idea organisation, presentation structure, and advanced speaking, then uses the free 1:1 assessment to confirm the pathway.
               </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Everyday conversational fluency belongs to Spoken English. Confidence-only barriers belong to Confidence Building. The Speaking programme builds audience-facing communication; it does not replace support for one-word everyday answers or sentence formation itself.
+              </p>
               <div className="mt-4 rounded-[18px] border border-violet-100 bg-violet-50/55 p-4">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-violet-800">Core Speaking fit</p>
                 <p className="mt-2 text-sm leading-6 text-slate-700">
@@ -796,7 +799,7 @@ export default function SpeakingPage() {
             </summary>
             <div className="border-t border-slate-200 px-4 pb-4 pt-3">
               <p className="text-sm leading-6 text-slate-600">
-                Spoken communication can involve language accuracy, idea organisation, delivery, confidence, listening, and audience adaptation. Tiny Steps uses the free assessment for educational programme fit; it is not a clinical diagnosis.
+                Spoken communication is multidimensional. The Oracy Skills Framework describes physical, linguistic, cognitive, and social/emotional dimensions. These are programme-fit cues, not diagnoses. Tiny Steps uses the free assessment for educational programme fit; it is not a clinical diagnosis.
               </p>
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 {speakingFitReferences.map((source) => (
@@ -808,6 +811,9 @@ export default function SpeakingPage() {
               </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">
                 Broader speech, language, hearing, or communication-development concerns should be assessed by an appropriately qualified speech-language or hearing professional.
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Final placement is assessment-led. The free assessment checks observable performance before recommending a programme.
               </p>
             </div>
           </details>
@@ -1006,6 +1012,9 @@ export default function SpeakingPage() {
               <p className="mt-3 text-sm leading-6 text-slate-300 md:text-[15px]">
                 Standard Tiny Steps 1:1 classes run for {PUBLIC_SESSION_DURATION_LABEL}. Before enrolment, the free {demoMinutes}-minute 1:1 assessment checks how your child answers questions, organises ideas, tells a story, responds to prompts, handles presentation-style tasks, and how much support is needed.
               </p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-white">
+                Not sure which speaking path fits your child? The assessment helps confirm the programme and level before enrolment.
+              </p>
               <p className="mt-3 text-sm leading-6 text-slate-400">
                 The assessment is used for programme and level fit; it is not a clinical diagnosis and does not guarantee a fixed improvement timeline.
               </p>
@@ -1049,7 +1058,7 @@ export default function SpeakingPage() {
                 Children can begin public-speaking development as early as age four when the work is communication-focused and developmentally appropriate. Tiny Steps starts younger children with description, storytelling, show-and-tell, listening, turn-taking, and short connected responses—not adult-style speeches. There is no single global starting-age rule, so recognised developmental communication evidence and primary-school spoken-language frameworks are used as reference points while the task is adjusted to the child.
               </p>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-800">
-                Tiny Steps position: age four is a valid starting point for communication foundations; formal speech and debate come later.
+                Tiny Steps position: age four is a valid starting point for communication foundations when the work is age-appropriate—but not for adult-style speeches. There is no single global rule that says children should begin public speaking at one exact age.
               </p>
             </div>
 

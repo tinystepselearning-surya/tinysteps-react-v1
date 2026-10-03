@@ -12,7 +12,7 @@ describe('Speaking Commercial Authority v2 — Brick 1 acquisition layer', () =>
     expect(speaking).toContain("const seoTitle = 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps';");
     expect(speaking).toContain('Online Public Speaking Classes for Kids');
     expect(speaking).toContain("const canonicalPath = '/speaking';");
-    expect((speaking.match(/<h1\\b/g) ?? [])).toHaveLength(1);
+    expect((speaking.match(/<h1\b/g) ?? [])).toHaveLength(1);
   });
 
   it('surfaces verified commercial facts above the fold', () => {

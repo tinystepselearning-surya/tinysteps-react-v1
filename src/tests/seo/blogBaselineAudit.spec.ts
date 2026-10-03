@@ -6,7 +6,7 @@ const repoRoot = path.resolve(__dirname, '../../..');
 const auditScript = path.join(repoRoot, 'scripts', 'audit-blog-baseline.mjs');
 const fixedEnv = {
   ...process.env,
-  BLOG_AUDIT_DATE: '2026-09-11',
+  BLOG_AUDIT_DATE: '2026-10-03',
 };
 
 function runAudit(args: string[] = []) {
@@ -18,19 +18,19 @@ function runAudit(args: string[] = []) {
 }
 
 describe('B0 blog baseline audit', () => {
-  it('executes successfully in normal mode and reports the integrated post-B3 inventory', () => {
+  it('executes successfully in normal mode and reports the current live inventory', () => {
     const output = runAudit();
 
     expect(output).toContain('[blog-b0] baseline inventory');
-    expect(output).toContain('"sourcePostFiles": 83');
-    expect(output).toContain('"routedPostSlugs": 83');
+    expect(output).toContain('"sourcePostFiles": 84');
+    expect(output).toContain('"routedPostSlugs": 84');
     expect(output).toContain('"duplicateSlugs": 0');
-    expect(output).toContain('"publishedPosts": 83');
+    expect(output).toContain('"publishedPosts": 84');
     expect(output).toContain('"weeklyPosts": 12');
     expect(output).toContain('"pageNoindexPosts": 0');
-    expect(output).toContain('"indexableByPageRobots": 83');
-    expect(output).toContain('"expectedGeneratedSitemapPosts": 82');
-    expect(output).toContain('"committedSitemapBlogUrls": 82');
+    expect(output).toContain('"indexableByPageRobots": 84');
+    expect(output).toContain('"expectedGeneratedSitemapPosts": 83');
+    expect(output).toContain('"committedSitemapBlogUrls": 83');
     expect(output).toContain('"missingExpectedFromCommittedSitemap": []');
     expect(output).toContain('"unexpectedCommittedSitemapSlugs": []');
     expect(output).toContain('"retiredSlugsInCommittedSitemap": []');

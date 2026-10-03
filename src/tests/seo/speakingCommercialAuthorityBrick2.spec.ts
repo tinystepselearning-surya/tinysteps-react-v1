@@ -20,7 +20,7 @@ describe('Speaking Commercial Authority v2 — Brick 2 developmental progression
   it('positions age four as communication foundations rather than formal speech training', () => {
     expect(speaking).toContain('At this age, public speaking begins with communication—not podium speeches.');
     expect(speaking).toContain('Formal speeches, debate, and sustained presentation performance are not the goal.');
-    expect(speaking).toContain('Age four can be a suitable starting point for communication foundations—but not for adult-style speeches.');
+    expect(speaking).toContain('Tiny Steps position: age four is a valid starting point for communication foundations when the work is age-appropriate—but not for adult-style speeches.');
     expect(speaking).toContain('Is age 4 too young to start public speaking classes?');
   });
 

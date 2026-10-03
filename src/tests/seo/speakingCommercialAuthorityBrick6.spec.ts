@@ -41,7 +41,8 @@ describe('Speaking Commercial Authority v2 — Brick 6 authority article and rec
   });
 
   it('keeps age-four guidance developmentally bounded and non-diagnostic', () => {
-    expect(article).toContain('There is **no universal international rule**');
+    expect(article).toContain('There is no universal international rule that sets one starting age');
+    expect(article).toContain('At Tiny Steps, children can begin age-appropriate public-speaking development from about age four');
     expect(article).toContain('at age four, public speaking begins with communication—not podium speeches');
     expect(article).toContain('https://www.asha.org/public/developmental-milestones/communication-milestones-4-to-5-years/');
     expect(article).toContain('milestone information is not a diagnostic test');
@@ -75,7 +76,8 @@ describe('Speaking Commercial Authority v2 — Brick 6 authority article and rec
     expect(canonical).toContain("topic('why-public-speaking-matters-for-kids'");
     expect(canonical).toContain("ownerPath: '/blog/why-public-speaking-is-important-for-kids'");
     expect(canonical).toContain("queryIntent: 'why public speaking is important for kids'");
-    expect(canonical).toContain("forbiddenCompetingOwners: ['/speaking']");
+    expect(canonical).not.toContain("forbiddenCompetingOwners: ['/speaking']");
+    expect(canonical).toContain("supportingPaths: ['/resources/speaking', '/speaking'");
     expect(canonical).toContain("topic('live-public-speaking-classes'");
     expect(canonical).toContain("ownerPath: '/speaking'");
     expect(technicalAuthority).toContain("'why-public-speaking-is-important-for-kids': {");

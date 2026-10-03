@@ -26,7 +26,7 @@ describe('Commercial owner compression pass', () => {
     expect(reading).toContain('This Reading pathway begins after the phonics decision.');
     expect(grammar).toContain('Online Grammar Classes for Kids');
     expect(grammar).toContain('Grammar supports writing, but it is not the writing programme');
-    expect(speaking).toContain('Public Speaking & Communication Classes for Kids');
+    expect(speaking).toContain('Online Public Speaking Classes for Kids');
     expect(speaking).toContain('Everyday conversational fluency belongs to Spoken English');
   });
 
