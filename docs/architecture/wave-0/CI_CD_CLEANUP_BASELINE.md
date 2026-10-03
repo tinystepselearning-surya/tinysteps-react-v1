@@ -56,6 +56,8 @@ For ordinary frontend PRs:
 4. always run the small critical regression pack for scheduling/session integrity, attendance reconciliation, parent payment allocation/billing, upcoming sessions and teacher/student delivery views;
 5. do **not** instrument the normal PR suite for coverage.
 
+Dependency/test-runner changes that can affect the whole test graph (for example `package.json` or Vitest configuration) may still cause Vitest's changed-mode safety behavior to run the full suite. This is intentional and should remain rare.
+
 Functions and Firestore continue to use their own focused validation/emulator lanes when impacted.
 
 ### Main deployment
