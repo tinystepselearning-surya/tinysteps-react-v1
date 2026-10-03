@@ -48,6 +48,7 @@ const reviewedPaths = [
   vocabularyKnowledgePath,
   speakingPath,
   courseDetailPath,
+  curriculumPath,
   testimonialsPath,
   confidenceBuildingPath,
   speakingProgressPath,
