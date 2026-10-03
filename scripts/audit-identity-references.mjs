@@ -230,23 +230,30 @@ function auditExpectedRoleMirrors(users, context, issues) {
   };
 
   for (const entry of users) {
-    const role = normalizedRole(entry.data.role);
-    if (role === 'parent') {
+    const roles = new Set([
+      normalizedRole(entry.data.role),
+      ...idList(entry.data.roles).map(normalizedRole),
+    ].filter(Boolean));
+
+    if (roles.has('parent')) {
       result.parentUsers += 1;
       if (context.parentIds.has(entry.id)) result.parentMirrorPresent += 1;
-      else issues.add('user_parent_role_missing_parent_mirror', entry, ['role']);
-    } else if (role === 'teacher') {
+      else issues.add('user_parent_role_missing_parent_mirror', entry, ['role', 'roles']);
+    }
+    if (roles.has('teacher')) {
       result.teacherUsers += 1;
       if (context.teacherIds.has(entry.id)) result.teacherMirrorPresent += 1;
-      else issues.add('user_teacher_role_missing_teacher_mirror', entry, ['role']);
-    } else if (role === 'learningpartner') {
+      else issues.add('user_teacher_role_missing_teacher_mirror', entry, ['role', 'roles']);
+    }
+    if (roles.has('learningpartner')) {
       result.learningPartnerUsers += 1;
       if (context.learningPartnerIds.has(entry.id)) result.learningPartnerMirrorPresent += 1;
-      else issues.add('user_learningPartner_role_missing_role_mirror', entry, ['role']);
-    } else if (role === 'admin') {
+      else issues.add('user_learningPartner_role_missing_role_mirror', entry, ['role', 'roles']);
+    }
+    if (roles.has('admin')) {
       result.adminUsers += 1;
       if (context.adminIds.has(entry.id)) result.adminMirrorPresent += 1;
-      else issues.add('user_admin_role_missing_admin_mirror', entry, ['role']);
+      else issues.add('user_admin_role_missing_admin_mirror', entry, ['role', 'roles']);
     }
   }
 
