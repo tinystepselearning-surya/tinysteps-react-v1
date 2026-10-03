@@ -139,6 +139,11 @@ jobs:
 
   build-and-test:
     needs: analyze-changes
+    if: >-
+      needs.analyze-changes.outputs.functions_validation_required == 'true' ||
+      needs.analyze-changes.outputs.frontend_validation_required == 'true' ||
+      needs.analyze-changes.outputs.firestore_validation_required == 'true' ||
+      (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
     runs-on: ubuntu-latest
     env:
       VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
@@ -179,6 +184,12 @@ jobs:
           (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
         run: npm ci --prefix functions --include=dev
 
+      - name: Lint Cloud Functions
+        if: >-
+          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
+          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
+        run: npm --prefix functions run lint
+
       - name: Build Cloud Functions
         if: >-
           needs.analyze-changes.outputs.functions_validation_required == 'true' ||
@@ -196,6 +207,13 @@ jobs:
       - name: Run bounded Functions deployment tests
         if: needs.analyze-changes.outputs.functions_validation_required == 'true'
         run: node --test scripts/test/functions-deployment.node-test.mjs
+
+      - name: Run prevalidated Firebase config tests
+        if: >-
+          needs.analyze-changes.outputs.functions_validation_required == 'true' ||
+          needs.analyze-changes.outputs.frontend_validation_required == 'true' ||
+          (github.event_name == 'workflow_dispatch' && inputs.functions_only != '')
+        run: node --test scripts/test/firebase-ci-config.node-test.mjs
 
       - name: Validate bounded Functions deployment plan (zero mutation)
         if: needs.analyze-changes.outputs.functions_deployment_required == 'true'
@@ -320,6 +338,18 @@ jobs:
         if: needs.analyze-changes.outputs.frontend_validation_required == 'true'
         run: npm run seo:smoke
 
+      - name: Upload validated Hosting artifact
+        if: >-
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/main' &&
+          needs.analyze-changes.outputs.hosting_changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosting-dist-${{ github.sha }}
+          path: dist
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Upload coverage to Codecov
         if: >-
           needs.analyze-changes.outputs.frontend_validation_required == 'true' &&
@@ -347,6 +377,7 @@ jobs:
     env:
       FUNCTIONS_DEPLOY_ONLY: ${{ needs.analyze-changes.outputs.functions_targets }}
       FUNCTIONS_DEPLOY_FULL: ${{ needs.analyze-changes.outputs.functions_full_deployment }}
+      FIREBASE_DEPLOY_CONFIG: .firebase.ci.json
       INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
       VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
       VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN }}
@@ -372,22 +403,32 @@ jobs:
             package-lock.json
             functions/package-lock.json
 
-      - name: Install dependencies
+      - name: Download validated Hosting artifact
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
-        run: npm ci
-
-      - name: Cache Playwright browsers for Hosting prerender
-        if: needs.analyze-changes.outputs.hosting_changed == 'true'
-        uses: actions/cache@v4
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
+          name: hosting-dist-${{ github.sha }}
+          path: dist
 
-      - name: Install Playwright Chromium for Hosting prerender
+      - name: Verify validated Hosting artifact identity
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
-        run: npx playwright install --with-deps chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const info = JSON.parse(fs.readFileSync('dist/build-info.json', 'utf8'));
+          if (info.gitSha !== process.env.GITHUB_SHA) {
+            throw new Error(`Validated Hosting artifact SHA mismatch: expected ${process.env.GITHUB_SHA}, got ${info.gitSha || '<missing>'}`);
+          }
+          console.log(`Validated Hosting artifact matches ${info.gitSha}`);
+          NODE
+
+      - name: Prepare prevalidated Firebase deployment config
+        if: >-
+          needs.analyze-changes.outputs.hosting_changed == 'true' ||
+          needs.analyze-changes.outputs.functions_deployment_required == 'true'
+        run: node scripts/prepare-firebase-ci-config.mjs --output "${FIREBASE_DEPLOY_CONFIG}"
 
       - name: Authenticate to Google Cloud
         id: gcp-auth
@@ -411,10 +452,6 @@ jobs:
             echo "::error::Refusing to deploy stale commit ${GITHUB_SHA}. Current main is ${current_main_sha}."
             exit 1
           fi
-
-      - name: Validate Ask Tiny Steps staging build configuration
-        if: needs.analyze-changes.outputs.hosting_changed == 'true'
-        run: node scripts/validate-ask-tiny-steps-build-env.mjs
 
       - name: Deploy to Firebase Staging Preview Channel
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
@@ -598,10 +635,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash .github/scripts/advance-production-marker.sh ci/functions-production "${GITHUB_SHA}"
 
-      - name: Validate Ask Tiny Steps production build configuration
-        if: needs.analyze-changes.outputs.hosting_changed == 'true'
-        run: node scripts/validate-ask-tiny-steps-build-env.mjs
-
       - name: Deploy to Firebase Production
         if: needs.analyze-changes.outputs.hosting_changed == 'true'
         run: bash .github/scripts/firebase-hosting-deploy.sh live
@@ -654,6 +687,7 @@ jobs:
       cancel-in-progress: false
     env:
       FUNCTIONS_DEPLOY_ONLY: ${{ inputs.functions_only }}
+      FIREBASE_DEPLOY_CONFIG: .firebase.ci.json
 
     steps:
       - name: Checkout selected main commit
@@ -674,6 +708,9 @@ jobs:
 
       - name: Build Cloud Functions
         run: npm --prefix functions run build
+
+      - name: Prepare prevalidated Firebase deployment config
+        run: node scripts/prepare-firebase-ci-config.mjs --output "${FIREBASE_DEPLOY_CONFIG}"
 
       - name: Verify deployment commit
         run: |
