@@ -50,9 +50,6 @@ async function resolveCallerRole(
       if (normalized !== 'unknown') return normalized;
     }
 
-    const tokenRole = normalizeRole(auth.token?.role);
-    if (tokenRole !== 'unknown') return tokenRole;
-    if (auth.token?.admin === true) return 'admin';
     return 'unknown';
   } catch (err) {
     logger.warn('createMakeupSessionFromCredit: failed to resolve caller role', {
