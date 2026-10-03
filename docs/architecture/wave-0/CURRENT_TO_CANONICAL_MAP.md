@@ -1,6 +1,6 @@
 # School OS Wave 0 — Current to Canonical Map
 
-**Status:** IDENTITY AUDIT IN PROGRESS — CODE DECISIONS RECORDED, LIVE VERIFY PENDING  
+**Status:** IDENTITY LIVE AUDIT COMPLETE — BOUNDED CURRENT EXCEPTIONS REQUIRE REVIEW  
 **Wave:** 0 — Architecture Contracts  
 **Source branch baseline:** `main` after School OS v1.0 freeze  
 **Purpose:** Document current production concepts and their intended School OS ownership before any schema migration.
@@ -212,15 +212,9 @@ Future mapping updates use these labels:
 
 ## 7. Next Wave 0 work
 
-Immediate completion step for this work package:
+The read-only production audit has completed successfully. Current identity exceptions are documented in `IDENTITY_REFERENCE_AUDIT.md` and must be resolved or explicitly registered before Wave 1 identity writes.
 
-```bash
-npm run audit:identity-references
-```
-
-Review the local read-only report and register/correct every ambiguity or orphan category.
-
-After that review, the next Wave 0 work package is **Academic & Enrollment Audit**:
+The next Wave 0 work package is **Academic & Enrollment Audit**:
 
 - Course vs CurriculumVersion vs DeliveryOffering ownership;
 - Enrollment lifecycle and canonical references;
