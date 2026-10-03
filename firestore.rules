@@ -670,7 +670,9 @@ function teacherCanAccessProgressData(kidId, data) {
     && (data.courseId is string)
     && data.courseId.size() > 0
     && enrollmentExists(data.enrollmentId)
-    && teacherOwnsCanonicalDoc(enrollmentDoc(data.enrollmentId))
+    && ('teacherId' in enrollmentDoc(data.enrollmentId))
+    && (enrollmentDoc(data.enrollmentId).teacherId is string)
+    && enrollmentDoc(data.enrollmentId).teacherId == request.auth.uid
     && enrollmentBelongsToKidCanonicalFirst(enrollmentDoc(data.enrollmentId), kidId)
     && ('courseId' in enrollmentDoc(data.enrollmentId))
     && (enrollmentDoc(data.enrollmentId).courseId is string)
