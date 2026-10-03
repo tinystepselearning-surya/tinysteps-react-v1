@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { isCurrentAdmin } from '../helpers/adminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -169,25 +170,11 @@ function resolveUserDisplayName(data: UserLikeDoc): string {
   return 'Team Member';
 }
 
-function isTokenAdmin(token: Record<string, unknown> | undefined): boolean {
-  if (!token) return false;
-  if (token.admin === true) return true;
-  return String(token.role || '').trim().toLowerCase() === 'admin';
-}
-
 async function isAdminUser(
-  db: admin.firestore.Firestore,
+  _db: admin.firestore.Firestore,
   auth: AuthLike,
 ): Promise<boolean> {
-  if (isTokenAdmin(auth.token)) return true;
-
-  const userSnap = await db.collection('users').doc(auth.uid).get();
-  if (!userSnap.exists) return false;
-  const user = userSnap.data() || {};
-  const role = String(user.role || '').trim().toLowerCase();
-  if (role === 'admin') return true;
-  if (user.superUser === true) return true;
-  return false;
+  return isCurrentAdmin(auth);
 }
 
 function resolveKidName(kidData: KidLikeDoc): string {
