@@ -32,6 +32,15 @@ export interface CompatibilityDocumentPlan {
   data: Record<string, unknown>;
 }
 
+export interface CompatibilityNestedDocumentPlan {
+  parentCollection: string;
+  parentId: string;
+  collection: string;
+  documentId: string;
+  data: Record<string, unknown>;
+  serverTimestampFields?: string[];
+}
+
 export interface CompatibilityArrayUnionPlan {
   collection: string;
   documentId: string;
@@ -45,7 +54,28 @@ export interface CanonicalLearnerCreatePlan {
   writeId: string;
   canonicalDocuments: CanonicalPrimaryDocumentPlan[];
   compatibilityDocuments: CompatibilityDocumentPlan[];
+  compatibilityNestedDocuments: CompatibilityNestedDocumentPlan[];
   compatibilityArrayUnions: CompatibilityArrayUnionPlan[];
+}
+
+export interface CanonicalLearnerDetailsInput {
+  preferredName?: string | null;
+  grade?: string | null;
+  board?: string | null;
+  gender?: string | null;
+  profilePhotoUrl?: string | null;
+}
+
+export interface CanonicalLearnerPrivateProfileInput {
+  notes?: string | null;
+  emergencyContact?: string | null;
+  medicalNotes?: string | null;
+}
+
+export interface NestedParentStudentCompatibilityInput {
+  enabled: true;
+  courses?: string[];
+  createdByRole?: string | null;
 }
 
 export interface CanonicalLearnerCreateInput {
@@ -53,16 +83,25 @@ export interface CanonicalLearnerCreateInput {
   parentId: string;
   displayName: string;
   ageYears: number;
-  grade: string;
+  grade?: string | null;
   status?: PersonStatus;
   countryCode?: string | null;
   summary?: Record<string, unknown> | null;
+  details?: CanonicalLearnerDetailsInput | null;
+  privateProfile?: CanonicalLearnerPrivateProfileInput | null;
+  nestedParentStudentCompatibility?:
+    NestedParentStudentCompatibilityInput | null;
   actorId: string;
   writeId: string;
 }
 
 function cleanText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function optionalText(value: unknown): string | null {
+  const text = cleanText(value).replace(/\s+/g, ' ');
+  return text || null;
 }
 
 function requiredText(
@@ -116,6 +155,17 @@ function normalizeStatus(
   throw new Error('learner_status_not_canonical');
 }
 
+function uniqueTextList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [
+    ...new Set(
+      value
+        .map((item) => optionalText(item))
+        .filter((item): item is string => Boolean(item)),
+    ),
+  ];
+}
+
 function ownership(params: {
   command: CanonicalPrimaryCommand;
   writeId: string;
@@ -162,6 +212,44 @@ function learnerRelationshipStatus(
   status: PersonStatus,
 ): 'active' | 'ended' {
   return status === 'archived' ? 'ended' : 'active';
+}
+
+function normalizedDetails(
+  input: CanonicalLearnerCreateInput,
+): Record<string, unknown> {
+  const details = input.details || {};
+  const grade = optionalText(
+    details.grade ?? input.grade,
+  );
+  const preferredName = optionalText(details.preferredName);
+  const board = optionalText(details.board);
+  const gender = optionalText(details.gender);
+  const profilePhotoUrl = optionalText(details.profilePhotoUrl);
+
+  return {
+    ...(grade ? { grade } : {}),
+    ...(preferredName ? { preferredName } : {}),
+    ...(board ? { board } : {}),
+    ...(gender ? { gender } : {}),
+    ...(profilePhotoUrl ? { profilePhotoUrl } : {}),
+  };
+}
+
+function normalizedPrivateProfile(
+  input: CanonicalLearnerCreateInput,
+): Record<string, unknown> {
+  const profile = input.privateProfile || {};
+  const notes = optionalText(profile.notes);
+  const emergencyContact = optionalText(
+    profile.emergencyContact,
+  );
+  const medicalNotes = optionalText(profile.medicalNotes);
+
+  return {
+    ...(notes ? { notes } : {}),
+    ...(emergencyContact ? { emergencyContact } : {}),
+    ...(medicalNotes ? { medicalNotes } : {}),
+  };
 }
 
 export function canonicalProjectionWriteId(
@@ -211,10 +299,6 @@ export function planCanonicalLearnerCreate(
     input.displayName,
     'displayName',
   );
-  const grade = displayText(
-    input.grade,
-    'grade',
-  );
   const status = normalizeStatus(input.status);
   const countryCode =
     normalizeCountryCode(input.countryCode);
@@ -240,6 +324,10 @@ export function planCanonicalLearnerCreate(
       learnerPersonId: personId,
       relationshipType: 'parent',
     });
+
+  const learnerDetails = normalizedDetails(input);
+  const learnerPrivateProfile =
+    normalizedPrivateProfile(input);
 
   const canonicalDocuments: CanonicalPrimaryDocumentPlan[] = [
     {
@@ -283,16 +371,30 @@ export function planCanonicalLearnerCreate(
         status: learnerRelationshipStatus(status),
       },
     },
-    {
-      collection: 'learnerDetails',
-      documentId: personId,
-      data: {
-        ...base,
-        learnerDetailsId: personId,
-        personId,
-        grade,
-      },
-    },
+    ...(Object.keys(learnerDetails).length
+      ? [{
+          collection: 'learnerDetails',
+          documentId: personId,
+          data: {
+            ...base,
+            learnerDetailsId: personId,
+            personId,
+            ...learnerDetails,
+          },
+        }]
+      : []),
+    ...(Object.keys(learnerPrivateProfile).length
+      ? [{
+          collection: 'learnerPrivateProfiles',
+          documentId: personId,
+          data: {
+            ...base,
+            learnerPrivateProfileId: personId,
+            personId,
+            ...learnerPrivateProfile,
+          },
+        }]
+      : []),
     ...(input.summary
       ? [{
           collection: 'learnerReadModels',
@@ -307,6 +409,11 @@ export function planCanonicalLearnerCreate(
       : []),
   ];
 
+  const grade = optionalText(
+    input.details?.grade ?? input.grade,
+  );
+  const gender = optionalText(input.details?.gender);
+
   const compatibilityDocuments: CompatibilityDocumentPlan[] = [
     {
       collection: 'kids',
@@ -317,7 +424,8 @@ export function planCanonicalLearnerCreate(
         displayName,
         age: input.ageYears,
         ageYears: input.ageYears,
-        grade,
+        ...(grade ? { grade } : {}),
+        ...(gender ? { gender } : {}),
         status,
         ...(countryCode
           ? { countryCode }
@@ -338,12 +446,67 @@ export function planCanonicalLearnerCreate(
     },
   ];
 
+  const compatibilityNestedDocuments:
+    CompatibilityNestedDocumentPlan[] = [];
+
+  if (input.nestedParentStudentCompatibility?.enabled) {
+    const details = input.details || {};
+    const privateProfile = input.privateProfile || {};
+    const courses = uniqueTextList(
+      input.nestedParentStudentCompatibility.courses,
+    );
+    const createdByRole = optionalText(
+      input.nestedParentStudentCompatibility.createdByRole,
+    );
+
+    compatibilityNestedDocuments.push({
+      parentCollection: 'parents',
+      parentId,
+      collection: 'students',
+      documentId: personId,
+      serverTimestampFields: ['enrollmentDate'],
+      data: {
+        parentId,
+        studentId: personId,
+        fullName: displayName,
+        preferredName:
+          optionalText(details.preferredName),
+        grade,
+        board: optionalText(details.board),
+        ageYears: input.ageYears,
+        gender: optionalText(details.gender),
+        status,
+        courses,
+        notes: optionalText(privateProfile.notes),
+        emergencyContact:
+          optionalText(privateProfile.emergencyContact),
+        medicalNotes:
+          optionalText(privateProfile.medicalNotes),
+        profilePhotoUrl:
+          optionalText(details.profilePhotoUrl),
+        lastActiveDate: null,
+        totalSessionsCompleted: 0,
+        currentLevel: grade || 'beginner',
+        ...(createdByRole
+          ? { createdByRole }
+          : {}),
+        _wave1CanonicalProjection:
+          compatibilityMarker({
+            personId,
+            command,
+            writeId,
+          }),
+      },
+    });
+  }
+
   return {
     command,
     personId,
     writeId,
     canonicalDocuments,
     compatibilityDocuments,
+    compatibilityNestedDocuments,
     compatibilityArrayUnions: [{
       collection: 'users',
       documentId: parentId,
