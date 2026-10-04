@@ -237,9 +237,9 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
         profilePhotoUrl: 'https://example.com/photo.jpg',
       },
       privateProfile: {
-        notes: 'Private admin note',
+        notes: 'Line one\nLine two',
         emergencyContact: '+91 9000000000',
-        medicalNotes: 'Allergy note',
+        medicalNotes: 'Allergy note\nCarry inhaler',
       },
       actorId: 'admin-1',
       writeId: 'write-rich-1',
@@ -268,9 +268,9 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
     expect(privateProfile?.data).toMatchObject({
       learnerPrivateProfileId: 'kid-rich-1',
       personId: 'kid-rich-1',
-      notes: 'Private admin note',
+      notes: 'Line one\nLine two',
       emergencyContact: '+91 9000000000',
-      medicalNotes: 'Allergy note',
+      medicalNotes: 'Allergy note\nCarry inhaler',
     });
 
     expect(kid?.data).toMatchObject({
