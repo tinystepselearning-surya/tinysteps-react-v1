@@ -605,7 +605,7 @@
     }
   },
   "legacyRetirement": {
-    "status": "identity_core_caught_up_retirement_field_migration_pending",
+    "status": "profile_migration_implementation_pending_validation",
     "approvedEndState": "canonical_primary_legacy_retired",
     "legacyCollections": [
       "users",
@@ -618,9 +618,9 @@
       "library": "scripts/migrations/wave1-identity-retirement-audit-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-retirement-audit.node-test.mjs",
       "documentation": "docs/architecture/wave-1/IDENTITY_LEGACY_RETIREMENT.md",
-      "productionRunAt": null,
-      "reportPath": null,
-      "result": null,
+      "productionRunAt": "2026-10-04T08:09:33.265Z",
+      "reportPath": "reports/wave1-identity-legacy-retirement-audit-2026-10-04T08-09-33-265Z.json",
+      "result": "retirement_blocked_pending_field_migration",
       "localValidation": {
         "validatedCommit": "a1b2fd256d4ed698143f200ec98543e05072cb9a",
         "workflowRunId": 37187751507,
@@ -631,6 +631,27 @@
         },
         "result": "success",
         "temporaryValidationWorkflowRetiredBeforeMerge": true
+      },
+      "productionInventory": {
+        "users": {
+          "documents": 225,
+          "fieldPaths": 46
+        },
+        "kids": {
+          "documents": 196,
+          "fieldPaths": 100
+        },
+        "schools": {
+          "documents": 1,
+          "fieldPaths": 23
+        },
+        "schoolUsers": {
+          "documents": 1,
+          "fieldPaths": 10
+        },
+        "blockingFieldMappings": 135,
+        "initiallyUnknownFieldMappings": 43,
+        "missingRoleProfileMirrors": 1
       }
     },
     "gates": {
@@ -666,6 +687,60 @@
       "conflicts": 0,
       "unexpected": 0,
       "blockingSourcePlanningIssues": 0
+    },
+    "profileMigration": {
+      "migrationId": "wave1-identity-profile-retirement-v1",
+      "status": "implementation_pending_validation",
+      "executor": "scripts/wave1-identity-profile-retirement.mjs",
+      "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
+      "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
+      "documentation": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "sourceCollections": [
+        "users",
+        "kids",
+        "schools",
+        "enrollments",
+        "guardianRelationships"
+      ],
+      "targetCollections": [
+        "personContacts",
+        "personLifecycle",
+        "staffPrivateProfiles",
+        "parents",
+        "teachers",
+        "learningPartners",
+        "admins",
+        "learnerDetails",
+        "learnerReadModels",
+        "learnerProvenance",
+        "organisationProfiles",
+        "organisationAssignments"
+      ],
+      "normalizedLegacyAliases": {
+        "qualification": "qualifications",
+        "qualifications": "qualifications",
+        "specialization": "specializations",
+        "specializations": "specializations",
+        "languages": "languages",
+        "languagesSpoken": "languages",
+        "bankAccount": "staffPrivateProfiles.bankAccountNumber",
+        "bankAccountNumber": "staffPrivateProfiles.bankAccountNumber"
+      },
+      "derivedRelationshipGates": {
+        "userChildIds": "guardianRelationships",
+        "kidTeacherIds": "usable enrollments",
+        "schoolLearningPartnerSnapshots": "referenced LP user identity/contact"
+      },
+      "destructiveOperations": false,
+      "legacyWritesPerformed": false,
+      "firebaseAuthWritesPerformed": false,
+      "canonicalIdentityCoreWritesPerformed": false,
+      "maxSourceRecordsPerRun": 250,
+      "maxWritesPerBatch": 100,
+      "productionDryRun": null,
+      "productionWrites": [],
+      "reconciliation": null,
+      "independentVerification": null
     }
   }
 }
