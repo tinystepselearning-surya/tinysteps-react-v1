@@ -37,6 +37,7 @@ jobs:
           npx vitest run --config functions/vitest.config.ts
           functions/test/authAccessReadModel.spec.ts
           functions/test/authAccessReadModelMaintenance.spec.ts
+          functions/test/authAccessReadModelMaintenanceRouting.spec.ts
           functions/test/authPersonCompatibility.spec.ts
           functions/test/canonicalPrimaryAuthUserCreate.spec.ts
           functions/test/canonicalPrimaryAuthUserUpdate.spec.ts
@@ -44,32 +45,17 @@ jobs:
           functions/test/authUserProjectionBridge.spec.ts
           functions/test/identityLegacySync.spec.ts
 
-      - name: Run routing tests
+      - name: Run authorization regression tests
         run: >-
           npx vitest run
-          src/tests/functions/authAccessReadModelMaintenanceRouting.spec.ts
           src/tests/functions/canonicalAuthUserActivationRouting.spec.ts
           src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
 
       - name: Run backfill planner tests
-        run: >-
-          node --test
-          scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs
+        run: node --test scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs
 
       - name: Verify backfill CLI loads
-        run: >-
-          node scripts/wave1-auth-access-read-model-backfill.mjs --help
+        run: node scripts/wave1-auth-access-read-model-backfill.mjs --help
 
       - name: Resolve production deployment impact
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main --quiet
-          main_sha="$(git rev-parse origin/main)"
-          node scripts/resolve-deployment-impact.mjs \
-            --before "${main_sha}" \
-            --functions-before "${main_sha}" \
-            --hosting-before "${main_sha}" \
-            --firestore-rules-before "${main_sha}" \
-            --firestore-indexes-before "${main_sha}" \
-            --sha "${GITHUB_SHA}"
+        run: node scripts/resolve-deployment-impact.mjs --before origin/main --functions-before origin/main --hosting-before origin/main --firestore-rules-before origin/main --firestore-indexes-before origin/main --sha HEAD
