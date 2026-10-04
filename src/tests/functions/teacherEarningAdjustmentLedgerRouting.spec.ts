@@ -83,10 +83,8 @@ describe('Brick 4 teacher earning adjustment routing', () => {
   });
 
   it('provides a bounded admin-only signed adjustment report', () => {
-    expect(reportSource).toContain('await ensureAdmin(auth);');
-    expect(reportSource).not.toContain(
-      "throw new HttpsError('permission-denied', 'Admin access required.')",
-    );
+    expect(reportSource).toContain('await ensureCanonicalAdmin(auth);');
+    expect(reportSource).not.toContain("from './helpers/adminGuard'");
     expect(reportSource).toContain("collection('teacherEarningAdjustments')");
     expect(reportSource).toContain("where('adjustmentMonthKey', '==', adjustmentMonthKey)");
     expect(reportSource).toContain('const MAX_SCAN = 1000');

@@ -61,6 +61,16 @@ test('frontend-only change deploys no Functions', () => {
   assert.equal(result.hostingChanged, true);
 });
 
+test('frontend test-only changes validate without triggering Hosting deployment', () => {
+  const result = impact([
+    'src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts',
+    'src/tests/functions/teacherEarningAdjustmentLedgerRouting.spec.ts',
+  ]);
+  assert.equal(result.frontendValidationRequired, true);
+  assert.equal(result.hostingChanged, false);
+  assert.equal(result.functionsDeploymentRequired, false);
+});
+
 test('blog post-only change uses the narrow content validation lane', () => {
   const result = impact(['src/content/blog/posts/phonics/example.ts']);
   assert.equal(result.contentOnlyValidation, true);

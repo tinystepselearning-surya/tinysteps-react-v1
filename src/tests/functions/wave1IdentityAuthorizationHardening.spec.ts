@@ -69,6 +69,15 @@ describe('Wave 1 current-user authorization invariant', () => {
     for (const source of [
       payWithholdings,
       earningAdjustments,
+    ]) {
+      expect(source).toContain('ensureCanonicalAdmin');
+      expect(source).not.toContain("from './helpers/adminGuard'");
+      expect(source).not.toMatch(
+        /if\s*\([^\n]*token[^\n]*(?:role|admin)[^\n]*\)\s*return/,
+      );
+    }
+
+    for (const source of [
       attendanceCorrection,
       phonicsEnforcer,
     ]) {

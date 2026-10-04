@@ -15,6 +15,14 @@ export function isFunctionsTestPath(file) {
     || /\.(?:spec|test)\.[cm]?[jt]sx?$/.test(name);
 }
 
+export function isFrontendTestPath(file) {
+  const name = posix(file);
+  return name.startsWith('src/tests/')
+    || name.startsWith('e2e/')
+    || name.includes('/__tests__/')
+    || /\.(?:spec|test)\.[cm]?[jt]sx?$/.test(name);
+}
+
 export function extractLocalSpecifiers(source) {
   const found = [];
   const patterns = [
@@ -145,7 +153,7 @@ export function classifyArtifactChanges(changedFiles, beforeFirebase = {}, after
       || file.startsWith('scripts/') || file === '.github/workflows/deploy.yml');
   const hostingChanged = hostingConfigChanged || files.some(file =>
     file === 'package.json' || file === 'package-lock.json' || file === 'index.html'
-      || file.startsWith('src/') || file.startsWith('public/')
+      || (file.startsWith('src/') && !isFrontendTestPath(file)) || file.startsWith('public/')
       || /^(?:vite|tsconfig)[^/]*\.(?:js|mjs|cjs|ts|json)$/.test(file)
       || file.startsWith('scripts/seo-') || file.startsWith('scripts/generate-')
       || file.startsWith('scripts/audit-') || file.startsWith('scripts/write-')

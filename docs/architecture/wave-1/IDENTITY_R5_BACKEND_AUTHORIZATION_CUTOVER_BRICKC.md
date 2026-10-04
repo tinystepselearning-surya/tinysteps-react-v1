@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** PARTIALLY DEPLOYED — 13 school programme/evidence Functions live; 5 school-management caller guards validated pending deployment  
+**Status:** R5C1 COMPLETE IN PRODUCTION — R5C2A bounded Admin read/audit cutover validation pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -323,5 +323,63 @@ Validated:
 
 The temporary hardening validation workflow is retired before merge.
 
-R5C1 is not considered production-complete until these five Functions deploy successfully
-and the final production authorization-state smoke audit is clean.
+### Production rollout stage 2
+
+PR #610 deployed the five school-management requester guards.
+
+~~~text
+Merge commit: 2f65d1596504e067c289a60ba191ed190abfb629
+Deploy workflow: 37216816454
+Deploy run number: 3882
+Result: success
+~~~
+
+Verified:
+
+- Functions planned: 5;
+- Functions deployed: 5;
+- Functions ready: 5/5;
+- full Functions deployment: no;
+- school callable transport verification: passed;
+- Hosting changed: no;
+- Firestore Rules changed: no;
+- Firestore indexes changed: no;
+- recovery job required: no.
+
+R5C1 is therefore production-complete.
+
+## R5C2 bounded Admin rollout
+
+Changing the shared `helpers/adminGuard.ts` directly would still fan out to approximately
+124 Functions. R5C2 therefore migrates callers in bounded slices through:
+
+~~~text
+functions/src/helpers/canonicalAdminGuard.ts
+~~~
+
+The staged guard authorizes exclusively from:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+~~~
+
+It has no `users/{uid}` fallback and does not accept Firebase custom claims as business
+authority.
+
+### R5C2A — low-risk read/audit slice
+
+The first slice contains only five report/audit callables:
+
+~~~text
+auditTeacherEarningsCanonicalCoverage
+getAdminTeacherEarningAdjustments
+getAdminTeacherPayWithholdings
+auditTeacherTodaySessions
+traceStudentTransferHistory
+~~~
+
+This slice intentionally excludes user/account mutation, attendance mutation, finance
+mutation, scheduling mutation, enrollment mutation, and lifecycle mutation.
+
+The shared legacy Admin guard remains untouched for all other callables until their own
+bounded migration slice is validated and deployed.
