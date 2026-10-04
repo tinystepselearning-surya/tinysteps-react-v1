@@ -4,7 +4,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
-  EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
+  BATCH_SIZE, EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan, firebaseCliDiagnosticExcerpt,
   functionsChangeDecision, normalizeRevisionId, parseDeploymentArgs,
   remainingTargets, retryProvider404, validateCheckpoint,
@@ -20,7 +20,8 @@ const REPORT_PATH = resolve('artifacts/functions-deployment-report.json');
 const MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
 const SETTLE_TIMEOUT_MS = 10 * 60 * 1000;
 const POLL_MS = 15 * 1000;
-const BACKOFF_SECONDS = [60, 120, 240];
+const RETRY_BACKOFF_SECONDS = [60, 120, 240];
+const MAX_ATTEMPTS = RETRY_BACKOFF_SECONDS.length + 1;
 
 let options;
 try {
@@ -63,13 +64,15 @@ try {
   report.targetCount = plan.length;
   report.targets = plan.map(({ id, selector }) => ({ id, selector }));
   report.planHash = deploymentPlanHash({ project: PROJECT, region: EXPECTED_REGION, codebase, targets: report.targets });
-  const groups = batch(plan, 5);
+  const groups = batch(plan, BATCH_SIZE);
+  report.batchSize = BATCH_SIZE;
+  report.retryBackoffSeconds = RETRY_BACKOFF_SECONDS;
   report.batchCount = groups.length;
 
   if (options.mode === '--plan') {
     report.status = 'planned';
     report.finishedAt = new Date().toISOString();
-    console.log(`Functions deployment plan ${report.planHash}: ${plan.length} targets in ${groups.length} sequential batch(es) of at most 5.`);
+    console.log(`Functions deployment plan ${report.planHash}: ${plan.length} targets in ${groups.length} sequential batch(es) of at most ${BATCH_SIZE}.`);
     groups.forEach((group, index) => console.log(`Batch ${index + 1}: ${group.map(target => target.id).join(', ')}`));
     await persistReport();
     process.exit(0);
@@ -110,8 +113,10 @@ try {
       continue;
     }
 
-    for (let attempt = 0; attempt < BACKOFF_SECONDS.length && pending.length; attempt++) {
-      await sleepWithJitter(BACKOFF_SECONDS[attempt]);
+    for (let attempt = 0; attempt < MAX_ATTEMPTS && pending.length; attempt++) {
+      if (attempt > 0) {
+        await sleepWithJitter(RETRY_BACKOFF_SECONDS[attempt - 1]);
+      }
       await waitForRegionalOperationsToSettle();
       if (!mutationStarted) {
         await requireCurrentMain();
@@ -329,7 +334,7 @@ async function firebaseFunctionsConfigAt(revision) {
 
 async function sleepWithJitter(seconds) {
   const jitterMs = Math.floor(Math.random() * 5000);
-  console.log(`Rate guard: waiting at least ${seconds}s before next mutation attempt.`);
+  console.log(`Retry backoff: waiting at least ${seconds}s before retrying a transient deployment failure.`);
   await sleep(seconds * 1000 + jitterMs);
 }
 
