@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C3 PASSWORD-MANAGEMENT MUTATION CUTOVER — validation pending  
+**Status:** R5C2C3 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -826,4 +826,40 @@ adminGenerateResetLink
 adminResetPassword
 ~~~
 
-R5C2C3 is acceptance-complete and ready for merge/deployment.
+R5C2C3 is acceptance-complete.
+
+### R5C2C3 production closeout
+
+PR #619 merged the password-management mutation slice.
+
+~~~text
+Merge commit: 7b1d66b513ed4fca5c997680bbd1c8cd9b883ffb
+Deploy workflow: 37224473282
+Deploy run number: 3891
+Result: success
+~~~
+
+Production deployment facts:
+
+- Functions planned: 2;
+- Functions deployed: 2;
+- bounded Cloud Functions deployment: success;
+- full Functions deployment: no;
+- Functions production marker advanced to the merge commit;
+- Hosting deployment: skipped;
+- Firestore Rules deployment: skipped;
+- Firestore indexes deployment: skipped;
+- School/AVS/lead transport verification: not required;
+- recovery job required: no.
+
+Deployed Functions:
+
+~~~text
+adminGenerateResetLink
+adminResetPassword
+~~~
+
+R5C2C3 is production-complete.
+
+The next bounded mutation slice is intentionally `adminDeleteUser` alone because hard-delete
+semantics deserve an isolated production and rollback boundary.
