@@ -606,6 +606,7 @@
         "canonicalPersonIdGeneration": "Firestore random document ID generated from people namespace",
         "atomicCanonicalAndCompatibilityWrite": true,
         "canonicalProjectionLoopSuppression": true,
+        "canonicalProjectionAuthorityCorroboration": true,
         "boundedPostWriteVerification": true,
         "rawIdentityIdsInTelemetry": false,
         "rawLearnerNamesInTelemetry": false,
