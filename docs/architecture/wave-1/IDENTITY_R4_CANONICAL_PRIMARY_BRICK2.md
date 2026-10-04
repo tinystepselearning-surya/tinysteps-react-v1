@@ -215,6 +215,22 @@ wave1_canonical_primary_learner_write
 
 The callable does not retry the create after a committed write, avoiding duplicate learner creation.
 
+## Telemetry privacy
+
+Canonical learner creation telemetry never emits raw learner, parent, actor or write identifiers.
+
+All identity-bearing telemetry values are deterministic SHA-256 privacy tokens truncated to 24 hexadecimal characters and namespaced by subject type.
+
+The Admin callable also omits learner names from success and error logs.
+
+Therefore:
+
+~~~text
+rawIdentityIdsInTelemetry = false
+rawLearnerNamesInTelemetry = false
+firestoreTelemetryWrites = 0
+~~~
+
 ## Error compatibility
 
 The callable preserves the important existing client-visible errors:
