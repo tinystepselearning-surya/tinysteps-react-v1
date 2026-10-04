@@ -199,18 +199,9 @@ function compatibilityWriteData(params: {
   data: Record<string, unknown>;
   actorId: string;
   now: admin.firestore.FieldValue;
-  serverTimestampFields?: string[];
 }): Record<string, unknown> {
   return {
     ...params.data,
-    ...(params.serverTimestampFields || [])
-      .reduce<Record<string, unknown>>(
-        (out, field) => {
-          out[field] = params.now;
-          return out;
-        },
-        {},
-      ),
     createdAt: params.now,
     updatedAt: params.now,
     createdBy: params.actorId,
@@ -276,7 +267,6 @@ async function verifyCanonicalLearnerWrite(params: {
       );
     }
   }
-
 
   const parentSnapshot = await db
     .collection('users')
@@ -379,7 +369,6 @@ export async function executeCanonicalLearnerCreate(
       );
     }
 
-
     const duplicateQuery = db
       .collection('kids')
       .where('parentIds', 'array-contains', parentId)
@@ -447,7 +436,6 @@ export async function executeCanonicalLearnerCreate(
       compatibilitySnapshots.set(key, snapshot);
     }
 
-
     for (const [key, snapshot] of canonicalSnapshots) {
       if (snapshot.exists) {
         throw new CanonicalPrimaryLearnerWriteError(
@@ -487,7 +475,6 @@ export async function executeCanonicalLearnerCreate(
         }),
       );
     }
-
 
     for (const union of plan.compatibilityArrayUnions) {
       transaction.set(
