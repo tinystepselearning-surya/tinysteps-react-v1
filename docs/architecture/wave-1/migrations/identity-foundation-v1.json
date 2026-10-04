@@ -316,7 +316,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "brick1_ready_for_local_validation",
+    "status": "brick2_ready_for_local_validation",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -355,10 +355,73 @@
       "canonicalMissingChangesBusinessResult": false,
       "semanticMismatchChangesBusinessResult": false,
       "legacyMissingPromotesCanonical": false,
-      "validatedAt": null,
-      "result": null
+      "validatedAt": "2026-10-04T06:12:55Z",
+      "result": "success",
+      "status": "complete",
+      "localValidation": {
+        "functionsLint": "passed",
+        "functionsBuild": "passed",
+        "adapterTests": {
+          "passed": 7,
+          "total": 7
+        },
+        "identityFoundationTests": {
+          "passed": 8,
+          "total": 8
+        },
+        "authorizationHardeningTests": {
+          "passed": 8,
+          "total": 8
+        }
+      },
+      "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "production shadow canary and divergence telemetry",
-    "readSwitchAuthorized": false
+    "nextBrick": "live legacy-to-canonical synchronization / compatibility path",
+    "readSwitchAuthorized": false,
+    "brick2": {
+      "status": "ready_for_local_validation",
+      "title": "Production shadow canary and divergence telemetry",
+      "reader": "getParentWorksheetResources",
+      "sourceCollection": "users",
+      "primaryReadAuthority": "legacy",
+      "primaryWriteAuthority": "legacy",
+      "samplePercent": 20,
+      "sampleRotation": "Deterministic per user and IST calendar day",
+      "telemetrySink": "Cloud Logging structured events only",
+      "firestoreTelemetryWrites": 0,
+      "rawIdentityIdsInTelemetry": false,
+      "canonicalPointReadsPerSampledHealthyParent": 3,
+      "extraLegacyPointReadsPerSampledHealthyParent": 0,
+      "adapterFailureFallback": "Exact pre-Brick-2 users/{uid} legacy point read",
+      "canonicalFailureChangesBusinessResult": false,
+      "canonicalMissingChangesBusinessResult": false,
+      "semanticMismatchChangesBusinessResult": false,
+      "legacyAuthorizationPreserved": true,
+      "files": {
+        "canary": "functions/src/schoolOS/identity/shadowCanary.ts",
+        "wiring": "functions/src/getParentWorksheetResources.ts",
+        "regressionTest": "functions/test/identityShadowCanary.spec.ts"
+      },
+      "shadowStatuses": [
+        "match",
+        "legacy_missing",
+        "canonical_missing",
+        "semantic_mismatch",
+        "canonical_read_error"
+      ],
+      "localValidatedAt": null,
+      "deployedAt": null,
+      "productionObservation": {
+        "startedAt": null,
+        "completedAt": null,
+        "sampledEvents": null,
+        "matchEvents": null,
+        "mismatchEvents": null,
+        "canonicalMissingEvents": null,
+        "canonicalReadErrorEvents": null,
+        "adapterErrorEvents": null
+      },
+      "result": null
+    }
   }
 }
