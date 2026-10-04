@@ -283,21 +283,13 @@ test('production verifier source is read-only by construction', () => {
     'utf8',
   );
 
-  // Guard Firestore mutation entry points without flagging unrelated APIs
-  // such as node:crypto Hash.update(), which is used only to hash report tokens.
-  assert.doesNotMatch(
-    source,
-    /\\b(?:batch|tx|transaction|ref|docRef|documentRef)\\.(?:set|create|update|delete|commit)\\s*\\(/,
-  );
-  assert.doesNotMatch(source, /\\bdb\\.batch\\s*\\(/);
-  assert.doesNotMatch(source, /\\bdb\\.runTransaction\\s*\\(/);
-
-  // Auth access is read-only as well: listUsers is allowed, mutation APIs are not.
-  assert.doesNotMatch(
-    source,
-    /\\bauth\\.(?:createUser|updateUser|deleteUser|setCustomUserClaims|revokeRefreshTokens|importUsers)\\s*\\(/,
-  );
-
-  assert.doesNotMatch(source, /FieldValue/);
-  assert.match(source, /writesPerformed:\\s*0/);
+  // Allowlist the only Firestore/Auth member calls used by the verifier.
+  assert.equal(source.split('db.').length - 1, 2);
+  assert.equal(source.split('db.collection(').length - 1, 2);
+  assert.equal(source.split('ref.').length - 1, 1);
+  assert.equal(source.includes('ref.get()'), true);
+  assert.equal(source.split('auth.').length - 1, 1);
+  assert.equal(source.includes('auth.listUsers('), true);
+  assert.equal(source.includes('FieldValue'), false);
+  assert.equal(source.includes('writesPerformed: 0'), true);
 });
