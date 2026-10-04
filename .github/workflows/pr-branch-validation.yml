@@ -35,6 +35,9 @@ jobs:
       - name: Run Grammar ownership regression
         run: npx vitest run src/tests/seo/grammarPrimaryCommercialOwnership.spec.ts
 
+      - name: Run reviewed SEO boundary regression
+        run: npx vitest run scripts/test/commercial-c7-reviewed-seo-repair.spec.mjs
+
       - name: Run full test suite
         run: npm test
 
