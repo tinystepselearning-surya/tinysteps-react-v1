@@ -5,8 +5,8 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
 const projectId = 'tinysteps-react-v1';
-const email = 'r4-auth-canary-20261004@example.com';
-const displayName = 'R4 Auth Canary';
+const email = 'testparent1@tinysteps.com';
+const displayName = 'testparent1';
 
 function token(ns, value) {
   return createHash('sha256')
