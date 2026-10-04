@@ -1,6 +1,18 @@
 import * as admin from 'firebase-admin';
 import { createHash } from 'node:crypto';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import {
+  readLegacyUserIdentityShadow,
+  type LegacyAuthoritativeIdentityRead,
+} from './schoolOS/identity/readAdapter';
+import {
+  IDENTITY_SHADOW_CANARY_READER,
+  buildIdentityShadowCanaryAdapterErrorTelemetry,
+  buildIdentityShadowCanaryTelemetry,
+  recordIdentityShadowCanaryAdapterError,
+  recordIdentityShadowCanaryTelemetry,
+  shouldRunIdentityShadowCanary,
+} from './schoolOS/identity/shadowCanary';
 
 if (admin.apps.length === 0) admin.initializeApp();
 
@@ -107,6 +119,109 @@ function parentFacingResource(id: string, data: ResourceRecord, courseTitleById:
   };
 }
 
+export interface WorksheetParentIdentityRead {
+  exists: boolean;
+  data: admin.firestore.DocumentData | null;
+  shadowSampled: boolean;
+}
+
+export interface WorksheetParentIdentityDependencies {
+  shouldSample?: (uid: string) => boolean;
+  readShadow?: typeof readLegacyUserIdentityShadow;
+  recordObservation?: (
+    result: LegacyAuthoritativeIdentityRead,
+  ) => void;
+  recordFailure?: (
+    uid: string,
+    error: unknown,
+  ) => void;
+}
+
+async function readLegacyWorksheetParent(
+  db: admin.firestore.Firestore,
+  uid: string,
+): Promise<WorksheetParentIdentityRead> {
+  const snap = await db.collection('users').doc(uid).get();
+  return {
+    exists: snap.exists,
+    data: snap.exists ? (snap.data() || {}) : null,
+    shadowSampled: false,
+  };
+}
+
+export async function loadWorksheetParentIdentity(
+  db: admin.firestore.Firestore,
+  uid: string,
+  dependencies: WorksheetParentIdentityDependencies = {},
+): Promise<WorksheetParentIdentityRead> {
+  const shouldSample =
+    dependencies.shouldSample ??
+    ((sourceId: string) =>
+      shouldRunIdentityShadowCanary({
+        reader: IDENTITY_SHADOW_CANARY_READER,
+        sourceCollection: 'users',
+        sourceId,
+      }));
+
+  if (!shouldSample(uid)) {
+    return readLegacyWorksheetParent(db, uid);
+  }
+
+  const readShadow =
+    dependencies.readShadow ??
+    readLegacyUserIdentityShadow;
+
+  const recordObservation =
+    dependencies.recordObservation ??
+    ((result: LegacyAuthoritativeIdentityRead) => {
+      recordIdentityShadowCanaryTelemetry(
+        buildIdentityShadowCanaryTelemetry({
+          reader: IDENTITY_SHADOW_CANARY_READER,
+          observation: result.shadow,
+        }),
+      );
+    });
+
+  const recordFailure =
+    dependencies.recordFailure ??
+    ((sourceId: string, error: unknown) => {
+      recordIdentityShadowCanaryAdapterError(
+        buildIdentityShadowCanaryAdapterErrorTelemetry({
+          reader: IDENTITY_SHADOW_CANARY_READER,
+          sourceCollection: 'users',
+          sourceId,
+          error,
+        }),
+      );
+    });
+
+  try {
+    const result = await readShadow({ db, uid });
+
+    try {
+      recordObservation(result);
+    } catch {
+      // Telemetry must never affect the business read.
+    }
+
+    return {
+      exists: result.legacyExists,
+      data: result.legacyData,
+      shadowSampled: true,
+    };
+  } catch (error) {
+    try {
+      recordFailure(uid, error);
+    } catch {
+      // Telemetry must never affect the business read.
+    }
+
+    // The shadow adapter is never authoritative in Brick 2.
+    // Fall back to the exact pre-Brick-2 legacy point read.
+    return readLegacyWorksheetParent(db, uid);
+  }
+}
+
 export async function loadParentWorksheetResources(
   db: admin.firestore.Firestore,
   parentId: string,
@@ -132,9 +247,14 @@ export async function loadParentWorksheetResources(
 
 export const getParentWorksheetResources = onCall({ region: 'asia-south1' }, async (request) => {
   if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Sign in as a parent to view worksheets.');
-  const userSnap = await admin.firestore().collection('users').doc(request.auth.uid).get();
-  if (!userSnap.exists) throw new HttpsError('permission-denied', 'Parent access is required.');
-  const user = userSnap.data() || {};
+
+  const db = admin.firestore();
+  const parentIdentity = await loadWorksheetParentIdentity(
+    db,
+    request.auth.uid,
+  );
+  if (!parentIdentity.exists) throw new HttpsError('permission-denied', 'Parent access is required.');
+  const user = parentIdentity.data || {};
   const status = String(user.status || '').trim().toLowerCase();
   if (status && status !== 'active') throw new HttpsError('permission-denied', 'Parent access is required.');
   const userRole = String(user.role || '').trim().toLowerCase();
@@ -147,7 +267,6 @@ export const getParentWorksheetResources = onCall({ region: 'asia-south1' }, asy
   const kidId = String((request.data as { kidId?: unknown } | undefined)?.kidId || '').trim();
   if (!kidId || kidId.length > 200) throw new HttpsError('invalid-argument', 'A valid kidId is required.');
 
-  const db = admin.firestore();
   const resources = await loadParentWorksheetResources(db, request.auth.uid, kidId);
   return { resources };
 });
