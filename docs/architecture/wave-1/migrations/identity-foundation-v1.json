@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": false,
     "canonicalPrimaryImplementation": {
-      "status": "brick1_contract_pending_validation",
+      "status": "brick1_contract_local_validation_complete",
       "brick1": {
         "title": "Canonical-primary learner write contract",
         "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -575,7 +575,18 @@
         "readerCutover": false,
         "securityRulesCutover": false,
         "legacyWriteFreeze": false,
-        "destructiveDeletion": false
+        "destructiveDeletion": false,
+        "localValidation": {
+          "validatedCommit": "dbd532adaf9a3350c15bfc10ddf4810f040bf5ec",
+          "workflowRunId": 37197326194,
+          "functionsBuild": "passed",
+          "plannerTests": {
+            "passed": 5,
+            "total": 5
+          },
+          "result": "success",
+          "temporaryValidationWorkflowRetiredBeforeMerge": true
+        }
       }
     },
       "legacyWritesStopped": false,
