@@ -269,5 +269,35 @@
       "reconciled": true,
       "reportTimestamp": "2026-10-04T05:51:21.195Z"
     }
+  },
+  "verify": {
+    "status": "ready_for_local_read_only_run",
+    "verifier": "scripts/wave1-identity-foundation-verify.mjs",
+    "helper": "scripts/verification/wave1-identity-verify-lib.mjs",
+    "regressionTest": "scripts/test/wave1-identity-verify.node-test.mjs",
+    "executionEnvironment": "Local Mac read-only verification against production",
+    "sourceBaseline": {
+      "users": 223,
+      "firebaseAuthUsers": 225,
+      "kids": 194,
+      "schools": 1,
+      "schoolUsers": 1
+    },
+    "canonicalBaseline": {
+      "people": 417,
+      "authIdentities": 223,
+      "roleAssignments": 223,
+      "learnerProfiles": 194,
+      "guardianRelationships": 194,
+      "organisations": 1,
+      "organisationMemberships": 1,
+      "households": 0
+    },
+    "semanticMismatchCount": null,
+    "referenceIssueCount": null,
+    "blockingSourceModelIssueCount": null,
+    "authOnlyCanonicalLeakCount": null,
+    "verifiedAt": null,
+    "result": null
   }
 }
