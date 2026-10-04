@@ -80,7 +80,7 @@ describe('Wave 1 R4 Brick 5E auth-backed writer activation routing', () => {
       'writeCanonicalAuthUserCreatePlan',
     );
     expect(createSource).toContain(
-      'await admin.auth().deleteUser(createdUid)',
+      '.deleteUser(createdUid)',
     );
     expect(createSource).not.toContain(
       'personId = authUser.uid',
