@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick4_production_deployed_partial_r4_active",
+        "status": "brick5a_compatibility_contract_complete_partial_r4_active",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -980,7 +980,82 @@
             "firestoreRulesDeployed": false,
             "firestoreIndexesDeployed": false
           }
-        }
+        },
+        "brick5a": {
+          "title": "Auth-backed Firebase UID to canonical Person compatibility contract",
+          "contract": "docs/architecture/wave-1/IDENTITY_R4_AUTH_PERSON_COMPATIBILITY_BRICK5A.md",
+          "resolver": "functions/src/schoolOS/identity/authPersonCompatibility.ts",
+          "regressionTest": "functions/test/authPersonCompatibility.spec.ts",
+          "productionWiring": false,
+          "productionBehaviorChanged": false,
+          "canonicalPrimaryWritesEnabledForAuthBackedUsers": false,
+          "authBackedUserWriteCutover": false,
+          "readerCutover": false,
+          "securityRulesCutover": false,
+          "legacyWriteFreeze": false,
+          "destructiveDeletion": false,
+          "identityContract": {
+            "firebaseUidSemantics": "authentication_provider_subject_only",
+            "personIdSemantics": "stable_tiny_steps_human_identity",
+            "legacySameValueAdoptionAllowed": true,
+            "newPersonIdDerivedFromFirebaseUid": false,
+            "newPersonIdDerivedFromEmailOrPhone": false,
+            "authIdentityIsSemanticBridge": true,
+            "silentUidEqualsPersonInferenceAllowed": false
+          },
+          "compatibilityContract": {
+            "usersKey": "firebase_uid",
+            "roleMirrorKeyDuringCompatibility": "firebase_uid",
+            "personKeyedRoleProfileForDecoupledIdentity": "deferred_until_role_root_key_cutover",
+            "duplicateUidAndPersonRoleRootDocsAllowed": false,
+            "teacherOperationalSubcollectionsRemainUidKeyed": true
+          },
+          "resolverContract": {
+            "uidToPerson": "deterministic_authIdentity_point_read",
+            "personToUid": "bounded_authIdentity_lookup",
+            "validatesProviderSubject": true,
+            "validatesCanonicalPerson": true,
+            "explicitLegacyAdoptionFallbackOnly": true,
+            "failsClosedOnAmbiguousFirebaseIdentity": true
+          },
+          "localValidation": {
+            "validatedImplementationCommit": "f55661e30e1012999e48c5ec7bbedf5632a214cd",
+            "workflowRunId": 37203617328,
+            "functionsBuild": "passed",
+            "focusedTests": {
+              "passed": 29,
+              "total": 29,
+              "authPersonCompatibility": {
+                "passed": 9,
+                "total": 9
+              },
+              "identityReadAdapter": {
+                "passed": 7,
+                "total": 7
+              },
+              "canonicalPrimaryPlanner": {
+                "passed": 7,
+                "total": 7
+              },
+              "canonicalPrimaryWriter": {
+                "passed": 6,
+                "total": 6
+              }
+            },
+            "deploymentImpact": {
+              "functionsSourceChanged": true,
+              "functionsValidationRequired": true,
+              "functionsDeploymentRequired": false,
+              "impactedFunctionsCount": 0,
+              "hostingChanged": false,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          }
+        },
+        "nextBrick": "brick5b_canonical_primary_admin_create_user"
       },
       "legacyWritesStopped": false,
       "readSwitchAuthorized": false,
