@@ -114,12 +114,12 @@ export {
 export { bootstrapParentClassAttendance } from "./bootstrapParentClassAttendanceV2";
 
 // Admin user management
-export { adminCreateUser } from "./adminCreateUserCanonical";
+export { adminCreateUser } from "./adminCreateUser";
 export { backfillTeacherDocs } from "./adminCreateUser";
 export { adminDeleteUser } from "./adminDeleteUser";
-export { adminArchiveUser } from "./adminArchiveUserCanonical";
+export { adminArchiveUser } from "./adminArchiveUser";
 export { getFounderEditorialReviewState, setFounderEditorialReviewDecision } from "./founderEditorialReview";
-export { adminUpdateUser } from "./adminUpdateUserCanonical";
+export { adminUpdateUser } from "./adminUpdateUser";
 export { adminGenerateResetLink } from "./adminGenerateResetLink";
 export { adminResetPassword } from "./adminResetPassword";
 export { resolveLoginIdentifier } from "./resolveLoginIdentifier";
@@ -180,8 +180,8 @@ export {
   unassignLPFromParent,
   assignLPToTeacher,
   unassignLPFromTeacher,
+  adminSetUserRole
 } from "./assignLP";
-export { adminSetUserRole } from "./adminSetUserRoleCanonical";
 export { updateTeacherProfile } from "./updateTeacherProfile";
 
 // Game progress tracking
