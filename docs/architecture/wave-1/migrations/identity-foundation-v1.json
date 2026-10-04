@@ -316,7 +316,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "brick2_ready_for_local_validation",
+    "status": "brick3_implementation_pending_validation",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -376,10 +376,10 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "live legacy-to-canonical synchronization / compatibility path",
+    "nextBrick": "narrow canonical-read canary after Brick 3 deployment, observation and reconciliation",
     "readSwitchAuthorized": false,
     "brick2": {
-      "status": "local_validation_complete",
+      "status": "production_observation_complete",
       "title": "Production shadow canary and divergence telemetry",
       "reader": "getParentWorksheetResources",
       "sourceCollection": "users",
@@ -410,18 +410,22 @@
         "canonical_read_error"
       ],
       "localValidatedAt": "2026-10-04",
-      "deployedAt": null,
+      "deployedAt": "2026-10-04T06:29:35Z",
       "productionObservation": {
-        "startedAt": null,
-        "completedAt": null,
-        "sampledEvents": null,
-        "matchEvents": null,
-        "mismatchEvents": null,
-        "canonicalMissingEvents": null,
-        "canonicalReadErrorEvents": null,
-        "adapterErrorEvents": null
+        "startedAt": "2026-10-04T07:06:57.094049Z",
+        "completedAt": "2026-10-04T07:11:07.460758Z",
+        "sampledEvents": 11,
+        "distinctSubjects": 5,
+        "matchEvents": 11,
+        "mismatchEvents": 0,
+        "canonicalMissingEvents": 0,
+        "canonicalReadErrorEvents": 0,
+        "adapterErrorEvents": 0,
+        "canonicalDocumentsExpectedPerHealthySample": 3,
+        "canonicalDocumentsReadPerHealthySample": 3,
+        "result": "passed"
       },
-      "result": "local_validation_passed",
+      "result": "production_canary_passed",
       "localValidation": {
         "functionsLint": "passed",
         "functionsBuild": "passed",
@@ -451,6 +455,59 @@
           "passed": 8,
           "total": 8
         }
+      }
+    },
+    "brick3": {
+      "status": "implementation_pending_validation",
+      "title": "Live legacy-to-canonical identity compatibility synchronization",
+      "primaryReadAuthority": "legacy",
+      "primaryWriteAuthority": "legacy",
+      "canonicalRole": "continuously synchronized compatibility projection",
+      "sourceCollections": [
+        "users",
+        "kids",
+        "schools",
+        "schoolUsers"
+      ],
+      "targetCollections": [
+        "people",
+        "authIdentities",
+        "roleAssignments",
+        "learnerProfiles",
+        "guardianRelationships",
+        "organisations",
+        "organisationMemberships"
+      ],
+      "files": {
+        "engine": "functions/src/schoolOS/identity/legacySync.ts",
+        "triggers": "functions/src/identityLegacySyncTriggers.ts",
+        "regressionTest": "functions/test/identityLegacySync.spec.ts",
+        "documentation": "docs/architecture/wave-1/IDENTITY_SWITCH_READS_BRICK3.md"
+      },
+      "triggerFunctions": [
+        "onWave1LegacyUserIdentityWrite",
+        "onWave1LegacyKidIdentityWrite",
+        "onWave1LegacySchoolIdentityWrite",
+        "onWave1LegacySchoolUserIdentityWrite"
+      ],
+      "transactionalCurrentSourceReread": true,
+      "retryTransientFailures": true,
+      "skipsUnrelatedFieldUpdates": true,
+      "migrationOwnershipGuard": true,
+      "staleProjectionCleanup": true,
+      "rawIdentityIdsInTelemetry": false,
+      "firestoreTelemetryWrites": 0,
+      "canonicalPrimaryWrites": false,
+      "legacyWritesStopped": false,
+      "readSwitchAuthorized": false,
+      "localValidation": null,
+      "deployedAt": null,
+      "productionObservation": {
+        "startedAt": null,
+        "completedAt": null,
+        "syncedEvents": null,
+        "blockedEvents": null,
+        "errorEvents": null
       }
     }
   }
