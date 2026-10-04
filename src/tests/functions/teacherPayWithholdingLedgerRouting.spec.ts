@@ -64,10 +64,8 @@ describe('Brick 3 school-retained teacher pay ledger routing', () => {
   });
 
   it('offers a bounded admin-only monthly report with teacher, reason, and session filters', () => {
-    expect(reportSource).toContain('await ensureAdmin(auth);');
-    expect(reportSource).not.toContain(
-      "throw new HttpsError('permission-denied', 'Admin access required.')",
-    );
+    expect(reportSource).toContain('await ensureCanonicalAdmin(auth);');
+    expect(reportSource).not.toContain("from './helpers/adminGuard'");
     expect(reportSource).toContain("collection('teacherPayWithholdings')");
     expect(reportSource).toContain("where('serviceMonthKey', '==', monthKey)");
     expect(reportSource).toContain('const teacherId = clean(payload.teacherId');
