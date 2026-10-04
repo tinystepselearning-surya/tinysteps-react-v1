@@ -31,6 +31,12 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
+      - name: Diagnose canary identity presence
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GOOGLE_CLOUD_PROJECT: tinysteps-react-v1
+        run: node scripts/diagnose-auth-user-canary.mjs
+
       - name: Verify suspended Parent canary
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
