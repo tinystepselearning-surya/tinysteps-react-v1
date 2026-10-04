@@ -184,10 +184,10 @@ describe('Wave 1 R4 Brick 5D canonical auth-user archive writer', () => {
     ).toEqual([
       'people/person-1',
       expect.stringMatching(
-        /^authIdentities\\/auth_/,
+        '^authIdentities/auth_',
       ),
       expect.stringMatching(
-        /^roleAssignments\\/role_/,
+        '^roleAssignments/role_',
       ),
       'personLifecycle/person-1',
     ]);
