@@ -268,6 +268,68 @@
       "writesPerformed": 0,
       "reconciled": true,
       "reportTimestamp": "2026-10-04T05:51:21.195Z"
+    },
+    "catchup": {
+      "status": "complete",
+      "reason": "Four legacy identity sources were created after the original 2026-10-04 backfill: 2 users and 2 learners.",
+      "sourceCounts": {
+        "users": 225,
+        "kids": 196,
+        "schools": 1,
+        "schoolUsers": 1
+      },
+      "expectedCanonicalDocuments": 1265,
+      "preCatchupState": {
+        "create": 12,
+        "update": 0,
+        "unchanged": 1253,
+        "conflicts": 0,
+        "unexpected": 0,
+        "blockingIssues": 0,
+        "readyForBoundedWrite": true,
+        "dryRunReport": "reports/wave1-identity-backfill-dry-run-2026-10-04T08-13-39-384Z.json"
+      },
+      "productionRuns": [
+        {
+          "sourceRecordsCommitted": 250,
+          "canonicalDocumentsCreated": 9,
+          "canonicalDocumentsUpdated": 0,
+          "canonicalDocumentsUnchanged": 740,
+          "writeBatchesCommitted": 1,
+          "postWriteSelectedMismatches": 0,
+          "checkpointComplete": false,
+          "reportPath": "reports/wave1-identity-backfill-write-2026-10-04T08-15-08-674Z.json"
+        },
+        {
+          "sourceRecordsCommitted": 173,
+          "canonicalDocumentsCreated": 3,
+          "canonicalDocumentsUpdated": 0,
+          "canonicalDocumentsUnchanged": 513,
+          "writeBatchesCommitted": 1,
+          "postWriteSelectedMismatches": 0,
+          "checkpointComplete": true,
+          "reportPath": "reports/wave1-identity-backfill-write-2026-10-04T08-16-35-630Z.json"
+        }
+      ],
+      "totals": {
+        "sourceRecordsProcessed": 423,
+        "canonicalDocumentsCreated": 12,
+        "canonicalDocumentsUpdated": 0,
+        "checkpointComplete": true
+      },
+      "reconciliation": {
+        "expectedDocuments": 1265,
+        "matchedDocuments": 1265,
+        "missingDocuments": 0,
+        "driftedMigrationOwnedDocuments": 0,
+        "conflictingDocuments": 0,
+        "unexpectedDocuments": 0,
+        "blockingSourcePlanningIssues": 0,
+        "writesPerformed": 0,
+        "reconciled": true,
+        "reportPath": "reports/wave1-identity-backfill-reconcile-2026-10-04T08-37-29-189Z.json",
+        "reconciledAt": "2026-10-04T08:37:29.189Z"
+      }
     }
   },
   "verify": {
@@ -543,7 +605,7 @@
     }
   },
   "legacyRetirement": {
-    "status": "audit_local_validation_complete",
+    "status": "identity_core_caught_up_retirement_field_migration_pending",
     "approvedEndState": "canonical_primary_legacy_retired",
     "legacyCollections": [
       "users",
@@ -594,6 +656,16 @@
     ],
     "destructiveDeletionAuthorized": false,
     "legacyWritesFrozen": false,
-    "canonicalPrimaryWrites": false
+    "canonicalPrimaryWrites": false,
+    "identityCoreCatchup": {
+      "complete": true,
+      "canonicalDocuments": 1265,
+      "reconciledAt": "2026-10-04T08:37:29.189Z",
+      "missing": 0,
+      "drifted": 0,
+      "conflicts": 0,
+      "unexpected": 0,
+      "blockingSourcePlanningIssues": 0
+    }
   }
 }
