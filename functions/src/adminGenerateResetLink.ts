@@ -1,7 +1,7 @@
 import * as fns from 'firebase-functions/v2';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard'; // ✅ central admin checker
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -71,7 +71,7 @@ export const adminGenerateResetLink = onCall(
 
     try {
       // 1. Validate admin
-      await ensureAdmin(auth);
+      await ensureCanonicalAdmin(auth);
       const callerUid = auth!.uid;
 
       // 2. Rate limit protection
