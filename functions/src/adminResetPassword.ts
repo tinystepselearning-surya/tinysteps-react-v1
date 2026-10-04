@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -25,7 +25,7 @@ export const adminResetPassword = onCall(
   { region: 'asia-south1', timeoutSeconds: 60, memory: '256MiB' },
   async (request): Promise<AdminResetPasswordResponse> => {
     const { auth, data } = request;
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     const payload = (data || {}) as Partial<AdminResetPasswordRequest>;
     const uid = typeof payload.uid === 'string' ? payload.uid.trim() : '';
