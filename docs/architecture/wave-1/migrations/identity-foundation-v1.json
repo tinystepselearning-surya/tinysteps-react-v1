@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c1_school_authorization_validated_pending_production",
+    "status": "r5c1_school_management_guard_validated_pending_production",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c1_school_authorization_cutover",
+    "nextBrick": "r5c1_school_management_guard_deploy",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c1_school_authorization_validated_pending_production",
+      "status": "r5c1_school_management_guard_validated_pending_production",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c1_school_authorization_cutover",
+      "nextBrick": "r5c1_school_management_guard_deploy",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -1838,7 +1838,7 @@
           "schoolAuthorizationUsesUsers": false,
           "schoolAuthorizationUsesSchoolUsers": false,
           "learningPartnerOperationalUidBoundaryPreserved": true,
-          "productionWiring": false,
+          "productionWiring": "partial_stage1_live",
           "productionVerified": false,
           "tests": [
             "functions/test/authAccessAuthorization.spec.ts",
@@ -1899,6 +1899,70 @@
               "avsCallableTransportVerificationRequired": false
             },
             "temporaryValidationWorkflowRetiredBeforeMerge": true
+          },
+          "stage1Deployment": {
+            "pullRequest": 609,
+            "mergeCommit": "7899fe6e5e34cc9af099855e7054a9f4bc6d222c",
+            "workflowRunId": 37216030978,
+            "workflowRunNumber": 3881,
+            "result": "success",
+            "functionsPlanned": 13,
+            "functionsDeployed": 13,
+            "functionsVerifiedReady": 13,
+            "deploymentBatches": 2,
+            "functionsFullDeployment": false,
+            "schoolCallableTransport": "passed",
+            "functionsProductionMarkerAdvanced": true,
+            "hostingChanged": false,
+            "firestoreRulesChanged": false,
+            "firestoreIndexesChanged": false
+          },
+          "schoolManagementGuardHardening": {
+            "requesterAuthority": "authAccessReadModels/{firebaseUid}",
+            "sharedAdminGuardCalled": false,
+            "targetUserLegacyCompatibilityReadsRemain": true,
+            "targetUserReadsAreAuthorizationAuthority": false,
+            "validation": {
+              "workflowRunId": 37216635790,
+              "result": "success",
+              "functionsBuild": "passed",
+              "r5cAuthorizationTests": {
+                "passed": 22,
+                "total": 22,
+                "filesPassed": 3,
+                "totalFiles": 3
+              },
+              "architectureAuthorizationRegressions": {
+                "passed": 22,
+                "total": 22,
+                "filesPassed": 3,
+                "totalFiles": 3
+              },
+              "totalFocusedTests": {
+                "passed": 44,
+                "total": 44,
+                "filesPassed": 6,
+                "totalFiles": 6
+              },
+              "deploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 5,
+                "impactedFunctions": [
+                  "adminAssignSchoolLearningPartner",
+                  "adminCreateSchool",
+                  "adminLinkSchoolUser",
+                  "adminUnlinkSchoolUser",
+                  "adminUpdateSchool"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "temporaryValidationWorkflowRetiredBeforeMerge": true
+            },
+            "productionWiring": false,
+            "productionVerified": false
           }
         },
         "r5c2": {
