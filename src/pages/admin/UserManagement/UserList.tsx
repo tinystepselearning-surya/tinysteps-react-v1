@@ -107,12 +107,28 @@ const isHardDeleteProtectedRole = (
     .toLowerCase();
 
   return (
-    canonical === 'parent' ||
+    canonical === 'admin' ||
     canonical === 'founder' ||
+    canonical === 'teacher' ||
+    canonical === 'parent' ||
+    canonical === 'learningPartner' ||
     canonical === 'kid' ||
     canonical === 'schoolAdmin' ||
     raw === 'student' ||
     raw === 'students'
+  );
+};
+
+const isGenericIdentityManagedRole = (
+  role?: string,
+) => {
+  const canonical = normalizeAuthRole(role);
+  return (
+    canonical === 'admin' ||
+    canonical === 'founder' ||
+    canonical === 'teacher' ||
+    canonical === 'parent' ||
+    canonical === 'learningPartner'
   );
 };
 
@@ -326,6 +342,12 @@ function UserTable({
             <TableCell className="px-3 py-2 text-right whitespace-nowrap">
               {(() => {
                 const deleteBlocked = isHardDeleteProtectedRole(user.role);
+                const lifecycleManaged =
+                  isGenericIdentityManagedRole(user.role);
+                const archived =
+                  String(user.status || '')
+                    .trim()
+                    .toLowerCase() === 'archived';
                 return (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -335,12 +357,22 @@ function UserTable({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuItem onSelect={() => onEdit(user)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!lifecycleManaged || archived}
+                    onSelect={() => onEdit(user)}
+                  >
+                    Edit
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => onResetPassword(user)}>
                     Reset Password
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => onArchive(user)}>Archive</DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!lifecycleManaged || archived}
+                    onSelect={() => onArchive(user)}
+                  >
+                    Archive
+                  </DropdownMenuItem>
                   {deleteBlocked ? (
                     <DropdownMenuItem disabled>
                       Delete disabled (archive only)
