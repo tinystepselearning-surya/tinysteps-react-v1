@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick3_local_validation_complete_pending_production_deploy",
+        "status": "brick3_production_deployed_partial_r4_active",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -712,9 +712,9 @@
           ],
           "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_PRIMARY_BRICK3.md",
           "productionWiring": true,
-          "productionBehaviorChanged": false,
-          "canonicalPrimaryWritesEnabled": false,
-          "learnerWriteCutover": "createStudentForParent_pending_production_deploy",
+          "productionBehaviorChanged": true,
+          "canonicalPrimaryWritesEnabled": true,
+          "learnerWriteCutover": "createStudentForParent_production_active",
           "activeRepositoryCallers": 0,
           "historicalNestedStudentProductionDocuments": 0,
           "nestedLegacyStudentWrites": false,
@@ -788,7 +788,46 @@
             "impactedFunctionsCount": 6,
             "result": "success"
           },
-          "productionDeployment": null
+          "productionDeployment": {
+            "commit": "c38ffd4a161f224553546d4843d74b01d89ba682",
+            "workflowRunId": 37200647332,
+            "result": "success",
+            "completedAt": "2026-10-04T12:06:01Z",
+            "functionsProductionMarkerAdvanced": true,
+            "functionsProductionMarker": "c38ffd4a161f224553546d4843d74b01d89ba682",
+            "fullFunctionsDeployment": false,
+            "deploymentBatches": [
+              [
+                "adminCreateStudent",
+                "createStudentForParent"
+              ],
+              [
+                "onWave1LegacyKidIdentityWrite",
+                "onWave1LegacySchoolIdentityWrite",
+                "onWave1LegacySchoolUserIdentityWrite",
+                "onWave1LegacyUserIdentityWrite"
+              ]
+            ],
+            "impactedFunctions": [
+              "adminCreateStudent",
+              "createStudentForParent",
+              "onWave1LegacyKidIdentityWrite",
+              "onWave1LegacySchoolIdentityWrite",
+              "onWave1LegacySchoolUserIdentityWrite",
+              "onWave1LegacyUserIdentityWrite"
+            ],
+            "impactedFunctionsCount": 6,
+            "hostingDeployed": false,
+            "firestoreRulesDeployed": false,
+            "firestoreIndexesDeployed": false
+          },
+          "productionActivationEvidence": {
+            "activeRepositoryCallers": 0,
+            "historicalNestedStudentProductionDocuments": 0,
+            "syntheticLiveCanaryRequired": false,
+            "reason": "No active repository caller and no verified production footprint in the retired nested parent/student namespace; build, regression, bounded deployment and production-marker evidence are sufficient until first live invocation.",
+            "firstLiveInvocationVerificationRequiredIfCallableBecomesActive": true
+          }
         }
       },
       "legacyWritesStopped": false,
@@ -834,7 +873,8 @@
         "errorEvents": null
       },
       "canonicalPrimaryWriteScope": [
-        "adminCreateStudent:learner_create"
+        "adminCreateStudent:learner_create",
+        "createStudentForParent:learner_create"
       ]
     }
   },
@@ -1122,10 +1162,13 @@
         "temporaryValidationWorkflowRetiredBeforeMerge": true
       },
       "nextAuthorizedStep": {
-        "kind": "canonical_primary_createStudentForParent_validation_and_deploy",
+        "kind": "canonical_primary_browser_learner_write_paths_implementation",
         "retirementStage": "R4",
         "scope": [
-          "createStudentForParent"
+          "StudentManagement inline learner create",
+          "kidsService.updateKid consumers",
+          "EditStudentForm canonical learner updates",
+          "AssignLPModal removal of child-level LP write authority"
         ],
         "destructive": false,
         "legacyDeletionAuthorized": false,
@@ -1133,11 +1176,12 @@
         "readerCutoverAuthorized": false,
         "securityRulesCutoverAuthorized": false,
         "authBackedUserWriteCutoverAuthorized": false,
-        "precondition": "adminCreateStudent production canary remains clean"
+        "precondition": "server-side learner create paths remain clean in production"
       }
     },
     "canonicalPrimaryWriteScope": [
-      "adminCreateStudent:learner_create"
+      "adminCreateStudent:learner_create",
+      "createStudentForParent:learner_create"
     ]
   }
 }
