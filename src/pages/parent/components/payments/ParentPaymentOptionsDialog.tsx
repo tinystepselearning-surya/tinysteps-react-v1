@@ -7,6 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { TINY_STEPS_PAYMENT_DETAILS } from "@/lib/tinyStepsPaymentDetails";
+
 import type { ParentWalletDisplayState } from "./parentPaymentsPresentation";
 
 type ParentPaymentOptionsDialogProps = {
@@ -95,12 +97,12 @@ export default function ParentPaymentOptionsDialog({
                 Bank transfer details
               </h3>
               <dl className="mt-3 select-text space-y-2 text-slate-700 dark:text-slate-200">
-                <div><dt className="inline font-medium">Account type:</dt> <dd className="inline">Current</dd></div>
-                <div><dt className="inline font-medium">Account number:</dt> <dd className="inline">50200108987663</dd></div>
-                <div><dt className="inline font-medium">Bank:</dt> <dd className="inline">HDFC</dd></div>
-                <div><dt className="inline font-medium">IFSC:</dt> <dd className="inline">HDFC0002352</dd></div>
-                <div><dt className="inline font-medium">Account name:</dt> <dd className="inline">TINY STEPS</dd></div>
-                <div><dt className="inline font-medium">UPI ID:</dt> <dd className="inline">tinystepslearning@ybl</dd></div>
+                <div><dt className="inline font-medium">Account type:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.accountType}</dd></div>
+                <div><dt className="inline font-medium">Account number:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.accountNumber}</dd></div>
+                <div><dt className="inline font-medium">Bank:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.bank}</dd></div>
+                <div><dt className="inline font-medium">IFSC:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.ifsc}</dd></div>
+                <div><dt className="inline font-medium">Account name:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.accountName}</dd></div>
+                <div><dt className="inline font-medium">UPI ID:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.upiId}</dd></div>
               </dl>
             </section>
           )}
