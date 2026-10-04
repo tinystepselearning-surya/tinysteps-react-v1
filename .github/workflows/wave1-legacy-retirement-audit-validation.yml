@@ -1,0 +1,27 @@
+name: Wave 1 Legacy Retirement Audit Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax-check retirement audit
+        run: node --check scripts/wave1-identity-legacy-retirement-audit.mjs
+
+      - name: Run retirement audit regression tests
+        run: node --test scripts/test/wave1-identity-retirement-audit.node-test.mjs
