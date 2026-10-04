@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2b_admin_diagnostics_validated_pending_merge",
+    "status": "r5c2b_production_complete_ready_for_next_bounded_admin_slice",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2b_admin_diagnostics_deploy",
+    "nextBrick": "r5c2c_bounded_admin_mutation_cutover",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2b_admin_diagnostics_validated_pending_merge",
+      "status": "r5c2b_production_complete_ready_for_next_bounded_admin_slice",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2b_admin_diagnostics_deploy",
+      "nextBrick": "r5c2c_bounded_admin_mutation_cutover",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2075,8 +2075,8 @@
               "businessMutationAllowed": false,
               "targetEntityLegacyReadsAllowed": true,
               "targetEntityLegacyReadsAreAuthorizationAuthority": false,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "deferredCoupledFunctions": {
                 "auditParentPaymentBackfillDryRun": {
@@ -2120,6 +2120,23 @@
                 },
                 "paymentDryRunDeferredToFinanceSlice": true,
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 613,
+                "mergeCommit": "2597656e677de8ac99f7b5c428799a21c587c9f7",
+                "workflowRunId": 37220092324,
+                "workflowRunNumber": 3885,
+                "result": "success",
+                "functionsPlanned": 2,
+                "functionsDeployed": 2,
+                "functionsVerifiedReady": 2,
+                "deploymentBatches": 1,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
