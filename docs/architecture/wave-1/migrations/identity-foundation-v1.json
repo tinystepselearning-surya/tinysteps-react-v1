@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c2_user_update_archive_validated_pending_merge",
+    "status": "r5c2c2_production_complete_ready_for_next_bounded_admin_mutation_slice",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c2_user_update_archive_deploy",
+    "nextBrick": "r5c2c3_next_bounded_admin_mutation_slice",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2c2_user_update_archive_validated_pending_merge",
+      "status": "r5c2c2_production_complete_ready_for_next_bounded_admin_mutation_slice",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2c2_user_update_archive_deploy",
+      "nextBrick": "r5c2c3_next_bounded_admin_mutation_slice",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2240,8 +2240,8 @@
               ],
               "businessMutationAllowed": true,
               "canonicalPrimaryWritersPreserved": true,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "deferredCoupledFunctions": {
                 "adminCreateUser": {
@@ -2294,6 +2294,26 @@
                   "avsCallableTransportVerificationRequired": false
                 },
                 "temporaryValidationWorkflowCreated": false
+              },
+              "productionDeployment": {
+                "pullRequest": 617,
+                "mergeCommit": "626df1bc0b168883f4df9f607525a6161dc40f0b",
+                "workflowRunId": 37223337451,
+                "workflowRunNumber": 3889,
+                "result": "success",
+                "functionsPlanned": 2,
+                "functionsDeployed": 2,
+                "functionsVerifiedReady": 2,
+                "deploymentBatches": 1,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "schoolCallableTransportRequired": false,
+                "avsCallableTransportRequired": false,
+                "leadAttributionTransportRequired": false,
+                "recoveryJobRequired": false
               }
             }
           }
