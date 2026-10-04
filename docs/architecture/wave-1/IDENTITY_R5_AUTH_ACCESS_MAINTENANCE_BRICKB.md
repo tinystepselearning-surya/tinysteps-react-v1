@@ -1,6 +1,6 @@
 # Wave 1 R5B — Auth Access Read Model Backfill and Live Maintenance
 
-**Status:** PRODUCTION DEPLOYED — dry-run clean; operator backfill/reconciliation pending  
+**Status:** COMPLETE — production backfill and independent reconciliation clean  
 **Lifecycle phase:** R5 reader / Firestore Rules cutover preparation  
 **Production reader authority after this brick:** legacy compatibility  
 **Production Rules authority after this brick:** legacy `users` / `schoolUsers`  
@@ -478,3 +478,75 @@ planningIssueCount = 0
 pendingWrites = 0
 result = reconciled
 ~~~
+
+
+## Production backfill closeout
+
+Operator execution completed successfully on 4 October 2026.
+
+~~~text
+Report directory:
+reports/r5b-production-20261004T155059Z
+~~~
+
+### Canary
+
+~~~text
+Expected: 227
+Attempted: 20
+Succeeded: 20
+Failed: 0
+After canary existing: 20
+Remaining create: 207
+Update: 0
+Conflict: 0
+Unexpected: 0
+Blocking issues: 0
+~~~
+
+Independent read-only canary verification confirmed the 20 written records as unchanged and
+reported no conflict, unexpected document, planning issue, or blocker.
+
+### Remaining bounded backfill
+
+~~~text
+Attempted: 207
+Succeeded: 207
+Failed: 0
+Expected after write: 227
+Existing after write: 227
+Unchanged: 227
+Create: 0
+Update: 0
+Conflict: 0
+Unexpected: 0
+Pending writes: 0
+Blocking issues: 0
+Result: write_complete_reconciled
+~~~
+
+### Independent full reconciliation
+
+~~~text
+Report:
+reports/r5b-production-20261004T155059Z/05-reconcile.json
+
+Result: reconciled
+Planning issues: 0
+Expected: 227
+Existing: 227
+Unchanged: 227
+Create: 0
+Update: 0
+Conflict: 0
+Unexpected: 0
+Pending writes: 0
+Blocking issues: 0
+Writes performed: 0
+~~~
+
+All R5B production gates are satisfied.
+
+R5C backend authorization/reader cutover is now authorized.
+
+Firestore Security Rules remain unchanged until the later R5D brick.
