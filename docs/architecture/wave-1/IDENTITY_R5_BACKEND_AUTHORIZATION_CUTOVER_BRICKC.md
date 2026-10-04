@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C3 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C4 ADMIN HARD-DELETE CUTOVER — validation pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -863,3 +863,64 @@ R5C2C3 is production-complete.
 
 The next bounded mutation slice is intentionally `adminDeleteUser` alone because hard-delete
 semantics deserve an isolated production and rollback boundary.
+
+
+## R5C2C4 — admin hard-delete
+
+R5C2C4 deliberately contains a single destructive mutation:
+
+~~~text
+adminDeleteUser
+~~~
+
+Its requester Admin authorization moves from the legacy shared guard to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+The destructive business behavior is otherwise unchanged.
+
+Hard-delete protections retained by this slice:
+
+- the requester cannot delete their own Admin account;
+- parent accounts cannot be hard-deleted;
+- learner/kid/student accounts cannot be hard-deleted;
+- school Admin accounts cannot be hard-deleted;
+- protected identities must use archive/lifecycle behavior instead.
+
+Existing cleanup scope is also preserved:
+
+- delete the Firebase Auth user;
+- delete `users/{uid}`;
+- delete the applicable role-mirror document;
+- do **not** cascade-delete kids, sessions, invoices, enrollments, or unrelated domain records.
+
+This slice is intentionally one Function so destructive authorization behavior has an isolated
+production, observation, and rollback boundary.
+
+Still deferred:
+
+- `adminCreateUser`: coupled to `backfillTeacherDocs` through its wrapper module;
+- `adminSetUserRole`: coupled to four Learning Partner assignment callables through its wrapper.
+
+### R5C2C4 acceptance target
+
+Expected bounded production impact:
+
+~~~text
+adminDeleteUser
+~~~
+
+Expected deployment properties:
+
+- Functions impacted: exactly 1;
+- full Functions deployment: false;
+- Hosting changed: false;
+- Firestore Rules changed: false;
+- Firestore indexes changed: false;
+- shared legacy Admin guard unchanged.
+
+Acceptance is pending focused lint, Functions build/tests, authorization regressions, and
+deployment-impact classification.
