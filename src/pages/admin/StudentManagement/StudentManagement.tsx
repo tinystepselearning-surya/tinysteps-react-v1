@@ -297,9 +297,6 @@ function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
   const [ageYearsInput, setAgeYearsInput] = useState<string>('');
-  const [parentName, setParentName] = useState('');
-  const [parentEmail, setParentEmail] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
   const [parentId, setParentId] = useState<string | undefined>();
   const [parents, setParents] = useState<ParentUser[]>([]);
   const [saving, setSaving] = useState(false);
@@ -323,16 +320,6 @@ function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
 
   const handleSelectParent = (id: string) => {
     setParentId(id);
-    const p = parents.find((x) => x.id === id);
-    if (p) {
-      const displayName = p.name || p.displayName || p.fullName || '';
-      if (!parentName) setParentName(displayName);
-      if (!parentEmail && p.email) setParentEmail(p.email);
-      if (!parentPhone) {
-        const phone = p.phone || p.mobile || p.contactNumber || '';
-        if (phone) setParentPhone(phone);
-      }
-    }
   };
 
   const handleSubmit = async () => {
@@ -387,9 +374,6 @@ function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
       setGrade('');
       setAgeYearsInput('');
       setParentId(undefined);
-      setParentName('');
-      setParentEmail('');
-      setParentPhone('');
 
       onCreated?.();
     } catch (err: any) {
@@ -442,7 +426,7 @@ function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
 
       {/* Link to parent account */}
       <div className="space-y-1">
-        <Label>Link to Parent Account (optional)</Label>
+        <Label>Link to Parent Account *</Label>
         <Select value={parentId} onValueChange={(v) => handleSelectParent(v)}>
           <SelectTrigger>
             <SelectValue placeholder="Select existing parent (if any)" />
@@ -461,39 +445,8 @@ function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
           </SelectContent>
         </Select>
         <p className="text-xs text-gray-500">
-          Links the child to a parent user so dashboards and enrollments work correctly.
+          Required. The learner is linked to this existing parent identity.
         </p>
-      </div>
-
-      {/* Parent name */}
-      <div className="space-y-1">
-        <Label>Parent Name (display)</Label>
-        <Input
-          value={parentName}
-          onChange={(e) => setParentName(e.target.value)}
-          placeholder="e.g., Priya R."
-        />
-      </div>
-
-      {/* Parent email */}
-      <div className="space-y-1">
-        <Label>Parent Email</Label>
-        <Input
-          type="email"
-          value={parentEmail}
-          onChange={(e) => setParentEmail(e.target.value)}
-          placeholder="e.g., parent@example.com"
-        />
-      </div>
-
-      {/* Parent phone */}
-      <div className="space-y-1">
-        <Label>Parent Phone</Label>
-        <Input
-          value={parentPhone}
-          onChange={(e) => setParentPhone(e.target.value)}
-          placeholder="e.g., +91 9xxxx xxxxx"
-        />
       </div>
 
       <div className="col-span-1 md:col-span-2 flex justify-end gap-2 mt-2">
