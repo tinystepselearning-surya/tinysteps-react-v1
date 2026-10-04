@@ -1,0 +1,61 @@
+name: R5B Production Auth Access Backfill
+
+on:
+  push:
+    branches:
+      - wave1/identity-r5b-production-backfill-20261004
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Authenticate to production
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run production dry-run
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GOOGLE_CLOUD_PROJECT: tinysteps-react-v1
+        run: >-
+          node scripts/wave1-auth-access-read-model-backfill.mjs
+          --project tinysteps-react-v1
+          --mode dry-run
+          --max-records 250
+          --sample-size 20
+          --report artifacts/r5b-auth-access-dry-run.json
+
+      - name: Upload dry-run report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r5b-auth-access-dry-run-${{ github.sha }}
+          path: artifacts/r5b-auth-access-dry-run.json
+          if-no-files-found: error
+          retention-days: 7
