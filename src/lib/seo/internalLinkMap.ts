@@ -35,8 +35,16 @@ export const internalLinkMap: InternalLinkRule[] = [
   {
     id: 'grammar-page',
     href: '/grammar',
-    phrases: ['grammar classes for kids', 'online grammar course', 'english grammar program'],
-    priority: 80,
+    phrases: [
+      'online grammar classes for kids',
+      'grammar classes for kids',
+      'online grammar course',
+      'grammar programme',
+      'grammar program',
+      'English grammar programme',
+      'English grammar program',
+    ],
+    priority: 90,
     cluster: 'grammar',
   },
   {
