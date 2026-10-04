@@ -464,3 +464,35 @@ This slice intentionally excludes:
 - user/account mutation;
 - enrollment or schedule repair;
 - lifecycle mutation.
+
+
+### R5C2B acceptance
+
+Final validation workflow:
+
+~~~text
+Run: 37218961723
+Head: 37638a66bb5563326621094b96a13743d605ea7b
+Result: success
+~~~
+
+Validated:
+
+- Functions authorization/diagnostic tests: 18/18;
+- historical attendance routing regression: 4/4;
+- deployment-impact classifier: 27/27;
+- impacted Functions: exactly 2;
+- full Functions deployment: no;
+- Hosting changed: no;
+- Firestore Rules changed: no;
+- Firestore indexes changed: no.
+
+The two intended production targets are:
+
+~~~text
+auditAllTransferredSessionSnapshotIssues
+getAdminHistoricalAttendanceCandidates
+~~~
+
+The parent-payment dry-run remains deferred because changing its shared module would also
+redeploy the mutating `applyParentPaymentBackfillForSafeParents` Function.
