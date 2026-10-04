@@ -344,6 +344,13 @@ function validateCreateStudentInput(
         );
       }
     }
+
+    if (data.courses.length > 0) {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        'Course assignment is no longer stored on the learner profile. Create the learner first, then use the admission/enrollment workflow.',
+      );
+    }
   }
 
   return ageYears;
@@ -355,7 +362,6 @@ function toCallableError(
 ): functions.https.HttpsError {
   switch (error.code) {
     case 'parent_compatibility_missing':
-    case 'parent_profile_compatibility_missing':
       return new functions.https.HttpsError(
         'not-found',
         'Parent account not found',
@@ -365,14 +371,12 @@ function toCallableError(
     case 'parent_canonical_person_ineligible':
     case 'parent_canonical_role_missing':
     case 'parent_canonical_role_ineligible':
-    case 'parent_profile_compatibility_inactive':
       return new functions.https.HttpsError(
         'failed-precondition',
         'Cannot add students to this parent account',
       );
 
     case 'duplicate_learner_name':
-    case 'duplicate_nested_learner_name':
       return new functions.https.HttpsError(
         'already-exists',
         `An active student named "${fullName}" already exists under this parent. Use a different name or update the existing student.`,
@@ -460,11 +464,6 @@ async function createStudentForParentHandlerImpl(
           notes,
           emergencyContact,
           medicalNotes,
-        },
-        nestedParentStudentCompatibility: {
-          enabled: true,
-          courses: rawData.courses || [],
-          createdByRole: 'admin',
         },
       });
 
