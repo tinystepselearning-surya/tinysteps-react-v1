@@ -21,6 +21,9 @@ const adminGuard = read(
 const schoolAuthorization = read(
   'functions/src/helpers/schoolAuthorization.ts',
 );
+const schools = read(
+  'functions/src/schools.ts',
+);
 const schoolEvidence = read(
   'functions/src/schoolEvidence.ts',
 );
@@ -32,6 +35,41 @@ describe('Wave 1 R5C1 school authorization routing', () => {
     );
     expect(adminGuard).not.toContain(
       'loadCurrentAuthAccessPrincipal',
+    );
+  });
+
+
+  it('uses canonical access for school-management caller Admin authorization while preserving legacy target-user compatibility reads', () => {
+    const guardStart = schools.indexOf(
+      'async function ensureCurrentActiveAdmin',
+    );
+    const guardEnd = schools.indexOf(
+      'function requireString',
+      guardStart,
+    );
+    const guardSource = schools.slice(
+      guardStart,
+      guardEnd,
+    );
+
+    expect(guardStart).toBeGreaterThanOrEqual(0);
+    expect(guardEnd).toBeGreaterThan(guardStart);
+    expect(guardSource).toContain(
+      'loadCurrentAuthAccessPrincipal',
+    );
+    expect(guardSource).toContain(
+      'principalHasGlobalRole',
+    );
+    expect(guardSource).not.toContain(
+      "collection('users')",
+    );
+    expect(schools).not.toContain(
+      "import { ensureAdmin } from './helpers/adminGuard'",
+    );
+
+    // Target-user role/profile compatibility is a separate reader migration.
+    expect(schools).toContain(
+      "db.collection('users').doc(learningPartnerId)",
     );
   });
 
