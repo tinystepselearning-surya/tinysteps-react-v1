@@ -7,6 +7,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import {
   planCanonicalLearnerCreate,
   type CanonicalLearnerCreatePlan,
+  type CanonicalLearnerDetailsInput,
+  type CanonicalLearnerPrivateProfileInput,
+  type NestedParentStudentCompatibilityInput,
 } from './canonicalPrimaryPlanner';
 import { buildRoleAssignmentId } from './idStrategy';
 
@@ -29,7 +32,10 @@ export type CanonicalPrimaryLearnerWriteErrorCode =
   | 'parent_canonical_person_ineligible'
   | 'parent_canonical_role_missing'
   | 'parent_canonical_role_ineligible'
+  | 'parent_profile_compatibility_missing'
+  | 'parent_profile_compatibility_inactive'
   | 'duplicate_learner_name'
+  | 'duplicate_nested_learner_name'
   | 'generated_person_id_collision'
   | 'canonical_target_exists'
   | 'compatibility_target_exists';
@@ -54,9 +60,13 @@ export interface ExecuteCanonicalLearnerCreateInput {
   parentId: string;
   displayName: string;
   ageYears: number;
-  grade: string;
+  grade?: string | null;
   status: 'active' | 'suspended' | 'archived';
   countryCode?: string | null;
+  details?: CanonicalLearnerDetailsInput | null;
+  privateProfile?: CanonicalLearnerPrivateProfileInput | null;
+  nestedParentStudentCompatibility?:
+    NestedParentStudentCompatibilityInput | null;
 }
 
 export interface ExecuteCanonicalLearnerCreateResult {
@@ -140,6 +150,17 @@ export function canonicalParentEligibilityIssue(params: {
   return null;
 }
 
+export function parentProfileCompatibilityIssue(
+  data: LooseDoc | null,
+): CanonicalPrimaryLearnerWriteErrorCode | null {
+  if (!data) return 'parent_profile_compatibility_missing';
+  const status = cleanText(data.status).toLowerCase();
+  if (status && status !== 'active') {
+    return 'parent_profile_compatibility_inactive';
+  }
+  return null;
+}
+
 function normalizedComparable(
   value: unknown,
 ): unknown {
@@ -195,9 +216,18 @@ function compatibilityWriteData(params: {
   data: Record<string, unknown>;
   actorId: string;
   now: admin.firestore.FieldValue;
+  serverTimestampFields?: string[];
 }): Record<string, unknown> {
   return {
     ...params.data,
+    ...(params.serverTimestampFields || [])
+      .reduce<Record<string, unknown>>(
+        (out, field) => {
+          out[field] = params.now;
+          return out;
+        },
+        {},
+      ),
     createdAt: params.now,
     updatedAt: params.now,
     createdBy: params.actorId,
@@ -264,6 +294,30 @@ async function verifyCanonicalLearnerWrite(params: {
     }
   }
 
+  for (const document of plan.compatibilityNestedDocuments) {
+    const snapshot = await db
+      .collection(document.parentCollection)
+      .doc(document.parentId)
+      .collection(document.collection)
+      .doc(document.documentId)
+      .get();
+    const actual = snapshot.exists
+      ? snapshot.data() || {}
+      : null;
+
+    if (
+      !expectedFieldsMatch(actual, {
+        ...document.data,
+        createdBy: actorId,
+        updatedBy: actorId,
+      })
+    ) {
+      issues.push(
+        `compatibility_mismatch:${document.parentCollection}/${document.collection}`,
+      );
+    }
+  }
+
   const parentSnapshot = await db
     .collection('users')
     .doc(parentId)
@@ -289,9 +343,12 @@ export async function executeCanonicalLearnerCreate(
     parentId,
     displayName,
     ageYears,
-    grade,
+    grade = null,
     status,
     countryCode = null,
+    details = null,
+    privateProfile = null,
+    nestedParentStudentCompatibility = null,
   } = input;
 
   const personId = db.collection('people').doc().id;
@@ -306,6 +363,9 @@ export async function executeCanonicalLearnerCreate(
     status,
     countryCode,
     summary: { ...DEFAULT_LEARNER_SUMMARY },
+    details,
+    privateProfile,
+    nestedParentStudentCompatibility,
     actorId,
     writeId,
   });
@@ -359,6 +419,58 @@ export async function executeCanonicalLearnerCreate(
         parentIssue,
         'Selected parent does not have an active canonical parent identity',
       );
+    }
+
+    if (nestedParentStudentCompatibility?.enabled) {
+      const parentProfileRef = db
+        .collection('parents')
+        .doc(parentId);
+      const parentProfile =
+        await transaction.get(parentProfileRef);
+      const profileIssue =
+        parentProfileCompatibilityIssue(
+          parentProfile.exists
+            ? parentProfile.data() || {}
+            : null,
+        );
+
+      if (profileIssue) {
+        throw new CanonicalPrimaryLearnerWriteError(
+          profileIssue,
+          'Selected parent profile compatibility record is unavailable',
+        );
+      }
+
+      const nestedDuplicateQuery = parentProfileRef
+        .collection('students')
+        .where('fullName', '==', displayName)
+        .select('fullName', 'status');
+      const nestedExisting =
+        await transaction.get(nestedDuplicateQuery);
+
+      const nestedDuplicate =
+        nestedExisting.docs.some((snapshot) => {
+          const data = snapshot.data() || {};
+          const nestedStatus =
+            cleanText(data.status).toLowerCase();
+          return (
+            normalizeNameForCompare(
+              learnerNameFromCompatibility(data),
+            ) === normalizeNameForCompare(displayName) &&
+            (
+              !nestedStatus ||
+              nestedStatus === 'active' ||
+              nestedStatus === 'trial'
+            )
+          );
+        });
+
+      if (nestedDuplicate) {
+        throw new CanonicalPrimaryLearnerWriteError(
+          'duplicate_nested_learner_name',
+          'A nested compatibility learner with this name already exists under the selected parent',
+        );
+      }
     }
 
     const duplicateQuery = db
@@ -428,6 +540,22 @@ export async function executeCanonicalLearnerCreate(
       compatibilitySnapshots.set(key, snapshot);
     }
 
+    const nestedCompatibilitySnapshots = new Map<
+      string,
+      admin.firestore.DocumentSnapshot
+    >();
+    for (const document of plan.compatibilityNestedDocuments) {
+      const key =
+        `${document.parentCollection}/${document.collection}/${document.documentId}`;
+      const snapshot = await transaction.get(
+        db.collection(document.parentCollection)
+          .doc(document.parentId)
+          .collection(document.collection)
+          .doc(document.documentId),
+      );
+      nestedCompatibilitySnapshots.set(key, snapshot);
+    }
+
     for (const [key, snapshot] of canonicalSnapshots) {
       if (snapshot.exists) {
         throw new CanonicalPrimaryLearnerWriteError(
@@ -437,7 +565,10 @@ export async function executeCanonicalLearnerCreate(
       }
     }
 
-    for (const [key, snapshot] of compatibilitySnapshots) {
+    for (const [key, snapshot] of [
+      ...compatibilitySnapshots,
+      ...nestedCompatibilitySnapshots,
+    ]) {
       if (snapshot.exists) {
         throw new CanonicalPrimaryLearnerWriteError(
           'compatibility_target_exists',
@@ -464,6 +595,22 @@ export async function executeCanonicalLearnerCreate(
           data: document.data,
           actorId,
           now,
+        }),
+      );
+    }
+
+    for (const document of plan.compatibilityNestedDocuments) {
+      transaction.create(
+        db.collection(document.parentCollection)
+          .doc(document.parentId)
+          .collection(document.collection)
+          .doc(document.documentId),
+        compatibilityWriteData({
+          data: document.data,
+          actorId,
+          now,
+          serverTimestampFields:
+            document.serverTimestampFields,
         }),
       );
     }
@@ -497,7 +644,8 @@ export async function executeCanonicalLearnerCreate(
     canonicalDocumentsWritten:
       plan.canonicalDocuments.length,
     compatibilityDocumentsWritten:
-      plan.compatibilityDocuments.length,
+      plan.compatibilityDocuments.length +
+      plan.compatibilityNestedDocuments.length,
     postWriteVerified:
       verificationIssues.length === 0,
     verificationIssues,
