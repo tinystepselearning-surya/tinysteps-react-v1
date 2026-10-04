@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('Wave 1 R4 createStudentForParent canonical cutover', () => {
   const source = readFileSync(
-    'src/parentStudents.ts',
+    'functions/src/parentStudents.ts',
     'utf8',
   );
 
@@ -67,7 +67,7 @@ describe('Wave 1 R4 createStudentForParent canonical cutover', () => {
 
   it('keeps learner private profiles server-only under current rules', () => {
     const rules = readFileSync(
-      '../firestore.rules',
+      'firestore.rules',
       'utf8',
     );
 
