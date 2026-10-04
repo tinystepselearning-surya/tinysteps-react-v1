@@ -1,6 +1,6 @@
 # Wave 1 R5A — Canonical Auth Access Read Model Contract
 
-**Status:** validation pending  
+**Status:** COMPLETE — validated contract/implementation; production wiring OFF  
 **Lifecycle phase:** R5 reader / Firestore Rules cutover preparation  
 **Production reader authority:** unchanged  
 **Production Rules authority:** unchanged  
@@ -278,3 +278,38 @@ The focused regression suite must prove:
 - zero legacy writes.
 
 Only after Functions build + focused tests + deployment-impact analysis are green may R5A merge.
+
+
+## Validation evidence
+
+Validated branch head:
+
+~~~text
+b8c95cdd04b3f9d97cbc45e3d55cf193ec55807b
+~~~
+
+Temporary validation workflow:
+
+~~~text
+Run ID: 37210305326
+Result: success
+~~~
+
+Results:
+
+- Functions TypeScript build: passed.
+- Focused test files: **7/7 passed**.
+- Focused tests: **62/62 passed**.
+- R5A authAccessReadModel tests: **10/10 passed**.
+- Functions source changed: yes.
+- Functions validation required: yes.
+- Functions deployment required: **no**.
+- Impacted deployed Functions: **0**.
+- Hosting changed: no.
+- Firestore Rules changed: no.
+- Firestore indexes changed: no.
+- Production reads/writes changed: none.
+- Temporary validation workflow retired before merge.
+
+R5A therefore establishes the Rules-compatible canonical-derived access contract without
+changing current production authorization.
