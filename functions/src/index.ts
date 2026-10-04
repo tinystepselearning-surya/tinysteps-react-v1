@@ -190,6 +190,7 @@ export { onGameSessionCreateTrigger } from "./triggers/onGameSessionCreate";
 // Parent data access
 export { createStudentForParent } from "./parentStudents";
 export { adminCreateStudent } from "./adminCreateStudent";
+export { adminUpdateStudent } from "./adminUpdateStudent";
 
 // Insights & analytics
 export { runInsightsRollupNow } from "./runInsightsRollupNow";
