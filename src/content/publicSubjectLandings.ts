@@ -91,25 +91,25 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
   },
   grammar: {
     route: '/english-grammar-writing-classes',
-    breadcrumbName: 'English Grammar & Writing Classes',
-    seoTitle: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
+    breadcrumbName: 'Grammar Level & Writing Pathway Guide',
+    seoTitle: 'Grammar Level Guide for Kids: Beginner vs Advanced | Tiny Steps',
     seoDescription:
-      'Explore Tiny Steps English grammar and writing classes for kids with live online support for sentence structure, punctuation, grammar control, and writing clarity.',
-    eyebrow: 'Tiny Steps Grammar',
-    heroTitle: 'English Grammar & Writing Classes',
+      'Compare Beginner and Advanced Grammar levels, then choose the dedicated Grammar or Writing programme based on whether the child needs sentence accuracy or longer composition.',
+    eyebrow: 'Tiny Steps • Programme Guide',
+    heroTitle: 'Grammar Levels Guide: Beginner, Advanced, or Writing?',
     heroDescription:
-      'A grammar and writing pathway built around Beginner Grammar and Advanced Grammar. Children build sentence structure, punctuation, grammar control, and guided writing before moving into advanced editing and writing clarity.',
+      'Use this guide to compare the two Grammar course levels and decide when the child needs the broader Grammar programme versus dedicated Writing support. Generic grammar-class intent belongs to the Grammar programme; longer composition belongs to Writing.',
     whoIntro:
-      'These two grammar tracks cover the full Tiny Steps grammar pathway from foundations to advanced writing control.',
+      'Compare the two Grammar course levels by current control. Use the dedicated Writing programme when idea development, paragraphs, stories, editing, or longer composition is the main need.',
     learnIntro:
-      'Each track below is rendered from the same course overview bullets used in the Tiny Steps catalog.',
+      'Each Grammar level below keeps a narrow course-stage role rather than competing with the main Grammar programme page.',
     outcomesIntro:
-      'These are the outcomes currently defined for the Tiny Steps grammar tracks.',
+      'Use these level-specific outcomes to compare placement; use the Grammar and Writing programme owners for broad programme decisions.',
     approachIntro:
-      'The grammar pathway is designed to stay easy to follow: fixed lesson counts, named stages, and a clear move from foundations to advanced writing.',
-    ctaTitle: 'Book a free grammar assessment',
+      'The hierarchy is deliberate: /grammar owns the broad Grammar programme, these course levels own Beginner or Advanced placement, and Writing owns longer composition.',
+    ctaTitle: 'Book a free assessment to choose the right Grammar level',
     ctaDescription:
-      'We will help you choose the right starting point between Beginner Grammar and Advanced Grammar.',
+      'We will identify whether the child needs Beginner Grammar, Advanced Grammar, or a Writing-focused pathway.',
     palette: {
       accentText: 'text-emerald-700',
       accentSurface: 'bg-emerald-50',
