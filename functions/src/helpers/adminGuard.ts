@@ -1,120 +1,90 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-
 import { normalizeRole } from './roles';
-import {
-  loadCurrentAuthAccessPrincipal,
-  principalHasGlobalRole,
-} from '../schoolOS/identity/authAccessAuthorization';
-import {
-  identityLogToken,
-} from '../schoolOS/identity/authUserActivation';
 
 type AuthLike = {
   uid?: string;
   token?: Record<string, unknown>;
 } | null | undefined;
 
-function tokenClaimsAdmin(
-  auth: AuthLike,
-): boolean {
+function isActiveOrLegacyUser(data: admin.firestore.DocumentData): boolean {
+  if (data.status === undefined || data.status === null) return true;
   return (
-    normalizeRole(auth?.token?.role) ===
-      'admin' ||
-    auth?.token?.admin === true
+    typeof data.status === 'string' &&
+    data.status.trim().toLowerCase() === 'active'
+  );
+}
+
+function hasAdminRole(data: admin.firestore.DocumentData): boolean {
+  if (data.superUser === true) return true;
+  if (normalizeRole(data.role) === 'admin') return true;
+  if (!Array.isArray(data.roles)) return false;
+  return data.roles.some(
+    (value: unknown) => normalizeRole(value) === 'admin',
   );
 }
 
 /**
- * Returns true only when the authenticated Firebase UID resolves to a current
- * canonical-derived authAccessReadModels/{uid} record whose Person/AuthIdentity
- * lifecycle is active and whose active global RoleAssignment includes Admin.
+ * Returns true only when the authenticated UID has a current active/legacy
+ * users/{uid} record whose business role is Admin.
  *
- * Firebase custom claims remain an authentication cache only. They are not
- * authoritative for Tiny Steps business authorization.
- *
- * There is intentionally no fallback to users/{uid}. R5B independently
- * reconciled every Firebase-backed canonical identity before this cutover.
+ * Custom claims are intentionally not authoritative here. They remain an
+ * authentication cache, but an orphan/stale claim cannot bypass current
+ * Tiny Steps business identity.
  */
-export async function isCurrentAdmin(
-  auth: AuthLike,
-): Promise<boolean> {
+export async function isCurrentAdmin(auth: AuthLike): Promise<boolean> {
   const uid = auth?.uid;
-  if (!uid || typeof uid !== 'string') {
-    return false;
-  }
-
-  const uidToken =
-    identityLogToken('uid', uid);
+  if (!uid || typeof uid !== 'string') return false;
 
   try {
-    const principal =
-      await loadCurrentAuthAccessPrincipal({
-        db: admin.firestore(),
-        firebaseUid: uid,
-      });
+    const snap = await admin
+      .firestore()
+      .collection('users')
+      .doc(uid)
+      .get();
 
-    if (!principal.accessActive) {
-      logger.warn(
-        'isCurrentAdmin: inactive canonical access rejected',
-        {
-          uidToken,
-          personIdToken:
-            identityLogToken(
-              'person',
-              principal.personId,
-            ),
-          personStatus:
-            principal.personStatus,
-          authStatus:
-            principal.authStatus,
-        },
-      );
+    if (!snap.exists) {
+      if (
+        normalizeRole(auth?.token?.role) === 'admin' ||
+        auth?.token?.admin === true
+      ) {
+        logger.warn('isCurrentAdmin: stale/orphan Admin claim rejected', {
+          uid,
+        });
+      }
       return false;
     }
 
-    const allowed =
-      principalHasGlobalRole(
-        principal,
-        'admin',
-      );
+    const data = snap.data() || {};
+    if (!isActiveOrLegacyUser(data)) {
+      logger.warn('isCurrentAdmin: inactive user rejected', {
+        uid,
+        status: data.status,
+      });
+      return false;
+    }
 
+    const allowed = hasAdminRole(data);
     if (
       !allowed &&
-      tokenClaimsAdmin(auth)
+      (
+        normalizeRole(auth?.token?.role) === 'admin' ||
+        auth?.token?.admin === true
+      )
     ) {
-      logger.warn(
-        'isCurrentAdmin: stale Admin claim rejected',
-        {
-          uidToken,
-          personIdToken:
-            identityLogToken(
-              'person',
-              principal.personId,
-            ),
-          canonicalRoles:
-            principal.globalRoles,
-        },
-      );
+      logger.warn('isCurrentAdmin: stale Admin claim rejected', {
+        uid,
+        role: data.role,
+      });
     }
 
     return allowed;
   } catch (err) {
-    logger.error(
-      'isCurrentAdmin: canonical access lookup failed',
-      {
-        uidToken,
-        errorName:
-          err instanceof Error
-            ? err.name
-            : 'UnknownError',
-        errorCode:
-          err instanceof Error
-            ? err.message
-            : 'unknown_error',
-      },
-    );
+    logger.error('isCurrentAdmin failed', {
+      uid,
+      err: String(err),
+    });
     return false;
   }
 }
@@ -122,26 +92,16 @@ export async function isCurrentAdmin(
 /**
  * Single source of truth for callable Admin authorization.
  *
- * Authorization is canonical-derived through authAccessReadModels/{uid}.
- * Legacy users/{uid} is not consulted.
+ * A current active/legacy Firestore user record is required even when the
+ * Firebase token contains an Admin custom claim.
  */
-export async function ensureAdmin(
-  auth: AuthLike,
-): Promise<void> {
+export async function ensureAdmin(auth: AuthLike): Promise<void> {
   if (!auth?.uid) {
     logger.warn('ensureAdmin: missing auth');
-    throw new HttpsError(
-      'unauthenticated',
-      'Authentication required',
-    );
+    throw new HttpsError('unauthenticated', 'Authentication required');
   }
 
-  if (await isCurrentAdmin(auth)) {
-    return;
-  }
+  if (await isCurrentAdmin(auth)) return;
 
-  throw new HttpsError(
-    'permission-denied',
-    'Admin access required',
-  );
+  throw new HttpsError('permission-denied', 'Admin access required');
 }
