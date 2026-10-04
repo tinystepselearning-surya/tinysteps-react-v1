@@ -433,7 +433,6 @@ The second general-Admin slice stays non-mutating.
 Functions:
 
 ~~~text
-auditParentPaymentBackfillDryRun
 getAdminHistoricalAttendanceCandidates
 auditAllTransferredSessionSnapshotIssues
 ~~~
@@ -451,8 +450,11 @@ Target-entity compatibility/profile reads remain allowed where the diagnostic it
 historical teacher or parent data. Those target reads are not requester authorization
 authority.
 
-The parent-payment endpoint remains explicitly `dry_run` only and reports every protected
-finance mutation flag as false.
+The initially considered `auditParentPaymentBackfillDryRun` endpoint is intentionally
+deferred. Its module is imported by the mutating
+`applyParentPaymentBackfillForSafeParents` Function, so changing that module would force the
+write-mode Function into the deployment set. R5C2B refuses that coupling and keeps the
+payment pair for a dedicated finance authorization slice.
 
 This slice intentionally excludes:
 
