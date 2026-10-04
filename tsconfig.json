@@ -11,12 +11,26 @@
     "noEmit": true,
     "baseUrl": "./",
     "paths": {
-      "@/components/*": ["src/components/*"],
-      "@components/*": ["src/components/*"],
-      "@/hooks/*": ["src/hooks/*"],
-      "@/common/*": ["src/common/*"]
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@/hooks/*": [
+        "src/hooks/*"
+      ],
+      "@/common/*": [
+        "src/common/*"
+      ],
+      "@/lib/*": [
+        "src/lib/*"
+      ]
     },
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "typeRoots": [
+      "./src/types",
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "src",

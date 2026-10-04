@@ -8,6 +8,18 @@ import {
   isCanonicalProjectionTransition,
 } from './canonicalPrimaryPlanner';
 import {
+  authUserProjectionAuthIdentityId,
+  authUserProjectionMarker,
+  canonicalAuthUserProjectionMatchesAuthority,
+} from './authUserProjectionBridge';
+import {
+  deleteAuthAccessReadModelStrict,
+  refreshAuthAccessReadModelStrict,
+} from './authAccessReadModelMaintenance';
+import {
+  resolveFirebaseUidFromPersonId,
+} from './authPersonCompatibility';
+import {
   planLegacyKidExpansion,
   planLegacySchoolExpansion,
   planLegacySchoolUserExpansion,
@@ -1157,6 +1169,83 @@ export async function syncLegacyIdentitySource(params: {
   return result;
 }
 
+async function maintainAuthAccessAfterLegacySync(params: {
+  db: admin.firestore.Firestore;
+  sourceCollection: LegacyIdentitySourceCollection;
+  sourceId: string;
+  beforeData: LooseDoc | null;
+  result: LegacyIdentitySyncResult;
+}): Promise<void> {
+  const {
+    db,
+    sourceCollection,
+    sourceId,
+    beforeData,
+    result,
+  } = params;
+
+  if (result.outcome === 'blocked') {
+    return;
+  }
+
+  if (sourceCollection === 'users') {
+    if (result.outcome === 'source_deleted') {
+      await deleteAuthAccessReadModelStrict({
+        db,
+        firebaseUid: sourceId,
+        context: 'legacyUserSync',
+      });
+      return;
+    }
+
+    await refreshAuthAccessReadModelStrict({
+      db,
+      firebaseUid: sourceId,
+      context: 'legacyUserSync',
+    });
+    return;
+  }
+
+  if (sourceCollection !== 'schoolUsers') {
+    return;
+  }
+
+  const currentSnap = await db
+    .collection('schoolUsers')
+    .doc(sourceId)
+    .get();
+  const currentData = currentSnap.exists
+    ? currentSnap.data() || {}
+    : null;
+
+  const affectedPersonIds = [
+    cleanText(beforeData?.userId) || (
+      beforeData ? sourceId : ''
+    ),
+    cleanText(currentData?.userId) || (
+      currentData ? sourceId : ''
+    ),
+  ].filter(Boolean);
+
+  for (
+    const personId of
+    [...new Set(affectedPersonIds)]
+  ) {
+    const resolution =
+      await resolveFirebaseUidFromPersonId({
+        db,
+        personId,
+      });
+
+    await refreshAuthAccessReadModelStrict({
+      db,
+      firebaseUid:
+        resolution.firebaseUid,
+      context: 'legacySchoolUserSync',
+    });
+  }
+}
+
 export async function handleLegacyIdentityWrite(params: {
   sourceCollection: LegacyIdentitySourceCollection;
   sourceId: string;
@@ -1170,15 +1259,27 @@ export async function handleLegacyIdentityWrite(params: {
     afterData,
   } = params;
 
-  const canonicalProjectionTransition =
+  const learnerCanonicalProjectionTransition =
     sourceCollection === 'kids' &&
     isCanonicalProjectionTransition({
       beforeData,
       afterData,
     });
 
+  const authUserIdentityId =
+    sourceCollection === 'users'
+      ? authUserProjectionAuthIdentityId({
+          firebaseUid: sourceId,
+          afterData,
+        })
+      : null;
+
+  const authUserCanonicalProjectionTransition =
+    Boolean(authUserIdentityId);
+
   if (
-    !canonicalProjectionTransition &&
+    !learnerCanonicalProjectionTransition &&
+    !authUserCanonicalProjectionTransition &&
     !shouldSyncLegacyIdentityWrite({
       sourceCollection,
       beforeData,
@@ -1191,7 +1292,7 @@ export async function handleLegacyIdentityWrite(params: {
   try {
     const db = admin.firestore();
 
-    if (canonicalProjectionTransition) {
+    if (learnerCanonicalProjectionTransition) {
       const personSnap = await db
         .collection('people')
         .doc(sourceId)
@@ -1220,12 +1321,72 @@ export async function handleLegacyIdentityWrite(params: {
       }
     }
 
-    await syncLegacyIdentitySource({
+    if (
+      authUserCanonicalProjectionTransition &&
+      authUserIdentityId
+    ) {
+      const projection =
+        authUserProjectionMarker(afterData);
+
+      if (projection) {
+        const [
+          personSnap,
+          authIdentitySnap,
+        ] = await Promise.all([
+          db.collection('people')
+            .doc(
+              projection.canonicalPersonId,
+            )
+            .get(),
+          db.collection('authIdentities')
+            .doc(authUserIdentityId)
+            .get(),
+        ]);
+
+        if (
+          canonicalAuthUserProjectionMatchesAuthority({
+            firebaseUid: sourceId,
+            afterData,
+            personData:
+              personSnap.exists
+                ? personSnap.data() || {}
+                : null,
+            authIdentityData:
+              authIdentitySnap.exists
+                ? authIdentitySnap.data() || {}
+                : null,
+          })
+        ) {
+          return;
+        }
+      }
+
+      if (
+        !shouldSyncLegacyIdentityWrite({
+          sourceCollection,
+          beforeData,
+          afterData,
+        })
+      ) {
+        return;
+      }
+    }
+
+    const result =
+      await syncLegacyIdentitySource({
+        db,
+        auth: admin.auth(),
+        sourceCollection,
+        sourceId,
+        priorData: beforeData,
+      });
+
+    await maintainAuthAccessAfterLegacySync({
       db,
-      auth: admin.auth(),
       sourceCollection,
       sourceId,
-      priorData: beforeData,
+      beforeData,
+      result,
     });
   } catch (error) {
     logger.error(
@@ -1245,3 +1406,4 @@ export async function handleLegacyIdentityWrite(params: {
     throw error;
   }
 }
+

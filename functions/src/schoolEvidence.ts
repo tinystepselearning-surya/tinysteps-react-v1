@@ -166,6 +166,40 @@ function validateDistribution(
   };
 }
 
+async function canonicalActorDisplayName(
+  personId: string,
+): Promise<string> {
+  const snap = await admin
+    .firestore()
+    .collection('people')
+    .doc(personId)
+    .get();
+
+  if (!snap.exists) {
+    return 'Tiny Steps';
+  }
+
+  const data = snap.data() || {};
+  const storedPersonId =
+    typeof data.personId === 'string'
+      ? data.personId.trim()
+      : '';
+
+  if (
+    storedPersonId &&
+    storedPersonId !== personId
+  ) {
+    return 'Tiny Steps';
+  }
+
+  const displayName =
+    typeof data.displayName === 'string'
+      ? data.displayName.trim()
+      : '';
+
+  return displayName || 'Tiny Steps';
+}
+
 function validateDomainScores(input: unknown): Record<string, number | null> {
   const raw = input && typeof input === 'object' && !Array.isArray(input)
     ? input as Record<string, unknown>
@@ -206,9 +240,10 @@ export const schoolCreateReview = onCall(
     const summary = required(request.data?.summary, 'summary', 2000);
     const recommendation = required(request.data?.recommendation, 'recommendation', 2000);
     const nextReviewAt = nextReviewTimestamp(request.data?.nextReviewAt);
-    const reviewerName = String(
-      manager.user.displayName || manager.user.name || manager.user.email || 'Tiny Steps',
-    ).trim();
+    const reviewerName =
+      await canonicalActorDisplayName(
+        manager.personId,
+      );
 
     const now = admin.firestore.FieldValue.serverTimestamp();
     const ref = yearRef.collection('reviews').doc();
@@ -286,9 +321,10 @@ export const schoolRecordAssessmentSummary = onCall(
     const assessmentVersion =
       optional(request.data?.assessmentVersion, 80) || 'TSERB-1.0';
     const notes = optional(request.data?.notes, 2000);
-    const assessorName = String(
-      manager.user.displayName || manager.user.name || manager.user.email || 'Tiny Steps',
-    ).trim();
+    const assessorName =
+      await canonicalActorDisplayName(
+        manager.personId,
+      );
     const coveragePercent = Math.round(
       (distributionResult.studentsAssessed / sectionStudentCount) * 10000,
     ) / 100;

@@ -350,7 +350,8 @@ export async function readLegacyUserIdentityShadow(params: {
   const uid = cleanText(params.uid);
   if (!uid) throw new Error('uid is required');
 
-  const personRef = params.db.collection('people').doc(uid);
+  const legacyAdoptedPersonRef =
+    params.db.collection('people').doc(uid);
   const authIdentityRef = params.db
     .collection('authIdentities')
     .doc(buildAuthIdentityId('firebase', uid));
@@ -362,7 +363,7 @@ export async function readLegacyUserIdentityShadow(params: {
     minimumExpectationsWhenLegacyMissing: () => [
       {
         kind: 'person',
-        ref: personRef,
+        ref: legacyAdoptedPersonRef,
         fields: { personId: uid },
       },
       {
@@ -376,54 +377,79 @@ export async function readLegacyUserIdentityShadow(params: {
       },
     ],
     buildExpectations: (legacy) => {
+      const personId =
+        cleanText(
+          legacy.canonicalPersonId,
+        ) || uid;
+      const personRef =
+        params.db.collection('people')
+          .doc(personId);
       const roles = canonicalRoles(legacy);
-      const status = normalizedPersonStatus(legacy.status);
-      const countryCode = cleanText(legacy.countryCode);
+      const status =
+        normalizedPersonStatus(
+          legacy.status,
+        );
+      const countryCode =
+        cleanText(legacy.countryCode);
 
-      const expectations: CanonicalExpectation[] = [
-        {
-          kind: 'person',
-          ref: personRef,
-          fields: {
-            personId: uid,
-            kind: roles.includes('kid') ? 'learner' : 'adult',
-            status,
-            displayName: userDisplayName(legacy),
-            ...(countryCode ? { countryCode } : {}),
+      const expectations:
+        CanonicalExpectation[] = [
+          {
+            kind: 'person',
+            ref: personRef,
+            fields: {
+              personId,
+              kind:
+                roles.includes('kid')
+                  ? 'learner'
+                  : 'adult',
+              status,
+              displayName:
+                userDisplayName(legacy),
+              ...(countryCode
+                ? { countryCode }
+                : {}),
+            },
           },
-        },
-        {
-          kind: 'authIdentity',
-          ref: authIdentityRef,
-          fields: {
-            personId: uid,
-            provider: 'firebase',
-            providerSubject: uid,
+          {
+            kind: 'authIdentity',
+            ref: authIdentityRef,
+            fields: {
+              personId,
+              provider: 'firebase',
+              providerSubject: uid,
+            },
           },
-        },
-      ];
+        ];
 
       for (const role of roles) {
-        if (role === 'schoolAdmin') continue;
-        const roleAssignmentId = buildRoleAssignmentId({
-          personId: uid,
-          role,
-          scopeType: 'global',
-        });
+        if (role === 'schoolAdmin') {
+          continue;
+        }
+        const roleAssignmentId =
+          buildRoleAssignmentId({
+            personId,
+            role,
+            scopeType: 'global',
+          });
         expectations.push({
-          kind: `roleAssignment:${role}`,
+          kind:
+            `roleAssignment:${role}`,
           ref: params.db
-            .collection('roleAssignments')
+            .collection(
+              'roleAssignments',
+            )
             .doc(roleAssignmentId),
           fields: {
             roleAssignmentId,
-            personId: uid,
+            personId,
             role,
             scopeType: 'global',
             scopeId: null,
-            status: status === 'active'
-              ? 'active'
-              : 'inactive',
+            status:
+              status === 'active'
+                ? 'active'
+                : 'inactive',
           },
         });
       }

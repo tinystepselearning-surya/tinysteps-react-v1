@@ -12,16 +12,23 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
 import {
-  AUTH_ROLES,
   normalizeAuthRole,
 } from '../../../constants/roles';
+
+const GENERIC_USER_ROLES = [
+  'admin',
+  'founder',
+  'teacher',
+  'parent',
+  'learningPartner',
+] as const;
 
 const editUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
-  role: z.enum(AUTH_ROLES),
-  status: z.enum(['active', 'suspended', 'archived']),
+  role: z.enum(GENERIC_USER_ROLES),
+  status: z.enum(['active', 'suspended']),
 });
 
 type EditUserFormData = z.infer<typeof editUserSchema>;
@@ -34,8 +41,26 @@ interface EditUserFormProps {
 
 const normalizeRoleForForm = (
   role: string,
-): EditUserFormData['role'] =>
-  normalizeAuthRole(role) ?? 'parent';
+): EditUserFormData['role'] => {
+  const normalized = normalizeAuthRole(role);
+  if (
+    normalized === 'admin' ||
+    normalized === 'founder' ||
+    normalized === 'teacher' ||
+    normalized === 'parent' ||
+    normalized === 'learningPartner'
+  ) {
+    return normalized;
+  }
+  return 'parent';
+};
+
+const normalizeStatusForForm = (
+  status: User['status'],
+): EditUserFormData['status'] =>
+  status === 'suspended'
+    ? 'suspended'
+    : 'active';
 
 export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProps) {
   const form = useForm<EditUserFormData>({
@@ -45,7 +70,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       email: user.email,
       phone: user.phone || '',
       role: normalizeRoleForForm(user.role),
-      status: user.status,
+      status: normalizeStatusForForm(user.status),
     },
   });
 
@@ -57,7 +82,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       email: user.email,
       phone: user.phone || '',
       role: normalizeRoleForForm(user.role),
-      status: user.status,
+      status: normalizeStatusForForm(user.status),
     });
   }, [user, reset]);
 
@@ -111,7 +136,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
-          <DialogDescription>Edit the user's profile information, role and status. Be careful when changing roles as it may affect permissions.</DialogDescription>
+          <DialogDescription>Edit profile details, role and active/suspended status. Use the dedicated Archive action to archive an account.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -175,8 +200,6 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
                         <SelectItem value="teacher">Teacher</SelectItem>
                         <SelectItem value="parent">Parent</SelectItem>
                         <SelectItem value="learningPartner">Learning Partner</SelectItem>
-                        <SelectItem value="schoolAdmin">School Admin</SelectItem>
-                        <SelectItem value="kid">Kid</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -199,7 +222,6 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="suspended">Suspended</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>

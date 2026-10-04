@@ -1,7 +1,8 @@
 # Tiny Steps School OS Migration Roadmap v1.0
 
 **Status:** ACTIVE MIGRATION ROADMAP  
-**Architecture source of truth:** [TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md](./TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md)
+**Architecture source of truth:** [TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md](./TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md)  
+**Enterprise engineering standard:** [SCHOOL_OS_ENTERPRISE_ARCHITECTURE_STANDARD_V1.md](./SCHOOL_OS_ENTERPRISE_ARCHITECTURE_STANDARD_V1.md)
 
 ## 1. Purpose
 
@@ -26,6 +27,7 @@ Each wave may contain several PRs and may overlap in limited, controlled ways. A
 11. **Converge repeated UI before adding another variant.** New and migrated experiences should reuse shared shells, navigation, templates and components wherever the interaction model is materially the same.
 12. **Use premium simplicity as the visual default.** New and migrated experiences should converge on an Apple-inspired Tiny Steps design language: clear hierarchy, generous whitespace, restrained colour, precise typography, purposeful motion and minimal visual noise.
 13. **Treat accessibility, performance, privacy and public discoverability as migration gates.** These qualities must not regress while canonical data and UI structures are being changed.
+14. **Apply the enterprise architecture standard to every durable migration.** Preserve explicit authority, contextual authorization, bounded operations, auditable transitions, rebuildable projections, provider boundaries, compatibility retirement gates and deployment blast-radius control.
 
 ## 3. Standard migration lifecycle
 

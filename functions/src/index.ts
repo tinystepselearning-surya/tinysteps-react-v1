@@ -182,6 +182,7 @@ export {
   unassignLPFromTeacher,
   adminSetUserRole
 } from "./assignLP";
+export { updateTeacherProfile } from "./updateTeacherProfile";
 
 // Game progress tracking
 export { onGameProgressWrite } from "./gameProgressSummary";

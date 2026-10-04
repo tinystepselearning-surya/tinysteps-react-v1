@@ -5,10 +5,11 @@ import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
 import { Label } from '@components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@components/hooks/use-toast';
-import { db } from '../../../../lib/firebaseConfig';
+import { db, functions } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface TeacherProfileProps {
@@ -205,14 +206,17 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacherId }) => 
           ? Math.floor(yearsExperienceParsed)
           : null;
 
-      const payload = {
+      const updateProfile = httpsCallable(
+        functions,
+        'updateTeacherProfile',
+      );
+
+      await updateProfile({
+        teacherUid: resolvedTeacherId,
         phone: profile.phone.trim(),
-        qualification: profile.qualifications.trim(),
         qualifications: profile.qualifications.trim(),
-        specialization: specializationList,
         specializations: specializationList,
         yearsExperience,
-        languagesSpoken: languagesList,
         languages: languagesList,
         city: profile.city.trim(),
         timezone: profile.timezone.trim(),
@@ -220,19 +224,13 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacherId }) => 
         emergencyContactPhone: profile.emergencyContactPhone.trim(),
         bio: profile.bio.trim(),
         bankAccountNumber: profile.bankAccountNumber.trim(),
-        bankAccount: profile.bankAccountNumber.trim(),
         bankAccountHolderName: profile.bankAccountHolderName.trim(),
         bankIfscCode: profile.bankIfscCode.trim(),
         upiId: profile.upiId.trim(),
-        preferences: {
-          sessionNotifications: profile.sessionNotifications,
-          emailAlerts: profile.emailAlerts,
-          paymentSchedule: profile.paymentSchedule,
-        },
-        updatedAt: serverTimestamp(),
-      };
-
-      await setDoc(doc(db, 'users', resolvedTeacherId), payload, { merge: true });
+        sessionNotifications: profile.sessionNotifications,
+        emailAlerts: profile.emailAlerts,
+        paymentSchedule: profile.paymentSchedule,
+      });
       setSavedProfile(profile);
       setIsEditing(false);
       toast({

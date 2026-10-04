@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -40,7 +40,7 @@ function toMillis(value: unknown): number {
 async function assertAdmin(auth: { uid?: string; token?: Record<string, unknown> } | undefined): Promise<string> {
   const uid = clean(auth?.uid, 160);
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-  await ensureAdmin(auth);
+  await ensureCanonicalAdmin(auth);
   return uid;
 }
 
