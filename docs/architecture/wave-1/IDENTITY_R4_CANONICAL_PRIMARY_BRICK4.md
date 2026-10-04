@@ -65,3 +65,20 @@ This brick does not authorize:
 - Edit Student cannot call `updateKid`;
 - LP assignment cannot update child-level LP state;
 - `kidsService` no longer exports learner create/update writers.
+
+
+## Validation gate
+
+Branch validation completed successfully in workflow run `37201998962`.
+
+- Functions TypeScript build: passed.
+- Focused Functions tests: **33/33 passed**.
+- Browser/lifecycle regression guards: **10/10 passed**.
+- Functions deployment required: yes.
+- Full Functions fleet deployment: no.
+- Impacted Functions: **7** — `adminCreateStudent`, `adminUpdateStudent`, `createStudentForParent`, and the four Wave 1 legacy identity triggers.
+- Hosting deployment required: yes.
+- Firestore Rules deployment required: no.
+- Firestore indexes deployment required: no.
+
+Production deployment remains a separate gate. The dedicated test parent/student identities are retained; production verification must not delete those canonical identities.
