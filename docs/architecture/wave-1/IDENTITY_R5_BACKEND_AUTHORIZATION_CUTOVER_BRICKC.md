@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C4 ADMIN HARD-DELETE CUTOVER — validation pending  
+**Status:** R5C2C4 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -948,4 +948,39 @@ Validated production target:
 adminDeleteUser
 ~~~
 
-R5C2C4 is acceptance-complete and ready for merge/deployment.
+R5C2C4 is acceptance-complete.
+
+### R5C2C4 production closeout
+
+PR #621 merged the isolated hard-delete mutation slice.
+
+~~~text
+Merge commit: d67eed72e03538ac2021bb2aaf69e72ad25e715e
+Deploy workflow: 37226742668
+Deploy run number: 3893
+Result: success
+~~~
+
+Production deployment facts:
+
+- Functions planned: 1;
+- Functions deployed: 1;
+- Functions checkpoint-ready: 1/1;
+- deployment batches: 1;
+- full Functions deployment: no;
+- Functions production marker advanced to the merge commit;
+- Hosting deployment: skipped;
+- Firestore Rules deployment: skipped;
+- Firestore indexes deployment: skipped;
+- School/AVS/lead transport verification: not required;
+- recovery job required: no.
+
+Deployed Function:
+
+~~~text
+adminDeleteUser
+~~~
+
+R5C2C4 is production-complete.
+
+The next bounded Admin mutation slice should remain independently deployable.
