@@ -2119,7 +2119,7 @@
                   "avsCallableTransportVerificationRequired": false
                 },
                 "paymentDryRunDeferredToFinanceSlice": true,
-                "temporaryValidationWorkflowRetiredBeforeMerge": false
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
