@@ -71,6 +71,10 @@ const USER_CONTACT_FIELDS = new Set([
   'phone',
   'phoneCountryCode',
   'phoneLocal',
+  'whatsappE164',
+  'timezone',
+  'countryCodeSource',
+  'countryCodeUpdatedAt',
 ]);
 
 const USER_RELATIONSHIP_FIELDS = new Set([
@@ -85,7 +89,7 @@ const USER_COMPATIBILITY_FIELDS = new Set([
   'permissions',
 ]);
 
-const USER_PARENT_PROFILE_FIELDS = new Set([
+const USER_ROLE_PROFILE_FIELDS = new Set([
   'address',
   'city',
   'state',
@@ -94,19 +98,32 @@ const USER_PARENT_PROFILE_FIELDS = new Set([
   'sessionTime',
   'paymentMethods',
   'preferences',
-]);
-
-const USER_STAFF_PROFILE_FIELDS = new Set([
   'qualification',
+  'qualifications',
   'specialization',
+  'specializations',
   'yearsExperience',
   'bio',
   'region',
+  'languages',
+  'languagesSpoken',
+]);
+
+const USER_PRIVATE_STAFF_FIELDS = new Set([
+  'bankAccount',
   'bankAccountNumber',
   'bankIfscCode',
   'bankAccountHolderName',
   'bankDetails',
+  'upiId',
+  'emergencyContactName',
+  'emergencyContactPhone',
   'creditsBalance',
+]);
+
+const USER_LIFECYCLE_FIELDS = new Set([
+  'archivedAt',
+  'archivedBy',
 ]);
 
 const KID_IDENTITY_FIELDS = new Set([
@@ -120,13 +137,32 @@ const KID_IDENTITY_FIELDS = new Set([
   'countryCode',
 ]);
 
-const KID_LEARNER_PROFILE_FIELDS = new Set([
+const KID_ALREADY_CANONICAL_PROFILE_FIELDS = new Set([
   'age',
   'ageYears',
+]);
+
+const KID_DETAIL_FIELDS = new Set([
   'grade',
   'gender',
   'school',
   'schoolName',
+]);
+
+const KID_LIFECYCLE_FIELDS = new Set([
+  'archivedAt',
+  'archivedReason',
+]);
+
+const KID_READ_MODEL_FIELDS = new Set([
+  'summary',
+  'progress',
+]);
+
+const KID_PROVENANCE_FIELDS = new Set([
+  'repairedFromBrokenStudentId',
+  'repairedFromEnrollmentId',
+  'repairSource',
 ]);
 
 const KID_GUARDIAN_FIELDS = new Set([
@@ -165,6 +201,7 @@ const SCHOOL_PROFILE_FIELDS = new Set([
   'nameSearch',
   'contact',
   'location',
+  'currentAcademicYearId',
 ]);
 
 const SCHOOL_ASSIGNMENT_FIELDS = new Set([
@@ -283,19 +320,27 @@ export function classifyLegacyField(collection, path) {
         blocker: false,
       };
     }
-    if (USER_PARENT_PROFILE_FIELDS.has(root)) {
+    if (USER_ROLE_PROFILE_FIELDS.has(root)) {
       return {
         category: 'role_profile',
-        disposition: 'verify_role_profile_backfill',
-        target: 'parents/{personId}',
+        disposition: 'migrate_to_current_role_profile',
+        target: 'parents/teachers/learningPartners/admins by current role',
         blocker: true,
       };
     }
-    if (USER_STAFF_PROFILE_FIELDS.has(root)) {
+    if (USER_PRIVATE_STAFF_FIELDS.has(root)) {
       return {
-        category: 'role_profile',
-        disposition: 'verify_role_profile_backfill',
-        target: 'teachers/learningPartners/{personId}',
+        category: 'private_staff_profile',
+        disposition: 'migrate_to_restricted_profile',
+        target: 'staffPrivateProfiles/{personId}',
+        blocker: true,
+      };
+    }
+    if (USER_LIFECYCLE_FIELDS.has(root)) {
+      return {
+        category: 'person_lifecycle',
+        disposition: 'migrate_before_retirement',
+        target: 'personLifecycle/{personId}',
         blocker: true,
       };
     }
@@ -310,11 +355,43 @@ export function classifyLegacyField(collection, path) {
         blocker: false,
       };
     }
-    if (KID_LEARNER_PROFILE_FIELDS.has(root)) {
+    if (KID_ALREADY_CANONICAL_PROFILE_FIELDS.has(root)) {
       return {
-        category: 'learner_profile',
-        disposition: 'extend_and_backfill',
+        category: 'canonical_learner_profile',
+        disposition: 'already_canonical_as_ageYears',
         target: 'learnerProfiles/{personId}',
+        blocker: false,
+      };
+    }
+    if (KID_DETAIL_FIELDS.has(root)) {
+      return {
+        category: 'learner_details',
+        disposition: 'migrate_before_retirement',
+        target: 'learnerDetails/{personId}',
+        blocker: true,
+      };
+    }
+    if (KID_LIFECYCLE_FIELDS.has(root)) {
+      return {
+        category: 'person_lifecycle',
+        disposition: 'migrate_before_retirement',
+        target: 'personLifecycle/{personId}',
+        blocker: true,
+      };
+    }
+    if (KID_READ_MODEL_FIELDS.has(root)) {
+      return {
+        category: 'derived_read_model',
+        disposition: 'migrate_before_retirement',
+        target: 'learnerReadModels/{personId}',
+        blocker: true,
+      };
+    }
+    if (KID_PROVENANCE_FIELDS.has(root)) {
+      return {
+        category: 'repair_provenance',
+        disposition: 'migrate_before_retirement',
+        target: 'learnerProvenance/{personId}',
         blocker: true,
       };
     }
@@ -337,8 +414,8 @@ export function classifyLegacyField(collection, path) {
     if (KID_DERIVED_FIELDS.has(root)) {
       return {
         category: 'derived_read_model',
-        disposition: 'rebuild_or_move_before_retirement',
-        target: 'student/learner read model',
+        disposition: 'migrate_before_retirement',
+        target: 'learnerReadModels/{personId}',
         blocker: true,
       };
     }
@@ -365,7 +442,7 @@ export function classifyLegacyField(collection, path) {
       return {
         category: 'organisation_relationship',
         disposition: 'migrate_before_retirement',
-        target: 'organisationMemberships/assignment history',
+        target: 'organisationAssignments/{deterministicId}',
         blocker: true,
       };
     }
