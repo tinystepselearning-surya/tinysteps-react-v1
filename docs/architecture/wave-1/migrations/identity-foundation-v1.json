@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2a_production_complete_ready_for_r5c2b",
+    "status": "r5c2b_admin_diagnostics_validation_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2b_admin_read_dry_run_cutover",
+    "nextBrick": "r5c2b_admin_diagnostics_cutover",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2a_production_complete_ready_for_r5c2b",
+      "status": "r5c2b_admin_diagnostics_validation_pending",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2b_admin_read_dry_run_cutover",
+      "nextBrick": "r5c2b_admin_diagnostics_cutover",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2061,6 +2061,24 @@
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
               }
+            },
+            "r5c2b": {
+              "title": "Admin read-only and dry-run diagnostics",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "auditParentPaymentBackfillDryRun",
+                "getAdminHistoricalAttendanceCandidates",
+                "auditAllTransferredSessionSnapshotIssues"
+              ],
+              "businessMutationAllowed": false,
+              "targetEntityLegacyReadsAllowed": true,
+              "targetEntityLegacyReadsAreAuthorizationAuthority": false,
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": true
             }
           }
         },
