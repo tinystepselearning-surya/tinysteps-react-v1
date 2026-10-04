@@ -717,10 +717,11 @@ export const ROUTE_SEO_REGISTRY = {
   // /writing-classes-for-kids
   // /phonics-fees-india
   '/english-grammar-writing-classes': {
-    title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
+    title: 'Grammar Level Guide for Kids: Beginner vs Advanced | Tiny Steps',
     description:
-      'Explore Tiny Steps English grammar and writing classes for kids with live online support for sentence structure, punctuation, grammar control, and writing clarity.',
+      'Compare Beginner and Advanced Grammar levels, then choose the dedicated Grammar or Writing programme based on whether the child needs sentence accuracy or longer composition.',
     canonicalPath: '/english-grammar-writing-classes',
+    robots: 'index,follow',
     ogType: 'website',
   },
   '/public-speaking-communication-kids': {
@@ -854,6 +855,7 @@ for (const coursePage of PUBLIC_COURSE_PAGE_CONFIGS) {
     title: coursePage.title,
     description: coursePage.description,
     canonicalPath: coursePage.routePath,
+    robots: 'index,follow',
     ogType: 'website',
   };
 }
