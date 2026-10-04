@@ -58,4 +58,13 @@ jobs:
         run: node scripts/wave1-auth-access-read-model-backfill.mjs --help
 
       - name: Resolve production deployment impact
-        run: node scripts/resolve-deployment-impact.mjs --before origin/main --functions-before origin/main --hosting-before origin/main --firestore-rules-before origin/main --firestore-indexes-before origin/main --sha HEAD
+        shell: bash
+        run: |
+          main_sha="$(git rev-parse origin/main)"
+          node scripts/resolve-deployment-impact.mjs \
+            --before "$main_sha" \
+            --functions-before "$main_sha" \
+            --hosting-before "$main_sha" \
+            --firestore-rules-before "$main_sha" \
+            --firestore-indexes-before "$main_sha" \
+            --sha "$GITHUB_SHA"
