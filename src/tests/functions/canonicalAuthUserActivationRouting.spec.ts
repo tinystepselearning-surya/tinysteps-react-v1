@@ -9,6 +9,18 @@ const read = (relativePath: string) =>
   );
 
 const indexSource = read('functions/src/index.ts');
+const createModuleSource = read(
+  'functions/src/adminCreateUser.ts',
+);
+const updateModuleSource = read(
+  'functions/src/adminUpdateUser.ts',
+);
+const archiveModuleSource = read(
+  'functions/src/adminArchiveUser.ts',
+);
+const assignModuleSource = read(
+  'functions/src/assignLP.ts',
+);
 const createSource = read(
   'functions/src/adminCreateUserCanonical.ts',
 );
@@ -41,31 +53,37 @@ const teacherProfileSource = read(
 );
 
 describe('Wave 1 R4 Brick 5E auth-backed writer activation routing', () => {
-  it('exports the canonical callable implementations under the existing production function names', () => {
+  it('preserves existing production export topology while routing modules to canonical implementations', () => {
     expect(indexSource).toContain(
-      'export { adminCreateUser } from "./adminCreateUserCanonical";',
+      'export { adminCreateUser } from "./adminCreateUser";',
     );
     expect(indexSource).toContain(
-      'export { adminUpdateUser } from "./adminUpdateUserCanonical";',
+      'export { adminUpdateUser } from "./adminUpdateUser";',
     );
     expect(indexSource).toContain(
-      'export { adminArchiveUser } from "./adminArchiveUserCanonical";',
+      'export { adminArchiveUser } from "./adminArchiveUser";',
     );
     expect(indexSource).toContain(
-      'export { adminSetUserRole } from "./adminSetUserRoleCanonical";',
+      'adminSetUserRole',
+    );
+    expect(indexSource).toContain(
+      '} from "./assignLP";',
     );
     expect(indexSource).toContain(
       'export { updateTeacherProfile } from "./updateTeacherProfile";',
     );
 
-    expect(indexSource).not.toContain(
-      'export { adminCreateUser } from "./adminCreateUser";',
+    expect(createModuleSource).toContain(
+      "export { adminCreateUser } from './adminCreateUserCanonical';",
     );
-    expect(indexSource).not.toContain(
-      'export { adminUpdateUser } from "./adminUpdateUser";',
+    expect(updateModuleSource).toContain(
+      "export { adminUpdateUser } from './adminUpdateUserCanonical';",
     );
-    expect(indexSource).not.toContain(
-      'export { adminArchiveUser } from "./adminArchiveUser";',
+    expect(archiveModuleSource).toContain(
+      "export { adminArchiveUser } from './adminArchiveUserCanonical';",
+    );
+    expect(assignModuleSource).toContain(
+      "export { adminSetUserRole } from './adminSetUserRoleCanonical';",
     );
   });
 
