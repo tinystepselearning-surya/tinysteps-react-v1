@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick5b_auth_user_create_writer_validated_not_activated",
+        "status": "brick5c_auth_user_update_writer_validated_not_activated",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -1055,7 +1055,7 @@
             "temporaryValidationWorkflowRetiredBeforeMerge": true
           }
         },
-        "nextBrick": "brick5c_canonical_auth_user_update_and_role_transition_writer",
+        "nextBrick": "brick5d_auth_user_archive_teacher_profile_and_projection_bridge",
         "brick5b": {
           "title": "Canonical auth-backed user create writer implementation",
           "writer": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserCreate.ts",
@@ -1124,6 +1124,92 @@
               "canonicalPrimaryWriter": {
                 "passed": 6,
                 "total": 6
+              },
+              "identityLegacySync": {
+                "passed": 11,
+                "total": 11
+              }
+            },
+            "deploymentImpact": {
+              "functionsSourceChanged": true,
+              "functionsValidationRequired": true,
+              "functionsDeploymentRequired": false,
+              "impactedFunctionsCount": 0,
+              "hostingChanged": false,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          }
+        },
+        "brick5c": {
+          "title": "Canonical auth-backed user update and role-transition writer implementation",
+          "writer": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserUpdate.ts",
+          "regressionTest": "functions/test/canonicalPrimaryAuthUserUpdate.spec.ts",
+          "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_AUTH_USER_UPDATE_BRICK5C.md",
+          "productionWiring": false,
+          "productionBehaviorChanged": false,
+          "adminUpdateUserCutover": false,
+          "adminSetUserRoleCutover": false,
+          "supportsLegacySameValueIdentity": true,
+          "supportsDecoupledUidPersonIdentity": true,
+          "supportedGenericRoles": [
+            "admin",
+            "founder",
+            "teacher",
+            "parent",
+            "learningPartner"
+          ],
+          "dedicatedFlowRoles": [
+            "kid",
+            "schoolAdmin"
+          ],
+          "canonicalTargets": [
+            "people",
+            "authIdentities",
+            "roleAssignments",
+            "personContacts"
+          ],
+          "compatibilityTargets": [
+            "users",
+            "teachers",
+            "parents",
+            "learningPartners",
+            "admins"
+          ],
+          "roleTransitionModel": "old_role_assignment_inactive_new_role_assignment_lifecycle_state",
+          "roleRootCompatibilityKey": "firebase_uid",
+          "duplicatePersonKeyedRoleRootCreated": false,
+          "contactMergePreservesUnsubmittedFields": true,
+          "atomicFirestoreTransaction": true,
+          "boundedPostWriteVerification": true,
+          "firebaseAuthOrClaimsOrchestrationIncluded": false,
+          "activationBlockedUntil": [
+            "canonical_archive_writer_ready",
+            "teacher_profile_writer_ready",
+            "adminSetUserRole_routes_through_canonical_update",
+            "decoupled_user_projection_bridge_ready",
+            "generic_role_ui_routes_kid_and_schoolAdmin_to_dedicated_flows"
+          ],
+          "localValidation": {
+            "validatedImplementationCommit": "567ffe548247052398b421bfd0726056b6ca91d3",
+            "workflowRunId": 37204376145,
+            "functionsBuild": "passed",
+            "focusedTests": {
+              "passed": 40,
+              "total": 40,
+              "canonicalPrimaryAuthUserUpdate": {
+                "passed": 10,
+                "total": 10
+              },
+              "canonicalPrimaryAuthUserCreate": {
+                "passed": 10,
+                "total": 10
+              },
+              "authPersonCompatibility": {
+                "passed": 9,
+                "total": 9
               },
               "identityLegacySync": {
                 "passed": 11,
