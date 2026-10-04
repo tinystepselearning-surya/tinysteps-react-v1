@@ -959,6 +959,10 @@ export function verifyDerivedRelationshipCoverage({
     }
   }
 
+  const usersById = new Map(
+    users.map((row) => [row.id, row.data || {}]),
+  );
+
   for (const school of schools) {
     const lpId =
       cleanText(school.data?.learningPartnerId);
@@ -974,6 +978,53 @@ export function verifyDerivedRelationshipCoverage({
       add(
         'school_profile_missing_canonical_organisation',
         `schools/${school.id}`,
+      );
+    }
+
+    const lpUser = usersById.get(lpId);
+    if (!lpUser) {
+      add(
+        'school_learning_partner_missing_legacy_user',
+        `schools/${school.id}:lp/${lpId}`,
+      );
+      continue;
+    }
+
+    const schoolLpName =
+      cleanText(school.data?.learningPartnerName);
+    const userLpName = firstText(
+      lpUser.displayName,
+      lpUser.name,
+      [
+        cleanText(lpUser.firstName),
+        cleanText(lpUser.lastName),
+      ].filter(Boolean).join(' '),
+    );
+    if (
+      schoolLpName &&
+      userLpName &&
+      schoolLpName.toLowerCase() !==
+        userLpName.toLowerCase()
+    ) {
+      add(
+        'school_learning_partner_name_snapshot_mismatch',
+        `schools/${school.id}:lp/${lpId}`,
+      );
+    }
+
+    const schoolLpEmail =
+      cleanText(school.data?.learningPartnerEmail)
+        .toLowerCase();
+    const userLpEmail =
+      cleanText(lpUser.email).toLowerCase();
+    if (
+      schoolLpEmail &&
+      userLpEmail &&
+      schoolLpEmail !== userLpEmail
+    ) {
+      add(
+        'school_learning_partner_email_snapshot_mismatch',
+        `schools/${school.id}:lp/${lpId}`,
       );
     }
   }
