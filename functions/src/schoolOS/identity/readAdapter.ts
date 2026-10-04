@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto';
 
 import type * as admin from 'firebase-admin';
 
-import {\n  normalizeRole,\n  type CanonicalRole,\n} from '../../helpers/roles';
+import {
+  normalizeRole,
+  type CanonicalRole,
+} from '../../helpers/roles';
 import {
   buildAuthIdentityId,
   buildGuardianRelationshipId,
