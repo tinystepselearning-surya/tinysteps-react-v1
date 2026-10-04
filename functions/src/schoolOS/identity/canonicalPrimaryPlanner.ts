@@ -86,6 +86,12 @@ function optionalText(value: unknown): string | null {
   return text || null;
 }
 
+function optionalPrivateText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  return text || null;
+}
+
 function requiredText(
   value: unknown,
   field: string,
@@ -210,11 +216,13 @@ function normalizedPrivateProfile(
   input: CanonicalLearnerCreateInput,
 ): Record<string, unknown> {
   const profile = input.privateProfile || {};
-  const notes = optionalText(profile.notes);
-  const emergencyContact = optionalText(
+  const notes = optionalPrivateText(profile.notes);
+  const emergencyContact = optionalPrivateText(
     profile.emergencyContact,
   );
-  const medicalNotes = optionalText(profile.medicalNotes);
+  const medicalNotes = optionalPrivateText(
+    profile.medicalNotes,
+  );
 
   return {
     ...(notes ? { notes } : {}),
