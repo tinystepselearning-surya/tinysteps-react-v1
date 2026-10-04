@@ -383,3 +383,44 @@ mutation, scheduling mutation, enrollment mutation, and lifecycle mutation.
 
 The shared legacy Admin guard remains untouched for all other callables until their own
 bounded migration slice is validated and deployed.
+
+
+## R5C2A production closeout
+
+PR #611 merged the first bounded general-Admin authorization slice.
+
+~~~text
+Merge commit: fe0b17c5c82d301e062a3d17f1371815e911b8ba
+Deploy workflow: 37218362402
+Deploy run number: 3883
+Result: success
+~~~
+
+Production deployment facts:
+
+- Functions planned: 5;
+- Functions deployed: 5;
+- Functions checkpoint-ready: 5/5;
+- deployment batches: 1;
+- full Functions deployment: no;
+- Functions production marker advanced: yes;
+- Hosting deployment: skipped;
+- Firestore Rules deployment: skipped;
+- Firestore indexes deployment: skipped;
+- recovery job required: no.
+
+Deployed Functions:
+
+~~~text
+auditTeacherEarningsCanonicalCoverage
+auditTeacherTodaySessions
+getAdminTeacherEarningAdjustments
+getAdminTeacherPayWithholdings
+traceStudentTransferHistory
+~~~
+
+R5C2A is production-complete.
+
+The shared legacy `helpers/adminGuard.ts` remains unchanged for all not-yet-migrated
+callables. The next authorized stage is another bounded Admin slice, not a fleet-wide shared
+guard replacement.

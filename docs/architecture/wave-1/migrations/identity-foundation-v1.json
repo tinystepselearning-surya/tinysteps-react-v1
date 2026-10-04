@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2a_admin_read_audit_validated_pending_merge",
+    "status": "r5c2a_production_complete_ready_for_r5c2b",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2a_admin_read_audit_deploy",
+    "nextBrick": "r5c2b_admin_read_dry_run_cutover",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2a_admin_read_audit_validated_pending_merge",
+      "status": "r5c2a_production_complete_ready_for_r5c2b",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2a_admin_read_audit_deploy",
+      "nextBrick": "r5c2b_admin_read_dry_run_cutover",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2002,8 +2002,8 @@
                 "auditTeacherTodaySessions",
                 "traceStudentTransferHistory"
               ],
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "validation": {
                 "workflowRunId": 37218221068,
@@ -2043,6 +2043,23 @@
                 },
                 "testOnlyHostingClassifierHardened": true,
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 611,
+                "mergeCommit": "fe0b17c5c82d301e062a3d17f1371815e911b8ba",
+                "workflowRunId": 37218362402,
+                "workflowRunNumber": 3883,
+                "result": "success",
+                "functionsPlanned": 5,
+                "functionsDeployed": 5,
+                "functionsVerifiedReady": 5,
+                "deploymentBatches": 1,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
