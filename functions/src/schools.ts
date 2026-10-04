@@ -5,8 +5,14 @@ import {
   onCall,
 } from 'firebase-functions/v2/https';
 
-import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeRole } from './helpers/roles';
+import {
+  loadCurrentAuthAccessPrincipal,
+  principalHasGlobalRole,
+} from './schoolOS/identity/authAccessAuthorization';
+import {
+  identityLogToken,
+} from './schoolOS/identity/authUserActivation';
 import {
   addSchoolAccess,
   normalizeSchoolStatus,
@@ -23,59 +29,81 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type FirestoreData = admin.firestore.DocumentData;
 
 /**
- * School-domain mutations are intentionally stricter than the shared legacy
- * admin guard. The shared guard keeps compatibility with existing admin
- * callables, but school writes are server-only and must honor the caller's
- * CURRENT Firestore role/status so a stale admin token cannot preserve access.
+ * School management caller authorization is canonical-derived in R5C1.
+ *
+ * Target-user validation below may still read legacy users/{uid} as temporary
+ * business/profile compatibility; those reads do not authorize the requester.
  */
 async function ensureCurrentActiveAdmin(auth: any): Promise<void> {
-  await ensureAdmin(auth);
-
   const uid = auth?.uid;
   if (!uid || typeof uid !== 'string') {
-    throw new HttpsError('unauthenticated', 'Authentication required');
+    throw new HttpsError(
+      'unauthenticated',
+      'Authentication required',
+    );
   }
 
+  const uidToken =
+    identityLogToken('uid', uid);
+
   try {
-    const snap = await admin.firestore().collection('users').doc(uid).get();
-    if (!snap.exists) {
-      logger.warn('school admin guard: no user document', { uid });
-      throw new HttpsError('permission-denied', 'Admin access required');
-    }
-
-    const data = snap.data() || {};
-    const primaryRole = normalizeRole(data.role);
-    const roles = Array.isArray(data.roles)
-      ? data.roles
-          .map((role: unknown) => normalizeRole(role))
-          .filter(Boolean)
-      : [];
-
-    const hasCurrentAdminRole =
-      primaryRole === 'admin' || roles.includes('admin');
-
-    const hasActiveOrLegacyStatus =
-      data.status === undefined ||
-      data.status === null ||
-      (typeof data.status === 'string' &&
-        data.status.trim().toLowerCase() === 'active');
-
-    if (!hasCurrentAdminRole || !hasActiveOrLegacyStatus) {
-      logger.warn('school admin guard: current admin access denied', {
-        uid,
-        role: data.role,
-        status: data.status,
+    const principal =
+      await loadCurrentAuthAccessPrincipal({
+        db: admin.firestore(),
+        firebaseUid: uid,
       });
-      throw new HttpsError('permission-denied', 'Admin access required');
+
+    if (
+      !principalHasGlobalRole(
+        principal,
+        'admin',
+      )
+    ) {
+      logger.warn(
+        'school admin guard: canonical admin access denied',
+        {
+          uidToken,
+          personIdToken:
+            identityLogToken(
+              'person',
+              principal.personId,
+            ),
+          accessActive:
+            principal.accessActive,
+          canonicalRoles:
+            principal.globalRoles,
+        },
+      );
+
+      throw new HttpsError(
+        'permission-denied',
+        'Admin access required',
+      );
     }
   } catch (error: any) {
-    if (error instanceof HttpsError) throw error;
+    if (error instanceof HttpsError) {
+      throw error;
+    }
 
-    logger.error('school admin guard failed', {
-      uid,
-      error: String(error),
-    });
-    throw new HttpsError('internal', 'Failed to verify admin status');
+    logger.error(
+      'school admin guard: canonical access lookup failed',
+      {
+        uidToken,
+        errorName:
+          error instanceof Error
+            ? error.name
+            : 'UnknownError',
+        errorCode:
+          error instanceof Error
+            ? error.message
+            : 'unknown_error',
+      },
+    );
+
+    throw new HttpsError(
+      'permission-denied',
+      'Admin access required',
+    );
   }
 }
 
