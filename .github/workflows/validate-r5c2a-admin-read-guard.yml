@@ -47,6 +47,9 @@ jobs:
           src/tests/functions/teacherEarningAdjustmentLedgerRouting.spec.ts
           src/tests/functions/teacherPayWithholdingLedgerRouting.spec.ts
 
+      - name: Run deployment-impact classifier regressions
+        run: node --test scripts/test/functions-impact.node-test.mjs
+
       - name: Analyze deployment impact
         shell: bash
         run: |
