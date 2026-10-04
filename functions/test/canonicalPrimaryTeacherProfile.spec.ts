@@ -400,7 +400,11 @@ describe('Wave 1 R4 Brick 5D canonical teacher profile writer', () => {
       canonicalPersonId:
         'person-teacher',
       qualification: 'B.Ed',
-      paymentSchedule: undefined,
+      preferences: {
+        sessionNotifications: true,
+        emailAlerts: false,
+        paymentSchedule: 'monthly',
+      },
     });
   });
 
