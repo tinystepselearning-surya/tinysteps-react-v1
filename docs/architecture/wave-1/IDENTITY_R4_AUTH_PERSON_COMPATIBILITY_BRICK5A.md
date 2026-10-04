@@ -1,6 +1,6 @@
 # Wave 1 R4 — Brick 5A: Auth-backed UID / Person compatibility contract
 
-**Status:** validation pending  
+**Status:** COMPLETE — validated contract; no production wiring  
 **Scope:** contract + resolver + regression coverage only  
 **Production behavior change:** none  
 **Reader cutover:** no  
@@ -149,3 +149,39 @@ Brick 5A does not:
 
 After validation and merge, R4 Brick 5B can migrate `adminCreateUser` against this
 contract without changing the frozen Wave 0 identity semantics.
+
+
+## Validation evidence
+
+Validated implementation commit:
+
+```text
+f55661e30e1012999e48c5ec7bbedf5632a214cd
+```
+
+Temporary GitHub Actions validation run:
+
+```text
+Run ID: 37203617328
+Result: success
+```
+
+Validation results:
+
+- Functions TypeScript build: passed.
+- Focused identity test files: 4/4 passed.
+- Focused identity tests: 29/29 passed.
+  - authPersonCompatibility: 9/9.
+  - identityReadAdapter: 7/7.
+  - canonicalPrimaryPlanner: 7/7.
+  - canonicalPrimaryWriter: 6/6.
+- Functions source changed: yes.
+- Functions validation required: yes.
+- Functions deployment required: no.
+- Impacted deployed Functions: 0.
+- Hosting changed: no.
+- Firestore Rules changed: no.
+- Firestore indexes changed: no.
+- Temporary validation workflow retired before merge.
+
+No production data writes or Firebase deployment were required for Brick 5A.
