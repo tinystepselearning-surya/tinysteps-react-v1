@@ -25,7 +25,6 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
-import { updateKid } from '../../../services/kidsService';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -191,11 +190,6 @@ export default function AssignLPModal({
         lpId: selectedLP,
         status: 'active',
         updatedAt: serverTimestamp(),
-      } as any);
-
-      // Update the kid's lpId (primary LP)
-      await updateKid(student.id as string, {
-        lpId: selectedLP,
       } as any);
 
       toast({
