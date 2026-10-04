@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5b_production_complete_ready_for_r5c",
+    "status": "r5c_backend_authorization_validation_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5b_production_complete_ready_for_r5c",
+      "status": "r5c_backend_authorization_validation_pending",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1820,6 +1820,32 @@
             "writesPerformed": 0
           }
         }
+      },
+      "r5c": {
+        "title": "Backend current-principal authorization cutover",
+        "documentation": "docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md",
+        "authorizationReader": "functions/src/schoolOS/identity/authAccessAuthorization.ts",
+        "adminGuard": "functions/src/helpers/adminGuard.ts",
+        "schoolAuthorization": "functions/src/helpers/schoolAuthorization.ts",
+        "schoolEvidenceProfileSource": "people/{personId}.displayName",
+        "requesterAuthorizationSource": "authAccessReadModels/{firebaseUid}",
+        "legacyAdminAuthorizationFallback": false,
+        "legacySchoolAuthorizationFallback": false,
+        "adminUsesUsers": false,
+        "schoolAuthorizationUsesUsers": false,
+        "schoolAuthorizationUsesSchoolUsers": false,
+        "learningPartnerOperationalUidBoundaryPreserved": true,
+        "firestoreRulesCutover": false,
+        "storageRulesCutover": false,
+        "productionWiring": false,
+        "productionVerified": false,
+        "targetUserBusinessReaderCutover": false,
+        "preAuthLoginResolverCutover": false,
+        "destructiveOperations": false,
+        "tests": [
+          "functions/test/authAccessAuthorization.spec.ts",
+          "functions/test/authAccessAuthorizationRouting.spec.ts"
+        ]
       }
     }
   },
