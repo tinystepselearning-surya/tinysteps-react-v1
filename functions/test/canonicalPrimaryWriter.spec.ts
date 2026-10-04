@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  canonicalIdentityTelemetryToken,
   canonicalParentEligibilityIssue,
   expectedFieldsMatch,
 } from '../src/schoolOS/identity/canonicalPrimaryWriter';
@@ -184,4 +185,26 @@ describe('Wave 1 R4 canonical-primary learner writer helpers', () => {
       ),
     ).toBe(false);
   });
+
+  it('privacy-tokenizes identity telemetry deterministically', () => {
+    const first = canonicalIdentityTelemetryToken(
+      'learner',
+      'kid-sensitive-id',
+    );
+    const again = canonicalIdentityTelemetryToken(
+      'learner',
+      'kid-sensitive-id',
+    );
+    const differentNamespace =
+      canonicalIdentityTelemetryToken(
+        'parent',
+        'kid-sensitive-id',
+      );
+
+    expect(first).toBe(again);
+    expect(first).toHaveLength(24);
+    expect(first).not.toContain('kid-sensitive-id');
+    expect(differentNamespace).not.toBe(first);
+  });
+
 });
