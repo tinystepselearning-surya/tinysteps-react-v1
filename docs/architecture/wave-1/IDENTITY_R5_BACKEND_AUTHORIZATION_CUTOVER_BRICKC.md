@@ -1,80 +1,82 @@
-# Wave 1 R5C — Backend Current-Principal Authorization Cutover
+# Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
 **Status:** validation pending  
-**Lifecycle phase:** R5 backend reader / authorization cutover  
-**Production backend authorization before deployment:** legacy compatibility  
-**Production Firestore Rules authority:** legacy `users` / `schoolUsers`  
+**Lifecycle phase:** R5 backend authorization cutover  
+**Production Admin callable authority:** legacy `users/{uid}` until R5C2  
+**Production school requester authority before deployment:** legacy `users/schoolUsers`  
+**Production Firestore Rules authority:** legacy `users/schoolUsers` until R5D  
 **Legacy write freeze:** no  
 **Destructive retirement:** no
 
-## Purpose
+## Why R5C is split
 
-R5B populated and independently reconciled:
+R5B independently reconciled all 227 Firebase-backed canonical access projections.
 
-~~~text
-authAccessReadModels/{firebaseUid}
-~~~
+A direct change to the shared `helpers/adminGuard.ts` would fan out to approximately 124
+Cloud Functions in one deployment. That is unnecessary for the first production cutover and
+creates a larger rollback surface than the brick strategy allows.
 
-for all current Firebase-backed canonical identities.
-
-R5C makes that canonical-derived read model authoritative for **backend current-principal
-authorization**.
-
-This is deliberately narrower than a blanket replacement of every `users` read in the
-codebase.
-
-## Cutover scope
-
-### 1. Admin callable authorization
+R5C is therefore split:
 
 ~~~text
-functions/src/helpers/adminGuard.ts
+R5C1  school-domain requester authorization
+R5C2  shared Admin callable authorization
+R5D   Firestore Security Rules
 ~~~
 
-`ensureAdmin` / `isCurrentAdmin` now authorize from:
+## R5C1 scope
+
+### Canonical authorization reader
+
+~~~text
+functions/src/schoolOS/identity/authAccessAuthorization.ts
+~~~
+
+The helper point-reads:
 
 ~~~text
 authAccessReadModels/{request.auth.uid}
 ~~~
 
-Requirements:
+and fails closed unless the record has:
 
-- schema version is supported;
-- authority = `canonical-derived`;
-- embedded Firebase UID matches the document key;
-- Person/AuthIdentity lifecycle flags are internally consistent;
-- `accessActive == true`;
-- active global roles include `admin`.
+- schemaVersion = 1;
+- authority = canonical-derived;
+- firebaseUid equal to the document key;
+- a valid Person ID and source AuthIdentity ID;
+- valid Person/AuthIdentity lifecycle states;
+- an `accessActive` value consistent with those lifecycle states;
+- only allowed global roles;
+- no duplicate global roles;
+- valid school organisation IDs;
+- no duplicate school scopes.
 
-Firebase custom claims remain an authentication cache only.
+Inactive lifecycle records may parse for diagnostics, but role/scope authorization predicates
+always deny them.
 
-There is **no fallback** to:
-
-~~~text
-users/{uid}
-~~~
-
-A missing or malformed canonical access document fails closed.
-
-### 2. School-domain requester authorization
+### School requester authorization
 
 ~~~text
 functions/src/helpers/schoolAuthorization.ts
 ~~~
 
-The authenticated requester is resolved from the same UID-keyed canonical-derived access
-document.
+R5C1 removes requester authorization reads from:
 
-Authorization rules become:
+~~~text
+users/{uid}
+schoolUsers/{uid}
+~~~
 
-#### Tiny Steps Admin
+and uses the reconciled canonical-derived access model instead.
+
+Tiny Steps Admin:
 
 ~~~text
 accessActive == true
 AND globalRoles contains admin
 ~~~
 
-#### Learning Partner
+Learning Partner:
 
 ~~~text
 accessActive == true
@@ -82,9 +84,9 @@ AND globalRoles contains learningPartner
 AND schools/{schoolId}.learningPartnerId == request.auth.uid
 ~~~
 
-The final equality intentionally preserves the current operational Firebase UID boundary.
+The final UID equality intentionally preserves the existing operational UID boundary.
 
-#### School Admin reader
+School Admin reader:
 
 ~~~text
 accessActive == true
@@ -92,72 +94,51 @@ AND schoolId in schoolAdminOrganisationIds
 AND school is not archived
 ~~~
 
-`schoolUsers/{uid}` is no longer consulted for requester authorization.
+### School evidence actor names
 
-### 3. School evidence actor names
+The school authorization result carries canonical `personId`.
 
-The school authorization result now carries canonical `personId`.
-
-School review / assessment actor display names are read from:
+Review and assessment display names now use:
 
 ~~~text
 people/{personId}.displayName
 ~~~
 
-instead of relying on a legacy `users/{uid}` profile returned by the authorization helper.
+instead of depending on a legacy user profile returned by the authorization helper.
 
-This profile read is presentation/audit metadata only; it is not part of the authorization
-decision.
+That Person read is presentation/audit metadata only; it does not participate in the
+authorization decision.
 
-## Canonical authorization reader
+## Explicitly deferred to R5C2
 
-New helper:
+The shared callable Admin guard remains unchanged in R5C1:
 
 ~~~text
-functions/src/schoolOS/identity/authAccessAuthorization.ts
+functions/src/helpers/adminGuard.ts
 ~~~
 
-The reader validates the R5A/R5B projection before exposing a principal.
+This means general Admin-only callables continue using the existing legacy compatibility
+authority until the separately validated/deployed R5C2 brick.
 
-Fail-closed checks include:
-
-- schema version;
-- canonical-derived authority;
-- Firebase UID/document-key equality;
-- required Person/AuthIdentity references;
-- valid Person status;
-- valid AuthIdentity status;
-- `accessActive` consistency with lifecycle state;
-- allowed global role values only;
-- no duplicate global roles;
-- valid school-organisation IDs;
-- no duplicate school scopes.
-
-A principal with inactive lifecycle may parse for diagnostics, but all authorization predicates
-return false.
+This is deliberate sequencing, not a fallback inside the R5C1 school authorization path.
 
 ## Read-cost boundary
 
-For ordinary backend authorization:
+Ordinary school authorization:
 
 ~~~text
 authAccessReadModels/{uid}: 1 point read
+schools/{schoolId}:         1 point read
 ~~~
 
-School authorization additionally reads:
+School evidence writes add one canonical Person point read when a human-readable actor name
+is required.
 
-~~~text
-schools/{schoolId}: 1 point read
-~~~
-
-School evidence writes perform one extra canonical Person point read only when a human-readable
-actor name is needed.
-
-There is no query fan-out and no fallback legacy read.
+No `users` or `schoolUsers` read is performed by the R5C1 school authorization helper.
 
 ## Operational UID boundary
 
-R5C does **not** change operational IDs used by:
+R5C1 does not change operational IDs used by:
 
 - school Learning Partner assignment;
 - teacher earnings;
@@ -168,53 +149,34 @@ R5C does **not** change operational IDs used by:
 - finance;
 - existing operational references.
 
-Firebase UID remains the operational reference where already required.
+## Non-goals
 
-## Explicit non-goals
+R5C1 does not:
 
-R5C does not yet cut over target-user business/profile reads in workflows such as:
-
-- LP assignment target validation;
-- permanent user deletion;
-- admin user lists;
-- pre-auth username/phone login resolution;
-- legacy compatibility writer orchestration.
-
-Those reads are not current-requester authorization and require their own canonical reader
-contracts.
-
-R5C also does not:
-
-- change Firestore Security Rules;
+- switch the shared Admin guard;
+- change Firestore Rules;
 - change Storage Rules;
+- cut over target-user business/profile reads;
+- cut over pre-auth username/phone resolution;
 - delete `users` or `schoolUsers`;
-- freeze legacy writes;
-- move teacher subcollections;
+- freeze compatibility writes;
+- move role-root subcollections;
 - change Firebase Auth UIDs;
 - authorize destructive retirement.
-
-## Firestore Rules
-
-Rules remain unchanged in R5C.
-
-R5D is the dedicated Security Rules cutover after backend authorization has deployed and been
-verified.
 
 ## Acceptance gates
 
 Before merge:
 
 1. Functions TypeScript build passes.
-2. R5C authorization-reader unit tests pass.
-3. Routing tests prove:
-   - Admin guard has no `users` read;
-   - school requester authorization has no `users` or `schoolUsers` read;
-   - Learning Partner operational UID equality is preserved;
-   - school evidence actor name comes from canonical Person.
-4. Existing R5A/R5B identity/access tests remain green.
-5. Existing authorization/routing regressions remain green.
-6. Deployment-impact analysis identifies only required Functions.
-7. No Hosting, Firestore Rules, or index deployment is introduced.
+2. Canonical authorization-reader tests pass.
+3. Routing tests prove school authorization reads no `users` or `schoolUsers`.
+4. Learning Partner operational UID equality remains intact.
+5. School evidence uses canonical Person displayName.
+6. Existing R5A/R5B tests remain green.
+7. Existing authorization/teacher earning regressions remain green.
+8. Deployment impact is bounded to the required school-domain Functions.
+9. No Firestore Rules or index deployment is introduced.
 
 ## Production gate
 
@@ -222,8 +184,8 @@ After merge:
 
 1. deploy only impacted Functions;
 2. verify every impacted Function is ready;
-3. verify production build/deployment marker;
-4. perform bounded Admin + school authorization smoke checks where possible;
-5. keep Firestore Rules unchanged.
+3. smoke-check school Admin / Learning Partner / School Admin authorization paths;
+4. keep the shared Admin guard and Firestore Rules unchanged.
 
-Only after clean R5C production verification may R5D begin.
+After clean R5C1 production verification, proceed to **R5C2 shared Admin authorization
+cutover**, using a separately bounded rollout plan.
