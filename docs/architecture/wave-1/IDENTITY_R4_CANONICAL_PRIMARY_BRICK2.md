@@ -311,3 +311,84 @@ until:
 3. a live Admin learner create is verified across canonical and compatibility documents.
 
 Only then may learner canonical-primary writes be recorded as production-active.
+
+## Production deployment evidence
+
+Brick 2 deployed successfully from:
+
+~~~text
+commit: bcdcc93374b11f19996f8231bb9dc6adafe25ccc
+workflow run: 37198592510
+completed: 2026-10-04T11:28:55Z
+~~~
+
+The Functions production marker advanced to the same commit.
+
+The deployment was bounded, not full. Exactly these five Functions were deployed:
+
+~~~text
+adminCreateStudent
+onWave1LegacyKidIdentityWrite
+onWave1LegacySchoolIdentityWrite
+onWave1LegacySchoolUserIdentityWrite
+onWave1LegacyUserIdentityWrite
+~~~
+
+Hosting, Firestore Security Rules and Firestore indexes were not deployed by this run.
+
+## Production canary evidence
+
+A live Admin learner was created through the normal production flow and then checked with a read-only verification script.
+
+The manifest intentionally does not retain the raw learner or parent IDs.
+
+Verification result:
+
+~~~text
+checks passed: 12 / 12
+failed checks: 0
+writes performed by verifier: 0
+result: passed
+~~~
+
+The successful checks were:
+
+1. `kids` compatibility document exists;
+2. canonical `people` document exists;
+3. canonical Person is a learner and uses the learner Person ID;
+4. `canonicalAuthority` is `canonical-primary / learner_create`;
+5. canonical Person has no migration/profile-migration ownership;
+6. `learnerProfiles` exists and links to the same Person;
+7. `learnerDetails` exists and links to the same Person;
+8. `learnerReadModels` exists and links to the same Person;
+9. canonical parent GuardianRelationship exists;
+10. the `kids` compatibility marker matches canonical authority/write ID;
+11. parent compatibility `users` document exists;
+12. parent `childIds` contains the learner Person ID.
+
+## Brick 2 production status
+
+The following path is now production-active:
+
+~~~text
+adminCreateStudent
+→ canonical-primary learner_create
+~~~
+
+This means canonical-primary writes are now active, but only for this explicitly recorded scope.
+
+The following remain outside the cutover:
+
+- `createStudentForParent`;
+- browser-side learner create/update paths;
+- auth-backed user creation/update;
+- school identity write paths;
+- reader authority;
+- Firestore Security Rules authority;
+- legacy write freeze;
+- destructive retirement.
+
+R4 is therefore **partially active, not complete**.
+
+The next authorized R4 work is migration of the remaining learner write paths while preserving compatibility projections.
+
