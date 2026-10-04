@@ -279,7 +279,7 @@ export async function executeCanonicalLearnerCreate(
     countryCode = null,
   } = input;
 
-  const personId = db.collection('kids').doc().id;
+  const personId = db.collection('people').doc().id;
   const writeId = `learner_create:${personId}`;
 
   const plan = planCanonicalLearnerCreate({
