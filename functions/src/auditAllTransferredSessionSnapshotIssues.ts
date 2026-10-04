@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -676,7 +676,7 @@ export function buildAuditAllTransferredSessionSnapshotIssuesResult(input: Build
 }
 
 export const auditAllTransferredSessionSnapshotIssues = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const today = currentYmdIst();
   const inputFromDate = toCleanText(request.data?.fromDate) || today;
