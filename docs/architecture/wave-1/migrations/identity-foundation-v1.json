@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": false,
     "canonicalPrimaryImplementation": {
-      "status": "brick1_contract_local_validation_complete",
+      "status": "brick2_writer_local_validation_complete_pending_production_deploy",
       "brick1": {
         "title": "Canonical-primary learner write contract",
         "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -586,6 +586,72 @@
           },
           "result": "success",
           "temporaryValidationWorkflowRetiredBeforeMerge": true
+        }
+      },
+      "brick2": {
+        "title": "Canonical-primary Admin learner creation",
+        "writer": "functions/src/schoolOS/identity/canonicalPrimaryWriter.ts",
+        "callable": "functions/src/adminCreateStudent.ts",
+        "legacySyncBridge": "functions/src/schoolOS/identity/legacySync.ts",
+        "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_PRIMARY_BRICK2.md",
+        "productionWiring": true,
+        "productionBehaviorChanged": false,
+        "canonicalPrimaryWritesEnabled": false,
+        "learnerWriteCutover": "adminCreateStudent_only_pending_production_deploy",
+        "authBackedUserWriteCutover": false,
+        "readerCutover": false,
+        "securityRulesCutover": false,
+        "legacyWriteFreeze": false,
+        "destructiveDeletion": false,
+        "canonicalPersonIdGeneration": "Firestore random document ID generated from people namespace",
+        "atomicCanonicalAndCompatibilityWrite": true,
+        "canonicalProjectionLoopSuppression": true,
+        "canonicalProjectionAuthorityCorroboration": true,
+        "boundedPostWriteVerification": true,
+        "rawIdentityIdsInTelemetry": false,
+        "rawLearnerNamesInTelemetry": false,
+        "firestoreTelemetryWrites": 0,
+        "productionDeployment": null,
+        "productionCanary": null,
+        "localValidation": {
+          "validatedImplementationCommit": "80d3f35d1732ea55c0bc97f638abbe1595a8733d",
+          "validationWorkflowHead": "084a4e2d34f79a73afd79d55fbb6128a0e300c36",
+          "workflowRunId": 37198437122,
+          "functionsBuild": "passed",
+          "focusedTests": {
+            "passed": 21,
+            "total": 21,
+            "canonicalPrimaryPlanner": {
+              "passed": 5,
+              "total": 5
+            },
+            "canonicalPrimaryWriter": {
+              "passed": 6,
+              "total": 6
+            },
+            "identityLegacySync": {
+              "passed": 10,
+              "total": 10
+            }
+          },
+          "result": "success",
+          "temporaryValidationWorkflowRetiredBeforeMerge": true
+        },
+        "deploymentImpactValidation": {
+          "validatedCommit": "084a4e2d34f79a73afd79d55fbb6128a0e300c36",
+          "workflowRunId": 37198437122,
+          "functionsProductionBaseline": "6b07f7167f8fa1606f2e286ba43d33e330cadd48",
+          "functionsDeploymentRequired": true,
+          "fullFunctionsDeployment": false,
+          "impactedFunctions": [
+            "adminCreateStudent",
+            "onWave1LegacyKidIdentityWrite",
+            "onWave1LegacySchoolIdentityWrite",
+            "onWave1LegacySchoolUserIdentityWrite",
+            "onWave1LegacyUserIdentityWrite"
+          ],
+          "impactedFunctionsCount": 5,
+          "result": "success"
         }
       }
     },

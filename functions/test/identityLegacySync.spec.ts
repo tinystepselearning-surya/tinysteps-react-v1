@@ -10,6 +10,7 @@ import {
   WAVE1_IDENTITY_MIGRATION_ACTOR,
   WAVE1_IDENTITY_MIGRATION_ID,
   buildLegacyIdentitySyncPlan,
+  canonicalProjectionMatchesAuthority,
   canonicalSyncDocumentMatches,
   hasLegacySyncMigrationOwner,
   shouldSyncLegacyIdentityWrite,
@@ -434,4 +435,110 @@ describe('Wave 1 identity SWITCH READS Brick 3 legacy sync', () => {
       ),
     ).toBe(false);
   });
+
+  it('requires canonical authority corroboration before suppressing kid projection transitions', () => {
+    const canonicalCreate = {
+      fullName: 'Learner One',
+      name: 'Learner One',
+      displayName: 'Learner One',
+      age: 8,
+      ageYears: 8,
+      status: 'active',
+      parentId: 'parent-1',
+      parentIds: ['parent-1'],
+      primaryParentId: 'parent-1',
+      _wave1CanonicalProjection: {
+        schemaVersion: 1,
+        authority: 'canonical-primary',
+        command: 'learner_create',
+        writeId: 'write-1',
+        canonicalPersonId: 'kid-1',
+      },
+    };
+
+    expect(
+      shouldSyncLegacyIdentityWrite({
+        sourceCollection: 'kids',
+        beforeData: null,
+        afterData: canonicalCreate,
+      }),
+    ).toBe(true);
+
+    expect(
+      canonicalProjectionMatchesAuthority({
+        sourceId: 'kid-1',
+        afterData: canonicalCreate,
+        personData: {
+          personId: 'kid-1',
+          canonicalAuthority: {
+            schemaVersion: 1,
+            authority: 'canonical-primary',
+            command: 'learner_create',
+            writeId: 'write-1',
+          },
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      canonicalProjectionMatchesAuthority({
+        sourceId: 'kid-1',
+        afterData: canonicalCreate,
+        personData: {
+          personId: 'kid-1',
+          canonicalAuthority: {
+            schemaVersion: 1,
+            authority: 'canonical-primary',
+            command: 'learner_create',
+            writeId: 'forged-write',
+          },
+        },
+      }),
+    ).toBe(false);
+
+    const canonicalUpdate = {
+      ...canonicalCreate,
+      fullName: 'Learner One Canonical Update',
+      _wave1CanonicalProjection: {
+        ...canonicalCreate._wave1CanonicalProjection,
+        writeId: 'write-2',
+      },
+    };
+
+    expect(
+      shouldSyncLegacyIdentityWrite({
+        sourceCollection: 'kids',
+        beforeData: canonicalCreate,
+        afterData: canonicalUpdate,
+      }),
+    ).toBe(true);
+
+    expect(
+      canonicalProjectionMatchesAuthority({
+        sourceId: 'kid-1',
+        afterData: canonicalUpdate,
+        personData: {
+          personId: 'kid-1',
+          canonicalAuthority: {
+            schemaVersion: 1,
+            authority: 'canonical-primary',
+            command: 'learner_create',
+            writeId: 'write-2',
+          },
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldSyncLegacyIdentityWrite({
+        sourceCollection: 'kids',
+        beforeData: canonicalCreate,
+        afterData: {
+          ...canonicalCreate,
+          fullName: 'Learner One Legacy Edit',
+        },
+      }),
+    ).toBe(true);
+  });
+
 });
