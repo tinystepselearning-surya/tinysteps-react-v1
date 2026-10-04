@@ -1,6 +1,6 @@
 # Wave 1 R5B — Auth Access Read Model Backfill and Live Maintenance
 
-**Status:** validation pending  
+**Status:** VALIDATED — merge/deployment/backfill pending  
 **Lifecycle phase:** R5 reader / Firestore Rules cutover preparation  
 **Production reader authority after this brick:** legacy compatibility  
 **Production Rules authority after this brick:** legacy `users` / `schoolUsers`  
@@ -255,3 +255,78 @@ After clean production backfill + maintenance evidence:
 **R5C — backend identity/authorization reader cutover to canonical-derived access state.**
 
 Firestore Rules remain a later R5D brick.
+
+
+## Acceptance validation
+
+Acceptance head:
+
+~~~text
+304cd79e5b7bb215e55407afeee050f3795b5090
+~~~
+
+Acceptance workflow:
+
+~~~text
+Run ID: 37211505883
+Result: success
+~~~
+
+Validated gates:
+
+- Functions TypeScript build: passed.
+- Focused Functions identity tests: **75/75 passed** across 9 files.
+- Authorization/routing regressions: **16/16 passed** across 2 files.
+- Backfill planner tests: **7/7 passed**.
+- Total focused tests: **98/98 passed**.
+- Backfill CLI load/help verification: passed.
+- Deployment impact analysis: passed.
+- Temporary validation workflow is retired before merge.
+
+## Validated deployment impact
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Functions impacted: 13
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Bounded Function targets:
+
+~~~text
+adminArchiveUser
+adminCreateUser
+adminSetUserRole
+adminUpdateUser
+assignLPToParent
+assignLPToTeacher
+backfillTeacherDocs
+onWave1LegacyKidIdentityWrite
+onWave1LegacySchoolIdentityWrite
+onWave1LegacySchoolUserIdentityWrite
+onWave1LegacyUserIdentityWrite
+unassignLPFromParent
+unassignLPFromTeacher
+~~~
+
+The LP assignment/backfill and non-user identity triggers appear because they share source
+modules with the changed canonical user/legacy-sync code. Their business behavior is not
+changed by R5B.
+
+No Hosting, Rules, or index deployment is required.
+
+## Production evidence gate
+
+R5B remains incomplete until:
+
+1. merge reaches main;
+2. all 13 bounded Functions deploy successfully;
+3. production dry-run reports zero planning/conflict/unexpected blockers;
+4. a bounded canary write succeeds;
+5. the remaining bounded backfill succeeds;
+6. independent full reconciliation reports zero pending/mismatch/unexpected records.
+
+Only then may R5C begin.
