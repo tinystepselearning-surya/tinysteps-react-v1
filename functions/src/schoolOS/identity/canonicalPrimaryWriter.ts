@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -68,6 +70,19 @@ export interface ExecuteCanonicalLearnerCreateResult {
 
 function cleanText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+export function canonicalIdentityTelemetryToken(
+  namespace: string,
+  value: string,
+): string {
+  return createHash('sha256')
+    .update(
+      [cleanText(namespace), cleanText(value)].join('\u001f'),
+      'utf8',
+    )
+    .digest('hex')
+    .slice(0, 24);
 }
 
 function normalizeNameForCompare(value: unknown): string {
@@ -490,10 +505,22 @@ export async function executeCanonicalLearnerCreate(
 
   const telemetry = {
     event: CANONICAL_PRIMARY_LEARNER_WRITE_EVENT,
-    personId,
-    parentId,
-    actorId,
-    writeId,
+    subjectToken: canonicalIdentityTelemetryToken(
+      'learner',
+      personId,
+    ),
+    parentToken: canonicalIdentityTelemetryToken(
+      'parent',
+      parentId,
+    ),
+    actorToken: canonicalIdentityTelemetryToken(
+      'actor',
+      actorId,
+    ),
+    writeToken: canonicalIdentityTelemetryToken(
+      'write',
+      writeId,
+    ),
     canonicalDocumentsWritten:
       result.canonicalDocumentsWritten,
     compatibilityDocumentsWritten:
