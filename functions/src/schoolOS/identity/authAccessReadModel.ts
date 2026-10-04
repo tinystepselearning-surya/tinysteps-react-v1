@@ -22,6 +22,16 @@ export const AUTH_ACCESS_READ_MODEL_SCHEMA_VERSION =
 export const AUTH_ACCESS_READ_MODEL_AUTHORITY =
   'canonical-derived' as const;
 
+const ALL_CANONICAL_ROLES = [
+  'admin',
+  'founder',
+  'teacher',
+  'parent',
+  'kid',
+  'learningPartner',
+  'schoolAdmin',
+] as const satisfies readonly CanonicalRole[];
+
 const GLOBAL_ACCESS_ROLES = [
   'admin',
   'founder',
@@ -137,6 +147,18 @@ function isAuthStatus(
     value === 'active' ||
     value === 'disabled' ||
     value === 'archived'
+  );
+}
+
+function isCanonicalRoleValue(
+  value: unknown,
+): value is CanonicalRole {
+  return (
+    typeof value === 'string' &&
+    (
+      ALL_CANONICAL_ROLES as
+        readonly string[]
+    ).includes(value)
   );
 }
 
@@ -450,9 +472,14 @@ function readRoleAssignment(
       data,
       'personId',
     );
-  const role =
-    cleanText(data.role) as
-      CanonicalRole;
+  const roleValue =
+    cleanText(data.role);
+  if (!isCanonicalRoleValue(roleValue)) {
+    throw new Error(
+      'role_assignment_role_invalid',
+    );
+  }
+  const role = roleValue;
   const scopeType =
     cleanText(data.scopeType) as
       RoleAssignmentRecord[
