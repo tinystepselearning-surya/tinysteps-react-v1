@@ -2063,13 +2063,12 @@
               }
             },
             "r5c2b": {
-              "title": "Admin read-only and dry-run diagnostics",
+              "title": "Independent Admin read-only diagnostics",
               "authorizationSource": "authAccessReadModels/{firebaseUid}",
               "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
               "legacyFallback": false,
               "sharedAdminGuardModified": false,
               "functions": [
-                "auditParentPaymentBackfillDryRun",
                 "getAdminHistoricalAttendanceCandidates",
                 "auditAllTransferredSessionSnapshotIssues"
               ],
@@ -2078,7 +2077,14 @@
               "targetEntityLegacyReadsAreAuthorizationAuthority": false,
               "productionWiring": false,
               "productionVerified": false,
-              "validationPending": true
+              "validationPending": true,
+              "deferredCoupledFunctions": {
+                "auditParentPaymentBackfillDryRun": {
+                  "reason": "module_is_imported_by_applyParentPaymentBackfillForSafeParents",
+                  "impactedMutatingFunction": "applyParentPaymentBackfillForSafeParents",
+                  "deferredTo": "dedicated_finance_authorization_slice"
+                }
+              }
             }
           }
         },
