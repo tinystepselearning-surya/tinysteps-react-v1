@@ -16,7 +16,7 @@ const programs = [
     icon: '✍️',
     age: 'Ages 6-12',
     blurb: 'Parts of speech, tenses, and writing labs with stage checks.',
-    href: '/courses/grammar',
+    href: '/grammar',
     accent: 'from-amber-100 via-white to-rose-100'
   },
   {
