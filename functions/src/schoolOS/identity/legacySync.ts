@@ -747,21 +747,56 @@ function sourceProjection(
   }
 }
 
+export function canonicalProjectionMatchesAuthority(params: {
+  sourceId: string;
+  afterData: LooseDoc | null;
+  personData: LooseDoc | null;
+}): boolean {
+  const marker =
+    params.afterData?._wave1CanonicalProjection;
+  const authority =
+    params.personData?.canonicalAuthority;
+
+  if (
+    !marker ||
+    typeof marker !== 'object' ||
+    !authority ||
+    typeof authority !== 'object'
+  ) {
+    return false;
+  }
+
+  const markerData =
+    marker as Record<string, unknown>;
+  const authorityData =
+    authority as Record<string, unknown>;
+
+  return (
+    markerData.schemaVersion === 1 &&
+    cleanText(markerData.authority) ===
+      'canonical-primary' &&
+    cleanText(markerData.command) ===
+      'learner_create' &&
+    cleanText(markerData.canonicalPersonId) ===
+      params.sourceId &&
+    Boolean(cleanText(markerData.writeId)) &&
+    cleanText(params.personData?.personId) ===
+      params.sourceId &&
+    authorityData.schemaVersion === 1 &&
+    cleanText(authorityData.authority) ===
+      'canonical-primary' &&
+    cleanText(authorityData.command) ===
+      cleanText(markerData.command) &&
+    cleanText(authorityData.writeId) ===
+      cleanText(markerData.writeId)
+  );
+}
+
 export function shouldSyncLegacyIdentityWrite(params: {
   sourceCollection: LegacyIdentitySourceCollection;
   beforeData: LooseDoc | null;
   afterData: LooseDoc | null;
 }): boolean {
-  if (
-    params.sourceCollection === 'kids' &&
-    isCanonicalProjectionTransition({
-      beforeData: params.beforeData,
-      afterData: params.afterData,
-    })
-  ) {
-    return false;
-  }
-
   if (!params.beforeData || !params.afterData) {
     return true;
   }
@@ -1132,7 +1167,15 @@ export async function handleLegacyIdentityWrite(params: {
     afterData,
   } = params;
 
+  const canonicalProjectionTransition =
+    sourceCollection === 'kids' &&
+    isCanonicalProjectionTransition({
+      beforeData,
+      afterData,
+    });
+
   if (
+    !canonicalProjectionTransition &&
     !shouldSyncLegacyIdentityWrite({
       sourceCollection,
       beforeData,
@@ -1143,8 +1186,39 @@ export async function handleLegacyIdentityWrite(params: {
   }
 
   try {
+    const db = admin.firestore();
+
+    if (canonicalProjectionTransition) {
+      const personSnap = await db
+        .collection('people')
+        .doc(sourceId)
+        .get();
+
+      if (
+        canonicalProjectionMatchesAuthority({
+          sourceId,
+          afterData,
+          personData: personSnap.exists
+            ? personSnap.data() || {}
+            : null,
+        })
+      ) {
+        return;
+      }
+
+      if (
+        !shouldSyncLegacyIdentityWrite({
+          sourceCollection,
+          beforeData,
+          afterData,
+        })
+      ) {
+        return;
+      }
+    }
+
     await syncLegacyIdentitySource({
-      db: admin.firestore(),
+      db,
       auth: admin.auth(),
       sourceCollection,
       sourceId,
