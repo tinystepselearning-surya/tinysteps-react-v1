@@ -32,6 +32,12 @@ const GENERIC_USER_ROLES = [
 type GenericUserRole =
   (typeof GENERIC_USER_ROLES)[number];
 
+type GenericCreateUserData =
+  Omit<CreateUserData, 'role' | 'status'> & {
+    role: GenericUserRole;
+    status: 'active' | 'suspended';
+  };
+
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -70,7 +76,7 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
   const [createdUserData, setCreatedUserData] = useState<any>(null);
   const [isAdminLocal, setIsAdminLocal] = useState<boolean | null>(null);
 
-  const form = useForm<CreateUserData>({
+  const form = useForm<GenericCreateUserData>({
     resolver: zodResolver(createUserSchema),
   defaultValues: {
       email: '',
@@ -127,7 +133,7 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
     return () => unsubscribe(); // Ensure cleanup to prevent memory leaks
   }, []);
 
-  const onSubmit = async (data: CreateUserData) => {
+  const onSubmit = async (data: GenericCreateUserData) => {
     setIsLoading(true);
     try {
       const phoneCountryCode = normalizeCountryCode(String(data.phoneCountryCode || ''));
@@ -155,13 +161,8 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         throw new Error('You must be logged in to create users.');
       }
 
-      // Force refresh token to ensure the callable has the latest token attached
-      let freshToken: string | null = null;
-      try {
-        const token = await currentUser.getIdToken(true);
-        freshToken = token;
-      } catch (tErr) {
-      }
+      // Force refresh so the callable receives the latest claims via the SDK auth context.
+      await currentUser.getIdToken(true);
 
       const submitData: Record<string, any> = {
         ...data,
@@ -172,7 +173,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         role: activeRole,
         specialization: data.specialization ? data.specialization.split(',').map(s => s.trim()) : undefined,
         paymentMethods: data.paymentMethods ? data.paymentMethods.split(',').map(s => s.trim()) : undefined,
-        adminToken: freshToken || undefined,
       };
 
       const createUserFunction = httpsCallable(functions, 'adminCreateUser');
@@ -202,7 +202,7 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         if (createdUid) {
           window.location.href = `/surya?createdUserId=${createdUid}`;
         }
-      } catch (err) {
+      } catch {
       }
     } catch (error: any) {
       // Provide clearer messaging for common function errors
