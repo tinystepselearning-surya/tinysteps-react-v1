@@ -38,6 +38,7 @@ import {
 } from '../../lib/parentMonthClose';
 import { buildWhatsAppUrl } from '../../lib/whatsAppUrl';
 import { downloadParentMonthInvoice } from '../../lib/parentMonthInvoice';
+import { TINY_STEPS_PAYMENT_DETAILS, TINY_STEPS_PAYMENT_PROOF_NOTE } from '../../lib/tinyStepsPaymentDetails';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -1342,9 +1343,17 @@ export default function AttendanceValidationDashboard() {
       return;
     }
     const due = formatMoney(detailBilling?.dueAmount ?? 0);
+    const paymentDetails = [
+      `Account Name: ${TINY_STEPS_PAYMENT_DETAILS.accountName}`,
+      `Bank: ${TINY_STEPS_PAYMENT_DETAILS.bank}`,
+      `Account Type: ${TINY_STEPS_PAYMENT_DETAILS.accountType}`,
+      `Account Number: ${TINY_STEPS_PAYMENT_DETAILS.accountNumber}`,
+      `IFSC: ${TINY_STEPS_PAYMENT_DETAILS.ifsc}`,
+      `UPI ID: ${TINY_STEPS_PAYMENT_DETAILS.upiId}`,
+    ].join('\n');
     const message = kind === 'invoice'
-      ? `Hello Dear Parent, please find attached the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The amount due is ${due}. Kindly review it and complete the payment. Thank you.`
-      : `Hello Dear Parent, this is a gentle reminder regarding the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The pending amount is ${due}. Kindly let us know once the payment is completed. Thank you.`;
+      ? `Hello Dear Parent, please find attached the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The amount due is ${due}. Kindly review it and complete the payment.\n\nPayment details:\n${paymentDetails}\n\n${TINY_STEPS_PAYMENT_PROOF_NOTE} Thank you.`
+      : `Hello Dear Parent, this is a gentle reminder regarding the Tiny Steps invoice for ${formatMonthKey(detailMonthKey)}. The pending amount is ${due}.\n\nPayment details:\n${paymentDetails}\n\n${TINY_STEPS_PAYMENT_PROOF_NOTE} Thank you.`;
     const url = buildWhatsAppUrl(detailParentPhone, message);
     if (!url) {
       setError('A normalized WhatsApp number is not available for this parent.');
@@ -1624,6 +1633,18 @@ export default function AttendanceValidationDashboard() {
                     <p className="mt-1 text-xs text-slate-500">
                       Download the PDF locally, open WhatsApp, attach the downloaded file manually, then confirm it was sent.
                     </p>
+                    <div className="mt-3 rounded-md bg-slate-50 p-3 text-xs text-slate-700">
+                      <p className="font-semibold text-slate-900">Payment details</p>
+                      <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
+                        <div><dt className="inline font-medium">Account name:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.accountName}</dd></div>
+                        <div><dt className="inline font-medium">Account type:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.accountType}</dd></div>
+                        <div><dt className="inline font-medium">Bank:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.bank}</dd></div>
+                        <div><dt className="inline font-medium">Account number:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.accountNumber}</dd></div>
+                        <div><dt className="inline font-medium">IFSC:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.ifsc}</dd></div>
+                        <div><dt className="inline font-medium">UPI ID:</dt> <dd className="inline">{TINY_STEPS_PAYMENT_DETAILS.upiId}</dd></div>
+                      </dl>
+                      <p className="mt-2 font-medium text-slate-800">{TINY_STEPS_PAYMENT_PROOF_NOTE}</p>
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
                         type="button"
