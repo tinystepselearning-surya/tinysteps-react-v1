@@ -434,4 +434,60 @@ describe('Wave 1 identity SWITCH READS Brick 3 legacy sync', () => {
       ),
     ).toBe(false);
   });
+
+  it('suppresses canonical-origin kid projection transitions without hiding later legacy edits', () => {
+    const canonicalCreate = {
+      fullName: 'Learner One',
+      name: 'Learner One',
+      displayName: 'Learner One',
+      age: 8,
+      ageYears: 8,
+      status: 'active',
+      parentId: 'parent-1',
+      parentIds: ['parent-1'],
+      primaryParentId: 'parent-1',
+      _wave1CanonicalProjection: {
+        schemaVersion: 1,
+        authority: 'canonical-primary',
+        command: 'learner_create',
+        writeId: 'write-1',
+        canonicalPersonId: 'kid-1',
+      },
+    };
+
+    expect(
+      shouldSyncLegacyIdentityWrite({
+        sourceCollection: 'kids',
+        beforeData: null,
+        afterData: canonicalCreate,
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldSyncLegacyIdentityWrite({
+        sourceCollection: 'kids',
+        beforeData: canonicalCreate,
+        afterData: {
+          ...canonicalCreate,
+          fullName: 'Learner One Canonical Update',
+          _wave1CanonicalProjection: {
+            ...canonicalCreate._wave1CanonicalProjection,
+            writeId: 'write-2',
+          },
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldSyncLegacyIdentityWrite({
+        sourceCollection: 'kids',
+        beforeData: canonicalCreate,
+        afterData: {
+          ...canonicalCreate,
+          fullName: 'Learner One Legacy Edit',
+        },
+      }),
+    ).toBe(true);
+  });
+
 });
