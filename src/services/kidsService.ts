@@ -6,13 +6,12 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  updateDoc,
   where,
   arrayRemove,
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
-import type { Kid, NewKidInput } from '../models/kid';
+import type { Kid } from '../models/kid';
 
 const KIDS_COLLECTION = 'kids';
 
