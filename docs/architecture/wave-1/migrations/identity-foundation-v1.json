@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "local_validation_complete",
+      "status": "teacher_evidence_gate_fix_pending_validation",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -700,6 +700,7 @@
         "kids",
         "schools",
         "enrollments",
+        "classSessions",
         "guardianRelationships"
       ],
       "targetCollections": [
@@ -728,7 +729,7 @@
       },
       "derivedRelationshipGates": {
         "userChildIds": "guardianRelationships",
-        "kidTeacherIds": "usable enrollments",
+        "kidTeacherIds": "usable Enrollment OR historical Enrollment OR ClassSession evidence; no unexplained legacy teacher refs",
         "schoolLearningPartnerSnapshots": "referenced LP user identity/contact"
       },
       "destructiveOperations": false,
@@ -755,6 +756,17 @@
         },
         "result": "success",
         "temporaryValidationWorkflowRetiredBeforeMerge": true
+      },
+      "teacherEvidenceDiagnostic": {
+        "observedAt": "2026-10-04",
+        "originalIssueCount": 70,
+        "historicalOnlyTeacherIds": 10,
+        "scalarTeacherIdMismatches": 60,
+        "archivedOrInactiveLearners": 55,
+        "representedByHistoricalEnrollment": 64,
+        "representedByClassSessionOnly": 6,
+        "noEnrollmentOrSessionEvidence": 0,
+        "conclusion": "all 70 legacy learner-teacher references have durable operational or historical evidence; do not create a new child-level teacher authority"
       }
     }
   }
