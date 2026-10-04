@@ -1,0 +1,76 @@
+name: Validate R4 Auth Writer Activation
+
+on:
+  push:
+    branches:
+      - wave1/identity-r4-auth-writer-activation-20261004
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Typecheck frontend
+        run: npm run typecheck
+
+      - name: Run focused Functions identity tests
+        run: >-
+          npx vitest run --config functions/vitest.config.ts
+          functions/test/canonicalPrimaryAuthUserCreate.spec.ts
+          functions/test/canonicalPrimaryAuthUserUpdate.spec.ts
+          functions/test/canonicalPrimaryAuthUserArchive.spec.ts
+          functions/test/canonicalPrimaryTeacherProfile.spec.ts
+          functions/test/authPersonCompatibility.spec.ts
+          functions/test/authUserProjectionBridge.spec.ts
+          functions/test/identityLegacySync.spec.ts
+          functions/test/identityReadAdapter.spec.ts
+          functions/test/canonicalPrimaryPlanner.spec.ts
+          functions/test/canonicalPrimaryWriter.spec.ts
+
+      - name: Run activation and authorization routing tests
+        run: >-
+          npx vitest run
+          src/tests/functions/canonicalAuthUserActivationRouting.spec.ts
+          src/tests/functions/teacherEarningAdjustmentLedgerRouting.spec.ts
+          src/tests/functions/teacherPayWithholdingLedgerRouting.spec.ts
+          src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+          src/tests/pages/CanonicalLearnerBrowserWriters.spec.ts
+
+      - name: Build deployable hosting bundle
+        run: npm run build:deploy
+
+      - name: Resolve deployment impact
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          main_sha="$(git rev-parse origin/main)"
+          node scripts/resolve-deployment-impact.mjs \
+            --before "${main_sha}" \
+            --functions-before "${main_sha}" \
+            --hosting-before "${main_sha}" \
+            --firestore-rules-before "${main_sha}" \
+            --firestore-indexes-before "${main_sha}" \
+            --sha "${GITHUB_SHA}"
