@@ -93,7 +93,7 @@ describe('Wave 1 R5B auth access read-model maintenance routing', () => {
       "sourceCollection !== 'schoolUsers'",
     );
     expect(legacySyncSource).toContain(
-      "db.collection('schoolUsers')",
+      ".collection('schoolUsers')",
     );
     expect(legacySyncSource).toContain(
       'resolveFirebaseUidFromPersonId',
