@@ -541,5 +541,59 @@
         "errorEvents": null
       }
     }
+  },
+  "legacyRetirement": {
+    "status": "audit_local_validation_complete",
+    "approvedEndState": "canonical_primary_legacy_retired",
+    "legacyCollections": [
+      "users",
+      "kids",
+      "schools",
+      "schoolUsers"
+    ],
+    "audit": {
+      "script": "scripts/wave1-identity-legacy-retirement-audit.mjs",
+      "library": "scripts/migrations/wave1-identity-retirement-audit-lib.mjs",
+      "regressionTest": "scripts/test/wave1-identity-retirement-audit.node-test.mjs",
+      "documentation": "docs/architecture/wave-1/IDENTITY_LEGACY_RETIREMENT.md",
+      "productionRunAt": null,
+      "reportPath": null,
+      "result": null,
+      "localValidation": {
+        "validatedCommit": "a1b2fd256d4ed698143f200ec98543e05072cb9a",
+        "workflowRunId": 37187751507,
+        "syntaxCheck": "passed",
+        "regressionTests": {
+          "passed": 9,
+          "total": 9
+        },
+        "result": "success",
+        "temporaryValidationWorkflowRetiredBeforeMerge": true
+      }
+    },
+    "gates": {
+      "unknownFieldMappingsMustBeZero": true,
+      "requiredFieldMigrationsMustBeZero": true,
+      "missingRequiredRoleProfilesMustBeZero": true,
+      "canonicalReconciliationFailuresMustBeZero": true,
+      "legacyPrimaryReadersMustBeZero": true,
+      "legacyPrimarySecurityRulesMustBeZero": true,
+      "legacyPrimaryWritersMustBeZero": true,
+      "unmigratedLegacySubcollectionsMustBeZero": true
+    },
+    "targetSequence": [
+      "field_and_dependency_inventory",
+      "canonical_profile_completion",
+      "profile_backfill_and_independent_verify",
+      "canonical_primary_create_update",
+      "reader_and_security_rules_cutover",
+      "legacy_subcollection_relocation",
+      "freeze_legacy_writes",
+      "final_reconciliation",
+      "bounded_legacy_retirement"
+    ],
+    "destructiveDeletionAuthorized": false,
+    "legacyWritesFrozen": false,
+    "canonicalPrimaryWrites": false
   }
 }
