@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../../lib/firebaseConfig';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -13,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@components/ui/form';
-import KidMultiSelect from '@components/KidMultiSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { toast } from '@components/hooks/use-toast';
 import { CreateUserData, User } from '../../../types/User';
@@ -24,10 +21,22 @@ import {
   normalizeCountryCode,
   normalizePhoneLocal,
 } from '../../../lib/phone';
-import {
-  AUTH_ROLES,
-  type AuthRole,
-} from '../../../constants/roles';
+const GENERIC_USER_ROLES = [
+  'admin',
+  'founder',
+  'teacher',
+  'parent',
+  'learningPartner',
+] as const;
+
+type GenericUserRole =
+  (typeof GENERIC_USER_ROLES)[number];
+
+type GenericCreateUserData =
+  Omit<CreateUserData, 'role' | 'status'> & {
+    role: GenericUserRole;
+    status: 'active' | 'suspended';
+  };
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -36,8 +45,8 @@ const createUserSchema = z.object({
   phone: z.string().optional(),
   phoneCountryCode: z.string().optional(),
   phoneLocal: z.string().optional(),
-  role: z.enum(AUTH_ROLES),
-  status: z.enum(['active', 'suspended', 'archived']),
+  role: z.enum(GENERIC_USER_ROLES),
+  status: z.enum(['active', 'suspended']),
   // Role-specific fields
   qualification: z.string().optional(),
   specialization: z.string().optional(),
@@ -54,8 +63,6 @@ const createUserSchema = z.object({
   bankAccountNumber: z.string().optional(),
   bankIfscCode: z.string().optional(),
   bankAccountHolderName: z.string().optional(),
-  isKidProfile: z.boolean().optional(),
-  childIds: z.array(z.string()).optional(),
 });
 
 interface CreateUserFormProps {
@@ -65,12 +72,11 @@ interface CreateUserFormProps {
 
 export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [activeRole, setActiveRole] = useState<AuthRole>('parent');
+  const [activeRole, setActiveRole] = useState<GenericUserRole>('parent');
   const [createdUserData, setCreatedUserData] = useState<any>(null);
-  const [kids, setKids] = useState<any[]>([]);
   const [isAdminLocal, setIsAdminLocal] = useState<boolean | null>(null);
 
-  const form = useForm<CreateUserData>({
+  const form = useForm<GenericCreateUserData>({
     resolver: zodResolver(createUserSchema),
   defaultValues: {
       email: '',
@@ -96,15 +102,12 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       bankAccountNumber: '',
       bankIfscCode: '',
       bankAccountHolderName: '',
-      isKidProfile: false,
-      childIds: [],
     },
   });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) {
-        console.error('Debug: No user logged in');
         setIsAdminLocal(false);
         toast({
           title: 'Authentication Error',
@@ -112,7 +115,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
           variant: 'destructive',
         });
       } else {
-        console.log('Debug: Logged-in user:', user);
         try {
           const tokenResult = await user.getIdTokenResult(true);
           const isAdminClaim = tokenResult.claims?.admin === true || tokenResult.claims?.role === 'admin';
@@ -123,7 +125,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
             setIsAdminLocal(false);
           }
         } catch (err) {
-          console.warn('Debug: Failed to determine admin claim locally', err);
           setIsAdminLocal(false);
         }
       }
@@ -132,9 +133,8 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
     return () => unsubscribe(); // Ensure cleanup to prevent memory leaks
   }, []);
 
-  const onSubmit = async (data: CreateUserData) => {
+  const onSubmit = async (data: GenericCreateUserData) => {
     setIsLoading(true);
-    console.log('Debug: onSubmit called with data:', data);
     try {
       const phoneCountryCode = normalizeCountryCode(String(data.phoneCountryCode || ''));
       const phoneLocal = normalizePhoneLocal(String(data.phoneLocal || ''));
@@ -160,20 +160,9 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       if (!currentUser) {
         throw new Error('You must be logged in to create users.');
       }
-      console.log('Debug: currentUser exists:', {
-        uid: currentUser.uid,
-        email: currentUser.email,
-      });
 
-      // Force refresh token to ensure the callable has the latest token attached
-      let freshToken: string | null = null;
-      try {
-        const token = await currentUser.getIdToken(true);
-        console.log('Debug: Refreshed ID token (first 8 chars):', token?.slice?.(0, 8));
-        freshToken = token;
-      } catch (tErr) {
-        console.warn('Debug: Failed to refresh token:', tErr);
-      }
+      // Force refresh so the callable receives the latest claims via the SDK auth context.
+      await currentUser.getIdToken(true);
 
       const submitData: Record<string, any> = {
         ...data,
@@ -184,19 +173,14 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         role: activeRole,
         specialization: data.specialization ? data.specialization.split(',').map(s => s.trim()) : undefined,
         paymentMethods: data.paymentMethods ? data.paymentMethods.split(',').map(s => s.trim()) : undefined,
-        adminToken: freshToken || undefined,
       };
-      console.log('Debug: submitData prepared:', submitData);
 
       const createUserFunction = httpsCallable(functions, 'adminCreateUser');
-  console.log('Debug: Calling adminCreateUser with region functions:', functions);
   const result = await createUserFunction(submitData);
-      console.log('Debug: createUserFunction result:', result);
 
       const createdUser = result.data as any;
       if (createdUser && createdUser.success === false) {
         const message = createdUser.error || 'Failed to create user';
-        console.error('Debug: User creation failed:', message);
         toast({ title: 'Error', description: message, variant: 'destructive' });
         return;
       }
@@ -216,20 +200,11 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       try {
         const createdUid = (result.data as any)?.uid;
         if (createdUid) {
-          console.log('Debug: Redirecting to admin page with createdUserId:', createdUid);
           window.location.href = `/surya?createdUserId=${createdUid}`;
         }
-      } catch (err) {
-        console.error('Debug: Error during redirect:', err);
+      } catch {
       }
     } catch (error: any) {
-        console.error('Debug: Error in onSubmit:', error);
-        if (error?.code || error?.status) {
-          console.error('Debug: callable error code/status:', error.code || error.status);
-        }
-        if (error?.details) {
-          console.error('Debug: callable error details:', error.details);
-        }
       // Provide clearer messaging for common function errors
       const code = error?.code || error?.status || null;
       let description = error?.message || 'Failed to create user. Try again.';
@@ -253,8 +228,8 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
   };
 
   const handleTabChange = (value: string) => {
-    setActiveRole(value as typeof activeRole);
-    form.setValue('role', value as any);
+    setActiveRole(value as GenericUserRole);
+    form.setValue('role', value as GenericUserRole);
     // Reset form when role changes
     form.reset({
       email: form.getValues('email'),
@@ -263,23 +238,10 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       phone: form.getValues('phone'),
       phoneCountryCode: form.getValues('phoneCountryCode') || DEFAULT_PHONE_COUNTRY_CODE,
       phoneLocal: form.getValues('phoneLocal'),
-      role: value as any,
+      role: value as GenericUserRole,
       status: 'active',
     });
   };
-
-  useEffect(() => {
-    // load kids for parent selection
-    const loadKids = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'kids'));
-        setKids(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
-      } catch (err) {
-        console.error('Failed to load kids for parent selection', err);
-      }
-    };
-    loadKids();
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -289,14 +251,12 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         </div>
       )}
       <Tabs value={activeRole} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="admin">Admin</TabsTrigger>
           <TabsTrigger value="founder">Founder</TabsTrigger>
           <TabsTrigger value="teacher">Teacher</TabsTrigger>
           <TabsTrigger value="parent">Parent</TabsTrigger>
           <TabsTrigger value="learningPartner">LP</TabsTrigger>
-          <TabsTrigger value="schoolAdmin">School Admin</TabsTrigger>
-          <TabsTrigger value="kid">Kid</TabsTrigger>
         </TabsList>
 
         <Form {...form}>
@@ -410,7 +370,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="suspended">Suspended</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -588,23 +547,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="childIds"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign kids (optional)</FormLabel>
-                      <div className="mt-2">
-                        <KidMultiSelect
-                          value={field.value || []}
-                          onChange={(ids) => field.onChange(ids)}
-                          kids={kids.map(k => ({ id: k.id, name: k.fullName || k.name || k.id }))}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </TabsContent>
             )}
 
@@ -667,41 +609,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                     )}
                   />
                 </div>
-              </TabsContent>
-            )}
-
-            {activeRole === 'schoolAdmin' && (
-              <TabsContent value="schoolAdmin" className="space-y-4">
-                <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-                  <p className="text-sm text-blue-900">
-                    This account will use the School Partnership workspace.
-                    School assignment and programme configuration are managed
-                    separately in School Management.
-                  </p>
-                </div>
-              </TabsContent>
-            )}
-
-            {activeRole === 'kid' && (
-              <TabsContent value="kid" className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="isKidProfile"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value || false}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Is Kid Profile</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
               </TabsContent>
             )}
 

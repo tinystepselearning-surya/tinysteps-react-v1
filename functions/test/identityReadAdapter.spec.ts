@@ -144,6 +144,65 @@ describe('Wave 1 identity SWITCH READS Brick 1 shadow adapter', () => {
     ]);
   });
 
+  it('shadows a UID-decoupled compatibility user against canonicalPersonId', async () => {
+    const uid = 'firebase-parent-1';
+    const personId = 'person-parent-1';
+    const authId = buildAuthIdentityId('firebase', uid);
+    const roleId = buildRoleAssignmentId({
+      personId,
+      role: 'parent',
+      scopeType: 'global',
+    });
+
+    const { db, reads } = buildDb({
+      [`users/${uid}`]: {
+        uid,
+        userId: uid,
+        canonicalPersonId: personId,
+        displayName: 'Decoupled Parent',
+        role: 'parent',
+        roles: ['parent'],
+        status: 'active',
+      },
+      [`people/${personId}`]: {
+        personId,
+        kind: 'adult',
+        status: 'active',
+        displayName: 'Decoupled Parent',
+      },
+      [`authIdentities/${authId}`]: {
+        authIdentityId: authId,
+        personId,
+        provider: 'firebase',
+        providerSubject: uid,
+        status: 'active',
+      },
+      [`roleAssignments/${roleId}`]: {
+        roleAssignmentId: roleId,
+        personId,
+        role: 'parent',
+        scopeType: 'global',
+        scopeId: null,
+        status: 'active',
+      },
+    });
+
+    const result = await readLegacyUserIdentityShadow({
+      db,
+      uid,
+    });
+
+    expect(result.authority).toBe('legacy');
+    expect(result.shadow.status).toBe('match');
+    expect(result.shadow.mismatchFields).toEqual([]);
+    expect(reads).toEqual([
+      `users/${uid}`,
+      `people/${personId}`,
+      `authIdentities/${authId}`,
+      `roleAssignments/${roleId}`,
+    ]);
+  });
+
   it('never replaces legacy user data when canonical semantics differ', async () => {
     const uid = 'parent-2';
     const authId = buildAuthIdentityId('firebase', uid);

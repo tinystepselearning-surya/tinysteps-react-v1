@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick5d_auth_archive_profile_bridge_validated_not_activated",
+        "status": "brick5e_auth_writer_activation_validated_deployment_pending",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -1055,7 +1055,7 @@
             "temporaryValidationWorkflowRetiredBeforeMerge": true
           }
         },
-        "nextBrick": "brick5e_auth_backed_writer_family_production_activation",
+        "nextBrick": "brick5e_production_deployment_and_canary_closeout",
         "brick5b": {
           "title": "Canonical auth-backed user create writer implementation",
           "writer": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserCreate.ts",
@@ -1335,6 +1335,106 @@
             "result": "success",
             "temporaryValidationWorkflowRetiredBeforeMerge": true
           }
+        },
+        "brick5e": {
+          "title": "Auth-backed canonical writer family production activation",
+          "documentation": "docs/architecture/wave-1/IDENTITY_R4_AUTH_WRITER_ACTIVATION_BRICK5E.md",
+          "productionWiring": true,
+          "productionDeploymentPending": true,
+          "productionCanaryPending": true,
+          "canonicalPrimaryWritesEnabledForAuthBackedUsers": "pending_deployment_and_canary",
+          "existingProductionFunctionNamesPreserved": [
+            "adminCreateUser",
+            "adminUpdateUser",
+            "adminArchiveUser",
+            "adminSetUserRole"
+          ],
+          "newCallable": "updateTeacherProfile",
+          "supportedGenericRoles": [
+            "admin",
+            "founder",
+            "teacher",
+            "parent",
+            "learningPartner"
+          ],
+          "dedicatedFlowRoles": [
+            "kid",
+            "schoolAdmin"
+          ],
+          "activationBehavior": {
+            "newPersonIdIndependentFromFirebaseUid": true,
+            "authIdentityIsUidPersonBridge": true,
+            "updateResolvesUidThroughAuthIdentity": true,
+            "roleTransitionPreservesRoleAssignmentHistory": true,
+            "archiveWritesPersonLifecycle": true,
+            "teacherProfileBrowserDirectUserWriteRemoved": true,
+            "legacyUserProjectionCorroborationWired": true,
+            "userShadowReadsCanonicalPersonIdAware": true,
+            "genericUserHardDeleteDisabled": true,
+            "obsoleteKidsCollectionReadRemoved": true,
+            "clientAdminTokenPayloadRemoved": true,
+            "sensitiveDebugLoggingRemoved": true
+          },
+          "correctedStaleArchitectureTests": {
+            "teacherEarningAdjustmentAuthorization": "ensureAdmin",
+            "teacherPayWithholdingAuthorization": "ensureAdmin",
+            "learnerCreationAuthorization": "ensureAdmin_plus_canonicalPrimaryWriter",
+            "focusedCorrectionWorkflowRunId": 37205450043,
+            "result": "success"
+          },
+          "buildHygiene": {
+            "typescriptLibAliasAdded": "@/lib/*",
+            "paymentBehaviorChanged": false
+          },
+          "localValidation": {
+            "acceptanceCommit": "baebb59b668aa11574bfa0de6df573023d452567",
+            "workflowRunId": 37206842107,
+            "result": "success",
+            "functionsBuild": "passed",
+            "frontendTypecheck": "passed",
+            "functionsIdentityTests": {
+              "passed": 84,
+              "total": 84,
+              "filesPassed": 10,
+              "totalFiles": 10
+            },
+            "activationAuthorizationRoutingTests": {
+              "passed": 35,
+              "total": 35,
+              "filesPassed": 5,
+              "totalFiles": 5
+            },
+            "hostingBuildAndPrerender": "passed",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true,
+            "deploymentImpact": {
+              "functionsSourceChanged": true,
+              "functionsValidationRequired": true,
+              "functionsDeploymentRequired": true,
+              "functionsFullDeployment": false,
+              "impactedFunctionsCount": 15,
+              "impactedFunctions": [
+                "adminArchiveUser",
+                "adminCreateUser",
+                "adminSetUserRole",
+                "adminUpdateUser",
+                "assignLPToParent",
+                "assignLPToTeacher",
+                "backfillTeacherDocs",
+                "getParentWorksheetResources",
+                "onWave1LegacyKidIdentityWrite",
+                "onWave1LegacySchoolIdentityWrite",
+                "onWave1LegacySchoolUserIdentityWrite",
+                "onWave1LegacyUserIdentityWrite",
+                "unassignLPFromParent",
+                "unassignLPFromTeacher",
+                "updateTeacherProfile"
+              ],
+              "hostingChanged": true,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false
+            }
+          },
+          "productionEvidence": null
         }
       },
       "legacyWritesStopped": false,
