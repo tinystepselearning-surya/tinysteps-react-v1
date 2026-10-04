@@ -222,7 +222,7 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
     ).toThrow('countryCode_not_iso_alpha2');
   });
 
-  it('routes rich learner fields to canonical detail/private targets and same-ID nested compatibility', () => {
+  it('routes rich learner fields to canonical detail/private targets without reviving nested legacy students', () => {
     const plan = planCanonicalLearnerCreate({
       personId: 'kid-rich-1',
       parentId: 'parent-1',
@@ -241,11 +241,6 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
         emergencyContact: '+91 9000000000',
         medicalNotes: 'Allergy note',
       },
-      nestedParentStudentCompatibility: {
-        enabled: true,
-        courses: ['phonics-foundation', 'basic-grammar'],
-        createdByRole: 'admin',
-      },
       actorId: 'admin-1',
       writeId: 'write-rich-1',
     });
@@ -259,7 +254,6 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
     const kid = plan.compatibilityDocuments.find(
       (document) => document.collection === 'kids',
     );
-    const nested = plan.compatibilityNestedDocuments[0];
 
     expect(details?.data).toMatchObject({
       learnerDetailsId: 'kid-rich-1',
@@ -290,31 +284,7 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
     expect(kid?.data).not.toHaveProperty('notes');
     expect(kid?.data).not.toHaveProperty('courses');
 
-    expect(nested).toMatchObject({
-      parentCollection: 'parents',
-      parentId: 'parent-1',
-      collection: 'students',
-      documentId: 'kid-rich-1',
-      serverTimestampFields: ['enrollmentDate'],
-      data: {
-        studentId: 'kid-rich-1',
-        parentId: 'parent-1',
-        fullName: 'Learner Rich',
-        preferredName: 'Rich',
-        board: 'CBSE',
-        gender: 'female',
-        courses: ['phonics-foundation', 'basic-grammar'],
-        notes: 'Private admin note',
-        emergencyContact: '+91 9000000000',
-        medicalNotes: 'Allergy note',
-        _wave1CanonicalProjection: {
-          canonicalPersonId: 'kid-rich-1',
-          authority: 'canonical-primary',
-          command: 'learner_create',
-          writeId: 'write-rich-1',
-        },
-      },
-    });
+    expect(plan).not.toHaveProperty('compatibilityNestedDocuments');
   });
 
   it('does not invent a canonical mapping for legacy trial or inactive learner status', () => {
