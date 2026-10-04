@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c1_school_authorization_validation_pending",
+    "status": "r5c1_school_authorization_validated_pending_production",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c1_school_authorization_validation_pending",
+      "status": "r5c1_school_authorization_validated_pending_production",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1843,7 +1843,63 @@
           "tests": [
             "functions/test/authAccessAuthorization.spec.ts",
             "functions/test/authAccessAuthorizationRouting.spec.ts"
-          ]
+          ],
+          "acceptanceValidation": {
+            "workflowRunId": 37215814782,
+            "result": "success",
+            "functionsBuild": "passed",
+            "focusedFunctionsTests": {
+              "passed": 48,
+              "total": 48,
+              "filesPassed": 7,
+              "totalFiles": 7
+            },
+            "architectureAuthorizationRegressions": {
+              "passed": 22,
+              "total": 22,
+              "filesPassed": 3,
+              "totalFiles": 3
+            },
+            "totalFocusedTests": {
+              "passed": 70,
+              "total": 70,
+              "filesPassed": 10,
+              "totalFiles": 10
+            },
+            "teacherEarningAdjustmentRouting": {
+              "passed": 7,
+              "total": 7
+            },
+            "teacherPayWithholdingRouting": {
+              "passed": 7,
+              "total": 7
+            },
+            "deploymentImpact": {
+              "functionsDeploymentRequired": true,
+              "functionsFullDeployment": false,
+              "impactedFunctionsCount": 13,
+              "impactedFunctions": [
+                "schoolCreateAcademicYear",
+                "schoolCreateReview",
+                "schoolGetProgrammeSnapshot",
+                "schoolRecordAssessmentSummary",
+                "schoolSetCurrentAcademicYear",
+                "schoolSetGradeStatus",
+                "schoolSetSectionStatus",
+                "schoolSetTeacherStatus",
+                "schoolUpdateCurriculumProgress",
+                "schoolUpdateTeacherTraining",
+                "schoolUpsertGrade",
+                "schoolUpsertSection",
+                "schoolUpsertTeacher"
+              ],
+              "hostingChanged": false,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false,
+              "avsCallableTransportVerificationRequired": false
+            },
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          }
         },
         "r5c2": {
           "sharedAdminGuard": "functions/src/helpers/adminGuard.ts",
