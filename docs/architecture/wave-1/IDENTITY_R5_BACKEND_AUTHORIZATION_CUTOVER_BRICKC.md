@@ -424,3 +424,41 @@ R5C2A is production-complete.
 The shared legacy `helpers/adminGuard.ts` remains unchanged for all not-yet-migrated
 callables. The next authorized stage is another bounded Admin slice, not a fleet-wide shared
 guard replacement.
+
+
+## R5C2B — diagnostic Admin endpoints
+
+The second general-Admin slice stays non-mutating.
+
+Functions:
+
+~~~text
+auditParentPaymentBackfillDryRun
+getAdminHistoricalAttendanceCandidates
+auditAllTransferredSessionSnapshotIssues
+~~~
+
+Requester authorization for all three is:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+with no fallback to the legacy `users/{uid}` Admin record or Firebase custom claims.
+
+Target-entity compatibility/profile reads remain allowed where the diagnostic itself needs
+historical teacher or parent data. Those target reads are not requester authorization
+authority.
+
+The parent-payment endpoint remains explicitly `dry_run` only and reports every protected
+finance mutation flag as false.
+
+This slice intentionally excludes:
+
+- finance report persistence;
+- attendance validation writes;
+- snapshot/cache refresh writes;
+- user/account mutation;
+- enrollment or schedule repair;
+- lifecycle mutation.
