@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   getRoleMirrorCollection,
   normalizeRole,
@@ -27,7 +27,7 @@ export const adminDeleteUser = onCall(
       throw new HttpsError('unauthenticated', 'Authentication required');
     }
 
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     const targetUid = data?.uid as string | undefined;
 

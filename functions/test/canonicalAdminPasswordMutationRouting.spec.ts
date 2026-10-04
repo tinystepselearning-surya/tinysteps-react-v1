@@ -18,9 +18,6 @@ const generateResetLink = read(
 const resetPassword = read(
   'functions/src/adminResetPassword.ts',
 );
-const deleteUser = read(
-  'functions/src/adminDeleteUser.ts',
-);
 const createUser = read(
   'functions/src/adminCreateUserCanonical.ts',
 );
@@ -64,9 +61,8 @@ describe('Wave 1 R5C2C3 password-management Admin authorization routing', () => 
     );
   });
 
-  it('keeps destructive delete and coupled account mutations outside this bounded slice', () => {
+  it('keeps still-coupled account mutations outside this bounded slice', () => {
     for (const source of [
-      deleteUser,
       createUser,
       setUserRole,
     ]) {
