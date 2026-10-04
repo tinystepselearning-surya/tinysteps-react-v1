@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   analyzeTeacherEarningsCanonicalCoverage,
   type TeacherEarningAuditRow,
@@ -63,7 +63,7 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const monthKey = normalizeMonthKey(request.data?.monthKey);
     const maxDocs = clampInt(request.data?.maxDocs, DEFAULT_MAX_DOCS, 1, MAX_ALLOWED_DOCS);
