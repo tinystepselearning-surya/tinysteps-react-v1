@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "production_bounded_write_complete",
+      "status": "production_reconciled_pending_independent_verification",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -784,9 +784,34 @@
           "postWriteSelectedMismatches": 0,
           "remainingPendingSourceRecords": 152,
           "writesPerformed": 515
+        },
+        {
+          "kind": "final_bounded",
+          "runAt": "2026-10-04T10:45:18.068Z",
+          "reportPath": "reports/wave1-identity-profile-retirement-write-2026-10-04T10-45-18-068Z.json",
+          "sourceRecordLimit": 152,
+          "sourceRecordsCommitted": 152,
+          "targetDocumentsCreated": 336,
+          "targetDocumentsUpdated": 0,
+          "writeBatchesCommitted": 4,
+          "postWriteSelectedMismatches": 0,
+          "remainingPendingSourceRecords": 0,
+          "writesPerformed": 336
         }
       ],
-      "reconciliation": null,
+      "reconciliation": {
+        "runAt": "2026-10-04T10:47:06.951Z",
+        "reportPath": "reports/wave1-identity-profile-retirement-reconcile-2026-10-04T10-47-06-951Z.json",
+        "expectedTargets": 891,
+        "matchedTargets": 891,
+        "missingTargets": 0,
+        "driftedTargets": 0,
+        "conflictingTargets": 0,
+        "coreIssues": 0,
+        "derivedRelationshipIssues": 0,
+        "reconciled": true,
+        "writesPerformed": 0
+      },
       "independentVerification": null,
       "localValidation": {
         "validatedCommit": "14288ddaeb383f5bf8d9e78e661567ff6e5c57b6",
@@ -830,13 +855,12 @@
         "temporaryValidationWorkflowRetiredBeforeMerge": true
       },
       "nextAuthorizedStep": {
-        "kind": "production_bounded_write",
-        "sourceRecordLimit": 152,
+        "kind": "independent_profile_migration_verification",
         "destructive": false,
         "legacyWrites": false,
         "firebaseAuthWrites": false,
         "canonicalIdentityCoreWrites": false,
-        "precondition": "rerun state-derived gates on every invocation"
+        "precondition": "production reconciliation remains clean"
       }
     }
   }
