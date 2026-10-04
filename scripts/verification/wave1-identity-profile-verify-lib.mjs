@@ -570,8 +570,8 @@ export function compareProfileDocument(actual, expectedData) {
     }
   }
 
-  if (!hasOwn(actual, 'createdAt')) mismatches.push('createdAt');
-  if (!hasOwn(actual, 'updatedAt')) mismatches.push('updatedAt');
+  if (!timestampLike(actual.createdAt)) mismatches.push('createdAt');
+  if (!timestampLike(actual.updatedAt)) mismatches.push('updatedAt');
 
   return [...new Set(mismatches)].sort();
 }
