@@ -424,3 +424,75 @@ R5C2A is production-complete.
 The shared legacy `helpers/adminGuard.ts` remains unchanged for all not-yet-migrated
 callables. The next authorized stage is another bounded Admin slice, not a fleet-wide shared
 guard replacement.
+
+
+## R5C2B — diagnostic Admin endpoints
+
+The second general-Admin slice stays non-mutating.
+
+Functions:
+
+~~~text
+getAdminHistoricalAttendanceCandidates
+auditAllTransferredSessionSnapshotIssues
+~~~
+
+Requester authorization for all three is:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+with no fallback to the legacy `users/{uid}` Admin record or Firebase custom claims.
+
+Target-entity compatibility/profile reads remain allowed where the diagnostic itself needs
+historical teacher or parent data. Those target reads are not requester authorization
+authority.
+
+The initially considered `auditParentPaymentBackfillDryRun` endpoint is intentionally
+deferred. Its module is imported by the mutating
+`applyParentPaymentBackfillForSafeParents` Function, so changing that module would force the
+write-mode Function into the deployment set. R5C2B refuses that coupling and keeps the
+payment pair for a dedicated finance authorization slice.
+
+This slice intentionally excludes:
+
+- finance report persistence;
+- attendance validation writes;
+- snapshot/cache refresh writes;
+- user/account mutation;
+- enrollment or schedule repair;
+- lifecycle mutation.
+
+
+### R5C2B acceptance
+
+Final validation workflow:
+
+~~~text
+Run: 37218961723
+Head: 37638a66bb5563326621094b96a13743d605ea7b
+Result: success
+~~~
+
+Validated:
+
+- Functions authorization/diagnostic tests: 18/18;
+- historical attendance routing regression: 4/4;
+- deployment-impact classifier: 27/27;
+- impacted Functions: exactly 2;
+- full Functions deployment: no;
+- Hosting changed: no;
+- Firestore Rules changed: no;
+- Firestore indexes changed: no.
+
+The two intended production targets are:
+
+~~~text
+auditAllTransferredSessionSnapshotIssues
+getAdminHistoricalAttendanceCandidates
+~~~
+
+The parent-payment dry-run remains deferred because changing its shared module would also
+redeploy the mutating `applyParentPaymentBackfillForSafeParents` Function.

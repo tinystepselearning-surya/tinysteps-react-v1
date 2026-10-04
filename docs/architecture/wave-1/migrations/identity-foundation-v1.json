@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2a_production_complete_ready_for_r5c2b",
+    "status": "r5c2b_admin_diagnostics_validated_pending_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2b_admin_read_dry_run_cutover",
+    "nextBrick": "r5c2b_admin_diagnostics_deploy",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2a_production_complete_ready_for_r5c2b",
+      "status": "r5c2b_admin_diagnostics_validated_pending_merge",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2b_admin_read_dry_run_cutover",
+      "nextBrick": "r5c2b_admin_diagnostics_deploy",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2060,6 +2060,66 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2b": {
+              "title": "Independent Admin read-only diagnostics",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "getAdminHistoricalAttendanceCandidates",
+                "auditAllTransferredSessionSnapshotIssues"
+              ],
+              "businessMutationAllowed": false,
+              "targetEntityLegacyReadsAllowed": true,
+              "targetEntityLegacyReadsAreAuthorizationAuthority": false,
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": false,
+              "deferredCoupledFunctions": {
+                "auditParentPaymentBackfillDryRun": {
+                  "reason": "module_is_imported_by_applyParentPaymentBackfillForSafeParents",
+                  "impactedMutatingFunction": "applyParentPaymentBackfillForSafeParents",
+                  "deferredTo": "dedicated_finance_authorization_slice"
+                }
+              },
+              "validation": {
+                "workflowRunId": 37218961723,
+                "headSha": "37638a66bb5563326621094b96a13743d605ea7b",
+                "result": "success",
+                "functionsTests": {
+                  "passed": 18,
+                  "total": 18,
+                  "filesPassed": 4,
+                  "totalFiles": 4
+                },
+                "historicalAttendanceRouting": {
+                  "passed": 4,
+                  "total": 4,
+                  "filesPassed": 1,
+                  "totalFiles": 1
+                },
+                "deploymentImpactClassifier": {
+                  "passed": 27,
+                  "total": 27
+                },
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 2,
+                  "impactedFunctions": [
+                    "auditAllTransferredSessionSnapshotIssues",
+                    "getAdminHistoricalAttendanceCandidates"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false,
+                  "avsCallableTransportVerificationRequired": false
+                },
+                "paymentDryRunDeferredToFinanceSlice": true,
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }

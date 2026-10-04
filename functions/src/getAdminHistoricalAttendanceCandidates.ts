@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { normalizeEnrollmentStatus } from './helpers/status';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -84,7 +84,7 @@ async function resolveTeacherIdentityIds(db: FirebaseFirestore.Firestore, reques
 }
 
 export const getAdminHistoricalAttendanceCandidates = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const requestedTeacherId = String(request.data?.teacherId || '').trim();
   if (!requestedTeacherId) throw new HttpsError('invalid-argument', 'teacherId is required');
 
