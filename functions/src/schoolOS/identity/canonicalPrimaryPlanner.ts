@@ -137,17 +137,6 @@ function normalizeStatus(
   throw new Error('learner_status_not_canonical');
 }
 
-function uniqueTextList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return [
-    ...new Set(
-      value
-        .map((item) => optionalText(item))
-        .filter((item): item is string => Boolean(item)),
-    ),
-  ];
-}
-
 function ownership(params: {
   command: CanonicalPrimaryCommand;
   writeId: string;
