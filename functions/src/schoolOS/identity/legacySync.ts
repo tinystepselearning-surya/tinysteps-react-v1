@@ -771,12 +771,16 @@ export function canonicalProjectionMatchesAuthority(params: {
   const authorityData =
     authority as Record<string, unknown>;
 
+  const command = cleanText(markerData.command);
+  const isCanonicalLearnerCommand =
+    command === 'learner_create' ||
+    command === 'learner_update';
+
   return (
     markerData.schemaVersion === 1 &&
     cleanText(markerData.authority) ===
       'canonical-primary' &&
-    cleanText(markerData.command) ===
-      'learner_create' &&
+    isCanonicalLearnerCommand &&
     cleanText(markerData.canonicalPersonId) ===
       params.sourceId &&
     Boolean(cleanText(markerData.writeId)) &&
@@ -785,8 +789,7 @@ export function canonicalProjectionMatchesAuthority(params: {
     authorityData.schemaVersion === 1 &&
     cleanText(authorityData.authority) ===
       'canonical-primary' &&
-    cleanText(authorityData.command) ===
-      cleanText(markerData.command) &&
+    cleanText(authorityData.command) === command &&
     cleanText(authorityData.writeId) ===
       cleanText(markerData.writeId)
   );
