@@ -4,6 +4,7 @@ import {
   canonicalIdentityTelemetryToken,
   canonicalParentEligibilityIssue,
   expectedFieldsMatch,
+  parentProfileCompatibilityIssue,
 } from '../src/schoolOS/identity/canonicalPrimaryWriter';
 
 describe('Wave 1 R4 canonical-primary learner writer helpers', () => {
@@ -205,6 +206,29 @@ describe('Wave 1 R4 canonical-primary learner writer helpers', () => {
     expect(first).toHaveLength(24);
     expect(first).not.toContain('kid-sensitive-id');
     expect(differentNamespace).not.toBe(first);
+  });
+
+
+  it('requires the permanent parent profile mirror when nested compatibility is requested', () => {
+    expect(
+      parentProfileCompatibilityIssue(null),
+    ).toBe('parent_profile_compatibility_missing');
+
+    expect(
+      parentProfileCompatibilityIssue({
+        status: 'inactive',
+      }),
+    ).toBe('parent_profile_compatibility_inactive');
+
+    expect(
+      parentProfileCompatibilityIssue({
+        status: 'active',
+      }),
+    ).toBeNull();
+
+    expect(
+      parentProfileCompatibilityIssue({}),
+    ).toBeNull();
   });
 
 });
