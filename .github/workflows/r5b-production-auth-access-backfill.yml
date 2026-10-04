@@ -6,7 +6,7 @@ on:
       - wave1/identity-r5b-production-backfill-20261004
 
 jobs:
-  dry-run:
+  canary-write:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,7 +39,20 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
-      - name: Run production dry-run
+      - name: Write 20-identity canary
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          GOOGLE_CLOUD_PROJECT: tinysteps-react-v1
+        run: >-
+          node scripts/wave1-auth-access-read-model-backfill.mjs
+          --project tinysteps-react-v1
+          --mode write
+          --write-limit 20
+          --max-records 250
+          --sample-size 20
+          --report artifacts/r5b-auth-access-canary-write.json
+
+      - name: Independently verify canary state
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
           GOOGLE_CLOUD_PROJECT: tinysteps-react-v1
@@ -49,13 +62,15 @@ jobs:
           --mode dry-run
           --max-records 250
           --sample-size 20
-          --report artifacts/r5b-auth-access-dry-run.json
+          --report artifacts/r5b-auth-access-canary-verify.json
 
-      - name: Upload dry-run report
+      - name: Upload canary reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: r5b-auth-access-dry-run-${{ github.sha }}
-          path: artifacts/r5b-auth-access-dry-run.json
+          name: r5b-auth-access-canary-${{ github.sha }}
+          path: |
+            artifacts/r5b-auth-access-canary-write.json
+            artifacts/r5b-auth-access-canary-verify.json
           if-no-files-found: error
           retention-days: 7
