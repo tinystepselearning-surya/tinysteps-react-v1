@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "teacher_evidence_gate_fix_pending_validation",
+      "status": "teacher_evidence_gate_fix_validated",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -767,6 +767,21 @@
         "representedByClassSessionOnly": 6,
         "noEnrollmentOrSessionEvidence": 0,
         "conclusion": "all 70 legacy learner-teacher references have durable operational or historical evidence; do not create a new child-level teacher authority"
+      },
+      "teacherEvidenceGateValidation": {
+        "validatedCommit": "61d583948fb3b5981bdfeb8b8364dfef8842f0d7",
+        "workflowRunId": 37195398619,
+        "syntaxCheck": "passed",
+        "profileRetirementTests": {
+          "passed": 13,
+          "total": 13
+        },
+        "retirementAuditTests": {
+          "passed": 10,
+          "total": 10
+        },
+        "result": "success",
+        "temporaryValidationWorkflowRetiredBeforeMerge": true
       }
     }
   }
