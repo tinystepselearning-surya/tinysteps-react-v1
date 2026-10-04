@@ -560,6 +560,24 @@
       "rawIdentityIdsInTelemetry": false,
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": false,
+    "canonicalPrimaryImplementation": {
+      "status": "brick1_contract_pending_validation",
+      "brick1": {
+        "title": "Canonical-primary learner write contract",
+        "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
+        "regressionTest": "functions/test/canonicalPrimaryPlanner.spec.ts",
+        "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_PRIMARY_BRICK1.md",
+        "productionWiring": false,
+        "productionBehaviorChanged": false,
+        "canonicalPrimaryWritesEnabled": false,
+        "authBackedUserWriteCutover": false,
+        "learnerWriteCutover": false,
+        "readerCutover": false,
+        "securityRulesCutover": false,
+        "legacyWriteFreeze": false,
+        "destructiveDeletion": false
+      }
+    },
       "legacyWritesStopped": false,
       "readSwitchAuthorized": false,
       "localValidation": {
