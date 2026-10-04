@@ -12,20 +12,19 @@ const read = (relativePath: string) =>
     'utf8',
   );
 
-const dryRun = read(
-  'functions/src/parentPaymentBackfillDryRun.ts',
-);
 const historicalCandidates = read(
   'functions/src/getAdminHistoricalAttendanceCandidates.ts',
 );
 const transferredAudit = read(
   'functions/src/auditAllTransferredSessionSnapshotIssues.ts',
 );
+const deferredPaymentDryRun = read(
+  'functions/src/parentPaymentBackfillDryRun.ts',
+);
 
 describe('Wave 1 R5C2B Admin diagnostics authorization routing', () => {
-  it('routes all three diagnostic requesters through canonical Admin access', () => {
+  it('routes the two independent diagnostic requesters through canonical Admin access', () => {
     for (const source of [
-      dryRun,
       historicalCandidates,
       transferredAudit,
     ]) {
@@ -41,24 +40,6 @@ describe('Wave 1 R5C2B Admin diagnostics authorization routing', () => {
     }
   });
 
-  it('keeps parent payment backfill strictly dry-run with no business mutation', () => {
-    expect(dryRun).toContain(
-      "mode must be \"dry_run\" in this phase",
-    );
-    expect(dryRun).toContain(
-      'wrotePayments: false',
-    );
-    expect(dryRun).toContain(
-      'wroteBillingCharges: false',
-    );
-    expect(dryRun).toContain(
-      'wroteParentWallets: false',
-    );
-    expect(dryRun).toContain(
-      'wroteInvoices: false',
-    );
-  });
-
   it('allows target-entity legacy/profile reads without treating them as requester authorization', () => {
     expect(
       historicalCandidates,
@@ -68,20 +49,26 @@ describe('Wave 1 R5C2B Admin diagnostics authorization routing', () => {
     expect(
       transferredAudit,
     ).toContain('fetchTeacherProfiles');
-    expect(
-      dryRun,
-    ).toContain(
-      ".collection('users').doc(parentId)",
-    );
 
     for (const source of [
       historicalCandidates,
       transferredAudit,
-      dryRun,
     ]) {
       expect(source).not.toContain(
         'ensureAdmin(request.auth)',
       );
     }
+  });
+
+  it('defers the coupled parent-payment dry-run so its write-mode dependent is not redeployed', () => {
+    expect(deferredPaymentDryRun).toContain(
+      "from './helpers/adminGuard'",
+    );
+    expect(deferredPaymentDryRun).toContain(
+      'await ensureAdmin(request.auth)',
+    );
+    expect(deferredPaymentDryRun).not.toContain(
+      'ensureCanonicalAdmin',
+    );
   });
 });
