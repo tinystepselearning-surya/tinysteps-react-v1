@@ -30,25 +30,12 @@ describe('Wave 1 current-user authorization invariant', () => {
   const rules = read('firestore.rules');
   const storageRules = read('storage.rules');
 
-  it('requires current canonical-derived access for callable Admin authorization', () => {
-    expect(adminGuard).toContain(
-      'loadCurrentAuthAccessPrincipal',
-    );
-    expect(adminGuard).toContain(
-      'principalHasGlobalRole',
-    );
-    expect(adminGuard).toContain(
-      'stale Admin claim rejected',
-    );
-    expect(adminGuard).not.toMatch(
-      /collection\((['"])users\1\)/,
-    );
-    expect(adminGuard).not.toContain(
-      'isActiveOrLegacyUser',
-    );
-    expect(adminGuard).not.toContain(
-      'if (isAdmin) return;',
-    );
+  it('requires a current users document for callable Admin authorization', () => {
+    expect(adminGuard).toContain("collection('users')");
+    expect(adminGuard).toContain('stale/orphan Admin claim rejected');
+    expect(adminGuard).toContain('if (!snap.exists)');
+    expect(adminGuard).toContain('if (!isActiveOrLegacyUser(data))');
+    expect(adminGuard).not.toContain('if (isAdmin) return;');
   });
 
   it('removes direct token-only Admin bypasses from known callable guards', () => {
