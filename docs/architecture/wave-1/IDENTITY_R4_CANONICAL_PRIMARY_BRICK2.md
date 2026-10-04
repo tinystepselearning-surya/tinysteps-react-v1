@@ -154,15 +154,31 @@ _wave1CanonicalProjection = {
 
 The existing `kids` legacy-sync bridge remains active because other writers have not yet been migrated.
 
-Brick 2 changes its decision gate so:
+Brick 2 changes its decision gate so a marker is only a hint. Suppression also requires canonical corroboration:
 
 ~~~text
 new canonical projection write ID
++ kids marker canonicalPersonId == source ID
++ people/{sourceId}.canonicalAuthority.writeId == marker.writeId
++ matching canonical-primary learner_create authority
 → do not treat the kids write as legacy authority
 → do not rewrite canonical state with migration ownership
 ~~~
 
-But:
+A marker transition performs one canonical `people/{sourceId}` point read for this corroboration. It does not add reads to ordinary legacy updates.
+
+If the marker is forged or does not match canonical authority:
+
+~~~text
+identity fields changed
+→ continue into legacy reconciliation
+→ existing canonical ownership guard prevents overwrite
+
+only marker changed
+→ no identity reconciliation is needed
+~~~
+
+And:
 
 ~~~text
 same projection write ID + later legacy identity-field edit
@@ -170,7 +186,7 @@ same projection write ID + later legacy identity-field edit
 → run compatibility reconciliation
 ~~~
 
-This prevents canonical → legacy → canonical feedback loops without hiding genuine remaining legacy writes.
+This prevents canonical → legacy → canonical feedback loops without trusting a client-editable marker or hiding genuine remaining legacy writes.
 
 The parent `users.childIds` compatibility update does not trigger canonical identity work because `childIds` is already outside the legacy-sync identity projection.
 
