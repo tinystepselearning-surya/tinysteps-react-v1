@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** VALIDATED — bounded production deployment pending  
+**Status:** PARTIALLY DEPLOYED — 13 school programme/evidence Functions live; 5 school-management caller guards validated pending deployment  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -245,3 +245,83 @@ shared Admin guard would fan out to approximately 124 Functions. R5C1 deliberate
 that guard unchanged and limits production impact to the 13 school-domain Functions above.
 
 The temporary validation workflow is retired before merge.
+
+
+## Production rollout stage 1
+
+PR #609 merged the first bounded R5C1 school-domain cutover.
+
+~~~text
+Merge commit: 7899fe6e5e34cc9af099855e7054a9f4bc6d222c
+Deploy workflow: 37216030978
+Deploy run number: 3881
+Result: success
+~~~
+
+Deployment facts:
+
+- Functions planned: 13;
+- Functions deployed: 13;
+- Functions verified checkpoint-ready: 13/13;
+- deployment batches: 2;
+- full Functions deployment: no;
+- School callable transport verification: passed;
+- Functions production marker advanced to the merge commit;
+- Hosting deployment: skipped;
+- Firestore Rules deployment: skipped;
+- Firestore indexes deployment: skipped.
+
+## School-management requester-guard hardening
+
+Post-deployment boundary inspection found that `functions/src/schools.ts` owns a separate
+local `ensureCurrentActiveAdmin` guard for five school-management callables.
+
+That guard was not imported from `helpers/schoolAuthorization.ts`, so it was outside the
+initial 13-Function dependency graph.
+
+R5C1 therefore adds a second, still-bounded cutover for:
+
+~~~text
+adminAssignSchoolLearningPartner
+adminCreateSchool
+adminLinkSchoolUser
+adminUnlinkSchoolUser
+adminUpdateSchool
+~~~
+
+The local requester guard now authorizes from:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+~~~
+
+and does not call the shared legacy `helpers/adminGuard.ts`.
+
+Legacy `users/{targetUid}` reads remain in these workflows only where the administrator is
+validating the target Learning Partner or target School Admin being assigned. Those are
+target-user business/profile compatibility reads, not requester authorization, and remain a
+separate reader-migration scope.
+
+### Hardening validation
+
+~~~text
+Workflow run: 37216635790
+Result: success
+~~~
+
+Validated:
+
+- Functions TypeScript build: passed;
+- R5C authorization tests: **22/22 passed** across 3 files;
+- architecture/authorization/teacher earning regressions: **22/22 passed** across 3 files;
+- total focused tests: **44/44 passed**;
+- Functions impacted: **5**;
+- full Functions deployment: false;
+- Hosting changed: false;
+- Firestore Rules changed: false;
+- Firestore indexes changed: false.
+
+The temporary hardening validation workflow is retired before merge.
+
+R5C1 is not considered production-complete until these five Functions deploy successfully
+and the final production authorization-state smoke audit is clean.
