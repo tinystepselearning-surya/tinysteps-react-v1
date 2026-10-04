@@ -850,6 +850,25 @@ function enrollmentTeacherIds(data) {
   ];
 }
 
+function relationshipEvidenceByKid(rows) {
+  const byKid = new Map();
+
+  for (const row of rows || []) {
+    const data = row.data || {};
+    const teacherIds = enrollmentTeacherIds(data);
+    if (!teacherIds.length) continue;
+
+    for (const kidId of enrollmentKidIds(data)) {
+      const set = byKid.get(kidId) || new Set();
+      teacherIds.forEach((teacherId) =>
+        set.add(teacherId));
+      byKid.set(kidId, set);
+    }
+  }
+
+  return byKid;
+}
+
 function enrollmentIsUsable(data) {
   if (
     data.archived === true ||
@@ -871,6 +890,7 @@ export function verifyDerivedRelationshipCoverage({
   users,
   kids,
   enrollments,
+  classSessions = [],
   guardianRelationships,
   peopleIds,
   organisationIds,
@@ -914,25 +934,23 @@ export function verifyDerivedRelationshipCoverage({
     }
   }
 
-  const enrollmentTeachersByKid = new Map();
-  for (const row of enrollments) {
-    const data = row.data || {};
-    if (!enrollmentIsUsable(data)) continue;
-    const teachers =
-      enrollmentTeacherIds(data);
-    if (!teachers.length) continue;
-    for (const kidId of enrollmentKidIds(data)) {
-      const set =
-        enrollmentTeachersByKid.get(kidId) ||
-        new Set();
-      teachers.forEach((teacherId) =>
-        set.add(teacherId));
-      enrollmentTeachersByKid.set(
-        kidId,
-        set,
-      );
-    }
-  }
+  const usableEnrollmentTeachersByKid =
+    relationshipEvidenceByKid(
+      enrollments.filter((row) =>
+        enrollmentIsUsable(row.data || {})),
+    );
+  const anyEnrollmentTeachersByKid =
+    relationshipEvidenceByKid(enrollments);
+  const classSessionTeachersByKid =
+    relationshipEvidenceByKid(classSessions);
+
+  const teacherEvidence = {
+    legacyReferences: 0,
+    currentUsableEnrollment: 0,
+    historicalEnrollment: 0,
+    classSessionOnly: 0,
+    unexplained: 0,
+  };
 
   for (const kid of kids) {
     const legacyTeachers = [
@@ -945,17 +963,39 @@ export function verifyDerivedRelationshipCoverage({
     ];
     if (!legacyTeachers.length) continue;
 
-    const enrollmentTeachers =
-      enrollmentTeachersByKid.get(kid.id) ||
+    const usableEnrollmentTeachers =
+      usableEnrollmentTeachersByKid.get(kid.id) ||
+      new Set();
+    const anyEnrollmentTeachers =
+      anyEnrollmentTeachersByKid.get(kid.id) ||
+      new Set();
+    const classSessionTeachers =
+      classSessionTeachersByKid.get(kid.id) ||
       new Set();
 
     for (const teacherId of legacyTeachers) {
-      if (!enrollmentTeachers.has(teacherId)) {
-        add(
-          'legacy_kid_teacher_missing_usable_enrollment_assignment',
-          `kids/${kid.id}:teacher/${teacherId}`,
-        );
+      teacherEvidence.legacyReferences += 1;
+
+      if (usableEnrollmentTeachers.has(teacherId)) {
+        teacherEvidence.currentUsableEnrollment += 1;
+        continue;
       }
+
+      if (anyEnrollmentTeachers.has(teacherId)) {
+        teacherEvidence.historicalEnrollment += 1;
+        continue;
+      }
+
+      if (classSessionTeachers.has(teacherId)) {
+        teacherEvidence.classSessionOnly += 1;
+        continue;
+      }
+
+      teacherEvidence.unexplained += 1;
+      add(
+        'legacy_kid_teacher_missing_any_operational_or_historical_evidence',
+        `kids/${kid.id}:teacher/${teacherId}`,
+      );
     }
   }
 
@@ -1044,6 +1084,7 @@ export function verifyDerivedRelationshipCoverage({
       Object.entries(samples)
         .sort(([a], [b]) => a.localeCompare(b)),
     ),
+    teacherEvidence,
     safeToRetireDerivedRelationshipFields:
       issues.length === 0,
   };

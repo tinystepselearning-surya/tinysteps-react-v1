@@ -278,21 +278,37 @@ blocks the migration.
 
 ### kids.teacherId / kids.teacherIds
 
-These are compatibility assignment fields.
+These are compatibility/denormalized teacher snapshots.
 
-The current delivery relationship remains represented through Enrollment.
+The repository's teacher-identity retirement contract already makes active operational ownership canonical on `teacherId` and treats legacy aliases as historical/backfill compatibility. The child-level `teacherIds[]` field is also used as a convenience multi-course index today, but it is not a new authority we should preserve during identity retirement.
 
-Before those learner fields may be retired, every legacy teacher ID must be represented by at least one usable, non-archived Enrollment for that learner.
+Before those learner fields may be retired, every legacy teacher reference must be explainable by durable domain evidence in this order:
 
-If not:
+1. a usable current Enrollment;
+2. otherwise any historical/terminal Enrollment;
+3. otherwise a ClassSession carrying that learner/teacher pair.
+
+A reference with none of those forms of evidence blocks retirement as:
 
 ~~~text
-legacy_kid_teacher_missing_usable_enrollment_assignment
+legacy_kid_teacher_missing_any_operational_or_historical_evidence
 ~~~
 
-blocks the migration.
+The 2026-10-04 production diagnostic for the original 70 blockers found:
 
-This avoids creating a second new teacher-assignment authority during identity retirement.
+~~~text
+total legacy teacher gate issues:       70
+historical-only teacherIds entries:     10
+scalar teacherId mismatches:            60
+archived/inactive learners:             55
+represented by historical Enrollment:   64
+represented by ClassSession only:        6
+no Enrollment/ClassSession evidence:     0
+~~~
+
+Therefore those 70 references are evidenced compatibility/history snapshots, not missing current relationships.
+
+Current teacher relationships remain represented by Enrollment. Historical teacher facts remain represented by historical Enrollment/ClassSession data. No replacement child-level teacher-authority collection is introduced.
 
 ## Write contract
 
