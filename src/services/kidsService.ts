@@ -16,46 +16,6 @@ import type { Kid, NewKidInput } from '../models/kid';
 
 const KIDS_COLLECTION = 'kids';
 
-/** Remove DOB-ish fields so we never store them going forward */
-function stripDobFields(obj: any) {
-  if (!obj || typeof obj !== 'object') return;
-  if ('dob' in obj) delete obj.dob;
-  if ('birthdate' in obj) delete obj.birthdate;
-  if ('dateOfBirth' in obj) delete obj.dateOfBirth;
-}
-
-/** Normalize age input. Supports legacy ageYears -> age */
-function normalizeAge(obj: any) {
-  if (!obj || typeof obj !== 'object') return;
-
-  // Accept age from either age or ageYears
-  const raw = obj.age ?? obj.ageYears;
-
-  // If neither is present, do nothing
-  const hasAge =
-    Object.prototype.hasOwnProperty.call(obj, 'age') ||
-    Object.prototype.hasOwnProperty.call(obj, 'ageYears');
-
-  if (!hasAge) return;
-
-  // Empty string => null
-  if (raw === '' || raw == null) {
-    obj.age = null;
-    delete obj.ageYears;
-    return;
-  }
-
-  const n = typeof raw === 'string' ? Number(raw) : raw;
-  if (Number.isFinite(n)) {
-    obj.age = Math.trunc(n);
-  } else {
-    obj.age = null;
-  }
-
-  // keep only one field
-  delete obj.ageYears;
-}
-
 export async function getKidById(id: string): Promise<Kid | null> {
   const d = await getDoc(doc(db, KIDS_COLLECTION, id));
   if (!d.exists()) return null;
