@@ -630,7 +630,23 @@
             }
           },
           "result": "success",
-          "temporaryValidationWorkflowRetiredBeforeMerge": false
+          "temporaryValidationWorkflowRetiredBeforeMerge": true
+        },
+        "deploymentImpactValidation": {
+          "validatedCommit": "8b827814da715a4a22d47be686e20d591d2533da",
+          "workflowRunId": 37197962800,
+          "functionsProductionBaseline": "6b07f7167f8fa1606f2e286ba43d33e330cadd48",
+          "functionsDeploymentRequired": true,
+          "fullFunctionsDeployment": false,
+          "impactedFunctions": [
+            "adminCreateStudent",
+            "onWave1LegacyKidIdentityWrite",
+            "onWave1LegacySchoolIdentityWrite",
+            "onWave1LegacySchoolUserIdentityWrite",
+            "onWave1LegacyUserIdentityWrite"
+          ],
+          "impactedFunctionsCount": 5,
+          "result": "success"
         }
       }
     },
