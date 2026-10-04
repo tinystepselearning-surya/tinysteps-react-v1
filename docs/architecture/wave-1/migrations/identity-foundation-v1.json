@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick3_parent_student_writer_pending_validation_and_production_deploy",
+        "status": "brick3_local_validation_complete_pending_production_deploy",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -743,8 +743,50 @@
           "securityRulesCutover": false,
           "legacyWriteFreeze": false,
           "destructiveDeletion": false,
-          "localValidation": null,
-          "deploymentImpactValidation": null,
+          "localValidation": {
+            "validatedImplementationCommit": "1b54646477768682149b7ea831ef00d46e4d2079",
+            "workflowRunId": 37200407911,
+            "functionsBuild": "passed",
+            "focusedTests": {
+              "passed": 29,
+              "total": 29,
+              "canonicalPrimaryPlanner": {
+                "passed": 7,
+                "total": 7
+              },
+              "canonicalPrimaryWriter": {
+                "passed": 6,
+                "total": 6
+              },
+              "identityLegacySync": {
+                "passed": 10,
+                "total": 10
+              },
+              "parentStudentsCanonicalPrimary": {
+                "passed": 6,
+                "total": 6
+              }
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          },
+          "deploymentImpactValidation": {
+            "validatedCommit": "1b54646477768682149b7ea831ef00d46e4d2079",
+            "workflowRunId": 37200407911,
+            "functionsProductionBaseline": "bcdcc93374b11f19996f8231bb9dc6adafe25ccc",
+            "functionsDeploymentRequired": true,
+            "fullFunctionsDeployment": false,
+            "impactedFunctions": [
+              "adminCreateStudent",
+              "createStudentForParent",
+              "onWave1LegacyKidIdentityWrite",
+              "onWave1LegacySchoolIdentityWrite",
+              "onWave1LegacySchoolUserIdentityWrite",
+              "onWave1LegacyUserIdentityWrite"
+            ],
+            "impactedFunctionsCount": 6,
+            "result": "success"
+          },
           "productionDeployment": null
         }
       },
