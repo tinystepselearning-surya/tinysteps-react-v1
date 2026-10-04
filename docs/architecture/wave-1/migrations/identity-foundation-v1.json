@@ -744,8 +744,8 @@
           "legacyWriteFreeze": false,
           "destructiveDeletion": false,
           "localValidation": {
-            "validatedImplementationCommit": "1b54646477768682149b7ea831ef00d46e4d2079",
-            "workflowRunId": 37200407911,
+            "validatedImplementationCommit": "e3b3e61b5ebb6b72926b94c637cfa7291c18b0ce",
+            "workflowRunId": 37200556538,
             "functionsBuild": "passed",
             "focusedTests": {
               "passed": 29,
@@ -768,11 +768,12 @@
               }
             },
             "result": "success",
-            "temporaryValidationWorkflowRetiredBeforeMerge": true
+            "temporaryValidationWorkflowRetiredBeforeMerge": true,
+            "validationWorkflowHead": "92c02de4bb253f598750ccedf8822101c266043b"
           },
           "deploymentImpactValidation": {
-            "validatedCommit": "1b54646477768682149b7ea831ef00d46e4d2079",
-            "workflowRunId": 37200407911,
+            "validatedCommit": "92c02de4bb253f598750ccedf8822101c266043b",
+            "workflowRunId": 37200556538,
             "functionsProductionBaseline": "bcdcc93374b11f19996f8231bb9dc6adafe25ccc",
             "functionsDeploymentRequired": true,
             "fullFunctionsDeployment": false,
