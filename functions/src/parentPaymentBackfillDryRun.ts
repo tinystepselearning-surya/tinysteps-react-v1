@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
+import { ensureAdmin } from './helpers/adminGuard';
 import {
   buildParentPaymentBackfillDryRunReport,
   type ParentPaymentBackfillChargeInput,
@@ -180,7 +180,7 @@ export async function loadParentPaymentBackfillParentScopedData(
 export const auditParentPaymentBackfillDryRun = onCall(
   { region: REGION },
   async (request) => {
-    await ensureCanonicalAdmin(request.auth);
+    await ensureAdmin(request.auth);
 
     const data = (request.data || {}) as AuditParentPaymentBackfillDryRunRequest;
     const mode = data.mode || 'dry_run';
