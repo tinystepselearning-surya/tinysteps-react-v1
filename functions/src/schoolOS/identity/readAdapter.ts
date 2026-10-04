@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import type * as admin from 'firebase-admin';
 
-import { normalizeRole } from '../../helpers/roles';
+import {\n  normalizeRole,\n  type CanonicalRole,\n} from '../../helpers/roles';
 import {
   buildAuthIdentityId,
   buildGuardianRelationshipId,
@@ -164,7 +164,7 @@ function learnerAgeYears(
 
 function canonicalRoles(
   data: admin.firestore.DocumentData,
-): string[] {
+): CanonicalRole[] {
   const raw = [
     data.role,
     ...(Array.isArray(data.roles) ? data.roles : []),
@@ -174,8 +174,8 @@ function canonicalRoles(
     ...new Set(
       raw
         .map((value) => normalizeRole(value))
-        .filter((value): value is NonNullable<typeof value> =>
-          Boolean(value),
+        .filter((value): value is CanonicalRole =>
+          value !== null,
         ),
     ),
   ];
