@@ -244,3 +244,53 @@ If a run fails:
 ## Retirement
 
 The executor and migration-specific report-shape tests remain until identity cutover is completed and observed. The deterministic ID strategy and canonical identity contracts remain permanent platform assets.
+
+
+## Production execution result
+
+Production execution completed successfully on 2026-10-04 using the local Mac bounded executor.
+
+### Write runs
+
+| Run | Source records | Canonical docs created | Write batches | Post-write mismatches |
+|---|---:|---:|---:|---:|
+| Canary | 20 | 59 | 1 | 0 |
+| Bounded run 2 | 250 | 750 | 8 | 0 |
+| Bounded run 3 | 149 | 444 | 5 | 0 |
+| **Total** | **419** | **1,253** | **14** | **0** |
+
+No canonical document required an update during initial backfill.
+
+The final checkpoint completed successfully.
+
+### Final reconciliation
+
+Read-only reconciliation result:
+
+~~~text
+Expected canonical documents: 1,253
+Matched:                     1,253
+Missing:                         0
+Drifted:                         0
+Conflicts:                       0
+Unexpected:                      0
+Blocking source/planning issues: 0
+Writes performed:                0
+RECONCILED:                   true
+~~~
+
+Therefore the BACKFILL phase is complete.
+
+Current authority remains unchanged:
+
+~~~text
+legacy identity collections
+= current production read/write authority
+
+canonical identity collections
+= fully populated shadow canonical state
+~~~
+
+This completion does not authorize SWITCH READS, STOP LEGACY WRITES, deletion, Firebase UID replacement, Household inference, or any unrelated domain migration.
+
+The next lifecycle phase is VERIFY / read-switch readiness review.
