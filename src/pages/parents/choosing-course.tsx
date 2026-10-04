@@ -82,8 +82,8 @@ const decisionCards = [
   },
   {
     title: 'Start with grammar',
-    destination: '/courses/grammar',
-    ctaLabel: 'Explore beginner grammar',
+    destination: '/grammar',
+    ctaLabel: 'Explore Grammar programme',
     ctaLocation: 'decision_ladder',
     helper: 'Best when correctness drops in writing and answers.',
     bullets: [
