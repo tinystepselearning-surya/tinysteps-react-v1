@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -192,7 +192,7 @@ function timestampFromYmdEndExclusive(ymd: string): admin.firestore.Timestamp {
 }
 
 export const auditTeacherTodaySessions = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const teacherUid = toCleanText(request.data?.teacherUid);
   const date = toCleanText(request.data?.date);
