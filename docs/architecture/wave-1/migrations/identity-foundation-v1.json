@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick4_validated_pending_production_deployment",
+        "status": "brick4_production_deployed_partial_r4_active",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -853,7 +853,7 @@
           "productionWiring": true,
           "productionBehaviorChanged": true,
           "canonicalPrimaryWritesEnabled": true,
-          "learnerWriteCutover": "validated_pending_production_deployment",
+          "learnerWriteCutover": "browser_learner_create_update_production_active",
           "canonicalTargets": [
             "people",
             "learnerProfiles",
@@ -939,6 +939,46 @@
             "firestoreRulesDeploymentRequired": false,
             "firestoreIndexesDeploymentRequired": false,
             "result": "success"
+          },
+          "productionDeployment": {
+            "commit": "8fc827c9ef11e91e09f83f54313b49e05284dbdb",
+            "workflowRunId": 37202185246,
+            "workflowRunNumber": 3869,
+            "result": "success",
+            "completedAt": "2026-10-04T12:35:49Z",
+            "functionsProductionMarkerAdvanced": true,
+            "functionsProductionMarker": "8fc827c9ef11e91e09f83f54313b49e05284dbdb",
+            "fullFunctionsDeployment": false,
+            "deploymentBatches": [
+              [
+                "adminCreateStudent",
+                "adminUpdateStudent",
+                "createStudentForParent"
+              ],
+              [
+                "onWave1LegacyKidIdentityWrite",
+                "onWave1LegacySchoolIdentityWrite",
+                "onWave1LegacySchoolUserIdentityWrite",
+                "onWave1LegacyUserIdentityWrite"
+              ]
+            ],
+            "impactedFunctions": [
+              "adminCreateStudent",
+              "adminUpdateStudent",
+              "createStudentForParent",
+              "onWave1LegacyKidIdentityWrite",
+              "onWave1LegacySchoolIdentityWrite",
+              "onWave1LegacySchoolUserIdentityWrite",
+              "onWave1LegacyUserIdentityWrite"
+            ],
+            "impactedFunctionsCount": 7,
+            "verifiedFunctionsReady": 7,
+            "hostingDeployed": true,
+            "hostingProductionMarkerAdvanced": true,
+            "hostingProductionMarker": "8fc827c9ef11e91e09f83f54313b49e05284dbdb",
+            "liveDeploymentIntegrityVerified": true,
+            "firestoreRulesDeployed": false,
+            "firestoreIndexesDeployed": false
           }
         }
       },
@@ -986,7 +1026,8 @@
       },
       "canonicalPrimaryWriteScope": [
         "adminCreateStudent:learner_create",
-        "createStudentForParent:learner_create"
+        "createStudentForParent:learner_create",
+        "adminUpdateStudent:learner_update"
       ]
     }
   },

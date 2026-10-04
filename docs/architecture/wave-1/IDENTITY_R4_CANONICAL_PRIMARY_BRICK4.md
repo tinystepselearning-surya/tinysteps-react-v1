@@ -81,4 +81,23 @@ Branch validation completed successfully in workflow run `37201998962`.
 - Firestore Rules deployment required: no.
 - Firestore indexes deployment required: no.
 
-Production deployment remains a separate gate. The dedicated test parent/student identities are retained; production verification must not delete those canonical identities.
+## Production deployment
+
+Production deployment completed successfully in Firebase workflow run `37202185246` / run number **3869** for merge commit `8fc827c9ef11e91e09f83f54313b49e05284dbdb`.
+
+- Functions deployment: targeted, not full fleet.
+- Batch 1: `adminCreateStudent`, `adminUpdateStudent`, `createStudentForParent`.
+- Batch 2: `onWave1LegacyKidIdentityWrite`, `onWave1LegacySchoolIdentityWrite`, `onWave1LegacySchoolUserIdentityWrite`, `onWave1LegacyUserIdentityWrite`.
+- Cloud Functions readiness verification: **7/7 ready**.
+- Hosting production deployment: succeeded.
+- Live deployment integrity/build identity verification: succeeded.
+- Functions production baseline advanced to the merge commit.
+- Hosting production baseline advanced to the merge commit.
+- Firestore Rules deployment: not required.
+- Firestore indexes deployment: not required.
+
+The browser learner create/update cutover is now production-active.
+
+The dedicated test parent/student identities are retained for later controlled production verification. Their canonical identity records are not cleanup targets. Any test enrollment or recurring schedule must remain disabled/archived so the retained identities do not generate operational sessions, reminders, attendance, teacher earnings, billing, or unnecessary Firestore activity.
+
+R4 remains partial: auth-backed user writers, reader authority, Firestore Rules authority, legacy write freeze, and destructive retirement are still not authorized.
