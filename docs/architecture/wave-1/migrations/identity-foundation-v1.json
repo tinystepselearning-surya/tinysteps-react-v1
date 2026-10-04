@@ -314,5 +314,51 @@
     "householdDocuments": 0,
     "writesPerformed": 0,
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
+  },
+  "switchReads": {
+    "status": "brick1_ready_for_local_validation",
+    "authority": {
+      "primaryReadAuthority": "legacy",
+      "canonicalRole": "shadow comparison only",
+      "primaryWriteAuthority": "legacy"
+    },
+    "brick1": {
+      "title": "Legacy-authoritative shadow read adapter",
+      "adapter": "functions/src/schoolOS/identity/readAdapter.ts",
+      "regressionTest": "functions/test/identityReadAdapter.spec.ts",
+      "liveProductionWiring": false,
+      "persistentTelemetry": false,
+      "productionReadAmplification": 0,
+      "supportedLegacySources": [
+        "users",
+        "kids",
+        "schools",
+        "schoolUsers"
+      ],
+      "canonicalTargets": [
+        "people",
+        "authIdentities",
+        "roleAssignments",
+        "learnerProfiles",
+        "guardianRelationships",
+        "organisations",
+        "organisationMemberships"
+      ],
+      "shadowStatuses": [
+        "match",
+        "legacy_missing",
+        "canonical_missing",
+        "semantic_mismatch",
+        "canonical_read_error"
+      ],
+      "canonicalFailureChangesBusinessResult": false,
+      "canonicalMissingChangesBusinessResult": false,
+      "semanticMismatchChangesBusinessResult": false,
+      "legacyMissingPromotesCanonical": false,
+      "validatedAt": null,
+      "result": null
+    },
+    "nextBrick": "production shadow canary and divergence telemetry",
+    "readSwitchAuthorized": false
   }
 }
