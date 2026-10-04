@@ -9,7 +9,6 @@ import {
   type CanonicalLearnerCreatePlan,
   type CanonicalLearnerDetailsInput,
   type CanonicalLearnerPrivateProfileInput,
-  type NestedParentStudentCompatibilityInput,
 } from './canonicalPrimaryPlanner';
 import { buildRoleAssignmentId } from './idStrategy';
 
@@ -32,10 +31,7 @@ export type CanonicalPrimaryLearnerWriteErrorCode =
   | 'parent_canonical_person_ineligible'
   | 'parent_canonical_role_missing'
   | 'parent_canonical_role_ineligible'
-  | 'parent_profile_compatibility_missing'
-  | 'parent_profile_compatibility_inactive'
   | 'duplicate_learner_name'
-  | 'duplicate_nested_learner_name'
   | 'generated_person_id_collision'
   | 'canonical_target_exists'
   | 'compatibility_target_exists';
@@ -65,8 +61,6 @@ export interface ExecuteCanonicalLearnerCreateInput {
   countryCode?: string | null;
   details?: CanonicalLearnerDetailsInput | null;
   privateProfile?: CanonicalLearnerPrivateProfileInput | null;
-  nestedParentStudentCompatibility?:
-    NestedParentStudentCompatibilityInput | null;
 }
 
 export interface ExecuteCanonicalLearnerCreateResult {
@@ -147,17 +141,6 @@ export function canonicalParentEligibilityIssue(params: {
     return 'parent_canonical_role_ineligible';
   }
 
-  return null;
-}
-
-export function parentProfileCompatibilityIssue(
-  data: LooseDoc | null,
-): CanonicalPrimaryLearnerWriteErrorCode | null {
-  if (!data) return 'parent_profile_compatibility_missing';
-  const status = cleanText(data.status).toLowerCase();
-  if (status && status !== 'active') {
-    return 'parent_profile_compatibility_inactive';
-  }
   return null;
 }
 
@@ -294,29 +277,6 @@ async function verifyCanonicalLearnerWrite(params: {
     }
   }
 
-  for (const document of plan.compatibilityNestedDocuments) {
-    const snapshot = await db
-      .collection(document.parentCollection)
-      .doc(document.parentId)
-      .collection(document.collection)
-      .doc(document.documentId)
-      .get();
-    const actual = snapshot.exists
-      ? snapshot.data() || {}
-      : null;
-
-    if (
-      !expectedFieldsMatch(actual, {
-        ...document.data,
-        createdBy: actorId,
-        updatedBy: actorId,
-      })
-    ) {
-      issues.push(
-        `compatibility_mismatch:${document.parentCollection}/${document.collection}`,
-      );
-    }
-  }
 
   const parentSnapshot = await db
     .collection('users')
@@ -348,7 +308,6 @@ export async function executeCanonicalLearnerCreate(
     countryCode = null,
     details = null,
     privateProfile = null,
-    nestedParentStudentCompatibility = null,
   } = input;
 
   const personId = db.collection('people').doc().id;
@@ -365,7 +324,6 @@ export async function executeCanonicalLearnerCreate(
     summary: { ...DEFAULT_LEARNER_SUMMARY },
     details,
     privateProfile,
-    nestedParentStudentCompatibility,
     actorId,
     writeId,
   });
@@ -421,57 +379,6 @@ export async function executeCanonicalLearnerCreate(
       );
     }
 
-    if (nestedParentStudentCompatibility?.enabled) {
-      const parentProfileRef = db
-        .collection('parents')
-        .doc(parentId);
-      const parentProfile =
-        await transaction.get(parentProfileRef);
-      const profileIssue =
-        parentProfileCompatibilityIssue(
-          parentProfile.exists
-            ? parentProfile.data() || {}
-            : null,
-        );
-
-      if (profileIssue) {
-        throw new CanonicalPrimaryLearnerWriteError(
-          profileIssue,
-          'Selected parent profile compatibility record is unavailable',
-        );
-      }
-
-      const nestedDuplicateQuery = parentProfileRef
-        .collection('students')
-        .where('fullName', '==', displayName)
-        .select('fullName', 'status');
-      const nestedExisting =
-        await transaction.get(nestedDuplicateQuery);
-
-      const nestedDuplicate =
-        nestedExisting.docs.some((snapshot) => {
-          const data = snapshot.data() || {};
-          const nestedStatus =
-            cleanText(data.status).toLowerCase();
-          return (
-            normalizeNameForCompare(
-              learnerNameFromCompatibility(data),
-            ) === normalizeNameForCompare(displayName) &&
-            (
-              !nestedStatus ||
-              nestedStatus === 'active' ||
-              nestedStatus === 'trial'
-            )
-          );
-        });
-
-      if (nestedDuplicate) {
-        throw new CanonicalPrimaryLearnerWriteError(
-          'duplicate_nested_learner_name',
-          'A nested compatibility learner with this name already exists under the selected parent',
-        );
-      }
-    }
 
     const duplicateQuery = db
       .collection('kids')
@@ -540,21 +447,6 @@ export async function executeCanonicalLearnerCreate(
       compatibilitySnapshots.set(key, snapshot);
     }
 
-    const nestedCompatibilitySnapshots = new Map<
-      string,
-      admin.firestore.DocumentSnapshot
-    >();
-    for (const document of plan.compatibilityNestedDocuments) {
-      const key =
-        `${document.parentCollection}/${document.collection}/${document.documentId}`;
-      const snapshot = await transaction.get(
-        db.collection(document.parentCollection)
-          .doc(document.parentId)
-          .collection(document.collection)
-          .doc(document.documentId),
-      );
-      nestedCompatibilitySnapshots.set(key, snapshot);
-    }
 
     for (const [key, snapshot] of canonicalSnapshots) {
       if (snapshot.exists) {
@@ -565,10 +457,7 @@ export async function executeCanonicalLearnerCreate(
       }
     }
 
-    for (const [key, snapshot] of [
-      ...compatibilitySnapshots,
-      ...nestedCompatibilitySnapshots,
-    ]) {
+    for (const [key, snapshot] of compatibilitySnapshots) {
       if (snapshot.exists) {
         throw new CanonicalPrimaryLearnerWriteError(
           'compatibility_target_exists',
@@ -599,21 +488,6 @@ export async function executeCanonicalLearnerCreate(
       );
     }
 
-    for (const document of plan.compatibilityNestedDocuments) {
-      transaction.create(
-        db.collection(document.parentCollection)
-          .doc(document.parentId)
-          .collection(document.collection)
-          .doc(document.documentId),
-        compatibilityWriteData({
-          data: document.data,
-          actorId,
-          now,
-          serverTimestampFields:
-            document.serverTimestampFields,
-        }),
-      );
-    }
 
     for (const union of plan.compatibilityArrayUnions) {
       transaction.set(
@@ -644,8 +518,7 @@ export async function executeCanonicalLearnerCreate(
     canonicalDocumentsWritten:
       plan.canonicalDocuments.length,
     compatibilityDocumentsWritten:
-      plan.compatibilityDocuments.length +
-      plan.compatibilityNestedDocuments.length,
+      plan.compatibilityDocuments.length,
     postWriteVerified:
       verificationIssues.length === 0,
     verificationIssues,
