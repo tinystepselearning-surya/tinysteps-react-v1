@@ -392,24 +392,24 @@ test('treats legacy childIds as derivable only when every backlink is represente
   );
 });
 
-test('allows legacy learner teacher aliases to retire only when represented by a usable enrollment', () => {
+test('retires legacy learner teacher snapshots when they have current or historical domain evidence', () => {
   const common = {
     users: [],
     guardianRelationships: [],
     peopleIds: new Set(['kid-1', 'teacher-1']),
     organisationIds: new Set(),
     schools: [],
+    kids: [
+      row('kid-1', {
+        teacherId: 'teacher-1',
+        teacherIds: ['teacher-1'],
+      }),
+    ],
   };
 
-  const healthy =
+  const current =
     verifyDerivedRelationshipCoverage({
       ...common,
-      kids: [
-        row('kid-1', {
-          teacherId: 'teacher-1',
-          teacherIds: ['teacher-1'],
-        }),
-      ],
       enrollments: [
         row('enr-1', {
           kidId: 'kid-1',
@@ -417,30 +417,68 @@ test('allows legacy learner teacher aliases to retire only when represented by a
           status: 'active',
         }),
       ],
+      classSessions: [],
     });
-  assert.equal(healthy.issueCount, 0);
+  assert.equal(current.issueCount, 0);
+  assert.equal(
+    current.teacherEvidence.currentUsableEnrollment,
+    1,
+  );
 
-  const archivedOnly =
+  const historicalEnrollment =
     verifyDerivedRelationshipCoverage({
       ...common,
-      kids: [
-        row('kid-1', {
-          teacherId: 'teacher-1',
-          teacherIds: ['teacher-1'],
-        }),
-      ],
       enrollments: [
         row('enr-1', {
           kidId: 'kid-1',
           teacherId: 'teacher-1',
-          status: 'active',
+          status: 'archived',
           archived: true,
         }),
       ],
+      classSessions: [],
     });
   assert.equal(
-    archivedOnly.byCode
-      .legacy_kid_teacher_missing_usable_enrollment_assignment,
+    historicalEnrollment.issueCount,
+    0,
+  );
+  assert.equal(
+    historicalEnrollment.teacherEvidence
+      .historicalEnrollment,
+    1,
+  );
+
+  const sessionOnly =
+    verifyDerivedRelationshipCoverage({
+      ...common,
+      enrollments: [],
+      classSessions: [
+        row('session-1', {
+          kidId: 'kid-1',
+          teacherId: 'teacher-1',
+        }),
+      ],
+    });
+  assert.equal(sessionOnly.issueCount, 0);
+  assert.equal(
+    sessionOnly.teacherEvidence.classSessionOnly,
+    1,
+  );
+
+  const unexplained =
+    verifyDerivedRelationshipCoverage({
+      ...common,
+      enrollments: [],
+      classSessions: [],
+    });
+  assert.equal(unexplained.issueCount, 1);
+  assert.equal(
+    unexplained.byCode
+      .legacy_kid_teacher_missing_any_operational_or_historical_evidence,
+    1,
+  );
+  assert.equal(
+    unexplained.teacherEvidence.unexplained,
     1,
   );
 });
