@@ -1,6 +1,6 @@
 # Wave 1 R4 — Brick 5E: Auth-backed canonical writer activation
 
-**Status:** VALIDATED — merge/deployment pending  
+**Status:** COMPLETE — production deployed and canary verified  
 **Scope:** production wiring for generic auth-backed identity writers  
 **Reader authority cutover:** no  
 **Firestore Rules authority cutover:** no  
@@ -278,16 +278,84 @@ Some unchanged callable behavior appears in the bounded target list because thos
 share source modules with the activated role/identity code. The deployment is still bounded;
 it is not a full Functions deployment.
 
-## Production evidence rule
+## Production deployment evidence
 
-Brick 5E must remain **deployment pending** until:
+Brick 5E merged to `main` as PR #603.
 
-1. the merge reaches `main`;
-2. the bounded Functions deployment succeeds;
-3. Hosting deploys and live artifact identity is verified;
-4. Firestore Rules/indexes remain unchanged as expected;
-5. a controlled production auth-user canary verifies UID/Person decoupling and canonical
-   compatibility behavior.
+~~~text
+Main merge commit: 87e0c0ef0a92755374cba2bfc9fb3baa694b4340
+Deploy workflow run: 37207219299
+Deploy run number: 3875
+Result: success
+Completed: 2026-10-04T14:02:52Z
+~~~
 
-Only after the live canary passes may R4 auth-backed canonical-primary writes be recorded
-as production-active.
+Deployment facts:
+
+- bounded Functions deployment: **15/15 ready**;
+- full Functions deployment: **no**;
+- Hosting deployment: **success**;
+- Firestore Rules deployed: **no**;
+- Firestore indexes deployed: **no**;
+- recovery job required: **no**.
+
+The deployed Function set matched the validated impact plan exactly.
+
+## Production canary evidence
+
+A dedicated suspended Parent test identity created through the live Admin User Management
+screen was used as the create-path canary. The verifier recorded only privacy-safe hash
+tokens for UID, Person ID and email.
+
+~~~text
+Canary verification workflow run: 37209875109
+Result: success
+Role: parent
+Status: suspended
+~~~
+
+Verified invariants:
+
+- exactly one matching Firestore compatibility user exists;
+- exactly one matching Firebase Auth account exists;
+- Firebase Auth account is disabled for suspended status;
+- `users/{uid}.canonicalPersonId` is present;
+- Firebase UID and canonical Person ID are different;
+- `people/{personId}` exists;
+- **`people/{firebaseUid}` does not exist**;
+- deterministic Firebase AuthIdentity exists;
+- AuthIdentity provider is `firebase`;
+- AuthIdentity providerSubject equals Firebase UID;
+- AuthIdentity personId equals canonical Person ID;
+- global Parent RoleAssignment exists and belongs to the Person;
+- UID-keyed `users/{uid}` compatibility document exists;
+- UID-keyed `parents/{uid}` compatibility mirror exists and points to the Person;
+- Firebase Auth disabled state matches suspended lifecycle state.
+
+Privacy-safe evidence tokens:
+
+~~~text
+uid:      e2003bba0d50
+personId: b30a7af631c7
+email:    44d55924fce0
+~~~
+
+No raw Firebase UID or Person ID is recorded in the architecture evidence.
+
+## Brick 5E verdict
+
+All activation gates are satisfied.
+
+R4 auth-backed canonical-primary writes are now **production-active** for the approved
+generic roles:
+
+~~~text
+admin
+founder
+teacher
+parent
+learningPartner
+~~~
+
+Compatibility roots remain UID-keyed until the later reader/rules and role-root key
+cutovers. This does not authorize R5–R8 retirement actions.
