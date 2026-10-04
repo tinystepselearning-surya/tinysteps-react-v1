@@ -133,14 +133,9 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
 
     setLoading(true);
     try {
-      const isArchiveTransition = status === 'archived' && student.status !== 'archived';
-      if (isArchiveTransition) {
-        const archiveKid = httpsCallable(functions, 'archiveKid');
-        await archiveKid({
-          kidId: student.id,
-          reason: 'Archived from student management',
-        });
-      }
+      const isArchiveTransition =
+        status === 'archived' &&
+        student.status !== 'archived';
 
       const updateStudent =
         httpsCallable(functions, 'adminUpdateStudent');
@@ -155,6 +150,15 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
             ? null
             : normalizeCountryCode(countryCode),
       });
+
+      if (isArchiveTransition) {
+        const archiveKid =
+          httpsCallable(functions, 'archiveKid');
+        await archiveKid({
+          kidId: student.id,
+          reason: 'Archived from student management',
+        });
+      }
 
       toast({ title: 'Updated', description: 'Student updated' });
       onUpdated?.();
