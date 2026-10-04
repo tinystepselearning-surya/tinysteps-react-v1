@@ -1,0 +1,32 @@
+name: Wave 1 R4 Learner Writer Validation
+
+on:
+  push:
+    branches:
+      - wave1/identity-r4-learner-primary-writer
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - name: Install root test dependencies
+        run: npm ci
+      - name: Install functions dependencies
+        run: npm --prefix functions ci
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused R4 and legacy-sync tests
+        run: >-
+          npx vitest run
+          --config functions/vitest.config.ts
+          functions/test/canonicalPrimaryPlanner.spec.ts
+          functions/test/canonicalPrimaryWriter.spec.ts
+          functions/test/identityLegacySync.spec.ts
