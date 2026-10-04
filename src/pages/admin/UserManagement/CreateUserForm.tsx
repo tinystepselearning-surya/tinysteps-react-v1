@@ -547,23 +547,6 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="childIds"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assign kids (optional)</FormLabel>
-                      <div className="mt-2">
-                        <KidMultiSelect
-                          value={field.value || []}
-                          onChange={(ids) => field.onChange(ids)}
-                          kids={kids.map(k => ({ id: k.id, name: k.fullName || k.name || k.id }))}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </TabsContent>
             )}
 
