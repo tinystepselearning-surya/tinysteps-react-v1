@@ -607,22 +607,25 @@
         "atomicCanonicalAndCompatibilityWrite": true,
         "canonicalProjectionLoopSuppression": true,
         "boundedPostWriteVerification": true,
+        "rawIdentityIdsInTelemetry": false,
+        "rawLearnerNamesInTelemetry": false,
+        "firestoreTelemetryWrites": 0,
         "productionDeployment": null,
         "productionCanary": null,
         "localValidation": {
-          "validatedImplementationCommit": "6f62abb21e7497804d131fdf1bc61bc39a3c45fc",
-          "workflowRunId": 37197811025,
+          "validatedImplementationCommit": "1b1e38665004cbf2131bd2ce636cd87d0c86cf44",
+          "workflowRunId": 37198186566,
           "functionsBuild": "passed",
           "focusedTests": {
-            "passed": 20,
-            "total": 20,
+            "passed": 21,
+            "total": 21,
             "canonicalPrimaryPlanner": {
               "passed": 5,
               "total": 5
             },
             "canonicalPrimaryWriter": {
-              "passed": 5,
-              "total": 5
+              "passed": 6,
+              "total": 6
             },
             "identityLegacySync": {
               "passed": 10,
@@ -633,8 +636,8 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         },
         "deploymentImpactValidation": {
-          "validatedCommit": "8b827814da715a4a22d47be686e20d591d2533da",
-          "workflowRunId": 37197962800,
+          "validatedCommit": "1b1e38665004cbf2131bd2ce636cd87d0c86cf44",
+          "workflowRunId": 37198186566,
           "functionsProductionBaseline": "6b07f7167f8fa1606f2e286ba43d33e330cadd48",
           "functionsDeploymentRequired": true,
           "fullFunctionsDeployment": false,
