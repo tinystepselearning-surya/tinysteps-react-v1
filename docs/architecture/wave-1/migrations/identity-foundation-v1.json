@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2b_production_complete_ready_for_next_bounded_admin_slice",
+    "status": "r5c2c1_learner_mutations_validated_pending_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c_bounded_admin_mutation_cutover",
+    "nextBrick": "r5c2c1_learner_mutations_deploy",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2b_production_complete_ready_for_next_bounded_admin_slice",
+      "status": "r5c2c1_learner_mutations_validated_pending_merge",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2c_bounded_admin_mutation_cutover",
+      "nextBrick": "r5c2c1_learner_mutations_deploy",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2137,6 +2137,75 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c1": {
+              "title": "Learner profile Admin mutations",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "adminCreateStudent",
+                "adminUpdateStudent"
+              ],
+              "businessMutationAllowed": true,
+              "canonicalPrimaryWritersPreserved": true,
+              "excludedMutationDomains": [
+                "enrollment_lifecycle",
+                "learner_archive",
+                "scheduling",
+                "attendance",
+                "finance",
+                "admin_account_mutation"
+              ],
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": false,
+              "validation": {
+                "mode": "local_acceptance",
+                "headSha": "f076af1a9c52b601ab6aacbdb05d338b27d5b0c1",
+                "result": "success",
+                "functionsBuild": "passed",
+                "functionsUnitEstate": {
+                  "filesPassed": 135,
+                  "filesSkipped": 2,
+                  "testsPassed": 1114,
+                  "testsSkipped": 25
+                },
+                "learnerMutationRouting": {
+                  "passed": 3,
+                  "total": 3
+                },
+                "wave1AuthorizationHardening": {
+                  "passed": 8,
+                  "total": 8
+                },
+                "deploymentImpactClassifierAndContracts": {
+                  "passed": 81,
+                  "total": 81
+                },
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 2,
+                  "impactedFunctions": [
+                    "adminCreateStudent",
+                    "adminUpdateStudent"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false,
+                  "avsCallableTransportVerificationRequired": false
+                },
+                "affectedPreflight": {
+                  "result": "blocked_by_preexisting_baseline_lint",
+                  "unrelatedFile": "functions/src/adminCreateUserCanonical.ts",
+                  "rule": "@typescript-eslint/no-unused-vars",
+                  "baseSha": "00912936e632c4d4b9bd9c3140c305539b3ac48f",
+                  "changedBySlice": false
+                },
+                "temporaryValidationWorkflowCreated": false
               }
             }
           }

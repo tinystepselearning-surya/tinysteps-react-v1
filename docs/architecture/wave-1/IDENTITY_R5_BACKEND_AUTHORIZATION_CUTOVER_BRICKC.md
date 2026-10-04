@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C1 COMPLETE IN PRODUCTION — R5C2A bounded Admin read/audit cutover validation pending  
+**Status:** R5C2B COMPLETE IN PRODUCTION — R5C2C1 learner mutation slice validated pending merge  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -536,3 +536,61 @@ slice because they share one implementation dependency boundary.
 
 The shared legacy `helpers/adminGuard.ts` still remains in place for callables that have
 not yet moved through a bounded canonical-authorization slice.
+
+
+## R5C2C1 — learner profile mutations
+
+R5C2C begins with the smallest independently deployable mutation slice:
+
+~~~text
+adminCreateStudent
+adminUpdateStudent
+~~~
+
+Both callables already use canonical-primary learner writers. This slice changes only requester
+Admin authorization from the legacy shared guard to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+The shared `helpers/adminGuard.ts` remains unchanged. Enrollment lifecycle, archive, scheduling,
+attendance, finance, and account mutation callables remain outside this slice.
+
+### R5C2C1 local acceptance
+
+Validation was run locally on branch head:
+
+~~~text
+f076af1a9c52b601ab6aacbdb05d338b27d5b0c1
+~~~
+
+Results:
+
+- Functions TypeScript build: passed.
+- Full Functions unit estate: **135 files passed, 2 skipped; 1114 tests passed, 25 skipped**.
+- R5C2C1 learner-mutation routing: **3/3 passed**.
+- Wave 1 authorization hardening: **8/8 passed**.
+- Deployment-impact/deployment contract tests: **81/81 passed**.
+- Functions impacted: **exactly 2**.
+- Full Functions deployment: no.
+- Hosting changed: no.
+- Firestore Rules changed: no.
+- Firestore indexes changed: no.
+- AVS callable transport verification required: no.
+
+The affected preflight's repository-wide Functions lint step is blocked by a pre-existing
+`@typescript-eslint/no-unused-vars` issue in `functions/src/adminCreateUserCanonical.ts`.
+That file is unchanged by R5C2C1 and contains the same issue on base
+`00912936e632c4d4b9bd9c3140c305539b3ac48f`. It is intentionally not repaired in this PR,
+because doing so would enlarge the production Function deployment boundary.
+
+Validated production targets:
+
+~~~text
+adminCreateStudent
+adminUpdateStudent
+~~~
+
+R5C2C1 is therefore acceptance-complete and ready for merge/deployment.
