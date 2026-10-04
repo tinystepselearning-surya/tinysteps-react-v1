@@ -276,6 +276,7 @@ const CourseDetailPage: FC = () => {
         title={seoTitle}
         description={seoDescription}
         canonical={canonicalUrl}
+        robots={isCanonicalSlug ? 'index,follow' : 'noindex,follow'}
         jsonLd={jsonLd}
         keywords={Array.isArray(coursePageConfig?.keywords) ? coursePageConfig.keywords.join(', ') : undefined}
       />
@@ -352,6 +353,18 @@ const CourseDetailPage: FC = () => {
           />
         }
       />
+
+      {courseTrack === 'grammar' ? (
+        <section className="px-6 pb-3 lg:px-8" aria-label="Grammar programme hierarchy">
+          <div className="mx-auto max-w-7xl rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm leading-6 text-slate-700">
+            This is a level-specific course inside the{' '}
+            <Link to="/grammar" className="font-semibold text-slate-950 underline decoration-emerald-400 underline-offset-2">
+              Tiny Steps Grammar programme
+            </Link>
+            . Use the programme page for the broad Grammar overview; use this page for {courseHeading} placement, curriculum, and outcomes.
+          </div>
+        </section>
+      ) : null}
 
       <section className="px-6 pb-3 lg:px-8" aria-label="How to use this course page">
         <div className="mx-auto max-w-7xl rounded-[1.75rem] border border-slate-200/90 bg-white/90 p-3 shadow-[0_14px_36px_rgba(15,23,42,0.07)] backdrop-blur sm:p-4">

@@ -41,11 +41,11 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
 
     if (subject === 'grammar') {
       return {
-        title: 'Grammar and writing support that matches real parent questions',
+        title: 'Grammar level guide: choose accuracy support before writing support',
         body:
-          'Tiny Steps supports parents searching for grammar classes, writing classes, sentence structure help, punctuation practice, and paragraph writing support for kids. The pathway moves from grammar basics to clearer, more confident writing.',
+          'Use Beginner or Advanced Grammar when sentence accuracy, tense control, punctuation, or correction is the main gap. Use the dedicated Writing programme when idea development, paragraphs, stories, editing, or longer composition is the main gap.',
         intent:
-          'Parent intent: grammar classes for kids • grammar and writing classes • sentence structure • punctuation • paragraph writing support.',
+          'Parent intent: choosing a Grammar level • Beginner vs Advanced Grammar • when to choose Writing.',
       };
     }
 
@@ -164,6 +164,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
       title: effectiveTitle,
       description: effectiveDescription,
       canonicalPath: effectiveCanonicalPath,
+      robots: 'index,follow',
       ogType: 'website',
       jsonLd: jsonLdBlocks,
     });
@@ -201,6 +202,18 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
                 Core authority page:{' '}
                 <Link to="/phonics" className="text-slate-900 underline decoration-sky-400 underline-offset-2 hover:text-sky-700">
                   phonics classes for kids
+                </Link>
+              </p>
+            ) : null}
+            {subject === 'grammar' ? (
+              <p className="mt-4 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700">
+                Primary programme owners:
+                <Link to="/grammar" className="text-slate-900 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-700">
+                  Grammar programme
+                </Link>
+                <span aria-hidden="true">•</span>
+                <Link to="/writing-classes-for-kids" className="text-slate-900 underline decoration-emerald-400 underline-offset-2 hover:text-emerald-700">
+                  Writing programme
                 </Link>
               </p>
             ) : null}

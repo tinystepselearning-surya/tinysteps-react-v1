@@ -103,9 +103,9 @@ export const COMMERCIAL_C2_OWNERSHIP_CLUSTERS = freezeList<CommercialOwnershipCl
   cluster({
     id: 'grammar-provider', subject: 'grammar', canonicalOwnerPath: '/grammar', ownerRole: 'programme', priority: 'P2',
     primaryQuery: 'online grammar classes for kids',
-    supportingPaths: ['/writing-classes-for-kids','/blog/how-to-improve-sentence-formation-in-kids','/resources/grammar'],
-    forbiddenPrimaryClaimants: ['/english-grammar-writing-classes','/resources/grammar'],
-    rationale: 'Generic grammar, sentence-formation and grammar-tutor commercial intent belongs to /grammar. The combined legacy landing must not compete for generic grammar classes.',
+    supportingPaths: ['/courses/grammar','/courses/grammar-mastery','/writing-classes-for-kids','/blog/how-to-improve-sentence-formation-in-kids','/resources/grammar'],
+    forbiddenPrimaryClaimants: ['/courses/grammar','/courses/grammar-mastery','/english-grammar-writing-classes','/resources/grammar'],
+    rationale: 'Generic grammar, sentence-formation and grammar-tutor commercial intent belongs to /grammar. Beginner and Advanced course URLs own level-specific placement intent; the combined Grammar/Writing URL is a chooser/support page. None may compete for the broad programme query.',
   }),
   cluster({
     id: 'writing-provider', subject: 'writing', canonicalOwnerPath: '/writing-classes-for-kids', ownerRole: 'programme', priority: 'P2',
