@@ -356,10 +356,10 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     publicSlug: 'grammar',
     routePath: '/courses/grammar',
     name: 'Beginner Grammar',
-    h1: 'Beginner Grammar Classes for Kids',
-    title: 'Beginner Grammar Classes for Kids | Tiny Steps',
+    h1: 'Beginner Grammar Foundations: Sentence Building & Punctuation',
+    title: 'Beginner Grammar Foundations for Kids | Tiny Steps',
     description:
-      'Build strong sentence basics with live beginner grammar classes covering nouns, verbs, punctuation, sentence formation, and early writing accuracy.',
+      'Foundation-level Grammar course inside the Tiny Steps Grammar programme, focused on sentence building, nouns, verbs, articles, prepositions, punctuation, and early grammar accuracy.',
     educationalLevel: 'Beginner',
     track: 'grammar',
     breadcrumbName: 'Grammar Foundations',
@@ -370,6 +370,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     ],
     legacySlugs: ['grammar-essentials', 'basic-grammar'],
     relatedLinks: [
+      { label: 'Grammar programme overview', to: '/grammar' },
       { label: 'Parent course chooser', to: '/parents/choosing-course' },
       { label: 'Grammar roadmap for parents', to: '/blog/grammar-nouns-to-paragraphs' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
@@ -400,7 +401,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     h1: 'Advanced Grammar Mastery Classes for Kids',
     title: 'Advanced Grammar Mastery Classes for Kids | Tiny Steps',
     description:
-      'Live 1:1 Advanced Grammar for kids strengthening tense control, sentence structure, punctuation, grammar correction, self-editing, and grammar transfer into connected writing.',
+      'Advanced-level Grammar course inside the Tiny Steps Grammar programme, strengthening tense control, sentence structure, punctuation, grammar correction, self-editing, and grammar transfer into connected writing.',
     educationalLevel: 'Advanced',
     track: 'grammar',
     breadcrumbName: 'Grammar Mastery',
@@ -411,6 +412,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     ],
     legacySlugs: ['advanced-grammar'],
     relatedLinks: [
+      { label: 'Grammar programme overview', to: '/grammar' },
       { label: 'Track your child’s progress', to: '/parents/tracking-progress' },
       { label: 'Common grammar mistakes parents notice', to: '/parents/common-mistakes' },
       { label: 'Choose Writing for idea development and longer composition', to: '/writing-classes-for-kids' },
