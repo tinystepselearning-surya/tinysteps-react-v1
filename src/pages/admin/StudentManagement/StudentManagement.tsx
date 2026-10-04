@@ -1,7 +1,8 @@
 // src/pages/admin/StudentManagement/StudentManagement.tsx
 import { useCallback, useEffect, useState } from 'react';
-import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../../lib/firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../../lib/firebaseConfig';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -357,31 +358,24 @@ function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
     try {
       setSaving(true);
 
-      await addDoc(collection(db, 'kids'), {
-        // ✅ write both, so all UI works
+      if (!parentId) {
+        throw new Error('Select an existing parent before creating a student.');
+      }
+      if (ageYears == null) {
+        throw new Error('Age is required.');
+      }
+      if (!grade.trim()) {
+        throw new Error('Grade is required.');
+      }
+
+      const createStudent =
+        httpsCallable(functions, 'adminCreateStudent');
+      await createStudent({
+        parentId,
         fullName: name.trim(),
-        name: name.trim(),
-
-        grade: grade.trim() || null,
-
-        // ✅ canonical age field
-        ageYears: ageYears ?? null,
-
-        // ✅ canonical parent linking used elsewhere
-        parentIds: parentId ? [parentId] : [],
-        primaryParentId: parentId || null,
-
-        // legacy (keep for older pages if any)
-        parentId: parentId || null,
-
-        // display copies
-        parentName: parentName.trim() || null,
-        parentEmail: parentEmail.trim() || null,
-        parentPhone: parentPhone.trim() || null,
-
+        grade: grade.trim(),
+        ageYears,
         status: 'active',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
 
       toast({
