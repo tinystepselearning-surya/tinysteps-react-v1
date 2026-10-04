@@ -19,7 +19,12 @@ jobs:
         with:
           node-version: 22.x
           cache: npm
-          cache-dependency-path: functions/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
 
       - name: Install Functions dependencies
         run: npm ci --prefix functions --include=dev
@@ -29,12 +34,11 @@ jobs:
 
       - name: Run focused identity tests
         run: >-
-          cd functions &&
-          npx vitest run --config vitest.config.ts
-          test/authPersonCompatibility.spec.ts
-          test/identityReadAdapter.spec.ts
-          test/canonicalPrimaryPlanner.spec.ts
-          test/canonicalPrimaryWriter.spec.ts
+          npx vitest run --config functions/vitest.config.ts
+          functions/test/authPersonCompatibility.spec.ts
+          functions/test/identityReadAdapter.spec.ts
+          functions/test/canonicalPrimaryPlanner.spec.ts
+          functions/test/canonicalPrimaryWriter.spec.ts
 
       - name: Verify no deployed Function is impacted
         shell: bash
