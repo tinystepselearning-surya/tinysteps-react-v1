@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c1_school_management_guard_validated_pending_production",
+    "status": "r5c2a_admin_read_audit_validation_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c1_school_management_guard_deploy",
+    "nextBrick": "r5c2a_admin_read_audit_cutover",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c1_school_management_guard_validated_pending_production",
+      "status": "r5c2a_admin_read_audit_validation_pending",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c1_school_management_guard_deploy",
+      "nextBrick": "r5c2a_admin_read_audit_cutover",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -1838,8 +1838,8 @@
           "schoolAuthorizationUsesUsers": false,
           "schoolAuthorizationUsesSchoolUsers": false,
           "learningPartnerOperationalUidBoundaryPreserved": true,
-          "productionWiring": "partial_stage1_live",
-          "productionVerified": false,
+          "productionWiring": "complete",
+          "productionVerified": true,
           "tests": [
             "functions/test/authAccessAuthorization.spec.ts",
             "functions/test/authAccessAuthorizationRouting.spec.ts"
@@ -1961,15 +1961,52 @@
               },
               "temporaryValidationWorkflowRetiredBeforeMerge": true
             },
-            "productionWiring": false,
-            "productionVerified": false
+            "productionWiring": true,
+            "productionVerified": true,
+            "productionDeployment": {
+              "pullRequest": 610,
+              "mergeCommit": "2f65d1596504e067c289a60ba191ed190abfb629",
+              "workflowRunId": 37216816454,
+              "workflowRunNumber": 3882,
+              "result": "success",
+              "functionsPlanned": 5,
+              "functionsDeployed": 5,
+              "functionsVerifiedReady": 5,
+              "functionsFullDeployment": false,
+              "schoolCallableTransport": "passed",
+              "hostingChanged": false,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false,
+              "recoveryJobRequired": false
+            }
           }
         },
         "r5c2": {
           "sharedAdminGuard": "functions/src/helpers/adminGuard.ts",
-          "productionWiring": false,
+          "productionWiring": "not_started",
           "productionVerified": false,
-          "deferredBecauseSharedGuardFanoutFunctions": 124
+          "deferredBecauseSharedGuardFanoutFunctions": 124,
+          "strategy": "bounded_caller_migration_before_shared_guard_retirement",
+          "stagedCanonicalGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+          "sharedGuardStillLegacy": true,
+          "slices": {
+            "r5c2a": {
+              "title": "Low-risk Admin read and audit callables",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "auditTeacherEarningsCanonicalCoverage",
+                "getAdminTeacherEarningAdjustments",
+                "getAdminTeacherPayWithholdings",
+                "auditTeacherTodaySessions",
+                "traceStudentTransferHistory"
+              ],
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": true
+            }
+          }
         },
         "firestoreRulesCutover": false,
         "storageRulesCutover": false,
