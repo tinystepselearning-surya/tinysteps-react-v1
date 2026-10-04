@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "brick3_local_validation_complete",
+    "status": "r5a_auth_access_read_model_validated",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "narrow canonical-read canary after Brick 3 deployment, observation and reconciliation",
+    "nextBrick": "r5b_auth_access_read_model_backfill_and_live_maintenance",
     "readSwitchAuthorized": false,
     "brick2": {
       "status": "production_observation_complete",
@@ -1538,6 +1538,78 @@
         "createStudentForParent:learner_create",
         "adminUpdateStudent:learner_update"
       ]
+    },
+    "r5": {
+      "status": "r5a_validated_not_activated",
+      "productionReaderAuthority": "legacy_compatibility",
+      "productionRulesAuthority": "users_and_schoolUsers_compatibility",
+      "r5a": {
+        "title": "Canonical-derived UID-keyed auth access read model",
+        "collection": "authAccessReadModels",
+        "documentKey": "firebaseUid",
+        "implementation": "functions/src/schoolOS/identity/authAccessReadModel.ts",
+        "regressionTest": "functions/test/authAccessReadModel.spec.ts",
+        "documentation": "docs/architecture/wave-1/IDENTITY_R5_AUTH_ACCESS_READ_MODEL_BRICKA.md",
+        "productionWiring": false,
+        "productionBehaviorChanged": false,
+        "backfillPerformed": false,
+        "backendReaderCutover": false,
+        "firestoreRulesCutover": false,
+        "authority": "canonical-derived_read_model_only",
+        "canonicalSources": [
+          "people",
+          "authIdentities",
+          "roleAssignments",
+          "organisationMemberships"
+        ],
+        "legacySourcesReadByModelLoader": [],
+        "fields": [
+          "firebaseUid",
+          "personId",
+          "personStatus",
+          "authStatus",
+          "accessActive",
+          "globalRoles",
+          "schoolAdminOrganisationIds",
+          "sourceAuthIdentityId"
+        ],
+        "accessActiveRule": "person_active_and_authIdentity_active",
+        "globalRoleSource": "active_global_roleAssignments_only",
+        "schoolAdminSource": "intersection_of_active_schoolAdmin_organisationMembership_and_active_organisation_scoped_roleAssignment",
+        "defaultBounds": {
+          "roleAssignments": 50,
+          "organisationMemberships": 50
+        },
+        "operationalUidBoundaryPreserved": true,
+        "directClientReadWritePlanned": false,
+        "localValidation": {
+          "validatedBranchHead": "b8c95cdd04b3f9d97cbc45e3d55cf193ec55807b",
+          "workflowRunId": 37210305326,
+          "functionsBuild": "passed",
+          "focusedTests": {
+            "passed": 62,
+            "total": 62,
+            "filesPassed": 7,
+            "totalFiles": 7
+          },
+          "authAccessReadModelTests": {
+            "passed": 10,
+            "total": 10
+          },
+          "deploymentImpact": {
+            "functionsSourceChanged": true,
+            "functionsValidationRequired": true,
+            "functionsDeploymentRequired": false,
+            "impactedFunctionsCount": 0,
+            "hostingChanged": false,
+            "firestoreRulesChanged": false,
+            "firestoreIndexesChanged": false
+          },
+          "result": "success",
+          "temporaryValidationWorkflowRetiredBeforeMerge": true
+        }
+      },
+      "nextBrick": "r5b_auth_access_read_model_backfill_and_live_maintenance"
     }
   },
   "legacyRetirement": {
