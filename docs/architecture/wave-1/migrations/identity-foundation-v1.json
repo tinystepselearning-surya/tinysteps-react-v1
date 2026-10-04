@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c_backend_authorization_validation_pending",
+    "status": "r5c1_school_authorization_validation_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c_backend_authorization_reader_cutover",
+    "nextBrick": "r5c1_school_authorization_cutover",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c_backend_authorization_validation_pending",
+      "status": "r5c1_school_authorization_validation_pending",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c_backend_authorization_reader_cutover",
+      "nextBrick": "r5c1_school_authorization_cutover",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -1822,30 +1822,40 @@
         }
       },
       "r5c": {
-        "title": "Backend current-principal authorization cutover",
+        "title": "Backend authorization cutover",
         "documentation": "docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md",
-        "authorizationReader": "functions/src/schoolOS/identity/authAccessAuthorization.ts",
-        "adminGuard": "functions/src/helpers/adminGuard.ts",
-        "schoolAuthorization": "functions/src/helpers/schoolAuthorization.ts",
-        "schoolEvidenceProfileSource": "people/{personId}.displayName",
-        "requesterAuthorizationSource": "authAccessReadModels/{firebaseUid}",
-        "legacyAdminAuthorizationFallback": false,
-        "legacySchoolAuthorizationFallback": false,
-        "adminUsesUsers": false,
-        "schoolAuthorizationUsesUsers": false,
-        "schoolAuthorizationUsesSchoolUsers": false,
-        "learningPartnerOperationalUidBoundaryPreserved": true,
+        "sequencing": [
+          "r5c1_school_domain_requester_authorization",
+          "r5c2_shared_admin_callable_authorization",
+          "r5d_firestore_rules"
+        ],
+        "r5c1": {
+          "authorizationReader": "functions/src/schoolOS/identity/authAccessAuthorization.ts",
+          "schoolAuthorization": "functions/src/helpers/schoolAuthorization.ts",
+          "schoolEvidenceProfileSource": "people/{personId}.displayName",
+          "requesterAuthorizationSource": "authAccessReadModels/{firebaseUid}",
+          "legacySchoolAuthorizationFallback": false,
+          "schoolAuthorizationUsesUsers": false,
+          "schoolAuthorizationUsesSchoolUsers": false,
+          "learningPartnerOperationalUidBoundaryPreserved": true,
+          "productionWiring": false,
+          "productionVerified": false,
+          "tests": [
+            "functions/test/authAccessAuthorization.spec.ts",
+            "functions/test/authAccessAuthorizationRouting.spec.ts"
+          ]
+        },
+        "r5c2": {
+          "sharedAdminGuard": "functions/src/helpers/adminGuard.ts",
+          "productionWiring": false,
+          "productionVerified": false,
+          "deferredBecauseSharedGuardFanoutFunctions": 124
+        },
         "firestoreRulesCutover": false,
         "storageRulesCutover": false,
-        "productionWiring": false,
-        "productionVerified": false,
         "targetUserBusinessReaderCutover": false,
         "preAuthLoginResolverCutover": false,
-        "destructiveOperations": false,
-        "tests": [
-          "functions/test/authAccessAuthorization.spec.ts",
-          "functions/test/authAccessAuthorizationRouting.spec.ts"
-        ]
+        "destructiveOperations": false
       }
     }
   },
