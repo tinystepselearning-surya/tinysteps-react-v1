@@ -32,15 +32,6 @@ export interface CompatibilityDocumentPlan {
   data: Record<string, unknown>;
 }
 
-export interface CompatibilityNestedDocumentPlan {
-  parentCollection: string;
-  parentId: string;
-  collection: string;
-  documentId: string;
-  data: Record<string, unknown>;
-  serverTimestampFields?: string[];
-}
-
 export interface CompatibilityArrayUnionPlan {
   collection: string;
   documentId: string;
@@ -54,7 +45,6 @@ export interface CanonicalLearnerCreatePlan {
   writeId: string;
   canonicalDocuments: CanonicalPrimaryDocumentPlan[];
   compatibilityDocuments: CompatibilityDocumentPlan[];
-  compatibilityNestedDocuments: CompatibilityNestedDocumentPlan[];
   compatibilityArrayUnions: CompatibilityArrayUnionPlan[];
 }
 
@@ -72,12 +62,6 @@ export interface CanonicalLearnerPrivateProfileInput {
   medicalNotes?: string | null;
 }
 
-export interface NestedParentStudentCompatibilityInput {
-  enabled: true;
-  courses?: string[];
-  createdByRole?: string | null;
-}
-
 export interface CanonicalLearnerCreateInput {
   personId: string;
   parentId: string;
@@ -89,8 +73,6 @@ export interface CanonicalLearnerCreateInput {
   summary?: Record<string, unknown> | null;
   details?: CanonicalLearnerDetailsInput | null;
   privateProfile?: CanonicalLearnerPrivateProfileInput | null;
-  nestedParentStudentCompatibility?:
-    NestedParentStudentCompatibilityInput | null;
   actorId: string;
   writeId: string;
 }
@@ -446,59 +428,6 @@ export function planCanonicalLearnerCreate(
     },
   ];
 
-  const compatibilityNestedDocuments:
-    CompatibilityNestedDocumentPlan[] = [];
-
-  if (input.nestedParentStudentCompatibility?.enabled) {
-    const details = input.details || {};
-    const privateProfile = input.privateProfile || {};
-    const courses = uniqueTextList(
-      input.nestedParentStudentCompatibility.courses,
-    );
-    const createdByRole = optionalText(
-      input.nestedParentStudentCompatibility.createdByRole,
-    );
-
-    compatibilityNestedDocuments.push({
-      parentCollection: 'parents',
-      parentId,
-      collection: 'students',
-      documentId: personId,
-      serverTimestampFields: ['enrollmentDate'],
-      data: {
-        parentId,
-        studentId: personId,
-        fullName: displayName,
-        preferredName:
-          optionalText(details.preferredName),
-        grade,
-        board: optionalText(details.board),
-        ageYears: input.ageYears,
-        gender: optionalText(details.gender),
-        status,
-        courses,
-        notes: optionalText(privateProfile.notes),
-        emergencyContact:
-          optionalText(privateProfile.emergencyContact),
-        medicalNotes:
-          optionalText(privateProfile.medicalNotes),
-        profilePhotoUrl:
-          optionalText(details.profilePhotoUrl),
-        lastActiveDate: null,
-        totalSessionsCompleted: 0,
-        currentLevel: grade || 'beginner',
-        ...(createdByRole
-          ? { createdByRole }
-          : {}),
-        _wave1CanonicalProjection:
-          compatibilityMarker({
-            personId,
-            command,
-            writeId,
-          }),
-      },
-    });
-  }
 
   return {
     command,
@@ -506,7 +435,6 @@ export function planCanonicalLearnerCreate(
     writeId,
     canonicalDocuments,
     compatibilityDocuments,
-    compatibilityNestedDocuments,
     compatibilityArrayUnions: [{
       collection: 'users',
       documentId: parentId,
