@@ -100,6 +100,7 @@ async function readSourceState(db) {
     kids,
     schools,
     enrollments,
+    classSessions,
     guardianRelationships,
     people,
     learnerProfiles,
@@ -127,6 +128,18 @@ async function readSourceState(db) {
       'archivedAt',
       'deletedAt',
     ]),
+    readCollection(db, 'classSessions', [
+      'kidId',
+      'studentId',
+      'childId',
+      'kidIds',
+      'teacherId',
+      'teacherIds',
+      'assignedTeacherId',
+      'primaryTeacherId',
+      'teacherUid',
+      'teacher_id',
+    ]),
     readCollection(db, 'guardianRelationships', [
       'guardianPersonId',
       'learnerPersonId',
@@ -147,6 +160,7 @@ async function readSourceState(db) {
     kids,
     schools,
     enrollments,
+    classSessions,
     guardianRelationships,
     peopleIds: new Set(people.map((row) => row.id)),
     learnerProfileIds: new Set(
@@ -288,6 +302,7 @@ function baseReport(options, state) {
       kids: state.kids.length,
       schools: state.schools.length,
       enrollments: state.enrollments.length,
+      classSessions: state.classSessions.length,
       guardianRelationships:
         state.guardianRelationships.length,
     },
