@@ -289,3 +289,66 @@ to the active canonical-primary scope only after:
 3. production deployment evidence is recorded.
 
 Because repository evidence shows no active application caller, a synthetic live invocation is not required merely to prove an unused API path. If this callable becomes actively used later, the first live invocation should be checked through the same bounded canonical/compatibility verification used for Brick 2.
+
+## Production deployment evidence
+
+Brick 3 deployed successfully from:
+
+~~~text
+commit: c38ffd4a161f224553546d4843d74b01d89ba682
+workflow run: 37200647332
+completed: 2026-10-04T12:06:01Z
+~~~
+
+The Functions production marker advanced to the same commit and is identical to `main`.
+
+The deployment was targeted, not full.
+
+Batch 1:
+
+~~~text
+adminCreateStudent
+createStudentForParent
+~~~
+
+Batch 2:
+
+~~~text
+onWave1LegacyKidIdentityWrite
+onWave1LegacySchoolIdentityWrite
+onWave1LegacySchoolUserIdentityWrite
+onWave1LegacyUserIdentityWrite
+~~~
+
+Hosting, Firestore Security Rules and Firestore indexes were not deployed by this run.
+
+## Production activation decision
+
+Repository search found no active application caller for `createStudentForParent`, and the verified production identity audit found zero documents in the historical nested `parents/*/students/*` namespace.
+
+Therefore Brick 3 does not manufacture a synthetic production learner merely to exercise an unused callable.
+
+Production activation is supported by:
+
+1. Functions build success;
+2. 29/29 focused regression tests;
+3. exact bounded deployment planning;
+4. successful six-Function production rollout;
+5. Functions production marker advancement to the Brick 3 commit;
+6. no legacy nested namespace resurrection.
+
+If a product flow begins calling `createStudentForParent` later, its first live invocation must receive the same bounded canonical/compatibility verification used for Brick 2.
+
+## Brick 3 production status
+
+The canonical-primary learner-create scope is now:
+
+~~~text
+adminCreateStudent:learner_create
+createStudentForParent:learner_create
+~~~
+
+R4 remains incomplete. Browser-side learner creation/update paths still write to legacy `kids` state directly and are the next migration target.
+
+Reader authority, Firestore Security Rules authority, auth-backed user writer cutover, legacy write freeze and destructive retirement remain unauthorized.
+
