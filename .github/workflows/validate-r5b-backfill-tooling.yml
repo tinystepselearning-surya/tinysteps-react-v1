@@ -1,0 +1,38 @@
+name: Validate R5B Backfill Tooling Fix
+
+on:
+  push:
+    branches:
+      - wave1/identity-r5b-production-backfill-20261004
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Validate runner syntax
+        run: bash -n scripts/run-r5b-production-auth-access-backfill.sh
+
+      - name: Run backfill planner tests
+        run: node --test scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs
+
+      - name: Verify backfill CLI loads
+        run: node scripts/wave1-auth-access-read-model-backfill.mjs --help
