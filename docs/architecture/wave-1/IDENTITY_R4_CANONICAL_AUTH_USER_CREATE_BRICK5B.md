@@ -1,6 +1,6 @@
 # Wave 1 R4 — Brick 5B: Canonical auth-backed user create writer
 
-**Status:** validation pending  
+**Status:** COMPLETE — validated implementation; production wiring remains OFF  
 **Scope:** writer implementation + regression coverage only  
 **Production wiring:** OFF  
 **Production behavior change:** none  
@@ -218,3 +218,39 @@ Brick 5B does not:
 
 After this implementation is validated and merged, continue with the matching
 auth-backed update/role-transition writer before production activation.
+
+
+## Validation evidence
+
+Validated implementation commit:
+
+~~~text
+ab82da80995d5c12a5dae74e27842a9d088fb34f
+~~~
+
+Temporary validation workflow:
+
+~~~text
+Run ID: 37204088176
+Result: success
+~~~
+
+Results:
+
+- Functions TypeScript build: passed.
+- Focused test files: 5/5 passed.
+- Focused tests: 43/43 passed.
+  - canonicalPrimaryAuthUserCreate: 10/10.
+  - authPersonCompatibility: 9/9.
+  - canonicalPrimaryPlanner: 7/7.
+  - canonicalPrimaryWriter: 6/6.
+  - identityLegacySync: 11/11.
+- Functions source changed: yes.
+- Functions validation required: yes.
+- Functions deployment required: no.
+- Impacted deployed Functions: 0.
+- Hosting changed: no.
+- Firestore Rules changed: no.
+- Firestore indexes changed: no.
+- Production writes: none.
+- Temporary validation workflow retired before merge.
