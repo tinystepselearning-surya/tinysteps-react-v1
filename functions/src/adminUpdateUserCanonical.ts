@@ -19,6 +19,9 @@ import {
   planCanonicalAuthUserUpdate,
   writeCanonicalAuthUserUpdatePlan,
 } from './schoolOS/identity/canonicalPrimaryAuthUserUpdate';
+import {
+  refreshAuthAccessReadModelBestEffort,
+} from './schoolOS/identity/authAccessReadModelMaintenance';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -506,6 +509,12 @@ export const adminUpdateUser = onCall(
           : 'Failed to update user',
       );
     }
+
+    await refreshAuthAccessReadModelBestEffort({
+      db,
+      firebaseUid: uid,
+      context: 'adminUpdateUser',
+    });
 
     logger.info(
       'adminUpdateUser: canonical user updated',

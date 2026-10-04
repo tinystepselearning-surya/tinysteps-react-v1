@@ -13,6 +13,13 @@ import {
   canonicalAuthUserProjectionMatchesAuthority,
 } from './authUserProjectionBridge';
 import {
+  deleteAuthAccessReadModelStrict,
+  refreshAuthAccessReadModelStrict,
+} from './authAccessReadModelMaintenance';
+import {
+  resolveFirebaseUidFromPersonId,
+} from './authPersonCompatibility';
+import {
   planLegacyKidExpansion,
   planLegacySchoolExpansion,
   planLegacySchoolUserExpansion,
@@ -1162,6 +1169,83 @@ export async function syncLegacyIdentitySource(params: {
   return result;
 }
 
+async function maintainAuthAccessAfterLegacySync(params: {
+  db: admin.firestore.Firestore;
+  sourceCollection: LegacyIdentitySourceCollection;
+  sourceId: string;
+  beforeData: LooseDoc | null;
+  result: LegacyIdentitySyncResult;
+}): Promise<void> {
+  const {
+    db,
+    sourceCollection,
+    sourceId,
+    beforeData,
+    result,
+  } = params;
+
+  if (result.outcome === 'blocked') {
+    return;
+  }
+
+  if (sourceCollection === 'users') {
+    if (result.outcome === 'source_deleted') {
+      await deleteAuthAccessReadModelStrict({
+        db,
+        firebaseUid: sourceId,
+        context: 'legacyUserSync',
+      });
+      return;
+    }
+
+    await refreshAuthAccessReadModelStrict({
+      db,
+      firebaseUid: sourceId,
+      context: 'legacyUserSync',
+    });
+    return;
+  }
+
+  if (sourceCollection !== 'schoolUsers') {
+    return;
+  }
+
+  const currentSnap = await db
+    .collection('schoolUsers')
+    .doc(sourceId)
+    .get();
+  const currentData = currentSnap.exists
+    ? currentSnap.data() || {}
+    : null;
+
+  const affectedPersonIds = [
+    cleanText(beforeData?.userId) || (
+      beforeData ? sourceId : ''
+    ),
+    cleanText(currentData?.userId) || (
+      currentData ? sourceId : ''
+    ),
+  ].filter(Boolean);
+
+  for (
+    const personId of
+    [...new Set(affectedPersonIds)]
+  ) {
+    const resolution =
+      await resolveFirebaseUidFromPersonId({
+        db,
+        personId,
+      });
+
+    await refreshAuthAccessReadModelStrict({
+      db,
+      firebaseUid:
+        resolution.firebaseUid,
+      context: 'legacySchoolUserSync',
+    });
+  }
+}
+
 export async function handleLegacyIdentityWrite(params: {
   sourceCollection: LegacyIdentitySourceCollection;
   sourceId: string;
@@ -1288,12 +1372,21 @@ export async function handleLegacyIdentityWrite(params: {
       }
     }
 
-    await syncLegacyIdentitySource({
+    const result =
+      await syncLegacyIdentitySource({
+        db,
+        auth: admin.auth(),
+        sourceCollection,
+        sourceId,
+        priorData: beforeData,
+      });
+
+    await maintainAuthAccessAfterLegacySync({
       db,
-      auth: admin.auth(),
       sourceCollection,
       sourceId,
-      priorData: beforeData,
+      beforeData,
+      result,
     });
   } catch (error) {
     logger.error(

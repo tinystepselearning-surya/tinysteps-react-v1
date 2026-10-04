@@ -16,6 +16,9 @@ import {
   planCanonicalAuthUserArchive,
   writeCanonicalAuthUserArchivePlan,
 } from './schoolOS/identity/canonicalPrimaryAuthUserArchive';
+import {
+  refreshAuthAccessReadModelBestEffort,
+} from './schoolOS/identity/authAccessReadModelMaintenance';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -242,6 +245,12 @@ export const adminArchiveUser = onCall(
           : 'Failed to archive user',
       );
     }
+
+    await refreshAuthAccessReadModelBestEffort({
+      db,
+      firebaseUid: uid,
+      context: 'adminArchiveUser',
+    });
 
     logger.info(
       'adminArchiveUser: canonical user archived',

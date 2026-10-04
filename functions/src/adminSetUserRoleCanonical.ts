@@ -20,6 +20,9 @@ import {
   planCanonicalAuthUserUpdate,
   writeCanonicalAuthUserUpdatePlan,
 } from './schoolOS/identity/canonicalPrimaryAuthUserUpdate';
+import {
+  refreshAuthAccessReadModelBestEffort,
+} from './schoolOS/identity/authAccessReadModelMaintenance';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -270,6 +273,12 @@ export const adminSetUserRole = onCall(
           : 'Failed to change user role',
       );
     }
+
+    await refreshAuthAccessReadModelBestEffort({
+      db,
+      firebaseUid: uid,
+      context: 'adminSetUserRole',
+    });
 
     logger.info(
       'adminSetUserRole: canonical role changed',

@@ -18,6 +18,9 @@ import {
   writeCanonicalAuthUserCreatePlan,
   type CanonicalAuthUserCreateRole,
 } from './schoolOS/identity/canonicalPrimaryAuthUserCreate';
+import {
+  refreshAuthAccessReadModelBestEffort,
+} from './schoolOS/identity/authAccessReadModelMaintenance';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -602,6 +605,12 @@ export const adminCreateUser = onCall(
           Boolean(personSnap?.exists);
         throw error;
       }
+
+      await refreshAuthAccessReadModelBestEffort({
+        db,
+        firebaseUid: authUser.uid,
+        context: 'adminCreateUser',
+      });
 
       let resetLinkSent = false;
       let resetLink: string | null = null;
