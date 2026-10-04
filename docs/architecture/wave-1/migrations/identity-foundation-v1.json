@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick5a_compatibility_contract_complete_partial_r4_active",
+        "status": "brick5b_auth_user_create_writer_validated_not_activated",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -1055,7 +1055,94 @@
             "temporaryValidationWorkflowRetiredBeforeMerge": true
           }
         },
-        "nextBrick": "brick5b_canonical_primary_admin_create_user"
+        "nextBrick": "brick5c_canonical_auth_user_update_and_role_transition_writer",
+        "brick5b": {
+          "title": "Canonical auth-backed user create writer implementation",
+          "writer": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserCreate.ts",
+          "regressionTest": "functions/test/canonicalPrimaryAuthUserCreate.spec.ts",
+          "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_AUTH_USER_CREATE_BRICK5B.md",
+          "productionWiring": false,
+          "productionBehaviorChanged": false,
+          "canonicalPrimaryWritesEnabledForAuthBackedUsers": false,
+          "adminCreateUserCutover": false,
+          "supportedGenericRoles": [
+            "admin",
+            "founder",
+            "teacher",
+            "parent",
+            "learningPartner"
+          ],
+          "dedicatedFlowRoles": [
+            "kid",
+            "schoolAdmin"
+          ],
+          "newIdentityRequiresUidPersonDecoupling": true,
+          "canonicalTargets": [
+            "people",
+            "authIdentities",
+            "roleAssignments",
+            "personContacts",
+            "staffPrivateProfiles"
+          ],
+          "compatibilityTargets": [
+            "users",
+            "teachers",
+            "parents",
+            "learningPartners",
+            "admins"
+          ],
+          "roleRootCompatibilityKey": "firebase_uid",
+          "duplicatePersonKeyedRoleRootCreated": false,
+          "atomicFirestoreTransaction": true,
+          "boundedPostWriteVerification": true,
+          "firebaseAuthOrchestrationIncluded": false,
+          "activationBlockedUntil": [
+            "canonical_auth_user_update_writer_ready",
+            "role_transition_writer_ready",
+            "teacher_profile_direct_user_writer_removed",
+            "decoupled_user_projection_bridge_ready"
+          ],
+          "localValidation": {
+            "validatedImplementationCommit": "ab82da80995d5c12a5dae74e27842a9d088fb34f",
+            "workflowRunId": 37204088176,
+            "functionsBuild": "passed",
+            "focusedTests": {
+              "passed": 43,
+              "total": 43,
+              "canonicalPrimaryAuthUserCreate": {
+                "passed": 10,
+                "total": 10
+              },
+              "authPersonCompatibility": {
+                "passed": 9,
+                "total": 9
+              },
+              "canonicalPrimaryPlanner": {
+                "passed": 7,
+                "total": 7
+              },
+              "canonicalPrimaryWriter": {
+                "passed": 6,
+                "total": 6
+              },
+              "identityLegacySync": {
+                "passed": 11,
+                "total": 11
+              }
+            },
+            "deploymentImpact": {
+              "functionsSourceChanged": true,
+              "functionsValidationRequired": true,
+              "functionsDeploymentRequired": false,
+              "impactedFunctionsCount": 0,
+              "hostingChanged": false,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          }
+        }
       },
       "legacyWritesStopped": false,
       "readSwitchAuthorized": false,
