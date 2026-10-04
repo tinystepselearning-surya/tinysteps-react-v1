@@ -11,7 +11,7 @@ describe('Wave 1 R4 createStudentForParent canonical cutover', () => {
     expect(source).toContain(
       'executeCanonicalLearnerCreate',
     );
-    expect(source).toContain(
+    expect(source).not.toContain(
       'nestedParentStudentCompatibility',
     );
     expect(source).toContain(
@@ -29,6 +29,18 @@ describe('Wave 1 R4 createStudentForParent canonical cutover', () => {
     );
     expect(source).not.toContain(
       'FieldValue.serverTimestamp',
+    );
+  });
+
+  it('rejects legacy course mirrors instead of storing course authority on the learner profile', () => {
+    expect(source).toContain(
+      'Course assignment is no longer stored on the learner profile',
+    );
+    expect(source).not.toContain(
+      "collection('parents').doc",
+    );
+    expect(source).not.toContain(
+      "collection('students')",
     );
   });
 
