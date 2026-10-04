@@ -2042,7 +2042,7 @@
                   "avsCallableTransportVerificationRequired": false
                 },
                 "testOnlyHostingClassifierHardened": true,
-                "temporaryValidationWorkflowRetiredBeforeMerge": false
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
