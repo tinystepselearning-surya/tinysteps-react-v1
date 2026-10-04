@@ -1,6 +1,6 @@
 # Wave 1 R4 — Brick 5D: Auth archive, teacher profile, and projection bridge
 
-**Status:** validation pending  
+**Status:** COMPLETE — validated implementation; production wiring remains OFF  
 **Scope:** implementation + regression coverage only  
 **Production wiring:** OFF  
 **Production behavior change:** none  
@@ -164,3 +164,44 @@ Brick 5D does not:
 After Brick 5D passes focused validation and merges with zero deployment impact, proceed to
 the final R4 auth-backed writer activation brick. That brick will be production-impacting
 and will require a controlled production canary after deployment.
+
+
+## Validation evidence
+
+Validated implementation commit:
+
+~~~text
+4624e6bdfdc653a0c37d1c0850ebb4d74530bead
+~~~
+
+Acceptance validation workflow:
+
+~~~text
+Run ID: 37204944564
+Result: success
+~~~
+
+Results:
+
+- Functions TypeScript build: passed.
+- Focused test files: 7/7 passed.
+- Focused tests: 63/63 passed.
+  - canonicalPrimaryAuthUserArchive: 6/6.
+  - canonicalPrimaryTeacherProfile: 8/8.
+  - authUserProjectionBridge: 9/9.
+  - canonicalPrimaryAuthUserUpdate: 10/10.
+  - canonicalPrimaryAuthUserCreate: 10/10.
+  - authPersonCompatibility: 9/9.
+  - identityLegacySync: 11/11.
+- Functions source changed: yes.
+- Functions validation required: yes.
+- Functions deployment required: no.
+- Impacted deployed Functions: 0.
+- Hosting changed: no.
+- Firestore Rules changed: no.
+- Firestore indexes changed: no.
+- Production writes: none.
+- Temporary validation workflow retired before merge.
+
+Earlier validation attempts failed only on test-fixture syntax/assertion issues. The acceptance
+run above is the sole merge gate and contains both corrections.
