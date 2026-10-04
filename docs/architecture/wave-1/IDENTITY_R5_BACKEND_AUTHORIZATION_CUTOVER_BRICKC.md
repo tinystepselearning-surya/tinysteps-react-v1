@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** validation pending  
+**Status:** VALIDATED — bounded production deployment pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -189,3 +189,59 @@ After merge:
 
 After clean R5C1 production verification, proceed to **R5C2 shared Admin authorization
 cutover**, using a separately bounded rollout plan.
+
+
+## Acceptance validation
+
+Acceptance workflow:
+
+~~~text
+Run ID: 37215814782
+Result: success
+~~~
+
+Validated gates:
+
+- Functions TypeScript build: passed.
+- Focused Functions identity/access tests: **48/48 passed** across 7 files.
+- Architecture/authorization regressions: **22/22 passed** across 3 files.
+- Total focused regression coverage: **70/70 passed** across 10 files.
+- Teacher earning adjustment routing: 7/7 passed.
+- Teacher pay withholding routing: 7/7 passed.
+- Deployment impact analysis: passed.
+
+Validated deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Functions impacted: 13
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+AVS callable transport verification required: false
+~~~
+
+Bounded Function targets:
+
+~~~text
+schoolCreateAcademicYear
+schoolCreateReview
+schoolGetProgrammeSnapshot
+schoolRecordAssessmentSummary
+schoolSetCurrentAcademicYear
+schoolSetGradeStatus
+schoolSetSectionStatus
+schoolSetTeacherStatus
+schoolUpdateCurriculumProgress
+schoolUpdateTeacherTraining
+schoolUpsertGrade
+schoolUpsertSection
+schoolUpsertTeacher
+~~~
+
+The earlier broad-cutover experiment was not accepted for deployment because changing the
+shared Admin guard would fan out to approximately 124 Functions. R5C1 deliberately leaves
+that guard unchanged and limits production impact to the 13 school-domain Functions above.
+
+The temporary validation workflow is retired before merge.
