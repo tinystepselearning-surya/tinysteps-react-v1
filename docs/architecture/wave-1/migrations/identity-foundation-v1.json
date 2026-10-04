@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick3_production_deployed_partial_r4_active",
+        "status": "brick4_validated_pending_production_deployment",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -827,6 +827,118 @@
             "syntheticLiveCanaryRequired": false,
             "reason": "No active repository caller and no verified production footprint in the retired nested parent/student namespace; build, regression, bounded deployment and production-marker evidence are sufficient until first live invocation.",
             "firstLiveInvocationVerificationRequiredIfCallableBecomesActive": true
+          }
+        },
+        "brick4": {
+          "title": "Canonical-primary browser learner create/update writer cutover",
+          "callable": "functions/src/adminUpdateStudent.ts",
+          "writer": "functions/src/schoolOS/identity/canonicalPrimaryLearnerUpdate.ts",
+          "legacySyncBridge": "functions/src/schoolOS/identity/legacySync.ts",
+          "browserPaths": [
+            "src/pages/admin/StudentManagement/StudentManagement.tsx",
+            "src/pages/admin/StudentManagement/EditStudentForm.tsx",
+            "src/pages/admin/StudentManagement/AssignLPModal.tsx"
+          ],
+          "retiredBrowserWriters": [
+            "kidsService.createKid",
+            "kidsService.updateKid"
+          ],
+          "regressionTests": [
+            "functions/test/canonicalPrimaryLearnerUpdate.spec.ts",
+            "functions/test/identityLegacySync.spec.ts",
+            "src/tests/pages/CanonicalLearnerBrowserWriters.spec.ts",
+            "src/tests/pages/EnrollmentLifecycleRouting.spec.ts"
+          ],
+          "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_PRIMARY_BRICK4.md",
+          "productionWiring": true,
+          "productionBehaviorChanged": true,
+          "canonicalPrimaryWritesEnabled": true,
+          "learnerWriteCutover": "validated_pending_production_deployment",
+          "canonicalTargets": [
+            "people",
+            "learnerProfiles",
+            "learnerDetails"
+          ],
+          "compatibilityTargets": [
+            "kids"
+          ],
+          "learningPartnerAuthority": "enrollment_only",
+          "archiveAuthority": "archiveKid_lifecycle_workflow",
+          "canonicalProjectionLoopSuppression": true,
+          "canonicalProjectionAuthorityCorroboration": true,
+          "boundedPostWriteVerification": true,
+          "rawIdentityIdsInTelemetry": false,
+          "rawLearnerNamesInTelemetry": false,
+          "firestoreTelemetryWrites": 0,
+          "authBackedUserWriteCutover": false,
+          "readerCutover": false,
+          "securityRulesCutover": false,
+          "legacyWriteFreeze": false,
+          "destructiveDeletion": false,
+          "localValidation": {
+            "validatedImplementationCommit": "dde9eb05e4752ecb8dedd7eb0dca8416dfdc4383",
+            "validationWorkflowHead": "dde9eb05e4752ecb8dedd7eb0dca8416dfdc4383",
+            "workflowRunId": 37201998962,
+            "functionsBuild": "passed",
+            "focusedFunctionTests": {
+              "passed": 33,
+              "total": 33,
+              "canonicalPrimaryPlanner": {
+                "passed": 7,
+                "total": 7
+              },
+              "canonicalPrimaryWriter": {
+                "passed": 6,
+                "total": 6
+              },
+              "canonicalPrimaryLearnerUpdate": {
+                "passed": 3,
+                "total": 3
+              },
+              "identityLegacySync": {
+                "passed": 11,
+                "total": 11
+              },
+              "parentStudentsCanonicalPrimary": {
+                "passed": 6,
+                "total": 6
+              }
+            },
+            "browserLifecycleTests": {
+              "passed": 10,
+              "total": 10,
+              "canonicalLearnerBrowserWriters": {
+                "passed": 5,
+                "total": 5
+              },
+              "enrollmentLifecycleRouting": {
+                "passed": 5,
+                "total": 5
+              }
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          },
+          "deploymentImpactValidation": {
+            "validatedCommit": "dde9eb05e4752ecb8dedd7eb0dca8416dfdc4383",
+            "workflowRunId": 37201998962,
+            "productionBaseline": "b201b7066e8e2bb9851f671fcd383f0b1a7cef28",
+            "functionsDeploymentRequired": true,
+            "fullFunctionsDeployment": false,
+            "impactedFunctions": [
+              "adminCreateStudent",
+              "adminUpdateStudent",
+              "createStudentForParent",
+              "onWave1LegacyKidIdentityWrite",
+              "onWave1LegacySchoolIdentityWrite",
+              "onWave1LegacySchoolUserIdentityWrite",
+              "onWave1LegacyUserIdentityWrite"
+            ],
+            "impactedFunctionsCount": 7,
+            "hostingDeploymentRequired": true,
+            "firestoreRulesDeploymentRequired": false,
+            "firestoreIndexesDeploymentRequired": false,
+            "result": "success"
           }
         }
       },
@@ -1162,13 +1274,12 @@
         "temporaryValidationWorkflowRetiredBeforeMerge": true
       },
       "nextAuthorizedStep": {
-        "kind": "canonical_primary_browser_learner_write_paths_implementation",
+        "kind": "canonical_primary_browser_learner_write_paths_production_deployment",
         "retirementStage": "R4",
         "scope": [
-          "StudentManagement inline learner create",
-          "kidsService.updateKid consumers",
-          "EditStudentForm canonical learner updates",
-          "AssignLPModal removal of child-level LP write authority"
+          "targeted deployment of 7 impacted Functions",
+          "Hosting deployment for browser learner writer cutover",
+          "production verification using dedicated test parent/student identity without deleting identity records"
         ],
         "destructive": false,
         "legacyDeletionAuthorized": false,
@@ -1176,7 +1287,7 @@
         "readerCutoverAuthorized": false,
         "securityRulesCutoverAuthorized": false,
         "authBackedUserWriteCutoverAuthorized": false,
-        "precondition": "server-side learner create paths remain clean in production"
+        "precondition": "Brick 4 Functions build, 33 focused function tests, 10 browser/lifecycle tests, and bounded deployment-impact validation all passed"
       }
     },
     "canonicalPrimaryWriteScope": [

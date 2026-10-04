@@ -42,9 +42,15 @@ describe('admin lifecycle routing', () => {
     expect(enrollmentListSource).toContain("httpsCallable(functions, 'setEnrollmentStatus')");
   });
 
-  it('routes the student archive transition through archiveKid', () => {
+  it('routes the student archive transition through archiveKid after canonical profile editing', () => {
+    expect(studentEditSource).toContain("httpsCallable(functions, 'adminUpdateStudent')");
+    expect(studentEditSource).toContain("status: isArchiveTransition ? null : status");
     expect(studentEditSource).toContain("httpsCallable(functions, 'archiveKid')");
-    expect(studentEditSource).toContain("...(!isArchiveTransition ? { status } : {})");
+    expect(
+      studentEditSource.indexOf("httpsCallable(functions, 'archiveKid')"),
+    ).toBeGreaterThan(
+      studentEditSource.indexOf("httpsCallable(functions, 'adminUpdateStudent')"),
+    );
   });
 
   it('routes admin manual session creation and cancellation through lifecycle callables', () => {

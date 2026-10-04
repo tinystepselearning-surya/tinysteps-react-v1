@@ -16,9 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@components/ui/select';
-import { deleteField } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { updateKid } from '../../../services/kidsService';
 import { functions } from '../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
@@ -135,30 +133,32 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
 
     setLoading(true);
     try {
-      const isArchiveTransition = status === 'archived' && student.status !== 'archived';
+      const isArchiveTransition =
+        status === 'archived' &&
+        student.status !== 'archived';
+
+      const updateStudent =
+        httpsCallable(functions, 'adminUpdateStudent');
+      await updateStudent({
+        kidId: student.id,
+        fullName,
+        ageYears: ageNum,
+        grade,
+        status: isArchiveTransition ? null : status,
+        countryCode:
+          countryCode === COUNTRY_NONE_VALUE
+            ? null
+            : normalizeCountryCode(countryCode),
+      });
+
       if (isArchiveTransition) {
-        const archiveKid = httpsCallable(functions, 'archiveKid');
+        const archiveKid =
+          httpsCallable(functions, 'archiveKid');
         await archiveKid({
           kidId: student.id,
           reason: 'Archived from student management',
         });
       }
-
-      await updateKid(student.id as string, {
-        fullName,
-        age: ageNum, // ✅ store only "age" going forward
-        grade,
-        ...(!isArchiveTransition ? { status } : {}),
-        countryCode:
-          countryCode === COUNTRY_NONE_VALUE
-            ? deleteField()
-            : (normalizeCountryCode(countryCode) || deleteField()),
-
-        // ✅ Remove legacy fields so we stop storing DOB
-        dob: deleteField(),
-        birthdate: deleteField(),
-        ageYears: deleteField(),
-      } as any);
 
       toast({ title: 'Updated', description: 'Student updated' });
       onUpdated?.();

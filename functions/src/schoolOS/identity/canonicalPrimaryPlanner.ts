@@ -11,7 +11,8 @@ export const CANONICAL_PRIMARY_WRITE_AUTHORITY =
   'canonical-primary' as const;
 
 export type CanonicalPrimaryCommand =
-  | 'learner_create';
+  | 'learner_create'
+  | 'learner_update';
 
 export interface CanonicalPrimaryOwnership {
   schemaVersion: typeof CANONICAL_PRIMARY_WRITE_SCHEMA_VERSION;
