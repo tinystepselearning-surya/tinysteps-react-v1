@@ -7,6 +7,8 @@ import { FieldValue } from 'firebase-admin/firestore';
 import {
   planCanonicalLearnerCreate,
   type CanonicalLearnerCreatePlan,
+  type CanonicalLearnerDetailsInput,
+  type CanonicalLearnerPrivateProfileInput,
 } from './canonicalPrimaryPlanner';
 import { buildRoleAssignmentId } from './idStrategy';
 
@@ -54,9 +56,11 @@ export interface ExecuteCanonicalLearnerCreateInput {
   parentId: string;
   displayName: string;
   ageYears: number;
-  grade: string;
+  grade?: string | null;
   status: 'active' | 'suspended' | 'archived';
   countryCode?: string | null;
+  details?: CanonicalLearnerDetailsInput | null;
+  privateProfile?: CanonicalLearnerPrivateProfileInput | null;
 }
 
 export interface ExecuteCanonicalLearnerCreateResult {
@@ -289,9 +293,11 @@ export async function executeCanonicalLearnerCreate(
     parentId,
     displayName,
     ageYears,
-    grade,
+    grade = null,
     status,
     countryCode = null,
+    details = null,
+    privateProfile = null,
   } = input;
 
   const personId = db.collection('people').doc().id;
@@ -306,6 +312,8 @@ export async function executeCanonicalLearnerCreate(
     status,
     countryCode,
     summary: { ...DEFAULT_LEARNER_SUMMARY },
+    details,
+    privateProfile,
     actorId,
     writeId,
   });

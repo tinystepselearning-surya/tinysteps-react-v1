@@ -221,4 +221,87 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
       }),
     ).toThrow('countryCode_not_iso_alpha2');
   });
+
+  it('routes rich learner fields to canonical detail/private targets without reviving nested legacy students', () => {
+    const plan = planCanonicalLearnerCreate({
+      personId: 'kid-rich-1',
+      parentId: 'parent-1',
+      displayName: 'Learner Rich',
+      ageYears: 9,
+      status: 'active',
+      details: {
+        preferredName: 'Rich',
+        grade: 'Grade 3',
+        board: 'CBSE',
+        gender: 'female',
+        profilePhotoUrl: 'https://example.com/photo.jpg',
+      },
+      privateProfile: {
+        notes: 'Line one\nLine two',
+        emergencyContact: '+91 9000000000',
+        medicalNotes: 'Allergy note\nCarry inhaler',
+      },
+      actorId: 'admin-1',
+      writeId: 'write-rich-1',
+    });
+
+    const details = plan.canonicalDocuments.find(
+      (document) => document.collection === 'learnerDetails',
+    );
+    const privateProfile = plan.canonicalDocuments.find(
+      (document) => document.collection === 'learnerPrivateProfiles',
+    );
+    const kid = plan.compatibilityDocuments.find(
+      (document) => document.collection === 'kids',
+    );
+
+    expect(details?.data).toMatchObject({
+      learnerDetailsId: 'kid-rich-1',
+      personId: 'kid-rich-1',
+      preferredName: 'Rich',
+      grade: 'Grade 3',
+      board: 'CBSE',
+      gender: 'female',
+      profilePhotoUrl: 'https://example.com/photo.jpg',
+    });
+
+    expect(privateProfile?.data).toMatchObject({
+      learnerPrivateProfileId: 'kid-rich-1',
+      personId: 'kid-rich-1',
+      notes: 'Line one\nLine two',
+      emergencyContact: '+91 9000000000',
+      medicalNotes: 'Allergy note\nCarry inhaler',
+    });
+
+    expect(kid?.data).toMatchObject({
+      fullName: 'Learner Rich',
+      grade: 'Grade 3',
+      gender: 'female',
+      parentId: 'parent-1',
+    });
+    expect(kid?.data).not.toHaveProperty('medicalNotes');
+    expect(kid?.data).not.toHaveProperty('emergencyContact');
+    expect(kid?.data).not.toHaveProperty('notes');
+    expect(kid?.data).not.toHaveProperty('courses');
+
+    expect(plan).not.toHaveProperty('compatibilityNestedDocuments');
+  });
+
+  it('does not invent a canonical mapping for legacy trial or inactive learner status', () => {
+    for (const status of ['trial', 'inactive']) {
+      expect(() =>
+        planCanonicalLearnerCreate({
+          personId: 'kid-status-1',
+          parentId: 'parent-1',
+          displayName: 'Learner',
+          ageYears: 7,
+          grade: '1',
+          status: status as any,
+          actorId: 'admin-1',
+          writeId: 'write-status-1',
+        }),
+      ).toThrow('learner_status_not_canonical');
+    }
+  });
+
 });

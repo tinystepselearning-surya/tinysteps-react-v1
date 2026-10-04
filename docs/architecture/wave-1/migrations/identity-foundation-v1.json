@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick2_production_canary_passed_partial_r4_active",
+        "status": "brick3_local_validation_complete_pending_production_deploy",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -698,6 +698,97 @@
             "impactedFunctionsCount": 5,
             "result": "success"
           }
+        },
+        "brick3": {
+          "title": "Canonical-primary createStudentForParent migration",
+          "callable": "functions/src/parentStudents.ts",
+          "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
+          "writer": "functions/src/schoolOS/identity/canonicalPrimaryWriter.ts",
+          "regressionTests": [
+            "functions/test/canonicalPrimaryPlanner.spec.ts",
+            "functions/test/canonicalPrimaryWriter.spec.ts",
+            "functions/test/identityLegacySync.spec.ts",
+            "functions/test/parentStudentsCanonicalPrimary.spec.ts"
+          ],
+          "documentation": "docs/architecture/wave-1/IDENTITY_R4_CANONICAL_PRIMARY_BRICK3.md",
+          "productionWiring": true,
+          "productionBehaviorChanged": false,
+          "canonicalPrimaryWritesEnabled": false,
+          "learnerWriteCutover": "createStudentForParent_pending_production_deploy",
+          "activeRepositoryCallers": 0,
+          "historicalNestedStudentProductionDocuments": 0,
+          "nestedLegacyStudentWrites": false,
+          "rootLegacyStudentWrites": false,
+          "canonicalTargets": [
+            "people",
+            "learnerProfiles",
+            "guardianRelationships",
+            "learnerDetails",
+            "learnerPrivateProfiles",
+            "learnerReadModels"
+          ],
+          "compatibilityTargets": [
+            "kids",
+            "users.childIds"
+          ],
+          "restrictedLearnerPrivateProfile": true,
+          "firestoreRulesChange": false,
+          "coursesArrayAuthority": "rejected_nonempty_use_enrollment_workflow",
+          "legacyStatusPolicy": "active_only_trial_and_inactive_fail_closed",
+          "rawIdentityIdsInTelemetry": false,
+          "rawLearnerNamesInTelemetry": false,
+          "firestoreTelemetryWrites": 0,
+          "authBackedUserWriteCutover": false,
+          "readerCutover": false,
+          "securityRulesCutover": false,
+          "legacyWriteFreeze": false,
+          "destructiveDeletion": false,
+          "localValidation": {
+            "validatedImplementationCommit": "e3b3e61b5ebb6b72926b94c637cfa7291c18b0ce",
+            "workflowRunId": 37200556538,
+            "functionsBuild": "passed",
+            "focusedTests": {
+              "passed": 29,
+              "total": 29,
+              "canonicalPrimaryPlanner": {
+                "passed": 7,
+                "total": 7
+              },
+              "canonicalPrimaryWriter": {
+                "passed": 6,
+                "total": 6
+              },
+              "identityLegacySync": {
+                "passed": 10,
+                "total": 10
+              },
+              "parentStudentsCanonicalPrimary": {
+                "passed": 6,
+                "total": 6
+              }
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true,
+            "validationWorkflowHead": "92c02de4bb253f598750ccedf8822101c266043b"
+          },
+          "deploymentImpactValidation": {
+            "validatedCommit": "92c02de4bb253f598750ccedf8822101c266043b",
+            "workflowRunId": 37200556538,
+            "functionsProductionBaseline": "bcdcc93374b11f19996f8231bb9dc6adafe25ccc",
+            "functionsDeploymentRequired": true,
+            "fullFunctionsDeployment": false,
+            "impactedFunctions": [
+              "adminCreateStudent",
+              "createStudentForParent",
+              "onWave1LegacyKidIdentityWrite",
+              "onWave1LegacySchoolIdentityWrite",
+              "onWave1LegacySchoolUserIdentityWrite",
+              "onWave1LegacyUserIdentityWrite"
+            ],
+            "impactedFunctionsCount": 6,
+            "result": "success"
+          },
+          "productionDeployment": null
         }
       },
       "legacyWritesStopped": false,
@@ -1031,11 +1122,10 @@
         "temporaryValidationWorkflowRetiredBeforeMerge": true
       },
       "nextAuthorizedStep": {
-        "kind": "canonical_primary_remaining_learner_write_paths_implementation",
+        "kind": "canonical_primary_createStudentForParent_validation_and_deploy",
         "retirementStage": "R4",
         "scope": [
-          "createStudentForParent",
-          "browser-side learner create/update writers"
+          "createStudentForParent"
         ],
         "destructive": false,
         "legacyDeletionAuthorized": false,
