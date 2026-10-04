@@ -77,6 +77,14 @@ function optionalText(value: unknown): string | undefined {
   return text || undefined;
 }
 
+function optionalPrivateText(
+  value: unknown,
+): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.trim();
+  return text || undefined;
+}
+
 function validateDobFormatIfProvided(dob: string): void {
   const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!isoDateRegex.test(dob)) {
@@ -438,11 +446,11 @@ async function createStudentForParentHandlerImpl(
     const board = optionalText(rawData.board);
     const profilePhotoUrl =
       optionalText(rawData.profilePhotoUrl);
-    const notes = optionalText(rawData.notes);
+    const notes = optionalPrivateText(rawData.notes);
     const emergencyContact =
-      optionalText(rawData.emergencyContact);
+      optionalPrivateText(rawData.emergencyContact);
     const medicalNotes =
-      optionalText(rawData.medicalNotes);
+      optionalPrivateText(rawData.medicalNotes);
 
     const result =
       await executeCanonicalLearnerCreate({
