@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick5e_auth_writer_activation_validated_deployment_pending",
+        "status": "brick5e_auth_writer_activation_production_active",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -1055,7 +1055,7 @@
             "temporaryValidationWorkflowRetiredBeforeMerge": true
           }
         },
-        "nextBrick": "brick5e_production_deployment_and_canary_closeout",
+        "nextBrick": "r5_reader_and_firestore_rules_cutover",
         "brick5b": {
           "title": "Canonical auth-backed user create writer implementation",
           "writer": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserCreate.ts",
@@ -1340,9 +1340,9 @@
           "title": "Auth-backed canonical writer family production activation",
           "documentation": "docs/architecture/wave-1/IDENTITY_R4_AUTH_WRITER_ACTIVATION_BRICK5E.md",
           "productionWiring": true,
-          "productionDeploymentPending": true,
-          "productionCanaryPending": true,
-          "canonicalPrimaryWritesEnabledForAuthBackedUsers": "pending_deployment_and_canary",
+          "productionDeploymentPending": false,
+          "productionCanaryPending": false,
+          "canonicalPrimaryWritesEnabledForAuthBackedUsers": true,
           "existingProductionFunctionNamesPreserved": [
             "adminCreateUser",
             "adminUpdateUser",
@@ -1434,8 +1434,62 @@
               "firestoreIndexesChanged": false
             }
           },
-          "productionEvidence": null
-        }
+          "productionEvidence": {
+            "mainMerge": {
+              "pullRequest": 603,
+              "commit": "87e0c0ef0a92755374cba2bfc9fb3baa694b4340"
+            },
+            "deployment": {
+              "workflowRunId": 37207219299,
+              "workflowRunNumber": 3875,
+              "result": "success",
+              "completedAt": "2026-10-04T14:02:52Z",
+              "functionsFullDeployment": false,
+              "functionsImpactedCount": 15,
+              "functionsVerifiedReady": 15,
+              "hostingDeployed": true,
+              "liveDeploymentIntegrityVerified": true,
+              "firestoreRulesDeployed": false,
+              "firestoreIndexesDeployed": false,
+              "recoveryJobRequired": false
+            },
+            "canary": {
+              "workflowRunId": 37209875109,
+              "result": "passed",
+              "role": "parent",
+              "status": "suspended",
+              "executionEnvironment": "GitHub Actions read-only production verification",
+              "rawFirebaseUidRecorded": false,
+              "rawPersonIdRecorded": false,
+              "rawEmailRecorded": false,
+              "privacySafeTokens": {
+                "uid": "e2003bba0d50",
+                "personId": "b30a7af631c7",
+                "email": "44d55924fce0"
+              },
+              "verificationChecks": {
+                "uidPersonDecoupled": true,
+                "erroneousUidKeyedPersonAbsent": true,
+                "canonicalPersonPresent": true,
+                "authIdentityPresent": true,
+                "authIdentityProviderFirebase": true,
+                "authIdentityUidPersonMappingCorrect": true,
+                "roleAssignmentPresent": true,
+                "compatibilityUserPresent": true,
+                "compatibilityRoleMirrorPresent": true,
+                "firebaseAuthStateConsistent": true
+              }
+            }
+          },
+          "productionActive": true
+        },
+        "canonicalPrimaryWriteScope": [
+          "adminCreateUser:auth_user_create",
+          "adminUpdateUser:auth_user_update",
+          "adminSetUserRole:auth_user_update_role_transition",
+          "adminArchiveUser:auth_user_archive",
+          "updateTeacherProfile:teacher_profile_update"
+        ]
       },
       "legacyWritesStopped": false,
       "readSwitchAuthorized": false,
