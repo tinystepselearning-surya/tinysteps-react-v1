@@ -605,7 +605,7 @@
     }
   },
   "legacyRetirement": {
-    "status": "profile_migration_implementation_pending_validation",
+    "status": "profile_migration_verified_ready_for_r4_implementation",
     "approvedEndState": "canonical_primary_legacy_retired",
     "legacyCollections": [
       "users",
@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "production_reconciled_pending_independent_verification",
+      "status": "production_independently_verified",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -812,9 +812,21 @@
         "reconciled": true,
         "writesPerformed": 0
       },
-      "independentVerification": null,
+      "independentVerification": {
+        "runAt": "2026-10-04T10:53:49.376Z",
+        "reportPath": "reports/wave1-identity-profile-verify-2026-10-04T10-53-49-376Z.json",
+        "verifierCommit": "eb79f52c4f710dcbcdef3739e14d95063f903bd4",
+        "expectedTargets": 891,
+        "matchedTargets": 891,
+        "missingTargets": 0,
+        "semanticProfileIssues": 0,
+        "unexpectedMigrationOwnedTargets": 0,
+        "retirementDependencyIssues": 0,
+        "verified": true,
+        "writesPerformed": 0
+      },
       "independentVerificationImplementation": {
-        "status": "local_validation_complete",
+        "status": "production_verification_complete",
         "verifier": "scripts/wave1-identity-profile-verify.mjs",
         "model": "scripts/verification/wave1-identity-profile-verify-lib.mjs",
         "regressionTest": "scripts/test/wave1-identity-profile-verify.node-test.mjs",
@@ -876,12 +888,14 @@
         "temporaryValidationWorkflowRetiredBeforeMerge": true
       },
       "nextAuthorizedStep": {
-        "kind": "independent_profile_migration_verification",
+        "kind": "canonical_primary_create_update_paths_implementation",
+        "retirementStage": "R4",
         "destructive": false,
-        "legacyWrites": false,
-        "firebaseAuthWrites": false,
-        "canonicalIdentityCoreWrites": false,
-        "precondition": "production reconciliation remains clean"
+        "legacyDeletionAuthorized": false,
+        "legacyWriteFreezeAuthorized": false,
+        "readerCutoverAuthorized": false,
+        "securityRulesCutoverAuthorized": false,
+        "precondition": "independent profile verification remains clean"
       }
     }
   }
