@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import { CreateUserForm } from '../../pages/admin/UserManagement/CreateUserForm';
 
@@ -21,17 +21,16 @@ vi.mock('firebase/functions', async () => {
 });
 
 describe('CreateUserForm UI', () => {
-  test('renders without runtime errors and shows Assign kids label with KidMultiSelect', async () => {
+  test('renders generic user fields without the retired parent kid-assignment control', () => {
     const onUserCreated = vi.fn();
     render(<CreateUserForm onUserCreated={onUserCreated} />);
 
-    // check static labels
     expect(screen.getByText('Email')).toBeInTheDocument();
     expect(screen.getByText('Full Name')).toBeInTheDocument();
-    expect(screen.getByText('Assign kids (optional)')).toBeInTheDocument();
 
-  // ensure the input placeholder from our KidMultiSelect is present
-  // placeholder appears after async fetch; use findBy to wait for it
-  await screen.findByPlaceholderText('Assign kids...');
+    // Wave 1 R4 retired kid assignment from generic user creation.
+    // Learner/guardian relationships are managed through the canonical identity flow instead.
+    expect(screen.queryByText('Assign kids (optional)')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Assign kids...')).not.toBeInTheDocument();
   });
 });
