@@ -208,5 +208,21 @@
     "storageRulesCompilation": "passed",
     "productionDryRun": "passed",
     "temporaryWorkflowRetired": true
+  },
+  "backfill": {
+    "status": "ready_for_local_dry_run",
+    "executor": "scripts/wave1-identity-foundation-backfill.mjs",
+    "helper": "scripts/migrations/wave1-identity-backfill-lib.mjs",
+    "regressionTest": "scripts/test/wave1-identity-backfill.node-test.mjs",
+    "executionEnvironment": "Local Mac manual execution against production; no scheduled or permanent migration workflow",
+    "checkpointPath": "reports/wave1-identity-backfill-checkpoint.json",
+    "reportPathPattern": "reports/wave1-identity-backfill-<mode>-<timestamp>.json",
+    "canarySourceRecordLimit": 20,
+    "maxSourceRecordsPerWriteRun": 250,
+    "maxWritesPerBatch": 100,
+    "firstProductionWriteAt": null,
+    "completedAt": null,
+    "finalReconciliationAt": null,
+    "finalReconciliationResult": null
   }
 }
