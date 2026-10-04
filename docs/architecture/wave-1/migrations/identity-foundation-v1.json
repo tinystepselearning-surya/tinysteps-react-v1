@@ -4,7 +4,7 @@
   "domain": "Identity & Relationships",
   "canonicalOwner": "Identity & Authentication / Learner Identity / Organisation Membership",
   "title": "Wave 1 Identity Foundation",
-  "status": "backfill_complete",
+  "status": "verified",
   "sourceBaselineCommit": "570bfef5fd99857e1f7df9529c46e593f77dcec0",
   "implementationCommit": "91f1078c2d7c4147f89da14bd14a709dd8113300",
   "schemaVersion": 1,
@@ -269,5 +269,50 @@
       "reconciled": true,
       "reportTimestamp": "2026-10-04T05:51:21.195Z"
     }
+  },
+  "verify": {
+    "status": "complete",
+    "verifier": "scripts/wave1-identity-foundation-verify.mjs",
+    "helper": "scripts/verification/wave1-identity-verify-lib.mjs",
+    "regressionTest": "scripts/test/wave1-identity-verify.node-test.mjs",
+    "executionEnvironment": "Local Mac read-only verification against production",
+    "sourceBaseline": {
+      "users": 223,
+      "firebaseAuthUsers": 225,
+      "kids": 194,
+      "schools": 1,
+      "schoolUsers": 1
+    },
+    "canonicalBaseline": {
+      "people": 417,
+      "authIdentities": 223,
+      "roleAssignments": 223,
+      "learnerProfiles": 194,
+      "guardianRelationships": 194,
+      "organisations": 1,
+      "organisationMemberships": 1,
+      "households": 0
+    },
+    "semanticMismatchCount": 0,
+    "referenceIssueCount": 0,
+    "blockingSourceModelIssueCount": 0,
+    "authOnlyCanonicalLeakCount": 0,
+    "verifiedAt": "2026-10-04T06:04:13.420Z",
+    "result": "success",
+    "verifierCommit": "5a4af4a41acbd656ffbc467bca7497dd82dc677b",
+    "regressionTests": {
+      "passed": 7,
+      "total": 7
+    },
+    "authOnlyAccountsExcluded": 2,
+    "expectedDocuments": 1253,
+    "matchedDocuments": 1253,
+    "missingDocuments": 0,
+    "unexpectedDocuments": 0,
+    "sourceBaselineUnchanged": true,
+    "canonicalBaselineExact": true,
+    "householdDocuments": 0,
+    "writesPerformed": 0,
+    "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   }
 }
