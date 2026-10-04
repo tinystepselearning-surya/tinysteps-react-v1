@@ -20,7 +20,14 @@ export function discoverEndpointPlan(exported) {
     if (!/^[A-Za-z][A-Za-z0-9_-]{0,62}$/.test(id)) throw new Error(`Unsafe function id: ${id}`);
     if (seen.has(id)) throw new Error(`Duplicate function id: ${id}`);
     seen.add(id);
-    functions.push({ exportName, id, region: regions[0], selector: `functions:${id}` });
+    functions.push({
+      exportName,
+      id,
+      region: regions[0],
+      selector: `functions:${id}`,
+      requiresFailurePolicyForce:
+        ep.eventTrigger?.retry === true,
+    });
   }
   if (!functions.length) throw new Error('No deployable compiled function exports found');
   functions.sort((a, b) => a.id.localeCompare(b.id));
@@ -31,6 +38,35 @@ export function batch(items, size = BATCH_SIZE) {
   if (!Number.isInteger(size) || size < 1) throw new Error('Invalid batch size');
   const out = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+export function batchByFailurePolicy(items, size = BATCH_SIZE) {
+  if (!Number.isInteger(size) || size < 1) throw new Error('Invalid batch size');
+  const out = [];
+  let current = [];
+  let currentRequiresForce = null;
+
+  for (const item of items) {
+    const requiresForce =
+      item?.requiresFailurePolicyForce === true;
+    if (
+      current.length > 0 &&
+      (
+        current.length >= size ||
+        currentRequiresForce !== requiresForce
+      )
+    ) {
+      out.push(current);
+      current = [];
+    }
+    if (current.length === 0) {
+      currentRequiresForce = requiresForce;
+    }
+    current.push(item);
+  }
+
+  if (current.length) out.push(current);
   return out;
 }
 
@@ -68,8 +104,25 @@ export function filterEndpointPlan(plan, only) {
 }
 
 export function deploymentPlanHash({ project, region, codebase = 'default', targets }) {
-  const identity = { project, region, codebase, targets: targets.map(({ id, selector }) => ({ id, selector })) };
-  return crypto.createHash('sha256').update(JSON.stringify(identity)).digest('hex');
+  const identity = {
+    project,
+    region,
+    codebase,
+    targets: targets.map(({
+      id,
+      selector,
+      requiresFailurePolicyForce = false,
+    }) => ({
+      id,
+      selector,
+      requiresFailurePolicyForce:
+        requiresFailurePolicyForce === true,
+    })),
+  };
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(identity))
+    .digest('hex');
 }
 
 export function validateCheckpoint(checkpoint, expected) {

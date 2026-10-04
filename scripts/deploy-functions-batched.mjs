@@ -4,7 +4,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
-  BATCH_SIZE, EXPECTED_REGION, EXPECTED_RUNTIME, batch, classifyAttempt, classifyProviderState, deploymentPlanHash,
+  BATCH_SIZE, EXPECTED_REGION, EXPECTED_RUNTIME, batchByFailurePolicy, classifyAttempt, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, discoverEndpointPlan, filterEndpointPlan, firebaseCliDiagnosticExcerpt,
   functionsChangeDecision, normalizeRevisionId, parseDeploymentArgs,
   remainingTargets, retryProvider404, validateCheckpoint,
@@ -62,9 +62,18 @@ try {
   const plan = filterEndpointPlan(fullPlan, options.only);
   if (!plan.length) throw new Error('Resolved Functions deployment plan is empty');
   report.targetCount = plan.length;
-  report.targets = plan.map(({ id, selector }) => ({ id, selector }));
+  report.targets = plan.map(({
+    id,
+    selector,
+    requiresFailurePolicyForce,
+  }) => ({
+    id,
+    selector,
+    requiresFailurePolicyForce:
+      requiresFailurePolicyForce === true,
+  }));
   report.planHash = deploymentPlanHash({ project: PROJECT, region: EXPECTED_REGION, codebase, targets: report.targets });
-  const groups = batch(plan, BATCH_SIZE);
+  const groups = batchByFailurePolicy(plan, BATCH_SIZE);
   report.batchSize = BATCH_SIZE;
   report.retryBackoffSeconds = RETRY_BACKOFF_SECONDS;
   report.batchCount = groups.length;
@@ -100,9 +109,21 @@ try {
   for (let index = 0; index < groups.length; index++) {
     const group = groups[index];
     let pending = remainingTargets(group, confirmedReady);
+    const failurePolicyForce =
+      group[0]?.requiresFailurePolicyForce === true;
+    if (
+      group.some(target =>
+        (target.requiresFailurePolicyForce === true) !==
+        failurePolicyForce)
+    ) {
+      throw new Error(
+        `Batch ${index + 1} mixes failure-policy and normal targets; refusing broad --force`,
+      );
+    }
     const batchReport = {
       index: index + 1,
       targets: group.map(target => target.id),
+      failurePolicyForce,
       resumedReady: group.filter(target => confirmedReady.has(target.id)).map(target => target.id),
       attempts: [],
     };
@@ -123,13 +144,20 @@ try {
         mutationStarted = true;
       }
       console.log(`Deploying batch ${index + 1}/${groups.length}, attempt ${attempt + 1}: ${pending.map(target => target.id).join(', ')}`);
-      const result = await runBounded('npx', [
+      const deployArgs = [
         '--yes', `firebase-tools@${FIREBASE_CLI}`, 'deploy',
         '--only', pending.map(target => target.selector).join(','),
         '--project', PROJECT,
         '--config', FIREBASE_DEPLOY_CONFIG,
-        '--non-interactive',
-      ]);
+      ];
+      if (failurePolicyForce) {
+        deployArgs.push('--force');
+      }
+      deployArgs.push('--non-interactive');
+      const result = await runBounded(
+        'npx',
+        deployArgs,
+      );
       const outputMeta = digestBoundedOutput(result.output);
       if (result.code !== 0) {
         const diagnostic = firebaseCliDiagnosticExcerpt(result.output);

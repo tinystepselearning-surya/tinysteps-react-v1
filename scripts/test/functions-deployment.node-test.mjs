@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { promisify } from 'node:util';
 import {
-  BATCH_SIZE, discoverEndpointPlan, batch, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
+  BATCH_SIZE, discoverEndpointPlan, batch, batchByFailurePolicy, classifyAttempt, classifyFailure, classifyProviderState, deploymentPlanHash,
   digestBoundedOutput, enforcePartition, filterEndpointPlan, functionsChangeDecision,
   firebaseCliDiagnosticExcerpt,
   normalizeRevisionId, parseDeploymentArgs, terminalFailedTargets, trafficPercentForRevision,
@@ -16,7 +16,21 @@ import { buildDependencyGraph, classifyArtifactChanges, resolveFunctionsImpact }
 const execFileAsync = promisify(execFile);
 const require = createRequire(import.meta.url);
 
-const fn = (entryPoint, region = ['asia-south1'], platform = 'gcfv2') => ({ __endpoint: { entryPoint, region, platform } });
+const fn = (
+  entryPoint,
+  region = ['asia-south1'],
+  platform = 'gcfv2',
+  retry = false,
+) => ({
+  __endpoint: {
+    entryPoint,
+    region,
+    platform,
+    ...(retry
+      ? { eventTrigger: { retry: true } }
+      : {}),
+  },
+});
 
 test('discovers and sorts compiled v2 asia-south1 exports', () => {
   const plan = discoverEndpointPlan({ z: fn('zFn'), a: fn('aFn'), helper: {} });
@@ -85,15 +99,101 @@ test('batches deterministically at the documented Firebase ceiling of ten', () =
   );
 });
 
+test('detects retry-enabled endpoint metadata and isolates --force batches', () => {
+  const plan = discoverEndpointPlan({
+    alpha: fn('alpha'),
+    beta: fn('beta', ['asia-south1'], 'gcfv2', true),
+    gamma: fn('gamma', ['asia-south1'], 'gcfv2', true),
+    zeta: fn('zeta'),
+  });
+
+  assert.deepEqual(
+    plan.map(({ id, requiresFailurePolicyForce }) => ({
+      id,
+      requiresFailurePolicyForce,
+    })),
+    [
+      { id: 'alpha', requiresFailurePolicyForce: false },
+      { id: 'beta', requiresFailurePolicyForce: true },
+      { id: 'gamma', requiresFailurePolicyForce: true },
+      { id: 'zeta', requiresFailurePolicyForce: false },
+    ],
+  );
+
+  const groups = batchByFailurePolicy(plan, BATCH_SIZE);
+  assert.deepEqual(
+    groups.map(group => ({
+      ids: group.map(target => target.id),
+      requiresFailurePolicyForce:
+        group[0].requiresFailurePolicyForce,
+    })),
+    [
+      {
+        ids: ['alpha'],
+        requiresFailurePolicyForce: false,
+      },
+      {
+        ids: ['beta', 'gamma'],
+        requiresFailurePolicyForce: true,
+      },
+      {
+        ids: ['zeta'],
+        requiresFailurePolicyForce: false,
+      },
+    ],
+  );
+});
+
+test('deployment plan hash includes failure-policy force metadata', () => {
+  const base = {
+    project: 'p',
+    region: 'asia-south1',
+    codebase: 'default',
+  };
+  const withoutRetry = deploymentPlanHash({
+    ...base,
+    targets: [{
+      id: 'alpha',
+      selector: 'functions:alpha',
+      requiresFailurePolicyForce: false,
+    }],
+  });
+  const withRetry = deploymentPlanHash({
+    ...base,
+    targets: [{
+      id: 'alpha',
+      selector: 'functions:alpha',
+      requiresFailurePolicyForce: true,
+    }],
+  });
+  assert.notEqual(withoutRetry, withRetry);
+});
+
 test('bounded deployer starts successful batches immediately and backs off only on retries', () => {
   const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
   assert.equal(BATCH_SIZE, 10);
   assert.match(source, /const RETRY_BACKOFF_SECONDS = \[60, 120, 240\];/);
   assert.match(source, /const MAX_ATTEMPTS = RETRY_BACKOFF_SECONDS\.length \+ 1;/);
-  assert.match(source, /const groups = batch\(plan, BATCH_SIZE\);/);
+  assert.match(source, /const groups = batchByFailurePolicy\(plan, BATCH_SIZE\);/);
   assert.match(source, /if \(attempt > 0\) \{\s*await sleepWithJitter\(RETRY_BACKOFF_SECONDS\[attempt - 1\]\);\s*\}/);
   assert.doesNotMatch(source, /await sleepWithJitter\(RETRY_BACKOFF_SECONDS\[attempt\]\)/);
   assert.match(source, /Retry backoff: waiting at least/);
+});
+
+test('bounded deployer adds Firebase --force only to an isolated failure-policy batch', () => {
+  const source = readFileSync('scripts/deploy-functions-batched.mjs', 'utf8');
+  assert.match(
+    source,
+    /if \(failurePolicyForce\) \{\s*deployArgs\.push\('--force'\);\s*\}/,
+  );
+  assert.match(
+    source,
+    /mixes failure-policy and normal targets; refusing broad --force/,
+  );
+  assert.doesNotMatch(
+    source,
+    /deployArgs\.push\('--force'\);\s*deployArgs\.push\('--force'\)/,
+  );
 });
 
 test('normalizes short and fully-qualified Cloud Run revision identifiers', () => {
