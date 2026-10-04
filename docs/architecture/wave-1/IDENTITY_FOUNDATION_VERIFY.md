@@ -199,3 +199,66 @@ SWITCH READS
 ~~~
 
 That phase must introduce canonical read adapters and bounded fallback/observability before production identity reads are moved.
+
+
+## Production VERIFY result
+
+Read-only production VERIFY completed successfully on 2026-10-04.
+
+Regression test result:
+
+~~~text
+tests 7
+pass 7
+fail 0
+~~~
+
+Production verifier result:
+
+~~~text
+People: 417/417
+Auth identities: 223/223
+Role assignments: 223/223
+Learner profiles: 194/194
+Guardian relationships: 194/194
+Organisations: 1/1
+Organisation memberships: 1/1
+Households: 0/0 (deferred)
+
+Expected documents: 1253
+Matched: 1253
+Missing: 0
+Unexpected: 0
+
+Semantic mismatches: 0
+Broken/reference invariant issues: 0
+Blocking source-model issues: 0
+Auth-only accounts excluded: 2
+Auth-only canonical leaks: 0
+
+Source baseline unchanged: true
+Canonical baseline exact: true
+
+VERIFIED: true
+Writes performed: 0
+~~~
+
+Production report:
+
+~~~text
+reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json
+~~~
+
+The VERIFY phase is therefore complete.
+
+Current authority is still unchanged:
+
+~~~text
+legacy identity collections
+= production read/write authority
+
+canonical identity collections
+= verified canonical shadow state
+~~~
+
+VERIFY completion authorizes planning the SWITCH READS brick only. It does not itself switch reads, stop legacy writes, delete legacy data, replace Firebase UIDs, create Households or migrate unrelated domains.
