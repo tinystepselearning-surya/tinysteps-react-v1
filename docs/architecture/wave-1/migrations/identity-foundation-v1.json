@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "production_canary_write_complete",
+      "status": "production_bounded_write_complete",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -771,6 +771,19 @@
           "postWriteSelectedMismatches": 0,
           "remainingPendingSourceRecords": 402,
           "writesPerformed": 40
+        },
+        {
+          "kind": "bounded",
+          "runAt": "2026-10-04T10:39:41.326Z",
+          "reportPath": "reports/wave1-identity-profile-retirement-write-2026-10-04T10-39-41-326Z.json",
+          "sourceRecordLimit": 250,
+          "sourceRecordsCommitted": 250,
+          "targetDocumentsCreated": 311,
+          "targetDocumentsUpdated": 204,
+          "writeBatchesCommitted": 6,
+          "postWriteSelectedMismatches": 0,
+          "remainingPendingSourceRecords": 152,
+          "writesPerformed": 515
         }
       ],
       "reconciliation": null,
@@ -818,7 +831,7 @@
       },
       "nextAuthorizedStep": {
         "kind": "production_bounded_write",
-        "sourceRecordLimit": 250,
+        "sourceRecordLimit": 152,
         "destructive": false,
         "legacyWrites": false,
         "firebaseAuthWrites": false,
