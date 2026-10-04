@@ -6,6 +6,7 @@ import {
   buildAuthAccessReadModel,
   loadCanonicalAuthAccessInput,
   refreshAuthAccessReadModel,
+  type AuthAccessCanonicalInput,
 } from '../src/schoolOS/identity/authAccessReadModel';
 import {
   buildAuthIdentityId,
@@ -156,7 +157,7 @@ function buildDb(
   };
 }
 
-function baseCanonicalInput() {
+function baseCanonicalInput(): AuthAccessCanonicalInput {
   const firebaseUid = 'firebase-uid-1';
   const personId = 'person-1';
   const authIdentityId =
