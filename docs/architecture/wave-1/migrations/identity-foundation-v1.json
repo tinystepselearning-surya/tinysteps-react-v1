@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "implementation_pending_validation",
+      "status": "local_validation_complete",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -740,7 +740,22 @@
       "productionDryRun": null,
       "productionWrites": [],
       "reconciliation": null,
-      "independentVerification": null
+      "independentVerification": null,
+      "localValidation": {
+        "validatedCommit": "14288ddaeb383f5bf8d9e78e661567ff6e5c57b6",
+        "workflowRunId": 37190103635,
+        "syntaxCheck": "passed",
+        "profileMigrationTests": {
+          "passed": 13,
+          "total": 13
+        },
+        "retirementAuditTests": {
+          "passed": 10,
+          "total": 10
+        },
+        "result": "success",
+        "temporaryValidationWorkflowRetiredBeforeMerge": true
+      }
     }
   }
 }
