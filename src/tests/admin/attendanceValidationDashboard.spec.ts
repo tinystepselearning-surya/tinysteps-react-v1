@@ -172,6 +172,10 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(dashboard).toContain("navigate(parentPaymentsUrl('receive'))");
     expect(dashboard).toContain("openParentWhatsApp('invoice')");
     expect(dashboard).toContain("openParentWhatsApp('reminder')");
+    expect(dashboard).toContain('TINY_STEPS_PAYMENT_DETAILS.accountNumber');
+    expect(dashboard).toContain('TINY_STEPS_PAYMENT_DETAILS.ifsc');
+    expect(dashboard).toContain('TINY_STEPS_PAYMENT_DETAILS.upiId');
+    expect(dashboard).toContain('TINY_STEPS_PAYMENT_PROOF_NOTE');
     expect(dashboard).toContain('No duplicate payment state is stored here.');
     expect(dashboard).not.toContain("collection(db, 'billingCharges')");
     expect(dashboard).not.toContain("collection(db, 'payments')");
