@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c3_password_management_validation_pending",
+    "status": "r5c2c3_password_management_validated_pending_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c3_password_management_validate_and_deploy",
+    "nextBrick": "r5c2c3_password_management_deploy",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2c3_password_management_validation_pending",
+      "status": "r5c2c3_password_management_validated_pending_merge",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2c3_password_management_validate_and_deploy",
+      "nextBrick": "r5c2c3_password_management_deploy",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2330,7 +2330,7 @@
               "passwordManagementBehaviorPreserved": true,
               "productionWiring": false,
               "productionVerified": false,
-              "validationPending": true,
+              "validationPending": false,
               "excludedAccountMutations": {
                 "adminDeleteUser": {
                   "reason": "destructive_hard_delete_requires_independent_rollout"
@@ -2348,6 +2348,43 @@
                     "unassignLPFromTeacher"
                   ]
                 }
+              },
+              "validation": {
+                "mode": "local_acceptance",
+                "headSha": "2a3a29ba60142054d75c904ff41639c275778ebf",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "functionsUnitEstate": {
+                  "filesPassed": 137,
+                  "filesSkipped": 2,
+                  "testsPassed": 1120,
+                  "testsSkipped": 25
+                },
+                "authorizationRegressions": {
+                  "passed": 16,
+                  "total": 16,
+                  "filesPassed": 2,
+                  "totalFiles": 2
+                },
+                "deploymentImpactClassifierAndContracts": {
+                  "passed": 81,
+                  "total": 81
+                },
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 2,
+                  "impactedFunctions": [
+                    "adminGenerateResetLink",
+                    "adminResetPassword"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false,
+                  "avsCallableTransportVerificationRequired": false
+                },
+                "temporaryValidationWorkflowCreated": false
               }
             }
           }
