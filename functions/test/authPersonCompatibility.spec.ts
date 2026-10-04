@@ -17,7 +17,7 @@ type Row = Record<string, unknown> | null;
 class FakeDocumentRef {
   constructor(
     public readonly path: string,
-    private readonly rows: Record<string, Row>,
+    protected readonly rows: Record<string, Row>,
   ) {}
 
   async get() {
@@ -84,10 +84,7 @@ class FakeCollection extends FakeQuery {
     rows: Record<string, Row>,
   ) {
     super(name, rows);
-    this.rows = rows;
   }
-
-  private readonly rows: Record<string, Row>;
 
   doc(id: string) {
     return new FakeDocumentRef(
