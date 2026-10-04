@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5a_auth_access_read_model_validated",
+    "status": "r5b_auth_access_maintenance_validated_pending_production",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5b_auth_access_read_model_backfill_and_live_maintenance",
+    "nextBrick": "r5b_production_deploy_backfill_reconciliation",
     "readSwitchAuthorized": false,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5a_validated_not_activated",
+      "status": "r5b_validated_pending_production",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,105 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5b_auth_access_read_model_backfill_and_live_maintenance"
+      "nextBrick": "r5b_production_deploy_backfill_reconciliation",
+      "r5b": {
+        "title": "Auth access read model bounded backfill and live maintenance",
+        "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
+        "backfillExecutor": "scripts/wave1-auth-access-read-model-backfill.mjs",
+        "backfillPlanner": "scripts/migrations/wave1-auth-access-read-model-backfill-lib.mjs",
+        "maintenanceRoutingTest": "functions/test/authAccessReadModelMaintenanceRouting.spec.ts",
+        "maintenanceHelperTest": "functions/test/authAccessReadModelMaintenance.spec.ts",
+        "backfillPlannerTest": "scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs",
+        "documentation": "docs/architecture/wave-1/IDENTITY_R5_AUTH_ACCESS_MAINTENANCE_BRICKB.md",
+        "productionWiring": false,
+        "productionBackfillComplete": false,
+        "productionReconciled": false,
+        "backendReaderCutover": false,
+        "firestoreRulesCutover": false,
+        "callableMaintenanceMode": "best_effort_after_canonical_commit",
+        "legacySyncMaintenanceMode": "strict_retryable",
+        "teacherProfileRefreshRequired": false,
+        "broadCanonicalTriggersAdded": false,
+        "canonicalMaintenanceEntryPoints": [
+          "adminCreateUser",
+          "adminUpdateUser",
+          "adminSetUserRole",
+          "adminArchiveUser"
+        ],
+        "legacyMaintenanceEntryPoints": [
+          "users",
+          "schoolUsers"
+        ],
+        "userDeletionRemovesReadModel": true,
+        "schoolUserMaintenanceRefreshesPreviousAndCurrentPersons": true,
+        "backfillModes": [
+          "dry-run",
+          "write",
+          "reconcile"
+        ],
+        "backfillDefaultBounds": {
+          "maxRecords": 250,
+          "writeLimit": 250,
+          "sampleSize": 20
+        },
+        "privacy": {
+          "rawFirebaseUidsInReport": false,
+          "rawPersonIdsInReport": false,
+          "rawEmailsInReport": false,
+          "samples": "sha256_tokens_only"
+        },
+        "acceptanceValidation": {
+          "head": "304cd79e5b7bb215e55407afeee050f3795b5090",
+          "workflowRunId": 37211505883,
+          "result": "success",
+          "functionsBuild": "passed",
+          "tests": {
+            "functionsIdentity": {
+              "passed": 75,
+              "total": 75,
+              "filesPassed": 9,
+              "totalFiles": 9
+            },
+            "authorizationRouting": {
+              "passed": 16,
+              "total": 16,
+              "filesPassed": 2,
+              "totalFiles": 2
+            },
+            "backfillPlanner": {
+              "passed": 7,
+              "total": 7
+            },
+            "total": {
+              "passed": 98,
+              "total": 98
+            }
+          },
+          "deploymentImpact": {
+            "functionsDeploymentRequired": true,
+            "functionsFullDeployment": false,
+            "impactedFunctionsCount": 13,
+            "impactedFunctions": [
+              "adminArchiveUser",
+              "adminCreateUser",
+              "adminSetUserRole",
+              "adminUpdateUser",
+              "assignLPToParent",
+              "assignLPToTeacher",
+              "backfillTeacherDocs",
+              "onWave1LegacyKidIdentityWrite",
+              "onWave1LegacySchoolIdentityWrite",
+              "onWave1LegacySchoolUserIdentityWrite",
+              "onWave1LegacyUserIdentityWrite",
+              "unassignLPFromParent",
+              "unassignLPFromTeacher"
+            ],
+            "hostingChanged": false,
+            "firestoreRulesChanged": false,
+            "firestoreIndexesChanged": false
+          }
+        }
+      }
     }
   },
   "legacyRetirement": {
