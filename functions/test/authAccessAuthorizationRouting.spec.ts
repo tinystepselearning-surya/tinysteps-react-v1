@@ -25,22 +25,13 @@ const schoolEvidence = read(
   'functions/src/schoolEvidence.ts',
 );
 
-describe('Wave 1 R5C backend authorization routing', () => {
-  it('makes canonical-derived access the sole Admin authorization source', () => {
+describe('Wave 1 R5C1 school authorization routing', () => {
+  it('keeps the shared Admin guard unchanged until the separately bounded R5C2 rollout', () => {
     expect(adminGuard).toContain(
+      "collection('users')",
+    );
+    expect(adminGuard).not.toContain(
       'loadCurrentAuthAccessPrincipal',
-    );
-    expect(adminGuard).toContain(
-      "principalHasGlobalRole",
-    );
-    expect(adminGuard).toContain(
-      "'admin'",
-    );
-    expect(adminGuard).not.toContain(
-      ".collection('users')",
-    );
-    expect(adminGuard).not.toContain(
-      '.collection("users")',
     );
   });
 
