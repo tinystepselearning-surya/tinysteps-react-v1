@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2B COMPLETE IN PRODUCTION — R5C2C1 learner mutation slice validated pending merge  
+**Status:** R5C2C1 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -593,4 +593,42 @@ adminCreateStudent
 adminUpdateStudent
 ~~~
 
-R5C2C1 is therefore acceptance-complete and ready for merge/deployment.
+R5C2C1 is therefore acceptance-complete.
+
+### R5C2C1 production closeout
+
+PR #615 merged the first bounded Admin mutation slice.
+
+~~~text
+Merge commit: 793fdde9797f231faf2c26ee8054196fb3881d80
+Deploy workflow: 37222376388
+Deploy run number: 3887
+Result: success
+~~~
+
+Production deployment facts:
+
+- Functions planned: 2;
+- Functions deployed: 2;
+- Functions checkpoint-ready: 2/2;
+- deployment batches: 1;
+- full Functions deployment: no;
+- Functions production marker advanced to the merge commit;
+- Hosting deployment: skipped;
+- Firestore Rules deployment: skipped;
+- Firestore indexes deployment: skipped;
+- School/AVS/lead transport verification: not required;
+- recovery job required: no.
+
+Deployed Functions:
+
+~~~text
+adminCreateStudent
+adminUpdateStudent
+~~~
+
+R5C2C1 is production-complete.
+
+The shared legacy `helpers/adminGuard.ts` remains unchanged for not-yet-migrated callables.
+The next stage must remain another bounded mutation slice; enrollment lifecycle, scheduling,
+attendance and finance should continue to be isolated rather than moved together.
