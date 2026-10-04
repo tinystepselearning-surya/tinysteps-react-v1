@@ -371,3 +371,35 @@ legacy read authority  = unchanged
 legacy write authority = unchanged
 canonical identity     = synchronized shadow/compatibility state
 ~~~
+
+## Local validation result
+
+The implementation was validated on the PR branch with a temporary no-secrets GitHub Actions workflow.
+
+Validation run:
+
+~~~text
+run ID: 37185511318
+validated implementation commit: 4c7aacb2ae8008392a932a5fc66b809c8df758bd
+~~~
+
+Result:
+
+~~~text
+Functions lint:                         passed
+Functions TypeScript build:             passed
+
+Focused Brick 1-3 identity tests:
+  identityLegacySync:                    9/9
+  identityReadAdapter:                   7/7
+  identityShadowCanary:                  8/8
+  focused total:                        24/24
+
+Wave 1 identity foundation tests:        8/8
+Authorization hardening tests:           8/8
+~~~
+
+The temporary validation workflow is retired before merge and is not part of the production CI surface.
+
+This validation proves compilation and regression behavior. It does not replace post-deployment production observation of the four new compatibility triggers.
+
