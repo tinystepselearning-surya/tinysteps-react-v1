@@ -3,7 +3,8 @@
 **Status:** FROZEN ARCHITECTURE SOURCE OF TRUTH  
 **Scope:** Long-term logical architecture for Tiny Steps Learning  
 **Repository:** `tinystepselearning-surya/tinysteps-react-v1`  
-**Companion roadmap:** [SCHOOL_OS_MIGRATION_ROADMAP_V1.md](./SCHOOL_OS_MIGRATION_ROADMAP_V1.md)
+**Companion roadmap:** [SCHOOL_OS_MIGRATION_ROADMAP_V1.md](./SCHOOL_OS_MIGRATION_ROADMAP_V1.md)  
+**Enterprise engineering standard:** [SCHOOL_OS_ENTERPRISE_ARCHITECTURE_STANDARD_V1.md](./SCHOOL_OS_ENTERPRISE_ARCHITECTURE_STANDARD_V1.md)
 
 ## 1. Purpose
 
@@ -46,6 +47,7 @@ The blueprint must support:
 17. **Child and family data is private by design.** Collect only what is necessary, bind it to a defined purpose, scope access, govern consent/retention and support appropriate deletion or anonymisation without weakening auditable financial, safeguarding or evidence obligations.
 18. **Public discoverability is protected architecture.** Public pages intended for discovery must remain semantically structured, crawlable/indexable by design, stable in URL/canonical ownership and compatible with search, answer engines and AI retrieval.
 19. **Design-system governance is shared-first.** New UI primitives, templates and variants should extend the maintained shared system before creating parallel implementations; exceptions require a genuine interaction, accessibility, security or product need.
+20. **Enterprise longevity is deliberate.** Durable School OS capabilities must use explicit authority, scoped/contextual access, auditable workflow transitions, rebuildable projections, bounded operations, controlled compatibility and documented retirement gates as defined by the enterprise architecture standard.
 
 ## 3. Six-layer architecture
 
@@ -579,7 +581,7 @@ The detailed implementation rules live outside this master blueprint as standard
 - privacy/retention standards;
 - public discoverability/SEO/AEO standards.
 
-This keeps the master blueprint stable and concise.
+This keeps the master blueprint stable and concise. Cross-cutting enterprise engineering discipline is governed by [SCHOOL_OS_ENTERPRISE_ARCHITECTURE_STANDARD_V1.md](./SCHOOL_OS_ENTERPRISE_ARCHITECTURE_STANDARD_V1.md).
 
 ## 18. Prohibited architectural patterns
 
