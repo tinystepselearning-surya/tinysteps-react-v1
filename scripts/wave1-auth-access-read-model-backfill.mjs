@@ -9,6 +9,7 @@ import {
   initializeApp,
 } from 'firebase-admin/app';
 import {
+  FieldValue,
   getFirestore,
 } from 'firebase-admin/firestore';
 
@@ -361,6 +362,44 @@ async function writeReport(
   );
 }
 
+async function refreshAccessReadModelFromCliRuntime(params) {
+  const {
+    db,
+    firebaseUid,
+    loadCanonicalAuthAccessInput,
+    buildAuthAccessReadModel,
+    collectionName,
+  } = params;
+
+  // The CLI owns the Firestore client. Build the semantic record through the
+  // compiled Functions implementation, but create the server-timestamp
+  // sentinel from this same root firebase-admin runtime. A FieldValue created
+  // by functions/node_modules cannot be serialized by the root client.
+  const loaded =
+    await loadCanonicalAuthAccessInput({
+      db,
+      firebaseUid,
+    });
+  const record =
+    buildAuthAccessReadModel(
+      loaded.input,
+    );
+
+  await db
+    .collection(collectionName)
+    .doc(record.firebaseUid)
+    .set(
+      {
+        ...record,
+        updatedAt:
+          FieldValue.serverTimestamp(),
+      },
+      { merge: false },
+    );
+
+  return record;
+}
+
 async function main() {
   const args = parseArgs(
     process.argv.slice(2),
@@ -385,7 +424,6 @@ async function main() {
     AUTH_ACCESS_READ_MODEL_COLLECTION,
     buildAuthAccessReadModel,
     loadCanonicalAuthAccessInput,
-    refreshAuthAccessReadModel,
   } = loadCompiledIdentityModule();
 
   const db = getFirestore();
@@ -492,10 +530,14 @@ async function main() {
 
     for (const item of selected) {
       try {
-        await refreshAuthAccessReadModel({
+        await refreshAccessReadModelFromCliRuntime({
           db,
           firebaseUid:
             item.firebaseUid,
+          loadCanonicalAuthAccessInput,
+          buildAuthAccessReadModel,
+          collectionName:
+            AUTH_ACCESS_READ_MODEL_COLLECTION,
         });
         report.writes.succeeded += 1;
         if (

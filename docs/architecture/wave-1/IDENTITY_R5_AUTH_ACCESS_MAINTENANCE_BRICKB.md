@@ -1,6 +1,6 @@
 # Wave 1 R5B — Auth Access Read Model Backfill and Live Maintenance
 
-**Status:** VALIDATED — merge/deployment/backfill pending  
+**Status:** PRODUCTION DEPLOYED — dry-run clean; operator backfill/reconciliation pending  
 **Lifecycle phase:** R5 reader / Firestore Rules cutover preparation  
 **Production reader authority after this brick:** legacy compatibility  
 **Production Rules authority after this brick:** legacy `users` / `schoolUsers`  
@@ -330,3 +330,151 @@ R5B remains incomplete until:
 6. independent full reconciliation reports zero pending/mismatch/unexpected records.
 
 Only then may R5C begin.
+
+
+## Production deployment and backfill evidence
+
+### Deployment
+
+R5B merged as PR #606.
+
+~~~text
+Merge commit: baaaf13e64c8a60a0ac42227a6615484ad6dc2fa
+Deploy workflow: 37211747231
+Deploy run number: 3878
+Result: success
+~~~
+
+Deployment facts:
+
+- bounded Functions deployment: 13;
+- verified ready: 13/13;
+- full Functions deployment: no;
+- recovery job: skipped;
+- Hosting: unchanged;
+- Firestore Rules: unchanged;
+- Firestore indexes: unchanged.
+
+Production reader authority and Rules authority therefore remain legacy compatibility while
+the read-model population gate is completed.
+
+### Production dry-run
+
+Read-only production dry-run:
+
+~~~text
+Workflow run: 37212571831
+Result: dry_run_ready
+~~~
+
+Inventory:
+
+~~~text
+Firebase AuthIdentity sources: 227
+Canonical expected read models: 227
+Existing read models: 0
+Create: 227
+Update: 0
+Unchanged: 0
+Conflict: 0
+Unexpected: 0
+Planning issues: 0
+Blocking issues: 0
+Writes performed: 0
+~~~
+
+This proves canonical planning is clean and the population is within the 250-record bound.
+
+### Canary write attempt 1 — CLI runtime boundary
+
+~~~text
+Workflow run: 37212938314
+Attempted writes: 20
+Succeeded: 0
+Failed: 20
+Production documents created: 0
+~~~
+
+Cause:
+
+The CLI loaded the compiled Functions identity module from `functions/node_modules` while
+using the root `firebase-admin` Firestore client. A `FieldValue.serverTimestamp()`
+sentinel created by the Functions package instance cannot be serialized by the root
+Firestore package instance.
+
+The executor was corrected so canonical semantics are still loaded from the compiled R5A
+implementation, while the CLI creates the timestamp sentinel from the same root
+`firebase-admin` runtime that owns its Firestore client.
+
+This was an executor/runtime boundary only. It does not affect deployed Functions, where the
+Firestore client and FieldValue share one package/runtime.
+
+### Canary write attempt 2 — CI IAM boundary
+
+~~~text
+Workflow run: 37213537477
+Attempted writes: 20
+Succeeded: 0
+Failed: 20
+Production documents created: 0
+Error: PERMISSION_DENIED
+~~~
+
+The audited GitHub deploy principal intentionally has:
+
+~~~text
+roles/datastore.viewer
+~~~
+
+and not general Firestore document-write authority.
+
+The migration will **not** broaden CI IAM merely to complete a one-time bounded backfill.
+
+### Approved operator execution path
+
+The corrected executor and a gated operator runner are:
+
+~~~text
+scripts/wave1-auth-access-read-model-backfill.mjs
+scripts/run-r5b-production-auth-access-backfill.sh
+~~~
+
+The runner performs, in order:
+
+1. production dry-run;
+2. strict dry-run gate;
+3. maximum 20-record canary write;
+4. strict canary-write gate;
+5. independent read-only canary verification;
+6. remaining bounded write;
+7. strict post-write gate;
+8. independent full reconciliation.
+
+It stops immediately on any planning issue, conflict, unexpected document, failed write or
+reconciliation mismatch.
+
+Tooling validation:
+
+~~~text
+Workflow run: 37214162302
+Result: success
+~~~
+
+Validated:
+
+- Functions build;
+- runner shell syntax;
+- backfill planner tests;
+- backfill CLI load/help.
+
+R5C remains blocked until the operator-run reports:
+
+~~~text
+create = 0
+update = 0
+conflict = 0
+unexpected = 0
+planningIssueCount = 0
+pendingWrites = 0
+result = reconciled
+~~~

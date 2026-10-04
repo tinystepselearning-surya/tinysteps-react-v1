@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5b_auth_access_maintenance_validated_pending_production",
+    "status": "r5b_deployed_dry_run_ready_operator_backfill_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5b_production_deploy_backfill_reconciliation",
+    "nextBrick": "r5b_operator_backfill_and_reconciliation",
     "readSwitchAuthorized": false,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5b_validated_pending_production",
+      "status": "r5b_deployed_dry_run_ready_operator_backfill_pending",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5b_production_deploy_backfill_reconciliation",
+      "nextBrick": "r5b_operator_backfill_and_reconciliation",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -1619,7 +1619,7 @@
         "maintenanceHelperTest": "functions/test/authAccessReadModelMaintenance.spec.ts",
         "backfillPlannerTest": "scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs",
         "documentation": "docs/architecture/wave-1/IDENTITY_R5_AUTH_ACCESS_MAINTENANCE_BRICKB.md",
-        "productionWiring": false,
+        "productionWiring": true,
         "productionBackfillComplete": false,
         "productionReconciled": false,
         "backendReaderCutover": false,
@@ -1706,7 +1706,72 @@
             "firestoreRulesChanged": false,
             "firestoreIndexesChanged": false
           }
-        }
+        },
+        "deployment": {
+          "pullRequest": 606,
+          "mergeCommit": "baaaf13e64c8a60a0ac42227a6615484ad6dc2fa",
+          "workflowRunId": 37211747231,
+          "workflowRunNumber": 3878,
+          "result": "success",
+          "boundedFunctionsDeployed": 13,
+          "functionsVerifiedReady": 13,
+          "functionsFullDeployment": false,
+          "hostingChanged": false,
+          "firestoreRulesChanged": false,
+          "firestoreIndexesChanged": false,
+          "recoveryJobRequired": false
+        },
+        "productionDryRun": {
+          "workflowRunId": 37212571831,
+          "result": "dry_run_ready",
+          "sourceAuthIdentities": 227,
+          "canonicalExpectedRecords": 227,
+          "existing": 0,
+          "create": 227,
+          "update": 0,
+          "unchanged": 0,
+          "conflict": 0,
+          "unexpected": 0,
+          "pendingWrites": 227,
+          "blockingIssues": 0,
+          "planningIssueCount": 0,
+          "writesPerformed": 0
+        },
+        "blockedCanaryAttempts": [
+          {
+            "workflowRunId": 37212938314,
+            "attempted": 20,
+            "succeeded": 0,
+            "failed": 20,
+            "documentsCreated": 0,
+            "cause": "cross_firebase_admin_runtime_server_timestamp_sentinel",
+            "productionDataChanged": false
+          },
+          {
+            "workflowRunId": 37213537477,
+            "attempted": 20,
+            "succeeded": 0,
+            "failed": 20,
+            "documentsCreated": 0,
+            "cause": "github_deploy_service_account_firestore_document_write_permission_denied",
+            "productionDataChanged": false
+          }
+        ],
+        "executorRuntimeFix": {
+          "commit": "4f2712d48b1a7a22904c2cbabba6a40f9a47d37c",
+          "strategy": "canonical_loader_and_builder_from_compiled_functions_module_with_root_cli_firestore_timestamp_and_write_runtime"
+        },
+        "operatorRunner": "scripts/run-r5b-production-auth-access-backfill.sh",
+        "operatorRunnerValidation": {
+          "workflowRunId": 37214162302,
+          "result": "success",
+          "functionsBuild": "passed",
+          "shellSyntax": "passed",
+          "backfillPlannerTests": "passed",
+          "cliLoadHelp": "passed"
+        },
+        "operatorBackfillRequired": true,
+        "readSwitchAuthorized": false
       }
     }
   },
