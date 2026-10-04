@@ -682,4 +682,31 @@ Expected deployment properties:
 - Firestore indexes changed: false;
 - shared legacy Admin guard unchanged.
 
-Acceptance remains pending local Functions build/tests and deployment-impact classification.
+Acceptance completed locally on branch head:
+
+~~~text
+972abed69ce308157a2f691947cea2e68a1f418f
+~~~
+
+Validated:
+
+- focused R5C2C2 lint: passed;
+- Functions TypeScript build: passed;
+- full Functions unit estate: **136 files passed, 2 skipped; 1117 tests passed, 25 skipped**;
+- canonical auth-user activation + Wave 1 authorization regressions: **16/16 passed**;
+- deployment-impact/deployment contract tests: **81/81 passed**;
+- Functions impacted: **exactly 2**;
+- full Functions deployment: no;
+- Hosting changed: no;
+- Firestore Rules changed: no;
+- Firestore indexes changed: no;
+- AVS callable transport verification required: no.
+
+Validated production targets:
+
+~~~text
+adminArchiveUser
+adminUpdateUser
+~~~
+
+R5C2C2 is acceptance-complete and ready for merge/deployment.
