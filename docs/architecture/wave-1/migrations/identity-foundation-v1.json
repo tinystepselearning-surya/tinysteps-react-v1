@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "production_dry_run_ready_for_canary_write",
+      "status": "production_canary_write_complete",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -758,7 +758,21 @@
         "readyForBoundedWrite": true,
         "writesPerformed": 0
       },
-      "productionWrites": [],
+      "productionWrites": [
+        {
+          "kind": "canary",
+          "runAt": "2026-10-04T10:35:02.116Z",
+          "reportPath": "reports/wave1-identity-profile-retirement-write-2026-10-04T10-35-02-116Z.json",
+          "sourceRecordLimit": 20,
+          "sourceRecordsCommitted": 20,
+          "targetDocumentsCreated": 22,
+          "targetDocumentsUpdated": 18,
+          "writeBatchesCommitted": 1,
+          "postWriteSelectedMismatches": 0,
+          "remainingPendingSourceRecords": 402,
+          "writesPerformed": 40
+        }
+      ],
       "reconciliation": null,
       "independentVerification": null,
       "localValidation": {
@@ -803,12 +817,13 @@
         "temporaryValidationWorkflowRetiredBeforeMerge": true
       },
       "nextAuthorizedStep": {
-        "kind": "production_canary_write",
-        "sourceRecordLimit": 20,
+        "kind": "production_bounded_write",
+        "sourceRecordLimit": 250,
         "destructive": false,
         "legacyWrites": false,
         "firebaseAuthWrites": false,
-        "canonicalIdentityCoreWrites": false
+        "canonicalIdentityCoreWrites": false,
+        "precondition": "rerun state-derived gates on every invocation"
       }
     }
   }
