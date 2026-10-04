@@ -917,7 +917,7 @@
               }
             },
             "result": "success",
-            "temporaryValidationWorkflowRetiredBeforeMerge": false
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
           },
           "deploymentImpactValidation": {
             "validatedCommit": "dde9eb05e4752ecb8dedd7eb0dca8416dfdc4383",
