@@ -690,7 +690,7 @@
     },
     "profileMigration": {
       "migrationId": "wave1-identity-profile-retirement-v1",
-      "status": "teacher_evidence_gate_fix_validated",
+      "status": "production_dry_run_ready_for_canary_write",
       "executor": "scripts/wave1-identity-profile-retirement.mjs",
       "planner": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
       "regressionTest": "scripts/test/wave1-identity-profile-retirement.node-test.mjs",
@@ -738,7 +738,26 @@
       "canonicalIdentityCoreWritesPerformed": false,
       "maxSourceRecordsPerRun": 250,
       "maxWritesPerBatch": 100,
-      "productionDryRun": null,
+      "productionDryRun": {
+        "runAt": "2026-10-04T10:31:17.635Z",
+        "reportPath": "reports/wave1-identity-profile-retirement-dry-run-2026-10-04T10-31-17-635Z.json",
+        "sourceCounts": {
+          "users": 225,
+          "kids": 196,
+          "schools": 1
+        },
+        "targetState": {
+          "create": 669,
+          "update": 222,
+          "unchanged": 0,
+          "conflicts": 0
+        },
+        "pendingSourceRecords": 422,
+        "coreIssues": 0,
+        "derivedRelationshipIssues": 0,
+        "readyForBoundedWrite": true,
+        "writesPerformed": 0
+      },
       "productionWrites": [],
       "reconciliation": null,
       "independentVerification": null,
@@ -782,6 +801,14 @@
         },
         "result": "success",
         "temporaryValidationWorkflowRetiredBeforeMerge": true
+      },
+      "nextAuthorizedStep": {
+        "kind": "production_canary_write",
+        "sourceRecordLimit": 20,
+        "destructive": false,
+        "legacyWrites": false,
+        "firebaseAuthWrites": false,
+        "canonicalIdentityCoreWrites": false
       }
     }
   }
