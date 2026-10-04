@@ -496,3 +496,43 @@ getAdminHistoricalAttendanceCandidates
 
 The parent-payment dry-run remains deferred because changing its shared module would also
 redeploy the mutating `applyParentPaymentBackfillForSafeParents` Function.
+
+
+## R5C2B production closeout
+
+PR #613 merged the second bounded general-Admin authorization slice.
+
+~~~text
+Merge commit: 2597656e677de8ac99f7b5c428799a21c587c9f7
+Deploy workflow: 37220092324
+Deploy run number: 3885
+Result: success
+~~~
+
+Production deployment facts:
+
+- Functions planned: 2;
+- Functions deployed: 2;
+- Functions checkpoint-ready: 2/2;
+- deployment batches: 1;
+- full Functions deployment: no;
+- Functions production marker advanced: yes;
+- Hosting deployment: skipped;
+- Firestore Rules deployment: skipped;
+- Firestore indexes deployment: skipped;
+- recovery job required: no.
+
+Deployed Functions:
+
+~~~text
+auditAllTransferredSessionSnapshotIssues
+getAdminHistoricalAttendanceCandidates
+~~~
+
+R5C2B is production-complete.
+
+The parent-payment dry-run/write pair remains deferred to a dedicated finance authorization
+slice because they share one implementation dependency boundary.
+
+The shared legacy `helpers/adminGuard.ts` still remains in place for callables that have
+not yet moved through a bounded canonical-authorization slice.
