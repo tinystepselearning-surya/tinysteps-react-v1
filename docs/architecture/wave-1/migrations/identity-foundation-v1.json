@@ -614,8 +614,9 @@
         "productionDeployment": null,
         "productionCanary": null,
         "localValidation": {
-          "validatedImplementationCommit": "1b1e38665004cbf2131bd2ce636cd87d0c86cf44",
-          "workflowRunId": 37198186566,
+          "validatedImplementationCommit": "80d3f35d1732ea55c0bc97f638abbe1595a8733d",
+          "validationWorkflowHead": "084a4e2d34f79a73afd79d55fbb6128a0e300c36",
+          "workflowRunId": 37198437122,
           "functionsBuild": "passed",
           "focusedTests": {
             "passed": 21,
@@ -637,8 +638,8 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         },
         "deploymentImpactValidation": {
-          "validatedCommit": "1b1e38665004cbf2131bd2ce636cd87d0c86cf44",
-          "workflowRunId": 37198186566,
+          "validatedCommit": "084a4e2d34f79a73afd79d55fbb6128a0e300c36",
+          "workflowRunId": 37198437122,
           "functionsProductionBaseline": "6b07f7167f8fa1606f2e286ba43d33e330cadd48",
           "functionsDeploymentRequired": true,
           "fullFunctionsDeployment": false,
