@@ -379,7 +379,7 @@
     "nextBrick": "live legacy-to-canonical synchronization / compatibility path",
     "readSwitchAuthorized": false,
     "brick2": {
-      "status": "ready_for_local_validation",
+      "status": "local_validation_complete",
       "title": "Production shadow canary and divergence telemetry",
       "reader": "getParentWorksheetResources",
       "sourceCollection": "users",
@@ -409,7 +409,7 @@
         "semantic_mismatch",
         "canonical_read_error"
       ],
-      "localValidatedAt": null,
+      "localValidatedAt": "2026-10-04",
       "deployedAt": null,
       "productionObservation": {
         "startedAt": null,
@@ -421,7 +421,37 @@
         "canonicalReadErrorEvents": null,
         "adapterErrorEvents": null
       },
-      "result": null
+      "result": "local_validation_passed",
+      "localValidation": {
+        "functionsLint": "passed",
+        "functionsBuild": "passed",
+        "focusedTests": {
+          "passed": 18,
+          "skipped": 1,
+          "total": 19
+        },
+        "identityReadAdapterTests": {
+          "passed": 7,
+          "total": 7
+        },
+        "identityShadowCanaryTests": {
+          "passed": 8,
+          "total": 8
+        },
+        "worksheetResourceTests": {
+          "passed": 3,
+          "skipped": 1,
+          "total": 4
+        },
+        "identityFoundationTests": {
+          "passed": 8,
+          "total": 8
+        },
+        "authorizationHardeningTests": {
+          "passed": 8,
+          "total": 8
+        }
+      }
     }
   }
 }
