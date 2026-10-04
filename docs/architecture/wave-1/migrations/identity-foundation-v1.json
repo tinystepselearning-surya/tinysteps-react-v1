@@ -561,7 +561,7 @@
       "firestoreTelemetryWrites": 0,
       "canonicalPrimaryWrites": true,
       "canonicalPrimaryImplementation": {
-        "status": "brick5c_auth_user_update_writer_validated_not_activated",
+        "status": "brick5d_auth_archive_profile_bridge_validated_not_activated",
         "brick1": {
           "title": "Canonical-primary learner write contract",
           "planner": "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts",
@@ -1055,7 +1055,7 @@
             "temporaryValidationWorkflowRetiredBeforeMerge": true
           }
         },
-        "nextBrick": "brick5d_auth_user_archive_teacher_profile_and_projection_bridge",
+        "nextBrick": "brick5e_auth_backed_writer_family_production_activation",
         "brick5b": {
           "title": "Canonical auth-backed user create writer implementation",
           "writer": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserCreate.ts",
@@ -1199,6 +1199,113 @@
             "focusedTests": {
               "passed": 40,
               "total": 40,
+              "canonicalPrimaryAuthUserUpdate": {
+                "passed": 10,
+                "total": 10
+              },
+              "canonicalPrimaryAuthUserCreate": {
+                "passed": 10,
+                "total": 10
+              },
+              "authPersonCompatibility": {
+                "passed": 9,
+                "total": 9
+              },
+              "identityLegacySync": {
+                "passed": 11,
+                "total": 11
+              }
+            },
+            "deploymentImpact": {
+              "functionsSourceChanged": true,
+              "functionsValidationRequired": true,
+              "functionsDeploymentRequired": false,
+              "impactedFunctionsCount": 0,
+              "hostingChanged": false,
+              "firestoreRulesChanged": false,
+              "firestoreIndexesChanged": false
+            },
+            "result": "success",
+            "temporaryValidationWorkflowRetiredBeforeMerge": true
+          }
+        },
+        "brick5d": {
+          "title": "Canonical auth-user archive, teacher profile, and decoupled projection bridge",
+          "archiveWriter": "functions/src/schoolOS/identity/canonicalPrimaryAuthUserArchive.ts",
+          "teacherProfileWriter": "functions/src/schoolOS/identity/canonicalPrimaryTeacherProfile.ts",
+          "projectionBridge": "functions/src/schoolOS/identity/authUserProjectionBridge.ts",
+          "regressionTests": [
+            "functions/test/canonicalPrimaryAuthUserArchive.spec.ts",
+            "functions/test/canonicalPrimaryTeacherProfile.spec.ts",
+            "functions/test/authUserProjectionBridge.spec.ts"
+          ],
+          "documentation": "docs/architecture/wave-1/IDENTITY_R4_AUTH_ARCHIVE_PROFILE_BRIDGE_BRICK5D.md",
+          "productionWiring": false,
+          "productionBehaviorChanged": false,
+          "adminArchiveUserCutover": false,
+          "teacherProfileBrowserCutover": false,
+          "legacyUserTriggerBridgeWired": false,
+          "canonicalArchiveTargets": [
+            "people",
+            "authIdentities",
+            "roleAssignments",
+            "personLifecycle"
+          ],
+          "canonicalTeacherProfileTargets": [
+            "people",
+            "personContacts",
+            "staffPrivateProfiles"
+          ],
+          "compatibilityTargets": [
+            "users",
+            "teachers",
+            "parents",
+            "learningPartners",
+            "admins"
+          ],
+          "projectionCommands": [
+            "auth_user_create",
+            "auth_user_update",
+            "auth_user_archive",
+            "teacher_profile_update"
+          ],
+          "projectionCorroborationRequires": [
+            "compatibility_marker",
+            "person_canonicalAuthority_same_command_and_writeId",
+            "deterministic_firebase_authIdentity_uid_to_person"
+          ],
+          "forgedOrStaleProjectionSuppressesLegacySync": false,
+          "duplicatePersonKeyedTeacherRootAllowedForDecoupledIdentity": false,
+          "firebaseAuthDisableIncluded": false,
+          "activationReadyDependencies": {
+            "createWriter": true,
+            "updateWriter": true,
+            "archiveWriter": true,
+            "teacherProfileWriter": true,
+            "decoupledProjectionBridge": true,
+            "liveCallableWiring": false,
+            "liveBrowserWiring": false,
+            "liveTriggerWiring": false
+          },
+          "localValidation": {
+            "validatedImplementationCommit": "4624e6bdfdc653a0c37d1c0850ebb4d74530bead",
+            "workflowRunId": 37204944564,
+            "functionsBuild": "passed",
+            "focusedTests": {
+              "passed": 63,
+              "total": 63,
+              "canonicalPrimaryAuthUserArchive": {
+                "passed": 6,
+                "total": 6
+              },
+              "canonicalPrimaryTeacherProfile": {
+                "passed": 8,
+                "total": 8
+              },
+              "authUserProjectionBridge": {
+                "passed": 9,
+                "total": 9
+              },
               "canonicalPrimaryAuthUserUpdate": {
                 "passed": 10,
                 "total": 10
