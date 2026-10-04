@@ -58,6 +58,9 @@ jobs:
           src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
           src/tests/pages/CanonicalLearnerBrowserWriters.spec.ts
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Build deployable hosting bundle
         run: npm run build:deploy
 
