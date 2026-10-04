@@ -1,0 +1,53 @@
+name: Validate R4 Browser Learner Writers
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "functions/src/adminUpdateStudent.ts"
+      - "functions/src/schoolOS/identity/canonicalPrimaryLearnerUpdate.ts"
+      - "functions/src/schoolOS/identity/canonicalPrimaryPlanner.ts"
+      - "functions/src/schoolOS/identity/legacySync.ts"
+      - "functions/src/index.ts"
+      - "functions/test/canonicalPrimaryLearnerUpdate.spec.ts"
+      - "functions/test/identityLegacySync.spec.ts"
+      - "src/pages/admin/StudentManagement/**"
+      - "src/services/kidsService.ts"
+      - "src/tests/pages/CanonicalLearnerBrowserWriters.spec.ts"
+      - ".github/workflows/validate-r4-browser-learner-writers.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Run focused Functions tests
+        run: |
+          cd functions
+          npx vitest run --config vitest.config.ts             test/canonicalPrimaryPlanner.spec.ts             test/canonicalPrimaryWriter.spec.ts             test/canonicalPrimaryLearnerUpdate.spec.ts             test/identityLegacySync.spec.ts             test/parentStudentsCanonicalPrimary.spec.ts
+
+      - name: Run browser writer regression guards
+        run: npx vitest run src/tests/pages/CanonicalLearnerBrowserWriters.spec.ts src/tests/pages/EnrollmentLifecycleRouting.spec.ts
+
+      - name: Resolve deployment impact
+        run: |
+          node scripts/resolve-deployment-impact.mjs             --before b201b7066e8e2bb9851f671fcd383f0b1a7cef28             --sha "$GITHUB_SHA"
