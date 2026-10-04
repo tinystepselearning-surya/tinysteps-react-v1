@@ -1,0 +1,51 @@
+name: Validate R4 Auth Person Compatibility
+
+on:
+  push:
+    branches:
+      - wave1/identity-r4-auth-person-compatibility-20261004
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Run focused identity tests
+        run: >-
+          cd functions &&
+          npx vitest run --config vitest.config.ts
+          test/authPersonCompatibility.spec.ts
+          test/identityReadAdapter.spec.ts
+          test/canonicalPrimaryPlanner.spec.ts
+          test/canonicalPrimaryWriter.spec.ts
+
+      - name: Verify no deployed Function is impacted
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          main_sha="$(git rev-parse origin/main)"
+          node scripts/resolve-deployment-impact.mjs \
+            --before "${main_sha}" \
+            --functions-before "${main_sha}" \
+            --hosting-before "${main_sha}" \
+            --firestore-rules-before "${main_sha}" \
+            --firestore-indexes-before "${main_sha}" \
+            --sha "${GITHUB_SHA}"
