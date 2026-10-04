@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C2 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C3 PASSWORD-MANAGEMENT MUTATION CUTOVER — validation pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -748,3 +748,82 @@ R5C2C2 is production-complete.
 The shared legacy `helpers/adminGuard.ts` remains unchanged for not-yet-migrated callables.
 `adminCreateUser` and `adminSetUserRole` remain deferred because their current wrapper
 topology broadens deployment reachability.
+
+
+## R5C2C3 — password-management mutations
+
+R5C2C3 is limited to the two independently deployable Admin password-management callables:
+
+~~~text
+adminGenerateResetLink
+adminResetPassword
+~~~
+
+This slice changes requester Admin authorization only:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+Existing password-management behavior remains unchanged:
+
+- reset-link generation continues to use Firebase Auth password-reset links;
+- reset-link requests continue to be written to `password_reset_requests`;
+- direct Admin password reset continues to update Firebase Auth;
+- password-reset audit/request records remain unchanged.
+
+The shared `helpers/adminGuard.ts` remains unchanged.
+
+The following account mutations are intentionally outside this slice:
+
+- `adminDeleteUser`: destructive hard-delete semantics warrant an independent rollout;
+- `adminCreateUser`: current wrapper topology also exports `backfillTeacherDocs`;
+- `adminSetUserRole`: current wrapper topology also exports four Learning Partner assignment callables.
+
+### R5C2C3 acceptance target
+
+Expected bounded production impact:
+
+~~~text
+adminGenerateResetLink
+adminResetPassword
+~~~
+
+Expected deployment properties:
+
+- Functions impacted: exactly 2;
+- full Functions deployment: false;
+- Hosting changed: false;
+- Firestore Rules changed: false;
+- Firestore indexes changed: false;
+- shared legacy Admin guard unchanged.
+
+Acceptance completed locally on branch head:
+
+~~~text
+2a3a29ba60142054d75c904ff41639c275778ebf
+~~~
+
+Validated:
+
+- focused R5C2C3 lint: passed;
+- Functions TypeScript build: passed;
+- full Functions unit estate: **137 files passed, 2 skipped; 1120 tests passed, 25 skipped**;
+- canonical auth-user activation + Wave 1 authorization regressions: **16/16 passed**;
+- deployment-impact/deployment contract tests: **81/81 passed**;
+- Functions impacted: **exactly 2**;
+- full Functions deployment: no;
+- Hosting changed: no;
+- Firestore Rules changed: no;
+- Firestore indexes changed: no;
+- AVS callable transport verification required: no.
+
+Validated production targets:
+
+~~~text
+adminGenerateResetLink
+adminResetPassword
+~~~
+
+R5C2C3 is acceptance-complete and ready for merge/deployment.
