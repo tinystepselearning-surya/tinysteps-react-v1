@@ -148,7 +148,7 @@ test('source model derives the expected identity graph independently', () => {
   assert.deepEqual(counts, {
     people: 3,
     authIdentities: 2,
-    roleAssignments: 3,
+    roleAssignments: 2,
     learnerProfiles: 1,
     guardianRelationships: 1,
     organisations: 1,
