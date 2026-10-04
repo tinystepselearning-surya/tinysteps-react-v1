@@ -5,6 +5,9 @@ import * as logger from 'firebase-functions/logger';
 import { FieldValue } from 'firebase-admin/firestore';
 
 import {
+  isCanonicalProjectionTransition,
+} from './canonicalPrimaryPlanner';
+import {
   planLegacyKidExpansion,
   planLegacySchoolExpansion,
   planLegacySchoolUserExpansion,
@@ -749,6 +752,16 @@ export function shouldSyncLegacyIdentityWrite(params: {
   beforeData: LooseDoc | null;
   afterData: LooseDoc | null;
 }): boolean {
+  if (
+    params.sourceCollection === 'kids' &&
+    isCanonicalProjectionTransition({
+      beforeData: params.beforeData,
+      afterData: params.afterData,
+    })
+  ) {
+    return false;
+  }
+
   if (!params.beforeData || !params.afterData) {
     return true;
   }
