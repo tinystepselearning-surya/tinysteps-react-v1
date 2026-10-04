@@ -4,9 +4,9 @@
   "domain": "Identity & Relationships",
   "canonicalOwner": "Identity & Authentication / Learner Identity / Organisation Membership",
   "title": "Wave 1 Identity Foundation",
-  "status": "expanded",
+  "status": "backfill_complete",
   "sourceBaselineCommit": "570bfef5fd99857e1f7df9529c46e593f77dcec0",
-  "implementationCommit": "1ad3a468100ea750a231c666bb8ba8b39106ec39",
+  "implementationCommit": "91f1078c2d7c4147f89da14bd14a709dd8113300",
   "schemaVersion": 1,
   "environment": "production",
   "scope": {
@@ -79,16 +79,16 @@
     "secretsPolicy": "Use managed production credentials only; never commit service-account JSON; reports omit raw IDs by default"
   },
   "verification": {
-    "sourceEligibleCount": null,
-    "attemptedCount": null,
-    "createdCount": null,
-    "updatedCount": null,
-    "unchangedCount": null,
-    "skippedCount": null,
-    "failedCount": null,
-    "unresolvedCount": null,
-    "reconciledCount": null,
-    "mismatchCount": null,
+    "sourceEligibleCount": 419,
+    "attemptedCount": 419,
+    "createdCount": 1253,
+    "updatedCount": 0,
+    "unchangedCount": 0,
+    "skippedCount": 0,
+    "failedCount": 0,
+    "unresolvedCount": 0,
+    "reconciledCount": 1253,
+    "mismatchCount": 0,
     "invariantChecks": [
       "Existing users document ID adoption does not contradict uid/userId",
       "Eligible auth-backed people resolve to Firebase Auth UID",
@@ -210,7 +210,7 @@
     "temporaryWorkflowRetired": true
   },
   "backfill": {
-    "status": "ready_for_local_dry_run",
+    "status": "complete",
     "executor": "scripts/wave1-identity-foundation-backfill.mjs",
     "helper": "scripts/migrations/wave1-identity-backfill-lib.mjs",
     "regressionTest": "scripts/test/wave1-identity-backfill.node-test.mjs",
@@ -220,9 +220,54 @@
     "canarySourceRecordLimit": 20,
     "maxSourceRecordsPerWriteRun": 250,
     "maxWritesPerBatch": 100,
-    "firstProductionWriteAt": null,
-    "completedAt": null,
-    "finalReconciliationAt": null,
-    "finalReconciliationResult": null
+    "firstProductionWriteAt": "2026-10-04T05:48:51.266Z",
+    "completedAt": "2026-10-04T05:50:51.812Z",
+    "finalReconciliationAt": "2026-10-04T05:51:21.195Z",
+    "finalReconciliationResult": "success",
+    "implementationCommit": "91f1078c2d7c4147f89da14bd14a709dd8113300",
+    "sourceRecordsProcessed": 419,
+    "canonicalDocumentsCreated": 1253,
+    "canonicalDocumentsUpdated": 0,
+    "postWriteMismatchCount": 0,
+    "checkpointComplete": true,
+    "productionRuns": [
+      {
+        "kind": "canary",
+        "sourceRecordsCommitted": 20,
+        "canonicalDocumentsCreated": 59,
+        "writeBatchesCommitted": 1,
+        "postWriteSelectedMismatches": 0,
+        "reportTimestamp": "2026-10-04T05:48:51.266Z"
+      },
+      {
+        "kind": "bounded_backfill",
+        "sourceRecordsCommitted": 250,
+        "canonicalDocumentsCreated": 750,
+        "writeBatchesCommitted": 8,
+        "postWriteSelectedMismatches": 0,
+        "reportTimestamp": "2026-10-04T05:50:00.282Z"
+      },
+      {
+        "kind": "bounded_backfill",
+        "sourceRecordsCommitted": 149,
+        "canonicalDocumentsCreated": 444,
+        "writeBatchesCommitted": 5,
+        "postWriteSelectedMismatches": 0,
+        "checkpointComplete": true,
+        "reportTimestamp": "2026-10-04T05:50:51.812Z"
+      }
+    ],
+    "reconciliation": {
+      "expectedDocuments": 1253,
+      "matchedDocuments": 1253,
+      "missingDocuments": 0,
+      "driftedMigrationOwnedDocuments": 0,
+      "conflictingDocuments": 0,
+      "unexpectedDocuments": 0,
+      "blockingSourcePlanningIssues": 0,
+      "writesPerformed": 0,
+      "reconciled": true,
+      "reportTimestamp": "2026-10-04T05:51:21.195Z"
+    }
   }
 }
