@@ -813,6 +813,27 @@
         "writesPerformed": 0
       },
       "independentVerification": null,
+      "independentVerificationImplementation": {
+        "status": "local_validation_complete",
+        "verifier": "scripts/wave1-identity-profile-verify.mjs",
+        "model": "scripts/verification/wave1-identity-profile-verify-lib.mjs",
+        "regressionTest": "scripts/test/wave1-identity-profile-verify.node-test.mjs",
+        "documentation": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_VERIFY.md",
+        "readOnly": true,
+        "importsMigrationPlanner": false,
+        "productionWritesAuthorized": false,
+        "localValidation": {
+          "validatedCommit": "8024d709cf26780e6a77d61f6311310bb9ee476b",
+          "workflowRunId": 37196749502,
+          "syntaxCheck": "passed",
+          "regressionTests": {
+            "passed": 8,
+            "total": 8
+          },
+          "result": "success",
+          "temporaryValidationWorkflowRetiredBeforeMerge": true
+        }
+      },
       "localValidation": {
         "validatedCommit": "14288ddaeb383f5bf8d9e78e661567ff6e5c57b6",
         "workflowRunId": 37190103635,
