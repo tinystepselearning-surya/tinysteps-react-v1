@@ -316,7 +316,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "brick3_implementation_pending_validation",
+    "status": "brick3_local_validation_complete",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -458,7 +458,7 @@
       }
     },
     "brick3": {
-      "status": "implementation_pending_validation",
+      "status": "local_validation_complete",
       "title": "Live legacy-to-canonical identity compatibility synchronization",
       "primaryReadAuthority": "legacy",
       "primaryWriteAuthority": "legacy",
@@ -500,7 +500,38 @@
       "canonicalPrimaryWrites": false,
       "legacyWritesStopped": false,
       "readSwitchAuthorized": false,
-      "localValidation": null,
+      "localValidation": {
+        "validatedImplementationCommit": "4c7aacb2ae8008392a932a5fc66b809c8df758bd",
+        "workflowRunId": 37185511318,
+        "functionsLint": "passed",
+        "functionsBuild": "passed",
+        "focusedIdentityTests": {
+          "passed": 24,
+          "total": 24,
+          "identityLegacySync": {
+            "passed": 9,
+            "total": 9
+          },
+          "identityReadAdapter": {
+            "passed": 7,
+            "total": 7
+          },
+          "identityShadowCanary": {
+            "passed": 8,
+            "total": 8
+          }
+        },
+        "identityFoundationTests": {
+          "passed": 8,
+          "total": 8
+        },
+        "authorizationHardeningTests": {
+          "passed": 8,
+          "total": 8
+        },
+        "result": "success",
+        "temporaryValidationWorkflowRetiredBeforeMerge": true
+      },
       "deployedAt": null,
       "productionObservation": {
         "startedAt": null,
