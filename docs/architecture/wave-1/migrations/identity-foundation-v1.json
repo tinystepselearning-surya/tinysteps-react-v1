@@ -543,7 +543,7 @@
     }
   },
   "legacyRetirement": {
-    "status": "audit_implementation_pending_validation",
+    "status": "audit_local_validation_complete",
     "approvedEndState": "canonical_primary_legacy_retired",
     "legacyCollections": [
       "users",
@@ -558,7 +558,18 @@
       "documentation": "docs/architecture/wave-1/IDENTITY_LEGACY_RETIREMENT.md",
       "productionRunAt": null,
       "reportPath": null,
-      "result": null
+      "result": null,
+      "localValidation": {
+        "validatedCommit": "a1b2fd256d4ed698143f200ec98543e05072cb9a",
+        "workflowRunId": 37187751507,
+        "syntaxCheck": "passed",
+        "regressionTests": {
+          "passed": 9,
+          "total": 9
+        },
+        "result": "success",
+        "temporaryValidationWorkflowRetiredBeforeMerge": true
+      }
     },
     "gates": {
       "unknownFieldMappingsMustBeZero": true,
