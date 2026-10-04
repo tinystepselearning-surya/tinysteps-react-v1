@@ -4,6 +4,7 @@ import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import {
   CanonicalPrimaryLearnerWriteError,
+  canonicalIdentityTelemetryToken,
   executeCanonicalLearnerCreate,
 } from './schoolOS/identity/canonicalPrimaryWriter';
 
@@ -197,11 +198,22 @@ export const adminCreateStudent = onCall(
       logger.info(
         'adminCreateStudent: created canonical-primary student',
         {
-          studentId: result.personId,
-          parentId,
-          fullName,
-          createdBy: actorId,
-          writeId: result.writeId,
+          studentToken: canonicalIdentityTelemetryToken(
+            'learner',
+            result.personId,
+          ),
+          parentToken: canonicalIdentityTelemetryToken(
+            'parent',
+            parentId,
+          ),
+          actorToken: canonicalIdentityTelemetryToken(
+            'actor',
+            actorId,
+          ),
+          writeToken: canonicalIdentityTelemetryToken(
+            'write',
+            result.writeId,
+          ),
           canonicalDocumentsWritten:
             result.canonicalDocumentsWritten,
           compatibilityDocumentsWritten:
@@ -239,9 +251,14 @@ export const adminCreateStudent = onCall(
       logger.error(
         'adminCreateStudent: canonical-primary create failed',
         {
-          parentId,
-          fullName,
-          createdBy: actorId,
+          parentToken: canonicalIdentityTelemetryToken(
+            'parent',
+            parentId,
+          ),
+          actorToken: canonicalIdentityTelemetryToken(
+            'actor',
+            actorId,
+          ),
           errorName:
             error instanceof Error
               ? error.name
