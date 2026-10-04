@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2a_admin_read_audit_validation_pending",
+    "status": "r5c2a_admin_read_audit_validated_pending_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2a_admin_read_audit_cutover",
+    "nextBrick": "r5c2a_admin_read_audit_deploy",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2a_admin_read_audit_validation_pending",
+      "status": "r5c2a_admin_read_audit_validated_pending_merge",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2a_admin_read_audit_cutover",
+      "nextBrick": "r5c2a_admin_read_audit_deploy",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -2004,7 +2004,46 @@
               ],
               "productionWiring": false,
               "productionVerified": false,
-              "validationPending": true
+              "validationPending": false,
+              "validation": {
+                "workflowRunId": 37218221068,
+                "result": "success",
+                "functionsBuild": "passed",
+                "canonicalAuthorizationTests": {
+                  "passed": 22,
+                  "total": 22,
+                  "filesPassed": 4,
+                  "totalFiles": 4
+                },
+                "architectureAndLedgerRegressions": {
+                  "passed": 22,
+                  "total": 22,
+                  "filesPassed": 3,
+                  "totalFiles": 3
+                },
+                "deploymentImpactClassifier": {
+                  "passed": 27,
+                  "total": 27
+                },
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 5,
+                  "impactedFunctions": [
+                    "auditTeacherEarningsCanonicalCoverage",
+                    "auditTeacherTodaySessions",
+                    "getAdminTeacherEarningAdjustments",
+                    "getAdminTeacherPayWithholdings",
+                    "traceStudentTransferHistory"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false,
+                  "avsCallableTransportVerificationRequired": false
+                },
+                "testOnlyHostingClassifierHardened": true,
+                "temporaryValidationWorkflowRetiredBeforeMerge": false
+              }
             }
           }
         },
