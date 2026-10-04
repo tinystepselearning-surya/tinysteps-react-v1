@@ -215,6 +215,13 @@ export { recordLevelResult } from "./games/recordLevelResult";
 export { createLessonAccessSession, resolveLessonAccessViewer } from "./createLessonAccessSession";
 export { getParentWorksheetResources } from "./getParentWorksheetResources";
 
+export {
+  onWave1LegacyUserIdentityWrite,
+  onWave1LegacyKidIdentityWrite,
+  onWave1LegacySchoolIdentityWrite,
+  onWave1LegacySchoolUserIdentityWrite,
+} from './identityLegacySyncTriggers';
+
 // Public website contact form
 export { contactForm } from "./contactForm";
 export { enrichPublicLeadAttribution } from "./enrichPublicLeadAttribution";
