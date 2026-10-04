@@ -632,3 +632,81 @@ R5C2C1 is production-complete.
 The shared legacy `helpers/adminGuard.ts` remains unchanged for not-yet-migrated callables.
 The next stage must remain another bounded mutation slice; enrollment lifecycle, scheduling,
 attendance and finance should continue to be isolated rather than moved together.
+
+
+## R5C2C2 — generic-user update and archive
+
+The next mutation slice is limited to the two generic-user mutations whose export topology is
+independently deployable:
+
+~~~text
+adminUpdateUser
+adminArchiveUser
+~~~
+
+Both already use canonical-primary identity writers and maintain the canonical-derived
+`authAccessReadModels` projection. This slice changes requester Admin authorization only:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+The shared `helpers/adminGuard.ts` remains unchanged.
+
+The following apparently related mutations are intentionally deferred:
+
+- `adminCreateUser`: its wrapper module also exports `backfillTeacherDocs`, so changing the
+  canonical create implementation would make that additional Function deployment-reachable;
+- `adminSetUserRole`: its wrapper module also exports four Learning Partner assignment
+  callables, so changing the canonical role implementation would broaden the deployment set.
+
+R5C2C2 therefore prefers exact deployment isolation over grouping all generic-user mutations
+in one rollout.
+
+### R5C2C2 acceptance target
+
+Expected bounded production impact:
+
+~~~text
+adminUpdateUser
+adminArchiveUser
+~~~
+
+Expected deployment properties:
+
+- Functions impacted: exactly 2;
+- full Functions deployment: false;
+- Hosting changed: false;
+- Firestore Rules changed: false;
+- Firestore indexes changed: false;
+- shared legacy Admin guard unchanged.
+
+Acceptance completed locally on branch head:
+
+~~~text
+972abed69ce308157a2f691947cea2e68a1f418f
+~~~
+
+Validated:
+
+- focused R5C2C2 lint: passed;
+- Functions TypeScript build: passed;
+- full Functions unit estate: **136 files passed, 2 skipped; 1117 tests passed, 25 skipped**;
+- canonical auth-user activation + Wave 1 authorization regressions: **16/16 passed**;
+- deployment-impact/deployment contract tests: **81/81 passed**;
+- Functions impacted: **exactly 2**;
+- full Functions deployment: no;
+- Hosting changed: no;
+- Firestore Rules changed: no;
+- Firestore indexes changed: no;
+- AVS callable transport verification required: no.
+
+Validated production targets:
+
+~~~text
+adminArchiveUser
+adminUpdateUser
+~~~
+
+R5C2C2 is acceptance-complete and ready for merge/deployment.
