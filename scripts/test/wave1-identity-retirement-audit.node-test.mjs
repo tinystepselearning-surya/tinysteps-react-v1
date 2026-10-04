@@ -59,12 +59,32 @@ test('classifies user identity as already canonical and contact as a migration b
   assert.match(email.target, /personContacts/);
 });
 
+test('maps all production-discovered retirement fields to explicit destinations', () => {
+  const cases = [
+    ['users', 'archivedAt', 'person_lifecycle', 'personLifecycle'],
+    ['users', 'whatsappE164', 'contact_profile', 'personContacts'],
+    ['users', 'bankAccount', 'private_staff_profile', 'staffPrivateProfiles'],
+    ['users', 'qualifications', 'role_profile', 'teachers'],
+    ['kids', 'age', 'canonical_learner_profile', 'learnerProfiles'],
+    ['kids', 'progress.byGame.letter-tracing', 'derived_read_model', 'learnerReadModels'],
+    ['kids', 'repairedFromEnrollmentId', 'repair_provenance', 'learnerProvenance'],
+    ['schools', 'currentAcademicYearId', 'organisation_profile', 'organisationProfiles'],
+    ['schools', 'learningPartnerId', 'organisation_relationship', 'organisationAssignments'],
+  ];
+
+  for (const [collection, path, category, target] of cases) {
+    const result = classifyLegacyField(collection, path);
+    assert.equal(result.category, category);
+    assert.match(String(result.target || ''), new RegExp(target));
+  }
+});
+
 test('classifies learner grade and legacy assignment aliases as retirement blockers', () => {
   const grade =
     classifyLegacyField('kids', 'grade');
-  assert.equal(grade.category, 'learner_profile');
+  assert.equal(grade.category, 'learner_details');
   assert.equal(grade.blocker, true);
-  assert.match(grade.target, /learnerProfiles/);
+  assert.match(grade.target, /learnerDetails/);
 
   const teacher =
     classifyLegacyField('kids', 'teacherId');
