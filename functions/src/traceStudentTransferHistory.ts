@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -969,7 +969,7 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 export const traceStudentTransferHistory = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const query: TraceQuery = {
     enrollmentId: toCleanText(request.data?.enrollmentId) || null,
