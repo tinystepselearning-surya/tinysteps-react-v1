@@ -237,7 +237,7 @@ async function verifyCanonicalLearnerWrite(params: {
       })
     ) {
       issues.push(
-        `canonical_mismatch:${document.collection}/${document.documentId}`,
+        `canonical_mismatch:${document.collection}`,
       );
     }
   }
@@ -259,7 +259,7 @@ async function verifyCanonicalLearnerWrite(params: {
       })
     ) {
       issues.push(
-        `compatibility_mismatch:${document.collection}/${document.documentId}`,
+        `compatibility_mismatch:${document.collection}`,
       );
     }
   }
