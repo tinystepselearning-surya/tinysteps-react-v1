@@ -76,6 +76,16 @@ function cleanText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+export function canonicalParentIdFromCompatibility(
+  data: LooseDoc | null,
+  parentCompatibilityId: string,
+): string {
+  return (
+    cleanText(data?.canonicalPersonId) ||
+    cleanText(parentCompatibilityId)
+  );
+}
+
 export function canonicalIdentityTelemetryToken(
   namespace: string,
   value: string,
@@ -213,13 +223,13 @@ async function verifyCanonicalLearnerWrite(params: {
   db: admin.firestore.Firestore;
   plan: CanonicalLearnerCreatePlan;
   actorId: string;
-  parentId: string;
+  parentCompatibilityId: string;
 }): Promise<string[]> {
   const {
     db,
     plan,
     actorId,
-    parentId,
+    parentCompatibilityId,
   } = params;
 
   const issues: string[] = [];
@@ -270,7 +280,7 @@ async function verifyCanonicalLearnerWrite(params: {
 
   const parentSnapshot = await db
     .collection('users')
-    .doc(parentId)
+    .doc(parentCompatibilityId)
     .get();
   const childIds = parentSnapshot.exists &&
     Array.isArray(parentSnapshot.data()?.childIds)
@@ -300,40 +310,20 @@ export async function executeCanonicalLearnerCreate(
     privateProfile = null,
   } = input;
 
+  // Callers still select parents from the UID-keyed users compatibility collection.
+  // New canonical auth-backed users intentionally have Person ID != Firebase UID,
+  // so resolve the canonical parent Person inside the transaction before planning
+  // learner identity writes.
+  const parentCompatibilityId = cleanText(parentId);
   const personId = db.collection('people').doc().id;
   const writeId = `learner_create:${personId}`;
-
-  const plan = planCanonicalLearnerCreate({
-    personId,
-    parentId,
-    displayName,
-    ageYears,
-    grade,
-    status,
-    countryCode,
-    summary: { ...DEFAULT_LEARNER_SUMMARY },
-    details,
-    privateProfile,
-    actorId,
-    writeId,
-  });
-
-  const parentRoleAssignmentId = buildRoleAssignmentId({
-    personId: parentId,
-    role: 'parent',
-    scopeType: 'global',
-  });
+  let committedPlan: CanonicalLearnerCreatePlan | null = null;
+  let canonicalParentIdForTelemetry = parentCompatibilityId;
 
   await db.runTransaction(async (transaction) => {
     const parentCompatibilityRef = db
       .collection('users')
-      .doc(parentId);
-    const parentPersonRef = db
-      .collection('people')
-      .doc(parentId);
-    const parentRoleRef = db
-      .collection('roleAssignments')
-      .doc(parentRoleAssignmentId);
+      .doc(parentCompatibilityId);
     const userCollisionRef = db
       .collection('users')
       .doc(personId);
@@ -347,6 +337,25 @@ export async function executeCanonicalLearnerCreate(
       );
     }
 
+    const canonicalParentId =
+      canonicalParentIdFromCompatibility(
+        parentCompatibility.data() || {},
+        parentCompatibilityId,
+      );
+    canonicalParentIdForTelemetry = canonicalParentId;
+
+    const parentRoleAssignmentId = buildRoleAssignmentId({
+      personId: canonicalParentId,
+      role: 'parent',
+      scopeType: 'global',
+    });
+    const parentPersonRef = db
+      .collection('people')
+      .doc(canonicalParentId);
+    const parentRoleRef = db
+      .collection('roleAssignments')
+      .doc(parentRoleAssignmentId);
+
     const parentPerson =
       await transaction.get(parentPersonRef);
     const parentRole =
@@ -359,7 +368,7 @@ export async function executeCanonicalLearnerCreate(
       roleData: parentRole.exists
         ? parentRole.data() || {}
         : null,
-      parentId,
+      parentId: canonicalParentId,
     });
 
     if (parentIssue) {
@@ -369,9 +378,29 @@ export async function executeCanonicalLearnerCreate(
       );
     }
 
+    const plan = planCanonicalLearnerCreate({
+      personId,
+      parentId: canonicalParentId,
+      parentCompatibilityId,
+      displayName,
+      ageYears,
+      grade,
+      status,
+      countryCode,
+      summary: { ...DEFAULT_LEARNER_SUMMARY },
+      details,
+      privateProfile,
+      actorId,
+      writeId,
+    });
+
     const duplicateQuery = db
       .collection('kids')
-      .where('parentIds', 'array-contains', parentId)
+      .where(
+        'parentIds',
+        'array-contains',
+        parentCompatibilityId,
+      )
       .select(
         'fullName',
         'name',
@@ -489,14 +518,23 @@ export async function executeCanonicalLearnerCreate(
         { merge: true },
       );
     }
+
+    committedPlan = plan;
   });
+
+  const plan = committedPlan as CanonicalLearnerCreatePlan | null;
+  if (!plan) {
+    throw new Error(
+      'Canonical learner plan missing after committed transaction',
+    );
+  }
 
   const verificationIssues =
     await verifyCanonicalLearnerWrite({
       db,
       plan,
       actorId,
-      parentId,
+      parentCompatibilityId,
     });
 
   const result: ExecuteCanonicalLearnerCreateResult = {
@@ -519,7 +557,7 @@ export async function executeCanonicalLearnerCreate(
     ),
     parentToken: canonicalIdentityTelemetryToken(
       'parent',
-      parentId,
+      canonicalParentIdForTelemetry,
     ),
     actorToken: canonicalIdentityTelemetryToken(
       'actor',

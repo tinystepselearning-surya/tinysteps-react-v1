@@ -2,11 +2,28 @@ import { describe, expect, it } from 'vitest';
 
 import {
   canonicalIdentityTelemetryToken,
+  canonicalParentIdFromCompatibility,
   canonicalParentEligibilityIssue,
   expectedFieldsMatch,
 } from '../src/schoolOS/identity/canonicalPrimaryWriter';
 
 describe('Wave 1 R4 canonical-primary learner writer helpers', () => {
+  it('resolves decoupled canonical parent IDs while preserving legacy fallback', () => {
+    expect(
+      canonicalParentIdFromCompatibility(
+        { canonicalPersonId: 'parent-person-1' },
+        'parent-uid-1',
+      ),
+    ).toBe('parent-person-1');
+
+    expect(
+      canonicalParentIdFromCompatibility(
+        {},
+        'legacy-parent-1',
+      ),
+    ).toBe('legacy-parent-1');
+  });
+
   it('accepts an active adult with an active global parent role', () => {
     expect(
       canonicalParentEligibilityIssue({
