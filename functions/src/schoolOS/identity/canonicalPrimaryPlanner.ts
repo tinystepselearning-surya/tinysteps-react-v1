@@ -66,6 +66,7 @@ export interface CanonicalLearnerPrivateProfileInput {
 export interface CanonicalLearnerCreateInput {
   personId: string;
   parentId: string;
+  parentCompatibilityId?: string | null;
   displayName: string;
   ageYears: number;
   grade?: string | null;
@@ -267,6 +268,10 @@ export function planCanonicalLearnerCreate(
     input.parentId,
     'parentId',
   );
+  const parentCompatibilityId = requiredText(
+    input.parentCompatibilityId ?? parentId,
+    'parentCompatibilityId',
+  );
   const actorId = requiredText(
     input.actorId,
     'actorId',
@@ -410,9 +415,9 @@ export function planCanonicalLearnerCreate(
         ...(countryCode
           ? { countryCode }
           : {}),
-        parentId,
-        parentIds: [parentId],
-        primaryParentId: parentId,
+        parentId: parentCompatibilityId,
+        parentIds: [parentCompatibilityId],
+        primaryParentId: parentCompatibilityId,
         ...(input.summary
           ? { summary: input.summary }
           : {}),
@@ -435,7 +440,7 @@ export function planCanonicalLearnerCreate(
     compatibilityDocuments,
     compatibilityArrayUnions: [{
       collection: 'users',
-      documentId: parentId,
+      documentId: parentCompatibilityId,
       field: 'childIds',
       value: personId,
     }],
