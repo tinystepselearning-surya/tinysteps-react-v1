@@ -104,6 +104,53 @@ describe('Wave 1 R4 canonical-primary learner contract', () => {
     ]);
   });
 
+  it('keeps decoupled parent Person ID separate from the UID-keyed compatibility parent', () => {
+    const plan = planCanonicalLearnerCreate({
+      personId: 'kid-decoupled-1',
+      parentId: 'parent-person-1',
+      parentCompatibilityId: 'parent-uid-1',
+      displayName: 'Decoupled Learner',
+      ageYears: 7,
+      grade: 'Grade 1',
+      status: 'active',
+      actorId: 'admin-1',
+      writeId: 'write-decoupled-1',
+    });
+
+    const guardianId = buildGuardianRelationshipId({
+      guardianPersonId: 'parent-person-1',
+      learnerPersonId: 'kid-decoupled-1',
+      relationshipType: 'parent',
+    });
+    const guardian = plan.canonicalDocuments.find(
+      (document) => document.collection === 'guardianRelationships',
+    );
+    const kid = plan.compatibilityDocuments.find(
+      (document) => document.collection === 'kids',
+    );
+
+    expect(guardian).toMatchObject({
+      documentId: guardianId,
+      data: {
+        guardianPersonId: 'parent-person-1',
+        learnerPersonId: 'kid-decoupled-1',
+      },
+    });
+    expect(kid?.data).toMatchObject({
+      parentId: 'parent-uid-1',
+      parentIds: ['parent-uid-1'],
+      primaryParentId: 'parent-uid-1',
+    });
+    expect(plan.compatibilityArrayUnions).toEqual([
+      {
+        collection: 'users',
+        documentId: 'parent-uid-1',
+        field: 'childIds',
+        value: 'kid-decoupled-1',
+      },
+    ]);
+  });
+
   it('does not create a learner read model when no source summary is supplied', () => {
     const plan = planCanonicalLearnerCreate({
       personId: 'kid-ts-002',
