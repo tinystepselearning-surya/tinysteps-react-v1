@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C5 COMPLETE IN PRODUCTION — R5C2C6 IMPLEMENTED, validation pending  
+**Status:** R5C2C5 COMPLETE IN PRODUCTION — R5C2C6 VALIDATED, ready for production merge  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1200,3 +1200,31 @@ Acceptance requires:
 
 Production remains unauthorized until this acceptance gate is green and the temporary
 validation workflow is retired.
+
+
+### R5C2C6 validation evidence
+
+Pull-request acceptance completed successfully before production merge.
+
+~~~text
+Workflow run: 37461403190
+Run number: 1
+Validated head: 7b0c74449cc577901a8d5ead248cad8a51315f36
+Result: success
+
+Focused lint: passed
+Functions build: passed
+Full Functions unit estate: passed
+Deployment classifier and contract tests: passed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  syncMessageThreadsForActiveStudents
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C6 can be marked complete in production.
