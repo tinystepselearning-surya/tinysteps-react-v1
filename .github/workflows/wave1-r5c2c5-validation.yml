@@ -28,7 +28,8 @@ jobs:
         run: npm ci --prefix functions --include=dev
 
       - name: Focused lint
-        run: npm --prefix functions exec -- eslint src/updateTeacherProfile.ts
+        working-directory: functions
+        run: npx eslint src/updateTeacherProfile.ts
 
       - name: Build Functions
         run: npm --prefix functions run build
