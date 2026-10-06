@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c5_production_complete_ready_for_next_bounded_admin_mutation_slice",
+    "status": "r5c2c6_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c6_next_bounded_admin_mutation_slice",
+    "nextBrick": "r5c2c6_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2565,6 +2565,56 @@
                 "hostingDeployed": false,
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
+              }
+            },
+            "r5c2c6": {
+              "title": "Message-thread maintenance mutation",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "syncMessageThreadsForActiveStudents"
+              ],
+              "businessMutationAllowed": true,
+              "maintenanceMutation": true,
+              "messageThreadSemanticsPreserved": true,
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": false,
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "syncMessageThreadsForActiveStudents"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "pull_request_acceptance",
+                "workflowRunId": 37461403190,
+                "workflowRunNumber": 1,
+                "validatedHeadSha": "7b0c74449cc577901a8d5ead248cad8a51315f36",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "fullFunctionsUnitEstate": "passed",
+                "deploymentClassifierAndContracts": "passed",
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 1,
+                  "impactedFunctions": [
+                    "syncMessageThreadsForActiveStudents"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false
+                },
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }

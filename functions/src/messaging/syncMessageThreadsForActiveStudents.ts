@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import {
   buildMessageThreadSyncPayload,
   upsertMessageThread,
@@ -103,7 +103,7 @@ async function collectActiveKidIds(db: admin.firestore.Firestore): Promise<Set<s
 export const syncMessageThreadsForActiveStudents = onCall(
   { region: REGION, timeoutSeconds: 540, memory: '512MiB' },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const db = admin.firestore();
     const activeKidIds = Array.from(await collectActiveKidIds(db));

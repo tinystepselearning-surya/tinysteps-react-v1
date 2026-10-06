@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C5 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C5 COMPLETE IN PRODUCTION — R5C2C6 VALIDATED, ready for production merge  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1125,3 +1125,106 @@ Functions production baseline advanced: true
 
 R5C2C5 is therefore complete in production. The next Wave 1 backend-authorization
 step is the next independently deployable bounded Admin mutation slice (R5C2C6).
+
+
+## R5C2C6 — message-thread maintenance mutation
+
+R5C2C6 moves one independently deployable Admin-only maintenance mutation:
+
+~~~text
+syncMessageThreadsForActiveStudents
+~~~
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The maintenance behavior is intentionally unchanged:
+
+- active learner IDs are collected from the existing enrollment/kids/students sources;
+- processing remains bounded in groups of 10;
+- message-thread payload construction remains unchanged;
+- writes remain idempotent upserts through the existing helper;
+- error reporting remains capped at 20 items;
+- the callable name, region, timeout and memory remain unchanged.
+
+### R5C2C6 non-goals
+
+This brick does not:
+
+- change message-thread schema or participant resolution;
+- change active-learner selection rules;
+- change automatic message-thread triggers;
+- change frontend Admin Dashboard behavior;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- migrate `adminCreateUser` or `adminSetUserRole`;
+- change Firestore Rules or Storage Rules;
+- change finance, attendance, scheduling, enrollment or demo business mutations;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C6 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  syncMessageThreadsForActiveStudents
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Functions TypeScript build passes.
+2. Full Functions unit estate passes.
+3. R5C2C6 routing regression passes.
+4. Deployment-impact/deployment-contract tests pass.
+5. Deployment impact resolves to exactly `syncMessageThreadsForActiveStudents`.
+6. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
+
+
+### R5C2C6 validation evidence
+
+Pull-request acceptance completed successfully before production merge.
+
+~~~text
+Workflow run: 37461403190
+Run number: 1
+Validated head: 7b0c74449cc577901a8d5ead248cad8a51315f36
+Result: success
+
+Focused lint: passed
+Functions build: passed
+Full Functions unit estate: passed
+Deployment classifier and contract tests: passed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  syncMessageThreadsForActiveStudents
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C6 can be marked complete in production.
