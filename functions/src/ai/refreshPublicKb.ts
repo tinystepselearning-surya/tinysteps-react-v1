@@ -2,7 +2,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
-import { ensureAdmin } from "../helpers/adminGuard";
+import { ensureCanonicalAdmin } from "../helpers/canonicalAdminGuard";
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -98,7 +98,7 @@ const RETIRED_PATHS = [
 // Admin check helpers
 // --------------------
 async function assertAdmin(request: any) {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 }
 
 // --------------------

@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C7 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C7 COMPLETE IN PRODUCTION — R5C2C8 VALIDATED, ready for production merge  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1388,3 +1388,111 @@ Functions production baseline advanced: true
 
 R5C2C7 is therefore complete in production. The next Wave 1 backend-authorization
 step is the next independently deployable bounded Admin mutation slice (R5C2C8).
+
+
+## R5C2C8 — public KB refresh mutation
+
+R5C2C8 moves one independently deployable Admin-only maintenance mutation:
+
+~~~text
+refreshPublicKb
+~~~
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The KB refresh behavior is intentionally unchanged:
+
+- the callable still reads the curated hosted `kb.json`;
+- requested/default path selection remains unchanged;
+- retired-path chunk deactivation remains unchanged;
+- chunking/tokenization rules remain unchanged;
+- Firestore writes remain bounded through existing 400-document paging/batches;
+- active chunks remain idempotent merge writes keyed by deterministic URL/chunk IDs;
+- callable name, region, memory and timeout remain unchanged.
+
+### R5C2C8 non-goals
+
+This brick does not:
+
+- change AI retrieval ranking or answer behavior;
+- change `kb.json` content or public-page content;
+- change the KB schema or collection name;
+- change the Admin UI for KB refresh;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- migrate `adminCreateUser` or `adminSetUserRole`;
+- change Firestore Rules or Storage Rules;
+- change finance, attendance, scheduling, enrollment or demo authority;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C8 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  refreshPublicKb
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Focused lint passes.
+2. Functions TypeScript build passes.
+3. R5C2C8 authorization-routing regression passes.
+4. Existing Wave 1 authorization-hardening regression passes.
+5. Full Functions unit estate passes.
+6. Deployment-impact/deployment-contract tests pass.
+7. Deployment impact resolves to exactly `refreshPublicKb`.
+8. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
+
+
+### R5C2C8 validation evidence
+
+Pull-request acceptance completed successfully before production merge.
+
+~~~text
+Workflow run: 37485929917
+Run number: 1
+Validated head: d7da1c5d1a4a3ddb948d178cf9f2b8bcffd6657c
+Result: success
+
+Focused lint: passed
+Functions build: passed
+Focused R5C2C8 regressions: passed
+Wave 1 authorization-hardening regression: passed
+Full Functions unit estate: passed
+Deployment classifier and contract tests: passed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  refreshPublicKb
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C8 can be marked complete in production.
