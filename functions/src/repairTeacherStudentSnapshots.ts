@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -160,7 +160,7 @@ export function isFutureSessionLike(session: FirestoreRow, nowMs: number): boole
 export const adminRepairTeacherStudentSnapshots = onCall<RepairRequest>(
   { region: REGION, memory: '512MiB', timeoutSeconds: 300 },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const apply = request.data?.apply === true;
     const limitRaw = Number(request.data?.limit);
