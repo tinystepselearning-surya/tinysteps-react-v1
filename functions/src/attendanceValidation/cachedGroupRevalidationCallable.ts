@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import { loadProductionStaffIdentityRegistry, type Av3StaffRegistrySnapshot } from './staffIdentityRegistry';
 import {
   loadAvsBusinessGroupForSession, loadAvsGroupEvidence,
@@ -70,7 +70,7 @@ export const revalidateAttendanceValidationGroupCached = onCall({
   region: 'asia-south1', memory: '256MiB', invoker: 'public',
   labels: { 'avs-public-invoker': 'true' }, timeoutSeconds: 120, maxInstances: 2,
 }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   return revalidateAvsGroupCached(admin.firestore(),
     exactAvsId(request.data?.classSessionId, 'classSessionId'),
     exactAvsId(request.data?.kidId, 'kidId'));
