@@ -3,6 +3,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
 import { fetchCompletedSessionsForFinanceReconciliation } from './helpers/financeReconciliationCompletedSessions';
+import { fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation } from './helpers/financeReconciliationProtectedLifecycleSessions';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import {
   isActiveBillingCharge,
@@ -490,10 +491,15 @@ async function buildFinanceReconciliationReport(
   const db = admin.firestore();
   const warnings: string[] = [];
 
-  const [repairSnap, completedSnap, chargesSnap, earningsSnap, paymentsSnap, payoutsSnap, parentReadModelsSnap] =
+  const [repairSnap, completedSnap, protectedLifecycleSnap, chargesSnap, earningsSnap, paymentsSnap, payoutsSnap, parentReadModelsSnap] =
     await Promise.all([
       fetchLimitedDocs(db.collection('classSessions').where('revenueRepairRequired', '==', true), maxDocsPerCollection),
       fetchCompletedSessionsForFinanceReconciliation({
+        db,
+        monthKey,
+        maxDocs: maxDocsPerCollection,
+      }),
+      fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation({
         db,
         monthKey,
         maxDocs: maxDocsPerCollection,
@@ -530,6 +536,9 @@ async function buildFinanceReconciliationReport(
 
   if (repairSnap.truncated) warnings.push('classSessions(revenueRepairRequired) scan truncated');
   if (completedSnap.truncated) warnings.push('classSessions(completed) scan truncated');
+  if (protectedLifecycleSnap.truncated) {
+    warnings.push('classSessions(financially-earned protected lifecycle) scan truncated');
+  }
   if (chargesSnap.truncated) warnings.push('billingCharges scan truncated');
   if (earningsSnap.truncated) warnings.push('teacherEarnings scan truncated');
   if (paymentsSnap.truncated) warnings.push('payments scan truncated');
@@ -541,6 +550,10 @@ async function buildFinanceReconciliationReport(
     .filter((row) => inMonthScope(row, monthKey));
 
   const completedSessions: SessionReportRow[] = completedSnap.docs
+    .map((docSnap) => mapDocToRow<SessionReportRow>(docSnap))
+    .filter((row) => inMonthScope(row, monthKey));
+
+  const protectedLifecycleSessions: SessionReportRow[] = protectedLifecycleSnap.docs
     .map((docSnap) => mapDocToRow<SessionReportRow>(docSnap))
     .filter((row) => inMonthScope(row, monthKey));
 
@@ -562,7 +575,7 @@ async function buildFinanceReconciliationReport(
       db,
       'billingCharges',
       'sessionId',
-      completedSessions.map((session) => session.id),
+      [...completedSessions, ...protectedLifecycleSessions].map((session) => session.id),
       maxLinkedLookups,
       maxDocsPerCollection,
     );
@@ -906,7 +919,7 @@ async function buildFinanceReconciliationReport(
 
   const expectedSessionEnrollmentIds = Array.from(
     new Set(
-      expectedCompletedSessions
+      [...expectedCompletedSessions, ...protectedLifecycleSessions]
         .map((session) => String(session.enrollmentId || '').trim())
         .filter(Boolean),
     ),
@@ -940,6 +953,46 @@ async function buildFinanceReconciliationReport(
       .map((charge) => String(charge.sessionId || '').trim())
       .filter(Boolean),
   );
+
+  const financiallyEarnedProtectedLifecycleSessions =
+    protectedLifecycleSessions.map((session) => {
+      const sessionId = String(session.id || '').trim();
+      const enrollmentId = String(session.enrollmentId || '').trim();
+      const enrollmentSnap = enrollmentId
+        ? expectedEnrollmentFetch.map.get(enrollmentId)
+        : null;
+      const enrollment = enrollmentSnap?.exists
+        ? ((enrollmentSnap.data() || {}) as Record<string, unknown>)
+        : {};
+      const activeChargeExists = activeChargeSessionIds.has(sessionId);
+
+      return {
+        sessionId,
+        date: session.date || null,
+        status: normalizeStatus(session.status) || null,
+        source: session.source || null,
+        cancelledReason: session.cancelledReason || null,
+        repairBatchId: session.repairBatchId || null,
+        enrollmentId: enrollmentId || null,
+        parentId:
+          String(session.parentId || enrollment.parentId || '').trim() || null,
+        kidId: resolvePrimaryKidId(session),
+        fee: resolveSessionFee(session, enrollment),
+        revenueAccrued: session.revenueAccrued === true,
+        activeChargeExists,
+        missingBillingCharge: !activeChargeExists,
+      };
+    });
+
+  const financiallyEarnedProtectedLifecycleSessionsMissingBillingCharge =
+    financiallyEarnedProtectedLifecycleSessions.filter(
+      (session) => session.activeChargeExists !== true,
+    );
+
+  if (financiallyEarnedProtectedLifecycleSessions.length > 0) {
+    warnings.push('financially_earned_protected_lifecycle_sessions_detected');
+  }
+
   const presentSessionsMissingBillingCharge: Array<Record<string, unknown>> = [];
   const presentSessionsWithZeroOrUnresolvedFee: Array<Record<string, unknown>> = [];
 
@@ -1112,6 +1165,10 @@ async function buildFinanceReconciliationReport(
       completedSessionsWithUnresolvedEnrollment: missingEnrollmentReferenceSessions.length,
       teacherMonthlyRollupMismatches: teacherMonthlyRollupMismatches.length,
       staleTeacherMonthlyRollups: staleTeacherMonthlyRollups.length,
+      financiallyEarnedProtectedLifecycleSessions:
+        financiallyEarnedProtectedLifecycleSessions.length,
+      financiallyEarnedProtectedLifecycleSessionsMissingBillingCharge:
+        financiallyEarnedProtectedLifecycleSessionsMissingBillingCharge.length,
       presentSessionsMissingBillingCharge: presentSessionsMissingBillingCharge.length,
       billingChargeServiceMonthMismatch: billingChargeServiceMonthMismatch.length,
       duplicateActiveBillingChargesBySession: duplicateActiveBillingChargesBySession.length,
@@ -1150,6 +1207,13 @@ async function buildFinanceReconciliationReport(
       ),
       teacherMonthlyRollupMismatches: sampleRows(teacherMonthlyRollupMismatches, sampleLimit),
       staleTeacherMonthlyRollups: sampleRows(staleTeacherMonthlyRollups, sampleLimit),
+      financiallyEarnedProtectedLifecycleSessions:
+        sampleRows(financiallyEarnedProtectedLifecycleSessions, sampleLimit),
+      financiallyEarnedProtectedLifecycleSessionsMissingBillingCharge:
+        sampleRows(
+          financiallyEarnedProtectedLifecycleSessionsMissingBillingCharge,
+          sampleLimit,
+        ),
       presentSessionsMissingBillingCharge: sampleRows(presentSessionsMissingBillingCharge, sampleLimit),
       billingChargeServiceMonthMismatch: sampleRows(billingChargeServiceMonthMismatch, sampleLimit),
       duplicateActiveBillingChargesBySession: sampleRows(duplicateActiveBillingChargesBySession, sampleLimit),
