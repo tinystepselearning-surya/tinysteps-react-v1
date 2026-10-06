@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { normalizeRole } from './helpers/roles';
 import {
   buildIdentityWriteId,
@@ -135,7 +135,7 @@ export const updateTeacherProfile = onCall(
     if (
       request.auth.uid !== teacherUid
     ) {
-      await ensureAdmin(request.auth);
+      await ensureCanonicalAdmin(request.auth);
     } else {
       const userSnap =
         await db.collection('users')
