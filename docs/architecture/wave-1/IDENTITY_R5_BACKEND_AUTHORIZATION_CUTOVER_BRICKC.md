@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C4 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C4 COMPLETE IN PRODUCTION — R5C2C5 IMPLEMENTED, validation pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -984,3 +984,90 @@ adminDeleteUser
 R5C2C4 is production-complete.
 
 The next bounded Admin mutation slice should remain independently deployable.
+
+
+## R5C2C5 — teacher profile Admin-on-behalf mutation
+
+R5C2C5 moves one additional independently deployable mutation boundary:
+
+~~~text
+updateTeacherProfile
+~~~
+
+The callable serves two authorization modes:
+
+1. a teacher editing their own profile;
+2. an Admin editing another teacher's profile.
+
+This brick changes only mode 2.
+
+Admin-on-behalf authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+Teacher self-service remains unchanged for this brick. The callable still verifies the
+requesting teacher from the current compatibility user record before allowing a self-profile
+mutation. That self-service reader is a separate R5 target-user/current-user reader-cutover
+concern and is deliberately not bundled into this Admin authorization slice.
+
+The mutation path remains canonical-primary:
+
+~~~text
+resolvePersonIdFromFirebaseUid
+→ planCanonicalTeacherProfileUpdate
+→ writeCanonicalTeacherProfileUpdatePlan
+~~~
+
+### R5C2C5 non-goals
+
+This brick does not:
+
+- change teacher self-service authorization;
+- change teacher profile fields or validation;
+- change canonical teacher-profile write semantics;
+- change Firebase Auth UIDs;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- modify Firestore Rules or Storage Rules;
+- migrate `adminCreateUser` or `adminSetUserRole`;
+- migrate finance, attendance, scheduling, enrollment or demo mutations;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C5 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  updateTeacherProfile
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Functions TypeScript build passes.
+2. Full Functions unit estate passes.
+3. R5C2C5 routing regression proves canonical Admin authorization and preserved teacher self-service.
+4. Canonical teacher-profile writer regressions pass.
+5. Deployment-impact/deployment-contract tests pass.
+6. Deployment impact resolves to exactly `updateTeacherProfile`.
+7. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
