@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C10 COMPLETE IN PRODUCTION — R5C2C11 VALIDATED, ready for production merge  
+**Status:** R5C2C11 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1928,3 +1928,35 @@ Firestore indexes changed: false
 
 The temporary validation workflow is retired before merge. Production verification remains
 required after the main-branch deployment before R5C2C11 can be marked complete in production.
+
+
+### R5C2C11 production evidence
+
+R5C2C11 completed production deployment successfully after the validator-isolation
+prerequisite removed the original two-Function dependency fanout.
+
+~~~text
+Pull request: #642
+Merge commit: f75dc683832de4e2d09d506b72f7f3dba3c72082
+Deploy workflow run: 37496485049
+Deploy run number: 3914
+Result: success
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted/deployed Functions: exactly 1
+  revalidateAttendanceValidationGroupCached
+
+AVS public transport verification: passed
+Hosting deployed: false
+Firestore Rules deployed: false
+Firestore indexes deployed: false
+Functions production baseline advanced: true
+~~~
+
+The original R5C2C11 attempt was intentionally superseded after its blast-radius gate exposed
+the manual-verification dependency. The prerequisite was independently deployed first, and the
+rebuilt C11 then validated and deployed as a genuine one-Function slice.
+
+R5C2C11 is therefore complete in production. The next Wave 1 backend-authorization step is
+the next independently deployable bounded Admin mutation slice (R5C2C12).
