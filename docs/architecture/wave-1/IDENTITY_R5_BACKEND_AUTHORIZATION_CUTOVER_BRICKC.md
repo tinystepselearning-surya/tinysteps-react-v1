@@ -1786,3 +1786,33 @@ Functions production baseline advanced: true
 
 R5C2C10 is therefore complete in production. The next Wave 1 backend-authorization
 step is the next independently deployable bounded Admin mutation slice (R5C2C11).
+
+
+### R5C2C11 prerequisite — AVS validator dependency isolation
+
+The first R5C2C11 validation correctly failed its one-Function blast-radius gate because
+`adminVerifyAttendanceValidationGroup` imported `exactAvsId` from
+`cachedGroupRevalidationCallable.ts`. That made the cached-revalidation module a runtime
+dependency of two deployed Functions.
+
+The prerequisite isolates `exactAvsId` into
+`attendanceValidation/avsId.ts` and moves only the manual-verification callable to that
+helper. Cached revalidation authorization remains unchanged in the prerequisite.
+
+Validation evidence:
+
+~~~text
+Workflow run: 37493943055
+Result: success
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  adminVerifyAttendanceValidationGroup
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+This prerequisite exists only to sever deployment coupling. R5C2C11 authorization must be
+rebuilt from the updated production baseline and must independently resolve to exactly
+`revalidateAttendanceValidationGroupCached`.
