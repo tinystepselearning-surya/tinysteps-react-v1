@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c11_implementation_ready_for_validation",
+    "status": "r5c2c11_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c11_cached_avs_revalidation_admin_authorization_validation_and_rollout",
+    "nextBrick": "r5c2c11_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2947,7 +2947,7 @@
               },
               "productionWiring": false,
               "productionVerified": false,
-              "validationPending": true,
+              "validationPending": false,
               "expectedDeploymentImpact": {
                 "functionsDeploymentRequired": true,
                 "functionsFullDeployment": false,
@@ -2958,6 +2958,30 @@
                 "hostingChanged": false,
                 "firestoreRulesChanged": false,
                 "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "pull_request_acceptance",
+                "workflowRunId": 37496183345,
+                "workflowRunNumber": 3,
+                "validatedHeadSha": "71879f6b58fd505aee744a4d9910ddbb94581cf7",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedR5C2C11Regressions": "passed",
+                "fullFunctionsUnitEstate": "passed",
+                "deploymentClassifierAndContracts": "passed",
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 1,
+                  "impactedFunctions": [
+                    "revalidateAttendanceValidationGroupCached"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false
+                },
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
