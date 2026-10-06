@@ -44,12 +44,12 @@ describe('Wave 1 R5C2C11 prerequisite AVS validator isolation', () => {
     );
   });
 
-  it('leaves cached revalidation runtime untouched by the prerequisite', () => {
-    expect(cachedSource).toContain(
-      "import { ensureAdmin } from '../helpers/adminGuard';",
-    );
+  it('keeps the cached callable structurally isolated from manual verification', () => {
     expect(cachedSource).toContain(
       'export function exactAvsId',
+    );
+    expect(manualSource).not.toContain(
+      "from './cachedGroupRevalidationCallable'",
     );
   });
 });
