@@ -1,0 +1,86 @@
+name: Wave 1 R5C2C7 validation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root test dependencies
+        run: npm ci --include=dev
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Focused lint
+        working-directory: functions
+        run: npx eslint src/repairTeacherStudentSnapshots.ts
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Run focused snapshot repair regressions
+        run: npx vitest run --config functions/vitest.config.ts functions/test/repairTeacherStudentSnapshots.spec.ts functions/test/canonicalAdminTeacherStudentSnapshotRepairRouting.spec.ts
+
+      - name: Run full Functions unit estate
+        run: npx vitest run --config functions/vitest.config.ts
+
+      - name: Run deployment classifier and contract tests
+        run: node --test scripts/test/functions-impact.node-test.mjs scripts/test/functions-deployment.node-test.mjs
+
+      - name: Resolve bounded deployment impact
+        id: impact
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${BASE_SHA}" ]]; then
+            BASE_SHA="$(git merge-base origin/main HEAD)"
+          fi
+          node scripts/resolve-deployment-impact.mjs \
+            --before "${BASE_SHA}" \
+            --functions-before "${BASE_SHA}" \
+            --hosting-before "${BASE_SHA}" \
+            --firestore-rules-before "${BASE_SHA}" \
+            --firestore-indexes-before "${BASE_SHA}" \
+            --sha "${GITHUB_SHA}"
+
+      - name: Enforce R5C2C7 blast radius
+        shell: bash
+        env:
+          FUNCTIONS_REQUIRED: ${{ steps.impact.outputs.functions_deployment_required }}
+          FUNCTIONS_FULL: ${{ steps.impact.outputs.functions_full_deployment }}
+          FUNCTIONS_TARGETS: ${{ steps.impact.outputs.functions_targets }}
+          HOSTING_CHANGED: ${{ steps.impact.outputs.hosting_changed }}
+          RULES_CHANGED: ${{ steps.impact.outputs.firestore_rules_changed }}
+          INDEXES_CHANGED: ${{ steps.impact.outputs.firestore_indexes_changed }}
+        run: |
+          set -euo pipefail
+          test "${FUNCTIONS_REQUIRED}" = "true"
+          test "${FUNCTIONS_FULL}" = "false"
+          test "${FUNCTIONS_TARGETS}" = "adminRepairTeacherStudentSnapshots"
+          test "${HOSTING_CHANGED}" = "false"
+          test "${RULES_CHANGED}" = "false"
+          test "${INDEXES_CHANGED}" = "false"
+          echo "R5C2C7 blast radius verified: adminRepairTeacherStudentSnapshots only."
