@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c9_production_complete_ready_for_next_bounded_admin_mutation_slice",
+    "status": "r5c2c10_implementation_ready_for_validation",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c10_next_bounded_admin_mutation_slice",
+    "nextBrick": "r5c2c10_enrollment_backfill_admin_authorization_validation_and_rollout",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2841,6 +2841,36 @@
                 "hostingDeployed": false,
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
+              }
+            },
+            "r5c2c10": {
+              "title": "Enrollment canonical backfill mutation",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "adminBackfillEnrollmentCanonicalFields"
+              ],
+              "businessMutationAllowed": true,
+              "maintenanceMutation": true,
+              "dryRunPreserved": true,
+              "boundedReadsPreserved": true,
+              "boundedWritesPreserved": true,
+              "mappingSemanticsPreserved": true,
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": true,
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "adminBackfillEnrollmentCanonicalFields"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
               }
             }
           }
