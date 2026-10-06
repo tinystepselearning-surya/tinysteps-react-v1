@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c11_validation_complete_ready_for_production_merge",
+    "status": "r5c2c11_production_complete_ready_for_next_bounded_admin_mutation_slice",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c11_production_merge_and_verification",
+    "nextBrick": "r5c2c12_next_bounded_admin_mutation_slice",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2945,8 +2945,8 @@
                 "firestoreIndexesDeployed": false,
                 "functionsProductionMarkerAdvanced": true
               },
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "expectedDeploymentImpact": {
                 "functionsDeploymentRequired": true,
@@ -2982,6 +2982,24 @@
                   "firestoreIndexesChanged": false
                 },
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 642,
+                "mergeCommit": "f75dc683832de4e2d09d506b72f7f3dba3c72082",
+                "workflowRunId": 37496485049,
+                "workflowRunNumber": 3914,
+                "result": "success",
+                "functionsPlanned": 1,
+                "functionsDeployed": 1,
+                "functions": [
+                  "revalidateAttendanceValidationGroupCached"
+                ],
+                "functionsFullDeployment": false,
+                "avsPublicTransportVerification": "passed",
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
               }
             }
           }
