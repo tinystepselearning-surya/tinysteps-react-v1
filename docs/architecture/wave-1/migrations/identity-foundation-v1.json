@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c10_production_complete_ready_for_next_bounded_admin_mutation_slice",
+    "status": "r5c2c11_implementation_ready_for_validation",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c11_next_bounded_admin_mutation_slice",
+    "nextBrick": "r5c2c11_cached_avs_revalidation_admin_authorization_validation_and_rollout",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2912,6 +2912,52 @@
                 "hostingDeployed": false,
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
+              }
+            },
+            "r5c2c11": {
+              "title": "Cached attendance-validation group revalidation",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "revalidateAttendanceValidationGroupCached"
+              ],
+              "businessMutationAllowed": true,
+              "maintenanceMutation": true,
+              "cachedEvidenceOnly": true,
+              "graphLogicalCallsPreservedAtZero": true,
+              "avsDecisionSemanticsPreserved": true,
+              "prerequisite": {
+                "title": "AVS ID validator dependency isolation",
+                "pullRequest": 641,
+                "mergeCommit": "a66a5559a0f40d139f1e687bb971846952d036b9",
+                "workflowRunId": 37493943055,
+                "productionWorkflowRunId": 37494252229,
+                "productionWorkflowRunNumber": 3913,
+                "result": "success",
+                "functions": [
+                  "adminVerifyAttendanceValidationGroup"
+                ],
+                "functionsFullDeployment": false,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "functionsProductionMarkerAdvanced": true
+              },
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": true,
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "revalidateAttendanceValidationGroupCached"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
               }
             }
           }
