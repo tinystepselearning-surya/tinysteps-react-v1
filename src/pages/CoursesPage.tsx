@@ -20,7 +20,8 @@ const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.core
 
 const heroFacts = [
   'Courses for children aged 3–12',
-  'Phonics, Reading, Grammar, and Public Speaking pathways',
+  'Core programmes: Phonics, Grammar, and Public Speaking',
+  'Reading support sits within the wider Phonics-to-reading journey',
   'Live teacher-guided online classes',
   'Assessment-led placement before a course recommendation',
 ];
@@ -56,6 +57,35 @@ const phonicsCards = [
     focus: ['Long vowels and advanced patterns', 'R-controlled sounds', 'Reading fluency'],
     outcome: 'Learning focus: strengthen advanced decoding and increasingly independent reading',
     href: '/courses/phonics-advanced',
+  },
+];
+
+const readingCards = [
+  {
+    title: 'General Reading Support',
+    fit: 'Primary Reading support pathway',
+    tag: 'Broad reading needs',
+    focus: [
+      'Connected-text accuracy and reading confidence',
+      'Vocabulary and comprehension',
+      'Phrasing, retelling, and understanding what was read',
+    ],
+    outcome: 'Learning focus: strengthen connected reading, meaning, and confidence across the child’s current reading gaps',
+    href: '/reading-classes-for-kids',
+    cta: 'Explore Reading Classes',
+  },
+  {
+    title: 'Reading Fluency Programme',
+    fit: 'Specialist reading support pathway',
+    tag: 'After decoding is reasonably secure',
+    focus: [
+      'Smoother connected reading and automaticity',
+      'Phrasing, expression, and fewer word-by-word pauses',
+      'Accuracy and comprehension while reading longer text',
+    ],
+    outcome: 'Learning focus: help children whose word reading is reasonably accurate but remains slow, hesitant, or choppy',
+    href: '/reading-fluency-program',
+    cta: 'Explore Reading Fluency',
   },
 ];
 
@@ -97,12 +127,12 @@ const quickAnswerFaqItems = [
   {
     question: 'Which Tiny Steps course is right for my child?',
     answer:
-      'The right course depends on the child’s current need. Children who struggle with reading may need phonics or reading support, children with sentence accuracy gaps may need grammar, children with everyday conversational-fluency gaps may need Spoken English, and children who can communicate basic ideas but need storytelling, presentation, or audience-facing structure may need Public Speaking.',
+      'Tiny Steps has three core course families: Phonics, Grammar, and Public Speaking. Reading development is handled within the wider Phonics-to-reading journey. If decoding is unstable, the child stays in Phonics; if decoding is reasonably secure but fluency, vocabulary, comprehension, or retelling needs support, the child can be routed to focused Reading support.',
   },
   {
-    question: 'Should my child start with phonics or grammar?',
+    question: 'Should my child start with phonics, reading, or grammar?',
     answer:
-      'If the child cannot read words confidently, phonics usually comes first. If the child can read but struggles to form correct sentences, grammar and sentence formation may be the better starting point.',
+      'If sound-letter knowledge, blending, or decoding is unstable, Phonics comes first. When decoding is reasonably secure but connected reading remains slow, hesitant, or weak in comprehension, the child can move into focused Reading support within the same broader reading-development journey. If reading is secure but sentence accuracy is the main gap, Grammar may be the better starting point.',
   },
   {
     question: 'Does Tiny Steps offer public speaking classes for kids?',
@@ -318,6 +348,38 @@ function CoursesPage() {
                   </Link>
                 </article>
               ))}
+            </div>
+
+            <div id="reading-support-pathway" className="mt-7 rounded-[24px] border border-emerald-100 bg-white/80 p-5 sm:p-6">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Reading support within the Phonics-to-reading journey</p>
+              <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">When decoding is stable but connected reading still needs support</h3>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">
+                Reading is not a separate core course family at Tiny Steps. It is a holistic extension of the Phonics-to-reading journey, surfaced separately because parents often describe the concern as reading, fluency, or comprehension. If decoding is unstable, Phonics remains the starting point.
+              </p>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {readingCards.map((card) => (
+                  <article key={card.title} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{card.tag}</p>
+                    <h4 className="mt-2 text-lg font-bold text-slate-900">{card.title}</h4>
+                    <p className="mt-1 text-sm font-semibold text-slate-600">{card.fit}</p>
+                    <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                      {card.focus.map((point) => (
+                        <li key={point} className="flex items-start gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-4 text-sm font-medium text-slate-800">Outcome: {card.outcome}</p>
+                    <Link
+                      to={card.href}
+                      className="mt-5 inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+                    >
+                      {card.cta}
+                    </Link>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </div>
