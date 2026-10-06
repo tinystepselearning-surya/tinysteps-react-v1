@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C6 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C6 COMPLETE IN PRODUCTION — R5C2C7 VALIDATED, ready for production merge  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1254,3 +1254,111 @@ Functions production baseline advanced: true
 
 R5C2C6 is therefore complete in production. The next Wave 1 backend-authorization
 step is the next independently deployable bounded Admin mutation slice (R5C2C7).
+
+
+## R5C2C7 — teacher-student snapshot repair mutation
+
+R5C2C7 moves one independently deployable Admin-only repair mutation:
+
+~~~text
+adminRepairTeacherStudentSnapshots
+~~~
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The repair behavior is intentionally unchanged:
+
+- `apply !== true` remains a dry run;
+- explicit enrollment targeting remains supported;
+- page size remains bounded to 25–500 enrollments;
+- write commits remain bounded by `MAX_BATCH = 400`;
+- only missing/placeholder student snapshot names are repaired;
+- only future session-like snapshots are eligible for session repair;
+- run evidence continues to be written under `adminStats/teacherStudentSnapshotRepairRuns/runs`;
+- callable name, region, memory and timeout remain unchanged.
+
+### R5C2C7 non-goals
+
+This brick does not:
+
+- change snapshot repair eligibility;
+- change learner/teacher identity semantics;
+- change historical sessions;
+- alter automatic transfer or scheduling behavior;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- migrate `adminCreateUser` or `adminSetUserRole`;
+- change Firestore Rules or Storage Rules;
+- change finance, attendance, scheduling or demo authority;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C7 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  adminRepairTeacherStudentSnapshots
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Focused lint passes.
+2. Functions TypeScript build passes.
+3. Full Functions unit estate passes.
+4. Existing snapshot-repair helper regressions pass.
+5. R5C2C7 authorization-routing regression passes.
+6. Deployment-impact/deployment-contract tests pass.
+7. Deployment impact resolves to exactly `adminRepairTeacherStudentSnapshots`.
+8. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
+
+
+### R5C2C7 validation evidence
+
+Pull-request acceptance completed successfully before production merge.
+
+~~~text
+Workflow run: 37462966975
+Run number: 1
+Validated head: 40c24fe253a29a30b79d7338e6cdca56edad723b
+Result: success
+
+Focused lint: passed
+Functions build: passed
+Focused snapshot repair regressions: passed
+Full Functions unit estate: passed
+Deployment classifier and contract tests: passed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  adminRepairTeacherStudentSnapshots
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C7 can be marked complete in production.
