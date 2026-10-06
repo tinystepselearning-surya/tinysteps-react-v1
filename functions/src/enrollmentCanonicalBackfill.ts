@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -139,7 +139,7 @@ function buildBackfillPlan(docId: string, data: Record<string, unknown>): PlanRe
 export const adminBackfillEnrollmentCanonicalFields = onCall<BackfillRequest>(
   { region: REGION, memory: '512MiB', timeoutSeconds: 300 },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const startedAtMs = Date.now();
 
     const apply = request.data?.apply === true;
