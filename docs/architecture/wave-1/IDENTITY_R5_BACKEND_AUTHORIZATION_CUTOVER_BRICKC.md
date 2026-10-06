@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C10 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C10 COMPLETE IN PRODUCTION — R5C2C11 IMPLEMENTED, validation pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1786,3 +1786,81 @@ Functions production baseline advanced: true
 
 R5C2C10 is therefore complete in production. The next Wave 1 backend-authorization
 step is the next independently deployable bounded Admin mutation slice (R5C2C11).
+
+
+## R5C2C11 — cached attendance-validation group revalidation
+
+R5C2C11 moves one independently deployable Admin-only AVS maintenance mutation:
+
+~~~text
+revalidateAttendanceValidationGroupCached
+~~~
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The AVS behavior is intentionally unchanged:
+
+- one explicitly requested class-session/kid business group remains the unit of work;
+- the callable uses cached AVS evidence only;
+- the cached recheck continues to make zero Microsoft Graph logical calls;
+- missing fresh Teams evidence still returns `fresh_teams_evidence_required`;
+- join-link fallback behavior remains unchanged;
+- only fully evaluable safe groups are persisted;
+- callable name, region, memory, timeout and maxInstances remain unchanged.
+
+### R5C2C11 non-goals
+
+This brick does not:
+
+- change AVS attendance decision rules;
+- change Teams evidence collection or Graph authorization;
+- change teacher identity rollout;
+- change manual attendance verification;
+- change attendance corrections or teacher-pay decisions;
+- change scheduling, finance or enrollment authority;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- change Firestore Rules or Storage Rules;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C11 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  revalidateAttendanceValidationGroupCached
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Focused lint passes.
+2. Functions TypeScript build passes.
+3. Existing cached-group revalidation regressions pass.
+4. R5C2C11 authorization-routing regression passes.
+5. Full Functions unit estate passes.
+6. Deployment-impact/deployment-contract tests pass.
+7. Deployment impact resolves to exactly `revalidateAttendanceValidationGroupCached`.
+8. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
