@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c5_validation_complete_ready_for_production_merge",
+    "status": "r5c2c5_production_complete_ready_for_next_bounded_admin_mutation_slice",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c5_production_merge_and_verification",
+    "nextBrick": "r5c2c6_next_bounded_admin_mutation_slice",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2512,8 +2512,8 @@
               "adminAuthorizationBranch": "request.auth.uid !== teacherUid",
               "teacherSelfServiceAuthorizationPreserved": true,
               "canonicalTeacherProfileWriterPreserved": true,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "expectedDeploymentImpact": {
                 "functionsDeploymentRequired": true,
@@ -2548,6 +2548,23 @@
                   "firestoreIndexesChanged": false
                 },
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 627,
+                "mergeCommit": "645aadf48c1d9f327663c920aab209c4f00904d2",
+                "workflowRunId": 37460377440,
+                "workflowRunNumber": 3900,
+                "result": "success",
+                "functionsPlanned": 1,
+                "functionsDeployed": 1,
+                "functions": [
+                  "updateTeacherProfile"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
               }
             }
           }
