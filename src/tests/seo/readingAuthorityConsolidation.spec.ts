@@ -12,6 +12,9 @@ describe('Reading authority consolidation', () => {
   const fluency = read('src/pages/public/ReadingFluencyProgramPage.tsx');
   const parents = read('src/pages/parents/ParentsHubPage.tsx');
   const comprehension = read('src/content/blog/posts/parent-tips/why-child-reads-words-but-does-not-understand-story.ts');
+  const llms = read('public/llms.txt');
+  const sitemap = read('public/sitemap-static.xml');
+  const commercialOwners = read('src/lib/commercialC3OwnerPageAudit.ts');
 
   it('keeps Phonics, Grammar, and Public Speaking as the core course families', () => {
     const title = 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning';
@@ -62,5 +65,15 @@ describe('Reading authority consolidation', () => {
     expect(courses).toContain("href: '/reading-classes-for-kids'");
     expect(courses).toContain("name: 'Tiny Steps core learning paths'");
     expect(courses).toContain("name: 'Reading Classes'");
+  });
+
+  it('keeps Reading SEO, AEO, and GEO discovery owners intact', () => {
+    expect(reading).toContain("const canonicalPath = '/reading-classes-for-kids'");
+    expect(llms).toContain('[Reading Classes for Kids](https://tinystepslearning.com/reading-classes-for-kids)');
+    expect(llms).toContain('Commercial searches for Grammar classes, Reading classes or Public Speaking classes belong to');
+    expect(sitemap).toContain('<loc>https://tinystepslearning.com/reading-classes-for-kids</loc>');
+    expect(commercialOwners).toContain("clusterId:'reading-provider'");
+    expect(commercialOwners).toContain("ownerPath:'/reading-classes-for-kids'");
+    expect(commercialOwners).toContain("protectedSignals:['generic reading owner','phonics boundary','specialist fluency handoff','writing handoff']");
   });
 });
