@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { isDeepStrictEqual } from 'util';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from '../helpers/adminGuard';
-import { exactAvsId } from './cachedGroupRevalidationCallable';
+import { exactAvsId } from './avsId';
 import { loadAvsBusinessGroupForSession } from './groupValidation';
 import { sameDayGroupDescriptor } from './shadowRunner';
 
