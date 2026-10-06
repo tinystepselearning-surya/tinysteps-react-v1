@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c10_implementation_ready_for_validation",
+    "status": "r5c2c10_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c10_enrollment_backfill_admin_authorization_validation_and_rollout",
+    "nextBrick": "r5c2c10_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -2860,7 +2860,7 @@
               "mappingSemanticsPreserved": true,
               "productionWiring": false,
               "productionVerified": false,
-              "validationPending": true,
+              "validationPending": false,
               "expectedDeploymentImpact": {
                 "functionsDeploymentRequired": true,
                 "functionsFullDeployment": false,
@@ -2871,6 +2871,30 @@
                 "hostingChanged": false,
                 "firestoreRulesChanged": false,
                 "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "pull_request_acceptance",
+                "workflowRunId": 37491308537,
+                "workflowRunNumber": 1,
+                "validatedHeadSha": "0614d5ab81ab08bd020bf14fcb99ec1b860628f2",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedR5C2C10Regression": "passed",
+                "fullFunctionsUnitEstate": "passed",
+                "deploymentClassifierAndContracts": "passed",
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 1,
+                  "impactedFunctions": [
+                    "adminBackfillEnrollmentCanonicalFields"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false
+                },
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
