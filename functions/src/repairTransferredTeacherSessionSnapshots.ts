@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { buildCanonicalTeacherWriteFields } from './helpers/teacherIdentity';
 
 if (!admin.apps.length) {
@@ -143,7 +143,7 @@ function isFutureFromDate(session: FirestoreRow, fromDate: string): boolean {
 }
 
 export const repairTransferredTeacherSessionSnapshots = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const enrollmentId = toCleanText(request.data?.enrollmentId);
   const kidId = toCleanText(request.data?.kidId);
