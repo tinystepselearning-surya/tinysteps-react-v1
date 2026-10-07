@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C11 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C11 COMPLETE IN PRODUCTION — R5C2C12 IMPLEMENTED, validation pending  
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -1960,3 +1960,78 @@ rebuilt C11 then validated and deployed as a genuine one-Function slice.
 
 R5C2C11 is therefore complete in production. The next Wave 1 backend-authorization step is
 the next independently deployable bounded Admin mutation slice (R5C2C12).
+
+
+## R5C2C12 — createStudentForParent Admin authorization
+
+R5C2C12 moves one independently deployable Admin-only learner creation callable:
+
+~~~text
+createStudentForParent
+~~~
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The learner creation behavior is intentionally unchanged:
+
+- the callable remains canonical-primary through `executeCanonicalLearnerCreate`;
+- learner identity and compatibility projections remain transactionally planned by the existing canonical writer;
+- guardian/parent relationship semantics remain unchanged;
+- learner validation rules, private-profile behavior, response shape and telemetry remain unchanged;
+- callable name, region, memory, timeout and maxInstances remain unchanged.
+
+### R5C2C12 non-goals
+
+This brick does not:
+
+- change learner creation validation;
+- change learner status mapping;
+- change parent/guardian relationship authority;
+- change enrollment creation or course assignment;
+- change archive/reactivation behavior;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- change Firestore Rules or Storage Rules;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C12 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  createStudentForParent
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Focused lint passes.
+2. Functions TypeScript build passes.
+3. Existing canonical-primary parent/student regressions pass.
+4. R5C2C12 authorization-routing regression passes.
+5. Full Functions unit estate passes.
+6. Deployment-impact/deployment-contract tests pass.
+7. Deployment impact resolves to exactly `createStudentForParent`.
+8. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
