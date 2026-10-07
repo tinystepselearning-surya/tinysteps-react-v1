@@ -1,6 +1,9 @@
 name: R5C2C12 Closeout Validation
 
 on:
+  push:
+    branches:
+      - r5c2c12-production-closeout-20261007
   pull_request:
     branches:
       - main
