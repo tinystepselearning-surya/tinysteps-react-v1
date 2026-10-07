@@ -27,6 +27,15 @@ describe('Past Student reactivation workflow', () => {
     expect(studentList).toContain(
       'Historical terminal enrollments were preserved.',
     );
+    expect(studentList).toContain(
+      "row.id === student.id",
+    );
+    expect(studentList).toContain(
+      "? ({ ...row, status: 'active' } as Student)",
+    );
+    expect(studentList).toContain(
+      "setStatusFilter('all')",
+    );
   });
 
   it('blocks operational enrollment actions while the learner is still a Past Student', () => {
