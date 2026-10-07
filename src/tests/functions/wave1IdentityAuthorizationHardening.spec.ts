@@ -95,7 +95,13 @@ describe('Wave 1 current-user authorization invariant', () => {
   });
 
   it('requires current Firestore identity before parent/teacher/role actions', () => {
-    expect(parentStudents).toContain('await ensureAdmin(auth);');
+    expect(parentStudents).toContain('await ensureCanonicalAdmin(auth);');
+    expect(parentStudents).toContain(
+      "from './helpers/canonicalAdminGuard'",
+    );
+    expect(parentStudents).not.toContain(
+      "from './helpers/adminGuard'",
+    );
     expect(parentStudents).toContain('executeCanonicalLearnerCreate');
     expect(parentStudents).toContain(
       "from './schoolOS/identity/canonicalPrimaryWriter'",
