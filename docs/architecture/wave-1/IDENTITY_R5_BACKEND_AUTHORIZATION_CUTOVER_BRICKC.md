@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C12 COMPLETE IN PRODUCTION — R5C2C13 IMPLEMENTED, acceptance validation pending
+**Status:** R5C2C12 COMPLETE IN PRODUCTION — R5C2C13 VALIDATED, ready for production merge
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -2190,3 +2190,47 @@ Acceptance requires:
 
 Production remains unauthorized until this acceptance gate is green and the temporary
 validation workflow is retired.
+
+
+### R5C2C13 validation evidence
+
+R5C2C13 passed its acceptance gate as a genuine one-Function authorization slice.
+
+~~~text
+Workflow run: 37660719146
+Run number: 3
+Validated head: bb9763b8f32f3fbd68d5250e87e804a54e26b651
+Result: success
+
+Changed-file and ledger boundary: passed
+Focused lint: passed
+Functions build: passed
+Focused C13 regressions: passed
+  root focused files: 3 passed
+  root focused tests: 22 passed
+  Functions focused files: 2 passed
+Full Functions unit estate: passed
+  files: 151 passed, 2 skipped
+  tests: 1167 passed, 25 skipped
+Deployment classifier and contract tests: 81 passed, 0 failed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  reconcileParentPaymentsMonthReadModels
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+AVS callable transport verification required: false
+School callable transport verification required: false
+Lead IAM verification required: false
+~~~
+
+The first acceptance attempt exposed one stale Wave 1 regression left behind by the already
+production-complete R5C2C12 cutover: the hardening test still expected
+`createStudentForParent` to call legacy `ensureAdmin`. That test-only assertion was corrected
+to the canonical C12 contract and retained in the C13 acceptance gate; no C12 runtime behavior
+was changed.
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C13 can be marked complete in production.
