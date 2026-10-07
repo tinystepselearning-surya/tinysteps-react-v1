@@ -1,0 +1,124 @@
+name: R5C2C14 Selection Audit
+
+on:
+  push:
+    branches:
+      - wave1/identity-r5c2c14-selection-audit-20261007
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit remaining legacy Admin authorization topology
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enumerate legacy adminGuard importers and deployment reachability
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          import { buildDependencyGraph } from './scripts/deployment/functions-impact-lib.mjs';
+
+          const files = execFileSync(
+            'git',
+            ['ls-files', 'functions/src/*.ts', 'functions/src/**/*.ts'],
+            { encoding: 'utf8' },
+          ).split('\n').filter(Boolean);
+
+          const sourceMap = new Map(
+            files.map(file => [file, fs.readFileSync(file, 'utf8')]),
+          );
+          const graph = buildDependencyGraph(sourceMap);
+
+          const legacyImporter = new Map();
+          const importPattern = /\bfrom\s*['"]([^'"]*adminGuard)['"]/g;
+
+          for (const [file, source] of sourceMap) {
+            const specifiers = [];
+            for (const match of source.matchAll(importPattern)) {
+              const specifier = match[1];
+              if (
+                specifier.endsWith('/adminGuard')
+                || specifier === './adminGuard'
+                || specifier === '../adminGuard'
+              ) {
+                specifiers.push(specifier);
+              }
+            }
+            if (specifiers.length) {
+              legacyImporter.set(file, [...new Set(specifiers)]);
+            }
+          }
+
+          function rootReaches(rootFile, target) {
+            const visited = new Set();
+            const stack = [rootFile];
+            while (stack.length) {
+              const file = stack.pop();
+              if (visited.has(file)) continue;
+              visited.add(file);
+              if (file === target) return true;
+              for (const dependency of graph.imports.get(file) ?? []) {
+                stack.push(dependency);
+              }
+            }
+            return false;
+          }
+
+          const rows = [];
+          for (const [file, specifiers] of legacyImporter) {
+            const roots = [];
+            for (const [id, rootFile] of graph.roots) {
+              if (rootReaches(rootFile, file)) roots.push(id);
+            }
+            rows.push({
+              file,
+              specifiers,
+              rootCount: roots.length,
+              roots: roots.sort(),
+              directRoots: [...graph.roots.entries()]
+                .filter(([, rootFile]) => rootFile === file)
+                .map(([id]) => id)
+                .sort(),
+            });
+          }
+
+          rows.sort((a, b) =>
+            a.rootCount - b.rootCount || a.file.localeCompare(b.file)
+          );
+
+          console.log('=== LEGACY ADMIN GUARD IMPORTERS ===');
+          console.log(JSON.stringify(rows, null, 2));
+          console.log('');
+          console.log('=== LOWEST BLAST-RADIUS CANDIDATES ===');
+          for (const row of rows.filter(row => row.rootCount <= 5)) {
+            console.log(
+              `${row.rootCount}\t${row.file}\t${row.roots.join(',')}`
+            );
+          }
+          console.log('');
+          console.log(`Total legacy importer modules: ${rows.length}`);
+          console.log(
+            `Total deployed roots transitively depending on at least one legacy importer: ${
+              new Set(rows.flatMap(row => row.roots)).size
+            }`
+          );
+          NODE
+
+      - name: Confirm audit is read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "Audit completed without changing the working tree."
