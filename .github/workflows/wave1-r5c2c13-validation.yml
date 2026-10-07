@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: wave1-r5c2c13-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -60,6 +64,7 @@ jobs:
             "docs/architecture/wave-1/migrations/identity-foundation-v1.json"
             "functions/src/reconcileParentPaymentsMonthReadModels.ts"
             "functions/test/canonicalAdminParentPaymentReadModelRouting.spec.ts"
+            "src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts"
           )
 
           for file in "${changed[@]}"; do
