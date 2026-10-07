@@ -136,6 +136,9 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
       const isArchiveTransition =
         status === 'archived' &&
         student.status !== 'archived';
+      const isReactivationTransition =
+        status === 'active' &&
+        student.status === 'archived';
 
       const updateStudent =
         httpsCallable(functions, 'adminUpdateStudent');
@@ -145,6 +148,7 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
         ageYears: ageNum,
         grade,
         status: isArchiveTransition ? null : status,
+        reactivate: isReactivationTransition,
         countryCode:
           countryCode === COUNTRY_NONE_VALUE
             ? null
@@ -160,7 +164,14 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
         });
       }
 
-      toast({ title: 'Updated', description: 'Student updated' });
+      toast({
+        title: isReactivationTransition
+          ? 'Student reactivated'
+          : 'Updated',
+        description: isReactivationTransition
+          ? 'Student restored to Active successfully.'
+          : 'Student updated',
+      });
       onUpdated?.();
       onClose();
     } catch (err: any) {
