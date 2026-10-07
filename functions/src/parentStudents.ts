@@ -2,7 +2,7 @@ import * as functions from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   CanonicalPrimaryLearnerWriteError,
   canonicalIdentityTelemetryToken,
@@ -418,7 +418,7 @@ async function createStudentForParentHandlerImpl(
         }
       | undefined;
 
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     if (!rawData) {
       throw new functions.https.HttpsError(
