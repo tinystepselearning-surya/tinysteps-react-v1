@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c13_validation_complete_ready_for_production_merge",
+    "status": "r5c2c13_production_complete_ready_for_next_bounded_admin_mutation_slice",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c13_production_merge_and_verification",
+    "nextBrick": "r5c2c14_next_bounded_admin_mutation_slice_selection",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3093,8 +3093,8 @@
               "billingChargeWritesAllowed": false,
               "walletWritesAllowed": false,
               "derivedMonthlyReadModelWritesOnly": true,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "selectionAudit": {
                 "workflowRunId": 37658500591,
@@ -3161,6 +3161,30 @@
                   "correctionValidatedInRun": 37660719146
                 },
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 651,
+                "mergeCommit": "7c01fddf1531a5d7127ee4eec5d095bd4ccc81d4",
+                "workflowRunId": 37661529664,
+                "workflowRunNumber": 3923,
+                "result": "success",
+                "functionsPlanned": 1,
+                "functionsDeployed": 1,
+                "functionsVerified": 1,
+                "functionsCheckpointReady": 1,
+                "deploymentBatches": 1,
+                "functions": [
+                  "reconcileParentPaymentsMonthReadModels"
+                ],
+                "functionsFullDeployment": false,
+                "schoolCallableTransportVerification": "not_required",
+                "avsCallableTransportVerification": "not_required",
+                "leadAttributionCallableTransportVerification": "not_required",
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
