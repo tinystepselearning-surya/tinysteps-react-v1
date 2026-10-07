@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C12 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice
+**Status:** R5C2C12 COMPLETE IN PRODUCTION — R5C2C13 VALIDATED, ready for production merge
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -2095,3 +2095,142 @@ R5C2C12 is therefore complete in production. The next Wave 1 backend-authorizati
 the next independently deployable bounded Admin mutation slice. The exact next slice must be
 selected from a fresh legacy-Admin-guard and deployment-topology audit rather than inferred
 from numbering alone.
+
+
+## R5C2C13 — Parent-payment monthly read-model Admin authorization
+
+A fresh deployment-topology audit was run before selecting this slice.
+
+~~~text
+Selection audit workflow run: 37658500591
+Result: success
+Legacy adminGuard importer modules: 38
+Deployed Function roots depending on at least one legacy importer: 85
+One-Function legacy-guard boundaries identified: 17
+Audit working-tree writes: 0
+~~~
+
+R5C2C13 selects the independently deployable callable:
+
+~~~text
+reconcileParentPaymentsMonthReadModels
+~~~
+
+The selection deliberately avoids higher-risk one-Function candidates that directly mutate
+teacher payouts, attendance corrections, demo completion state, rolling schedules, or other
+authoritative operational data.
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The parent-payment reconciliation behavior is intentionally unchanged:
+
+- dry-run remains the default;
+- the existing parent cap remains bounded at 1,500;
+- authoritative payment documents are not written;
+- billing-charge documents are not written;
+- parent-wallet documents are not written;
+- apply mode may rebuild only the derived `parentMonthlyReadModels/{parentId}/months/{monthKey}` projection;
+- the existing billing/read-model derivation and mismatch semantics remain unchanged;
+- callable name, region, memory and timeout remain unchanged.
+
+### R5C2C13 non-goals
+
+This brick does not:
+
+- change billing or payment calculation authority;
+- change wallet balances;
+- change billing charges or payment allocation;
+- change parent invoice policy;
+- change monthly read-model derivation semantics;
+- change the existing dry-run default or parent safety bound;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- change Firestore Rules or Storage Rules;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C13 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  reconcileParentPaymentsMonthReadModels
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Focused lint passes.
+2. Functions TypeScript build passes.
+3. Existing parent monthly billing/read-model regressions pass.
+4. R5C2C13 authorization-routing regression passes.
+5. Wave 1 authorization-hardening regressions pass.
+6. Full Functions unit estate passes.
+7. Deployment-impact/deployment-contract tests pass.
+8. Deployment impact resolves to exactly `reconcileParentPaymentsMonthReadModels`.
+9. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
+
+
+### R5C2C13 validation evidence
+
+R5C2C13 passed its acceptance gate as a genuine one-Function authorization slice.
+
+~~~text
+Workflow run: 37660719146
+Run number: 3
+Validated head: bb9763b8f32f3fbd68d5250e87e804a54e26b651
+Result: success
+
+Changed-file and ledger boundary: passed
+Focused lint: passed
+Functions build: passed
+Focused C13 regressions: passed
+  root focused files: 3 passed
+  root focused tests: 22 passed
+  Functions focused files: 2 passed
+Full Functions unit estate: passed
+  files: 151 passed, 2 skipped
+  tests: 1167 passed, 25 skipped
+Deployment classifier and contract tests: 81 passed, 0 failed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  reconcileParentPaymentsMonthReadModels
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+AVS callable transport verification required: false
+School callable transport verification required: false
+Lead IAM verification required: false
+~~~
+
+The first acceptance attempt exposed one stale Wave 1 regression left behind by the already
+production-complete R5C2C12 cutover: the hardening test still expected
+`createStudentForParent` to call legacy `ensureAdmin`. That test-only assertion was corrected
+to the canonical C12 contract and retained in the C13 acceptance gate; no C12 runtime behavior
+was changed.
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C13 can be marked complete in production.

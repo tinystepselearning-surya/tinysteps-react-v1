@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   buildParentMonthlyBillingReadModel,
   type ParentMonthlyBillingChargeInput,
@@ -228,7 +228,7 @@ export const reconcileParentPaymentsMonthReadModels = onCall(
     timeoutSeconds: 300,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as RequestData;
     const monthKey = normalizeMonthKey(data.monthKey);
