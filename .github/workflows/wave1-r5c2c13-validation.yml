@@ -1,0 +1,176 @@
+name: Wave 1 R5C2C13 Validation
+
+on:
+  push:
+    branches:
+      - wave1/identity-r5c2c13-parent-payment-readmodel-admin-20261007
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "functions/src/reconcileParentPaymentsMonthReadModels.ts"
+      - "functions/test/canonicalAdminParentPaymentReadModelRouting.spec.ts"
+      - "docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"
+      - "docs/architecture/wave-1/migrations/identity-foundation-v1.json"
+      - ".github/workflows/wave1-r5c2c13-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root test dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Validate C13 changed-file boundary and ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git diff --check origin/main...HEAD
+
+          mapfile -t changed < <(git diff --name-only origin/main...HEAD | sort)
+          printf '%s\n' "${changed[@]}"
+
+          allowed=(
+            ".github/workflows/wave1-r5c2c13-validation.yml"
+            "docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"
+            "docs/architecture/wave-1/migrations/identity-foundation-v1.json"
+            "functions/src/reconcileParentPaymentsMonthReadModels.ts"
+            "functions/test/canonicalAdminParentPaymentReadModelRouting.spec.ts"
+          )
+
+          for file in "${changed[@]}"; do
+            ok=false
+            for expected in "${allowed[@]}"; do
+              if [[ "$file" == "$expected" ]]; then
+                ok=true
+                break
+              fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Unexpected changed file: $file" >&2
+              exit 1
+            fi
+          done
+
+          node <<'NODE'
+          const fs = require('fs');
+          const ledger = JSON.parse(
+            fs.readFileSync(
+              'docs/architecture/wave-1/migrations/identity-foundation-v1.json',
+              'utf8',
+            ),
+          );
+          const slice = ledger.switchReads?.r5?.r5c?.r5c2?.slices?.r5c2c13;
+
+          function assert(condition, message) {
+            if (!condition) throw new Error(message);
+          }
+
+          assert(
+            ledger.switchReads.status ===
+              'r5c2c13_implemented_acceptance_validation_pending',
+            'Unexpected R5C2C13 switchReads status.',
+          );
+          assert(
+            ledger.switchReads.nextBrick === 'r5c2c13_acceptance_validation',
+            'Unexpected R5C2C13 nextBrick.',
+          );
+          assert(slice, 'R5C2C13 ledger slice is missing.');
+          assert(slice.legacyFallback === false, 'Legacy fallback must remain disabled.');
+          assert(slice.sharedAdminGuardModified === false, 'Shared legacy guard must remain untouched.');
+          assert(slice.productionWiring === false, 'Production wiring must remain false pre-merge.');
+          assert(slice.productionVerified === false, 'Production verification must remain false pre-deploy.');
+          assert(slice.validationPending === true, 'Validation must remain pending before this gate completes.');
+          assert(slice.dryRunDefaultPreserved === true, 'Dry-run default must be preserved.');
+          assert(slice.authoritativeFinanceWrites === false, 'Authoritative finance writes must remain false.');
+          assert(slice.paymentWritesAllowed === false, 'Payment writes must remain disabled.');
+          assert(slice.billingChargeWritesAllowed === false, 'Billing-charge writes must remain disabled.');
+          assert(slice.walletWritesAllowed === false, 'Wallet writes must remain disabled.');
+          assert(slice.derivedMonthlyReadModelWritesOnly === true, 'Only derived monthly read-model writes are allowed.');
+          assert(
+            Array.isArray(slice.functions)
+              && slice.functions.length === 1
+              && slice.functions[0] === 'reconcileParentPaymentsMonthReadModels',
+            'R5C2C13 must contain exactly one Function.',
+          );
+          assert(
+            slice.selectionAudit?.workflowRunId === 37658500591
+              && slice.selectionAudit?.result === 'success',
+            'Selection audit evidence is missing or incorrect.',
+          );
+          NODE
+
+      - name: Focused lint
+        working-directory: functions
+        run: npx eslint src/reconcileParentPaymentsMonthReadModels.ts test/canonicalAdminParentPaymentReadModelRouting.spec.ts
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Run focused C13 regressions
+        run: |
+          npx vitest run             src/tests/functions/parentMonthlyBillingReadModel.spec.ts             src/tests/functions/reconcileParentPaymentsMonthReadModels.spec.ts             src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+          npx vitest run             --config functions/vitest.config.ts             functions/test/canonicalAdminParentPaymentReadModelRouting.spec.ts             functions/test/canonicalAdminGuardRouting.spec.ts
+
+      - name: Run full Functions unit estate
+        run: npx vitest run --config functions/vitest.config.ts
+
+      - name: Run deployment classifier and contract tests
+        run: node --test scripts/test/functions-impact.node-test.mjs scripts/test/functions-deployment.node-test.mjs
+
+      - name: Resolve bounded deployment impact
+        id: impact
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs             --before "${BASE_SHA}"             --functions-before "${BASE_SHA}"             --hosting-before "${BASE_SHA}"             --firestore-rules-before "${BASE_SHA}"             --firestore-indexes-before "${BASE_SHA}"             --sha "${GITHUB_SHA}"
+
+      - name: Enforce R5C2C13 blast radius
+        shell: bash
+        env:
+          FUNCTIONS_REQUIRED: ${{ steps.impact.outputs.functions_deployment_required }}
+          FUNCTIONS_FULL: ${{ steps.impact.outputs.functions_full_deployment }}
+          FUNCTIONS_TARGETS: ${{ steps.impact.outputs.functions_targets }}
+          HOSTING_CHANGED: ${{ steps.impact.outputs.hosting_changed }}
+          RULES_CHANGED: ${{ steps.impact.outputs.firestore_rules_changed }}
+          INDEXES_CHANGED: ${{ steps.impact.outputs.firestore_indexes_changed }}
+          SCHOOL_TRANSPORT: ${{ steps.impact.outputs.school_transport_required }}
+          AVS_TRANSPORT: ${{ steps.impact.outputs.avs_transport_required }}
+          LEAD_IAM: ${{ steps.impact.outputs.lead_iam_required }}
+        run: |
+          set -euo pipefail
+          test "${FUNCTIONS_REQUIRED}" = "true"
+          test "${FUNCTIONS_FULL}" = "false"
+          test "${FUNCTIONS_TARGETS}" = "reconcileParentPaymentsMonthReadModels"
+          test "${HOSTING_CHANGED}" = "false"
+          test "${RULES_CHANGED}" = "false"
+          test "${INDEXES_CHANGED}" = "false"
+          test "${SCHOOL_TRANSPORT}" = "false"
+          test "${AVS_TRANSPORT}" = "false"
+          test "${LEAD_IAM}" = "false"
+          echo "R5C2C13 blast radius verified: reconcileParentPaymentsMonthReadModels only."
