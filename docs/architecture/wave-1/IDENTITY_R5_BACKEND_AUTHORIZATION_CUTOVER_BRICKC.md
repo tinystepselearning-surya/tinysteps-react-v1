@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C12 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice  
+**Status:** R5C2C12 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
