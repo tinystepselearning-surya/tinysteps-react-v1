@@ -23,7 +23,8 @@ export type CanonicalPrimaryLearnerUpdateErrorCode =
   | 'learner_profile_ineligible'
   | 'learner_compatibility_missing'
   | 'archive_requires_lifecycle_workflow'
-  | 'archived_reactivation_unsupported';
+  | 'archived_reactivation_unsupported'
+  | 'learner_reactivation_requires_active_status';
 
 export class CanonicalPrimaryLearnerUpdateError extends Error {
   readonly code: CanonicalPrimaryLearnerUpdateErrorCode;
@@ -51,6 +52,7 @@ export interface ExecuteCanonicalLearnerUpdateInput
   db: admin.firestore.Firestore;
   actorId: string;
   personId: string;
+  reactivateArchived?: boolean;
 }
 
 export interface ExecuteCanonicalLearnerUpdateResult {
@@ -389,6 +391,7 @@ export async function executeCanonicalLearnerUpdate(
         'Learner compatibility projection was not found',
       );
     }
+    const kidData = kidSnap.data() || {};
 
     const currentStatus = canonicalLearnerStatus(personData);
     if (!currentStatus) {
@@ -409,13 +412,39 @@ export async function executeCanonicalLearnerUpdate(
     }
 
     if (
+      input.reactivateArchived === true &&
+      fields.status !== 'active'
+    ) {
+      throw new CanonicalPrimaryLearnerUpdateError(
+        'learner_reactivation_requires_active_status',
+        'Learner reactivation requires active status',
+      );
+    }
+
+    const profileStatus =
+      canonicalLearnerStatus(profileData);
+    const compatibilityStatus =
+      canonicalLearnerStatus(kidData);
+    const hasArchiveEvidence =
+      currentStatus === 'archived' ||
+      profileStatus === 'archived' ||
+      compatibilityStatus === 'archived' ||
+      Boolean(kidData.archivedAt);
+
+    const reactivationRequested =
+      input.reactivateArchived === true &&
+      fields.status === 'active' &&
+      hasArchiveEvidence;
+
+    if (
       currentStatus === 'archived' &&
       fields.status &&
-      fields.status !== 'archived'
+      fields.status !== 'archived' &&
+      !reactivationRequested
     ) {
       throw new CanonicalPrimaryLearnerUpdateError(
         'archived_reactivation_unsupported',
-        'Archived learner reactivation is not supported by this profile writer',
+        'Archived learner reactivation requires the explicit lifecycle restore path',
       );
     }
 
@@ -434,6 +463,12 @@ export async function executeCanonicalLearnerUpdate(
         countryCode,
         updatedBy: actorId,
         updatedAt: now,
+        ...(reactivationRequested
+          ? {
+              reactivatedAt: now,
+              reactivatedBy: actorId,
+            }
+          : {}),
         canonicalAuthority: authority,
       },
       { merge: true },
@@ -447,6 +482,12 @@ export async function executeCanonicalLearnerUpdate(
         countryCode,
         updatedBy: actorId,
         updatedAt: now,
+        ...(reactivationRequested
+          ? {
+              reactivatedAt: now,
+              reactivatedBy: actorId,
+            }
+          : {}),
         canonicalAuthority: authority,
       },
       { merge: true },
@@ -483,6 +524,16 @@ export async function executeCanonicalLearnerUpdate(
         grade: fields.grade,
         status: finalStatus,
         countryCode,
+        ...(reactivationRequested
+          ? {
+              archivedAt: FieldValue.delete(),
+              archivedBy: FieldValue.delete(),
+              archivedReason: FieldValue.delete(),
+              isArchived: FieldValue.delete(),
+              reactivatedAt: now,
+              reactivatedBy: actorId,
+            }
+          : {}),
         dob: FieldValue.delete(),
         birthdate: FieldValue.delete(),
         dateOfBirth: FieldValue.delete(),
