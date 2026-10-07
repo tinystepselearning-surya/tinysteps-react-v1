@@ -465,6 +465,16 @@ export default function EnrollmentDetailView({
   const showStudentIdHint = resolvedStudentName === 'Name not found' && resolvedStudentId.length > 0;
   const enrollmentStatusForDisplay =
     enrollment.archived === true || enrollment.archivedAt ? 'archived' : enrollment.status;
+  const normalizedEnrollmentStatusForLifecycle =
+    normalizeStatus(enrollmentStatusForDisplay);
+  const enrollmentIsTerminal = new Set([
+    'completed',
+    'discontinued',
+    'expired',
+    'cancelled',
+    'archived',
+    'inactive',
+  ]).has(normalizedEnrollmentStatusForLifecycle);
 
   /* ---------------- UI ---------------- */
 
@@ -928,73 +938,83 @@ export default function EnrollmentDetailView({
           <CardTitle>Lifecycle Actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => callSetEnrollmentStatus('active')}
-              disabled={actionBusy !== null}
-            >
-              Mark Active
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => callSetEnrollmentStatus('paused')}
-              disabled={actionBusy !== null}
-            >
-              Pause
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => callSetEnrollmentStatus('active')}
-              disabled={actionBusy !== null}
-            >
-              Resume
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (!window.confirm('Mark this enrollment as completed?')) return;
-                callSetEnrollmentStatus('completed');
-              }}
-              disabled={actionBusy !== null}
-            >
-              Complete
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => void handleOpenCourseTransition()}
-              disabled={actionBusy !== null}
-            >
-              Change Course
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (!window.confirm('Discontinue this enrollment?')) return;
-                callSetEnrollmentStatus('discontinued');
-              }}
-              disabled={actionBusy !== null}
-            >
-              Discontinue
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowAssignTeacher(true)}
-              disabled={actionBusy !== null}
-            >
-              Reassign Teacher
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (!window.confirm('Archive this kid? This cannot be undone.')) return;
-                callArchiveKid();
-              }}
-              disabled={actionBusy !== null || !kidId}
-            >
-              Archive Kid
-            </Button>
-          </div>
+          {enrollmentIsTerminal ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <div className="font-semibold">Historical enrollment — cannot be resumed</div>
+              <div className="mt-1 text-xs leading-5">
+                This enrollment is {normalizedEnrollmentStatusForLifecycle} and remains immutable history.
+                To restart classes, reactivate the student from Past Students and create a new enrollment using Course / Set Up Admission.
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => callSetEnrollmentStatus('active')}
+                disabled={actionBusy !== null}
+              >
+                Mark Active
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => callSetEnrollmentStatus('paused')}
+                disabled={actionBusy !== null}
+              >
+                Pause
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => callSetEnrollmentStatus('active')}
+                disabled={actionBusy !== null}
+              >
+                Resume
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!window.confirm('Mark this enrollment as completed?')) return;
+                  callSetEnrollmentStatus('completed');
+                }}
+                disabled={actionBusy !== null}
+              >
+                Complete
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => void handleOpenCourseTransition()}
+                disabled={actionBusy !== null}
+              >
+                Change Course
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!window.confirm('Discontinue this enrollment?')) return;
+                  callSetEnrollmentStatus('discontinued');
+                }}
+                disabled={actionBusy !== null}
+              >
+                Discontinue
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowAssignTeacher(true)}
+                disabled={actionBusy !== null}
+              >
+                Reassign Teacher
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  if (!window.confirm('Archive this kid? This cannot be undone.')) return;
+                  callArchiveKid();
+                }}
+                disabled={actionBusy !== null || !kidId}
+              >
+                Archive Kid
+              </Button>
+            </div>
+          )}
 
           {courseTransitionOpen ? (
             <div className="rounded-xl border bg-slate-50 p-4 space-y-4">
