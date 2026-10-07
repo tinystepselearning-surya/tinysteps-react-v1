@@ -25,6 +25,7 @@ interface AdminUpdateStudentRequest {
   grade: string;
   status?: 'active' | 'suspended' | 'archived' | null;
   countryCode?: string | null;
+  reactivate?: boolean;
 }
 
 function toCallableError(
@@ -48,7 +49,13 @@ function toCallableError(
     case 'archived_reactivation_unsupported':
       return new HttpsError(
         'failed-precondition',
-        'Archived students cannot be reactivated from profile editing.',
+        'Archived students must be restored through the explicit reactivation path.',
+      );
+
+    case 'learner_reactivation_requires_active_status':
+      return new HttpsError(
+        'invalid-argument',
+        'Student reactivation requires Active status.',
       );
 
     case 'learner_canonical_person_ineligible':
@@ -116,6 +123,8 @@ export const adminUpdateStudent = onCall(
           db: admin.firestore(),
           actorId,
           personId: kidId,
+          reactivateArchived:
+            data.reactivate === true,
           ...fields,
         });
 
