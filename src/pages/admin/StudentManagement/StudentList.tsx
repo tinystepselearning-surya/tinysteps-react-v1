@@ -1577,6 +1577,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [assignLPFor, setAssignLPFor] = useState<Student | null>(null);
   const [enrollmentDetailsFor, setEnrollmentDetailsFor] = useState<Student | null>(null);
   const [actionsFor, setActionsFor] = useState<Student | null>(null);
+  const [reactivatingStudentId, setReactivatingStudentId] = useState<string | null>(null);
 
   // ✅ NEW: schedule modal state
   const [scheduleFor, setScheduleFor] = useState<Student | null>(null);
@@ -2862,6 +2863,92 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     ? canManageStudent(enrollmentDetailsFor)
     : false;
   const canManageActionsFor = actionsFor ? canManageStudent(actionsFor) : false;
+  const actionsForStatus = actionsFor
+    ? normalizeStudentLifecycleStatus((actionsFor as any).status)
+    : '';
+  const actionsForIsPast = actionsFor
+    ? isPastStudentStatus(actionsForStatus)
+    : false;
+
+  const handleReactivateStudent = async (student: Student) => {
+    if (user?.role !== 'admin') {
+      toast({
+        title: 'Permission denied',
+        description: 'Only an Admin can reactivate a Past Student.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const ageYears = Number(displayAgeYears(student));
+    const grade = String((student as any).grade || '').trim();
+    const fullName = String((student as any).fullName || '').trim();
+
+    if (
+      !fullName ||
+      !Number.isInteger(ageYears) ||
+      ageYears < 2 ||
+      ageYears > 15 ||
+      !grade
+    ) {
+      toast({
+        title: 'Profile details required',
+        description:
+          'Open Edit student first and confirm the student name, age, and grade before reactivation.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Reactivate this student?\n\n' +
+      'The student profile will return to Active. Historical discontinued/completed enrollments will remain unchanged. Create a new enrollment afterward if classes are restarting.',
+    );
+    if (!confirmed) return;
+
+    setReactivatingStudentId(student.id);
+    try {
+      const updateStudent = httpsCallable(
+        functions,
+        'adminUpdateStudent',
+      );
+
+      await updateStudent({
+        kidId: student.id,
+        fullName,
+        ageYears,
+        grade,
+        status: 'active',
+        reactivate: true,
+        countryCode:
+          typeof (student as any).countryCode === 'string' &&
+          String((student as any).countryCode).trim()
+            ? String((student as any).countryCode).trim().toUpperCase()
+            : null,
+      });
+
+      toast({
+        title: 'Student reactivated',
+        description:
+          'Student is Active. Historical terminal enrollments were preserved. Use Course / Set Up Admission to create a new enrollment if classes are restarting.',
+      });
+
+      setActionsFor(null);
+      setEnrollmentStatusTab('active');
+      setPage(0);
+    } catch (error) {
+      toast({
+        title: 'Reactivation failed',
+        description: extractCallableErrorMessage(
+          error,
+          'Unable to reactivate student',
+        ),
+        variant: 'destructive',
+      });
+    } finally {
+      setReactivatingStudentId(null);
+    }
+  };
 
   useEffect(() => {
     setPage(0);
@@ -3400,6 +3487,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               >
                 Edit student
               </Button>
+              {actionsForIsPast && (
+                <Button
+                  size="sm"
+                  className="col-span-2 h-8 text-xs"
+                  onClick={() => void handleReactivateStudent(actionsFor)}
+                  disabled={
+                    user?.role !== 'admin' ||
+                    reactivatingStudentId === actionsFor.id
+                  }
+                >
+                  {reactivatingStudentId === actionsFor.id
+                    ? 'Reactivating...'
+                    : 'Reactivate Student'}
+                </Button>
+              )}
               <Button
                 size="sm"
                 className="h-8 text-xs"
@@ -3407,7 +3509,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   onAssignCourse(actionsFor);
                   setActionsFor(null);
                 }}
-                disabled={!canManageActionsFor}
+                disabled={!canManageActionsFor || actionsForIsPast}
               >
                 Course
               </Button>
@@ -3418,7 +3520,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   setAssignTeacherFor(actionsFor);
                   setActionsFor(null);
                 }}
-                disabled={!canManageActionsFor}
+                disabled={!canManageActionsFor || actionsForIsPast}
               >
                 Teacher
               </Button>
@@ -3441,7 +3543,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   setActionsFor(null);
                   openScheduleModal(actionsFor);
                 }}
-                disabled={!canManageActionsFor}
+                disabled={!canManageActionsFor || actionsForIsPast}
               >
                 Schedule
               </Button>
@@ -3453,7 +3555,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   setActionsFor(null);
                   openAdHocModal(actionsFor);
                 }}
-                disabled={!canManageActionsFor}
+                disabled={!canManageActionsFor || actionsForIsPast}
               >
                 Ad Hoc Session
               </Button>
