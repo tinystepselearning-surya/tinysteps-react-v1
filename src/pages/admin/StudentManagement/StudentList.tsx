@@ -2927,6 +2927,19 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             : null,
       });
 
+      // StudentList intentionally uses a bounded one-shot read instead of a
+      // second live kids listener. Keep that local snapshot consistent with
+      // the successful canonical reactivation without re-reading up to 1,000
+      // student documents.
+      setStudents((prev) =>
+        prev.map((row) =>
+          row.id === student.id
+            ? ({ ...row, status: 'active' } as Student)
+            : row,
+        ),
+      );
+      setStatusFilter('all');
+
       toast({
         title: 'Student reactivated',
         description:
