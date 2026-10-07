@@ -30,6 +30,18 @@ jobs:
       - name: Targeted student reactivation regression
         run: npx vitest run src/tests/pages/admin/PastStudentReactivationWorkflow.spec.ts src/tests/pages/admin/StudentReactivation.spec.ts
 
+      - name: Full application test suite
+        run: npm run test:full
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev
+
+      - name: Build Functions
+        run: npm --prefix functions run build
+
+      - name: Functions test suite
+        run: npm --prefix functions test
+
       - name: Typecheck
         run: npm run typecheck
 
