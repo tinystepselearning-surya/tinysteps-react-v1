@@ -1,0 +1,185 @@
+name: R5C2C12 Closeout Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"
+      - "docs/architecture/wave-1/migrations/identity-foundation-v1.json"
+      - ".github/workflows/r5c2c12-closeout-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: r5c2c12-closeout-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate R5C2C12 production closeout
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate changed-file boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          git diff --check origin/main...HEAD
+          mapfile -t changed < <(git diff --name-only origin/main...HEAD | sort)
+          printf '%s\n' "${changed[@]}"
+          allowed=(
+            ".github/workflows/r5c2c12-closeout-validation.yml"
+            "docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"
+            "docs/architecture/wave-1/migrations/identity-foundation-v1.json"
+          )
+          for file in "${changed[@]}"; do
+            ok=false
+            for expected in "${allowed[@]}"; do
+              if [[ "$file" == "$expected" ]]; then
+                ok=true
+                break
+              fi
+            done
+            if [[ "$ok" != true ]]; then
+              echo "Unexpected changed file: $file" >&2
+              exit 1
+            fi
+          done
+          [[ " ${changed[*]} " == *" docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md "* ]]
+          [[ " ${changed[*]} " == *" docs/architecture/wave-1/migrations/identity-foundation-v1.json "* ]]
+
+      - name: Validate architecture document and migration ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+
+          const docPath = 'docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md';
+          const ledgerPath = 'docs/architecture/wave-1/migrations/identity-foundation-v1.json';
+
+          const doc = fs.readFileSync(docPath, 'utf8');
+          const ledger = JSON.parse(fs.readFileSync(ledgerPath, 'utf8'));
+
+          function assert(condition, message) {
+            if (!condition) {
+              throw new Error(message);
+            }
+          }
+
+          assert(
+            doc.includes('**Status:** R5C2C12 COMPLETE IN PRODUCTION'),
+            'Architecture document does not mark R5C2C12 production complete.'
+          );
+          assert(
+            doc.includes('Pull request: #647'),
+            'Missing runtime PR evidence.'
+          );
+          assert(
+            doc.includes('Merge commit: 6573b59bd51e9dcafdc77adf752c2a57f5566b2d'),
+            'Missing or incorrect runtime merge commit evidence.'
+          );
+          assert(
+            doc.includes('Deploy workflow run: 37608533558'),
+            'Missing deployment workflow evidence.'
+          );
+          assert(
+            doc.includes('Deploy run number: 3919'),
+            'Missing deployment run number.'
+          );
+          assert(
+            doc.includes('Impacted/deployed Functions: exactly 1'),
+            'Missing bounded one-Function deployment assertion.'
+          );
+          assert(
+            doc.includes('createStudentForParent'),
+            'Missing createStudentForParent production target evidence.'
+          );
+
+          assert(
+            ledger.switchReads.status ===
+              'r5c2c12_production_complete_ready_for_next_bounded_admin_mutation_slice',
+            'Unexpected switchReads status.'
+          );
+          assert(
+            ledger.switchReads.nextBrick ===
+              'r5c2c13_next_bounded_admin_mutation_slice_selection',
+            'Unexpected nextBrick marker.'
+          );
+
+          const slice = ledger.switchReads?.r5?.r5c?.r5c2?.slices?.r5c2c12;
+          assert(slice, 'R5C2C12 ledger slice is missing.');
+          assert(slice.productionWiring === true, 'productionWiring must be true.');
+          assert(slice.productionVerified === true, 'productionVerified must be true.');
+
+          const deployment = slice.productionDeployment;
+          assert(deployment, 'productionDeployment evidence is missing.');
+          assert(deployment.pullRequest === 647, 'Incorrect production pull request.');
+          assert(
+            deployment.mergeCommit === '6573b59bd51e9dcafdc77adf752c2a57f5566b2d',
+            'Incorrect production merge commit.'
+          );
+          assert(deployment.workflowRunId === 37608533558, 'Incorrect workflow run ID.');
+          assert(deployment.workflowRunNumber === 3919, 'Incorrect workflow run number.');
+          assert(deployment.result === 'success', 'Deployment result must be success.');
+          assert(deployment.functionsPlanned === 1, 'functionsPlanned must be 1.');
+          assert(deployment.functionsDeployed === 1, 'functionsDeployed must be 1.');
+          assert(deployment.functionsCheckpointReady === 1, 'functionsCheckpointReady must be 1.');
+          assert(
+            Array.isArray(deployment.functions) &&
+              deployment.functions.length === 1 &&
+              deployment.functions[0] === 'createStudentForParent',
+            'Deployment function boundary must contain only createStudentForParent.'
+          );
+          assert(deployment.functionsFullDeployment === false, 'Full Functions deployment must be false.');
+          assert(deployment.hostingDeployed === false, 'Hosting must remain undeployed.');
+          assert(deployment.firestoreRulesDeployed === false, 'Firestore Rules must remain undeployed.');
+          assert(deployment.firestoreIndexesDeployed === false, 'Firestore indexes must remain undeployed.');
+          assert(deployment.functionsProductionMarkerAdvanced === true, 'Functions production marker must be advanced.');
+          assert(deployment.recoveryJobRequired === false, 'Recovery job must not be required.');
+
+          console.log('R5C2C12 closeout invariants passed.');
+          NODE
+
+      - name: Verify recorded GitHub production run
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/37608533558"             > /tmp/run.json
+          node <<'NODE'
+          const fs = require('fs');
+          const run = JSON.parse(fs.readFileSync('/tmp/run.json', 'utf8'));
+          function assert(condition, message) {
+            if (!condition) throw new Error(message);
+          }
+          assert(run.conclusion === 'success', 'Recorded deployment run is not successful.');
+          assert(run.run_number === 3919, 'Recorded deployment run number does not match.');
+          assert(
+            run.head_sha === '6573b59bd51e9dcafdc77adf752c2a57f5566b2d',
+            'Recorded deployment run head SHA does not match.'
+          );
+          console.log('Recorded GitHub deployment evidence matches the ledger.');
+          NODE
+
+      - name: Confirm no runtime architecture files changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --name-only origin/main...HEAD | grep -E '^(functions/|src/|firestore|firebase\.json|storage\.rules)'; then
+            echo "Runtime or Firebase configuration changed in closeout PR." >&2
+            exit 1
+          fi
+          echo "No runtime or Firebase configuration files changed."
