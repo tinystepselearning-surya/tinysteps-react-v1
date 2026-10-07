@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C11 COMPLETE IN PRODUCTION — R5C2C12 VALIDATED, ready for production merge  
+**Status:** R5C2C12 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -2064,3 +2064,34 @@ Firestore indexes changed: false
 
 The temporary validation workflow is retired before merge. Production verification remains
 required after the main-branch deployment before R5C2C12 can be marked complete in production.
+
+
+### R5C2C12 production evidence
+
+R5C2C12 completed its bounded production deployment successfully.
+
+~~~text
+Pull request: #647
+Merge commit: 6573b59bd51e9dcafdc77adf752c2a57f5566b2d
+Deploy workflow run: 37608533558
+Deploy run number: 3919
+Result: success
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted/deployed Functions: exactly 1
+  createStudentForParent
+
+Functions checkpoint-ready: 1/1
+Hosting deployed: false
+Firestore Rules deployed: false
+Firestore indexes deployed: false
+School/AVS/lead transport verification: not required
+Functions production baseline advanced: true
+Recovery job required: false
+~~~
+
+R5C2C12 is therefore complete in production. The next Wave 1 backend-authorization step is
+the next independently deployable bounded Admin mutation slice. The exact next slice must be
+selected from a fresh legacy-Admin-guard and deployment-topology audit rather than inferred
+from numbering alone.
