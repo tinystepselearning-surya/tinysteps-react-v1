@@ -57,6 +57,7 @@ interface UserTableProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onArchive: (user: User) => void;
+  onReactivate: (user: User) => void;
   onResetPassword: (user: User) => void;
   sortField: UserSortField | null;
   sortDirection: SortDirection;
@@ -137,6 +138,7 @@ function UserTable({
   onEdit,
   onDelete,
   onArchive,
+  onReactivate,
   onResetPassword,
   sortField,
   sortDirection,
@@ -363,6 +365,13 @@ function UserTable({
                   >
                     Edit
                   </DropdownMenuItem>
+                  {archived && lifecycleManaged && (
+                    <DropdownMenuItem
+                      onSelect={() => onReactivate(user)}
+                    >
+                      Reactivate
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onSelect={() => onResetPassword(user)}>
                     Reset Password
                   </DropdownMenuItem>
@@ -777,6 +786,56 @@ export function UserList() {
     }
   };
 
+  // ---------------- Reactivate archived user ----------------
+  const handleReactivateUser = async (
+    user: User,
+  ) => {
+    const ok = window.confirm(
+      `Reactivate ${user.name || user.email || user.id}?\n\n` +
+      'The account will be restored to Active and login will be enabled.',
+    );
+
+    if (!ok) return;
+
+    try {
+      const updateUserFn = httpsCallable(
+        functions,
+        'adminUpdateUser',
+      );
+
+      await updateUserFn({
+        uid: user.uid || user.id,
+        displayName:
+          user.name || user.email,
+        email: user.email,
+        phone: user.phone || null,
+        role: user.role,
+        status: 'active',
+      });
+
+      toast({
+        title: 'Reactivated',
+        description:
+          'User restored to Active and login enabled successfully.',
+      });
+
+      await fetchUsers();
+    } catch (error: any) {
+      console.error(
+        'Reactivation failed:',
+        error,
+      );
+
+      toast({
+        title: 'Error',
+        description:
+          error?.message ||
+          'Failed to reactivate user.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // ---------------- Delete User (hard delete) ----------------
   // IMPORTANT:
   // - This expects a deployed Cloud Function: adminDeleteUser (v2 callable)
@@ -1003,6 +1062,7 @@ export function UserList() {
           onEdit={(u) => setEditingUser(u)}
           onDelete={handleDeleteUser}
           onArchive={handleArchiveUser}
+          onReactivate={handleReactivateUser}
           onResetPassword={handleOpenResetPassword}
           sortField={sortField}
           sortDirection={sortDirection}

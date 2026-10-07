@@ -11,6 +11,7 @@ import {
   buildIdentityWriteId,
   identityLogToken,
   isGenericAuthUserRole,
+  normalizeCanonicalUserStatus,
 } from './schoolOS/identity/authUserActivation';
 import {
   resolvePersonIdFromFirebaseUid,
@@ -354,6 +355,10 @@ export const adminUpdateUser = onCall(
         beforeData.role ??
         beforeData.rawRole,
       );
+    const previousStatus =
+      normalizeCanonicalUserStatus(
+        beforeData.status,
+      );
 
     if (
       !isGenericAuthUserRole(
@@ -431,6 +436,32 @@ export const adminUpdateUser = onCall(
           actorId,
           writeId,
         });
+
+      const isReactivation =
+        previousStatus === 'archived' &&
+        status === 'active';
+
+      if (isReactivation) {
+        const userProjection =
+          plan.compatibilityWrites.find(
+            (operation) =>
+              operation.operation === 'set' &&
+              operation.collection === 'users' &&
+              operation.documentId === uid,
+          );
+
+        if (
+          userProjection &&
+          userProjection.operation === 'set'
+        ) {
+          userProjection.data.archivedAt = null;
+          userProjection.data.archivedBy = null;
+          userProjection.data.reactivatedAt =
+            admin.firestore.FieldValue.serverTimestamp();
+          userProjection.data.reactivatedBy =
+            actorId;
+        }
+      }
 
       try {
         await writeCanonicalAuthUserUpdatePlan({
@@ -528,6 +559,7 @@ export const adminUpdateUser = onCall(
           ),
         previousRole,
         nextRole,
+        previousStatus,
         status,
       },
     );
