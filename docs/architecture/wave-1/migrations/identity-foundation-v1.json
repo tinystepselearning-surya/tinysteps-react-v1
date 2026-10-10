@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c15_validation_complete_ready_for_production_merge",
+    "status": "r5c2c15_production_verified_ready_for_r5c2c16_selection_audit",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c15_production_merge_and_verification",
+    "nextBrick": "r5c2c16_fresh_bounded_admin_mutation_slice_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3304,8 +3304,8 @@
               "progressStatusesPreserved": true,
               "workflowActionsPreserved": true,
               "authoritativeBillingPaymentEarningAttendanceWritesIntroduced": false,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "selectionAudit": {
                 "workflowRunId": 38013932159,
@@ -3346,6 +3346,27 @@
                 "deploymentClassifierAndContracts": "passed",
                 "singleFunctionBlastRadius": "passed",
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 655,
+                "mergeCommit": "88f158225d811c28cf9504c4997e632baff1d837",
+                "workflowRunId": 38014280018,
+                "workflowRunNumber": 3927,
+                "result": "success",
+                "functionsDeploymentRequired": true,
+                "functionsDeployed": 1,
+                "functionsVerified": 1,
+                "functionsCheckpointReady": 1,
+                "deploymentBatches": 1,
+                "functions": [
+                  "updateAttendanceValidationMonthlyParentProgress"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
