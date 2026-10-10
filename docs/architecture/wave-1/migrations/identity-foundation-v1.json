@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5_milestone2_remaining_admin_authorization_complete_production_verified",
+    "status": "r5_milestone3_final_system_verification_in_progress",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5_milestone3_final_system_regression_verification_selection_audit",
+    "nextBrick": "r5_m3_critical_workflows_architecture_live_parity_and_rules_readiness_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -1540,7 +1540,7 @@
       ]
     },
     "r5": {
-      "status": "r5c2c4_production_complete_ready_for_next_bounded_admin_mutation_slice",
+      "status": "r5_milestone2_completed_milestone3_verification_in_progress",
       "productionReaderAuthority": "legacy_compatibility",
       "productionRulesAuthority": "users_and_schoolUsers_compatibility",
       "r5a": {
@@ -1609,7 +1609,7 @@
           "temporaryValidationWorkflowRetiredBeforeMerge": true
         }
       },
-      "nextBrick": "r5c2c5_next_bounded_admin_mutation_slice",
+      "nextBrick": "r5_milestone3_final_system_regression_verification",
       "r5b": {
         "title": "Auth access read model bounded backfill and live maintenance",
         "maintenanceHelper": "functions/src/schoolOS/identity/authAccessReadModelMaintenance.ts",
@@ -4875,6 +4875,56 @@
             "lastVerifiedProductionCommit": "81af741aef78ea3d8e3cac66e548455ce3a9b43f"
           },
           "nextMilestone": "Milestone 3 - final regression, system verification and explicit remaining-cutover review"
+        },
+        "milestone3": {
+          "title": "Final system regression, authorization parity, production verification and cutover readiness",
+          "status": "verification_in_progress",
+          "sourceBaseline": "66fc5d7898eca9f86aa65e3153eca0a084f395bc",
+          "initiatedOn": "2026-10-10",
+          "milestone1ExitPassed": true,
+          "milestone2ExitPassed": true,
+          "productionMutationsAuthorized": false,
+          "finalExitGate": "not_attempted",
+          "verificationScope": [
+            "canonical_admin_and_role_authorization",
+            "school_parent_teacher_learning_partner_access_isolation",
+            "AVS_evidence_attendance_correction_and_teacher_pay",
+            "rolling_scheduling_enrollment_lifecycle_sessions_management",
+            "parent_billing_wallet_payments_and_finance_idempotency",
+            "messaging_and_portal_access",
+            "Firestore_Storage_Rules_emulator_and_legacy_canonical_parity",
+            "production_checkpoint_integrity_and_deployment_blast_radius",
+            "Firestore_read_budget_and_auth_principal_freshness",
+            "read_only_operator_approved_production_canaries"
+          ],
+          "guardrails": {
+            "globalReadSwitch": false,
+            "firestoreRulesCutover": false,
+            "storageRulesCutover": false,
+            "destructiveRetirement": false,
+            "automatedProductionWrites": false,
+            "liveCanaryStatus": "NOT_VERIFIED",
+            "liveAuthAccessCoverageStatus": "NOT_VERIFIED",
+            "liveFirestoreReadCountStatus": "NOT_VERIFIED"
+          },
+          "monitoring": {
+            "ciAndProductionWatch": "hourly_existing_automation_updated",
+            "githubNativeScheduledVerification": "daily_scheduled_main_branch_workflow_after_merge",
+            "alertOnMaterialChangesOnly": true,
+            "autoMergeOrDeploy": false
+          },
+          "evidence": {
+            "initialWorkflowRunId": 38043064008,
+            "results": "passed_source_ledger_functions_operational_and_rules_emulator",
+            "sourceFilesScanned": 240,
+            "functionsTestFilesPassed": 177,
+            "operationalTestsPassed": 158,
+            "rulesEmulatorTestsPassed": 81,
+            "deploymentFunctionsImpacted": 0,
+            "liveCanaries": "NOT_VERIFIED",
+            "productionReadCount": "NOT_VERIFIED",
+            "latestKickoffReport": "scripts/milestone3-system-audit.mjs"
+          }
         }
       }
     }
