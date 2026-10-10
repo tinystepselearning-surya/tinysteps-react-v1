@@ -37,7 +37,6 @@ import {
 const ANALYTICS_VIEWS: Array<{ id: AnalyticsView; label: string }> = [
   { id: 'overview', label: 'Overview' },
   { id: 'growth', label: 'Growth & Admissions' },
-  { id: 'enrollment', label: 'Admissions & Enrollment Insights' },
   { id: 'acquisition', label: 'Acquisition' },
   { id: 'finance', label: 'Finance' },
   { id: 'delivery', label: 'Delivery' },
@@ -342,46 +341,6 @@ export default function AnalyticsDashboardV3(): JSX.Element {
     return counts;
   }, [enrollments]);
 
-  const courseEnrollmentInsights = useMemo(() => {
-    const labels = new Map<string, string>();
-    courses.forEach((course: any) => {
-      const id = String(course.id || '').trim();
-      if (id) labels.set(id, String(course.title || course.name || course.courseName || id));
-    });
-    const groups = new Map<string, { id: string; name: string; enrollments: number; kids: Set<string> }>();
-    const activeKids = new Set<string>();
-    let missingCourseId = 0;
-    let missingLearnerId = 0;
-    for (const enrollment of enrollments) {
-      if (enrollment?.archived === true || enrollment?.isArchived === true || enrollment?.archivedAt) continue;
-      const status = normalizeEnrollmentStatus(enrollment);
-      if (!ACTIVE_LIKE_ENROLLMENT_STATUSES.has(status)) continue;
-      const courseId = String(enrollment.courseId || '').trim();
-      if (!courseId) { missingCourseId += 1; continue; }
-      const kidId = String(enrollment.kidId || enrollment.studentId || enrollment.childId || (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : '') || '').trim();
-      if (!kidId) missingLearnerId += 1;
-      else activeKids.add(kidId);
-      const group = groups.get(courseId) || {
-        id: courseId,
-        name: labels.get(courseId) || String(enrollment.courseName || courseId),
-        enrollments: 0,
-        kids: new Set<string>(),
-      };
-      group.enrollments += 1;
-      if (kidId) group.kids.add(kidId);
-      groups.set(courseId, group);
-    }
-    return {
-      rows: [...groups.values()].map((g) => ({
-        id: g.id, name: g.name, enrollments: g.enrollments, students: g.kids.size,
-      })).sort((a, b) => b.enrollments - a.enrollments || a.name.localeCompare(b.name)),
-      uniqueStudents: activeKids.size,
-      activeEnrollments: [...groups.values()].reduce((sum, g) => sum + g.enrollments, 0),
-      missingCourseId,
-      missingLearnerId,
-    };
-  }, [courses, enrollments]);
-
   const teacherProfileById = useMemo(() => {
     const map: Record<string, { name: string; role: string; status: string }> = {};
     users.forEach((user) => {
@@ -563,47 +522,6 @@ export default function AnalyticsDashboardV3(): JSX.Element {
             analyticsEndKey={analyticsEndKey}
             analyticsVariant="full"
           />
-        </section>
-      ) : null}
-
-      {activeView === 'enrollment' ? (
-        <section className="space-y-4">
-          <SectionHeading
-            title="Admissions & Enrollment Insights"
-            description="Current course enrollment snapshot from canonical records. This is not a month-filtered admissions or retention report."
-          />
-          {!loading && !error ? (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <MetricCard label="Active-Like Course Enrollments" value={courseEnrollmentInsights.activeEnrollments} sub="Includes active, paused and pending enrollment states; not all are actively attending." />
-                <MetricCard label="Unique Learners (Identified)" value={courseEnrollmentInsights.uniqueStudents} sub="Deduplicated across courses using available student identifiers." />
-              </div>
-              <Card className="overflow-x-auto p-4">
-                <h4 className="mb-3 text-sm font-semibold">Enrollments by course</h4>
-                <table className="w-full text-left text-sm">
-                  <thead><tr className="border-b text-slate-500"><th className="py-2 pr-4">Course</th><th className="py-2 pr-4 text-right">Enrollments</th><th className="py-2 text-right">Identified learners</th></tr></thead>
-                  <tbody>
-                    {courseEnrollmentInsights.rows.map((row) => (
-                      <tr key={row.id} className="border-b last:border-0">
-                        <td className="py-2 pr-4">{row.name}</td>
-                        <td className="py-2 pr-4 text-right tabular-nums">{row.enrollments}</td>
-                        <td className="py-2 text-right tabular-nums">{row.students}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {courseEnrollmentInsights.rows.length === 0 ? <p className="py-4 text-sm text-slate-500">No current enrollments found.</p> : null}
-              </Card>
-              {(courseEnrollmentInsights.missingCourseId > 0 || courseEnrollmentInsights.missingLearnerId > 0) ? (
-                <p className="text-xs text-amber-800">
-                  Data coverage: {courseEnrollmentInsights.missingCourseId} active-like enrollments have no course ID; {courseEnrollmentInsights.missingLearnerId} have no identifiable learner.
-                </p>
-              ) : null}
-              <p className="text-xs text-muted-foreground">
-                Planned next: month-by-month admissions, discontinuations, verified attendance-based lifetime classes, and retention cohorts. These require audited event dates and session evidence before publication.
-              </p>
-            </>
-          ) : null}
         </section>
       ) : null}
 
