@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5_m3_critical_workflows_architecture_live_parity_and_rules_readiness_audit",
+    "nextBrick": "r5_m3_live_role_canary_and_read_model_freshness_read_only_gate",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4923,8 +4923,29 @@
             "deploymentFunctionsImpacted": 0,
             "liveCanaries": "NOT_VERIFIED",
             "productionReadCount": "NOT_VERIFIED",
-            "latestKickoffReport": "scripts/milestone3-system-audit.mjs"
-          }
+            "latestKickoffReport": "scripts/milestone3-system-audit.mjs",
+            "authorizationParityAudit": {
+              "status": "source_and_emulator_verified_live_parity_pending",
+              "workflowRunId": 38044733888,
+              "sourceRulesAndExceptionShape": "passed_privacy_safe",
+              "sourceAuditorTestsPassed": 5,
+              "canonicalFocusedTestsPassed": 10,
+              "functionsTestsPassed": 1257,
+              "firestoreRuleTestFilesPassed": 14,
+              "storageEmulatorTestsPassed": 4,
+              "firestoreRulesCutover": "held",
+              "storageRulesCutover": "held",
+              "hardCodedLegacyAdminExceptionDecision": "owner_review_required",
+              "canonicalOnlyLegacyRulesMismatch": "confirmed_by_synthetic_emulator",
+              "storageTokenEmailDeniedPathWarning": "observed_non_granting",
+              "productionRoleCanaries": "NOT_VERIFIED",
+              "currentReadModelCoverage": "NOT_VERIFIED",
+              "actualFirestoreReads": "NOT_VERIFIED",
+              "productionWritesPerformed": false,
+              "firebaseResourcesDeployed": false
+            }
+          },
+          "nextAction": "operator_approved_read_only_production_role_canaries_principal_coverage_and_read_budget"
         }
       }
     }
