@@ -3015,3 +3015,13 @@ full Functions suite 163 files passed, 2 skipped; 1209 tests passed,
 `recordLevelResult` impacted, full Functions deploy false and
 Hosting/Firestore unchanged. Temporary acceptance workflow retired before
 merge. Separate production checkpoint and marker verification required.
+
+### R5C2C25 production closeout
+
+Actions deployment 38028680808 succeeded on squash commit
+`0ad680a449fc903d147c465f2ae68a3715618ba3`.
+Exactly `recordLevelResult` deployed, bounded batch 1/1,
+one verified and checkpoint-ready Function. Full Functions deployment
+false; Hosting/Firestore Rules/indexes skipped; recovery skipped;
+`ci/functions-production` marker advanced to the squash commit.
+R5C2C25 is production verified. Proceed with fresh R5C2C26 selection audit.
