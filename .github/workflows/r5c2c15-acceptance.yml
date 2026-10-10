@@ -51,11 +51,27 @@ jobs:
         run: npx vitest run --config functions/vitest.config.ts
       - name: Deployment classifier contracts
         run: node --test scripts/test/functions-impact.node-test.mjs scripts/test/functions-deployment.node-test.mjs
-      - name: Resolve and enforce bounded deployment impact
+      - name: Resolve bounded deployment impact
+        id: impact
         shell: bash
         run: |
           set -euo pipefail
           BASE_SHA="$(git merge-base origin/main HEAD)"
           node scripts/resolve-deployment-impact.mjs --before "$BASE_SHA" --functions-before "$BASE_SHA" --hosting-before "$BASE_SHA" --firestore-rules-before "$BASE_SHA" --firestore-indexes-before "$BASE_SHA" --sha "$GITHUB_SHA"
-          test "${FUNCTIONS_DEPLOY_ONLY}" = "updateAttendanceValidationMonthlyParentProgress"
-          test "${FUNCTIONS_DEPLOY_FULL}" = "false"
+      - name: Enforce single-Function blast radius
+        shell: bash
+        env:
+          FUNCTIONS_REQUIRED: ${{ steps.impact.outputs.functions_deployment_required }}
+          FUNCTIONS_FULL: ${{ steps.impact.outputs.functions_full_deployment }}
+          FUNCTIONS_TARGETS: ${{ steps.impact.outputs.functions_targets }}
+          HOSTING_CHANGED: ${{ steps.impact.outputs.hosting_changed }}
+          RULES_CHANGED: ${{ steps.impact.outputs.firestore_rules_changed }}
+          INDEXES_CHANGED: ${{ steps.impact.outputs.firestore_indexes_changed }}
+        run: |
+          set -euo pipefail
+          test "${FUNCTIONS_REQUIRED}" = "true"
+          test "${FUNCTIONS_FULL}" = "false"
+          test "${FUNCTIONS_TARGETS}" = "updateAttendanceValidationMonthlyParentProgress"
+          test "${HOSTING_CHANGED}" = "false"
+          test "${RULES_CHANGED}" = "false"
+          test "${INDEXES_CHANGED}" = "false"
