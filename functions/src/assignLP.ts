@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   normalizeRole,
 } from './helpers/roles';
@@ -69,7 +69,7 @@ async function updateAssignment(
 export const assignLPToParent = onCall(
   { region: 'asia-south1' },
   async ({ data, auth }) => {
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     const { parentId, lpId } = data || {};
 
@@ -113,7 +113,7 @@ export const assignLPToParent = onCall(
 export const unassignLPFromParent = onCall(
   { region: 'asia-south1' },
   async ({ data, auth }) => {
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     const { parentId, lpId } = data || {};
 
@@ -140,7 +140,7 @@ export const unassignLPFromParent = onCall(
 export const assignLPToTeacher = onCall(
   { region: 'asia-south1' },
   async ({ data, auth }) => {
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     const { teacherId, lpId } = data || {};
 
@@ -187,7 +187,7 @@ export const assignLPToTeacher = onCall(
 export const unassignLPFromTeacher = onCall(
   { region: 'asia-south1' },
   async ({ data, auth }) => {
-    await ensureAdmin(auth);
+    await ensureCanonicalAdmin(auth);
 
     const { teacherId, lpId } = data || {};
 
