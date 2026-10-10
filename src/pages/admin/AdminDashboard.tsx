@@ -8,7 +8,6 @@ import { Textarea } from '@components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import {
   BellDot,
-  BookCopy,
   BookOpen,
   BookOpenCheck,
   Building2,
@@ -47,7 +46,6 @@ import RefreshPublicKbTool from './RefreshPublicKbTool';
 
 import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
-import CourseManagement from './CourseManagement/CourseManagement';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
@@ -98,7 +96,6 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'attendance-corrections', label: 'Attendance', icon: ClipboardList },
   { id: 'attendance-validation', label: 'Month Close', icon: ShieldCheck },
   { id: 'relationships', label: 'Relations', icon: Handshake },
-  { id: 'courses', label: 'Courses', icon: BookCopy },
   { id: 'today-notifications', label: 'Sessions', icon: BellDot },
   { id: 'lessons', label: 'Lessons', icon: BookOpen },
   { id: 'class-recordings', label: 'Recordings', icon: Users },
@@ -136,7 +133,6 @@ const ADMIN_VALID_TABS = new Set([
   'attendance-corrections',
   'attendance-validation',
   'relationships',
-  'courses',
   'today-notifications',
   'lessons',
   'class-recordings',
@@ -731,10 +727,6 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
 
             <TabsContent value="relationships" className="mt-0">
               <RelationshipManagement />
-            </TabsContent>
-
-            <TabsContent value="courses" className="mt-0">
-              <CourseManagement />
             </TabsContent>
 
             <TabsContent value="today-notifications" className="mt-0">
