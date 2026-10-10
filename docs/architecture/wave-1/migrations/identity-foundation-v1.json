@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5_milestone2_c33_c35_authorization_production_verified_remaining_boundaries_pending",
+    "status": "r5_milestone2_remaining_admin_authorization_complete_production_verified",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5_milestone2_next_bounded_legacy_admin_dependency_selection_audit",
+    "nextBrick": "r5_milestone3_final_system_regression_verification_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4597,6 +4597,211 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
               }
+            },
+            "r5c2c36": {
+              "title": "Milestone 2 - Sessions Management, teacher-pay decision and parent-payment write-mode canonical Admin",
+              "sourceModules": [
+                "sessionsManagementSnapshot.ts",
+                "adminAttendanceCorrectionTeacherPayDecision.ts",
+                "parentPaymentBackfillWriteMode.ts"
+              ],
+              "functions": [
+                "getSessionsManagementSnapshot",
+                "adminRefreshSessionsManagementSnapshot",
+                "getSessionsManagementDateSnapshot",
+                "prepareAdminAttendanceCorrectionTeacherPayDecision",
+                "cancelAdminAttendanceCorrectionTeacherPayDecision",
+                "applyParentPaymentBackfillForSafeParents"
+              ],
+              "impactedDeploymentFunctions": [
+                "getSessionsManagementSnapshot",
+                "adminRefreshSessionsManagementSnapshot",
+                "getSessionsManagementDateSnapshot",
+                "onSessionsManagementEnrollmentWrite",
+                "onSessionsManagementClassSessionWrite",
+                "refreshSessionsManagementSnapshot4am",
+                "prepareAdminAttendanceCorrectionTeacherPayDecision",
+                "cancelAdminAttendanceCorrectionTeacherPayDecision",
+                "onAdminAttendanceCorrectionTeacherPayDecisionLink",
+                "applyParentPaymentBackfillForSafeParents"
+              ],
+              "legacyGuardCallSitesMigrated": 5,
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedLegacyAdminGuardModified": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {
+                "workflowRunId": 38040501680,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 694,
+                "mergeCommit": "efec264bc653334de1ac24052dd637a55aa4a1c3",
+                "workflowRunId": 38040636479,
+                "result": "success",
+                "functionsDeployed": 10,
+                "functionsVerified": 10,
+                "functionsCheckpointReady": 10,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              },
+              "note": "Three source modules and one shared pay decision helper guard; finance backfill business writes and Sessions Management queries unchanged."
+            },
+            "r5c2c37": {
+              "title": "Milestone 2 - wallet and revenue canonical Admin",
+              "sourceModules": [
+                "wallet.ts",
+                "revenue.ts"
+              ],
+              "functions": [
+                "getWalletAutomationConfig",
+                "setWalletAutomationConfig",
+                "previewMissingWalletDeductions",
+                "backfillMissingWalletDeductions",
+                "adminReceiveParentPayment",
+                "adminTopupParentWallet",
+                "adminAdjustParentWallet",
+                "initParentWalletOpeningDeficit",
+                "reconcileParentWallet",
+                "recordPayment",
+                "recordTeacherPayout",
+                "voidTeacherOrphanEarnings",
+                "adminVoidSessionCharge",
+                "previewFinanceCutoverArchive",
+                "archiveFinanceRecordsThroughMonth",
+                "reconcileSessionRevenueMonthKeys"
+              ],
+              "impactedDeploymentFunctions": [
+                "getWalletAutomationConfig",
+                "setWalletAutomationConfig",
+                "previewMissingWalletDeductions",
+                "backfillMissingWalletDeductions",
+                "onBillingChargeWalletSync",
+                "adminReceiveParentPayment",
+                "adminTopupParentWallet",
+                "adminAdjustParentWallet",
+                "initParentWalletOpeningDeficit",
+                "reconcileParentWallet",
+                "recordPayment",
+                "recordTeacherPayout",
+                "previewFinanceCutoverArchive",
+                "archiveFinanceRecordsThroughMonth",
+                "reconcileSessionRevenueMonthKeys",
+                "adminVoidSessionCharge"
+              ],
+              "legacyGuardCallSitesMigrated": 16,
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedLegacyAdminGuardModified": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {
+                "workflowRunId": 38040503935,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 695,
+                "mergeCommit": "796fb49bb3f086656756003b60d82a7ff3b9ec18",
+                "workflowRunId": 38040891677,
+                "result": "success",
+                "functionsDeployed": 16,
+                "functionsVerified": 16,
+                "functionsCheckpointReady": 16,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              },
+              "note": "Sixteen guarded callable definitions; sixteen deployed roots include unguarded wallet sync trigger, and exclude a legacy-only revenue callable."
+            },
+            "r5c2c38": {
+              "title": "Milestone 2 - legacy lifecycle and finite scheduler canonical Admin",
+              "sourceModules": [
+                "lifecycle.ts",
+                "createSessionsFromSchedule.ts"
+              ],
+              "functions": [
+                "transitionEnrollmentCourse",
+                "createAdminManualSession",
+                "cancelAdminManualSession",
+                "setEnrollmentStatus",
+                "reassignEnrollmentTeacher",
+                "repairEnrollmentTeacherSessionConsistency",
+                "archiveKid",
+                "createSessionsFromSchedule",
+                "saveEnrollmentScheduleAndGenerateSessions",
+                "repairEnrollmentFutureSessionsFromSchedule",
+                "repairCancelledFutureRegularSessionsForEnrollment",
+                "pauseEnrollmentUpcomingSessions",
+                "resumeEnrollmentSchedule"
+              ],
+              "impactedDeploymentFunctions": [
+                "createAdminManualSession",
+                "cancelAdminManualSession",
+                "reassignEnrollmentTeacher",
+                "repairEnrollmentTeacherSessionConsistency",
+                "archiveKid",
+                "createEnrollment",
+                "createSessionsFromSchedule",
+                "pauseEnrollmentUpcomingSessions",
+                "repairCancelledFutureRegularSessionsForEnrollment",
+                "repairEnrollmentFutureSessionsFromSchedule",
+                "resumeEnrollmentSchedule",
+                "saveEnrollmentScheduleAndGenerateSessions",
+                "setEnrollmentStatus",
+                "transitionEnrollmentCourse"
+              ],
+              "legacyGuardCallSitesMigrated": 13,
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedLegacyAdminGuardModified": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {
+                "workflowRunId": 38040587015,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 696,
+                "mergeCommit": "81af741aef78ea3d8e3cac66e548455ce3a9b43f",
+                "workflowRunId": 38041278948,
+                "result": "success",
+                "functionsDeployed": 14,
+                "functionsVerified": 14,
+                "functionsCheckpointReady": 14,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              },
+              "note": "Legacy implementation requester guards canonicalized; rolling compatibility entry points remain authoritative, with preexisting delegated double-guard paths unchanged."
             }
           }
         },
@@ -4634,21 +4839,42 @@
         },
         "milestone2": {
           "title": "Remaining Admin authorization boundaries",
-          "status": "in_progress",
+          "status": "complete",
           "productionSlicesVerified": [
             "r5c2c33",
             "r5c2c34",
-            "r5c2c35"
+            "r5c2c35",
+            "r5c2c36",
+            "r5c2c37",
+            "r5c2c38"
           ],
           "pendingProductionSlice": null,
           "remainingLegacyGuardModulesAfterC35CodeMerge": 7,
           "remainingLegacyGuardCallSitesAfterC35CodeMerge": 34,
           "sharedLegacyAdminGuardModified": false,
-          "finalExitGate": "not_attempted",
-          "note": "Milestone 2 remains in progress; no global auth/read switch, Firestore Rules or storage rules cutover.",
-          "lastProductionCommit": "7f50afbabe75da964ab2372b27ec9645d561408f",
-          "deployedFunctionRootsAcrossBatches": 11,
-          "canonicalAdminCallablesMigratedAcrossBatches": 10
+          "finalExitGate": "passed",
+          "note": "Scoped legacy Admin requester cutover complete in production across C33-C38; historical helper retained unused. Global reader/auth switch, Hosting, Firestore Rules, Storage Rules and destructive operations remain outside this milestone.",
+          "lastProductionCommit": "81af741aef78ea3d8e3cac66e548455ce3a9b43f",
+          "deployedFunctionRootsAcrossBatches": 51,
+          "canonicalAdminCallablesMigratedAcrossBatches": 45,
+          "remainingLegacyGuardModulesAfterC38CodeMerge": 0,
+          "remainingLegacyGuardCallSitesAfterC38CodeMerge": 0,
+          "totalLegacyAdminGuardSitesMigratedAcrossMilestone2": 44,
+          "finalExitVerification": {
+            "workflowRunId": 38041660356,
+            "result": "success",
+            "productionEvidenceC33ToC38": "passed",
+            "permanentZeroLegacyAdminGuardSweep": "passed",
+            "sourceAuthorizationRegressions": "passed",
+            "browserIdentityHardening": "passed",
+            "fullFunctionsSuite": "passed",
+            "functionsBuild": "passed",
+            "focusedLint": "passed",
+            "documentationAndTestsDeploymentImpact": "zero_functions_hosting_firestore",
+            "temporaryAcceptanceWorkflowRetiredBeforeMerge": true,
+            "lastVerifiedProductionCommit": "81af741aef78ea3d8e3cac66e548455ce3a9b43f"
+          },
+          "nextMilestone": "Milestone 3 - final regression, system verification and explicit remaining-cutover review"
         }
       }
     }
