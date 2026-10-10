@@ -2403,3 +2403,41 @@ Lead IAM verification required: false
 
 The temporary validation workflow is retired before merge. Production verification remains
 required after the main-branch deployment before R5C2C14 can be marked complete in production.
+
+### R5C2C14 production evidence
+
+R5C2C14 completed its bounded production deployment successfully.
+
+~~~text
+Pull request: #653
+Merge commit: 0fcab87eacf949744ec644417e4b41387eb87a66
+Deploy workflow run: 38013436381
+Deploy run number: 3925
+Result: success
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted/deployed Functions: exactly 1
+  prepareTeacherFinanceAnalyticsRollups
+
+Deployment batches: 1/1
+Cloud Functions verified: 1
+Functions checkpoint-ready: 1/1
+Hosting deployed: false
+Firestore Rules deployed: false
+Firestore indexes deployed: false
+School callable transport verification: not required
+AVS callable transport verification: not required
+Lead attribution callable transport verification: not required
+Functions production baseline advanced: true
+Recovery job required: false
+~~~
+
+GitHub Actions deployment logs confirmed batch 1/1 targeting only
+`prepareTeacherFinanceAnalyticsRollups`, verified 1 Cloud Function with 1 checkpoint-ready,
+and advanced `ci/functions-production` to the merge commit. No production write or
+runtime change is introduced by this documentation-only closeout.
+
+R5C2C14 is therefore complete in production. The next Wave 1 backend-authorization step is a
+fresh post-C14 legacy-Admin-guard and deployment-topology audit to select a genuinely bounded
+R5C2C15 Admin authorization slice; do not assume the next Function target from numbering.
