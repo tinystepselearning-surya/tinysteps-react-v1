@@ -9,7 +9,7 @@ import {
 } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import {
   ForceFreshCaseRefreshError,
   MICROSOFT_CLIENT_ID,
@@ -607,7 +607,7 @@ export const forceRefreshAttendanceValidationRange = onCall(
     ],
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     let range: { fromDate: string; toDate: string };
     let requestedRunId: string | null;
