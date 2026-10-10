@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {ensureAdmin} from "./helpers/adminGuard";
+import {ensureCanonicalAdmin} from "./helpers/canonicalAdminGuard";
 import {buildCanonicalTeacherWriteFields, resolveCanonicalTeacherIdForWrite} from "./helpers/teacherIdentity";
 
 if (!admin.apps.length) {
@@ -2704,7 +2704,7 @@ export async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
 export const createSessionsFromSchedule = onCall(
   {region: REGION},
   async (request): Promise<CreateSessionsResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<CreateSessionsRequest>;
     return generateSessionsFromScheduleInternal(input);
   },
@@ -2713,7 +2713,7 @@ export const createSessionsFromSchedule = onCall(
 export const saveEnrollmentScheduleAndGenerateSessions = onCall(
   {region: REGION},
   async (request): Promise<SaveEnrollmentScheduleAndGenerateResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const input = (request.data || {}) as Partial<SaveEnrollmentScheduleAndGenerateRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
@@ -3090,7 +3090,7 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
 export const repairEnrollmentFutureSessionsFromSchedule = onCall(
   { region: REGION, memory: "512MiB", timeoutSeconds: 300 },
   async (request): Promise<RepairEnrollmentFutureSessionsResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<RepairEnrollmentFutureSessionsRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
     if (!enrollmentId) {
@@ -3108,7 +3108,7 @@ export const repairEnrollmentFutureSessionsFromSchedule = onCall(
 export const repairCancelledFutureRegularSessionsForEnrollment = onCall(
   { region: REGION, memory: "512MiB", timeoutSeconds: 300 },
   async (request): Promise<RepairCancelledFutureRegularSessionsForEnrollmentResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<RepairCancelledFutureRegularSessionsForEnrollmentRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
     if (!enrollmentId) {
@@ -3126,7 +3126,7 @@ export const repairCancelledFutureRegularSessionsForEnrollment = onCall(
 export const pauseEnrollmentUpcomingSessions = onCall(
   {region: REGION},
   async (request): Promise<PauseEnrollmentUpcomingSessionsResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<PauseEnrollmentUpcomingSessionsRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
     const pauseCount = toPauseCount(input.count);
@@ -3276,7 +3276,7 @@ export const pauseEnrollmentUpcomingSessions = onCall(
 export const resumeEnrollmentSchedule = onCall(
   {region: REGION},
   async (request): Promise<ResumeEnrollmentScheduleResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<ResumeEnrollmentScheduleRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
     if (!enrollmentId) {
