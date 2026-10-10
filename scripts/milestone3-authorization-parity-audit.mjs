@@ -8,7 +8,7 @@ import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export function authorizationFunction(source, functionName) {
-  const header = new RegExp('\\bfunction\\s+' + functionName + '\\s*\\(\\)\\s*\\{');
+  const header = new RegExp('\\bfunction\\s+' + functionName + '\\s*\\([^)]*\\)\\s*\\{');
   const match = header.exec(source);
   if (!match) throw new Error('missing_rule_helper_' + functionName);
   const start = match.index + match[0].length;
