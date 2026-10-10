@@ -36,7 +36,7 @@ jobs:
           mapfile -t changed < <(git diff --name-only origin/main...HEAD | sort)
           for file in "${changed[@]}"; do
             case "$file" in
-              ".github/workflows/r5c2c24-acceptance.yml"|"functions/src/adminCreateUser.ts"|"functions/src/adminCreateUserCanonical.ts"|"functions/test/canonicalAdminUserAdministrationRouting.spec.ts"|"docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"|"docs/architecture/wave-1/migrations/identity-foundation-v1.json") ;;
+              ".github/workflows/r5c2c24-acceptance.yml"|"functions/src/adminCreateUser.ts"|"functions/src/adminCreateUserCanonical.ts"|"functions/test/canonicalAdminUserAdministrationRouting.spec.ts"|"functions/test/canonicalAdminAccountMutationRouting.spec.ts"|"functions/test/canonicalAdminPasswordMutationRouting.spec.ts"|"docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"|"docs/architecture/wave-1/migrations/identity-foundation-v1.json") ;;
               *) echo "Unexpected file: $file"; exit 1 ;;
             esac
           done
