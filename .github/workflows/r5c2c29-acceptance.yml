@@ -1,0 +1,42 @@
+name: R5C2C29 Messaging Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c29-messaging-canonical-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - name: Install dependencies
+        run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Messaging and Wave 1 regressions
+        run: |
+          npx vitest run --config functions/vitest.config.ts functions/test/canonicalMessagingAdminRouting.spec.ts
+          npx vitest run src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+      - name: Full Functions unit tests
+        run: npm --prefix functions test
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/messaging/sendMessage.ts src/messaging/createOrSyncMessageThread.ts
+      - name: Deployment impact report
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          node scripts/resolve-deployment-impact.mjs --before "$(git rev-parse origin/main)" --functions-before "$(git rev-parse origin/main)" --sha "$GITHUB_SHA" | tee /tmp/r5c2c29-impact.txt
+          grep -q 'Functions full deployment: false' /tmp/r5c2c29-impact.txt
+          grep -q 'Hosting changed: false' /tmp/r5c2c29-impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/r5c2c29-impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/r5c2c29-impact.txt
