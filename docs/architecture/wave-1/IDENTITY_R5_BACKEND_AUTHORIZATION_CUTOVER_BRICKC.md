@@ -2630,3 +2630,31 @@ Hosting / Firestore Rules / indexes changed: false
 
 The temporary workflow is retired before merge. Production verification of the
 single Function and production-baseline advancement remains a separate gate.
+
+### R5C2C17 production evidence
+
+R5C2C17 completed bounded production deployment successfully.
+
+~~~text
+Pull request: #659
+Merge commit: 0cce4787251815a7513e165d22d14b2d071a8c09
+Deploy workflow run: 38016720056
+Deploy run number: 3931
+Result: success
+Functions deployment required: true
+Functions full deployment: false
+Impacted/deployed Functions: exactly 1
+  runAttendanceValidationFirstTimeBaseline
+Deployment batches: 1/1
+Cloud Functions verified: 1
+Functions checkpoint-ready: 1/1
+Hosting deployed: false
+Firestore Rules deployed: false
+Firestore indexes deployed: false
+Functions production baseline advanced: true
+Recovery job required: false
+~~~
+
+Deployment logs verified the single Function, checkpoint readiness, and advancement of
+`ci/functions-production` to the merge commit. R5C2C17 is complete in production.
+R5C2C18 must be selected by a fresh read-only Admin-guard dependency-topology audit.
