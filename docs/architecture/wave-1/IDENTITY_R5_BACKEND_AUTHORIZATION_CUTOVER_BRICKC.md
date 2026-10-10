@@ -2949,3 +2949,13 @@ Hosting / Firestore Rules / indexes changed: false
 
 Temporary acceptance workflow retired before merge. Production deployment
 and checkpoint evidence remain separate required gates.
+
+### R5C2C23 verified production closeout
+
+Deployment workflow 38023087954 succeeded on commit
+`5541fa971223f9c5ca1665b6cb00a2efe89d9999`.
+Only `createAdminHistoricalAttendanceSession` deployed, bounded batch 1/1,
+verified and checkpoint-ready 1/1, full Functions deployment false,
+Hosting/Firestore Rules/indexes skipped and production baseline
+`ci/functions-production` advanced to the merge commit.
+R5C2C23 production verified; next R5C2C24 fresh selection audit.
