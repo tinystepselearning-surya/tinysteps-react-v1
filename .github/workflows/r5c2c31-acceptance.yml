@@ -1,0 +1,42 @@
+name: R5C2C31 Course Transition Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c31-course-transition-canonical-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Focused course transition regressions
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalRollingCourseTransitionAdminRouting.spec.ts functions/test/rollingScheduleProductionHardening.spec.ts
+      - name: Full Functions suite
+        run: npm --prefix functions test
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/scheduling/rollingScheduleCourseTransition.ts test/canonicalRollingCourseTransitionAdminRouting.spec.ts
+      - name: Deployment impact classification
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'Functions impacted: 1' /tmp/impact.txt
+          grep -q 'functions:transitionEnrollmentCourse' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
