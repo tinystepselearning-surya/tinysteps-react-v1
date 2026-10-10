@@ -3155,3 +3155,29 @@ No full Functions deployment, Hosting or Firestore changes.
 lifecycle, course transitions and remaining compatibility callable boundaries
 require separate bounded authorization/dependency audits. Final regression
 and exit checks have not yet passed.
+
+## R5C2C30 — Rolling enrollment lifecycle canonical Admin authorization
+
+The two requester Admin guards in `rollingScheduleLifecycle.ts` (schedule
+save and lifecycle state changes) now authorize against
+`authAccessReadModels/{firebaseUid}` through `ensureCanonicalAdmin`;
+there is no fallback to the legacy Admin guard. Materialization, lifecycle
+transition protections, session finance linkage, idempotency and operational
+writes remain unchanged.
+
+Acceptance run `38032919617` succeeded: focused lifecycle/reconciliation
+regressions, full Functions suite, TypeScript build, focused lint and
+deployment-impact classification all passed. The dependency classifier
+identified exactly fourteen affected Functions: `createEnrollment`,
+`createSessionsFromSchedule`, `futureScheduleReconcilerEveryTwoHours`,
+`onFutureScheduleEnrollmentWrite`, `pauseEnrollmentUpcomingSessions`,
+`reconcileRollingEnrollmentSchedule`,
+`repairCancelledFutureRegularSessionsForEnrollment`,
+`repairEnrollmentFutureSessionsFromSchedule`, `resumeEnrollmentSchedule`,
+`saveEnrollmentScheduleAndGenerateSessions`, `saveRollingEnrollmentSchedule`,
+`setEnrollmentStatus`, `setRollingEnrollmentLifecycle` and
+`transitionEnrollmentCourse`.
+
+Full Functions deployment false; Hosting, Firestore Rules and indexes
+unchanged. Temporary acceptance workflow retired before merge. Independent
+production and checkpoint verification required before closeout.

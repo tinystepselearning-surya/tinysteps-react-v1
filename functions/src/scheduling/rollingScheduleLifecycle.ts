@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
-import {ensureAdmin} from '../helpers/adminGuard';
+import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
 import {
   doesEnrollmentOccupyCourseSlot,
   normalizeEnrollmentStatus,
@@ -589,7 +589,7 @@ function plainMaterializationResult(result: Awaited<ReturnType<typeof materializ
 export const saveRollingEnrollmentSchedule = onCall(
   {region: REGION, memory: '256MiB', timeoutSeconds: 120},
   async (request): Promise<SaveRollingEnrollmentScheduleResult> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<SaveRollingEnrollmentScheduleInput>;
     const enrollmentId = optionalText(input.enrollmentId);
     if (!enrollmentId) throw new HttpsError('invalid-argument', 'enrollmentId required');
@@ -768,7 +768,7 @@ export const saveRollingEnrollmentSchedule = onCall(
 export const setRollingEnrollmentLifecycle = onCall(
   {region: REGION, memory: '256MiB', timeoutSeconds: 120},
   async (request): Promise<SetRollingEnrollmentLifecycleResult> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const enrollmentId = optionalText(request.data?.enrollmentId);
     const target = normalizeRollingLifecycleTarget(request.data?.status ?? request.data?.action);
     const reason = optionalText(request.data?.reason);
