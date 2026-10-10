@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   buildRoleClaims,
   normalizeRole,
@@ -393,7 +393,7 @@ export const adminCreateUser = onCall(
     let firestoreCommitted = false;
 
     try {
-      await ensureAdmin(request.auth);
+      await ensureCanonicalAdmin(request.auth);
 
       const data =
         (request.data || {}) as
@@ -514,7 +514,7 @@ export const adminCreateUser = onCall(
             authUser.uid,
             claims,
           );
-      } catch (error) {
+      } catch {
         try {
           await admin.auth()
             .deleteUser(authUser.uid);

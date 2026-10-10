@@ -2959,3 +2959,34 @@ verified and checkpoint-ready 1/1, full Functions deployment false,
 Hosting/Firestore Rules/indexes skipped and production baseline
 `ci/functions-production` advanced to the merge commit.
 R5C2C23 production verified; next R5C2C24 fresh selection audit.
+
+## R5C2C24 — Grouped canonical Admin user administration
+
+Selection audit 38023370896 passed (25 legacy importers, 70 dependent
+deployed roots). Both coupled source modules of admin user creation and
+teacher document backfill now call `ensureCanonicalAdmin` against
+`authAccessReadModels/{firebaseUid}` with no fallback. Canonical identity
+writes, user creation rollback and teacher-document backfill behavior stay
+unchanged. A previously unused catch binding was removed without changing
+rollback semantics. Two earlier migration contract tests were updated to
+reflect that user creation is now canonical while role assignment remains
+on the legacy guard.
+
+### R5C2C24 green acceptance
+
+~~~text
+PR: #673
+Run: 38027938861
+Validated head: f48da322a990d5330bf0d14a4059ed53aac25c02
+Result: success
+Focused: 2 files, 8 passed
+Full suite: 162 files passed, 2 skipped
+Tests: 1206 passed, 25 skipped
+Lint/build and classifier contracts: passed
+Exact target set: adminCreateUser, backfillTeacherDocs
+Full Functions deployment: false
+Hosting/Firestore Rules/indexes: unchanged
+~~~
+
+Temporary workflow retired prior to merge. Production deployment and
+checkpoint verification remain required before closeout.
