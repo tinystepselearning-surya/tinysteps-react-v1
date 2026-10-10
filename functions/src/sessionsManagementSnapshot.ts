@@ -4,7 +4,7 @@ import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   applySessionsManagementProjectionDeltas,
   isOperationalSessionsManagementEnrollment,
@@ -879,7 +879,7 @@ async function buildDatePayload(dateKey: string, snapshotId: string): Promise<Da
 export const getSessionsManagementSnapshot = onCall(
   { region: REGION, timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const requestData = request.data as {
       knownSnapshotId?: unknown;
       knownProjectionRevision?: unknown;
@@ -919,7 +919,7 @@ export const getSessionsManagementSnapshot = onCall(
 export const adminRefreshSessionsManagementSnapshot = onCall(
   { region: REGION, timeoutSeconds: 300, memory: '512MiB' },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const snapshot = await rebuildSnapshot('manual', request.auth?.uid || null);
     return { ok: true, snapshot };
   },
@@ -928,7 +928,7 @@ export const adminRefreshSessionsManagementSnapshot = onCall(
 export const getSessionsManagementDateSnapshot = onCall(
   { region: REGION, timeoutSeconds: 120, memory: '512MiB' },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const dateKey = String((request.data as { dateKey?: unknown } | undefined)?.dateKey || '').trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
       throw new HttpsError('invalid-argument', 'dateKey must use YYYY-MM-DD.');
