@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { normalizeFinancialStatus } from './helpers/status';
 import { resolveTeacherEarningNetEntitlementAmount } from './helpers/teacherEarningsAuthoritativeRollup';
 import {
@@ -85,7 +85,7 @@ export const recordTeacherPayoutV2 = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const teacherId = clean(request.data?.teacherId, 160);
     if (!teacherId) throw new HttpsError('invalid-argument', 'teacherId is required');

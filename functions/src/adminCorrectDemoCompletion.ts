@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   buildDemoCorrectionCycleKey,
   isDemoCorrectionEarningSource,
@@ -91,7 +91,7 @@ interface CorrectionResponse {
 export const adminCorrectDemoCompletion = onCall<CorrectionRequest>(
   { region: REGION },
   async (request): Promise<CorrectionResponse> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const demoId = text(request.data?.demoId, 120);
     const reason = text(request.data?.reason, 1000);

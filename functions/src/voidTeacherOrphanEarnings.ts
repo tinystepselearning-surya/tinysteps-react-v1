@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { evaluateTeacherOrphanEarning } from './helpers/teacherOrphanEarnings';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -24,7 +24,7 @@ export const voidTeacherOrphanEarnings = onCall(
     timeoutSeconds: 120,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const teacherId = String(request.data?.teacherId || '').trim();
     const monthKey = String(request.data?.monthKey || '').trim();
