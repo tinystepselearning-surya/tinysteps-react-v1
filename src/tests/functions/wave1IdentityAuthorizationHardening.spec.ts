@@ -83,11 +83,9 @@ describe('Wave 1 current-user authorization invariant', () => {
       );
     }
 
-    for (const source of [
-      attendanceCorrection,
-      phonicsEnforcer,
-    ]) {
-      expect(source).toContain('ensureAdmin');
+    expect(attendanceCorrection).toContain('ensureAdmin');
+    expect(phonicsEnforcer).toContain('ensureCanonicalAdmin');
+    for (const source of [attendanceCorrection, phonicsEnforcer]) {
       expect(source).not.toMatch(
         /if\s*\([^\n]*token[^\n]*(?:role|admin)[^\n]*\)\s*return/,
       );
