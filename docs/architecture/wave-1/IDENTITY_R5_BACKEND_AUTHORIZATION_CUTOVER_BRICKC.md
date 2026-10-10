@@ -2658,3 +2658,36 @@ Recovery job required: false
 Deployment logs verified the single Function, checkpoint readiness, and advancement of
 `ci/functions-production` to the merge commit. R5C2C17 is complete in production.
 R5C2C18 must be selected by a fresh read-only Admin-guard dependency-topology audit.
+
+## R5C2C18 — AVS latest check canonical Admin authorization
+
+Read-only selection audit workflow 38017155830 succeeded: 33 remaining legacy
+Admin-guard importer modules, 80 deployed dependent roots, 12 independently
+deployable one-Function importer boundaries; zero working-tree writes.
+
+Selected `runAttendanceValidationLatestCheck` for an authorization-only guard
+replacement from `ensureAdmin` to `ensureCanonicalAdmin`, using
+`authAccessReadModels/{firebaseUid}` with no legacy fallback. Existing private
+invocation, AVS case/evidence handling and cleanup, date gates and processing
+bounds remain unchanged. No authoritative attendance, payments, billing or
+teacher-earnings writes are introduced.
+
+### R5C2C18 acceptance evidence
+
+~~~text
+PR: #661
+Acceptance workflow: 38018989456
+Validated head: 9708600fe13e7aa5b0ffc8edb1e48ec8784fd6fa
+Conclusion: success
+Lint and Functions build: passed
+Focused routing tests: 2 files / 6 tests passed
+Full Functions tests: 156 files passed, 2 skipped;
+                      1182 tests passed, 25 skipped
+Deployment classifier/contracts: passed
+Deployment blast radius: exactly runAttendanceValidationLatestCheck
+Full Functions deployment: false
+Hosting, Firestore Rules, Firestore indexes: unchanged
+~~~
+
+Temporary acceptance workflow retired before merge. Production verification
+and Functions production marker advancement are separate required gates.
