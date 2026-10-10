@@ -34,7 +34,7 @@ jobs:
       - name: Functions build
         run: npm --prefix functions run build
       - name: Focused lint
-        run: npm --prefix functions exec -- eslint src/scheduling/rollingScheduleRepair.ts
+        run: cd functions && npx eslint src/scheduling/rollingScheduleRepair.ts
       - name: Verify exact source diff and no other deployment targets
         shell: bash
         run: |
