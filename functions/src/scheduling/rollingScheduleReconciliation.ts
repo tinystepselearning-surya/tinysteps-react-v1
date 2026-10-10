@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
-import {ensureAdmin} from '../helpers/adminGuard';
+import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
 import {normalizeEnrollmentStatus, normalizeSessionStatus} from '../helpers/status';
 import {
   ROLLING_SCHEDULE_DELIVERY_MODE,
@@ -540,7 +540,7 @@ async function reconcileSessionsAndPersistSchedule(args: {
 export const reconcileRollingEnrollmentSchedule = onCall(
   {region: REGION, memory: '256MiB', timeoutSeconds: 120},
   async (request): Promise<ReconcileRollingEnrollmentScheduleResult> => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const input = (request.data || {}) as Partial<ReconcileRollingEnrollmentScheduleInput>;
     const enrollmentId = optionalText(input.enrollmentId);
     if (!enrollmentId) throw new HttpsError('invalid-argument', 'enrollmentId required');

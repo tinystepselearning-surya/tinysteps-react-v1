@@ -3087,3 +3087,27 @@ verification; 1/1 checkpoint ready. No full Functions deployment. Hosting,
 Firestore Rules and indexes were skipped. The `ci/functions-production`
 marker advanced to the merge commit. R5C2C27 is production-complete;
 operational Milestone 1 continues with a fresh R5C2C28 selection audit.
+
+## R5C2C28 — Rolling schedule reconciliation canonical Admin authorization
+
+Switch only the requester Admin guard in
+`functions/src/scheduling/rollingScheduleReconciliation.ts` to
+`ensureCanonicalAdmin` against `authAccessReadModels/{firebaseUid}`.
+No legacy fallback. Reconciliation, lifecycle, session materialization,
+teacher identity, finance protection, read bounds and Firestore mutation
+semantics are unchanged.
+
+Transitive dependency analysis identifies exactly **nine** deployed Function
+roots: `createEnrollment`, `createSessionsFromSchedule`,
+`pauseEnrollmentUpcomingSessions`, `reconcileRollingEnrollmentSchedule`,
+`repairCancelledFutureRegularSessionsForEnrollment`,
+`repairEnrollmentFutureSessionsFromSchedule`, `resumeEnrollmentSchedule`,
+`saveEnrollmentScheduleAndGenerateSessions` and `setEnrollmentStatus`.
+The initially assumed one-Function radius was incorrect, and the first
+acceptance run correctly failed closed despite passing all tests and build.
+
+Corrected acceptance: run `38031038424`, success. Focused regressions,
+full Functions suite, TypeScript build, focused lint and exact nine-target
+deployment classifier passed. Functions full deployment false; Hosting,
+Firestore Rules and indexes unchanged. Temporary acceptance workflow
+retired before merge. Production verification is a separate gate.
