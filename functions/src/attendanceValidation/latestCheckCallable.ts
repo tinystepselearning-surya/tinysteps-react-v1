@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import type { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import {
   ATTENDANCE_VALIDATION_DIRTY_SESSIONS_COLLECTION,
 } from './dirtySessionMarker';
@@ -493,7 +493,7 @@ export const runAttendanceValidationLatestCheck = onCall(
     timeoutSeconds: 540,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     let range: { fromDate: string; toDate: string };
     let mode: LatestCheckMode;
