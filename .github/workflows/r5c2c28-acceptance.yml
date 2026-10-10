@@ -36,7 +36,7 @@ jobs:
           grep -q 'Functions impacted: 9' /tmp/impact.txt
           grep -q 'Functions full deployment: false' /tmp/impact.txt
           for target in createEnrollment createSessionsFromSchedule pauseEnrollmentUpcomingSessions reconcileRollingEnrollmentSchedule repairCancelledFutureRegularSessionsForEnrollment repairEnrollmentFutureSessionsFromSchedule resumeEnrollmentSchedule saveEnrollmentScheduleAndGenerateSessions setEnrollmentStatus; do
-            grep -q "`functions:${target}`" /tmp/impact.txt
+            grep -Fq -- "\`functions:${target}\`" /tmp/impact.txt
           done
           actual="$(grep -c '^\- `functions:' /tmp/impact.txt)"
           test "$actual" -eq 9
