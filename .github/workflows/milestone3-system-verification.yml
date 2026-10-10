@@ -34,6 +34,8 @@ jobs:
       - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
       - name: Read-only Milestone 3 source, production ledger and risk inventory
         run: node scripts/milestone3-system-audit.mjs --output=artifacts/milestone3-system-report.json
+      - name: Build before identity tooling tests
+        run: npm --prefix functions run build
       - name: Identity foundation, parity and deployment tooling regressions
         run: >
           node --test
