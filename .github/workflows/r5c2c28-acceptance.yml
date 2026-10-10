@@ -33,9 +33,13 @@ jobs:
           set -euo pipefail
           git fetch origin main --quiet
           node scripts/resolve-deployment-impact.mjs --before "$(git rev-parse origin/main)" --functions-before "$(git rev-parse origin/main)" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
-          grep -q 'Functions impacted: 1' /tmp/impact.txt
+          grep -q 'Functions impacted: 9' /tmp/impact.txt
           grep -q 'Functions full deployment: false' /tmp/impact.txt
-          grep -q 'functions:reconcileRollingEnrollmentSchedule' /tmp/impact.txt
+          for target in createEnrollment createSessionsFromSchedule pauseEnrollmentUpcomingSessions reconcileRollingEnrollmentSchedule repairCancelledFutureRegularSessionsForEnrollment repairEnrollmentFutureSessionsFromSchedule resumeEnrollmentSchedule saveEnrollmentScheduleAndGenerateSessions setEnrollmentStatus; do
+            grep -q "`functions:${target}`" /tmp/impact.txt
+          done
+          actual="$(grep -c '^\- `functions:' /tmp/impact.txt)"
+          test "$actual" -eq 9
           grep -q 'Hosting changed: false' /tmp/impact.txt
           grep -q 'Firestore rules changed: false' /tmp/impact.txt
           grep -q 'Firestore indexes changed: false' /tmp/impact.txt
