@@ -2908,3 +2908,13 @@ Hosting / Firestore Rules / indexes: unchanged
 
 Temporary acceptance workflow retired before merge. Production deployment and
 checkpoint verification are separate required gates.
+
+### R5C2C22 production closeout
+
+Deployment workflow 38022376058 (#3941) succeeded on commit
+`f680ceb4194e52766ee6b3eb7a824c30a619d3de`.
+Exactly one Function `forceRefreshAttendanceValidationRange` deployed in one
+bounded batch, verified and checkpoint-ready 1/1. Full Function deployment
+false; Hosting/Firestore Rules/indexes skipped; recovery skipped;
+`ci/functions-production` advanced to the merge commit.
+R5C2C22 is production-complete. R5C2C23 requires a fresh selection audit.
