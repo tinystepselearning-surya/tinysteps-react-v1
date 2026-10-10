@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c27_milestone1_next_operational_authorization_batch",
+    "nextBrick": "r5c2c28_milestone1_next_operational_authorization_batch",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
