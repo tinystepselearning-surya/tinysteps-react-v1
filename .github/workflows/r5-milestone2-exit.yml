@@ -1,0 +1,49 @@
+name: Milestone 2 Canonical Admin Exit Preflight
+on:
+  push:
+    branches:
+      - wave1-r5-milestone2-exit-gate
+permissions:
+  contents: read
+jobs:
+  exit-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Permanent no-legacy-guard and cross-batch focused tests
+        run: >
+          npx vitest run --config functions/vitest.config.ts
+          functions/test/canonicalAdminMilestone2Exit.spec.ts
+          functions/test/canonicalAdminMilestone2C36Routing.spec.ts
+          functions/test/canonicalAdminMilestone2C37Routing.spec.ts
+          functions/test/canonicalAdminMilestone2C38Routing.spec.ts
+          functions/test/canonicalAdminLearnerMutationRouting.spec.ts
+          functions/test/canonicalAdminGuard.spec.ts
+      - name: Browser identity hardening regression
+        run: npx vitest run src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+      - name: Full Functions regression suite
+        run: npm --prefix functions test
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint test/canonicalAdminMilestone2Exit.spec.ts
+      - name: Documentation and test-only deployment classification
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions deployment required: false' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
