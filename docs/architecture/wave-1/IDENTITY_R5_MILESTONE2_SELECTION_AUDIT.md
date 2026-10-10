@@ -47,3 +47,43 @@ Required gates:
 6. Accept and merge only after green temporary CI, then verify the exact production Function checkpoint before advancing.
 
 Higher-risk wallet, teacher earnings, role administration and legacy scheduler work must stay in **separate** bounded slices; do not batch them with the candidate.
+
+
+## Batch progress and next dependency audit
+
+### R5C2C33 — audit dry-run requester
+
+- PR #691, merged at `c1d1340e596d57d9d71db14096ab430b789fdc73`.
+- Acceptance CI `38038798336` passed. Production run `38039242562` verified 2/2 deployed Function roots and advanced the Functions checkpoint.
+- Migrated callable: `auditParentPaymentBackfillDryRun`. The write-mode callable `applyParentPaymentBackfillForSafeParents` was redeployed because it transitively imports the shared dry-run module, **but its legacy requester guard was not switched**.
+- The original query-limit/cost caveat is tracked separately; no finance query or backfill behavior changed in this authorization migration.
+
+### R5C2C34 — teacher-finance Admin requesters
+
+- PR #692, merged at `ebfcca46149b40f13818706715e27a11fc83c8a5`.
+- Acceptance CI `38039355014` passed. Production run `38039489423` verified 4/4 deployed Function roots and advanced the Functions checkpoint.
+- Migrated `recordTeacherPayoutV2`, `voidTeacherOrphanEarnings`, `certifyTeacherEarningsSessionCreateFastPath`, and `adminCorrectDemoCompletion`.
+- The business logic and finance writes remain unchanged.
+
+### R5C2C35 — identity administration and LP assignments
+
+- PR #693, merged at `7f50afbabe75da964ab2372b27ec9645d561408f`.
+- Acceptance CI `38039642887` passed: focused/full Functions tests, build, lint, exact five-root impact with no Hosting/Firestore deployment.
+- Migrated `assignLPToParent`, `unassignLPFromParent`, `assignLPToTeacher`, `unassignLPFromTeacher`, and `adminSetUserRole`, which is re-exported by the same LP module.
+- **Separate production checkpoint verification pending as of this draft.** Do not mark production verified until exact 5/5 evidence is available.
+
+### Remaining boundary inventory after C35 code merge
+
+A fresh direct-source audit (not just lagging code-search index results) found seven source modules retaining 34 `ensureAdmin(` calls:
+
+| Legacy module | Remaining guard calls | Selection considerations |
+|---|---:|---|
+| `wallet.ts` | 9 | Payment and wallet mutations, configuration, read models, triggers — large blast radius |
+| `revenue.ts` | 7 | Payments/earnings/revenue and reporting triggers — high finance risk |
+| `lifecycle.ts` | 7 | Legacy enrollment and sessions; compatibility code transitively imports parts of it |
+| `createSessionsFromSchedule.ts` | 6 | Transitive dependency of rolling compatibility; original exported names overridden by compatibility adapter |
+| `sessionsManagementSnapshot.ts` | 3 | Snapshot read/refresh plus triggers and cron; protect Firestore read volume |
+| `parentPaymentBackfillWriteMode.ts` | 1 | Payment backfill mutation, requires strict write-gate and idempotency regression |
+| `adminAttendanceCorrectionTeacherPayDecision.ts` | 1 | Attendance correction and teacher-pay disposition, including trigger |
+
+These counts are **source guard call sites**, not the number of active or impacted Cloud Functions. Prioritize new slices only after exact transitive-impact classification. Do not modify the shared `helpers/adminGuard.ts` or combine the highest-risk finance and legacy scheduler graphs into a single deployment.
