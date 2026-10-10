@@ -64,6 +64,7 @@ cannot be excluded by Git markers alone.
 | Functions TypeScript build; application typecheck | PASS |
 | Application lint; Functions lint; new test lint | PASS; application retains 17 existing warnings |
 | Full application build, prerender and postbuild checks | PASS after local-loopback permission retry |
+| PR deployment-impact classifier | PASS: zero Functions; Hosting, Firestore Rules and indexes unchanged; explicit path diff also confirms Storage Rules unchanged |
 
 Skipped Functions tests are not counted as passes. Logs are local diagnostic
 artifacts under `/tmp/tinysteps-m3-evidence`; raw emulator logs are deliberately
