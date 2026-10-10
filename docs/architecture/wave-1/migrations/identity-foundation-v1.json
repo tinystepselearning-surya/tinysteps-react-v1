@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c32_milestone1_operational_migrations_production_verified_exit_audit_pending",
+    "status": "r5_milestone1_operational_authorization_complete_production_verified",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c_milestone1_final_exit_regression_audit",
+    "nextBrick": "r5_milestone2_remaining_authorization_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4476,7 +4476,7 @@
         "destructiveOperations": false,
         "milestone1": {
           "title": "Operational authorization: AVS, scheduling/enrollment and messaging",
-          "status": "exit_audit_pending",
+          "status": "complete",
           "productionSlicesVerified": [
             "r5c2c26",
             "r5c2c27",
@@ -4486,8 +4486,20 @@
             "r5c2c31",
             "r5c2c32"
           ],
-          "finalExitGate": "pending",
-          "lastProductionCommit": "0e05a03cccce2ba8e34cf30cd5f322a2a394121d"
+          "finalExitGate": "passed",
+          "lastProductionCommit": "0e05a03cccce2ba8e34cf30cd5f322a2a394121d",
+          "exitVerification": {
+            "workflowRunId": 38037626614,
+            "result": "success",
+            "ledgerCompleteness": "passed",
+            "canonicalAuthorizationNoFallback": "passed",
+            "operationalRegressions": "passed",
+            "fullFunctionsSuite": "passed",
+            "functionsBuild": "passed",
+            "focusedLint": "passed",
+            "deploymentImpact": "documentation_only_zero_functions_hosting_firestore",
+            "temporaryWorkflowRetiredBeforeMerge": true
+          }
         }
       }
     }
