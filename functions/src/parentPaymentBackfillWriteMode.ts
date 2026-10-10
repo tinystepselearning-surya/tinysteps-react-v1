@@ -1,6 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   loadParentPaymentBackfillParentScopedData,
   loadParentPaymentBackfillPayments,
@@ -146,7 +146,7 @@ export const applyParentPaymentBackfillForSafeParents = onCall(
     timeoutSeconds: 180,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as ApplyParentPaymentBackfillForSafeParentsRequest;
     if (data.mode !== 'write') {
