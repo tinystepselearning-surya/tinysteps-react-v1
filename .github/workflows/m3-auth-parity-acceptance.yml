@@ -1,0 +1,105 @@
+name: M3 Authorization Parity Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5-m3-auth-rules-parity-20261010
+permissions:
+  contents: read
+jobs:
+  source-and-functions:
+    name: Source parity, canonical Functions and privacy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Safe source parity inventory
+        run: node scripts/milestone3-authorization-parity-audit.mjs --output=artifacts/m3-auth-parity.json
+      - name: Fail-closed source-shape and redaction regression
+        run: node --test scripts/test/milestone3-authorization-parity.node-test.mjs
+      - name: Canonical role authorization regression
+        run: npx vitest run --config functions/vitest.config.ts functions/test/milestone3AuthorizationParityGuard.spec.ts functions/test/canonicalAdminGuard.spec.ts functions/test/canonicalAdminMilestone2Exit.spec.ts
+      - name: Full Functions suite and build
+        run: npm --prefix functions test && npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint test/milestone3AuthorizationParityGuard.spec.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: milestone3-parity-source
+          path: artifacts/m3-auth-parity.json
+          if-no-files-found: warn
+          retention-days: 14
+  firestore-parity:
+    name: Firestore Rules synthetic authorization parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts
+      - name: Complete current Firestore Rules suite including parity cases
+        run: npm run test:wave1-identity-rules
+  storage-parity:
+    name: Storage Rules synthetic authorization parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts
+      - name: Storage and Firestore joint emulator deny/allow cases
+        run: >
+          npx firebase-tools@latest emulators:exec
+          --project tinysteps-react-v1 --only firestore,storage
+          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run src/tests/storage/milestone3AuthorizationParity.rules.spec.ts"
+  zero-deploy:
+    name: Explicit no production resource change
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Fail if Rules, Functions runtime, Hosting or storage configuration was modified
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          files="$(git diff --name-only "$baseline" HEAD)"
+          if printf '%s\n' "$files" | grep -E '^(firestore\.rules|storage\.rules|firestore\.indexes\.json|firebase\.json|functions/src/|src/(?!tests/))' >/dev/null; then
+            echo "Production code/rules changed: abort"; exit 1
+          fi
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions deployment required: false' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
