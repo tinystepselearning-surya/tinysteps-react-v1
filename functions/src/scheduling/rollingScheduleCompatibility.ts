@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
-import {ensureAdmin} from '../helpers/adminGuard';
+import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
 import {
   doesEnrollmentOccupyCourseSlot,
   normalizeEnrollmentStatus,
@@ -194,7 +194,7 @@ async function materializeRollingCompatibility(
  * their established behavior.
  */
 export const setEnrollmentStatus = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -284,7 +284,7 @@ export const setEnrollmentStatus = onCall({region: REGION}, async (request) => {
 });
 
 export const pauseEnrollmentUpcomingSessions = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -303,7 +303,7 @@ export const pauseEnrollmentUpcomingSessions = onCall({region: REGION}, async (r
 });
 
 export const resumeEnrollmentSchedule = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -322,7 +322,7 @@ export const resumeEnrollmentSchedule = onCall({region: REGION}, async (request)
 });
 
 export const createSessionsFromSchedule = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -332,7 +332,7 @@ export const createSessionsFromSchedule = onCall({region: REGION}, async (reques
 });
 
 export const repairEnrollmentFutureSessionsFromSchedule = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -347,7 +347,7 @@ export const repairEnrollmentFutureSessionsFromSchedule = onCall({region: REGION
 });
 
 export const repairCancelledFutureRegularSessionsForEnrollment = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -362,7 +362,7 @@ export const repairCancelledFutureRegularSessionsForEnrollment = onCall({region:
 });
 
 export const saveEnrollmentScheduleAndGenerateSessions = onCall({region: REGION}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
@@ -442,7 +442,7 @@ export const createEnrollment = onCall({region: REGION}, async (request) => {
  * enrollments continue to use the existing transition state machine unchanged.
  */
 export const transitionEnrollmentCourse = onCall({region: REGION, memory: '256MiB', timeoutSeconds: 180}, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const data = (request.data || {}) as Record<string, unknown>;
   const operationId = text(data.operationId);
   const oldEnrollmentId = text(data.oldEnrollmentId);
