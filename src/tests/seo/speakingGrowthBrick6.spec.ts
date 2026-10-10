@@ -132,7 +132,10 @@ describe('Speaking growth Brick 6 programme architecture', () => {
 
     expect(coursesPage).toContain("title: 'Public Speaking Foundations'");
     expect(coursesPage).toContain("title: 'Public Speaking Excellence'");
-    expect(coursesPage).toContain('children with everyday conversational-fluency gaps may need Spoken English');
+    expect(coursesPage).toContain("outcome: 'Learning focus: build speaking structure, clear expression, and short presentation readiness'");
+    expect(coursesPage).toContain("outcome: 'Learning focus: strengthen organisation, audience awareness, reasoning, delivery, and presentation skill'");
+    expect(coursesPage).toContain("href: '/courses/public-speaking-foundations'");
+    expect(coursesPage).toContain("href: '/courses/public-speaking-excellence'");
     expect(coursesPage).not.toContain('Children who give one-word answers, feel shy');
 
     expect(chooser).toContain("title: 'Start with speaking structure'");

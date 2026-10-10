@@ -11,7 +11,12 @@ vi.mock('firebase-functions/v2/https', () => ({
     constructor(public code: string, message: string) { super(message); }
   },
 }));
-vi.mock('../../../functions/src/helpers/adminGuard', () => ({ ensureAdmin: vi.fn(async () => true) }));
+const { canonicalAdminGuardMock } = vi.hoisted(() => ({
+  canonicalAdminGuardMock: vi.fn(async (_auth: unknown): Promise<void> => undefined),
+}));
+vi.mock('../../../functions/src/helpers/canonicalAdminGuard', () => ({
+  ensureCanonicalAdmin: canonicalAdminGuardMock,
+}));
 const db = (() => {
   const progressRef = { kind: 'progress' };
   const billingRef = { kind: 'billing' };
@@ -54,6 +59,16 @@ describe('monthly parent progress callable transaction', () => {
   beforeEach(() => {
     state.progress = { status: 'completed' };
     state.writes = [];
+    canonicalAdminGuardMock.mockReset();
+    canonicalAdminGuardMock.mockResolvedValue(undefined);
+  });
+
+  it('denies monthly workflow before any write when canonical Admin authorization rejects', async () => {
+    const denied = Object.assign(new Error('Admin access required'), { code: 'permission-denied' });
+    canonicalAdminGuardMock.mockRejectedValueOnce(denied);
+    await expect(call('billing_reviewed')).rejects.toBe(denied);
+    expect(canonicalAdminGuardMock).toHaveBeenCalledWith(expect.objectContaining({ uid: 'admin-1' }));
+    expect(state.writes).toHaveLength(0);
   });
 
   it('writes billing review once and returns the verified snapshot on retry', async () => {
