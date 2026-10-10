@@ -62,19 +62,11 @@ describe('Wave 1 R5C2C2 generic-user mutation Admin authorization routing', () =
   });
 
   it('keeps create and role-change outside this bounded slice', () => {
-    for (const source of [
-      createUser,
-      setUserRole,
-    ]) {
-      expect(source).toContain(
-        "from './helpers/adminGuard'",
-      );
-      expect(source).toContain(
-        'ensureAdmin',
-      );
-      expect(source).not.toContain(
-        "from './helpers/canonicalAdminGuard'",
-      );
-    }
+    expect(createUser).toContain("from './helpers/canonicalAdminGuard'");
+    expect(createUser).toContain('await ensureCanonicalAdmin(request.auth);');
+    expect(createUser).not.toContain("from './helpers/adminGuard'");
+    expect(setUserRole).toContain("from './helpers/adminGuard'");
+    expect(setUserRole).toContain('ensureAdmin');
+    expect(setUserRole).not.toContain("from './helpers/canonicalAdminGuard'");
   });
 });
