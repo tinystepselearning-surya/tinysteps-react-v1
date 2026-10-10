@@ -1,0 +1,4 @@
+{
+  "extends": "../finance-pagination.tsconfig.json",
+  "include": ["*.ts", "../milestone3FirestoreFinance*.spec.ts"]
+}
