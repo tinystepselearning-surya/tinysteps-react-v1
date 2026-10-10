@@ -2818,3 +2818,38 @@ ci/functions-production: advanced to merge commit
 R5C2C20 is complete in production. Next R5C2C21 starts with a fresh
 read-only multi-Function dependency selection audit. Preserve narrow
 deployment impact and isolate operational financial/attendance mutations.
+
+## R5C2C21 — Grouped curriculum and push-notification Admin authorization
+
+Read-only dependency selection audit 38021587050 passed with 29 legacy Admin
+importers, 75 dependent deployed roots and zero audit writes.
+
+Two source modules migrated their manual Admin guard from `ensureAdmin` to
+canonical `ensureCanonicalAdmin`, with no fallback. Curriculum automatic
+correction trigger and notification registration user permissions, delivery
+behavior and write semantics remain unchanged. No financial, teacher earning or
+attendance source writes introduced.
+
+### Acceptance evidence
+
+~~~text
+PR: #667
+Acceptance workflow: 38021645386
+Validated head: f37112dae54f9ec2856998a136f7fd085acf8b7f
+Result: success
+Focused lint and Functions build: passed
+Focused regressions: 2 files, 8 tests passed
+Full Functions estate: 159 files passed, 2 skipped
+Full Functions tests: 1195 passed, 25 skipped
+Classifier/deployment contracts: passed
+Deployment targets (exactly 4):
+  adminSyncCanonicalPhonicsCurriculum
+  onCurriculumTopicsCanonicalize
+  registerNotificationToken
+  sendTestPushNotification
+Full deployment: false
+Hosting/Rules/indexes changed: false
+~~~
+
+Acceptance workflow removed before merge. Production validation remains a separate
+required gate for all four Functions and the Functions production marker.
