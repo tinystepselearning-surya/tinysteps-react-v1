@@ -146,3 +146,16 @@ Review A versus B and owner contracts first. Add a runtime-design-only transacti
 The dedicated `Milestone 3 Firestore Finance Consistency` workflow has read-only repository permission, no secrets and no deploy command. It downloads a SHA-256-pinned emulator, runs synthetic experiments, the previous 60 tests, full Functions/root suites, build/types/lint, then checks an exact test/docs/workflow path allowlist and deployment impact at the CI SHA. Existing Milestone 3 system CI supplies applicable Firestore/Storage Rules emulator checks.
 
 Local results and final CI links are recorded in the PR handoff. Emulator tests are explicitly skipped in ordinary suites without the gate and are counted as passed only in the focused emulator job. Existing root lint warnings remain visible. No skipped test is treated as passing. The exact impact must report: Functions deployment false, full deployment false, impacted Functions 0, Firestore Rules false, indexes false, Hosting false. No merge or auto-merge is authorized.
+
+### Recorded local results and review evidence
+
+| Validation | Passed | Failed | Skipped |
+| --- | ---: | ---: | ---: |
+| Focused real-emulator + safety suite | 53 | 0 | 0 |
+| Existing PR707 finance suite | 60 | 0 | 0 |
+| Full Functions, emulator gate absent | 1,329 | 0 | 70 |
+| Full repository, emulator gate absent | 4,496 | 0 | 161 |
+
+Functions skips comprise 25 baseline skips plus 45 explicitly gated emulator cases; repository skips comprise 116 baseline skips plus those 45 cases. The eight new environment-safety tests run in ordinary suites. Test totals overlap across suites and must not be summed as independent coverage. Functions build, root typecheck, adapter typecheck and lint pass; root lint has 17 existing warnings, with no errors. Node emits the dependency `punycode` deprecation warning in emulator tests.
+
+[PR #708 checks](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/708/checks) provide the live, exact-head CI conclusions. The dedicated workflow artifact `milestone3-firestore-finance` contains focused/full JSON test results, SDK measurements, changed paths and deployment-impact output. The PR description records the final immutable head and run links after completion. Local impact on the committed 11-file change: zero impacted Functions; Functions/full deployment, Firestore Rules/indexes and Hosting changes all false. CI repeats classification at its exact merge SHA.
