@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c13_production_complete_ready_for_next_bounded_admin_mutation_slice",
+    "status": "r5c2c14_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c14_next_bounded_admin_mutation_slice_selection",
+    "nextBrick": "r5c2c14_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3185,6 +3185,86 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c14": {
+              "title": "Teacher-finance analytics rollup Admin authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "prepareTeacherFinanceAnalyticsRollups"
+              ],
+              "businessMutationAllowed": true,
+              "maintenanceMutation": true,
+              "dryRunDefaultPreserved": true,
+              "authoritativeTeacherEarningsWrites": false,
+              "derivedTeacherMonthRollupWritesOnly": true,
+              "maxDocsBoundPreserved": 10000,
+              "readinessGatesPreserved": true,
+              "projectionParityGatesPreserved": true,
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": false,
+              "selectionAudit": {
+                "workflowRunId": 37664882331,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 37,
+                "deployedRootsDependingOnLegacyImporters": 84,
+                "oneFunctionBoundaries": 16,
+                "writesPerformed": 0,
+                "selectionReason": "one_function_boundary_with_dry_run_default_fail_closed_parity_and_derived_rollup_only_apply_writes"
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "prepareTeacherFinanceAnalyticsRollups"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "pull_request_acceptance",
+                "workflowRunId": 37665202385,
+                "workflowRunNumber": 1,
+                "validatedHeadSha": "1ca857a4c2c656c901fb4607316b331996dc04e9",
+                "result": "success",
+                "changedFileAndLedgerBoundary": "passed",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedR5C2C14Regressions": {
+                  "filesPassed": 5,
+                  "testsPassed": 23
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 152,
+                  "filesSkipped": 2,
+                  "testsPassed": 1170,
+                  "testsSkipped": 25
+                },
+                "deploymentClassifierAndContracts": {
+                  "passed": 81,
+                  "failed": 0
+                },
+                "deploymentImpact": {
+                  "functionsDeploymentRequired": true,
+                  "functionsFullDeployment": false,
+                  "impactedFunctionsCount": 1,
+                  "impactedFunctions": [
+                    "prepareTeacherFinanceAnalyticsRollups"
+                  ],
+                  "hostingChanged": false,
+                  "firestoreRulesChanged": false,
+                  "firestoreIndexesChanged": false,
+                  "schoolCallableTransportVerificationRequired": false,
+                  "avsCallableTransportVerificationRequired": false,
+                  "leadIamVerificationRequired": false
+                },
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }

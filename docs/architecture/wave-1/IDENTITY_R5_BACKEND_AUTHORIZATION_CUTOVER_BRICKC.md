@@ -1,6 +1,6 @@
 # Wave 1 R5C1 — School-Domain Backend Authorization Cutover
 
-**Status:** R5C2C13 COMPLETE IN PRODUCTION — ready for next bounded Admin mutation slice
+**Status:** R5C2C13 COMPLETE IN PRODUCTION — R5C2C14 VALIDATED, ready for production merge
 **Lifecycle phase:** R5 backend authorization cutover  
 **Production Admin callable authority:** legacy `users/{uid}` until R5C2  
 **Production school requester authority before deployment:** legacy `users/schoolUsers`  
@@ -2269,3 +2269,137 @@ R5C2C13 is therefore complete in production. The next Wave 1 backend-authorizati
 must remain another independently deployable bounded Admin mutation slice. The exact next
 slice must be selected from a fresh post-C13 legacy-Admin-guard and deployment-topology
 audit rather than inferred from numbering alone.
+
+
+## R5C2C14 — Teacher-finance analytics rollup Admin authorization
+
+A fresh post-C13 deployment-topology audit was run before selecting this slice.
+
+~~~text
+Selection audit workflow run: 37664882331
+Result: success
+Legacy adminGuard importer modules: 37
+Deployed Function roots depending on at least one legacy importer: 84
+One-Function legacy-guard boundaries identified: 16
+Audit working-tree writes: 0
+~~~
+
+R5C2C14 selects the independently deployable callable:
+
+~~~text
+prepareTeacherFinanceAnalyticsRollups
+~~~
+
+This candidate was preferred over the remaining one-Function boundaries because it is
+dry-run by default, refuses preparation unless canonical coverage and rollup parity are clean,
+never writes the authoritative `teacherEarnings` ledger, and in apply mode writes only
+analytics/readiness metadata to derived teacher-month rollups.
+
+Authorization moves from:
+
+~~~text
+users/{request.auth.uid}
+→ helpers/adminGuard.ts
+~~~
+
+to:
+
+~~~text
+authAccessReadModels/{request.auth.uid}
+→ ensureCanonicalAdmin
+~~~
+
+There is no legacy Admin fallback and no Firebase custom-claim business-authority fallback.
+
+The existing teacher-finance analytics preparation behavior is intentionally unchanged:
+
+- `apply` remains false unless explicitly requested;
+- the ledger scan remains bounded by `MAX_ALLOWED_DOCS = 10000`;
+- canonical earning coverage checks remain fail-closed;
+- service-month evidence checks remain fail-closed;
+- teacher-rollup parity checks remain fail-closed;
+- `teacherEarnings` remains read-only;
+- apply mode writes only analytics projection metadata to existing derived teacher-month rollups;
+- month readiness remains false until every preparation batch finishes successfully;
+- callable name, region, memory and timeout remain unchanged.
+
+### R5C2C14 non-goals
+
+This brick does not:
+
+- change teacher earning amounts or payment status;
+- change authoritative teacher-finance totals;
+- create, void, or alter teacher payouts;
+- modify the `teacherEarnings` ledger;
+- change analytics projection formulas or parity semantics;
+- relax any readiness or coverage gate;
+- modify the shared legacy `helpers/adminGuard.ts`;
+- change Firestore Rules or Storage Rules;
+- freeze legacy writes;
+- authorize destructive identity retirement.
+
+### R5C2C14 acceptance target
+
+Expected deployment impact:
+
+~~~text
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  prepareTeacherFinanceAnalyticsRollups
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+Acceptance requires:
+
+1. Focused lint passes.
+2. Functions TypeScript build passes.
+3. Existing teacher-finance analytics preparation/projection/readiness regressions pass.
+4. R5C2C14 authorization-routing regression passes.
+5. Canonical Admin guard routing regressions pass.
+6. Full Functions unit estate passes.
+7. Deployment-impact/deployment-contract tests pass.
+8. Deployment impact resolves to exactly `prepareTeacherFinanceAnalyticsRollups`.
+9. No full Functions deployment, Hosting deployment, Firestore Rules deployment or index deployment is introduced.
+
+Production remains unauthorized until this acceptance gate is green and the temporary
+validation workflow is retired.
+
+
+### R5C2C14 validation evidence
+
+R5C2C14 passed its acceptance gate as a genuine one-Function authorization slice.
+
+~~~text
+Workflow run: 37665202385
+Run number: 1
+Validated head: 1ca857a4c2c656c901fb4607316b331996dc04e9
+Result: success
+
+Changed-file and ledger boundary: passed
+Focused lint: passed
+Functions build: passed
+Focused C14 regressions:
+  files: 5 passed
+  tests: 23 passed
+Full Functions unit estate:
+  files: 152 passed, 2 skipped
+  tests: 1170 passed, 25 skipped
+Deployment classifier and contract tests: 81 passed, 0 failed
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted Functions: exactly 1
+  prepareTeacherFinanceAnalyticsRollups
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+School callable transport verification required: false
+AVS callable transport verification required: false
+Lead IAM verification required: false
+~~~
+
+The temporary validation workflow is retired before merge. Production verification remains
+required after the main-branch deployment before R5C2C14 can be marked complete in production.
