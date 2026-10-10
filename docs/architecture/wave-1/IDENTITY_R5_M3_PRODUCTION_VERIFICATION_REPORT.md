@@ -1,5 +1,9 @@
 # Milestone 3 — production authorization and Firestore verification
 
+For the independent rerun after merged PRs #699–#703 and the exact remaining
+approval requirements, see [controlled verification status](IDENTITY_R5_M3_CONTROLLED_VERIFICATION_STATUS.md).
+The dated observations below remain the historical #700 baseline.
+
 Audit date: 2026-10-10 (Asia/Kolkata). Base: latest fetched `main`,
 `df8df70941a8a6846fc9e80a1bf55b7ac3c02cbe` (merged PR #699).
 
