@@ -134,5 +134,5 @@ jobs:
       - name: Emulated Storage Admin exceptions and owner isolation
         run: >
           npx firebase-tools@latest emulators:exec
-          --project tinysteps-react-v1 --only firestore,storage
+          --project demo-tinysteps-m3-storage-parity --only firestore,storage
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run src/tests/storage/milestone3AuthorizationParity.rules.spec.ts"
