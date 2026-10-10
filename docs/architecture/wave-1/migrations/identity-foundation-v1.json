@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c16_validation_complete_ready_for_production_merge",
+    "status": "r5c2c16_production_verified_ready_for_r5c2c17_selection_audit",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c16_production_merge_and_verification",
+    "nextBrick": "r5c2c17_fresh_bounded_admin_mutation_slice_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3381,8 +3381,8 @@
               "sourceSessionAttendanceWritesIntroduced": false,
               "authoritativePaymentTeacherEarningBillingWritesIntroduced": false,
               "existingAvsCaseAndResolutionTransactionPreserved": true,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "validationPending": false,
               "selectionAudit": {
                 "workflowRunId": 38014975326,
@@ -3423,6 +3423,27 @@
                 "deploymentClassifierAndContracts": "passed",
                 "singleFunctionBlastRadius": "passed",
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 657,
+                "mergeCommit": "d626a77a26ccee7929c3658fa35a33f7254a9f51",
+                "workflowRunId": 38015842082,
+                "workflowRunNumber": 3929,
+                "result": "success",
+                "functionsDeploymentRequired": true,
+                "functionsDeployed": 1,
+                "functionsVerified": 1,
+                "functionsCheckpointReady": 1,
+                "deploymentBatches": 1,
+                "functions": [
+                  "adminVerifyAttendanceValidationGroup"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
