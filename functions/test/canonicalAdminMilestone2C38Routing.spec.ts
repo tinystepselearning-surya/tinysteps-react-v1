@@ -10,8 +10,8 @@ const index = src('index.ts');
 describe('R5C2C38 lifecycle and finite-scheduler legacy Admin closure', () => {
   it('canonicalizes all 13 remaining guards in the two coupled modules', () => {
     for(const [source, count] of [[lifecycle, 7], [finite, 6]] as const){
-      expect(source).toContain("from './helpers/canonicalAdminGuard'");
-      expect(source).not.toContain("from './helpers/adminGuard'");
+      expect(source).toMatch(/from ['"]\.\/helpers\/canonicalAdminGuard['"]/);
+      expect(source).not.toMatch(/from ['"]\.\/helpers\/adminGuard['"]/);
       expect(source).not.toMatch(/await\s+ensureAdmin\(/);
       expect((source.match(/await\s+ensureCanonicalAdmin\(/g) || []).length).toBe(count);
     }
