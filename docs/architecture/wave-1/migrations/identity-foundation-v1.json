@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5_milestone2_c33_c38_authorization_production_verified_exit_audit_pending",
+    "status": "r5_milestone2_remaining_admin_authorization_complete_production_verified",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5_milestone2_final_exit_audit",
+    "nextBrick": "r5_milestone3_final_system_regression_verification_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4839,7 +4839,7 @@
         },
         "milestone2": {
           "title": "Remaining Admin authorization boundaries",
-          "status": "exit_audit_pending",
+          "status": "complete",
           "productionSlicesVerified": [
             "r5c2c33",
             "r5c2c34",
@@ -4852,14 +4852,29 @@
           "remainingLegacyGuardModulesAfterC35CodeMerge": 7,
           "remainingLegacyGuardCallSitesAfterC35CodeMerge": 34,
           "sharedLegacyAdminGuardModified": false,
-          "finalExitGate": "pending",
+          "finalExitGate": "passed",
           "note": "Scoped legacy Admin requester cutover complete in production across C33-C38; historical helper retained unused. Global reader/auth switch, Hosting, Firestore Rules, Storage Rules and destructive operations remain outside this milestone.",
           "lastProductionCommit": "81af741aef78ea3d8e3cac66e548455ce3a9b43f",
           "deployedFunctionRootsAcrossBatches": 51,
           "canonicalAdminCallablesMigratedAcrossBatches": 45,
           "remainingLegacyGuardModulesAfterC38CodeMerge": 0,
           "remainingLegacyGuardCallSitesAfterC38CodeMerge": 0,
-          "totalLegacyAdminGuardSitesMigratedAcrossMilestone2": 44
+          "totalLegacyAdminGuardSitesMigratedAcrossMilestone2": 44,
+          "finalExitVerification": {
+            "workflowRunId": 38041660356,
+            "result": "success",
+            "productionEvidenceC33ToC38": "passed",
+            "permanentZeroLegacyAdminGuardSweep": "passed",
+            "sourceAuthorizationRegressions": "passed",
+            "browserIdentityHardening": "passed",
+            "fullFunctionsSuite": "passed",
+            "functionsBuild": "passed",
+            "focusedLint": "passed",
+            "documentationAndTestsDeploymentImpact": "zero_functions_hosting_firestore",
+            "temporaryAcceptanceWorkflowRetiredBeforeMerge": true,
+            "lastVerifiedProductionCommit": "81af741aef78ea3d8e3cac66e548455ce3a9b43f"
+          },
+          "nextMilestone": "Milestone 3 - final regression, system verification and explicit remaining-cutover review"
         }
       }
     }
