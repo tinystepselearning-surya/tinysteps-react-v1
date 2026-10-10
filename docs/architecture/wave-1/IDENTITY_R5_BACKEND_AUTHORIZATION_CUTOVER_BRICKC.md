@@ -3136,3 +3136,22 @@ The dependency classifier identified exactly eight Function roots:
 Full Functions deployment false. Hosting, Firestore Rules and indexes
 unchanged. Temporary acceptance workflow retired before merge. Separate
 production deployment/checkpoint verification is required for closeout.
+
+### R5C2C28 verified production closeout
+
+Production run 38031157384 succeeded, exactly nine Functions checkpoint-ready
+(9/9), commit `c465d20a063173fa0de69568b2ef0077692d477e`,
+production marker advanced, no Hosting/Firestore deployment.
+
+### R5C2C29 verified production closeout
+
+Production run 38032558098 succeeded on commit
+`866ebd9c60385f62bb84ed87832f7cba8dc11eff`.
+All eight messaging-related Functions deployed in one bounded batch,
+verified 8/8 checkpoint-ready; the Functions production marker advanced.
+No full Functions deployment, Hosting or Firestore changes.
+
+**Milestone 1 remains open.** Canonical Admin cutovers for scheduling
+lifecycle, course transitions and remaining compatibility callable boundaries
+require separate bounded authorization/dependency audits. Final regression
+and exit checks have not yet passed.

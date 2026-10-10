@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c27_milestone1_scheduling_repair_production_verified_next_operational_batch",
+    "status": "r5c2c29_milestone1_messaging_production_verified_scheduling_lifecycle_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c28_milestone1_next_operational_authorization_batch",
+    "nextBrick": "r5c2c30_scheduling_lifecycle_authorization_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4264,7 +4264,29 @@
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
               }
-            }
+            },
+            "r5c2c28": {
+              "title": "Milestone 1 operational authorization - rolling schedule reconciliation",
+              "functions": ["createEnrollment", "createSessionsFromSchedule", "pauseEnrollmentUpcomingSessions", "reconcileRollingEnrollmentSchedule", "repairCancelledFutureRegularSessionsForEnrollment", "repairEnrollmentFutureSessionsFromSchedule", "resumeEnrollmentSchedule", "saveEnrollmentScheduleAndGenerateSessions", "setEnrollmentStatus"],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {"workflowRunId": 38031038424, "result": "success"},
+              "productionDeployment": {"pullRequest": 683, "mergeCommit": "c465d20a063173fa0de69568b2ef0077692d477e", "workflowRunId": 38031157384, "result": "success", "functionsDeployed": 9, "functionsVerified": 9, "functionsCheckpointReady": 9, "functionsFullDeployment": false, "functionsProductionMarkerAdvanced": true, "hostingDeployed": false, "firestoreRulesDeployed": false, "firestoreIndexesDeployed": false}
+            },
+            "r5c2c29": {
+              "title": "Milestone 1 operational authorization - messaging Admin access",
+              "functions": ["createOrSyncMessageThread", "markMessageThreadRead", "onEnrollmentMessageThreadAutoSync", "onKidMessageThreadAutoSync", "onStudentMessageThreadAutoSync", "reconcileMyUnreadMessageCount", "sendMessage", "syncMessageThreadsForActiveStudents"],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {"workflowRunId": 38032438380, "result": "success", "staleRegressionAssertionsCorrected": true, "functionsBuild": "passed", "lint": "passed", "deploymentClassifier": "passed"},
+              "productionDeployment": {"pullRequest": 684, "mergeCommit": "866ebd9c60385f62bb84ed87832f7cba8dc11eff", "workflowRunId": 38032558098, "result": "success", "functionsDeployed": 8, "functionsVerified": 8, "functionsCheckpointReady": 8, "deploymentBatches": 1, "functionsFullDeployment": false, "functionsProductionMarkerAdvanced": true, "hostingDeployed": false, "firestoreRulesDeployed": false, "firestoreIndexesDeployed": false}
+              }
           }
         },
         "firestoreRulesCutover": false,
