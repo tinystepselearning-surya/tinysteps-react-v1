@@ -71,6 +71,7 @@ import {
   loadSessionsManagementSnapshot,
   clearSessionsManagementSnapshotCache,
   isSessionsManagementAuthorizationFailure,
+  isSessionsManagementTransientFailure,
 } from '../../lib/sessionsManagementSnapshot';
 import {
   buildTeacherDailyReminderGroups,
@@ -1502,9 +1503,22 @@ export default function TodaysNotifications() {
 
     const loadAdmissions = async () => {
       try {
-        const cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
+        let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
           'TodaysNotifications:overall-admissions',
         );
+        if (cachedAdmissionRows === null) {
+          // A persisted revision hint is not displayable until authorized.
+          // Revalidate the existing projected snapshot before any raw-read
+          // fallback to avoid fetching the entire enrollment collection.
+          try {
+            await loadSessionsManagementSnapshot();
+            cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
+              'TodaysNotifications:overall-admissions',
+            );
+          } catch (error) {
+            if (!isSessionsManagementTransientFailure(error)) throw error;
+          }
+        }
         const nextEnrollments = (
           cachedAdmissionRows !== null
             ? cachedAdmissionRows.map((row) => ({ id: row.id, ...(row.data as any) }))
