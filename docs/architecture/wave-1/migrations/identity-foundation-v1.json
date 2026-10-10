@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c23_production_verified_ready_for_next_selection_audit",
+    "status": "r5c2c24_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c24_fresh_bounded_authorization_selection_audit",
+    "nextBrick": "r5c2c24_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3991,6 +3991,68 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c24": {
+              "title": "Grouped user creation and teacher document backfill canonical Admin authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "sourceModules": [
+                "functions/src/adminCreateUser.ts",
+                "functions/src/adminCreateUserCanonical.ts"
+              ],
+              "functions": [
+                "adminCreateUser",
+                "backfillTeacherDocs"
+              ],
+              "userCreationAndRollbackSemanticsPreserved": true,
+              "teacherBackfillWriteSemanticsPreserved": true,
+              "productionWiring": false,
+              "productionVerified": false,
+              "selectionAudit": {
+                "workflowRunId": 38023370896,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 25,
+                "deployedRootsDependingOnLegacyImporters": 70,
+                "writesPerformed": 0
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 2,
+                "impactedFunctions": [
+                  "adminCreateUser",
+                  "backfillTeacherDocs"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "workflowRunId": 38027938861,
+                "validatedHeadSha": "f48da322a990d5330bf0d14a4059ed53aac25c02",
+                "result": "success",
+                "focusedRegressions": {
+                  "filesPassed": 2,
+                  "testsPassed": 8
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 162,
+                  "filesSkipped": 2,
+                  "testsPassed": 1206,
+                  "testsSkipped": 25
+                },
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "deploymentClassifierAndContracts": "passed",
+                "exactTwoFunctionBlastRadius": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true,
+                "additionalLegacyAssertionUpdates": [
+                  "functions/test/canonicalAdminAccountMutationRouting.spec.ts",
+                  "functions/test/canonicalAdminPasswordMutationRouting.spec.ts"
+                ]
               }
             }
           }
