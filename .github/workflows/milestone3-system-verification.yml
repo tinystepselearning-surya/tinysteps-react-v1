@@ -64,17 +64,34 @@ jobs:
           node --check scripts/milestone3-system-audit.mjs
           cd functions
           npx eslint test/canonicalAdminMilestone2Exit.spec.ts
-      - name: Verify this audit PR cannot deploy Firebase resources
+      - name: Verify no backend resources changed and explicitly classify the bounded frontend exception
         if: github.ref != 'refs/heads/main'
         run: |
           set -euo pipefail
           git fetch origin main --quiet
           baseline="$(git merge-base origin/main HEAD)"
+          changed="$(git diff --name-only "$baseline" HEAD)"
+          if printf '%s\n' "$changed" | grep -E '^(storage\.rules|firestore\.rules|firestore\.indexes\.json|firebase\.json|functions/src/)' >/dev/null; then
+            echo 'Milestone 3 PR unexpectedly changes backend or security resources'; exit 1
+          fi
+          # This daily audit is also triggered by the P1 cache-security report.
+          # Only the exact reviewed P1 client files may intentionally change
+          # Hosting; other production client changes require their own gate.
+          unexpected_runtime="$(printf '%s\n' "$changed" | grep -E '^src/' | grep -Ev '^(src/tests/|src/lib/(sessionsManagementSnapshot|auth)\.ts$|src/components/common/AuthBootstrap\.tsx$|src/pages/admin/(TodaysNotifications\.tsx|todaysNotificationsManualData\.ts)$)' || true)"
+          if test -n "$unexpected_runtime"; then
+            echo 'Unexpected application runtime change in audit PR'; exit 1
+          fi
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
           grep -q 'Functions deployment required: false' /tmp/impact.txt
-          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'Functions impacted: 0' /tmp/impact.txt
           grep -q 'Firestore rules changed: false' /tmp/impact.txt
           grep -q 'Firestore indexes changed: false' /tmp/impact.txt
+          if printf '%s\n' "$changed" | grep -E '^src/' | grep -Ev '^src/tests/' >/dev/null; then
+            grep -q 'Hosting changed: true' /tmp/impact.txt
+          else
+            grep -q 'Hosting changed: false' /tmp/impact.txt
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

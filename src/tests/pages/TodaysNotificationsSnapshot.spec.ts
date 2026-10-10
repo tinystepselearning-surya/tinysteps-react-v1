@@ -210,7 +210,7 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(pageSource).toContain("'Parent unavailable'");
   });
 
-  it('keeps zero Overall Admissions authoritative instead of exposing session-only enrollment rows', () => {
+  it('does not expose unscoped legacy Overall Admissions from a previous browser session', () => {
     clearSessionsManagementSnapshotCacheForTests();
     window.sessionStorage.setItem(
       'tinysteps:sessions-management-snapshot:v3',
@@ -232,30 +232,45 @@ describe('Sessions Management authoritative snapshot loading', () => {
       getCachedSessionsManagementRowsForReadLabel(
         'TodaysNotifications:overall-admissions',
       ),
-    ).toEqual([]);
+    ).toBeNull();
 
     clearSessionsManagementSnapshotCacheForTests();
   });
 
   it('revalidates the browser snapshot with the live projection revision', () => {
     expect(snapshotClientSource).toContain(
-      "const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v3';",
+      "const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v4';",
     );
+    expect(snapshotClientSource).toContain(
+      "const LEGACY_CACHE_KEY = 'tinysteps:sessions-management-snapshot:v3';",
+    );
+    expect(snapshotClientSource).toContain('verifiedGeneration === actor.generation');
     expect(snapshotClientSource).toContain('knownProjectionRevision');
     expect(snapshotClientSource).toContain(
       'cached?.snapshot.projectionRevision ?? -1',
     );
   });
 
-  it('keeps the cached snapshot when live callable revalidation is temporarily unhealthy', () => {
-    expect(snapshotClientSource).toContain(
+  it('uses cache only after same-user verification and only for transient errors', () => {
+    expect(snapshotClientSource).toContain('canUseVerifiedFallback(actor, cached, error)');
+    expect(snapshotClientSource).toContain('verifiedGeneration === actor.generation');
+    expect(snapshotClientSource).toContain('isTransientFailure(error)');
+    expect(snapshotClientSource).toContain('isAccessFailure(error)');
+    expect(snapshotClientSource).toContain('clearSessionsManagementSnapshotCache()');
+    expect(snapshotClientSource).not.toContain(
       '[SessionsManagementSnapshot] live snapshot revalidation failed; using cached snapshot',
     );
-    expect(snapshotClientSource).toContain(
-      '[SessionsManagementSnapshot] manual refresh failed; keeping cached snapshot',
-    );
-    expect(snapshotClientSource).toContain('if (cached?.snapshot) {');
-    expect(snapshotClientSource).toContain('return cached.snapshot;');
+  });
+
+  it('revalidates an unauthenticated-cache miss before any full Overall Admissions Firestore read', () => {
+    const start = pageSource.indexOf('let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(');
+    const revalidate = pageSource.indexOf('await loadSessionsManagementSnapshot();', start);
+    const fallback = pageSource.indexOf("await getDocs(query(collection(db, 'enrollments')))", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(revalidate).toBeGreaterThan(start);
+    expect(fallback).toBeGreaterThan(revalidate);
+    expect(pageSource.slice(start, fallback)).toContain('isSessionsManagementTransientFailure(error)');
+    expect(pageSource).toContain('subscribeSessionsManagementSnapshotInvalidation(');
   });
 
   it('listens to the single admin projection signal and reloads the cached read model', () => {
@@ -375,6 +390,31 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(sendSource).not.toContain('httpsCallable(');
   });
 
+  it.each(['functions/permission-denied', 'functions/unauthenticated', 'snapshot/actor-changed'])(
+    'does not fall back to legacy Firestore after snapshot authorization failure %s',
+    async (code) => {
+      const deps = makeDeps();
+      const loadSnapshot = vi.fn(async () => {
+        throw Object.assign(new Error('Access denied'), {code});
+      });
+      await expect(loadManualReminderDayBuckets({
+        deps: {...deps, loadSnapshot},
+        todayDateKey: '2026-08-27',
+        tomorrowDateKey: '2026-08-28',
+      })).rejects.toMatchObject({code});
+      expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
+      expect(deps.fetchEnrollmentsByIds).not.toHaveBeenCalled();
+      const loadDateSnapshot = vi.fn(async () => {
+        throw Object.assign(new Error('Access denied'), {code});
+      });
+      await expect(loadManualReminderSelectedDate({
+        dateKey: '2026-09-03',
+        deps: {...deps, loadDateSnapshot},
+      })).rejects.toMatchObject({code});
+      expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
+    },
+  );
+
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {
     const deps = makeDeps();
     deps.fetchSessionsForDate.mockImplementation(async (dateKey: string) => [
@@ -393,7 +433,7 @@ describe('Sessions Management authoritative snapshot loading', () => {
       deps: {
         ...deps,
         loadSnapshot: vi.fn(async () => {
-          throw new Error('snapshot unavailable');
+          throw Object.assign(new Error('snapshot temporarily unavailable'), {code: 'functions/unavailable'});
         }),
       },
       todayDateKey: '2026-08-27',

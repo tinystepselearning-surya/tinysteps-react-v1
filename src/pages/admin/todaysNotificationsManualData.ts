@@ -6,6 +6,7 @@ import {
 import {
   loadSessionsManagementDateSnapshot,
   loadSessionsManagementSnapshot,
+  isSessionsManagementTransientFailure,
   refreshSessionsManagementSnapshot,
   type SessionsManagementDatePayload,
   type SessionsManagementSnapshotPayload,
@@ -436,7 +437,10 @@ export const loadManualReminderDayBuckets = async ({
       source: 'snapshot',
     };
   } catch (snapshotError) {
-    console.warn('[TodaysNotifications] snapshot load failed; falling back to bounded Firestore reads', snapshotError);
+    // A denied or identity-changed snapshot must never fall back to legacy
+    // Firestore permissions. Only an identified temporary outage may do so.
+    if (!isSessionsManagementTransientFailure(snapshotError)) throw snapshotError;
+    console.warn('[TodaysNotifications] snapshot service temporarily unavailable; using bounded Firestore fallback');
     return loadDayBucketsFromFirestore(deps, todayDateKey, tomorrowDateKey, startedAt);
   }
 };
@@ -462,7 +466,8 @@ export const loadManualReminderSelectedDate = async ({
       source: 'snapshot',
     };
   } catch (snapshotError) {
-    console.warn('[TodaysNotifications] selected-date snapshot load failed; using bounded Firestore fallback', snapshotError);
+    if (!isSessionsManagementTransientFailure(snapshotError)) throw snapshotError;
+    console.warn('[TodaysNotifications] selected-date snapshot temporarily unavailable; using bounded Firestore fallback');
     const sessions = await deps.fetchSessionsForDate(dateKey);
     const enriched = await hydrateSessionsWithEnrollments(sessions, deps.fetchEnrollmentsByIds);
     return {

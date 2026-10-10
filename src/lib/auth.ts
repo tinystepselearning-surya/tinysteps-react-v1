@@ -10,6 +10,7 @@ import { callFunction } from './callFunctions';
 import { useAuthStore } from '../store/useAuthStore';
 import type { AuthUser, AuthRole } from '../store/useAuthStore';
 import { clearPendingPushOpenRoute } from './pushNavigationState';
+import { clearSessionsManagementSnapshotCache } from './sessionsManagementSnapshot';
 import { schedulePostLoginAuthDiagnostics } from './nativeAuthDiagnostics';
 import {
   normalizeAuthRole,
@@ -487,9 +488,12 @@ export async function handleLoginWithGoogle(expectedRole?: string) {
 
 export async function performAppLogout(reason: AppLogoutReason): Promise<void> {
   console.info('[auth-diagnostics] logout-called', { reason });
+  // Invalidate sensitive snapshots before asynchronous Firebase sign-out begins.
+  clearSessionsManagementSnapshotCache();
   try {
     await signOut(auth);
   } finally {
+    clearSessionsManagementSnapshotCache();
     useAuthStore.getState().resolveAuth(
       'unauthenticated',
       null,
