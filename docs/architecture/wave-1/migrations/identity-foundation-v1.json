@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c15_production_verified_ready_for_r5c2c16_selection_audit",
+    "status": "r5c2c16_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c16_fresh_bounded_admin_mutation_slice_selection_audit",
+    "nextBrick": "r5c2c16_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3367,6 +3367,62 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c16": {
+              "title": "AVS manual verification canonical Admin authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "adminVerifyAttendanceValidationGroup"
+              ],
+              "sourceSessionAttendanceWritesIntroduced": false,
+              "authoritativePaymentTeacherEarningBillingWritesIntroduced": false,
+              "existingAvsCaseAndResolutionTransactionPreserved": true,
+              "productionWiring": false,
+              "productionVerified": false,
+              "validationPending": false,
+              "selectionAudit": {
+                "workflowRunId": 38014975326,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 35,
+                "deployedRootsDependingOnLegacyImporters": 82,
+                "oneFunctionBoundaries": 14,
+                "writesPerformed": 0
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "adminVerifyAttendanceValidationGroup"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "pull_request_acceptance",
+                "workflowRunId": 38015294189,
+                "validatedHeadSha": "169522e61dc4275c97d33327d8fe57f3673e5428",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedRegressions": {
+                  "filesPassed": 2,
+                  "testsPassed": 6
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 154,
+                  "filesSkipped": 2,
+                  "testsPassed": 1176,
+                  "testsSkipped": 25
+                },
+                "deploymentClassifierAndContracts": "passed",
+                "singleFunctionBlastRadius": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
