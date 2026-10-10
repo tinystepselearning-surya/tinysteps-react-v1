@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import {
   hasApnsConfiguration,
   isApnsInvalidTokenReason,
@@ -389,7 +389,7 @@ export const sendTestPushNotification = onCall(
     memory: '256MiB',
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const input = asRecord(request.data) as SendTestPushNotificationInput;
     const targetUserId = asOptionalString(input.userId) || request.auth!.uid;
