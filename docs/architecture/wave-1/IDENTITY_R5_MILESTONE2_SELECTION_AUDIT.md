@@ -70,7 +70,7 @@ Higher-risk wallet, teacher earnings, role administration and legacy scheduler w
 - PR #693, merged at `7f50afbabe75da964ab2372b27ec9645d561408f`.
 - Acceptance CI `38039642887` passed: focused/full Functions tests, build, lint, exact five-root impact with no Hosting/Firestore deployment.
 - Migrated `assignLPToParent`, `unassignLPFromParent`, `assignLPToTeacher`, `unassignLPFromTeacher`, and `adminSetUserRole`, which is re-exported by the same LP module.
-- **Separate production checkpoint verification pending as of this draft.** Do not mark production verified until exact 5/5 evidence is available.
+- Production run `38039760999` succeeded on commit `7f50afbabe75da964ab2372b27ec9645d561408f`, with **5/5 Cloud Functions checkpoint-ready** and production marker advanced. No full Functions deployment, Hosting, Firestore Rules or index changes.
 
 ### Remaining boundary inventory after C35 code merge
 
@@ -87,3 +87,9 @@ A fresh direct-source audit (not just lagging code-search index results) found s
 | `adminAttendanceCorrectionTeacherPayDecision.ts` | 1 | Attendance correction and teacher-pay disposition, including trigger |
 
 These counts are **source guard call sites**, not the number of active or impacted Cloud Functions. Prioritize new slices only after exact transitive-impact classification. Do not modify the shared `helpers/adminGuard.ts` or combine the highest-risk finance and legacy scheduler graphs into a single deployment.
+
+## Batch C33-C35 closeout verdict
+
+**Production-verified, but Milestone 2 remains open.** The batch migrated ten Admin-gated callables through three independent bounded production releases, touching eleven deployed Function roots in total (2 + 4 + 5). C33's second deployment root is its still-legacy write-mode dependent, not an extra migrated guard. All three acceptance gates, Functions builds, full regression suites, exact deployment-impact checks and production checkpoints passed.
+
+The next brick is a **fresh read-only transitive dependency/operational-risk audit** of the seven remaining legacy-guard source modules; do not begin with a shared-guard rewrite. Retain the C33 parent-payment audit query-read cost concern for a separate bounded performance review.
