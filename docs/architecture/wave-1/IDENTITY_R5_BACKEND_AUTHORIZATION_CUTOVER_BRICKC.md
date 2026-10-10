@@ -3043,3 +3043,7 @@ Lint/build/deployment classifier passed. Exact three impacted Functions:
 `forceRefreshAttendanceValidationRange`, `runAttendanceValidationRange`.
 No full Functions deploy or Hosting/Firestore changes expected.
 Production and checkpoint verification remain required before closeout.
+
+### R5C2C26 Milestone 1 AVS evidence production verification
+
+GitHub Actions run 38029445802 completed successfully on merge commit `7196e50d0ede0c7538a409aad9783b12529932e8`. Exactly three Functions were deployed in one bounded batch: `forceRefreshAttendanceValidationEvidence`, `forceRefreshAttendanceValidationRange`, and `runAttendanceValidationRange`. Deployment verification confirmed 3/3 checkpoint-ready; full Functions deployment was false, Hosting/Firestore unchanged and `ci/functions-production` advanced to the merge SHA. Milestone 1 remains underway; AVS evidence boundary is complete.
