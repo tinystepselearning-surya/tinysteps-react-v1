@@ -1,0 +1,43 @@
+name: R5C2C33 Payment Audit Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c33-payment-audit-canonical-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Focused canonical payment audit regressions
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalAdminPaymentBackfillDryRunRouting.spec.ts functions/test/parentPaymentBackfillAudit.spec.ts
+      - name: Full Functions regression suite
+        run: npm --prefix functions test
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/parentPaymentBackfillDryRun.ts test/canonicalAdminPaymentBackfillDryRunRouting.spec.ts
+      - name: Exact deployment impact
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'Functions impacted: 2' /tmp/impact.txt
+          grep -q 'functions:auditParentPaymentBackfillDryRun' /tmp/impact.txt
+          grep -q 'functions:applyParentPaymentBackfillForSafeParents' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
