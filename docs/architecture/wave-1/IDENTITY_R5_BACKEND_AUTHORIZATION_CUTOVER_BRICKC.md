@@ -3181,3 +3181,25 @@ identified exactly fourteen affected Functions: `createEnrollment`,
 Full Functions deployment false; Hosting, Firestore Rules and indexes
 unchanged. Temporary acceptance workflow retired before merge. Independent
 production and checkpoint verification required before closeout.
+
+
+### R5C2C30–C32 verified production closeout (2026-10-10)
+
+- **R5C2C30 lifecycle:** PR #686, merge commit `7eb44c4123bba59dd4d95d417427df1db4e619ea`; acceptance run `38032919617`; production run `38033057095` succeeded with 14/14 Functions checkpoint-ready and marker advanced.
+- **R5C2C31 course transition:** PR #687, merge commit `8ea51e68eadaf430e910bf892e9c4065155133d6`; acceptance run `38035450378`; production run `38035698083` succeeded with 1/1 Function checkpoint-ready and marker advanced.
+- **R5C2C32 rolling compatibility:** PR #688, merge commit `0e05a03cccce2ba8e34cf30cd5f322a2a394121d`; acceptance run `38035488856`; production run `38035930603` succeeded with 8/8 Functions checkpoint-ready and marker advanced.
+
+Each migration used the dedicated canonical Admin helper backed by `authAccessReadModels/{firebaseUid}`, with no fallback to the shared legacy Admin guard. Temporary per-brick acceptance workflows were removed before merging. None required full Functions deployment; no Hosting, Firestore Rules or index changes.
+
+### Milestone 1 operational authorization final exit gate
+
+Scope is AVS evidence, enrollment/scheduling repair, reconciliation, rolling lifecycle, course transitions, compatibility entrypoints and messaging Admin authorization. Other legacy Admin guard consumers outside this operational scope are explicitly deferred to a subsequent milestone.
+
+The gate must confirm:
+1. All operational callables route via canonical authority and fail closed, without legacy Admin fallback.
+2. AVS, rolling schedule lifecycle, repair, reconciliation, compatibility and transition regression contracts pass together.
+3. The complete Functions test suite, Functions build, focused lint and deployment impact classification pass.
+4. The ledger contains production deployment evidence for all seven Milestone 1 slices C26–C32.
+5. No unexpected Functions, Hosting or Firestore production deployment is needed for documentation/test closeout.
+
+**Exit verdict: PENDING** until the independent final acceptance workflow passes. Never mark this milestone complete on green deployment alone.
