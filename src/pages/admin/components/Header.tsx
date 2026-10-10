@@ -21,7 +21,6 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   'attendance-corrections': 'Attendance Corrections',
   'attendance-validation': 'Parent Month Close',
   relationships: 'Relationship Management',
-  courses: 'Course Management',
   'today-notifications': 'Sessions Management',
   lessons: 'Lesson Library',
   'class-recordings': 'Class Recordings',
