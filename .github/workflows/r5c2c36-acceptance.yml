@@ -1,0 +1,52 @@
+name: R5C2C36 Snapshot and Pay Authorization Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c36-snapshot-pay-adjust-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Focused canonical Admin and business regression
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalAdminMilestone2C36Routing.spec.ts functions/test/canonicalAdminGuard.spec.ts functions/test/sessionsManagementSnapshotRollingHorizon.spec.ts functions/test/attendanceCorrectionFreeze.spec.ts
+      - name: Full Functions regression suite
+        run: npm --prefix functions test
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/sessionsManagementSnapshot.ts src/adminAttendanceCorrectionTeacherPayDecision.ts src/parentPaymentBackfillWriteMode.ts test/canonicalAdminMilestone2C36Routing.spec.ts
+      - name: Exact bounded Function dependency classification
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions deployment required: true' /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'Functions impacted: 10' /tmp/impact.txt
+          grep -Fq 'functions:getSessionsManagementSnapshot' /tmp/impact.txt
+          grep -Fq 'functions:adminRefreshSessionsManagementSnapshot' /tmp/impact.txt
+          grep -Fq 'functions:getSessionsManagementDateSnapshot' /tmp/impact.txt
+          grep -Fq 'functions:onSessionsManagementEnrollmentWrite' /tmp/impact.txt
+          grep -Fq 'functions:onSessionsManagementClassSessionWrite' /tmp/impact.txt
+          grep -Fq 'functions:refreshSessionsManagementSnapshot4am' /tmp/impact.txt
+          grep -Fq 'functions:prepareAdminAttendanceCorrectionTeacherPayDecision' /tmp/impact.txt
+          grep -Fq 'functions:cancelAdminAttendanceCorrectionTeacherPayDecision' /tmp/impact.txt
+          grep -Fq 'functions:onAdminAttendanceCorrectionTeacherPayDecisionLink' /tmp/impact.txt
+          grep -Fq 'functions:applyParentPaymentBackfillForSafeParents' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
