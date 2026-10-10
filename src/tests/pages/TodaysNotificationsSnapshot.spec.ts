@@ -210,7 +210,7 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(pageSource).toContain("'Parent unavailable'");
   });
 
-  it('keeps zero Overall Admissions authoritative instead of exposing session-only enrollment rows', () => {
+  it('does not expose unscoped legacy Overall Admissions from a previous browser session', () => {
     clearSessionsManagementSnapshotCacheForTests();
     window.sessionStorage.setItem(
       'tinysteps:sessions-management-snapshot:v3',
@@ -232,30 +232,34 @@ describe('Sessions Management authoritative snapshot loading', () => {
       getCachedSessionsManagementRowsForReadLabel(
         'TodaysNotifications:overall-admissions',
       ),
-    ).toEqual([]);
+    ).toBeNull();
 
     clearSessionsManagementSnapshotCacheForTests();
   });
 
   it('revalidates the browser snapshot with the live projection revision', () => {
     expect(snapshotClientSource).toContain(
-      "const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v3';",
+      "const CACHE_KEY = 'tinysteps:sessions-management-snapshot:v4';",
     );
+    expect(snapshotClientSource).toContain(
+      "const LEGACY_CACHE_KEY = 'tinysteps:sessions-management-snapshot:v3';",
+    );
+    expect(snapshotClientSource).toContain('verifiedGeneration === actor.generation');
     expect(snapshotClientSource).toContain('knownProjectionRevision');
     expect(snapshotClientSource).toContain(
       'cached?.snapshot.projectionRevision ?? -1',
     );
   });
 
-  it('keeps the cached snapshot when live callable revalidation is temporarily unhealthy', () => {
-    expect(snapshotClientSource).toContain(
+  it('uses cache only after same-user verification and only for transient errors', () => {
+    expect(snapshotClientSource).toContain('canUseVerifiedFallback(actor, cached, error)');
+    expect(snapshotClientSource).toContain('verifiedGeneration === actor.generation');
+    expect(snapshotClientSource).toContain('isTransientFailure(error)');
+    expect(snapshotClientSource).toContain('isAccessFailure(error)');
+    expect(snapshotClientSource).toContain('clearSessionsManagementSnapshotCache()');
+    expect(snapshotClientSource).not.toContain(
       '[SessionsManagementSnapshot] live snapshot revalidation failed; using cached snapshot',
     );
-    expect(snapshotClientSource).toContain(
-      '[SessionsManagementSnapshot] manual refresh failed; keeping cached snapshot',
-    );
-    expect(snapshotClientSource).toContain('if (cached?.snapshot) {');
-    expect(snapshotClientSource).toContain('return cached.snapshot;');
   });
 
   it('listens to the single admin projection signal and reloads the cached read model', () => {
