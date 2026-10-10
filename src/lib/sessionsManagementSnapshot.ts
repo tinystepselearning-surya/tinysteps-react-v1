@@ -57,6 +57,20 @@ let authGeneration = 0;
 // until the backend successfully authorizes the current authenticated session.
 let verifiedGeneration = -1;
 
+const cacheInvalidationListeners = new Set<() => void>();
+
+/** UI subscribers can clear already-rendered rows before async claim resolution. */
+export const subscribeSessionsManagementSnapshotInvalidation = (listener: () => void): (() => void) => {
+  cacheInvalidationListeners.add(listener);
+  return () => { cacheInvalidationListeners.delete(listener); };
+};
+
+const notifySnapshotCacheInvalidated = (): void => {
+  for (const listener of cacheInvalidationListeners) {
+    try { listener(); } catch { /* preserve cache invalidation if UI unmounted */ }
+  }
+};
+
 const canUseSessionStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
 
@@ -98,6 +112,7 @@ export const observeSessionsManagementAuthUid = (uid: string | null): void => {
   if (canUseSessionStorage()) {
     try { window.sessionStorage.removeItem(LEGACY_CACHE_KEY); } catch { /* best effort */ }
   }
+  notifySnapshotCacheInvalidated();
 };
 
 const currentSnapshotActor = (): SnapshotActor | null => {
@@ -296,6 +311,7 @@ const replaceSnapshotCache = (
 export const clearSessionsManagementSnapshotCache = (): void => {
   authGeneration++;
   discardBrowserCache();
+  notifySnapshotCacheInvalidated();
 };
 
 export const clearSessionsManagementSnapshotCacheForTests = clearSessionsManagementSnapshotCache;

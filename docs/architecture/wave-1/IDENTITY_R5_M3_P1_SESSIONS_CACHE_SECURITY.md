@@ -10,11 +10,12 @@ Milestone-3 report in PR #700 identified `src/lib/sessionsManagementSnapshot.ts`
 
 1. **Actor-scoped v4 cache:** The cache now carries the signed-in Firebase UID as its owner. An unauthorized or mismatched actor never consumes the rows or another actor's projection-revision hint. The old unscoped v3 key is not migrated and is removed.
 2. **Per-session revalidation:** Persisted data can supply only a revision hint until the same authenticated actor successfully calls `getSessionsManagementSnapshot`. The synchronous UI cache getters return no data without this verification.
-3. **Credential boundary invalidation:** Firebase Auth changes (via existing AuthBootstrap listener), explicit logout, an auth listener error, access failure and account mismatch clear the cache. The code introduces no extra authentication listeners or Firestore reads.
+3. **Credential boundary invalidation:** Firebase Auth changes (via existing AuthBootstrap listener), explicit logout, an auth listener error, access failure and account mismatch clear the cache. In-memory UI subscribers also clear already-rendered rows before asynchronous claims resolution. The code introduces no extra Firebase authentication listeners or Firestore reads.
 4. **Race-safe in-flight work:** A generation counter prevents an old actor's in-flight snapshot, refresh or selected-date response from populating the new actor's memory/storage. Promise cleanup is identity-checked so an old completion cannot discard the new actor's pending request.
 5. **Fail-closed errors:** `permission-denied`, `unauthenticated`, disabled/expired token and unrecognized errors do not reuse cached operational data. Only explicitly recognized transient transport errors may reuse already revalidated, same-session data.
 6. **Admin screen:** Existing displayed rows clear before paint when the account UID changes and on relevant projection authorization failures. Old actor loaders are re-run/cancelled on UID changes.
 7. **Reminder fallback:** A denied or actor-changed snapshot request is no longer routed through legacy Firestore fallback. That path remains only for recognized transient failures, preserving outage resilience.
+8. **Overall Admissions read protection:** When the cached revision is not yet verified, revalidate the projected snapshot before considering the previous full-enrollment Firestore query. Only a recognized transient outage permits that raw-query fallback.
 
 No Cloud Functions, backend authorization, Firestore/Storage Rules, indexes, payments, attendance data or custom claims are changed.
 

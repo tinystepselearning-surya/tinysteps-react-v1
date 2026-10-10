@@ -262,6 +262,17 @@ describe('Sessions Management authoritative snapshot loading', () => {
     );
   });
 
+  it('revalidates an unauthenticated-cache miss before any full Overall Admissions Firestore read', () => {
+    const start = pageSource.indexOf('let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(');
+    const revalidate = pageSource.indexOf('await loadSessionsManagementSnapshot();', start);
+    const fallback = pageSource.indexOf("await getDocs(query(collection(db, 'enrollments')))", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(revalidate).toBeGreaterThan(start);
+    expect(fallback).toBeGreaterThan(revalidate);
+    expect(pageSource.slice(start, fallback)).toContain('isSessionsManagementTransientFailure(error)');
+    expect(pageSource).toContain('subscribeSessionsManagementSnapshotInvalidation(');
+  });
+
   it('listens to the single admin projection signal and reloads the cached read model', () => {
     expect(pageSource).toContain(
       "doc(db, 'adminSessionsManagement', 'projectionState')",

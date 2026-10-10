@@ -22,6 +22,7 @@ import {
   loadSessionsManagementSnapshot,
   observeSessionsManagementAuthUid,
   refreshSessionsManagementSnapshot,
+  subscribeSessionsManagementSnapshotInvalidation,
   type SessionsManagementSnapshotPayload,
 } from '../../lib/sessionsManagementSnapshot';
 
@@ -146,6 +147,20 @@ describe('P1 Sessions Management authenticated cache and request isolation', () 
     expect(window.sessionStorage.getItem(KEY)).toBeNull();
     success('a');
     expect((await loadSessionsManagementSnapshot()).snapshotId).toBe('a');
+  });
+
+  it('notifies UI subscribers immediately for account changes and authorization invalidation', async () => {
+    const onInvalidation = vi.fn();
+    const unsubscribe = subscribeSessionsManagementSnapshotInvalidation(onInvalidation);
+    success('a-sensitive');
+    await loadSessionsManagementSnapshot();
+    signedIn('admin-b');
+    expect(onInvalidation).toHaveBeenCalledTimes(1);
+    clearSessionsManagementSnapshotCache();
+    expect(onInvalidation).toHaveBeenCalledTimes(2);
+    unsubscribe();
+    signedOut();
+    expect(onInvalidation).toHaveBeenCalledTimes(2);
   });
 
   it('removes rows immediately on sign-out and does not allow unauthenticated requests', async () => {

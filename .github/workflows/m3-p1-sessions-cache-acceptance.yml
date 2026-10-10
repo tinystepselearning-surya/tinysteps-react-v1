@@ -54,6 +54,8 @@ jobs:
           src/tests/pages/TodaysNotificationsSnapshot.spec.ts
       - name: Full application lint
         run: npm run lint
+      - name: Install Playwright Chromium for prerender validation
+        run: npx playwright install --with-deps chromium
       - name: Public site production build and existing integrity checks
         run: npm run build
   deployment-impact:

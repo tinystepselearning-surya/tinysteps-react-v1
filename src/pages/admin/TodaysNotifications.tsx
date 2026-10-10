@@ -72,6 +72,7 @@ import {
   clearSessionsManagementSnapshotCache,
   isSessionsManagementAuthorizationFailure,
   isSessionsManagementTransientFailure,
+  subscribeSessionsManagementSnapshotInvalidation,
 } from '../../lib/sessionsManagementSnapshot';
 import {
   buildTeacherDailyReminderGroups,
@@ -1211,6 +1212,21 @@ export default function TodaysNotifications() {
     setSessionLoadError(null);
     lastProjectionSignalRef.current = '';
   }, [user?.uid]);
+
+  // Firebase's UID-change callback runs before the store resolves token claims.
+  // Clear old actor rows immediately rather than waiting for the next render.
+  useLayoutEffect(() => subscribeSessionsManagementSnapshotInvalidation(() => {
+    setSessions([]);
+    setEnrollments([]);
+    setUsersMap({});
+    setKidMap({});
+    setEnrollmentMap({});
+    setCourseMap({});
+    setMessageDrafts({});
+    setMessageEditor(null);
+    setSessionLoadError(null);
+    lastProjectionSignalRef.current = '';
+  }), []);
 
   const [todayDateKey, setTodayDateKey] = useState(() =>
     getSessionsManagementBaselineDateKey(),
