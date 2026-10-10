@@ -514,7 +514,7 @@ export const adminCreateUser = onCall(
             authUser.uid,
             claims,
           );
-      } catch (error) {
+      } catch {
         try {
           await admin.auth()
             .deleteUser(authUser.uid);
