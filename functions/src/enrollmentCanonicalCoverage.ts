@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import { onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -223,7 +223,7 @@ async function computeCoverageSnapshot(triggerType: 'manual' | 'scheduled', crea
 export const runEnrollmentCanonicalCoverage = onCall(
   { region: REGION, memory: '512MiB', timeoutSeconds: 300 },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     return computeCoverageSnapshot('manual', request.auth?.uid || null);
   },
 );
