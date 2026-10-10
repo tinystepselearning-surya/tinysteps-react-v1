@@ -49,3 +49,21 @@ The milestone may be marked **complete only when**:
 7. Ledger and final independent gate are green and merged to `main`.
 
 **Current exit verdict: NOT ATTEMPTED.** No destructive retirement and no broad identity-reader/Rules switch is authorized in Milestone 3 kickoff.
+
+
+## First independent verification run — 2026-10-10
+
+**CI:** `38043064008` — PASS across all three independent jobs.
+
+- 240 production source files inspected; no active legacy Admin guard import/call sites.
+- Production and Milestone 1–2 ledger evidence checks passed.
+- 76 identity/deployment tooling Node tests passed.
+- Full Functions suite: **177 passing files, 2 skipped files**; TypeScript build passed.
+- Critical workflows: **158 tests across 20 files passed** (AVS, rolling scheduling, sessions, billing, wallet, teacher pay and portal identity).
+- Current Firestore Rules emulator: **81 tests across 13 files passed**.
+- Deployment impact: **0 Functions, no Hosting, no Firestore rules/indexes**.
+- The initial broad operational suite exposed one obsolete AVS test assertion from the earlier canonical Admin migration. Updated that assertion without modifying the production AVS callable. Initial tooling run also needed Functions compilation before dependent Node tests. Both corrections are part of the validated branch.
+
+**Coverage boundary:** These passes concern code, source/ledger and local emulators. Direct signed-in production role canaries, current authAccessReadModels coverage/drift, and live Firestore read quantities remain **NOT VERIFIED**. Existing Rules still use compatibility-era identity checks. Therefore the Milestone-3 final exit gate remains **NOT ATTEMPTED**, with no authorization to switch global identity readers or Rules.
+
+After this PR merges, daily scheduled CI and the existing hourly GitHub CI/production monitor provide ongoing checks; they do not themselves verify authenticated production access or mutate production data.
