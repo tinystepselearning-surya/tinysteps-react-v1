@@ -1,0 +1,85 @@
+name: R5M3 Six Historical Test Contracts Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5-m3-separate-regression-test-debt-20261010
+permissions:
+  contents: read
+jobs:
+  focused:
+    name: Six independently verified test files and typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: 1 First-time AVS baseline canonical Admin routing
+        run: npx vitest run src/tests/functions/attendanceValidationFirstTimeBaselineRouting.spec.ts
+      - name: 2 Latest-check AVS canonical Admin routing
+        run: npx vitest run src/tests/functions/attendanceValidationLatestCheckRouting.spec.ts
+      - name: 3 Monthly parent progress canonical Admin routing
+        run: npx vitest run src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts
+      - name: 4 Unified range canonical Admin routing
+        run: npx vitest run src/tests/functions/attendanceValidationUnifiedRangeRouting.spec.ts
+      - name: 5 Monthly progress idempotency and denied canonical Admin
+        run: npx vitest run src/tests/functions/monthlyParentProgressCallableIdempotency.spec.ts
+      - name: 6 Public Speaking course positioning and canonical routes
+        run: npx vitest run src/tests/seo/speakingGrowthBrick6.spec.ts
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Focused six-file lint
+        run: >
+          npx eslint
+          src/tests/functions/attendanceValidationFirstTimeBaselineRouting.spec.ts
+          src/tests/functions/attendanceValidationLatestCheckRouting.spec.ts
+          src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts
+          src/tests/functions/attendanceValidationUnifiedRangeRouting.spec.ts
+          src/tests/functions/monthlyParentProgressCallableIdempotency.spec.ts
+          src/tests/seo/speakingGrowthBrick6.spec.ts
+  full-suite:
+    name: Unfiltered complete frontend Vitest suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Full app test suite with no test-file exclusions
+        run: npm test
+  zero-deploy:
+    name: Verify test-only change and zero Firebase deployment impact
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Enforce exact six test-files plus temporary workflow
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          git diff --name-only "$baseline" HEAD | tee /tmp/changed.txt
+          if grep -Ev '^src/tests/(functions/(attendanceValidationFirstTimeBaselineRouting|attendanceValidationLatestCheckRouting|attendanceValidationMonthlyParentProgressRouting|attendanceValidationUnifiedRangeRouting|monthlyParentProgressCallableIdempotency)|seo/speakingGrowthBrick6)\.spec\.ts$|^\.github/workflows/r5m3-test-contracts-acceptance\.yml$' /tmp/changed.txt; then
+            echo 'Unexpected changes outside six tests + temporary CI'; exit 1
+          fi
+          count="$(grep -c '^src/tests/' /tmp/changed.txt)"
+          test "$count" -eq 6
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions deployment required: false' /tmp/impact.txt
+          grep -q 'Functions impacted: 0' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
