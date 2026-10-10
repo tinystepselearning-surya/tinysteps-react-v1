@@ -2758,3 +2758,39 @@ GitHub Actions run 38020603559 (#3935) succeeded on merge commit
 Next: re-audit the remaining legacy Admin dependency graph and assess a safe
 multi-Function cutover, keeping financial and authoritative attendance mutations
 isolated rather than automatically grouping every remaining candidate.
+
+## R5C2C20 — Grouped coverage and finance report canonical Admin authorization
+
+Fresh read-only group selection audit GitHub Actions 38021045331: 31 legacy
+Admin guard importers, 79 dependent Function roots; no working tree writes.
+Grouped two independent report source modules with a total of four deployed
+Function roots. Manual Admin callables switch to canonical
+`ensureCanonicalAdmin` without legacy fallback. Scheduled report jobs, existing
+read model/report persistence, read budgets and reporting semantics remain
+unchanged. No payment, teacher earning, billing or attendance authoritative
+write behavior is introduced.
+
+### R5C2C20 acceptance evidence
+
+~~~text
+PR: #665
+Acceptance run: 38021105139
+Validated head: dd8d70669fab97c28d76d5fbff42bbff209c0cb2
+Conclusion: success
+Focused lint and Functions build: passed
+Focused tests: 2 files, 8 passed
+Full Functions estate: 158 passed files, 2 skipped
+Functions tests: 1190 passed, 25 skipped
+Deployment classifier/contracts: passed
+Exactly four impacted Function roots:
+  runEnrollmentCanonicalCoverage
+  runEnrollmentCanonicalCoverageDaily
+  runFinanceReconciliationAudit
+  runFinanceReconciliationAuditDaily
+Full Functions deployment: false
+Hosting / Firestore Rules / indexes changed: false
+~~~
+
+The temporary acceptance workflow was retired before merge. Production
+verification of all four targets, each checkpoint, and Functions production
+marker advancement is a separate release gate.

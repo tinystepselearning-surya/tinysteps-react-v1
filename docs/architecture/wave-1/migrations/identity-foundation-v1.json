@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c19_production_verified_ready_for_next_bounded_group_audit",
+    "status": "r5c2c20_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c20_fresh_multi_function_dependency_selection_audit",
+    "nextBrick": "r5c2c20_group_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3672,6 +3672,70 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c20": {
+              "title": "Grouped enrollment coverage and finance audit report Admin authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "sourceModules": [
+                "functions/src/enrollmentCanonicalCoverage.ts",
+                "functions/src/financeReconciliationReport.ts"
+              ],
+              "functions": [
+                "runEnrollmentCanonicalCoverage",
+                "runEnrollmentCanonicalCoverageDaily",
+                "runFinanceReconciliationAudit",
+                "runFinanceReconciliationAuditDaily"
+              ],
+              "scheduledJobsPreserved": true,
+              "reportWriteSemanticsPreserved": true,
+              "authoritativeFinanceOrAttendanceWritesIntroduced": false,
+              "productionWiring": false,
+              "productionVerified": false,
+              "selectionAudit": {
+                "workflowRunId": 38021045331,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 31,
+                "deployedRootsDependingOnLegacyImporters": 79,
+                "writesPerformed": 0
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 4,
+                "impactedFunctions": [
+                  "runEnrollmentCanonicalCoverage",
+                  "runEnrollmentCanonicalCoverageDaily",
+                  "runFinanceReconciliationAudit",
+                  "runFinanceReconciliationAuditDaily"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "push_acceptance",
+                "workflowRunId": 38021105139,
+                "validatedHeadSha": "dd8d70669fab97c28d76d5fbff42bbff209c0cb2",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedRegressions": {
+                  "filesPassed": 2,
+                  "testsPassed": 8
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 158,
+                  "filesSkipped": 2,
+                  "testsPassed": 1190,
+                  "testsSkipped": 25
+                },
+                "deploymentClassifierAndContracts": "passed",
+                "exactFourFunctionBlastRadius": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
