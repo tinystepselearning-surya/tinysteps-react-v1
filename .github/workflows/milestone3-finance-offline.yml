@@ -1,0 +1,73 @@
+name: Milestone 3 Finance Offline
+
+on:
+  pull_request:
+    paths:
+      - 'functions/test/milestone3Finance*.spec.ts'
+      - 'functions/test/support/finance*.ts'
+      - 'functions/test/finance-pagination.tsconfig.json'
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_FINANCE_PAGINATION_OFFLINE_REPORT.md'
+      - '.github/workflows/milestone3-finance-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-finance:
+    name: Synthetic finance, full regression and zero deployment impact
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Finance reference, prototype and write-boundary tests
+        run: |
+          mkdir -p artifacts/finance-offline
+          npx vitest run --config functions/vitest.config.ts functions/test/milestone3Finance*.spec.ts --reporter=json --outputFile=artifacts/finance-offline/focused.json
+      - name: Full regression suites (no credentials or production adapters)
+        run: |
+          npm --prefix functions test -- --reporter=json --outputFile=artifacts/finance-offline/functions.json
+          npm test -- --reporter=json --outputFile=artifacts/finance-offline/root.json
+      - name: Production and prototype TypeScript checks
+        run: |
+          npm --prefix functions run build
+          npm run typecheck
+          npx tsc -p functions/test/finance-pagination.tsconfig.json
+      - name: Lint production baseline and new offline files
+        run: |
+          npm run lint
+          npm --prefix functions run lint
+          cd functions
+          npx eslint test/milestone3Finance*.spec.ts test/support/finance*.ts
+      - name: Exact deployment impact and offline-only diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          baseline="$(git merge-base "$BASE_SHA" HEAD)"
+          git diff --name-only "$baseline" HEAD > artifacts/finance-offline/changed-paths.txt
+          unexpected="$(grep -Ev '^(functions/test/milestone3Finance[^/]*\.spec\.ts|functions/test/support/finance[^/]*\.ts|functions/test/finance-pagination\.tsconfig\.json|docs/architecture/wave-1/IDENTITY_R5_M3_FINANCE_PAGINATION_OFFLINE_REPORT\.md|\.github/workflows/milestone3-finance-offline\.yml)$' artifacts/finance-offline/changed-paths.txt || true)"
+          if test -n "$unexpected"; then echo 'Unexpected path in offline-only finance PR'; exit 1; fi
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee artifacts/finance-offline/deployment-impact.txt
+          grep -q 'Functions deployment required: false' artifacts/finance-offline/deployment-impact.txt
+          grep -q 'Functions full deployment: false' artifacts/finance-offline/deployment-impact.txt
+          grep -q 'Functions impacted: 0' artifacts/finance-offline/deployment-impact.txt
+          grep -q 'Firestore rules changed: false' artifacts/finance-offline/deployment-impact.txt
+          grep -q 'Firestore indexes changed: false' artifacts/finance-offline/deployment-impact.txt
+          grep -q 'Hosting changed: false' artifacts/finance-offline/deployment-impact.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: milestone3-finance-offline
+          path: artifacts/finance-offline/
+          retention-days: 14
