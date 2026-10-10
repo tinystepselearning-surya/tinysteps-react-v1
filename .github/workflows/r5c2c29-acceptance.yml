@@ -35,7 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main --quiet
-          node scripts/resolve-deployment-impact.mjs --before "$(git rev-parse origin/main)" --functions-before "$(git rev-parse origin/main)" --sha "$GITHUB_SHA" | tee /tmp/r5c2c29-impact.txt
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/r5c2c29-impact.txt
           grep -q 'Functions full deployment: false' /tmp/r5c2c29-impact.txt
           grep -q 'Hosting changed: false' /tmp/r5c2c29-impact.txt
           grep -q 'Firestore rules changed: false' /tmp/r5c2c29-impact.txt
