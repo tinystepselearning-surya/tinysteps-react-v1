@@ -1,0 +1,40 @@
+name: R5C2C30 Lifecycle Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c30-lifecycle-canonical-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Focused lifecycle and reconciliation regressions
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalRollingLifecycleAdminRouting.spec.ts functions/test/canonicalAdminRollingReconciliationRouting.spec.ts functions/test/rollingScheduleLifecycle.spec.ts
+      - name: Full Functions suite
+        run: npm --prefix functions test
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/scheduling/rollingScheduleLifecycle.ts
+      - name: Deployment impact classification
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
