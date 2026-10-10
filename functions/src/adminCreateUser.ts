@@ -2,7 +2,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -27,7 +27,7 @@ export const backfillTeacherDocs = onCall(
     maxInstances: 5,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const db = admin.firestore();
     const ts =
