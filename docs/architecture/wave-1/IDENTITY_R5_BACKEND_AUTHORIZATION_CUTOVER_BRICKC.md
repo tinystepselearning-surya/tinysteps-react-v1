@@ -2561,3 +2561,32 @@ Firestore indexes changed: false
 The temporary acceptance workflow is retired before merge. Production completion
 requires an independently verified bounded Function deployment with one
 checkpoint-ready Function and an advanced Functions production baseline.
+
+### R5C2C16 production evidence
+
+R5C2C16 completed its bounded single-Function production deployment.
+
+~~~text
+Pull request: #657
+Merge commit: d626a77a26ccee7929c3658fa35a33f7254a9f51
+Deploy workflow run: 38015842082
+Deploy run number: 3929
+Result: success
+Functions deployment required: true
+Functions full deployment: false
+Impacted/deployed Functions: exactly 1
+  adminVerifyAttendanceValidationGroup
+Deployment batches: 1/1
+Cloud Functions verified: 1
+Functions checkpoint-ready: 1/1
+Hosting deployed: false
+Firestore Rules deployed: false
+Firestore indexes deployed: false
+Functions production baseline advanced: true
+Recovery job required: false
+~~~
+
+Deployment logs confirmed one bounded batch, one verified and checkpoint-ready Function,
+and advancement of `ci/functions-production` to the merge commit. R5C2C16 is complete
+in production. The next slice, R5C2C17, requires a fresh read-only legacy-guard and
+deployment-topology selection audit. No next Function target is assumed.
