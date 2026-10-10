@@ -2441,3 +2441,45 @@ runtime change is introduced by this documentation-only closeout.
 R5C2C14 is therefore complete in production. The next Wave 1 backend-authorization step is a
 fresh post-C14 legacy-Admin-guard and deployment-topology audit to select a genuinely bounded
 R5C2C15 Admin authorization slice; do not assume the next Function target from numbering.
+
+## R5C2C15 — AVS monthly parent progress canonical Admin authorization
+
+Fresh post-C14 selection audit:
+- GitHub Actions run: 38013932159; result: success
+- Legacy Admin guard importer modules: 36
+- Deployed Function roots transitively depending on legacy importers: 83
+- Genuine one-Function boundaries: 15
+- Audit working-tree writes: 0
+
+Selected independent callable: `updateAttendanceValidationMonthlyParentProgress`.
+Its Admin authority changes from legacy `users/{uid}` via `ensureAdmin` to canonical
+`authAccessReadModels/{firebaseUid}` via `ensureCanonicalAdmin`, with no legacy fallback.
+
+The existing completed-month gate (from September 2026), allowed progress statuses,
+billing-review/invoice-sent workflow actions, transaction logic, callable export, runtime
+configuration and Firestore operations remain unchanged. This migration does not introduce
+mutations to authoritative payments, billing charges, teacher earnings or attendance records.
+Shared legacy `helpers/adminGuard.ts` remains unchanged.
+
+### R5C2C15 acceptance evidence
+
+~~~text
+Pull request: #655
+Workflow run: 38014067726
+Validated head: b80022c72f34d23888bf58e2f778be9daaa1000f
+Result: success
+Changed-file boundary: passed
+Focused lint: passed
+Functions build: passed
+Focused authorization regressions: 2 files, 6 tests passed
+Full Functions unit estate: 153 files passed, 2 skipped
+Full Functions tests: 1173 passed, 25 skipped
+Deployment classifier/contracts: passed
+Deployment impact: exactly updateAttendanceValidationMonthlyParentProgress
+Full Functions deployment: false
+Hosting / Firestore Rules / indexes changed: false
+~~~
+
+The temporary acceptance workflow must be retired before merge. Production closeout
+requires verification of a bounded single-Function deployment, checkpoint readiness,
+and advancement of the Functions production baseline. No full Function redeploy is authorized.
