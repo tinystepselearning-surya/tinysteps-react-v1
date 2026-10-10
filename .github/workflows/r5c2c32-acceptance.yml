@@ -1,0 +1,49 @@
+name: R5C2C32 Compatibility Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c32-compatibility-canonical-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Focused compatibility regressions
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalRollingCompatibilityAdminRouting.spec.ts functions/test/rollingScheduleProductionHardening.spec.ts
+      - name: Full Functions suite
+        run: npm --prefix functions test
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/scheduling/rollingScheduleCompatibility.ts test/canonicalRollingCompatibilityAdminRouting.spec.ts
+      - name: Deployment impact classification
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'Functions impacted: 8' /tmp/impact.txt
+          grep -q 'functions:createEnrollment' /tmp/impact.txt
+          grep -q 'functions:createSessionsFromSchedule' /tmp/impact.txt
+          grep -q 'functions:pauseEnrollmentUpcomingSessions' /tmp/impact.txt
+          grep -q 'functions:repairCancelledFutureRegularSessionsForEnrollment' /tmp/impact.txt
+          grep -q 'functions:repairEnrollmentFutureSessionsFromSchedule' /tmp/impact.txt
+          grep -q 'functions:resumeEnrollmentSchedule' /tmp/impact.txt
+          grep -q 'functions:saveEnrollmentScheduleAndGenerateSessions' /tmp/impact.txt
+          grep -q 'functions:setEnrollmentStatus' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
