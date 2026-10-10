@@ -2483,3 +2483,35 @@ Hosting / Firestore Rules / indexes changed: false
 The temporary acceptance workflow must be retired before merge. Production closeout
 requires verification of a bounded single-Function deployment, checkpoint readiness,
 and advancement of the Functions production baseline. No full Function redeploy is authorized.
+
+### R5C2C15 production evidence
+
+R5C2C15 completed its bounded production deployment successfully.
+
+~~~text
+Pull request: #655
+Merge commit: 88f158225d811c28cf9504c4997e632baff1d837
+Deploy workflow run: 38014280018
+Deploy run number: 3927
+Result: success
+
+Functions deployment required: true
+Functions full deployment: false
+Impacted/deployed Functions: exactly 1
+  updateAttendanceValidationMonthlyParentProgress
+
+Deployment batches: 1/1
+Cloud Functions verified: 1
+Functions checkpoint-ready: 1/1
+Hosting deployed: false
+Firestore Rules deployed: false
+Firestore indexes deployed: false
+School/AVS/lead callable transport: skipped by workflow
+Functions production baseline advanced: true
+Recovery job required: false
+~~~
+
+GitHub Actions deployment logs confirm the one-Function bounded batch, one checkpoint-ready
+Function and advancement of `ci/functions-production` to the merge commit.
+R5C2C15 is complete in production. The next step is a fresh post-C15 legacy-Admin-guard
+and deployment-topology audit to select R5C2C16; no candidate is assumed in advance.
