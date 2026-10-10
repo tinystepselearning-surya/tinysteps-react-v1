@@ -4,7 +4,7 @@ import { createHash } from 'crypto';
 import { FieldPath, type Firestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import {
   ATTENDANCE_VALIDATION_BASELINE_RANGES_COLLECTION,
@@ -554,7 +554,7 @@ export const runAttendanceValidationFirstTimeBaseline = onCall(
     ],
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     let range: { fromDate: string; toDate: string };
     try {
