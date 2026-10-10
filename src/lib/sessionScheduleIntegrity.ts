@@ -1,3 +1,9 @@
+import {
+  doesEnrollmentOccupyCourseSlot as canonicalDoesEnrollmentOccupyCourseSlot,
+  isEnrollmentOperationallyActive as canonicalIsEnrollmentOperationallyActive,
+  normalizeEnrollmentStatus,
+} from './statuses';
+
 const IST_OFFSET_MINUTES = 330;
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -6,7 +12,6 @@ const ROLLING_SCHEDULE_HORIZON_DAYS = 14;
 const ROLLING_SCHEDULE_DELIVERY_MODE = 'rolling';
 const ROLLING_SCHEDULE_TIME_ZONE = 'Asia/Kolkata';
 
-const OPERATIONAL_ENROLLMENT_STATUSES = new Set(['active', 'trial']);
 
 const NON_OPERATIONAL_SESSION_STATUSES = new Set(['cancelled', 'paused']);
 
@@ -28,15 +33,6 @@ const LEGACY_MANUAL_SESSION_SOURCES = [
   'manual_adhoc',
   'manual_ad_hoc',
 ];
-
-const TERMINAL_ENROLLMENT_STATUSES = new Set([
-  'completed',
-  'cancelled',
-  'archived',
-  'inactive',
-  'discontinued',
-  'expired',
-]);
 
 export type ManualSessionState = 'approved' | 'cancelled' | 'withdrawn' | 'completed';
 
@@ -117,44 +113,9 @@ const collectSessionTeacherIds = (sessionLike: Record<string, unknown>): string[
   );
 };
 
-export const normalizeEnrollmentStatusForOperations = (value: unknown): string => {
-  const raw = normalizeText(value).toLowerCase();
-  if (!raw) return 'active';
-  if (raw === 'pending_teacher') return 'trial';
-  if (raw === 'pending_payment' || raw === 'pending_lp' || raw === 'pending_lp_assignment') {
-    return 'active';
-  }
-  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
-};
-
-export const isEnrollmentOperationallyActive = (enrollmentLike: Record<string, unknown> | undefined): boolean => {
-  if (!enrollmentLike) return false;
-  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
-    return false;
-  }
-  const normalized = normalizeEnrollmentStatusForOperations(enrollmentLike.status);
-  // Unknown statuses are deliberately non-operational. A new production status
-  // must be reviewed and added here instead of silently exposing its sessions.
-  return OPERATIONAL_ENROLLMENT_STATUSES.has(normalized);
-};
-
-/**
- * Paused enrollments are hidden operationally but continue to reserve the
- * child/course pair. Unknown non-terminal states also reserve it so a new
- * production status cannot silently permit duplicate enrollment creation.
- */
-export const doesEnrollmentOccupyCourseSlot = (
-  enrollmentLike: Record<string, unknown> | undefined,
-): boolean => {
-  if (!enrollmentLike) return false;
-  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
-    return false;
-  }
-  const normalized = normalizeEnrollmentStatusForOperations(enrollmentLike.status);
-  return !TERMINAL_ENROLLMENT_STATUSES.has(normalized);
-};
+export const normalizeEnrollmentStatusForOperations = normalizeEnrollmentStatus;
+export const isEnrollmentOperationallyActive = canonicalIsEnrollmentOperationallyActive;
+export const doesEnrollmentOccupyCourseSlot = canonicalDoesEnrollmentOccupyCourseSlot;
 
 export const isSessionStatusOperationallyVisible = (value: unknown): boolean => {
   const normalized = normalizeText(value).toLowerCase();
