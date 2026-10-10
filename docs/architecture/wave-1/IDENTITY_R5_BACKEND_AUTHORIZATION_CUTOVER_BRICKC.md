@@ -3076,3 +3076,14 @@ financially protected sessions and the call's API contract are unchanged.
 The temporary acceptance workflow is retired before merge. Production release
 and checkpoint verification remain an independent gate. R5C2C27 must not be
 marked production-complete solely on this acceptance evidence.
+
+### R5C2C27 verified production closeout
+
+GitHub Actions deployment 38030411143 succeeded on squash commit
+`0fe8b286a10715f9eba9c09822881780304158ba`.
+Exactly one Cloud Function, `adminRepairRollingScheduleMaterialization`,
+deployed in one bounded batch on the first attempt and passed production
+verification; 1/1 checkpoint ready. No full Functions deployment. Hosting,
+Firestore Rules and indexes were skipped. The `ci/functions-production`
+marker advanced to the merge commit. R5C2C27 is production-complete;
+operational Milestone 1 continues with a fresh R5C2C28 selection audit.

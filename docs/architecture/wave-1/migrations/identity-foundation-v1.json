@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c26_milestone1_avs_evidence_production_verified_next_operational_batch",
+    "status": "r5c2c27_milestone1_scheduling_repair_production_verified_next_operational_batch",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -4208,6 +4208,61 @@
                 "hostingDeployed": false,
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
+              }
+            },
+
+            "r5c2c27": {
+              "title": "Milestone 1 operational authorization - bounded rolling schedule repair",
+              "functions": [
+                "adminRepairRollingScheduleMaterialization"
+              ],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {
+                "workflowRunId": 38030289064,
+                "result": "success",
+                "focusedTestsPassed": 7,
+                "fullTestsPassed": 1215,
+                "fullTestsSkipped": 25,
+                "fullFilesPassed": 165,
+                "fullFilesSkipped": 2,
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "deploymentClassifier": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctions": [
+                  "adminRepairRollingScheduleMaterialization"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "productionDeployment": {
+                "pullRequest": 679,
+                "mergeCommit": "0fe8b286a10715f9eba9c09822881780304158ba",
+                "workflowRunId": 38030411143,
+                "result": "success",
+                "functionsDeployed": 1,
+                "functionsVerified": 1,
+                "functionsCheckpointReady": 1,
+                "deploymentBatches": 1,
+                "functions": [
+                  "adminRepairRollingScheduleMaterialization"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
