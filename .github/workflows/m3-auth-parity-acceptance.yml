@@ -76,7 +76,7 @@ jobs:
       - name: Storage and Firestore joint emulator deny/allow cases
         run: >
           npx firebase-tools@latest emulators:exec
-          --project tinysteps-react-v1 --only firestore,storage
+          --project demo-tinysteps-m3-storage-parity --only firestore,storage
           "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run src/tests/storage/milestone3AuthorizationParity.rules.spec.ts"
   zero-deploy:
     name: Explicit no production resource change
@@ -95,8 +95,11 @@ jobs:
           git fetch origin main --quiet
           baseline="$(git merge-base origin/main HEAD)"
           files="$(git diff --name-only "$baseline" HEAD)"
-          if printf '%s\n' "$files" | grep -E '^(firestore\.rules|storage\.rules|firestore\.indexes\.json|firebase\.json|functions/src/|src/(?!tests/))' >/dev/null; then
+          if printf '%s\\n' "$files" | grep -E '^(firestore\\.rules|storage\\.rules|firestore\\.indexes\\.json|firebase\\.json|functions/src/)' >/dev/null; then
             echo "Production code/rules changed: abort"; exit 1
+          fi
+          if printf '%s\\n' "$files" | grep -E '^src/' | grep -Ev '^src/tests/' >/dev/null; then
+            echo "Application source changed: abort"; exit 1
           fi
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
           grep -q 'Functions deployment required: false' /tmp/impact.txt
