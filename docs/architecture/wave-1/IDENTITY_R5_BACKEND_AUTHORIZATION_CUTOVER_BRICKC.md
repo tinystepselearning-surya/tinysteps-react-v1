@@ -3000,3 +3000,18 @@ bounded batch 1/1 on first attempt. Two Cloud Functions verified, 2/2
 checkpoint-ready; full Functions deployment false. Hosting/Firestore Rules
 and indexes skipped; `ci/functions-production` marker advanced to merge
 commit. R5C2C24 production-complete; next R5C2C25 fresh audit.
+
+## R5C2C25 — Game results canonical Admin bypass
+
+Read-only selection audit 38028341662 passed: 23 legacy importer modules and
+68 dependent deployed roots. The `recordLevelResult` Admin bypass now
+requires the canonical Admin model `authAccessReadModels/{firebaseUid}`.
+Non-Admin callers continue through the existing child-scoped authorization
+check, and result validation/idempotent write logic remains unchanged.
+
+Acceptance workflow 38028575572: success, focused 2 files/6 tests passed;
+full Functions suite 163 files passed, 2 skipped; 1209 tests passed,
+25 skipped. Lint/build/deployment classifier passed with only
+`recordLevelResult` impacted, full Functions deploy false and
+Hosting/Firestore unchanged. Temporary acceptance workflow retired before
+merge. Separate production checkpoint and marker verification required.

@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c24_production_verified_ready_for_next_selection_audit",
+    "status": "r5c2c25_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c25_fresh_bounded_authorization_selection_audit",
+    "nextBrick": "r5c2c25_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4073,6 +4073,58 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c25": {
+              "title": "Game result canonical Admin bypass authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "recordLevelResult"
+              ],
+              "childScopedNonAdminAuthorizationPreserved": true,
+              "gameResultWriteSemanticsPreserved": true,
+              "productionWiring": false,
+              "productionVerified": false,
+              "selectionAudit": {
+                "workflowRunId": 38028341662,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 23,
+                "deployedRootsDependingOnLegacyImporters": 68,
+                "writesPerformed": 0
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "recordLevelResult"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "workflowRunId": 38028575572,
+                "validatedHeadSha": "07638d22888123149ccbcdbf3f324b38401b295e",
+                "result": "success",
+                "focusedRegressions": {
+                  "filesPassed": 2,
+                  "testsPassed": 6
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 163,
+                  "filesSkipped": 2,
+                  "testsPassed": 1209,
+                  "testsSkipped": 25
+                },
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "deploymentClassifierAndContracts": "passed",
+                "singleFunctionBlastRadius": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
