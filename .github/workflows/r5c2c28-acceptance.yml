@@ -1,0 +1,41 @@
+name: R5C2C28 Reconciliation Acceptance
+on:
+  push:
+    branches:
+      - wave1-r5c2c28-reconciliation-canonical-admin
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Focused regressions
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalAdminRollingReconciliationRouting.spec.ts functions/test/rollingScheduleReconciliation.spec.ts
+      - name: Full Functions suite
+        run: npm --prefix functions test
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/scheduling/rollingScheduleReconciliation.ts
+      - name: Exact deployment classifier
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          node scripts/resolve-deployment-impact.mjs --before "$(git rev-parse origin/main)" --functions-before "$(git rev-parse origin/main)" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions impacted: 1' /tmp/impact.txt
+          grep -q 'Functions full deployment: false' /tmp/impact.txt
+          grep -q 'functions:reconcileRollingEnrollmentSchedule' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
