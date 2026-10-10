@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { fetchCompletedSessionsForFinanceReconciliation } from './helpers/financeReconciliationCompletedSessions';
 import { fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation } from './helpers/financeReconciliationProtectedLifecycleSessions';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
@@ -1313,7 +1313,7 @@ export const runFinanceReconciliationAudit = onCall(
     timeoutSeconds: 300,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const options: ReconciliationRunOptions = {
       monthKey: normalizeMonthKey(request.data?.monthKey),
