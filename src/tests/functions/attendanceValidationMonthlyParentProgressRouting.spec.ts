@@ -17,7 +17,10 @@ describe('AVS monthly parent tracker routing', () => {
   const monthlyProgress = read('src/lib/attendanceValidationMonthlyParentProgress.ts');
 
   it('uses an admin-only callable and writes only monthly workflow metadata', () => {
-    expect(callable).toContain('await ensureAdmin(request.auth)');
+    expect(callable).toContain("from '../helpers/canonicalAdminGuard'");
+    expect(callable).toContain('await ensureCanonicalAdmin(request.auth)');
+    expect(callable).not.toContain("from '../helpers/adminGuard'");
+    expect(callable).not.toContain('await ensureAdmin(request.auth)');
     expect(callable).toContain("const COLLECTION = 'attendanceValidationMonthlyParentProgress'");
     expect(callable).not.toContain("collection('classSessions')");
     expect(callable).not.toContain("collection('billingCharges')");

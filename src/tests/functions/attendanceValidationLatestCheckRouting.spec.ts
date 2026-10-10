@@ -22,7 +22,10 @@ describe('AVS changed-only latest-check callable routing', () => {
   });
 
   it('is admin-only, date-bounded, and capped at 100 dirty sessions', () => {
-    expect(source).toContain('await ensureAdmin(request.auth)');
+    expect(source).toContain("from '../helpers/canonicalAdminGuard'");
+    expect(source).toContain('await ensureCanonicalAdmin(request.auth)');
+    expect(source).not.toContain("from '../helpers/adminGuard'");
+    expect(source).not.toContain('await ensureAdmin(request.auth)');
     expect(source).toContain(
       "where('serviceDateYmd', '>=', range.fromDate)",
     );

@@ -15,7 +15,10 @@ describe('AVS unified Run Validation backend routing', () => {
   const contract = read('scripts/avs-callable-contract.mjs');
 
   it('is one admin-only browser callable with the Graph secrets and hardened transport', () => {
-    expect(source).toContain('await ensureAdmin(request.auth)');
+    expect(source).toContain("from '../helpers/canonicalAdminGuard'");
+    expect(source).toContain('await ensureCanonicalAdmin(request.auth)');
+    expect(source).not.toContain("from '../helpers/adminGuard'");
+    expect(source).not.toContain('await ensureAdmin(request.auth)');
     expect(source).toContain("invoker: 'public'");
     expect(source).toContain("'avs-public-invoker': 'true'");
     expect(source).toContain('MICROSOFT_TENANT_ID');

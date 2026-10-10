@@ -15,7 +15,10 @@ describe('AVS first-time date-range baseline routing', () => {
   const rules = read('firestore.rules');
 
   it('is admin-only, secret-bound, and processes completed historical dates only', () => {
-    expect(source).toContain('await ensureAdmin(request.auth)');
+    expect(source).toContain("from '../helpers/canonicalAdminGuard'");
+    expect(source).toContain('await ensureCanonicalAdmin(request.auth)');
+    expect(source).not.toContain("from '../helpers/adminGuard'");
+    expect(source).not.toContain('await ensureAdmin(request.auth)');
     expect(source).toContain("defineSecret('MICROSOFT_TENANT_ID')");
     expect(source).toContain("defineSecret('MICROSOFT_CLIENT_ID')");
     expect(source).toContain("defineSecret('MICROSOFT_CLIENT_SECRET')");
