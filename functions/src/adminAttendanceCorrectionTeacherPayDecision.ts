@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import * as logger from 'firebase-functions/logger';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import { normalizeTeacherPayDisposition, type TeacherPayDisposition } from './helpers/sessionFinancialRates';
@@ -53,7 +53,7 @@ function isPaidOrPartiallyPaidEarning(data: Record<string, unknown>): boolean {
 async function assertAdmin(auth: { uid?: string; token?: Record<string, unknown> } | undefined): Promise<string> {
   const uid = clean(auth?.uid, 160);
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-  await ensureAdmin(auth);
+  await ensureCanonicalAdmin(auth);
   return uid;
 }
 
