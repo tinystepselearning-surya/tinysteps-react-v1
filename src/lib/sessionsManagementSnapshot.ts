@@ -106,23 +106,31 @@ const currentSnapshotActor = (): SnapshotActor | null => {
   return uid ? { uid, generation: authGeneration } : null;
 };
 
+const snapshotSessionError = (code: 'snapshot/unauthenticated' | 'snapshot/actor-changed'): Error & {code: string} =>
+  Object.assign(new Error(code === 'snapshot/unauthenticated'
+    ? 'Sessions Management snapshot requires an authenticated session.'
+    : 'Sessions Management snapshot authentication changed during the request.'), {code});
+
 const requireSnapshotActor = (): SnapshotActor => {
   const actor = currentSnapshotActor();
-  if (!actor) throw new Error('Sessions Management snapshot requires an authenticated session.');
+  if (!actor) throw snapshotSessionError('snapshot/unauthenticated');
   return actor;
 };
 
 const assertSnapshotActor = (actor: SnapshotActor): void => {
   const current = currentSnapshotActor();
   if (!current || current.uid !== actor.uid || current.generation !== actor.generation) {
-    throw new Error('Sessions Management snapshot authentication changed during the request.');
+    throw snapshotSessionError('snapshot/actor-changed');
   }
 };
 
-const isAccessFailure = (error: unknown): boolean => {
-  const code = error && typeof error === 'object' && 'code' in error
-    ? String((error as { code?: unknown }).code || '').toLowerCase()
+const failureCode = (error: unknown): string =>
+  error && typeof error === 'object' && 'code' in error
+    ? String((error as {code?: unknown}).code || '').toLowerCase()
     : '';
+
+const isAccessFailure = (error: unknown): boolean => {
+  const code = failureCode(error);
   return [
     'functions/permission-denied', 'permission-denied',
     'functions/unauthenticated', 'unauthenticated',
@@ -132,15 +140,23 @@ const isAccessFailure = (error: unknown): boolean => {
 };
 
 const isTransientFailure = (error: unknown): boolean => {
-  const code = error && typeof error === 'object' && 'code' in error
-    ? String((error as { code?: unknown }).code || '').toLowerCase()
-    : '';
+  const code = failureCode(error);
   return [
     'functions/unavailable', 'unavailable',
     'functions/deadline-exceeded', 'deadline-exceeded',
     'auth/network-request-failed',
   ].includes(code);
 };
+
+/** Authorization and account changes must never fall back to raw Firestore or cached rows. */
+export const isSessionsManagementAuthorizationFailure = (error: unknown): boolean =>
+  isAccessFailure(error) || [
+    'snapshot/unauthenticated', 'snapshot/actor-changed',
+  ].includes(failureCode(error));
+
+/** Only known transient transport failures can use the legacy direct-read fallback. */
+export const isSessionsManagementTransientFailure = (error: unknown): boolean =>
+  isTransientFailure(error);
 
 const canUseVerifiedFallback = (actor: SnapshotActor, cached: BrowserSnapshotCache | null, error: unknown): boolean =>
   Boolean(cached && cached.ownerUid === actor.uid &&
