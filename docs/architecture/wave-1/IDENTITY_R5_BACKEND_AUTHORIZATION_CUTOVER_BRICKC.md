@@ -2990,3 +2990,13 @@ Hosting/Firestore Rules/indexes: unchanged
 
 Temporary workflow retired prior to merge. Production deployment and
 checkpoint verification remain required before closeout.
+
+### R5C2C24 verified production closeout
+
+GitHub Actions deployment 38028066613 succeeded on merge commit
+`b358f4ed5abe8964161ed7c07e34790170beab2d`.
+Exactly `adminCreateUser` and `backfillTeacherDocs` deployed together in
+bounded batch 1/1 on first attempt. Two Cloud Functions verified, 2/2
+checkpoint-ready; full Functions deployment false. Hosting/Firestore Rules
+and indexes skipped; `ci/functions-production` marker advanced to merge
+commit. R5C2C24 production-complete; next R5C2C25 fresh audit.
