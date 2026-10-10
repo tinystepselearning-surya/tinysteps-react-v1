@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5_milestone1_operational_authorization_complete_production_verified",
+    "status": "r5_milestone2_c33_c35_authorization_production_verified_remaining_boundaries_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5_milestone2_remaining_authorization_selection_audit",
+    "nextBrick": "r5_milestone2_next_bounded_legacy_admin_dependency_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4466,6 +4466,137 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
               }
+            },
+            "r5c2c33": {
+              "title": "Milestone 2 — parent-payment backfill dry-run Admin access",
+              "functions": [
+                "auditParentPaymentBackfillDryRun"
+              ],
+              "impactedDeploymentFunctions": [
+                "auditParentPaymentBackfillDryRun",
+                "applyParentPaymentBackfillForSafeParents"
+              ],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {
+                "workflowRunId": 38038798336,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 691,
+                "mergeCommit": "c1d1340e596d57d9d71db14096ab430b789fdc73",
+                "workflowRunId": 38039242562,
+                "result": "success",
+                "functionsDeployed": 2,
+                "functionsVerified": 2,
+                "functionsCheckpointReady": 2,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              },
+              "note": "Two deployment roots due to write-mode import dependency; only the audit requester guard was migrated. Existing parent-scoped Firestore query read costs remain for separate hardening."
+            },
+            "r5c2c34": {
+              "title": "Milestone 2 — teacher-finance and demo-correction canonical Admin access",
+              "functions": [
+                "recordTeacherPayoutV2",
+                "voidTeacherOrphanEarnings",
+                "certifyTeacherEarningsSessionCreateFastPath",
+                "adminCorrectDemoCompletion"
+              ],
+              "impactedDeploymentFunctions": [
+                "recordTeacherPayoutV2",
+                "voidTeacherOrphanEarnings",
+                "certifyTeacherEarningsSessionCreateFastPath",
+                "adminCorrectDemoCompletion"
+              ],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "validation": {
+                "workflowRunId": 38039355014,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 692,
+                "mergeCommit": "ebfcca46149b40f13818706715e27a11fc83c8a5",
+                "workflowRunId": 38039489423,
+                "result": "success",
+                "functionsDeployed": 4,
+                "functionsVerified": 4,
+                "functionsCheckpointReady": 4,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              }
+            },
+            "r5c2c35": {
+              "title": "Milestone 2 — LP assignment and generic Admin role authorization",
+              "functions": [
+                "assignLPToParent",
+                "unassignLPFromParent",
+                "assignLPToTeacher",
+                "unassignLPFromTeacher",
+                "adminSetUserRole"
+              ],
+              "impactedDeploymentFunctions": [
+                "adminSetUserRole",
+                "assignLPToParent",
+                "assignLPToTeacher",
+                "unassignLPFromParent",
+                "unassignLPFromTeacher"
+              ],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "note": "Four Learning Partner assignment requesters and their coupled Admin role-change re-export migrate together. Existing canonical identity primary writers and symmetric LP assignment semantics remain unchanged.",
+              "validation": {
+                "workflowRunId": 38039642887,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 693,
+                "mergeCommit": "7f50afbabe75da964ab2372b27ec9645d561408f",
+                "workflowRunId": 38039760999,
+                "result": "success",
+                "functionsDeployed": 5,
+                "functionsVerified": 5,
+                "functionsCheckpointReady": 5,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              }
             }
           }
         },
@@ -4500,6 +4631,24 @@
             "deploymentImpact": "documentation_only_zero_functions_hosting_firestore",
             "temporaryWorkflowRetiredBeforeMerge": true
           }
+        },
+        "milestone2": {
+          "title": "Remaining Admin authorization boundaries",
+          "status": "in_progress",
+          "productionSlicesVerified": [
+            "r5c2c33",
+            "r5c2c34",
+            "r5c2c35"
+          ],
+          "pendingProductionSlice": null,
+          "remainingLegacyGuardModulesAfterC35CodeMerge": 7,
+          "remainingLegacyGuardCallSitesAfterC35CodeMerge": 34,
+          "sharedLegacyAdminGuardModified": false,
+          "finalExitGate": "not_attempted",
+          "note": "Milestone 2 remains in progress; no global auth/read switch, Firestore Rules or storage rules cutover.",
+          "lastProductionCommit": "7f50afbabe75da964ab2372b27ec9645d561408f",
+          "deployedFunctionRootsAcrossBatches": 11,
+          "canonicalAdminCallablesMigratedAcrossBatches": 10
         }
       }
     }
