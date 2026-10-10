@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c25_validation_complete_ready_for_production_merge",
+    "status": "r5c2c25_production_verified_ready_for_next_selection_audit",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c25_production_merge_and_verification",
+    "nextBrick": "r5c2c26_fresh_bounded_authorization_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4086,8 +4086,8 @@
               ],
               "childScopedNonAdminAuthorizationPreserved": true,
               "gameResultWriteSemanticsPreserved": true,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "selectionAudit": {
                 "workflowRunId": 38028341662,
                 "result": "success",
@@ -4125,6 +4125,25 @@
                 "deploymentClassifierAndContracts": "passed",
                 "singleFunctionBlastRadius": "passed",
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 675,
+                "mergeCommit": "0ad680a449fc903d147c465f2ae68a3715618ba3",
+                "workflowRunId": 38028680808,
+                "result": "success",
+                "functionsDeployed": 1,
+                "functionsVerified": 1,
+                "functionsCheckpointReady": 1,
+                "deploymentBatches": 1,
+                "functions": [
+                  "recordLevelResult"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
