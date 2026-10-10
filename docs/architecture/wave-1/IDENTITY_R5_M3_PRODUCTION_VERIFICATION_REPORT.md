@@ -261,3 +261,14 @@ Before exit: obtain approved bounded principal/canary evidence; resolve or obtai
 named acceptance for parity/cache risks; quantify operational read/error budgets;
 reconcile deployed artifact identity; pass the independent final gate and merge
 its evidence. This PR is review-only and must not be automatically merged.
+
+
+## Post-audit timeline (2026-10-10)
+
+The paragraphs above preserve the original source observations as of the audit baseline; they are not edited retrospectively.
+
+- **P1 browser cache:** PR [#701](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/701) addressed the actor-unscoped Sessions Management v3 cache and authorization-denied fallback. Its bounded Hosting deployment was verified on production run [38049616488](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/38049616488), commit `8e694ec`. This closes the *identified code defect*, not the outstanding live-role canary gate.
+- **Historical test debt:** PR [#702](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/702) repaired six stale tests. The unfiltered application suite in [38050637842](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/38050637842) passed **4,428 tests**, with 116 preexisting skips; the test-only main-branch workflow [38051012823](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/38051012823) correctly skipped Firebase deployment.
+- **Canary safety:** The new `milestone3-canary-read-safety-preflight.mjs` and approval packet in this follow-on change classify the payment/snapshot read-cost and write-risk exclusions. They run without production credentials. Passing this preflight is **not** proof that any production canary or billed-read measurement has occurred.
+
+The Milestone-3 authenticated test-actor matrix, production principal coverage and actual billed Firestore read costs remain **NOT_VERIFIED**. Keep Rules, Storage, global reader and destructive cutovers disabled pending separate owner approval and final gates.
