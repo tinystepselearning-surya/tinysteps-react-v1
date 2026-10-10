@@ -2742,3 +2742,19 @@ Hosting/Firestore Rules/indexes unchanged
 ~~~
 
 Temporary acceptance workflow retired before merge; independent production deployment verification required.
+
+### R5C2C19 verified production closeout
+
+GitHub Actions run 38020603559 (#3935) succeeded on merge commit
+`d21131054a566c43763c622c07ad2def3144a2f2`.
+
+- Exactly one Function: `runAttendanceValidationRange`
+- One bounded deployment batch, first attempt; one verified and checkpoint-ready Function
+- Full Functions deployment: false
+- Hosting / Firestore Rules / indexes: skipped
+- Functions production marker advanced to merge commit
+- Recovery job skipped
+
+Next: re-audit the remaining legacy Admin dependency graph and assess a safe
+multi-Function cutover, keeping financial and authoritative attendance mutations
+isolated rather than automatically grouping every remaining candidate.
