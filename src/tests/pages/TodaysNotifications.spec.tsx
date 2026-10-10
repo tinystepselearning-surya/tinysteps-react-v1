@@ -41,6 +41,10 @@ describe('TodaysNotifications teacher alias resolution', () => {
 });
 
 describe('TodaysNotifications manual reminder loading', () => {
+  const simulatedSnapshotOutage = async (): Promise<never> => {
+    throw Object.assign(new Error('snapshot service unavailable'), {code: 'functions/unavailable'});
+  };
+
   beforeEach(() => {
     vi.restoreAllMocks();
   });
@@ -56,7 +60,10 @@ describe('TodaysNotifications manual reminder loading', () => {
     const fetchEnrollmentsByIds = vi.fn(async () => ({}));
 
     const result = await loadManualReminderDayBuckets({
-      deps: { fetchEnrollmentsByIds, fetchSessionsForDate, readCache, writeCache },
+      deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage, fetchEnrollmentsByIds, fetchSessionsForDate, readCache, writeCache },
       todayDateKey: '2026-06-30',
       tomorrowDateKey: '2026-07-01',
     });
@@ -79,6 +86,9 @@ describe('TodaysNotifications manual reminder loading', () => {
 
     const result = await loadManualReminderDayBuckets({
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds,
         fetchSessionsForDate,
         readCache: () => cached,
@@ -100,6 +110,9 @@ describe('TodaysNotifications manual reminder loading', () => {
 
     await loadManualReminderDayBuckets({
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds: vi.fn(async () => ({})),
         fetchSessionsForDate,
         readCache: () => ({}),
@@ -118,6 +131,9 @@ describe('TodaysNotifications manual reminder loading', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const result = await loadManualReminderDayBuckets({
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds: vi.fn(async () => ({})),
         fetchSessionsForDate: vi.fn(async (dateKey: string) => [
           { id: `session-${dateKey}`, date: dateKey, status: 'scheduled' },
@@ -142,6 +158,9 @@ describe('TodaysNotifications manual reminder loading', () => {
   it('does not convert backend failures into an empty successful result', async () => {
     await expect(loadManualReminderDayBuckets({
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds: vi.fn(async () => ({})),
         fetchSessionsForDate: vi.fn(async () => {
           throw new Error('Firestore unavailable');
@@ -157,6 +176,9 @@ describe('TodaysNotifications manual reminder loading', () => {
   it('returns an empty result only after successful backend requests return no sessions', async () => {
     const result = await loadManualReminderDayBuckets({
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds: vi.fn(async () => ({})),
         fetchSessionsForDate: vi.fn(async () => []),
         readCache: () => null,
@@ -185,6 +207,9 @@ describe('TodaysNotifications manual reminder loading', () => {
     const result = await loadManualReminderSelectedDate({
       dateKey: '2026-07-04',
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds: vi.fn(async () => ({})),
         fetchSessionsForDate,
       },
@@ -213,6 +238,9 @@ describe('TodaysNotifications manual reminder loading', () => {
     await loadManualReminderSelectedDate({
       dateKey: '2026-06-30',
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds,
         fetchSessionsForDate: vi.fn(async () => [session]),
       },
@@ -234,6 +262,9 @@ describe('TodaysNotifications manual reminder loading', () => {
     const result = await loadManualReminderSelectedDate({
       dateKey: '2026-06-30',
       deps: {
+        loadSnapshot: simulatedSnapshotOutage,
+        refreshSnapshot: simulatedSnapshotOutage,
+        loadDateSnapshot: simulatedSnapshotOutage,
         fetchEnrollmentsByIds,
         fetchSessionsForDate: vi.fn(async () => [
           {

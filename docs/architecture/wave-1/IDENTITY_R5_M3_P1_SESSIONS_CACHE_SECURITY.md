@@ -23,7 +23,8 @@ No Cloud Functions, backend authorization, Firestore/Storage Rules, indexes, pay
 
 - Behavior-level tests for successful same-actor revision revalidation, persisted data not shown before revalidation, v3 rejection, mismatched owner purging, UID switch, logout, rejected authorization, manual refresh revocation, transient outage fallback, unknown failures, in-flight response races and date-loader races.
 - Reminder fallback denied for `functions/permission-denied`, `functions/unauthenticated` and `snapshot/actor-changed`.
-- Existing AuthBootstrap and admin notification regressions; full application tests, typecheck, focused and full lint, public production build.
+- Existing AuthBootstrap and admin notification regressions; broad application tests, typecheck, focused and full lint, public production build.
+- The full unfiltered application suite was run first and surfaced unchanged legacy test debt outside this P1 diff: four AVS source tests still expect retired `ensureAdmin`, monthly progress idempotency tests mock the old helper, and one speaking SEO copy assertion uses old text. Those six files are explicitly excluded from this P1 acceptance's broad suite, **not counted as passing**. A separate correction should update their expectations and mocks without changing production logic. The nine affected older reminder tests are updated here to inject a synthetic `functions/unavailable` outage instead of depending on implicit test-network failures. Critical operational regressions run separately.
 - Exact deployment classifier must report **0 Functions and Hosting-only**. No backend service/rules deployments are allowed in this slice.
 
 ## Unresolved boundary
