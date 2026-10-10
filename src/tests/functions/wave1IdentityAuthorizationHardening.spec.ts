@@ -59,8 +59,8 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(refreshPublicKb).not.toContain(
       "from \"../helpers/adminGuard\"",
     );
-    expect(sendMessage).toContain('return isCurrentAdmin(auth);');
-    expect(createThread).toContain('return isCurrentAdmin(auth);');
+    expect(sendMessage).toContain('await ensureCanonicalAdmin(auth);');
+    expect(createThread).toContain('await ensureCanonicalAdmin(auth);');
     expect(sendMessage).not.toContain('function isTokenAdmin');
     expect(createThread).not.toContain('function isTokenAdmin');
 
