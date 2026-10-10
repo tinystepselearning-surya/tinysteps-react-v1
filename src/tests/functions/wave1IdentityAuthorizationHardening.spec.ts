@@ -68,7 +68,7 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(lessonAccess).not.toContain('auth.token?.role');
 
     expect(recordLevelResult).toContain(
-      'const isAdmin = await isCurrentAdmin(request.auth);',
+      'await ensureCanonicalAdmin(request.auth);',
     );
     expect(recordLevelResult).not.toContain('isAdminClaim');
 
