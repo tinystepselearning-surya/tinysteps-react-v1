@@ -59,8 +59,8 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(refreshPublicKb).not.toContain(
       "from \"../helpers/adminGuard\"",
     );
-    expect(sendMessage).toContain('return isCurrentAdmin(auth);');
-    expect(createThread).toContain('return isCurrentAdmin(auth);');
+    expect(sendMessage).toContain('await ensureCanonicalAdmin(auth);');
+    expect(createThread).toContain('await ensureCanonicalAdmin(auth);');
     expect(sendMessage).not.toContain('function isTokenAdmin');
     expect(createThread).not.toContain('function isTokenAdmin');
 
@@ -68,7 +68,7 @@ describe('Wave 1 current-user authorization invariant', () => {
     expect(lessonAccess).not.toContain('auth.token?.role');
 
     expect(recordLevelResult).toContain(
-      'const isAdmin = await isCurrentAdmin(request.auth);',
+      'await ensureCanonicalAdmin(request.auth);',
     );
     expect(recordLevelResult).not.toContain('isAdminClaim');
 
@@ -83,11 +83,9 @@ describe('Wave 1 current-user authorization invariant', () => {
       );
     }
 
-    for (const source of [
-      attendanceCorrection,
-      phonicsEnforcer,
-    ]) {
-      expect(source).toContain('ensureAdmin');
+    expect(attendanceCorrection).toContain('ensureAdmin');
+    expect(phonicsEnforcer).toContain('ensureCanonicalAdmin');
+    for (const source of [attendanceCorrection, phonicsEnforcer]) {
       expect(source).not.toMatch(
         /if\s*\([^\n]*token[^\n]*(?:role|admin)[^\n]*\)\s*return/,
       );

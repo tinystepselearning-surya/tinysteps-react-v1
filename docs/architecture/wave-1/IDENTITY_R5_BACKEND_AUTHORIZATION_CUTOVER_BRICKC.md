@@ -3111,3 +3111,28 @@ full Functions suite, TypeScript build, focused lint and exact nine-target
 deployment classifier passed. Functions full deployment false; Hosting,
 Firestore Rules and indexes unchanged. Temporary acceptance workflow
 retired before merge. Production verification is a separate gate.
+
+## R5C2C29 — Milestone 1 messaging authorization boundary
+
+The messaging callable authorization readers in
+`functions/src/messaging/sendMessage.ts` and
+`functions/src/messaging/createOrSyncMessageThread.ts` now check canonical
+Admin status with `ensureCanonicalAdmin` from
+`authAccessReadModels/{firebaseUid}` and fail closed. Their existing boolean
+authorization contract, recipient permissions, message/thread writes, unread
+tracking, and notifications remain unchanged. No legacy Admin fallback is used.
+
+Acceptance workflow 38032438380: **success** after correcting pre-existing stale
+Wave 1 test expectations from already-completed R5C2C25 and phonics
+authorization migrations, and using the branch merge-base when `main`
+advanced during PR validation. Focused regression, full Functions suite,
+TypeScript build, focused lint, and deployment classifier all passed.
+
+The dependency classifier identified exactly eight Function roots:
+`createOrSyncMessageThread`, `markMessageThreadRead`,
+`onEnrollmentMessageThreadAutoSync`, `onKidMessageThreadAutoSync`,
+`onStudentMessageThreadAutoSync`, `reconcileMyUnreadMessageCount`,
+`sendMessage`, `syncMessageThreadsForActiveStudents`.
+Full Functions deployment false. Hosting, Firestore Rules and indexes
+unchanged. Temporary acceptance workflow retired before merge. Separate
+production deployment/checkpoint verification is required for closeout.

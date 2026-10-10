@@ -11,7 +11,7 @@ import {
 } from './unreadState';
 import { hasApnsConfiguration } from '../lib/sendApnsAlert';
 import { deliverPushToUser } from '../notifications/pushDelivery';
-import { isCurrentAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -83,7 +83,12 @@ async function isAdminUser(
   _db: admin.firestore.Firestore,
   auth: AuthLike,
 ): Promise<boolean> {
-  return isCurrentAdmin(auth);
+  try {
+    await ensureCanonicalAdmin(auth);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function buildLastMessagePreview(text: string): string {
