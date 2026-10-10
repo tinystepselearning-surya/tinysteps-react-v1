@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   collection,
   doc,
@@ -39,7 +39,7 @@ import {
   TableRow,
 } from '@components/ui/table';
 import { useToast } from '@components/hooks/use-toast';
-import { db } from '../../lib/firebaseConfig';
+import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import {
@@ -69,6 +69,8 @@ import {
   getCachedSessionsManagementRowsForReadLabel,
   getCachedSessionsManagementSnapshot,
   loadSessionsManagementSnapshot,
+  clearSessionsManagementSnapshotCache,
+  isSessionsManagementAuthorizationFailure,
 } from '../../lib/sessionsManagementSnapshot';
 import {
   buildTeacherDailyReminderGroups,
@@ -1188,7 +1190,26 @@ export default function TodaysNotifications() {
   const [projectionRefreshNonce, setProjectionRefreshNonce] = useState(0);
   const handledReminderRefreshNonceRef = useRef(0);
   const lastProjectionSignalRef = useRef('');
+  const displayedActorUidRef = useRef(user?.uid || null);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
+
+  // Clear already-rendered operational rows before the next paint when an
+  // authenticated account changes. Async loaders are restarted per actor.
+  useLayoutEffect(() => {
+    const uid = user?.uid || null;
+    if (displayedActorUidRef.current === uid) return;
+    displayedActorUidRef.current = uid;
+    setSessions([]);
+    setEnrollments([]);
+    setUsersMap({});
+    setKidMap({});
+    setEnrollmentMap({});
+    setCourseMap({});
+    setMessageDrafts({});
+    setMessageEditor(null);
+    setSessionLoadError(null);
+    lastProjectionSignalRef.current = '';
+  }, [user?.uid]);
 
   const [todayDateKey, setTodayDateKey] = useState(() =>
     getSessionsManagementBaselineDateKey(),
@@ -1226,10 +1247,26 @@ export default function TodaysNotifications() {
   }, [mode, upcomingSpecificDate, tomorrowDateKey]);
 
   useEffect(() => {
+    let active = true;
+    const actorUid = user?.uid || null;
+    const actorActive = () => active && Boolean(actorUid) && auth.currentUser?.uid === actorUid;
+    const invalidateVisibleRows = () => {
+      clearSessionsManagementSnapshotCache();
+      setSessions([]);
+      setEnrollments([]);
+      setUsersMap({});
+      setKidMap({});
+      setEnrollmentMap({});
+      setCourseMap({});
+      setMessageDrafts({});
+      setMessageEditor(null);
+      setSessionLoadError('Your Sessions Management access must be verified again.');
+    };
     const projectionStateRef = doc(db, 'adminSessionsManagement', 'projectionState');
     const unsubscribe = onSnapshot(
       projectionStateRef,
       (snapshot) => {
+        if (!actorActive()) return;
         if (!snapshot.exists()) return;
         const data = snapshot.data() || {};
         const revision = Math.max(0, Number(data.revision || 0));
@@ -1263,6 +1300,7 @@ export default function TodaysNotifications() {
         void (async () => {
           try {
             await loadSessionsManagementSnapshot();
+            if (!actorActive()) return;
             const refreshed = getCachedSessionsManagementSnapshot();
             const refreshedSignal = refreshed
               ? `${refreshed.snapshotId}:${refreshed.projectionRevision}`
@@ -1270,25 +1308,32 @@ export default function TodaysNotifications() {
             if (refreshedSignal !== signal) {
               await loadSessionsManagementSnapshot();
             }
-            setProjectionRefreshNonce((value) => value + 1);
+            if (actorActive()) setProjectionRefreshNonce((value) => value + 1);
           } catch (error) {
-            console.warn(
-              '[TodaysNotifications] live Sessions Management projection reload failed',
-              error,
-            );
+            if (!actorActive()) return;
+            if (isSessionsManagementAuthorizationFailure(error)) {
+              invalidateVisibleRows();
+              return;
+            }
+            console.warn('[TodaysNotifications] projection reload temporarily failed');
           }
         })();
       },
       (error) => {
-        console.warn(
-          '[TodaysNotifications] Sessions Management projection listener failed',
-          error,
-        );
+        if (!actorActive()) return;
+        if (isSessionsManagementAuthorizationFailure(error)) {
+          invalidateVisibleRows();
+          return;
+        }
+        console.warn('[TodaysNotifications] projection listener failed');
       },
     );
 
-    return unsubscribe;
-  }, []);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [user?.uid]);
 
   useEffect(() => {
     if (isNotificationActionsEnabled) return;
@@ -1394,8 +1439,15 @@ export default function TodaysNotifications() {
           });
         }
       } catch (error: any) {
-        console.error('[TodaysNotifications] Failed to load sessions', error);
         if (!active) return;
+        if (isSessionsManagementAuthorizationFailure(error)) {
+          setSessions([]);
+          setEnrollmentMap({});
+          setUsersMap({});
+          setKidMap({});
+          setCourseMap({});
+        }
+        console.error('[TodaysNotifications] Failed to load sessions');
         setIsLoading(false);
         setSessionLoadError(error instanceof Error ? error.message : 'Please try again.');
         toast({
@@ -1418,6 +1470,7 @@ export default function TodaysNotifications() {
     todayDateKey,
     tomorrowDateKey,
     upcomingSpecificDate,
+    user?.uid,
     toast,
   ]);
 
@@ -1531,7 +1584,7 @@ export default function TodaysNotifications() {
     return () => {
       active = false;
     };
-  }, [admissionsRefreshNonce, mode, projectionRefreshNonce, toast]);
+  }, [admissionsRefreshNonce, mode, projectionRefreshNonce, user?.uid, toast]);
 
   const rows = useMemo(() => {
     return sessions
