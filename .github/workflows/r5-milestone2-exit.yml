@@ -20,6 +20,43 @@ jobs:
             package-lock.json
             functions/package-lock.json
       - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Six-slice production ledger and pending closeout gate
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const j=JSON.parse(fs.readFileSync('docs/architecture/wave-1/migrations/identity-foundation-v1.json','utf8'));
+          const slices=j.switchReads.r5.r5c.r5c2.slices;
+          const expected={33:2,34:4,35:5,36:10,37:16,38:14};
+          for(const [num,count] of Object.entries(expected)){
+            const key='r5c2c'+num;
+            const s=slices[key];
+            const d=s?.productionDeployment;
+            if(!s?.productionVerified || s.legacyFallback!==false ||
+                s.authorizationSource!=='authAccessReadModels/{firebaseUid}' ||
+                s.validation?.result!=='success' ||
+                d?.result!=='success' ||
+                d.functionsDeployed!==count ||
+                d.functionsVerified!==count ||
+                d.functionsCheckpointReady!==count ||
+                !d.functionsProductionMarkerAdvanced ||
+                d.functionsFullDeployment!==false ||
+                d.hostingDeployed!==false ||
+                d.firestoreRulesDeployed!==false ||
+                d.firestoreIndexesDeployed!==false) throw new Error('Invalid production evidence: '+key);
+          }
+          const m=j.switchReads.r5.r5c.milestone2;
+          if(m?.status!=='exit_audit_pending' ||
+             m?.finalExitGate!=='pending' ||
+             m.remainingLegacyGuardModulesAfterC38CodeMerge!==0 ||
+             m.remainingLegacyGuardCallSitesAfterC38CodeMerge!==0 ||
+             m.totalLegacyAdminGuardSitesMigratedAcrossMilestone2!==44 ||
+             m.deployedFunctionRootsAcrossBatches!==51 ||
+             m.sharedLegacyAdminGuardModified!==false ||
+             m.lastProductionCommit!=='81af741aef78ea3d8e3cac66e548455ce3a9b43f' ||
+             j.switchReads.r5.r5c.firestoreRulesCutover!==false ||
+             j.switchReads.r5.r5c.storageRulesCutover!==false) throw new Error('Milestone 2 closeout contract not satisfied');
+          console.log('Six production slices C33-C38 checkpoint-ready; Milestone 2 exit awaiting final CI green');
+          NODE
       - name: Permanent no-legacy-guard and cross-batch focused tests
         run: >
           npx vitest run --config functions/vitest.config.ts
