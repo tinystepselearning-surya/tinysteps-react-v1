@@ -2876,3 +2876,35 @@ ci/functions-production: advanced to merge commit
 
 R5C2C21 is complete in production. R5C2C22 begins with a fresh
 read-only dependency audit and financial-safety-aware group selection.
+
+## R5C2C22 — Bounded AVS forced-range canonical Admin authorization
+
+Read-only topology audit run 38022046998 succeeded: 27 legacy Admin-guard importer
+modules, 71 dependent deployed Function roots, zero audit writes. Financial,
+earnings and scheduling mutation candidates were not bundled because their
+side effects require separately audited safety gates.
+
+Selected only `forceRefreshAttendanceValidationRange`: replace its legacy
+`ensureAdmin` with canonical `ensureCanonicalAdmin` based on
+`authAccessReadModels/{firebaseUid}`. No legacy fallback; existing AVS
+checkpoint and evidence handling, invocation configuration and read bounds
+unchanged, no new authoritative financial or attendance writes.
+
+### R5C2C22 acceptance
+
+~~~text
+PR: #669
+Run: 38022254644
+Validated head: c21ce9759ee169bc7530d55eb3af1c035b3bdc9a
+Result: success
+Focused tests: 2 files / 6 passed
+Full Functions: 160 files passed, 2 skipped
+Tests: 1198 passed, 25 skipped
+Focused lint/build/deployment classifier: passed
+Deployment: forceRefreshAttendanceValidationRange only
+Full Functions deploy: false
+Hosting / Firestore Rules / indexes: unchanged
+~~~
+
+Temporary acceptance workflow retired before merge. Production deployment and
+checkpoint verification are separate required gates.
