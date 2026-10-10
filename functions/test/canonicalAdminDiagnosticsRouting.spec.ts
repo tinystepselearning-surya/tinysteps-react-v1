@@ -60,15 +60,18 @@ describe('Wave 1 R5C2B Admin diagnostics authorization routing', () => {
     }
   });
 
-  it('defers the coupled parent-payment dry-run so its write-mode dependent is not redeployed', () => {
+  it('recognizes the separately migrated C33 payment dry-run canonical guard', () => {
     expect(deferredPaymentDryRun).toContain(
-      "from './helpers/adminGuard'",
+      "from './helpers/canonicalAdminGuard'",
     );
     expect(deferredPaymentDryRun).toContain(
-      'await ensureAdmin(request.auth)',
+      'await ensureCanonicalAdmin(request.auth)',
     );
     expect(deferredPaymentDryRun).not.toContain(
-      'ensureCanonicalAdmin',
+      "from './helpers/adminGuard'",
+    );
+    expect(deferredPaymentDryRun).not.toContain(
+      'await ensureAdmin(request.auth)',
     );
   });
 });
