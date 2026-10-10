@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import { alreadyReviewedCurrentBilling, alreadySentCurrentInvoice } from './monthlyParentWorkflowDecisions';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -157,7 +157,7 @@ export async function handleMonthlyParentProgress(
   request: CallableRequest<Record<string, unknown>>,
   db: admin.firestore.Firestore = admin.firestore(),
 ) {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in as an admin.');
 
