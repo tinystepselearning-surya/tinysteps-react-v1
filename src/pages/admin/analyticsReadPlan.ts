@@ -1,6 +1,7 @@
 export type AnalyticsView =
   | 'overview'
   | 'growth'
+  | 'enrollment'
   | 'acquisition'
   | 'finance'
   | 'delivery'
@@ -33,6 +34,11 @@ const PLAN: Record<AnalyticsView, AnalyticsReadPlan> = {
   growth: {
     datasets: [],
     rawDatasets: [],
+  },
+  enrollment: {
+    // Explicitly opened only: current canonical enrollment distribution.
+    datasets: ['enrollments', 'courses'],
+    rawDatasets: ['enrollments', 'courses'],
   },
   acquisition: {
     datasets: [],
