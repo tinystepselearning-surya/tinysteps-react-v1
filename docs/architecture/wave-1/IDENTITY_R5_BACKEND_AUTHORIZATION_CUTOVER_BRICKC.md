@@ -3025,3 +3025,21 @@ one verified and checkpoint-ready Function. Full Functions deployment
 false; Hosting/Firestore Rules/indexes skipped; recovery skipped;
 `ci/functions-production` marker advanced to the squash commit.
 R5C2C25 is production verified. Proceed with fresh R5C2C26 selection audit.
+
+## R5C2C26 — Milestone 1 operational authorization, AVS evidence boundary
+
+This is the first bounded implementation batch within the larger
+operational-authorization milestone covering AVS, scheduling, and messaging.
+Only the manual Admin guard in `forceFreshEvidenceCallable.ts` moves to
+`ensureCanonicalAdmin`, with no legacy fallback. Existing operational,
+Microsoft Graph evidence, transport and checkpoint behavior is unchanged.
+R5C2C26 read-only audit 38028926251 identified 22 remaining importer modules
+and 67 deployed dependent Function roots.
+
+Acceptance run 38029308767: success. Focused 6 tests; full Functions unit
+estate 1212 passed, 25 skipped, 164 test files passed, 2 skipped.
+Lint/build/deployment classifier passed. Exact three impacted Functions:
+`forceRefreshAttendanceValidationEvidence`,
+`forceRefreshAttendanceValidationRange`, `runAttendanceValidationRange`.
+No full Functions deploy or Hosting/Firestore changes expected.
+Production and checkpoint verification remain required before closeout.

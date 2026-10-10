@@ -3,7 +3,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import { bindTeacherIdentityFromFreshEvidence } from './automaticTeacherIdentity';
 import { FirestoreAttendanceValidationEvidenceStore } from './evidenceStore';
 import {
@@ -378,7 +378,7 @@ export const forceRefreshAttendanceValidationEvidence = onCall(
     ],
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const caseId = cleanId(request.data?.caseId, 'caseId');
     const inputFingerprint = cleanFingerprint(request.data?.inputFingerprint);
