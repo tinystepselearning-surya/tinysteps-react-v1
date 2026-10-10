@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c20_validation_complete_ready_for_production_merge",
+    "status": "r5c2c20_production_verified_ready_for_next_group_audit",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c20_group_production_merge_and_verification",
+    "nextBrick": "r5c2c21_fresh_bounded_multi_function_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3693,8 +3693,8 @@
               "scheduledJobsPreserved": true,
               "reportWriteSemanticsPreserved": true,
               "authoritativeFinanceOrAttendanceWritesIntroduced": false,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "selectionAudit": {
                 "workflowRunId": 38021045331,
                 "result": "success",
@@ -3736,6 +3736,29 @@
                 "deploymentClassifierAndContracts": "passed",
                 "exactFourFunctionBlastRadius": "passed",
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 665,
+                "mergeCommit": "13a5ca70f0e99b9651e2d360759f34a506a1a790",
+                "workflowRunId": 38021228811,
+                "workflowRunNumber": 3937,
+                "result": "success",
+                "functionsDeployed": 4,
+                "functionsVerified": 4,
+                "functionsCheckpointReady": 4,
+                "deploymentBatches": 1,
+                "functions": [
+                  "runEnrollmentCanonicalCoverage",
+                  "runEnrollmentCanonicalCoverageDaily",
+                  "runFinanceReconciliationAudit",
+                  "runFinanceReconciliationAuditDaily"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
