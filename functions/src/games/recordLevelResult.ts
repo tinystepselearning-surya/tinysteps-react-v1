@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { normalizeGameIdentity } from "./helpers/normalizeGameIdentity";
-import { isCurrentAdmin } from "../helpers/adminGuard";
+import { ensureCanonicalAdmin } from "../helpers/canonicalAdminGuard";
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -184,7 +184,13 @@ export const recordLevelResult = onCall({ region: "asia-south1" }, async (reques
 
   // ✅ Permission check (Callable bypasses Firestore rules, so we must do it here)
   const uid = request.auth.uid;
-  const isAdmin = await isCurrentAdmin(request.auth);
+  let isAdmin = false;
+  try {
+    await ensureCanonicalAdmin(request.auth);
+    isAdmin = true;
+  } catch {
+    // Not a canonical Admin: enforce the existing child-scoped authorization.
+  }
 
   if (!isAdmin) {
     const kidRef = db.doc(`kids/${kidId}`);
