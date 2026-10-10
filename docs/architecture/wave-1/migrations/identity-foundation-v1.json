@@ -4914,10 +4914,15 @@
             "autoMergeOrDeploy": false
           },
           "evidence": {
-            "sourceAndLedgerAudit": "pending_CI",
-            "functionsRegression": "pending_CI",
-            "criticalBusinessRegression": "pending_CI",
-            "rulesEmulator": "pending_CI"
+            "initialWorkflowRunId": 38043064008,
+            "results": "passed_source_ledger_functions_operational_and_rules_emulator",
+            "sourceFilesScanned": 240,
+            "functionsTestFilesPassed": 177,
+            "operationalTestsPassed": 158,
+            "rulesEmulatorTestsPassed": 81,
+            "deploymentFunctionsImpacted": 0,
+            "liveCanaries": "NOT_VERIFIED",
+            "productionReadCount": "NOT_VERIFIED"
           }
         }
       }
