@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
-import {ensureAdmin} from '../helpers/adminGuard';
+import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
 import {resolveCanonicalTeacherIdForWrite} from '../helpers/teacherIdentity';
 import {
   ROLLING_SCHEDULE_HORIZON_DAYS,
@@ -499,7 +499,7 @@ export const adminRepairRollingScheduleMaterialization = onCall(
     memory: '1GiB',
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     return runRollingScheduleRepairInternal(
       admin.firestore(),
       (request.data || {}) as RepairInput,

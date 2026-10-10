@@ -3047,3 +3047,32 @@ Production and checkpoint verification remain required before closeout.
 ### R5C2C26 Milestone 1 AVS evidence production verification
 
 GitHub Actions run 38029445802 completed successfully on merge commit `7196e50d0ede0c7538a409aad9783b12529932e8`. Exactly three Functions were deployed in one bounded batch: `forceRefreshAttendanceValidationEvidence`, `forceRefreshAttendanceValidationRange`, and `runAttendanceValidationRange`. Deployment verification confirmed 3/3 checkpoint-ready; full Functions deployment was false, Hosting/Firestore unchanged and `ci/functions-production` advanced to the merge SHA. Milestone 1 remains underway; AVS evidence boundary is complete.
+
+## R5C2C27 — Milestone 1 rolling schedule repair canonical Admin guard
+
+Continue operational Milestone 1 with the standalone scheduling repair callable.
+`adminRepairRollingScheduleMaterialization` moves to `ensureCanonicalAdmin`
+using `authAccessReadModels/{firebaseUid}`, with no legacy fallback or shared
+guard changes. The repair remains dry-run first, explicit-apply-confirmation
+gated, bounded to at most 250 operational enrollments, transactional and
+create-only for missing future sessions. Existing scheduling algorithms,
+teacher identity, Firestore read planning, metadata writes, historical records,
+financially protected sessions and the call's API contract are unchanged.
+
+### R5C2C27 acceptance evidence
+
+- PR: #679
+- Validation workflow: 38030289064 — success
+- Validated head: `e197f391791d7eda489264bf67b7b170f60d38da`
+- Focused: 2 files, 7 tests passed
+- Full Functions suite: 165 files passed, 2 skipped; 1,215 tests passed, 25 skipped
+- Functions TypeScript build: passed
+- Focused scheduling-repair lint: passed
+- Deployment impact classification: exactly one target,
+  `functions:adminRepairRollingScheduleMaterialization`
+- Full Functions deployment: false
+- Hosting / Firestore Rules / Firestore indexes changed: false
+
+The temporary acceptance workflow is retired before merge. Production release
+and checkpoint verification remain an independent gate. R5C2C27 must not be
+marked production-complete solely on this acceptance evidence.

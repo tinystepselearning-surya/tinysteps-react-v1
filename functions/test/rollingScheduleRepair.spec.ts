@@ -74,7 +74,9 @@ describe('rolling schedule repair', () => {
   });
 
   it('is protected, dry-run first, deterministic, create-only, and never deletes sessions', () => {
-    expect(repairSource).toContain('await ensureAdmin(request.auth)');
+    expect(repairSource).toContain('await ensureCanonicalAdmin(request.auth)');
+    expect(repairSource).toContain("from '../helpers/canonicalAdminGuard'");
+    expect(repairSource).not.toContain("from '../helpers/adminGuard'");
     expect(repairSource).toContain("const apply = input.apply === true");
     expect(repairSource).toContain('expectedMissingCount');
     expect(repairSource).toContain('ROLLING_SCHEDULE_REPAIR_CONFIRMATION');
