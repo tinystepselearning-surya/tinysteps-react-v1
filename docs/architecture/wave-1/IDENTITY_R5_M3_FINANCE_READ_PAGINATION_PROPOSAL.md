@@ -7,7 +7,7 @@ canaries. This document grants no access or implementation/deployment approval.
 
 ## Problem and evidence
 
-`functions/src/parentPaymentBackfillDryRun.ts` has four independent sources of
+`functions/src/parentPaymentBackfillDryRun.ts` has five independent sources of
 unbounded returned rows: an explicit-parent payments query, each selected payment's
 allocations, and parent-scoped charges / wallet transactions / month records.
 `limitPayments` slices explicit-parent results after retrieval. The caller also

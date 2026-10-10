@@ -202,6 +202,7 @@ Do not upload raw Rules/debug logs; they may reproduce source identifiers.
 | Full application build / prerender / postbuild checks | PASS |
 | Firestore emulator, isolated two-worker rerun | 14 files / 87 tests passed |
 | Storage emulator | 4 tests passed |
+| Deployment-impact classifier | PASS: 0 Functions; Hosting, Firestore Rules and indexes unchanged; explicit diff also confirms Storage Rules, runtime and ledger unchanged |
 
 The application suite already includes Functions tests; counts are not additive
 unique coverage. First Firestore invocation completed 57 tests but timed out in
@@ -271,7 +272,7 @@ Batch 4 design can proceed offline without batch 2, but its implementation and
 production sample need their own review. Responsible roles above are proposed
 owners, not recorded risk acceptance.
 
-**Milestone-3 readiness: NOT PASSED.** Live verification remains stopped at the
-owner's explicit approval gate. Keep every production
+**Milestone-3 readiness: NOT PASSED.** Independently safe verification is complete;
+live verification remains stopped at the owner's explicit approval gate. Keep every production
 cutover flag disabled. No production fix, deployment or final-exit flag is part of
 this evidence package.
