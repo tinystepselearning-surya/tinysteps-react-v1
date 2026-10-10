@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c22_production_verified_ready_for_next_selection_audit",
+    "status": "r5c2c23_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c23_fresh_bounded_authorization_selection_audit",
+    "nextBrick": "r5c2c23_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3919,6 +3919,59 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c23": {
+              "title": "Historical attendance session creation canonical Admin authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "createAdminHistoricalAttendanceSession"
+              ],
+              "existingHistoricalSessionAndAuditWriteSemanticsPreserved": true,
+              "financialMutationBehaviorChanged": false,
+              "productionWiring": false,
+              "productionVerified": false,
+              "selectionAudit": {
+                "workflowRunId": 38022691163,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 26,
+                "deployedRootsDependingOnLegacyImporters": 71,
+                "writesPerformed": 0
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "createAdminHistoricalAttendanceSession"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "push_acceptance",
+                "workflowRunId": 38022953872,
+                "validatedHeadSha": "c11a67fcda2a8578475cce1c6e001a4884f91ac8",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedRegressions": {
+                  "filesPassed": 2,
+                  "testsPassed": 6
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 161,
+                  "filesSkipped": 2,
+                  "testsPassed": 1201,
+                  "testsSkipped": 25
+                },
+                "deploymentClassifierAndContracts": "passed",
+                "singleFunctionBlastRadius": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
