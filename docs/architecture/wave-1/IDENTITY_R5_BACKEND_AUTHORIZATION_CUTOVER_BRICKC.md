@@ -2515,3 +2515,49 @@ GitHub Actions deployment logs confirm the one-Function bounded batch, one check
 Function and advancement of `ci/functions-production` to the merge commit.
 R5C2C15 is complete in production. The next step is a fresh post-C15 legacy-Admin-guard
 and deployment-topology audit to select R5C2C16; no candidate is assumed in advance.
+
+## R5C2C16 — AVS manual verification canonical Admin authorization
+
+Fresh post-C15 selection audit:
+- Workflow run: 38014975326; result: success
+- Remaining legacy Admin guard importer modules: 35
+- Deployed Function roots depending on a legacy importer: 82
+- Genuine one-Function boundaries: 14
+- Working-tree writes: 0
+
+Selected one-Function callable: `adminVerifyAttendanceValidationGroup`.
+Only the authorization route moves from legacy `ensureAdmin` to canonical
+`ensureCanonicalAdmin` using `authAccessReadModels/{firebaseUid}`.
+There is no legacy fallback and no change to shared `helpers/adminGuard.ts`.
+
+The existing AVS manual verification transaction continues to check current class
+sessions and unresolved discrepancy cases and write only AVS resolution and case
+status updates. It does not update source class session attendance, payments,
+teacher earnings or billing charges. Public callable invocation configuration,
+region, memory, timeout and max-instance bounds remain unchanged.
+
+### R5C2C16 acceptance evidence
+
+~~~text
+Pull request: #657
+Workflow run: 38015294189
+Validated head: 169522e61dc4275c97d33327d8fe57f3673e5428
+Result: success
+Changed-file boundary: passed
+Focused lint: passed
+Functions build: passed
+Focused authorization regressions: 2 files, 6 tests passed
+Full Functions unit estate: 154 files passed, 2 skipped
+Full Functions tests: 1176 passed, 25 skipped
+Deployment classifier/contracts: passed
+Expected Functions deployment: exactly 1
+  adminVerifyAttendanceValidationGroup
+Functions full deployment: false
+Hosting changed: false
+Firestore Rules changed: false
+Firestore indexes changed: false
+~~~
+
+The temporary acceptance workflow is retired before merge. Production completion
+requires an independently verified bounded Function deployment with one
+checkpoint-ready Function and an advanced Functions production baseline.

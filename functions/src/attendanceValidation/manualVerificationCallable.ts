@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import { isDeepStrictEqual } from 'util';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import { exactAvsId } from './avsId';
 import { loadAvsBusinessGroupForSession } from './groupValidation';
 import { sameDayGroupDescriptor } from './shadowRunner';
@@ -71,7 +71,7 @@ export const adminVerifyAttendanceValidationGroup = onCall({
   region: 'asia-south1', memory: '256MiB', invoker: 'public',
   labels: { 'avs-public-invoker': 'true' }, timeoutSeconds: 120, maxInstances: 2,
 }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in as an admin.');
   return verifyAvsGroupManually(admin.firestore(), {
