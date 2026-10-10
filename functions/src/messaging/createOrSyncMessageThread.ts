@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { isCurrentAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -174,7 +174,12 @@ async function isAdminUser(
   _db: admin.firestore.Firestore,
   auth: AuthLike,
 ): Promise<boolean> {
-  return isCurrentAdmin(auth);
+  try {
+    await ensureCanonicalAdmin(auth);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function resolveKidName(kidData: KidLikeDoc): string {
