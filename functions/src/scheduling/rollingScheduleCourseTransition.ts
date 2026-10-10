@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
-import {ensureAdmin} from '../helpers/adminGuard';
+import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
 import {normalizeEnrollmentStatus} from '../helpers/status';
 import {
   createTransitionEnrollmentInternal,
@@ -110,7 +110,7 @@ function buildTransitionSlots(scheduleLike: unknown) {
 export const transitionEnrollmentCourse = onCall(
   {region: REGION, memory: '256MiB', timeoutSeconds: 180},
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
     const data = (request.data || {}) as RecordLike;
     const operationId = text(data.operationId);
     const oldEnrollmentId = text(data.oldEnrollmentId);
