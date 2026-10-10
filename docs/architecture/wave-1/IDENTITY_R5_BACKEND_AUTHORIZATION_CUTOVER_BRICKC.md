@@ -2590,3 +2590,43 @@ Deployment logs confirmed one bounded batch, one verified and checkpoint-ready F
 and advancement of `ci/functions-production` to the merge commit. R5C2C16 is complete
 in production. The next slice, R5C2C17, requires a fresh read-only legacy-guard and
 deployment-topology selection audit. No next Function target is assumed.
+
+## R5C2C17 — AVS first-time baseline canonical Admin authorization
+
+Fresh read-only legacy Admin guard audit:
+- Selection workflow run: 38016243267; result: success
+- Legacy Admin importer modules: 34
+- Deployed Function roots depending on legacy importers: 81
+- One-Function boundaries: 13
+- Audit writes: 0
+
+Selected bounded callable: `runAttendanceValidationFirstTimeBaseline`.
+The authorization guard moves from legacy `ensureAdmin` to canonical
+`ensureCanonicalAdmin` sourced from `authAccessReadModels/{firebaseUid}`.
+No legacy authorization fallback or change to shared `helpers/adminGuard.ts`.
+
+The existing AVS baseline work, completed-service-date validation, session processing bounds,
+identity/evidence collection, region, memory, secrets, private invoker and concurrency
+configuration remain unchanged. No authoritative attendance, payments, billing charge or
+teacher-earnings write behavior is introduced.
+
+### R5C2C17 acceptance evidence
+
+~~~text
+Pull request: #659
+Validation workflow run: 38016528814
+Validated head: 6d97aa6a16e2125634a7d654059b014b1dde3a5e
+Result: success
+Focused lint: passed
+Functions build: passed
+Focused regressions: 2 files / 6 tests passed
+Full Functions unit estate: 155 files passed, 2 skipped
+Full Functions tests: 1179 passed, 25 skipped
+Deployment classifier/contracts: passed
+Impacted Function: exactly runAttendanceValidationFirstTimeBaseline
+Functions full deployment: false
+Hosting / Firestore Rules / indexes changed: false
+~~~
+
+The temporary workflow is retired before merge. Production verification of the
+single Function and production-baseline advancement remains a separate gate.
