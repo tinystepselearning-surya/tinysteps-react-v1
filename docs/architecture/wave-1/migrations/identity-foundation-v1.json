@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c26_milestone1_avs_evidence_validation_complete_ready_for_production_merge",
+    "status": "r5c2c26_milestone1_avs_evidence_production_verified_next_operational_batch",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c26_milestone1_avs_evidence_production_merge_and_verification",
+    "nextBrick": "r5c2c27_milestone1_next_operational_authorization_batch",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4157,8 +4157,8 @@
               "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
               "legacyFallback": false,
               "sharedAdminGuardModified": false,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "selectionAudit": {
                 "workflowRunId": 38028926251,
                 "result": "success",
@@ -4188,6 +4188,26 @@
                 "hostingChanged": false,
                 "firestoreRulesChanged": false,
                 "firestoreIndexesChanged": false
+              },
+              "productionDeployment": {
+                "pullRequest": 677,
+                "mergeCommit": "7196e50d0ede0c7538a409aad9783b12529932e8",
+                "workflowRunId": 38029445802,
+                "result": "success",
+                "functionsDeployed": 3,
+                "functionsVerified": 3,
+                "functionsCheckpointReady": 3,
+                "deploymentBatches": 1,
+                "functions": [
+                  "forceRefreshAttendanceValidationEvidence",
+                  "forceRefreshAttendanceValidationRange",
+                  "runAttendanceValidationRange"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
               }
             }
           }
