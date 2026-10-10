@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from '../helpers/adminGuard';
+import { ensureCanonicalAdmin } from '../helpers/canonicalAdminGuard';
 import { MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_TENANT_ID } from './forceFreshEvidenceCallable';
 import { normalizeAvsLatestCheckRange } from './latestCheckPlanner';
 import { normalizeAvsParentId, resolveAvsParentEnrollments } from './parentScope';
@@ -27,7 +27,7 @@ export const runAttendanceValidationRange = onCall({
   labels: { 'avs-public-invoker': 'true' }, timeoutSeconds: 540, maxInstances: 1,
   secrets: [MICROSOFT_TENANT_ID, MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET],
 }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   let range: { fromDate: string; toDate: string };
   try {
     range = normalizeAvsLatestCheckRange(request.data?.fromDate, request.data?.toDate);

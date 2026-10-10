@@ -2718,3 +2718,27 @@ Functions production baseline: ci/functions-production advanced to merge commit
 
 R5C2C18 is complete in production. The next step is a fresh read-only topology
 audit to select an independently deployable R5C2C19 Admin-authorization cutover.
+
+## R5C2C19 — AVS range validation canonical Admin authorization
+
+Read-only audit run 38020183452 passed: 32 legacy Admin guard direct importers, 79 dependent deployed roots and 11 single-Function candidates. No audit writes.
+
+Selected `runAttendanceValidationRange`: authorization-only guard replacement from `ensureAdmin` to `ensureCanonicalAdmin` using `authAccessReadModels/{firebaseUid}`, without fallback or change to shared guard. Existing AVS evidence, identities, business-case writes, date constraints, read budgeting, Teams secrets, callable transport and concurrency unchanged. No authoritative finance or attendance writes introduced.
+
+### R5C2C19 acceptance
+
+~~~text
+PR: #663
+Workflow: 38020479949
+Validated head: 04181ec60556f4efcac398e4a550a7b5320ee689
+Conclusion: success
+Focused lint and Functions build: passed
+Focused regressions: 2 files, 6 tests passed
+Full Functions tests: 157 files passed, 2 skipped; 1185 tests passed, 25 skipped
+Deployment classifier and contracts: passed
+Bounded deployment: exactly runAttendanceValidationRange
+Full Functions deployment: false
+Hosting/Firestore Rules/indexes unchanged
+~~~
+
+Temporary acceptance workflow retired before merge; independent production deployment verification required.
