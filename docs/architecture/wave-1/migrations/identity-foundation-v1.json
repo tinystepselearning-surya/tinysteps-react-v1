@@ -4909,7 +4909,7 @@
           },
           "monitoring": {
             "ciAndProductionWatch": "hourly_existing_automation_updated",
-            "githubNativeScheduledVerification": "pending_green_pr_merge",
+            "githubNativeScheduledVerification": "daily_scheduled_main_branch_workflow_after_merge",
             "alertOnMaterialChangesOnly": true,
             "autoMergeOrDeploy": false
           },
@@ -4922,7 +4922,8 @@
             "rulesEmulatorTestsPassed": 81,
             "deploymentFunctionsImpacted": 0,
             "liveCanaries": "NOT_VERIFIED",
-            "productionReadCount": "NOT_VERIFIED"
+            "productionReadCount": "NOT_VERIFIED",
+            "latestKickoffReport": "scripts/milestone3-system-audit.mjs"
           }
         }
       }
