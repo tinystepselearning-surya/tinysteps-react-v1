@@ -13,7 +13,10 @@ describe('AVS force-fresh Teams evidence routing', () => {
   const functionsIndex = read('functions/src/index.ts');
 
   it('is admin-only and binds only the existing Graph secrets', () => {
-    expect(source).toContain('await ensureAdmin(request.auth)');
+    expect(source).toContain('await ensureCanonicalAdmin(request.auth)');
+    expect(source).toContain("from '../helpers/canonicalAdminGuard'");
+    expect(source).not.toContain('await ensureAdmin(request.auth)');
+    expect(source).not.toContain("from '../helpers/adminGuard'");
     expect(source).toContain("defineSecret('MICROSOFT_TENANT_ID')");
     expect(source).toContain("defineSecret('MICROSOFT_CLIENT_ID')");
     expect(source).toContain("defineSecret('MICROSOFT_CLIENT_SECRET')");
