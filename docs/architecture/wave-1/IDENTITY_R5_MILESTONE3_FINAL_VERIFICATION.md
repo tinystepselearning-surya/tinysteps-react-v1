@@ -67,3 +67,19 @@ The milestone may be marked **complete only when**:
 **Coverage boundary:** These passes concern code, source/ledger and local emulators. Direct signed-in production role canaries, current authAccessReadModels coverage/drift, and live Firestore read quantities remain **NOT VERIFIED**. Existing Rules still use compatibility-era identity checks. Therefore the Milestone-3 final exit gate remains **NOT ATTEMPTED**, with no authorization to switch global identity readers or Rules.
 
 After this PR merges, daily scheduled CI and the existing hourly GitHub CI/production monitor provide ongoing checks; they do not themselves verify authenticated production access or mutate production data.
+
+
+## R5M3-PARITY1 — Legacy Rules and canonical authorization characterization (2026-10-10)
+
+**Acceptance CI:** `38044733888` — **PASS across all four jobs**, with the Rules-cutover flags unchanged.
+
+- **Source and canonical guard:** privacy-safe production source/R5 ledger report passed, 5 auditor regression cases passed, 10 focused Functions tests passed. Full Functions suite: **178 passing files / 1,257 tests**, 2 files and 25 tests skipped; TypeScript build and focused lint passed.
+- **Firestore emulator:** **14 rule-test files passed**, including 6 new synthetic-characterization tests for active legacy `superUser` behavior, canonical-only records not yet used by client Rules, inactive/orphan denial, Founder read-only separation, school-tenant boundaries and wallet owner isolation.
+- **Storage emulator:** **4 synthetic tests passed**, using a `demo-` emulator-only project. Rules accepted the modeled active legacy `superUser` image upload, denied canonical-only/inactive/orphan actors, protected student-recording ownership and denied direct certificate uploads.
+- **Known emulator warning:** Storage Rules logged an undefined token-email property during a denied test path. The test failed closed as expected; this warning must be considered during the future R5D rule design rather than silently dismissed.
+- **Deployment impact:** 0 Functions, no Hosting, Firestore Rules or indexes; current production Rules and Storage Rules were **not modified**.
+- **Rule parity findings:** both Rules files contain legacy identity-specific Admin exceptions and `superUser` authorization absent from canonical backend Admin, and canonical-only Admin records cannot authorize those browser Rules until a separately approved cutover. Current School Admin membership and Founder read-only semantics differ by scope and must be preserved intentionally.
+
+The versioned source matrix and role-canary plan are in `IDENTITY_R5_M3_AUTHORIZATION_PARITY_AND_CANARY_PLAN.md`. No hard-coded UID/email exception literals are reproduced in the report or documentation.
+
+**Live authenticated production role canaries, canonical read-model coverage/freshness, and Firestore read costs: NOT VERIFIED.** The next evidence gate is an explicitly approved, user-authenticated *read-only* actor matrix with a bounded, privacy-protected principal-coverage check. All global reader switches, Rules switches and destructive operations remain on **HOLD**. Milestone 3 remains **IN PROGRESS**.

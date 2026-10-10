@@ -34,6 +34,10 @@ jobs:
       - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
       - name: Read-only Milestone 3 source, production ledger and risk inventory
         run: node scripts/milestone3-system-audit.mjs --output=artifacts/milestone3-system-report.json
+      - name: Read-only Milestone 3 authorization parity and held-Rules inventory
+        run: |
+          node scripts/milestone3-authorization-parity-audit.mjs --output=artifacts/milestone3-authorization-parity-report.json
+          node --test scripts/test/milestone3-authorization-parity.node-test.mjs
       - name: Build before identity tooling tests
         run: npm --prefix functions run build
       - name: Identity foundation, parity and deployment tooling regressions
@@ -67,7 +71,9 @@ jobs:
         if: always()
         with:
           name: milestone3-system-report
-          path: artifacts/milestone3-system-report.json
+          path: |
+            artifacts/milestone3-system-report.json
+            artifacts/milestone3-authorization-parity-report.json
           if-no-files-found: warn
           retention-days: 14
 
@@ -125,3 +131,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Emulated Firestore permissions for parent, teacher, Admin and school role
         run: npm run test:wave1-identity-rules
+      - name: Emulated Storage Admin exceptions and owner isolation
+        run: >
+          npx firebase-tools@latest emulators:exec
+          --project demo-tinysteps-m3-storage-parity --only firestore,storage
+          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 npx vitest run src/tests/storage/milestone3AuthorizationParity.rules.spec.ts"
