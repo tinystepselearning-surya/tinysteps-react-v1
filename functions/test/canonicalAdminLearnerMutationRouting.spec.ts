@@ -59,18 +59,21 @@ describe('Wave 1 R5C2C1 learner mutation Admin authorization routing', () => {
     );
   });
 
-  it('does not pull enrollment or archive lifecycle mutations into this bounded slice', () => {
+  it('keeps archive routing distinct while protecting lifecycle mutations with canonical Admin', () => {
     expect(updateStudent).toContain(
       "case 'archive_requires_lifecycle_workflow':",
     );
     expect(lifecycle).toContain(
-      "from './helpers/adminGuard'",
+      "from './helpers/canonicalAdminGuard'",
     );
     expect(lifecycle).toContain(
-      'await ensureAdmin(request.auth);',
+      'await ensureCanonicalAdmin(request.auth);',
     );
     expect(lifecycle).not.toContain(
-      "from './helpers/canonicalAdminGuard'",
+      "from './helpers/adminGuard'",
+    );
+    expect(lifecycle).not.toContain(
+      'await ensureAdmin(request.auth);',
     );
   });
 });

@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   doesEnrollmentOccupyCourseSlot,
   normalizeEnrollmentStatus,
@@ -505,7 +505,7 @@ type CourseTransitionState =
   | 'failed';
 
 export const transitionEnrollmentCourse = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const data = (request.data || {}) as Record<string, unknown>;
   const operationId = String(data.operationId || '').trim();
   const oldEnrollmentId = String(data.oldEnrollmentId || '').trim();
@@ -1451,7 +1451,7 @@ function isManualSessionDocument(raw: Record<string, unknown>): boolean {
 }
 
 export const createAdminManualSession = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const enrollmentId = String(request.data?.enrollmentId || '').trim();
   const date = String(request.data?.date || '').trim();
   const startTime = String(request.data?.startTime || '').trim();
@@ -1556,7 +1556,7 @@ export const createAdminManualSession = onCall({ region: REGION }, async (reques
 });
 
 export const cancelAdminManualSession = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
   const sessionId = String(request.data?.sessionId || '').trim();
   const reason = String(request.data?.reason || '').trim();
   if (!sessionId || !reason) throw new HttpsError('invalid-argument', 'sessionId and a non-empty reason are required');
@@ -1951,7 +1951,7 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
   }
 
   try {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const db = admin.firestore();
     const enrRef = db.collection('enrollments').doc(enrollmentId);
@@ -2094,7 +2094,7 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
 });
 
 export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const enrollmentId = String(request.data?.enrollmentId || '').trim();
   const newTeacherId = String(request.data?.newTeacherId || '').trim();
@@ -2350,7 +2350,7 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
 });
 
 export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const dryRun = request.data?.dryRun === undefined ? true : Boolean(request.data?.dryRun);
   const enrollmentIdFilter = toOptionalId(request.data?.enrollmentId);
@@ -2475,7 +2475,7 @@ export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION
 });
 
 export const archiveKid = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const kidId = String(request.data?.kidId || '').trim();
   const reason = request.data?.reason ? String(request.data.reason) : null;
