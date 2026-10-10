@@ -2853,3 +2853,26 @@ Hosting/Rules/indexes changed: false
 
 Acceptance workflow removed before merge. Production validation remains a separate
 required gate for all four Functions and the Functions production marker.
+
+### R5C2C21 production closeout — verified four-Function group
+
+Actions deployment run 38021784884 (#3939) succeeded for merge commit
+`3c3a47f5b2aa797346551bd355a27b18368f007d`.
+
+~~~text
+Impacted and deployed Functions (exactly 4):
+  adminSyncCanonicalPhonicsCurriculum
+  onCurriculumTopicsCanonicalize
+  registerNotificationToken
+  sendTestPushNotification
+Deployment batches: 1/1, first attempt
+Verified Cloud Functions: 4
+Checkpoint-ready: 4/4
+Functions full deployment: false
+Hosting/Firestore Rules/indexes: skipped
+Recovery: skipped
+ci/functions-production: advanced to merge commit
+~~~
+
+R5C2C21 is complete in production. R5C2C22 begins with a fresh
+read-only dependency audit and financial-safety-aware group selection.
