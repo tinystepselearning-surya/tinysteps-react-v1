@@ -2918,3 +2918,34 @@ bounded batch, verified and checkpoint-ready 1/1. Full Function deployment
 false; Hosting/Firestore Rules/indexes skipped; recovery skipped;
 `ci/functions-production` advanced to the merge commit.
 R5C2C22 is production-complete. R5C2C23 requires a fresh selection audit.
+
+## R5C2C23 — Historical attendance creation canonical Admin authorization
+
+Fresh read-only topology audit run 38022691163 succeeded: 26 legacy Admin
+importers, 71 dependent deployed roots, no audit writes.
+The Admin guard on `createAdminHistoricalAttendanceSession` switched to
+`ensureCanonicalAdmin`, with canonical access authority
+`authAccessReadModels/{firebaseUid}` and no legacy fallback.
+Historic enrollment checks, idempotence, canonical teacher identity,
+atomic created session and audit record, associated pricing and pay fields
+and request/response behavior remain unchanged.
+
+### R5C2C23 acceptance evidence
+
+~~~text
+PR: #671
+Acceptance workflow: 38022953872
+Validated head: c11a67fcda2a8578475cce1c6e001a4884f91ac8
+Conclusion: success
+Lint and Functions build: passed
+Focused regressions: 2 files / 6 passed
+Full Functions estate: 161 files passed, 2 skipped
+Functions tests: 1201 passed, 25 skipped
+Deployment classifier and contracts: passed
+Deployment: createAdminHistoricalAttendanceSession only
+Full Functions deploy: false
+Hosting / Firestore Rules / indexes changed: false
+~~~
+
+Temporary acceptance workflow retired before merge. Production deployment
+and checkpoint evidence remain separate required gates.
