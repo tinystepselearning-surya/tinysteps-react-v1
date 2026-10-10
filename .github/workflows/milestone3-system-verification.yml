@@ -45,6 +45,10 @@ jobs:
         run: |
           node scripts/milestone3-authorization-parity-audit.mjs --output=artifacts/milestone3-authorization-parity-report.json
           node --test scripts/test/milestone3-authorization-parity.node-test.mjs
+      - name: Production canary source safety / uncapped-read audit (no production access)
+        run: |
+          node scripts/milestone3-canary-read-safety-preflight.mjs --output=artifacts/milestone3-canary-read-safety.json
+          node --test scripts/test/milestone3-canary-read-safety-preflight.node-test.mjs
       - name: Build before identity tooling tests
         run: npm --prefix functions run build
       - name: Identity foundation, parity and deployment tooling regressions
@@ -62,6 +66,7 @@ jobs:
       - name: Validate audit script syntax and lint
         run: |
           node --check scripts/milestone3-system-audit.mjs
+          node --check scripts/milestone3-canary-read-safety-preflight.mjs
           cd functions
           npx eslint test/canonicalAdminMilestone2Exit.spec.ts
       - name: Verify no backend resources changed and explicitly classify the bounded frontend exception
@@ -99,6 +104,7 @@ jobs:
           path: |
             artifacts/milestone3-system-report.json
             artifacts/milestone3-authorization-parity-report.json
+            artifacts/milestone3-canary-read-safety.json
           if-no-files-found: warn
           retention-days: 14
 
