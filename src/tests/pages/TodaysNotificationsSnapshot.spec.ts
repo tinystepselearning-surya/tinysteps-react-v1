@@ -379,6 +379,31 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(sendSource).not.toContain('httpsCallable(');
   });
 
+  it.each(['functions/permission-denied', 'functions/unauthenticated', 'snapshot/actor-changed'])(
+    'does not fall back to legacy Firestore after snapshot authorization failure %s',
+    async (code) => {
+      const deps = makeDeps();
+      const loadSnapshot = vi.fn(async () => {
+        throw Object.assign(new Error('Access denied'), {code});
+      });
+      await expect(loadManualReminderDayBuckets({
+        deps: {...deps, loadSnapshot},
+        todayDateKey: '2026-08-27',
+        tomorrowDateKey: '2026-08-28',
+      })).rejects.toMatchObject({code});
+      expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
+      expect(deps.fetchEnrollmentsByIds).not.toHaveBeenCalled();
+      const loadDateSnapshot = vi.fn(async () => {
+        throw Object.assign(new Error('Access denied'), {code});
+      });
+      await expect(loadManualReminderSelectedDate({
+        dateKey: '2026-09-03',
+        deps: {...deps, loadDateSnapshot},
+      })).rejects.toMatchObject({code});
+      expect(deps.fetchSessionsForDate).not.toHaveBeenCalled();
+    },
+  );
+
   it('falls back to bounded Firestore reads if the snapshot service is unavailable', async () => {
     const deps = makeDeps();
     deps.fetchSessionsForDate.mockImplementation(async (dateKey: string) => [
@@ -397,7 +422,7 @@ describe('Sessions Management authoritative snapshot loading', () => {
       deps: {
         ...deps,
         loadSnapshot: vi.fn(async () => {
-          throw new Error('snapshot unavailable');
+          throw Object.assign(new Error('snapshot temporarily unavailable'), {code: 'functions/unavailable'});
         }),
       },
       todayDateKey: '2026-08-27',
