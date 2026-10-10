@@ -1,0 +1,81 @@
+name: Milestone 1 Operational Authorization Exit Gate
+on:
+  push:
+    branches:
+      - wave1-milestone1-ledger-closeout
+permissions:
+  contents: read
+jobs:
+  milestone1-exit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Milestone 1 production ledger completeness
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const j=JSON.parse(fs.readFileSync('docs/architecture/wave-1/migrations/identity-foundation-v1.json','utf8'));
+          const slices=j.switchReads.r5.r5c.r5c2.slices;
+          for(let n=26;n<=32;n++){
+            const k='r5c2c'+n, s=slices[k], d=s?.productionDeployment;
+            if(!s?.productionVerified || d?.result!=='success' || !d.functionsProductionMarkerAdvanced || d.functionsVerified!==d.functionsCheckpointReady || d.functionsVerified!==d.functionsDeployed || d.functionsFullDeployment!==false || d.hostingDeployed!==false || d.firestoreRulesDeployed!==false || d.firestoreIndexesDeployed!==false || s.legacyFallback!==false) throw new Error('Milestone 1 evidence invalid: '+k);
+          }
+          if(j.switchReads.r5.r5c.milestone1?.status!=='exit_audit_pending') throw new Error('Exit stage changed prematurely');
+          console.log('Verified seven production slices C26-C32 and pending exit gate');
+          NODE
+      - name: Canonical operational authorization and no fallback
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const files={
+            'functions/src/scheduling/rollingScheduleLifecycle.ts':2,
+            'functions/src/scheduling/rollingScheduleCompatibility.ts':8,
+            'functions/src/scheduling/rollingScheduleCourseTransition.ts':1,
+          };
+          for(const [p,n] of Object.entries(files)){
+            const s=fs.readFileSync(p,'utf8');
+            const count=(s.match(/await ensureCanonicalAdmin\(request\.auth\);/g)||[]).length;
+            if(count!==n || !s.includes('canonicalAdminGuard') || s.includes("from '../helpers/adminGuard'") || s.includes('await ensureAdmin(request.auth);')) throw new Error(p+' canonical Admin mismatch: '+count);
+          }
+          const canonical=fs.readFileSync('functions/src/helpers/canonicalAdminGuard.ts','utf8');
+          if(!canonical.includes('loadCurrentAuthAccessPrincipal') || !canonical.includes("'permission-denied'")) throw new Error('Fail-closed canonical guard missing');
+          console.log('Operational lifecycle, compatibility and transition guards fail closed');
+          NODE
+      - name: Focused operational regression suite
+        run: >
+          npx vitest run --config functions/vitest.config.ts
+          functions/test/canonicalAdminAvsEvidenceMilestone1.spec.ts
+          functions/test/canonicalAdminRollingScheduleRepairRouting.spec.ts
+          functions/test/canonicalAdminRollingReconciliationRouting.spec.ts
+          functions/test/canonicalRollingLifecycleAdminRouting.spec.ts
+          functions/test/canonicalRollingCourseTransitionAdminRouting.spec.ts
+          functions/test/canonicalRollingCompatibilityAdminRouting.spec.ts
+          functions/test/canonicalMessagingAdminRouting.spec.ts
+          functions/test/rollingScheduleProductionHardening.spec.ts
+          functions/test/rollingScheduleLifecycle.spec.ts
+      - name: Full Functions regression suite
+        run: npm --prefix functions test
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+      - name: Focused lint
+        run: cd functions && npx eslint src/scheduling/rollingScheduleLifecycle.ts src/scheduling/rollingScheduleCourseTransition.ts src/scheduling/rollingScheduleCompatibility.ts test/canonicalRollingCourseTransitionAdminRouting.spec.ts test/canonicalRollingCompatibilityAdminRouting.spec.ts
+      - name: Documentation-only deployment safety
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions deployment required: false' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
