@@ -8,7 +8,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import {doc, setDoc} from 'firebase/firestore';
+import {doc, getDoc, setDoc} from 'firebase/firestore';
 import {getMetadata, ref, uploadBytes} from 'firebase/storage';
 import {afterAll, afterEach, beforeAll, describe, it} from 'vitest';
 
@@ -23,7 +23,7 @@ beforeAll(async () => {
   const [fireHost, firePort = '8085'] = firestoreHost.split(':');
   const [storeHost, storePort = '9199'] = storageHost.split(':');
   env = await initializeTestEnvironment({
-    projectId: 'tinysteps-m3-storage-parity',
+    projectId: 'demo-tinysteps-m3-storage-parity',
     firestore: {
       host: fireHost,
       port: Number(firePort),
@@ -39,7 +39,7 @@ beforeAll(async () => {
 afterEach(async () => {if (env) await env.clearFirestore();});
 afterAll(async () => {if (env) await env.cleanup();});
 const storage = (uid: string, token: Record<string, unknown> = {}) =>
-  env.authenticatedContext(uid, token).storage('gs://tinysteps-m3-storage-parity.appspot.com');
+  env.authenticatedContext(uid, token).storage('gs://demo-tinysteps-m3-storage-parity.appspot.com');
 
 async function seed() {
   await env.withSecurityRulesDisabled(async (runner) => {
@@ -61,6 +61,7 @@ async function seed() {
 suite('Milestone 3 Storage legacy and canonical authorization parity emulator', () => {
   it('accepts synthetic active legacy superUser for Admin-only image write', async () => {
     await seed();
+    await assertSucceeds(getDoc(doc(env.authenticatedContext('legacy-super').firestore(), 'users', 'legacy-super')));
     await assertSucceeds(uploadBytes(ref(storage('legacy-super'), 'images/legacy-super.png'), bytes));
     await assertSucceeds(uploadBytes(ref(storage('admin-1'), 'pronunciations/admin-1.mp3'), bytes));
   });
