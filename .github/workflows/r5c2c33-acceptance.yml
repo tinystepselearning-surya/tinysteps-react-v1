@@ -21,7 +21,7 @@ jobs:
             functions/package-lock.json
       - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
       - name: Focused canonical payment audit regressions
-        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalAdminPaymentBackfillDryRunRouting.spec.ts functions/test/parentPaymentBackfillAudit.spec.ts
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalAdminPaymentBackfillDryRunRouting.spec.ts
       - name: Full Functions regression suite
         run: npm --prefix functions test
       - name: Functions build
