@@ -302,8 +302,11 @@ export const clearSessionsManagementSnapshotCacheForTests = clearSessionsManagem
 
 export const getCachedSessionsManagementSnapshot = (): SessionsManagementSnapshotPayload | null => {
   const actor = currentSnapshotActor();
-  return actor && verifiedGeneration === actor.generation
-    ? readStoredCache(actor)?.snapshot || null : null;
+  if (!actor) return null;
+  // Check ownership and purge mismatched persisted data even before this
+  // session is allowed to display a previously saved revision hint.
+  const cache = readStoredCache(actor);
+  return verifiedGeneration === actor.generation ? cache?.snapshot || null : null;
 };
 
 export async function loadSessionsManagementSnapshot(): Promise<SessionsManagementSnapshotPayload> {
@@ -447,9 +450,9 @@ export function getCachedSessionsManagementRowsForReadLabel(
   label: string,
 ): SessionsManagementSnapshotRow[] | null {
   const actor = currentSnapshotActor();
-  if (!actor || verifiedGeneration !== actor.generation) return null;
+  if (!actor) return null;
   const cache = readStoredCache(actor);
-  if (!cache) return null;
+  if (!cache || verifiedGeneration !== actor.generation) return null;
   const { snapshot, extraDates } = cache;
   const extraPayloads = Object.values(extraDates)
     .filter((payload) => payload.snapshotId === snapshot.snapshotId);
