@@ -2,7 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
   buildParentPaymentAllocationPlan,
   type BillingChargeDocLike,
@@ -1294,7 +1294,7 @@ export const getWalletAutomationConfig = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const db = admin.firestore();
     const configRef = db.collection('config').doc('finance');
@@ -1319,7 +1319,7 @@ export const setWalletAutomationConfig = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as SetWalletAutomationConfigRequest;
     if (typeof data.walletClassDeductionsEnabled !== 'boolean') {
@@ -1476,7 +1476,7 @@ export const previewMissingWalletDeductions = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as PreviewMissingWalletDeductionsRequest;
     if (hasOwnProp(data, 'monthKey') && data.monthKey != null && typeof data.monthKey !== 'string') {
@@ -1757,7 +1757,7 @@ export const backfillMissingWalletDeductions = onCall(
     timeoutSeconds: 120,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as BackfillMissingWalletDeductionsRequest;
     if (hasOwnProp(data, 'monthKey') && data.monthKey != null && typeof data.monthKey !== 'string') {
@@ -2516,7 +2516,7 @@ export const adminReceiveParentPayment = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as AdminReceiveParentPaymentRequest;
     const parentId = String(data.parentId || '').trim();
@@ -2759,7 +2759,7 @@ export const adminTopupParentWallet = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as AdminTopupParentWalletRequest;
     const parentId = String(data.parentId || '').trim();
@@ -2821,7 +2821,7 @@ export const adminAdjustParentWallet = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as AdminAdjustParentWalletRequest;
     const parentId = String(data.parentId || '').trim();
@@ -2893,7 +2893,7 @@ export const initParentWalletOpeningDeficit = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as InitParentWalletOpeningDeficitRequest;
     const parentId = String(data.parentId || '').trim();
@@ -3024,7 +3024,7 @@ export const reconcileParentWallet = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const data = (request.data || {}) as ReconcileParentWalletRequest;
     const parentId = String(data.parentId || '').trim();

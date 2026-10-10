@@ -3,7 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
 import { resolveCanonicalServiceDate } from './helpers/serviceDate';
 import {
@@ -1051,7 +1051,7 @@ export const recordPayment = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const enrollmentId = String(request.data?.enrollmentId || '').trim();
     if (!enrollmentId) throw new HttpsError('invalid-argument', 'enrollmentId is required');
@@ -1305,7 +1305,7 @@ export const recordTeacherPayout = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const teacherId = String(request.data?.teacherId || '').trim();
     if (!teacherId) throw new HttpsError('invalid-argument', 'teacherId is required');
@@ -1582,7 +1582,7 @@ export const voidTeacherOrphanEarnings = onCall(
     timeoutSeconds: 120,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const teacherId = String(request.data?.teacherId || '').trim();
     const monthKey = String(request.data?.monthKey || '').trim();
@@ -1724,7 +1724,7 @@ export const adminVoidSessionCharge = onCall(
     invoker: 'public',
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const sessionId = String(request.data?.sessionId || '').trim();
     if (!sessionId) {
@@ -2076,7 +2076,7 @@ export const previewFinanceCutoverArchive = onCall(
     timeoutSeconds: 300,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const archiveThroughMonthKey = normalizeArchiveThroughMonthKeyOrThrow(
       request.data?.archiveThroughMonthKey
@@ -2213,7 +2213,7 @@ export const archiveFinanceRecordsThroughMonth = onCall(
     timeoutSeconds: 300,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const archiveThroughMonthKey = normalizeArchiveThroughMonthKeyOrThrow(
       request.data?.archiveThroughMonthKey
@@ -2377,7 +2377,7 @@ export const reconcileSessionRevenueMonthKeys = onCall(
     timeoutSeconds: 300,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     const monthKey = normalizeMonthKeyOrThrow(request.data?.monthKey);
     const apply = request.data?.apply === true;
