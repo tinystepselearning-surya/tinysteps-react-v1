@@ -35,7 +35,7 @@ No scheduler generation, Teams links, class attendance billing, wallet transacti
 
 The source-code exit preflight workflow `38041348297` passed: source-import sweep, focused authorization tests, browser identity-hardening regression, complete Functions suite, TypeScript build, lint, and zero production deployment impact for the closeout/test changes.
 
-**Formal ledger-inclusive Milestone-2 exit verdict: PENDING** until the final CI gate checks all six production records, permanent source scan and build/regression suite together and reports success.
+**Formal ledger-inclusive Milestone-2 exit verdict: PASSED (2026-10-10).** Final workflow `38041660356` succeeded: six C33–C38 production records checkpoint-verified, permanent no-legacy-Admin guard sweep, focused and browser identity regressions, full Functions suite, TypeScript build, lint, and zero-deployment-impact classifier. Production marker remains `81af741aef78ea3d8e3cac66e548455ce3a9b43f`. No additional Functions, Hosting, Firestore Rules or indexes required by closeout. Milestone 2 is complete and the next independent work phase is Milestone 3 final system regression/verification; any global identity reader or rule cutover remains separately gated.
 
 ## Exclusions and transition
 
