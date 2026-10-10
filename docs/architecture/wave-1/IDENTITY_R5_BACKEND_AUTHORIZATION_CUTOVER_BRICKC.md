@@ -2691,3 +2691,30 @@ Hosting, Firestore Rules, Firestore indexes: unchanged
 
 Temporary acceptance workflow retired before merge. Production verification
 and Functions production marker advancement are separate required gates.
+
+### R5C2C18 production evidence
+
+R5C2C18 completed a bounded one-Function production deployment, verified directly
+from GitHub Actions workflow and deployment job logs.
+
+~~~text
+PR: #661
+Merge commit: f597fc5b65e985693bdca1c0552020d3eb1598aa
+Deploy workflow run: 38019692307
+Deploy run number: 3933
+Conclusion: success
+Functions deployment required: true
+Functions full deployment: false
+Deployed Function: runAttendanceValidationLatestCheck
+Deployment batch: 1/1, first attempt
+Verified Functions: 1
+Checkpoint-ready Functions: 1/1
+Hosting: skipped
+Firestore Rules: skipped
+Firestore indexes: skipped
+Recovery: skipped
+Functions production baseline: ci/functions-production advanced to merge commit
+~~~
+
+R5C2C18 is complete in production. The next step is a fresh read-only topology
+audit to select an independently deployable R5C2C19 Admin-authorization cutover.
