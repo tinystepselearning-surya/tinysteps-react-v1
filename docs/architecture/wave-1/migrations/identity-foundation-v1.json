@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5_milestone2_c33_c34_production_verified_c35_deployment_pending",
+    "status": "r5_milestone2_c33_c35_authorization_production_verified_remaining_boundaries_pending",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c35_production_checkpoint_and_batch_ledger_closeout",
+    "nextBrick": "r5_milestone2_next_bounded_legacy_admin_dependency_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4550,6 +4550,53 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false
               }
+            },
+            "r5c2c35": {
+              "title": "Milestone 2 — LP assignment and generic Admin role authorization",
+              "functions": [
+                "assignLPToParent",
+                "unassignLPFromParent",
+                "assignLPToTeacher",
+                "unassignLPFromTeacher",
+                "adminSetUserRole"
+              ],
+              "impactedDeploymentFunctions": [
+                "adminSetUserRole",
+                "assignLPToParent",
+                "assignLPToTeacher",
+                "unassignLPFromParent",
+                "unassignLPFromTeacher"
+              ],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "productionWiring": true,
+              "productionVerified": true,
+              "note": "Four Learning Partner assignment requesters and their coupled Admin role-change re-export migrate together. Existing canonical identity primary writers and symmetric LP assignment semantics remain unchanged.",
+              "validation": {
+                "workflowRunId": 38039642887,
+                "result": "success",
+                "focusedTests": "passed",
+                "fullFunctionsTests": "passed",
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "exactBoundedImpact": "passed",
+                "temporaryAcceptanceWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 693,
+                "mergeCommit": "7f50afbabe75da964ab2372b27ec9645d561408f",
+                "workflowRunId": 38039760999,
+                "result": "success",
+                "functionsDeployed": 5,
+                "functionsVerified": 5,
+                "functionsCheckpointReady": 5,
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false
+              }
             }
           }
         },
@@ -4590,14 +4637,18 @@
           "status": "in_progress",
           "productionSlicesVerified": [
             "r5c2c33",
-            "r5c2c34"
+            "r5c2c34",
+            "r5c2c35"
           ],
-          "pendingProductionSlice": "r5c2c35",
+          "pendingProductionSlice": null,
           "remainingLegacyGuardModulesAfterC35CodeMerge": 7,
           "remainingLegacyGuardCallSitesAfterC35CodeMerge": 34,
           "sharedLegacyAdminGuardModified": false,
           "finalExitGate": "not_attempted",
-          "note": "Milestone 2 remains in progress; no global auth/read switch, Firestore Rules or storage rules cutover."
+          "note": "Milestone 2 remains in progress; no global auth/read switch, Firestore Rules or storage rules cutover.",
+          "lastProductionCommit": "7f50afbabe75da964ab2372b27ec9645d561408f",
+          "deployedFunctionRootsAcrossBatches": 11,
+          "canonicalAdminCallablesMigratedAcrossBatches": 10
         }
       }
     }
