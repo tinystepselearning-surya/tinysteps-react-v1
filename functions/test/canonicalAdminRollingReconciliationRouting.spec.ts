@@ -19,6 +19,6 @@ describe('R5C2C28 reconciliation authorization boundary', () => {
     expect(index).toContain('export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingScheduleReconciliation";');
     expect(source).toContain('materializeRollingEnrollmentWindowInternal');
     expect(source).toContain('canCancelRollingLifecycleSession');
-    expect(lifecycle).toContain('await ensureAdmin(request.auth);');
+    expect(lifecycle).toContain('await ensureCanonicalAdmin(request.auth);');
   });
 });
