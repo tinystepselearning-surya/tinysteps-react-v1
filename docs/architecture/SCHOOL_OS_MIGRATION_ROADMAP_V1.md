@@ -367,6 +367,24 @@ BI / attribution / forecasting / governed AI
 - final retirement of verified legacy aliases and duplicate collections;
 - architecture fitness checks for future work.
 
+### Planned Wave 6 deliverable — Admissions & Enrollment Insights
+
+**Status:** PLANNED, NOT IMPLEMENTED. Deliver under School OS Wave 6 after Wave 2 enrollment semantics, Wave 3 attendance/session evidence, and relevant domain projection contracts are certified. Do not build a parallel authority or ship unverified metrics earlier.
+
+**Experience:** A read-only `Analytics → Admissions & Enrollment Insights` view, replacing the need for a mutable Course Management reporting screen. Canonical courses and identifiers remain authoritative in the Academic & Enrollment domain; retirement of the old admin UI must not delete course documents or impair course selectors.
+
+**Business questions and metric contract to certify:**
+- Current active course enrollments and unique active learners (clearly distinguish the two; handle concurrent courses).
+- New learner admissions versus additional-course enrollments, transfers/transitions, and reactivations, by consistent month/cohort.
+- Ended enrollments, genuine learner exits, course progression, and returning students; do not count transitions as student loss.
+- Verified attended classes per enrollment and per learner, including distributions and median/average lifetime classes; deduplicate evidence for rescheduled, double-length and overlapping sessions.
+- Enrollment duration and cohort retention at 30/60/90 days, with right-censoring for ongoing cohorts; distinguish unknown exit dates/reasons from verified outcomes.
+- Per-course comparisons and trend windows only where periods, denominators, enrollment identities and evidence are comparable.
+
+**Engineering gates:** Reuse certified domain events/read models and explicitly owned semantic metrics; bounded, rebuildable, versioned projections with reconciliation, freshness/coverage metadata and access control. Avoid direct full historical Firestore scans, persistent dashboard listeners, new write paths, and duplicate facts. Preserve finance/evidence auditability and existing production operations. Validate historical data quality and test the metrics against canonical records before display; expose unknown/partial coverage instead of invented values.
+
+**Release policy:** Independent feature PR(s), CI and domain-contract tests, no coupling to the UI-retirement PR. Initially ship verified course enrollment counts only when the canonical read model and filters are certified; retain advanced tenure, progression, and attendance insights as gated follow-ups.
+
 ## Exit gate
 
 - management metrics use canonical definitions;

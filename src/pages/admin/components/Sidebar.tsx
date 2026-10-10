@@ -3,7 +3,6 @@ import { cn } from '@components/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import {
   BellDot,
-  BookCopy,
   BookOpen,
   BookOpenCheck,
   Building2,
@@ -39,7 +38,6 @@ export const ADMIN_SIDEBAR_TABS: AdminSidebarTab[] = [
     { id: 'attendance-corrections', label: 'Attendance Corrections', icon: ClipboardList },
     { id: 'attendance-validation', label: 'Parent Month Close', icon: ShieldCheck },
     { id: 'relationships', label: 'Relationship Management', icon: Handshake },
-    { id: 'courses', label: 'Course Management', icon: BookCopy },
     { id: 'today-notifications', label: 'Sessions Management', icon: BellDot },
     { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
     { id: 'class-recordings', label: 'Class Recordings', icon: Users },
