@@ -1,0 +1,125 @@
+name: Milestone 3 System Verification
+
+on:
+  push:
+    branches:
+      - wave1-r5-milestone3-system-verification
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: milestone3-system-verification
+  cancel-in-progress: false
+
+jobs:
+  canonical-identity-and-functions:
+    name: Canonical authorization + full Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: Read-only Milestone 3 source, production ledger and risk inventory
+        run: node scripts/milestone3-system-audit.mjs --output=artifacts/milestone3-system-report.json
+      - name: Identity foundation, parity and deployment tooling regressions
+        run: >
+          node --test
+          scripts/test/wave1-identity-foundation.node-test.mjs
+          scripts/test/wave1-identity-verify.node-test.mjs
+          scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs
+          scripts/test/functions-deployment.node-test.mjs
+      - name: Complete Functions regression suite
+        run: npm --prefix functions test
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+      - name: Validate audit script syntax and lint
+        run: |
+          node --check scripts/milestone3-system-audit.mjs
+          cd functions
+          npx eslint test/canonicalAdminMilestone2Exit.spec.ts
+      - name: Verify this audit PR cannot deploy Firebase resources
+        if: github.ref != 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee /tmp/impact.txt
+          grep -q 'Functions deployment required: false' /tmp/impact.txt
+          grep -q 'Hosting changed: false' /tmp/impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/impact.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: milestone3-system-report
+          path: artifacts/milestone3-system-report.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  operational-business-regressions:
+    name: Attendance, scheduling, finance and portals
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Operational end-to-end contract regressions (no production writes)
+        run: >
+          npx vitest run
+          src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+          src/tests/functions/ParentPaymentAllocator.spec.ts
+          src/tests/functions/ParentPaymentBackfill.spec.ts
+          src/tests/functions/wallet.spec.ts
+          src/tests/functions/parentMonthlyBillingReadModel.spec.ts
+          src/tests/functions/parentMonthlyBillingProjectionV2.spec.ts
+          src/tests/functions/monthlyParentWorkflowDecisions.spec.ts
+          src/tests/functions/adminAttendanceCorrectionTeacherPayHandling.spec.ts
+          src/tests/functions/sessionRevenuePresentLatePolicy.spec.ts
+          src/tests/functions/teacherPayoutV2EntitlementRouting.spec.ts
+          src/tests/functions/teacherPayWithholdingLedgerRouting.spec.ts
+          src/tests/functions/teacherEarningAdjustmentLedgerRouting.spec.ts
+          src/tests/functions/attendanceValidationEvidenceFreshnessRouting.spec.ts
+          src/tests/functions/attendanceValidationForceFreshRouting.spec.ts
+          src/tests/admin/attendanceValidationBusinessReconciliation.spec.ts
+          src/tests/admin/parentMonthClose.spec.ts
+          src/tests/scheduling/EnrollmentRollingScheduleContract.spec.ts
+          src/tests/scheduling/RollingScheduleCompatibilityContract.spec.ts
+          src/tests/scheduling/RollingScheduleRuntimeParity.spec.ts
+          src/tests/hooks/useUpcomingSessions.spec.tsx
+
+  firestore-security-emulator:
+    name: Firestore Rules deny/allow emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts
+      - name: Emulated Firestore permissions for parent, teacher, Admin and school role
+        run: npm run test:wave1-identity-rules
