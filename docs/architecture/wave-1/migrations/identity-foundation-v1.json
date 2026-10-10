@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c21_production_verified_ready_for_next_group_audit",
+    "status": "r5c2c22_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c22_fresh_bounded_multi_function_selection_audit",
+    "nextBrick": "r5c2c22_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3846,6 +3846,59 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c22": {
+              "title": "AVS forced range refresh canonical Admin authorization",
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "functions": [
+                "forceRefreshAttendanceValidationRange"
+              ],
+              "existingAvsCheckpointWriteSemanticsPreserved": true,
+              "authoritativeFinanceOrAttendanceWritesIntroduced": false,
+              "productionWiring": false,
+              "productionVerified": false,
+              "selectionAudit": {
+                "workflowRunId": 38022046998,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 27,
+                "deployedRootsDependingOnLegacyImporters": 71,
+                "writesPerformed": 0
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctionsCount": 1,
+                "impactedFunctions": [
+                  "forceRefreshAttendanceValidationRange"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
+              },
+              "validation": {
+                "mode": "push_acceptance",
+                "workflowRunId": 38022254644,
+                "validatedHeadSha": "c21ce9759ee169bc7530d55eb3af1c035b3bdc9a",
+                "result": "success",
+                "focusedLint": "passed",
+                "functionsBuild": "passed",
+                "focusedRegressions": {
+                  "filesPassed": 2,
+                  "testsPassed": 6
+                },
+                "fullFunctionsUnitEstate": {
+                  "filesPassed": 160,
+                  "filesSkipped": 2,
+                  "testsPassed": 1198,
+                  "testsSkipped": 25
+                },
+                "deploymentClassifierAndContracts": "passed",
+                "singleFunctionBlastRadius": "passed",
+                "temporaryValidationWorkflowRetiredBeforeMerge": true
               }
             }
           }
