@@ -1,0 +1,86 @@
+name: Milestone 3 Firestore Finance Consistency
+on:
+  pull_request:
+    paths:
+      - 'functions/test/firestoreFinance/**'
+      - 'functions/test/milestone3FirestoreFinance*.spec.ts'
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT.md'
+      - '.github/workflows/milestone3-firestore-finance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  emulator-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Synthetic emulator experiments
+        env:
+          M3_FINANCE_EMULATOR_ONLY: '1'
+          FIRESTORE_EMULATOR_HOST: '127.0.0.1:8787'
+          GCLOUD_PROJECT: demo-tinysteps-finance-consistency
+          M3_FINANCE_EVIDENCE_DIR: artifacts/firestore-finance
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/firestore-finance
+          curl --fail --location --retry 3 https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.19.8.jar -o /tmp/finance-emulator.jar
+          echo '9d43599ed6151199e8d604dc87fac51218e49e5f3a48519b1ae560bbe5e3382d  /tmp/finance-emulator.jar' | sha256sum --check
+          java -jar /tmp/finance-emulator.jar --host 127.0.0.1 --port 8787 --project_id demo-tinysteps-finance-consistency --single_project_mode true --single_project_mode_error true > artifacts/firestore-finance/emulator.log 2>&1 &
+          emulator_pid=$!
+          trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if node -e 'const s=require("node:net").connect(8787,"127.0.0.1");s.on("connect",()=>{s.end();process.exit(0)});s.on("error",()=>process.exit(1));s.setTimeout(500,()=>process.exit(1))'; then break; fi
+            sleep 1
+          done
+          npx vitest run --config functions/test/firestoreFinance/vitest.config.ts --reporter=json --outputFile=artifacts/firestore-finance/emulator-tests.json
+      - name: Existing finance and full regressions
+        run: |
+          npx vitest run --config functions/vitest.config.ts functions/test/milestone3Finance*.spec.ts --reporter=json --outputFile=artifacts/firestore-finance/previous-60.json
+          npm --prefix functions test -- --reporter=json --outputFile=artifacts/firestore-finance/functions.json
+          npm test -- --reporter=json --outputFile=artifacts/firestore-finance/root.json
+      - name: TypeScript, build and lint
+        run: |
+          npm --prefix functions run build
+          npm run typecheck
+          npx tsc -p functions/test/firestoreFinance/tsconfig.json
+          npm run lint
+          npm --prefix functions run lint
+          cd functions
+          npx eslint test/firestoreFinance/*.ts test/milestone3FirestoreFinance*.spec.ts
+      - name: Exact deployment impact and permitted paths
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          baseline="$(git merge-base "$BASE_SHA" HEAD)"
+          git diff --name-only "$baseline" HEAD > artifacts/firestore-finance/changed-paths.txt
+          unexpected="$(grep -Ev '^(functions/test/firestoreFinance/[^/]+|functions/test/milestone3FirestoreFinance[^/]*\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT\.md|\.github/workflows/milestone3-firestore-finance\.yml)$' artifacts/firestore-finance/changed-paths.txt || true)"
+          if test -n "$unexpected"; then echo 'Unexpected path in emulator-only PR'; exit 1; fi
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee artifacts/firestore-finance/deployment-impact.txt
+          grep -q 'Functions deployment required: false' artifacts/firestore-finance/deployment-impact.txt
+          grep -q 'Functions full deployment: false' artifacts/firestore-finance/deployment-impact.txt
+          grep -q 'Functions impacted: 0' artifacts/firestore-finance/deployment-impact.txt
+          grep -q 'Firestore rules changed: false' artifacts/firestore-finance/deployment-impact.txt
+          grep -q 'Firestore indexes changed: false' artifacts/firestore-finance/deployment-impact.txt
+          grep -q 'Hosting changed: false' artifacts/firestore-finance/deployment-impact.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: milestone3-firestore-finance
+          path: artifacts/firestore-finance/
+          retention-days: 14
