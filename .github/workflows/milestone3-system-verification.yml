@@ -1,6 +1,13 @@
 name: Milestone 3 System Verification
 
 on:
+  pull_request:
+    paths:
+      - 'scripts/milestone3-*.mjs'
+      - 'scripts/test/milestone3-*.node-test.mjs'
+      - 'functions/test/milestone3*.spec.ts'
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_*.md'
+      - '.github/workflows/milestone3-system-verification.yml'
   push:
     branches:
       - wave1-r5-milestone3-system-verification
@@ -47,6 +54,7 @@ jobs:
           scripts/test/wave1-identity-verify.node-test.mjs
           scripts/test/wave1-auth-access-read-model-backfill.node-test.mjs
           scripts/test/functions-deployment.node-test.mjs
+          scripts/test/milestone3-bounded-principal-audit.node-test.mjs
       - name: Complete Functions regression suite
         run: npm --prefix functions test
       - name: Functions TypeScript build
