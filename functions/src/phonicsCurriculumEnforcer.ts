@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
@@ -72,7 +72,7 @@ export const adminSyncCanonicalPhonicsCurriculum = onCall(
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
-    await ensureAdmin(request.auth);
+    await ensureCanonicalAdmin(request.auth);
 
     return ensureCanonicalPhonicsCurriculum({
       actorUid: uid,
