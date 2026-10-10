@@ -1,0 +1,79 @@
+name: Wave 1 R5C2C21 Acceptance
+
+on:
+  push:
+    branches:
+      - wave1/identity-r5c2c21-curriculum-notification-admin-20261010
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm --prefix functions ci
+      - name: Validate changed files and clean diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git diff --check origin/main...HEAD
+          mapfile -t changed < <(git diff --name-only origin/main...HEAD | sort)
+          for file in "${changed[@]}"; do
+            case "$file" in
+              ".github/workflows/r5c2c21-acceptance.yml"|"functions/src/phonicsCurriculumEnforcer.ts"|"functions/src/notifications/classReminders.ts"|"functions/test/canonicalAdminCurriculumNotificationsRouting.spec.ts"|"docs/architecture/wave-1/IDENTITY_R5_BACKEND_AUTHORIZATION_CUTOVER_BRICKC.md"|"docs/architecture/wave-1/migrations/identity-foundation-v1.json") ;;
+              *) echo "Unexpected file: $file"; exit 1 ;;
+            esac
+          done
+      - name: Focused lint
+        run: npx eslint src/phonicsCurriculumEnforcer.ts src/notifications/classReminders.ts test/canonicalAdminCurriculumNotificationsRouting.spec.ts
+        working-directory: functions
+      - name: Functions build
+        run: npm --prefix functions run build
+      - name: Focused authorization tests
+        run: npx vitest run --config functions/vitest.config.ts functions/test/canonicalAdminCurriculumNotificationsRouting.spec.ts functions/test/canonicalAdminGuardRouting.spec.ts
+      - name: Full Functions unit estate
+        run: npx vitest run --config functions/vitest.config.ts
+      - name: Deployment classifier contracts
+        run: node --test scripts/test/functions-impact.node-test.mjs scripts/test/functions-deployment.node-test.mjs
+      - name: Resolve bounded deployment impact
+        id: impact
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$BASE_SHA" --functions-before "$BASE_SHA" --hosting-before "$BASE_SHA" --firestore-rules-before "$BASE_SHA" --firestore-indexes-before "$BASE_SHA" --sha "$GITHUB_SHA"
+      - name: Enforce exact four-Function deployment boundary
+        shell: bash
+        env:
+          FUNCTIONS_REQUIRED: ${{ steps.impact.outputs.functions_deployment_required }}
+          FUNCTIONS_FULL: ${{ steps.impact.outputs.functions_full_deployment }}
+          FUNCTIONS_TARGETS: ${{ steps.impact.outputs.functions_targets }}
+          HOSTING_CHANGED: ${{ steps.impact.outputs.hosting_changed }}
+          RULES_CHANGED: ${{ steps.impact.outputs.firestore_rules_changed }}
+          INDEXES_CHANGED: ${{ steps.impact.outputs.firestore_indexes_changed }}
+        run: |
+          set -euo pipefail
+          test "${FUNCTIONS_REQUIRED}" = "true"
+          test "${FUNCTIONS_FULL}" = "false"
+          EXPECTED="adminSyncCanonicalPhonicsCurriculum onCurriculumTopicsCanonicalize registerNotificationToken sendTestPushNotification"
+          ACTUAL="$(printf "%s" "${FUNCTIONS_TARGETS}" | tr ",;" "  " | xargs -n1 | sort | xargs)"
+          test "${ACTUAL}" = "$(printf "%s" "${EXPECTED}" | tr " " "\\n" | sort | xargs)"
+          test "${HOSTING_CHANGED}" = "false"
+          test "${RULES_CHANGED}" = "false"
+          test "${INDEXES_CHANGED}" = "false"
