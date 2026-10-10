@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { ensureAdmin } from './helpers/adminGuard';
+import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { normalizeEnrollmentStatus } from './helpers/status';
 import { buildCanonicalTeacherWriteFields } from './helpers/teacherIdentity';
 import {
@@ -136,7 +136,7 @@ function numberOrZero(value: unknown): number {
 }
 
 export const createAdminHistoricalAttendanceSession = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  await ensureCanonicalAdmin(request.auth);
 
   const enrollmentId = String(request.data?.enrollmentId || '').trim();
   const requestedTeacherId = String(request.data?.teacherId || '').trim();
