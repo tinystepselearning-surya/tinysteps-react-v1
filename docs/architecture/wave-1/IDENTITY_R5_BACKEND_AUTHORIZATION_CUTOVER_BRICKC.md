@@ -2794,3 +2794,27 @@ Hosting / Firestore Rules / indexes changed: false
 The temporary acceptance workflow was retired before merge. Production
 verification of all four targets, each checkpoint, and Functions production
 marker advancement is a separate release gate.
+
+### R5C2C20 production closeout — verified four-Function group
+
+Actions deployment run 38021228811 (#3937) succeeded on commit
+`13a5ca70f0e99b9651e2d360759f34a506a1a790`.
+
+~~~text
+Deployed Functions: exactly 4
+  runEnrollmentCanonicalCoverage
+  runEnrollmentCanonicalCoverageDaily
+  runFinanceReconciliationAudit
+  runFinanceReconciliationAuditDaily
+Deployment batches: 1/1, first attempt
+Verified Cloud Functions: 4
+Checkpoint-ready: 4/4
+Functions full deploy: false
+Hosting/Firestore Rules/indexes: skipped
+Recovery: skipped
+ci/functions-production: advanced to merge commit
+~~~
+
+R5C2C20 is complete in production. Next R5C2C21 starts with a fresh
+read-only multi-Function dependency selection audit. Preserve narrow
+deployment impact and isolate operational financial/attendance mutations.
