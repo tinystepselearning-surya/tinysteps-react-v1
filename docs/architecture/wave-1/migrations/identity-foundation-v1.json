@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c22_validation_complete_ready_for_production_merge",
+    "status": "r5c2c22_production_verified_ready_for_next_selection_audit",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c22_production_merge_and_verification",
+    "nextBrick": "r5c2c23_fresh_bounded_authorization_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3859,8 +3859,8 @@
               ],
               "existingAvsCheckpointWriteSemanticsPreserved": true,
               "authoritativeFinanceOrAttendanceWritesIntroduced": false,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "selectionAudit": {
                 "workflowRunId": 38022046998,
                 "result": "success",
@@ -3899,6 +3899,26 @@
                 "deploymentClassifierAndContracts": "passed",
                 "singleFunctionBlastRadius": "passed",
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 669,
+                "mergeCommit": "f680ceb4194e52766ee6b3eb7a824c30a619d3de",
+                "workflowRunId": 38022376058,
+                "workflowRunNumber": 3941,
+                "result": "success",
+                "functionsDeployed": 1,
+                "functionsVerified": 1,
+                "functionsCheckpointReady": 1,
+                "deploymentBatches": 1,
+                "functions": [
+                  "forceRefreshAttendanceValidationRange"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
