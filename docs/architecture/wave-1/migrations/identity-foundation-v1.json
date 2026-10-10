@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c25_production_verified_ready_for_next_selection_audit",
+    "status": "r5c2c26_milestone1_avs_evidence_validation_complete_ready_for_production_merge",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c26_fresh_bounded_authorization_selection_audit",
+    "nextBrick": "r5c2c26_milestone1_avs_evidence_production_merge_and_verification",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -4144,6 +4144,50 @@
                 "firestoreRulesDeployed": false,
                 "firestoreIndexesDeployed": false,
                 "recoveryJobRequired": false
+              }
+            },
+            "r5c2c26": {
+              "title": "Milestone 1 operational authorization - AVS evidence refresh",
+              "functions": [
+                "forceRefreshAttendanceValidationEvidence",
+                "forceRefreshAttendanceValidationRange",
+                "runAttendanceValidationRange"
+              ],
+              "authorizationSource": "authAccessReadModels/{firebaseUid}",
+              "authorizationGuard": "functions/src/helpers/canonicalAdminGuard.ts",
+              "legacyFallback": false,
+              "sharedAdminGuardModified": false,
+              "productionWiring": false,
+              "productionVerified": false,
+              "selectionAudit": {
+                "workflowRunId": 38028926251,
+                "result": "success",
+                "legacyAdminGuardImporterModules": 22,
+                "deployedRootsDependingOnLegacyImporters": 67
+              },
+              "validation": {
+                "workflowRunId": 38029308767,
+                "result": "success",
+                "focusedTestsPassed": 6,
+                "fullTestsPassed": 1212,
+                "fullTestsSkipped": 25,
+                "fullFilesPassed": 164,
+                "fullFilesSkipped": 2,
+                "functionsBuild": "passed",
+                "lint": "passed",
+                "deploymentClassifier": "passed"
+              },
+              "expectedDeploymentImpact": {
+                "functionsDeploymentRequired": true,
+                "functionsFullDeployment": false,
+                "impactedFunctions": [
+                  "forceRefreshAttendanceValidationEvidence",
+                  "forceRefreshAttendanceValidationRange",
+                  "runAttendanceValidationRange"
+                ],
+                "hostingChanged": false,
+                "firestoreRulesChanged": false,
+                "firestoreIndexesChanged": false
               }
             }
           }
