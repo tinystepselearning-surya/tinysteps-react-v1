@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, ensureNativeAuthPersistence } from '../../lib/firebaseConfig';
+import { clearSessionsManagementSnapshotCache, observeSessionsManagementAuthUid } from '../../lib/sessionsManagementSnapshot';
 import useAuthStore, {
   type AuthRole,
   type AuthUser,
@@ -77,9 +78,14 @@ export default function AuthBootstrap() {
         logBootstrap('callback');
 
         if (!firebaseUser) {
+          clearSessionsManagementSnapshotCache();
+          observeSessionsManagementAuthUid(null);
           resolveUnauthenticated();
           return;
         }
+        // Clear cached operational rows immediately on an account change,
+        // before the asynchronous claims lookup or route transition.
+        observeSessionsManagementAuthUid(firebaseUser.uid);
 
         let role: AuthRole = 'kid';
         try {
@@ -123,6 +129,7 @@ export default function AuthBootstrap() {
             ? (error as unknown as { code: string }).code
             : undefined;
         console.warn('[auth-bootstrap] listener:error', { code });
+        clearSessionsManagementSnapshotCache();
         useAuthStore.getState().setAuthRecoveryError(
           'Your session could not be refreshed. Try again without signing in again.',
         );
