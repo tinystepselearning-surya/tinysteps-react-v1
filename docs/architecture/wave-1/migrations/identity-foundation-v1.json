@@ -378,7 +378,7 @@
     "reportPath": "reports/wave1-identity-verify-2026-10-04T06-04-13-420Z.json"
   },
   "switchReads": {
-    "status": "r5c2c21_validation_complete_ready_for_production_merge",
+    "status": "r5c2c21_production_verified_ready_for_next_group_audit",
     "authority": {
       "primaryReadAuthority": "legacy",
       "canonicalRole": "shadow comparison only",
@@ -438,7 +438,7 @@
       },
       "mergeCommit": "1b683c506d579825585a11b9d4cb202d3b81fffe"
     },
-    "nextBrick": "r5c2c21_group_production_merge_and_verification",
+    "nextBrick": "r5c2c22_fresh_bounded_multi_function_selection_audit",
     "readSwitchAuthorized": true,
     "brick2": {
       "status": "production_observation_complete",
@@ -3780,8 +3780,8 @@
               "automaticCurriculumGuardrailPreserved": true,
               "notificationRegistrationPreserved": true,
               "authoritativeFinanceOrAttendanceWritesIntroduced": false,
-              "productionWiring": false,
-              "productionVerified": false,
+              "productionWiring": true,
+              "productionVerified": true,
               "selectionAudit": {
                 "workflowRunId": 38021587050,
                 "result": "success",
@@ -3823,6 +3823,29 @@
                 "deploymentClassifierAndContracts": "passed",
                 "exactFourFunctionBlastRadius": "passed",
                 "temporaryValidationWorkflowRetiredBeforeMerge": true
+              },
+              "productionDeployment": {
+                "pullRequest": 667,
+                "mergeCommit": "3c3a47f5b2aa797346551bd355a27b18368f007d",
+                "workflowRunId": 38021784884,
+                "workflowRunNumber": 3939,
+                "result": "success",
+                "functionsDeployed": 4,
+                "functionsVerified": 4,
+                "functionsCheckpointReady": 4,
+                "deploymentBatches": 1,
+                "functions": [
+                  "adminSyncCanonicalPhonicsCurriculum",
+                  "onCurriculumTopicsCanonicalize",
+                  "registerNotificationToken",
+                  "sendTestPushNotification"
+                ],
+                "functionsFullDeployment": false,
+                "functionsProductionMarkerAdvanced": true,
+                "hostingDeployed": false,
+                "firestoreRulesDeployed": false,
+                "firestoreIndexesDeployed": false,
+                "recoveryJobRequired": false
               }
             }
           }
