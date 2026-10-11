@@ -2501,6 +2501,16 @@ export default function ParentDashboard() {
     ((kidSessionsQuery.data ?? []) as KidSession[]), [kidSessionsQuery.data]);
   // The next two weeks are calculated from Student Management, not saved
   // as scheduled classSessions. Existing attendance/history rows always win.
+  // IST service date, refreshed only when the day changes (no polling reads).
+  const [todayDayKey, setTodayDayKey] = useState(() =>
+    new Date(Date.now()+330*60_000).toISOString().slice(0,10));
+  useEffect(()=>{
+    const timer=window.setInterval(()=>{
+      const key=new Date(Date.now()+330*60_000).toISOString().slice(0,10);
+      setTodayDayKey(old=>old===key?old:key);
+    },60_000);
+    return ()=>window.clearInterval(timer);
+  },[]);
   const visibleUpcomingProjections = useMemo(() => {
     const kidId = String(selectedKidId || '').trim();
     if (!kidId) return [] as KidSession[];
@@ -2510,14 +2520,14 @@ export default function ParentDashboard() {
         String(enrollment.studentId || '') === kidId ||
         (Array.isArray(enrollment.kidIds) && enrollment.kidIds.some(id => String(id) === kidId))
       );
-    const from = toYMD(new Date());
-    const through = toYMD(new Date(Date.now() + 14 * 86_400_000));
+    const from = todayDayKey;
+    const through = new Date(Date.parse(from+'T00:00:00.000Z') + 14*86_400_000).toISOString().slice(0,10);
     return buildRollingScheduleCalendarProjections({
       enrollments: enrollmentRows as unknown as Record<string, unknown>[],
       realSessions: allKidSessions as unknown as Record<string, unknown>[],
       fromYmd: from, toYmd: through,
     }).map(row => row as unknown as KidSession);
-  }, [allKidSessions, enrollmentsQuery.data, selectedKidId]);
+  }, [allKidSessions, enrollmentsQuery.data, selectedKidId, todayDayKey]);
 
   const sortedClassSessions = useMemo(() => {
     return [...allKidSessions, ...visibleUpcomingProjections]
@@ -2531,19 +2541,9 @@ export default function ParentDashboard() {
       .sort((a, b) => a.start.getTime() - b.start.getTime());
   }, [allKidSessions, visibleUpcomingProjections, selectedKidId]);
 
-  // IST service date, refreshed only when the day changes (no polling reads).
-  const [todayDayKey, setTodayDayKey] = useState(() =>
-    new Date(Date.now()+330*60_000).toISOString().slice(0,10));
-  useEffect(()=>{
-    const timer=window.setInterval(()=>{
-      const key=new Date(Date.now()+330*60_000).toISOString().slice(0,10);
-      setTodayDayKey(old=>old===key?old:key);
-    },60_000);
-    return ()=>window.clearInterval(timer);
-  },[]);
   const getClassServiceDay = (session:KidSession,start:Date):string => {
     const given=typeof session.date==='string'?session.date.trim():'';
-    if (/^\\d{4}-\\d{2}-\\d{2}$/.test(given)) return given;
+    if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(given)) return given;
     return new Date(start.getTime()+330*60_000).toISOString().slice(0,10);
   };
 
@@ -2593,8 +2593,6 @@ export default function ParentDashboard() {
   );
 
   const classesCalendarSessions = useMemo(() => {
-    const startMs = classesCalendarStart.getTime();
-    const endMs = classesCalendarEnd.getTime();
     // Full monthly calendar computes its own virtual slots; use only truly
     // persisted records here so next-two-week projections cannot duplicate.
     const realRows = allKidSessions
