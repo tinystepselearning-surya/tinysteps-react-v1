@@ -203,9 +203,9 @@ export const ROUTE_SEO_REGISTRY = {
       'phonics program for schools,school phonics curriculum India,phonics teacher training for schools,synthetic phonics program India,phonics partnership for international schools',
   },
   '/careers': {
-    title: 'Online English Teacher Jobs in India | Tiny Steps Learning',
+    title: 'Tiny Steps Learning Careers | Teacher Recruitment Closed',
     description:
-      'Apply for remote online English teacher jobs in India with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.',
+      'Tiny Steps Learning teacher positions are filled. Applications closed on 11 October 2026; no new teacher applications are being accepted.'
     canonicalPath: '/careers',
     ogType: 'website',
     keywords:

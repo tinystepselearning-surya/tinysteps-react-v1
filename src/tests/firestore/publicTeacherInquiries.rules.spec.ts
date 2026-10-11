@@ -60,9 +60,9 @@ afterEach(async () => {
 });
 
 suite('public teacher enquiries firestore rules', () => {
-  it('allows a valid unauthenticated Careers application', async () => {
+  it('rejects valid unauthenticated Careers applications after closure', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
-    await assertSucceeds(
+    await assertFails(
       addDoc(collection(db, 'teacherInquiries'), buildPublicTeacherInquiry()),
     );
   });

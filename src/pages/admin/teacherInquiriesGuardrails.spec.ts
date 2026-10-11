@@ -25,15 +25,16 @@ describe('teacher enquiries admin and public guardrails', () => {
     expect(source).toContain("{ value: 'not_selected', label: 'Not Selected & Closed' }");
   });
 
-  it('saves public Careers applications without public admin fields', async () => {
+  it('does not expose a public writer for closed teacher applications', async () => {
     const source = await import('../public/CareersPage?raw').then(
       (module) => module.default as string,
     );
 
-    expect(source).toContain("doc(collection(db, 'teacherInquiries'))");
-    expect(source).toContain("stage: 'open'");
-    expect(source).toContain("source: 'careers_page'");
-    expect(source).not.toContain('adminNotes:');
-    expect(source).not.toContain('finalStatus:');
+    expect(source).toContain('11 October 2026');
+    expect(source).toContain('applications closed');
+    expect(source).not.toContain("doc(collection(db, 'teacherInquiries'))");
+    expect(source).not.toContain('CareerApplicationForm');
+    expect(source).not.toContain('buildApplicationWhatsAppLink');
   });
+
 });
