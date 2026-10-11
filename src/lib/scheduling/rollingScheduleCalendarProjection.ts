@@ -191,11 +191,15 @@ export const buildRollingScheduleCalendarProjections = (
   );
   const occupiedChildTimes = new Set<string>();
   authoritativeRealSessions.forEach(session=>{
-    const key=sessionOccurrenceIdentity(session);
-    if (!key) return;
-    const pieces=key.split('|');
-    if(pieces.length!==3)return;
-    const day=pieces[1],time=pieces[2];
+    let day=text(session.date);
+    let time=normalizeTime(session.startTime);
+    if (!isValidYmd(day) || !time) {
+      const at=dateLikeToMs(session.startAt);
+      if (at===null) return;
+      const parsed=ymdAndTimeFromUtcMs(at);
+      day=parsed.ymd;
+      time=parsed.time;
+    }
     const kids=[
       ...(Array.isArray(session.kidIds)?session.kidIds:[]),
       session.kidId,session.studentId,session.childId,
