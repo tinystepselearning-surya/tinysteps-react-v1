@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import {
   computeTeacherMonthlyRollupPayload,
   type TeacherEarningsLedgerRow,
@@ -166,11 +167,11 @@ async function recomputeOneTargetAtomic(input: {
         incrementalLastAuthoritativeEventId: eventId,
         // Resolved by Firestore to the transaction commit time. Future incremental events compare
         // their source document updateTime against this watermark to prove inclusion/non-inclusion.
-        incrementalAuthoritativeCommittedAt: admin.firestore.FieldValue.serverTimestamp(),
-        incrementalRecomputeCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+        incrementalAuthoritativeCommittedAt: FieldValue.serverTimestamp(),
+        incrementalRecomputeCompletedAt: FieldValue.serverTimestamp(),
         analyticsProjectionVersion: 0,
         analyticsProjectionInvalidReason: 'authoritative_recompute_transaction',
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
