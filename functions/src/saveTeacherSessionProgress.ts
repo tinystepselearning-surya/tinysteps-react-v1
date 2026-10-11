@@ -1,10 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import {
-  ATTENDANCE_FINALISED_MESSAGE,
-  getTeacherAttendanceCorrectionCutoffMillis,
-} from './helpers/attendanceCorrectionFreeze';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import {
@@ -15,7 +11,6 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
-const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
 const CALLABLE_CORS_ORIGINS: Array<string | RegExp> = [
   'http://localhost:5173',
   'https://tinystepslearning.com',
@@ -135,57 +130,6 @@ function expectedAv7StatusForAction(value: unknown): 'present' | 'absent' | null
 function sanitizeText(value: unknown, maxLen = 500): string {
   if (typeof value !== 'string') return '';
   return value.trim().slice(0, maxLen);
-}
-
-function toDateMaybe(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === 'object' && value !== null) {
-    const maybeTimestamp = value as { toDate?: () => Date; seconds?: number };
-    if (typeof maybeTimestamp.toDate === 'function') {
-      const dt = maybeTimestamp.toDate();
-      if (dt instanceof Date && !Number.isNaN(dt.getTime())) return dt;
-    }
-    if (typeof maybeTimestamp.seconds === 'number') {
-      const dt = new Date(maybeTimestamp.seconds * 1000);
-      if (!Number.isNaN(dt.getTime())) return dt;
-    }
-  }
-  if (typeof value === 'string' || typeof value === 'number') {
-    const dt = new Date(value);
-    if (!Number.isNaN(dt.getTime())) return dt;
-  }
-  return null;
-}
-
-function normalizeTimeForIstParse(value: unknown): string | null {
-  const raw = sanitizeText(value, 16);
-  if (!raw) return null;
-  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
-  if (!match) return null;
-  const seconds = match[3] || '00';
-  return `${match[1]}:${match[2]}:${seconds}`;
-}
-
-function getSessionStartMillis(session: Record<string, unknown>): number | null {
-  const fromStartAt = toDateMaybe(session.startAt);
-  if (fromStartAt) return fromStartAt.getTime();
-
-  const dateYmd = sanitizeText(session.date, 16);
-  const startTime = normalizeTimeForIstParse(session.startTime);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
-  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function getAttendanceAllowedAtMillis(session: Record<string, unknown>): number | null {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + ATTENDANCE_OPEN_DELAY_MS;
-}
-
-function canCallerOverrideAttendanceTime(role: string): boolean {
-  return role === 'admin';
 }
 
 function normalizeStringArray(value: unknown): string[] {
