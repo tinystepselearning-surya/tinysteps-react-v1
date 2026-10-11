@@ -258,6 +258,133 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
   });
 
+  it('reactivates the same charge and teacher earning on Present -> Absent -> Present', async () => {
+    const financeConfigRef = db.collection('config').doc('finance');
+    await financeConfigRef.set({
+      walletClassDeductionsEnabled: true,
+      walletCutoverMonthKey: '2026-01',
+    });
+    const walletTransactions = () =>
+      db.collection('parentWallets').doc(ids.parent).collection('transactions').get();
+    const walletBalance = async () =>
+      (await db.collection('parentWallets').doc(ids.parent).get()).data()?.currentBalance;
+    const assertLedger = async (sessionId: string, status: 'void' | 'open', cycle: number) =>
+      eventually(async () => {
+        const [charge, earning] = await ledger(sessionId);
+        const session = (await db.collection('classSessions').doc(sessionId).get()).data();
+        if (charge.data()?.status !== status ||
+            earning.data()?.status !== (status === 'open' ? 'unpaid' : 'void') ||
+            charge.data()?.attendanceFinanceCycle !== cycle ||
+            earning.data()?.attendanceFinanceCycle !== cycle ||
+            session?.revenueAccrued !== (status === 'open')) return null;
+        return {charge, earning, session};
+      }, status + ' canonical ledger revision ' + cycle);
+    const waitWallet = (expectedCount: number, expectedBalance: number) =>
+      eventually(async () => {
+        const wallet = await walletTransactions();
+        const balance = Number(await walletBalance());
+        if (wallet.size !== expectedCount || balance !== expectedBalance) return null;
+        return wallet;
+      }, 'wallet entries=' + expectedCount + ' balance=' + expectedBalance);
+    try {
+      const {sessionId} = await ensure();
+      await mark(sessionId, 'present');
+      await complete(sessionId);
+      await assertLedger(sessionId, 'open', 1);
+      await waitWallet(1, -400);
+
+      // Same attendance again never creates another charge or debit.
+      await mark(sessionId, 'present');
+      await mark(sessionId, 'present');
+      await complete(sessionId);
+      expect((await walletTransactions()).size).toBe(1);
+
+      await mark(sessionId, 'absent');
+      await assertLedger(sessionId, 'void', 1);
+      await waitWallet(2, 0);
+
+      await mark(sessionId, 'present');
+      const restored = await assertLedger(sessionId, 'open', 2);
+      expect(restored.charge.id).toBe(sessionId);
+      expect(restored.earning.id).toBe(sessionId);
+      expect(restored.charge.data()?.amount).toBe(400);
+      expect(restored.earning.data()?.amount).toBe(175);
+      await waitWallet(3, -400);
+      // Teacher's monthly pay model is derived from the one canonical earning,
+      // and must recover after the void -> unpaid transition.
+      await eventually(async () => {
+        const rollup = await db.collection('teachers').doc(ids.teacher)
+          .collection('earnings').doc('2026-10').get();
+        return Number(rollup.data()?.totalEarnings) === 175 ? rollup : null;
+      }, 'teacher earnings monthly rollup restored to 175');
+      expect((await db.collection('billingCharges')
+        .where('sessionId', '==', sessionId).get()).size).toBe(1);
+      expect((await db.collection('teacherEarnings')
+        .where('sessionId', '==', sessionId).get()).size).toBe(1);
+      expect(await sessionsForCurrentChild()).toHaveLength(1);
+      expect((await db.collection('calendarAttendanceClaims').doc(ids.kid + '_20261012_1700').get())
+        .data()?.sessionId).toBe(sessionId);
+
+      await mark(sessionId, 'present');
+      await complete(sessionId);
+      expect((await walletTransactions()).size).toBe(3);
+      const walletDocs = (await walletTransactions()).docs.map(d => d.data());
+      expect(walletDocs.filter(x => x.type === 'class_deduction')).toHaveLength(2);
+      expect(walletDocs.filter(x => x.type === 'class_deduction_reversal')).toHaveLength(1);
+      expect((await db.collection('enrollments').doc(ids.enrollment).get()).data())
+        .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
+    } finally {
+      await financeConfigRef.set({walletClassDeductionsEnabled: false}, {merge: true});
+    }
+  });
+
+  it('permits admin attendance correction to restore the same unpaid charge and earning', async () => {
+    const {sessionId} = await ensure();
+    await mark(sessionId, 'present');
+    await complete(sessionId);
+    await waitForLedger(sessionId);
+
+    const adminUid = 'stage1-finance-admin-' + sequence;
+    const email = adminUid + '@example.test';
+    const password = 'Stage1EmulatorOnly!123';
+    await adminAuth.createUser({uid: adminUid, email, password});
+    await db.collection('users').doc(adminUid).set({
+      role: 'admin', status: 'active', email, fullName: 'Finance Test Admin',
+    });
+    await signInWithEmailAndPassword(authClient, email, password);
+
+    await call('adminAttendanceCorrection', {
+      sessionId, kidId: ids.kid, newStatus: 'absent',
+      reason: 'Verified test attendance correction',
+    });
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return row?.revenueAccrued === false &&
+        charge.data()?.status === 'void' && earning.data()?.status === 'void'
+        ? true : null;
+    }, 'admin attendance void and financial reversal');
+
+    await call('adminAttendanceCorrection', {
+      sessionId, kidId: ids.kid, newStatus: 'present',
+      reason: 'Verified teacher-led class did happen',
+    });
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return row?.revenueAccrued === true &&
+        charge.data()?.status === 'open' &&
+        charge.data()?.attendanceFinanceCycle === 2 &&
+        earning.data()?.status === 'unpaid' &&
+        earning.data()?.attendanceFinanceCycle === 2 ? true : null;
+    }, 'admin restores single canonical charge and earning');
+    expect(await sessionsForCurrentChild()).toHaveLength(1);
+    expect((await db.collection('billingCharges')
+      .where('sessionId', '==', sessionId).get()).size).toBe(1);
+    expect((await db.collection('teacherEarnings')
+      .where('sessionId', '==', sessionId).get()).size).toBe(1);
+  });
+
   it('accepts attendance for a future date before the class starts', async () => {
     const {sessionId} = await ensure('2026-10-19');
     await mark(sessionId, 'absent');
@@ -320,23 +447,77 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       .doc(ids.kid + '_20260928_1700').get()).exists).toBe(false);
   });
 
-  it('retains settled charge and payout unchanged if teacher tries a billability correction', async () => {
+  it('saves teacher attendance reversals even for settled finance without touching cash ledgers', async () => {
     const {sessionId} = await ensure();
     await mark(sessionId, 'present');
     await complete(sessionId);
     await waitForLedger(sessionId);
+    const chargeRef = db.collection('billingCharges').doc(sessionId);
+    const earningRef = db.collection('teacherEarnings').doc(sessionId);
     await Promise.all([
-      db.collection('billingCharges').doc(sessionId).update({status: 'paid', paidAmount: 400}),
-      db.collection('teacherEarnings').doc(sessionId).update({status: 'paid', paidAmount: 175}),
+      chargeRef.update({status: 'paid', paidAmount: 400, paymentIds: ['payment-a']}),
+      earningRef.update({status: 'paid', paidAmount: 175, payoutIds: ['payout-a']}),
     ]);
-    await expect(mark(sessionId, 'absent')).rejects.toMatchObject({
-      code: 'functions/failed-precondition',
-    });
+
+    // Simulate a legacy attendance row whose occurrence claim needs rebuilding.
+    // The Finance review audit cannot stage writes before the day coverage query.
+    const claimRef = db.collection('calendarAttendanceClaims')
+      .doc(ids.kid + '_20261012_1700');
+    await claimRef.delete();
+    await mark(sessionId, 'absent');
+    await eventually(async () => {
+      const saved = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return saved?.attendance?.[ids.kid]?.status === 'absent' &&
+        saved?.revenueRepairRequired === true &&
+        saved?.revenueRepairReason === 'attendance_correction_settled_ledger'
+        ? true : null;
+    }, 'settled attendance saved and flagged');
+    expect((await claimRef.get()).data()?.sessionId).toBe(sessionId);
+    await delay(1_500); // allow the revenue trigger to process the saved correction
+    const [charge, earning] = await ledger(sessionId);
+    expect(charge.data()).toMatchObject({status: 'paid', paidAmount: 400, paymentIds: ['payment-a']});
+    expect(earning.data()).toMatchObject({status: 'paid', paidAmount: 175, payoutIds: ['payout-a']});
+    expect((await db.collection('classSessions').doc(sessionId).get()).data()?.revenueAccrued).toBe(true);
+
+    await mark(sessionId, 'present');
+    await delay(1_500);
+    const [restoredCharge, restoredEarning] = await ledger(sessionId);
+    expect(restoredCharge.data()).toMatchObject({status: 'paid', paidAmount: 400});
+    expect(restoredEarning.data()).toMatchObject({status: 'paid', paidAmount: 175});
+    expect((await db.collection('billingCharges').where('sessionId', '==', sessionId).get()).size).toBe(1);
+    expect((await db.collection('teacherEarnings').where('sessionId', '==', sessionId).get()).size).toBe(1);
     expect((await db.collection('classSessions').doc(sessionId).get())
       .data()?.attendance?.[ids.kid]?.status).toBe('present');
+    const audits = await db.collection('classSessions').doc(sessionId)
+      .collection('attendanceCorrections').get();
+    expect(audits.size).toBe(2);
+    expect(audits.docs.every(d => d.data().financeReconciliation.action === 'review_required')).toBe(true);
+  });
+
+  it('allows a teacher correction but does not auto-reopen a manually voided finance pair', async () => {
+    const {sessionId} = await ensure();
+    await mark(sessionId, 'present');
+    await complete(sessionId);
+    await waitForLedger(sessionId);
+    await mark(sessionId, 'absent');
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      return charge.data()?.status === 'void' && earning.data()?.status === 'void' ? true : null;
+    }, 'void before manual override');
+    await db.collection('billingCharges').doc(sessionId).update({
+      voidReason: 'Admin manually voided this charge', voidSource: 'manual_finance_override',
+    });
+    await mark(sessionId, 'present');
+    const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+    expect(row?.attendance?.[ids.kid]?.status).toBe('present');
+    await eventually(async () => {
+      const latest = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return latest?.revenueRepairRequired === true ? true : null;
+    }, 'manual void finance exception raised');
+    await delay(1_500);
     const [charge, earning] = await ledger(sessionId);
-    expect(charge.data()).toMatchObject({status: 'paid', paidAmount: 400});
-    expect(earning.data()).toMatchObject({status: 'paid', paidAmount: 175});
+    expect(charge.data()?.status).toBe('void');
+    expect(earning.data()?.status).toBe('void');
   });
 
   it('supports two genuine class times on one day without merging occurrences', async () => {

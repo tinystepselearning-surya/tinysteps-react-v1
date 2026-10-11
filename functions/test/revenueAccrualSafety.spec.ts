@@ -25,6 +25,22 @@ describe('revenue accrual ledger safety', () => {
     })).toBe('void_ledger_requires_review');
   });
 
+  it('permits a reviewed attendance void pair to return to the same open ledger IDs', () => {
+    const finance = {
+      alreadyAccrued: false,
+      chargeExists: true, chargeStatus: 'void',
+      earningExists: true, earningStatus: 'void',
+    };
+    expect(resolveRevenueAccrualLedgerRepairReason(finance))
+      .toBe('void_ledger_requires_review');
+    expect(resolveRevenueAccrualLedgerRepairReason({
+      ...finance, attendanceVoidReactivation: true,
+    })).toBeNull();
+    expect(resolveRevenueAccrualLedgerRepairReason({
+      ...finance, alreadyAccrued: true, attendanceVoidReactivation: true,
+    })).toBe('void_ledger_requires_review');
+  });
+
   it('fails closed when a paid charge exists without a teacher earning', () => {
     expect(resolveRevenueAccrualLedgerRepairReason({
       alreadyAccrued: false,
