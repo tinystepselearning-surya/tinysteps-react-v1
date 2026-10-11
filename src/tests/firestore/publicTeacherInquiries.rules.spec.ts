@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   assertFails,
-  assertSucceeds,
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
