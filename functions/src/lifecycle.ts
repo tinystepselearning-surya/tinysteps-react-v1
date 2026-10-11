@@ -1656,6 +1656,8 @@ async function cancelEligibleFutureSessions(args: {
 }
 
 async function cancelFutureSessionsByEnrollmentId(enrollmentId: string, reason: string, actorUid: string | null) {
+  // Legacy course/status transitions no longer scan a rolling future window.
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) return 0;
   const db = admin.firestore();
   const snap = await db.collection('classSessions').where('enrollmentId', '==', enrollmentId).get();
   return cancelEligibleFutureSessions({ docs: snap.docs, reason, actorUid, scope: 'enrollment' });
