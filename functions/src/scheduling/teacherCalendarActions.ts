@@ -38,7 +38,7 @@ const personIds = (enrollment: Row): string[] => [
 
 export const virtualCalendarAttendanceEnabled = (
   env: Record<string, string | undefined> = process.env,
-): boolean => env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === 'true';
+): boolean => env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED !== 'false';
 
 export function strictYmd(date: unknown): string {
   const value = text(date);
