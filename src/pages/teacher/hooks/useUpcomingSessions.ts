@@ -6,7 +6,6 @@ import {
   orderBy,
   query,
   where,
-  type Query,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
