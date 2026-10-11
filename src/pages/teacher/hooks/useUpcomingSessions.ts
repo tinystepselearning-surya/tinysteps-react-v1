@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
-import { teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
+import { getCachedTeacherEnrollmentSnapshots, teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
 import { getSessionStartDate } from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
@@ -467,10 +467,12 @@ export const useUpcomingSessions = (
         ),
       );
 
-      let enrollmentMap = new Map<string, Record<string, unknown>>();
-      if (enrollmentIds.length > 0) {
+      const enrollmentMap = getCachedTeacherEnrollmentSnapshots(teacherId);
+      const missingEnrollmentIds = enrollmentIds.filter(id => !enrollmentMap.has(id));
+      if (missingEnrollmentIds.length > 0) {
         try {
-          enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+          const fetched = await fetchEnrollmentsByIds(missingEnrollmentIds);
+          fetched.forEach((row, id) => enrollmentMap.set(id, row));
         } catch (err) {
           devLogTeacherQuery('useUpcomingSessions', 'error', {
             queryName: 'enrollmentLookups',
