@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment} from './dayWindowTimetableSync';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
 import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
@@ -423,6 +424,12 @@ export const transitionEnrollmentCourse = onCall(
       createdBy: actor,
     });
     await completionBatch.commit();
+    // The outgoing enrollment is already discontinued above; synchronize the
+    // destination's two visible days only, not another 14-day window.
+    const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+      ? await syncTodayTomorrowForEnrollment({
+        db, enrollmentId: newEnrollmentId, actorId: actor,
+      }) : undefined;
 
     return {
       ok: true,
@@ -432,6 +439,7 @@ export const transitionEnrollmentCourse = onCall(
       newEnrollmentId,
       cancelledSessionsCount,
       reconciliation,
+      ...(daySync ? {daySync} : {}),
       idempotentReplay: false,
       rolling: true,
       transitionType,
