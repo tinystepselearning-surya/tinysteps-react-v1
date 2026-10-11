@@ -297,6 +297,33 @@ describe('student timetable Today/Tomorrow synchronization', () => {
     expect(fake.rows('classSessions').size).toBe(0);
   });
 
+  it('does not delete future classes when an active enrollment lacks a child profile', async () => {
+    const fake = fakeDb();
+    await sync(fake);
+    fake.rows('kids').delete('kid-a');
+    await expect(sync(fake)).rejects.toThrow('missing its linked child profile');
+    expect([...fake.rows('classSessions').keys()].sort()).toEqual([DAY_ONE, DAY_TWO]);
+  });
+
+  it('follows legacy weekly timetables even when class-start date is absent', async () => {
+    const enrollment = base();
+    delete enrollment.classesStartDateYmd;
+    const fake = fakeDb(enrollment);
+    const result = await sync(fake);
+    expect(result.created).toBe(2);
+    expect([...fake.rows('classSessions').keys()].sort()).toEqual([DAY_ONE, DAY_TWO]);
+  });
+
+  it('refuses to erase existing sessions for an active enrollment with no timetable', async () => {
+    const fake = fakeDb();
+    await sync(fake);
+    const enrollment = fake.rows('enrollments').get('enrollment-a')!;
+    enrollment.schedule = {revision: 5, timezone: 'Asia/Kolkata', weeklySlots: []};
+    await expect(sync(fake, {expectedRevision: 5}))
+      .rejects.toThrow('has no recurring timetable');
+    expect([...fake.rows('classSessions').keys()].sort()).toEqual([DAY_ONE, DAY_TWO]);
+  });
+
   it('pure plan only contains future Today/Tomorrow slots and no 14-day horizon', () => {
     const planned = planTodayTomorrowForEnrollment({
       enrollmentId: 'enrollment-a', enrollment: base(),
