@@ -38,6 +38,14 @@ try {
     }
     const screenshot = path.join(OUT, 'careers-' + device.name + '.png');
     await page.screenshot({ path: screenshot, fullPage: true, animations: 'disabled' });
+    // Emit chunked, viewport-only PNG previews for an auditable visual review.
+    // Full-page screenshots are retained separately as workflow artifacts.
+    const preview = await page.screenshot({ fullPage: false, animations: 'disabled' });
+    const preview64 = preview.toString('base64');
+    for (let offset = 0; offset < preview64.length; offset += 8000) {
+      console.log('TS_CAREERS_PREVIEW_' + device.name.toUpperCase() +
+        '_CHUNK ' + (offset / 8000) + ' ' + preview64.slice(offset, offset + 8000));
+    }
     results.push({
       device: device.name,
       url: page.url(),
