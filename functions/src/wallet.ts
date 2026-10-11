@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
+import {attendanceFinanceCycle, attendanceWalletCycleKeys} from './helpers/attendanceFinancialCycles';
 import * as logger from 'firebase-functions/logger';
 import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import {
@@ -390,6 +391,7 @@ export function shouldSkipWalletChargeDeductionSync(
     enrollmentId: normalizeOptionalId(beforeData.enrollmentId),
     classSessionId: resolveChargeClassSessionId('', beforeData),
     source: normalizeOptionalText(beforeData.source, 150),
+    attendanceFinanceCycle: attendanceFinanceCycle(beforeData),
   };
   const triggerRelevantAfter = {
     parentId: normalizeOptionalId(afterData.parentId),
@@ -402,6 +404,7 @@ export function shouldSkipWalletChargeDeductionSync(
     enrollmentId: normalizeOptionalId(afterData.enrollmentId),
     classSessionId: resolveChargeClassSessionId('', afterData),
     source: normalizeOptionalText(afterData.source, 150),
+    attendanceFinanceCycle: attendanceFinanceCycle(afterData),
   };
   if (JSON.stringify(triggerRelevantBefore) === JSON.stringify(triggerRelevantAfter)) {
     return true;
@@ -2268,10 +2271,11 @@ export const onBillingChargeWalletSync = onDocumentWritten(
     const wasExcluded = beforeData ? isExcludedBillingChargeStatus(beforeStatus) : true;
     const isExcluded = afterData ? isExcludedBillingChargeStatus(afterStatus) : true;
     const wasVoidedNow = Boolean(beforeData && afterData && !wasExcluded && isExcluded);
+    const walletCycleKeys = attendanceWalletCycleKeys(chargeId, currentChargeData);
 
     if (wasVoidedNow) {
-      const deductionIdempotencyKey = normalizeIdempotencyKey(`charge_${chargeId}`);
-      const reversalIdempotencyKey = normalizeIdempotencyKey(`reverse_charge_${chargeId}`);
+      const deductionIdempotencyKey = normalizeIdempotencyKey(walletCycleKeys.deduction);
+      const reversalIdempotencyKey = normalizeIdempotencyKey(walletCycleKeys.reversal);
       if (!deductionIdempotencyKey || !reversalIdempotencyKey) {
         logger.warn('wallet reversal no-op: invalid idempotency key', { chargeId, parentId });
         return;
@@ -2452,7 +2456,21 @@ export const onBillingChargeWalletSync = onDocumentWritten(
       }
     }
 
-    const idempotencyKey = normalizeIdempotencyKey(`charge_${chargeId}`);
+    // Ignore stale open-cycle events delivered after a later void/reopen.
+    // Each genuine billable interval has a unique immutable wallet debit.
+    const currentLiveCharge = await db.collection('billingCharges').doc(chargeId).get();
+    const currentLiveData = currentLiveCharge.data() as Record<string, unknown> | undefined;
+    if (!currentLiveCharge.exists || !currentLiveData ||
+        attendanceFinanceCycle(currentLiveData) !== walletCycleKeys.cycle ||
+        isExcludedBillingChargeStatus(normalizeChargeStatus(currentLiveData.status)) ||
+        currentLiveData.archived === true) {
+      logger.info('wallet class deduction skipped: stale or voided charge cycle', {
+        chargeId, cycle: walletCycleKeys.cycle,
+      });
+      return;
+    }
+
+    const idempotencyKey = normalizeIdempotencyKey(walletCycleKeys.deduction);
     if (!idempotencyKey) {
       logger.warn('wallet billing sync no-op: failed to build idempotency key', { chargeId, parentId });
       return;
