@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - 'functions/src/scheduling/teacherCalendarActions.ts'
+      - '.github/workflows/virtual-calendar-emulator-stage1.yml'
+      - 'functions/src/onSessionComplete.ts'
+      - 'functions/src/saveTeacherSessionProgress.ts'
+      - 'vitest.virtual-calendar-emulator.config.ts'
+      - 'src/tests/emulator/virtualCalendarAttendance.emulator.spec.ts'
       - 'functions/test/teacherCalendarActions.spec.ts'
       - 'functions/src/index.ts'
       - 'src/lib/scheduling/rollingScheduleCalendarProjection.ts'
@@ -58,3 +63,55 @@ jobs:
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$(git rev-parse HEAD)"
       - name: No deployment or Firestore mutations
         run: echo "Validation only, feature flag OFF by default."
+
+  firebase-calendar-business-acceptance:
+    name: Isolated attendance and billing acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      GCLOUD_PROJECT: demo-tinysteps-calendar-test
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-calendar-test
+      VIRTUAL_CALENDAR_ATTENDANCE_ENABLED: 'true'
+      FIREBASE_CLI_DISABLE_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Ensure this run cannot target a live Firebase project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCLOUD_PROJECT" = demo-tinysteps-calendar-test
+          test "$GOOGLE_CLOUD_PROJECT" = demo-tinysteps-calendar-test
+          test "$VIRTUAL_CALENDAR_ATTENDANCE_ENABLED" = true
+          test -z "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          if [ -n "${FIREBASE_TOKEN:-}" ]; then
+            echo "Unexpected Firebase credential; refusing emulator run"
+            exit 1
+          fi
+      - name: Install pinned application dependencies (no lifecycle scripts)
+        run: |
+          npm ci --ignore-scripts
+          npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Build real Cloud Function handlers
+        run: npm --prefix functions run build
+      - name: Run authenticated business tests against demo-only emulators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@latest emulators:exec \
+            --project demo-tinysteps-calendar-test \
+            --only auth,firestore,functions \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FUNCTIONS_EMULATOR_HOST=127.0.0.1:5001 GCLOUD_PROJECT=demo-tinysteps-calendar-test GOOGLE_CLOUD_PROJECT=demo-tinysteps-calendar-test VIRTUAL_CALENDAR_ATTENDANCE_ENABLED=true npx vitest run --config vitest.virtual-calendar-emulator.config.ts'
+      - name: Confirmation
+        run: echo "Tests executed solely against demo- Firebase Emulator. No live deployment or database access."
