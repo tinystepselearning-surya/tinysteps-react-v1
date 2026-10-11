@@ -105,7 +105,6 @@ import {
   isSessionTimeFallback,
 } from "../../lib/sessionTime";
 import { getJoinLinkCandidate, resolveSessionJoinLink } from "../../lib/sessionJoinLink";
-import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildRollingScheduleCalendarProjections,
 } from "../../lib/scheduling/rollingScheduleCalendarProjection";
@@ -127,6 +126,7 @@ import {
   getParentClassStatusTone as statusBadgeClass,
   selectNextParentClass,
   shouldShowClassJoinAction,
+  resolveParentCalendarAttendanceDisplayStatus,
   type ParentClassesFilterId,
   type ParentClassesResourceId,
   type ParentClassesViewId,
@@ -2555,22 +2555,10 @@ export default function ParentDashboard() {
     return map;
   }, [enrollmentsQuery.data]);
 
-  const allKidSessions = useMemo(() => {
-    const sessions = (kidSessionsQuery.data ?? []) as KidSession[];
-    return sessions.filter((session) => {
-      if (normalizeStatus(session.status) === 'paused') return false;
-      const sessionLike = session as unknown as Record<string, unknown>;
-      const enrollmentIdFromDoc = String((session as any)?.enrollmentId || "").trim();
-      const enrollmentIdFromSessionId =
-        typeof session.id === "string" && session.id.includes("_")
-          ? session.id.split("_")[0].trim()
-          : "";
-      const enrollmentId = enrollmentIdFromDoc || enrollmentIdFromSessionId;
-      if (!enrollmentId) return false;
-      const enrollment = activeEnrollmentById.get(enrollmentId);
-      return isSessionCanonicalForEnrollment(sessionLike, enrollment);
-    });
-  }, [kidSessionsQuery.data, activeEnrollmentById]);
+  // Persisted child history remains authoritative across enrollment changes.
+  // Both Firestore reads are already scoped to parentId and the selected child.
+  const allKidSessions = useMemo(() =>
+    ((kidSessionsQuery.data ?? []) as KidSession[]), [kidSessionsQuery.data]);
   // The next two weeks are calculated from Student Management, not saved
   // as scheduled classSessions. Existing attendance/history rows always win.
   const visibleUpcomingProjections = useMemo(() => {
@@ -2596,11 +2584,12 @@ export default function ParentDashboard() {
       .map((session) => ({
         session,
         start: sessionStartDate(session),
-        status: normalizeStatus(session.status),
+        status: resolveParentCalendarAttendanceDisplayStatus(session, String(selectedKidId||'')) ||
+          normalizeStatus(session.status),
       }))
       .filter((row): row is { session: KidSession; start: Date; status: string } => Boolean(row.start))
       .sort((a, b) => a.start.getTime() - b.start.getTime());
-  }, [allKidSessions, visibleUpcomingProjections]);
+  }, [allKidSessions, visibleUpcomingProjections, selectedKidId]);
 
   const todayDayKey = toYMD(new Date());
 
@@ -2656,7 +2645,9 @@ export default function ParentDashboard() {
     // persisted records here so next-two-week projections cannot duplicate.
     const realRows = allKidSessions
       .map(session => ({
-        session, start: sessionStartDate(session), status: normalizeStatus(session.status),
+        session, start: sessionStartDate(session),
+        status: resolveParentCalendarAttendanceDisplayStatus(session, String(selectedKidId||'')) ||
+          normalizeStatus(session.status),
       }))
       .filter((row): row is {session: KidSession; start: Date; status: string} => Boolean(row.start))
       .filter(row => row.start.getTime() >= startMs && row.start.getTime() <= endMs);
