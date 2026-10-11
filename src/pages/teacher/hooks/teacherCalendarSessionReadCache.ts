@@ -1,5 +1,6 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { useAuthStore } from '../../../store/useAuthStore';
 import type { TeacherSession } from '../../../types/Teacher';
 import { resolveOperationalTeacherId } from '../../../lib/teacherIdentity';
 
@@ -114,3 +115,10 @@ export class TeacherCalendarSessionReadCache {
 }
 
 export const teacherCalendarSessionReadCache = new TeacherCalendarSessionReadCache();
+
+// Keep private browser-memory attendance/exception snapshots scoped to login.
+if (typeof useAuthStore.subscribe === 'function') {
+  useAuthStore.subscribe((next, previous) => {
+    if (next.user?.uid !== previous.user?.uid) teacherCalendarSessionReadCache.clear();
+  });
+}
