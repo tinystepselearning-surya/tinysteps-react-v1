@@ -3,6 +3,7 @@ import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
+import { teacherCalendarSessionReadCache } from '../../hooks/teacherCalendarSessionReadCache';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
@@ -39,8 +40,12 @@ type SessionViewFilter = 'all' | 'soon' | 'pending' | 'completed';
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
   const ATTENDANCE_OPEN_DELAY_MS = TEACHER_ATTENDANCE_OPEN_DELAY_MS;
   const { user } = useAuthStore();
-  const { sessions, isLoading, error } = useTeacherSessions(teacherId);
-  const { students, loading: studentsLoading } = useTeacherFilteredStudents();
+  const { sessions, isLoading, error, refresh: refreshSessions } = useTeacherSessions(teacherId);
+  const { students, loading: studentsLoading, refresh: refreshEnrollments } = useTeacherFilteredStudents();
+  const refreshCalendar = () => {
+    refreshSessions();
+    void refreshEnrollments();
+  };
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<SessionViewFilter>('all');
@@ -124,6 +129,18 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         toast({ title: 'Attendance saved', description: 'Attendance recorded and session completed.' });
       } else {
         toast({ title: 'Attendance saved', description: 'Attendance recorded.' });
+      }
+      setSelectedSession(null);
+      // Exactly one authoritative status read, not a new collection query.
+      try {
+        await teacherCalendarSessionReadCache.confirmSavedSession(
+          String(teacherId || user?.uid || ''), attendanceSessionId);
+      } catch (statusError) {
+        console.warn('[TeacherToday] Attendance saved; status confirmation deferred', statusError);
+        toast({
+          title: 'Attendance saved',
+          description: 'Use Refresh if the updated status is not visible yet.',
+        });
       }
     } catch (err) {
       console.error(err);
@@ -268,8 +285,9 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
   if (!orderedSessions.length) {
     return (
-      <Card className="p-6 text-center">
+      <Card className="p-6 text-center space-y-3">
         <p className="text-sm text-muted-foreground">No sessions scheduled for today.</p>
+        <Button size="sm" variant="outline" onClick={refreshCalendar}>Refresh schedule</Button>
       </Card>
     );
   }
@@ -278,6 +296,11 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     <div className="space-y-4">
       <Card className="border-slate-200 bg-white/95 p-3 shadow-sm">
         <div className="flex flex-col gap-3">
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" size="sm" onClick={refreshCalendar}>
+              Refresh schedule
+            </Button>
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-slate-500">Today</div>

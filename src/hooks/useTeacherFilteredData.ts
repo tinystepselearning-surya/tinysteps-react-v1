@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { collection, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import { getDocsLogged } from '../lib/firestoreReadLogging';
 import { operationalTeacherRecordBelongsTo } from '../lib/teacherIdentity';
 import { useAuthStore } from '../store/useAuthStore';
+import { teacherCalendarSessionReadCache } from '../pages/teacher/hooks/teacherCalendarSessionReadCache';
 
 export type TeacherScheduleEnrollment = Record<string, unknown> & {
   id: string;
@@ -153,14 +154,28 @@ async function fetchTeacherFilteredStudents(teacherId: string): Promise<Filtered
 
 export function useTeacherFilteredStudents() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const teacherId = user?.role === 'teacher' ? user.uid : '';
+
+  useEffect(() => {
+    if (typeof useAuthStore.subscribe !== 'function') return;
+    return useAuthStore.subscribe((next, previous) => {
+      if (next.user?.uid === previous.user?.uid) return;
+      // Forget browser-only timetable and session snapshots at logout.
+      teacherCalendarSessionReadCache.clear();
+      queryClient.removeQueries({ queryKey: ['teacherFilteredStudents'] });
+    });
+  }, [queryClient]);
 
   const queryResult = useQuery<FilteredStudent[]>({
     queryKey: ['teacherFilteredStudents', teacherId],
     enabled: Boolean(teacherId),
     retry: false,
-    staleTime: 60_000,
+    staleTime: Infinity,
+    gcTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
     queryFn: () => fetchTeacherFilteredStudents(teacherId),
   });
 
@@ -170,16 +185,17 @@ export function useTeacherFilteredStudents() {
   }, [queryResult.error]);
 
   if (!user) {
-    return { students: [], loading: false, error: null };
+    return { students: [], loading: false, error: null, refresh: async () => {} };
   }
 
   if (user.role !== 'teacher') {
-    return { students: [], loading: false, error: 'Unauthorized role' };
+    return { students: [], loading: false, error: 'Unauthorized role', refresh: async () => {} };
   }
 
   return {
     students: queryResult.data ?? [],
     loading: queryResult.isLoading,
     error,
+    refresh: async () => { await queryResult.refetch(); },
   };
 }

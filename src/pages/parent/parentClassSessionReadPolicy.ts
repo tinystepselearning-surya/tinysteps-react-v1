@@ -51,15 +51,15 @@ export const resolveParentClassSessionDateBounds = ({
     };
   }
 
-  // Keep the current month available for attendance/billing fallback calculations,
-  // while bounding the operational future horizon to what parents actually need.
-
-  // Operational service dates are recorded in IST, not the parent's device zone.
+  // Current-month totals come from parentMonthlyReadModels, not an
+  // automatic scan of old classSessions when a parent opens the calendar.
+  // Operational exceptions are needed only for today and the next 14 days.
+  // Service dates use IST, not the parent's device time zone.
   const todayYmd=new Date(now.getTime()+330*60_000).toISOString().slice(0,10);
   const upcomingEnd=new Date(Date.parse(todayYmd+'T00:00:00.000Z')+
     PARENT_UPCOMING_CLASS_DAYS*86_400_000).toISOString().slice(0,10);
   return {
-    startKey: todayYmd.slice(0,8)+'01',
+    startKey: todayYmd,
     endKey: upcomingEnd,
   };
 };

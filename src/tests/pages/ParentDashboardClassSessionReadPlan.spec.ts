@@ -21,12 +21,17 @@ describe("ParentDashboard class-session read plan", () => {
     expect(dashboardSource).not.toContain("recentRangeEnd.setMonth(recentRangeEnd.getMonth() + 3)");
   });
 
-  it("keeps legacy ownership and missing-date compatibility available", () => {
+  it("keeps both canonical and legacy child ownership queries scoped to the selected parent", () => {
     expect(dashboardSource).toContain('where("kidIds", "array-contains", selectedKidId)');
     expect(dashboardSource).toContain('where("kidId", "==", selectedKidId)');
-    expect(dashboardSource).toContain("shouldRunParentLegacySessionFallback(snapA?.size ?? 0)");
-    expect(dashboardSource).toContain("|| snapB === null");
-    expect(dashboardSource).toContain('"classSessions_missing_date"');
+    expect(dashboardSource).toContain('where("parentId", "==", user.uid)');
+    expect(dashboardSource).toContain('const [snapA, snapB] = await Promise.all([');
+    expect(dashboardSource).toContain('readQueryDocs("Query A", buildCanonicalQuery)');
+    expect(dashboardSource).toContain('readQueryDocs("Query B", buildLegacyQuery)');
+    expect(dashboardSource).toContain('emitParentLegacyFallbackTelemetry("classSessions_kidId"');
+    // A missing-date historical compatibility scan must never be triggered
+    // by the routine Today/Upcoming calendar.
+    expect(dashboardSource).not.toContain('"classSessions_missing_date"');
   });
 
   it("declares the bounded Query B composite index used by legacy kidId rows", () => {

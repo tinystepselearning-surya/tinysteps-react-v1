@@ -1332,8 +1332,9 @@ export default function ParentDashboard() {
   const shouldLoadBillingData =
     activeTab === "dashboard" || activeTab === "payments" || activeTab === "profile";
   const shouldLoadPaymentHistory = activeTab === "payments" || activeTab === "profile";
-  const shouldLoadClassSessions =
-    activeTab === "classes" || activeTab === "payments" || activeTab === "dashboard";
+  // Schedules come from enrollments; the overview and payments read monthly
+  // summaries instead of automatically scanning historic classSessions.
+  const shouldLoadClassSessions = activeTab === "classes";
   const { threads: messageThreads } = useMessageThreads({
     userId: user?.uid,
     isAdmin: false,
@@ -1501,8 +1502,10 @@ export default function ParentDashboard() {
       legacyStudentIdCandidates.join("|"),
     ],
     enabled: !!user?.uid && !!selectedKidId && shouldLoadEnrollmentData,
-    staleTime: 10 * 60 * 1000,
+    staleTime: Infinity,
+    gcTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchOnMount: false,
     queryFn: async (): Promise<Enrollment[]> => {
       if (!user?.uid || !selectedKidId) return [];
@@ -2311,9 +2314,15 @@ export default function ParentDashboard() {
       parentClassSessionDateBounds?.startKey ?? "unbounded",
       parentClassSessionDateBounds?.endKey ?? "unbounded",
     ],
-    enabled: !!selectedKidId && shouldLoadClassSessions,
-    staleTime: 2 * 60 * 1000,
+    enabled: !!selectedKidId && shouldLoadClassSessions &&
+      !(parentClassSessionReadMode === 'calendar' &&
+        parentClassSessionDateBounds?.endKey &&
+        parentClassSessionDateBounds.endKey <
+          new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10)),
+    staleTime: Infinity,
+    gcTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchOnMount: false,
     queryFn: async (): Promise<KidSession[]> => {
       if (!selectedKidId || !user?.uid) return [];
@@ -2617,7 +2626,10 @@ export default function ParentDashboard() {
     const projectionRows = buildRollingScheduleCalendarProjections({
       enrollments: projectionEnrollments as unknown as Record<string, unknown>[],
       realSessions: ((kidSessionsQuery.data ?? []) as KidSession[]) as unknown as Record<string, unknown>[],
-      fromYmd: toYMD(classesCalendarStart),
+      // Past months use monthly attendance totals, not fake historical
+      // 'Scheduled' rows synthesized from today's enrollment timetable.
+      fromYmd: toYMD(classesCalendarStart) < todayDayKey
+        ? todayDayKey : toYMD(classesCalendarStart),
       toYmd: toYMD(classesCalendarEnd),
     }).map((session) => ({
       session: session as unknown as KidSession,
@@ -2633,6 +2645,7 @@ export default function ParentDashboard() {
     kidSessionsQuery.data,
     selectedKidId,
     allKidSessions,
+    todayDayKey,
   ]);
 
   const classesCalendarSessionsByDay = useMemo(() => {
@@ -5326,6 +5339,19 @@ export default function ParentDashboard() {
               onSelectFilter={selectClassesView}
               onSelectResource={selectClassResource}
               onJoinSession={(row) => openJoinClass(row.source as KidSession)}
+              onRefresh={() => {
+                // Never trigger a history scan from Refresh on a past-month
+                // calendar; the monthly attendance read model is sufficient.
+                const pastCalendar = parentClassSessionReadMode === 'calendar' &&
+                  Boolean(parentClassSessionDateBounds?.endKey) &&
+                  String(parentClassSessionDateBounds?.endKey) <
+                    new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+                void Promise.all([
+                  enrollmentsQuery.refetch(),
+                  ...(!pastCalendar ? [kidSessionsQuery.refetch()] : []),
+                  parentMonthlyBillingReadModelQuery.refetch(),
+                ]);
+              }}
               resourceContent={classesView === "calendar" ? (
               <Card className="p-3 sm:p-6">
                 <div className="space-y-4">
