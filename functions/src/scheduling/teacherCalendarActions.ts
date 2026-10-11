@@ -136,7 +136,7 @@ export const calendarAttendanceClaimId = (
 
 const attendanceTimeOf = (row: Row): string => {
   const raw = text(row.startTime);
-  const match = /^(\\d{1,2}):(\\d{2})(?::\\d{2})?$/.exec(raw);
+  const match = /^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/.exec(raw);
   if (match && Number(match[1]) < 24 && Number(match[2]) < 60) {
     return match[1].padStart(2,'0') + ':' + match[2];
   }
