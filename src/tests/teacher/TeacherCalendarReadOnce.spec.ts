@@ -11,12 +11,32 @@ vi.mock('../../store/useAuthStore', () => ({
 }));
 
 import { TeacherCalendarSessionReadCache, teacherCalendarReadWindow } from '../../pages/teacher/hooks/teacherCalendarSessionReadCache';
+import { resolveTodaySessionStatusBadge } from '../../pages/teacher/components/today-sessions/todaySessionViewState';
 import type { TeacherSession } from '../../types/Teacher';
 
 const scheduled = (id: string, date = '2026-10-12') =>
   ({ id, date, startTime: '17:00', teacherId: 'teacher-1', status: 'scheduled' } as TeacherSession);
 
 describe('Teacher calendar browser-session read-once model', () => {
+  it('displays confirmed absent attendance rather than a stale Scheduled badge', () => {
+    const absent = {
+      ...scheduled('absent-1'),
+      attendance: { 'kid-1': { status: 'absent' as const } },
+    };
+    expect(resolveTodaySessionStatusBadge(absent)).toEqual({
+      label: 'Absent', variant: 'outline',
+    });
+    expect(resolveTodaySessionStatusBadge(scheduled('virtual-1'))).toEqual({
+      label: 'Scheduled', variant: 'secondary',
+    });
+    const present = {
+      ...scheduled('completed-1'),
+      status: 'completed' as const,
+      attendance: { 'kid-1': { status: 'present' as const } },
+    };
+    expect(resolveTodaySessionStatusBadge(present).label).toBe('Completed');
+  });
+
   it('shares one query window across Today, Tomorrow, Week and Month', () => {
     const today = '2026-10-11';
     expect(teacherCalendarReadWindow('2026-10-11', today))
