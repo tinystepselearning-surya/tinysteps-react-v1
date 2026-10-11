@@ -55,12 +55,9 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
 import {
-  loadManualReminderDayBuckets,
-  loadManualReminderSelectedDate,
-  readManualReminderCacheFromStorage,
+  mergeSessionWithEnrollmentFallback,
   selectOperationalReminderSessions,
   buildVirtualReminderSessions,
-  writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
 import { removeExpiredManualReminderCaches } from './manualReminderCache';
 import { ManualReminderReadCache } from './manualReminderReadCache';
@@ -169,12 +166,9 @@ interface ResolvedUserDoc {
   data: UserDoc;
 }
 
-// Enrollment timetable cache is scoped to one Admin user and kept until
-// manual Refresh, not silently invalidated every two minutes.
-let adminEnrollmentCache: {actorUid: string; enrollments: EnrollmentDoc[]} | null = null;
-async function getVirtualAdminEnrollments(actorUid: string): Promise<EnrollmentDoc[]> {
-  const cached = adminEnrollmentCache;
-  if (cached?.actorUid === actorUid) return cached.enrollments;
+// This callback performs one bounded enrollment read on the page's first
+// load or explicit refresh. The per-Admin memory cache owns reuse.
+async function fetchVirtualAdminEnrollments(actorUid: string): Promise<EnrollmentDoc[]> {
   const queryBound = 450;
   const result = await getDocs(query(collection(db, 'enrollments'), limit(queryBound)));
   if (result.size >= queryBound) {
@@ -183,9 +177,9 @@ async function getVirtualAdminEnrollments(actorUid: string): Promise<EnrollmentD
   if (auth.currentUser?.uid !== actorUid) {
     throw new Error('Admin account changed while loading enrollments.');
   }
-  const enrollments = result.docs.map(snap => ({ id: snap.id, ...(snap.data() as Record<string, unknown>) } as EnrollmentDoc));
-  adminEnrollmentCache = { actorUid, enrollments };
-  return enrollments;
+  return result.docs.map(snap => ({
+    id: snap.id, ...(snap.data() as Record<string, unknown>),
+  } as EnrollmentDoc));
 }
 
 const TIMEZONE = 'Asia/Kolkata';
@@ -1212,7 +1206,6 @@ export default function TodaysNotifications() {
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
   const reminderReadCacheRef = useRef(new ManualReminderReadCache<EnrollmentDoc, ManualReminderSessionDoc>());
   const reminderUsersCacheRef = useRef<Record<string, ResolvedUserDoc>>({});
-  const handledReminderRefreshNonceRef = useRef(0);
   const handledAdmissionsRefreshNonceRef = useRef(0);
   const overallAdmissionsCacheRef = useRef<{
     enrollments: EnrollmentDoc[];
@@ -1230,7 +1223,6 @@ export default function TodaysNotifications() {
     const uid = user?.uid || null;
     if (displayedActorUidRef.current === uid) return;
     displayedActorUidRef.current = uid;
-    adminEnrollmentCache = null;
     reminderReadCacheRef.current.useActor(uid);
     reminderUsersCacheRef.current = {};
     overallAdmissionsCacheRef.current = null;
@@ -1248,7 +1240,6 @@ export default function TodaysNotifications() {
   // Firebase's UID-change callback runs before the store resolves token claims.
   // Clear old actor rows immediately rather than waiting for the next render.
   useLayoutEffect(() => subscribeSessionsManagementSnapshotInvalidation(() => {
-    adminEnrollmentCache = null;
     reminderReadCacheRef.current.invalidate();
     reminderUsersCacheRef.current = {};
     overallAdmissionsCacheRef.current = null;
@@ -1327,8 +1318,7 @@ export default function TodaysNotifications() {
     }
     reminderReadCacheRef.current.useActor(actorUid);
     const readCache = reminderReadCacheRef.current;
-    const forceRefresh = reminderRefreshNonce !== handledReminderRefreshNonceRef.current;
-    if (forceRefresh) handledReminderRefreshNonceRef.current = reminderRefreshNonce;
+    const cacheRevision = readCache.getRevision();
 
     const loadSessions = async () => {
       try {
@@ -1343,53 +1333,27 @@ export default function TodaysNotifications() {
           return;
         }
 
-        const virtualEnrollments = await getVirtualAdminEnrollments(actorUid);
-        if (!active || auth.currentUser?.uid !== actorUid) return;
-        readCache.enrollments = virtualEnrollments;
-        const enrollmentIndex = Object.fromEntries(virtualEnrollments.map(row => [row.id, row]));
-        const cachedPersisted = readCache.realSessionsByDate.get(selectedDateKey);
-        let result: {
-          enrollmentMap: Record<string, Record<string, unknown>>;
-          elapsedMs: number; enrollmentFallbackReads: number; source: string;
-        };
-        let fetchedSessions: ManualReminderSessionDoc[];
-        if (cachedPersisted) {
-          fetchedSessions = cachedPersisted;
-          result = { enrollmentMap: {}, elapsedMs: 0, enrollmentFallbackReads: 0, source: 'memory' };
-        } else if (selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey) {
-          const buckets = await loadManualReminderDayBuckets({
-            directFirestore: true,
-            deps: {
-              fetchEnrollmentsByIds: async (ids) => Object.fromEntries(
-                ids.filter(id => enrollmentIndex[id]).map(id => [id, enrollmentIndex[id]])),
-              fetchSessionsForDate: fetchReminderSessionsForDate,
-              readCache: readManualReminderCacheFromStorage,
-              writeCache: writeManualReminderCacheToStorage,
-            },
-            forceRefresh, todayDateKey, tomorrowDateKey,
-          });
-          readCache.realSessionsByDate.set(todayDateKey, buckets.todaySessions);
-          readCache.realSessionsByDate.set(tomorrowDateKey, buckets.tomorrowSessions);
-          fetchedSessions = selectedDateKey === todayDateKey ? buckets.todaySessions : buckets.tomorrowSessions;
-          result = buckets;
-        } else {
-          const selected = await loadManualReminderSelectedDate({
-            dateKey: selectedDateKey, directFirestore: true,
-            deps: {
-              fetchEnrollmentsByIds: async (ids) => Object.fromEntries(
-                ids.filter(id => enrollmentIndex[id]).map(id => [id, enrollmentIndex[id]])),
-              fetchSessionsForDate: fetchReminderSessionsForDate,
-            },
-          });
-          fetchedSessions = selected.sessions;
-          readCache.realSessionsByDate.set(selectedDateKey, fetchedSessions);
-          result = selected;
-        }
-        if (!active || auth.currentUser?.uid !== actorUid) return;
-        const mergedEnrollmentMap = {
-          ...result.enrollmentMap,
-          ...Object.fromEntries(virtualEnrollments.map(row=>[row.id,row])),
-        } as Record<string,Record<string,unknown>>;
+        // Parallel initial reads, then all date switches run from memory.
+        // Any date not previously visited needs its real exceptions once.
+        const persistedRequest = selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey
+          ? Promise.all([
+              readCache.loadRealSessions(todayDateKey, fetchReminderSessionsForDate),
+              readCache.loadRealSessions(tomorrowDateKey, fetchReminderSessionsForDate),
+            ]).then(() => readCache.realSessionsByDate.get(selectedDateKey) || [])
+          : readCache.loadRealSessions(selectedDateKey, fetchReminderSessionsForDate);
+        const [virtualEnrollments, persistedSessions] = await Promise.all([
+          readCache.loadEnrollments(() => fetchVirtualAdminEnrollments(actorUid)),
+          persistedRequest,
+        ]);
+        if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+        const mergedEnrollmentMap = Object.fromEntries(
+          virtualEnrollments.map(row => [row.id, row]),
+        ) as Record<string, Record<string, unknown>>;
+        const fetchedSessions = persistedSessions.map(session =>
+          mergeSessionWithEnrollmentFallback(
+            session, mergedEnrollmentMap[normalizeLookupId(session.enrollmentId)],
+          ),
+        );
         // Reminder acknowledgements are deliberately separate from attendance
         // records; checking a box never creates a classSession document.
         const flagQuery = query(
@@ -1400,7 +1364,8 @@ export default function TodaysNotifications() {
         if (flagSnap.size >= 250) {
           throw new Error('Reminder flag safety limit reached; contact Admin');
         }
-        const flags = new Map(flagSnap.docs.map(s=>[s.id,s.data()]));
+        if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+        const flags = new Map(flagSnap.docs.map(s => [s.id, s.data()]));
 
         const virtualRows = buildVirtualReminderSessions({
           enrollments:virtualEnrollments as unknown as Record<string,unknown>[],
@@ -1412,7 +1377,7 @@ export default function TodaysNotifications() {
           [...fetchedSessions,...virtualRows],mergedEnrollmentMap,
         );
 
-        if (!active) return;
+        if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
         readCache.setVisibleSessions(selectedDateKey, nextSessions);
         setSessions(nextSessions);
         setEnrollmentMap(mergedEnrollmentMap);
@@ -1452,11 +1417,10 @@ export default function TodaysNotifications() {
         if (import.meta.env.DEV) {
           console.info('[TodaysNotifications] manualReminderLoad', {
             dateLoaded: selectedDateKey,
-            elapsedMs: result.elapsedMs,
-            enrollmentFallbackReads: result.enrollmentFallbackReads,
+            enrollmentFallbackReads: 0,
             screen: 'TodaysNotifications',
             sessionsReturned: nextSessions.length,
-            source: result.source,
+            source: 'read-once-enrollment-and-day-cache',
           });
         }
       } catch (error: any) {
@@ -2513,7 +2477,6 @@ export default function TodaysNotifications() {
               variant="outline"
               className="h-7 px-3 text-xs"
               onClick={() => {
-                adminEnrollmentCache = null;
                 reminderReadCacheRef.current.invalidate();
                 reminderUsersCacheRef.current = {};
                 overallAdmissionsCacheRef.current = null;
@@ -2537,7 +2500,6 @@ export default function TodaysNotifications() {
               className="h-7 px-3 text-xs"
               onClick={() => {
                 overallAdmissionsCacheRef.current = null;
-                adminEnrollmentCache = null;
                 reminderReadCacheRef.current.invalidate();
                 reminderUsersCacheRef.current = {};
                 setAdmissionsRefreshNonce(value => value + 1);
