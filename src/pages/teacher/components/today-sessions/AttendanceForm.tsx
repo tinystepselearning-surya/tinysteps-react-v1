@@ -339,7 +339,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     if (hasMissingStatus) {
       toast({
         title: 'Select attendance status',
-        description: 'Please choose Present or Absent for each student.'
+        description: 'Please choose Present or Absent for each student.',
         variant: 'destructive',
       });
       return;
