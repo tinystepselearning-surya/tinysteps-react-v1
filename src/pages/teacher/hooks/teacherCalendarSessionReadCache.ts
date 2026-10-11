@@ -1,8 +1,32 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { queryClient } from '../../../lib/queryClient';
 import type { TeacherSession } from '../../../types/Teacher';
 import { resolveOperationalTeacherId } from '../../../lib/teacherIdentity';
+
+type CachedTeacherStudent = {
+  scheduleEnrollments?: Array<Record<string, unknown> & { id: string }>;
+};
+
+/** Reuse the same teacher-owned timetable data already fetched for projection. */
+export const getCachedTeacherEnrollmentSnapshots = (
+  teacherId: string,
+): Map<string, Record<string, unknown>> => {
+  const rows = queryClient.getQueryData<CachedTeacherStudent[]>(
+    ['teacherFilteredStudents', teacherId],
+  ) || [];
+  const snapshots = new Map<string, Record<string, unknown>>();
+  rows.forEach(student => {
+    (student.scheduleEnrollments || []).forEach(enrollment => {
+      const id = String(enrollment.id || '').trim();
+      if (id && String(enrollment.teacherId || '').trim() === teacherId) {
+        snapshots.set(id, enrollment);
+      }
+    });
+  });
+  return snapshots;
+};
 
 type Range = { teacherId: string; start: string; end: string };
 type Listener = { next: (rows: TeacherSession[]) => void; fail: (error: Error) => void };
