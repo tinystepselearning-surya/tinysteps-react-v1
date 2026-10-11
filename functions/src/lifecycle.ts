@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './scheduling/legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment} from './scheduling/dayWindowTimetableSync';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
@@ -2066,12 +2067,19 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
         })
       : null;
 
+    // Old finite future scans are retired. Lifecycle changes reconcile only
+    // the unstarted recurring classes already visible Today/Tomorrow.
+    const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+      ? await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actor || 'admin',
+      }) : undefined;
     return {
       ok: true,
       updatedEnrollmentId: enrollmentId,
       cancelledSessionsCount: cancelledSessions,
       reactivated: isReactivation,
       reconciliation,
+      ...(daySync ? {daySync} : {}),
       message: `Enrollment set to ${canonicalStatus}`,
     };
   } catch (error) {
@@ -2255,7 +2263,25 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   const cleanEnrollmentPatch = removeUndefinedDeep(enrollmentPatch) as Record<string, unknown>;
   await enrRef.set(cleanEnrollmentPatch, { merge: true });
 
-  const sessionUpdateSummary = await repairFutureSessionsForEnrollment({
+  // Reassignment previously scanned ALL sessions for a student/enrollment.
+  // After the cutover, only pending automatic Today/Tomorrow sessions can
+  // change teacher. Historical/attended/finance-linked sessions remain intact.
+  const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+    ? await syncTodayTomorrowForEnrollment({
+      db, enrollmentId, actorId: actorIdentity || 'admin',
+    }) : null;
+  const sessionUpdateSummary = LEGACY_14_DAY_SESSION_WRITES_RETIRED ? {
+    sessionsScanned: (daySync?.updated || 0) + (daySync?.removed || 0) + (daySync?.preserved || 0),
+    sessionsMatchedByEnrollmentId: (daySync?.updated || 0) + (daySync?.removed || 0) + (daySync?.preserved || 0),
+    sessionsMatchedByLegacyIdentity: 0,
+    sessionsUpdated: (daySync?.updated || 0) + (daySync?.created || 0),
+    sessionsWouldUpdate: (daySync?.updated || 0) + (daySync?.created || 0),
+    sessionsSkipped: (daySync?.preserved || 0) + (daySync?.conflicts || 0),
+    identitySnapshotsBackfilled: 0,
+    skipReasonCounts: {protected: daySync?.preserved || 0, conflicts: daySync?.conflicts || 0},
+    queryCoverageUsed: daySync?.state === 'synchronized' ? ['enrollment+date:Today+Tomorrow'] : [],
+    queriesAttempted: daySync?.state === 'synchronized' ? 2 : 0,
+  } : await repairFutureSessionsForEnrollment({
     enrollmentId,
     enrollment: {
       ...enrollment,
