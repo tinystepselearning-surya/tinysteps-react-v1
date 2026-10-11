@@ -1140,13 +1140,11 @@ function teacherProgressIdentityUnchanged() {
           && ('parentId' in resource.data)
           && resource.data.parentId == request.auth.uid);
 
-      allow create: if isAdmin()
-        || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
+      // New reschedule-credit creation is retired. Existing records may be
+      // read for history, and Admin can correct legacy records if necessary.
+      allow create: if false;
 
-      allow update: if isAdmin()
-        || (isTeacher()
-          && resource.data.teacherId == request.auth.uid
-          && request.resource.data.teacherId == resource.data.teacherId);
+      allow update: if isAdmin();
 
       allow delete: if isAdmin();
     }
