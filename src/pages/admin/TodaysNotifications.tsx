@@ -9,6 +9,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  Timestamp,
   where,
 } from 'firebase/firestore';
 import { Card } from '@components/ui/card';
@@ -42,6 +43,7 @@ import { useToast } from '@components/hooks/use-toast';
 import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
+import { buildRollingScheduleCalendarProjections } from '../../lib/scheduling/rollingScheduleCalendarProjection';
 import {
   buildWhatsAppUrl,
   sanitizeWhatsAppMessage,
@@ -60,6 +62,7 @@ import {
   loadManualReminderSelectedDate,
   readManualReminderCacheFromStorage,
   selectOperationalReminderSessions,
+  mergeSessionWithEnrollmentFallback,
   writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
 import { removeExpiredManualReminderCaches } from './manualReminderCache';
@@ -167,6 +170,23 @@ interface ResolvedUserDoc {
   docId: string;
   uid: string;
   data: UserDoc;
+}
+
+// Enrollment recurrence, not pre-created classSessions, is the source of
+// Admin Today/Tomorrow. Cache the same tiny collection read for both tabs.
+const VIRTUAL_ADMIN_ENROLLMENT_CACHE_MS = 120_000;
+let adminEnrollmentCache: {expiresAt: number; enrollments: EnrollmentDoc[]} | null = null;
+async function getVirtualAdminEnrollments(): Promise<EnrollmentDoc[]> {
+  const cached = adminEnrollmentCache;
+  if (cached && cached.expiresAt > Date.now()) return cached.enrollments;
+  const queryBound = 450;
+  const result = await getDocs(query(collection(db, 'enrollments'), limit(queryBound)));
+  if (result.size >= queryBound) {
+    throw new Error('Enrollment projection safety limit reached; Admin calendar is incomplete');
+  }
+  const enrollments = result.docs.map(snap=>({id:snap.id,...(snap.data() as Record<string,unknown>)} as EnrollmentDoc));
+  adminEnrollmentCache = {expiresAt:Date.now()+VIRTUAL_ADMIN_ENROLLMENT_CACHE_MS, enrollments};
+  return enrollments;
 }
 
 const TIMEZONE = 'Asia/Kolkata';
@@ -1415,11 +1435,58 @@ export default function TodaysNotifications() {
               ? result.todaySessions
               : result.tomorrowSessions
             : result.sessions;
-        const nextSessions = selectOperationalReminderSessions(fetchedSessions, result.enrollmentMap);
+        const virtualEnrollments = await getVirtualAdminEnrollments();
+        const mergedEnrollmentMap = {
+          ...result.enrollmentMap,
+          ...Object.fromEntries(virtualEnrollments.map(row=>[row.id,row])),
+        } as Record<string,Record<string,unknown>>;
+        // Existing physical attendance/manual records take precedence over a
+        // timetable occurrence with the same deterministic identity.
+        const virtual = buildRollingScheduleCalendarProjections({
+          enrollments:virtualEnrollments as unknown as Record<string,unknown>[],
+          realSessions:fetchedSessions as unknown as Record<string,unknown>[],
+          fromYmd:selectedDateKey,toYmd:selectedDateKey,todayYmd:todayDateKey,
+        });
+
+        // Reminder acknowledgements are deliberately separate from attendance
+        // records; checking a box never creates a classSession document.
+        const flagQuery = query(
+          collection(db,'virtualClassReminderFlags'),
+          where('date','==',selectedDateKey),limit(250),
+        );
+        const flagSnap = await getDocs(flagQuery);
+        if (flagSnap.size >= 250) {
+          throw new Error('Reminder flag safety limit reached; contact Admin');
+        }
+        const flags = new Map(flagSnap.docs.map(s=>[s.id,s.data()]));
+
+        const virtualRows = virtual.map(row=>{
+          const enrollment = mergedEnrollmentMap[row.enrollmentId] || {};
+          const flag = flags.get(row.id) || {};
+          return mergeSessionWithEnrollmentFallback({
+            id:row.id, enrollmentId:row.enrollmentId,
+            date:row.date,startTime:row.startTime,endTime:row.endTime,
+            startAt:Timestamp.fromDate(row.startAt),endAt:Timestamp.fromDate(row.endAt),
+            durationMinutes:row.durationMinutes,
+            status:'scheduled',source:row.source,
+            kidId:row.kidId,kidIds:row.kidIds,
+            kidName:row.kidName,studentName:row.studentName,
+            teacherId:row.teacherId,teacherName:row.teacherName,
+            courseId:row.courseId,courseName:row.courseName,
+            joinUrl:row.joinUrl,
+            parentNotified:flag.parentNotified===true,
+            parentNotifiedAt:flag.parentNotifiedAt,
+            teacherNotified:flag.teacherNotified===true,
+            teacherNotifiedAt:flag.teacherNotifiedAt,
+          },enrollment);
+        });
+        const nextSessions = selectOperationalReminderSessions(
+          [...fetchedSessions,...virtualRows],mergedEnrollmentMap,
+        );
 
         if (!active) return;
         setSessions(nextSessions);
-        setEnrollmentMap(result.enrollmentMap);
+        setEnrollmentMap(mergedEnrollmentMap);
         // The authoritative snapshot is enough to render the session rows. Do not keep
         // the whole screen blocked while optional profile details are enriched.
         setIsLoading(false);
@@ -1443,7 +1510,7 @@ export default function TodaysNotifications() {
           if (!active) return;
           setUsersMap(nextUsersMap);
           setKidMap({});
-          setEnrollmentMap(result.enrollmentMap);
+          setEnrollmentMap(mergedEnrollmentMap);
           setCourseMap({});
         } catch (enrichmentError) {
           console.warn(
@@ -2187,9 +2254,11 @@ export default function TodaysNotifications() {
     try {
       const notifiedField = target === 'parent' ? 'parentNotified' : 'teacherNotified';
       const notifiedAtField = target === 'parent' ? 'parentNotifiedAt' : 'teacherNotifiedAt';
+      const virtual = sessionId.startsWith('projection:');
       await setDoc(
-        doc(db, 'classSessions', sessionId),
+        doc(db, virtual ? 'virtualClassReminderFlags' : 'classSessions', sessionId),
         {
+          ...(virtual ? {date:activeReminderDateKey} : {}),
           [notifiedField]: checked,
           [notifiedAtField]: checked ? serverTimestamp() : null,
           updatedAt: serverTimestamp(),
@@ -2197,6 +2266,9 @@ export default function TodaysNotifications() {
         },
         { merge: true },
       );
+      setSessions(prev=>prev.map(row => row.id===sessionId
+        ? {...row,[notifiedField]:checked,[notifiedAtField]:checked ? new Date() : null}
+        : row));
     } catch (error: any) {
       toast({
         title: 'Unable to update notification flag',
