@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {buildNextDaySessionPlan, indiaTodayYmd, nextDayYmd} from '../src/scheduling/nextDaySessionPlan';
+import {buildDailySessionRunPlan, buildNextDaySessionPlan, dailySessionTargetDates, indiaTodayYmd, nextDayYmd} from '../src/scheduling/nextDaySessionPlan';
 
 const enrolled = (overrides: Record<string, unknown> = {}) => ({
   id: 'enrollment-a',
@@ -38,6 +38,28 @@ describe('Tiny Steps daily session plan', () => {
     expect(plan([enrolled()], '2026-10-12').targetYmd).toBe('2026-10-13');
     expect(() => plan([enrolled()], '2026-10-13', '2026-10-13')).toThrow();
     expect(() => plan([enrolled()], '2026-10-12', '2026-10-14')).toThrow();
+  });
+  it('on Oct 12 creates exactly Oct 12 and 13, sharing input, never Oct 14+', () => {
+    const row = enrolled({
+      schedule: {timezone: 'Asia/Kolkata', weeklySlots: [
+        {weekday: 1, time: '05:00', durationMinutes: 35},
+        {weekday: 2, time: '05:00', durationMinutes: 35},
+        {weekday: 3, time: '05:00', durationMinutes: 35},
+      ]},
+    });
+    const input = {enrollments: [row], activeKidIds: new Set(['child-a'])};
+    const launch = buildDailySessionRunPlan({...input, todayYmd: '2026-10-12'});
+    expect(launch.targetDays).toEqual(['2026-10-12', '2026-10-13']);
+    expect(launch.plans.map((p) => p.targetYmd)).toEqual(launch.targetDays);
+    expect(launch.plans.flatMap((p) => p.occurrences.map((s) => s.date)))
+      .toEqual(['2026-10-12', '2026-10-13']);
+    expect(launch.plans.flatMap((p) => p.occurrences).every((s) => s.date <= '2026-10-13')).toBe(true);
+    const nextRun = buildDailySessionRunPlan({...input, todayYmd: '2026-10-13'});
+    expect(nextRun.targetDays).toEqual(['2026-10-14']);
+    expect(nextRun.plans.flatMap((p) => p.occurrences.map((s) => s.date))
+      .toEqual(['2026-10-14']);
+    expect(dailySessionTargetDates('2026-10-14')).toEqual(['2026-10-15']);
+    expect(() => dailySessionTargetDates('2026-10-11')).toThrow('starts on 2026-10-12');
   });
   it('skips paused and archived enrollments, and inactive children', () => {
     expect(plan([enrolled({status: 'paused'})]).occurrences).toHaveLength(0);
