@@ -72,9 +72,10 @@ describe('Teacher Today read-once canonical class exceptions', () => {
     expect(screen.getByTestId('row').textContent).toBe('class-1:completed');
     const sessionQueries=getDocs.mock.calls.filter(([ref])=>getCollectionName(ref)==='classSessions');
     expect(sessionQueries).toHaveLength(1);
-    const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+    const cappedStart = new Date(Date.parse(date + 'T00:00:00.000Z') -
+      60 * 86_400_000).toISOString().slice(0, 10);
     expect(constraints(sessionQueries[0][0])).toEqual(expect.arrayContaining([
-      ['teacherId','==','teacher-1'],['date','>=',todayIst],['date','<=',date],
+      ['teacherId','==','teacher-1'],['date','>=',cappedStart],['date','<=',date],
     ]));
     expect(onSnapshot).not.toHaveBeenCalled();
     view.unmount();
