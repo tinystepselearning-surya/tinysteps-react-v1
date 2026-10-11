@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
@@ -445,7 +446,7 @@ async function repairParentClassAttendance(args: {
         legacyKidAliasOnlySessionRecords: projection.legacyKidAliasOnlySessionRecords,
         migratedIdentityRecords: normalized.migratedIdentityRecords,
         repairVersion: ATTENDANCE_REPAIR_VERSION,
-        refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+        refreshedAt: FieldValue.serverTimestamp(),
         generatedAtMs,
         totals: projection.totals,
         byKid: projection.byKid,
@@ -494,7 +495,7 @@ async function claimRepairVersion(
       repairVersion: ATTENDANCE_REPAIR_VERSION,
       status: 'processing',
       startedAtMs: nowMs,
-      startedAt: admin.firestore.FieldValue.serverTimestamp(),
+      startedAt: FieldValue.serverTimestamp(),
       attemptCount: numberOrZero(data.attemptCount) + 1,
     });
     return true;
@@ -570,7 +571,7 @@ export const bootstrapParentClassAttendance = onCall({ region: REGION }, async (
         status: 'completed',
         result,
         lastAttemptAtMs: Date.now(),
-        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        completedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
@@ -582,7 +583,7 @@ export const bootstrapParentClassAttendance = onCall({ region: REGION }, async (
         status: 'failed',
         failureCode: message.slice(0, 180),
         lastAttemptAtMs: Date.now(),
-        completedAt: admin.firestore.FieldValue.serverTimestamp(),
+        completedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
