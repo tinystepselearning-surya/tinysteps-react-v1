@@ -261,7 +261,7 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
   result.impactedFunctions = [...targetReasons.keys()]
     .filter(id => !result.retiredFunctions.includes(id))
     .sort();
-  result.functionsDeploymentRequired = result.impactedFunctions.length > 0;
+  result.functionsDeploymentRequired = result.impactedFunctions.length > 0 || result.retiredFunctions.length > 0;
   result.reasons = Object.fromEntries(result.impactedFunctions.map(id => [id, [...targetReasons.get(id)].sort()]));
   return result;
 }
