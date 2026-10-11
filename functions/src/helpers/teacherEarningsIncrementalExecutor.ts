@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import {
   isCanonicalSessionCreateFastPathCandidate,
   planTeacherEarningsRollupChange,
@@ -210,7 +211,7 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
             : {}),
           outcome: 'covered',
           eventUpdateTime: input.eventUpdateTime,
-          recordedAt: admin.firestore.FieldValue.serverTimestamp(),
+          recordedAt: FieldValue.serverTimestamp(),
         },
         { merge: false },
       );
@@ -230,8 +231,8 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
         incrementalRevision: decision.revisionAfter,
         incrementalLastEventId: eventId,
         incrementalLastEventUpdateTime: input.eventUpdateTime,
-        incrementalLastAppliedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        incrementalLastAppliedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
@@ -256,7 +257,7 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
         eventUpdateTime: input.eventUpdateTime,
         revisionBefore: decision.revisionBefore,
         revisionAfter: decision.revisionAfter,
-        recordedAt: admin.firestore.FieldValue.serverTimestamp(),
+        recordedAt: FieldValue.serverTimestamp(),
       },
       { merge: false },
     );
