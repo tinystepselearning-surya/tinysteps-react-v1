@@ -91,6 +91,56 @@ const makeDeps = () => ({
   writeCache: vi.fn((_dateKey: string, _payload: unknown) => undefined),
 });
 
+describe('October 12 Today/Tomorrow direct read cutover', () => {
+  it('reads exactly Oct 12 and Oct 13 without calling legacy snapshot functions', async () => {
+    const deps = makeDeps();
+    const loadSnapshot = vi.fn(async () => {
+      throw new Error('Old snapshot should never be touched');
+    });
+    const refreshSnapshot = vi.fn(async () => {
+      throw new Error('Old snapshot refresh should never be touched');
+    });
+    deps.fetchSessionsForDate.mockImplementation(async (dateKey: string) => [{
+      id: `session-${dateKey}`,
+      enrollmentId: 'enrollment-1',
+      date: dateKey, startTime: '05:00', status: 'scheduled',
+    }]);
+    deps.fetchEnrollmentsByIds.mockResolvedValue({
+      'enrollment-1': {
+        id: 'enrollment-1', kidId: 'kid-1', teacherId: 'teacher-a', courseId: 'phonics',
+        status: 'active',
+      },
+    });
+    const result = await loadManualReminderDayBuckets({
+      todayDateKey: '2026-10-12', tomorrowDateKey: '2026-10-13',
+      directFirestore: true,
+      deps: {...deps, loadSnapshot, refreshSnapshot},
+    });
+    expect(result.source).toBe('firestore');
+    expect(result.todaySessions.map((s) => s.id)).toEqual(['session-2026-10-12']);
+    expect(result.tomorrowSessions.map((s) => s.id)).toEqual(['session-2026-10-13']);
+    expect(deps.fetchSessionsForDate).toHaveBeenCalledTimes(2);
+    expect(deps.fetchSessionsForDate).toHaveBeenNthCalledWith(1, '2026-10-12');
+    expect(deps.fetchSessionsForDate).toHaveBeenNthCalledWith(2, '2026-10-13');
+    expect(loadSnapshot).not.toHaveBeenCalled();
+    expect(refreshSnapshot).not.toHaveBeenCalled();
+  });
+  it('arbitrary-date direct reads never call the old snapshot', async () => {
+    const deps = makeDeps();
+    const loadDateSnapshot = vi.fn(async () => {
+      throw new Error('Old date snapshot should never be touched');
+    });
+    const result = await loadManualReminderSelectedDate({
+      dateKey: '2026-10-14', directFirestore: true,
+      deps: {...deps, loadDateSnapshot},
+    });
+    expect(result.source).toBe('firestore');
+    expect(deps.fetchSessionsForDate).toHaveBeenCalledOnce();
+    expect(deps.fetchSessionsForDate).toHaveBeenCalledWith('2026-10-14');
+    expect(loadDateSnapshot).not.toHaveBeenCalled();
+  });
+});
+
 describe('Sessions Management authoritative snapshot loading', () => {
   it('uses the current snapshot without raw session or enrollment reads', async () => {
     const deps = makeDeps();
@@ -195,12 +245,10 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(deps.fetchEnrollmentsByIds).not.toHaveBeenCalled();
   });
 
-  it('keeps the UI on the same 04:00 IST operational-day boundary as the backend snapshot', () => {
-    expect(pageSource).toContain('const SESSIONS_MANAGEMENT_REFRESH_HOUR = 4;');
+  it('uses the IST calendar day for Today/Tomorrow instead of the legacy 04:00 snapshot boundary', () => {
     expect(pageSource).toContain('getSessionsManagementBaselineDateKey()');
-    expect(pageSource).toContain(
-      'SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000',
-    );
+    expect(pageSource).toContain('getKolkataDateKey(date);');
+    expect(pageSource).not.toContain('SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000');
   });
 
   it('counts every operational admission even when profile lookups are incomplete', () => {
