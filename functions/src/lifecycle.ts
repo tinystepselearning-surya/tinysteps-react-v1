@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './scheduling/legacy14DayCutover';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
@@ -693,11 +694,13 @@ export const transitionEnrollmentCourse = onCall({ region: REGION }, async (requ
     if (state === 'new_enrollment_created') {
       transition = ((await transitionRef.get()).data() || {}) as Record<string, unknown>;
       const newEnrollmentId = String(transition.newEnrollmentId || '');
-      const reconciliation = await repairEnrollmentFutureSessionsFromScheduleInternal({
-        enrollmentId: newEnrollmentId,
-        dryRun: false,
-        actorUid: actor,
-      });
+      const reconciliation = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+        ? null
+        : await repairEnrollmentFutureSessionsFromScheduleInternal({
+          enrollmentId: newEnrollmentId,
+          dryRun: false,
+          actorUid: actor,
+        });
       await transitionRef.set({
         state: 'new_sessions_generated',
         reconciliation,
@@ -2045,14 +2048,15 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
     });
 
     let cancelledSessions = 0;
-    if (canonicalStatus === 'paused') {
+    if (!LEGACY_14_DAY_SESSION_WRITES_RETIRED && canonicalStatus === 'paused') {
       cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'enrollment_paused', actor);
-    } else if (isTerminal) {
+    } else if (!LEGACY_14_DAY_SESSION_WRITES_RETIRED && isTerminal) {
       const cancellationReason = canonicalStatus === 'archived' ? 'enrollment_archived' : 'enrollment_ended';
       cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, cancellationReason, actor);
     }
 
-    const reconciliation = isReactivation && enrollmentHasConfiguredSchedule(enrollmentData)
+    const reconciliation = !LEGACY_14_DAY_SESSION_WRITES_RETIRED &&
+      isReactivation && enrollmentHasConfiguredSchedule(enrollmentData)
       ? await repairEnrollmentFutureSessionsFromScheduleInternal({
           enrollmentId,
           dryRun: false,
