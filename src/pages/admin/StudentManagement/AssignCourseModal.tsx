@@ -500,7 +500,7 @@ export default function AssignCourseModal({
     } catch (error: any) {
       console.error(error);
       toast({
-        title: 'Schedule not saved',
+        title: 'Timetable setup needs attention',
         description: error?.message || 'Failed to activate recurring schedule.',
         variant: 'destructive',
       });
