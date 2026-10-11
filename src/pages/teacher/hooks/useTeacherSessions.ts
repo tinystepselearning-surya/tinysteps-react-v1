@@ -516,6 +516,17 @@ export const useTeacherSessions = (
   const [isLoading, setIsLoading] = useState<boolean>(Boolean(teacherId) || includeAllTeachers);
   const [error, setError] = useState<Error | null>(null);
 
+  // A tab left open overnight must switch its Today listener at IST midnight.
+  const [todayYmd, setTodayYmd] = useState(() =>
+    new Date(Date.now()+330*60_000).toISOString().slice(0,10));
+  useEffect(()=>{
+    const interval = window.setInterval(()=>{
+      const next = new Date(Date.now()+330*60_000).toISOString().slice(0,10);
+      setTodayYmd(previous=>previous===next?previous:next);
+    },60_000);
+    return ()=>window.clearInterval(interval);
+  },[]);
+
   useEffect(() => {
     if (!teacherId && !includeAllTeachers) {
       setSessions([]);
@@ -527,7 +538,7 @@ export const useTeacherSessions = (
     setIsLoading(true);
     setError(null);
 
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = todayYmd;
     const start = startDate || today;
     const end = endDate || today;
 
@@ -741,7 +752,7 @@ export const useTeacherSessions = (
       cancelled = true;
       unsubscribe();
     };
-  }, [teacherId, startDate, endDate, includeAllTeachers]);
+  }, [teacherId, startDate, endDate, includeAllTeachers, todayYmd]);
 
   const sortedSessions = useMemo(() => sortSessions(sessions), [sessions]);
 
