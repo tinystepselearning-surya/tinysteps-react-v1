@@ -13,6 +13,9 @@ const NON_OPERATIONAL_SESSION_STATUSES = new Set(['cancelled', 'paused']);
 const SCHEDULE_EXCEPTION_SOURCES = [
   'ad_hoc',
   'adhoc',
+  // Attendance-on-demand is immutable occurrence evidence even if the weekly
+  // timetable changes afterwards. It is not an optional projected class.
+  'virtual_calendar_attendance',
   'makeup',
   'reschedule',
   'manual_one_off',
