@@ -39,7 +39,7 @@ describe('rolling schedule display projection', () => {
     expect(rows.map((row) => row.date)).toEqual(['2026-09-10','2026-09-15','2026-09-17','2026-09-22','2026-09-24']);
   });
 
-  it('starts at today and follows Brick 1 recurrence and follows Brick 1 recurrence semantics', () => {
+  it('keeps past timetable slots available for missing attendance without writes', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [],
@@ -49,6 +49,9 @@ describe('rolling schedule display projection', () => {
     });
 
     expect(rows.map((row) => `${row.date} ${row.startTime}`)).toEqual([
+      '2026-09-01 18:00',
+      '2026-09-03 18:00',
+      '2026-09-08 18:00',
       '2026-09-10 18:00',
       '2026-09-15 18:00',
       '2026-09-17 18:00',
@@ -113,6 +116,19 @@ describe('rolling schedule display projection', () => {
       fromYmd: '2026-09-25',
       toYmd: '2026-09-30',
       todayYmd: '2026-09-10',
+    });
+    expect(rows).toEqual([]);
+  });
+
+  it('does not resurrect an attendance row with legacy ID and no enrollmentId',()=>{
+    const rows=buildRollingScheduleCalendarProjections({
+      enrollments:[rollingEnrollment()],
+      realSessions:[{
+        id:'old-attendance-row',kidId:'kid-1',date:'2026-09-29',
+        startTime:'18:00',status:'completed',
+      }],
+      fromYmd:'2026-09-29',toYmd:'2026-09-29',
+      todayYmd:'2026-10-11',
     });
     expect(rows).toEqual([]);
   });
