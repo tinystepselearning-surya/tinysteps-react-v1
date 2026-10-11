@@ -30,6 +30,14 @@ export class ManualReminderReadCache<Enrollment, Session extends { id: string }>
     this.visibleSessionsByDate.clear();
   }
 
+  getRevision(): number {
+    return this.revision;
+  }
+
+  isCurrentRevision(revision: number): boolean {
+    return this.revision === revision;
+  }
+
   async loadEnrollments(loader: () => Promise<Enrollment[]>): Promise<Enrollment[]> {
     if (this.enrollments !== null) return this.enrollments;
     if (this.enrollmentLoad) return this.enrollmentLoad;
