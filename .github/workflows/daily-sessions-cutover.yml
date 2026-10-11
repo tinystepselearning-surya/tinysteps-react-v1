@@ -8,6 +8,7 @@ on:
       - 'functions/src/scheduling/nextDaySessionPlan.ts'
       - 'functions/src/index.ts'
       - 'functions/test/nextDaySessionPlan.spec.ts'
+      - 'functions/test/dailySessionGenerator.spec.ts'
       - 'src/pages/admin/TodaysNotifications.tsx'
       - 'src/pages/admin/todaysNotificationsManualData.ts'
       - 'src/pages/admin/StudentManagement/StudentList.tsx'
@@ -43,7 +44,7 @@ jobs:
         run: npm --prefix functions run build
       - name: Planner and admin regression tests
         run: |
-          npx vitest run --config functions/vitest.config.ts functions/test/nextDaySessionPlan.spec.ts
+          npx vitest run --config functions/vitest.config.ts functions/test/nextDaySessionPlan.spec.ts functions/test/dailySessionGenerator.spec.ts
           npx vitest run src/tests/pages/TodaysNotificationsSnapshot.spec.ts src/tests/pages/TodaysNotifications.spec.tsx src/tests/pages/RollingScheduleAdminCutover.spec.ts
       - name: Verify client TypeScript
         run: npm run typecheck
