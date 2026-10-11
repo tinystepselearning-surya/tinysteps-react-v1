@@ -186,17 +186,17 @@ const FAQS = [
       'For the completed 2026 recruitment cycle, regular classes scheduled from 9:00 AM to 9:00 PM IST were advertised at ₹175 per completed 35-minute class, and classes before 9:00 AM IST or after 9:00 PM IST at ₹200. Demo compensation and incentives were governed by the applicable plan. These are historical rates, not current vacancies.',
   },
   {
-    question: 'What was the illustrative monthly earning potential in the completed cycle?'
+    question: 'What was the illustrative monthly earning potential in the completed cycle?',
     answer:
       'The completed 2026 recruitment page illustrated six completed regular classes per day over six days a week for four weeks: 144 classes at ₹175, or ₹25,200. This was an illustrative scenario, not a guaranteed salary or a current job offer. Actual earnings depended on assigned and completed classes.',
   },
   {
-    question: 'Were demo classes paid in the completed recruitment cycle?'
+    question: 'Were demo classes paid in the completed recruitment cycle?',
     answer:
       'During the completed recruitment cycle, assigned demo classes were paid separately from regular classes. Additional conversion incentives depended on the applicable incentive plan.',
   },
   {
-    question: 'How were selected teachers onboarded in the completed cycle?'
+    question: 'How were selected teachers onboarded in the completed cycle?',
     answer:
       'Selected teachers received preparation support, demo opportunities and scheduling assistance based on their availability and student demand. There are no open roles at present, and future onboarding terms may differ.',
   },
