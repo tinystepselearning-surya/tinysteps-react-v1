@@ -128,6 +128,64 @@ function assertAssignedActive(enrollment: Row, uid: string, date: string): strin
   return childId;
 }
 
+
+/** Identity stays stable across retries and attendance corrections. */
+export const calendarAttendanceClaimId = (
+  enrollmentId: string, childId: string, date: string, startTime: string,
+): string => [enrollmentId, childId, date.replace(/-/g, ''), startTime.replace(':', '')].join('_');
+
+const attendanceTimeOf = (row: Row): string => {
+  const raw = text(row.startTime);
+  const match = /^(\\d{1,2}):(\\d{2})(?::\\d{2})?$/.exec(raw);
+  if (match && Number(match[1]) < 24 && Number(match[2]) < 60) {
+    return match[1].padStart(2,'0') + ':' + match[2];
+  }
+  const dateLike = row.startAt as {toDate?: () => Date}|null;
+  const at = dateLike?.toDate?.();
+  if (!at || !Number.isFinite(at.getTime())) return '';
+  const shifted = new Date(at.getTime() + IST_MINUTES * HOUR);
+  return shifted.toISOString().slice(11,16);
+};
+
+const rowBelongsToChild = (row: Row, childId: string): boolean =>
+  personIds(row).includes(childId);
+
+export type ExistingCalendarOccurrence = {id:string; data:Row};
+export function resolveCalendarOccurrenceConflict(
+  rows: ExistingCalendarOccurrence[],
+  args: {enrollmentId:string; childId:string; date:string; startTime:string; teacherId:string; courseId:string},
+): {sessionId:string|null; conflict:string|null} {
+  const collisions = rows.filter(({data}) =>
+    rowBelongsToChild(data,args.childId) && attendanceTimeOf(data)===args.startTime);
+  if (collisions.length === 0) return {sessionId:null,conflict:null};
+  if (collisions.length > 1) return {sessionId:null,conflict:'Multiple historical sessions for this student/date/time; Admin review required'};
+  const only = collisions[0];
+  const data=only.data;
+  const differentEnrollment = text(data.enrollmentId) && text(data.enrollmentId)!==args.enrollmentId;
+  const differentTeacher = text(data.teacherId) && text(data.teacherId)!==args.teacherId;
+  const differentCourse = text(data.courseId) && text(data.courseId)!==args.courseId;
+  if (differentEnrollment||differentTeacher||differentCourse) {
+    return {sessionId:null,conflict:'An existing class for this student/date/time has different ownership or course; Admin review required'};
+  }
+  if (['cancelled','canceled','withdrawn'].includes(text(data.status).toLowerCase())) {
+    return {sessionId:null,conflict:'This class was previously cancelled; Admin review required'};
+  }
+  return {sessionId:only.id,conflict:null};
+}
+
+function assertCalendarSessionIdentity(
+  row:Row, enrollmentId:string, uid:string, childId:string, courseId:string,
+):void {
+  if ((text(row.enrollmentId) && text(row.enrollmentId)!==enrollmentId) ||
+      text(row.teacherId)!==uid || !personIds(row).includes(childId) ||
+      (text(row.courseId) && text(row.courseId)!==courseId)) {
+    throw new HttpsError('failed-precondition','Existing class identity mismatch; Admin review required');
+  }
+  if (['cancelled','canceled','withdrawn'].includes(text(row.status).toLowerCase())) {
+    throw new HttpsError('failed-precondition','Cancelled class cannot be marked as scheduled; Admin review required');
+  }
+}
+
 /** Only explicitly called when teacher submits Present/Absent for a projection. */
 export const ensureTeacherCalendarAttendanceSession = onCall(
   {region:REGION, memory:'256MiB', timeoutSeconds:45},
@@ -154,27 +212,58 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
       const enrollment = (enrollmentSnap.data()||{}) as Row;
       const childId = assertAssignedActive(enrollment, uid, date);
       const occurrence = resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime});
-      const [childSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
+      const claimRef = db.collection('calendarAttendanceClaims')
+        .doc(calendarAttendanceClaimId(enrollmentId,childId,date,startTime));
+      const [childSnap, claimSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
+        tx.get(claimRef),
         tx.get(sessionRef),
         tx.get(db.collection('billingCharges').doc(sessionId)),
         tx.get(db.collection('teacherEarnings').doc(sessionId)),
       ]);
-      if (sessionSnap.exists) {
-        const session = (sessionSnap.data()||{}) as Row;
-        if (text(session.enrollmentId)!==enrollmentId ||
-            text(session.teacherId)!==uid || !personIds(session).includes(childId)) {
-          throw new HttpsError('failed-precondition','Existing class identity mismatch');
-        }
-        return {sessionId,created:false};
-      }
-      if (chargeSnap.exists || earningSnap.exists) {
-        throw new HttpsError('failed-precondition','This occurrence has a financial record; manual review required');
+      if (claimSnap.exists) {
+        const existingId = text(claimSnap.data()?.sessionId);
+        if (!existingId) throw new HttpsError('failed-precondition','Attendance claim requires Admin repair');
+        const existing = existingId===sessionId ? sessionSnap :
+          await tx.get(db.collection('classSessions').doc(existingId));
+        if (!existing.exists) throw new HttpsError('failed-precondition','Historical attendance claim points to a missing class');
+        assertCalendarSessionIdentity((existing.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
+        return {sessionId:existingId,created:false};
       }
       if (!childSnap.exists || childSnap.data()?.deleted || childSnap.data()?.isDeleted ||
           childSnap.data()?.archived || childSnap.data()?.isArchived ||
           !['','active'].includes(text(childSnap.data()?.status).toLowerCase())) {
         throw new HttpsError('failed-precondition','Student profile is inactive or missing');
+      }
+      // Date-only query avoids legacy-ID assumptions and requires no new
+      // composite index. It runs only on first attendance, never on calendar view.
+      // The bounded scan fails closed rather than silently missing a duplicate.
+      const sameDay = await tx.get(db.collection('classSessions')
+        .where('date','==',date).limit(251));
+      if (sameDay.size > 250) {
+        throw new HttpsError('failed-precondition','Daily class identity check exceeded the safe limit; Admin review required');
+      }
+      const existingRows:ExistingCalendarOccurrence[] = sameDay.docs.map(d=>({
+        id:d.id,data:(d.data()||{}) as Row,
+      }));
+      if (sessionSnap.exists && !existingRows.some(r=>r.id===sessionId)) {
+        existingRows.push({id:sessionId,data:(sessionSnap.data()||{}) as Row});
+      }
+      const found=resolveCalendarOccurrenceConflict(existingRows,{
+        enrollmentId,childId,date,startTime,teacherId:uid,courseId:text(enrollment.courseId),
+      });
+      if (found.conflict) throw new HttpsError('failed-precondition',found.conflict);
+      if (found.sessionId) {
+        const reused = found.sessionId===sessionId ? sessionSnap :
+          await tx.get(db.collection('classSessions').doc(found.sessionId));
+        if (!reused.exists) throw new HttpsError('failed-precondition','Existing class disappeared');
+        assertCalendarSessionIdentity((reused.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
+        tx.create(claimRef,{sessionId:found.sessionId,enrollmentId,childId,date,startTime,
+          source:'virtual_calendar_attendance',createdAt:admin.firestore.FieldValue.serverTimestamp()});
+        return {sessionId:found.sessionId,created:false};
+      }
+      if (sessionSnap.exists || chargeSnap.exists || earningSnap.exists) {
+        throw new HttpsError('failed-precondition','Class identity or finance exists without valid attendance; Admin review required');
       }
       const schedule = enrollment.schedule as Row|undefined;
       const revision = Number(schedule?.revision || 1);
@@ -184,6 +273,8 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
         actorId:uid,
       });
       tx.create(sessionRef,{...payload,source:'virtual_calendar_attendance'});
+      tx.create(claimRef,{sessionId,enrollmentId,childId,date,startTime,
+        source:'virtual_calendar_attendance',createdAt:admin.firestore.FieldValue.serverTimestamp()});
       return {sessionId,created:true};
     });
     return {...result,ok:true};
