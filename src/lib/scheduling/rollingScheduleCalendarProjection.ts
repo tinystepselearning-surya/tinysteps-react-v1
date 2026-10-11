@@ -32,6 +32,7 @@ export type RollingScheduleCalendarProjection = {
   childName?: string;
   teacherId?: string;
   teacherName?: string;
+  joinUrl?: string;
   courseId?: string;
   courseName?: string;
   courseLabel?: string;
@@ -252,6 +253,7 @@ export const buildRollingScheduleCalendarProjections = (
           ? { teacherId: firstText(enrollment.teacherId, enrollment.teacherUid, enrollment.teacherUserId) }
           : {}),
         ...(teacherName ? { teacherName } : {}),
+        ...(text(enrollment.joinUrl) ? { joinUrl: text(enrollment.joinUrl) } : {}),
         ...(text(enrollment.courseId) ? { courseId: text(enrollment.courseId) } : {}),
         ...(courseName ? { courseName, courseLabel: courseName } : {}),
       });
