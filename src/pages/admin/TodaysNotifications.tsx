@@ -9,7 +9,6 @@ import {
   query,
   serverTimestamp,
   setDoc,
-  Timestamp,
   where,
 } from 'firebase/firestore';
 import { Card } from '@components/ui/card';
@@ -43,7 +42,6 @@ import { useToast } from '@components/hooks/use-toast';
 import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
-import { buildRollingScheduleCalendarProjections } from '../../lib/scheduling/rollingScheduleCalendarProjection';
 import {
   buildWhatsAppUrl,
   sanitizeWhatsAppMessage,
@@ -62,7 +60,7 @@ import {
   loadManualReminderSelectedDate,
   readManualReminderCacheFromStorage,
   selectOperationalReminderSessions,
-  mergeSessionWithEnrollmentFallback,
+  buildVirtualReminderSessions,
   writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
 import { removeExpiredManualReminderCaches } from './manualReminderCache';
@@ -1440,14 +1438,6 @@ export default function TodaysNotifications() {
           ...result.enrollmentMap,
           ...Object.fromEntries(virtualEnrollments.map(row=>[row.id,row])),
         } as Record<string,Record<string,unknown>>;
-        // Existing physical attendance/manual records take precedence over a
-        // timetable occurrence with the same deterministic identity.
-        const virtual = buildRollingScheduleCalendarProjections({
-          enrollments:virtualEnrollments as unknown as Record<string,unknown>[],
-          realSessions:fetchedSessions as unknown as Record<string,unknown>[],
-          fromYmd:selectedDateKey,toYmd:selectedDateKey,todayYmd:todayDateKey,
-        });
-
         // Reminder acknowledgements are deliberately separate from attendance
         // records; checking a box never creates a classSession document.
         const flagQuery = query(
@@ -1460,25 +1450,11 @@ export default function TodaysNotifications() {
         }
         const flags = new Map(flagSnap.docs.map(s=>[s.id,s.data()]));
 
-        const virtualRows = virtual.map(row=>{
-          const enrollment = mergedEnrollmentMap[row.enrollmentId] || {};
-          const flag = flags.get(row.id) || {};
-          return mergeSessionWithEnrollmentFallback({
-            id:row.id, enrollmentId:row.enrollmentId,
-            date:row.date,startTime:row.startTime,endTime:row.endTime,
-            startAt:Timestamp.fromDate(row.startAt),endAt:Timestamp.fromDate(row.endAt),
-            durationMinutes:row.durationMinutes,
-            status:'scheduled',source:row.source,
-            kidId:row.kidId,kidIds:row.kidIds,
-            kidName:row.kidName,studentName:row.studentName,
-            teacherId:row.teacherId,teacherName:row.teacherName,
-            courseId:row.courseId,courseName:row.courseName,
-            joinUrl:row.joinUrl,
-            parentNotified:flag.parentNotified===true,
-            parentNotifiedAt:flag.parentNotifiedAt,
-            teacherNotified:flag.teacherNotified===true,
-            teacherNotifiedAt:flag.teacherNotifiedAt,
-          },enrollment);
+        const virtualRows = buildVirtualReminderSessions({
+          enrollments:virtualEnrollments as unknown as Record<string,unknown>[],
+          realSessions:fetchedSessions,
+          dateKey:selectedDateKey,todayDateKey,
+          flags,
         });
         const nextSessions = selectOperationalReminderSessions(
           [...fetchedSessions,...virtualRows],mergedEnrollmentMap,
