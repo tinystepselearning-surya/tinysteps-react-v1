@@ -310,6 +310,13 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       expect(restored.charge.data()?.amount).toBe(400);
       expect(restored.earning.data()?.amount).toBe(175);
       await waitWallet(3, -400);
+      // Teacher's monthly pay model is derived from the one canonical earning,
+      // and must recover after the void -> unpaid transition.
+      await eventually(async () => {
+        const rollup = await db.collection('teachers').doc(ids.teacher)
+          .collection('earnings').doc('2026-10').get();
+        return Number(rollup.data()?.totalEarnings) === 175 ? rollup : null;
+      }, 'teacher earnings monthly rollup restored to 175');
       expect((await db.collection('billingCharges')
         .where('sessionId', '==', sessionId).get()).size).toBe(1);
       expect((await db.collection('teacherEarnings')
@@ -329,6 +336,53 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
     } finally {
       await financeConfigRef.set({walletClassDeductionsEnabled: false}, {merge: true});
     }
+  });
+
+  it('permits admin attendance correction to restore the same unpaid charge and earning', async () => {
+    const {sessionId} = await ensure();
+    await mark(sessionId, 'present');
+    await complete(sessionId);
+    await waitForLedger(sessionId);
+
+    const adminUid = 'stage1-finance-admin-' + sequence;
+    const email = adminUid + '@example.test';
+    const password = 'Stage1EmulatorOnly!123';
+    await adminAuth.createUser({uid: adminUid, email, password});
+    await db.collection('users').doc(adminUid).set({
+      role: 'admin', status: 'active', email, fullName: 'Finance Test Admin',
+    });
+    await signInWithEmailAndPassword(authClient, email, password);
+
+    await call('adminAttendanceCorrection', {
+      sessionId, kidId: ids.kid, newStatus: 'absent',
+      reason: 'Verified test attendance correction',
+    });
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return row?.revenueAccrued === false &&
+        charge.data()?.status === 'void' && earning.data()?.status === 'void'
+        ? true : null;
+    }, 'admin attendance void and financial reversal');
+
+    await call('adminAttendanceCorrection', {
+      sessionId, kidId: ids.kid, newStatus: 'present',
+      reason: 'Verified teacher-led class did happen',
+    });
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return row?.revenueAccrued === true &&
+        charge.data()?.status === 'open' &&
+        charge.data()?.attendanceFinanceCycle === 2 &&
+        earning.data()?.status === 'unpaid' &&
+        earning.data()?.attendanceFinanceCycle === 2 ? true : null;
+    }, 'admin restores single canonical charge and earning');
+    expect(await sessionsForCurrentChild()).toHaveLength(1);
+    expect((await db.collection('billingCharges')
+      .where('sessionId', '==', sessionId).get()).size).toBe(1);
+    expect((await db.collection('teacherEarnings')
+      .where('sessionId', '==', sessionId).get()).size).toBe(1);
   });
 
   it('accepts attendance for a future date before the class starts', async () => {
