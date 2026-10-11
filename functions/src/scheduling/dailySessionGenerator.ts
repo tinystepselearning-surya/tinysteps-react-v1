@@ -23,6 +23,12 @@ const ACTOR = 'system:daily_session_generator';
 const MAX_ENROLLMENTS = 450;
 const MAX_SESSION_ATTEMPTS = 350;
 const KID_LOOKUP_BATCH = 100;
+const FINANCE_LOOKUP_BATCH = 100;
+const MAX_ACTIVE_DAY_SESSIONS = 600;
+const ACTIVE_SESSION_STATES = new Set([
+  'scheduled', 'upcoming', 'planned', 'open', 'reschedule_requested',
+  'approved', 'in_progress', 'replacement',
+]);
 const ACTIVE_STATUS_VALUES = [
   'active', 'enrolled', 'current', 'ongoing', 'pending_payment', 'pending_lp',
 ];
@@ -57,6 +63,34 @@ function alreadyExists(error: unknown): boolean {
   const message = String(e?.message || '').toLowerCase();
   return code === '6' || code === 'already-exists' || code === 'already_exists' ||
     message.includes('already exists') || message.includes('already-exists');
+}
+
+/**
+ * A different scheduled/manual/makeup class at the same child/date/time
+ * must block new automatic creation. Cancelled and completed records do not
+ * reserve operational child/time slots. No queries occur in this helper.
+ */
+export function childTimeOccupancy(
+  sessions: Array<{id: string; data: Record<string, unknown>}>,
+): Map<string, Set<string>> {
+  const reserved = new Map<string, Set<string>>();
+  for (const {id, data} of sessions) {
+    const status = value(data.status).toLowerCase();
+    if (!ACTIVE_SESSION_STATES.has(status)) continue;
+    const childIds = [
+      value(data.kidId), value(data.studentId), value(data.childId),
+      ...(Array.isArray(data.kidIds) ? data.kidIds.map(value) : []),
+    ].filter(Boolean);
+    const date = value(data.date);
+    const startTime = value(data.startTime);
+    if (!date || !startTime) continue;
+    for (const childId of new Set(childIds)) {
+      const key = `${childId}|${date}|${startTime}`;
+      if (!reserved.has(key)) reserved.set(key, new Set());
+      reserved.get(key)!.add(id);
+    }
+  }
+  return reserved;
 }
 
 export async function runDailySessionGenerator(
@@ -113,6 +147,34 @@ export async function runDailySessionGenerator(
     throw new Error('Session candidate safety limit reached; no new sessions written');
   }
 
+  // Only two day buckets, not future/history scans. Manual and makeup
+  // exceptions already in those dates must not be double booked.
+  const existingSnap = await db.collection('classSessions')
+    .where('date', 'in', targetDays)
+    .limit(MAX_ACTIVE_DAY_SESSIONS).get();
+  if (existingSnap.size === MAX_ACTIVE_DAY_SESSIONS) {
+    throw new Error('Today/Tomorrow session safety limit reached; no writes');
+  }
+  const occupancy = childTimeOccupancy(existingSnap.docs.map((doc) => ({
+    id: doc.id, data: doc.data() as Record<string, unknown>,
+  })));
+  const existingIds = new Set(existingSnap.docs.map((doc) => doc.id));
+  const newRows = rows.filter((row) => !existingIds.has(row.sessionId));
+  const financeLinkedIds = new Set<string>();
+  for (let offset = 0; offset < newRows.length; offset += FINANCE_LOOKUP_BATCH) {
+    const chunk = newRows.slice(offset, offset + FINANCE_LOOKUP_BATCH);
+    const refs = chunk.flatMap(({sessionId}) => [
+      db.collection('billingCharges').doc(sessionId),
+      db.collection('teacherEarnings').doc(sessionId),
+    ]);
+    const links = await db.getAll(...refs);
+    chunk.forEach(({sessionId}, i) => {
+      if (links[2 * i].exists || links[2 * i + 1].exists) {
+        financeLinkedIds.add(sessionId);
+      }
+    });
+  }
+
   const enrollmentById = new Map(enrollments.map(({id, data}) => [id, data]));
   const issuesByReason: Record<string, number> = {};
   for (const issue of plans.flatMap((plan) => plan.issues)) {
@@ -125,6 +187,24 @@ export async function runDailySessionGenerator(
   // Sequential create-only writes avoid overwhelming Firestore and make failures
   // observable; no reads of classSessions are performed.
   for (const row of rows) {
+    // Already created deterministic IDs remain authoritative even when a
+    // manually cancelled class is being deliberately left cancelled.
+    if (existingIds.has(row.sessionId)) {
+      skipped += 1;
+      continue;
+    }
+    const key = `${row.kidId}|${row.date}|${row.startTime}`;
+    const occupied = occupancy.get(key);
+    if (occupied?.size) {
+      issuesByReason.existing_student_time_conflict =
+        (issuesByReason.existing_student_time_conflict || 0) + 1;
+      continue;
+    }
+    if (financeLinkedIds.has(row.sessionId)) {
+      issuesByReason.financial_reference_conflict =
+        (issuesByReason.financial_reference_conflict || 0) + 1;
+      continue;
+    }
     const enrollment = enrollmentById.get(row.enrollmentId);
     if (!enrollment) {
       failed += 1;
@@ -155,6 +235,8 @@ export async function runDailySessionGenerator(
       });
       await db.collection('classSessions').doc(row.sessionId).create(payload);
       created += 1;
+      if (!occupancy.has(key)) occupancy.set(key, new Set());
+      occupancy.get(key)!.add(row.sessionId);
     } catch (error) {
       if (alreadyExists(error)) skipped += 1;
       else {
@@ -175,7 +257,7 @@ export async function runDailySessionGenerator(
     planned: rows.length,
     created,
     alreadyExists: skipped,
-    blocked: plans.reduce((sum, plan) => sum + plan.issues.length, 0),
+    blocked: Object.values(issuesByReason).reduce((sum, count) => sum + count, 0),
     failed,
     issuesByReason,
   };
