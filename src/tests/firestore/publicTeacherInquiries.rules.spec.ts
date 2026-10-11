@@ -42,7 +42,7 @@ beforeAll(async () => {
   if (!emulatorHost) return;
   const [host, rawPort] = emulatorHost.split(':');
   testEnv = await initializeTestEnvironment({
-    projectId: 'tinysteps-firestore-rules',
+    projectId: process.env.GCLOUD_PROJECT?.startsWith('demo-') ? process.env.GCLOUD_PROJECT : 'tinysteps-firestore-rules',
     firestore: {
       host,
       port: Number(rawPort || '8085'),

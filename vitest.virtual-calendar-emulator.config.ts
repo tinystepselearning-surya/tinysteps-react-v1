@@ -4,7 +4,10 @@ import {defineConfig} from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/tests/emulator/virtualCalendarAttendance.emulator.spec.ts'],
+    include: [
+      'src/tests/emulator/virtualCalendarAttendance.emulator.spec.ts',
+      'src/tests/firestore/publicTeacherInquiries.rules.spec.ts',
+    ],
     testTimeout: 90_000,
     hookTimeout: 90_000,
     fileParallelism: false,
