@@ -44,7 +44,17 @@ describe('virtual calendar: parent/teacher historical and ad hoc integrity',()=>
       attendance:{'kid-1':{status:'absent'}},
     };
     expect(isSessionCanonicalForEnrollment(absent,enrollment)).toBe(true);
-    expect(isScheduleExceptionSession(absent)).toBe(false);
+    expect(isScheduleExceptionSession(absent)).toBe(true);
+    // A later edit must NOT remove a previously marked absence/presence from
+    // historical parent and teacher calendars.
+    const edited = {
+      ...enrollment,
+      schedule:{
+        ...enrollment.schedule,
+        weeklySlots:[{weekday:1,time:'18:00',durationMinutes:35}],
+      },
+    };
+    expect(isSessionCanonicalForEnrollment(absent,edited)).toBe(true);
   });
   it('treats existing completed regular attendance as historical authority',()=>{
     const present={
