@@ -3,7 +3,7 @@ import { collection, doc, documentId, orderBy, query, where } from 'firebase/fir
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
-import { teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
+import { teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -556,6 +556,9 @@ export const useTeacherSessions = (
       setIsLoading(false);
       return;
     }
+    const readWindow = includeAllTeachers
+      ? { start, end }
+      : teacherCalendarReadWindow(end, today);
 
     const baseCollection = collection(db, 'classSessions');
     const teacherKey = toCleanText(teacherId);
@@ -566,16 +569,16 @@ export const useTeacherSessions = (
     ) => query(
       baseCollection,
       where(field, operator, teacherKey),
-      where('date', '>=', start),
-      where('date', '<=', end),
+      where('date', '>=', readWindow.start),
+      where('date', '<=', readWindow.end),
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc'),
     );
     const primaryQuery = includeAllTeachers || !teacherKey
       ? query(
           baseCollection,
-          where('date', '>=', start),
-          where('date', '<=', end),
+          where('date', '>=', readWindow.start),
+          where('date', '<=', readWindow.end),
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         )
@@ -702,7 +705,7 @@ export const useTeacherSessions = (
       dateRange: { start, end },
     });
     const unsubscribe = teacherCalendarSessionReadCache.subscribe(
-      { teacherId: includeAllTeachers ? '__all__' : teacherKey, start, end },
+      { teacherId: includeAllTeachers ? '__all__' : teacherKey, ...readWindow },
       async () => {
         const snapshot = await getDocsLogged(
           'useTeacherSessions:primary',
@@ -722,7 +725,9 @@ export const useTeacherSessions = (
           source: 'manual_refresh_cache',
         });
         sourceStates.set('primary', { status: 'ready', error: null });
-        liveDocsBySource.set('primary', new Map(rows.map(row => [row.id, row])));
+        liveDocsBySource.set('primary', new Map(rows
+          .filter(row => String(row.date || '') >= start && String(row.date || '') <= end)
+          .map(row => [row.id, row])));
         publishMergedRows();
       },
       err => {
