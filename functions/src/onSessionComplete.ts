@@ -1,6 +1,7 @@
 // functions/src/onSessionComplete.ts
 import * as admin from "firebase-admin";
 import {virtualCalendarAttendanceEnabled} from "./scheduling/teacherCalendarActions";
+import {AUTOMATIC_SESSION_CREATION_RETIRED} from "./scheduling/legacy14DayCutover";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -513,7 +514,7 @@ async function processSessionCompletion(
     // operating model. Parent charges and teacher earnings continue to be
     // generated from the single real session by onSessionRevenueWrite.
     // Keep the old completion marker for compatibility with historical retries.
-    if (virtualCalendarAttendanceEnabled()) {
+    if (AUTOMATIC_SESSION_CREATION_RETIRED) {
       const presentCount = kidIds.filter((kidId) =>
         (attendanceMap[kidId]?.status || "").toLowerCase() === "present"
       ).length;
