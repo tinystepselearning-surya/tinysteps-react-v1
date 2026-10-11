@@ -1492,6 +1492,28 @@ function enrollmentLabel(e: EnrollmentLite): string {
   return `${courseTitle}${teacher ? ` — ${teacher}` : ''}${feeText}`;
 }
 
+type TimetableDaySync = {
+  state: 'disabled' | 'synchronized';
+  created: number;
+  updated: number;
+  removed: number;
+  preserved: number;
+  conflicts: number;
+};
+
+const describeTimetableDaySync = (sync: TimetableDaySync | undefined, paused: boolean): string => {
+  if (sync?.state === 'synchronized') {
+    return 'Today/Tomorrow updated: ' +
+      `${sync.created} created, ${sync.updated} updated, ${sync.removed} obsolete removed. ` +
+      (sync.conflicts > 0
+        ? `${sync.conflicts} overlapping class(es) preserved for review.`
+        : 'Existing attendance and manual classes preserved.');
+  }
+  return paused
+    ? 'Weekly timetable saved while paused. No new sessions are generated.'
+    : 'Weekly timetable saved. The daily scheduler will prepare the next class dates.';
+};
+
 function isCanonicalRollingEnrollmentForAdmin(enrollment: EnrollmentLite | null | undefined): boolean {
   return Boolean(
     enrollment?.schedule &&
@@ -2246,6 +2268,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             restoredPreviouslyReconciledSessions: number;
             materializedSessionsCreated: number;
             materializedSessionsPreserved: number;
+            daySync?: TimetableDaySync;
           }
         >(regionalFunctions, 'reconcileRollingEnrollmentSchedule');
         const result = await reconcileRollingEnrollmentSchedule(payload);
@@ -2254,13 +2277,13 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         const createdCount = safeNumber(data.materializedSessionsCreated, 0);
         const preservedCount = safeNumber(data.materializedSessionsPreserved, 0);
         toast({
-          title: data.scheduleChanged ? 'Recurring schedule updated' : 'Schedule saved',
-          description:
-            `Continuous weekly schedule is ${selectedScheduleStatus === 'paused' ? 'saved while paused' : 'active'}. ` +
-            `${createdCount} upcoming session${createdCount === 1 ? '' : 's'} created; ${preservedCount} preserved.` +
-            (safeNumber(data.cancelledStaleSessions, 0) > 0 ? ` ${data.cancelledStaleSessions} stale future session${data.cancelledStaleSessions === 1 ? '' : 's'} cancelled.` : '') +
-            (safeNumber(data.restoredPreviouslyReconciledSessions, 0) > 0 ? ` ${data.restoredPreviouslyReconciledSessions} prior occurrence${data.restoredPreviouslyReconciledSessions === 1 ? '' : 's'} restored.` : '') +
-            (protectedCount > 0 ? ` ${protectedCount} protected session${protectedCount === 1 ? '' : 's'} left untouched.` : ''),
+          title: data.scheduleChanged ? 'Recurring timetable updated' : 'Timetable saved',
+          description: data.horizonDays === 0
+            ? describeTimetableDaySync(data.daySync, selectedScheduleStatus === 'paused')
+            : `Continuous weekly schedule is ${selectedScheduleStatus === 'paused' ? 'saved while paused' : 'active'}. ` +
+              `${createdCount} upcoming session${createdCount === 1 ? '' : 's'} created; ${preservedCount} preserved.` +
+              (safeNumber(data.cancelledStaleSessions, 0) > 0 ? ` ${data.cancelledStaleSessions} stale future sessions cancelled.` : '') +
+              (protectedCount > 0 ? ` ${protectedCount} protected sessions left untouched.` : ''),
         });
       } else {
         const saveRollingEnrollmentSchedule = httpsCallable<
@@ -2277,6 +2300,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               materializedThroughYmd: string;
             } | null;
             pausedSessionsCancelled: number;
+            daySync?: TimetableDaySync;
           }
         >(regionalFunctions, 'saveRollingEnrollmentSchedule');
         const idempotencyKey =
@@ -2286,10 +2310,12 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         const result = await saveRollingEnrollmentSchedule({...payload, idempotencyKey});
         const materialized = result.data.initialMaterialization;
         toast({
-          title: 'Continuous schedule activated',
-          description: materialized
-            ? `Weekly recurrence is now continuous. ${safeNumber(materialized.createdCount, 0)} upcoming session${safeNumber(materialized.createdCount, 0) === 1 ? '' : 's'} created and ${safeNumber(materialized.existingCount, 0) + safeNumber(materialized.raceAlreadyExistsCount, 0)} preserved within the 14-day operational window.`
-            : 'Weekly recurrence is saved as a continuous schedule. It will remain paused until you resume the enrollment.',
+          title: 'Weekly timetable saved',
+          description: result.data.horizonDays === 0
+            ? describeTimetableDaySync(result.data.daySync, selectedScheduleStatus === 'paused')
+            : materialized
+              ? `Weekly recurrence is now continuous. ${safeNumber(materialized.createdCount, 0)} upcoming sessions created.`
+              : 'Weekly recurrence saved. The enrollment remains paused until resumed.',
         });
       }
 
@@ -3780,7 +3806,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                     <div>
                       <div className="text-sm font-medium text-slate-800">Continuous recurring schedule</div>
                       <div className="text-xs text-slate-600 mt-1">
-                        Weekly classes continue automatically while this enrollment is active. The system keeps only the next 14 days operationally materialized.
+                        Weekly classes follow this timetable while the enrollment is active. Only Today and Tomorrow are generated; timetable changes synchronize pending sessions in those two days.
                       </div>
                     </div>
                     <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
