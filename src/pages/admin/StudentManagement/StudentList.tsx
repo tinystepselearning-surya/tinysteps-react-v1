@@ -31,7 +31,6 @@ import { clearEnrollmentsCacheForStudents, useEnrollmentsForStudents } from '../
 import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
-import type { RescheduleCreditStatus } from '../../../services/rescheduleCredits';
 import {
   GRAMMAR_CURRICULUM_REVISION,
   GRAMMAR_CURRICULUM_SCHEMA_VERSION,
@@ -1332,27 +1331,6 @@ type SessionRequestRow = {
   status?: string;
 };
 
-type RescheduleCreditMonitorEntry = {
-  id: string;
-  kidId: string;
-  teacherId: string;
-  status: RescheduleCreditStatus;
-  updatedAt: Date | null;
-};
-
-type RescheduleCreditsMonitorRow = {
-  key: string;
-  kidId: string;
-  teacherId: string;
-  studentName: string;
-  teacherName: string;
-  open: number;
-  scheduled: number;
-  consumed: number;
-  total: number;
-  lastUpdatedAt: Date | null;
-};
-
 function computeAgeYearsFromDob(dob?: string): number | null {
   try {
     if (!dob) return null;
@@ -1591,7 +1569,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [sortField, setSortField] = useState<StudentSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [enrollmentStatusTab, setEnrollmentStatusTab] = useState<'active' | 'past'>('active');
-  const [showCreditsMonitor, setShowCreditsMonitor] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(DEFAULT_PAGE_SIZE);
 
@@ -1626,9 +1603,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [sessionRequests, setSessionRequests] = useState<SessionRequestRow[]>([]);
   const [requestActionId, setRequestActionId] = useState<string | null>(null);
   const [sessionRequestsOpen, setSessionRequestsOpen] = useState(false);
-  const [rescheduleCreditsMonitorEntries, setRescheduleCreditsMonitorEntries] = useState<RescheduleCreditMonitorEntry[]>([]);
-  const [rescheduleCreditsMonitorLoading, setRescheduleCreditsMonitorLoading] = useState<boolean>(false);
-  const [creditsRefreshKey, setCreditsRefreshKey] = useState(0);
   const [syncStatus, setSyncStatus] = useState({
     running: false,
   });
@@ -1797,70 +1771,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return () => unsub();
   }, [user?.role]);
 
-  useEffect(() => {
-    if (user?.role !== 'admin') {
-      setRescheduleCreditsMonitorEntries([]);
-      setRescheduleCreditsMonitorLoading(false);
-      return;
-    }
-    if (!showCreditsMonitor) {
-      setRescheduleCreditsMonitorLoading(false);
-      return;
-    }
-
-    setRescheduleCreditsMonitorLoading(true);
-    let active = true;
-    const loadRescheduleCreditsMonitor = async () => {
-      try {
-        const snapshot = await getDocs(
-          query(
-            collection(db, 'rescheduleCredits'),
-            orderBy('updatedAt', 'desc'),
-            limit(2000),
-          )
-        );
-        if (!active) return;
-        const rows = snapshot.docs
-          .map((d) => {
-            const raw = d.data() as any;
-            const kidId = String(raw?.kidId || '').trim();
-            if (!kidId) return null;
-
-            const teacherId = String(raw?.teacherId || '').trim();
-            const statusRaw = String(raw?.status || '').trim().toLowerCase();
-            const status = (
-              ['open', 'scheduled', 'consumed', 'cancelled'].includes(statusRaw)
-                ? statusRaw
-                : 'open'
-            ) as RescheduleCreditStatus;
-            const updatedAt = dateLikeToDate(raw?.updatedAt) || dateLikeToDate(raw?.createdAt);
-
-            return {
-              id: d.id,
-              kidId,
-              teacherId,
-              status,
-              updatedAt,
-            } as RescheduleCreditMonitorEntry;
-          })
-          .filter(Boolean) as RescheduleCreditMonitorEntry[];
-
-        setRescheduleCreditsMonitorEntries(rows);
-        setRescheduleCreditsMonitorLoading(false);
-      } catch (err) {
-        console.error('rescheduleCredits monitor onSnapshot error', err);
-        if (!active) return;
-        setRescheduleCreditsMonitorEntries([]);
-        setRescheduleCreditsMonitorLoading(false);
-      }
-    };
-
-    void loadRescheduleCreditsMonitor();
-    return () => {
-      active = false;
-    };
-  }, [creditsRefreshKey, showCreditsMonitor, user?.role]);
-
   const parentLabelById = useMemo(() => {
     const map = new Map<string, string>();
     parents.forEach((parent) => {
@@ -1871,94 +1781,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     });
     return map;
   }, [parents]);
-
-  const teacherLabelById = useMemo(() => {
-    const map = new Map<string, string>();
-    teachers.forEach((teacher) => {
-      const docId = String(teacher.id || '').trim();
-      const uid = String((teacher as any).uid || '').trim();
-      const label = String(teacher.name || teacher.email || (teacher as any).displayName || docId || uid || '—');
-      if (docId) map.set(docId, label);
-      if (uid) map.set(uid, label);
-    });
-    return map;
-  }, [teachers]);
-
-  const studentNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    students.forEach((student) => {
-      if (!student?.id) return;
-      map.set(String(student.id), String(student.fullName || student.id));
-    });
-    return map;
-  }, [students]);
-
-  const rescheduleCreditsTotals = useMemo(() => {
-    return rescheduleCreditsMonitorEntries.reduce(
-      (acc, entry) => {
-        if (entry.status === 'open') acc.open += 1;
-        if (entry.status === 'scheduled') acc.scheduled += 1;
-        if (entry.status === 'consumed') acc.consumed += 1;
-        return acc;
-      },
-      { open: 0, scheduled: 0, consumed: 0 },
-    );
-  }, [rescheduleCreditsMonitorEntries]);
-
-  const rescheduleCreditsMonitorRows = useMemo(() => {
-    const grouped = new Map<string, RescheduleCreditsMonitorRow>();
-
-    rescheduleCreditsMonitorEntries.forEach((entry) => {
-      if (entry.status === 'cancelled') return;
-
-      const teacherKey = entry.teacherId || 'unassigned';
-      const key = `${entry.kidId}__${teacherKey}`;
-      const studentName = studentNameById.get(entry.kidId) || entry.kidId;
-      const teacherName = entry.teacherId
-        ? (teacherLabelById.get(entry.teacherId) || entry.teacherId)
-        : 'Unassigned';
-
-      const existing = grouped.get(key);
-      if (!existing) {
-        grouped.set(key, {
-          key,
-          kidId: entry.kidId,
-          teacherId: entry.teacherId,
-          studentName,
-          teacherName,
-          open: entry.status === 'open' ? 1 : 0,
-          scheduled: entry.status === 'scheduled' ? 1 : 0,
-          consumed: entry.status === 'consumed' ? 1 : 0,
-          total: 1,
-          lastUpdatedAt: entry.updatedAt,
-        });
-        return;
-      }
-
-      if (entry.status === 'open') existing.open += 1;
-      if (entry.status === 'scheduled') existing.scheduled += 1;
-      if (entry.status === 'consumed') existing.consumed += 1;
-      existing.total += 1;
-
-      if (
-        entry.updatedAt
-        && (!existing.lastUpdatedAt || entry.updatedAt.getTime() > existing.lastUpdatedAt.getTime())
-      ) {
-        existing.lastUpdatedAt = entry.updatedAt;
-      }
-    });
-
-    return Array.from(grouped.values()).sort((a, b) => {
-      if (b.open !== a.open) return b.open - a.open;
-      if (b.scheduled !== a.scheduled) return b.scheduled - a.scheduled;
-      const aTime = a.lastUpdatedAt?.getTime() || 0;
-      const bTime = b.lastUpdatedAt?.getTime() || 0;
-      if (bTime !== aTime) return bTime - aTime;
-      const studentCompare = a.studentName.localeCompare(b.studentName, undefined, { sensitivity: 'base' });
-      if (studentCompare !== 0) return studentCompare;
-      return a.teacherName.localeCompare(b.teacherName, undefined, { sensitivity: 'base' });
-    });
-  }, [rescheduleCreditsMonitorEntries, studentNameById, teacherLabelById]);
 
   const getParentLabelsForStudent = useCallback((student: Student): string[] => {
     return (student.parentIds || [])
@@ -3127,91 +2949,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           Showing: {studentStatusSummary.showing}
         </span>
       </div>
-
-      {isAdmin ? (
-        <Card className="overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
-            <div>
-              <div className="text-sm font-medium text-gray-700">Reschedule Credits Monitor</div>
-              <div className="text-xs text-gray-500">Operational status by student and teacher</div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="text-xs text-gray-600">
-                Open: <span className="font-semibold">{rescheduleCreditsTotals.open}</span>
-                <span className="mx-2 text-gray-300">|</span>
-                Scheduled: <span className="font-semibold">{rescheduleCreditsTotals.scheduled}</span>
-                <span className="mx-2 text-gray-300">|</span>
-                Consumed: <span className="font-semibold">{rescheduleCreditsTotals.consumed}</span>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 px-2 text-xs"
-                onClick={() => setShowCreditsMonitor((prev) => !prev)}
-              >
-                {showCreditsMonitor ? 'Hide credits monitor' : 'Show credits monitor'}
-              </Button>
-              {showCreditsMonitor ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setCreditsRefreshKey((prev) => prev + 1)}
-                >
-                  Refresh
-                </Button>
-              ) : null}
-            </div>
-          </div>
-
-          {showCreditsMonitor ? (
-            <>
-              {rescheduleCreditsMonitorLoading ? (
-                <div className="p-4 text-sm text-gray-500">Loading reschedule credits...</div>
-              ) : rescheduleCreditsMonitorRows.length === 0 ? (
-                <div className="p-4 text-sm text-gray-500">No reschedule credits yet.</div>
-              ) : (
-                <div className="max-h-56 overflow-auto">
-                  <Table className="w-full text-sm">
-                    <TableHeader className="sticky top-0 z-20 bg-slate-50">
-                      <TableRow>
-                        <TableHead className="w-[220px]">Student</TableHead>
-                        <TableHead className="w-[220px]">Teacher</TableHead>
-                        <TableHead className="w-[90px] text-right">Open</TableHead>
-                        <TableHead className="w-[90px] text-right">Scheduled</TableHead>
-                        <TableHead className="w-[90px] text-right">Consumed</TableHead>
-                        <TableHead className="w-[90px] text-right">Total</TableHead>
-                        <TableHead className="w-[180px]">Last Update</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rescheduleCreditsMonitorRows.map((row) => (
-                        <TableRow key={row.key}>
-                          <TableCell className="font-medium">
-                            <div className="truncate" title={row.studentName}>{row.studentName}</div>
-                            <div className="text-[11px] text-gray-500">{row.kidId}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="truncate" title={row.teacherName}>{row.teacherName}</div>
-                            <div className="text-[11px] text-gray-500">{row.teacherId || 'unassigned'}</div>
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-amber-700">{row.open}</TableCell>
-                          <TableCell className="text-right font-semibold text-blue-700">{row.scheduled}</TableCell>
-                          <TableCell className="text-right font-semibold text-emerald-700">{row.consumed}</TableCell>
-                          <TableCell className="text-right">{row.total}</TableCell>
-                          <TableCell className="text-xs text-gray-600">
-                            {row.lastUpdatedAt ? formatDateTime(row.lastUpdatedAt) : '—'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </>
-          ) : null}
-        </Card>
-      ) : null}
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
