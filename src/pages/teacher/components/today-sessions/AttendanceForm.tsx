@@ -41,7 +41,7 @@ type AttendanceEntryState = {
   notes?: string;
 };
 
-const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];
+const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent'];
 
 const attendanceStatusLabel = (status: AttendanceStatus): string => {
   if (status === 'reschedule_requested') return 'Rescheduled';
@@ -292,13 +292,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     return startMs === null ? null : startMs + 30 * 60 * 1000;
   };
 
-  const attendanceCorrectionCutoffMs = session
-    ? getTeacherAttendanceCorrectionCutoffMillis(session)
-    : null;
-  const isAttendanceFinalised =
-    !canOverrideAttendanceTime
-    && attendanceCorrectionCutoffMs !== null
-    && Date.now() >= attendanceCorrectionCutoffMs;
+  const isAttendanceFinalised = false;
 
   const handleChange = (kidId: string, status: AttendanceOutcome) => {
     setFormState((prev) => ({
@@ -339,40 +333,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     if (hasMissingStatus) {
       toast({
         title: 'Select attendance status',
-        description: 'Please choose Present/Absent/Rescheduled for each student.',
+        description: 'Please choose Present or Absent for each student.',
         variant: 'destructive',
       });
       return;
-    }
-
-    if (!canOverrideAttendanceTime) {
-      const allowedAt = getAttendanceAllowedAtMillis();
-      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
-      const nowMs = Date.now();
-      if (allowedAt === null || correctionCutoffAt === null) {
-        toast({
-          title: 'Attendance unavailable',
-          description: 'Attendance time could not be verified. Please contact admin.',
-          variant: 'destructive',
-        });
-        return;
-      }
-      if (nowMs < allowedAt) {
-        toast({
-          title: 'Attendance unavailable',
-          description: `Attendance opens at ${new Date(allowedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`,
-          variant: 'destructive',
-        });
-        return;
-      }
-      if (nowMs >= correctionCutoffAt) {
-        toast({
-          title: 'Attendance unavailable',
-          description: ATTENDANCE_FINALISED_MESSAGE,
-          variant: 'destructive',
-        });
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -482,7 +446,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Lesson progress is not updated for absent or rescheduled attendance.
+                          Lesson progress is not updated for absent attendance.
                         </p>
                       )}
 

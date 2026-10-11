@@ -1,3 +1,4 @@
+import {buildRollingScheduleCalendarProjections} from '../../lib/scheduling/rollingScheduleCalendarProjection';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -253,6 +254,48 @@ const hydrateSnapshotSessions = (
       enrollmentMap[normalizeLookupId(session.enrollmentId)],
     ),
   );
+
+/** Pure Admin Today/Tomorrow projection: enrollment is authoritative.
+ * Existing historical attendance/explicit classes remain persisted authority.
+ * Optional flags are stored separately; a reminder never creates a session.
+ */
+export function buildVirtualReminderSessions(args: {
+  enrollments: Record<string,unknown>[];
+  realSessions: ManualReminderSessionDoc[];
+  dateKey: string;
+  todayDateKey: string;
+  flags?: ReadonlyMap<string,Record<string,unknown>>;
+}): ManualReminderSessionDoc[] {
+  const byId = new Map(args.enrollments.map(enrollment =>
+    [String(enrollment.id||''),enrollment],
+  ));
+  return buildRollingScheduleCalendarProjections({
+    enrollments:args.enrollments,
+    realSessions:args.realSessions as unknown as Record<string,unknown>[],
+    fromYmd:args.dateKey,
+    toYmd:args.dateKey,
+    todayYmd:args.todayDateKey,
+  }).map(row=>{
+    const enrollment = byId.get(row.enrollmentId);
+    const flags = args.flags?.get(row.id) || {};
+    return mergeSessionWithEnrollmentFallback({
+      id:row.id,enrollmentId:row.enrollmentId,
+      date:row.date,startTime:row.startTime,endTime:row.endTime,
+      startAt:row.startAt,endAt:row.endAt,
+      durationMinutes:row.durationMinutes,
+      status:'scheduled',source:row.source,
+      kidId:row.kidId,kidIds:row.kidIds,
+      kidName:row.kidName,studentName:row.studentName,
+      teacherId:row.teacherId,teacherName:row.teacherName,
+      courseId:row.courseId,courseName:row.courseName,
+      joinUrl:row.joinUrl,
+      parentNotified:flags.parentNotified===true,
+      parentNotifiedAt:flags.parentNotifiedAt,
+      teacherNotified:flags.teacherNotified===true,
+      teacherNotifiedAt:flags.teacherNotifiedAt,
+    },enrollment);
+  });
+}
 
 const operationalIdentity = (session: ManualReminderSessionDoc): string => {
   const exceptionIdentity = isScheduleExceptionSession(session as unknown as Record<string, unknown>)

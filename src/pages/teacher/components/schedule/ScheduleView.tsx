@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import { Input } from '@components/ui/input';
 import {
   Select,
@@ -19,10 +20,10 @@ import {
 } from '../../../../lib/attendanceCorrectionFreeze';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { auth, db } from '../../../../lib/firebaseConfig';
+import { Timestamp } from 'firebase/firestore';
+import { auth } from '../../../../lib/firebaseConfig';
+import { resolveSessionJoinLink } from '../../../../lib/sessionJoinLink';
 import { toast } from '@components/hooks/use-toast';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';
 import {
   buildRollingScheduleCalendarProjections,
@@ -144,37 +145,6 @@ const MONTH_WEEKDAY_HEADER_TONE_CLASS = [
   'border-indigo-200 bg-gradient-to-b from-indigo-100 to-indigo-50 text-indigo-700',
 ] as const;
 
-type RescheduleCreditRecord = {
-  creditId: string;
-  kidId: string;
-  status: 'open' | 'scheduled' | 'consumed' | 'cancelled' | string;
-  sourceSessionId: string;
-  sourceSessionDate: string;
-  sourceStartTime: string;
-  durationMins: number;
-  updatedAt?: unknown;
-};
-
-type MakeupDraft = {
-  date: string;
-  startTime: string;
-  note: string;
-};
-
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-const buildDefaultMakeupDate = (): string => {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  return format(date, 'yyyy-MM-dd');
-};
-
-const toNumberOr = (value: unknown, fallback: number): number => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-};
-
 const timestampToMillis = (value: unknown): number => {
   if (value && typeof value === 'object' && typeof (value as { toMillis?: unknown }).toMillis === 'function') {
     return Number((value as { toMillis: () => number }).toMillis()) || 0;
@@ -211,12 +181,6 @@ const getSessionStartMillis = (session: Partial<TeacherSession> | null | undefin
   return Number.isNaN(parsed) ? null : parsed;
 };
 
-const getAttendanceAllowedAtMillis = (session: Partial<TeacherSession> | null | undefined): number | null => {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + 30 * 60 * 1000;
-};
-
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -234,18 +198,14 @@ const completeSessionViaBackend = async (
 };
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
-  const { user } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('day');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('all');
-  const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCreditRecord[]>([]);
-  const [rescheduleCreditsLoading, setRescheduleCreditsLoading] = useState<boolean>(false);
-  const [makeupDraftByCredit, setMakeupDraftByCredit] = useState<Record<string, MakeupDraft>>({});
-  const [schedulingCreditId, setSchedulingCreditId] = useState<string | null>(null);
-  const [isReschedulePanelExpanded, setIsReschedulePanelExpanded] = useState<boolean>(false);
-  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
-
+  const [adHocOpen, setAdHocOpen] = useState(false);
+  const [adHocEnrollmentId, setAdHocEnrollmentId] = useState('');
+  const [adHocStartTime, setAdHocStartTime] = useState('17:00');
+  const [adHocSaving, setAdHocSaving] = useState(false);
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
       return { rangeStart: startOfMonth(currentDate), rangeEnd: endOfMonth(currentDate) };
@@ -287,6 +247,71 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     [students],
   );
 
+  // Reuse the one already-bounded teacher student/enrollment read for ad hoc
+  // selection. No extra Firestore reads while browsing a day.
+  const assignedEnrollmentOptions = useMemo(() => {
+    return teacherScheduleEnrollments
+      .filter((row) => {
+        const status = String(row.status || '').trim().toLowerCase();
+        return ['active','enrolled','current','ongoing','pending_payment','pending_lp'].includes(status) &&
+          !row.archived && !row.isArchived && !row.archivedAt;
+      })
+      .map((row) => {
+        const name = String(row.studentName || row.kidName || row.childName ||
+          (row.studentSnapshot as any)?.name || '').trim() || 'Student';
+        return {
+          id: row.id, label: name + ' · ' + String(row.courseName || row.courseId || 'English'),
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [teacherScheduleEnrollments]);
+
+  const openTeacherMeeting = useCallback((session: TeacherSession) => {
+    const byId = new Map(teacherScheduleEnrollments.map(row=>[row.id, row as Record<string,unknown>]));
+    const link = resolveSessionJoinLink(session,byId);
+    if (!/^https:\/\//i.test(link)) {
+      toast({ title: 'Teams link unavailable',
+        description: 'Ask Admin to add the meeting link to Student Management.',
+        variant: 'destructive' });
+      return;
+    }
+    window.open(link, '_blank', 'noopener,noreferrer');
+  }, [teacherScheduleEnrollments]);
+
+  const submitAdHocBooking = async () => {
+    if (!adHocEnrollmentId) {
+      toast({ title: 'Choose a student', variant: 'destructive' });
+      return;
+    }
+    try {
+      setAdHocSaving(true);
+      const functions = getFunctions(undefined, 'asia-south1');
+      const createAdHoc = httpsCallable<
+        {enrollmentId:string;date:string;startTime:string;durationMinutes:number},
+        {sessionId:string;created:boolean}
+      >(functions,'createTeacherCalendarAdHocSession');
+      const result = await createAdHoc({
+        enrollmentId: adHocEnrollmentId,
+        date: format(currentDate, 'yyyy-MM-dd'),
+        startTime: adHocStartTime,
+        durationMinutes: 35,
+      });
+      toast({
+        title: result.data.created ? 'Ad hoc class added' : 'Ad hoc class already exists',
+        description: 'Select it in your calendar to join or mark Present/Absent.',
+      });
+      setAdHocOpen(false);
+    } catch (error) {
+      toast({
+        title:'Unable to add ad hoc class',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant:'destructive',
+      });
+    } finally {
+      setAdHocSaving(false);
+    }
+  };
+
   const projectedSessions = useMemo<TeacherSession[]>(() => {
     const projections = buildRollingScheduleCalendarProjections({
       enrollments: teacherScheduleEnrollments,
@@ -313,6 +338,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       childName: row.childName,
       status: 'scheduled',
       source: row.source,
+      joinUrl: row.joinUrl,
+      startAt: Timestamp.fromDate(row.startAt),
+      endAt: Timestamp.fromDate(row.endAt),
       isScheduleProjection: true,
       projectionOnly: true,
     } as TeacherSession & { isScheduleProjection: true; projectionOnly: true }));
@@ -449,48 +477,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     [getSessionKidIds],
   );
 
-  const isAttendanceAllowedNow = useCallback((session?: Partial<TeacherSession> | null): boolean => {
-    if (canOverrideAttendanceTime) return true;
-    const allowedAt = getAttendanceAllowedAtMillis(session);
-    const correctionCutoffAt = session ? getTeacherAttendanceCorrectionCutoffMillis(session) : null;
-    if (allowedAt === null || correctionCutoffAt === null) return false;
-    const nowMs = Date.now();
-    return nowMs >= allowedAt && nowMs < correctionCutoffAt;
-  }, [canOverrideAttendanceTime]);
-
-  const isAttendanceFinalised = useCallback((session?: Partial<TeacherSession> | null): boolean => {
-    if (canOverrideAttendanceTime || !session) return false;
-    const cutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
-    return cutoffAt !== null && Date.now() >= cutoffAt;
-  }, [canOverrideAttendanceTime]);
-
+  // Attendance access is no longer blocked by class time or month.
+  const isAttendanceFinalised = useCallback((_session?: Partial<TeacherSession> | null): boolean => false, []);
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
-    if (isRollingScheduleProjection(session)) {
-      toast({
-        title: 'Planned recurring class',
-        description: 'This future calendar entry is display-only. Attendance becomes available after the real session enters the 14-day operational window.',
-      });
-      return;
-    }
-    if (!isAttendanceAllowedNow(session)) {
-      const allowedAt = getAttendanceAllowedAtMillis(session);
-      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
-      const nowMs = Date.now();
-      const message =
-        allowedAt === null || correctionCutoffAt === null
-          ? 'Attendance time could not be verified. Please contact admin.'
-          : nowMs >= correctionCutoffAt
-            ? ATTENDANCE_FINALISED_MESSAGE
-            : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
-      toast({
-        title: 'Attendance unavailable',
-        description: message,
-        variant: 'destructive',
-      });
-      return;
-    }
     setSelectedSession(session);
-  }, [isAttendanceAllowedNow]);
+  }, []);
 
   const studentFilterOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
@@ -548,83 +539,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   );
 
   useEffect(() => {
-    if (!resolvedTeacherId) {
-      setRescheduleCredits([]);
-      setRescheduleCreditsLoading(false);
-      return;
-    }
-
-    setRescheduleCreditsLoading(true);
-    const creditsQuery = query(
-      collection(db, 'rescheduleCredits'),
-      where('teacherId', '==', resolvedTeacherId),
-      where('status', '==', 'open'),
-    );
-
-    const unsub = onSnapshot(
-      creditsQuery,
-      (snapshot) => {
-        const rows: RescheduleCreditRecord[] = snapshot.docs.map((snap) => {
-          const data = (snap.data() || {}) as Record<string, unknown>;
-          const durationMins = Math.max(10, Math.min(180, Math.round(toNumberOr(data.durationMins, 35))));
-          return {
-            creditId: String(data.creditId || snap.id),
-            kidId: String(data.kidId || ''),
-            status: String(data.status || 'open'),
-            sourceSessionId: String(data.sourceSessionId || ''),
-            sourceSessionDate: String(data.sourceSessionDate || ''),
-            sourceStartTime: String(data.sourceStartTime || ''),
-            durationMins,
-            updatedAt: data.updatedAt,
-          };
-        }).filter((row) => row.creditId && row.kidId);
-
-        rows.sort((a, b) => {
-          const byUpdated = timestampToMillis(b.updatedAt) - timestampToMillis(a.updatedAt);
-          if (byUpdated !== 0) return byUpdated;
-          return b.sourceSessionDate.localeCompare(a.sourceSessionDate);
-        });
-
-        setRescheduleCredits(rows);
-        setRescheduleCreditsLoading(false);
-        setMakeupDraftByCredit((prev) => {
-          const next: Record<string, MakeupDraft> = {};
-          rows.forEach((row) => {
-            next[row.creditId] = prev[row.creditId] || {
-              date: buildDefaultMakeupDate(),
-              startTime: '16:00',
-              note: '',
-            };
-          });
-          return next;
-        });
-      },
-      (err) => {
-        console.error('rescheduleCredits onSnapshot error', err);
-        setRescheduleCredits([]);
-        setRescheduleCreditsLoading(false);
-      },
-    );
-
-    return () => unsub();
-  }, [resolvedTeacherId]);
-
-  const updateMakeupDraft = (creditId: string, patch: Partial<MakeupDraft>) => {
-    setMakeupDraftByCredit((prev) => ({
-      ...prev,
-      [creditId]: {
-        ...(prev[creditId] || { date: buildDefaultMakeupDate(), startTime: '16:00', note: '' }),
-        ...patch,
-      },
-    }));
-  };
-
-  const visibleRescheduleCredits = useMemo(() => {
-    if (selectedStudentId === 'all') return rescheduleCredits;
-    return rescheduleCredits.filter((credit) => String(credit.kidId || '').trim() === selectedStudentId);
-  }, [rescheduleCredits, selectedStudentId]);
-
-  useEffect(() => {
     if (!selectedSession) return;
     if (selectedStudentId === 'all') return;
     const matchesSelected = getSessionKidIds(selectedSession).includes(selectedStudentId);
@@ -633,88 +547,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   }, [selectedSession, selectedStudentId, getSessionKidIds]);
 
-  const handleCreateMakeupSession = async (credit: RescheduleCreditRecord) => {
-    const draft = makeupDraftByCredit[credit.creditId] || {
-      date: buildDefaultMakeupDate(),
-      startTime: '16:00',
-      note: '',
-    };
-
-    if (!ISO_DATE_RE.test(draft.date)) {
-      toast({
-        title: 'Invalid date',
-        description: 'Choose a valid date (YYYY-MM-DD).',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!HHMM_RE.test(draft.startTime)) {
-      toast({
-        title: 'Invalid time',
-        description: 'Choose a valid start time (HH:mm).',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setSchedulingCreditId(credit.creditId);
-      const functions = getFunctions(undefined, 'asia-south1');
-      const createMakeupSessionFromCredit = httpsCallable(functions, 'createMakeupSessionFromCredit');
-      const response = await createMakeupSessionFromCredit({
-        creditId: credit.creditId,
-        kidId: credit.kidId,
-        date: draft.date,
-        startTime: draft.startTime,
-        durationMins: credit.durationMins,
-        note: draft.note.trim() || undefined,
-      });
-
-      const result = (response.data || {}) as { sessionId?: string; alreadyExisted?: boolean };
-      setCurrentDate(new Date(`${draft.date}T00:00:00`));
-      setView('day');
-      toast({
-        title: result.alreadyExisted ? 'Makeup session already exists' : 'Makeup session scheduled',
-        description: result.sessionId
-          ? `Session ${result.sessionId} is ready in your calendar.`
-          : 'The reschedule credit was scheduled successfully.',
-      });
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: 'Unable to schedule makeup session',
-        description: err instanceof Error ? err.message : 'Please try another date/time.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSchedulingCreditId(null);
-    }
-  };
-
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
-    if (!isAttendanceAllowedNow(selectedSession)) {
-      const allowedAt = getAttendanceAllowedAtMillis(selectedSession);
-      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(selectedSession);
-      const nowMs = Date.now();
-      const message =
-        allowedAt === null || correctionCutoffAt === null
-          ? 'Attendance time could not be verified. Please contact admin.'
-          : nowMs >= correctionCutoffAt
-            ? ATTENDANCE_FINALISED_MESSAGE
-            : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
-      toast({
-        title: 'Attendance unavailable',
-        description: message,
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
+      let attendanceSessionId = selectedSession.id;
+      if (isRollingScheduleProjection(selectedSession)) {
+        const ensureSession = httpsCallable<
+          {enrollmentId:string;date:string;startTime:string},
+          {sessionId:string}
+        >(functions, 'ensureTeacherCalendarAttendanceSession');
+        const materialized = await ensureSession({
+          enrollmentId: String(selectedSession.enrollmentId || ''),
+          date: selectedSession.date,
+          startTime: selectedSession.startTime,
+        });
+        attendanceSessionId = materialized.data.sessionId;
+      }
       const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
       const response: any = await saveTeacherSessionProgress({
-        sessionId: selectedSession.id,
+        sessionId: attendanceSessionId,
         attendance: data.attendance,
         sessionNotes: data.sessionNotes,
         meta: {
@@ -726,7 +578,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       const hasPresentOrLate = response?.data?.hasPresentOrLate === true;
 
       if (hasPresentOrLate) {
-        await completeSessionViaBackend(selectedSession.id, {
+        await completeSessionViaBackend(attendanceSessionId, {
           attendance: data.attendance as Record<string, any>,
           sessionNotes: data.sessionNotes,
         });
@@ -811,12 +663,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">Teacher Schedule</h2>
             <p className="mt-1 text-sm text-slate-500">
-              View your sessions and tap any session to mark attendance.
+              Classes follow the saved student timetable. Join Teams or mark Present/Absent.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="rounded-full" onClick={handlePrev}>Prev</Button>
             <Button variant="outline" size="sm" className="rounded-full" onClick={handleToday}>Today</Button>
+            <Button type="button" size="sm" onClick={() => { setView('day'); setAdHocOpen(true); }}>
+              Add ad hoc class
+            </Button>
             <Button variant="outline" size="sm" className="rounded-full" onClick={handleNext}>Next</Button>
           </div>
         </div>
@@ -849,7 +704,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </div>
           <div className="text-sm text-slate-500">{getTitle()}</div>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
           <Card className="p-2">
             <div className="text-slate-500">Completed / Present</div>
             <div className="font-semibold text-slate-900">{attendanceSummary.completedPresent}</div>
@@ -859,113 +714,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
             <div className="font-semibold text-slate-900">{attendanceSummary.absentMissed}</div>
           </Card>
           <Card className="p-2">
-            <div className="text-slate-500">Rescheduled</div>
-            <div className="font-semibold text-slate-900">{attendanceSummary.rescheduled}</div>
-          </Card>
-          <Card className="p-2">
             <div className="text-slate-500">Upcoming</div>
             <div className="font-semibold text-slate-900">{attendanceSummary.upcoming}</div>
           </Card>
         </div>
-      </Card>
-
-      <Card className="border-slate-200 bg-white/95 p-4 shadow-sm md:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">Open Reschedule Credits</h3>
-            <p className="text-xs text-slate-500">
-              Schedule one makeup class per student credit.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-              {visibleRescheduleCredits.length} open
-            </Badge>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="rounded-full"
-              onClick={() => setIsReschedulePanelExpanded((prev) => !prev)}
-            >
-              {isReschedulePanelExpanded ? 'Close' : 'Expand'}
-            </Button>
-          </div>
-        </div>
-
-        {isReschedulePanelExpanded && (
-          <>
-            {rescheduleCreditsLoading ? (
-              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                Loading credits...
-              </div>
-            ) : visibleRescheduleCredits.length === 0 ? (
-              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                No open reschedule credits right now.
-              </div>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {visibleRescheduleCredits.map((credit) => {
-                  const draft = makeupDraftByCredit[credit.creditId] || {
-                    date: buildDefaultMakeupDate(),
-                    startTime: '16:00',
-                    note: '',
-                  };
-                  const studentLabel =
-                    studentNameById.get(credit.kidId) ||
-                    `Student (${credit.kidId.slice(0, 6)}...)`;
-
-                  return (
-                    <div key={credit.creditId} className="rounded-xl border border-slate-200 bg-white p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-slate-900">{studentLabel}</div>
-                        <div className="text-xs text-slate-500">
-                          Missed: {credit.sourceSessionDate || '—'}{credit.sourceStartTime ? ` at ${credit.sourceStartTime}` : ''}
-                        </div>
-                      </div>
-                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
-                        <div>
-                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Date</label>
-                          <Input
-                            type="date"
-                            value={draft.date}
-                            onChange={(event) => updateMakeupDraft(credit.creditId, { date: event.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Time</label>
-                          <Input
-                            type="time"
-                            value={draft.startTime}
-                            onChange={(event) => updateMakeupDraft(credit.creditId, { startTime: event.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Note (optional)</label>
-                          <Input
-                            type="text"
-                            placeholder="Optional note"
-                            value={draft.note}
-                            onChange={(event) => updateMakeupDraft(credit.creditId, { note: event.target.value })}
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            className="w-full rounded-lg"
-                            onClick={() => handleCreateMakeupSession(credit)}
-                            disabled={schedulingCreditId === credit.creditId}
-                          >
-                            {schedulingCreditId === credit.creditId ? 'Scheduling...' : 'Schedule Makeup'}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
       </Card>
 
       <Card className="border-slate-200 bg-white/95 p-5 shadow-sm md:p-6">
@@ -1050,8 +802,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                       const badgeTone = resolveSessionBadgeTone(session);
                       const attendanceFinalised = isAttendanceFinalised(session);
                       return (
+                        <div key={session.id || `${dateStr}_${idx}`} className="space-y-1">
                         <button
-                          key={session.id || `${dateStr}_${idx}`}
                           type="button"
                           className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
                           onClick={() => tryOpenAttendance(session)}
@@ -1065,6 +817,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                           {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 20)}</div> : null}
                           {attendanceFinalised ? <div className="mt-1 text-[10px]">{ATTENDANCE_FINALISED_MESSAGE}</div> : null}
                         </button>
+                        <Button type="button" size="sm" variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => openTeacherMeeting(session)}>
+                          Join Teams
+                        </Button>
+                        </div>
                       );
                     })}
                     {daySessions.length === 0 ? (
@@ -1088,10 +846,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
               const attendanceFinalised = isAttendanceFinalised(session);
 
               return (
+                <div key={session.id || `day_${idx}`}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                 <button
-                  key={session.id || `day_${idx}`}
                   type="button"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  className="w-full text-left transition hover:text-indigo-700"
                   onClick={() => tryOpenAttendance(session)}
                   disabled={attendanceFinalised}
                   title={attendanceFinalised ? ATTENDANCE_FINALISED_MESSAGE : undefined}
@@ -1112,6 +871,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                     <div className="mt-2 text-xs text-amber-700">{ATTENDANCE_FINALISED_MESSAGE}</div>
                   ) : null}
                 </button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline"
+                    onClick={() => openTeacherMeeting(session)}>Join Teams</Button>
+                  <Button type="button" size="sm" variant="secondary"
+                    disabled={attendanceFinalised}
+                    onClick={() => tryOpenAttendance(session)}>Mark Present / Absent</Button>
+                </div>
+                </div>
               );
             })}
             {(sessionsByDate[format(currentDate, 'yyyy-MM-dd')] || []).length === 0 ? (
@@ -1122,6 +889,44 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </div>
         )}
       </Card>
+
+      <Dialog open={adHocOpen} onOpenChange={setAdHocOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add ad hoc class · {format(currentDate, 'd MMM yyyy')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium" htmlFor="ad-hoc-student">
+                Student
+              </label>
+              <Select value={adHocEnrollmentId} onValueChange={setAdHocEnrollmentId}>
+                <SelectTrigger id="ad-hoc-student"><SelectValue placeholder="Choose assigned student" /></SelectTrigger>
+                <SelectContent>
+                  {assignedEnrollmentOptions.map(row => (
+                    <SelectItem key={row.id} value={row.id}>{row.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="ad-hoc-start" className="mb-1 block text-sm font-medium">Time (IST)</label>
+                <Input id="ad-hoc-start" type="time" value={adHocStartTime}
+                  onChange={e => setAdHocStartTime(e.target.value)} />
+              </div>
+              <div className="text-sm text-slate-600">Duration: 35 minutes</div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              One-off class only. Your student's regular weekly timetable stays unchanged.
+            </p>
+            <Button type="button" onClick={() => void submitAdHocBooking()}
+              disabled={!adHocEnrollmentId || adHocSaving} className="w-full">
+              {adHocSaving ? 'Adding…' : 'Add to calendar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AttendanceForm
         open={Boolean(selectedSession)}

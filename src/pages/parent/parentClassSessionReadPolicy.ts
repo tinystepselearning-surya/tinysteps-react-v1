@@ -53,13 +53,14 @@ export const resolveParentClassSessionDateBounds = ({
 
   // Keep the current month available for attendance/billing fallback calculations,
   // while bounding the operational future horizon to what parents actually need.
-  const firstDayOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const upcomingEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  upcomingEnd.setDate(upcomingEnd.getDate() + PARENT_UPCOMING_CLASS_DAYS);
 
+  // Operational service dates are recorded in IST, not the parent's device zone.
+  const todayYmd=new Date(now.getTime()+330*60_000).toISOString().slice(0,10);
+  const upcomingEnd=new Date(Date.parse(todayYmd+'T00:00:00.000Z')+
+    PARENT_UPCOMING_CLASS_DAYS*86_400_000).toISOString().slice(0,10);
   return {
-    startKey: toYmd(firstDayOfCurrentMonth),
-    endKey: toYmd(upcomingEnd),
+    startKey: todayYmd.slice(0,8)+'01',
+    endKey: upcomingEnd,
   };
 };
 

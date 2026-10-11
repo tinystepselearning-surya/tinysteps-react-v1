@@ -1,12 +1,10 @@
 import {
-  ROLLING_SCHEDULE_HORIZON_DAYS,
   resolveEnrollmentRollingScheduleContract,
 } from './enrollmentRollingScheduleContract';
 import {
   enumerateRollingScheduleOccurrences,
   ROLLING_SCHEDULE_UTC_OFFSET_MINUTES,
 } from './rollingScheduleRecurrence';
-import { isRealSessionAuthoritativeForRollingCalendar } from './rollingScheduleRealSessionAuthority';
 
 export const ROLLING_SCHEDULE_PROJECTION_SOURCE = 'rolling_schedule_projection' as const;
 
@@ -34,6 +32,7 @@ export type RollingScheduleCalendarProjection = {
   childName?: string;
   teacherId?: string;
   teacherName?: string;
+  joinUrl?: string;
   courseId?: string;
   courseName?: string;
   courseLabel?: string;
@@ -64,12 +63,6 @@ const isValidYmd = (value: string): boolean => {
     && parsed.getUTCDate() === day;
 };
 
-const addDaysYmd = (ymd: string, days: number): string => {
-  if (!isValidYmd(ymd)) throw new Error('todayYmd must be YYYY-MM-DD');
-  const [year, month, day] = ymd.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + days));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-};
 
 const indiaYmd = (date = new Date()): string => {
   const shifted = new Date(date.getTime() + ROLLING_SCHEDULE_UTC_OFFSET_MINUTES * 60 * 1000);
@@ -117,11 +110,11 @@ const ymdAndTimeFromUtcMs = (utcMs: number): { ymd: string; time: string } => {
   };
 };
 
+
 const enrollmentIdFromSession = (session: RecordLike): string => {
   const direct = text(session.enrollmentId);
   if (direct) return direct;
-  const id = text(session.id);
-  const match = /^(.+)_\d{8}_\d{4}$/.exec(id);
+  const match = /^(.+)_\d{8}_\d{4}$/.exec(text(session.id));
   return match?.[1] || '';
 };
 
@@ -160,13 +153,12 @@ const enrollmentKidIds = (enrollment: RecordLike): string[] => {
 };
 
 /**
- * Builds display-only recurrence rows strictly beyond the physical classSession horizon.
+ * Builds read-only calendar occurrences from active enrollment timetables for today onward.
  *
  * The function never reads or writes Firestore. Canonical rolling enrollments are the only
- * projection authority. Within the 14-day physical window, persisted real sessions remain
- * authoritative. Beyond that window, stale ordinary rows left by the retired finite scheduler
- * are intentionally ignored so they cannot suppress recurrence projections after cutover.
- * Explicit real exceptions remain authoritative at any distance.
+ * projection authority. A persisted session ALWAYS overrides the corresponding
+ * timetable occurrence, preserving attendance, cancellation and ad hoc exceptions.
+ * Pure calculation: this helper performs no Firestore writes.
  */
 export const buildRollingScheduleCalendarProjections = (
   input: BuildRollingScheduleCalendarProjectionsInput,
@@ -178,30 +170,42 @@ export const buildRollingScheduleCalendarProjections = (
   }
   if (input.toYmd < input.fromYmd) return [];
 
-  const firstProjectionYmd = addDaysYmd(todayYmd, ROLLING_SCHEDULE_HORIZON_DAYS + 1);
-  const fromYmd = input.fromYmd > firstProjectionYmd ? input.fromYmd : firstProjectionYmd;
-  if (fromYmd > input.toYmd) return [];
+  // Historical virtual slots must remain available for missing attendance.
+  // The enrollment start date bounds the recurrence; real records override it.
+  const fromYmd = input.fromYmd;
 
   const enrollmentsById = new Map<string, RecordLike>();
   input.enrollments.forEach((enrollment) => {
     const enrollmentId = text(enrollment.id);
     if (enrollmentId) enrollmentsById.set(enrollmentId, enrollment);
   });
-  const authoritativeRealSessions = input.realSessions.filter((session) => {
-    const enrollmentId = enrollmentIdFromSession(session);
-    if (!enrollmentId) return true;
-    return isRealSessionAuthoritativeForRollingCalendar({
-      session,
-      enrollment: enrollmentsById.get(enrollmentId),
-      todayYmd,
-    });
-  });
+  // Every persisted occurrence wins, regardless of how it was originally
+  // created. An attended, absent, cancelled, or one-off class is never
+  // "resurrected" by a virtual recurrence row.
+  const authoritativeRealSessions = input.realSessions;
   const realIds = new Set(authoritativeRealSessions.map((session) => text(session.id)).filter(Boolean));
   const realOccurrenceIdentities = new Set(
     authoritativeRealSessions
       .map(sessionOccurrenceIdentity)
       .filter((value): value is string => Boolean(value)),
   );
+  const occupiedChildTimes = new Set<string>();
+  authoritativeRealSessions.forEach(session=>{
+    let day=text(session.date);
+    let time=normalizeTime(session.startTime);
+    if (!isValidYmd(day) || !time) {
+      const at=dateLikeToMs(session.startAt);
+      if (at===null) return;
+      const parsed=ymdAndTimeFromUtcMs(at);
+      day=parsed.ymd;
+      time=parsed.time;
+    }
+    const kids=[
+      ...(Array.isArray(session.kidIds)?session.kidIds:[]),
+      session.kidId,session.studentId,session.childId,
+    ].map(text).filter(Boolean);
+    kids.forEach(kid=>occupiedChildTimes.add(kid+'|'+day+'|'+time));
+  });
 
   const projections: RollingScheduleCalendarProjection[] = [];
 
@@ -210,7 +214,7 @@ export const buildRollingScheduleCalendarProjections = (
     if (!enrollmentId) return;
 
     const contract = resolveEnrollmentRollingScheduleContract(enrollment);
-    if (contract.source !== 'canonical_rolling' || contract.lifecycleState !== 'active' || !contract.schedule) {
+    if (contract.source === 'unconfigured' || contract.lifecycleState !== 'active' || !contract.schedule) {
       return;
     }
 
@@ -242,7 +246,8 @@ export const buildRollingScheduleCalendarProjections = (
     occurrences.forEach((occurrence) => {
       if (!occurrence.sessionId) return;
       const occurrenceIdentity = `${enrollmentId}|${occurrence.date}|${occurrence.startTime}`;
-      if (realIds.has(occurrence.sessionId) || realOccurrenceIdentities.has(occurrenceIdentity)) return;
+      if (realIds.has(occurrence.sessionId) || realOccurrenceIdentities.has(occurrenceIdentity) ||
+          kidIds.some(kid=>occupiedChildTimes.has(kid+'|'+occurrence.date+'|'+occurrence.startTime))) return;
 
       projections.push({
         id: `projection:${occurrence.sessionId}`,
@@ -267,6 +272,7 @@ export const buildRollingScheduleCalendarProjections = (
           ? { teacherId: firstText(enrollment.teacherId, enrollment.teacherUid, enrollment.teacherUserId) }
           : {}),
         ...(teacherName ? { teacherName } : {}),
+        ...(text(enrollment.joinUrl) ? { joinUrl: text(enrollment.joinUrl) } : {}),
         ...(text(enrollment.courseId) ? { courseId: text(enrollment.courseId) } : {}),
         ...(courseName ? { courseName, courseLabel: courseName } : {}),
       });

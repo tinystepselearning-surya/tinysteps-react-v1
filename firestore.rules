@@ -1140,13 +1140,11 @@ function teacherProgressIdentityUnchanged() {
           && ('parentId' in resource.data)
           && resource.data.parentId == request.auth.uid);
 
-      allow create: if isAdmin()
-        || (isTeacher() && request.resource.data.teacherId == request.auth.uid);
+      // New reschedule-credit creation is retired. Existing records may be
+      // read for history, and Admin can correct legacy records if necessary.
+      allow create: if false;
 
-      allow update: if isAdmin()
-        || (isTeacher()
-          && resource.data.teacherId == request.auth.uid
-          && request.resource.data.teacherId == resource.data.teacherId);
+      allow update: if isAdmin();
 
       allow delete: if isAdmin();
     }
@@ -1845,6 +1843,13 @@ function teacherProgressIdentityUnchanged() {
       allow read, write: if isAdmin();
       allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
       allow write: if false;
+    }
+
+    // ----------------------------
+    // Virtual timetable reminders do not create partial classSessions.
+    // Only Admin may read or update manually-sent reminder acknowledgements.
+    match /virtualClassReminderFlags/{flagId} {
+      allow read, create, update, delete: if isAdmin();
     }
 
     // ----------------------------

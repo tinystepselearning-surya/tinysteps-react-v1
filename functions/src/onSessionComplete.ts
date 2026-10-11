@@ -1,19 +1,16 @@
 // functions/src/onSessionComplete.ts
 import * as admin from "firebase-admin";
+import {virtualCalendarAttendanceEnabled} from "./scheduling/teacherCalendarActions";
+import {AUTOMATIC_SESSION_CREATION_RETIRED} from "./scheduling/legacy14DayCutover";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import {
-  ATTENDANCE_FINALISED_MESSAGE,
-  getTeacherAttendanceCorrectionCutoffMillis,
-} from "./helpers/attendanceCorrectionFreeze";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const REGION = "asia-south1";
-const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unknown";
 
@@ -117,93 +114,11 @@ function normalizeIncomingAttendanceMap(
   );
 }
 
-function normalizeCallerRole(value: unknown): string {
-  const raw = String(value || "").trim().toLowerCase();
-  if (!raw) return "";
-  if (raw === "learningpartner") return "learning-partner";
-  return raw;
-}
-
 function normalizeEnrollmentStatus(value: unknown): string {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "active";
   if (raw === "canceled") return "cancelled";
   return raw;
-}
-
-function getTimestampMillis(value: unknown): number {
-  if (value && typeof (value as any).toMillis === "function") {
-    return Number((value as any).toMillis()) || 0;
-  }
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === "string" || typeof value === "number") {
-    const parsed = new Date(value).getTime();
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function normalizeTimeForIstParse(value: unknown): string | null {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
-  if (!match) return null;
-  const seconds = match[3] || "00";
-  return `${match[1]}:${match[2]}:${seconds}`;
-}
-
-function getSessionStartMillis(session: SessionData): number | null {
-  const startAtMs = getTimestampMillis(session.startAt);
-  if (startAtMs > 0) return startAtMs;
-
-  const dateYmd = String(session.date || "").trim();
-  const startTime = normalizeTimeForIstParse(session.startTime);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
-  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function getAttendanceAllowedAtMillis(session: SessionData): number | null {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + ATTENDANCE_OPEN_DELAY_MS;
-}
-
-function canCallerOverrideAttendanceTime(role: string): boolean {
-  return role === "admin";
-}
-
-async function resolveCallerRoleFromAuth(
-  auth: { uid?: string; token?: Record<string, unknown> } | null,
-): Promise<string> {
-  const uid = String(auth?.uid || "").trim();
-  if (!uid) return "";
-
-  const userSnap = await admin.firestore().collection("users").doc(uid).get();
-  if (!userSnap.exists) return "";
-
-  const user = userSnap.data() || {};
-  if (
-    user.status !== undefined &&
-    user.status !== null &&
-    (
-      typeof user.status !== "string" ||
-      user.status.trim().toLowerCase() !== "active"
-    )
-  ) {
-    return "";
-  }
-
-  const primaryRole = normalizeCallerRole(user.role);
-  if (primaryRole) return primaryRole;
-
-  const roles = Array.isArray(user.roles) ? user.roles : [];
-  for (const role of roles) {
-    const normalized = normalizeCallerRole(role);
-    if (normalized) return normalized;
-  }
-
-  return "";
 }
 
 function resolveEnrollmentKidIds(enrollment: any): string[] {
@@ -595,6 +510,18 @@ async function processSessionCompletion(
       return { success: true, skipped: false, creditsEarnedForTeacher: 0 };
     }
 
+    // Enrollment remaining/used credits are retired for the virtual-calendar
+    // operating model. Parent charges and teacher earnings continue to be
+    // generated from the single real session by onSessionRevenueWrite.
+    // Keep the old completion marker for compatibility with historical retries.
+    if (AUTOMATIC_SESSION_CREATION_RETIRED) {
+      const presentCount = kidIds.filter((kidId) =>
+        (attendanceMap[kidId]?.status || "").toLowerCase() === "present"
+      ).length;
+      await markProcessed(sessionRef);
+      return { success: true, skipped: false, creditsEarnedForTeacher: presentCount };
+    }
+
     let creditsEarnedForTeacher = 0;
     const creditChanges: CreditChange[] = [];
     for (const kidId of kidIds) {
@@ -748,33 +675,21 @@ export const onSessionComplete = onCall(
 
     const session = sessionSnap.data() as SessionData;
     await assertCanFinalizeSession(uid, session);
-    const callerRole = await resolveCallerRoleFromAuth({
-      uid,
-      token: (request.auth?.token || {}) as Record<string, unknown>,
-    });
+    // Teachers may record/correct a valid class at any time. Authorization,
+    // class identity, and financial integrity remain enforced separately.
 
-    const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
-    const attendanceCorrectionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-    if (
-      !canCallerOverrideAttendanceTime(callerRole)
-    ) {
-      if (attendanceAllowedAtMs === null || attendanceCorrectionCutoffMs === null) {
-        throw new HttpsError(
-          "failed-precondition",
-          "Attendance time could not be verified. Please contact admin."
-        );
-      }
-      if (Date.now() < attendanceAllowedAtMs) {
-        throw new HttpsError(
-          "failed-precondition",
-          "Attendance can be marked 30 minutes after class start."
-        );
-      }
-      if (Date.now() >= attendanceCorrectionCutoffMs) {
-        throw new HttpsError(
-          "failed-precondition",
-          ATTENDANCE_FINALISED_MESSAGE
-        );
+    // In the virtual calendar model, only the canonical attendance-save path
+    // may change attendance. Completion cannot supply a divergent attendance
+    // map that bypasses student/date/time uniqueness claims.
+    if (virtualCalendarAttendanceEnabled() && incomingAttendance) {
+      const savedAttendance=session.attendance || {};
+      for(const [kidId, entry] of Object.entries(incomingAttendance)) {
+        const recorded=normalizeStatus(savedAttendance[kidId]?.status);
+        const supplied=normalizeStatus(entry?.status);
+        if (!recorded || recorded!==supplied) {
+          throw new HttpsError("failed-precondition",
+            "Save Present/Absent through the calendar before completing the class.");
+        }
       }
     }
 
@@ -796,7 +711,9 @@ export const onSessionComplete = onCall(
       return { success: true, skipped: true, creditsEarnedForTeacher: 0 };
     }
 
-    const attendanceForCompletion = incomingAttendance || session.attendance || null;
+    const attendanceForCompletion = virtualCalendarAttendanceEnabled()
+      ? (session.attendance || null)
+      : (incomingAttendance || session.attendance || null);
     if (!hasRequiredAttendanceForCompletion(session, attendanceForCompletion)) {
       throw new HttpsError(
         "failed-precondition",

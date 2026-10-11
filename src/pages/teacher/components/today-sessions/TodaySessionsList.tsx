@@ -7,6 +7,11 @@ import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { Timestamp } from 'firebase/firestore';
+import {
+  buildRollingScheduleCalendarProjections,
+  isRollingScheduleProjection,
+} from '../../../../lib/scheduling/rollingScheduleCalendarProjection';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
@@ -35,11 +40,12 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   const ATTENDANCE_OPEN_DELAY_MS = TEACHER_ATTENDANCE_OPEN_DELAY_MS;
   const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
-  const { students } = useTeacherFilteredStudents();
+  const { students, loading: studentsLoading } = useTeacherFilteredStudents();
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<SessionViewFilter>('all');
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const todayYmd = new Date(nowMs+330*60_000).toISOString().slice(0,10);
   const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
 
   useEffect(() => {
@@ -88,34 +94,30 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     meta?: { attendanceOnly?: boolean };
   }) => {
     if (!selectedSession) return;
-    if (!isAttendanceAllowedNow(selectedSession)) {
-      const startMs = getSessionStartMillis(selectedSession);
-      const correctionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(selectedSession);
-      const nowMs = Date.now();
-      toast({
-        title: 'Attendance unavailable',
-        description:
-          startMs === null
-            ? 'Attendance time could not be verified. Please contact admin.'
-            : correctionCutoffMs !== null && nowMs >= correctionCutoffMs
-              ? ATTENDANCE_FINALISED_MESSAGE
-              : 'Attendance can be marked 30 minutes after class start.',
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
+      let attendanceSessionId = selectedSession.id;
+      if (isRollingScheduleProjection(selectedSession)) {
+        const ensure = httpsCallable<
+          {enrollmentId:string;date:string;startTime:string},
+          {sessionId:string}
+        >(functions,'ensureTeacherCalendarAttendanceSession');
+        const prepared=await ensure({
+          enrollmentId:String(selectedSession.enrollmentId || ''),
+          date:selectedSession.date,startTime:selectedSession.startTime,
+        });
+        attendanceSessionId=prepared.data.sessionId;
+      }
       const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
       const response: any = await saveTeacherSessionProgress({
-        sessionId: selectedSession.id,
+        sessionId: attendanceSessionId,
         attendance: data.attendance,
         sessionNotes: data.sessionNotes,
         meta: { attendanceOnly: data.meta?.attendanceOnly === true },
       });
       const hasPresentOrLate = response?.data?.hasPresentOrLate === true;
       if (hasPresentOrLate) {
-        await completeSessionViaBackend(selectedSession.id, {
+        await completeSessionViaBackend(attendanceSessionId, {
           attendance: data.attendance,
           sessionNotes: data.sessionNotes,
         });
@@ -133,7 +135,35 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     }
   };
 
-  const orderedSessions = useMemo(() => sessions, [sessions]);
+  // Teacher Today is projected directly from Student Management. No daily
+  // classSession writer is required simply to display or join a class.
+  const projectedTodaySessions = useMemo<TeacherSession[]>(() => {
+    const enrollments = students.flatMap(student => student.scheduleEnrollments || []);
+    const projections = buildRollingScheduleCalendarProjections({
+      enrollments,
+      realSessions: sessions as unknown as Record<string, unknown>[],
+      fromYmd: todayYmd, toYmd: todayYmd,
+    });
+    return projections.map(row => ({
+      id:row.id, enrollmentId:row.enrollmentId,
+      teacherId:row.teacherId || teacherId || '',
+      courseId:row.courseId || '', courseName:row.courseName,
+      date:row.date,startTime:row.startTime,endTime:row.endTime,
+      durationMins:row.durationMins,durationMinutes:row.durationMinutes,
+      kidIds:row.kidIds || (row.kidId ? [row.kidId] : []),
+      kidId:row.kidId,studentId:row.studentId,
+      studentName:row.studentName,kidName:row.kidName,childName:row.childName,
+      joinUrl:row.joinUrl,
+      startAt:Timestamp.fromDate(row.startAt),
+      endAt:Timestamp.fromDate(row.endAt),
+      status:'scheduled',source:row.source,isScheduleProjection:true,projectionOnly:true,
+    } as TeacherSession & {isScheduleProjection:true;projectionOnly:true}));
+  }, [students, sessions, teacherId, todayYmd]);
+
+  const orderedSessions = useMemo(
+    () => [...sessions, ...projectedTodaySessions],
+    [sessions, projectedTodaySessions],
+  );
 
   const getSessionStart = (session: TeacherSession): Date | null => {
     return getSessionStartDate(session);
@@ -156,16 +186,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
     const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
     return Number.isNaN(parsed) ? null : parsed;
-  };
-
-  const isAttendanceAllowedNow = (session: TeacherSession): boolean => {
-    if (canOverrideAttendanceTime) return true;
-    const startMs = getSessionStartMillis(session);
-    if (startMs === null) return false;
-    const nowMs = Date.now();
-    const allowedAtMs = startMs + ATTENDANCE_OPEN_DELAY_MS;
-    const correctionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-    return correctionCutoffMs !== null && nowMs >= allowedAtMs && nowMs < correctionCutoffMs;
   };
 
   const getKnownNames = (session: TeacherSession): string[] => {
@@ -229,7 +249,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     });
   }, [normalizedSearch, nowMs, sortedSessions, viewFilter]);
 
-  if (isLoading) {
+  if (isLoading || studentsLoading) {
     return (
       <Card className="p-6">
         <p className="text-sm text-muted-foreground">Loading today’s sessions...</p>

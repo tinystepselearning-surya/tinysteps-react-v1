@@ -166,6 +166,10 @@ export const createMakeupSessionFromCredit = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
+    // New makeup-credit bookings are retired for all modes. Historical
+    // credits and class sessions remain stored and readable.
+    throw new HttpsError('failed-precondition',
+      'Reschedule credits are retired. Use an authorized ad hoc class instead.');
     const callerUid = request.auth?.uid;
     if (!callerUid) throw new HttpsError('unauthenticated', 'Authentication required');
 

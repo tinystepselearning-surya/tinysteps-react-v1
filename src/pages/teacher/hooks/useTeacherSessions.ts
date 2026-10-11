@@ -6,7 +6,6 @@ import { getDocLogged, getDocsLogged, onSnapshotLogged } from '../../../lib/fire
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
-  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
 import {
@@ -517,6 +516,17 @@ export const useTeacherSessions = (
   const [isLoading, setIsLoading] = useState<boolean>(Boolean(teacherId) || includeAllTeachers);
   const [error, setError] = useState<Error | null>(null);
 
+  // A tab left open overnight must switch its Today listener at IST midnight.
+  const [todayYmd, setTodayYmd] = useState(() =>
+    new Date(Date.now()+330*60_000).toISOString().slice(0,10));
+  useEffect(()=>{
+    const interval = window.setInterval(()=>{
+      const next = new Date(Date.now()+330*60_000).toISOString().slice(0,10);
+      setTodayYmd(previous=>previous===next?previous:next);
+    },60_000);
+    return ()=>window.clearInterval(interval);
+  },[]);
+
   useEffect(() => {
     if (!teacherId && !includeAllTeachers) {
       setSessions([]);
@@ -528,7 +538,7 @@ export const useTeacherSessions = (
     setIsLoading(true);
     setError(null);
 
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const today = todayYmd;
     const start = startDate || today;
     const end = endDate || today;
 
@@ -559,6 +569,9 @@ export const useTeacherSessions = (
     let cancelled = false;
     let batchCounter = 0;
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
+    // Cache enrollment snapshots for this listener lifetime; repeated session
+    // changes should not re-hydrate the same enrollment documents.
+    const enrollmentCache=new Map<string,Record<string,unknown>>();
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
     ]);
@@ -588,49 +601,36 @@ export const useTeacherSessions = (
         ? rows
         : rows.filter((session) => sessionBelongsToTeacher(session as any, teacherKey));
 
-      let enrollmentMap = new Map<string, Record<string, unknown>>();
-      const enrollmentIds = Array.from(
-        new Set(
-          filtered
-            .map((session) => toCleanText((session as any)?.enrollmentId))
-            .filter(Boolean),
-        ),
-      );
-
-      if (enrollmentIds.length > 0) {
+      const enrollmentMap=enrollmentCache;
+      const enrollmentIds = Array.from(new Set(
+        filtered.map(session=>toCleanText((session as any)?.enrollmentId)).filter(Boolean)));
+      const missingEnrollmentIds=enrollmentIds.filter(id=>!enrollmentCache.has(id));
+      if (missingEnrollmentIds.length>0) {
         try {
-          enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+          const loaded=await fetchEnrollmentsByIds(missingEnrollmentIds);
+          loaded.forEach((row,id)=>enrollmentCache.set(id,row));
         } catch (err) {
-          devLogTeacherQuery('useTeacherSessions', 'error', {
-            queryName: 'enrollmentLookups',
-            collection: 'enrollments',
-            aliasField: 'documentId',
-            teacherUid: teacherKey || null,
-            todayDate,
-            dateRange: { start, end },
-            error: err instanceof Error ? err.message : String(err),
-            code: (err as any)?.code || null,
+          devLogTeacherQuery('useTeacherSessions','error',{
+            queryName:'enrollmentLookups',teacherUid:teacherKey||null,
+            error:err instanceof Error?err.message:String(err),
           });
         }
       }
 
       const canonicalOnly = filtered.filter((session) => {
         const status = toCleanText((session as any)?.status).toLowerCase();
-        if (status === 'paused') return false;
+        const attendance = (session as any).attendance;
+        const isMarked = Boolean(attendance && typeof attendance==='object' &&
+          Object.values(attendance).some(v=>Boolean(v)));
+        const historical = String(session.date||'') < todayYmd;
+        const authoritative = historical || isMarked ||
+          ['completed','absent','cancelled','canceled','no_show','rescheduled','reschedule_requested'].includes(status) ||
+          isScheduleExceptionSession(session as unknown as Record<string, unknown>);
+        if (authoritative) return true;
         const enrollmentId = toCleanText((session as any)?.enrollmentId);
-        if (!enrollmentId) return false;
-        const enrollment = enrollmentMap.get(enrollmentId);
-        if (!enrollment) {
-          return (
-            sessionBelongsToTeacher(session as any, teacherKey) &&
-            isScheduleExceptionSession(session as unknown as Record<string, unknown>) &&
-            shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(
-              session as unknown as Record<string, unknown>,
-              teacherKey,
-            )
-          );
-        }
-        return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
+        const enrollment = enrollmentId ? enrollmentMap.get(enrollmentId) : undefined;
+        return Boolean(enrollment) &&
+          isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
       });
 
       if (cancelled || currentBatch !== batchCounter) return;
@@ -740,7 +740,7 @@ export const useTeacherSessions = (
       cancelled = true;
       unsubscribe();
     };
-  }, [teacherId, startDate, endDate, includeAllTeachers]);
+  }, [teacherId, startDate, endDate, includeAllTeachers, todayYmd]);
 
   const sortedSessions = useMemo(() => sortSessions(sessions), [sessions]);
 
