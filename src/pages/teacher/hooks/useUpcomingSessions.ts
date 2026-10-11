@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
-import { teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
+import { teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
 import { getSessionStartDate } from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
@@ -408,6 +408,7 @@ export const useUpcomingSessions = (
       setIsLoading(false);
       return;
     }
+    const readWindow = teacherCalendarReadWindow(targetDate, todayIst);
 
     const buildScopedTeacherQuery = (
       field: 'teacherId' | 'teacherIds' | 'assignedTeacherId' | 'primaryTeacherId' | 'teacherUid' | 'teacher_id',
@@ -415,7 +416,8 @@ export const useUpcomingSessions = (
     ) => query(
       baseCollection,
       where(field, operator, teacherId),
-      where('date', '==', targetDate),
+      where('date', '>=', readWindow.start),
+      where('date', '<=', readWindow.end),
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc'),
     );
@@ -568,7 +570,7 @@ export const useUpcomingSessions = (
     };
 
     const unsubscribe = teacherCalendarSessionReadCache.subscribe(
-      { teacherId, start: targetDate, end: targetDate },
+      { teacherId, ...readWindow },
       async () => {
         const snapshot = await getDocsLogged(
           'useUpcomingSessions:primary',
