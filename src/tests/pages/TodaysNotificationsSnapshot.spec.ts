@@ -311,12 +311,13 @@ describe('Sessions Management authoritative snapshot loading', () => {
   });
 
   it('revalidates an unauthenticated-cache miss before any full Overall Admissions Firestore read', () => {
-    const start = pageSource.indexOf('let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(');
+    const start = pageSource.indexOf('let cachedAdmissionRows = manualRefresh');
     const revalidate = pageSource.indexOf('await loadSessionsManagementSnapshot();', start);
     const fallback = pageSource.indexOf("await getDocs(query(collection(db, 'enrollments')))", start);
     expect(start).toBeGreaterThan(-1);
     expect(revalidate).toBeGreaterThan(start);
     expect(fallback).toBeGreaterThan(revalidate);
+    expect(pageSource.slice(start, fallback)).toContain('cachedAdmissionRows === null && !manualRefresh');
     expect(pageSource.slice(start, fallback)).toContain('isSessionsManagementTransientFailure(error)');
     expect(pageSource).toContain('subscribeSessionsManagementSnapshotInvalidation(');
   });
