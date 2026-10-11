@@ -40,13 +40,14 @@ describe('rolling schedule admin cutover', () => {
     expect(scheduleModal).toContain('Pause remains in effect until Resume is selected.');
   });
 
-  it('removes finite scheduling controls and explains continuous 14-day materialization', () => {
+  it('removes finite scheduling controls and explains Today/Tomorrow materialization', () => {
     expect(scheduleModal).not.toContain('Generate for (weeks)');
     expect(scheduleModal).not.toContain('Planned classes (optional)');
     expect(scheduleModal).not.toContain('End date (optional)');
     expect(scheduleModal).not.toContain('Pause upcoming classes');
     expect(scheduleModal).toContain('Continuous recurring schedule');
-    expect(scheduleModal).toContain('next 14 days operationally materialized');
+    expect(scheduleModal).toContain('Only Today and Tomorrow are generated');
+    expect(scheduleModal).not.toContain('next 14 days operationally materialized');
     expect(scheduleModal).toContain('There is no weeks, planned-class, or end-date cap.');
   });
 
@@ -79,6 +80,12 @@ describe('rolling schedule admin cutover', () => {
     expect(deleteHandler).toContain("'setRollingEnrollmentLifecycle'");
     expect(deleteHandler).toContain("'setEnrollmentStatus'");
     expect(deleteHandler).toContain('Legacy enrollments remain supported');
+  });
+
+  it('reports new day-window synchronization without claiming a paused enrollment', () => {
+    expect(studentListSource).toContain('describeTimetableDaySync');
+    expect(scheduleHandler).toContain('result.data.daySync');
+    expect(scheduleHandler).not.toContain('It will remain paused until you resume the enrollment.');
   });
 
   it('keeps session mutation authority on backend callables', () => {
