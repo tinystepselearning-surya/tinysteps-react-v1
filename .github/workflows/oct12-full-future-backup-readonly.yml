@@ -1,0 +1,48 @@
+name: Oct12 Full-Future Backup Read-only Verification
+on:
+  pull_request:
+    paths:
+      - 'functions/scripts/backupAllFutureSessionsReadOnly.cjs'
+      - 'functions/scripts/backupAllFutureSessionsReadOnly.test.cjs'
+      - '.github/workflows/oct12-full-future-backup-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-no-firestore-writes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Install Firebase Admin SDK dependencies
+        run: npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Verify read-only backup syntax
+        run: |
+          node --check functions/scripts/backupAllFutureSessionsReadOnly.cjs
+          node --check functions/scripts/backupAllFutureSessionsReadOnly.test.cjs
+      - name: Validate all Firestore typed value encodings (offline)
+        run: node --test functions/scripts/backupAllFutureSessionsReadOnly.test.cjs
+      - name: Ensure no production deploy needed (no writes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs \
+            --before "$baseline" --functions-before "$baseline" \
+            --sha "$(git rev-parse HEAD)" | tee /tmp/full-future-backup-impact.txt
+          grep -q 'Functions deployment required: false' /tmp/full-future-backup-impact.txt
+          grep -q 'Hosting changed: false' /tmp/full-future-backup-impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/full-future-backup-impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/full-future-backup-impact.txt
+      - name: Confirm cloud state untouched
+        run: echo "No production Firestore access or function deployments in this CI."
