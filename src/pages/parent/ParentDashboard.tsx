@@ -2728,7 +2728,8 @@ export default function ParentDashboard() {
   };
 
   const openJoinClass = async (session: KidSession) => {
-    if (isRollingScheduleProjection(session)) return;
+    // Virtual timetable entries use the enrollment Teams link directly.
+    // Joining never creates a classSession document.
     if (joiningSessionId === session.id) return;
     hapticLight();
     setJoiningSessionId(session.id);
@@ -4216,7 +4217,6 @@ export default function ParentDashboard() {
     walletLastUpdatedText === "—" ? null : walletLastUpdatedText;
 
   const canJoinSession = useCallback((session: KidSession, status: string) => {
-    if (isRollingScheduleProjection(session)) return false;
     return (
       status !== "completed" &&
       status !== "cancelled" &&
@@ -5498,9 +5498,21 @@ export default function ParentDashboard() {
                                 {resolveSessionChildName(session)} · {session.courseName || "—"}
                               </div>
                             </div>
-                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
-                              {statusLabel(status)}
-                            </span>
+                            <div className="flex shrink-0 items-center gap-2">
+                              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
+                                {statusLabel(status)}
+                              </span>
+                              {canJoinSession(session, status) ? (
+                                <Button
+                                  size="sm"
+                                  type="button"
+                                  disabled={joiningSessionId === session.id}
+                                  onClick={() => void openJoinClass(session)}
+                                >
+                                  {joiningSessionId === session.id ? 'Opening…' : 'Join Class'}
+                                </Button>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
                       ))}
