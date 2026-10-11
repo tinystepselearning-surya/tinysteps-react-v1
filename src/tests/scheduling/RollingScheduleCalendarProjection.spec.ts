@@ -171,7 +171,7 @@ describe('rolling schedule display projection', () => {
     expect(rows.map(r=>r.startTime)).toEqual(['17:00','17:00']);
   });
 
-  it('creates non-actionable projection rows without a join URL or mutable real-session id', () => {
+  it('exposes enrollment Teams link for joining without writing a physical session', () => {
     const [row] = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment({ joinUrl: 'https://teams.example/join' })],
       realSessions: [],
@@ -181,7 +181,7 @@ describe('rolling schedule display projection', () => {
     });
     expect(row.id).toBe('projection:enr-1_20260929_1800');
     expect(row.deterministicSessionId).toBe('enr-1_20260929_1800');
-    expect(row).not.toHaveProperty('joinUrl');
+    expect(row.joinUrl).toBe('https://teams.example/join');
     expect(row).not.toHaveProperty('attendance');
     expect(isRollingScheduleProjection(row)).toBe(true);
     expect(isRollingScheduleProjection({ ...row, isScheduleProjection: false })).toBe(false);
