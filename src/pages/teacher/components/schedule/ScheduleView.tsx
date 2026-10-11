@@ -1133,8 +1133,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                       const badgeTone = resolveSessionBadgeTone(session);
                       const attendanceFinalised = isAttendanceFinalised(session);
                       return (
+                        <div key={session.id || `${dateStr}_${idx}`} className="space-y-1">
                         <button
-                          key={session.id || `${dateStr}_${idx}`}
                           type="button"
                           className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
                           onClick={() => tryOpenAttendance(session)}
@@ -1148,6 +1148,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                           {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 20)}</div> : null}
                           {attendanceFinalised ? <div className="mt-1 text-[10px]">{ATTENDANCE_FINALISED_MESSAGE}</div> : null}
                         </button>
+                        <Button type="button" size="sm" variant="outline"
+                          className="w-full text-xs"
+                          onClick={() => openTeacherMeeting(session)}>
+                          Join Teams
+                        </Button>
+                        </div>
                       );
                     })}
                     {daySessions.length === 0 ? (
@@ -1171,10 +1177,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
               const attendanceFinalised = isAttendanceFinalised(session);
 
               return (
+                <div key={session.id || `day_${idx}`}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                 <button
-                  key={session.id || `day_${idx}`}
                   type="button"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  className="w-full text-left transition hover:text-indigo-700"
                   onClick={() => tryOpenAttendance(session)}
                   disabled={attendanceFinalised}
                   title={attendanceFinalised ? ATTENDANCE_FINALISED_MESSAGE : undefined}
@@ -1195,6 +1202,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                     <div className="mt-2 text-xs text-amber-700">{ATTENDANCE_FINALISED_MESSAGE}</div>
                   ) : null}
                 </button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button type="button" size="sm" variant="outline"
+                    onClick={() => openTeacherMeeting(session)}>Join Teams</Button>
+                  <Button type="button" size="sm" variant="secondary"
+                    disabled={attendanceFinalised}
+                    onClick={() => tryOpenAttendance(session)}>Mark Present / Absent</Button>
+                </div>
+                </div>
               );
             })}
             {(sessionsByDate[format(currentDate, 'yyyy-MM-dd')] || []).length === 0 ? (
