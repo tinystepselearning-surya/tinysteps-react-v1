@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment, type DayWindowSyncResult} from './dayWindowTimetableSync';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
@@ -107,6 +108,7 @@ export type SaveRollingEnrollmentScheduleResult = {
     nextMaterializationDueYmd: string | null;
   } | null;
   pausedSessionsCancelled: number;
+  daySync?: DayWindowSyncResult;
 };
 
 export type SetRollingEnrollmentLifecycleResult = {
@@ -119,6 +121,7 @@ export type SetRollingEnrollmentLifecycleResult = {
   materializedSessionsCreated: number;
   materializedSessionsPreserved: number;
   nextMaterializationDueYmd: string | null;
+  daySync?: DayWindowSyncResult;
 };
 
 type LifecycleOccurrenceIdentity = Pick<
@@ -689,10 +692,18 @@ export const saveRollingEnrollmentSchedule = onCall(
 
     const replay = replayResult as SaveRollingEnrollmentScheduleResult | null;
     if (replay) {
+      // A retry after a saved timetable MUST retry the two-day sync; otherwise
+      // a transient failure could leave newly enrolled pupils without classes.
+      const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+        ? await syncTodayTomorrowForEnrollment({
+          db, enrollmentId, actorId: actorUid,
+          expectedRevision: replay.scheduleRevision,
+        }) : undefined;
       return {
         ...replay,
         idempotentReplay: true,
         orchestrationState: 'replayed',
+        ...(daySync ? {daySync} : {}),
       };
     }
 
@@ -727,7 +738,13 @@ export const saveRollingEnrollmentSchedule = onCall(
         updatedAt: FieldValue.serverTimestamp(),
         updatedBy: actorUid,
       });
-      return response;
+      // This is NOT enrollment creation. The timetable has now been saved.
+      // Only already-visible Today/Tomorrow slots are synchronized.
+      const daySync = await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actorUid,
+        expectedRevision: response.scheduleRevision,
+      });
+      return {...response, daySync};
     }
 
     try {
@@ -976,6 +993,14 @@ export const setRollingEnrollmentLifecycle = onCall(
       }
     }
 
+    // Pause/discontinue must remove only not-yet-started generated classes;
+    // resume must recreate only Today/Tomorrow, never a rolling window.
+    const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+      ? await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actorUid,
+        expectedRevision: currentScheduleRevision(enrollment),
+      }) : undefined;
+
     logger.info('setRollingEnrollmentLifecycle completed', {
       enrollmentId,
       previousStatus,
@@ -997,6 +1022,7 @@ export const setRollingEnrollmentLifecycle = onCall(
       materializedSessionsCreated,
       materializedSessionsPreserved,
       nextMaterializationDueYmd,
+      ...(daySync ? {daySync} : {}),
     };
   },
 );
