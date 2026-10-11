@@ -1374,9 +1374,10 @@ export default function TodaysNotifications() {
           persistedRequest,
         ]);
         if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
-        const mergedEnrollmentMap = Object.fromEntries(
-          virtualEnrollments.map(row => [row.id, row]),
-        ) as Record<string, Record<string, unknown>>;
+        const mergedEnrollmentMap: Record<string, Record<string, unknown>> =
+          Object.fromEntries(virtualEnrollments.map(row => [
+            row.id, row as unknown as Record<string, unknown>,
+          ]));
         const fetchedSessions = persistedSessions.map(session =>
           mergeSessionWithEnrollmentFallback(
             session, mergedEnrollmentMap[normalizeLookupId(session.enrollmentId)],
