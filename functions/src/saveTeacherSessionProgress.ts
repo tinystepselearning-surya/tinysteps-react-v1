@@ -233,13 +233,6 @@ function hasPresentOrLateAttendance(attendance: Record<string, unknown>): boolea
   });
 }
 
-function normalizeSessionLifecycleStatus(value: unknown): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return '';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
-}
-
 async function resolveCallerRole(auth: { uid?: string; token?: Record<string, unknown> }): Promise<string> {
   const uid = String(auth?.uid || '').trim();
   if (!uid) return '';
