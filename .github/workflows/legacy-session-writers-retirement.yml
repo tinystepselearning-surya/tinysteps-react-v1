@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'functions/src/scheduling/legacy14DayCutover.ts'
+      - 'functions/src/scheduling/dayWindowTimetableSync.ts'
       - 'functions/src/scheduling/rollingScheduleMaterializer.ts'
       - 'functions/src/scheduling/rollingScheduleLifecycle.ts'
       - 'functions/src/scheduling/rollingScheduleReconciliation.ts'
@@ -14,6 +15,7 @@ on:
       - 'functions/src/createSessionsFromSchedule.ts'
       - 'functions/src/lifecycle.ts'
       - 'functions/test/legacy14DaySessionWritersRetired.spec.ts'
+      - 'functions/test/dayWindowTimetableSync.spec.ts'
       - '.github/workflows/legacy-session-writers-retirement.yml'
   workflow_dispatch:
 
