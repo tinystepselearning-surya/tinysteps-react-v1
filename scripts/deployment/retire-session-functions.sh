@@ -6,7 +6,7 @@ set -euo pipefail
 EXPECTED_PROJECT="tinysteps-react-v1"
 EXPECTED_REPO="tinystepselearning-surya/tinysteps-react-v1"
 REGION="asia-south1"
-EXPECTED="dailySessionsTomorrowAt0005,rollingScheduleEdgeReplenisherDaily,futureScheduleReconcilerEveryTwoHours,onFutureScheduleEnrollmentWrite"
+EXPECTED="dailySessionsTomorrowAt0005,futureScheduleReconcilerEveryTwoHours,onFutureScheduleEnrollmentWrite,rollingScheduleEdgeReplenisherDaily"
 RETIRED="${FUNCTIONS_RETIRED_TARGETS:-}"
 if [[ "${GITHUB_ACTIONS:-}" != "true" || "${GITHUB_EVENT_NAME:-}" != "push" || "${GITHUB_REF:-}" != "refs/heads/main" || "${GITHUB_REPOSITORY:-}" != "$EXPECTED_REPO" || "${FIREBASE_PROJECT_ID:-}" != "$EXPECTED_PROJECT" ]]; then
   echo "Refusing to retire functions outside production main-branch deployment" >&2
