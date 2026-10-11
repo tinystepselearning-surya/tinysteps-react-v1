@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
@@ -597,6 +598,67 @@ export const reconcileRollingEnrollmentSchedule = onCall(
         scheduleRevision: targetRevision,
       },
     };
+
+    // Cutover path: the timetable itself is authoritative. A timetable edit
+    // must not query, cancel, restore, patch, or generate a 14-day session set.
+    // The daily worker uses the latest recurrence on its next 00:05 run.
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      const safeSlots = targetSchedule.weeklySlots;
+      if (!Array.isArray(safeSlots) || safeSlots.length === 0) {
+        throw new HttpsError('failed-precondition', 'A recurring timetable requires at least one slot');
+      }
+      const response: ReconcileRollingEnrollmentScheduleResult = {
+        ok: true, enrollmentId, scheduleChanged,
+        scheduleRevision: targetRevision,
+        horizonDays: 0,
+        status,
+        orchestrationState: status === 'paused'
+          ? 'saved_paused' : scheduleChanged ? 'reconciled' : 'unchanged',
+        staleCandidates: 0, cancelledStaleSessions: 0,
+        protectedStaleSessions: 0, retainedCandidates: 0,
+        patchedRetainedSessions: 0, protectedRetainedSessions: 0,
+        restoredPreviouslyReconciledSessions: 0, addedCandidates: 0,
+        materializedSessionsCreated: 0, materializedSessionsPreserved: 0,
+        nextMaterializationDueYmd: null,
+      };
+      await enrollmentRef.update({
+        startDate: ymdToIstMidnightTimestamp(enrollmentStartDateYmd),
+        startDateYmd: enrollmentStartDateYmd,
+        classesStartDate: ymdToIstMidnightTimestamp(classesStartDateYmd),
+        classesStartDateYmd,
+        feePerClass,
+        ratePerSession: feePerClass,
+        currency,
+        joinUrl,
+        'schedule.schemaVersion': targetSchedule.schemaVersion,
+        'schedule.deliveryMode': targetSchedule.deliveryMode,
+        'schedule.timezone': targetSchedule.timezone,
+        'schedule.revision': targetRevision,
+        'schedule.weeklySlots': safeSlots,
+        'schedule.weekdays': targetSchedule.weekdays,
+        'schedule.timeHHmm': targetSchedule.timeHHmm,
+        'schedule.durationMins': targetSchedule.durationMins,
+        'schedule.weeksAhead': FieldValue.delete(),
+        'schedule.plannedSessions': FieldValue.delete(),
+        'schedule.endDateYmd': FieldValue.delete(),
+        'scheduleMaterialization.schemaVersion': ROLLING_SCHEDULE_MATERIALIZATION_VERSION,
+        'scheduleMaterialization.horizonDays': 0,
+        'scheduleMaterialization.scheduleRevision': targetRevision,
+        'scheduleMaterialization.materializedThroughYmd': FieldValue.delete(),
+        'scheduleMaterialization.nextOccurrenceYmd': null,
+        'scheduleMaterialization.nextMaterializationDueYmd': null,
+        'rollingScheduleReconciliation.state': 'success',
+        'rollingScheduleReconciliation.targetFingerprint': targetFingerprint,
+        'rollingScheduleReconciliation.targetScheduleRevision': targetRevision,
+        'rollingScheduleReconciliation.completedAt': FieldValue.serverTimestamp(),
+        'rollingScheduleReconciliation.completedBy': actorUid,
+        'rollingScheduleReconciliation.lastResult': response,
+        'rollingScheduleReconciliation.error': FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: actorUid,
+      });
+      return response;
+    }
 
     if (!scheduleChanged) {
       await enrollmentRef.update({
