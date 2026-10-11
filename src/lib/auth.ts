@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import type { AuthUser, AuthRole } from '../store/useAuthStore';
 import { clearPendingPushOpenRoute } from './pushNavigationState';
 import { clearSessionsManagementSnapshotCache } from './sessionsManagementSnapshot';
+import { queryClient } from './queryClient';
 import { schedulePostLoginAuthDiagnostics } from './nativeAuthDiagnostics';
 import {
   normalizeAuthRole,
@@ -490,6 +491,11 @@ export async function performAppLogout(reason: AppLogoutReason): Promise<void> {
   console.info('[auth-diagnostics] logout-called', { reason });
   // Invalidate sensitive snapshots before asynchronous Firebase sign-out begins.
   clearSessionsManagementSnapshotCache();
+  // Read-once calendar queries are deliberately login-scoped. Never keep a
+  // previous user's enrollment or attendance rows across sign-out.
+  queryClient.removeQueries({ queryKey: ['teacherFilteredStudents'] });
+  queryClient.removeQueries({ queryKey: ['kidEnrollments'] });
+  queryClient.removeQueries({ queryKey: ['kidSessions'] });
   try {
     await signOut(auth);
   } finally {

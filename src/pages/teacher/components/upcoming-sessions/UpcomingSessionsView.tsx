@@ -58,11 +58,15 @@ const readLookupName = (row: Record<string, unknown>): string => {
 export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId }) => {
   const [draftSelectedDate, setDraftSelectedDate] = useState(getDefaultUpcomingSelectedDate);
   const [appliedSelectedDate, setAppliedSelectedDate] = useState(getDefaultUpcomingSelectedDate);
-  const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups } = useUpcomingSessions(
+  const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups, refresh: refreshSessions } = useUpcomingSessions(
     teacherId,
     appliedSelectedDate,
   );
-  const { students } = useTeacherFilteredStudents();
+  const { students, refresh: refreshEnrollments } = useTeacherFilteredStudents();
+  const refreshCalendar = () => {
+    refreshSessions();
+    void refreshEnrollments();
+  };
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
@@ -356,6 +360,10 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
               disabled={!draftSelectedDate || draftSelectedDate === appliedSelectedDate}
             >
               Load
+            </Button>
+
+            <Button type="button" size="sm" variant="outline" onClick={refreshCalendar}>
+              Refresh schedule
             </Button>
 
             <Badge variant="outline" className="h-8 w-fit px-3 text-xs font-medium">
