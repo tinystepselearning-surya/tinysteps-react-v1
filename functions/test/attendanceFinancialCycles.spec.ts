@@ -5,7 +5,12 @@ import {
   mayReopenAttendanceVoidedLedgers,
 } from '../src/helpers/attendanceFinancialCycles';
 
-function eligible() {
+function eligible(): {
+  sessionId: string;
+  session: Record<string, unknown>;
+  charge: Record<string, unknown>;
+  earning: Record<string, unknown>;
+} {
   return {
     sessionId: 'original-class',
     session: {revenueAccrued: false},
