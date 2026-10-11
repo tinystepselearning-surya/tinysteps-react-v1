@@ -1,0 +1,53 @@
+name: Virtual Calendar Attendance Review
+on:
+  pull_request:
+    paths:
+      - 'functions/src/scheduling/teacherCalendarActions.ts'
+      - 'functions/test/teacherCalendarActions.spec.ts'
+      - 'functions/src/index.ts'
+      - 'src/lib/scheduling/rollingScheduleCalendarProjection.ts'
+      - 'src/pages/parent/ParentDashboard.tsx'
+      - 'src/pages/teacher/**'
+      - 'src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts'
+      - '.github/workflows/virtual-calendar-attendance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-virtual-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - name: Install root and Functions dependencies
+        run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
+      - name: TypeScript Functions build
+        run: npm --prefix functions run build
+      - name: TypeScript client check
+        run: npm run typecheck
+      - name: Virtual timetable and attendance unit tests
+        run: |
+          npx vitest run --config functions/vitest.config.ts functions/test/teacherCalendarActions.spec.ts
+          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts
+      - name: Full backend regression
+        run: npm --prefix functions test
+      - name: Deployment impact calculation only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$(git rev-parse HEAD)"
+      - name: No deployment or Firestore mutations
+        run: echo "Validation only, feature flag OFF by default."
