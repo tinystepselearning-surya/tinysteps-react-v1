@@ -1,4 +1,6 @@
-import * as admin from 'firebase-admin';
+import {getApps, initializeApp, deleteApp} from 'firebase-admin/app';
+import {getFirestore} from 'firebase-admin/firestore';
+import {getAuth} from 'firebase-admin/auth';
 import {expect, test, type Page} from '@playwright/test';
 
 /**
@@ -40,10 +42,10 @@ function assertDemoOnly() {
 }
 assertDemoOnly();
 
-const app = admin.apps.find(a => a?.name === 'stage2-browser') ||
-  admin.initializeApp({projectId: PROJECT}, 'stage2-browser');
-const db = app.firestore();
-const auth = app.auth();
+const app = getApps().find(a => a.name === 'stage2-browser') ||
+  initializeApp({projectId: PROJECT}, 'stage2-browser');
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 test.beforeAll(async () => {
   await Promise.all([
@@ -89,7 +91,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  await app.delete();
+  await deleteApp(app);
 });
 
 test.beforeEach(async ({page}) => {
