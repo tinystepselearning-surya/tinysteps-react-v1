@@ -73,7 +73,7 @@ function enrollmentStartDay(row: Row): string | null {
   return null;
 }
 
-function resolveOccurrence(args: {
+export function resolveTeacherCalendarOccurrence(args: {
   enrollmentId: string; enrollment: Row; date: string;
   startTime: string; durationMinutes?: number;
 }): RollingMaterializationOccurrence {
@@ -127,7 +127,7 @@ function assertAssignedActive(enrollment: Row, uid: string, date: string): strin
   return childId;
 }
 
-function assertCalendarTime(occurrence: RollingMaterializationOccurrence, nowMs: number): void {
+export function assertTeacherCalendarAttendanceTime(occurrence: RollingMaterializationOccurrence, nowMs: number): void {
   if (nowMs < occurrence.startAtUtcMs+30*HOUR) {
     throw new HttpsError('failed-precondition','Attendance opens 30 minutes after class start');
   }
@@ -162,8 +162,8 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
       if (!enrollmentSnap.exists) throw new HttpsError('not-found','Enrollment not found');
       const enrollment = (enrollmentSnap.data()||{}) as Row;
       const childId = assertAssignedActive(enrollment, uid, date);
-      const occurrence = resolveOccurrence({enrollmentId,enrollment,date,startTime});
-      assertCalendarTime(occurrence,Date.now());
+      const occurrence = resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime});
+      assertTeacherCalendarAttendanceTime(occurrence,Date.now());
       const [childSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
         tx.get(sessionRef),
@@ -229,7 +229,7 @@ export const createTeacherCalendarAdHocSession = onCall(
       if (!enrSnap.exists) throw new HttpsError('not-found','Enrollment not found');
       const enrollment=(enrSnap.data()||{}) as Row;
       const childId=assertAssignedActive(enrollment,uid,date);
-      const occurrence=resolveOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
+      const occurrence=resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
       const now=Date.now();
       const cutoff=getTeacherAttendanceCorrectionCutoffMillis({date});
       if (cutoff===null||now>=cutoff) {
