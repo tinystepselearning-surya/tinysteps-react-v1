@@ -258,6 +258,79 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
   });
 
+  it('reactivates the same charge and teacher earning on Present -> Absent -> Present', async () => {
+    const financeConfigRef = db.collection('config').doc('finance');
+    await financeConfigRef.set({
+      walletClassDeductionsEnabled: true,
+      walletCutoverMonthKey: '2026-01',
+    });
+    const walletTransactions = () =>
+      db.collection('parentWallets').doc(ids.parent).collection('transactions').get();
+    const walletBalance = async () =>
+      (await db.collection('parentWallets').doc(ids.parent).get()).data()?.currentBalance;
+    const assertLedger = async (sessionId: string, status: 'void' | 'open', cycle: number) =>
+      eventually(async () => {
+        const [charge, earning] = await ledger(sessionId);
+        const session = (await db.collection('classSessions').doc(sessionId).get()).data();
+        if (charge.data()?.status !== status ||
+            earning.data()?.status !== (status === 'open' ? 'unpaid' : 'void') ||
+            charge.data()?.attendanceFinanceCycle !== cycle ||
+            earning.data()?.attendanceFinanceCycle !== cycle ||
+            session?.revenueAccrued !== (status === 'open')) return null;
+        return {charge, earning, session};
+      }, status + ' canonical ledger revision ' + cycle);
+    const waitWallet = (expectedCount: number, expectedBalance: number) =>
+      eventually(async () => {
+        const wallet = await walletTransactions();
+        const balance = Number(await walletBalance());
+        if (wallet.size !== expectedCount || balance !== expectedBalance) return null;
+        return wallet;
+      }, 'wallet entries=' + expectedCount + ' balance=' + expectedBalance);
+    try {
+      const {sessionId} = await ensure();
+      await mark(sessionId, 'present');
+      await complete(sessionId);
+      await assertLedger(sessionId, 'open', 1);
+      await waitWallet(1, -400);
+
+      // Same attendance again never creates another charge or debit.
+      await mark(sessionId, 'present');
+      await mark(sessionId, 'present');
+      await complete(sessionId);
+      expect((await walletTransactions()).size).toBe(1);
+
+      await mark(sessionId, 'absent');
+      await assertLedger(sessionId, 'void', 1);
+      await waitWallet(2, 0);
+
+      await mark(sessionId, 'present');
+      const restored = await assertLedger(sessionId, 'open', 2);
+      expect(restored.charge.id).toBe(sessionId);
+      expect(restored.earning.id).toBe(sessionId);
+      expect(restored.charge.data()?.amount).toBe(400);
+      expect(restored.earning.data()?.amount).toBe(175);
+      await waitWallet(3, -400);
+      expect((await db.collection('billingCharges')
+        .where('sessionId', '==', sessionId).get()).size).toBe(1);
+      expect((await db.collection('teacherEarnings')
+        .where('sessionId', '==', sessionId).get()).size).toBe(1);
+      expect(await sessionsForCurrentChild()).toHaveLength(1);
+      expect((await db.collection('calendarAttendanceClaims').doc(ids.kid + '_20261012_1700').get())
+        .data()?.sessionId).toBe(sessionId);
+
+      await mark(sessionId, 'present');
+      await complete(sessionId);
+      expect((await walletTransactions()).size).toBe(3);
+      const walletDocs = (await walletTransactions()).docs.map(d => d.data());
+      expect(walletDocs.filter(x => x.type === 'class_deduction')).toHaveLength(2);
+      expect(walletDocs.filter(x => x.type === 'class_deduction_reversal')).toHaveLength(1);
+      expect((await db.collection('enrollments').doc(ids.enrollment).get()).data())
+        .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
+    } finally {
+      await financeConfigRef.set({walletClassDeductionsEnabled: false}, {merge: true});
+    }
+  });
+
   it('accepts attendance for a future date before the class starts', async () => {
     const {sessionId} = await ensure('2026-10-19');
     await mark(sessionId, 'absent');
