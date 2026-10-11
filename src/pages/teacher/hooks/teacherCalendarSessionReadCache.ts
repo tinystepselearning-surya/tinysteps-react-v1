@@ -13,6 +13,21 @@ type Entry = {
   promise: Promise<void> | null;
 };
 
+export const TEACHER_CALENDAR_READ_AHEAD_DAYS = 60;
+
+/**
+ * All three Teacher calendar views share one future-exception query for the
+ * current IST day through 60 days ahead. A deliberately selected later date
+ * extends the bounds on demand; normal Today/Upcoming/Month navigation reuses
+ * the initial result without another Firestore query.
+ */
+export const teacherCalendarReadWindow = (selectedEndYmd: string, todayYmd?: string) => {
+  const today = todayYmd || new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+  const horizon = new Date(Date.parse(today + 'T00:00:00.000Z') +
+    TEACHER_CALENDAR_READ_AHEAD_DAYS * 86_400_000).toISOString().slice(0, 10);
+  return { start: today, end: selectedEndYmd > horizon ? selectedEndYmd : horizon };
+};
+
 const rangeKey = ({ teacherId, start, end }: Range) => [teacherId, start, end].join('|');
 const includes = (range: Range, date: string) => range.start <= date && date <= range.end;
 
