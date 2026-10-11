@@ -47,7 +47,6 @@ import { stripParentStagePrefix } from "./parentVisualTokens";
 import {
   resolveParentClassSessionDateBounds,
   resolveParentClassSessionReadMode,
-  shouldRunParentLegacySessionFallback,
 } from "./parentClassSessionReadPolicy";
 import {
   ArrowRight,
@@ -105,7 +104,6 @@ import {
   isSessionTimeFallback,
 } from "../../lib/sessionTime";
 import { getJoinLinkCandidate, resolveSessionJoinLink } from "../../lib/sessionJoinLink";
-import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildRollingScheduleCalendarProjections,
 } from "../../lib/scheduling/rollingScheduleCalendarProjection";
@@ -127,6 +125,7 @@ import {
   getParentClassStatusTone as statusBadgeClass,
   selectNextParentClass,
   shouldShowClassJoinAction,
+  resolveParentCalendarAttendanceDisplayStatus,
   type ParentClassesFilterId,
   type ParentClassesResourceId,
   type ParentClassesViewId,
@@ -2399,68 +2398,9 @@ export default function ParentDashboard() {
         });
       }
 
-      // Compatibility only: if a bounded read sees nothing at all, retry the old
-      // ownership lookups once. This protects legacy sessions that have startAt but
-      // no canonical date field. Canonical parents never pay this extra read cost.
-      if (
-        parentClassSessionDateBounds
-        && (
-          shouldRunParentLegacySessionFallback(snapA?.size ?? 0)
-          || snapB === null
-        )
-      ) {
-        const [legacyCanonicalSnap, legacyKidIdSnap] = await Promise.all([
-          readQueryDocs(
-            "Query A legacy compatibility",
-            () => query(
-              classSessionsCol,
-              where("kidIds", "array-contains", selectedKidId),
-              where("parentId", "==", user.uid),
-            ),
-          ),
-          readQueryDocs(
-            "Query B legacy compatibility",
-            () => query(
-              classSessionsCol,
-              where("kidId", "==", selectedKidId),
-              where("parentId", "==", user.uid),
-            ),
-          ),
-        ]);
-
-        (legacyCanonicalSnap?.docs ?? []).forEach((d) => {
-          const row = { id: d.id, ...(d.data() as any) } as KidSession;
-          const start = sessionStartDate(row);
-          if (!start) return;
-          const dayKey = toYMD(start);
-          if (
-            dayKey >= parentClassSessionDateBounds.startKey
-            && dayKey <= parentClassSessionDateBounds.endKey
-          ) {
-            map.set(d.id, row);
-          }
-        });
-        (legacyKidIdSnap?.docs ?? []).forEach((d) => {
-          const row = { id: d.id, ...(d.data() as any) } as KidSession;
-          const start = sessionStartDate(row);
-          if (!start) return;
-          const dayKey = toYMD(start);
-          if (
-            dayKey >= parentClassSessionDateBounds.startKey
-            && dayKey <= parentClassSessionDateBounds.endKey
-          ) {
-            map.set(d.id, row);
-          }
-        });
-
-        if (map.size > 0) {
-          emitParentLegacyFallbackTelemetry("classSessions_missing_date", {
-            kidId: selectedKidId,
-            count: map.size,
-            canonicalHit: false,
-          });
-        }
-      }
+      // Do not turn an empty monthly/Today query into an unbounded historical
+      // scan. Historical records remain accessible through the explicit
+      // History view, which has its own read mode.
 
       const all = Array.from(map.values());
       debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
@@ -2555,24 +2495,22 @@ export default function ParentDashboard() {
     return map;
   }, [enrollmentsQuery.data]);
 
-  const allKidSessions = useMemo(() => {
-    const sessions = (kidSessionsQuery.data ?? []) as KidSession[];
-    return sessions.filter((session) => {
-      if (normalizeStatus(session.status) === 'paused') return false;
-      const sessionLike = session as unknown as Record<string, unknown>;
-      const enrollmentIdFromDoc = String((session as any)?.enrollmentId || "").trim();
-      const enrollmentIdFromSessionId =
-        typeof session.id === "string" && session.id.includes("_")
-          ? session.id.split("_")[0].trim()
-          : "";
-      const enrollmentId = enrollmentIdFromDoc || enrollmentIdFromSessionId;
-      if (!enrollmentId) return false;
-      const enrollment = activeEnrollmentById.get(enrollmentId);
-      return isSessionCanonicalForEnrollment(sessionLike, enrollment);
-    });
-  }, [kidSessionsQuery.data, activeEnrollmentById]);
+  // Persisted child history remains authoritative across enrollment changes.
+  // Both Firestore reads are already scoped to parentId and the selected child.
+  const allKidSessions = useMemo(() =>
+    ((kidSessionsQuery.data ?? []) as KidSession[]), [kidSessionsQuery.data]);
   // The next two weeks are calculated from Student Management, not saved
   // as scheduled classSessions. Existing attendance/history rows always win.
+  // IST service date, refreshed only when the day changes (no polling reads).
+  const [todayDayKey, setTodayDayKey] = useState(() =>
+    new Date(Date.now()+330*60_000).toISOString().slice(0,10));
+  useEffect(()=>{
+    const timer=window.setInterval(()=>{
+      const key=new Date(Date.now()+330*60_000).toISOString().slice(0,10);
+      setTodayDayKey(old=>old===key?old:key);
+    },60_000);
+    return ()=>window.clearInterval(timer);
+  },[]);
   const visibleUpcomingProjections = useMemo(() => {
     const kidId = String(selectedKidId || '').trim();
     if (!kidId) return [] as KidSession[];
@@ -2582,35 +2520,40 @@ export default function ParentDashboard() {
         String(enrollment.studentId || '') === kidId ||
         (Array.isArray(enrollment.kidIds) && enrollment.kidIds.some(id => String(id) === kidId))
       );
-    const from = toYMD(new Date());
-    const through = toYMD(new Date(Date.now() + 14 * 86_400_000));
+    const from = todayDayKey;
+    const through = new Date(Date.parse(from+'T00:00:00.000Z') + 14*86_400_000).toISOString().slice(0,10);
     return buildRollingScheduleCalendarProjections({
       enrollments: enrollmentRows as unknown as Record<string, unknown>[],
       realSessions: allKidSessions as unknown as Record<string, unknown>[],
       fromYmd: from, toYmd: through,
     }).map(row => row as unknown as KidSession);
-  }, [allKidSessions, enrollmentsQuery.data, selectedKidId]);
+  }, [allKidSessions, enrollmentsQuery.data, selectedKidId, todayDayKey]);
 
   const sortedClassSessions = useMemo(() => {
     return [...allKidSessions, ...visibleUpcomingProjections]
       .map((session) => ({
         session,
         start: sessionStartDate(session),
-        status: normalizeStatus(session.status),
+        status: resolveParentCalendarAttendanceDisplayStatus(session, String(selectedKidId||'')) ||
+          normalizeStatus(session.status),
       }))
       .filter((row): row is { session: KidSession; start: Date; status: string } => Boolean(row.start))
       .sort((a, b) => a.start.getTime() - b.start.getTime());
-  }, [allKidSessions, visibleUpcomingProjections]);
+  }, [allKidSessions, visibleUpcomingProjections, selectedKidId]);
 
-  const todayDayKey = toYMD(new Date());
+  const getClassServiceDay = (session:KidSession,start:Date):string => {
+    const given=typeof session.date==='string'?session.date.trim():'';
+    if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(given)) return given;
+    return new Date(start.getTime()+330*60_000).toISOString().slice(0,10);
+  };
 
   const todayClassSessions = useMemo(() => {
-    return sortedClassSessions.filter((row) => toYMD(row.start) === todayDayKey);
+    return sortedClassSessions.filter((row) => getClassServiceDay(row.session,row.start) === todayDayKey);
   }, [sortedClassSessions, todayDayKey]);
 
   const upcomingClassSessions = useMemo(() => {
     return sortedClassSessions.filter((row) => {
-      if (toYMD(row.start) <= todayDayKey) return false;
+      if (getClassServiceDay(row.session,row.start) <= todayDayKey) return false;
       return row.status === "scheduled" || row.status === "in_progress";
     });
   }, [sortedClassSessions, todayDayKey]);
@@ -2630,7 +2573,7 @@ export default function ParentDashboard() {
   const pastPendingClassSessions = useMemo(() => {
     return [...sortedClassSessions]
       .filter((row) => {
-        if (toYMD(row.start) >= todayDayKey) return false;
+        if (getClassServiceDay(row.session,row.start) >= todayDayKey) return false;
         return row.status === "scheduled" || row.status === "in_progress";
       })
       .sort((a, b) => b.start.getTime() - a.start.getTime());
@@ -2650,16 +2593,19 @@ export default function ParentDashboard() {
   );
 
   const classesCalendarSessions = useMemo(() => {
-    const startMs = classesCalendarStart.getTime();
-    const endMs = classesCalendarEnd.getTime();
     // Full monthly calendar computes its own virtual slots; use only truly
     // persisted records here so next-two-week projections cannot duplicate.
     const realRows = allKidSessions
       .map(session => ({
-        session, start: sessionStartDate(session), status: normalizeStatus(session.status),
+        session, start: sessionStartDate(session),
+        status: resolveParentCalendarAttendanceDisplayStatus(session, String(selectedKidId||'')) ||
+          normalizeStatus(session.status),
       }))
       .filter((row): row is {session: KidSession; start: Date; status: string} => Boolean(row.start))
-      .filter(row => row.start.getTime() >= startMs && row.start.getTime() <= endMs);
+      .filter(row => {
+        const day=getClassServiceDay(row.session,row.start);
+        return day >= toYMD(classesCalendarStart) && day <= toYMD(classesCalendarEnd);
+      });
 
     const kidId = selectedKidId ? String(selectedKidId) : '';
     const projectionEnrollments = ((enrollmentsQuery.data ?? []) as Enrollment[]).filter((enrollment) => {
@@ -2692,7 +2638,7 @@ export default function ParentDashboard() {
   const classesCalendarSessionsByDay = useMemo(() => {
     const map: Record<string, Array<{ session: KidSession; start: Date; status: string }>> = {};
     classesCalendarSessions.forEach((row) => {
-      const key = toYMD(row.start);
+      const key = getClassServiceDay(row.session,row.start);
       if (!map[key]) map[key] = [];
       map[key].push(row);
     });

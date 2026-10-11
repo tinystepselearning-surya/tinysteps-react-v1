@@ -3,6 +3,11 @@ on:
   pull_request:
     paths:
       - 'functions/src/scheduling/teacherCalendarActions.ts'
+      - '.github/workflows/virtual-calendar-emulator-stage1.yml'
+      - 'functions/src/onSessionComplete.ts'
+      - 'functions/src/saveTeacherSessionProgress.ts'
+      - 'vitest.virtual-calendar-emulator.config.ts'
+      - 'src/tests/emulator/virtualCalendarAttendance.emulator.spec.ts'
       - 'functions/test/teacherCalendarActions.spec.ts'
       - 'functions/src/index.ts'
       - 'src/lib/scheduling/rollingScheduleCalendarProjection.ts'
@@ -11,6 +16,7 @@ on:
       - 'src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts'
       - 'src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts'
       - 'src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts'
+      - 'src/tests/pages/parent/ParentClassesView.spec.tsx'
       - 'src/pages/admin/TodaysNotifications.tsx'
       - 'src/pages/admin/todaysNotificationsManualData.ts'
       - 'src/lib/sessionScheduleIntegrity.ts'
@@ -45,7 +51,7 @@ jobs:
       - name: Virtual timetable and attendance unit tests
         run: |
           npx vitest run --config functions/vitest.config.ts functions/test/teacherCalendarActions.spec.ts
-          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts
+          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx
       - name: Full backend regression
         run: npm --prefix functions test
       - name: Deployment impact calculation only

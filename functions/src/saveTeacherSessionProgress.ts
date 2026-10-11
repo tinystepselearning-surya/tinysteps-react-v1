@@ -1,12 +1,10 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
-import {
-  ATTENDANCE_FINALISED_MESSAGE,
-  getTeacherAttendanceCorrectionCutoffMillis,
-} from './helpers/attendanceCorrectionFreeze';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
+import {calendarAttendanceClaimId} from './scheduling/teacherCalendarActions';
 import {
   hasAttendanceValidationAttendanceChange,
   markAttendanceValidationDirtySession,
@@ -15,7 +13,6 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
-const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
 const CALLABLE_CORS_ORIGINS: Array<string | RegExp> = [
   'http://localhost:5173',
   'https://tinystepslearning.com',
@@ -137,57 +134,6 @@ function sanitizeText(value: unknown, maxLen = 500): string {
   return value.trim().slice(0, maxLen);
 }
 
-function toDateMaybe(value: unknown): Date | null {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === 'object' && value !== null) {
-    const maybeTimestamp = value as { toDate?: () => Date; seconds?: number };
-    if (typeof maybeTimestamp.toDate === 'function') {
-      const dt = maybeTimestamp.toDate();
-      if (dt instanceof Date && !Number.isNaN(dt.getTime())) return dt;
-    }
-    if (typeof maybeTimestamp.seconds === 'number') {
-      const dt = new Date(maybeTimestamp.seconds * 1000);
-      if (!Number.isNaN(dt.getTime())) return dt;
-    }
-  }
-  if (typeof value === 'string' || typeof value === 'number') {
-    const dt = new Date(value);
-    if (!Number.isNaN(dt.getTime())) return dt;
-  }
-  return null;
-}
-
-function normalizeTimeForIstParse(value: unknown): string | null {
-  const raw = sanitizeText(value, 16);
-  if (!raw) return null;
-  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
-  if (!match) return null;
-  const seconds = match[3] || '00';
-  return `${match[1]}:${match[2]}:${seconds}`;
-}
-
-function getSessionStartMillis(session: Record<string, unknown>): number | null {
-  const fromStartAt = toDateMaybe(session.startAt);
-  if (fromStartAt) return fromStartAt.getTime();
-
-  const dateYmd = sanitizeText(session.date, 16);
-  const startTime = normalizeTimeForIstParse(session.startTime);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
-  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function getAttendanceAllowedAtMillis(session: Record<string, unknown>): number | null {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + ATTENDANCE_OPEN_DELAY_MS;
-}
-
-function canCallerOverrideAttendanceTime(role: string): boolean {
-  return role === 'admin';
-}
-
 function normalizeStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -261,12 +207,6 @@ function toIncomingAttendanceEntry(entry: unknown): ReturnType<typeof toAttendan
   return normalized;
 }
 
-function resolveDurationMins(session: Record<string, unknown>): number {
-  const raw = Number(session.durationMins) || Number(session.durationMinutes) || 35;
-  if (!Number.isFinite(raw) || raw <= 0) return 35;
-  return Math.max(10, Math.min(180, Math.round(raw)));
-}
-
 function normalizeCourseId(value: unknown): string {
   const raw = sanitizeText(value, 120).toLowerCase();
   if (!raw) return '';
@@ -292,34 +232,6 @@ function hasPresentOrLateAttendance(attendance: Record<string, unknown>): boolea
   return Object.values(attendance).some((entry) => {
     const normalized = toAttendanceEntry(entry).status;
     return normalized === 'present' || normalized === 'late';
-  });
-}
-
-function hasRescheduleAttendance(attendance: Record<string, unknown>): boolean {
-  return Object.values(attendance).some(
-    (entry) => toAttendanceEntry(entry).status === 'reschedule_requested'
-  );
-}
-
-function normalizeSessionLifecycleStatus(value: unknown): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return '';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
-}
-
-async function hasPendingRescheduleCredit(
-  db: admin.firestore.Firestore,
-  sourceSessionId: string,
-): Promise<boolean> {
-  const snap = await db
-    .collection('rescheduleCredits')
-    .where('sourceSessionId', '==', sourceSessionId)
-    .limit(50)
-    .get();
-  return snap.docs.some((docSnap) => {
-    const status = normalizeSessionLifecycleStatus(docSnap.data()?.status);
-    return status === 'open' || status === 'scheduled';
   });
 }
 
@@ -437,7 +349,7 @@ async function reconcileAttendanceCorrectionFinance(args: {
 
   const metadata: Record<string, unknown> = {
     attendanceCorrectionId,
-    reconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+    reconciledAt: FieldValue.serverTimestamp(),
     reconciledByUid: correctedByUid,
     reconciliationSource: 'admin-attendance-correction',
     previousAttendanceStatus: previousStatus || 'not_marked',
@@ -518,11 +430,11 @@ async function reconcileAttendanceCorrectionFinance(args: {
       chargeRef,
       {
         status: 'void',
-        voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+        voidedAt: FieldValue.serverTimestamp(),
         voidReason: reason,
         correctedBy: correctedByUid,
-        correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        correctedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         ...metadata,
       },
       { merge: true },
@@ -536,11 +448,11 @@ async function reconcileAttendanceCorrectionFinance(args: {
       earningRef,
       {
         status: 'void',
-        voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+        voidedAt: FieldValue.serverTimestamp(),
         voidReason: reason,
         correctedBy: correctedByUid,
-        correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        correctedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         ...metadata,
       },
       { merge: true },
@@ -585,49 +497,30 @@ export const saveTeacherSessionProgress = onCall(
     const session = (sessionSnap.data() || {}) as Record<string, unknown>;
     assertCanSaveSession(uid, role, session);
 
-    const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
-    const attendanceCorrectionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-    if (
-      role === 'teacher' &&
-      !canCallerOverrideAttendanceTime(role)
-    ) {
-      if (attendanceAllowedAtMs === null || attendanceCorrectionCutoffMs === null) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Attendance time could not be verified. Please contact admin.',
-        );
-      }
-      if (Date.now() < attendanceAllowedAtMs) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Attendance can be marked 30 minutes after class start.',
-        );
-      }
-      if (Date.now() >= attendanceCorrectionCutoffMs) {
-        throw new HttpsError(
-          'failed-precondition',
-          ATTENDANCE_FINALISED_MESSAGE,
-        );
-      }
-    }
-
+    // No time-based teacher gate. Keep authorization and financial safeguards.
     const attendanceOnly = payload.meta?.attendanceOnly === true;
     const incomingAttendance = payload.attendance as Record<string, unknown>;
     // Preserve historical credits/corrections. Once virtual calendar is
     // activated, do not let any new Present/Absent submission produce another
     // reschedule credit; teacher ad hoc is the only one-off workflow.
-    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === 'true' &&
-        Object.values(incomingAttendance).some(entry =>
-          toAttendanceEntry(entry).status === 'reschedule_requested')) {
+    if (Object.values(incomingAttendance).some(entry =>
+          !['present','absent'].includes(String(toIncomingAttendanceEntry(entry).status||'')))) {
       throw new HttpsError('failed-precondition',
-        'Rescheduling is retired. Mark Present or Absent instead.');
+        'Only Present or Absent can be newly submitted.');
     }
     const nextAttendance: Record<string, Record<string, unknown>> = {};
-    const sessionKidIds = Array.isArray(session.kidIds)
-      ? (session.kidIds as unknown[]).map((kidId) => String(kidId || '').trim()).filter(Boolean)
-      : [];
+    const sessionKidIds = Array.from(new Set([
+      ...(Array.isArray(session.kidIds) ? session.kidIds : []),
+      session.kidId, session.studentId, session.childId,
+    ].map(value=>String(value||'').trim()).filter(Boolean)));
     const allowedAttendanceKidIds = new Set<string>(sessionKidIds);
-    const enforceKidMembership = allowedAttendanceKidIds.size > 0;
+    // A historical record with no child identity needs Admin repair, not an
+    // unrestricted teacher write under an arbitrary child ID.
+    if (!allowedAttendanceKidIds.size) {
+      throw new HttpsError('failed-precondition',
+        'Class is missing its student identity. Ask Admin to repair the record.');
+    }
+    const enforceKidMembership = true;
 
     if (attendanceOnly) {
       const existingAttendanceRaw = session.attendance;
@@ -712,132 +605,28 @@ export const saveTeacherSessionProgress = onCall(
     );
     const sessionNotes = sanitizeText(payload.sessionNotes, 2000);
     const presentOrLate = hasPresentOrLateAttendance(nextAttendance);
-    const hasReschedule = hasRescheduleAttendance(nextAttendance);
-    const shouldRequestReschedule = hasReschedule && !presentOrLate;
-    const currentSessionStatus = normalizeSessionLifecycleStatus(session.status);
-    const sessionSource = normalizeSessionLifecycleStatus(session.source);
-    const hasMakeupMarkers = Boolean(
-      session.isMakeup === true ||
-        session.makeupCreditId ||
-        session.makeupForSessionId ||
-        sessionSource.includes('makeup'),
-    );
-    let shouldNormalizeRescheduleStatus = false;
 
-    if (
-      !shouldRequestReschedule &&
-      presentOrLate &&
-      currentSessionStatus === 'reschedule_requested' &&
-      !hasMakeupMarkers
-    ) {
-      const pendingRescheduleCredit = await hasPendingRescheduleCredit(db, sessionId);
-      shouldNormalizeRescheduleStatus = !pendingRescheduleCredit;
-      if (pendingRescheduleCredit) {
-        logger.info('saveTeacherSessionProgress: keeping reschedule_requested due to pending credit chain', {
-          sessionId,
-          actorUid: uid,
-          role,
-        });
-      }
+    // One existing attendance map is updated in-place. Previous reschedule
+    // statuses remain readable, but no new credit lookup/write is permitted.
+    const previousMap = session.attendance && typeof session.attendance === 'object'
+      ? session.attendance as Record<string, unknown> : {};
+    const changesBillability = Object.entries(incomingAttendance).some(([kidId]) => {
+      const before = toAttendanceEntry(previousMap[kidId]).status;
+      const after = toAttendanceEntry(nextAttendance[kidId]).status;
+      return isFinanciallyEarnedAttendanceStatus(before)
+        !== isFinanciallyEarnedAttendanceStatus(after);
+    });
+
+    if (!sessionSnap.updateTime) {
+      throw new HttpsError('failed-precondition','Session version unavailable; retry attendance save.');
     }
-
-    const batch = db.batch();
     const sessionUpdate: Record<string, unknown> = {
       attendance: nextAttendance,
       notes: sessionNotes,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
-    if (shouldRequestReschedule) {
-      sessionUpdate.status = 'reschedule_requested';
-    } else if (shouldNormalizeRescheduleStatus) {
-      sessionUpdate.status = 'completed';
-    }
-    batch.set(sessionRef, sessionUpdate, { merge: true });
-
-    const rescheduleCreditIds: string[] = [];
-    if (hasReschedule) {
-      for (const [kidId, rawEntry] of Object.entries(nextAttendance)) {
-        const entry = toAttendanceEntry(rawEntry);
-        if (entry.status !== 'reschedule_requested') continue;
-        const creditId = `${sessionId}_${kidId}`;
-        const creditRef = db.collection('rescheduleCredits').doc(creditId);
-        const existingSnap = await creditRef.get();
-        const statusRaw = String(existingSnap.data()?.status || '').trim().toLowerCase();
-        const existingStatus =
-          statusRaw === 'open' || statusRaw === 'scheduled' || statusRaw === 'consumed' || statusRaw === 'cancelled'
-            ? statusRaw
-            : '';
-
-        const sharedPayload: Record<string, unknown> = {
-          creditId,
-          sourceSessionId: sessionId,
-          sourceEnrollmentId: session.enrollmentId || null,
-          sourceSessionDate: session.date || null,
-          sourceStartAt: session.startAt || null,
-          sourceEndAt: session.endAt || null,
-          sourceStartTime: session.startTime || null,
-          sourceEndTime: session.endTime || null,
-          teacherId: session.teacherId || null,
-          kidId,
-          parentId: session.parentId || null,
-          parentIds: Array.isArray(session.parentIds) ? session.parentIds : [],
-          courseId: session.courseId || null,
-          currency: session.currency || 'INR',
-          feeAmount:
-            Number.isFinite(Number(session.feeAmount)) ? Number(session.feeAmount) :
-            Number.isFinite(Number(session.feePerClass)) ? Number(session.feePerClass) :
-            0,
-          durationMins: resolveDurationMins(session),
-          sourceStatus: 'reschedule_requested',
-          reason: entry.notes || sessionNotes || null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: uid,
-        };
-
-        if (!existingSnap.exists) {
-          batch.set(
-            creditRef,
-            {
-              ...sharedPayload,
-              status: 'open',
-              createdAt: admin.firestore.FieldValue.serverTimestamp(),
-              createdBy: uid,
-              openedAt: admin.firestore.FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
-        } else {
-          batch.set(
-            creditRef,
-            {
-              ...sharedPayload,
-              ...(existingStatus === 'cancelled'
-                ? { status: 'open', reopenedAt: admin.firestore.FieldValue.serverTimestamp() }
-                : {}),
-            },
-            { merge: true }
-          );
-        }
-        rescheduleCreditIds.push(creditId);
-      }
-    }
-
-    const makeupCreditId = sanitizeText(session.makeupCreditId, 160);
-    if (makeupCreditId && presentOrLate) {
-      const creditRef = db.collection('rescheduleCredits').doc(makeupCreditId);
-      batch.set(
-        creditRef,
-        {
-          status: 'consumed',
-          consumedSessionId: sessionId,
-          consumedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: uid,
-        },
-        { merge: true }
-      );
-    }
+    const stagedWrites:Array<(tx:admin.firestore.Transaction)=>void> = [];
 
     let curriculumWriteCount = 0;
     let progressWriteCount = 0;
@@ -869,7 +658,7 @@ export const saveTeacherSessionProgress = onCall(
           const curriculumRef = db.collection('students').doc(kidId).collection('curriculum').doc(topicId);
           const curriculumPayload: Record<string, unknown> = {
             status: isCompleted ? 'completed' : 'in_progress',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: uid,
             source: 'attendance',
             lastSessionId: sessionId,
@@ -880,14 +669,14 @@ export const saveTeacherSessionProgress = onCall(
             curriculumPayload.courseLabel = resolvedCourseLabel;
             curriculumPayload.courseName = resolvedCourseLabel;
           }
-          batch.set(curriculumRef, curriculumPayload, { merge: true });
+          stagedWrites.push(tx=>tx.set(curriculumRef,curriculumPayload,{merge:true}));
           curriculumWriteCount += 1;
 
           const progressRef = db.collection('students').doc(kidId).collection('progress').doc(topicId);
           const progressPayload: Record<string, unknown> = {
             lastEvidence: 'session',
             lastSessionId: sessionId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: uid,
             source: 'attendance',
             topicName,
@@ -900,13 +689,81 @@ export const saveTeacherSessionProgress = onCall(
             progressPayload.courseLabel = resolvedCourseLabel;
             progressPayload.courseName = resolvedCourseLabel;
           }
-          batch.set(progressRef, progressPayload, { merge: true });
+          stagedWrites.push(tx=>tx.set(progressRef,progressPayload,{merge:true}));
           progressWriteCount += 1;
         }
       }
     }
 
-    await batch.commit();
+
+    const sessionDayAndTime=():{day:string;time:string}=>{
+      const day=String(session.date||'').trim();
+      const match=/^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/.exec(String(session.startTime||'').trim());
+      if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day) && match)
+        return {day,time:match[1].padStart(2,'0')+':'+match[2]};
+      const at=(session.startAt as {toDate?:()=>Date}|undefined)?.toDate?.();
+      if(!at || !Number.isFinite(at.getTime()))
+        throw new HttpsError('failed-precondition','Historical class date/time requires Admin review.');
+      const shifted=new Date(at.getTime()+330*60_000).toISOString();
+      return {day:shifted.slice(0,10),time:shifted.slice(11,16)};
+    };
+    const occurrence=sessionDayAndTime();
+    const claimIds=Object.keys(incomingAttendance);
+    await db.runTransaction(async tx=>{
+      const latest=await tx.get(sessionRef);
+      if(!latest.exists || !latest.updateTime ||
+          latest.updateTime.toMillis()!==sessionSnap.updateTime!.toMillis())
+        throw new HttpsError('aborted','Attendance changed. Refresh and try again.');
+      const [chargeSnap,earningSnap,...claims]=await Promise.all([
+        tx.get(db.collection('billingCharges').doc(sessionId)),
+        tx.get(db.collection('teacherEarnings').doc(sessionId)),
+        ...claimIds.map(kid=>tx.get(db.collection('calendarAttendanceClaims').doc(
+          calendarAttendanceClaimId('',kid,occurrence.day,occurrence.time)))),
+      ]);
+      if(changesBillability){
+        const isPaid=(data:Record<string,unknown>):boolean=>
+          isSettledFinancialStatus(normalizeFinancialStatus(data.status))
+            || normalizeMoney(data.paidAmount)>0;
+        if((chargeSnap.exists&&isPaid((chargeSnap.data()||{}) as Record<string,unknown>))||
+           (earningSnap.exists&&isPaid((earningSnap.data()||{}) as Record<string,unknown>)))
+          throw new HttpsError('failed-precondition',
+            'Attendance correction affects settled finance; contact Admin.');
+      }
+      if(claims.some(c=>c.exists && String(c.data()?.sessionId||'')!==sessionId))
+        throw new HttpsError('failed-precondition',
+          'Another canonical attendance exists for this student/date/time.');
+      if(claims.some(c=>!c.exists)){
+        const daySnap=await tx.get(db.collection('classSessions')
+          .where('date','==',occurrence.day).limit(251));
+        if(daySnap.size>250)
+          throw new HttpsError('failed-precondition','Occurrence coverage exceeded; Admin review.');
+        for(const docSnap of daySnap.docs){
+          if(docSnap.id===sessionId)continue;
+          const row=docSnap.data() as Record<string,unknown>;
+          const m=/^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/.exec(String(row.startTime||'').trim());
+          const otherTime=m?m[1].padStart(2,'0')+':'+m[2]:'';
+          const kids=[...(Array.isArray(row.kidIds)?row.kidIds:[]),
+            row.kidId,row.studentId,row.childId].map(k=>String(k||'').trim());
+          if(otherTime===occurrence.time&&claimIds.some(k=>kids.includes(k)))
+            throw new HttpsError('failed-precondition',
+              'Historical class already exists for the student/date/time; Admin review.');
+        }
+      }
+      tx.update(sessionRef,sessionUpdate);
+      for(let i=0;i<claims.length;i++){
+        if(claims[i].exists)continue;
+        const childId=claimIds[i];
+        tx.create(db.collection('calendarAttendanceClaims').doc(
+          calendarAttendanceClaimId('',childId,occurrence.day,occurrence.time)),{
+          sessionId,childId,enrollmentId:String(session.enrollmentId||''),
+          date:occurrence.day,startTime:occurrence.time,
+          createdAt:FieldValue.serverTimestamp(),
+          source:'teacher_attendance_save',
+        });
+      }
+      stagedWrites.forEach(write=>write(tx));
+    });
+
 
     if (attendanceChangedForAvs) {
       try {
@@ -933,31 +790,27 @@ export const saveTeacherSessionProgress = onCall(
       role,
       attendanceOnly,
       presentOrLate,
-      hasReschedule,
+      hasReschedule: false,
       attendanceKidsCount: Object.keys(nextAttendance).length,
       curriculumWriteCount,
       progressWriteCount,
-      rescheduleCreditsOpened: rescheduleCreditIds.length,
-      consumedMakeupCreditId: makeupCreditId || null,
+      rescheduleCreditsOpened: 0,
+      consumedMakeupCreditId: null,
     });
 
     return {
       ok: true,
       sessionId,
       hasPresentOrLate: presentOrLate,
-      hasReschedule,
+      hasReschedule: false,
       attendanceOnly,
-      appliedStatus: shouldRequestReschedule
-        ? 'reschedule_requested'
-        : shouldNormalizeRescheduleStatus
-          ? 'completed'
-          : null,
+      appliedStatus: null,
       attendanceKidsCount: Object.keys(nextAttendance).length,
       curriculumWriteCount,
       progressWriteCount,
-      rescheduleCreditsOpened: rescheduleCreditIds.length,
-      rescheduleCreditIds,
-      consumedMakeupCreditId: makeupCreditId || null,
+      rescheduleCreditsOpened: 0,
+      rescheduleCreditIds: [],
+      consumedMakeupCreditId: null,
     };
   }
 );
@@ -1209,7 +1062,7 @@ export const adminAttendanceCorrection = onCall(
 
     const sessionUpdate = {
       attendance: nextAttendance,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
     if (av7ValidationLink) {
@@ -1239,7 +1092,7 @@ export const adminAttendanceCorrection = onCall(
       correctedByUid: uid,
       correctedByName,
       correctedByEmail,
-      correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+      correctedAt: FieldValue.serverTimestamp(),
       financeReconciliation,
       ...(av7ValidationLink
         ? {
@@ -1250,7 +1103,7 @@ export const adminAttendanceCorrection = onCall(
     });
 
     if (av7ValidationLink) {
-      const resolvedAt = admin.firestore.FieldValue.serverTimestamp();
+      const resolvedAt = FieldValue.serverTimestamp();
       batch.create(av7ValidationLink.resolutionRef, {
         schemaVersion: 1,
         brick: 'AV7',

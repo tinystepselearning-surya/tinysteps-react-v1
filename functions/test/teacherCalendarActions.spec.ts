@@ -1,6 +1,10 @@
 import {describe, expect, it} from 'vitest';
 import {
-  assertTeacherCalendarAttendanceTime,
+  calendarAttendanceClaimId,
+  resolveCalendarOccurrenceConflict,
+  classIntervalsOverlap,
+  hasTeacherVirtualCalendarConflict,
+  hasStudentVirtualCalendarConflict,
   resolveTeacherCalendarOccurrence,
   strictYmd,
   virtualCalendarAttendanceEnabled,
@@ -16,8 +20,8 @@ const enrolled = (schedule: Record<string,unknown> = {
 });
 
 describe('virtual class calendar backend (no Firestore in these tests)',()=>{
-  it('defaults all attendance and ad hoc writes OFF until explicitly enabled',()=>{
-    expect(virtualCalendarAttendanceEnabled({})).toBe(false);
+  it('runs approved virtual attendance by default and retains an explicit emergency kill switch',()=>{
+    expect(virtualCalendarAttendanceEnabled({})).toBe(true);
     expect(virtualCalendarAttendanceEnabled({VIRTUAL_CALENDAR_ATTENDANCE_ENABLED:'false'})).toBe(false);
     expect(virtualCalendarAttendanceEnabled({VIRTUAL_CALENDAR_ATTENDANCE_ENABLED:'true'})).toBe(true);
   });
@@ -58,13 +62,68 @@ describe('virtual class calendar backend (no Firestore in these tests)',()=>{
     expect(row.durationMinutes).toBe(40);
   });
 
-  it('enforces attendance opening after class and the existing freeze cutoff',()=>{
-    const row=resolveTeacherCalendarOccurrence({
-      enrollmentId:'enr-1', enrollment:enrolled(),date:'2026-10-12',startTime:'17:00',
-    });
-    expect(()=>assertTeacherCalendarAttendanceTime(row,row.startAtUtcMs)).toThrow(/30 minutes/);
-    expect(()=>assertTeacherCalendarAttendanceTime(row,row.startAtUtcMs+31*60_000)).not.toThrow();
-    expect(()=>assertTeacherCalendarAttendanceTime(row,Date.parse('2026-11-06T00:00:00+05:30'))).toThrow(/frozen/);
+  it('allows attendance identity irrespective of the wall-clock time',()=>{
+    expect(calendarAttendanceClaimId('enr-1','kid-a','2026-10-12','17:00'))
+      .toBe('kid-a_20261012_1700');
+    expect(calendarAttendanceClaimId('other-course','kid-a','2026-10-12','17:00'))
+      .toBe('kid-a_20261012_1700');
+  });
+
+  it('reuses one legacy-ID attendance for the same student, date and time',()=>{
+    const rows=[{id:'legacy-session-42',data:{
+      kidId:'kid-a',date:'2026-10-12',startTime:'17:00:00',
+      enrollmentId:'enr-1',teacherId:'teacher-a',courseId:'phonics',status:'completed',
+    }}];
+    expect(resolveCalendarOccurrenceConflict(rows,{
+      enrollmentId:'enr-1',childId:'kid-a',date:'2026-10-12',
+      startTime:'17:00',teacherId:'teacher-a',courseId:'phonics',
+    })).toEqual({sessionId:'legacy-session-42',conflict:null});
+  });
+
+  it('fails closed on two historical IDs for one student/time',()=>{
+    const rows=['a','b'].map(id=>({id,data:{
+      kidId:'kid-a',date:'2026-10-12',startTime:'17:00',
+      enrollmentId:'enr-1',teacherId:'teacher-a',courseId:'phonics',
+    }}));
+    expect(resolveCalendarOccurrenceConflict(rows,{
+      enrollmentId:'enr-1',childId:'kid-a',date:'2026-10-12',
+      startTime:'17:00',teacherId:'teacher-a',courseId:'phonics',
+    }).conflict).toMatch(/Multiple historical/);
+  });
+
+  it('rejects collision with a different enrollment or course',()=>{
+    const rows=[{id:'prior',data:{
+      kidId:'kid-a',date:'2026-10-12',startTime:'17:00',
+      enrollmentId:'other-enrollment',teacherId:'teacher-a',courseId:'grammar',
+    }}];
+    expect(resolveCalendarOccurrenceConflict(rows,{
+      enrollmentId:'enr-1',childId:'kid-a',date:'2026-10-12',
+      startTime:'17:00',teacherId:'teacher-a',courseId:'phonics',
+    }).conflict).toMatch(/different ownership or course/);
+  });
+
+  it('rejects overlapping bookings and accepts adjacent 35-minute classes',()=>{
+    expect(classIntervalsOverlap(1020,35,1030,35)).toBe(true);
+    expect(classIntervalsOverlap(1020,35,1055,35)).toBe(false);
+    expect(hasTeacherVirtualCalendarConflict(
+      [enrolled()], 'teacher-a','2026-10-12','17:10',35,
+    )).toBe(true);
+    expect(hasTeacherVirtualCalendarConflict(
+      [enrolled()], 'teacher-a','2026-10-12','17:35',35,
+    )).toBe(false);
+  });
+
+  it('prevents ad hoc overlap with another teacher\'s virtual class for same child',()=>{
+    const anotherTeacher={...enrolled(),teacherId:'teacher-other'};
+    expect(hasStudentVirtualCalendarConflict(
+      [anotherTeacher],'kid-a','2026-10-12','17:10',35,
+    )).toBe(true);
+    expect(hasStudentVirtualCalendarConflict(
+      [anotherTeacher],'kid-b','2026-10-12','17:10',35,
+    )).toBe(false);
+    expect(hasStudentVirtualCalendarConflict(
+      [anotherTeacher],'kid-a','2026-10-12','17:35',35,
+    )).toBe(false);
   });
 
   it('allows ad hoc times independently of recurring slots while retaining a single occurrence key',()=>{

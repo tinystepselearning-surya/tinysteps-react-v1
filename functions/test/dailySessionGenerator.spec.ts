@@ -9,10 +9,10 @@ describe('nightly Today/Tomorrow scheduling writer protections', () => {
   const at = '05:00';
   const key = `kid-a|${date}|${at}`;
 
-  it('remains disabled until explicitly enabled', () => {
+  it('remains retired even if stale production flags enable it', () => {
     expect(dailySessionWritesEnabled({})).toBe(false);
     expect(dailySessionWritesEnabled({DAILY_SESSION_WRITES_ENABLED: 'false'})).toBe(false);
-    expect(dailySessionWritesEnabled({DAILY_SESSION_WRITES_ENABLED: 'true'})).toBe(true);
+    expect(dailySessionWritesEnabled({DAILY_SESSION_WRITES_ENABLED: 'true'})).toBe(false);
   });
 
   it('reserves student/date/time for existing scheduled manual and makeup classes', () => {

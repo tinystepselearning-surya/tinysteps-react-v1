@@ -11,6 +11,7 @@ import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
 import { FileText } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { buildRollingScheduleCalendarProjections } from '../../../../lib/scheduling/rollingScheduleCalendarProjection';
+import { resolveSessionJoinLink } from '../../../../lib/sessionJoinLink';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
@@ -110,8 +111,8 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   );
 
   const openUpcomingMeeting=(session:TeacherSession)=>{
-    const enrollment=teacherEnrollments.find(row=>row.id===session.enrollmentId);
-    const url=String(enrollment?.joinUrl || session.joinUrl || '').trim();
+    const byId=new Map(teacherEnrollments.map(row=>[row.id,row as Record<string,unknown>]));
+    const url=resolveSessionJoinLink(session,byId);
     if(!/^https:\/\//i.test(url)){
       toast({title:'Teams link unavailable',
         description:'Ask Admin to update the enrollment meeting link.',

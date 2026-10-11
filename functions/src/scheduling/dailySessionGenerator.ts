@@ -9,6 +9,7 @@
  * history, overwrites sessions or updates enrollment materialization metadata.
  */
 import * as admin from 'firebase-admin';
+import {AUTOMATIC_SESSION_CREATION_RETIRED} from './legacy14DayCutover';
 import * as logger from 'firebase-functions/logger';
 import {onSchedule} from 'firebase-functions/v2/scheduler';
 import {buildRollingScheduledSessionPayload, type RollingMaterializationOccurrence} from './rollingScheduleMaterializer';
@@ -39,7 +40,8 @@ const ACTIVE_STATUS_VALUES = [
  */
 export const dailySessionWritesEnabled = (
   env: Record<string, string | undefined> = process.env,
-): boolean => String(env.DAILY_SESSION_WRITES_ENABLED || '').trim().toLowerCase() === 'true';
+): boolean => !AUTOMATIC_SESSION_CREATION_RETIRED &&
+  String(env.DAILY_SESSION_WRITES_ENABLED || '').trim().toLowerCase() === 'true';
 
 const value = (raw: unknown): string => typeof raw === 'string' ? raw.trim() : '';
 
@@ -108,6 +110,10 @@ export async function runDailySessionGenerator(
   failed: number;
   issuesByReason: Record<string, number>;
 }> {
+  // No Firestore reads/writes, even if this helper is invoked directly.
+  if (AUTOMATIC_SESSION_CREATION_RETIRED) {
+    throw new Error('Automatic session generation is retired; calendar is enrollment-projected');
+  }
   const todayYmd = indiaTodayYmd(now);
   // Date gate before any Firestore operation.
   if (todayYmd < '2026-10-12') throw new Error('Cutover not active until October 12 IST');

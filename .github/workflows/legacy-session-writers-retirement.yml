@@ -53,9 +53,13 @@ jobs:
             --before "$baseline" \
             --functions-before "$baseline" \
             --sha "$(git rev-parse HEAD)" | tee /tmp/legacy-writer-impact.txt
+          # This is a combined calendar + UI + rules release. Hosting and
+          # security-rules changes are intentional; verify they are reported
+          # instead of falsely requiring a backend-only change set.
+          grep -q 'Functions deployment required: true' /tmp/legacy-writer-impact.txt
           grep -q 'Functions full deployment: false' /tmp/legacy-writer-impact.txt
-          grep -q 'Hosting changed: false' /tmp/legacy-writer-impact.txt
-          grep -q 'Firestore rules changed: false' /tmp/legacy-writer-impact.txt
           grep -q 'Firestore indexes changed: false' /tmp/legacy-writer-impact.txt
+          grep -q 'Hosting changed:' /tmp/legacy-writer-impact.txt
+          grep -q 'Firestore rules changed:' /tmp/legacy-writer-impact.txt
       - name: Deployment safety
         run: echo "Verification only; no Cloud Functions or Firestore updates."

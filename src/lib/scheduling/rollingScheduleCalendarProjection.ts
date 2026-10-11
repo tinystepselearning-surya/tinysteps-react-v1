@@ -170,8 +170,9 @@ export const buildRollingScheduleCalendarProjections = (
   }
   if (input.toYmd < input.fromYmd) return [];
 
-  const fromYmd = input.fromYmd > todayYmd ? input.fromYmd : todayYmd;
-  if (fromYmd > input.toYmd) return [];
+  // Historical virtual slots must remain available for missing attendance.
+  // The enrollment start date bounds the recurrence; real records override it.
+  const fromYmd = input.fromYmd;
 
   const enrollmentsById = new Map<string, RecordLike>();
   input.enrollments.forEach((enrollment) => {
@@ -188,6 +189,23 @@ export const buildRollingScheduleCalendarProjections = (
       .map(sessionOccurrenceIdentity)
       .filter((value): value is string => Boolean(value)),
   );
+  const occupiedChildTimes = new Set<string>();
+  authoritativeRealSessions.forEach(session=>{
+    let day=text(session.date);
+    let time=normalizeTime(session.startTime);
+    if (!isValidYmd(day) || !time) {
+      const at=dateLikeToMs(session.startAt);
+      if (at===null) return;
+      const parsed=ymdAndTimeFromUtcMs(at);
+      day=parsed.ymd;
+      time=parsed.time;
+    }
+    const kids=[
+      ...(Array.isArray(session.kidIds)?session.kidIds:[]),
+      session.kidId,session.studentId,session.childId,
+    ].map(text).filter(Boolean);
+    kids.forEach(kid=>occupiedChildTimes.add(kid+'|'+day+'|'+time));
+  });
 
   const projections: RollingScheduleCalendarProjection[] = [];
 
@@ -228,7 +246,8 @@ export const buildRollingScheduleCalendarProjections = (
     occurrences.forEach((occurrence) => {
       if (!occurrence.sessionId) return;
       const occurrenceIdentity = `${enrollmentId}|${occurrence.date}|${occurrence.startTime}`;
-      if (realIds.has(occurrence.sessionId) || realOccurrenceIdentities.has(occurrenceIdentity)) return;
+      if (realIds.has(occurrence.sessionId) || realOccurrenceIdentities.has(occurrenceIdentity) ||
+          kidIds.some(kid=>occupiedChildTimes.has(kid+'|'+occurrence.date+'|'+occurrence.startTime))) return;
 
       projections.push({
         id: `projection:${occurrence.sessionId}`,

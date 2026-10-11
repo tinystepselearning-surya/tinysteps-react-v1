@@ -1,5 +1,6 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import { canSkipTeacherEarningsRollupRecompute } from './helpers/teacherEarningsRollupDelta';
 import { checkTeacherFinanceAnalyticsReadinessRow } from './helpers/teacherFinanceAnalyticsReadiness';
 import { recomputeTeacherEarningsEventCoordinated } from './helpers/teacherEarningsCoordinatedRecompute';
@@ -46,7 +47,7 @@ async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promis
           {
             analyticsProjectionVersion: 0,
             analyticsProjectionInvalidReason: invalidReasons.join(','),
-            analyticsProjectionInvalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            analyticsProjectionInvalidatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true },
         );
@@ -66,7 +67,7 @@ async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promis
           ready: false,
           analyticsProjectionVersion: ANALYTICS_PROJECTION_VERSION,
           invalidReason: invalidReasons.join(','),
-          invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          invalidatedAt: FieldValue.serverTimestamp(),
           source: 'b6_teacher_earnings_readiness_guard',
         },
         { merge: true },
@@ -88,7 +89,7 @@ async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promis
           blockers: ['runtime_unsafe_teacher_earning_event'],
           sourceCodeContract: TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
           invalidReason: `unsafe_teacher_earning_event:${invalidReasons.join(',')}`,
-          invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          invalidatedAt: FieldValue.serverTimestamp(),
           source: 'b6_brick_7d2a_runtime_invalidation_guard',
         },
         { merge: true },
@@ -145,7 +146,7 @@ async function refreshCertifiedAnalyticsRollups(input: EarningImages): Promise<v
         analyticsProjectionVersion: ANALYTICS_PROJECTION_VERSION,
         unclassifiedEarnings: 0,
         analyticsProjectionSource: 'b6_teacher_earnings_live_refresh_v1',
-        analyticsProjectionRefreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+        analyticsProjectionRefreshedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );

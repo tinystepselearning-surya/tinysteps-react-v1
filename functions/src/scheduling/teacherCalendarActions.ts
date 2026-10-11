@@ -6,12 +6,12 @@
  * occurrence on demand. Teacher ad hoc bookings are explicit exceptions and
  * are persisted so they remain visible until attendance is marked.
  *
- * The source flag intentionally defaults OFF until both parent/teacher
- * calendars and integration tests pass.
+ * The tested virtual calendar is ON by default after October cutover;
+ * VIRTUAL_CALENDAR_ATTENDANCE_ENABLED=false is an emergency kill switch.
  */
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import {onCall, HttpsError} from 'firebase-functions/v2/https';
-import {getTeacherAttendanceCorrectionCutoffMillis} from '../helpers/attendanceCorrectionFreeze';
 import {resolveCanonicalTeacherIdForWrite} from '../helpers/teacherIdentity';
 import {
   buildRollingScheduledSessionPayload,
@@ -38,7 +38,7 @@ const personIds = (enrollment: Row): string[] => [
 
 export const virtualCalendarAttendanceEnabled = (
   env: Record<string, string | undefined> = process.env,
-): boolean => env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === 'true';
+): boolean => env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED !== 'false';
 
 export function strictYmd(date: unknown): string {
   const value = text(date);
@@ -129,13 +129,61 @@ function assertAssignedActive(enrollment: Row, uid: string, date: string): strin
   return childId;
 }
 
-export function assertTeacherCalendarAttendanceTime(occurrence: RollingMaterializationOccurrence, nowMs: number): void {
-  if (nowMs < occurrence.startAtUtcMs+30*HOUR) {
-    throw new HttpsError('failed-precondition','Attendance opens 30 minutes after class start');
+
+/** Identity stays stable across retries and attendance corrections. */
+export const calendarAttendanceClaimId = (
+  _enrollmentId: string, childId: string, date: string, startTime: string,
+): string => [childId, date.replace(/-/g, ''), startTime.replace(':', '')].join('_');
+
+const attendanceTimeOf = (row: Row): string => {
+  const raw = text(row.startTime);
+  const match = /^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/.exec(raw);
+  if (match && Number(match[1]) < 24 && Number(match[2]) < 60) {
+    return match[1].padStart(2,'0') + ':' + match[2];
   }
-  const cutoff = getTeacherAttendanceCorrectionCutoffMillis({date:occurrence.date});
-  if (cutoff===null || nowMs>=cutoff) {
-    throw new HttpsError('failed-precondition','Attendance month is frozen');
+  const dateLike = row.startAt as {toDate?: () => Date}|null;
+  const at = dateLike?.toDate?.();
+  if (!at || !Number.isFinite(at.getTime())) return '';
+  const shifted = new Date(at.getTime() + IST_MINUTES * HOUR);
+  return shifted.toISOString().slice(11,16);
+};
+
+const rowBelongsToChild = (row: Row, childId: string): boolean =>
+  personIds(row).includes(childId);
+
+export type ExistingCalendarOccurrence = {id:string; data:Row};
+export function resolveCalendarOccurrenceConflict(
+  rows: ExistingCalendarOccurrence[],
+  args: {enrollmentId:string; childId:string; date:string; startTime:string; teacherId:string; courseId:string},
+): {sessionId:string|null; conflict:string|null} {
+  const collisions = rows.filter(({data}) =>
+    rowBelongsToChild(data,args.childId) && attendanceTimeOf(data)===args.startTime);
+  if (collisions.length === 0) return {sessionId:null,conflict:null};
+  if (collisions.length > 1) return {sessionId:null,conflict:'Multiple historical sessions for this student/date/time; Admin review required'};
+  const only = collisions[0];
+  const data=only.data;
+  const differentEnrollment = text(data.enrollmentId) && text(data.enrollmentId)!==args.enrollmentId;
+  const differentTeacher = text(data.teacherId) && text(data.teacherId)!==args.teacherId;
+  const differentCourse = text(data.courseId) && text(data.courseId)!==args.courseId;
+  if (differentEnrollment||differentTeacher||differentCourse) {
+    return {sessionId:null,conflict:'An existing class for this student/date/time has different ownership or course; Admin review required'};
+  }
+  if (['cancelled','canceled','withdrawn'].includes(text(data.status).toLowerCase())) {
+    return {sessionId:null,conflict:'This class was previously cancelled; Admin review required'};
+  }
+  return {sessionId:only.id,conflict:null};
+}
+
+function assertCalendarSessionIdentity(
+  row:Row, enrollmentId:string, uid:string, childId:string, courseId:string,
+):void {
+  if ((text(row.enrollmentId) && text(row.enrollmentId)!==enrollmentId) ||
+      text(row.teacherId)!==uid || !personIds(row).includes(childId) ||
+      (text(row.courseId) && text(row.courseId)!==courseId)) {
+    throw new HttpsError('failed-precondition','Existing class identity mismatch; Admin review required');
+  }
+  if (['cancelled','canceled','withdrawn'].includes(text(row.status).toLowerCase())) {
+    throw new HttpsError('failed-precondition','Cancelled class cannot be marked as scheduled; Admin review required');
   }
 }
 
@@ -165,28 +213,58 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
       const enrollment = (enrollmentSnap.data()||{}) as Row;
       const childId = assertAssignedActive(enrollment, uid, date);
       const occurrence = resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime});
-      assertTeacherCalendarAttendanceTime(occurrence,Date.now());
-      const [childSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
+      const claimRef = db.collection('calendarAttendanceClaims')
+        .doc(calendarAttendanceClaimId(enrollmentId,childId,date,startTime));
+      const [childSnap, claimSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
+        tx.get(claimRef),
         tx.get(sessionRef),
         tx.get(db.collection('billingCharges').doc(sessionId)),
         tx.get(db.collection('teacherEarnings').doc(sessionId)),
       ]);
-      if (sessionSnap.exists) {
-        const session = (sessionSnap.data()||{}) as Row;
-        if (text(session.enrollmentId)!==enrollmentId ||
-            text(session.teacherId)!==uid || !personIds(session).includes(childId)) {
-          throw new HttpsError('failed-precondition','Existing class identity mismatch');
-        }
-        return {sessionId,created:false};
-      }
-      if (chargeSnap.exists || earningSnap.exists) {
-        throw new HttpsError('failed-precondition','This occurrence has a financial record; manual review required');
+      if (claimSnap.exists) {
+        const existingId = text(claimSnap.data()?.sessionId);
+        if (!existingId) throw new HttpsError('failed-precondition','Attendance claim requires Admin repair');
+        const existing = existingId===sessionId ? sessionSnap :
+          await tx.get(db.collection('classSessions').doc(existingId));
+        if (!existing.exists) throw new HttpsError('failed-precondition','Historical attendance claim points to a missing class');
+        assertCalendarSessionIdentity((existing.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
+        return {sessionId:existingId,created:false};
       }
       if (!childSnap.exists || childSnap.data()?.deleted || childSnap.data()?.isDeleted ||
           childSnap.data()?.archived || childSnap.data()?.isArchived ||
           !['','active'].includes(text(childSnap.data()?.status).toLowerCase())) {
         throw new HttpsError('failed-precondition','Student profile is inactive or missing');
+      }
+      // Date-only query avoids legacy-ID assumptions and requires no new
+      // composite index. It runs only on first attendance, never on calendar view.
+      // The bounded scan fails closed rather than silently missing a duplicate.
+      const sameDay = await tx.get(db.collection('classSessions')
+        .where('date','==',date).limit(251));
+      if (sameDay.size > 250) {
+        throw new HttpsError('failed-precondition','Daily class identity check exceeded the safe limit; Admin review required');
+      }
+      const existingRows:ExistingCalendarOccurrence[] = sameDay.docs.map(d=>({
+        id:d.id,data:(d.data()||{}) as Row,
+      }));
+      if (sessionSnap.exists && !existingRows.some(r=>r.id===sessionId)) {
+        existingRows.push({id:sessionId,data:(sessionSnap.data()||{}) as Row});
+      }
+      const found=resolveCalendarOccurrenceConflict(existingRows,{
+        enrollmentId,childId,date,startTime,teacherId:uid,courseId:text(enrollment.courseId),
+      });
+      if (found.conflict) throw new HttpsError('failed-precondition',found.conflict);
+      if (found.sessionId) {
+        const reused = found.sessionId===sessionId ? sessionSnap :
+          await tx.get(db.collection('classSessions').doc(found.sessionId));
+        if (!reused.exists) throw new HttpsError('failed-precondition','Existing class disappeared');
+        assertCalendarSessionIdentity((reused.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
+        tx.create(claimRef,{sessionId:found.sessionId,enrollmentId,childId,date,startTime,
+          source:'virtual_calendar_attendance',createdAt:FieldValue.serverTimestamp()});
+        return {sessionId:found.sessionId,created:false};
+      }
+      if (sessionSnap.exists || chargeSnap.exists || earningSnap.exists) {
+        throw new HttpsError('failed-precondition','Class identity or finance exists without valid attendance; Admin review required');
       }
       const schedule = enrollment.schedule as Row|undefined;
       const revision = Number(schedule?.revision || 1);
@@ -196,12 +274,63 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
         actorId:uid,
       });
       tx.create(sessionRef,{...payload,source:'virtual_calendar_attendance'});
+      tx.create(claimRef,{sessionId,enrollmentId,childId,date,startTime,
+        source:'virtual_calendar_attendance',createdAt:FieldValue.serverTimestamp()});
       return {sessionId,created:true};
     });
     return {...result,ok:true};
   },
 );
 
+
+const minutesOf = (hhmm:string):number => Number(hhmm.slice(0,2))*60+Number(hhmm.slice(3,5));
+export const classIntervalsOverlap = (
+  aStart:number,aDuration:number,bStart:number,bDuration:number,
+):boolean => aStart < bStart+bDuration && bStart < aStart+aDuration;
+
+export function hasTeacherVirtualCalendarConflict(
+  enrollments:Row[], uid:string, date:string, startTime:string, durationMinutes:number,
+):boolean {
+  const weekday=new Date(date+'T00:00:00.000Z').getUTCDay();
+  const start=minutesOf(startTime);
+  return enrollments.some(enrollment=>{
+    const resolved=resolveCanonicalTeacherIdForWrite(enrollment);
+    if (resolved.teacherId!==uid &&
+        !(resolved.source==='ambiguous_legacy' && resolved.legacyRefs.includes(uid))) return false;
+    if (!ACTIVE.has(text(enrollment.status).toLowerCase()) ||
+        enrollment.archived || enrollment.isArchived || enrollment.archivedAt) return false;
+    const effective=enrollmentStartDay(enrollment);
+    if (effective && effective>date) return false;
+    return normalizeRollingMaterializerSlots(enrollment.schedule).some(slot=>
+      slot.weekday===weekday &&
+      classIntervalsOverlap(start,durationMinutes,minutesOf(slot.time),slot.durationMinutes));
+  });
+}
+
+export function hasStudentVirtualCalendarConflict(
+  enrollments:Row[], childId:string, date:string, startTime:string, durationMinutes:number,
+):boolean {
+  const weekday=new Date(date+'T00:00:00.000Z').getUTCDay();
+  const start=minutesOf(startTime);
+  return enrollments.some(enrollment=>{
+    if(!personIds(enrollment).includes(childId))return false;
+    if(!ACTIVE.has(text(enrollment.status).toLowerCase()) ||
+       enrollment.archived || enrollment.isArchived || enrollment.archivedAt)return false;
+    const effective=enrollmentStartDay(enrollment);
+    if(effective&&effective>date)return false;
+    return normalizeRollingMaterializerSlots(enrollment.schedule).some(slot=>
+      slot.weekday===weekday&&
+      classIntervalsOverlap(start,durationMinutes,minutesOf(slot.time),slot.durationMinutes));
+  });
+}
+
+type AdHocDayReservation = {sessionId:string; childId:string; startTime:string; durationMinutes:number};
+function conflictsWithReservation(
+  reservations:AdHocDayReservation[],startTime:string,durationMinutes:number,
+):boolean {
+  return reservations.some(r=>classIntervalsOverlap(
+    minutesOf(startTime),durationMinutes,minutesOf(r.startTime),r.durationMinutes));
+}
 /** One-off classes are explicit calendar exceptions, never recurrence edits. */
 export const createTeacherCalendarAdHocSession = onCall(
   {region:REGION,memory:'256MiB',timeoutSeconds:45},
@@ -217,9 +346,9 @@ export const createTeacherCalendarAdHocSession = onCall(
     }
     const date=strictYmd(request.data?.date);
     const startTime=strictTime(request.data?.startTime);
-    const durationMinutes=Number(request.data?.durationMinutes||35);
-    if (!Number.isInteger(durationMinutes)||durationMinutes<10||durationMinutes>90) {
-      throw new HttpsError('invalid-argument','Duration must be 10–90 minutes');
+    const durationMinutes=35; // one-off classes use the standard Tiny Steps duration
+    if (request.data?.durationMinutes !== undefined && Number(request.data.durationMinutes)!==35) {
+      throw new HttpsError('invalid-argument','Ad hoc classes must be 35 minutes');
     }
     const db=admin.firestore();
     await assertTeacher(uid,db);
@@ -231,58 +360,87 @@ export const createTeacherCalendarAdHocSession = onCall(
       if (!enrSnap.exists) throw new HttpsError('not-found','Enrollment not found');
       const enrollment=(enrSnap.data()||{}) as Row;
       const childId=assertAssignedActive(enrollment,uid,date);
-      const weekday=new Date(date+'T00:00:00.000Z').getUTCDay();
-      const recurringSlots=normalizeRollingMaterializerSlots(enrollment.schedule);
-      if (recurringSlots.some(slot=>slot.weekday===weekday && slot.time===startTime)) {
-        throw new HttpsError('failed-precondition',
-          'A regular timetable class already occupies this time. Use the regular class instead.');
-      }
       const occurrence=resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
-      const now=Date.now();
-      const cutoff=getTeacherAttendanceCorrectionCutoffMillis({date});
-      if (cutoff===null||now>=cutoff) {
-        throw new HttpsError('failed-precondition','Month is frozen');
-      }
-      const [childSnap,existing,regular,charge,earning,sameChildDay] = await Promise.all([
+      const teacherDayRef=db.collection('calendarTeacherAdHocDays').doc(uid+'_'+date);
+      const studentDayRef=db.collection('calendarStudentAdHocDays').doc(childId+'_'+date);
+      const [childSnap,existing,regular,charge,earning,teacherDay,studentDay,sameDay,teacherEnrollments,legacyEnrollments,uidEnrollments,assignedEnrollments,primaryEnrollments,teacherSnakeEnrollments,teacherIdsEnrollments,studentEnrollments,studentIdEnrollments,studentIdsEnrollments,childEnrollments]=await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
         tx.get(sessionRef),
         tx.get(db.collection('classSessions').doc(rollingSessionId(enrollmentId,date,startTime))),
         tx.get(db.collection('billingCharges').doc(sessionId)),
         tx.get(db.collection('teacherEarnings').doc(sessionId)),
-        tx.get(db.collection('classSessions').where('kidId','==',childId)
-          .where('date','==',date).limit(81)),
+        tx.get(teacherDayRef),
+        tx.get(studentDayRef),
+        tx.get(db.collection('classSessions').where('date','==',date).limit(251)),
+        tx.get(db.collection('enrollments').where('teacherId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('teacherUid','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('teacherUserId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('assignedTeacherId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('primaryTeacherId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('teacher_id','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('teacherIds','array-contains',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('kidId','==',childId).limit(251)),
+        tx.get(db.collection('enrollments').where('studentId','==',childId).limit(251)),
+        tx.get(db.collection('enrollments').where('kidIds','array-contains',childId).limit(251)),
+        tx.get(db.collection('enrollments').where('childId','==',childId).limit(251)),
       ]);
       if (existing.exists) {
-        const data=existing.data()||{};
-        if (text(data.teacherId)!==uid || text(data.enrollmentId)!==enrollmentId ||
-            !personIds(data).includes(childId)) {
-          throw new HttpsError('failed-precondition','Ad hoc class identity mismatch');
-        }
+        assertCalendarSessionIdentity((existing.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
         return {sessionId,created:false};
       }
-      if (!childSnap.exists || childSnap.data()?.isArchived ||
+      if (!childSnap.exists || childSnap.data()?.deleted || childSnap.data()?.isDeleted ||
+          childSnap.data()?.archived || childSnap.data()?.isArchived ||
           !['','active'].includes(text(childSnap.data()?.status).toLowerCase())) {
-        throw new HttpsError('failed-precondition','Student is inactive');
+        throw new HttpsError('failed-precondition','Student profile is inactive or missing');
       }
-      if (sameChildDay.size > 80) {
-        throw new HttpsError('failed-precondition','Daily student schedule needs manual review');
+      if (sameDay.size>250 || teacherEnrollments.size>250 ||
+          legacyEnrollments.size>250 || uidEnrollments.size>250 ||
+          assignedEnrollments.size>250 || primaryEnrollments.size>250 ||
+          teacherSnakeEnrollments.size>250 || teacherIdsEnrollments.size>250 ||
+          studentEnrollments.size>250 || studentIdEnrollments.size>250 ||
+          studentIdsEnrollments.size>250 || childEnrollments.size>250) {
+        throw new HttpsError('failed-precondition','Calendar conflict coverage incomplete; Admin review required');
       }
-      const occupied = sameChildDay.docs.some(doc => {
-        const row = doc.data();
-        const status = text(row.status).toLowerCase();
-        return doc.id !== sessionId && text(row.startTime)===startTime &&
-          !['cancelled','canceled','completed','absent','no_show','present'].includes(status);
+      const currentStart=minutesOf(startTime);
+      // Both past and future persisted bookings count. Never double-book a
+      // teacher or child simply because an earlier class was completed.
+      const existingOverlap=sameDay.docs.some(d=>{
+        const data=d.data() as Row;
+        if (['cancelled','canceled','withdrawn'].includes(text(data.status).toLowerCase())) return false;
+        const teacherId=text(data.teacherId);
+        if (teacherId!==uid && !rowBelongsToChild(data,childId)) return false;
+        const otherStart=attendanceTimeOf(data);
+        if (!otherStart) return true; // fail closed for incomplete history
+        const duration=Number(data.durationMinutes||data.durationMins||35);
+        return classIntervalsOverlap(currentStart,35,minutesOf(otherStart),
+          Number.isFinite(duration)&&duration>0?duration:35);
       });
-      if (occupied) {
-        throw new HttpsError('failed-precondition',
-          'Another class already occupies this student/date/time.');
+      if (existingOverlap || regular.exists || charge.exists || earning.exists) {
+        throw new HttpsError('failed-precondition','This time conflicts with an existing class or finance record');
       }
-      if (regular.exists && text(regular.data()?.status).toLowerCase()!=='cancelled') {
-        throw new HttpsError('failed-precondition','Regular class already occupies this time');
+      const schedules=new Map<string,Row>();
+      for (const snapshot of [teacherEnrollments,legacyEnrollments,uidEnrollments,
+        assignedEnrollments,primaryEnrollments,teacherSnakeEnrollments,teacherIdsEnrollments,
+        studentEnrollments,studentIdEnrollments,studentIdsEnrollments,childEnrollments]) {
+        snapshot.docs.forEach(d=>schedules.set(d.id,d.data() as Row));
       }
-      if (charge.exists || earning.exists) {
-        throw new HttpsError('failed-precondition','An earlier class has a financial reference');
+      if (!schedules.has(enrollmentId)) schedules.set(enrollmentId,enrollment);
+      if (hasTeacherVirtualCalendarConflict([...schedules.values()],uid,date,startTime,35)) {
+        throw new HttpsError('failed-precondition','Time overlaps an existing scheduled class');
       }
+      if (hasStudentVirtualCalendarConflict([...schedules.values()],childId,date,startTime,35)) {
+        throw new HttpsError('failed-precondition','The student already has another scheduled class at this time');
+      }
+      const asReservations=(snap:admin.firestore.DocumentSnapshot):AdHocDayReservation[]=>{
+        const raw=snap.data()?.reservations;
+        return Array.isArray(raw) ? raw as AdHocDayReservation[] : [];
+      };
+      const teacherSlots=asReservations(teacherDay),studentSlots=asReservations(studentDay);
+      if (conflictsWithReservation(teacherSlots,startTime,35) ||
+          conflictsWithReservation(studentSlots,startTime,35)) {
+        throw new HttpsError('failed-precondition','An ad hoc class already occupies this time');
+      }
+      const reservation:AdHocDayReservation={sessionId,childId,startTime,durationMinutes:35};
       const payload=buildRollingScheduledSessionPayload({
         enrollmentId,enrollment,occurrence,scheduleRevision:0,actorId:uid,
       });
@@ -290,11 +448,16 @@ export const createTeacherCalendarAdHocSession = onCall(
         ...payload,source:'teacher_ad_hoc',
         isAdHoc:true,isManual:true,
         manualSessionState:'approved',
-        manualSessionApprovedAt:admin.firestore.FieldValue.serverTimestamp(),
+        manualSessionApprovedAt:FieldValue.serverTimestamp(),
         manualSessionApprovedBy:uid,
         notes:'Teacher-created ad hoc class',
         scheduleDeliveryMode:'ad_hoc',
       });
+      // Two stable day documents serialize concurrent ad hoc attempts.
+      tx.set(teacherDayRef,{reservations:[...teacherSlots,reservation],
+        updatedAt:FieldValue.serverTimestamp()},{merge:true});
+      tx.set(studentDayRef,{reservations:[...studentSlots,reservation],
+        updatedAt:FieldValue.serverTimestamp()},{merge:true});
       return {sessionId,created:true};
     });
     return {...result,ok:true};
