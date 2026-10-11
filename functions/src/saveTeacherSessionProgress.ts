@@ -205,12 +205,6 @@ function toIncomingAttendanceEntry(entry: unknown): ReturnType<typeof toAttendan
   return normalized;
 }
 
-function resolveDurationMins(session: Record<string, unknown>): number {
-  const raw = Number(session.durationMins) || Number(session.durationMinutes) || 35;
-  if (!Number.isFinite(raw) || raw <= 0) return 35;
-  return Math.max(10, Math.min(180, Math.round(raw)));
-}
-
 function normalizeCourseId(value: unknown): string {
   const raw = sanitizeText(value, 120).toLowerCase();
   if (!raw) return '';
@@ -239,32 +233,11 @@ function hasPresentOrLateAttendance(attendance: Record<string, unknown>): boolea
   });
 }
 
-function hasRescheduleAttendance(attendance: Record<string, unknown>): boolean {
-  return Object.values(attendance).some(
-    (entry) => toAttendanceEntry(entry).status === 'reschedule_requested'
-  );
-}
-
 function normalizeSessionLifecycleStatus(value: unknown): string {
   const raw = String(value || '').trim().toLowerCase();
   if (!raw) return '';
   if (raw === 'canceled') return 'cancelled';
   return raw;
-}
-
-async function hasPendingRescheduleCredit(
-  db: admin.firestore.Firestore,
-  sourceSessionId: string,
-): Promise<boolean> {
-  const snap = await db
-    .collection('rescheduleCredits')
-    .where('sourceSessionId', '==', sourceSessionId)
-    .limit(50)
-    .get();
-  return snap.docs.some((docSnap) => {
-    const status = normalizeSessionLifecycleStatus(docSnap.data()?.status);
-    return status === 'open' || status === 'scheduled';
-  });
 }
 
 async function resolveCallerRole(auth: { uid?: string; token?: Record<string, unknown> }): Promise<string> {
@@ -535,11 +508,10 @@ export const saveTeacherSessionProgress = onCall(
     // Preserve historical credits/corrections. Once virtual calendar is
     // activated, do not let any new Present/Absent submission produce another
     // reschedule credit; teacher ad hoc is the only one-off workflow.
-    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === 'true' &&
-        Object.values(incomingAttendance).some(entry =>
-          toAttendanceEntry(entry).status === 'reschedule_requested')) {
+    if (Object.values(incomingAttendance).some(entry =>
+          !['present','absent'].includes(String(toIncomingAttendanceEntry(entry).status||'')))) {
       throw new HttpsError('failed-precondition',
-        'Rescheduling is retired. Mark Present or Absent instead.');
+        'Only Present or Absent can be newly submitted.');
     }
     const nextAttendance: Record<string, Record<string, unknown>> = {};
     const sessionKidIds = Array.isArray(session.kidIds)
@@ -631,35 +603,35 @@ export const saveTeacherSessionProgress = onCall(
     );
     const sessionNotes = sanitizeText(payload.sessionNotes, 2000);
     const presentOrLate = hasPresentOrLateAttendance(nextAttendance);
-    const hasReschedule = hasRescheduleAttendance(nextAttendance);
-    const shouldRequestReschedule = hasReschedule && !presentOrLate;
-    const currentSessionStatus = normalizeSessionLifecycleStatus(session.status);
-    const sessionSource = normalizeSessionLifecycleStatus(session.source);
-    const hasMakeupMarkers = Boolean(
-      session.isMakeup === true ||
-        session.makeupCreditId ||
-        session.makeupForSessionId ||
-        sessionSource.includes('makeup'),
-    );
-    let shouldNormalizeRescheduleStatus = false;
 
-    if (
-      !shouldRequestReschedule &&
-      presentOrLate &&
-      currentSessionStatus === 'reschedule_requested' &&
-      !hasMakeupMarkers
-    ) {
-      const pendingRescheduleCredit = await hasPendingRescheduleCredit(db, sessionId);
-      shouldNormalizeRescheduleStatus = !pendingRescheduleCredit;
-      if (pendingRescheduleCredit) {
-        logger.info('saveTeacherSessionProgress: keeping reschedule_requested due to pending credit chain', {
-          sessionId,
-          actorUid: uid,
-          role,
-        });
+    // One existing attendance map is updated in-place. Previous reschedule
+    // statuses remain readable, but no new credit lookup/write is permitted.
+    const previousMap = session.attendance && typeof session.attendance === 'object'
+      ? session.attendance as Record<string, unknown> : {};
+    const changesBillability = Object.entries(incomingAttendance).some(([kidId]) => {
+      const before = toAttendanceEntry(previousMap[kidId]).status;
+      const after = toAttendanceEntry(nextAttendance[kidId]).status;
+      return isFinanciallyEarnedAttendanceStatus(before)
+        !== isFinanciallyEarnedAttendanceStatus(after);
+    });
+    if (changesBillability) {
+      const [chargeSnap, earningSnap] = await Promise.all([
+        db.collection('billingCharges').doc(sessionId).get(),
+        db.collection('teacherEarnings').doc(sessionId).get(),
+      ]);
+      const isPaid = (data:Record<string,unknown>):boolean => {
+        const state = normalizeFinancialStatus(data.status);
+        return isSettledFinancialStatus(state) || normalizeMoney(data.paidAmount)>0;
+      };
+      if ((chargeSnap.exists && isPaid((chargeSnap.data()||{}) as Record<string,unknown>)) ||
+          (earningSnap.exists && isPaid((earningSnap.data()||{}) as Record<string,unknown>))) {
+        throw new HttpsError('failed-precondition',
+          'Attendance correction affects settled finance; contact Admin for reconciliation.');
       }
     }
-
+    if (!sessionSnap.updateTime) {
+      throw new HttpsError('failed-precondition','Session version unavailable; retry attendance save.');
+    }
     const batch = db.batch();
     const sessionUpdate: Record<string, unknown> = {
       attendance: nextAttendance,
@@ -667,96 +639,7 @@ export const saveTeacherSessionProgress = onCall(
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
-    if (shouldRequestReschedule) {
-      sessionUpdate.status = 'reschedule_requested';
-    } else if (shouldNormalizeRescheduleStatus) {
-      sessionUpdate.status = 'completed';
-    }
-    batch.set(sessionRef, sessionUpdate, { merge: true });
-
-    const rescheduleCreditIds: string[] = [];
-    if (hasReschedule) {
-      for (const [kidId, rawEntry] of Object.entries(nextAttendance)) {
-        const entry = toAttendanceEntry(rawEntry);
-        if (entry.status !== 'reschedule_requested') continue;
-        const creditId = `${sessionId}_${kidId}`;
-        const creditRef = db.collection('rescheduleCredits').doc(creditId);
-        const existingSnap = await creditRef.get();
-        const statusRaw = String(existingSnap.data()?.status || '').trim().toLowerCase();
-        const existingStatus =
-          statusRaw === 'open' || statusRaw === 'scheduled' || statusRaw === 'consumed' || statusRaw === 'cancelled'
-            ? statusRaw
-            : '';
-
-        const sharedPayload: Record<string, unknown> = {
-          creditId,
-          sourceSessionId: sessionId,
-          sourceEnrollmentId: session.enrollmentId || null,
-          sourceSessionDate: session.date || null,
-          sourceStartAt: session.startAt || null,
-          sourceEndAt: session.endAt || null,
-          sourceStartTime: session.startTime || null,
-          sourceEndTime: session.endTime || null,
-          teacherId: session.teacherId || null,
-          kidId,
-          parentId: session.parentId || null,
-          parentIds: Array.isArray(session.parentIds) ? session.parentIds : [],
-          courseId: session.courseId || null,
-          currency: session.currency || 'INR',
-          feeAmount:
-            Number.isFinite(Number(session.feeAmount)) ? Number(session.feeAmount) :
-            Number.isFinite(Number(session.feePerClass)) ? Number(session.feePerClass) :
-            0,
-          durationMins: resolveDurationMins(session),
-          sourceStatus: 'reschedule_requested',
-          reason: entry.notes || sessionNotes || null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: uid,
-        };
-
-        if (!existingSnap.exists) {
-          batch.set(
-            creditRef,
-            {
-              ...sharedPayload,
-              status: 'open',
-              createdAt: admin.firestore.FieldValue.serverTimestamp(),
-              createdBy: uid,
-              openedAt: admin.firestore.FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
-        } else {
-          batch.set(
-            creditRef,
-            {
-              ...sharedPayload,
-              ...(existingStatus === 'cancelled'
-                ? { status: 'open', reopenedAt: admin.firestore.FieldValue.serverTimestamp() }
-                : {}),
-            },
-            { merge: true }
-          );
-        }
-        rescheduleCreditIds.push(creditId);
-      }
-    }
-
-    const makeupCreditId = sanitizeText(session.makeupCreditId, 160);
-    if (makeupCreditId && presentOrLate) {
-      const creditRef = db.collection('rescheduleCredits').doc(makeupCreditId);
-      batch.set(
-        creditRef,
-        {
-          status: 'consumed',
-          consumedSessionId: sessionId,
-          consumedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: uid,
-        },
-        { merge: true }
-      );
-    }
+    batch.update(sessionRef, sessionUpdate, {lastUpdateTime:sessionSnap.updateTime});
 
     let curriculumWriteCount = 0;
     let progressWriteCount = 0;
@@ -852,31 +735,27 @@ export const saveTeacherSessionProgress = onCall(
       role,
       attendanceOnly,
       presentOrLate,
-      hasReschedule,
+      hasReschedule: false,
       attendanceKidsCount: Object.keys(nextAttendance).length,
       curriculumWriteCount,
       progressWriteCount,
-      rescheduleCreditsOpened: rescheduleCreditIds.length,
-      consumedMakeupCreditId: makeupCreditId || null,
+      rescheduleCreditsOpened: 0,
+      consumedMakeupCreditId: null,
     });
 
     return {
       ok: true,
       sessionId,
       hasPresentOrLate: presentOrLate,
-      hasReschedule,
+      hasReschedule: false,
       attendanceOnly,
-      appliedStatus: shouldRequestReschedule
-        ? 'reschedule_requested'
-        : shouldNormalizeRescheduleStatus
-          ? 'completed'
-          : null,
+      appliedStatus: null,
       attendanceKidsCount: Object.keys(nextAttendance).length,
       curriculumWriteCount,
       progressWriteCount,
-      rescheduleCreditsOpened: rescheduleCreditIds.length,
-      rescheduleCreditIds,
-      consumedMakeupCreditId: makeupCreditId || null,
+      rescheduleCreditsOpened: 0,
+      rescheduleCreditIds: [],
+      consumedMakeupCreditId: null,
     };
   }
 );
