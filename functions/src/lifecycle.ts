@@ -740,14 +740,26 @@ export const transitionEnrollmentCourse = onCall({ region: REGION }, async (requ
     }
 
     const finalData = (await transitionRef.get()).data() || {};
+    const newEnrollmentId = String(finalData.newEnrollmentId || '').trim();
+    // Existing course state changes are preserved, but class changes are
+    // limited to Today/Tomorrow: retire old pending classes before creating
+    // the destination's classes to avoid a duplicate student/time.
+    let transitionDaySync: unknown = null;
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED && newEnrollmentId) {
+      await syncTodayTomorrowForEnrollment({db, enrollmentId: oldEnrollmentId, actorId: actor || 'admin'});
+      transitionDaySync = await syncTodayTomorrowForEnrollment({
+        db, enrollmentId: newEnrollmentId, actorId: actor || 'admin',
+      });
+    }
     return {
       ok: true,
       operationId,
       state: finalData.state,
       oldEnrollmentId,
-      newEnrollmentId: finalData.newEnrollmentId || null,
+      newEnrollmentId: newEnrollmentId || null,
       cancelledSessionsCount: finalData.cancelledSessionsCount || 0,
       reconciliation: finalData.reconciliation || null,
+      ...(transitionDaySync ? {daySync: transitionDaySync} : {}),
     };
   } catch (error) {
     const current = await transitionRef.get();
