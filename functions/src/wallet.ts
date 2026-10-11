@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
+import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {attendanceFinanceCycle, attendanceWalletCycleKeys} from './helpers/attendanceFinancialCycles';
 import * as logger from 'firebase-functions/logger';
 import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
@@ -115,7 +116,7 @@ interface AppendWalletTransactionInput {
   monthKey: string | null;
   description: string | null;
   method: string | null;
-  paidAt: admin.firestore.Timestamp | null;
+  paidAt: Timestamp | null;
   note: string | null;
   reference: string | null;
   reason: string | null;
@@ -259,12 +260,12 @@ function dayKeyFromDateIST(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function resolveTopupPaidAt(value: unknown): admin.firestore.Timestamp {
+function resolveTopupPaidAt(value: unknown): Timestamp {
   const parsed = value == null ? new Date() : toDate(value);
   if (!parsed) {
     throw new HttpsError('invalid-argument', 'paidAt must be a valid date string or timestamp');
   }
-  return admin.firestore.Timestamp.fromDate(parsed);
+  return Timestamp.fromDate(parsed);
 }
 
 function resolveSignedAmount(amount: number, direction: WalletDirection): number {
@@ -653,7 +654,7 @@ export function applyReceiveParentPaymentWithPreparedState(params: {
   parentId: string;
   amount: number;
   allocationModeUsed: ParentPaymentAllocationMode;
-  paidAt: admin.firestore.Timestamp;
+  paidAt: Timestamp;
   dateKey: string;
   monthKey: string;
   method: string | null;
@@ -709,8 +710,8 @@ export function applyReceiveParentPaymentWithPreparedState(params: {
     const updates: Record<string, unknown> = {
       paidAmount: nextPaid,
       outstandingAmount: nextOutstanding,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      paymentIds: admin.firestore.FieldValue.arrayUnion(paymentRef.id),
+      updatedAt: FieldValue.serverTimestamp(),
+      paymentIds: FieldValue.arrayUnion(paymentRef.id),
       lastAllocatedAt: paidAt,
       lastPaymentId: paymentRef.id,
       lastAllocationRef: `payments/${paymentRef.id}/allocations/${String(allocation.sequence).padStart(4, '0')}`,
@@ -721,7 +722,7 @@ export function applyReceiveParentPaymentWithPreparedState(params: {
       updates.paidAt = paidAt;
     } else {
       updates.status = 'partial';
-      updates.paidAt = admin.firestore.FieldValue.delete();
+      updates.paidAt = FieldValue.delete();
     }
     tx.set(chargeEntry.ref, updates, { merge: true });
   }
@@ -808,9 +809,9 @@ export function applyReceiveParentPaymentWithPreparedState(params: {
       walletBalanceAfter: roundCurrency(walletResult.currentBalance),
       migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
       warnings: allWarnings,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       createdBy,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -840,8 +841,8 @@ export function applyReceiveParentPaymentWithPreparedState(params: {
       courseId: allocation.courseId,
       classSessionId: allocation.classSessionId,
       source: 'adminReceiveParentPayment',
-      allocatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      allocatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   });
 
@@ -849,8 +850,8 @@ export function applyReceiveParentPaymentWithPreparedState(params: {
   tx.set(
     rollupRef,
     {
-      earned: admin.firestore.FieldValue.increment(amount),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      earned: FieldValue.increment(amount),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -1110,7 +1111,7 @@ export function appendWalletTransactionWithPreparedState(
     input.type === 'class_deduction' && input.direction === 'debit' ? input.amount : 0;
   const openingDeficitIncrement =
     input.type === 'opening_deficit' && input.direction === 'debit' ? input.amount : 0;
-  const now = admin.firestore.FieldValue.serverTimestamp();
+  const now = FieldValue.serverTimestamp();
 
   const walletPatch: Record<string, unknown> = {
     parentId: input.parentId,
@@ -1426,7 +1427,7 @@ export const setWalletAutomationConfig = onCall(
         previousConfig.walletCutoverMonthKey !== nextWalletCutoverMonthKey ||
         previousConfig.walletCutoverDate !== nextWalletCutoverDate;
 
-      const now = admin.firestore.FieldValue.serverTimestamp();
+      const now = FieldValue.serverTimestamp();
       const patch: Record<string, unknown> = {
         walletClassDeductionsEnabled,
         walletCutoverMonthKey: nextWalletCutoverMonthKey || null,
@@ -3298,7 +3299,7 @@ export const reconcileParentWallet = onCall(
         await db.runTransaction(async (tx) => {
           const latestWalletSnap = await tx.get(walletRef);
           const latestWalletData = (latestWalletSnap.data() || {}) as Record<string, unknown>;
-          const now = admin.firestore.FieldValue.serverTimestamp();
+          const now = FieldValue.serverTimestamp();
           const walletPatch: Record<string, unknown> = {
             parentId,
             currentBalance: computedLedgerBalance,
