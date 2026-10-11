@@ -47,7 +47,6 @@ import { stripParentStagePrefix } from "./parentVisualTokens";
 import {
   resolveParentClassSessionDateBounds,
   resolveParentClassSessionReadMode,
-  shouldRunParentLegacySessionFallback,
 } from "./parentClassSessionReadPolicy";
 import {
   ArrowRight,
@@ -2399,68 +2398,9 @@ export default function ParentDashboard() {
         });
       }
 
-      // Compatibility only: if a bounded read sees nothing at all, retry the old
-      // ownership lookups once. This protects legacy sessions that have startAt but
-      // no canonical date field. Canonical parents never pay this extra read cost.
-      if (
-        parentClassSessionDateBounds
-        && (
-          shouldRunParentLegacySessionFallback(snapA?.size ?? 0)
-          || snapB === null
-        )
-      ) {
-        const [legacyCanonicalSnap, legacyKidIdSnap] = await Promise.all([
-          readQueryDocs(
-            "Query A legacy compatibility",
-            () => query(
-              classSessionsCol,
-              where("kidIds", "array-contains", selectedKidId),
-              where("parentId", "==", user.uid),
-            ),
-          ),
-          readQueryDocs(
-            "Query B legacy compatibility",
-            () => query(
-              classSessionsCol,
-              where("kidId", "==", selectedKidId),
-              where("parentId", "==", user.uid),
-            ),
-          ),
-        ]);
-
-        (legacyCanonicalSnap?.docs ?? []).forEach((d) => {
-          const row = { id: d.id, ...(d.data() as any) } as KidSession;
-          const start = sessionStartDate(row);
-          if (!start) return;
-          const dayKey = toYMD(start);
-          if (
-            dayKey >= parentClassSessionDateBounds.startKey
-            && dayKey <= parentClassSessionDateBounds.endKey
-          ) {
-            map.set(d.id, row);
-          }
-        });
-        (legacyKidIdSnap?.docs ?? []).forEach((d) => {
-          const row = { id: d.id, ...(d.data() as any) } as KidSession;
-          const start = sessionStartDate(row);
-          if (!start) return;
-          const dayKey = toYMD(start);
-          if (
-            dayKey >= parentClassSessionDateBounds.startKey
-            && dayKey <= parentClassSessionDateBounds.endKey
-          ) {
-            map.set(d.id, row);
-          }
-        });
-
-        if (map.size > 0) {
-          emitParentLegacyFallbackTelemetry("classSessions_missing_date", {
-            kidId: selectedKidId,
-            count: map.size,
-            canonicalHit: false,
-          });
-        }
-      }
+      // Do not turn an empty monthly/Today query into an unbounded historical
+      // scan. Historical records remain accessible through the explicit
+      // History view, which has its own read mode.
 
       const all = Array.from(map.values());
       debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
@@ -2591,15 +2531,29 @@ export default function ParentDashboard() {
       .sort((a, b) => a.start.getTime() - b.start.getTime());
   }, [allKidSessions, visibleUpcomingProjections, selectedKidId]);
 
-  const todayDayKey = toYMD(new Date());
+  // IST service date, refreshed only when the day changes (no polling reads).
+  const [todayDayKey, setTodayDayKey] = useState(() =>
+    new Date(Date.now()+330*60_000).toISOString().slice(0,10));
+  useEffect(()=>{
+    const timer=window.setInterval(()=>{
+      const key=new Date(Date.now()+330*60_000).toISOString().slice(0,10);
+      setTodayDayKey(old=>old===key?old:key);
+    },60_000);
+    return ()=>window.clearInterval(timer);
+  },[]);
+  const getClassServiceDay = (session:KidSession,start:Date):string => {
+    const given=typeof session.date==='string'?session.date.trim():'';
+    if (/^\\d{4}-\\d{2}-\\d{2}$/.test(given)) return given;
+    return new Date(start.getTime()+330*60_000).toISOString().slice(0,10);
+  };
 
   const todayClassSessions = useMemo(() => {
-    return sortedClassSessions.filter((row) => toYMD(row.start) === todayDayKey);
+    return sortedClassSessions.filter((row) => getClassServiceDay(row.session,row.start) === todayDayKey);
   }, [sortedClassSessions, todayDayKey]);
 
   const upcomingClassSessions = useMemo(() => {
     return sortedClassSessions.filter((row) => {
-      if (toYMD(row.start) <= todayDayKey) return false;
+      if (getClassServiceDay(row.session,row.start) <= todayDayKey) return false;
       return row.status === "scheduled" || row.status === "in_progress";
     });
   }, [sortedClassSessions, todayDayKey]);
@@ -2619,7 +2573,7 @@ export default function ParentDashboard() {
   const pastPendingClassSessions = useMemo(() => {
     return [...sortedClassSessions]
       .filter((row) => {
-        if (toYMD(row.start) >= todayDayKey) return false;
+        if (getClassServiceDay(row.session,row.start) >= todayDayKey) return false;
         return row.status === "scheduled" || row.status === "in_progress";
       })
       .sort((a, b) => b.start.getTime() - a.start.getTime());
@@ -2650,7 +2604,10 @@ export default function ParentDashboard() {
           normalizeStatus(session.status),
       }))
       .filter((row): row is {session: KidSession; start: Date; status: string} => Boolean(row.start))
-      .filter(row => row.start.getTime() >= startMs && row.start.getTime() <= endMs);
+      .filter(row => {
+        const day=getClassServiceDay(row.session,row.start);
+        return day >= toYMD(classesCalendarStart) && day <= toYMD(classesCalendarEnd);
+      });
 
     const kidId = selectedKidId ? String(selectedKidId) : '';
     const projectionEnrollments = ((enrollmentsQuery.data ?? []) as Enrollment[]).filter((enrollment) => {
@@ -2683,7 +2640,7 @@ export default function ParentDashboard() {
   const classesCalendarSessionsByDay = useMemo(() => {
     const map: Record<string, Array<{ session: KidSession; start: Date; status: string }>> = {};
     classesCalendarSessions.forEach((row) => {
-      const key = toYMD(row.start);
+      const key = getClassServiceDay(row.session,row.start);
       if (!map[key]) map[key] = [];
       map[key].push(row);
     });
