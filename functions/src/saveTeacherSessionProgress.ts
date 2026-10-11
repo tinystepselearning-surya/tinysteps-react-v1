@@ -762,25 +762,6 @@ export const saveTeacherSessionProgress = onCall(
           revenueRepairReason: financeReviewReason,
           revenueRepairDetectedAt: FieldValue.serverTimestamp(),
         });
-        const auditRef = sessionRef.collection('attendanceCorrections').doc();
-        tx.create(auditRef, {
-          source: 'teacher-attendance-correction',
-          sessionId,
-          correctedByUid: uid,
-          correctedAt: FieldValue.serverTimestamp(),
-          attendanceTransitions: Object.fromEntries(
-            Object.keys(incomingAttendance).map(kidId => [kidId, {
-              previousStatus: toAttendanceEntry(previousMap[kidId]).status || 'not_marked',
-              newStatus: toAttendanceEntry(nextAttendance[kidId]).status || 'not_marked',
-            }]),
-          ),
-          financeReconciliation: {
-            action: 'review_required',
-            reviewReason: financeReviewReason,
-            chargeChanged: false,
-            earningChanged: false,
-          },
-        });
       }
       if(claims.some(c=>c.exists && String(c.data()?.sessionId||'')!==sessionId))
         throw new HttpsError('failed-precondition',
@@ -802,6 +783,29 @@ export const saveTeacherSessionProgress = onCall(
               'Historical class already exists for the student/date/time; Admin review.');
         }
       }
+      if (financeReviewReason) {
+        // All Firestore transaction reads (including optional canonical-day
+        // coverage) must finish before this audit document is staged.
+          const auditRef = sessionRef.collection('attendanceCorrections').doc();
+          tx.create(auditRef, {
+            source: 'teacher-attendance-correction',
+            sessionId,
+            correctedByUid: uid,
+            correctedAt: FieldValue.serverTimestamp(),
+            attendanceTransitions: Object.fromEntries(
+              Object.keys(incomingAttendance).map(kidId => [kidId, {
+                previousStatus: toAttendanceEntry(previousMap[kidId]).status || 'not_marked',
+                newStatus: toAttendanceEntry(nextAttendance[kidId]).status || 'not_marked',
+              }]),
+            ),
+            financeReconciliation: {
+              action: 'review_required',
+              reviewReason: financeReviewReason,
+              chargeChanged: false,
+              earningChanged: false,
+            },
+          });
+        }
       tx.update(sessionRef,sessionUpdate);
       for(let i=0;i<claims.length;i++){
         if(claims[i].exists)continue;

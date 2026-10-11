@@ -459,6 +459,11 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       earningRef.update({status: 'paid', paidAmount: 175, payoutIds: ['payout-a']}),
     ]);
 
+    // Simulate a legacy attendance row whose occurrence claim needs rebuilding.
+    // The Finance review audit cannot stage writes before the day coverage query.
+    const claimRef = db.collection('calendarAttendanceClaims')
+      .doc(ids.kid + '_20261012_1700');
+    await claimRef.delete();
     await mark(sessionId, 'absent');
     await eventually(async () => {
       const saved = (await db.collection('classSessions').doc(sessionId).get()).data();
@@ -467,6 +472,7 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
         saved?.revenueRepairReason === 'attendance_correction_settled_ledger'
         ? true : null;
     }, 'settled attendance saved and flagged');
+    expect((await claimRef.get()).data()?.sessionId).toBe(sessionId);
     await delay(1_500); // allow the revenue trigger to process the saved correction
     const [charge, earning] = await ledger(sessionId);
     expect(charge.data()).toMatchObject({status: 'paid', paidAmount: 400, paymentIds: ['payment-a']});
