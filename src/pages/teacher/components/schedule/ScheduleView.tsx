@@ -20,10 +20,9 @@ import {
 } from '../../../../lib/attendanceCorrectionFreeze';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
-import { auth, db } from '../../../../lib/firebaseConfig';
+import { Timestamp } from 'firebase/firestore';
+import { auth } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';
 import {
   buildRollingScheduleCalendarProjections,
@@ -44,9 +43,6 @@ import {
   eachDayOfInterval,
   isToday,
 } from 'date-fns';
-
-// Legacy reschedule/credit UI retired. Existing historical records remain untouched.
-const LEGACY_RESCHEDULE_INTERFACE_ENABLED = false;
 
 interface ScheduleViewProps {
   teacherId?: string;
@@ -148,37 +144,6 @@ const MONTH_WEEKDAY_HEADER_TONE_CLASS = [
   'border-indigo-200 bg-gradient-to-b from-indigo-100 to-indigo-50 text-indigo-700',
 ] as const;
 
-type RescheduleCreditRecord = {
-  creditId: string;
-  kidId: string;
-  status: 'open' | 'scheduled' | 'consumed' | 'cancelled' | string;
-  sourceSessionId: string;
-  sourceSessionDate: string;
-  sourceStartTime: string;
-  durationMins: number;
-  updatedAt?: unknown;
-};
-
-type MakeupDraft = {
-  date: string;
-  startTime: string;
-  note: string;
-};
-
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-const buildDefaultMakeupDate = (): string => {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  return format(date, 'yyyy-MM-dd');
-};
-
-const toNumberOr = (value: unknown, fallback: number): number => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-};
-
 const timestampToMillis = (value: unknown): number => {
   if (value && typeof value === 'object' && typeof (value as { toMillis?: unknown }).toMillis === 'function') {
     return Number((value as { toMillis: () => number }).toMillis()) || 0;
@@ -215,12 +180,6 @@ const getSessionStartMillis = (session: Partial<TeacherSession> | null | undefin
   return Number.isNaN(parsed) ? null : parsed;
 };
 
-const getAttendanceAllowedAtMillis = (session: Partial<TeacherSession> | null | undefined): number | null => {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + 30 * 60 * 1000;
-};
-
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -238,7 +197,6 @@ const completeSessionViaBackend = async (
 };
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
-  const { user } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
@@ -248,13 +206,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [adHocStartTime, setAdHocStartTime] = useState('17:00');
   const [adHocDurationMinutes, setAdHocDurationMinutes] = useState(35);
   const [adHocSaving, setAdHocSaving] = useState(false);
-  const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCreditRecord[]>([]);
-  const [rescheduleCreditsLoading, setRescheduleCreditsLoading] = useState<boolean>(false);
-  const [makeupDraftByCredit, setMakeupDraftByCredit] = useState<Record<string, MakeupDraft>>({});
-  const [schedulingCreditId, setSchedulingCreditId] = useState<string | null>(null);
-  const [isReschedulePanelExpanded, setIsReschedulePanelExpanded] = useState<boolean>(false);
-  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
-
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
       return { rangeStart: startOfMonth(currentDate), rangeEnd: endOfMonth(currentDate) };
@@ -588,89 +539,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   );
 
   useEffect(() => {
-    if (!LEGACY_RESCHEDULE_INTERFACE_ENABLED) {
-      // No rescheduleCredits collection listener or unnecessary Firestore reads.
-      setRescheduleCredits([]);
-      setRescheduleCreditsLoading(false);
-      return;
-    }
-    if (!resolvedTeacherId) {
-      setRescheduleCredits([]);
-      setRescheduleCreditsLoading(false);
-      return;
-    }
-
-    setRescheduleCreditsLoading(true);
-    const creditsQuery = query(
-      collection(db, 'rescheduleCredits'),
-      where('teacherId', '==', resolvedTeacherId),
-      where('status', '==', 'open'),
-    );
-
-    const unsub = onSnapshot(
-      creditsQuery,
-      (snapshot) => {
-        const rows: RescheduleCreditRecord[] = snapshot.docs.map((snap) => {
-          const data = (snap.data() || {}) as Record<string, unknown>;
-          const durationMins = Math.max(10, Math.min(180, Math.round(toNumberOr(data.durationMins, 35))));
-          return {
-            creditId: String(data.creditId || snap.id),
-            kidId: String(data.kidId || ''),
-            status: String(data.status || 'open'),
-            sourceSessionId: String(data.sourceSessionId || ''),
-            sourceSessionDate: String(data.sourceSessionDate || ''),
-            sourceStartTime: String(data.sourceStartTime || ''),
-            durationMins,
-            updatedAt: data.updatedAt,
-          };
-        }).filter((row) => row.creditId && row.kidId);
-
-        rows.sort((a, b) => {
-          const byUpdated = timestampToMillis(b.updatedAt) - timestampToMillis(a.updatedAt);
-          if (byUpdated !== 0) return byUpdated;
-          return b.sourceSessionDate.localeCompare(a.sourceSessionDate);
-        });
-
-        setRescheduleCredits(rows);
-        setRescheduleCreditsLoading(false);
-        setMakeupDraftByCredit((prev) => {
-          const next: Record<string, MakeupDraft> = {};
-          rows.forEach((row) => {
-            next[row.creditId] = prev[row.creditId] || {
-              date: buildDefaultMakeupDate(),
-              startTime: '16:00',
-              note: '',
-            };
-          });
-          return next;
-        });
-      },
-      (err) => {
-        console.error('rescheduleCredits onSnapshot error', err);
-        setRescheduleCredits([]);
-        setRescheduleCreditsLoading(false);
-      },
-    );
-
-    return () => unsub();
-  }, [resolvedTeacherId]);
-
-  const updateMakeupDraft = (creditId: string, patch: Partial<MakeupDraft>) => {
-    setMakeupDraftByCredit((prev) => ({
-      ...prev,
-      [creditId]: {
-        ...(prev[creditId] || { date: buildDefaultMakeupDate(), startTime: '16:00', note: '' }),
-        ...patch,
-      },
-    }));
-  };
-
-  const visibleRescheduleCredits = useMemo(() => {
-    if (selectedStudentId === 'all') return rescheduleCredits;
-    return rescheduleCredits.filter((credit) => String(credit.kidId || '').trim() === selectedStudentId);
-  }, [rescheduleCredits, selectedStudentId]);
-
-  useEffect(() => {
     if (!selectedSession) return;
     if (selectedStudentId === 'all') return;
     const matchesSelected = getSessionKidIds(selectedSession).includes(selectedStudentId);
@@ -678,64 +546,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       setSelectedSession(null);
     }
   }, [selectedSession, selectedStudentId, getSessionKidIds]);
-
-  const handleCreateMakeupSession = async (credit: RescheduleCreditRecord) => {
-    const draft = makeupDraftByCredit[credit.creditId] || {
-      date: buildDefaultMakeupDate(),
-      startTime: '16:00',
-      note: '',
-    };
-
-    if (!ISO_DATE_RE.test(draft.date)) {
-      toast({
-        title: 'Invalid date',
-        description: 'Choose a valid date (YYYY-MM-DD).',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!HHMM_RE.test(draft.startTime)) {
-      toast({
-        title: 'Invalid time',
-        description: 'Choose a valid start time (HH:mm).',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setSchedulingCreditId(credit.creditId);
-      const functions = getFunctions(undefined, 'asia-south1');
-      const createMakeupSessionFromCredit = httpsCallable(functions, 'createMakeupSessionFromCredit');
-      const response = await createMakeupSessionFromCredit({
-        creditId: credit.creditId,
-        kidId: credit.kidId,
-        date: draft.date,
-        startTime: draft.startTime,
-        durationMins: credit.durationMins,
-        note: draft.note.trim() || undefined,
-      });
-
-      const result = (response.data || {}) as { sessionId?: string; alreadyExisted?: boolean };
-      setCurrentDate(new Date(`${draft.date}T00:00:00`));
-      setView('day');
-      toast({
-        title: result.alreadyExisted ? 'Makeup session already exists' : 'Makeup session scheduled',
-        description: result.sessionId
-          ? `Session ${result.sessionId} is ready in your calendar.`
-          : 'The reschedule credit was scheduled successfully.',
-      });
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: 'Unable to schedule makeup session',
-        description: err instanceof Error ? err.message : 'Please try another date/time.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSchedulingCreditId(null);
-    }
-  };
 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
@@ -909,107 +719,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </Card>
         </div>
       </Card>
-
-      {LEGACY_RESCHEDULE_INTERFACE_ENABLED && (
-      <Card className="border-slate-200 bg-white/95 p-4 shadow-sm md:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">Open Reschedule Credits</h3>
-            <p className="text-xs text-slate-500">
-              Schedule one makeup class per student credit.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-              {visibleRescheduleCredits.length} open
-            </Badge>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="rounded-full"
-              onClick={() => setIsReschedulePanelExpanded((prev) => !prev)}
-            >
-              {isReschedulePanelExpanded ? 'Close' : 'Expand'}
-            </Button>
-          </div>
-        </div>
-
-        {isReschedulePanelExpanded && (
-          <>
-            {rescheduleCreditsLoading ? (
-              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                Loading credits...
-              </div>
-            ) : visibleRescheduleCredits.length === 0 ? (
-              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                No open reschedule credits right now.
-              </div>
-            ) : (
-              <div className="mt-3 space-y-3">
-                {visibleRescheduleCredits.map((credit) => {
-                  const draft = makeupDraftByCredit[credit.creditId] || {
-                    date: buildDefaultMakeupDate(),
-                    startTime: '16:00',
-                    note: '',
-                  };
-                  const studentLabel =
-                    studentNameById.get(credit.kidId) ||
-                    `Student (${credit.kidId.slice(0, 6)}...)`;
-
-                  return (
-                    <div key={credit.creditId} className="rounded-xl border border-slate-200 bg-white p-3">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-medium text-slate-900">{studentLabel}</div>
-                        <div className="text-xs text-slate-500">
-                          Missed: {credit.sourceSessionDate || '—'}{credit.sourceStartTime ? ` at ${credit.sourceStartTime}` : ''}
-                        </div>
-                      </div>
-                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
-                        <div>
-                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Date</label>
-                          <Input
-                            type="date"
-                            value={draft.date}
-                            onChange={(event) => updateMakeupDraft(credit.creditId, { date: event.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Time</label>
-                          <Input
-                            type="time"
-                            value={draft.startTime}
-                            onChange={(event) => updateMakeupDraft(credit.creditId, { startTime: event.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Note (optional)</label>
-                          <Input
-                            type="text"
-                            placeholder="Optional note"
-                            value={draft.note}
-                            onChange={(event) => updateMakeupDraft(credit.creditId, { note: event.target.value })}
-                          />
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            className="w-full rounded-lg"
-                            onClick={() => handleCreateMakeupSession(credit)}
-                            disabled={schedulingCreditId === credit.creditId}
-                          >
-                            {schedulingCreditId === credit.creditId ? 'Scheduling...' : 'Schedule Makeup'}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
-      </Card>
-      )}
 
       <Card className="border-slate-200 bg-white/95 p-5 shadow-sm md:p-6">
         {view === 'month' && (
