@@ -387,15 +387,21 @@ const loadDayBucketsFromFirestore = async (
 export const loadManualReminderDayBuckets = async ({
   deps,
   forceRefresh = false,
+  directFirestore = false,
   todayDateKey,
   tomorrowDateKey,
 }: {
   deps: ReminderLoadDeps;
   forceRefresh?: boolean;
+  /** Cutover option: use two day-bounded Firestore queries, never the old full snapshot. */
+  directFirestore?: boolean;
   todayDateKey: string;
   tomorrowDateKey: string;
 }): Promise<ManualReminderDayBucketsResult> => {
   const startedAt = Date.now();
+  if (directFirestore) {
+    return loadDayBucketsFromFirestore(deps, todayDateKey, tomorrowDateKey, startedAt);
+  }
   if (!forceRefresh) {
     try {
       deps.readCache(todayDateKey);
@@ -448,11 +454,22 @@ export const loadManualReminderDayBuckets = async ({
 export const loadManualReminderSelectedDate = async ({
   dateKey,
   deps,
+  directFirestore = false,
 }: {
   dateKey: string;
   deps: Omit<ReminderLoadDeps, 'readCache' | 'writeCache'>;
+  directFirestore?: boolean;
 }): Promise<ManualReminderSelectedDateResult> => {
   const startedAt = Date.now();
+  if (directFirestore) {
+    const sessions = await deps.fetchSessionsForDate(dateKey);
+    const enriched = await hydrateSessionsWithEnrollments(sessions, deps.fetchEnrollmentsByIds);
+    return {
+      dateKey, elapsedMs: Date.now() - startedAt,
+      enrollmentFallbackReads: enriched.enrollmentFallbackReads,
+      enrollmentMap: enriched.enrollmentMap, sessions: enriched.sessions, source: 'firestore',
+    };
+  }
   try {
     const payload = await (deps.loadDateSnapshot || loadSessionsManagementDateSnapshot)(dateKey);
     const enrollmentMap = rowsToMap(payload.enrollments);
