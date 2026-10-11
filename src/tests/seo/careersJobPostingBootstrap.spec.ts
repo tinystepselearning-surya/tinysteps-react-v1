@@ -27,6 +27,7 @@ describe('closed teacher recruitment', () => {
     expect(careersSource).toContain('Teacher Recruitment Closed');
     expect(careersSource).not.toContain('CareerApplicationForm');
     expect(careersSource).not.toContain("',,");
+    expect(careersSource).not.toMatch(/question: '[^\n]+'\s*\n\s*answer:/);
     expect(careersSource).toContain('id="apply"');
     expect(careersSource).not.toContain('wa.me/');
     expect(careersSource).not.toContain("collection(db, 'teacherInquiries')");
