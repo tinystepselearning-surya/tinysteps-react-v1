@@ -585,32 +585,7 @@ export const saveTeacherSessionProgress = onCall(
     const session = (sessionSnap.data() || {}) as Record<string, unknown>;
     assertCanSaveSession(uid, role, session);
 
-    const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
-    const attendanceCorrectionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-    if (
-      role === 'teacher' &&
-      !canCallerOverrideAttendanceTime(role)
-    ) {
-      if (attendanceAllowedAtMs === null || attendanceCorrectionCutoffMs === null) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Attendance time could not be verified. Please contact admin.',
-        );
-      }
-      if (Date.now() < attendanceAllowedAtMs) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Attendance can be marked 30 minutes after class start.',
-        );
-      }
-      if (Date.now() >= attendanceCorrectionCutoffMs) {
-        throw new HttpsError(
-          'failed-precondition',
-          ATTENDANCE_FINALISED_MESSAGE,
-        );
-      }
-    }
-
+    // No time-based teacher gate. Keep authorization and financial safeguards.
     const attendanceOnly = payload.meta?.attendanceOnly === true;
     const incomingAttendance = payload.attendance as Record<string, unknown>;
     // Preserve historical credits/corrections. Once virtual calendar is
