@@ -209,14 +209,10 @@ export {
   batchInsightsRollup11pm,
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
-// Only the new daily generator will remain scheduled after the cutover.
-// Fail-closed until DAILY_SESSION_WRITES_ENABLED=true has been approved.
-export { dailySessionsTomorrowAt0005 } from "./scheduling/dailySessionGenerator";
-export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
-export {
-  onFutureScheduleEnrollmentWrite,
-  futureScheduleReconcilerEveryTwoHours,
-} from "./scheduling/futureScheduleOrchestration";
+// Obsolete automatic recurrence schedulers and Firestore reconciliation triggers
+// were permanently retired at the October 2026 virtual-calendar cutover.
+// They are intentionally NOT exported or deployed. Real sessions are persisted
+// only by authorized attendance, ad hoc, and admin-history actions.
 
 // Games: catalog management and level results
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
