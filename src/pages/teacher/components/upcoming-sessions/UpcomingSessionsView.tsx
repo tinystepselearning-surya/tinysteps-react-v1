@@ -9,6 +9,9 @@ import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, getSessionS
 import { TeacherSession } from '../../../../types/Teacher';
 import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
 import { FileText } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
+import { buildRollingScheduleCalendarProjections } from '../../../../lib/scheduling/rollingScheduleCalendarProjection';
+import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { app } from '../../../../lib/firebaseConfig';
@@ -75,10 +78,53 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
     setIsLessonPlanModalOpen(true);
   };
 
+  const teacherEnrollments = useMemo(() =>
+    students.flatMap(student => student.scheduleEnrollments || []), [students]);
+
+  // An upcoming calendar date is driven by Student Management recurrence even
+  // when the old future classSessions have all been cleared.
+  const projectedUpcoming = useMemo<TeacherSession[]>(() => {
+    const projected = buildRollingScheduleCalendarProjections({
+      enrollments:teacherEnrollments,
+      realSessions:sessions as unknown as Record<string,unknown>[],
+      fromYmd:appliedSelectedDate,toYmd:appliedSelectedDate,
+    });
+    return projected.map(row=>({
+      id:row.id,enrollmentId:row.enrollmentId,
+      teacherId:row.teacherId || teacherId || '',
+      courseId:row.courseId || '',courseName:row.courseName,
+      date:row.date,startTime:row.startTime,endTime:row.endTime,
+      durationMins:row.durationMins,durationMinutes:row.durationMinutes,
+      kidIds:row.kidIds || (row.kidId?[row.kidId]:[]),
+      kidId:row.kidId,studentId:row.studentId,
+      studentName:row.studentName,kidName:row.kidName,childName:row.childName,
+      joinUrl:row.joinUrl,
+      startAt:Timestamp.fromDate(row.startAt),endAt:Timestamp.fromDate(row.endAt),
+      source:row.source,status:'scheduled',
+    }));
+  },[appliedSelectedDate,sessions,teacherEnrollments,teacherId]);
+
+  const visibleSessions=useMemo(
+    ()=>[...sessions,...projectedUpcoming],
+    [sessions,projectedUpcoming],
+  );
+
+  const openUpcomingMeeting=(session:TeacherSession)=>{
+    const enrollment=teacherEnrollments.find(row=>row.id===session.enrollmentId);
+    const url=String(enrollment?.joinUrl || session.joinUrl || '').trim();
+    if(!/^https:\/\//i.test(url)){
+      toast({title:'Teams link unavailable',
+        description:'Ask Admin to update the enrollment meeting link.',
+        variant:'destructive'});
+      return;
+    }
+    window.open(url,'_blank','noopener,noreferrer');
+  };
+
   const courseOptions = useMemo(() => {
-    const courses = new Set(sessions.map((s) => s.courseName).filter(Boolean));
+    const courses = new Set(visibleSessions.map((s) => s.courseName).filter(Boolean));
     return Array.from(courses) as string[];
-  }, [sessions]);
+  }, [visibleSessions]);
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -121,7 +167,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   }, [entityDocById, teacherOwnedEntityDocById]);
 
   const resolvedSessions = useMemo(() => {
-    return sessions.map((session) => {
+    return visibleSessions.map((session) => {
       const enrollmentId = typeof session.enrollmentId === 'string' ? session.enrollmentId.trim() : '';
       const enrollment = enrollmentId ? enrollmentsById.get(enrollmentId) : undefined;
       const resolved = resolveTeacherSessionStudentName(session, {
@@ -135,7 +181,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
         resolved,
       };
     });
-  }, [combinedEntityDocById, enrollmentsById, sessions]);
+  }, [combinedEntityDocById, enrollmentsById, visibleSessions]);
 
   useEffect(() => {
     if (!shouldDebugNameResolution) return;
@@ -412,12 +458,9 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                           </Button>
                         ) : null}
 
-                        <Button size="sm" variant="outline">
-                          Set Reminder
-                        </Button>
-
-                        <Button size="sm" variant="outline">
-                          View Details
+                        <Button size="sm" variant="outline"
+                          onClick={() => openUpcomingMeeting(session)}>
+                          Join Teams
                         </Button>
                       </div>
                     </div>
