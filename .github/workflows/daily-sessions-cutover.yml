@@ -4,6 +4,7 @@ on:
     paths:
       - 'functions/src/scheduling/dailySessionGenerator.ts'
       - 'functions/scripts/resetFutureSessionsOctober12.cjs'
+      - 'functions/scripts/preflightOct12DailySessionsReadonly.cjs'
       - 'functions/src/scheduling/nextDaySessionPlan.ts'
       - 'functions/src/index.ts'
       - 'functions/test/nextDaySessionPlan.spec.ts'
@@ -34,8 +35,10 @@ jobs:
             functions/package-lock.json
       - name: Install dependencies (no deploy)
         run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
-      - name: Verify one-time reset script syntax (no execution)
-        run: node --check functions/scripts/resetFutureSessionsOctober12.cjs
+      - name: Verify cutover scripts syntax (no Firestore access)
+        run: |
+          node --check functions/scripts/resetFutureSessionsOctober12.cjs
+          node --check functions/scripts/preflightOct12DailySessionsReadonly.cjs
       - name: Build functions
         run: npm --prefix functions run build
       - name: Planner and admin regression tests
