@@ -10,7 +10,8 @@ import {
 } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
-import { getDocLogged, getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
+import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
+import { teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
 import { getSessionStartDate } from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
@@ -39,6 +40,7 @@ interface UseUpcomingSessionsResult {
   enrollmentsById: Map<string, Record<string, unknown>>;
   entityDocById: Map<string, Record<string, unknown>>;
   deniedLookups: Array<{ collection: string; code?: string | null; error: string }>;
+  refresh: () => void;
 }
 
 export const getDefaultUpcomingSelectedDate = (): string => format(new Date(), 'yyyy-MM-dd');
@@ -373,6 +375,11 @@ export const useUpcomingSessions = (
   const [enrollmentsById, setEnrollmentsById] = useState<Map<string, Record<string, unknown>>>(new Map());
   const [entityDocById, setEntityDocById] = useState<Map<string, Record<string, unknown>>>(new Map());
   const [deniedLookups, setDeniedLookups] = useState<Array<{ collection: string; code?: string | null; error: string }>>([]);
+  const [manualRefresh, setManualRefresh] = useState(0);
+  const refresh = () => {
+    if (teacherId) teacherCalendarSessionReadCache.invalidateTeacher(teacherId);
+    setManualRefresh(n => n + 1);
+  };
 
   useEffect(() => {
     if (!teacherId) {
@@ -393,6 +400,15 @@ export const useUpcomingSessions = (
 
     const baseCollection = collection(db, 'classSessions');
     const targetDate = cleanString(selectedDate) || getDefaultUpcomingSelectedDate();
+    const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+    if (targetDate < todayIst) {
+      // Monthly summaries, not historical classSessions, serve history.
+      setSessions([]);
+      setEnrollmentsById(new Map());
+      setEntityDocById(new Map());
+      setIsLoading(false);
+      return;
+    }
 
     const buildScopedTeacherQuery = (
       field: 'teacherId' | 'teacherIds' | 'assignedTeacherId' | 'primaryTeacherId' | 'teacherUid' | 'teacher_id',
@@ -552,117 +568,48 @@ export const useUpcomingSessions = (
       setSettledState();
     };
 
-    const listeners: Array<() => void> = [];
-
-    const attachListener = (
-      sourceKey: string,
-      aliasField: string,
-      op: '==' | 'array-contains',
-      listenerQuery: Query,
-    ) => {
-      devLogTeacherQuery('useUpcomingSessions', 'listen', {
-        queryName: sourceKey,
-        collection: 'classSessions',
-        aliasField,
-        op,
-        dateRange: { type: 'single', date: targetDate },
-        authUid: teacherId,
-      });
-
-      const unsubscribe = onSnapshotLogged(
-        `useUpcomingSessions:${sourceKey}`,
-        listenerQuery,
-        { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
-        (snapshot) => {
-          devLogTeacherQuery('useUpcomingSessions', 'snapshot', {
-            queryName: sourceKey,
-            collection: 'classSessions',
-            aliasField,
-            dateRange: { type: 'single', date: targetDate },
-            authUid: teacherId,
-            docsReturned: snapshot.docs.length,
-          });
-          sourceStates.set(sourceKey, { status: 'ready', error: null });
-
-          liveDocsBySource.set(
-            sourceKey,
-            new Map(
-              snapshot.docs.map((d) => [
-                d.id,
-                toTeacherSession({
-                  id: d.id,
-                  ...(d.data() as Record<string, unknown>),
-                }),
-              ]),
-            ),
-          );
-
-          void publishMerged().catch((err) => {
-            devLogTeacherQuery('useUpcomingSessions', 'error', {
-              queryName: 'canonical-filter',
-              collection: 'classSessions',
-              error: err instanceof Error ? err.message : String(err),
-              code: (err as any)?.code || null,
-              authUid: teacherId,
-            });
-
-            if (cancelled) return;
-
-            setError(createUpcomingSessionsError(
-              'Unable to load upcoming sessions. Please contact admin if this keeps happening.',
-              (err as any)?.code || null,
-            ));
-            setIsLoading(false);
-          });
-        },
-        (err) => {
-          const errMessage = err instanceof Error ? err.message : String(err);
-          devLogTeacherQuery('useUpcomingSessions', 'error', {
-            queryName: sourceKey,
-            collection: 'classSessions',
-            aliasField,
-            op,
-            dateRange: { type: 'single', date: targetDate },
-            authUid: teacherId,
-            error: errMessage,
-            code: (err as any)?.code || null,
-          });
-
+    const unsubscribe = teacherCalendarSessionReadCache.subscribe(
+      { teacherId, start: targetDate, end: targetDate },
+      async () => {
+        const snapshot = await getDocsLogged(
+          'useUpcomingSessions:primary',
+          primaryQuery,
+          { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
+        );
+        return snapshot.docs.map(d =>
+          toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+      },
+      rows => {
+        sourceStates.set('primary', { status: 'ready', error: null });
+        liveDocsBySource.set('primary', new Map(rows.map(row => [row.id, row])));
+        void publishMerged().catch(err => {
           if (cancelled) return;
-
-          sourceStates.set(sourceKey, {
-            status: 'error',
-            error: createUpcomingSessionsError(
-              'Unable to load upcoming sessions. One or more teacher session queries were denied.',
-              (err as any)?.code || null,
-            ),
-          });
-          liveDocsBySource.set(sourceKey, new Map());
-          setSettledState();
-        },
-      );
-
-      listeners.push(unsubscribe);
-    };
-
-    if (shouldDebugTeacherSessionNames()) {
-      const debugCollections = ['children'];
-      setDeniedLookups(
-        debugCollections.map((collectionName) => ({
-          collection: collectionName,
-          code: 'skipped',
-          error: 'Skipped unauthorized lookup source; relying on session/enrollment snapshots and teacher-owned student docs.',
-        })),
-      );
-    }
-
-    attachListener('primary', 'teacherId', '==', primaryQuery);
+          setError(createUpcomingSessionsError(
+            'Unable to resolve teacher class exceptions. Use Refresh to retry.',
+            (err as {code?:string})?.code || null,
+          ));
+          setIsLoading(false);
+        });
+      },
+      err => {
+        if (cancelled) return;
+        sourceStates.set('primary', {
+          status: 'error',
+          error: createUpcomingSessionsError(
+            'Unable to load teacher class exceptions. Use Refresh to retry.',
+            (err as {code?:string})?.code || null,
+          ),
+        });
+        liveDocsBySource.set('primary', new Map());
+        setSettledState();
+      },
+    );
 
     return () => {
       cancelled = true;
-      listeners.forEach((stop) => stop());
+      unsubscribe();
     };
-  }, [teacherId, selectedDate]);
+  }, [teacherId, selectedDate, manualRefresh]);
 
-  return { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups };
+  return { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups, refresh };
 };
