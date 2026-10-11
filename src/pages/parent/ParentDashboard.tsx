@@ -5340,9 +5340,15 @@ export default function ParentDashboard() {
               onSelectResource={selectClassResource}
               onJoinSession={(row) => openJoinClass(row.source as KidSession)}
               onRefresh={() => {
+                // Never trigger a history scan from Refresh on a past-month
+                // calendar; the monthly attendance read model is sufficient.
+                const pastCalendar = parentClassSessionReadMode === 'calendar' &&
+                  Boolean(parentClassSessionDateBounds?.endKey) &&
+                  String(parentClassSessionDateBounds?.endKey) <
+                    new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
                 void Promise.all([
                   enrollmentsQuery.refetch(),
-                  kidSessionsQuery.refetch(),
+                  ...(!pastCalendar ? [kidSessionsQuery.refetch()] : []),
                   parentMonthlyBillingReadModelQuery.refetch(),
                 ]);
               }}
