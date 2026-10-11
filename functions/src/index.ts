@@ -75,6 +75,11 @@ export { reconcileRollingEnrollmentSchedule } from "./scheduling/rollingSchedule
 export { adminRepairRollingScheduleMaterialization } from "./scheduling/rollingScheduleRepair";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
+// Explicit attendance-on-demand and one-off teacher bookings: no daily session pre-generation.
+export {
+  ensureTeacherCalendarAttendanceSession,
+  createTeacherCalendarAdHocSession,
+} from "./scheduling/teacherCalendarActions";
 export { runAttendanceValidationRange } from "./attendanceValidation/runValidationCallable";
 export { updateAttendanceValidationMonthlyParentProgress } from "./attendanceValidation/monthlyParentProgressCallable";
 export { revalidateAttendanceValidationGroupCached } from "./attendanceValidation/cachedGroupRevalidationCallable";
