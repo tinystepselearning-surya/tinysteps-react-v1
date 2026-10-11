@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.1
@@ -39,5 +41,19 @@ jobs:
         run: npm --prefix functions run build
       - name: Cutover hard-stop and entire functions regression suite
         run: npm --prefix functions test
+      - name: Verify targeted Functions deployment impact (no deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          baseline="$(git merge-base origin/main HEAD)"
+          node scripts/resolve-deployment-impact.mjs \
+            --before "$baseline" \
+            --functions-before "$baseline" \
+            --sha "$(git rev-parse HEAD)" | tee /tmp/legacy-writer-impact.txt
+          grep -q 'Functions full deployment: false' /tmp/legacy-writer-impact.txt
+          grep -q 'Hosting changed: false' /tmp/legacy-writer-impact.txt
+          grep -q 'Firestore rules changed: false' /tmp/legacy-writer-impact.txt
+          grep -q 'Firestore indexes changed: false' /tmp/legacy-writer-impact.txt
       - name: Deployment safety
         run: echo "Verification only; no Cloud Functions or Firestore updates."
