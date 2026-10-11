@@ -154,7 +154,7 @@ test('teacher marks a future class Absent through the actual UI without a charge
 
   await page.getByRole('button', {name: 'Mark Present / Absent'}).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByText('Mark Attendance')).toBeVisible();
+  await expect(dialog.getByRole('heading', {name: 'Mark Attendance'})).toBeVisible();
   await dialog.getByRole('combobox').click();
   await page.getByRole('option', {name: 'Absent', exact: true}).click();
   await dialog.getByRole('button', {name: 'Save & Close'}).click();
