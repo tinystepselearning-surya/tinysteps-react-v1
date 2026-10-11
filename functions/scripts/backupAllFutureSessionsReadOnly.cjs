@@ -2,8 +2,8 @@
 'use strict';
 
 /**
- * Tiny Steps Oct 12 cutover: READ-ONLY Firestore -> LOCAL encrypted-at-rest-by-OS
- * eligible 0600 JSON archive. No Firestore mutation code exists in this script.
+ * Tiny Steps Oct 12 cutover: READ-ONLY Firestore -> LOCAL permission-restricted
+ * 0600 JSON archive. No Firestore mutation code exists in this script.
  *
  * Save *all* future classSessions documents, not only Oct 12-25.
  * The typed field encoding conforms to Firestore's Document REST value schema:
