@@ -45,6 +45,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<SessionViewFilter>('all');
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const todayYmd = new Date(nowMs+330*60_000).toISOString().slice(0,10);
   const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
 
   useEffect(() => {
@@ -137,12 +138,11 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   // Teacher Today is projected directly from Student Management. No daily
   // classSession writer is required simply to display or join a class.
   const projectedTodaySessions = useMemo<TeacherSession[]>(() => {
-    const date = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
     const enrollments = students.flatMap(student => student.scheduleEnrollments || []);
     const projections = buildRollingScheduleCalendarProjections({
       enrollments,
       realSessions: sessions as unknown as Record<string, unknown>[],
-      fromYmd: date, toYmd: date,
+      fromYmd: todayYmd, toYmd: todayYmd,
     });
     return projections.map(row => ({
       id:row.id, enrollmentId:row.enrollmentId,
@@ -158,7 +158,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       endAt:Timestamp.fromDate(row.endAt),
       status:'scheduled',source:row.source,isScheduleProjection:true,projectionOnly:true,
     } as TeacherSession & {isScheduleProjection:true;projectionOnly:true}));
-  }, [students, sessions, teacherId]);
+  }, [students, sessions, teacherId, todayYmd]);
 
   const orderedSessions = useMemo(
     () => [...sessions, ...projectedTodaySessions],
