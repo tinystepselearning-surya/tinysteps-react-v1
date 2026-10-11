@@ -14,6 +14,7 @@ import {
 } from './helpers/revenueAccrualSafety';
 import {
   attendanceFinanceCycle,
+  hasAttendanceFinanceSettlementEvidence,
   mayReopenAttendanceVoidedLedgers,
 } from './helpers/attendanceFinancialCycles';
 import {
@@ -625,6 +626,29 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const chargeRef = db.collection('billingCharges').doc(sessionId);
         const earningRef = db.collection('teacherEarnings').doc(sessionId);
         const [chargeSnap, earningSnap] = await Promise.all([tx.get(chargeRef), tx.get(earningRef)]);
+
+        // Attendance is authoritative, but a paid/partially paid charge or
+        // teacher payout is immutable. Do not decrement accrued revenue,
+        // erase the accrual marker, void ledgers or credit a wallet here.
+        // Even a direct Firestore correction must fail safely at this trigger.
+        if (hasAttendanceFinanceSettlementEvidence(chargeSnap.data()) ||
+            hasAttendanceFinanceSettlementEvidence(earningSnap.data())) {
+          const repairReason = 'attendance_correction_settled_ledger';
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(sessionRef, {
+              revenueRepairRequired: true,
+              revenueRepairReason: repairReason,
+              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
+            }, {merge: true});
+          }
+          logger.warn('Revenue reversal held for settled attendance correction', {sessionId});
+          return;
+        }
 
         if (session.revenueAccrued === true) {
           tx.set(rollupRef, {

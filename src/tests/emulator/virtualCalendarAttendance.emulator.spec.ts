@@ -447,23 +447,71 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       .doc(ids.kid + '_20260928_1700').get()).exists).toBe(false);
   });
 
-  it('retains settled charge and payout unchanged if teacher tries a billability correction', async () => {
+  it('saves teacher attendance reversals even for settled finance without touching cash ledgers', async () => {
     const {sessionId} = await ensure();
     await mark(sessionId, 'present');
     await complete(sessionId);
     await waitForLedger(sessionId);
+    const chargeRef = db.collection('billingCharges').doc(sessionId);
+    const earningRef = db.collection('teacherEarnings').doc(sessionId);
     await Promise.all([
-      db.collection('billingCharges').doc(sessionId).update({status: 'paid', paidAmount: 400}),
-      db.collection('teacherEarnings').doc(sessionId).update({status: 'paid', paidAmount: 175}),
+      chargeRef.update({status: 'paid', paidAmount: 400, paymentIds: ['payment-a']}),
+      earningRef.update({status: 'paid', paidAmount: 175, payoutIds: ['payout-a']}),
     ]);
-    await expect(mark(sessionId, 'absent')).rejects.toMatchObject({
-      code: 'functions/failed-precondition',
-    });
+
+    await mark(sessionId, 'absent');
+    await eventually(async () => {
+      const saved = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return saved?.attendance?.[ids.kid]?.status === 'absent' &&
+        saved?.revenueRepairRequired === true &&
+        saved?.revenueRepairReason === 'attendance_correction_settled_ledger'
+        ? true : null;
+    }, 'settled attendance saved and flagged');
+    await delay(1_500); // allow the revenue trigger to process the saved correction
+    const [charge, earning] = await ledger(sessionId);
+    expect(charge.data()).toMatchObject({status: 'paid', paidAmount: 400, paymentIds: ['payment-a']});
+    expect(earning.data()).toMatchObject({status: 'paid', paidAmount: 175, payoutIds: ['payout-a']});
+    expect((await db.collection('classSessions').doc(sessionId).get()).data()?.revenueAccrued).toBe(true);
+
+    await mark(sessionId, 'present');
+    await delay(1_500);
+    const [restoredCharge, restoredEarning] = await ledger(sessionId);
+    expect(restoredCharge.data()).toMatchObject({status: 'paid', paidAmount: 400});
+    expect(restoredEarning.data()).toMatchObject({status: 'paid', paidAmount: 175});
+    expect((await db.collection('billingCharges').where('sessionId', '==', sessionId).get()).size).toBe(1);
+    expect((await db.collection('teacherEarnings').where('sessionId', '==', sessionId).get()).size).toBe(1);
     expect((await db.collection('classSessions').doc(sessionId).get())
       .data()?.attendance?.[ids.kid]?.status).toBe('present');
+    const audits = await db.collection('classSessions').doc(sessionId)
+      .collection('attendanceCorrections').get();
+    expect(audits.size).toBe(2);
+    expect(audits.docs.every(d => d.data().financeReconciliation.action === 'review_required')).toBe(true);
+  });
+
+  it('allows a teacher correction but does not auto-reopen a manually voided finance pair', async () => {
+    const {sessionId} = await ensure();
+    await mark(sessionId, 'present');
+    await complete(sessionId);
+    await waitForLedger(sessionId);
+    await mark(sessionId, 'absent');
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      return charge.data()?.status === 'void' && earning.data()?.status === 'void' ? true : null;
+    }, 'void before manual override');
+    await db.collection('billingCharges').doc(sessionId).update({
+      voidReason: 'Admin manually voided this charge', voidSource: 'manual_finance_override',
+    });
+    await mark(sessionId, 'present');
+    const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+    expect(row?.attendance?.[ids.kid]?.status).toBe('present');
+    await eventually(async () => {
+      const latest = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return latest?.revenueRepairRequired === true ? true : null;
+    }, 'manual void finance exception raised');
+    await delay(1_500);
     const [charge, earning] = await ledger(sessionId);
-    expect(charge.data()).toMatchObject({status: 'paid', paidAmount: 400});
-    expect(earning.data()).toMatchObject({status: 'paid', paidAmount: 175});
+    expect(charge.data()?.status).toBe('void');
+    expect(earning.data()?.status).toBe('void');
   });
 
   it('supports two genuine class times on one day without merging occurrences', async () => {

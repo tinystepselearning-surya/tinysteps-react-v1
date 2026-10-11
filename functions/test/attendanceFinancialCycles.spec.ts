@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {
   attendanceFinanceCycle,
   attendanceWalletCycleKeys,
+  hasAttendanceFinanceSettlementEvidence,
   mayReopenAttendanceVoidedLedgers,
 } from '../src/helpers/attendanceFinancialCycles';
 
@@ -66,6 +67,17 @@ describe('one canonical session with independent attendance-finance cycles', () 
     input.charge.reconciliationSource = 'admin-attendance-correction';
     input.earning.reconciliationSource = 'admin-attendance-correction';
     expect(mayReopenAttendanceVoidedLedgers(input)).toBe(true);
+  });
+
+  it('recognizes partial payments and payout identifiers as immutable settlement evidence', () => {
+    expect(hasAttendanceFinanceSettlementEvidence(null)).toBe(false);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'open', paidAmount: 0})).toBe(false);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'paid'})).toBe(true);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'partial'})).toBe(true);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'void', paidAmount: 20})).toBe(true);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'void', payoutIds: ['payout-1']})).toBe(true);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'void', lastPaymentId: 'payment-1'})).toBe(true);
+    expect(hasAttendanceFinanceSettlementEvidence({status: 'void', allocations: [{id: 'a'}]})).toBe(true);
   });
 
   it('never automatically resurrects a manually voided charge or teacher earning', () => {

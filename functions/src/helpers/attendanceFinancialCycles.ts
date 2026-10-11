@@ -34,15 +34,29 @@ export function attendanceWalletCycleKeys(
   };
 }
 
-function hasPaymentAllocation(record: LedgerRecord): boolean {
-  // Never resurrect a settled or manually allocated charge/earning. The
-  // cash/payout reversal is a separate auditable financial operation.
-  if (positiveMoney(record.paidAmount) > 0 || positiveMoney(record.appliedAmount) > 0 ||
-      positiveMoney(record.settledAmount) > 0) return true;
-  if (Array.isArray(record.allocations) && record.allocations.length > 0) return true;
-  if (Array.isArray(record.paymentIds) && record.paymentIds.length > 0) return true;
-  if (Array.isArray(record.payoutIds) && record.payoutIds.length > 0) return true;
+/**
+ * Attendance may always be corrected; cash allocations and teacher payouts may
+ * never be silently rewritten by that correction. Recognize both status-driven
+ * settlement and legacy ledgers containing allocation evidence.
+ */
+export function hasAttendanceFinanceSettlementEvidence(
+  record: LedgerRecord | null | undefined,
+): boolean {
+  if (!record) return false;
+  if (['paid', 'settled', 'partial', 'partially_paid'].includes(normalized(record.status))) {
+    return true;
+  }
+  if (['paidAmount', 'appliedAmount', 'settledAmount'].some(key =>
+    positiveMoney(record[key]) > 0)) return true;
+  if (['allocations', 'paymentIds', 'payoutIds'].some(key =>
+    Array.isArray(record[key]) && (record[key] as unknown[]).length > 0)) return true;
+  if (['paymentId', 'payoutId', 'lastPaymentId', 'lastAllocationRef', 'payoutBatchId'].some(key =>
+    Boolean(String(record[key] ?? '').trim()))) return true;
   return false;
+}
+
+function hasPaymentAllocation(record: LedgerRecord): boolean {
+  return hasAttendanceFinanceSettlementEvidence(record);
 }
 
 function voidWasCausedByAttendance(record: LedgerRecord): boolean {

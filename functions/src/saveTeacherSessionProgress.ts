@@ -3,7 +3,10 @@ import * as admin from 'firebase-admin';
 import {FieldValue} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
-import { mayReopenAttendanceVoidedLedgers } from './helpers/attendanceFinancialCycles';
+import {
+  hasAttendanceFinanceSettlementEvidence,
+  mayReopenAttendanceVoidedLedgers,
+} from './helpers/attendanceFinancialCycles';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import {calendarAttendanceClaimId} from './scheduling/teacherCalendarActions';
 import {
@@ -310,13 +313,22 @@ function resolveTeacherEarningPaidAmount(data: Record<string, unknown>, amount: 
 type AttendanceCorrectionFinanceAction =
   | 'mark_billable'
   | 'mark_non_billable'
-  | 'no_finance_change';
+  | 'no_finance_change'
+  | 'review_required';
 
 type AttendanceCorrectionFinanceResult = {
   action: AttendanceCorrectionFinanceAction;
   chargeChanged: boolean;
   earningChanged: boolean;
+  reviewReason?: string;
 };
+
+const SETTLED_ATTENDANCE_REVIEW_REASON = 'attendance_correction_settled_ledger';
+const UNSAFE_ATTENDANCE_REVIEW_REASON = 'attendance_correction_unsafe_ledger';
+
+function needsFinanceReview(reason: string): AttendanceCorrectionFinanceResult {
+  return {action: 'review_required', chargeChanged: false, earningChanged: false, reviewReason: reason};
+}
 
 async function reconcileAttendanceCorrectionFinance(args: {
   db: admin.firestore.Firestore;
@@ -367,6 +379,12 @@ async function reconcileAttendanceCorrectionFinance(args: {
     const chargeStatus = normalizeFinancialStatus(existingChargeData.status);
     const existingEarningData = (earningSnap.data() || {}) as Record<string, unknown>;
     const earningStatus = normalizeFinancialStatus(existingEarningData.status);
+    if (!wasBillable && (
+      hasAttendanceFinanceSettlementEvidence(existingChargeData) ||
+      hasAttendanceFinanceSettlementEvidence(existingEarningData)
+    )) {
+      return needsFinanceReview(SETTLED_ATTENDANCE_REVIEW_REASON);
+    }
     const replayPlan = resolvePresentFinanceReplayPlan({
       wasBillable,
       alreadyAccrued: session.revenueAccrued === true,
@@ -384,26 +402,10 @@ async function reconcileAttendanceCorrectionFinance(args: {
       // transaction; never create a second charge/earning from this callable.
       return {action: 'mark_billable', chargeChanged: false, earningChanged: false};
     }
-    if (replayPlan.conflict === 'charge_void') {
-      throw new HttpsError('failed-precondition', 'Existing charge is void; financially-earned attendance replay requires financial review.');
-    }
-    if (replayPlan.conflict === 'earning_void') {
-      throw new HttpsError('failed-precondition', 'Existing teacher earning is void; financially-earned attendance replay requires financial review.');
-    }
-    if (replayPlan.conflict === 'missing_charge') {
-      throw new HttpsError('failed-precondition', 'Billing charge is missing while a teacher earning exists; use explicit financial reconciliation.');
-    }
-    if (replayPlan.conflict === 'missing_earning') {
-      throw new HttpsError('failed-precondition', 'Teacher earning is missing while a billing charge exists; use explicit financial reconciliation.');
-    }
-    if (replayPlan.conflict === 'missing_charge_and_earning') {
-      throw new HttpsError('failed-precondition', 'Financial ledger is missing for already-earned attendance; use explicit financial reconciliation.');
-    }
-    if (replayPlan.conflict === 'already_accrued_without_ledger') {
-      throw new HttpsError('failed-precondition', 'Session is already accrued but its financial ledger is missing; use explicit financial reconciliation.');
-    }
-    if (replayPlan.conflict === 'preexisting_ledger_for_non_billable_attendance') {
-      throw new HttpsError('failed-precondition', 'Financial ledger already exists for non-billable attendance; use explicit financial reconciliation.');
+    if (replayPlan.conflict) {
+      // Attendance remains editable even when a ledger is manually voided,
+      // incomplete or historically inconsistent. Cash changes need Admin review.
+      return needsFinanceReview(UNSAFE_ATTENDANCE_REVIEW_REASON);
     }
     return {
       action: replayPlan.deferToRevenueAccrual ? 'mark_billable' : 'no_finance_change',
@@ -416,27 +418,23 @@ async function reconcileAttendanceCorrectionFinance(args: {
   const chargeStatus = normalizeFinancialStatus(chargeData.status);
   const chargeAmount = Math.max(normalizeMoney(chargeData.amount ?? session.accruedAmount), 0);
   const chargePaidAmount = resolveChargePaidAmount(chargeData, chargeAmount);
-  if (chargeSnap.exists && chargeStatus !== 'void' && chargePaidAmount > 0) {
-    throw new HttpsError(
-      'failed-precondition',
-      'This charge already has payment applied. Reverse payment allocation first.'
-    );
-  }
-
   const earningData = (earningSnap.data() || {}) as Record<string, unknown>;
   const earningStatus = normalizeFinancialStatus(earningData.status);
   const earningAmount = Math.max(normalizeMoney(earningData.amount), 0);
   const earningPaidAmount = resolveTeacherEarningPaidAmount(earningData, earningAmount);
-  if (earningSnap.exists && earningStatus !== 'void' && earningPaidAmount > 0) {
-    throw new HttpsError(
-      'failed-precondition',
-      'This teacher earning is already paid. Reverse payout allocation first.'
-    );
+  if ((chargeSnap.exists && (chargePaidAmount > 0 ||
+        hasAttendanceFinanceSettlementEvidence(chargeData))) ||
+      (earningSnap.exists && (earningPaidAmount > 0 ||
+        hasAttendanceFinanceSettlementEvidence(earningData)))) {
+    return needsFinanceReview(SETTLED_ATTENDANCE_REVIEW_REASON);
   }
 
   let chargeChanged = false;
   if (chargeSnap.exists && chargeStatus !== 'void') {
-    batch.set(
+    if (!chargeSnap.updateTime) {
+      throw new HttpsError('aborted', 'Charge version unavailable. Retry correction.');
+    }
+    batch.update(
       chargeRef,
       {
         status: 'void',
@@ -447,14 +445,17 @@ async function reconcileAttendanceCorrectionFinance(args: {
         updatedAt: FieldValue.serverTimestamp(),
         ...metadata,
       },
-      { merge: true },
+      {lastUpdateTime: chargeSnap.updateTime},
     );
     chargeChanged = true;
   }
 
   let earningChanged = false;
   if (earningSnap.exists && earningStatus !== 'void') {
-    batch.set(
+    if (!earningSnap.updateTime) {
+      throw new HttpsError('aborted', 'Teacher earning version unavailable. Retry correction.');
+    }
+    batch.update(
       earningRef,
       {
         status: 'void',
@@ -465,7 +466,7 @@ async function reconcileAttendanceCorrectionFinance(args: {
         updatedAt: FieldValue.serverTimestamp(),
         ...metadata,
       },
-      { merge: true },
+      {lastUpdateTime: earningSnap.updateTime},
     );
     earningChanged = true;
   }
@@ -733,11 +734,17 @@ export const saveTeacherSessionProgress = onCall(
         ...claimIds.map(kid=>tx.get(db.collection('calendarAttendanceClaims').doc(
           calendarAttendanceClaimId('',kid,occurrence.day,occurrence.time)))),
       ]);
-      if(newlyBillable && (chargeSnap.exists || earningSnap.exists)) {
-        const chargeData = chargeSnap.exists
-          ? (chargeSnap.data() || {}) as Record<string, unknown> : null;
-        const earningData = earningSnap.exists
-          ? (earningSnap.data() || {}) as Record<string, unknown> : null;
+      const chargeData = chargeSnap.exists
+        ? (chargeSnap.data() || {}) as Record<string, unknown> : null;
+      const earningData = earningSnap.exists
+        ? (earningSnap.data() || {}) as Record<string, unknown> : null;
+      let financeReviewReason: string | null = null;
+
+      if (changesBillability &&
+          (hasAttendanceFinanceSettlementEvidence(chargeData) ||
+           hasAttendanceFinanceSettlementEvidence(earningData))) {
+        financeReviewReason = SETTLED_ATTENDANCE_REVIEW_REASON;
+      } else if (newlyBillable && (chargeSnap.exists || earningSnap.exists)) {
         const chargeVoid = chargeData && normalizeFinancialStatus(chargeData.status) === 'void';
         const earningVoid = earningData && normalizeFinancialStatus(earningData.status) === 'void';
         if ((chargeVoid || earningVoid) &&
@@ -745,18 +752,35 @@ export const saveTeacherSessionProgress = onCall(
               sessionId, session,
               charge: chargeData, earning: earningData,
             })) {
-          throw new HttpsError('failed-precondition',
-            'A previously voided charge/earning needs Admin financial review; attendance was not changed.');
+          financeReviewReason = UNSAFE_ATTENDANCE_REVIEW_REASON;
         }
       }
-      if(changesBillability){
-        const isPaid=(data:Record<string,unknown>):boolean=>
-          isSettledFinancialStatus(normalizeFinancialStatus(data.status))
-            || normalizeMoney(data.paidAmount)>0;
-        if((chargeSnap.exists&&isPaid((chargeSnap.data()||{}) as Record<string,unknown>))||
-           (earningSnap.exists&&isPaid((earningSnap.data()||{}) as Record<string,unknown>)))
-          throw new HttpsError('failed-precondition',
-            'Attendance correction affects settled finance; contact Admin.');
+
+      if (financeReviewReason) {
+        Object.assign(sessionUpdate, {
+          revenueRepairRequired: true,
+          revenueRepairReason: financeReviewReason,
+          revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+        });
+        const auditRef = sessionRef.collection('attendanceCorrections').doc();
+        tx.create(auditRef, {
+          source: 'teacher-attendance-correction',
+          sessionId,
+          correctedByUid: uid,
+          correctedAt: FieldValue.serverTimestamp(),
+          attendanceTransitions: Object.fromEntries(
+            Object.keys(incomingAttendance).map(kidId => [kidId, {
+              previousStatus: toAttendanceEntry(previousMap[kidId]).status || 'not_marked',
+              newStatus: toAttendanceEntry(nextAttendance[kidId]).status || 'not_marked',
+            }]),
+          ),
+          financeReconciliation: {
+            action: 'review_required',
+            reviewReason: financeReviewReason,
+            chargeChanged: false,
+            earningChanged: false,
+          },
+        });
       }
       if(claims.some(c=>c.exists && String(c.data()?.sessionId||'')!==sessionId))
         throw new HttpsError('failed-precondition',
@@ -1089,26 +1113,22 @@ export const adminAttendanceCorrection = onCall(
       reason,
     });
 
-    const sessionUpdate = {
+    const sessionUpdate: Record<string, unknown> = {
       attendance: nextAttendance,
       updatedAt: FieldValue.serverTimestamp(),
       updatedBy: uid,
+      ...(financeReconciliation.action === 'review_required' ? {
+        revenueRepairRequired: true,
+        revenueRepairReason: financeReconciliation.reviewReason || UNSAFE_ATTENDANCE_REVIEW_REASON,
+        revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+      } : {}),
     };
-    if (av7ValidationLink) {
-      if (!sessionUpdateTime) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Session version could not be verified for AVS correction.',
-        );
-      }
-      batch.update(
-        sessionRef,
-        sessionUpdate,
-        { lastUpdateTime: sessionUpdateTime },
-      );
-    } else {
-      batch.set(sessionRef, sessionUpdate, { merge: true });
+    // All corrections need a session-version precondition, not only AVS-linked
+    // corrections; otherwise a concurrent teacher save can be overwritten.
+    if (!sessionUpdateTime) {
+      throw new HttpsError('failed-precondition', 'Session version unavailable. Retry correction.');
     }
+    batch.update(sessionRef, sessionUpdate, {lastUpdateTime: sessionUpdateTime});
 
     batch.set(auditRef, {
       source: 'admin-attendance-correction',
@@ -1205,6 +1225,9 @@ export const adminAttendanceCorrection = onCall(
       previousStatus,
       newStatus,
       correctionId: auditRef.id,
+      financeReviewRequired: financeReconciliation.action === 'review_required',
+      ...(financeReconciliation.action === 'review_required'
+        ? {financeReviewReason: financeReconciliation.reviewReason} : {}),
       ...(av7ValidationLink
         ? {
             validationCaseId: av7ValidationLink.caseId,
