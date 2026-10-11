@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@components/ui/select';
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
+import { teacherCalendarSessionReadCache } from '../../hooks/teacherCalendarSessionReadCache';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
 import {
@@ -220,7 +221,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return { rangeStart: currentDate, rangeEnd: currentDate };
   }, [currentDate, view]);
 
-  const { sessions, error: sessionsError } = useTeacherSessions(
+  const { sessions, error: sessionsError, refresh: refreshSessions } = useTeacherSessions(
     teacherId,
     format(rangeStart, 'yyyy-MM-dd'),
     format(rangeEnd, 'yyyy-MM-dd'),
@@ -239,7 +240,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     [monthEnd],
   );
 
-  const { students } = useTeacherFilteredStudents();
+  const { students, refresh: refreshEnrollments } = useTeacherFilteredStudents();
+  const refreshCalendar = () => {
+    refreshSessions();
+    void refreshEnrollments();
+  };
   const resolvedTeacherId = teacherId || auth.currentUser?.uid || '';
 
   const teacherScheduleEnrollments = useMemo(
@@ -301,6 +306,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         description: 'Select it in your calendar to join or mark Present/Absent.',
       });
       setAdHocOpen(false);
+      try {
+        await teacherCalendarSessionReadCache.confirmSavedSession(
+          resolvedTeacherId, result.data.sessionId);
+      } catch (statusError) {
+        console.warn('[TeacherSchedule] Ad hoc saved; status confirmation deferred', statusError);
+        toast({ title: 'Class saved', description: 'Use Refresh to display the new class.' });
+      }
     } catch (error) {
       toast({
         title:'Unable to add ad hoc class',
@@ -313,10 +325,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   };
 
   const projectedSessions = useMemo<TeacherSession[]>(() => {
+    const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
     const projections = buildRollingScheduleCalendarProjections({
       enrollments: teacherScheduleEnrollments,
       realSessions: sessions as unknown as Record<string, unknown>[],
-      fromYmd: format(rangeStart, 'yyyy-MM-dd'),
+      // Past attendance belongs to monthly summaries and audits, not virtual
+      // schedule rows that could misleadingly look like unmarked classes.
+      fromYmd: format(rangeStart, 'yyyy-MM-dd') < todayIst
+        ? todayIst : format(rangeStart, 'yyyy-MM-dd'),
       toYmd: format(rangeEnd, 'yyyy-MM-dd'),
     });
     return projections.map((row) => ({
@@ -599,6 +615,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         });
       }
       setSelectedSession(null);
+      try {
+        await teacherCalendarSessionReadCache.confirmSavedSession(
+          resolvedTeacherId, attendanceSessionId);
+      } catch (statusError) {
+        console.warn('[TeacherSchedule] Attendance saved; confirmation deferred', statusError);
+        toast({ title: 'Attendance saved', description: 'Use Refresh to confirm its status.' });
+      }
     } catch (err) {
       console.error(err);
       toast({
@@ -669,6 +692,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="rounded-full" onClick={handlePrev}>Prev</Button>
             <Button variant="outline" size="sm" className="rounded-full" onClick={handleToday}>Today</Button>
+            <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={refreshCalendar}>
+              Refresh schedule
+            </Button>
             <Button type="button" size="sm" onClick={() => { setView('day'); setAdHocOpen(true); }}>
               Add ad hoc class
             </Button>
