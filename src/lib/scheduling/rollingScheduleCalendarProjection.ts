@@ -1,5 +1,4 @@
 import {
-  ROLLING_SCHEDULE_HORIZON_DAYS,
   resolveEnrollmentRollingScheduleContract,
 } from './enrollmentRollingScheduleContract';
 import {
@@ -160,13 +159,12 @@ const enrollmentKidIds = (enrollment: RecordLike): string[] => {
 };
 
 /**
- * Builds display-only recurrence rows strictly beyond the physical classSession horizon.
+ * Builds read-only calendar occurrences from active enrollment timetables for today onward.
  *
  * The function never reads or writes Firestore. Canonical rolling enrollments are the only
- * projection authority. Within the 14-day physical window, persisted real sessions remain
- * authoritative. Beyond that window, stale ordinary rows left by the retired finite scheduler
- * are intentionally ignored so they cannot suppress recurrence projections after cutover.
- * Explicit real exceptions remain authoritative at any distance.
+ * projection authority. A persisted session ALWAYS overrides the corresponding
+ * timetable occurrence, preserving attendance, cancellation and ad hoc exceptions.
+ * Pure calculation: this helper performs no Firestore writes.
  */
 export const buildRollingScheduleCalendarProjections = (
   input: BuildRollingScheduleCalendarProjectionsInput,
@@ -178,8 +176,7 @@ export const buildRollingScheduleCalendarProjections = (
   }
   if (input.toYmd < input.fromYmd) return [];
 
-  const firstProjectionYmd = addDaysYmd(todayYmd, ROLLING_SCHEDULE_HORIZON_DAYS + 1);
-  const fromYmd = input.fromYmd > firstProjectionYmd ? input.fromYmd : firstProjectionYmd;
+  const fromYmd = input.fromYmd > todayYmd ? input.fromYmd : todayYmd;
   if (fromYmd > input.toYmd) return [];
 
   const enrollmentsById = new Map<string, RecordLike>();
@@ -210,7 +207,7 @@ export const buildRollingScheduleCalendarProjections = (
     if (!enrollmentId) return;
 
     const contract = resolveEnrollmentRollingScheduleContract(enrollment);
-    if (contract.source !== 'canonical_rolling' || contract.lifecycleState !== 'active' || !contract.schedule) {
+    if (contract.source === 'unconfigured' || contract.lifecycleState !== 'active' || !contract.schedule) {
       return;
     }
 
