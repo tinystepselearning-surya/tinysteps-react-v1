@@ -10,6 +10,7 @@ on:
       - 'firestore.rules'
       - 'src/tests/seo/careersJobPostingBootstrap.spec.ts'
       - 'src/pages/admin/teacherInquiriesGuardrails.spec.ts'
+      - 'scripts/verify-careers-live-visual.mjs'
       - '.github/workflows/careers-seo-aeo-validation.yml'
   workflow_dispatch:
 
@@ -38,5 +39,16 @@ jobs:
           npx vitest run
           src/tests/seo/careersJobPostingBootstrap.spec.ts
           src/pages/admin/teacherInquiriesGuardrails.spec.ts
-      - name: Confirm no Firebase access or deploy is performed
-        run: echo "Static validation only. No live Firestore, Hosting or Cloud Functions calls."
+      - name: Install Chromium for public-page visual verification
+        run: npx playwright install --with-deps chromium
+      - name: Capture production Careers page on desktop and mobile
+        run: node scripts/verify-careers-live-visual.mjs
+      - name: Upload read-only production page evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: careers-production-visual-check
+          path: artifacts/careers-production-visual-check/
+          retention-days: 14
+      - name: Confirm no Firebase writes or deployment
+        run: echo "Read-only public page check; no live Firestore, Hosting or Cloud Functions mutations."
