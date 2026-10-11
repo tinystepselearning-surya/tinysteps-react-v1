@@ -93,22 +93,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     meta?: { attendanceOnly?: boolean };
   }) => {
     if (!selectedSession) return;
-    if (!isAttendanceAllowedNow(selectedSession)) {
-      const startMs = getSessionStartMillis(selectedSession);
-      const correctionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(selectedSession);
-      const nowMs = Date.now();
-      toast({
-        title: 'Attendance unavailable',
-        description:
-          startMs === null
-            ? 'Attendance time could not be verified. Please contact admin.'
-            : correctionCutoffMs !== null && nowMs >= correctionCutoffMs
-              ? ATTENDANCE_FINALISED_MESSAGE
-              : 'Attendance can be marked 30 minutes after class start.',
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
       let attendanceSessionId = selectedSession.id;
@@ -202,16 +186,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
     const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
     return Number.isNaN(parsed) ? null : parsed;
-  };
-
-  const isAttendanceAllowedNow = (session: TeacherSession): boolean => {
-    if (canOverrideAttendanceTime) return true;
-    const startMs = getSessionStartMillis(session);
-    if (startMs === null) return false;
-    const nowMs = Date.now();
-    const allowedAtMs = startMs + ATTENDANCE_OPEN_DELAY_MS;
-    const correctionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-    return correctionCutoffMs !== null && nowMs >= allowedAtMs && nowMs < correctionCutoffMs;
   };
 
   const getKnownNames = (session: TeacherSession): string[] => {
