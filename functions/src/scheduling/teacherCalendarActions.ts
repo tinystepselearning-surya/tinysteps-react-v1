@@ -1,0 +1,276 @@
+/**
+ * Virtual-calendar write boundary.
+ *
+ * Reading a timetable and joining Teams must not create classSessions.
+ * Only a teacher's deliberate attendance submission creates a recurring
+ * occurrence on demand. Teacher ad hoc bookings are explicit exceptions and
+ * are persisted so they remain visible until attendance is marked.
+ *
+ * The source flag intentionally defaults OFF until both parent/teacher
+ * calendars and integration tests pass.
+ */
+import * as admin from 'firebase-admin';
+import {onCall, HttpsError} from 'firebase-functions/v2/https';
+import {getTeacherAttendanceCorrectionCutoffMillis} from '../helpers/attendanceCorrectionFreeze';
+import {resolveCanonicalTeacherIdForWrite} from '../helpers/teacherIdentity';
+import {
+  buildRollingScheduledSessionPayload,
+  normalizeRollingMaterializerSlots,
+  rollingSessionId,
+  type RollingMaterializationOccurrence,
+} from './rollingScheduleMaterializer';
+
+const REGION = 'asia-south1';
+const IST_MINUTES = 330;
+const ACTIVE = new Set(['active','enrolled','current','ongoing','pending_payment','pending_lp']);
+const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const YYYYMMDD = /^(\d{4})-(\d{2})-(\d{2})$/;
+const HOUR = 60_000;
+type Row = Record<string, unknown>;
+const text = (value: unknown): string => typeof value === 'string' ? value.trim() : '';
+const personIds = (enrollment: Row): string[] => [
+  text(enrollment.kidId),
+  ...(Array.isArray(enrollment.kidIds) ? enrollment.kidIds.map(text) : []),
+  text(enrollment.studentId), text(enrollment.childId),
+].filter(Boolean);
+
+export const virtualCalendarAttendanceEnabled = (
+  env: Record<string, string | undefined> = process.env,
+): boolean => env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === 'true';
+
+export function strictYmd(date: unknown): string {
+  const value = text(date);
+  const match = YYYYMMDD.exec(value);
+  if (!match) throw new HttpsError('invalid-argument','Date must be YYYY-MM-DD');
+  const [year, month, day] = match.slice(1).map(Number);
+  const check = new Date(Date.UTC(year,month-1,day));
+  if (check.getUTCFullYear()!==year || check.getUTCMonth()!==month-1 || check.getUTCDate()!==day) {
+    throw new HttpsError('invalid-argument','Invalid calendar date');
+  }
+  return value;
+}
+
+function strictTime(value: unknown): string {
+  const result = text(value);
+  if (!HHMM.test(result)) throw new HttpsError('invalid-argument','Time must be HH:MM');
+  return result;
+}
+
+function asDayYmd(value: unknown): string | null {
+  if (typeof value === 'string' && YYYYMMDD.test(value)) {
+    try {return strictYmd(value);} catch {return null;}
+  }
+  const asDate = (value as {toDate?: () => Date}|null)?.toDate?.();
+  if (!asDate || !Number.isFinite(asDate.getTime())) return null;
+  return new Date(asDate.getTime() + IST_MINUTES*HOUR).toISOString().slice(0,10);
+}
+
+function enrollmentStartDay(row: Row): string | null {
+  for (const v of [row.classesStartDateYmd,row.classesStartDate,row.startDateYmd,row.startDate]) {
+    const value = asDayYmd(v);
+    if (value) return value;
+  }
+  return null;
+}
+
+function resolveOccurrence(args: {
+  enrollmentId: string; enrollment: Row; date: string;
+  startTime: string; durationMinutes?: number;
+}): RollingMaterializationOccurrence {
+  const {enrollmentId, enrollment, date, startTime} = args;
+  const dayMs = Date.parse(date+'T00:00:00.000Z');
+  const weekday = new Date(dayMs).getUTCDay();
+  const slots = normalizeRollingMaterializerSlots(enrollment.schedule);
+  const slot = args.durationMinutes
+    ? {time: startTime, weekday, hour: Number(startTime.slice(0,2)),
+       minute: Number(startTime.slice(3,5)), durationMinutes: args.durationMinutes}
+    : slots.find(s=>s.weekday===weekday && s.time===startTime);
+  if (!slot) throw new HttpsError('failed-precondition','Not a class on this enrollment timetable');
+  const startAtUtcMs = dayMs+(slot.hour*60+slot.minute-IST_MINUTES)*HOUR;
+  const endAtUtcMs = startAtUtcMs + slot.durationMinutes*HOUR;
+  const end = (slot.hour*60+slot.minute+slot.durationMinutes)%1440;
+  const endTime = String(Math.floor(end/60)).padStart(2,'0')+':'+String(end%60).padStart(2,'0');
+  return {
+    date, weekday, startTime, endTime,
+    durationMinutes:slot.durationMinutes,
+    startAtUtcMs,endAtUtcMs,
+    occurrenceKey:date+'|'+startTime+'|'+slot.durationMinutes,
+    sessionId:rollingSessionId(enrollmentId,date,startTime),
+  };
+}
+
+async function assertTeacher(uid: string, db: admin.firestore.Firestore): Promise<void> {
+  const snap = await db.collection('users').doc(uid).get();
+  const user = snap.data() || {};
+  const role = text(user.role).toLowerCase();
+  const roles = Array.isArray(user.roles) ? user.roles.map(x=>text(x).toLowerCase()) : [];
+  if (!snap.exists || (role!=='teacher' && !roles.includes('teacher')) ||
+      (user.status && text(user.status).toLowerCase()!=='active')) {
+    throw new HttpsError('permission-denied','Only active Tiny Steps teachers can perform this action');
+  }
+}
+
+function assertAssignedActive(enrollment: Row, uid: string, date: string): string {
+  const teacher = resolveCanonicalTeacherIdForWrite(enrollment);
+  if (!teacher.teacherId || teacher.source==='ambiguous_legacy' || teacher.teacherId!==uid) {
+    throw new HttpsError('permission-denied','Student not assigned to this teacher');
+  }
+  const status = text(enrollment.status).toLowerCase();
+  if (!ACTIVE.has(status) || enrollment.archived || enrollment.isArchived || enrollment.archivedAt) {
+    throw new HttpsError('failed-precondition','Student enrollment is not active');
+  }
+  const start = enrollmentStartDay(enrollment);
+  if (start && date < start) throw new HttpsError('failed-precondition','Class is before enrollment start date');
+  const childId = personIds(enrollment)[0];
+  if (!childId) throw new HttpsError('failed-precondition','Enrollment has no student');
+  if (!text(enrollment.courseId)) throw new HttpsError('failed-precondition','Enrollment has no course');
+  return childId;
+}
+
+function assertCalendarTime(occurrence: RollingMaterializationOccurrence, nowMs: number): void {
+  if (nowMs < occurrence.startAtUtcMs+30*HOUR) {
+    throw new HttpsError('failed-precondition','Attendance opens 30 minutes after class start');
+  }
+  const cutoff = getTeacherAttendanceCorrectionCutoffMillis({date:occurrence.date});
+  if (cutoff===null || nowMs>=cutoff) {
+    throw new HttpsError('failed-precondition','Attendance month is frozen');
+  }
+}
+
+/** Only explicitly called when teacher submits Present/Absent for a projection. */
+export const ensureTeacherCalendarAttendanceSession = onCall(
+  {region:REGION, memory:'256MiB', timeoutSeconds:45},
+  async (request) => {
+    if (!virtualCalendarAttendanceEnabled()) {
+      throw new HttpsError('failed-precondition','Virtual attendance is not activated');
+    }
+    const uid = text(request.auth?.uid);
+    if (!uid) throw new HttpsError('unauthenticated','Sign in required');
+    const enrollmentId = text(request.data?.enrollmentId);
+    if (!/^[A-Za-z0-9_-]{1,120}$/.test(enrollmentId)) {
+      throw new HttpsError('invalid-argument','Valid enrollment required');
+    }
+    const date = strictYmd(request.data?.date);
+    const startTime = strictTime(request.data?.startTime);
+    const db = admin.firestore();
+    await assertTeacher(uid, db);
+    const ref = db.collection('enrollments').doc(enrollmentId);
+    const sessionId = rollingSessionId(enrollmentId,date,startTime);
+    const sessionRef = db.collection('classSessions').doc(sessionId);
+    const result = await db.runTransaction(async tx=>{
+      const enrollmentSnap = await tx.get(ref);
+      if (!enrollmentSnap.exists) throw new HttpsError('not-found','Enrollment not found');
+      const enrollment = (enrollmentSnap.data()||{}) as Row;
+      const childId = assertAssignedActive(enrollment, uid, date);
+      const occurrence = resolveOccurrence({enrollmentId,enrollment,date,startTime});
+      assertCalendarTime(occurrence,Date.now());
+      const [childSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
+        tx.get(db.collection('kids').doc(childId)),
+        tx.get(sessionRef),
+        tx.get(db.collection('billingCharges').doc(sessionId)),
+        tx.get(db.collection('teacherEarnings').doc(sessionId)),
+      ]);
+      if (sessionSnap.exists) {
+        const session = (sessionSnap.data()||{}) as Row;
+        if (text(session.enrollmentId)!==enrollmentId ||
+            text(session.teacherId)!==uid || !personIds(session).includes(childId)) {
+          throw new HttpsError('failed-precondition','Existing class identity mismatch');
+        }
+        return {sessionId,created:false};
+      }
+      if (chargeSnap.exists || earningSnap.exists) {
+        throw new HttpsError('failed-precondition','This occurrence has a financial record; manual review required');
+      }
+      if (!childSnap.exists || childSnap.data()?.deleted || childSnap.data()?.isDeleted ||
+          childSnap.data()?.archived || childSnap.data()?.isArchived ||
+          !['','active'].includes(text(childSnap.data()?.status).toLowerCase())) {
+        throw new HttpsError('failed-precondition','Student profile is inactive or missing');
+      }
+      const schedule = enrollment.schedule as Row|undefined;
+      const revision = Number(schedule?.revision || 1);
+      const payload = buildRollingScheduledSessionPayload({
+        enrollmentId, enrollment, occurrence,
+        scheduleRevision:Number.isSafeInteger(revision)&&revision>=1?revision:1,
+        actorId:uid,
+      });
+      tx.create(sessionRef,{...payload,source:'virtual_calendar_attendance'});
+      return {sessionId,created:true};
+    });
+    return {...result,ok:true};
+  },
+);
+
+/** One-off classes are explicit calendar exceptions, never recurrence edits. */
+export const createTeacherCalendarAdHocSession = onCall(
+  {region:REGION,memory:'256MiB',timeoutSeconds:45},
+  async(request)=>{
+    if (!virtualCalendarAttendanceEnabled()) {
+      throw new HttpsError('failed-precondition','Teacher ad hoc booking is not activated');
+    }
+    const uid=text(request.auth?.uid);
+    if (!uid) throw new HttpsError('unauthenticated','Sign in required');
+    const enrollmentId=text(request.data?.enrollmentId);
+    if (!/^[A-Za-z0-9_-]{1,120}$/.test(enrollmentId)) {
+      throw new HttpsError('invalid-argument','Valid enrollment required');
+    }
+    const date=strictYmd(request.data?.date);
+    const startTime=strictTime(request.data?.startTime);
+    const durationMinutes=Number(request.data?.durationMinutes||35);
+    if (!Number.isInteger(durationMinutes)||durationMinutes<10||durationMinutes>90) {
+      throw new HttpsError('invalid-argument','Duration must be 10–90 minutes');
+    }
+    const db=admin.firestore();
+    await assertTeacher(uid,db);
+    const enrollmentRef=db.collection('enrollments').doc(enrollmentId);
+    const sessionId=rollingSessionId(enrollmentId,date,startTime)+'_adhoc';
+    const sessionRef=db.collection('classSessions').doc(sessionId);
+    const result=await db.runTransaction(async tx=>{
+      const enrSnap=await tx.get(enrollmentRef);
+      if (!enrSnap.exists) throw new HttpsError('not-found','Enrollment not found');
+      const enrollment=(enrSnap.data()||{}) as Row;
+      const childId=assertAssignedActive(enrollment,uid,date);
+      const occurrence=resolveOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
+      const now=Date.now();
+      const cutoff=getTeacherAttendanceCorrectionCutoffMillis({date});
+      if (cutoff===null||now>=cutoff) {
+        throw new HttpsError('failed-precondition','Month is frozen');
+      }
+      const [childSnap,existing,regular,charge,earning] = await Promise.all([
+        tx.get(db.collection('kids').doc(childId)),
+        tx.get(sessionRef),
+        tx.get(db.collection('classSessions').doc(rollingSessionId(enrollmentId,date,startTime))),
+        tx.get(db.collection('billingCharges').doc(sessionId)),
+        tx.get(db.collection('teacherEarnings').doc(sessionId)),
+      ]);
+      if (existing.exists) {
+        const data=existing.data()||{};
+        if (text(data.teacherId)!==uid || text(data.enrollmentId)!==enrollmentId ||
+            !personIds(data).includes(childId)) {
+          throw new HttpsError('failed-precondition','Ad hoc class identity mismatch');
+        }
+        return {sessionId,created:false};
+      }
+      if (!childSnap.exists || childSnap.data()?.isArchived ||
+          !['','active'].includes(text(childSnap.data()?.status).toLowerCase())) {
+        throw new HttpsError('failed-precondition','Student is inactive');
+      }
+      if (regular.exists && text(regular.data()?.status).toLowerCase()!=='cancelled') {
+        throw new HttpsError('failed-precondition','Regular class already occupies this time');
+      }
+      if (charge.exists || earning.exists) {
+        throw new HttpsError('failed-precondition','An earlier class has a financial reference');
+      }
+      const payload=buildRollingScheduledSessionPayload({
+        enrollmentId,enrollment,occurrence,scheduleRevision:0,actorId:uid,
+      });
+      tx.create(sessionRef,{
+        ...payload,source:'teacher_ad_hoc',
+        isAdHoc:true,isManual:true,
+        notes:'Teacher-created ad hoc class',
+        scheduleDeliveryMode:'ad_hoc',
+      });
+      return {sessionId,created:true};
+    });
+    return {...result,ok:true};
+  },
+);
