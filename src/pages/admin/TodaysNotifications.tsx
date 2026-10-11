@@ -1240,6 +1240,12 @@ export default function TodaysNotifications() {
   // Firebase's UID-change callback runs before the store resolves token claims.
   // Clear old actor rows immediately rather than waiting for the next render.
   useLayoutEffect(() => subscribeSessionsManagementSnapshotInvalidation(() => {
+    // The snapshot client also announces first-time same-UID verification.
+    // Only a genuine authenticated UID change may clear the manual cache.
+    const actualUid = auth.currentUser?.uid || null;
+    if (displayedActorUidRef.current === actualUid) return;
+    displayedActorUidRef.current = actualUid;
+    reminderReadCacheRef.current.useActor(actualUid);
     reminderReadCacheRef.current.invalidate();
     reminderUsersCacheRef.current = {};
     overallAdmissionsCacheRef.current = null;
