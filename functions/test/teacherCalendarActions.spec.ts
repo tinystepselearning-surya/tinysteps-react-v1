@@ -4,6 +4,7 @@ import {
   resolveCalendarOccurrenceConflict,
   classIntervalsOverlap,
   hasTeacherVirtualCalendarConflict,
+  hasStudentVirtualCalendarConflict,
   resolveTeacherCalendarOccurrence,
   strictYmd,
   virtualCalendarAttendanceEnabled,
@@ -109,6 +110,19 @@ describe('virtual class calendar backend (no Firestore in these tests)',()=>{
     )).toBe(true);
     expect(hasTeacherVirtualCalendarConflict(
       [enrolled()], 'teacher-a','2026-10-12','17:35',35,
+    )).toBe(false);
+  });
+
+  it('prevents ad hoc overlap with another teacher\'s virtual class for same child',()=>{
+    const anotherTeacher={...enrolled(),teacherId:'teacher-other'};
+    expect(hasStudentVirtualCalendarConflict(
+      [anotherTeacher],'kid-a','2026-10-12','17:10',35,
+    )).toBe(true);
+    expect(hasStudentVirtualCalendarConflict(
+      [anotherTeacher],'kid-b','2026-10-12','17:10',35,
+    )).toBe(false);
+    expect(hasStudentVirtualCalendarConflict(
+      [anotherTeacher],'kid-a','2026-10-12','17:35',35,
     )).toBe(false);
   });
 
