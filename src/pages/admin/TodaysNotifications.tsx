@@ -11,6 +11,8 @@ import {
   startAfter,
   setDoc,
   where,
+  type Query,
+  type QuerySnapshot,
 } from 'firebase/firestore';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -202,11 +204,11 @@ async function fetchVirtualAdminEnrollments(actorUid: string): Promise<Enrollmen
     if (auth.currentUser?.uid !== actorUid) {
       throw new Error('Admin account changed while loading enrollments.');
     }
-    const pageQuery = query(
+    const pageQuery: Query = query(
       collection(db, 'enrollments'), orderBy(documentId()),
       ...(cursor ? [startAfter(cursor)] : []), limit(pageSize),
     );
-    const page = await getDocs(pageQuery);
+    const page: QuerySnapshot = await getDocs(pageQuery);
     if (auth.currentUser?.uid !== actorUid) {
       throw new Error('Admin account changed while loading enrollments.');
     }
