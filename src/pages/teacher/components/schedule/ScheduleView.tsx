@@ -477,7 +477,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   );
 
   // Attendance access is no longer blocked by class time or month.
-  const isAttendanceFinalised = useCallback((): boolean => false, []);
+  const isAttendanceFinalised = useCallback((_session?: Partial<TeacherSession> | null): boolean => false, []);
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
     setSelectedSession(session);
   }, []);
