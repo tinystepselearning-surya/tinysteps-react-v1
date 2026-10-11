@@ -227,6 +227,37 @@ describe('virtual-calendar Stage 1 business acceptance (isolated emulator)', () 
       .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
   });
 
+  it('allows an old completed Absent class to be corrected to Present and accrued once', async () => {
+    const {sessionId} = await ensure(PAST_MONDAY);
+    await mark(sessionId, 'absent');
+    await complete(sessionId);
+    await mark(sessionId, 'present');
+    const {charge, earning} = await waitForLedger(sessionId);
+    expect(Number(charge.data()?.amount)).toBe(400);
+    expect(Number(earning.data()?.amount)).toBe(175);
+    expect(await sessionsForCurrentChild(PAST_MONDAY)).toHaveLength(1);
+    expect((await db.collection('enrollments').doc(ids.enrollment).get()).data())
+      .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
+  });
+
+  it('reverses an unsettled Present charge and earning when corrected to Absent', async () => {
+    const {sessionId} = await ensure();
+    await mark(sessionId, 'present');
+    await complete(sessionId);
+    await waitForLedger(sessionId);
+    await mark(sessionId, 'absent');
+    await eventually(async () => {
+      const [charge, earning] = await ledger(sessionId);
+      const row = (await db.collection('classSessions').doc(sessionId).get()).data();
+      return charge.data()?.status === 'void' && earning.data()?.status === 'void'
+        && row?.revenueAccrued === false ? true : null;
+    }, 'reversal of unbilled correction for ' + sessionId);
+    expect((await db.collection('classSessions').doc(sessionId).get())
+      .data()?.attendance?.[ids.kid]?.status).toBe('absent');
+    expect((await db.collection('enrollments').doc(ids.enrollment).get()).data())
+      .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
+  });
+
   it('accepts attendance for a future date before the class starts', async () => {
     const {sessionId} = await ensure('2026-10-19');
     await mark(sessionId, 'absent');
