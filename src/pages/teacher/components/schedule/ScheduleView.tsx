@@ -19,7 +19,7 @@ import {
 } from '../../../../lib/attendanceCorrectionFreeze';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../../../store/useAuthStore';
@@ -313,6 +313,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       childName: row.childName,
       status: 'scheduled',
       source: row.source,
+      joinUrl: row.joinUrl,
+      startAt: Timestamp.fromDate(row.startAt),
+      endAt: Timestamp.fromDate(row.endAt),
       isScheduleProjection: true,
       projectionOnly: true,
     } as TeacherSession & { isScheduleProjection: true; projectionOnly: true }));
@@ -465,13 +468,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   }, [canOverrideAttendanceTime]);
 
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
-    if (isRollingScheduleProjection(session)) {
-      toast({
-        title: 'Planned recurring class',
-        description: 'This future calendar entry is display-only. Attendance becomes available after the real session enters the 14-day operational window.',
-      });
-      return;
-    }
     if (!isAttendanceAllowedNow(session)) {
       const allowedAt = getAttendanceAllowedAtMillis(session);
       const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
@@ -712,9 +708,22 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
+      let attendanceSessionId = selectedSession.id;
+      if (isRollingScheduleProjection(selectedSession)) {
+        const ensureSession = httpsCallable<
+          {enrollmentId:string;date:string;startTime:string},
+          {sessionId:string}
+        >(functions, 'ensureTeacherCalendarAttendanceSession');
+        const materialized = await ensureSession({
+          enrollmentId: String(selectedSession.enrollmentId || ''),
+          date: selectedSession.date,
+          startTime: selectedSession.startTime,
+        });
+        attendanceSessionId = materialized.data.sessionId;
+      }
       const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
       const response: any = await saveTeacherSessionProgress({
-        sessionId: selectedSession.id,
+        sessionId: attendanceSessionId,
         attendance: data.attendance,
         sessionNotes: data.sessionNotes,
         meta: {
@@ -726,7 +735,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       const hasPresentOrLate = response?.data?.hasPresentOrLate === true;
 
       if (hasPresentOrLate) {
-        await completeSessionViaBackend(selectedSession.id, {
+        await completeSessionViaBackend(attendanceSessionId, {
           attendance: data.attendance as Record<string, any>,
           sessionNotes: data.sessionNotes,
         });
