@@ -13,6 +13,10 @@ import {
   shouldPersistRevenueRepairMarker,
 } from './helpers/revenueAccrualSafety';
 import {
+  attendanceFinanceCycle,
+  mayReopenAttendanceVoidedLedgers,
+} from './helpers/attendanceFinancialCycles';
+import {
   buildSessionFinancialTermsSnapshot,
   hasCompleteSessionFinancialTermsSnapshot,
   resolveSessionBillingRate,
@@ -437,12 +441,25 @@ export const onSessionRevenueWrite = onDocumentWritten(
           ? preservedEarningMonthKey
           : monthKey;
 
+        // Reactivation keeps one canonical ledger pair, while incrementing a
+        // wallet idempotency cycle for the next genuine billable period.
+        const attendanceVoidReactivation = mayReopenAttendanceVoidedLedgers({
+          sessionId, session,
+          charge: chargeSnap.exists ? existingChargeData : null,
+          earning: earningSnap.exists ? existingEarningData : null,
+        });
+        const attendanceFinanceCycleNumber = attendanceVoidReactivation
+          ? Math.max(attendanceFinanceCycle(existingChargeData),
+              attendanceFinanceCycle(existingEarningData)) + 1
+          : Math.max(attendanceFinanceCycle(existingChargeData),
+              attendanceFinanceCycle(existingEarningData));
         const repairReason = resolveRevenueAccrualLedgerRepairReason({
           alreadyAccrued,
           chargeExists: chargeSnap.exists,
           chargeStatus,
           earningExists: earningSnap.exists,
           earningStatus,
+          attendanceVoidReactivation,
         });
         if (repairReason) {
           if (shouldPersistRevenueRepairMarker({
@@ -477,7 +494,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
           courseId: session.courseId || enrollment.courseId || null,
           amount: chargeAmount,
           currency,
-          status: nextChargeStatus || 'open',
+          status: attendanceVoidReactivation ? 'open' : (nextChargeStatus || 'open'),
+          attendanceFinanceCycle: attendanceFinanceCycleNumber,
           source: 'session_present_completed',
           monthKey: chargeMonthKey,
           serviceDate: existingChargeData.serviceDate || canonicalService.serviceDate,
@@ -487,6 +505,12 @@ export const onSessionRevenueWrite = onDocumentWritten(
           ...(existingChargeData.sessionStartAt || !session.startAt ? {} : { sessionStartAt: session.startAt }),
           updatedAt: FieldValue.serverTimestamp(),
           ...(!chargeSnap.exists ? { createdAt: FieldValue.serverTimestamp() } : {}),
+          ...(attendanceVoidReactivation ? {
+            lastReactivatedAt: FieldValue.serverTimestamp(),
+            voidedAt: FieldValue.delete(), voidReason: FieldValue.delete(),
+            voidSource: FieldValue.delete(),
+            reconciliationSource: FieldValue.delete(),
+          } : {}),
         };
 
         const earningPayload: Record<string, unknown> = {
@@ -498,7 +522,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
           courseId: session.courseId || enrollment.courseId || null,
           amount: teacherEarningAmount,
           currency,
-          status: nextEarningStatus || 'unpaid',
+          status: attendanceVoidReactivation ? 'unpaid' : (nextEarningStatus || 'unpaid'),
+          attendanceFinanceCycle: attendanceFinanceCycleNumber,
           source: 'session_present_completed',
           earnedAt: FieldValue.serverTimestamp(),
           monthKey: earningMonthKey,
@@ -506,11 +531,24 @@ export const onSessionRevenueWrite = onDocumentWritten(
           financialTermsSnapshotVersion: session.financialTermsSnapshotVersion || 1,
           updatedAt: FieldValue.serverTimestamp(),
           ...(!earningSnap.exists ? { createdAt: FieldValue.serverTimestamp() } : {}),
+          ...(attendanceVoidReactivation ? {
+            lastReactivatedAt: FieldValue.serverTimestamp(),
+            voidedAt: FieldValue.delete(), voidReason: FieldValue.delete(),
+            voidSource: FieldValue.delete(),
+            reconciliationSource: FieldValue.delete(),
+          } : {}),
         };
 
         if (!alreadyAccrued) {
           tx.set(sessionRef, {
             revenueAccrued: true,
+            attendanceFinanceCycle: attendanceFinanceCycleNumber,
+            ...(attendanceVoidReactivation ? {
+              lastFinanceReactivatedAt: FieldValue.serverTimestamp(),
+              revenueRepairRequired: FieldValue.delete(),
+              revenueRepairReason: FieldValue.delete(),
+              revenueRepairDetectedAt: FieldValue.delete(),
+            } : {}),
             accruedAmount: ratePerSession,
             accruedMonthKey: monthKey,
             accruedAt: FieldValue.serverTimestamp(),
@@ -615,9 +653,11 @@ export const onSessionRevenueWrite = onDocumentWritten(
 
         if (chargeSnap.exists) {
           const status = normalizeChargeStatus(chargeSnap.data()?.status);
-          if (status && status !== 'paid' && status !== 'settled') {
+          if (status && status !== 'paid' && status !== 'settled' && status !== 'void') {
             tx.set(chargeRef, {
               status: 'void',
+              voidSource: 'attendance_status_correction',
+              voidReason: 'attendance_marked_non_billable',
               voidedAt: FieldValue.serverTimestamp(),
               updatedAt: FieldValue.serverTimestamp(),
             }, { merge: true });
@@ -630,6 +670,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
           if (status !== 'paid' && status !== 'void' && paidAmount <= 0) {
             tx.set(earningRef, {
               status: 'void',
+              voidSource: 'attendance_status_correction',
+              voidReason: 'attendance_marked_non_billable',
               voidedAt: FieldValue.serverTimestamp(),
               updatedAt: FieldValue.serverTimestamp(),
             }, { merge: true });
