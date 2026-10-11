@@ -143,3 +143,31 @@ test('parent Classes view displays matching upcoming class from enrollment timet
   const classes = await db.collection('classSessions').where('date', '==', DATE).get();
   expect(classes.docs.filter(d => d.data().kidId === KID_ID)).toHaveLength(0);
 });
+
+test('teacher marks a future class Absent through the actual UI without a charge', async ({page}) => {
+  await login(page, 'teacher');
+  await page.goto('/teacher?tab=schedule');
+  await expect(page.getByRole('heading', {name: 'Teacher Schedule'}))
+    .toBeVisible({timeout: 25_000});
+  await page.getByRole('button', {name: 'Next', exact: true}).click();
+  await expect(page.getByText('Browser Test Child')).toBeVisible({timeout: 30_000});
+
+  await page.getByRole('button', {name: 'Mark Present / Absent'}).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('Mark Attendance')).toBeVisible();
+  await dialog.getByRole('combobox').click();
+  await page.getByRole('option', {name: 'Absent', exact: true}).click();
+  await dialog.getByRole('button', {name: 'Save & Close'}).click();
+
+  const sessionId = ENROLLMENT_ID + '_20261012_1700';
+  await expect.poll(async () =>
+    (await db.collection('classSessions').doc(sessionId).get())
+      .data()?.attendance?.[KID_ID]?.status || null, {timeout: 25_000})
+    .toBe('absent');
+  expect((await db.collection('calendarAttendanceClaims')
+    .doc(KID_ID + '_20261012_1700').get()).data()?.sessionId).toBe(sessionId);
+  expect((await db.collection('billingCharges').doc(sessionId).get()).exists).toBe(false);
+  expect((await db.collection('teacherEarnings').doc(sessionId).get()).exists).toBe(false);
+  expect((await db.collection('enrollments').doc(ENROLLMENT_ID).get()).data())
+    .toMatchObject({creditsRemaining: 12, creditsUsed: 3});
+});
