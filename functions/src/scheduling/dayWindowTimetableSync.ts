@@ -26,7 +26,11 @@ const MAX_DAY_SESSIONS = 40;
 const MAX_CANDIDATE_SESSIONS = 12;
 const AUTO_SOURCE = 'rolling_schedule';
 const ACTIVE_ENROLLMENT_STATES = new Set([
-  'active', 'enrolled', 'current', 'ongoing', 'pending_payment', 'pending_lp',
+  '', 'active', 'enrolled', 'current', 'ongoing', 'pending_payment', 'pending_lp',
+]);
+const EXPLICITLY_INACTIVE_STATES = new Set([
+  'paused', 'discontinued', 'completed', 'expired',
+  'cancelled', 'canceled', 'archived', 'inactive',
 ]);
 const PENDING_SESSION_STATES = new Set(['scheduled', 'upcoming', 'planned', 'open']);
 
@@ -63,6 +67,11 @@ function childIdFromEnrollment(enrollment: Enrollment): string {
 function isActiveEnrollment(enrollment: Enrollment): boolean {
   return !enrollment.archived && !enrollment.isArchived && !enrollment.archivedAt &&
     ACTIVE_ENROLLMENT_STATES.has(str(enrollment.status).toLowerCase());
+}
+
+function isExplicitlyInactiveEnrollment(enrollment: Enrollment): boolean {
+  return Boolean(enrollment.archived || enrollment.isArchived || enrollment.archivedAt ||
+    EXPLICITLY_INACTIVE_STATES.has(str(enrollment.status).toLowerCase()));
 }
 
 function isActiveChild(child: Enrollment | null): boolean {
@@ -104,15 +113,20 @@ export function planTodayTomorrowForEnrollment(args: {
   activeChild: boolean;
 }): RollingMaterializationOccurrence[] {
   if (!args.activeChild || !isActiveEnrollment(args.enrollment)) return [];
+  // Legacy enrollments may omit the class-start cutoff. Their authoritative
+  // weekly timetable is still valid (same policy as the nightly planner).
   const startYmd = dateStartYmd(args.enrollment);
-  // Ambiguous class-start data is not sufficient to create a class.
-  if (!startYmd) return [];
   const slots = normalizeRollingMaterializerSlots(args.enrollment.schedule);
-  if (!slots.length) return [];
+  if (!slots.length) {
+    // An active enrollment with a missing timetable is a data-quality error,
+    // not permission to delete every existing pending class.
+    throw new HttpsError('failed-precondition',
+      'Active enrollment has no recurring timetable. Repair Student Management first.');
+  }
   const days = [args.todayYmd, addDaysYmd(args.todayYmd, 1)];
   const occurrences: RollingMaterializationOccurrence[] = [];
   for (const date of days) {
-    if (date < startYmd) continue;
+    if (startYmd && date < startYmd) continue;
     const midnightUtcMs = dateToUtcMs(date);
     const weekday = new Date(midnightUtcMs).getUTCDay();
     for (const slot of slots) {
@@ -265,8 +279,17 @@ export async function syncTodayTomorrowForEnrollment(args: {
       revision(enrollment) !== args.expectedRevision) {
       throw new HttpsError('aborted', 'Timetable changed again during Today/Tomorrow sync; retry');
     }
+    if (!isActiveEnrollment(enrollment) && !isExplicitlyInactiveEnrollment(enrollment)) {
+      // Trial/pending-teacher/unrecognized states must not be mistaken for a
+      // lifecycle cancellation. Do not erase pending sessions or generate new ones.
+      return {...empty('synchronized', days), preserved: sessionSnap.size};
+    }
     const kidId = childIdFromEnrollment(enrollment);
     const childSnap = kidId ? await tx.get(db.collection('kids').doc(kidId)) : null;
+    if (isActiveEnrollment(enrollment) && (!kidId || !childSnap?.exists)) {
+      throw new HttpsError('failed-precondition',
+        'Active enrollment is missing its linked child profile; no sessions modified.');
+    }
     const childActive = isActiveChild(
       childSnap?.exists ? (childSnap.data() || {}) as Enrollment : null
     );
