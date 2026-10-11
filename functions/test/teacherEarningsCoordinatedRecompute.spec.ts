@@ -60,7 +60,9 @@ describe('B6 Brick 7C1 atomic authoritative recompute', () => {
     expect(source).toContain('const earningsSnap = await tx.get(earningsQuery)');
     expect(source).toContain('const payoutsSnap = await tx.get(payoutsQuery)');
     expect(source).toContain('computeTeacherMonthlyRollupPayload');
-    expect(source).toContain('incrementalAuthoritativeCommittedAt: admin.firestore.FieldValue.serverTimestamp()');
+    expect(source).toContain("import {FieldValue} from 'firebase-admin/firestore'");
+    expect(source).toContain('incrementalAuthoritativeCommittedAt: FieldValue.serverTimestamp()');
+    expect(source).not.toContain('admin.firestore.FieldValue');
     expect(source).toContain('incrementalRecomputeState: TEACHER_EARNINGS_RECOMPUTE_STATE_IDLE');
     expect(source).not.toContain('planTeacherEarningsRecomputeClaim');
     expect(source).not.toContain('planTeacherEarningsRecomputeFinalize');
