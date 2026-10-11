@@ -311,30 +311,34 @@ describe('Sessions Management authoritative snapshot loading', () => {
   });
 
   it('revalidates an unauthenticated-cache miss before any full Overall Admissions Firestore read', () => {
-    const start = pageSource.indexOf('let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(');
+    const start = pageSource.indexOf('let cachedAdmissionRows = manualRefresh');
     const revalidate = pageSource.indexOf('await loadSessionsManagementSnapshot();', start);
     const fallback = pageSource.indexOf("await getDocs(query(collection(db, 'enrollments')))", start);
     expect(start).toBeGreaterThan(-1);
     expect(revalidate).toBeGreaterThan(start);
     expect(fallback).toBeGreaterThan(revalidate);
+    expect(pageSource.slice(start, fallback)).toContain('cachedAdmissionRows === null && !manualRefresh');
     expect(pageSource.slice(start, fallback)).toContain('isSessionsManagementTransientFailure(error)');
     expect(pageSource).toContain('subscribeSessionsManagementSnapshotInvalidation(');
   });
 
-  it('listens to the single admin projection signal and reloads the cached read model', () => {
-    expect(pageSource).toContain(
-      "doc(db, 'adminSessionsManagement', 'projectionState')",
-    );
-    expect(pageSource).toContain('onSnapshot(');
-    expect(pageSource).toContain('loadSessionsManagementSnapshot()');
-    expect(pageSource).toContain('setProjectionRefreshNonce');
+  it('never subscribes to an automatic Admin snapshot listener while reminders are open', () => {
+    expect(pageSource).not.toContain('onSnapshot(');
+    expect(pageSource).not.toContain('setProjectionRefreshNonce');
+    expect(pageSource).toContain('readCache.visibleSessionsByDate.get(selectedDateKey)');
+    expect(pageSource).toContain('readCache.loadEnrollments(');
+    expect(pageSource).toContain('readCache.loadRealSessions(');
+    expect(pageSource).toContain('sharedAdminReminderViews.readCacheRef');
+    expect(pageSource).toContain('useAuthStore.subscribe(');
+    expect(pageSource).toContain('readCache.setVisibleSessions(selectedDateKey, nextSessions)');
   });
 
-  it('rolls the default Tomorrow selection forward when the 04:00 baseline advances', () => {
-    expect(pageSource).toContain('const todayDateKeyRef = useRef(todayDateKey);');
+  it('rolls Today/Tomorrow forward only on explicit manual refresh after IST midnight', () => {
+    expect(pageSource).toContain('const latestToday = getSessionsManagementBaselineDateKey();');
     expect(pageSource).toContain('previousTomorrowDateKey');
     expect(pageSource).toContain('nextTomorrowDateKey');
     expect(pageSource).toContain('selected === previousTomorrowDateKey');
+    expect(pageSource).not.toContain('todayDateKeyRef');
   });
 
   it('allows only admins to read the projection signal from the browser', () => {

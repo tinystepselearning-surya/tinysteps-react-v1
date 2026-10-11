@@ -5,7 +5,6 @@ import {
   documentId,
   getDocs,
   limit,
-  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -56,21 +55,18 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
 import {
-  loadManualReminderDayBuckets,
-  loadManualReminderSelectedDate,
-  readManualReminderCacheFromStorage,
+  mergeSessionWithEnrollmentFallback,
   selectOperationalReminderSessions,
   buildVirtualReminderSessions,
-  writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
 import { removeExpiredManualReminderCaches } from './manualReminderCache';
+import { ManualReminderReadCache } from './manualReminderReadCache';
+import type { ManualReminderSessionDoc } from './todaysNotificationsManualData';
 import PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';
 import { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';
 import {
   getCachedSessionsManagementRowsForReadLabel,
-  getCachedSessionsManagementSnapshot,
   loadSessionsManagementSnapshot,
-  clearSessionsManagementSnapshotCache,
   isSessionsManagementAuthorizationFailure,
   isSessionsManagementTransientFailure,
   subscribeSessionsManagementSnapshotInvalidation,
@@ -170,21 +166,46 @@ interface ResolvedUserDoc {
   data: UserDoc;
 }
 
-// Enrollment recurrence, not pre-created classSessions, is the source of
-// Admin Today/Tomorrow. Cache the same tiny collection read for both tabs.
-const VIRTUAL_ADMIN_ENROLLMENT_CACHE_MS = 120_000;
-let adminEnrollmentCache: {expiresAt: number; enrollments: EnrollmentDoc[]} | null = null;
-async function getVirtualAdminEnrollments(): Promise<EnrollmentDoc[]> {
-  const cached = adminEnrollmentCache;
-  if (cached && cached.expiresAt > Date.now()) return cached.enrollments;
+type OverallAdmissionsCachedView = {
+  enrollments: EnrollmentDoc[];
+  enrollmentMap: Record<string, Record<string, any>>;
+  usersMap: Record<string, ResolvedUserDoc>;
+  kidMap: Record<string, KidDoc>;
+  courseMap: Record<string, CourseDoc>;
+};
+
+// One memory-only snapshot per authenticated Admin browser session. It survives
+// Admin subpage navigation but never persists personal data to localStorage.
+// Zustand's existing auth updates clear all views on logout/account switch;
+// this adds no Firestore listener, polling or network calls.
+const sharedAdminReminderViews = {
+  readCacheRef: {current: new ManualReminderReadCache<EnrollmentDoc, ManualReminderSessionDoc>()},
+  usersRef: {current: {} as Record<string, ResolvedUserDoc>},
+  overallRef: {current: null as OverallAdmissionsCachedView | null},
+};
+sharedAdminReminderViews.readCacheRef.current.useActor(useAuthStore.getState().user?.uid || null);
+useAuthStore.subscribe((state, previous) => {
+  const nextUid = state.user?.uid || null;
+  if (nextUid === (previous.user?.uid || null)) return;
+  sharedAdminReminderViews.readCacheRef.current.useActor(nextUid);
+  sharedAdminReminderViews.usersRef.current = {};
+  sharedAdminReminderViews.overallRef.current = null;
+});
+
+// This callback performs one bounded enrollment read on the page's first
+// load or explicit refresh. The per-Admin memory cache owns reuse.
+async function fetchVirtualAdminEnrollments(actorUid: string): Promise<EnrollmentDoc[]> {
   const queryBound = 450;
   const result = await getDocs(query(collection(db, 'enrollments'), limit(queryBound)));
   if (result.size >= queryBound) {
     throw new Error('Enrollment projection safety limit reached; Admin calendar is incomplete');
   }
-  const enrollments = result.docs.map(snap=>({id:snap.id,...(snap.data() as Record<string,unknown>)} as EnrollmentDoc));
-  adminEnrollmentCache = {expiresAt:Date.now()+VIRTUAL_ADMIN_ENROLLMENT_CACHE_MS, enrollments};
-  return enrollments;
+  if (auth.currentUser?.uid !== actorUid) {
+    throw new Error('Admin account changed while loading enrollments.');
+  }
+  return result.docs.map(snap => ({
+    id: snap.id, ...(snap.data() as Record<string, unknown>),
+  } as EnrollmentDoc));
 }
 
 const TIMEZONE = 'Asia/Kolkata';
@@ -1209,9 +1230,10 @@ export default function TodaysNotifications() {
   const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
   const [cancellingManualSessionId, setCancellingManualSessionId] = useState('');
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
-  const [projectionRefreshNonce, setProjectionRefreshNonce] = useState(0);
-  const handledReminderRefreshNonceRef = useRef(0);
-  const lastProjectionSignalRef = useRef('');
+  const reminderReadCacheRef = sharedAdminReminderViews.readCacheRef;
+  const reminderUsersCacheRef = sharedAdminReminderViews.usersRef;
+  const handledAdmissionsRefreshNonceRef = useRef(0);
+  const overallAdmissionsCacheRef = sharedAdminReminderViews.overallRef;
   const displayedActorUidRef = useRef(user?.uid || null);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
@@ -1221,6 +1243,9 @@ export default function TodaysNotifications() {
     const uid = user?.uid || null;
     if (displayedActorUidRef.current === uid) return;
     displayedActorUidRef.current = uid;
+    reminderReadCacheRef.current.useActor(uid);
+    reminderUsersCacheRef.current = {};
+    overallAdmissionsCacheRef.current = null;
     setSessions([]);
     setEnrollments([]);
     setUsersMap({});
@@ -1230,12 +1255,20 @@ export default function TodaysNotifications() {
     setMessageDrafts({});
     setMessageEditor(null);
     setSessionLoadError(null);
-    lastProjectionSignalRef.current = '';
   }, [user?.uid]);
 
   // Firebase's UID-change callback runs before the store resolves token claims.
   // Clear old actor rows immediately rather than waiting for the next render.
   useLayoutEffect(() => subscribeSessionsManagementSnapshotInvalidation(() => {
+    // The snapshot client also announces first-time same-UID verification.
+    // Only a genuine authenticated UID change may clear the manual cache.
+    const actualUid = auth.currentUser?.uid || null;
+    if (displayedActorUidRef.current === actualUid) return;
+    displayedActorUidRef.current = actualUid;
+    reminderReadCacheRef.current.useActor(actualUid);
+    reminderReadCacheRef.current.invalidate();
+    reminderUsersCacheRef.current = {};
+    overallAdmissionsCacheRef.current = null;
     setSessions([]);
     setEnrollments([]);
     setUsersMap({});
@@ -1245,13 +1278,11 @@ export default function TodaysNotifications() {
     setMessageDrafts({});
     setMessageEditor(null);
     setSessionLoadError(null);
-    lastProjectionSignalRef.current = '';
   }), []);
 
   const [todayDateKey, setTodayDateKey] = useState(() =>
     getSessionsManagementBaselineDateKey(),
   );
-  const todayDateKeyRef = useRef(todayDateKey);
   const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
   const todayLabel = useMemo(() => {
     const baselineDate = dateFromYmdKey(todayDateKey);
@@ -1284,98 +1315,6 @@ export default function TodaysNotifications() {
   }, [mode, upcomingSpecificDate, tomorrowDateKey]);
 
   useEffect(() => {
-    // The cutover's Today/Tomorrow sessions never observe the legacy projection
-    // and never re-request the full Sessions Management snapshot.
-    if (mode !== 'overall-admissions') return;
-    let active = true;
-    const actorUid = user?.uid || null;
-    const actorActive = () => active && Boolean(actorUid) && auth.currentUser?.uid === actorUid;
-    const invalidateVisibleRows = () => {
-      clearSessionsManagementSnapshotCache();
-      setSessions([]);
-      setEnrollments([]);
-      setUsersMap({});
-      setKidMap({});
-      setEnrollmentMap({});
-      setCourseMap({});
-      setMessageDrafts({});
-      setMessageEditor(null);
-      setSessionLoadError('Your Sessions Management access must be verified again.');
-    };
-    const projectionStateRef = doc(db, 'adminSessionsManagement', 'projectionState');
-    const unsubscribe = onSnapshot(
-      projectionStateRef,
-      (snapshot) => {
-        if (!actorActive()) return;
-        if (!snapshot.exists()) return;
-        const data = snapshot.data() || {};
-        const revision = Math.max(0, Number(data.revision || 0));
-        const snapshotId = String(data.snapshotId || '').trim();
-        const signal = `${snapshotId}:${revision}`;
-        const previousSignal = lastProjectionSignalRef.current;
-        lastProjectionSignalRef.current = signal;
-
-        const cached = getCachedSessionsManagementSnapshot();
-        const cachedSignal = cached
-          ? `${cached.snapshotId}:${cached.projectionRevision}`
-          : '';
-
-        const nextBaselineDateKey = getSessionsManagementBaselineDateKey();
-        const previousBaselineDateKey = todayDateKeyRef.current;
-        if (previousBaselineDateKey !== nextBaselineDateKey) {
-          const previousTomorrowDateKey = shiftDateKeyByDays(previousBaselineDateKey, 1);
-          const nextTomorrowDateKey = shiftDateKeyByDays(nextBaselineDateKey, 1);
-          todayDateKeyRef.current = nextBaselineDateKey;
-          setTodayDateKey(nextBaselineDateKey);
-          setUpcomingSpecificDate((selected) =>
-            !selected || selected === previousTomorrowDateKey
-              ? nextTomorrowDateKey
-              : selected,
-          );
-        }
-
-        if (!previousSignal && (!cachedSignal || cachedSignal === signal)) return;
-        if (previousSignal === signal && cachedSignal === signal) return;
-
-        void (async () => {
-          try {
-            await loadSessionsManagementSnapshot();
-            if (!actorActive()) return;
-            const refreshed = getCachedSessionsManagementSnapshot();
-            const refreshedSignal = refreshed
-              ? `${refreshed.snapshotId}:${refreshed.projectionRevision}`
-              : '';
-            if (refreshedSignal !== signal) {
-              await loadSessionsManagementSnapshot();
-            }
-            if (actorActive()) setProjectionRefreshNonce((value) => value + 1);
-          } catch (error) {
-            if (!actorActive()) return;
-            if (isSessionsManagementAuthorizationFailure(error)) {
-              invalidateVisibleRows();
-              return;
-            }
-            console.warn('[TodaysNotifications] projection reload temporarily failed');
-          }
-        })();
-      },
-      (error) => {
-        if (!actorActive()) return;
-        if (isSessionsManagementAuthorizationFailure(error)) {
-          invalidateVisibleRows();
-          return;
-        }
-        console.warn('[TodaysNotifications] projection listener failed');
-      },
-    );
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [user?.uid, mode]);
-
-  useEffect(() => {
     if (isNotificationActionsEnabled) return;
     setEditingPhone(null);
     setMessageEditor(null);
@@ -1397,47 +1336,73 @@ export default function TodaysNotifications() {
       mode === 'today'
         ? todayDateKey
         : String(upcomingSpecificDate || '').trim() || tomorrowDateKey;
-    const forceRefresh = reminderRefreshNonce !== handledReminderRefreshNonceRef.current;
-    if (forceRefresh) {
-      handledReminderRefreshNonceRef.current = reminderRefreshNonce;
+    const actorUid = user?.uid || '';
+    if (!actorUid) {
+      setIsLoading(false);
+      setSessionLoadError('Sign in as an Admin to load class reminders.');
+      return () => { active = false; };
     }
+    reminderReadCacheRef.current.useActor(actorUid);
+    const readCache = reminderReadCacheRef.current;
+    const cacheRevision = readCache.getRevision();
 
     const loadSessions = async () => {
       try {
-        const result =
-          selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey
-            ? await loadManualReminderDayBuckets({
-                directFirestore: true,
-                deps: {
-                  fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),
-                  fetchSessionsForDate: fetchReminderSessionsForDate,
-                  readCache: readManualReminderCacheFromStorage,
-                  writeCache: writeManualReminderCacheToStorage,
-                },
-                forceRefresh,
-                todayDateKey,
-                tomorrowDateKey,
-              })
-            : await loadManualReminderSelectedDate({
-                dateKey: selectedDateKey,
-                directFirestore: true,
-                deps: {
-                  fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),
-                  fetchSessionsForDate: fetchReminderSessionsForDate,
-                },
-              });
+        const cacheHit = readCache.visibleSessionsByDate.get(selectedDateKey);
+        if (cacheHit) {
+          if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+          setSessions(cacheHit);
+          const currentEnrollments = readCache.enrollments || [];
+          setEnrollmentMap(Object.fromEntries(currentEnrollments.map(row => [row.id, row])));
+          setUsersMap(reminderUsersCacheRef.current);
+          setKidMap({});
+          setCourseMap({});
+          setIsLoading(false);
 
-        const fetchedSessions =
-          'todaySessions' in result
-            ? selectedDateKey === todayDateKey
-              ? result.todaySessions
-              : result.tomorrowSessions
-            : result.sessions;
-        const virtualEnrollments = await getVirtualAdminEnrollments();
-        const mergedEnrollmentMap = {
-          ...result.enrollmentMap,
-          ...Object.fromEntries(virtualEnrollments.map(row=>[row.id,row])),
-        } as Record<string,Record<string,unknown>>;
+          // A date may have been left before profile enrichment finished.
+          // Load only still-missing contacts, never its sessions or enrollments.
+          const requiredRefs = new Set<string>();
+          cacheHit.forEach(session => {
+            const parent = getPrimaryParentId(session);
+            if (parent) requiredRefs.add(parent);
+            collectSessionTeacherRefs(session as unknown as Record<string, unknown>).forEach(
+              teacher => requiredRefs.add(teacher),
+            );
+          });
+          const unresolved = [...requiredRefs].filter(
+            id => !reminderUsersCacheRef.current[normalizeLookupId(id)],
+          );
+          if (unresolved.length) {
+            const extraUsers = await fetchUsersByRefs(unresolved);
+            if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+            reminderUsersCacheRef.current = { ...reminderUsersCacheRef.current, ...extraUsers };
+            setUsersMap(reminderUsersCacheRef.current);
+          }
+          return;
+        }
+
+        // Parallel initial reads, then all date switches run from memory.
+        // Any date not previously visited needs its real exceptions once.
+        const persistedRequest = selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey
+          ? Promise.all([
+              readCache.loadRealSessions(todayDateKey, fetchReminderSessionsForDate),
+              readCache.loadRealSessions(tomorrowDateKey, fetchReminderSessionsForDate),
+            ]).then(() => readCache.realSessionsByDate.get(selectedDateKey) || [])
+          : readCache.loadRealSessions(selectedDateKey, fetchReminderSessionsForDate);
+        const [virtualEnrollments, persistedSessions] = await Promise.all([
+          readCache.loadEnrollments(() => fetchVirtualAdminEnrollments(actorUid)),
+          persistedRequest,
+        ]);
+        if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+        const mergedEnrollmentMap: Record<string, Record<string, unknown>> =
+          Object.fromEntries(virtualEnrollments.map(row => [
+            row.id, row as unknown as Record<string, unknown>,
+          ]));
+        const fetchedSessions = persistedSessions.map(session =>
+          mergeSessionWithEnrollmentFallback(
+            session, mergedEnrollmentMap[normalizeLookupId(session.enrollmentId)],
+          ),
+        );
         // Reminder acknowledgements are deliberately separate from attendance
         // records; checking a box never creates a classSession document.
         const flagQuery = query(
@@ -1448,7 +1413,8 @@ export default function TodaysNotifications() {
         if (flagSnap.size >= 250) {
           throw new Error('Reminder flag safety limit reached; contact Admin');
         }
-        const flags = new Map(flagSnap.docs.map(s=>[s.id,s.data()]));
+        if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+        const flags = new Map(flagSnap.docs.map(s => [s.id, s.data()]));
 
         const virtualRows = buildVirtualReminderSessions({
           enrollments:virtualEnrollments as unknown as Record<string,unknown>[],
@@ -1460,7 +1426,8 @@ export default function TodaysNotifications() {
           [...fetchedSessions,...virtualRows],mergedEnrollmentMap,
         );
 
-        if (!active) return;
+        if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+        readCache.setVisibleSessions(selectedDateKey, nextSessions);
         setSessions(nextSessions);
         setEnrollmentMap(mergedEnrollmentMap);
         // The authoritative snapshot is enough to render the session rows. Do not keep
@@ -1479,12 +1446,16 @@ export default function TodaysNotifications() {
         });
 
         try {
-          const nextUsersMap = await fetchUsersByRefs(
-            Array.from(new Set([...parentIds, ...teacherIds])),
-          );
+          const needed = Array.from(new Set([...parentIds, ...teacherIds]))
+            .filter(id => !reminderUsersCacheRef.current[normalizeLookupId(id)]);
+          const nextUsersMap = await fetchUsersByRefs(needed);
 
+          // Cache completed contacts even if the Admin switched dates while
+          // the lookup was in flight; only update the currently visible UI.
+          if (auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+          reminderUsersCacheRef.current = { ...reminderUsersCacheRef.current, ...nextUsersMap };
           if (!active) return;
-          setUsersMap(nextUsersMap);
+          setUsersMap(reminderUsersCacheRef.current);
           setKidMap({});
           setEnrollmentMap(mergedEnrollmentMap);
           setCourseMap({});
@@ -1498,11 +1469,10 @@ export default function TodaysNotifications() {
         if (import.meta.env.DEV) {
           console.info('[TodaysNotifications] manualReminderLoad', {
             dateLoaded: selectedDateKey,
-            elapsedMs: result.elapsedMs,
-            enrollmentFallbackReads: result.enrollmentFallbackReads,
+            enrollmentFallbackReads: 0,
             screen: 'TodaysNotifications',
             sessionsReturned: nextSessions.length,
-            source: result.source,
+            source: 'read-once-enrollment-and-day-cache',
           });
         }
       } catch (error: any) {
@@ -1533,7 +1503,6 @@ export default function TodaysNotifications() {
   }, [
     mode,
     reminderRefreshNonce,
-    projectionRefreshNonce,
     todayDateKey,
     tomorrowDateKey,
     upcomingSpecificDate,
@@ -1549,7 +1518,8 @@ export default function TodaysNotifications() {
       const cancelManualSession = httpsCallable(getFunctions(), 'cancelAdminManualSession');
       await cancelManualSession({ sessionId: session.id, reason });
       toast({ title: 'Manual session cancelled', description: 'The historical session document was preserved.' });
-      setReminderRefreshNonce((value) => value + 1);
+      reminderReadCacheRef.current.removeVisibleSession(session.id);
+      setSessions(previous => previous.filter(row => row.id !== session.id));
     } catch (error) {
       toast({
         title: 'Unable to cancel manual session',
@@ -1564,15 +1534,29 @@ export default function TodaysNotifications() {
   useEffect(() => {
     if (mode !== 'overall-admissions') return;
     let active = true;
+    const cached = overallAdmissionsCacheRef.current;
+    if (cached) {
+      setEnrollments(cached.enrollments);
+      setEnrollmentMap(cached.enrollmentMap);
+      setUsersMap(cached.usersMap);
+      setKidMap(cached.kidMap);
+      setCourseMap(cached.courseMap);
+      setIsLoading(false);
+      return () => { active = false; };
+    }
     setIsLoading(true);
     setSessions([]);
+    const manualRefresh = admissionsRefreshNonce !== handledAdmissionsRefreshNonceRef.current;
+    if (manualRefresh) handledAdmissionsRefreshNonceRef.current = admissionsRefreshNonce;
 
     const loadAdmissions = async () => {
       try {
-        let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
-          'TodaysNotifications:overall-admissions',
-        );
-        if (cachedAdmissionRows === null) {
+        let cachedAdmissionRows = manualRefresh
+          ? null
+          : getCachedSessionsManagementRowsForReadLabel(
+              'TodaysNotifications:overall-admissions',
+            );
+        if (cachedAdmissionRows === null && !manualRefresh) {
           // A persisted revision hint is not displayable until authorized.
           // Revalidate the existing projected snapshot before any raw-read
           // fallback to avoid fetching the entire enrollment collection.
@@ -1620,6 +1604,11 @@ export default function TodaysNotifications() {
         });
 
         setEnrollmentMap(nextEnrollmentMap);
+        overallAdmissionsCacheRef.current = {
+          enrollments: nextEnrollments,
+          enrollmentMap: nextEnrollmentMap,
+          usersMap: {}, kidMap: {}, courseMap: {},
+        };
 
         const userRefs = Array.from(new Set([...parentRefs, ...teacherRefs]));
         try {
@@ -1641,6 +1630,12 @@ export default function TodaysNotifications() {
           setUsersMap(nextUsersMap);
           setKidMap(nextKidMap);
           setCourseMap(nextCourseMap);
+          if (overallAdmissionsCacheRef.current) {
+            overallAdmissionsCacheRef.current = {
+              ...overallAdmissionsCacheRef.current,
+              usersMap: nextUsersMap, kidMap: nextKidMap, courseMap: nextCourseMap,
+            };
+          }
         } catch (enrichmentError) {
           console.warn(
             '[TodaysNotifications] admissions profile enrichment failed; keeping snapshot rows visible',
@@ -1664,7 +1659,7 @@ export default function TodaysNotifications() {
     return () => {
       active = false;
     };
-  }, [admissionsRefreshNonce, mode, projectionRefreshNonce, user?.uid, toast]);
+  }, [admissionsRefreshNonce, mode, user?.uid, toast]);
 
   const rows = useMemo(() => {
     return sessions
@@ -2242,6 +2237,10 @@ export default function TodaysNotifications() {
         },
         { merge: true },
       );
+      reminderReadCacheRef.current.updateVisibleSession(sessionId, row => ({
+        ...row, [notifiedField]: checked,
+        [notifiedAtField]: checked ? new Date() : null,
+      }));
       setSessions(prev=>prev.map(row => row.id===sessionId
         ? {...row,[notifiedField]:checked,[notifiedAtField]:checked ? new Date() : null}
         : row));
@@ -2374,9 +2373,9 @@ export default function TodaysNotifications() {
         { merge: true },
       );
 
-      setUsersMap((prev) => {
-        const nextMap: Record<string, ResolvedUserDoc> = { ...prev };
-        Object.keys(nextMap).forEach((lookupKey) => {
+      const updateUserPhoneInMap = (source: Record<string, ResolvedUserDoc>) => {
+        const nextMap: Record<string, ResolvedUserDoc> = { ...source };
+        Object.keys(nextMap).forEach(lookupKey => {
           const existing = nextMap[lookupKey];
           if (!existing || existing.docId !== editingPhone.userDocId) return;
           nextMap[lookupKey] = {
@@ -2392,7 +2391,16 @@ export default function TodaysNotifications() {
           };
         });
         return nextMap;
-      });
+      };
+      setUsersMap(current => updateUserPhoneInMap(current));
+      // Explicit local edits stay visible while switching tabs, without reads.
+      reminderUsersCacheRef.current = updateUserPhoneInMap(reminderUsersCacheRef.current);
+      if (overallAdmissionsCacheRef.current) {
+        overallAdmissionsCacheRef.current = {
+          ...overallAdmissionsCacheRef.current,
+          usersMap: updateUserPhoneInMap(overallAdmissionsCacheRef.current.usersMap),
+        };
+      }
 
       setEditingPhone(null);
       toast({ title: 'Phone updated', description: `Saved ${nextWhatsappE164} as the WhatsApp-ready number.` });
@@ -2529,7 +2537,20 @@ export default function TodaysNotifications() {
               size="sm"
               variant="outline"
               className="h-7 px-3 text-xs"
-              onClick={() => setReminderRefreshNonce((value) => value + 1)}
+              onClick={() => {
+                reminderReadCacheRef.current.invalidate();
+                reminderUsersCacheRef.current = {};
+                overallAdmissionsCacheRef.current = null;
+                const latestToday = getSessionsManagementBaselineDateKey();
+                if (todayDateKey !== latestToday) {
+                  const previousTomorrowDateKey = shiftDateKeyByDays(todayDateKey, 1);
+                  const nextTomorrowDateKey = shiftDateKeyByDays(latestToday, 1);
+                  setTodayDateKey(latestToday);
+                  setUpcomingSpecificDate(selected =>
+                    !selected || selected === previousTomorrowDateKey ? nextTomorrowDateKey : selected);
+                }
+                setReminderRefreshNonce(value => value + 1);
+              }}
             >
               Refresh sessions
             </Button>
@@ -2538,7 +2559,12 @@ export default function TodaysNotifications() {
               size="sm"
               variant="outline"
               className="h-7 px-3 text-xs"
-              onClick={() => setAdmissionsRefreshNonce((value) => value + 1)}
+              onClick={() => {
+                overallAdmissionsCacheRef.current = null;
+                reminderReadCacheRef.current.invalidate();
+                reminderUsersCacheRef.current = {};
+                setAdmissionsRefreshNonce(value => value + 1);
+              }}
             >
               Refresh admissions
             </Button>
