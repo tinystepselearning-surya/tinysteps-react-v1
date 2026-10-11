@@ -56,7 +56,7 @@ describe('Tiny Steps daily session plan', () => {
     expect(launch.plans.flatMap((p) => p.occurrences).every((s) => s.date <= '2026-10-13')).toBe(true);
     const nextRun = buildDailySessionRunPlan({...input, todayYmd: '2026-10-13'});
     expect(nextRun.targetDays).toEqual(['2026-10-14']);
-    expect(nextRun.plans.flatMap((p) => p.occurrences.map((s) => s.date))
+    expect(nextRun.plans.flatMap((p) => p.occurrences.map((s) => s.date)))
       .toEqual(['2026-10-14']);
     expect(dailySessionTargetDates('2026-10-14')).toEqual(['2026-10-15']);
     expect(() => dailySessionTargetDates('2026-10-11')).toThrow('starts on 2026-10-12');
