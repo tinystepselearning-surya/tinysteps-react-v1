@@ -66,27 +66,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
     return Number.isNaN(parsed) ? null : parsed;
   };
 
-  const sessionStartMs = getSessionStartMillis();
-  const attendanceAllowedAtMs = sessionStartMs === null ? null : sessionStartMs + ATTENDANCE_OPEN_DELAY_MS;
-  const attendanceCorrectionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
-  const nowMs = Date.now();
-  const isAttendanceTimeUnverified =
-    !canOverrideAttendanceTime && (attendanceAllowedAtMs === null || attendanceCorrectionCutoffMs === null);
-  const isAttendanceTooEarly =
-    !canOverrideAttendanceTime && attendanceAllowedAtMs !== null && nowMs < attendanceAllowedAtMs;
-  const isAttendanceFinalised =
-    !canOverrideAttendanceTime && attendanceCorrectionCutoffMs !== null && nowMs >= attendanceCorrectionCutoffMs;
-  const isAttendanceLocked = isAttendanceTimeUnverified || isAttendanceTooEarly || isAttendanceFinalised;
-  const attendanceOpensLabel =
-    attendanceAllowedAtMs !== null
-      ? new Intl.DateTimeFormat('en-GB', {
-          timeZone: INDIA_TIME_ZONE,
-          hour: '2-digit',
-          minute: '2-digit',
-          hourCycle: 'h23',
-        }).format(new Date(attendanceAllowedAtMs))
-      : null;
+  const isAttendanceLocked = false;
+  const isAttendanceTimeUnverified = false;
+  const isAttendanceFinalised = false;
+  const attendanceOpensLabel: string | null = null;
 
   const getAttendanceStatus = (value: any): string | undefined => {
     if (!value) return undefined;
