@@ -902,6 +902,10 @@ async function fetchReminderSessionsForDate(dateKey: string): Promise<ClassSessi
     sessionsQuery,
     { source: 'src/pages/admin/TodaysNotifications.tsx' },
   );
+  if (snap.size === 200) {
+    // A truncated list could mean missed reminders. Do not silently display it.
+    throw new Error('Session safety limit reached for this date; contact Admin before sending reminders.');
+  }
   return snap.docs
     .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
     .sort((left: ClassSessionDoc, right: ClassSessionDoc) => {
@@ -1264,6 +1268,9 @@ export default function TodaysNotifications() {
   }, [mode, upcomingSpecificDate, tomorrowDateKey]);
 
   useEffect(() => {
+    // The cutover's Today/Tomorrow sessions never observe the legacy projection
+    // and never re-request the full Sessions Management snapshot.
+    if (mode !== 'overall-admissions') return;
     let active = true;
     const actorUid = user?.uid || null;
     const actorActive = () => active && Boolean(actorUid) && auth.currentUser?.uid === actorUid;
@@ -1350,7 +1357,7 @@ export default function TodaysNotifications() {
       active = false;
       unsubscribe();
     };
-  }, [user?.uid]);
+  }, [user?.uid, mode]);
 
   useEffect(() => {
     if (isNotificationActionsEnabled) return;
@@ -1384,6 +1391,7 @@ export default function TodaysNotifications() {
         const result =
           selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey
             ? await loadManualReminderDayBuckets({
+                directFirestore: true,
                 deps: {
                   fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),
                   fetchSessionsForDate: fetchReminderSessionsForDate,
@@ -1396,6 +1404,7 @@ export default function TodaysNotifications() {
               })
             : await loadManualReminderSelectedDate({
                 dateKey: selectedDateKey,
+                directFirestore: true,
                 deps: {
                   fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),
                   fetchSessionsForDate: fetchReminderSessionsForDate,
