@@ -5,8 +5,10 @@ import {
   documentId,
   getDocs,
   limit,
+  orderBy,
   query,
   serverTimestamp,
+  startAfter,
   setDoc,
   where,
 } from 'firebase/firestore';
@@ -65,10 +67,7 @@ import type { ManualReminderSessionDoc } from './todaysNotificationsManualData';
 import PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';
 import { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';
 import {
-  getCachedSessionsManagementRowsForReadLabel,
-  loadSessionsManagementSnapshot,
   isSessionsManagementAuthorizationFailure,
-  isSessionsManagementTransientFailure,
   subscribeSessionsManagementSnapshotInvalidation,
 } from '../../lib/sessionsManagementSnapshot';
 import {
@@ -192,20 +191,36 @@ useAuthStore.subscribe((state, previous) => {
   sharedAdminReminderViews.overallRef.current = null;
 });
 
-// This callback performs one bounded enrollment read on the page's first
-// load or explicit refresh. The per-Admin memory cache owns reuse.
+// Shared, complete enrollment snapshot for Today, Upcoming and Overall Admissions.
+// Ordered pages prevent a 450-document UI limit from truncating admissions.
 async function fetchVirtualAdminEnrollments(actorUid: string): Promise<EnrollmentDoc[]> {
-  const queryBound = 450;
-  const result = await getDocs(query(collection(db, 'enrollments'), limit(queryBound)));
-  if (result.size >= queryBound) {
-    throw new Error('Enrollment projection safety limit reached; Admin calendar is incomplete');
+  const pageSize = 450;
+  const maxEnrollments = 4500;
+  const rows: EnrollmentDoc[] = [];
+  let cursor: string | null = null;
+  while (true) {
+    if (auth.currentUser?.uid !== actorUid) {
+      throw new Error('Admin account changed while loading enrollments.');
+    }
+    const pageQuery = query(
+      collection(db, 'enrollments'), orderBy(documentId()),
+      ...(cursor ? [startAfter(cursor)] : []), limit(pageSize),
+    );
+    const page = await getDocs(pageQuery);
+    if (auth.currentUser?.uid !== actorUid) {
+      throw new Error('Admin account changed while loading enrollments.');
+    }
+    rows.push(...page.docs.map(snap => ({
+      id: snap.id, ...(snap.data() as Record<string, unknown>),
+    } as EnrollmentDoc)));
+    if (rows.length > maxEnrollments) {
+      throw new Error('Enrollment safety cap exceeded; never show a partial admission count.');
+    }
+    if (page.size < pageSize) break;
+    cursor = page.docs[page.docs.length - 1]?.id || null;
+    if (!cursor) throw new Error('Missing enrollment pagination cursor.');
   }
-  if (auth.currentUser?.uid !== actorUid) {
-    throw new Error('Admin account changed while loading enrollments.');
-  }
-  return result.docs.map(snap => ({
-    id: snap.id, ...(snap.data() as Record<string, unknown>),
-  } as EnrollmentDoc));
+  return rows;
 }
 
 const TIMEZONE = 'Asia/Kolkata';
@@ -837,24 +852,8 @@ async function fetchDocsByIds(
   const unique = Array.from(new Set(ids.map((id) => String(id || '').trim()).filter(Boolean)));
   if (!unique.length) return out;
 
-  const cacheLabel = `TodaysNotifications:fetchDocsByIds:${collectionName}`;
-  const cachedRows = getCachedSessionsManagementRowsForReadLabel(cacheLabel);
-  if (cachedRows !== null) {
-    const requestedIds = new Set(unique);
-    cachedRows.forEach((row) => {
-      if (!requestedIds.has(row.id)) return;
-      out[row.id] = { id: row.id, ...(row.data || {}) };
-    });
-    // A loaded Sessions Management snapshot is authoritative for this screen.
-    // Missing optional profile rows render with fallbacks instead of spawning
-    // repeated pseudo-queries against the same browser cache.
-    return out;
-  }
-
   for (const idChunk of chunkIds(unique, 10)) {
     const q = query(collection(db, collectionName), where(documentId(), 'in', idChunk));
-    // We are already on the explicit Firestore fallback path here. Calling
-    // getDocsLogged would retry the broken snapshot callable before every chunk.
     const snap = await getDocs(q);
     const requestedChunkIds = new Set(idChunk);
     snap.docs.forEach((docSnap) => {
@@ -886,20 +885,6 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
     new Set(userRefs.map((value) => normalizeLookupId(value)).filter(Boolean)),
   );
   if (!normalized.length) return map;
-
-  const cachedRows = getCachedSessionsManagementRowsForReadLabel(
-    'TodaysNotifications:users-by-doc-id',
-  );
-  if (cachedRows !== null) {
-    const requestedRefs = new Set(normalized);
-    cachedRows.forEach((row) => {
-      const rawData = row.data as UserDoc;
-      const uid = normalizeLookupId(rawData?.uid);
-      if (!requestedRefs.has(row.id) && !requestedRefs.has(uid)) return;
-      addResolvedUserToMap(map, row.id, rawData);
-    });
-    return map;
-  }
 
   for (const idChunk of chunkIds(normalized, 10)) {
     const byDocIdQuery = query(collection(db, 'users'), where(documentId(), 'in', idChunk));
@@ -1232,7 +1217,6 @@ export default function TodaysNotifications() {
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
   const reminderReadCacheRef = sharedAdminReminderViews.readCacheRef;
   const reminderUsersCacheRef = sharedAdminReminderViews.usersRef;
-  const handledAdmissionsRefreshNonceRef = useRef(0);
   const overallAdmissionsCacheRef = sharedAdminReminderViews.overallRef;
   const displayedActorUidRef = useRef(user?.uid || null);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
@@ -1546,42 +1530,29 @@ export default function TodaysNotifications() {
     }
     setIsLoading(true);
     setSessions([]);
-    const manualRefresh = admissionsRefreshNonce !== handledAdmissionsRefreshNonceRef.current;
-    if (manualRefresh) handledAdmissionsRefreshNonceRef.current = admissionsRefreshNonce;
+    const actorUid = user?.uid || '';
+    if (!actorUid) {
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+    reminderReadCacheRef.current.useActor(actorUid);
+    const readCache = reminderReadCacheRef.current;
+    const cacheRevision = readCache.getRevision();
 
     const loadAdmissions = async () => {
       try {
-        let cachedAdmissionRows = manualRefresh
-          ? null
-          : getCachedSessionsManagementRowsForReadLabel(
-              'TodaysNotifications:overall-admissions',
-            );
-        if (cachedAdmissionRows === null && !manualRefresh) {
-          // A persisted revision hint is not displayable until authorized.
-          // Revalidate the existing projected snapshot before any raw-read
-          // fallback to avoid fetching the entire enrollment collection.
-          try {
-            await loadSessionsManagementSnapshot();
-            cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
-              'TodaysNotifications:overall-admissions',
-            );
-          } catch (error) {
-            if (!isSessionsManagementTransientFailure(error)) throw error;
-          }
-        }
-        const nextEnrollments = (
-          cachedAdmissionRows !== null
-            ? cachedAdmissionRows.map((row) => ({ id: row.id, ...(row.data as any) }))
-            : (await getDocs(query(collection(db, 'enrollments')))).docs.map((docSnap) => ({
-                id: docSnap.id,
-                ...(docSnap.data() as any),
-              }))
-        ).sort((a: EnrollmentDoc, b: EnrollmentDoc) =>
+        // Reuse the same actor-scoped timetable cache as Today/Upcoming.
+        // Only first open or explicit Refresh performs an enrollment read.
+        const enrollmentSnapshot = await readCache.loadEnrollments(
+          () => fetchVirtualAdminEnrollments(actorUid),
+        );
+        if (!active || auth.currentUser?.uid !== actorUid ||
+            !readCache.isCurrentRevision(cacheRevision)) return;
+        const nextEnrollments = [...enrollmentSnapshot].sort((a: EnrollmentDoc, b: EnrollmentDoc) =>
           String(a.id || '').localeCompare(String(b.id || ''), undefined, { sensitivity: 'base' }),
         );
 
-        if (!active) return;
-        setEnrollments(nextEnrollments);
+                setEnrollments(nextEnrollments);
         // Overall Admissions can render from enrollment snapshot rows immediately.
         // Profile/course hydration is secondary and must never hold the screen in Loading.
         setIsLoading(false);
@@ -1626,7 +1597,8 @@ export default function TodaysNotifications() {
             });
           }
 
-          if (!active) return;
+          if (!active || auth.currentUser?.uid !== actorUid ||
+              !readCache.isCurrentRevision(cacheRevision)) return;
           setUsersMap(nextUsersMap);
           setKidMap(nextKidMap);
           setCourseMap(nextCourseMap);
@@ -1638,7 +1610,7 @@ export default function TodaysNotifications() {
           }
         } catch (enrichmentError) {
           console.warn(
-            '[TodaysNotifications] admissions profile enrichment failed; keeping snapshot rows visible',
+            '[TodaysNotifications] admissions profile enrichment failed; keeping enrollment rows visible',
             enrichmentError,
           );
         }
