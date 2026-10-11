@@ -204,6 +204,9 @@ export {
   batchInsightsRollup11pm,
 } from "./scheduled/batchInsightsRollup";
 export { globalLearnersRollup } from "./scheduled/globalLearnersRollup";
+// Only the new daily generator will remain scheduled after the cutover.
+// Fail-closed until DAILY_SESSION_WRITES_ENABLED=true has been approved.
+export { dailySessionsTomorrowAt0005 } from "./scheduling/dailySessionGenerator";
 export { rollingScheduleEdgeReplenisherDaily } from "./scheduled/rollingScheduleEdgeReplenisher";
 export {
   onFutureScheduleEnrollmentWrite,
