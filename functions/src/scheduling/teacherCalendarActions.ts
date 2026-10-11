@@ -20,6 +20,8 @@ import {
   type RollingMaterializationOccurrence,
 } from './rollingScheduleMaterializer';
 
+if (!admin.apps.length) admin.initializeApp();
+
 const REGION = 'asia-south1';
 const IST_MINUTES = 330;
 const ACTIVE = new Set(['active','enrolled','current','ongoing','pending_payment','pending_lp']);
@@ -229,6 +231,12 @@ export const createTeacherCalendarAdHocSession = onCall(
       if (!enrSnap.exists) throw new HttpsError('not-found','Enrollment not found');
       const enrollment=(enrSnap.data()||{}) as Row;
       const childId=assertAssignedActive(enrollment,uid,date);
+      const weekday=new Date(date+'T00:00:00.000Z').getUTCDay();
+      const recurringSlots=normalizeRollingMaterializerSlots(enrollment.schedule);
+      if (recurringSlots.some(slot=>slot.weekday===weekday && slot.time===startTime)) {
+        throw new HttpsError('failed-precondition',
+          'A regular timetable class already occupies this time. Use the regular class instead.');
+      }
       const occurrence=resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
       const now=Date.now();
       const cutoff=getTeacherAttendanceCorrectionCutoffMillis({date});
@@ -266,6 +274,9 @@ export const createTeacherCalendarAdHocSession = onCall(
       tx.create(sessionRef,{
         ...payload,source:'teacher_ad_hoc',
         isAdHoc:true,isManual:true,
+        manualSessionState:'approved',
+        manualSessionApprovedAt:admin.firestore.FieldValue.serverTimestamp(),
+        manualSessionApprovedBy:uid,
         notes:'Teacher-created ad hoc class',
         scheduleDeliveryMode:'ad_hoc',
       });
