@@ -35,6 +35,7 @@ import {
   buildCanonicalRollingScheduleDefinition,
   isCanonicalRollingEnrollment,
   resolveRollingLifecycleTodayYmd,
+  saveRollingEnrollmentSchedule,
   setRollingEnrollmentLifecycle,
 } from './rollingScheduleLifecycle';
 import {reconcileRollingEnrollmentSchedule} from './rollingScheduleReconciliation';
@@ -399,6 +400,30 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall({region: REGION}
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
+    // Before cutover this entry point saved the timetable AND generated a
+    // finite set of classSessions. Preserve timetable editing by activating
+    // the canonical recurrence, but never run the legacy session materializer.
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      const activated = await runCallable(saveRollingEnrollmentSchedule, {
+        ...request,
+        data: {
+          enrollmentId,
+          enrollmentStartDate: request.data?.enrollmentStartDate,
+          classesStartDate: request.data?.classesStartDate,
+          feePerClass: request.data?.feePerClass,
+          currency: request.data?.currency,
+          joinUrl: request.data?.joinUrl,
+          weeklySlots: request.data?.weeklySlots,
+          idempotencyKey: request.data?.idempotencyKey,
+        },
+      });
+      return {
+        ...retiredLegacyGenerationResponse(),
+        enrollmentId,
+        scheduleRevision: activated.scheduleRevision,
+        orchestrationState: 'timetable_saved_without_sessions',
+      };
+    }
     return runCallable(legacySaveEnrollmentScheduleAndGenerateSessions, request);
   }
   const result = await runCallable(reconcileRollingEnrollmentSchedule, {
