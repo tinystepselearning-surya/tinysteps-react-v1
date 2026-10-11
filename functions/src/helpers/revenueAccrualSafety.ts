@@ -21,9 +21,15 @@ export function resolveRevenueAccrualLedgerRepairReason(input: {
   chargeStatus: string;
   earningExists: boolean;
   earningStatus: string;
+  attendanceVoidReactivation?: boolean;
 }): RevenueAccrualLedgerRepairReason | null {
   const chargeStatus = String(input.chargeStatus || '').trim().toLowerCase();
   const earningStatus = String(input.earningStatus || '').trim().toLowerCase();
+  if (input.attendanceVoidReactivation === true && !input.alreadyAccrued &&
+      input.chargeExists && input.earningExists &&
+      chargeStatus === 'void' && earningStatus === 'void') {
+    return null; // Explicitly validated safe attendance reversal, not manual void.
+  }
   if (
     (input.chargeExists && chargeStatus === 'void') ||
     (input.earningExists && earningStatus === 'void')
