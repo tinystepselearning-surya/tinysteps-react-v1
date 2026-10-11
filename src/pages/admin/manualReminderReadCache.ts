@@ -5,7 +5,7 @@
  * background listener. Navigating between previously visited dates performs
  * no network reads. Authentication changes and explicit refresh invalidate it.
  */
-export class ManualReminderReadCache<Enrollment, Session> {
+export class ManualReminderReadCache<Enrollment, Session extends { id: string }> {
   private actorUid: string | null = null;
   private revision = 0;
   private enrollmentLoad: Promise<Enrollment[]> | null = null;
@@ -73,8 +73,7 @@ export class ManualReminderReadCache<Enrollment, Session> {
   updateVisibleSession(id: string, update: (session: Session) => Session): void {
     this.visibleSessionsByDate.forEach((rows, date) => {
       this.visibleSessionsByDate.set(date, rows.map(session => {
-        const candidate = session as Record<string, unknown>;
-        return candidate.id === id ? update(session) : session;
+        return session.id === id ? update(session) : session;
       }));
     });
   }
@@ -82,7 +81,7 @@ export class ManualReminderReadCache<Enrollment, Session> {
   removeVisibleSession(id: string): void {
     this.visibleSessionsByDate.forEach((rows, date) => {
       this.visibleSessionsByDate.set(date, rows.filter(session =>
-        (session as Record<string, unknown>).id !== id));
+        session.id !== id));
     });
   }
 }
