@@ -11,7 +11,6 @@
  */
 import * as admin from 'firebase-admin';
 import {onCall, HttpsError} from 'firebase-functions/v2/https';
-import {getTeacherAttendanceCorrectionCutoffMillis} from '../helpers/attendanceCorrectionFreeze';
 import {resolveCanonicalTeacherIdForWrite} from '../helpers/teacherIdentity';
 import {
   buildRollingScheduledSessionPayload,
@@ -129,16 +128,6 @@ function assertAssignedActive(enrollment: Row, uid: string, date: string): strin
   return childId;
 }
 
-export function assertTeacherCalendarAttendanceTime(occurrence: RollingMaterializationOccurrence, nowMs: number): void {
-  if (nowMs < occurrence.startAtUtcMs+30*HOUR) {
-    throw new HttpsError('failed-precondition','Attendance opens 30 minutes after class start');
-  }
-  const cutoff = getTeacherAttendanceCorrectionCutoffMillis({date:occurrence.date});
-  if (cutoff===null || nowMs>=cutoff) {
-    throw new HttpsError('failed-precondition','Attendance month is frozen');
-  }
-}
-
 /** Only explicitly called when teacher submits Present/Absent for a projection. */
 export const ensureTeacherCalendarAttendanceSession = onCall(
   {region:REGION, memory:'256MiB', timeoutSeconds:45},
@@ -165,7 +154,6 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
       const enrollment = (enrollmentSnap.data()||{}) as Row;
       const childId = assertAssignedActive(enrollment, uid, date);
       const occurrence = resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime});
-      assertTeacherCalendarAttendanceTime(occurrence,Date.now());
       const [childSnap, sessionSnap, chargeSnap, earningSnap] = await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
         tx.get(sessionRef),
@@ -238,11 +226,6 @@ export const createTeacherCalendarAdHocSession = onCall(
           'A regular timetable class already occupies this time. Use the regular class instead.');
       }
       const occurrence=resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
-      const now=Date.now();
-      const cutoff=getTeacherAttendanceCorrectionCutoffMillis({date});
-      if (cutoff===null||now>=cutoff) {
-        throw new HttpsError('failed-precondition','Month is frozen');
-      }
       const [childSnap,existing,regular,charge,earning,sameChildDay] = await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
         tx.get(sessionRef),
