@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
+import {calendarAttendanceClaimId} from './scheduling/teacherCalendarActions';
 import {
   hasAttendanceValidationAttendanceChange,
   markAttendanceValidationDirtySession,
@@ -607,32 +608,17 @@ export const saveTeacherSessionProgress = onCall(
       return isFinanciallyEarnedAttendanceStatus(before)
         !== isFinanciallyEarnedAttendanceStatus(after);
     });
-    if (changesBillability) {
-      const [chargeSnap, earningSnap] = await Promise.all([
-        db.collection('billingCharges').doc(sessionId).get(),
-        db.collection('teacherEarnings').doc(sessionId).get(),
-      ]);
-      const isPaid = (data:Record<string,unknown>):boolean => {
-        const state = normalizeFinancialStatus(data.status);
-        return isSettledFinancialStatus(state) || normalizeMoney(data.paidAmount)>0;
-      };
-      if ((chargeSnap.exists && isPaid((chargeSnap.data()||{}) as Record<string,unknown>)) ||
-          (earningSnap.exists && isPaid((earningSnap.data()||{}) as Record<string,unknown>))) {
-        throw new HttpsError('failed-precondition',
-          'Attendance correction affects settled finance; contact Admin for reconciliation.');
-      }
-    }
+
     if (!sessionSnap.updateTime) {
       throw new HttpsError('failed-precondition','Session version unavailable; retry attendance save.');
     }
-    const batch = db.batch();
     const sessionUpdate: Record<string, unknown> = {
       attendance: nextAttendance,
       notes: sessionNotes,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
-    batch.update(sessionRef, sessionUpdate, {lastUpdateTime:sessionSnap.updateTime});
+    const stagedWrites:Array<(tx:admin.firestore.Transaction)=>void> = [];
 
     let curriculumWriteCount = 0;
     let progressWriteCount = 0;
@@ -675,7 +661,7 @@ export const saveTeacherSessionProgress = onCall(
             curriculumPayload.courseLabel = resolvedCourseLabel;
             curriculumPayload.courseName = resolvedCourseLabel;
           }
-          batch.set(curriculumRef, curriculumPayload, { merge: true });
+          stagedWrites.push(tx=>tx.set(curriculumRef,curriculumPayload,{merge:true}));
           curriculumWriteCount += 1;
 
           const progressRef = db.collection('students').doc(kidId).collection('progress').doc(topicId);
@@ -695,13 +681,81 @@ export const saveTeacherSessionProgress = onCall(
             progressPayload.courseLabel = resolvedCourseLabel;
             progressPayload.courseName = resolvedCourseLabel;
           }
-          batch.set(progressRef, progressPayload, { merge: true });
+          stagedWrites.push(tx=>tx.set(progressRef,progressPayload,{merge:true}));
           progressWriteCount += 1;
         }
       }
     }
 
-    await batch.commit();
+
+    const sessionDayAndTime=():{day:string;time:string}=>{
+      const day=String(session.date||'').trim();
+      const match=/^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/.exec(String(session.startTime||'').trim());
+      if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day) && match)
+        return {day,time:match[1].padStart(2,'0')+':'+match[2]};
+      const at=(session.startAt as {toDate?:()=>Date}|undefined)?.toDate?.();
+      if(!at || !Number.isFinite(at.getTime()))
+        throw new HttpsError('failed-precondition','Historical class date/time requires Admin review.');
+      const shifted=new Date(at.getTime()+330*60_000).toISOString();
+      return {day:shifted.slice(0,10),time:shifted.slice(11,16)};
+    };
+    const occurrence=sessionDayAndTime();
+    const claimIds=Object.keys(incomingAttendance);
+    await db.runTransaction(async tx=>{
+      const latest=await tx.get(sessionRef);
+      if(!latest.exists || !latest.updateTime ||
+          latest.updateTime.toMillis()!==sessionSnap.updateTime!.toMillis())
+        throw new HttpsError('aborted','Attendance changed. Refresh and try again.');
+      const [chargeSnap,earningSnap,...claims]=await Promise.all([
+        tx.get(db.collection('billingCharges').doc(sessionId)),
+        tx.get(db.collection('teacherEarnings').doc(sessionId)),
+        ...claimIds.map(kid=>tx.get(db.collection('calendarAttendanceClaims').doc(
+          calendarAttendanceClaimId('',kid,occurrence.day,occurrence.time)))),
+      ]);
+      if(changesBillability){
+        const isPaid=(data:Record<string,unknown>):boolean=>
+          isSettledFinancialStatus(normalizeFinancialStatus(data.status))
+            || normalizeMoney(data.paidAmount)>0;
+        if((chargeSnap.exists&&isPaid((chargeSnap.data()||{}) as Record<string,unknown>))||
+           (earningSnap.exists&&isPaid((earningSnap.data()||{}) as Record<string,unknown>)))
+          throw new HttpsError('failed-precondition',
+            'Attendance correction affects settled finance; contact Admin.');
+      }
+      if(claims.some(c=>c.exists && String(c.data()?.sessionId||'')!==sessionId))
+        throw new HttpsError('failed-precondition',
+          'Another canonical attendance exists for this student/date/time.');
+      if(claims.some(c=>!c.exists)){
+        const daySnap=await tx.get(db.collection('classSessions')
+          .where('date','==',occurrence.day).limit(251));
+        if(daySnap.size>250)
+          throw new HttpsError('failed-precondition','Occurrence coverage exceeded; Admin review.');
+        for(const docSnap of daySnap.docs){
+          if(docSnap.id===sessionId)continue;
+          const row=docSnap.data() as Record<string,unknown>;
+          const m=/^([0-9]{1,2}):([0-9]{2})(?::[0-9]{2})?$/.exec(String(row.startTime||'').trim());
+          const otherTime=m?m[1].padStart(2,'0')+':'+m[2]:'';
+          const kids=[...(Array.isArray(row.kidIds)?row.kidIds:[]),
+            row.kidId,row.studentId,row.childId].map(k=>String(k||'').trim());
+          if(otherTime===occurrence.time&&claimIds.some(k=>kids.includes(k)))
+            throw new HttpsError('failed-precondition',
+              'Historical class already exists for the student/date/time; Admin review.');
+        }
+      }
+      tx.update(sessionRef,sessionUpdate);
+      for(let i=0;i<claims.length;i++){
+        if(claims[i].exists)continue;
+        const childId=claimIds[i];
+        tx.create(db.collection('calendarAttendanceClaims').doc(
+          calendarAttendanceClaimId('',childId,occurrence.day,occurrence.time)),{
+          sessionId,childId,enrollmentId:String(session.enrollmentId||''),
+          date:occurrence.day,startTime:occurrence.time,
+          createdAt:admin.firestore.FieldValue.serverTimestamp(),
+          source:'teacher_attendance_save',
+        });
+      }
+      stagedWrites.forEach(write=>write(tx));
+    });
+
 
     if (attendanceChangedForAvs) {
       try {
