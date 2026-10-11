@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
 import * as logger from 'firebase-functions/logger';
 import {FieldPath, FieldValue} from 'firebase-admin/firestore';
 import {onDocumentWritten} from 'firebase-functions/v2/firestore';
@@ -578,6 +579,7 @@ export const onFutureScheduleEnrollmentWrite = onDocumentWritten(
     timeoutSeconds: 120,
   },
   async (event) => {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) return;
     const before = event.data?.before.exists
       ? ((event.data.before.data() || {}) as Record<string, unknown>)
       : null;
@@ -634,6 +636,10 @@ export const futureScheduleReconcilerEveryTwoHours = onSchedule(
     timeoutSeconds: 540,
   },
   async () => {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      logger.info('futureScheduleReconciler: retired; no reads or writes');
+      return;
+    }
     const writesEnabled = futureScheduleWritesEnabled();
     const canaryEnrollmentIds = futureScheduleCanaryEnrollmentIds();
     const summary = await runFutureSchedulePeriodicSweep(admin.firestore(), {

@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
 import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
@@ -138,11 +139,30 @@ async function syncRollingWindowJoinUrl(
   return eligible.length;
 }
 
+function retiredLegacyGenerationResponse() {
+  const date = resolveRollingLifecycleTodayYmd();
+  return {
+    created: 0, skipped: 0, replaced: 0,
+    cancelledBlockersRestored: 0, cancelledBlockersSkipped: 0,
+    plannedSessionsTarget: null,
+    plannedSessionsGenerated: 0, plannedSessionsConsumed: 0,
+    plannedSessionsActiveFuture: 0, plannedSessionsPausedFuture: 0,
+    plannedSessionsRemaining: 0, plannedSessionsUnfilled: 0,
+    plannedSessionsCapReached: false,
+    rangeStart: date, rangeEnd: date,
+    rangeStartYmd: date, rangeEndYmd: date,
+    rolling: false, horizonDays: 0,
+    nextMaterializationDueYmd: null,
+    schedulingAuthority: 'daily_from_student_management',
+  };
+}
+
 async function materializeRollingCompatibility(
   enrollmentId: string,
   request: CallableRequest<any>,
   dryRun = false,
 ) {
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) return retiredLegacyGenerationResponse();
   const enrollment = await readEnrollment(enrollmentId);
   const status = normalizeEnrollmentStatus(enrollment.status);
   if (status === 'paused' || TERMINAL_STATUSES.has(status)) {
@@ -288,6 +308,9 @@ export const pauseEnrollmentUpcomingSessions = onCall({region: REGION}, async (r
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      throw new HttpsError('failed-precondition', 'Legacy pause-next-N sessions is retired. Pause or edit the enrollment timetable instead.');
+    }
     return runCallable(legacyPauseEnrollmentUpcomingSessions, request);
   }
   const result = await runCallable(setRollingEnrollmentLifecycle, {
@@ -307,6 +330,9 @@ export const resumeEnrollmentSchedule = onCall({region: REGION}, async (request)
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
   if (!isCanonicalRollingEnrollment(enrollment)) {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      throw new HttpsError('failed-precondition', 'Legacy resume-next-N sessions is retired. Resume the enrollment instead.');
+    }
     return runCallable(legacyResumeEnrollmentSchedule, request);
   }
   const result = await runCallable(setRollingEnrollmentLifecycle, {
@@ -325,6 +351,7 @@ export const createSessionsFromSchedule = onCall({region: REGION}, async (reques
   await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) return retiredLegacyGenerationResponse();
   if (!isCanonicalRollingEnrollment(enrollment)) {
     return runCallable(legacyCreateSessionsFromSchedule, request);
   }
@@ -335,6 +362,9 @@ export const repairEnrollmentFutureSessionsFromSchedule = onCall({region: REGION
   await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+    return {...retiredLegacyGenerationResponse(), dryRun: true, rollingRepair: false};
+  }
   if (!isCanonicalRollingEnrollment(enrollment)) {
     return runCallable(legacyRepairEnrollmentFutureSessionsFromSchedule, request);
   }
@@ -350,6 +380,9 @@ export const repairCancelledFutureRegularSessionsForEnrollment = onCall({region:
   await ensureCanonicalAdmin(request.auth);
   const enrollmentId = requireEnrollmentId(request);
   const enrollment = await readEnrollment(enrollmentId);
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+    return {...retiredLegacyGenerationResponse(), dryRun: true, rollingRepair: false};
+  }
   if (!isCanonicalRollingEnrollment(enrollment)) {
     return runCallable(legacyRepairCancelledFutureRegularSessionsForEnrollment, request);
   }
@@ -424,6 +457,9 @@ export const createEnrollment = onCall({region: REGION}, async (request) => {
   }
   const created = await runCallable(legacyCreateEnrollment, request);
   if (!scheduleIsRolling) return created;
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+    return {...created, rollingMaterialization: retiredLegacyGenerationResponse()};
+  }
   const enrollmentId = text(created.enrollmentId);
   if (!enrollmentId) throw new HttpsError('internal', 'Enrollment creation did not return an enrollmentId');
   const materialized = await materializeRollingEnrollmentWindowInternal(admin.firestore(), {

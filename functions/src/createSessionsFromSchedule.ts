@@ -1,5 +1,6 @@
 // functions/src/createSessionsFromSchedule.ts
 import * as admin from "firebase-admin";
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from "./scheduling/legacy14DayCutover";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
@@ -136,6 +137,20 @@ interface CreateSessionsResponse {
   rangeEnd: string;
   rangeStartYmd: string;
   rangeEndYmd: string;
+}
+
+function noLegacySessionGenerationResult(): CreateSessionsResponse {
+  const today = toIstTodayYmd();
+  return {
+    created: 0, skipped: 0, replaced: 0,
+    cancelledBlockersRestored: 0, cancelledBlockersSkipped: 0,
+    plannedSessionsTarget: null, plannedSessionsGenerated: 0,
+    plannedSessionsConsumed: 0, plannedSessionsActiveFuture: 0,
+    plannedSessionsPausedFuture: 0, plannedSessionsRemaining: 0,
+    plannedSessionsUnfilled: 0, plannedSessionsCapReached: false,
+    rangeStart: today, rangeEnd: today,
+    rangeStartYmd: today, rangeEndYmd: today,
+  };
 }
 
 interface SaveEnrollmentScheduleAndGenerateRequest {
@@ -854,6 +869,9 @@ function normalizeScheduleSlotsOrThrow(schedule: ScheduleConfig | undefined): No
 async function generateSessionsFromScheduleInternal(
   input: Partial<CreateSessionsRequest>,
 ): Promise<CreateSessionsResponse> {
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+    throw new HttpsError('failed-precondition', 'Bulk class generation is retired; classes are created by the daily Student Management timetable worker.');
+  }
   const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
   if (!enrollmentId) {
     throw new HttpsError("invalid-argument", "enrollmentId required");
@@ -2544,6 +2562,9 @@ async function repairCancelledFutureRegularSessionsForEnrollmentInternal(args: {
   dryRun: boolean;
   actorUid: string | null;
 }): Promise<RepairCancelledFutureRegularSessionsForEnrollmentResponse> {
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED && !args.dryRun) {
+    throw new HttpsError('failed-precondition', 'Legacy cancelled-session restoration is retired.');
+  }
   const repairBatchId = `cancelled_future_restore_${args.enrollmentId}_${Date.now()}`;
   const context = await loadRepairContext({ enrollmentId: args.enrollmentId });
   const actorIdentity = args.actorUid || "repairCancelledFutureRegularSessionsForEnrollment";
@@ -2660,6 +2681,9 @@ export async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
   dryRun: boolean;
   actorUid: string | null;
 }): Promise<RepairEnrollmentFutureSessionsResponse> {
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED && !args.dryRun) {
+    throw new HttpsError('failed-precondition', 'Legacy future-session repair is retired.');
+  }
   const repairBatchId = `schedule_repair_${args.enrollmentId}_${Date.now()}`;
   const plan = await executeRepairEnrollmentFutureSessionsFromSchedule({
     loadContext: () => loadRepairContext({ enrollmentId: args.enrollmentId }),
@@ -2996,6 +3020,30 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
       };
     }
 
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      // Save the weekly timetable only; never invoke legacy 4-52-week repairs.
+      const result = noLegacySessionGenerationResult();
+      await enrollmentRef.set({
+        scheduleGeneration: {
+          state: 'success',
+          lastRequestKey: idempotencyKey || null,
+          completedAt: FieldValue.serverTimestamp(),
+          completedBy: actorUid,
+          lastResult: result,
+          error: FieldValue.delete(),
+        },
+        scheduleProgress: {
+          plannedSessionsTarget: null, consumedCount: 0,
+          activeFutureCount: 0, pausedFutureCount: 0,
+          remainingCount: 0, plannedCompleted: false,
+          completionMessage: null,
+          updatedAt: FieldValue.serverTimestamp(), updatedBy: actorUid,
+        },
+        updatedAt: FieldValue.serverTimestamp(), updatedBy: actorUid,
+      }, {merge: true});
+      return {...result, idempotentReplay: false, orchestrationState: 'generated'};
+    }
+
     try {
       logger.info("Calling repairEnrollmentFutureSessionsFromScheduleInternal", {
         enrollmentId,
@@ -3127,6 +3175,9 @@ export const pauseEnrollmentUpcomingSessions = onCall(
   {region: REGION},
   async (request): Promise<PauseEnrollmentUpcomingSessionsResponse> => {
     await ensureCanonicalAdmin(request.auth);
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      throw new HttpsError('failed-precondition', 'Pause-next-N legacy sessions is retired; change the active enrollment schedule instead.');
+    }
     const input = (request.data || {}) as Partial<PauseEnrollmentUpcomingSessionsRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
     const pauseCount = toPauseCount(input.count);
@@ -3277,6 +3328,9 @@ export const resumeEnrollmentSchedule = onCall(
   {region: REGION},
   async (request): Promise<ResumeEnrollmentScheduleResponse> => {
     await ensureCanonicalAdmin(request.auth);
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      throw new HttpsError('failed-precondition', 'Resume-next-N legacy sessions is retired; resume the enrollment instead.');
+    }
     const input = (request.data || {}) as Partial<ResumeEnrollmentScheduleRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
     if (!enrollmentId) {

@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {assertLegacy14DayWritesNotRetired} from './legacy14DayCutover';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {
   buildCanonicalTeacherWriteFields,
@@ -721,6 +722,8 @@ export async function materializeRollingEnrollmentWindowInternal(
   db: admin.firestore.Firestore,
   input: MaterializeRollingEnrollmentWindowInput,
 ): Promise<MaterializeRollingEnrollmentWindowResult> {
+  // No runtime flag may bypass the cutover for a deployed admin callable.
+  assertLegacy14DayWritesNotRetired();
   return materializeRollingEnrollmentWithStore(
     createFirestoreRollingScheduleMaterializerStore(db),
     input,

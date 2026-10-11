@@ -1,4 +1,6 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment} from './dayWindowTimetableSync';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
 import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
@@ -148,6 +150,13 @@ export const transitionEnrollmentCourse = onCall(
         throw new HttpsError('already-exists', 'operationId belongs to a different course transition');
       }
       if (String(priorData.state || '') === 'complete') {
+        // A retry must repair a failed day-window sync even when the course
+        // transition itself had already committed successfully.
+        const previousNewId = text(priorData.newEnrollmentId);
+        const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED && previousNewId
+          ? await syncTodayTomorrowForEnrollment({
+            db, enrollmentId: previousNewId, actorId: actor,
+          }) : undefined;
         return {
           ok: true,
           operationId,
@@ -156,6 +165,7 @@ export const transitionEnrollmentCourse = onCall(
           newEnrollmentId: priorData.newEnrollmentId || null,
           cancelledSessionsCount: priorData.cancelledSessionsCount || 0,
           reconciliation: priorData.reconciliation || null,
+          ...(daySync ? {daySync} : {}),
           idempotentReplay: true,
           rolling: Boolean(priorData.rolling),
           transitionType,
@@ -300,7 +310,7 @@ export const transitionEnrollmentCourse = onCall(
       updatedBy: actor,
     }, {merge: true});
 
-    const materialized = await materializeRollingEnrollmentWindowInternal(db, {
+    const materialized = LEGACY_14_DAY_SESSION_WRITES_RETIRED ? null : await materializeRollingEnrollmentWindowInternal(db, {
       enrollmentId: newEnrollmentId,
       anchorYmd: resolveRollingLifecycleTodayYmd(),
       actorId: actor,
@@ -390,11 +400,11 @@ export const transitionEnrollmentCourse = onCall(
     }
 
     const reconciliation = {
-      rolling: true,
-      horizonDays: ROLLING_SCHEDULE_HORIZON_DAYS,
-      created: materialized.createdCount,
-      preserved: materialized.existingCount + materialized.raceAlreadyExistsCount,
-      nextMaterializationDueYmd: materialized.materialization.nextMaterializationDueYmd,
+      rolling: !LEGACY_14_DAY_SESSION_WRITES_RETIRED,
+      horizonDays: LEGACY_14_DAY_SESSION_WRITES_RETIRED ? 0 : ROLLING_SCHEDULE_HORIZON_DAYS,
+      created: materialized?.createdCount || 0,
+      preserved: (materialized?.existingCount || 0) + (materialized?.raceAlreadyExistsCount || 0),
+      nextMaterializationDueYmd: materialized?.materialization.nextMaterializationDueYmd || null,
     };
     const completionBatch = db.batch();
     completionBatch.set(transitionRef, {
@@ -422,6 +432,12 @@ export const transitionEnrollmentCourse = onCall(
       createdBy: actor,
     });
     await completionBatch.commit();
+    // The outgoing enrollment is already discontinued above; synchronize the
+    // destination's two visible days only, not another 14-day window.
+    const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+      ? await syncTodayTomorrowForEnrollment({
+        db, enrollmentId: newEnrollmentId, actorId: actor,
+      }) : undefined;
 
     return {
       ok: true,
@@ -431,6 +447,7 @@ export const transitionEnrollmentCourse = onCall(
       newEnrollmentId,
       cancelledSessionsCount,
       reconciliation,
+      ...(daySync ? {daySync} : {}),
       idempotentReplay: false,
       rolling: true,
       transitionType,

@@ -1,4 +1,6 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './scheduling/legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment} from './scheduling/dayWindowTimetableSync';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
@@ -693,11 +695,13 @@ export const transitionEnrollmentCourse = onCall({ region: REGION }, async (requ
     if (state === 'new_enrollment_created') {
       transition = ((await transitionRef.get()).data() || {}) as Record<string, unknown>;
       const newEnrollmentId = String(transition.newEnrollmentId || '');
-      const reconciliation = await repairEnrollmentFutureSessionsFromScheduleInternal({
-        enrollmentId: newEnrollmentId,
-        dryRun: false,
-        actorUid: actor,
-      });
+      const reconciliation = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+        ? null
+        : await repairEnrollmentFutureSessionsFromScheduleInternal({
+          enrollmentId: newEnrollmentId,
+          dryRun: false,
+          actorUid: actor,
+        });
       await transitionRef.set({
         state: 'new_sessions_generated',
         reconciliation,
@@ -736,14 +740,26 @@ export const transitionEnrollmentCourse = onCall({ region: REGION }, async (requ
     }
 
     const finalData = (await transitionRef.get()).data() || {};
+    const newEnrollmentId = String(finalData.newEnrollmentId || '').trim();
+    // Existing course state changes are preserved, but class changes are
+    // limited to Today/Tomorrow: retire old pending classes before creating
+    // the destination's classes to avoid a duplicate student/time.
+    let transitionDaySync: unknown = null;
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED && newEnrollmentId) {
+      await syncTodayTomorrowForEnrollment({db, enrollmentId: oldEnrollmentId, actorId: actor || 'admin'});
+      transitionDaySync = await syncTodayTomorrowForEnrollment({
+        db, enrollmentId: newEnrollmentId, actorId: actor || 'admin',
+      });
+    }
     return {
       ok: true,
       operationId,
       state: finalData.state,
       oldEnrollmentId,
-      newEnrollmentId: finalData.newEnrollmentId || null,
+      newEnrollmentId: newEnrollmentId || null,
       cancelledSessionsCount: finalData.cancelledSessionsCount || 0,
       reconciliation: finalData.reconciliation || null,
+      ...(transitionDaySync ? {daySync: transitionDaySync} : {}),
     };
   } catch (error) {
     const current = await transitionRef.get();
@@ -1653,6 +1669,8 @@ async function cancelEligibleFutureSessions(args: {
 }
 
 async function cancelFutureSessionsByEnrollmentId(enrollmentId: string, reason: string, actorUid: string | null) {
+  // Legacy course/status transitions no longer scan a rolling future window.
+  if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) return 0;
   const db = admin.firestore();
   const snap = await db.collection('classSessions').where('enrollmentId', '==', enrollmentId).get();
   return cancelEligibleFutureSessions({ docs: snap.docs, reason, actorUid, scope: 'enrollment' });
@@ -2045,14 +2063,15 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
     });
 
     let cancelledSessions = 0;
-    if (canonicalStatus === 'paused') {
+    if (!LEGACY_14_DAY_SESSION_WRITES_RETIRED && canonicalStatus === 'paused') {
       cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'enrollment_paused', actor);
-    } else if (isTerminal) {
+    } else if (!LEGACY_14_DAY_SESSION_WRITES_RETIRED && isTerminal) {
       const cancellationReason = canonicalStatus === 'archived' ? 'enrollment_archived' : 'enrollment_ended';
       cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, cancellationReason, actor);
     }
 
-    const reconciliation = isReactivation && enrollmentHasConfiguredSchedule(enrollmentData)
+    const reconciliation = !LEGACY_14_DAY_SESSION_WRITES_RETIRED &&
+      isReactivation && enrollmentHasConfiguredSchedule(enrollmentData)
       ? await repairEnrollmentFutureSessionsFromScheduleInternal({
           enrollmentId,
           dryRun: false,
@@ -2060,12 +2079,19 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
         })
       : null;
 
+    // Old finite future scans are retired. Lifecycle changes reconcile only
+    // the unstarted recurring classes already visible Today/Tomorrow.
+    const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+      ? await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actor || 'admin',
+      }) : undefined;
     return {
       ok: true,
       updatedEnrollmentId: enrollmentId,
       cancelledSessionsCount: cancelledSessions,
       reactivated: isReactivation,
       reconciliation,
+      ...(daySync ? {daySync} : {}),
       message: `Enrollment set to ${canonicalStatus}`,
     };
   } catch (error) {
@@ -2249,7 +2275,25 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   const cleanEnrollmentPatch = removeUndefinedDeep(enrollmentPatch) as Record<string, unknown>;
   await enrRef.set(cleanEnrollmentPatch, { merge: true });
 
-  const sessionUpdateSummary = await repairFutureSessionsForEnrollment({
+  // Reassignment previously scanned ALL sessions for a student/enrollment.
+  // After the cutover, only pending automatic Today/Tomorrow sessions can
+  // change teacher. Historical/attended/finance-linked sessions remain intact.
+  const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+    ? await syncTodayTomorrowForEnrollment({
+      db, enrollmentId, actorId: actorIdentity || 'admin',
+    }) : null;
+  const sessionUpdateSummary = LEGACY_14_DAY_SESSION_WRITES_RETIRED ? {
+    sessionsScanned: (daySync?.updated || 0) + (daySync?.removed || 0) + (daySync?.preserved || 0),
+    sessionsMatchedByEnrollmentId: (daySync?.updated || 0) + (daySync?.removed || 0) + (daySync?.preserved || 0),
+    sessionsMatchedByLegacyIdentity: 0,
+    sessionsUpdated: (daySync?.updated || 0) + (daySync?.created || 0),
+    sessionsWouldUpdate: (daySync?.updated || 0) + (daySync?.created || 0),
+    sessionsSkipped: (daySync?.preserved || 0) + (daySync?.conflicts || 0),
+    identitySnapshotsBackfilled: 0,
+    skipReasonCounts: {protected: daySync?.preserved || 0, conflicts: daySync?.conflicts || 0},
+    queryCoverageUsed: daySync?.state === 'synchronized' ? ['enrollment+date:Today+Tomorrow'] : [],
+    queriesAttempted: daySync?.state === 'synchronized' ? 2 : 0,
+  } : await repairFutureSessionsForEnrollment({
     enrollmentId,
     enrollment: {
       ...enrollment,

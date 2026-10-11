@@ -1,4 +1,6 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment, type DayWindowSyncResult} from './dayWindowTimetableSync';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
@@ -106,6 +108,7 @@ export type SaveRollingEnrollmentScheduleResult = {
     nextMaterializationDueYmd: string | null;
   } | null;
   pausedSessionsCancelled: number;
+  daySync?: DayWindowSyncResult;
 };
 
 export type SetRollingEnrollmentLifecycleResult = {
@@ -118,6 +121,7 @@ export type SetRollingEnrollmentLifecycleResult = {
   materializedSessionsCreated: number;
   materializedSessionsPreserved: number;
   nextMaterializationDueYmd: string | null;
+  daySync?: DayWindowSyncResult;
 };
 
 type LifecycleOccurrenceIdentity = Pick<
@@ -671,7 +675,7 @@ export const saveRollingEnrollmentSchedule = onCall(
         'schedule.plannedSessions': FieldValue.delete(),
         'schedule.endDateYmd': FieldValue.delete(),
         'scheduleMaterialization.schemaVersion': ROLLING_SCHEDULE_MATERIALIZATION_VERSION,
-        'scheduleMaterialization.horizonDays': ROLLING_SCHEDULE_HORIZON_DAYS,
+        'scheduleMaterialization.horizonDays': LEGACY_14_DAY_SESSION_WRITES_RETIRED ? 0 : ROLLING_SCHEDULE_HORIZON_DAYS,
         'scheduleMaterialization.scheduleRevision': schedule.revision,
         'scheduleMaterialization.nextOccurrenceYmd': null,
         'scheduleMaterialization.nextMaterializationDueYmd': null,
@@ -688,11 +692,59 @@ export const saveRollingEnrollmentSchedule = onCall(
 
     const replay = replayResult as SaveRollingEnrollmentScheduleResult | null;
     if (replay) {
+      // A retry after a saved timetable MUST retry the two-day sync; otherwise
+      // a transient failure could leave newly enrolled pupils without classes.
+      const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+        ? await syncTodayTomorrowForEnrollment({
+          db, enrollmentId, actorId: actorUid,
+          expectedRevision: replay.scheduleRevision,
+        }) : undefined;
       return {
         ...replay,
         idempotentReplay: true,
         orchestrationState: 'replayed',
+        ...(daySync ? {daySync} : {}),
       };
+    }
+
+    // Saving or activating a Student Management timetable MUST remain functional.
+    // Under the cutover, this operation saves the recurrence only; the 00:05
+    // daily generator owns creation of the next day's class sessions.
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      const saved = await enrollmentRef.get();
+      if (!saved.exists) throw new HttpsError('not-found', `Enrollment ${enrollmentId} not found`);
+      const savedStatus = normalizeEnrollmentStatus(saved.data()?.status);
+      const response: SaveRollingEnrollmentScheduleResult = {
+        ok: true,
+        enrollmentId,
+        scheduleRevision: scheduleRevision || currentScheduleRevision((saved.data() || {}) as Record<string, unknown>),
+        deliveryMode: ROLLING_SCHEDULE_DELIVERY_MODE,
+        horizonDays: 0,
+        orchestrationState: savedStatus === 'paused' ? 'saved_paused' : 'activated',
+        idempotentReplay: false,
+        initialMaterialization: null,
+        pausedSessionsCancelled: 0,
+      };
+      await enrollmentRef.update({
+        'scheduleMaterialization.horizonDays': 0,
+        'scheduleMaterialization.materializedThroughYmd': FieldValue.delete(),
+        'scheduleMaterialization.nextOccurrenceYmd': null,
+        'scheduleMaterialization.nextMaterializationDueYmd': null,
+        'rollingScheduleActivation.state': 'success',
+        'rollingScheduleActivation.completedAt': FieldValue.serverTimestamp(),
+        'rollingScheduleActivation.completedBy': actorUid,
+        'rollingScheduleActivation.lastResult': response,
+        'rollingScheduleActivation.error': FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: actorUid,
+      });
+      // This is NOT enrollment creation. The timetable has now been saved.
+      // Only already-visible Today/Tomorrow slots are synchronized.
+      const daySync = await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actorUid,
+        expectedRevision: response.scheduleRevision,
+      });
+      return {...response, daySync};
     }
 
     try {
@@ -810,7 +862,7 @@ export const setRollingEnrollmentLifecycle = onCall(
     // discontinue intentionally do not depend on teacher/fee health; stopping
     // delivery must remain possible even when enrollment data needs repair.
     let resumePlan: ReturnType<typeof buildRollingMaterializationPlan> | null = null;
-    if (target === 'active') {
+    if (target === 'active' && !LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
       resumePlan = buildRollingMaterializationPlan({
         enrollmentId,
         enrollment: prospectiveActiveEnrollment,
@@ -904,7 +956,10 @@ export const setRollingEnrollmentLifecycle = onCall(
     let materializedSessionsPreserved = 0;
     let nextMaterializationDueYmd: string | null = null;
 
-    if (target === 'paused' || target === 'discontinued') {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      // Status/key/audit transaction is committed; legacy 14-day session
+      // cancellation, restoration and materialization are retired.
+    } else if (target === 'paused' || target === 'discontinued') {
       cancelledSessionsCount = await cancelRollingLifecycleWindow({
         db,
         enrollmentId,
@@ -938,6 +993,14 @@ export const setRollingEnrollmentLifecycle = onCall(
       }
     }
 
+    // Pause/discontinue must remove only not-yet-started generated classes;
+    // resume must recreate only Today/Tomorrow, never a rolling window.
+    const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED
+      ? await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actorUid,
+        expectedRevision: currentScheduleRevision(enrollment),
+      }) : undefined;
+
     logger.info('setRollingEnrollmentLifecycle completed', {
       enrollmentId,
       previousStatus,
@@ -959,6 +1022,7 @@ export const setRollingEnrollmentLifecycle = onCall(
       materializedSessionsCreated,
       materializedSessionsPreserved,
       nextMaterializationDueYmd,
+      ...(daySync ? {daySync} : {}),
     };
   },
 );
