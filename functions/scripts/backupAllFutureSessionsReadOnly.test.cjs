@@ -33,7 +33,7 @@ test('Firestore integers, doubles, NaN, infinity, boolean, null and string remai
 
 test('Firestore timestamps retain nanosecond precision and ISO UTC format', () => {
   assert.equal(typedTimestamp({seconds: '1791693000', nanos: 123456789}),
-    '2026-10-11T03:10:00.123456789Z');
+    '2026-10-11T04:30:00.123456789Z');
   assert.deepEqual(typedValue({timestampValue: {seconds: 0, nanos: 900}}),
     {timestampValue: '1970-01-01T00:00:00.000000900Z'});
 });
