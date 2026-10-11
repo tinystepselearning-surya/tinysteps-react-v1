@@ -28,7 +28,7 @@ const rollingEnrollment = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('rolling schedule display projection', () => {
-  it('never projects inside the physical today-through-today+14 classSession window', () => {
+  it('projects from today without creating physical class sessions', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [],
@@ -36,10 +36,10 @@ describe('rolling schedule display projection', () => {
       toYmd: '2026-09-24',
       todayYmd: '2026-09-10',
     });
-    expect(rows).toEqual([]);
+    expect(rows.map((row) => row.date)).toEqual(['2026-09-10','2026-09-15','2026-09-17','2026-09-22','2026-09-24']);
   });
 
-  it('starts strictly after the 14-day physical horizon and follows Brick 1 recurrence semantics', () => {
+  it('starts at today and follows Brick 1 recurrence and follows Brick 1 recurrence semantics', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [],
@@ -49,6 +49,11 @@ describe('rolling schedule display projection', () => {
     });
 
     expect(rows.map((row) => `${row.date} ${row.startTime}`)).toEqual([
+      '2026-09-10 18:00',
+      '2026-09-15 18:00',
+      '2026-09-17 18:00',
+      '2026-09-22 18:00',
+      '2026-09-24 18:00',
       '2026-09-29 18:00',
       '2026-10-01 18:00',
     ]);
@@ -56,7 +61,7 @@ describe('rolling schedule display projection', () => {
     expect(rows.every((row) => row.source === ROLLING_SCHEDULE_PROJECTION_SOURCE)).toBe(true);
   });
 
-  it('ignores stale ordinary real documents beyond the rolling physical horizon', () => {
+  it('never re-projects any persisted cancellation or attendance record', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [{
@@ -72,7 +77,7 @@ describe('rolling schedule display projection', () => {
       todayYmd: '2026-09-10',
     });
 
-    expect(rows.map((row) => row.date)).toEqual(['2026-09-29', '2026-10-01']);
+    expect(rows.map((row) => row.date)).toEqual(['2026-10-01']);
   });
 
   it('keeps explicit real schedule exceptions authoritative beyond the physical horizon', () => {
@@ -95,7 +100,7 @@ describe('rolling schedule display projection', () => {
     expect(rows.map((row) => row.date)).toEqual(['2026-10-01']);
   });
 
-  it('does not let a nonstandard stale ordinary document suppress a long-range projection', () => {
+  it('normalizes real session identities to prevent duplicate virtual occurrences', () => {
     const rows = buildRollingScheduleCalendarProjections({
       enrollments: [rollingEnrollment()],
       realSessions: [{
@@ -109,18 +114,14 @@ describe('rolling schedule display projection', () => {
       toYmd: '2026-09-30',
       todayYmd: '2026-09-10',
     });
-    expect(rows.map((row) => row.date)).toEqual(['2026-09-29']);
+    expect(rows).toEqual([]);
   });
 
-  it('does not speculate for paused, discontinued, inactive, or unconverted legacy enrollments', () => {
+  it('does not speculate for paused, discontinued or inactive enrollments', () => {
     const candidates = [
       rollingEnrollment({ status: 'paused' }),
       rollingEnrollment({ id: 'enr-2', status: 'discontinued' }),
       rollingEnrollment({ id: 'enr-3', status: 'inactive' }),
-      rollingEnrollment({
-        id: 'enr-4',
-        schedule: { weekdays: [2], timeHHmm: '18:00', durationMins: 35, weeksAhead: 8 },
-      }),
     ];
     expect(buildRollingScheduleCalendarProjections({
       enrollments: candidates,
@@ -156,6 +157,18 @@ describe('rolling schedule display projection', () => {
       ['2026-10-01', '17:00', 35],
       ['2026-10-01', '19:00', 40],
     ]);
+  });
+
+  it('supports legacy weekly slots and keeps Today/Tomorrow visible after reset', () => {
+    const legacy = rollingEnrollment({
+      schedule: {weekdays:[1,2],timeHHmm:'17:00',durationMins:35},
+    });
+    const rows=buildRollingScheduleCalendarProjections({
+      enrollments:[legacy],realSessions:[],
+      fromYmd:'2026-10-12',toYmd:'2026-10-13',todayYmd:'2026-10-12',
+    });
+    expect(rows.map(r=>r.date)).toEqual(['2026-10-12','2026-10-13']);
+    expect(rows.map(r=>r.startTime)).toEqual(['17:00','17:00']);
   });
 
   it('creates non-actionable projection rows without a join URL or mutable real-session id', () => {
