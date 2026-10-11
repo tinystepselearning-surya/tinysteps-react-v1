@@ -294,7 +294,8 @@ export function hasTeacherVirtualCalendarConflict(
   const start=minutesOf(startTime);
   return enrollments.some(enrollment=>{
     const resolved=resolveCanonicalTeacherIdForWrite(enrollment);
-    if (resolved.teacherId!==uid || resolved.source==='ambiguous_legacy') return false;
+    if (resolved.teacherId!==uid &&
+        !(resolved.source==='ambiguous_legacy' && resolved.legacyRefs.includes(uid))) return false;
     if (!ACTIVE.has(text(enrollment.status).toLowerCase()) ||
         enrollment.archived || enrollment.isArchived || enrollment.archivedAt) return false;
     const effective=enrollmentStartDay(enrollment);
@@ -361,7 +362,7 @@ export const createTeacherCalendarAdHocSession = onCall(
       const occurrence=resolveTeacherCalendarOccurrence({enrollmentId,enrollment,date,startTime,durationMinutes});
       const teacherDayRef=db.collection('calendarTeacherAdHocDays').doc(uid+'_'+date);
       const studentDayRef=db.collection('calendarStudentAdHocDays').doc(childId+'_'+date);
-      const [childSnap,existing,regular,charge,earning,teacherDay,studentDay,sameDay,teacherEnrollments,legacyEnrollments,uidEnrollments,studentEnrollments,studentIdEnrollments,studentIdsEnrollments]=await Promise.all([
+      const [childSnap,existing,regular,charge,earning,teacherDay,studentDay,sameDay,teacherEnrollments,legacyEnrollments,uidEnrollments,assignedEnrollments,primaryEnrollments,teacherSnakeEnrollments,teacherIdsEnrollments,studentEnrollments,studentIdEnrollments,studentIdsEnrollments,childEnrollments]=await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
         tx.get(sessionRef),
         tx.get(db.collection('classSessions').doc(rollingSessionId(enrollmentId,date,startTime))),
@@ -373,9 +374,14 @@ export const createTeacherCalendarAdHocSession = onCall(
         tx.get(db.collection('enrollments').where('teacherId','==',uid).limit(251)),
         tx.get(db.collection('enrollments').where('teacherUid','==',uid).limit(251)),
         tx.get(db.collection('enrollments').where('teacherUserId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('assignedTeacherId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('primaryTeacherId','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('teacher_id','==',uid).limit(251)),
+        tx.get(db.collection('enrollments').where('teacherIds','array-contains',uid).limit(251)),
         tx.get(db.collection('enrollments').where('kidId','==',childId).limit(251)),
         tx.get(db.collection('enrollments').where('studentId','==',childId).limit(251)),
         tx.get(db.collection('enrollments').where('kidIds','array-contains',childId).limit(251)),
+        tx.get(db.collection('enrollments').where('childId','==',childId).limit(251)),
       ]);
       if (existing.exists) {
         assertCalendarSessionIdentity((existing.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
@@ -388,8 +394,10 @@ export const createTeacherCalendarAdHocSession = onCall(
       }
       if (sameDay.size>250 || teacherEnrollments.size>250 ||
           legacyEnrollments.size>250 || uidEnrollments.size>250 ||
+          assignedEnrollments.size>250 || primaryEnrollments.size>250 ||
+          teacherSnakeEnrollments.size>250 || teacherIdsEnrollments.size>250 ||
           studentEnrollments.size>250 || studentIdEnrollments.size>250 ||
-          studentIdsEnrollments.size>250) {
+          studentIdsEnrollments.size>250 || childEnrollments.size>250) {
         throw new HttpsError('failed-precondition','Calendar conflict coverage incomplete; Admin review required');
       }
       const currentStart=minutesOf(startTime);
@@ -411,7 +419,8 @@ export const createTeacherCalendarAdHocSession = onCall(
       }
       const schedules=new Map<string,Row>();
       for (const snapshot of [teacherEnrollments,legacyEnrollments,uidEnrollments,
-        studentEnrollments,studentIdEnrollments,studentIdsEnrollments]) {
+        assignedEnrollments,primaryEnrollments,teacherSnakeEnrollments,teacherIdsEnrollments,
+        studentEnrollments,studentIdEnrollments,studentIdsEnrollments,childEnrollments]) {
         snapshot.docs.forEach(d=>schedules.set(d.id,d.data() as Row));
       }
       if (!schedules.has(enrollmentId)) schedules.set(enrollmentId,enrollment);
