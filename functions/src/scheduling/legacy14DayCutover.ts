@@ -3,8 +3,9 @@
  *
  * This is intentionally source-controlled and fail-closed; no Cloud Run
  * environment variable or canary can re-enable the old 14-day writers.
- * Student Management still owns the recurring enrollment timetable. Only the
- * separate daily generator may create new scheduled sessions after cutover.
+ * Student Management remains the timetable authority. No daily or rolling
+ * job may pre-create sessions. Only explicit teacher attendance or an ad hoc
+ * class creates a real session on demand.
  *
  * Do not change this switch to true as an operational rollback. The old
  * materialization architecture is retired, not temporarily paused.
