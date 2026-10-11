@@ -22,6 +22,7 @@ import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Timestamp } from 'firebase/firestore';
 import { auth } from '../../../../lib/firebaseConfig';
+import { resolveSessionJoinLink } from '../../../../lib/sessionJoinLink';
 import { toast } from '@components/hooks/use-toast';
 import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';
 import {
@@ -198,7 +199,7 @@ const completeSessionViaBackend = async (
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('day');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('all');
   const [adHocOpen, setAdHocOpen] = useState(false);
@@ -266,8 +267,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   }, [teacherScheduleEnrollments]);
 
   const openTeacherMeeting = useCallback((session: TeacherSession) => {
-    const source = teacherScheduleEnrollments.find(row => row.id === session.enrollmentId);
-    const link = String(source?.joinUrl || session.joinUrl || '').trim();
+    const byId = new Map(teacherScheduleEnrollments.map(row=>[row.id, row as Record<string,unknown>]));
+    const link = resolveSessionJoinLink(session,byId);
     if (!/^https:\/\//i.test(link)) {
       toast({ title: 'Teams link unavailable',
         description: 'Ask Admin to add the meeting link to Student Management.',
