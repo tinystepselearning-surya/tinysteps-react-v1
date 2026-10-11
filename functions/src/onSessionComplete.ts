@@ -1,5 +1,6 @@
 // functions/src/onSessionComplete.ts
 import * as admin from "firebase-admin";
+import {virtualCalendarAttendanceEnabled} from "./scheduling/teacherCalendarActions";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -512,7 +513,7 @@ async function processSessionCompletion(
     // operating model. Parent charges and teacher earnings continue to be
     // generated from the single real session by onSessionRevenueWrite.
     // Keep the old completion marker for compatibility with historical retries.
-    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === "true") {
+    if (virtualCalendarAttendanceEnabled()) {
       const presentCount = kidIds.filter((kidId) =>
         (attendanceMap[kidId]?.status || "").toLowerCase() === "present"
       ).length;
@@ -679,7 +680,7 @@ export const onSessionComplete = onCall(
     // In the virtual calendar model, only the canonical attendance-save path
     // may change attendance. Completion cannot supply a divergent attendance
     // map that bypasses student/date/time uniqueness claims.
-    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === "true" && incomingAttendance) {
+    if (virtualCalendarAttendanceEnabled() && incomingAttendance) {
       const savedAttendance=session.attendance || {};
       for(const [kidId, entry] of Object.entries(incomingAttendance)) {
         const recorded=normalizeStatus(savedAttendance[kidId]?.status);
@@ -709,7 +710,7 @@ export const onSessionComplete = onCall(
       return { success: true, skipped: true, creditsEarnedForTeacher: 0 };
     }
 
-    const attendanceForCompletion = process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === "true"
+    const attendanceForCompletion = virtualCalendarAttendanceEnabled()
       ? (session.attendance || null)
       : (incomingAttendance || session.attendance || null);
     if (!hasRequiredAttendanceForCompletion(session, attendanceForCompletion)) {
