@@ -1324,12 +1324,34 @@ export default function TodaysNotifications() {
       try {
         const cacheHit = readCache.visibleSessionsByDate.get(selectedDateKey);
         if (cacheHit) {
-          if (!active || auth.currentUser?.uid !== actorUid) return;
+          if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
           setSessions(cacheHit);
           const currentEnrollments = readCache.enrollments || [];
           setEnrollmentMap(Object.fromEntries(currentEnrollments.map(row => [row.id, row])));
           setUsersMap(reminderUsersCacheRef.current);
+          setKidMap({});
+          setCourseMap({});
           setIsLoading(false);
+
+          // A date may have been left before profile enrichment finished.
+          // Load only still-missing contacts, never its sessions or enrollments.
+          const requiredRefs = new Set<string>();
+          cacheHit.forEach(session => {
+            const parent = getPrimaryParentId(session);
+            if (parent) requiredRefs.add(parent);
+            collectSessionTeacherRefs(session as Record<string, unknown>).forEach(
+              teacher => requiredRefs.add(teacher),
+            );
+          });
+          const unresolved = [...requiredRefs].filter(
+            id => !reminderUsersCacheRef.current[normalizeLookupId(id)],
+          );
+          if (unresolved.length) {
+            const extraUsers = await fetchUsersByRefs(unresolved);
+            if (!active || auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
+            reminderUsersCacheRef.current = { ...reminderUsersCacheRef.current, ...extraUsers };
+            setUsersMap(reminderUsersCacheRef.current);
+          }
           return;
         }
 
@@ -1401,8 +1423,11 @@ export default function TodaysNotifications() {
             .filter(id => !reminderUsersCacheRef.current[normalizeLookupId(id)]);
           const nextUsersMap = await fetchUsersByRefs(needed);
 
-          if (!active || auth.currentUser?.uid !== actorUid) return;
+          // Cache completed contacts even if the Admin switched dates while
+          // the lookup was in flight; only update the currently visible UI.
+          if (auth.currentUser?.uid !== actorUid || !readCache.isCurrentRevision(cacheRevision)) return;
           reminderUsersCacheRef.current = { ...reminderUsersCacheRef.current, ...nextUsersMap };
+          if (!active) return;
           setUsersMap(reminderUsersCacheRef.current);
           setKidMap({});
           setEnrollmentMap(mergedEnrollmentMap);
