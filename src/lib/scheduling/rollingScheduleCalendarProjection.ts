@@ -62,12 +62,6 @@ const isValidYmd = (value: string): boolean => {
     && parsed.getUTCDate() === day;
 };
 
-const addDaysYmd = (ymd: string, days: number): string => {
-  if (!isValidYmd(ymd)) throw new Error('todayYmd must be YYYY-MM-DD');
-  const [year, month, day] = ymd.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day + days));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-};
 
 const indiaYmd = (date = new Date()): string => {
   const shifted = new Date(date.getTime() + ROLLING_SCHEDULE_UTC_OFFSET_MINUTES * 60 * 1000);
@@ -115,13 +109,6 @@ const ymdAndTimeFromUtcMs = (utcMs: number): { ymd: string; time: string } => {
   };
 };
 
-const enrollmentIdFromSession = (session: RecordLike): string => {
-  const direct = text(session.enrollmentId);
-  if (direct) return direct;
-  const id = text(session.id);
-  const match = /^(.+)_\d{8}_\d{4}$/.exec(id);
-  return match?.[1] || '';
-};
 
 const sessionOccurrenceIdentity = (session: RecordLike): string | null => {
   const enrollmentId = enrollmentIdFromSession(session);
