@@ -2,7 +2,14 @@ import path from 'node:path';
 
 const SOURCE_ROOT = 'functions/src';
 const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
-const INTENTIONALLY_RETIRED_FUNCTION_EXPORTS = new Set(['runAv2TeamsEvidenceProof', 'notFoundRoute']);
+const INTENTIONALLY_RETIRED_FUNCTION_EXPORTS = new Set([
+  'runAv2TeamsEvidenceProof', 'notFoundRoute',
+  // Permanent virtual-calendar cutover: explicit physical production retirement.
+  'dailySessionsTomorrowAt0005',
+  'rollingScheduleEdgeReplenisherDaily',
+  'futureScheduleReconcilerEveryTwoHours',
+  'onFutureScheduleEnrollmentWrite',
+]);
 
 function posix(value) {
   return value.replaceAll('\\', '/').replace(/^\.\//, '');
