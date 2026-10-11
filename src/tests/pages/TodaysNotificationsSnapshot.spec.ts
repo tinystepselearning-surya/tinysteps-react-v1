@@ -310,16 +310,17 @@ describe('Sessions Management authoritative snapshot loading', () => {
     );
   });
 
-  it('revalidates an unauthenticated-cache miss before any full Overall Admissions Firestore read', () => {
-    const start = pageSource.indexOf('let cachedAdmissionRows = manualRefresh');
-    const revalidate = pageSource.indexOf('await loadSessionsManagementSnapshot();', start);
-    const fallback = pageSource.indexOf("await getDocs(query(collection(db, 'enrollments')))", start);
-    expect(start).toBeGreaterThan(-1);
-    expect(revalidate).toBeGreaterThan(start);
-    expect(fallback).toBeGreaterThan(revalidate);
-    expect(pageSource.slice(start, fallback)).toContain('cachedAdmissionRows === null && !manualRefresh');
-    expect(pageSource.slice(start, fallback)).toContain('isSessionsManagementTransientFailure(error)');
-    expect(pageSource).toContain('subscribeSessionsManagementSnapshotInvalidation(');
+  it('shares one actor-scoped enrollment cache across Overall Admissions and date reminders', () => {
+    const overallStart = pageSource.indexOf("if (mode !== 'overall-admissions') return;");
+    const overallEnd = pageSource.indexOf("const rows = useMemo(", overallStart);
+    const overallSource = pageSource.slice(overallStart, overallEnd);
+    expect(overallSource).toContain("const enrollmentSnapshot = await readCache.loadEnrollments(");
+    expect(overallSource).toContain("() => fetchVirtualAdminEnrollments(actorUid)");
+    expect(pageSource).toContain("readCache.loadEnrollments(() => fetchVirtualAdminEnrollments(actorUid))");
+    expect(overallSource).not.toContain('loadSessionsManagementSnapshot(');
+    expect(overallSource).not.toContain("getDocs(query(collection(db, 'enrollments')))");
+    expect(overallSource).toContain('auth.currentUser?.uid !== actorUid');
+    expect(overallSource).toContain('readCache.isCurrentRevision(cacheRevision)');
   });
 
   it('never subscribes to an automatic Admin snapshot listener while reminders are open', () => {
@@ -373,35 +374,24 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(admissionsEnrichment).toBeGreaterThan(admissionsLoadingDone);
   });
 
-  it('uses snapshot rows directly for profile lookups before Firestore fallback', () => {
-    expect(pageSource).toContain('getCachedSessionsManagementRowsForReadLabel');
-    expect(pageSource).toContain(
-      "'TodaysNotifications:users-by-doc-id',",
-    );
-    expect(pageSource).toContain(
-      '`TodaysNotifications:fetchDocsByIds:${collectionName}`',
-    );
-    expect(pageSource).toContain(
-      '// A loaded Sessions Management snapshot is authoritative for this screen.',
-    );
-    expect(pageSource).toContain('if (cachedRows !== null) {');
-    expect(pageSource).toContain('return out;');
-    expect(pageSource).toContain('return map;');
+  it('uses direct, bounded profile lookups without revalidating the old snapshot', () => {
+    expect(pageSource).not.toContain('getCachedSessionsManagementRowsForReadLabel');
+    expect(pageSource).not.toContain('loadSessionsManagementSnapshot');
+    expect(pageSource).toContain("where(documentId(), 'in', idChunk)");
+    expect(pageSource).toContain("const byDocIdSnap = await getDocs(byDocIdQuery);");
+    expect(pageSource).toContain("const byUidSnap = await getDocs(byUidQuery);");
   });
 
-  it('does not retry the snapshot callable inside the Firestore fallback helpers', () => {
-    expect(pageSource).toContain(
-      '// We are already on the explicit Firestore fallback path here.',
-    );
-    expect(pageSource).toContain('const snap = await getDocs(q);');
-    expect(pageSource).toContain('const byDocIdSnap = await getDocs(byDocIdQuery);');
-    expect(pageSource).toContain('const byUidSnap = await getDocs(byUidQuery);');
-    expect(pageSource).toContain(
-      "cachedAdmissionRows !== null",
-    );
-    expect(pageSource).toContain(
-      "await getDocs(query(collection(db, 'enrollments')))",
-    );
+  it('paginates enrollment reads and rejects truncation rather than hiding admissions', () => {
+    const start = pageSource.indexOf('async function fetchVirtualAdminEnrollments');
+    const end = pageSource.indexOf('const TIMEZONE', start);
+    const loader = pageSource.slice(start, end);
+    expect(loader).toContain('orderBy(documentId())');
+    expect(loader).toContain('startAfter(cursor)');
+    expect(loader).toContain('limit(pageSize)');
+    expect(loader).toContain("if (rows.length > maxEnrollments)");
+    expect(loader).toContain("if (page.size < pageSize) break;");
+    expect(loader).toContain("auth.currentUser?.uid !== actorUid");
   });
 
   it('resolves reminder teacher ownership against the current enrollment before profile lookup', () => {
