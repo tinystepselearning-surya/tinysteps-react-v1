@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
+import {syncTodayTomorrowForEnrollment, type DayWindowSyncResult} from './dayWindowTimetableSync';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
@@ -81,6 +82,7 @@ export type ReconcileRollingEnrollmentScheduleResult = {
   materializedSessionsCreated: number;
   materializedSessionsPreserved: number;
   nextMaterializationDueYmd: string | null;
+  daySync?: DayWindowSyncResult;
 };
 
 type ReconciliationCounts = {
@@ -657,7 +659,11 @@ export const reconcileRollingEnrollmentSchedule = onCall(
         updatedAt: FieldValue.serverTimestamp(),
         updatedBy: actorUid,
       });
-      return response;
+      const daySync = await syncTodayTomorrowForEnrollment({
+        db, enrollmentId, actorId: actorUid,
+        expectedRevision: targetRevision,
+      });
+      return {...response, daySync};
     }
 
     if (!scheduleChanged) {
