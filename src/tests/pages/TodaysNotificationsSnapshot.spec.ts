@@ -245,12 +245,10 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(deps.fetchEnrollmentsByIds).not.toHaveBeenCalled();
   });
 
-  it('keeps the UI on the same 04:00 IST operational-day boundary as the backend snapshot', () => {
-    expect(pageSource).toContain('const SESSIONS_MANAGEMENT_REFRESH_HOUR = 4;');
+  it('uses the IST calendar day for Today/Tomorrow instead of the legacy 04:00 snapshot boundary', () => {
     expect(pageSource).toContain('getSessionsManagementBaselineDateKey()');
-    expect(pageSource).toContain(
-      'SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000',
-    );
+    expect(pageSource).toContain('getKolkataDateKey(date);');
+    expect(pageSource).not.toContain('SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000');
   });
 
   it('counts every operational admission even when profile lookups are incomplete', () => {
