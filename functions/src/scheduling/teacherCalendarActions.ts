@@ -131,8 +131,8 @@ function assertAssignedActive(enrollment: Row, uid: string, date: string): strin
 
 /** Identity stays stable across retries and attendance corrections. */
 export const calendarAttendanceClaimId = (
-  enrollmentId: string, childId: string, date: string, startTime: string,
-): string => [enrollmentId, childId, date.replace(/-/g, ''), startTime.replace(':', '')].join('_');
+  _enrollmentId: string, childId: string, date: string, startTime: string,
+): string => [childId, date.replace(/-/g, ''), startTime.replace(':', '')].join('_');
 
 const attendanceTimeOf = (row: Row): string => {
   const raw = text(row.startTime);
