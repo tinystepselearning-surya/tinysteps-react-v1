@@ -100,6 +100,26 @@ export const getParentClassDisplayStatus = (row: ParentClassSessionDisplay): str
   return row.status;
 };
 
+/**
+ * Display-only attendance state. A regular class marked Absent must not
+ * masquerade as Scheduled while backend finance uses the original session.
+ * This never changes a persisted status or any billing calculation.
+ */
+export const resolveParentCalendarAttendanceDisplayStatus = (
+  session: {status?: unknown; attendance?: unknown},
+  selectedKidId: string,
+): string | null => {
+  const status = String(session.status || '').trim().toLowerCase();
+  if (!['scheduled','upcoming','planned','open'].includes(status)) return null;
+  const attendance = session.attendance;
+  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return null;
+  const value = (attendance as Record<string,unknown>)[selectedKidId];
+  const state = typeof value === 'string' ? value
+    : value && typeof value === 'object' ? (value as Record<string,unknown>).status : '';
+  const marked = String(state||'').trim().toLowerCase();
+  return marked === 'absent' ? 'absent' : null;
+};
+
 export const getParentClassStatusLabel = (status: string): string => {
   switch (status) {
     case "completed":
@@ -110,6 +130,8 @@ export const getParentClassStatusLabel = (status: string): string => {
       return "Cancelled";
     case "no_show":
       return "No show";
+    case "absent":
+      return "Absent";
     case "reschedule_requested":
       return "Reschedule requested";
     case "rescheduled":
@@ -130,6 +152,7 @@ export const getParentClassStatusTone = (status: string): string => {
     case "cancelled":
       return "border-slate-200 bg-slate-100 text-slate-600";
     case "no_show":
+    case "absent":
       return "border-orange-200 bg-orange-50 text-orange-800";
     case "reschedule_requested":
       return "border-amber-200 bg-amber-50 text-amber-800";
@@ -148,6 +171,7 @@ export const getParentClassStatusDotTone = (status: string): string => {
     case "in_progress":
       return "bg-sky-600";
     case "no_show":
+    case "absent":
       return "bg-orange-600";
     case "reschedule_requested":
       return "bg-amber-600";
@@ -183,6 +207,7 @@ export const shouldShowClassJoinAction = (status: string): boolean =>
   status !== "completed"
   && status !== "cancelled"
   && status !== "no_show"
+  && status !== "absent"
   && status !== "reschedule_requested"
   && status !== "rescheduled"
   && status !== "paused";
