@@ -303,6 +303,27 @@ export async function syncTodayTomorrowForEnrollment(args: {
       .filter((doc) => PENDING_SESSION_STATES.has(str(doc.data().status).toLowerCase()))
       .map((doc) => `${str(doc.data().date)}|${str(doc.data().startTime)}|${doc.id}`));
 
+    // A future generated class which has gained attendance/finance evidence
+    // cannot be moved or silently duplicated at a replacement time. Fail
+    // atomically; do not create a second billable occurrence for that date.
+    const protectedStale = existing.some((snap) => {
+      const row = snap.data() as Enrollment;
+      const start = sessionStartMs(row);
+      return !expected.has(snap.id) &&
+        str(row.source).toLowerCase() === AUTO_SOURCE &&
+        !isFutureScheduleExceptionSession(row) &&
+        PENDING_SESSION_STATES.has(str(row.status).toLowerCase()) &&
+        start !== null && start > now.getTime() &&
+        !canMutateAutoSession({
+          session: row, enrollmentId, nowMs: now.getTime(),
+          externallyFinanceLinked: linked.has(snap.id),
+        });
+    });
+    if (protectedStale) {
+      throw new HttpsError('failed-precondition',
+        'Timetable changed, but a financially or operationally protected future class cannot be moved. Review the existing class before retrying.');
+    }
+
     const result = empty('synchronized', days);
     const existingIds = new Set(existing.map((doc) => doc.id));
     const writes: Array<() => void> = [];
@@ -350,7 +371,11 @@ export async function syncTodayTomorrowForEnrollment(args: {
               nowMs: now.getTime(), externallyFinanceLinked: linked.has(id),
             }));
       });
-      if (hasCollision || linked.has(occurrence.sessionId)) {
+      if (linked.has(occurrence.sessionId)) {
+        throw new HttpsError('failed-precondition',
+          'A financial record already references an absent future class. Manual review is required before regeneration.');
+      }
+      if (hasCollision) {
         result.conflicts += 1;
         continue;
       }
