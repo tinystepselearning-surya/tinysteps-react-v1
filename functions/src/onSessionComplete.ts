@@ -676,6 +676,21 @@ export const onSessionComplete = onCall(
     // Teachers may record/correct a valid class at any time. Authorization,
     // class identity, and financial integrity remain enforced separately.
 
+    // In the virtual calendar model, only the canonical attendance-save path
+    // may change attendance. Completion cannot supply a divergent attendance
+    // map that bypasses student/date/time uniqueness claims.
+    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === "true" && incomingAttendance) {
+      const savedAttendance=session.attendance || {};
+      for(const [kidId, entry] of Object.entries(incomingAttendance)) {
+        const recorded=normalizeStatus(savedAttendance[kidId]?.status);
+        const supplied=normalizeStatus(entry?.status);
+        if (!recorded || recorded!==supplied) {
+          throw new HttpsError("failed-precondition",
+            "Save Present/Absent through the calendar before completing the class.");
+        }
+      }
+    }
+
     const currentStatus = normalizeStatus(session.status);
     if (COMPLETION_BLOCKED_STATUSES.has(currentStatus)) {
       throw new HttpsError(
@@ -694,7 +709,9 @@ export const onSessionComplete = onCall(
       return { success: true, skipped: true, creditsEarnedForTeacher: 0 };
     }
 
-    const attendanceForCompletion = incomingAttendance || session.attendance || null;
+    const attendanceForCompletion = process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === "true"
+      ? (session.attendance || null)
+      : (incomingAttendance || session.attendance || null);
     if (!hasRequiredAttendanceForCompletion(session, attendanceForCompletion)) {
       throw new HttpsError(
         "failed-precondition",
