@@ -45,6 +45,9 @@ import {
   isToday,
 } from 'date-fns';
 
+// Legacy reschedule/credit UI retired. Existing historical records remain untouched.
+const LEGACY_RESCHEDULE_INTERFACE_ENABLED = false;
+
 interface ScheduleViewProps {
   teacherId?: string;
 }
@@ -615,6 +618,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   );
 
   useEffect(() => {
+    if (!LEGACY_RESCHEDULE_INTERFACE_ENABLED) {
+      // No rescheduleCredits collection listener or unnecessary Firestore reads.
+      setRescheduleCredits([]);
+      setRescheduleCreditsLoading(false);
+      return;
+    }
     if (!resolvedTeacherId) {
       setRescheduleCredits([]);
       setRescheduleCreditsLoading(false);
@@ -932,7 +941,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </div>
           <div className="text-sm text-slate-500">{getTitle()}</div>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
           <Card className="p-2">
             <div className="text-slate-500">Completed / Present</div>
             <div className="font-semibold text-slate-900">{attendanceSummary.completedPresent}</div>
@@ -942,16 +951,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
             <div className="font-semibold text-slate-900">{attendanceSummary.absentMissed}</div>
           </Card>
           <Card className="p-2">
-            <div className="text-slate-500">Rescheduled</div>
-            <div className="font-semibold text-slate-900">{attendanceSummary.rescheduled}</div>
-          </Card>
-          <Card className="p-2">
             <div className="text-slate-500">Upcoming</div>
             <div className="font-semibold text-slate-900">{attendanceSummary.upcoming}</div>
           </Card>
         </div>
       </Card>
 
+      {LEGACY_RESCHEDULE_INTERFACE_ENABLED && (
       <Card className="border-slate-200 bg-white/95 p-4 shadow-sm md:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -1050,6 +1056,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </>
         )}
       </Card>
+      )}
 
       <Card className="border-slate-200 bg-white/95 p-5 shadow-sm md:p-6">
         {view === 'month' && (
