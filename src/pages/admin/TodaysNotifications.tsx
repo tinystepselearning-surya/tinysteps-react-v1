@@ -166,6 +166,32 @@ interface ResolvedUserDoc {
   data: UserDoc;
 }
 
+type OverallAdmissionsCachedView = {
+  enrollments: EnrollmentDoc[];
+  enrollmentMap: Record<string, Record<string, any>>;
+  usersMap: Record<string, ResolvedUserDoc>;
+  kidMap: Record<string, KidDoc>;
+  courseMap: Record<string, CourseDoc>;
+};
+
+// One memory-only snapshot per authenticated Admin browser session. It survives
+// Admin subpage navigation but never persists personal data to localStorage.
+// Zustand's existing auth updates clear all views on logout/account switch;
+// this adds no Firestore listener, polling or network calls.
+const sharedAdminReminderViews = {
+  readCacheRef: {current: new ManualReminderReadCache<EnrollmentDoc, ManualReminderSessionDoc>()},
+  usersRef: {current: {} as Record<string, ResolvedUserDoc>},
+  overallRef: {current: null as OverallAdmissionsCachedView | null},
+};
+sharedAdminReminderViews.readCacheRef.current.useActor(useAuthStore.getState().user?.uid || null);
+useAuthStore.subscribe((state, previous) => {
+  const nextUid = state.user?.uid || null;
+  if (nextUid === (previous.user?.uid || null)) return;
+  sharedAdminReminderViews.readCacheRef.current.useActor(nextUid);
+  sharedAdminReminderViews.usersRef.current = {};
+  sharedAdminReminderViews.overallRef.current = null;
+});
+
 // This callback performs one bounded enrollment read on the page's first
 // load or explicit refresh. The per-Admin memory cache owns reuse.
 async function fetchVirtualAdminEnrollments(actorUid: string): Promise<EnrollmentDoc[]> {
@@ -1204,16 +1230,10 @@ export default function TodaysNotifications() {
   const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
   const [cancellingManualSessionId, setCancellingManualSessionId] = useState('');
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
-  const reminderReadCacheRef = useRef(new ManualReminderReadCache<EnrollmentDoc, ManualReminderSessionDoc>());
-  const reminderUsersCacheRef = useRef<Record<string, ResolvedUserDoc>>({});
+  const reminderReadCacheRef = sharedAdminReminderViews.readCacheRef;
+  const reminderUsersCacheRef = sharedAdminReminderViews.usersRef;
   const handledAdmissionsRefreshNonceRef = useRef(0);
-  const overallAdmissionsCacheRef = useRef<{
-    enrollments: EnrollmentDoc[];
-    enrollmentMap: Record<string, Record<string, any>>;
-    usersMap: Record<string, ResolvedUserDoc>;
-    kidMap: Record<string, KidDoc>;
-    courseMap: Record<string, CourseDoc>;
-  } | null>(null);
+  const overallAdmissionsCacheRef = sharedAdminReminderViews.overallRef;
   const displayedActorUidRef = useRef(user?.uid || null);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
