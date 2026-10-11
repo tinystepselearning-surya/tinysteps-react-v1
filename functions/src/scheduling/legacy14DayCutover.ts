@@ -11,6 +11,12 @@
  */
 export const LEGACY_14_DAY_SESSION_WRITES_RETIRED = true;
 
+// October 2026 virtual-calendar cutover: every scheduled/background session
+// materializer is retired even if stale Cloud Run environment flags are true.
+// Intentional teacher attendance materialization and teacher-created ad hoc
+// classes are separate authorized write paths and remain available.
+export const AUTOMATIC_SESSION_CREATION_RETIRED = true;
+
 export function assertLegacy14DayWritesNotRetired(): void {
   if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
     throw new Error('Legacy 14-day session generation is retired. Use the daily timetable generator.');
