@@ -6,8 +6,8 @@
  * occurrence on demand. Teacher ad hoc bookings are explicit exceptions and
  * are persisted so they remain visible until attendance is marked.
  *
- * The source flag intentionally defaults OFF until both parent/teacher
- * calendars and integration tests pass.
+ * The tested virtual calendar is ON by default after October cutover;
+ * VIRTUAL_CALENDAR_ATTENDANCE_ENABLED=false is an emergency kill switch.
  */
 import * as admin from 'firebase-admin';
 import {FieldValue} from 'firebase-admin/firestore';
