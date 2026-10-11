@@ -314,6 +314,25 @@ describe('student timetable Today/Tomorrow synchronization', () => {
     expect([...fake.rows('classSessions').keys()].sort()).toEqual([DAY_ONE, DAY_TWO]);
   });
 
+  it('does not treat trial or pending-teacher status as permission to erase classes', async () => {
+    for (const status of ['trial', 'pending_teacher', 'unrecognized']) {
+      const fake = fakeDb();
+      await sync(fake);
+      fake.rows('enrollments').get('enrollment-a')!.status = status;
+      const result = await sync(fake);
+      expect(result).toMatchObject({created: 0, removed: 0, preserved: 2});
+      expect([...fake.rows('classSessions').keys()].sort()).toEqual([DAY_ONE, DAY_TWO]);
+    }
+  });
+
+  it('keeps blank legacy enrollment status operational where a timetable exists', async () => {
+    const enrollment = base();
+    enrollment.status = '';
+    const fake = fakeDb(enrollment);
+    const result = await sync(fake);
+    expect(result.created).toBe(2);
+  });
+
   it('refuses to erase existing sessions for an active enrollment with no timetable', async () => {
     const fake = fakeDb();
     await sync(fake);
