@@ -228,6 +228,27 @@ describe('student timetable Today/Tomorrow synchronization', () => {
     })).toBe(false);
   });
 
+  it('refuses to duplicate a protected future class after a timetable move', async () => {
+    const fake = fakeDb();
+    await sync(fake);
+    fake.rows('teacherEarnings').set(DAY_ONE, {amount: 175});
+    const enrollment = fake.rows('enrollments').get('enrollment-a')!;
+    enrollment.schedule.revision = 5;
+    enrollment.schedule.weeklySlots[0].time = '07:00';
+    await expect(sync(fake, {expectedRevision: 5}))
+      .rejects.toThrow('protected future class cannot be moved');
+    expect(fake.rows('classSessions').has(DAY_ONE)).toBe(true);
+    expect(fake.rows('classSessions').has('enrollment-a_20261012_0700')).toBe(false);
+    expect(fake.rows('classSessions').has(DAY_TWO)).toBe(true);
+  });
+
+  it('refuses to regenerate an absent session with an external finance link', async () => {
+    const fake = fakeDb();
+    fake.rows('billingCharges').set(DAY_ONE, {status: 'paid'});
+    await expect(sync(fake)).rejects.toThrow('financial record already references');
+    expect(fake.rows('classSessions').size).toBe(0);
+  });
+
   it('does not generate for inactive students or a past start time', async () => {
     const fake = fakeDb();
     fake.rows('kids').get('kid-a')!.status = 'inactive';
