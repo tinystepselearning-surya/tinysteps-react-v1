@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue, Timestamp} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
@@ -671,7 +672,7 @@ export const saveRollingEnrollmentSchedule = onCall(
         'schedule.plannedSessions': FieldValue.delete(),
         'schedule.endDateYmd': FieldValue.delete(),
         'scheduleMaterialization.schemaVersion': ROLLING_SCHEDULE_MATERIALIZATION_VERSION,
-        'scheduleMaterialization.horizonDays': ROLLING_SCHEDULE_HORIZON_DAYS,
+        'scheduleMaterialization.horizonDays': LEGACY_14_DAY_SESSION_WRITES_RETIRED ? 0 : ROLLING_SCHEDULE_HORIZON_DAYS,
         'scheduleMaterialization.scheduleRevision': schedule.revision,
         'scheduleMaterialization.nextOccurrenceYmd': null,
         'scheduleMaterialization.nextMaterializationDueYmd': null,
@@ -693,6 +694,40 @@ export const saveRollingEnrollmentSchedule = onCall(
         idempotentReplay: true,
         orchestrationState: 'replayed',
       };
+    }
+
+    // Saving or activating a Student Management timetable MUST remain functional.
+    // Under the cutover, this operation saves the recurrence only; the 00:05
+    // daily generator owns creation of the next day's class sessions.
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      const saved = await enrollmentRef.get();
+      if (!saved.exists) throw new HttpsError('not-found', `Enrollment ${enrollmentId} not found`);
+      const savedStatus = normalizeEnrollmentStatus(saved.data()?.status);
+      const response: SaveRollingEnrollmentScheduleResult = {
+        ok: true,
+        enrollmentId,
+        scheduleRevision: scheduleRevision || currentScheduleRevision((saved.data() || {}) as Record<string, unknown>),
+        deliveryMode: ROLLING_SCHEDULE_DELIVERY_MODE,
+        horizonDays: 0,
+        orchestrationState: savedStatus === 'paused' ? 'saved_paused' : 'activated',
+        idempotentReplay: false,
+        initialMaterialization: null,
+        pausedSessionsCancelled: 0,
+      };
+      await enrollmentRef.update({
+        'scheduleMaterialization.horizonDays': 0,
+        'scheduleMaterialization.materializedThroughYmd': FieldValue.delete(),
+        'scheduleMaterialization.nextOccurrenceYmd': null,
+        'scheduleMaterialization.nextMaterializationDueYmd': null,
+        'rollingScheduleActivation.state': 'success',
+        'rollingScheduleActivation.completedAt': FieldValue.serverTimestamp(),
+        'rollingScheduleActivation.completedBy': actorUid,
+        'rollingScheduleActivation.lastResult': response,
+        'rollingScheduleActivation.error': FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: actorUid,
+      });
+      return response;
     }
 
     try {
@@ -810,7 +845,7 @@ export const setRollingEnrollmentLifecycle = onCall(
     // discontinue intentionally do not depend on teacher/fee health; stopping
     // delivery must remain possible even when enrollment data needs repair.
     let resumePlan: ReturnType<typeof buildRollingMaterializationPlan> | null = null;
-    if (target === 'active') {
+    if (target === 'active' && !LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
       resumePlan = buildRollingMaterializationPlan({
         enrollmentId,
         enrollment: prospectiveActiveEnrollment,
@@ -904,7 +939,10 @@ export const setRollingEnrollmentLifecycle = onCall(
     let materializedSessionsPreserved = 0;
     let nextMaterializationDueYmd: string | null = null;
 
-    if (target === 'paused' || target === 'discontinued') {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      // Status/key/audit transaction is committed; legacy 14-day session
+      // cancellation, restoration and materialization are retired.
+    } else if (target === 'paused' || target === 'discontinued') {
       cancelledSessionsCount = await cancelRollingLifecycleWindow({
         db,
         enrollmentId,
