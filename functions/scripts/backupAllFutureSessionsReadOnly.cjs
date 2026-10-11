@@ -86,8 +86,8 @@ function typedValue(value, depth = 0) {
   if (kind === 'referenceValue') return {referenceValue: String(raw)};
   if (kind === 'geoPointValue') {
     const point = raw || {};
-    const latitude = Number(point.latitude);
-    const longitude = Number(point.longitude);
+    const latitude = Number(point.latitude ?? 0);
+    const longitude = Number(point.longitude ?? 0);
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       fail('Invalid Firestore GeoPoint value');
     }
