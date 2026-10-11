@@ -613,6 +613,15 @@ export const saveTeacherSessionProgress = onCall(
 
     const attendanceOnly = payload.meta?.attendanceOnly === true;
     const incomingAttendance = payload.attendance as Record<string, unknown>;
+    // Preserve historical credits/corrections. Once virtual calendar is
+    // activated, do not let any new Present/Absent submission produce another
+    // reschedule credit; teacher ad hoc is the only one-off workflow.
+    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === 'true' &&
+        Object.values(incomingAttendance).some(entry =>
+          toAttendanceEntry(entry).status === 'reschedule_requested')) {
+      throw new HttpsError('failed-precondition',
+        'Rescheduling is retired. Mark Present or Absent instead.');
+    }
     const nextAttendance: Record<string, Record<string, unknown>> = {};
     const sessionKidIds = Array.isArray(session.kidIds)
       ? (session.kidIds as unknown[]).map((kidId) => String(kidId || '').trim()).filter(Boolean)
