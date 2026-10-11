@@ -110,7 +110,7 @@ export const resolveParentCalendarAttendanceDisplayStatus = (
   selectedKidId: string,
 ): string | null => {
   const status = String(session.status || '').trim().toLowerCase();
-  if (!['scheduled','upcoming','planned','open'].includes(status)) return null;
+  if (['cancelled','canceled','rescheduled','reschedule_requested'].includes(status)) return null;
   const attendance = session.attendance;
   if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return null;
   const value = (attendance as Record<string,unknown>)[selectedKidId];
