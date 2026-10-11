@@ -28,6 +28,9 @@ export type NextDayIssue = {
 type EnrollmentRow = {id: string; data: Record<string, unknown>};
 type Slot = {weekday: number; time: string; durationMinutes: number};
 
+const OPERATIONAL_ENROLLMENT_STATUSES = new Set([
+  'active', 'enrolled', 'current', 'ongoing', 'pending_payment', 'pending_lp',
+]);
 const IST_OFFSET_MS = 330 * 60 * 1000;
 const YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
 const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -174,10 +177,12 @@ export function buildNextDaySessionPlan(args: {
   const logicalSessions = new Set<string>();
 
   for (const {id: enrollmentId, data} of args.enrollments) {
-    if (text(data.status).toLowerCase() !== 'active' ||
+    if (!OPERATIONAL_ENROLLMENT_STATUSES.has(text(data.status).toLowerCase()) ||
         data.archived === true || data.isArchived === true || data.archivedAt) continue;
 
-    const kidId = text(data.kidId) || text(data.studentId) || text(data.childId);
+    const kidIds = Array.isArray(data.kidIds) ? data.kidIds.map(text).filter(Boolean) : [];
+    const kidId = text(data.kidId) || kidIds[0] ||
+      text(data.studentId) || text(data.childId);
     if (!kidId || !args.activeKidIds.has(kidId)) {
       issues.push({enrollmentId, reason: 'student_not_active'});
       continue;
