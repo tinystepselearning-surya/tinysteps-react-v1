@@ -119,6 +119,8 @@ function slotsFromSchedule(value: unknown): Slot[] {
 
 export function buildNextDaySessionPlan(args: {
   todayYmd: string;
+  /** Only used for the October 12 first-run bootstrap. Default is tomorrow. */
+  targetYmd?: string;
   enrollments: EnrollmentRow[];
   activeKidIds: ReadonlySet<string>;
 }): {
@@ -126,7 +128,13 @@ export function buildNextDaySessionPlan(args: {
   occurrences: NextDayOccurrence[];
   issues: NextDayIssue[];
 } {
-  const targetYmd = nextDayYmd(args.todayYmd);
+  const tomorrow = nextDayYmd(args.todayYmd);
+  const targetYmd = args.targetYmd || tomorrow;
+  // The October 12 launch is the single exception to the tomorrow-only rule:
+  // its first run must materialize both October 12 and October 13.
+  if (targetYmd !== tomorrow && !(args.todayYmd === '2026-10-12' && targetYmd === args.todayYmd)) {
+    throw new Error('Only tomorrow (or the October 12 bootstrap date) may be materialized');
+  }
   const targetDayMs = parseYmd(targetYmd);
   const targetWeekday = new Date(targetDayMs).getUTCDay();
   const occurrences: NextDayOccurrence[] = [];
