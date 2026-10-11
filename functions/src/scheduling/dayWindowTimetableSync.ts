@@ -9,6 +9,7 @@
  * Cloud Run environment. Zero Firestore reads when disabled.
  */
 import * as admin from 'firebase-admin';
+import {AUTOMATIC_SESSION_CREATION_RETIRED} from './legacy14DayCutover';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {
@@ -48,7 +49,8 @@ export type DayWindowSyncResult = {
 
 export const dayWindowSyncWritesEnabled = (
   env: Record<string, string | undefined> = process.env,
-): boolean => String(env.TIMETABLE_DAY_SYNC_ENABLED || '').trim().toLowerCase() === 'true';
+): boolean => !AUTOMATIC_SESSION_CREATION_RETIRED &&
+  String(env.TIMETABLE_DAY_SYNC_ENABLED || '').trim().toLowerCase() === 'true';
 
 export function indiaDay(now = new Date()): string {
   return new Date(now.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
@@ -251,7 +253,8 @@ export async function syncTodayTomorrowForEnrollment(args: {
   const now = args.now || new Date();
   const todayYmd = indiaDay(now);
   const days = [todayYmd, addDaysYmd(todayYmd, 1)];
-  if (args.enabled !== true && !(args.enabled === undefined && dayWindowSyncWritesEnabled())) {
+  if (AUTOMATIC_SESSION_CREATION_RETIRED ||
+      (args.enabled !== true && !(args.enabled === undefined && dayWindowSyncWritesEnabled()))) {
     return empty('disabled', days);
   }
   if (todayYmd < DAY_WINDOW_SYNC_START_YMD) {
