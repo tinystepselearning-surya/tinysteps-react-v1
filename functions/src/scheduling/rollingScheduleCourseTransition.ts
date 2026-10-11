@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall, type CallableRequest} from 'firebase-functions/v2/https';
 import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
@@ -300,7 +301,7 @@ export const transitionEnrollmentCourse = onCall(
       updatedBy: actor,
     }, {merge: true});
 
-    const materialized = await materializeRollingEnrollmentWindowInternal(db, {
+    const materialized = LEGACY_14_DAY_SESSION_WRITES_RETIRED ? null : await materializeRollingEnrollmentWindowInternal(db, {
       enrollmentId: newEnrollmentId,
       anchorYmd: resolveRollingLifecycleTodayYmd(),
       actorId: actor,
@@ -390,11 +391,11 @@ export const transitionEnrollmentCourse = onCall(
     }
 
     const reconciliation = {
-      rolling: true,
-      horizonDays: ROLLING_SCHEDULE_HORIZON_DAYS,
-      created: materialized.createdCount,
-      preserved: materialized.existingCount + materialized.raceAlreadyExistsCount,
-      nextMaterializationDueYmd: materialized.materialization.nextMaterializationDueYmd,
+      rolling: !LEGACY_14_DAY_SESSION_WRITES_RETIRED,
+      horizonDays: LEGACY_14_DAY_SESSION_WRITES_RETIRED ? 0 : ROLLING_SCHEDULE_HORIZON_DAYS,
+      created: materialized?.createdCount || 0,
+      preserved: (materialized?.existingCount || 0) + (materialized?.raceAlreadyExistsCount || 0),
+      nextMaterializationDueYmd: materialized?.materialization.nextMaterializationDueYmd || null,
     };
     const completionBatch = db.batch();
     completionBatch.set(transitionRef, {
