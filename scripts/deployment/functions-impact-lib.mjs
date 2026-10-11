@@ -2,7 +2,16 @@ import path from 'node:path';
 
 const SOURCE_ROOT = 'functions/src';
 const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'];
-const INTENTIONALLY_RETIRED_FUNCTION_EXPORTS = new Set(['runAv2TeamsEvidenceProof', 'notFoundRoute']);
+import { RETIRED_SESSION_FUNCTIONS } from './session-retirement-lib.mjs';
+
+const INTENTIONALLY_RETIRED_FUNCTION_EXPORTS = new Set([
+  'runAv2TeamsEvidenceProof', 'notFoundRoute',
+  // Permanent virtual-calendar cutover: explicit physical production retirement.
+  'dailySessionsTomorrowAt0005',
+  'rollingScheduleEdgeReplenisherDaily',
+  'futureScheduleReconcilerEveryTwoHours',
+  'onFutureScheduleEnrollmentWrite',
+]);
 
 function posix(value) {
   return value.replaceAll('\\', '/').replace(/^\.\//, '');
@@ -207,7 +216,18 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
     && movedRoots.length === 0;
   const safelyTargetableIndexTopologyChange =
     retiredOnlyTopologyChange || additiveOnlyTopologyChange;
-  if (retiredOnlyTopologyChange) result.retiredFunctions = removedRoots;
+  // Carry physical retirement independently of other export changes or a missing
+  // production marker. Retries must also find orphans after partial deletion.
+  if (afterSources?.has('functions/src/scheduling/legacy14DayCutover.ts') && afterGraph
+      && RETIRED_SESSION_FUNCTIONS.every(id => !afterGraph.roots.has(id))
+      && (removedRoots.some(id => RETIRED_SESSION_FUNCTIONS.includes(id))
+        || files.some(file => file.startsWith('scripts/deployment/')
+          || file === '.github/workflows/deploy.yml'))) {
+    result.retiredFunctions = [...RETIRED_SESSION_FUNCTIONS];
+    result.functionsDeploymentRequired = true;
+  } else if (retiredOnlyTopologyChange) {
+    result.retiredFunctions = removedRoots;
+  }
 
   const globals = files.filter(file => file === 'functions/package.json'
     || file === 'functions/package-lock.json'
@@ -254,7 +274,7 @@ export function resolveFunctionsImpact({ changedFiles, beforeSources, afterSourc
   result.impactedFunctions = [...targetReasons.keys()]
     .filter(id => !result.retiredFunctions.includes(id))
     .sort();
-  result.functionsDeploymentRequired = result.impactedFunctions.length > 0;
+  result.functionsDeploymentRequired = result.impactedFunctions.length > 0 || result.retiredFunctions.some(id => RETIRED_SESSION_FUNCTIONS.includes(id));
   result.reasons = Object.fromEntries(result.impactedFunctions.map(id => [id, [...targetReasons.get(id)].sort()]));
   return result;
 }

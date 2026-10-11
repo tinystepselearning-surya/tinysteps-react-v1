@@ -10,6 +10,11 @@ on:
       - 'src/tests/emulator/virtualCalendarAttendance.emulator.spec.ts'
       - 'functions/test/teacherCalendarActions.spec.ts'
       - 'functions/src/index.ts'
+      - 'scripts/deployment/**'
+      - 'scripts/test/*deployment*'
+      - 'scripts/test/session-retirement.node-test.mjs'
+      - 'scripts/resolve-deployment-impact.mjs'
+      - '.github/workflows/deploy.yml'
       - 'src/lib/scheduling/rollingScheduleCalendarProjection.ts'
       - 'src/pages/parent/ParentDashboard.tsx'
       - 'src/pages/teacher/**'
@@ -54,6 +59,8 @@ jobs:
           npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx
       - name: Full backend regression
         run: npm --prefix functions test
+      - name: Deployment and retirement regressions (mocked mutations only)
+        run: node --test scripts/test/functions-deployment.node-test.mjs scripts/test/session-retirement.node-test.mjs
       - name: Deployment impact calculation only
         shell: bash
         run: |

@@ -488,7 +488,7 @@ test('workflow feeds resolver targets to bounded deployment and skips zero-impac
   assert.match(workflow, /Resolve artifact and Function impact[\s\S]*resolve-deployment-impact\.mjs/);
   assert.match(workflow, /FUNCTIONS_DEPLOY_ONLY: \$\{\{ needs\.analyze-changes\.outputs\.functions_targets \}\}/);
   assert.match(workflow, /FUNCTIONS_DEPLOY_FULL: \$\{\{ needs\.analyze-changes\.outputs\.functions_full_deployment \}\}/);
-  assert.match(workflow, /Deploy Cloud Functions in bounded batches\n\s+if: needs\.analyze-changes\.outputs\.functions_deployment_required == 'true'/);
+  assert.match(workflow, /Deploy Cloud Functions in bounded batches\n\s+if: >-\n\s+needs\.analyze-changes\.outputs\.functions_deployment_required == 'true'/);
   assert.match(workflow, /Deploy Firestore Security Rules\n\s+if: needs\.analyze-changes\.outputs\.firestore_rules_changed == 'true'/);
   assert.match(workflow, /Deploy to Firebase Production\n\s+if: needs\.analyze-changes\.outputs\.hosting_changed == 'true'/);
 });
