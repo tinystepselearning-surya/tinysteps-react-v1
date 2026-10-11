@@ -5,7 +5,6 @@ import {
   enumerateRollingScheduleOccurrences,
   ROLLING_SCHEDULE_UTC_OFFSET_MINUTES,
 } from './rollingScheduleRecurrence';
-import { isRealSessionAuthoritativeForRollingCalendar } from './rollingScheduleRealSessionAuthority';
 
 export const ROLLING_SCHEDULE_PROJECTION_SOURCE = 'rolling_schedule_projection' as const;
 
@@ -184,15 +183,10 @@ export const buildRollingScheduleCalendarProjections = (
     const enrollmentId = text(enrollment.id);
     if (enrollmentId) enrollmentsById.set(enrollmentId, enrollment);
   });
-  const authoritativeRealSessions = input.realSessions.filter((session) => {
-    const enrollmentId = enrollmentIdFromSession(session);
-    if (!enrollmentId) return true;
-    return isRealSessionAuthoritativeForRollingCalendar({
-      session,
-      enrollment: enrollmentsById.get(enrollmentId),
-      todayYmd,
-    });
-  });
+  // Every persisted occurrence wins, regardless of how it was originally
+  // created. An attended, absent, cancelled, or one-off class is never
+  // "resurrected" by a virtual recurrence row.
+  const authoritativeRealSessions = input.realSessions;
   const realIds = new Set(authoritativeRealSessions.map((session) => text(session.id)).filter(Boolean));
   const realOccurrenceIdentities = new Set(
     authoritativeRealSessions
