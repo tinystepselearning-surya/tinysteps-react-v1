@@ -150,6 +150,13 @@ export const transitionEnrollmentCourse = onCall(
         throw new HttpsError('already-exists', 'operationId belongs to a different course transition');
       }
       if (String(priorData.state || '') === 'complete') {
+        // A retry must repair a failed day-window sync even when the course
+        // transition itself had already committed successfully.
+        const previousNewId = text(priorData.newEnrollmentId);
+        const daySync = LEGACY_14_DAY_SESSION_WRITES_RETIRED && previousNewId
+          ? await syncTodayTomorrowForEnrollment({
+            db, enrollmentId: previousNewId, actorId: actor,
+          }) : undefined;
         return {
           ok: true,
           operationId,
@@ -158,6 +165,7 @@ export const transitionEnrollmentCourse = onCall(
           newEnrollmentId: priorData.newEnrollmentId || null,
           cancelledSessionsCount: priorData.cancelledSessionsCount || 0,
           reconciliation: priorData.reconciliation || null,
+          ...(daySync ? {daySync} : {}),
           idempotentReplay: true,
           rolling: Boolean(priorData.rolling),
           transitionType,
