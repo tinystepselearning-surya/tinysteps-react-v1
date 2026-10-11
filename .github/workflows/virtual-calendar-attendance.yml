@@ -18,6 +18,14 @@ on:
       - 'src/lib/scheduling/rollingScheduleCalendarProjection.ts'
       - 'src/pages/parent/ParentDashboard.tsx'
       - 'src/pages/teacher/**'
+      - 'src/hooks/useTeacherFilteredData.ts'
+      - 'src/pages/parent/parentClassSessionReadPolicy.ts'
+      - 'src/pages/parent/components/classes/ParentClassesView.tsx'
+      - 'src/tests/hooks/useTeacherSessions.spec.tsx'
+      - 'src/tests/hooks/useUpcomingSessions.spec.tsx'
+      - 'src/tests/teacher/TeacherCalendarReadOnce.spec.ts'
+      - 'src/tests/pages/parentClassSessionReadPolicy.spec.ts'
+      - 'src/lib/auth.ts'
       - 'src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts'
       - 'src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts'
       - 'src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts'
@@ -57,7 +65,7 @@ jobs:
       - name: Virtual timetable and attendance unit tests
         run: |
           npx vitest run --config functions/vitest.config.ts functions/test/teacherCalendarActions.spec.ts
-          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/TodaysNotificationsManualRefresh.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx
+          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/TodaysNotificationsManualRefresh.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx src/tests/hooks/useTeacherSessions.spec.tsx src/tests/hooks/useUpcomingSessions.spec.tsx src/tests/hooks/useTeacherStudents.spec.tsx src/tests/teacher/TeacherCalendarReadOnce.spec.ts src/tests/pages/parentClassSessionReadPolicy.spec.ts src/tests/pages/ParentDashboardClassSessionReadPlan.spec.ts
       - name: Full backend regression
         run: npm --prefix functions test
       - name: Deployment and retirement regressions (mocked mutations only)
