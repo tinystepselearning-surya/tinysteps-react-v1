@@ -526,41 +526,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     [getSessionKidIds],
   );
 
-  const isAttendanceAllowedNow = useCallback((session?: Partial<TeacherSession> | null): boolean => {
-    if (canOverrideAttendanceTime) return true;
-    const allowedAt = getAttendanceAllowedAtMillis(session);
-    const correctionCutoffAt = session ? getTeacherAttendanceCorrectionCutoffMillis(session) : null;
-    if (allowedAt === null || correctionCutoffAt === null) return false;
-    const nowMs = Date.now();
-    return nowMs >= allowedAt && nowMs < correctionCutoffAt;
-  }, [canOverrideAttendanceTime]);
-
-  const isAttendanceFinalised = useCallback((session?: Partial<TeacherSession> | null): boolean => {
-    if (canOverrideAttendanceTime || !session) return false;
-    const cutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
-    return cutoffAt !== null && Date.now() >= cutoffAt;
-  }, [canOverrideAttendanceTime]);
-
+  // Attendance access is no longer blocked by class time or month.
+  const isAttendanceFinalised = useCallback((): boolean => false, []);
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
-    if (!isAttendanceAllowedNow(session)) {
-      const allowedAt = getAttendanceAllowedAtMillis(session);
-      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
-      const nowMs = Date.now();
-      const message =
-        allowedAt === null || correctionCutoffAt === null
-          ? 'Attendance time could not be verified. Please contact admin.'
-          : nowMs >= correctionCutoffAt
-            ? ATTENDANCE_FINALISED_MESSAGE
-            : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
-      toast({
-        title: 'Attendance unavailable',
-        description: message,
-        variant: 'destructive',
-      });
-      return;
-    }
     setSelectedSession(session);
-  }, [isAttendanceAllowedNow]);
+  }, []);
 
   const studentFilterOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
@@ -769,23 +739,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
-    if (!isAttendanceAllowedNow(selectedSession)) {
-      const allowedAt = getAttendanceAllowedAtMillis(selectedSession);
-      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(selectedSession);
-      const nowMs = Date.now();
-      const message =
-        allowedAt === null || correctionCutoffAt === null
-          ? 'Attendance time could not be verified. Please contact admin.'
-          : nowMs >= correctionCutoffAt
-            ? ATTENDANCE_FINALISED_MESSAGE
-            : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
-      toast({
-        title: 'Attendance unavailable',
-        description: message,
-        variant: 'destructive',
-      });
-      return;
-    }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
       let attendanceSessionId = selectedSession.id;
