@@ -3,17 +3,12 @@ import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import {
-  ATTENDANCE_FINALISED_MESSAGE,
-  getTeacherAttendanceCorrectionCutoffMillis,
-} from "./helpers/attendanceCorrectionFreeze";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const REGION = "asia-south1";
-const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unknown";
 
@@ -129,48 +124,6 @@ function normalizeEnrollmentStatus(value: unknown): string {
   if (!raw) return "active";
   if (raw === "canceled") return "cancelled";
   return raw;
-}
-
-function getTimestampMillis(value: unknown): number {
-  if (value && typeof (value as any).toMillis === "function") {
-    return Number((value as any).toMillis()) || 0;
-  }
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === "string" || typeof value === "number") {
-    const parsed = new Date(value).getTime();
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function normalizeTimeForIstParse(value: unknown): string | null {
-  const raw = String(value || "").trim();
-  if (!raw) return null;
-  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
-  if (!match) return null;
-  const seconds = match[3] || "00";
-  return `${match[1]}:${match[2]}:${seconds}`;
-}
-
-function getSessionStartMillis(session: SessionData): number | null {
-  const startAtMs = getTimestampMillis(session.startAt);
-  if (startAtMs > 0) return startAtMs;
-
-  const dateYmd = String(session.date || "").trim();
-  const startTime = normalizeTimeForIstParse(session.startTime);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
-  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function getAttendanceAllowedAtMillis(session: SessionData): number | null {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + ATTENDANCE_OPEN_DELAY_MS;
-}
-
-function canCallerOverrideAttendanceTime(role: string): boolean {
-  return role === "admin";
 }
 
 async function resolveCallerRoleFromAuth(
@@ -595,6 +548,18 @@ async function processSessionCompletion(
       return { success: true, skipped: false, creditsEarnedForTeacher: 0 };
     }
 
+    // Enrollment remaining/used credits are retired for the virtual-calendar
+    // operating model. Parent charges and teacher earnings continue to be
+    // generated from the single real session by onSessionRevenueWrite.
+    // Keep the old completion marker for compatibility with historical retries.
+    if (process.env.VIRTUAL_CALENDAR_ATTENDANCE_ENABLED === "true") {
+      const presentCount = kidIds.filter((kidId) =>
+        (attendanceMap[kidId]?.status || "").toLowerCase() === "present"
+      ).length;
+      await markProcessed(sessionRef);
+      return { success: true, skipped: false, creditsEarnedForTeacher: presentCount };
+    }
+
     let creditsEarnedForTeacher = 0;
     const creditChanges: CreditChange[] = [];
     for (const kidId of kidIds) {
@@ -753,30 +718,8 @@ export const onSessionComplete = onCall(
       token: (request.auth?.token || {}) as Record<string, unknown>,
     });
 
-    const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
-    const attendanceCorrectionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
-    if (
-      !canCallerOverrideAttendanceTime(callerRole)
-    ) {
-      if (attendanceAllowedAtMs === null || attendanceCorrectionCutoffMs === null) {
-        throw new HttpsError(
-          "failed-precondition",
-          "Attendance time could not be verified. Please contact admin."
-        );
-      }
-      if (Date.now() < attendanceAllowedAtMs) {
-        throw new HttpsError(
-          "failed-precondition",
-          "Attendance can be marked 30 minutes after class start."
-        );
-      }
-      if (Date.now() >= attendanceCorrectionCutoffMs) {
-        throw new HttpsError(
-          "failed-precondition",
-          ATTENDANCE_FINALISED_MESSAGE
-        );
-      }
-    }
+    // Teachers may record/correct a valid class at any time. Authorization,
+    // class identity, and financial integrity remain enforced separately.
 
     const currentStatus = normalizeStatus(session.status);
     if (COMPLETION_BLOCKED_STATUSES.has(currentStatus)) {
