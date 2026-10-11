@@ -9,6 +9,12 @@ on:
       - 'src/pages/parent/ParentDashboard.tsx'
       - 'src/pages/teacher/**'
       - 'src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts'
+      - 'src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts'
+      - 'src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts'
+      - 'src/pages/admin/TodaysNotifications.tsx'
+      - 'src/pages/admin/todaysNotificationsManualData.ts'
+      - 'src/lib/sessionScheduleIntegrity.ts'
+      - 'firestore.rules'
       - '.github/workflows/virtual-calendar-attendance.yml'
   workflow_dispatch:
 
@@ -39,7 +45,7 @@ jobs:
       - name: Virtual timetable and attendance unit tests
         run: |
           npx vitest run --config functions/vitest.config.ts functions/test/teacherCalendarActions.spec.ts
-          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts
+          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts
       - name: Full backend regression
         run: npm --prefix functions test
       - name: Deployment impact calculation only
