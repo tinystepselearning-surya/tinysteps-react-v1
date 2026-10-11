@@ -41,7 +41,7 @@ type AttendanceEntryState = {
   notes?: string;
 };
 
-const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];
+const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent'];
 
 const attendanceStatusLabel = (status: AttendanceStatus): string => {
   if (status === 'reschedule_requested') return 'Rescheduled';
@@ -339,7 +339,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
     if (hasMissingStatus) {
       toast({
         title: 'Select attendance status',
-        description: 'Please choose Present/Absent/Rescheduled for each student.',
+        description: 'Please choose Present or Absent for each student.'
         variant: 'destructive',
       });
       return;
@@ -482,7 +482,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground">
-                          Lesson progress is not updated for absent or rescheduled attendance.
+                          Lesson progress is not updated for absent attendance.
                         </p>
                       )}
 
