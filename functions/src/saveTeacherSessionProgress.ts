@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
@@ -348,7 +349,7 @@ async function reconcileAttendanceCorrectionFinance(args: {
 
   const metadata: Record<string, unknown> = {
     attendanceCorrectionId,
-    reconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+    reconciledAt: FieldValue.serverTimestamp(),
     reconciledByUid: correctedByUid,
     reconciliationSource: 'admin-attendance-correction',
     previousAttendanceStatus: previousStatus || 'not_marked',
@@ -429,11 +430,11 @@ async function reconcileAttendanceCorrectionFinance(args: {
       chargeRef,
       {
         status: 'void',
-        voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+        voidedAt: FieldValue.serverTimestamp(),
         voidReason: reason,
         correctedBy: correctedByUid,
-        correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        correctedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         ...metadata,
       },
       { merge: true },
@@ -447,11 +448,11 @@ async function reconcileAttendanceCorrectionFinance(args: {
       earningRef,
       {
         status: 'void',
-        voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+        voidedAt: FieldValue.serverTimestamp(),
         voidReason: reason,
         correctedBy: correctedByUid,
-        correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        correctedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         ...metadata,
       },
       { merge: true },
@@ -622,7 +623,7 @@ export const saveTeacherSessionProgress = onCall(
     const sessionUpdate: Record<string, unknown> = {
       attendance: nextAttendance,
       notes: sessionNotes,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
     const stagedWrites:Array<(tx:admin.firestore.Transaction)=>void> = [];
@@ -657,7 +658,7 @@ export const saveTeacherSessionProgress = onCall(
           const curriculumRef = db.collection('students').doc(kidId).collection('curriculum').doc(topicId);
           const curriculumPayload: Record<string, unknown> = {
             status: isCompleted ? 'completed' : 'in_progress',
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: uid,
             source: 'attendance',
             lastSessionId: sessionId,
@@ -675,7 +676,7 @@ export const saveTeacherSessionProgress = onCall(
           const progressPayload: Record<string, unknown> = {
             lastEvidence: 'session',
             lastSessionId: sessionId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: uid,
             source: 'attendance',
             topicName,
@@ -756,7 +757,7 @@ export const saveTeacherSessionProgress = onCall(
           calendarAttendanceClaimId('',childId,occurrence.day,occurrence.time)),{
           sessionId,childId,enrollmentId:String(session.enrollmentId||''),
           date:occurrence.day,startTime:occurrence.time,
-          createdAt:admin.firestore.FieldValue.serverTimestamp(),
+          createdAt:FieldValue.serverTimestamp(),
           source:'teacher_attendance_save',
         });
       }
@@ -1061,7 +1062,7 @@ export const adminAttendanceCorrection = onCall(
 
     const sessionUpdate = {
       attendance: nextAttendance,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
     if (av7ValidationLink) {
@@ -1091,7 +1092,7 @@ export const adminAttendanceCorrection = onCall(
       correctedByUid: uid,
       correctedByName,
       correctedByEmail,
-      correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+      correctedAt: FieldValue.serverTimestamp(),
       financeReconciliation,
       ...(av7ValidationLink
         ? {
@@ -1102,7 +1103,7 @@ export const adminAttendanceCorrection = onCall(
     });
 
     if (av7ValidationLink) {
-      const resolvedAt = admin.firestore.FieldValue.serverTimestamp();
+      const resolvedAt = FieldValue.serverTimestamp();
       batch.create(av7ValidationLink.resolutionRef, {
         schemaVersion: 1,
         brick: 'AV7',
