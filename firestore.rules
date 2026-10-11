@@ -1848,6 +1848,13 @@ function teacherProgressIdentityUnchanged() {
     }
 
     // ----------------------------
+    // Virtual timetable reminders do not create partial classSessions.
+    // Only Admin may read or update manually-sent reminder acknowledgements.
+    match /virtualClassReminderFlags/{flagId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
     // NOTIFICATION TOKENS
     // ----------------------------
     match /notificationTokens/{tokenId} {
