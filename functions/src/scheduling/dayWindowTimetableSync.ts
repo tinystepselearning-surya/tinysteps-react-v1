@@ -104,15 +104,20 @@ export function planTodayTomorrowForEnrollment(args: {
   activeChild: boolean;
 }): RollingMaterializationOccurrence[] {
   if (!args.activeChild || !isActiveEnrollment(args.enrollment)) return [];
+  // Legacy enrollments may omit the class-start cutoff. Their authoritative
+  // weekly timetable is still valid (same policy as the nightly planner).
   const startYmd = dateStartYmd(args.enrollment);
-  // Ambiguous class-start data is not sufficient to create a class.
-  if (!startYmd) return [];
   const slots = normalizeRollingMaterializerSlots(args.enrollment.schedule);
-  if (!slots.length) return [];
+  if (!slots.length) {
+    // An active enrollment with a missing timetable is a data-quality error,
+    // not permission to delete every existing pending class.
+    throw new HttpsError('failed-precondition',
+      'Active enrollment has no recurring timetable. Repair Student Management first.');
+  }
   const days = [args.todayYmd, addDaysYmd(args.todayYmd, 1)];
   const occurrences: RollingMaterializationOccurrence[] = [];
   for (const date of days) {
-    if (date < startYmd) continue;
+    if (startYmd && date < startYmd) continue;
     const midnightUtcMs = dateToUtcMs(date);
     const weekday = new Date(midnightUtcMs).getUTCDay();
     for (const slot of slots) {
@@ -267,6 +272,10 @@ export async function syncTodayTomorrowForEnrollment(args: {
     }
     const kidId = childIdFromEnrollment(enrollment);
     const childSnap = kidId ? await tx.get(db.collection('kids').doc(kidId)) : null;
+    if (isActiveEnrollment(enrollment) && (!kidId || !childSnap?.exists)) {
+      throw new HttpsError('failed-precondition',
+        'Active enrollment is missing its linked child profile; no sessions modified.');
+    }
     const childActive = isActiveChild(
       childSnap?.exists ? (childSnap.data() || {}) as Enrollment : null
     );
