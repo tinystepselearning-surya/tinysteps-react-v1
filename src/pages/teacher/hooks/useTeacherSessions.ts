@@ -569,6 +569,9 @@ export const useTeacherSessions = (
     let cancelled = false;
     let batchCounter = 0;
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
+    // Cache enrollment snapshots for this listener lifetime; repeated session
+    // changes should not re-hydrate the same enrollment documents.
+    const enrollmentCache=new Map<string,Record<string,unknown>>();
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
     ]);
@@ -598,37 +601,22 @@ export const useTeacherSessions = (
         ? rows
         : rows.filter((session) => sessionBelongsToTeacher(session as any, teacherKey));
 
-      let enrollmentMap = new Map<string, Record<string, unknown>>();
-      const enrollmentIds = Array.from(
-        new Set(
-          filtered
-            .map((session) => toCleanText((session as any)?.enrollmentId))
-            .filter(Boolean),
-        ),
-      );
-
-      if (enrollmentIds.length > 0) {
+      const enrollmentMap=enrollmentCache;
+      const enrollmentIds = Array.from(new Set(
+        filtered.map(session=>toCleanText((session as any)?.enrollmentId)).filter(Boolean)));
+      const missingEnrollmentIds=enrollmentIds.filter(id=>!enrollmentCache.has(id));
+      if (missingEnrollmentIds.length>0) {
         try {
-          enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+          const loaded=await fetchEnrollmentsByIds(missingEnrollmentIds);
+          loaded.forEach((row,id)=>enrollmentCache.set(id,row));
         } catch (err) {
-          devLogTeacherQuery('useTeacherSessions', 'error', {
-            queryName: 'enrollmentLookups',
-            collection: 'enrollments',
-            aliasField: 'documentId',
-            teacherUid: teacherKey || null,
-            todayDate,
-            dateRange: { start, end },
-            error: err instanceof Error ? err.message : String(err),
-            code: (err as any)?.code || null,
+          devLogTeacherQuery('useTeacherSessions','error',{
+            queryName:'enrollmentLookups',teacherUid:teacherKey||null,
+            error:err instanceof Error?err.message:String(err),
           });
         }
       }
 
-      // Persisted sessions are historical authority even after an enrollment
-      // pauses, changes schedule, or passes the old 14-day generation horizon.
-      // Only an unmarked, non-exception *future* record still needs current
-      // timetable validation. A cancelled/attended record must not disappear.
-      const todayYmd = new Date(Date.now()+330*60_000).toISOString().slice(0,10);
       const canonicalOnly = filtered.filter((session) => {
         const status = toCleanText((session as any)?.status).toLowerCase();
         const attendance = (session as any).attendance;
