@@ -1,0 +1,96 @@
+name: Virtual Calendar Stage 2 - Isolated Browser Acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/teacher/**'
+      - 'src/pages/parent/**'
+      - 'src/hooks/useTeacherFilteredData.ts'
+      - 'src/lib/firebaseConfig.ts'
+      - 'src/lib/scheduling/rollingScheduleCalendarProjection.ts'
+      - 'tests/stage2/**'
+      - 'playwright.virtual-calendar-stage2.config.ts'
+      - 'functions/src/scheduling/teacherCalendarActions.ts'
+      - 'functions/src/saveTeacherSessionProgress.ts'
+      - 'functions/src/onSessionComplete.ts'
+      - '.github/workflows/virtual-calendar-browser-stage2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-calendar-browser-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-calendar-acceptance:
+    name: Teacher / Parent Chromium on demo Firebase emulators
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      GCLOUD_PROJECT: demo-tinysteps-calendar-test
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-calendar-test
+      FIREBASE_CLI_DISABLE_TELEMETRY: 'true'
+      VIRTUAL_CALENDAR_ATTENDANCE_ENABLED: 'true'
+      # These explicit values override every production client fallback.
+      VITE_FIREBASE_API_KEY: demo-browser-emulator-not-live
+      VITE_FIREBASE_AUTH_DOMAIN: demo-tinysteps-calendar-test.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: demo-tinysteps-calendar-test
+      VITE_FIREBASE_STORAGE_BUCKET: demo-tinysteps-calendar-test.appspot.com
+      VITE_FIREBASE_MESSAGING_SENDER_ID: '123456'
+      VITE_FIREBASE_APP_ID: '1:123456:web:emulatorstage2'
+      VITE_USE_AUTH_EMULATOR: 'true'
+      VITE_USE_FIRESTORE_EMULATOR: 'true'
+      VITE_USE_FUNCTIONS_EMULATOR: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Fail closed unless all client and backend services target the demo project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCLOUD_PROJECT" = demo-tinysteps-calendar-test
+          test "$GOOGLE_CLOUD_PROJECT" = demo-tinysteps-calendar-test
+          test "$VITE_FIREBASE_PROJECT_ID" = demo-tinysteps-calendar-test
+          test "$VITE_USE_AUTH_EMULATOR" = true
+          test "$VITE_USE_FIRESTORE_EMULATOR" = true
+          test "$VITE_USE_FUNCTIONS_EMULATOR" = true
+          test "$VIRTUAL_CALENDAR_ATTENDANCE_ENABLED" = true
+          test -z "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -z "${FIREBASE_TOKEN:-}"
+      - name: Install pinned dependencies (no lifecycle scripts)
+        run: |
+          npm ci --ignore-scripts
+          npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Build actual callable and Firestore trigger handlers
+        run: npm --prefix functions run build
+      - name: Install real Chromium browser
+        run: npx playwright install --with-deps chromium
+      - name: Run teacher/parent UI on disposable Auth, Firestore and Functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.30.0 emulators:exec \
+            --project demo-tinysteps-calendar-test \
+            --only auth,firestore,functions \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FUNCTIONS_EMULATOR_HOST=127.0.0.1:5001 GCLOUD_PROJECT=demo-tinysteps-calendar-test npx playwright test --config playwright.virtual-calendar-stage2.config.ts'
+      - name: Upload failed browser evidence, never user data
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: calendar-stage2-browser-failures
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 3
