@@ -63,7 +63,9 @@ describe('virtual class calendar backend (no Firestore in these tests)',()=>{
 
   it('allows attendance identity irrespective of the wall-clock time',()=>{
     expect(calendarAttendanceClaimId('enr-1','kid-a','2026-10-12','17:00'))
-      .toBe('enr-1_kid-a_20261012_1700');
+      .toBe('kid-a_20261012_1700');
+    expect(calendarAttendanceClaimId('other-course','kid-a','2026-10-12','17:00'))
+      .toBe('kid-a_20261012_1700');
   });
 
   it('reuses one legacy-ID attendance for the same student, date and time',()=>{
