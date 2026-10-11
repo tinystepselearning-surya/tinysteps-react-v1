@@ -205,7 +205,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/careers': {
     title: 'Tiny Steps Learning Careers | Teacher Recruitment Closed',
     description:
-      'Tiny Steps Learning teacher positions are filled. Applications closed on 11 October 2026; no new teacher applications are being accepted.'
+      'Tiny Steps Learning teacher positions are filled. Applications closed on 11 October 2026; no new teacher applications are being accepted.',
     canonicalPath: '/careers',
     ogType: 'website',
     keywords:
