@@ -129,13 +129,21 @@ async function main() {
       fail('A future session now contains attendance/finance state. No deletes performed.');
     }
     if (
+      data.historicalCorrection === true ||
       data.isAdHoc === true || data.isManual === true || data.isMakeup === true ||
-      data.makeupCreditId || data.rescheduleCreditId ||
-      /manual|makeup|ad[_-]?hoc|resched|replacement|one[_-]?off/.test(
-        [data.source, data.sessionType, data.createdByFlow].join('|').toLowerCase()
+      data.manualSessionState != null ||
+      data.makeupCreditId != null || data.makeupForSessionId != null ||
+      data.rescheduleCreditId != null || data.rescheduledFromSessionId != null ||
+      data.originalSessionId != null || data.sourceSessionId != null ||
+      data.replacementSessionId != null || data.replacementForSessionId != null ||
+      /manual|makeup|ad[_-]?hoc|resched|replacement|one[_-]?off|historical/.test(
+        [
+          data.source, data.sessionType, data.createdByFlow, data.adHocType,
+          data.manualSessionType, data.rescheduleSource, data.replacementSource,
+        ].join('|').toLowerCase()
       )
     ) {
-      fail('A future manual, makeup or rescheduled session needs independent preservation.');
+      fail('A future manual, makeup, rescheduled, or historical exception needs preservation.');
     }
   }
 
