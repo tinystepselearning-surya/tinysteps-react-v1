@@ -12,6 +12,7 @@ import {
   getParentClassStatusLabel,
   selectNextParentClass,
   shouldShowClassJoinAction,
+  resolveParentCalendarAttendanceDisplayStatus,
   type ParentClassesFilterId,
   type ParentClassSessionDisplay,
 } from "../../../pages/parent/components/classes/parentClassPresentation";
@@ -167,6 +168,16 @@ describe("parent class presentation", () => {
     expect(shouldShowClassJoinAction("no_show")).toBe(false);
     expect(shouldShowClassJoinAction("reschedule_requested")).toBe(false);
     expect(shouldShowClassJoinAction("rescheduled")).toBe(false);
+  });
+
+  it("shows the selected child's marked Absent even if the shared session is completed",()=>{
+    const session={
+      status:'completed',
+      attendance:{'kid-a':{status:'absent'},'kid-b':{status:'present'}},
+    };
+    expect(resolveParentCalendarAttendanceDisplayStatus(session,'kid-a')).toBe('absent');
+    expect(resolveParentCalendarAttendanceDisplayStatus(session,'kid-b')).toBeNull();
+    expect(session.status).toBe('completed');
   });
 
   it("selects a today joinable class before future classes", () => {
