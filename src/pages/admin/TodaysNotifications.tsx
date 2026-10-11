@@ -1345,7 +1345,7 @@ export default function TodaysNotifications() {
           cacheHit.forEach(session => {
             const parent = getPrimaryParentId(session);
             if (parent) requiredRefs.add(parent);
-            collectSessionTeacherRefs(session as Record<string, unknown>).forEach(
+            collectSessionTeacherRefs(session as unknown as Record<string, unknown>).forEach(
               teacher => requiredRefs.add(teacher),
             );
           });
