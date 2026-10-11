@@ -108,7 +108,6 @@ import { getJoinLinkCandidate, resolveSessionJoinLink } from "../../lib/sessionJ
 import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildRollingScheduleCalendarProjections,
-  isRollingScheduleProjection,
 } from "../../lib/scheduling/rollingScheduleCalendarProjection";
 import {
   formatCurrencyINR,
@@ -2572,8 +2571,28 @@ export default function ParentDashboard() {
       return isSessionCanonicalForEnrollment(sessionLike, enrollment);
     });
   }, [kidSessionsQuery.data, activeEnrollmentById]);
+  // The next two weeks are calculated from Student Management, not saved
+  // as scheduled classSessions. Existing attendance/history rows always win.
+  const visibleUpcomingProjections = useMemo(() => {
+    const kidId = String(selectedKidId || '').trim();
+    if (!kidId) return [] as KidSession[];
+    const enrollmentRows = ((enrollmentsQuery.data ?? []) as Enrollment[])
+      .filter(enrollment =>
+        String(enrollment.kidId || '') === kidId ||
+        String(enrollment.studentId || '') === kidId ||
+        (Array.isArray(enrollment.kidIds) && enrollment.kidIds.some(id => String(id) === kidId))
+      );
+    const from = toYMD(new Date());
+    const through = toYMD(new Date(Date.now() + 14 * 86_400_000));
+    return buildRollingScheduleCalendarProjections({
+      enrollments: enrollmentRows as unknown as Record<string, unknown>[],
+      realSessions: allKidSessions as unknown as Record<string, unknown>[],
+      fromYmd: from, toYmd: through,
+    }).map(row => row as unknown as KidSession);
+  }, [allKidSessions, enrollmentsQuery.data, selectedKidId]);
+
   const sortedClassSessions = useMemo(() => {
-    return allKidSessions
+    return [...allKidSessions, ...visibleUpcomingProjections]
       .map((session) => ({
         session,
         start: sessionStartDate(session),
@@ -2581,7 +2600,7 @@ export default function ParentDashboard() {
       }))
       .filter((row): row is { session: KidSession; start: Date; status: string } => Boolean(row.start))
       .sort((a, b) => a.start.getTime() - b.start.getTime());
-  }, [allKidSessions]);
+  }, [allKidSessions, visibleUpcomingProjections]);
 
   const todayDayKey = toYMD(new Date());
 
@@ -2633,10 +2652,14 @@ export default function ParentDashboard() {
   const classesCalendarSessions = useMemo(() => {
     const startMs = classesCalendarStart.getTime();
     const endMs = classesCalendarEnd.getTime();
-    const realRows = sortedClassSessions.filter((row) => {
-      const ts = row.start.getTime();
-      return ts >= startMs && ts <= endMs;
-    });
+    // Full monthly calendar computes its own virtual slots; use only truly
+    // persisted records here so next-two-week projections cannot duplicate.
+    const realRows = allKidSessions
+      .map(session => ({
+        session, start: sessionStartDate(session), status: normalizeStatus(session.status),
+      }))
+      .filter((row): row is {session: KidSession; start: Date; status: string} => Boolean(row.start))
+      .filter(row => row.start.getTime() >= startMs && row.start.getTime() <= endMs);
 
     const kidId = selectedKidId ? String(selectedKidId) : '';
     const projectionEnrollments = ((enrollmentsQuery.data ?? []) as Enrollment[]).filter((enrollment) => {
@@ -2663,7 +2686,7 @@ export default function ParentDashboard() {
     enrollmentsQuery.data,
     kidSessionsQuery.data,
     selectedKidId,
-    sortedClassSessions,
+    allKidSessions,
   ]);
 
   const classesCalendarSessionsByDay = useMemo(() => {
