@@ -243,12 +243,14 @@ export const createTeacherCalendarAdHocSession = onCall(
       if (cutoff===null||now>=cutoff) {
         throw new HttpsError('failed-precondition','Month is frozen');
       }
-      const [childSnap,existing,regular,charge,earning] = await Promise.all([
+      const [childSnap,existing,regular,charge,earning,sameChildDay] = await Promise.all([
         tx.get(db.collection('kids').doc(childId)),
         tx.get(sessionRef),
         tx.get(db.collection('classSessions').doc(rollingSessionId(enrollmentId,date,startTime))),
         tx.get(db.collection('billingCharges').doc(sessionId)),
         tx.get(db.collection('teacherEarnings').doc(sessionId)),
+        tx.get(db.collection('classSessions').where('kidId','==',childId)
+          .where('date','==',date).limit(81)),
       ]);
       if (existing.exists) {
         const data=existing.data()||{};
@@ -261,6 +263,19 @@ export const createTeacherCalendarAdHocSession = onCall(
       if (!childSnap.exists || childSnap.data()?.isArchived ||
           !['','active'].includes(text(childSnap.data()?.status).toLowerCase())) {
         throw new HttpsError('failed-precondition','Student is inactive');
+      }
+      if (sameChildDay.size > 80) {
+        throw new HttpsError('failed-precondition','Daily student schedule needs manual review');
+      }
+      const occupied = sameChildDay.docs.some(doc => {
+        const row = doc.data();
+        const status = text(row.status).toLowerCase();
+        return doc.id !== sessionId && text(row.startTime)===startTime &&
+          !['cancelled','canceled','completed','absent','no_show','present'].includes(status);
+      });
+      if (occupied) {
+        throw new HttpsError('failed-precondition',
+          'Another class already occupies this student/date/time.');
       }
       if (regular.exists && text(regular.data()?.status).toLowerCase()!=='cancelled') {
         throw new HttpsError('failed-precondition','Regular class already occupies this time');
