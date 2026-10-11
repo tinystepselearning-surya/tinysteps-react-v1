@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import {FieldValue} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
+import { mayReopenAttendanceVoidedLedgers } from './helpers/attendanceFinancialCycles';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import {calendarAttendanceClaimId} from './scheduling/teacherCalendarActions';
 import {
@@ -374,6 +375,15 @@ async function reconcileAttendanceCorrectionFinance(args: {
       earningExists: earningSnap.exists,
       earningStatus,
     });
+    if (mayReopenAttendanceVoidedLedgers({
+      sessionId, session,
+      charge: chargeSnap.exists ? existingChargeData : null,
+      earning: earningSnap.exists ? existingEarningData : null,
+    })) {
+      // Original ledger IDs are restored by the canonical session revenue
+      // transaction; never create a second charge/earning from this callable.
+      return {action: 'mark_billable', chargeChanged: false, earningChanged: false};
+    }
     if (replayPlan.conflict === 'charge_void') {
       throw new HttpsError('failed-precondition', 'Existing charge is void; financially-earned attendance replay requires financial review.');
     }
@@ -610,6 +620,9 @@ export const saveTeacherSessionProgress = onCall(
     // statuses remain readable, but no new credit lookup/write is permitted.
     const previousMap = session.attendance && typeof session.attendance === 'object'
       ? session.attendance as Record<string, unknown> : {};
+    const newlyBillable = Object.entries(incomingAttendance).some(([kidId]) =>
+      !isFinanciallyEarnedAttendanceStatus(toAttendanceEntry(previousMap[kidId]).status) &&
+      isFinanciallyEarnedAttendanceStatus(toAttendanceEntry(nextAttendance[kidId]).status));
     const changesBillability = Object.entries(incomingAttendance).some(([kidId]) => {
       const before = toAttendanceEntry(previousMap[kidId]).status;
       const after = toAttendanceEntry(nextAttendance[kidId]).status;
@@ -720,6 +733,22 @@ export const saveTeacherSessionProgress = onCall(
         ...claimIds.map(kid=>tx.get(db.collection('calendarAttendanceClaims').doc(
           calendarAttendanceClaimId('',kid,occurrence.day,occurrence.time)))),
       ]);
+      if(newlyBillable && (chargeSnap.exists || earningSnap.exists)) {
+        const chargeData = chargeSnap.exists
+          ? (chargeSnap.data() || {}) as Record<string, unknown> : null;
+        const earningData = earningSnap.exists
+          ? (earningSnap.data() || {}) as Record<string, unknown> : null;
+        const chargeVoid = chargeData && normalizeFinancialStatus(chargeData.status) === 'void';
+        const earningVoid = earningData && normalizeFinancialStatus(earningData.status) === 'void';
+        if ((chargeVoid || earningVoid) &&
+            !mayReopenAttendanceVoidedLedgers({
+              sessionId, session,
+              charge: chargeData, earning: earningData,
+            })) {
+          throw new HttpsError('failed-precondition',
+            'A previously voided charge/earning needs Admin financial review; attendance was not changed.');
+        }
+      }
       if(changesBillability){
         const isPaid=(data:Record<string,unknown>):boolean=>
           isSettledFinancialStatus(normalizeFinancialStatus(data.status))
