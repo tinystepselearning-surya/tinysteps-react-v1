@@ -277,7 +277,8 @@ jobs:
       - name: Plan bounded Cloud Functions deployment
         if: >-
           needs.analyze-changes.outputs.functions_deployment_required == 'true' &&
-          needs.analyze-changes.outputs.functions_targets != ''
+          (needs.analyze-changes.outputs.functions_targets != '' ||
+           needs.analyze-changes.outputs.functions_full_deployment == 'true')
         run: node scripts/deploy-functions-batched.mjs --plan
 
       - name: Setup Google Cloud CLI
@@ -303,7 +304,8 @@ jobs:
       - name: Deploy Cloud Functions in bounded batches
         if: >-
           needs.analyze-changes.outputs.functions_deployment_required == 'true' &&
-          needs.analyze-changes.outputs.functions_targets != ''
+          (needs.analyze-changes.outputs.functions_targets != '' ||
+           needs.analyze-changes.outputs.functions_full_deployment == 'true')
         run: node scripts/deploy-functions-batched.mjs --deploy
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
@@ -322,7 +324,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: functions-deployment-report-${{ github.sha }}
-          path: artifacts/functions-deployment-report.json
+          path: |
+            artifacts/functions-deployment-report.json
+            artifacts/session-retirement-report.json
           if-no-files-found: warn
           retention-days: 7
 

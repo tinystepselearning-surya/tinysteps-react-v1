@@ -51,9 +51,8 @@ export { reconcileParentPaymentsMonthReadModels } from "./reconcileParentPayment
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 
 // Production cutover compatibility surface. Existing clients may continue using the
-// legacy callable names, but canonical rolling enrollments are detected server-side and
-// routed to the bounded rolling lifecycle/materialization/reconciliation paths. Genuine
-// legacy enrollments retain their previous finite-scheduler behavior until converted.
+// legacy callable names. Generation/repair routes are permanently disabled;
+// timetable and lifecycle routes update recurrence without creating future sessions.
 export {
   createSessionsFromSchedule,
   saveEnrollmentScheduleAndGenerateSessions,
