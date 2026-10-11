@@ -204,7 +204,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [adHocOpen, setAdHocOpen] = useState(false);
   const [adHocEnrollmentId, setAdHocEnrollmentId] = useState('');
   const [adHocStartTime, setAdHocStartTime] = useState('17:00');
-  const [adHocDurationMinutes, setAdHocDurationMinutes] = useState(35);
   const [adHocSaving, setAdHocSaving] = useState(false);
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
@@ -294,7 +293,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         enrollmentId: adHocEnrollmentId,
         date: format(currentDate, 'yyyy-MM-dd'),
         startTime: adHocStartTime,
-        durationMinutes: adHocDurationMinutes,
+        durationMinutes: 35,
       });
       toast({
         title: result.data.created ? 'Ad hoc class added' : 'Ad hoc class already exists',
@@ -915,12 +914,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 <Input id="ad-hoc-start" type="time" value={adHocStartTime}
                   onChange={e => setAdHocStartTime(e.target.value)} />
               </div>
-              <div>
-                <label htmlFor="ad-hoc-duration" className="mb-1 block text-sm font-medium">Minutes</label>
-                <Input id="ad-hoc-duration" type="number" min={10} max={90}
-                  value={adHocDurationMinutes}
-                  onChange={e => setAdHocDurationMinutes(Number(e.target.value))} />
-              </div>
+              <div className="text-sm text-slate-600">Duration: 35 minutes</div>
             </div>
             <p className="text-xs text-muted-foreground">
               One-off class only. Your student's regular weekly timetable stays unchanged.
