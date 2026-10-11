@@ -10,13 +10,20 @@ vi.mock('../../store/useAuthStore', () => ({
   useAuthStore: { subscribe: () => () => {} },
 }));
 
-import { TeacherCalendarSessionReadCache } from '../../pages/teacher/hooks/teacherCalendarSessionReadCache';
+import { TeacherCalendarSessionReadCache, teacherCalendarReadWindow } from '../../pages/teacher/hooks/teacherCalendarSessionReadCache';
 import type { TeacherSession } from '../../types/Teacher';
 
 const scheduled = (id: string, date = '2026-10-12') =>
   ({ id, date, startTime: '17:00', teacherId: 'teacher-1', status: 'scheduled' } as TeacherSession);
 
 describe('Teacher calendar browser-session read-once model', () => {
+  it('shares one query window across Today, Tomorrow, Week and Month', () => {
+    const today = '2026-10-11';
+    expect(teacherCalendarReadWindow('2026-10-11', today))
+      .toEqual(teacherCalendarReadWindow('2026-11-15', today));
+    expect(teacherCalendarReadWindow('2027-02-01', today).end).toBe('2027-02-01');
+  });
+
   beforeEach(() => { mockGetDoc.mockReset(); });
 
   it('deduplicates in-flight loads, tab remounts and repeated date selection', async () => {
