@@ -20,8 +20,8 @@ const enrolled = (schedule: Record<string,unknown> = {
 });
 
 describe('virtual class calendar backend (no Firestore in these tests)',()=>{
-  it('defaults all attendance and ad hoc writes OFF until explicitly enabled',()=>{
-    expect(virtualCalendarAttendanceEnabled({})).toBe(false);
+  it('runs approved virtual attendance by default and retains an explicit emergency kill switch',()=>{
+    expect(virtualCalendarAttendanceEnabled({})).toBe(true);
     expect(virtualCalendarAttendanceEnabled({VIRTUAL_CALENDAR_ATTENDANCE_ENABLED:'false'})).toBe(false);
     expect(virtualCalendarAttendanceEnabled({VIRTUAL_CALENDAR_ATTENDANCE_ENABLED:'true'})).toBe(true);
   });
