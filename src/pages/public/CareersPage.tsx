@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -10,8 +10,6 @@ import {
   Globe2,
   GraduationCap,
   IndianRupee,
-  MessageCircle,
-  Send,
   ShieldCheck,
   Sparkles,
   Trophy,
@@ -20,47 +18,26 @@ import {
 } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
-import { trackEvent } from '../../lib/analytics';
 import { applySeo } from '../../lib/seo';
 
 const CAREERS_PATH = '/careers';
 const CAREERS_URL = 'https://tinystepslearning.com/careers';
-const ROLE_TITLE = 'Online English Teacher - Phonics, Grammar & Public Speaking';
-const WHATSAPP_NUMBER = '919618398383';
-const JOB_VALID_THROUGH = '2026-12-31T23:59:59+05:30';
-const CAREERS_TITLE = 'Online English Teacher Jobs in India | Tiny Steps Learning';
+const CAREERS_CLOSED_DATE = '11 October 2026';
+const CAREERS_TITLE = 'Tiny Steps Learning Careers | Teacher Recruitment Closed';
 const CAREERS_DESCRIPTION =
-  'Apply for remote online English teacher jobs in India with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.';
-const PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY = 'ts_pending_teacher_application_id_v1';
-
-const buildGeneralWhatsAppLink = () => {
-  const message = [
-    'Hello Tiny Steps Learning! I would like to apply for the Online English Teacher role.',
-    '',
-    'Name: _____',
-    'City / State: _____',
-    'Teaching experience: _____',
-    'Primary teaching strength: Phonics / Grammar / Public Speaking / Spoken English',
-    'Current / recent teaching context: _____',
-    'Daily availability in IST: _____',
-    '',
-    'I can attach supporting documents here if required.',
-  ].join('\n');
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-};
+  'Tiny Steps Learning teacher positions are filled. Applications closed on 11 October 2026; no new teacher applications are being accepted.';
 
 const AT_A_GLANCE = [
   ['Role', 'Online English Teacher'],
   ['Work mode', 'Fully remote / work from home'],
-  ['Applications', 'Teachers based in India'],
-  ['Applications close', '31 December 2026'],
+  ['Recruitment status', 'Positions filled'],
+  ['Applications closed', CAREERS_CLOSED_DATE],
   ['Learners', 'Children aged 3–12'],
   ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
   ['Class duration', '35 minutes'],
-  ['Regular class rate', '₹175 per completed class'],
-  ['Extended-hours rate', '₹200 per completed class'],
+  ['Previous regular rate', '₹175 per completed class'],
+  ['Previous extended rate', '₹200 per completed class'],
 ];
 
 const BENEFITS = [
@@ -138,7 +115,7 @@ const EXTRA_EARNINGS = [
   {
     icon: Trophy,
     title: 'Conversion incentives',
-    description: 'Successful demo conversions are eligible for additional attractive incentives under the current incentive plan.',
+    description: 'In the completed recruitment cycle, successful demo conversions could qualify for additional incentives under the applicable plan.',
     tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-950',
     iconTone: 'bg-emerald-100 text-emerald-700',
   },
@@ -166,8 +143,8 @@ const REQUIREMENTS = [
 
 const PROCESS_STEPS = [
   {
-    title: 'Apply on this page',
-    description: 'Enter your teaching profile and availability. Submit opens WhatsApp with your details already prepared.',
+    title: 'Applications closed',
+    description: 'The 2026 teacher recruitment cycle closed on 11 October 2026. New applications are not being accepted.',
     tone: 'border-blue-200 bg-blue-50/80',
   },
   {
@@ -191,47 +168,47 @@ const FAQS = [
   {
     question: 'Is Tiny Steps hiring remote online English teachers in India?',
     answer:
-      'Yes. Tiny Steps Learning currently accepts applications from teachers based in India for remote online English teaching roles covering Phonics, Grammar, Public Speaking and Spoken English for children aged 3–12.',
+      'No. Tiny Steps Learning filled its current online English teaching positions. Applications closed on 11 October 2026, and new applications are not being accepted at this time.',
   },
   {
-    question: 'Who can apply for Tiny Steps online teaching roles?',
+    question: 'Who was eligible for the most recent teaching roles?',
     answer:
-      'For the current hiring cycle, applications are open to teachers based in India. Candidates should share their city or state, teaching background and reliable availability in Indian Standard Time (IST).',
+      'The completed 2026 recruitment cycle considered India-based teachers with relevant experience and reliable availability in Indian Standard Time (IST). Requirements for any future vacancies will be announced when recruitment resumes.',
   },
   {
-    question: 'Can teachers working with other online English teaching platforms apply?',
+    question: 'Does Tiny Steps consider teachers from other education platforms?',
     answer:
-      'Yes. Teachers working with other online English teaching platforms such as Vedantu, PlanetSpark, Learn2Read, Instrucko and similar organisations are welcome to apply. Selection is based on English communication, teaching quality, learner engagement, reliability and available teaching slots.',
+      'The completed recruitment cycle considered experienced teachers from other education platforms. There are currently no open teacher vacancies or application submissions.',
   },
   {
     question: 'How much does Tiny Steps pay online teachers?',
     answer:
-      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Demo classes are paid separately, and successful demo conversions are eligible for additional incentives.',
+      'For the completed 2026 recruitment cycle, regular classes scheduled from 9:00 AM to 9:00 PM IST were advertised at ₹175 per completed 35-minute class, and classes before 9:00 AM IST or after 9:00 PM IST at ₹200. Demo compensation and incentives were governed by the applicable plan. These are historical rates, not current vacancies.',
   },
   {
-    question: 'Can I earn ₹25,000+ per month with a regular schedule?',
+    question: 'What was the illustrative monthly earning potential in the completed cycle?',
     answer:
-      'Yes, as an illustrative example. Six 35-minute regular classes per day equals 3.5 hours of live teaching. Across six teaching days per week, a four-week month gives about 144 regular classes. At ₹175 per completed class, that is ₹25,200 from regular classes alone. Paid demos, conversion incentives and any extended-hours classes are additional. Actual monthly earnings depend on completed classes and schedule.',
+      'The completed 2026 recruitment page illustrated six completed regular classes per day over six days a week for four weeks: 144 classes at ₹175, or ₹25,200. This was an illustrative scenario, not a guaranteed salary or a current job offer. Actual earnings depended on assigned and completed classes.',
   },
   {
-    question: 'Are demo classes paid?',
+    question: 'Were demo classes paid in the completed recruitment cycle?',
     answer:
-      'Yes. Assigned demo classes are paid separately from regular teaching classes. In addition, successful demo conversions may qualify for attractive conversion incentives under the current incentive plan.',
+      'During the completed recruitment cycle, assigned demo classes were paid separately from regular classes. Additional conversion incentives depended on the applicable incentive plan.',
   },
   {
-    question: 'How quickly can I build a regular teaching schedule?',
+    question: 'How were selected teachers onboarded in the completed cycle?',
     answer:
-      'After selection, Tiny Steps supports you with structured training, demo preparation and paid demo opportunities. Once your reliable availability is confirmed, our scheduling team actively works to build and fill your regular teaching slots, typically within 1–2 weeks of onboarding.',
+      'Selected teachers received preparation support, demo opportunities and scheduling assistance based on their availability and student demand. There are no open roles at present, and future onboarding terms may differ.',
   },
   {
     question: 'What subjects can I teach at Tiny Steps?',
     answer:
-      'Tiny Steps recruits online teachers for Phonics, Grammar, Public Speaking and Spoken English. Candidates can indicate one primary strength and any additional areas they are confident teaching.',
+      'Tiny Steps teacher roles have covered Phonics, Grammar, Public Speaking and Spoken English. All positions in the current recruitment cycle have been filled.',
   },
   {
-    question: 'Do I need phonics experience to apply?',
+    question: 'Is phonics experience useful for a future teacher role?',
     answer:
-      'Phonics experience is valuable but is not the only route. Strong English teachers with child-teaching experience may also be considered for Grammar, Spoken English or Public Speaking roles and can be trained on Tiny Steps lesson standards where appropriate.',
+      'Phonics experience has been valuable, alongside teaching experience in Grammar, Spoken English or Public Speaking. Eligibility for future vacancies will be announced when recruitment resumes.',
   },
   {
     question: 'What equipment do I need for online teaching?',
@@ -241,368 +218,17 @@ const FAQS = [
   {
     question: 'What teaching hours are preferred?',
     answer:
-      'We value consistent availability and currently prefer teachers who can offer around 3–4 teaching hours per day. Please share your exact available teaching window in Indian Standard Time (IST) when applying.',
+      'The completed 2026 recruitment cycle preferred teachers with around 3–4 teaching hours available daily. Future vacancies may have different scheduling requirements.',
   },
   {
-    question: 'How do I share supporting documents?',
+    question: 'Can I send my CV or supporting documents now?',
     answer:
-      'The website form collects only your basic application details. After you submit, WhatsApp opens with those details pre-filled. You can then attach your CV, certificates or other supporting documents directly in WhatsApp before sending the message.',
+      'No. Applications closed on 11 October 2026. Please do not send CVs or application materials for this completed recruitment cycle. This page will be updated if new positions become available.',
   },
 ];
 
-const applicationInitialValues = {
-  name: '',
-  email: '',
-  phone: '',
-  location: '',
-  experience: '',
-  specialization: 'Phonics',
-  currentContext: '',
-  availability: '',
-  note: '',
-};
-
-type ApplicationValues = typeof applicationInitialValues;
-
-function buildApplicationWhatsAppLink(values: ApplicationValues) {
-  const message = [
-    'Hello Tiny Steps Learning! I would like to apply for the Online English Teacher role.',
-    '',
-    `Name: ${values.name}`,
-    `Email: ${values.email || 'Not provided'}`,
-    `Phone / WhatsApp: ${values.phone}`,
-    `City / State: ${values.location}`,
-    `Teaching experience: ${values.experience}`,
-    `Primary teaching strength: ${values.specialization}`,
-    `Current / recent teaching context: ${values.currentContext || 'Not provided'}`,
-    `Daily availability in IST: ${values.availability}`,
-    `Additional note: ${values.note || 'Not provided'}`,
-    '',
-    'I can attach supporting documents here if required.',
-  ].join('\n');
-
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-}
-
-function CareerApplicationForm() {
-  const [values, setValues] = useState<ApplicationValues>(applicationInitialValues);
-  const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const hasTrackedStart = useRef(false);
-  const pendingApplicationIdRef = useRef<string | null>(null);
-
-  const update = (field: keyof ApplicationValues, value: string) => {
-    setValues((current) => ({ ...current, [field]: value }));
-    setSubmitted(false);
-    setSubmitError('');
-  };
-
-  const trackStart = () => {
-    if (hasTrackedStart.current) return;
-    hasTrackedStart.current = true;
-    trackEvent('career_application_start', {
-      page_path: CAREERS_PATH,
-      role: 'online_english_teacher',
-      application_channel: 'whatsapp',
-    });
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (isSubmitting) return;
-
-    setSubmitted(false);
-    setSubmitError('');
-    setIsSubmitting(true);
-
-    const submittedValues = { ...values };
-    const whatsappUrl = buildApplicationWhatsAppLink(submittedValues);
-    const whatsappWindow = window.open('', '_blank');
-    if (whatsappWindow) {
-      try {
-        whatsappWindow.opener = null;
-      } catch {
-        // Browser security policy may prevent changing opener; navigation still works.
-      }
-    }
-
-    const openWhatsapp = () => {
-      if (whatsappWindow && !whatsappWindow.closed) {
-        whatsappWindow.location.href = whatsappUrl;
-        return;
-      }
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-    };
-
-    try {
-      const [{ collection, doc, serverTimestamp, setDoc }, { db }] = await Promise.all([
-        import('firebase/firestore'),
-        import('../../lib/firebaseConfig'),
-      ]);
-
-      if (!pendingApplicationIdRef.current) {
-        try {
-          pendingApplicationIdRef.current = window.sessionStorage.getItem(
-            PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY,
-          );
-        } catch {
-          // Storage may be disabled. The in-memory id is enough for same-page retries.
-        }
-      }
-
-      const applicationRef = pendingApplicationIdRef.current
-        ? doc(db, 'teacherInquiries', pendingApplicationIdRef.current)
-        : doc(collection(db, 'teacherInquiries'));
-
-      pendingApplicationIdRef.current = applicationRef.id;
-      try {
-        window.sessionStorage.setItem(
-          PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY,
-          applicationRef.id,
-        );
-      } catch {
-        // Storage may be disabled. The in-memory id still prevents same-page duplicates.
-      }
-
-      await setDoc(applicationRef, {
-        candidateName: submittedValues.name.trim(),
-        phone: submittedValues.phone.trim(),
-        email: submittedValues.email.trim(),
-        location: submittedValues.location.trim(),
-        experience: submittedValues.experience.trim(),
-        specialization: submittedValues.specialization.trim(),
-        currentContext: submittedValues.currentContext.trim(),
-        availability: submittedValues.availability.trim(),
-        candidateNote: submittedValues.note.trim(),
-        stage: 'open',
-        source: 'careers_page',
-        sourcePath: CAREERS_PATH,
-        requestedAt: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      pendingApplicationIdRef.current = null;
-      try {
-        window.sessionStorage.removeItem(PENDING_TEACHER_APPLICATION_ID_STORAGE_KEY);
-      } catch {
-        // Storage may be disabled.
-      }
-
-      trackEvent('career_application_whatsapp_submit', {
-        page_path: CAREERS_PATH,
-        role: 'online_english_teacher',
-        specialization: submittedValues.specialization.toLowerCase().replace(/\s+/g, '_'),
-        application_channel: 'whatsapp',
-        submission_id: applicationRef.id,
-      });
-
-      setSubmitted(true);
-      openWhatsapp();
-    } catch (error) {
-      console.error('[CareersPage] teacher application save failed', error);
-      setSubmitError(
-        'We could not save your application on the website, but WhatsApp is opening with your completed details. Please send the message so our team receives it.',
-      );
-      openWhatsapp();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const inputClass =
-    'mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 shadow-sm outline-none transition duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
-
-  return (
-    <form onSubmit={handleSubmit} onFocusCapture={trackStart} className="mt-7 grid gap-5 md:grid-cols-2">
-      <label className="text-sm font-semibold text-slate-800">
-        Full name
-        <input
-          value={values.name}
-          onChange={(event) => update('name', event.target.value)}
-          className={inputClass}
-          placeholder="Your full name"
-          autoComplete="name"
-          required
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        Phone / WhatsApp number
-        <input
-          type="tel"
-          value={values.phone}
-          onChange={(event) => update('phone', event.target.value)}
-          className={inputClass}
-          placeholder="+91 ..."
-          autoComplete="tel"
-          required
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        Email address <span className="font-normal text-slate-400">(optional)</span>
-        <input
-          type="email"
-          value={values.email}
-          onChange={(event) => update('email', event.target.value)}
-          className={inputClass}
-          placeholder="you@example.com"
-          autoComplete="email"
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        City / State
-        <input
-          value={values.location}
-          onChange={(event) => update('location', event.target.value)}
-          className={inputClass}
-          placeholder="Example: Hyderabad, Telangana"
-          autoComplete="address-level2"
-          required
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        Teaching experience
-        <input
-          value={values.experience}
-          onChange={(event) => update('experience', event.target.value)}
-          className={inputClass}
-          placeholder="Example: 3 years online English teaching"
-          required
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        Primary teaching strength
-        <select
-          value={values.specialization}
-          onChange={(event) => update('specialization', event.target.value)}
-          className={inputClass}
-          required
-        >
-          <option>Phonics</option>
-          <option>Grammar</option>
-          <option>Public Speaking</option>
-          <option>Spoken English</option>
-          <option>Multiple areas</option>
-        </select>
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        Current / recent teaching context <span className="font-normal text-slate-400">(optional)</span>
-        <input
-          value={values.currentContext}
-          onChange={(event) => update('currentContext', event.target.value)}
-          className={inputClass}
-          placeholder="School, EdTech platform, tutoring, career break..."
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800">
-        Daily availability in IST
-        <input
-          value={values.availability}
-          onChange={(event) => update('availability', event.target.value)}
-          className={inputClass}
-          placeholder="Example: 5–9 PM IST, Mon–Sat"
-          required
-        />
-      </label>
-
-      <label className="text-sm font-semibold text-slate-800 md:col-span-2">
-        Anything else we should know? <span className="font-normal text-slate-400">(optional)</span>
-        <textarea
-          value={values.note}
-          onChange={(event) => update('note', event.target.value)}
-          className={`${inputClass} min-h-28 resize-y`}
-          placeholder="Age groups taught, certifications, teaching methods, preferred schedule, etc."
-        />
-      </label>
-
-      <div className="md:col-span-2">
-        <Button
-          type="submit"
-          size="lg"
-          disabled={isSubmitting}
-          className="group w-full rounded-2xl bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 px-7 text-white shadow-lg shadow-blue-950/10 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
-        >
-          {isSubmitting ? 'Saving application...' : 'Continue application on WhatsApp'}
-          <Send className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
-        </Button>
-        <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
-          Your application is saved for our admin team, then WhatsApp opens with the same details pre-filled. Review the message, attach any supporting documents you want to share, and send it to Tiny Steps Learning.
-        </p>
-
-        {submitted ? (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
-            Your application was saved and WhatsApp opened with your details. Review the message, attach any documents you want to share, and send it to Tiny Steps Learning.
-          </div>
-        ) : null}
-
-        {submitError ? (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-            {submitError}
-          </div>
-        ) : null}
-      </div>
-    </form>
-  );
-}
-
 export default function CareersPage() {
   useEffect(() => {
-    const jobDescription = [
-      'Tiny Steps Learning is recruiting India-based remote Online English Teachers to teach children aged 3–12 in live 1:1 classes.',
-      'Teachers may be assigned Phonics, Grammar, Public Speaking or Spoken English lessons using structured Tiny Steps curriculum and teaching materials.',
-      `Responsibilities include ${RESPONSIBILITIES.join(' ')}`,
-      `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
-      'Applications are currently open to teachers based in India through 31 December 2026. Candidates should provide their city or state and available teaching window in Indian Standard Time (IST).',
-      'Consistent availability of around 3–4 teaching hours per day is preferred.',
-      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately, and successful demo conversions may qualify for additional incentives. Selected teachers receive structured training, demo preparation and active scheduling support, with confirmed teaching slots typically built within 1–2 weeks of onboarding.',
-      'An illustrative four-week schedule of six completed regular classes per day across six teaching days can exceed ₹25,000 per month in regular-class earnings before paid demos, conversion incentives or extended-hours classes.',
-    ].join('\n');
-
-    const jobPostingSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'JobPosting',
-      '@id': `${CAREERS_URL}#online-english-teacher`,
-      identifier: {
-        '@type': 'PropertyValue',
-        name: 'Tiny Steps Learning',
-        value: 'TS-ONLINE-ENGLISH-TEACHER-2026',
-      },
-      title: ROLE_TITLE,
-      description: jobDescription,
-      datePosted: '2026-08-20',
-      validThrough: JOB_VALID_THROUGH,
-      employmentType: 'PART_TIME',
-      directApply: true,
-      industry: 'Online Education',
-      hiringOrganization: {
-        '@type': 'Organization',
-        name: 'Tiny Steps Learning',
-        sameAs: 'https://tinystepslearning.com',
-        url: 'https://tinystepslearning.com',
-        logo: 'https://tinystepslearning.com/android-chrome-512x512.png',
-      },
-      jobLocationType: 'TELECOMMUTE',
-      applicantLocationRequirements: {
-        '@type': 'Country',
-        name: 'India',
-      },
-      responsibilities: RESPONSIBILITIES.join(' '),
-      qualifications: REQUIREMENTS.join(' '),
-      skills:
-        'Online English teaching; phonics; grammar; spoken English; public speaking; child engagement; clear pronunciation; screen sharing; digital classroom delivery.',
-      workHours:
-        'Consistent availability is required. Around 3–4 teaching hours per day is preferred. Applicants should state their available teaching window in Indian Standard Time (IST).',
-      url: CAREERS_URL,
-    };
-
     const faqSchema = {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
@@ -629,7 +255,7 @@ export default function CareersPage() {
         {
           '@type': 'ListItem',
           position: 2,
-          name: 'Online Teaching Jobs',
+          name: 'Careers',
           item: CAREERS_URL,
         },
       ],
@@ -639,27 +265,16 @@ export default function CareersPage() {
       title: CAREERS_TITLE,
       description: CAREERS_DESCRIPTION,
       keywords: [
-        'online English teacher jobs India',
-        'remote English teacher jobs India',
-        'work from home English teacher jobs India',
-        'online phonics teacher jobs India',
-        'phonics teacher jobs remote India',
-        'online grammar teacher jobs India',
-        'public speaking teacher jobs online India',
-        'spoken English teacher jobs India',
-        'online English tutor jobs India',
-        'remote tutoring jobs for English teachers India',
-        'English teaching jobs from home India',
-        'remote teaching jobs for English teachers',
         'Tiny Steps Learning careers',
+        'Tiny Steps Learning teacher recruitment closed',
+        'Tiny Steps Learning recruitment update',
+        'Tiny Steps Learning teaching team',
       ],
       canonicalPath: CAREERS_PATH,
       ogType: 'website',
-      jsonLd: [jobPostingSchema, faqSchema, breadcrumbSchema],
+      jsonLd: [faqSchema, breadcrumbSchema],
     });
   }, []);
-
-  const whatsappLink = buildGeneralWhatsAppLink();
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -671,19 +286,19 @@ export default function CareersPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-4 py-2 text-sm font-bold text-orange-800 shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Remote English teaching opportunities across India
+              Teacher recruitment closed · 11 October 2026
             </div>
 
             <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl md:text-6xl md:leading-[1.02]">
-              Online English Teacher Jobs for Phonics, Grammar & Speaking
+              Teacher Recruitment Closed — All Positions Filled
             </h1>
 
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600 md:text-xl">
-              Teach children through live 1:1 online classes with structured curriculum, ready-to-use lesson materials and academic support. English teachers based in India with strong communication and child-teaching skills are welcome to apply.
+              All online English teaching positions for this recruitment cycle have been filled. Applications closed on 11 October 2026, and we are not accepting new teacher applications at this time.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-bold text-slate-700">
-              {['₹175 regular classes', '₹200 extended hours', '₹25,000+ monthly potential', 'Paid demos', 'Conversion incentives', 'Fully remote'].map((item) => (
+              {['Positions filled', 'Applications closed', 'Phonics', 'Grammar', 'Public Speaking', 'Spoken English'].map((item) => (
                 <span key={item} className="rounded-full border border-white bg-white/90 px-4 py-2 shadow-sm">
                   {item}
                 </span>
@@ -691,22 +306,16 @@ export default function CareersPage() {
             </div>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="group rounded-full bg-slate-950 px-7 text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-slate-800">
-                <a href="#apply">
-                  Apply to teach
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
-                </a>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full border-blue-200 bg-white/90 px-7 text-blue-950 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-blue-50">
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Start on WhatsApp
-                </a>
+              <Button asChild size="lg" className="group rounded-full bg-slate-950 px-7 text-white shadow-lg transition hover:bg-slate-800">
+                <Link to="/team">
+                  Meet the Tiny Steps Team
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </Link>
               </Button>
             </div>
 
             <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-500">
-              Teachers from schools, tutoring organisations and online education platforms are welcome. Selection focuses on communication, teaching quality, reliability, learner engagement and scheduling fit.
+              Thank you to everyone who expressed interest in joining Tiny Steps Learning. New teaching openings will be announced here if recruitment resumes.
             </p>
           </div>
 
@@ -718,7 +327,7 @@ export default function CareersPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-200">At a glance</p>
-                  <h2 className="mt-1 text-2xl font-black">Tiny Steps teacher role</h2>
+                  <h2 className="mt-1 text-2xl font-black">Previous teacher recruitment cycle</h2>
                 </div>
               </div>
             </div>
@@ -738,10 +347,10 @@ export default function CareersPage() {
       <section className="px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Why teach with Tiny Steps</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">A structured remote role built around good teaching</h2>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Our teaching approach</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">How Tiny Steps supports quality online teaching</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Focus on your learner while the curriculum, lesson materials and academic framework are already in place.
+              For reference, these are features of the teaching approach used in our completed 2026 recruitment cycle.
             </p>
           </div>
 
@@ -766,9 +375,9 @@ export default function CareersPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Teaching compensation</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Simple, transparent earning structure</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Compensation in the completed 2026 hiring cycle</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Every regular class is 35 minutes. The rate depends only on the scheduled teaching time in Indian Standard Time (IST).
+              For reference, these are the rates published during the completed recruitment cycle, not a current job offer. Future rates may differ.
             </p>
           </div>
 
@@ -817,7 +426,7 @@ export default function CareersPage() {
             <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="border-b border-white/10 p-6 md:p-7 lg:border-b-0 lg:border-r">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Illustrative monthly earnings</p>
-                <h3 className="mt-3 text-3xl font-black tracking-tight">₹25,000+ monthly earning potential</h3>
+                <h3 className="mt-3 text-3xl font-black tracking-tight">Illustrative earnings from the completed cycle</h3>
                 <p className="mt-3 text-sm leading-7 text-blue-100">
                   Example: 6 regular classes per day × 6 teaching days per week. Sunday remains a weekly holiday.
                 </p>
@@ -843,7 +452,7 @@ export default function CareersPage() {
           </div>
 
           <p className="mt-5 text-center text-xs leading-5 text-slate-500">
-            Rates are stated in INR. The ₹25,000+ figure is an illustrative earning example based on six completed regular classes per day across six teaching days per week for four weeks. Actual earnings depend on completed classes; paid demos, incentives and extended-hours classes can add more.
+            Rates are in INR and describe the completed 2026 recruitment cycle. The ₹25,000+ example assumes six completed regular classes per day across six teaching days per week for four weeks; actual earnings depend on assigned and completed classes.
           </p>
         </div>
       </section>
@@ -888,10 +497,10 @@ export default function CareersPage() {
                 <ShieldCheck className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Support after selection</p>
-                <h3 className="mt-2 text-2xl font-black text-slate-950">We help you build your teaching schedule</h3>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">How selected teachers were supported</p>
+                <h3 className="mt-2 text-2xl font-black text-slate-950">Teaching schedule support in the previous cycle</h3>
                 <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-600">
-                  Once selected, you receive structured training, demo preparation and paid demo opportunities so you can begin confidently. After you confirm reliable teaching availability, our scheduling team actively works on learner matching and aims to build and fill your regular teaching slots within 1–2 weeks of onboarding.
+                  During the completed 2026 recruitment cycle, selected teachers received structured training, demo preparation and support with learner matching based on confirmed availability. The former scheduling target was 1–2 weeks, but placement was not guaranteed. These details do not represent an active vacancy.
                 </p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   {[
@@ -915,8 +524,8 @@ export default function CareersPage() {
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-cyan-300">Selection process</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">From application to onboarding</h2>
-            <p className="mt-3 text-lg leading-8 text-slate-300">A straightforward process focused on communication, teaching quality and reliable availability.</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">How our teacher selection process works</h2>
+            <p className="mt-3 text-lg leading-8 text-slate-300">For reference, this is how our completed 2026 recruitment cycle worked. Applications are currently closed.</p>
           </div>
 
           <ol className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -936,56 +545,37 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section id="apply" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-orange-50 px-5 py-10 md:px-6 md:py-12">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-white bg-white/95 shadow-2xl shadow-slate-200/70">
-          <div className="grid gap-0 lg:grid-cols-[0.34fr_0.66fr]">
-            <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-7 text-white md:p-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-                <MessageCircle className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <p className="mt-6 text-sm font-black uppercase tracking-[0.2em] text-blue-200">Teacher application</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight">Apply in one simple WhatsApp flow</h2>
-              <p className="mt-4 text-sm leading-7 text-blue-100">
-                Fill in your basic details here. When you submit, WhatsApp opens with the information already prepared. No document upload is required on this page.
-              </p>
-              <div className="mt-6 space-y-3 text-sm text-blue-50">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>Review the pre-filled application message before sending.</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>Attach your CV, certificates or supporting documents directly in WhatsApp if you choose.</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>Share your city/state and reliable availability in IST so scheduling can be reviewed quickly.</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 md:p-8 lg:p-9">
-              <div className="max-w-3xl">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Tell us about your teaching profile</p>
-                <h3 className="mt-2 text-3xl font-black tracking-tight">Continue your application on WhatsApp</h3>
-                <p className="mt-3 text-base leading-7 text-slate-600">
-                  Keep your details concise. Include your city/state and reliable teaching availability in IST so our team can review your scheduling fit accurately.
-                </p>
-              </div>
-
-              <CareerApplicationForm />
-            </div>
-          </div>
+      <section id="apply" aria-labelledby="careers-closed-title" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-orange-50 px-5 py-12 md:px-6 md:py-16">
+        <div className="mx-auto max-w-4xl rounded-[2rem] border border-slate-200 bg-white px-7 py-10 text-center shadow-xl shadow-slate-200/60 md:px-12 md:py-14">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+            <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
+          </span>
+          <p className="mt-6 text-sm font-black uppercase tracking-[0.18em] text-blue-700">Teacher recruitment update</p>
+          <h2 id="careers-closed-title" className="mt-3 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            Teaching positions filled — applications closed
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-slate-700">
+            All teaching positions for the current recruitment cycle have been filled. Applications closed on 11 October 2026, and we are not accepting new teacher applications at this time.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-500">
+            Thank you to everyone who expressed interest in Tiny Steps Learning. If recruitment resumes, new vacancies will be announced here. Please do not send CVs or applications via WhatsApp for this closed cycle.
+          </p>
+          <Button asChild variant="outline" className="mt-7 rounded-full border-slate-200 bg-white text-slate-900 hover:bg-slate-50">
+            <Link to="/team">
+              Meet our team
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Link>
+          </Button>
         </div>
       </section>
 
       <section className="border-y border-slate-200 bg-white px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions online English teachers ask before applying</h2>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher careers FAQ</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions about teaching at Tiny Steps</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Clear answers about remote teaching in India, compensation, demos, earning examples, subjects, equipment, schedules and the WhatsApp application process.
+              Information about our previous teacher recruitment cycle. Applications are currently closed.
             </p>
           </div>
 
@@ -1012,7 +602,7 @@ export default function CareersPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-7 text-white shadow-xl md:p-9">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-300">Understand what you will teach</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-300">Explore our academic approach</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight">Explore the Tiny Steps academic approach</h2>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">
                 Review our public program pages to understand the skills, learner ages and teaching style behind Tiny Steps classes.
@@ -1046,7 +636,7 @@ export default function CareersPage() {
               <p className="mt-5 text-sm font-black uppercase tracking-[0.2em] text-cyan-800">Looking for English classes instead?</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight">Parents and learners can explore our programs here</h2>
               <p className="mt-3 text-sm leading-7 text-slate-600">
-                This page is for teachers. If you are searching for phonics, grammar, spoken English or public speaking classes for a child, use our learner pathways instead.
+                Teacher recruitment is closed. If you are searching for phonics, grammar, spoken English or public speaking classes for a child, explore our learner programs instead.
               </p>
               <Button asChild variant="outline" className="mt-5 rounded-full border-cyan-200 bg-white text-slate-950 hover:bg-cyan-50">
                 <Link to="/courses">

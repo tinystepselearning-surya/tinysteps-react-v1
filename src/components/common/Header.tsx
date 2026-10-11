@@ -181,16 +181,18 @@ export default function Header() {
           <button
             type="button"
             onClick={handlePrimaryAction}
+            disabled={isCareersPage}
+            aria-label={isCareersPage ? 'Teacher recruitment closed on 11 October 2026' : undefined}
             data-no-booking-intercept={location.pathname === '/contact' ? '1' : undefined}
             className={`inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition ${
               isCareersPage
-                ? 'border-blue-700 bg-gradient-to-r from-blue-700 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-500'
+                ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600 shadow-none'
                 : isSchoolsPage
                 ? 'border-orange-400 bg-gradient-to-r from-orange-400 to-amber-300 text-slate-950 hover:from-orange-300 hover:to-amber-200'
                 : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
-            {isCareersPage ? 'Apply to Teach' : isSchoolsPage ? 'School Partnership Options' : 'Book Free 35-Minute Demo'}
+            {isCareersPage ? 'Recruitment Closed' : isSchoolsPage ? 'School Partnership Options' : 'Book Free 35-Minute Demo'}
           </button>
         </div>
       </>
@@ -233,16 +235,18 @@ export default function Header() {
           <button
             type="button"
             onClick={handlePrimaryAction}
+            disabled={isCareersPage}
+            aria-label={isCareersPage ? 'Teacher recruitment closed on 11 October 2026' : undefined}
             data-no-booking-intercept={location.pathname === '/contact' ? '1' : undefined}
             className={`rounded-full border px-3.5 py-2 text-xs font-semibold max-[380px]:px-3 max-[380px]:text-[11px] ${
               isCareersPage
-                ? 'border-blue-700 bg-gradient-to-r from-blue-700 to-cyan-600 text-white'
+                ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600'
                 : isSchoolsPage
                 ? 'border-orange-400 bg-orange-400 text-slate-950'
                 : 'border-slate-900 bg-slate-900 text-white'
             }`}
           >
-            {isCareersPage ? 'Apply to Teach' : isSchoolsPage ? 'School Options' : 'Book Free 35-Minute Demo'}
+            {isCareersPage ? 'Recruitment Closed' : isSchoolsPage ? 'School Options' : 'Book Free 35-Minute Demo'}
           </button>
           <button
             type="button"

@@ -8,7 +8,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
@@ -42,7 +42,7 @@ beforeAll(async () => {
   if (!emulatorHost) return;
   const [host, rawPort] = emulatorHost.split(':');
   testEnv = await initializeTestEnvironment({
-    projectId: 'tinysteps-firestore-rules',
+    projectId: process.env.GCLOUD_PROJECT?.startsWith('demo-') ? process.env.GCLOUD_PROJECT : 'tinysteps-firestore-rules',
     firestore: {
       host,
       port: Number(rawPort || '8085'),
@@ -60,11 +60,25 @@ afterEach(async () => {
 });
 
 suite('public teacher enquiries firestore rules', () => {
-  it('allows a valid unauthenticated Careers application', async () => {
+  it('rejects valid unauthenticated Careers applications after closure', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
-    await assertSucceeds(
+    await assertFails(
       addDoc(collection(db, 'teacherInquiries'), buildPublicTeacherInquiry()),
     );
+  });
+
+  it('retains authenticated admin creation and review of teacher inquiries', async () => {
+    const adminUid = 'teacher-inquiry-admin';
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'users', adminUid), {
+        role: 'admin',
+        status: 'active',
+      });
+    });
+
+    const db = testEnv.authenticatedContext(adminUid).firestore();
+    await assertSucceeds(addDoc(collection(db, 'teacherInquiries'), buildPublicTeacherInquiry()));
+    await assertSucceeds(getDocs(collection(db, 'teacherInquiries')));
   });
 
   it('rejects public attempts to write admin workflow fields', async () => {
