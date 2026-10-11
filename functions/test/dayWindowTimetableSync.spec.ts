@@ -206,9 +206,9 @@ describe('student timetable Today/Tomorrow synchronization', () => {
     fake.rows('classSessions').get(DAY_ONE)!.attendance = {status: 'present'};
     fake.rows('billingCharges').set(DAY_TWO, {amount: 400});
     fake.rows('enrollments').get('enrollment-a')!.status = 'paused';
-    const result = await sync(fake);
-    expect(result.removed).toBe(0);
-    expect(result.preserved).toBe(2);
+    // With a protected unstarted class, fail the whole synchronization
+    // rather than deleting other occurrences or showing a false success.
+    await expect(sync(fake)).rejects.toThrow('protected future class cannot be moved');
     expect(fake.rows('classSessions').has(DAY_ONE)).toBe(true);
     expect(fake.rows('classSessions').has(DAY_TWO)).toBe(true);
 
