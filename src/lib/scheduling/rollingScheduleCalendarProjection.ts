@@ -110,6 +110,13 @@ const ymdAndTimeFromUtcMs = (utcMs: number): { ymd: string; time: string } => {
 };
 
 
+const enrollmentIdFromSession = (session: RecordLike): string => {
+  const direct = text(session.enrollmentId);
+  if (direct) return direct;
+  const match = /^(.+)_\d{8}_\d{4}$/.exec(text(session.id));
+  return match?.[1] || '';
+};
+
 const sessionOccurrenceIdentity = (session: RecordLike): string | null => {
   const enrollmentId = enrollmentIdFromSession(session);
   if (!enrollmentId) return null;
