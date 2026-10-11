@@ -1,0 +1,41 @@
+name: Legacy Session Writers Retirement
+on:
+  pull_request:
+    paths:
+      - 'functions/src/scheduling/legacy14DayCutover.ts'
+      - 'functions/src/scheduling/rollingScheduleMaterializer.ts'
+      - 'functions/src/scheduling/rollingScheduleLifecycle.ts'
+      - 'functions/src/scheduling/rollingScheduleReconciliation.ts'
+      - 'functions/src/scheduling/rollingScheduleCompatibility.ts'
+      - 'functions/src/scheduling/rollingScheduleCourseTransition.ts'
+      - 'functions/src/scheduling/rollingScheduleRepair.ts'
+      - 'functions/src/scheduling/futureScheduleOrchestration.ts'
+      - 'functions/src/scheduled/rollingScheduleEdgeReplenisher.ts'
+      - 'functions/src/createSessionsFromSchedule.ts'
+      - 'functions/src/lifecycle.ts'
+      - 'functions/test/legacy14DaySessionWritersRetired.spec.ts'
+      - '.github/workflows/legacy-session-writers-retirement.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-deploy-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Install functions dependencies
+        run: npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Full Functions TypeScript build
+        run: npm --prefix functions run build
+      - name: Cutover hard-stop and entire functions regression suite
+        run: npm --prefix functions test
+      - name: Deployment safety
+        run: echo "Verification only; no Cloud Functions or Firestore updates."
