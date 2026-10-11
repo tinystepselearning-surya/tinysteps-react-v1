@@ -328,6 +328,8 @@ describe('Sessions Management authoritative snapshot loading', () => {
     expect(pageSource).toContain('readCache.visibleSessionsByDate.get(selectedDateKey)');
     expect(pageSource).toContain('readCache.loadEnrollments(');
     expect(pageSource).toContain('readCache.loadRealSessions(');
+    expect(pageSource).toContain('sharedAdminReminderViews.readCacheRef');
+    expect(pageSource).toContain('useAuthStore.subscribe(');
     expect(pageSource).toContain('readCache.setVisibleSessions(selectedDateKey, nextSessions)');
   });
 
