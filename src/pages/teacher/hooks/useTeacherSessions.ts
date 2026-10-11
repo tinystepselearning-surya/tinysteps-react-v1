@@ -6,7 +6,6 @@ import { getDocLogged, getDocsLogged, onSnapshotLogged } from '../../../lib/fire
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
-  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
 import {
@@ -614,23 +613,25 @@ export const useTeacherSessions = (
         }
       }
 
+      // Persisted sessions are historical authority even after an enrollment
+      // pauses, changes schedule, or passes the old 14-day generation horizon.
+      // Only an unmarked, non-exception *future* record still needs current
+      // timetable validation. A cancelled/attended record must not disappear.
+      const todayYmd = new Date(Date.now()+330*60_000).toISOString().slice(0,10);
       const canonicalOnly = filtered.filter((session) => {
         const status = toCleanText((session as any)?.status).toLowerCase();
-        if (status === 'paused') return false;
+        const attendance = (session as any).attendance;
+        const isMarked = Boolean(attendance && typeof attendance==='object' &&
+          Object.values(attendance).some(v=>Boolean(v)));
+        const historical = String(session.date||'') < todayYmd;
+        const authoritative = historical || isMarked ||
+          ['completed','absent','cancelled','canceled','no_show','rescheduled','reschedule_requested'].includes(status) ||
+          isScheduleExceptionSession(session as unknown as Record<string, unknown>);
+        if (authoritative) return true;
         const enrollmentId = toCleanText((session as any)?.enrollmentId);
-        if (!enrollmentId) return false;
-        const enrollment = enrollmentMap.get(enrollmentId);
-        if (!enrollment) {
-          return (
-            sessionBelongsToTeacher(session as any, teacherKey) &&
-            isScheduleExceptionSession(session as unknown as Record<string, unknown>) &&
-            shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(
-              session as unknown as Record<string, unknown>,
-              teacherKey,
-            )
-          );
-        }
-        return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
+        const enrollment = enrollmentId ? enrollmentMap.get(enrollmentId) : undefined;
+        return Boolean(enrollment) &&
+          isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
       });
 
       if (cancelled || currentBatch !== batchCounter) return;
