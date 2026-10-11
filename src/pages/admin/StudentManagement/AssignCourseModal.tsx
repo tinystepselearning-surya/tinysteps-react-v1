@@ -468,7 +468,7 @@ export default function AssignCourseModal({
       setSaving(true);
       const regionalFunctions = getFunctions(undefined, 'asia-south1');
       const saveRollingEnrollmentSchedule = httpsCallable(regionalFunctions, 'saveRollingEnrollmentSchedule');
-      await saveRollingEnrollmentSchedule({
+      const savedTimetable = await saveRollingEnrollmentSchedule({
         enrollmentId: createdEnrollmentId,
         enrollmentStartDate: classesStartDate,
         classesStartDate,
@@ -482,7 +482,19 @@ export default function AssignCourseModal({
             : `admission-schedule-${createdEnrollmentId}-${Date.now()}`,
       });
       setScheduleSaved(true);
-      toast({ title: 'Schedule activated', description: 'Continuous recurring schedule saved safely.' });
+      const sync = (savedTimetable.data as {
+        daySync?: {
+          state: 'disabled' | 'synchronized';
+          created: number; updated: number; removed: number; conflicts: number;
+        };
+      } | undefined)?.daySync;
+      toast({
+        title: 'Weekly timetable saved',
+        description: sync?.state === 'synchronized'
+          ? `Today/Tomorrow: ${sync.created} created, ${sync.updated} updated, ${sync.removed} obsolete removed.` +
+            (sync.conflicts > 0 ? ` ${sync.conflicts} overlapping class(es) require review.` : '')
+          : 'The timetable is saved. Daily class generation follows the scheduled class days.',
+      });
       if (exitAfterSave) onClose();
       else setStep(5);
     } catch (error: any) {
