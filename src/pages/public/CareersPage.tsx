@@ -115,7 +115,7 @@ const EXTRA_EARNINGS = [
   {
     icon: Trophy,
     title: 'Conversion incentives',
-    description: 'Successful demo conversions are eligible for additional attractive incentives under the current incentive plan.',
+    description: 'In the completed recruitment cycle, successful demo conversions could qualify for additional incentives under the applicable plan.',
     tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-950',
     iconTone: 'bg-emerald-100 text-emerald-700',
   },
@@ -173,7 +173,7 @@ const FAQS = [
   {
     question: 'Who was eligible for the most recent teaching roles?',
     answer:
-      'The completed 2026 recruitment cycle considered India-based teachers with relevant experience and reliable availability in Indian Standard Time (IST). Requirements for any future vacancies will be announced when recruitment resumes.',,
+      'The completed 2026 recruitment cycle considered India-based teachers with relevant experience and reliable availability in Indian Standard Time (IST). Requirements for any future vacancies will be announced when recruitment resumes.',
   },
   {
     question: 'Does Tiny Steps consider teachers from other education platforms?',
@@ -183,22 +183,22 @@ const FAQS = [
   {
     question: 'How much does Tiny Steps pay online teachers?',
     answer:
-      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Demo classes are paid separately, and successful demo conversions are eligible for additional incentives.',
+      'For the completed 2026 recruitment cycle, regular classes scheduled from 9:00 AM to 9:00 PM IST were advertised at ₹175 per completed 35-minute class, and classes before 9:00 AM IST or after 9:00 PM IST at ₹200. Demo compensation and incentives were governed by the applicable plan. These are historical rates, not current vacancies.',
   },
   {
-    question: 'Can I earn ₹25,000+ per month with a regular schedule?',
+    question: 'What was the illustrative monthly earning potential in the completed cycle?'
     answer:
-      'Yes, as an illustrative example. Six 35-minute regular classes per day equals 3.5 hours of live teaching. Across six teaching days per week, a four-week month gives about 144 regular classes. At ₹175 per completed class, that is ₹25,200 from regular classes alone. Paid demos, conversion incentives and any extended-hours classes are additional. Actual monthly earnings depend on completed classes and schedule.',
+      'The completed 2026 recruitment page illustrated six completed regular classes per day over six days a week for four weeks: 144 classes at ₹175, or ₹25,200. This was an illustrative scenario, not a guaranteed salary or a current job offer. Actual earnings depended on assigned and completed classes.',
   },
   {
-    question: 'Are demo classes paid?',
+    question: 'Were demo classes paid in the completed recruitment cycle?'
     answer:
-      'Yes. Assigned demo classes are paid separately from regular teaching classes. In addition, successful demo conversions may qualify for attractive conversion incentives under the current incentive plan.',
+      'During the completed recruitment cycle, assigned demo classes were paid separately from regular classes. Additional conversion incentives depended on the applicable incentive plan.',
   },
   {
-    question: 'How quickly can I build a regular teaching schedule?',
+    question: 'How were selected teachers onboarded in the completed cycle?'
     answer:
-      'After selection, Tiny Steps supports you with structured training, demo preparation and paid demo opportunities. Once your reliable availability is confirmed, our scheduling team actively works to build and fill your regular teaching slots, typically within 1–2 weeks of onboarding.',
+      'Selected teachers received preparation support, demo opportunities and scheduling assistance based on their availability and student demand. There are no open roles at present, and future onboarding terms may differ.',
   },
   {
     question: 'What subjects can I teach at Tiny Steps?',
@@ -255,7 +255,7 @@ export default function CareersPage() {
         {
           '@type': 'ListItem',
           position: 2,
-          name: 'Online Teaching Jobs',
+          name: 'Careers',
           item: CAREERS_URL,
         },
       ],
@@ -265,19 +265,10 @@ export default function CareersPage() {
       title: CAREERS_TITLE,
       description: CAREERS_DESCRIPTION,
       keywords: [
-        'online English teacher jobs India',
-        'remote English teacher jobs India',
-        'work from home English teacher jobs India',
-        'online phonics teacher jobs India',
-        'phonics teacher jobs remote India',
-        'online grammar teacher jobs India',
-        'public speaking teacher jobs online India',
-        'spoken English teacher jobs India',
-        'online English tutor jobs India',
-        'remote tutoring jobs for English teachers India',
-        'English teaching jobs from home India',
-        'remote teaching jobs for English teachers',
         'Tiny Steps Learning careers',
+        'Tiny Steps Learning teacher recruitment closed',
+        'Tiny Steps Learning recruitment update',
+        'Tiny Steps Learning teaching team',
       ],
       canonicalPath: CAREERS_PATH,
       ogType: 'website',
@@ -356,10 +347,10 @@ export default function CareersPage() {
       <section className="px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Why teach with Tiny Steps</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">A structured remote role built around good teaching</h2>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Our teaching approach</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">How Tiny Steps supports quality online teaching</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Focus on your learner while the curriculum, lesson materials and academic framework are already in place.
+              For reference, these are features of the teaching approach used in our completed 2026 recruitment cycle.
             </p>
           </div>
 
@@ -435,7 +426,7 @@ export default function CareersPage() {
             <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="border-b border-white/10 p-6 md:p-7 lg:border-b-0 lg:border-r">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Illustrative monthly earnings</p>
-                <h3 className="mt-3 text-3xl font-black tracking-tight">₹25,000+ monthly earning potential</h3>
+                <h3 className="mt-3 text-3xl font-black tracking-tight">Illustrative earnings from the completed cycle</h3>
                 <p className="mt-3 text-sm leading-7 text-blue-100">
                   Example: 6 regular classes per day × 6 teaching days per week. Sunday remains a weekly holiday.
                 </p>
@@ -506,10 +497,10 @@ export default function CareersPage() {
                 <ShieldCheck className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="flex-1">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Support after selection</p>
-                <h3 className="mt-2 text-2xl font-black text-slate-950">We help you build your teaching schedule</h3>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">How selected teachers were supported</p>
+                <h3 className="mt-2 text-2xl font-black text-slate-950">Teaching schedule support in the previous cycle</h3>
                 <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-600">
-                  Once selected, you receive structured training, demo preparation and paid demo opportunities so you can begin confidently. After you confirm reliable teaching availability, our scheduling team actively works on learner matching and aims to build and fill your regular teaching slots within 1–2 weeks of onboarding.
+                  During the completed 2026 recruitment cycle, selected teachers received structured training, demo preparation and support with learner matching based on confirmed availability. The former scheduling target was 1–2 weeks, but placement was not guaranteed. These details do not represent an active vacancy.
                 </p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   {[

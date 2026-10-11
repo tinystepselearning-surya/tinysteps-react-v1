@@ -209,7 +209,7 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/careers',
     ogType: 'website',
     keywords:
-      'online English teacher jobs India,remote English teacher jobs India,work from home English teacher jobs India,online phonics teacher jobs India,phonics teacher jobs remote India,online grammar teacher jobs India,public speaking teacher jobs online India,spoken English teacher jobs India,online English tutor jobs India,remote tutoring jobs for English teachers India,English teaching jobs from home India,remote teaching jobs for English teachers,Tiny Steps Learning careers',
+      'Tiny Steps Learning careers,Tiny Steps Learning teacher recruitment closed,Tiny Steps Learning recruitment update,Tiny Steps Learning teaching team',
   },
   '/learning-partner': {
     title: 'Learning Partner Support | Tiny Steps Learning',

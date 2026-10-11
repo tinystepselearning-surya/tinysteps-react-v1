@@ -11,8 +11,10 @@ describe('closed teacher recruitment', () => {
     const careersSource = read('src/pages/public/CareersPage.tsx');
     expect(indexHtml).not.toContain("if (pathname !== '/careers') return;");
     expect(indexHtml).not.toContain("'@type': 'JobPosting'");
+    expect(indexHtml).not.toContain('2026-12-31T23:59:59+05:30');
     expect(careersSource).not.toContain("'@type': 'JobPosting'");
     expect(careersSource).not.toContain('directApply: true');
+    expect(careersSource).not.toContain('2026-12-31T23:59:59+05:30');
     expect(careersSource).toContain('jsonLd: [faqSchema, breadcrumbSchema]');
   });
 
@@ -24,11 +26,17 @@ describe('closed teacher recruitment', () => {
     expect(careersSource).toContain('11 October 2026');
     expect(careersSource).toContain('Teacher Recruitment Closed');
     expect(careersSource).not.toContain('CareerApplicationForm');
+    expect(careersSource).not.toContain("',,");
+    expect(careersSource).toContain('id="apply"');
     expect(careersSource).not.toContain('wa.me/');
     expect(careersSource).not.toContain("collection(db, 'teacherInquiries')");
     expect(headerSource).toContain('disabled={isCareersPage}');
     expect(headerSource).toContain('Recruitment Closed');
     expect(seoRegistry).toContain('Teacher Recruitment Closed');
-    expect(rules).toContain('allow create: if isAdmin();');
+    const teacherBlock = rules.split('match /teacherInquiries/{inquiryId} {')[1]?.split('}')[0] || '';
+    expect(teacherBlock).toContain('allow create: if isAdmin();');
+    expect(teacherBlock).toContain('allow read, update, delete: if isAdmin();');
+    expect(teacherBlock).not.toContain('request.resource.data');
+    expect(careersSource).not.toContain('current incentive plan');
   });
 });

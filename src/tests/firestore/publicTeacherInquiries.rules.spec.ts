@@ -4,10 +4,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   assertFails,
+  assertSucceeds,
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
 
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
@@ -64,6 +65,20 @@ suite('public teacher enquiries firestore rules', () => {
     await assertFails(
       addDoc(collection(db, 'teacherInquiries'), buildPublicTeacherInquiry()),
     );
+  });
+
+  it('retains authenticated admin creation and review of teacher inquiries', async () => {
+    const adminUid = 'teacher-inquiry-admin';
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'users', adminUid), {
+        role: 'admin',
+        status: 'active',
+      });
+    });
+
+    const db = testEnv.authenticatedContext(adminUid).firestore();
+    await assertSucceeds(addDoc(collection(db, 'teacherInquiries'), buildPublicTeacherInquiry()));
+    await assertSucceeds(getDocs(collection(db, 'teacherInquiries')));
   });
 
   it('rejects public attempts to write admin workflow fields', async () => {
