@@ -10,6 +10,7 @@
  * calendars and integration tests pass.
  */
 import * as admin from 'firebase-admin';
+import {FieldValue} from 'firebase-admin/firestore';
 import {onCall, HttpsError} from 'firebase-functions/v2/https';
 import {resolveCanonicalTeacherIdForWrite} from '../helpers/teacherIdentity';
 import {
@@ -259,7 +260,7 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
         if (!reused.exists) throw new HttpsError('failed-precondition','Existing class disappeared');
         assertCalendarSessionIdentity((reused.data()||{}) as Row,enrollmentId,uid,childId,text(enrollment.courseId));
         tx.create(claimRef,{sessionId:found.sessionId,enrollmentId,childId,date,startTime,
-          source:'virtual_calendar_attendance',createdAt:admin.firestore.FieldValue.serverTimestamp()});
+          source:'virtual_calendar_attendance',createdAt:FieldValue.serverTimestamp()});
         return {sessionId:found.sessionId,created:false};
       }
       if (sessionSnap.exists || chargeSnap.exists || earningSnap.exists) {
@@ -274,7 +275,7 @@ export const ensureTeacherCalendarAttendanceSession = onCall(
       });
       tx.create(sessionRef,{...payload,source:'virtual_calendar_attendance'});
       tx.create(claimRef,{sessionId,enrollmentId,childId,date,startTime,
-        source:'virtual_calendar_attendance',createdAt:admin.firestore.FieldValue.serverTimestamp()});
+        source:'virtual_calendar_attendance',createdAt:FieldValue.serverTimestamp()});
       return {sessionId,created:true};
     });
     return {...result,ok:true};
@@ -447,16 +448,16 @@ export const createTeacherCalendarAdHocSession = onCall(
         ...payload,source:'teacher_ad_hoc',
         isAdHoc:true,isManual:true,
         manualSessionState:'approved',
-        manualSessionApprovedAt:admin.firestore.FieldValue.serverTimestamp(),
+        manualSessionApprovedAt:FieldValue.serverTimestamp(),
         manualSessionApprovedBy:uid,
         notes:'Teacher-created ad hoc class',
         scheduleDeliveryMode:'ad_hoc',
       });
       // Two stable day documents serialize concurrent ad hoc attempts.
       tx.set(teacherDayRef,{reservations:[...teacherSlots,reservation],
-        updatedAt:admin.firestore.FieldValue.serverTimestamp()},{merge:true});
+        updatedAt:FieldValue.serverTimestamp()},{merge:true});
       tx.set(studentDayRef,{reservations:[...studentSlots,reservation],
-        updatedAt:admin.firestore.FieldValue.serverTimestamp()},{merge:true});
+        updatedAt:FieldValue.serverTimestamp()},{merge:true});
       return {sessionId,created:true};
     });
     return {...result,ok:true};
