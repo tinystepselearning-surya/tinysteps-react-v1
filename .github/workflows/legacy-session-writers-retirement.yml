@@ -30,9 +30,11 @@ jobs:
         with:
           node-version: 22.22.1
           cache: npm
-          cache-dependency-path: functions/package-lock.json
-      - name: Install functions dependencies
-        run: npm ci --prefix functions --include=dev --ignore-scripts
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - name: Install frontend and Functions test dependencies
+        run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
       - name: Full Functions TypeScript build
         run: npm --prefix functions run build
       - name: Cutover hard-stop and entire functions regression suite
