@@ -16,10 +16,6 @@ import type { TeacherSession } from '../../types/Teacher';
 const scheduled = (id: string, date = '2026-10-12') =>
   ({ id, date, startTime: '17:00', teacherId: 'teacher-1', status: 'scheduled' } as TeacherSession);
 
-const flush = async () => {
-  await vi.waitFor(() => {});
-};
-
 describe('Teacher calendar browser-session read-once model', () => {
   beforeEach(() => { mockGetDoc.mockReset(); });
 
