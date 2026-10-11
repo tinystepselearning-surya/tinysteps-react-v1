@@ -8,7 +8,6 @@ import {
   where,
   type Query,
 } from 'firebase/firestore';
-import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
 import { teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
@@ -43,7 +42,8 @@ interface UseUpcomingSessionsResult {
   refresh: () => void;
 }
 
-export const getDefaultUpcomingSelectedDate = (): string => format(new Date(), 'yyyy-MM-dd');
+export const getDefaultUpcomingSelectedDate = (): string =>
+  new Date(Date.now() + 330 * 60_000 + 86_400_000).toISOString().slice(0, 10);
 
 const cleanString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
