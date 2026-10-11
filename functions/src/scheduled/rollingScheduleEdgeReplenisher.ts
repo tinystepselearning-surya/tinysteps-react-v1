@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from '../scheduling/legacy14DayCutover';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue} from 'firebase-admin/firestore';
 import {onSchedule} from 'firebase-functions/v2/scheduler';
@@ -262,6 +263,10 @@ export const rollingScheduleEdgeReplenisherDaily = onSchedule(
     timeoutSeconds: 300,
   },
   async () => {
+    if (LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+      logger.info('rollingScheduleEdgeReplenisher: retired; no reads or writes');
+      return;
+    }
     const summary = await runRollingScheduleEdgeReplenisher(admin.firestore());
     const logPayload = {
       ...summary,
