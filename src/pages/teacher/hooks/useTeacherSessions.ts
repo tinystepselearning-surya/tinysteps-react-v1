@@ -3,7 +3,7 @@ import { collection, doc, documentId, orderBy, query, where } from 'firebase/fir
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
-import { teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
+import { getCachedTeacherEnrollmentSnapshots, teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -589,7 +589,7 @@ export const useTeacherSessions = (
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
     // Cache enrollment snapshots for this listener lifetime; repeated session
     // changes should not re-hydrate the same enrollment documents.
-    const enrollmentCache=new Map<string,Record<string,unknown>>();
+    const enrollmentCache = teacherKey ? getCachedTeacherEnrollmentSnapshots(teacherKey) : new Map<string, Record<string, unknown>>();
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
     ]);
