@@ -9,7 +9,7 @@
  * Cloud Run environment. Zero Firestore reads when disabled.
  */
 import * as admin from 'firebase-admin';
-import {FieldValue, Timestamp} from 'firebase-admin/firestore';
+import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError} from 'firebase-functions/v2/https';
 import {
   addDaysYmd,
@@ -29,7 +29,6 @@ const ACTIVE_ENROLLMENT_STATES = new Set([
   'active', 'enrolled', 'current', 'ongoing', 'pending_payment', 'pending_lp',
 ]);
 const PENDING_SESSION_STATES = new Set(['scheduled', 'upcoming', 'planned', 'open']);
-const DAY_MS = 86400000;
 
 type Enrollment = Record<string, unknown>;
 
