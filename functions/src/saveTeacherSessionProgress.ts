@@ -508,11 +508,18 @@ export const saveTeacherSessionProgress = onCall(
         'Only Present or Absent can be newly submitted.');
     }
     const nextAttendance: Record<string, Record<string, unknown>> = {};
-    const sessionKidIds = Array.isArray(session.kidIds)
-      ? (session.kidIds as unknown[]).map((kidId) => String(kidId || '').trim()).filter(Boolean)
-      : [];
+    const sessionKidIds = Array.from(new Set([
+      ...(Array.isArray(session.kidIds) ? session.kidIds : []),
+      session.kidId, session.studentId, session.childId,
+    ].map(value=>String(value||'').trim()).filter(Boolean)));
     const allowedAttendanceKidIds = new Set<string>(sessionKidIds);
-    const enforceKidMembership = allowedAttendanceKidIds.size > 0;
+    // A historical record with no child identity needs Admin repair, not an
+    // unrestricted teacher write under an arbitrary child ID.
+    if (!allowedAttendanceKidIds.size) {
+      throw new HttpsError('failed-precondition',
+        'Class is missing its student identity. Ask Admin to repair the record.');
+    }
+    const enforceKidMembership = true;
 
     if (attendanceOnly) {
       const existingAttendanceRaw = session.attendance;
