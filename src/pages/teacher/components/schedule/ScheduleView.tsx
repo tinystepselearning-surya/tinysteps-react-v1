@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import { Input } from '@components/ui/input';
 import {
   Select,
@@ -239,6 +240,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('all');
+  const [adHocOpen, setAdHocOpen] = useState(false);
+  const [adHocEnrollmentId, setAdHocEnrollmentId] = useState('');
+  const [adHocStartTime, setAdHocStartTime] = useState('17:00');
+  const [adHocDurationMinutes, setAdHocDurationMinutes] = useState(35);
+  const [adHocSaving, setAdHocSaving] = useState(false);
   const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCreditRecord[]>([]);
   const [rescheduleCreditsLoading, setRescheduleCreditsLoading] = useState<boolean>(false);
   const [makeupDraftByCredit, setMakeupDraftByCredit] = useState<Record<string, MakeupDraft>>({});
@@ -286,6 +292,71 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     () => students.flatMap((student) => student.scheduleEnrollments || []),
     [students],
   );
+
+  // Reuse the one already-bounded teacher student/enrollment read for ad hoc
+  // selection. No extra Firestore reads while browsing a day.
+  const assignedEnrollmentOptions = useMemo(() => {
+    return teacherScheduleEnrollments
+      .filter((row) => {
+        const status = String(row.status || '').trim().toLowerCase();
+        return ['active','enrolled','current','ongoing','pending_payment','pending_lp'].includes(status) &&
+          !row.archived && !row.isArchived && !row.archivedAt;
+      })
+      .map((row) => {
+        const name = String(row.studentName || row.kidName || row.childName ||
+          (row.studentSnapshot as any)?.name || '').trim() || 'Student';
+        return {
+          id: row.id, label: name + ' · ' + String(row.courseName || row.courseId || 'English'),
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [teacherScheduleEnrollments]);
+
+  const openTeacherMeeting = useCallback((session: TeacherSession) => {
+    const source = teacherScheduleEnrollments.find(row => row.id === session.enrollmentId);
+    const link = String(source?.joinUrl || session.joinUrl || '').trim();
+    if (!/^https:\/\//i.test(link)) {
+      toast({ title: 'Teams link unavailable',
+        description: 'Ask Admin to add the meeting link to Student Management.',
+        variant: 'destructive' });
+      return;
+    }
+    window.open(link, '_blank', 'noopener,noreferrer');
+  }, [teacherScheduleEnrollments]);
+
+  const submitAdHocBooking = async () => {
+    if (!adHocEnrollmentId) {
+      toast({ title: 'Choose a student', variant: 'destructive' });
+      return;
+    }
+    try {
+      setAdHocSaving(true);
+      const functions = getFunctions(undefined, 'asia-south1');
+      const createAdHoc = httpsCallable<
+        {enrollmentId:string;date:string;startTime:string;durationMinutes:number},
+        {sessionId:string;created:boolean}
+      >(functions,'createTeacherCalendarAdHocSession');
+      const result = await createAdHoc({
+        enrollmentId: adHocEnrollmentId,
+        date: format(currentDate, 'yyyy-MM-dd'),
+        startTime: adHocStartTime,
+        durationMinutes: adHocDurationMinutes,
+      });
+      toast({
+        title: result.data.created ? 'Ad hoc class added' : 'Ad hoc class already exists',
+        description: 'Select it in your calendar to join or mark Present/Absent.',
+      });
+      setAdHocOpen(false);
+    } catch (error) {
+      toast({
+        title:'Unable to add ad hoc class',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant:'destructive',
+      });
+    } finally {
+      setAdHocSaving(false);
+    }
+  };
 
   const projectedSessions = useMemo<TeacherSession[]>(() => {
     const projections = buildRollingScheduleCalendarProjections({
@@ -820,12 +891,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">Teacher Schedule</h2>
             <p className="mt-1 text-sm text-slate-500">
-              View your sessions and tap any session to mark attendance.
+              Classes follow the saved student timetable. Join Teams or mark Present/Absent.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="rounded-full" onClick={handlePrev}>Prev</Button>
             <Button variant="outline" size="sm" className="rounded-full" onClick={handleToday}>Today</Button>
+            <Button type="button" size="sm" onClick={() => { setView('day'); setAdHocOpen(true); }}>
+              Add ad hoc class
+            </Button>
             <Button variant="outline" size="sm" className="rounded-full" onClick={handleNext}>Next</Button>
           </div>
         </div>
@@ -1131,6 +1205,49 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </div>
         )}
       </Card>
+
+      <Dialog open={adHocOpen} onOpenChange={setAdHocOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add ad hoc class · {format(currentDate, 'd MMM yyyy')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium" htmlFor="ad-hoc-student">
+                Student
+              </label>
+              <Select value={adHocEnrollmentId} onValueChange={setAdHocEnrollmentId}>
+                <SelectTrigger id="ad-hoc-student"><SelectValue placeholder="Choose assigned student" /></SelectTrigger>
+                <SelectContent>
+                  {assignedEnrollmentOptions.map(row => (
+                    <SelectItem key={row.id} value={row.id}>{row.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="ad-hoc-start" className="mb-1 block text-sm font-medium">Time (IST)</label>
+                <Input id="ad-hoc-start" type="time" value={adHocStartTime}
+                  onChange={e => setAdHocStartTime(e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="ad-hoc-duration" className="mb-1 block text-sm font-medium">Minutes</label>
+                <Input id="ad-hoc-duration" type="number" min={10} max={90}
+                  value={adHocDurationMinutes}
+                  onChange={e => setAdHocDurationMinutes(Number(e.target.value))} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              One-off class only. Your student's regular weekly timetable stays unchanged.
+            </p>
+            <Button type="button" onClick={() => void submitAdHocBooking()}
+              disabled={!adHocEnrollmentId || adHocSaving} className="w-full">
+              {adHocSaving ? 'Adding…' : 'Add to calendar'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AttendanceForm
         open={Boolean(selectedSession)}
