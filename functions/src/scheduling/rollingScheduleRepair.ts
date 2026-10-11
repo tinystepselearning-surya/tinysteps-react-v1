@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import {LEGACY_14_DAY_SESSION_WRITES_RETIRED} from './legacy14DayCutover';
 import * as logger from 'firebase-functions/logger';
 import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
@@ -408,6 +409,9 @@ export async function runRollingScheduleRepairInternal(
   input: RepairInput = {},
 ): Promise<RollingScheduleRepairSummary> {
   const apply = input.apply === true;
+  if (apply && LEGACY_14_DAY_SESSION_WRITES_RETIRED) {
+    throw new HttpsError('failed-precondition', 'Legacy 14-day repair is retired. Daily timetable generation is authoritative.');
+  }
   const anchorYmd = validateAnchorYmd(input.anchorYmd || resolveRollingScheduleRepairTodayYmd());
   const maxEnrollments = normalizeMaxEnrollments(input.maxEnrollments);
   const preflight = await auditRollingScheduleRepairState(db, {
