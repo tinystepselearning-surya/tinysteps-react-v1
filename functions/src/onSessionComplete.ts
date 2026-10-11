@@ -112,51 +112,11 @@ function normalizeIncomingAttendanceMap(
   );
 }
 
-function normalizeCallerRole(value: unknown): string {
-  const raw = String(value || "").trim().toLowerCase();
-  if (!raw) return "";
-  if (raw === "learningpartner") return "learning-partner";
-  return raw;
-}
-
 function normalizeEnrollmentStatus(value: unknown): string {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "active";
   if (raw === "canceled") return "cancelled";
   return raw;
-}
-
-async function resolveCallerRoleFromAuth(
-  auth: { uid?: string; token?: Record<string, unknown> } | null,
-): Promise<string> {
-  const uid = String(auth?.uid || "").trim();
-  if (!uid) return "";
-
-  const userSnap = await admin.firestore().collection("users").doc(uid).get();
-  if (!userSnap.exists) return "";
-
-  const user = userSnap.data() || {};
-  if (
-    user.status !== undefined &&
-    user.status !== null &&
-    (
-      typeof user.status !== "string" ||
-      user.status.trim().toLowerCase() !== "active"
-    )
-  ) {
-    return "";
-  }
-
-  const primaryRole = normalizeCallerRole(user.role);
-  if (primaryRole) return primaryRole;
-
-  const roles = Array.isArray(user.roles) ? user.roles : [];
-  for (const role of roles) {
-    const normalized = normalizeCallerRole(role);
-    if (normalized) return normalized;
-  }
-
-  return "";
 }
 
 function resolveEnrollmentKidIds(enrollment: any): string[] {
@@ -713,11 +673,6 @@ export const onSessionComplete = onCall(
 
     const session = sessionSnap.data() as SessionData;
     await assertCanFinalizeSession(uid, session);
-    const callerRole = await resolveCallerRoleFromAuth({
-      uid,
-      token: (request.auth?.token || {}) as Record<string, unknown>,
-    });
-
     // Teachers may record/correct a valid class at any time. Authorization,
     // class identity, and financial integrity remain enforced separately.
 
