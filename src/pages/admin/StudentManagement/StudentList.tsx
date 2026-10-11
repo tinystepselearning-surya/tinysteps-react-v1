@@ -2325,7 +2325,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     } catch (err: any) {
       console.error('Error saving rolling schedule:', err);
       toast({
-        title: 'Unable to save schedule',
+        title: 'Timetable update needs attention',
         description: extractCallableErrorMessage(err, 'Failed to save the continuous recurring schedule.'),
         variant: 'destructive',
       });
