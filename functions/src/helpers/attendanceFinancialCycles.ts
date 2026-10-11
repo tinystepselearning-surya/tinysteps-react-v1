@@ -18,7 +18,7 @@ const normalized = (value: unknown): string =>
 
 export function attendanceFinanceCycle(record: LedgerRecord | null | undefined): number {
   const value = Number(record?.attendanceFinanceCycle);
-  return Number.isSafeInteger(value) && value >= 1 && value <= 10_000 ? value : 1;
+  return Number.isSafeInteger(value) && value >= 1 ? value : 1;
 }
 
 export function attendanceWalletCycleKeys(
@@ -57,7 +57,8 @@ function voidWasCausedByAttendance(record: LedgerRecord): boolean {
   // Backward compatible with automated October cutover voids, which wrote
   // only status: void and voidedAt. The *known* manual void flows always
   // supply a nonempty reason and are therefore protected here.
-  return reason === '' || reason === 'attendance_marked_non_billable';
+  return (reason === '' && Boolean(record.voidedAt)) ||
+    reason === 'attendance_marked_non_billable';
 }
 
 export function mayReopenAttendanceVoidedLedgers(input: {
