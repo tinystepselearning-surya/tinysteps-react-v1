@@ -8,7 +8,7 @@ import {
 } from "../../pages/parent/parentClassSessionReadPolicy";
 
 describe("parent class session read policy", () => {
-  it("keeps operational reads to the current month plus the next 14 days", () => {
+  it("reads only today through the next 14 days, never the previous current-month sessions", () => {
     expect(PARENT_UPCOMING_CLASS_DAYS).toBe(14);
     expect(
       resolveParentClassSessionDateBounds({
@@ -17,7 +17,7 @@ describe("parent class session read policy", () => {
         now: new Date(2026, 7, 24, 10, 30),
       }),
     ).toEqual({
-      startKey: "2026-08-01",
+      startKey: "2026-08-24",
       endKey: "2026-09-07",
     });
   });

@@ -372,13 +372,13 @@ describe('rolling schedule Brick 4 due-edge worker', () => {
     expect(source).not.toContain('every 5 minutes');
   });
 
-  it('registers the daily rolling worker while retaining legacy implementation code only behind compatibility routing', () => {
+  it('retires the daily rolling worker while preserving timetable compatibility code', () => {
     const indexSource = readFileSync(resolve(process.cwd(), 'functions/src/index.ts'), 'utf8');
     const finiteSchedulerSource = readFileSync(
       resolve(process.cwd(), 'functions/src/createSessionsFromSchedule.ts'),
       'utf8',
     );
-    expect(indexSource).toContain('rollingScheduleEdgeReplenisherDaily');
+    expect(indexSource).not.toContain('rollingScheduleEdgeReplenisherDaily');
     expect(indexSource).toContain('from "./scheduling/rollingScheduleCompatibility"');
     expect(finiteSchedulerSource).toContain('saveEnrollmentScheduleAndGenerateSessions');
     expect(finiteSchedulerSource).toContain('plannedSessions');

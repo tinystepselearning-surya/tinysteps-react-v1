@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { RETIRED_SESSION_FUNCTIONS } from './deployment/session-retirement-lib.mjs';
 import { appendFile, readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
-import { classifyArtifactChanges, resolveFunctionsImpact } from './deployment/functions-impact-lib.mjs';
+import { buildDependencyGraph, classifyArtifactChanges, resolveFunctionsImpact } from './deployment/functions-impact-lib.mjs';
 import { SCHOOL_BROWSER_CALLABLES } from './school-callable-contract.mjs';
 import { AVS_BROWSER_CALLABLES } from './avs-callable-contract.mjs';
 
@@ -124,9 +125,16 @@ const result = {
     ? 'production-functions-baseline-missing-or-invalid'
     : functionsResult.fullDeploymentReason,
   impactedFunctions: forceFunctionsFull ? [] : functionsResult.impactedFunctions,
-  retiredFunctions: forceFunctionsFull ? [] : functionsResult.retiredFunctions,
+  retiredFunctions: functionsResult.retiredFunctions,
   reasons: forceFunctionsFull ? {} : functionsResult.reasons,
 };
+if (forceFunctionsFull) {
+  // Parse actual export roots; comments naming retired endpoints are irrelevant.
+  const currentRoots = buildDependencyGraph(sourceSnapshot(sha)).roots;
+  if (RETIRED_SESSION_FUNCTIONS.every(id => !currentRoots.has(id))) {
+    result.retiredFunctions = [...RETIRED_SESSION_FUNCTIONS];
+  }
+}
 const targetsCsv = result.impactedFunctions.join(',');
 const schoolCallables = new Set(SCHOOL_BROWSER_CALLABLES);
 const avsCallables = new Set(AVS_BROWSER_CALLABLES);

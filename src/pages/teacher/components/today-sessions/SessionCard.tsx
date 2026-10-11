@@ -16,22 +16,13 @@ import {
   resolveTeacherSessionCourseLabel,
 } from '../../utils/resolveTeacherSessionStudentName';
 import { SessionResourcesDialog } from './SessionResourcesDialog';
+import { resolveTodaySessionStatusBadge } from './todaySessionViewState';
 
 interface SessionCardProps {
   session: TeacherSession;
   studentNames?: string[];
   onMarkAttendance: (session: TeacherSession) => void;
 }
-
-const statusMap: Record<
-  TeacherSession['status'],
-  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
-> = {
-  scheduled: { label: 'Scheduled', variant: 'secondary' },
-  in_progress: { label: 'In Progress', variant: 'default' },
-  completed: { label: 'Completed', variant: 'outline' },
-  reschedule_requested: { label: 'Rescheduled', variant: 'destructive' },
-};
 
 export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance }) => {
   const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
@@ -195,8 +186,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Badge variant={statusMap[session.status]?.variant || 'secondary'}>
-              {statusMap[session.status]?.label || 'Scheduled'}
+            <Badge variant={resolveTodaySessionStatusBadge(session).variant}>
+              {resolveTodaySessionStatusBadge(session).label}
             </Badge>
             {isLiveNow && (
               <Badge className="border border-emerald-300 bg-emerald-100 text-emerald-900">

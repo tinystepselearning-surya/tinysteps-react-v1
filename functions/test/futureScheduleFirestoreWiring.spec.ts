@@ -87,16 +87,19 @@ describe('Brick 5 production Firestore wiring', () => {
     ].forEach((field) => expect(source).toContain(`'${field}'`));
   });
 
-  it('exports only the two intended Brick 5 production entry points', () => {
+  it('removes retired automatic Firestore and two-hour scheduler roots from production', () => {
     const indexSource = readFileSync(
       resolve(process.cwd(), 'functions/src/index.ts'),
       'utf8',
     );
 
-    expect(indexSource).toContain('onFutureScheduleEnrollmentWrite');
-    expect(indexSource).toContain('futureScheduleReconcilerEveryTwoHours');
+    expect(indexSource).not.toContain('onFutureScheduleEnrollmentWrite');
+    expect(indexSource).not.toContain('futureScheduleReconcilerEveryTwoHours');
     expect(indexSource).not.toContain('prepareFutureScheduleExecution } from');
     expect(indexSource).not.toContain('executeFutureScheduleReconciliation } from');
+    // Explicit teacher attendance and its financial triggers must stay deployed.
+    expect(indexSource).toContain('ensureTeacherCalendarAttendanceSession');
+    expect(indexSource).toContain('onSessionRevenueWrite');
   });
 
   it('keeps enrollment-trigger recursion isolated from scheduleMaterialization pointer writes', () => {

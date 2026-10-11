@@ -1,6 +1,25 @@
 import { getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
 import { TeacherSession } from '../../../../types/Teacher';
 
+export type TodaySessionBadge = {
+  label: string;
+  variant: 'default' | 'secondary' | 'destructive' | 'outline';
+};
+
+/** UI-only status: persisted attendance can be Absent with session.status=scheduled. */
+export const resolveTodaySessionStatusBadge = (session: TeacherSession): TodaySessionBadge => {
+  const statuses = Object.values(session.attendance || {}).map(value =>
+    typeof value === 'string' ? value : value?.status || '',
+  ).map(value => String(value || '').trim().toLowerCase()).filter(Boolean);
+  if (statuses.length > 0 && statuses.every(status => status === 'absent')) {
+    return { label: 'Absent', variant: 'outline' };
+  }
+  if (session.status === 'completed') return { label: 'Completed', variant: 'outline' };
+  if (session.status === 'in_progress') return { label: 'In Progress', variant: 'default' };
+  if (session.status === 'reschedule_requested') return { label: 'Rescheduled', variant: 'destructive' };
+  return { label: 'Scheduled', variant: 'secondary' };
+};
+
 export const TEACHER_ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
 const SOON_WINDOW_MS = 60 * 60 * 1000;
 

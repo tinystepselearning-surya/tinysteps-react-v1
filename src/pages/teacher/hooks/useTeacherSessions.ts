@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { collection, doc, documentId, orderBy, query, where } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
-import { getDocLogged, getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
+import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
+import { getCachedTeacherEnrollmentSnapshots, teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -25,6 +26,7 @@ interface UseTeacherSessionsResult {
   sessions: TeacherSession[];
   isLoading: boolean;
   error: Error | null;
+  refresh: () => void;
 }
 
 const devLogTeacherQuery = (
@@ -515,6 +517,11 @@ export const useTeacherSessions = (
   const [sessions, setSessions] = useState<TeacherSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(Boolean(teacherId) || includeAllTeachers);
   const [error, setError] = useState<Error | null>(null);
+  const [manualRefresh, setManualRefresh] = useState(0);
+  const refresh = () => {
+    if (teacherId) teacherCalendarSessionReadCache.invalidateTeacher(teacherId);
+    setManualRefresh(previous => previous + 1);
+  };
 
   // A tab left open overnight must switch its Today listener at IST midnight.
   const [todayYmd, setTodayYmd] = useState(() =>
@@ -541,6 +548,17 @@ export const useTeacherSessions = (
     const today = todayYmd;
     const start = startDate || today;
     const end = endDate || today;
+    // Routine teacher calendars do not pull historical attendance. History
+    // and earned totals are displayed from their separate monthly read models.
+    if (end < today) {
+      setSessions([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+    const readWindow = includeAllTeachers
+      ? { start, end }
+      : teacherCalendarReadWindow(end, today);
 
     const baseCollection = collection(db, 'classSessions');
     const teacherKey = toCleanText(teacherId);
@@ -551,16 +569,16 @@ export const useTeacherSessions = (
     ) => query(
       baseCollection,
       where(field, operator, teacherKey),
-      where('date', '>=', start),
-      where('date', '<=', end),
+      where('date', '>=', readWindow.start),
+      where('date', '<=', readWindow.end),
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc'),
     );
     const primaryQuery = includeAllTeachers || !teacherKey
       ? query(
           baseCollection,
-          where('date', '>=', start),
-          where('date', '<=', end),
+          where('date', '>=', readWindow.start),
+          where('date', '<=', readWindow.end),
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         )
@@ -571,7 +589,7 @@ export const useTeacherSessions = (
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
     // Cache enrollment snapshots for this listener lifetime; repeated session
     // changes should not re-hydrate the same enrollment documents.
-    const enrollmentCache=new Map<string,Record<string,unknown>>();
+    const enrollmentCache = teacherKey ? getCachedTeacherEnrollmentSnapshots(teacherKey) : new Map<string, Record<string, unknown>>();
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
     ]);
@@ -686,63 +704,52 @@ export const useTeacherSessions = (
       todayDate,
       dateRange: { start, end },
     });
-    const unsubscribe = onSnapshotLogged(
-      'useTeacherSessions:primary',
-      primaryQuery,
-      { source: 'src/pages/teacher/hooks/useTeacherSessions.ts' },
-      (snapshot) => {
+    const unsubscribe = teacherCalendarSessionReadCache.subscribe(
+      { teacherId: includeAllTeachers ? '__all__' : teacherKey, ...readWindow },
+      async () => {
+        const snapshot = await getDocsLogged(
+          'useTeacherSessions:primary',
+          primaryQuery,
+          { source: 'src/pages/teacher/hooks/useTeacherSessions.ts' },
+        );
+        return snapshot.docs.map(d =>
+          toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }));
+      },
+      rows => {
         devLogTeacherQuery('useTeacherSessions', 'snapshot', {
           queryName: 'primary',
           collection: 'classSessions',
-          aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
           teacherUid: teacherKey || null,
-          todayDate,
           dateRange: { start, end },
-          docsReturned: snapshot.docs.length,
+          docsReturned: rows.length,
+          source: 'manual_refresh_cache',
         });
         sourceStates.set('primary', { status: 'ready', error: null });
-        liveDocsBySource.set(
-          'primary',
-          new Map(
-            snapshot.docs.map((d) => [
-              d.id,
-              toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }),
-            ]),
-          ),
-        );
+        liveDocsBySource.set('primary', new Map(rows
+          .filter(row => String(row.date || '') >= start && String(row.date || '') <= end)
+          .map(row => [row.id, row])));
         publishMergedRows();
       },
-      (err) => {
-        devLogTeacherQuery('useTeacherSessions', 'error', {
-          queryName: 'primary',
-          collection: 'classSessions',
-          aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
-          teacherUid: teacherKey || null,
-          todayDate,
-          dateRange: { start, end },
-          error: err instanceof Error ? err.message : String(err),
-          code: (err as any)?.code || null,
-        });
+      err => {
         if (cancelled) return;
         sourceStates.set('primary', {
           status: 'error',
           error: createTeacherSessionError(
-            'Unable to load today\'s sessions. One or more teacher session queries were denied.',
-            (err as any)?.code || null,
+            'Unable to load teacher class exceptions. Use Refresh to try again.',
+            (err as {code?:string})?.code || null,
           ),
         });
         liveDocsBySource.set('primary', new Map());
         setSettledState();
       },
     );
-
     return () => {
       cancelled = true;
       unsubscribe();
     };
-  }, [teacherId, startDate, endDate, includeAllTeachers, todayYmd]);
+  }, [teacherId, startDate, endDate, includeAllTeachers, todayYmd, manualRefresh]);
 
   const sortedSessions = useMemo(() => sortSessions(sessions), [sessions]);
 
-  return { sessions: sortedSessions, isLoading, error };
+  return { sessions: sortedSessions, isLoading, error, refresh };
 };
