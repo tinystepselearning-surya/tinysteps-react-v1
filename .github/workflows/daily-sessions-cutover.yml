@@ -9,6 +9,9 @@ on:
       - 'functions/test/nextDaySessionPlan.spec.ts'
       - 'src/pages/admin/TodaysNotifications.tsx'
       - 'src/pages/admin/todaysNotificationsManualData.ts'
+      - 'src/pages/admin/StudentManagement/StudentList.tsx'
+      - 'src/pages/admin/StudentManagement/AssignCourseModal.tsx'
+      - 'src/tests/pages/RollingScheduleAdminCutover.spec.ts'
       - 'src/tests/pages/TodaysNotificationsSnapshot.spec.ts'
       - '.github/workflows/daily-sessions-cutover.yml'
   workflow_dispatch:
@@ -38,7 +41,7 @@ jobs:
       - name: Planner and admin regression tests
         run: |
           npx vitest run --config functions/vitest.config.ts functions/test/nextDaySessionPlan.spec.ts
-          npx vitest run src/tests/pages/TodaysNotificationsSnapshot.spec.ts src/tests/pages/TodaysNotifications.spec.tsx
+          npx vitest run src/tests/pages/TodaysNotificationsSnapshot.spec.ts src/tests/pages/TodaysNotifications.spec.tsx src/tests/pages/RollingScheduleAdminCutover.spec.ts
       - name: Verify client TypeScript
         run: npm run typecheck
       - name: No production deployment
