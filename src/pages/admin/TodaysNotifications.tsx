@@ -170,7 +170,7 @@ interface ResolvedUserDoc {
 }
 
 const TIMEZONE = 'Asia/Kolkata';
-const SESSIONS_MANAGEMENT_REFRESH_HOUR = 4;
+// Today/Tomorrow now follow the IST calendar day (midnight, not the old 4 AM snapshot).
 const USER_PHONE_FIELDS: UserPhoneField[] = ['phone', 'mobile', 'contactNumber', 'whatsappPhone'];
 const COUNTRY_OPTIONS = [
   { id: 'IN', code: '+91', label: 'India (+91)' },
@@ -318,9 +318,7 @@ const getKolkataDateKey = (date: Date = new Date()): string => {
 };
 
 const getSessionsManagementBaselineDateKey = (date: Date = new Date()): string =>
-  getKolkataDateKey(
-    new Date(date.getTime() - SESSIONS_MANAGEMENT_REFRESH_HOUR * 60 * 60 * 1000),
-  );
+  getKolkataDateKey(date);
 
 const shiftDateKeyByDays = (dateKey: string, dayDelta: number): string => {
   const [year, month, day] = String(dateKey)
