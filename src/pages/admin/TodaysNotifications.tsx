@@ -2321,9 +2321,9 @@ export default function TodaysNotifications() {
         { merge: true },
       );
 
-      setUsersMap((prev) => {
-        const nextMap: Record<string, ResolvedUserDoc> = { ...prev };
-        Object.keys(nextMap).forEach((lookupKey) => {
+      const updateUserPhoneInMap = (source: Record<string, ResolvedUserDoc>) => {
+        const nextMap: Record<string, ResolvedUserDoc> = { ...source };
+        Object.keys(nextMap).forEach(lookupKey => {
           const existing = nextMap[lookupKey];
           if (!existing || existing.docId !== editingPhone.userDocId) return;
           nextMap[lookupKey] = {
@@ -2339,7 +2339,16 @@ export default function TodaysNotifications() {
           };
         });
         return nextMap;
-      });
+      };
+      setUsersMap(current => updateUserPhoneInMap(current));
+      // Explicit local edits stay visible while switching tabs, without reads.
+      reminderUsersCacheRef.current = updateUserPhoneInMap(reminderUsersCacheRef.current);
+      if (overallAdmissionsCacheRef.current) {
+        overallAdmissionsCacheRef.current = {
+          ...overallAdmissionsCacheRef.current,
+          usersMap: updateUserPhoneInMap(overallAdmissionsCacheRef.current.usersMap),
+        };
+      }
 
       setEditingPhone(null);
       toast({ title: 'Phone updated', description: `Saved ${nextWhatsappE164} as the WhatsApp-ready number.` });
