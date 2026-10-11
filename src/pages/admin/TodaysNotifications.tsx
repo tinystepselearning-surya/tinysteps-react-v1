@@ -5,7 +5,6 @@ import {
   documentId,
   getDocs,
   limit,
-  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -70,9 +69,7 @@ import PhoneNumberEditorDialog from './components/PhoneNumberEditorDialog';
 import { PHONE_COUNTRY_OPTIONS } from '../../lib/phoneCountryOptions';
 import {
   getCachedSessionsManagementRowsForReadLabel,
-  getCachedSessionsManagementSnapshot,
   loadSessionsManagementSnapshot,
-  clearSessionsManagementSnapshotCache,
   isSessionsManagementAuthorizationFailure,
   isSessionsManagementTransientFailure,
   subscribeSessionsManagementSnapshotInvalidation,
@@ -1213,11 +1210,17 @@ export default function TodaysNotifications() {
   const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
   const [cancellingManualSessionId, setCancellingManualSessionId] = useState('');
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
-  const [projectionRefreshNonce, setProjectionRefreshNonce] = useState(0);
   const reminderReadCacheRef = useRef(new ManualReminderReadCache<EnrollmentDoc, ManualReminderSessionDoc>());
   const reminderUsersCacheRef = useRef<Record<string, ResolvedUserDoc>>({});
   const handledReminderRefreshNonceRef = useRef(0);
-  const lastProjectionSignalRef = useRef('');
+  const handledAdmissionsRefreshNonceRef = useRef(0);
+  const overallAdmissionsCacheRef = useRef<{
+    enrollments: EnrollmentDoc[];
+    enrollmentMap: Record<string, Record<string, any>>;
+    usersMap: Record<string, ResolvedUserDoc>;
+    kidMap: Record<string, KidDoc>;
+    courseMap: Record<string, CourseDoc>;
+  } | null>(null);
   const displayedActorUidRef = useRef(user?.uid || null);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
@@ -1230,6 +1233,7 @@ export default function TodaysNotifications() {
     adminEnrollmentCache = null;
     reminderReadCacheRef.current.useActor(uid);
     reminderUsersCacheRef.current = {};
+    overallAdmissionsCacheRef.current = null;
     setSessions([]);
     setEnrollments([]);
     setUsersMap({});
@@ -1239,7 +1243,6 @@ export default function TodaysNotifications() {
     setMessageDrafts({});
     setMessageEditor(null);
     setSessionLoadError(null);
-    lastProjectionSignalRef.current = '';
   }, [user?.uid]);
 
   // Firebase's UID-change callback runs before the store resolves token claims.
@@ -1248,6 +1251,7 @@ export default function TodaysNotifications() {
     adminEnrollmentCache = null;
     reminderReadCacheRef.current.invalidate();
     reminderUsersCacheRef.current = {};
+    overallAdmissionsCacheRef.current = null;
     setSessions([]);
     setEnrollments([]);
     setUsersMap({});
@@ -1257,13 +1261,11 @@ export default function TodaysNotifications() {
     setMessageDrafts({});
     setMessageEditor(null);
     setSessionLoadError(null);
-    lastProjectionSignalRef.current = '';
   }), []);
 
   const [todayDateKey, setTodayDateKey] = useState(() =>
     getSessionsManagementBaselineDateKey(),
   );
-  const todayDateKeyRef = useRef(todayDateKey);
   const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
   const todayLabel = useMemo(() => {
     const baselineDate = dateFromYmdKey(todayDateKey);
@@ -1294,98 +1296,6 @@ export default function TodaysNotifications() {
     if (upcomingSpecificDate) return;
     setUpcomingSpecificDate(tomorrowDateKey);
   }, [mode, upcomingSpecificDate, tomorrowDateKey]);
-
-  useEffect(() => {
-    // The cutover's Today/Tomorrow sessions never observe the legacy projection
-    // and never re-request the full Sessions Management snapshot.
-    if (mode !== 'overall-admissions') return;
-    let active = true;
-    const actorUid = user?.uid || null;
-    const actorActive = () => active && Boolean(actorUid) && auth.currentUser?.uid === actorUid;
-    const invalidateVisibleRows = () => {
-      clearSessionsManagementSnapshotCache();
-      setSessions([]);
-      setEnrollments([]);
-      setUsersMap({});
-      setKidMap({});
-      setEnrollmentMap({});
-      setCourseMap({});
-      setMessageDrafts({});
-      setMessageEditor(null);
-      setSessionLoadError('Your Sessions Management access must be verified again.');
-    };
-    const projectionStateRef = doc(db, 'adminSessionsManagement', 'projectionState');
-    const unsubscribe = onSnapshot(
-      projectionStateRef,
-      (snapshot) => {
-        if (!actorActive()) return;
-        if (!snapshot.exists()) return;
-        const data = snapshot.data() || {};
-        const revision = Math.max(0, Number(data.revision || 0));
-        const snapshotId = String(data.snapshotId || '').trim();
-        const signal = `${snapshotId}:${revision}`;
-        const previousSignal = lastProjectionSignalRef.current;
-        lastProjectionSignalRef.current = signal;
-
-        const cached = getCachedSessionsManagementSnapshot();
-        const cachedSignal = cached
-          ? `${cached.snapshotId}:${cached.projectionRevision}`
-          : '';
-
-        const nextBaselineDateKey = getSessionsManagementBaselineDateKey();
-        const previousBaselineDateKey = todayDateKeyRef.current;
-        if (previousBaselineDateKey !== nextBaselineDateKey) {
-          const previousTomorrowDateKey = shiftDateKeyByDays(previousBaselineDateKey, 1);
-          const nextTomorrowDateKey = shiftDateKeyByDays(nextBaselineDateKey, 1);
-          todayDateKeyRef.current = nextBaselineDateKey;
-          setTodayDateKey(nextBaselineDateKey);
-          setUpcomingSpecificDate((selected) =>
-            !selected || selected === previousTomorrowDateKey
-              ? nextTomorrowDateKey
-              : selected,
-          );
-        }
-
-        if (!previousSignal && (!cachedSignal || cachedSignal === signal)) return;
-        if (previousSignal === signal && cachedSignal === signal) return;
-
-        void (async () => {
-          try {
-            await loadSessionsManagementSnapshot();
-            if (!actorActive()) return;
-            const refreshed = getCachedSessionsManagementSnapshot();
-            const refreshedSignal = refreshed
-              ? `${refreshed.snapshotId}:${refreshed.projectionRevision}`
-              : '';
-            if (refreshedSignal !== signal) {
-              await loadSessionsManagementSnapshot();
-            }
-            if (actorActive()) setProjectionRefreshNonce((value) => value + 1);
-          } catch (error) {
-            if (!actorActive()) return;
-            if (isSessionsManagementAuthorizationFailure(error)) {
-              invalidateVisibleRows();
-              return;
-            }
-            console.warn('[TodaysNotifications] projection reload temporarily failed');
-          }
-        })();
-      },
-      (error) => {
-        if (!actorActive()) return;
-        if (isSessionsManagementAuthorizationFailure(error)) {
-          invalidateVisibleRows();
-          return;
-        }
-        console.warn('[TodaysNotifications] projection listener failed');
-      },
-    );
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [user?.uid, mode]);
 
   useEffect(() => {
     if (isNotificationActionsEnabled) return;
@@ -1577,7 +1487,6 @@ export default function TodaysNotifications() {
   }, [
     mode,
     reminderRefreshNonce,
-    projectionRefreshNonce,
     todayDateKey,
     tomorrowDateKey,
     upcomingSpecificDate,
@@ -1609,15 +1518,29 @@ export default function TodaysNotifications() {
   useEffect(() => {
     if (mode !== 'overall-admissions') return;
     let active = true;
+    const cached = overallAdmissionsCacheRef.current;
+    if (cached) {
+      setEnrollments(cached.enrollments);
+      setEnrollmentMap(cached.enrollmentMap);
+      setUsersMap(cached.usersMap);
+      setKidMap(cached.kidMap);
+      setCourseMap(cached.courseMap);
+      setIsLoading(false);
+      return () => { active = false; };
+    }
     setIsLoading(true);
     setSessions([]);
+    const manualRefresh = admissionsRefreshNonce !== handledAdmissionsRefreshNonceRef.current;
+    if (manualRefresh) handledAdmissionsRefreshNonceRef.current = admissionsRefreshNonce;
 
     const loadAdmissions = async () => {
       try {
-        let cachedAdmissionRows = getCachedSessionsManagementRowsForReadLabel(
-          'TodaysNotifications:overall-admissions',
-        );
-        if (cachedAdmissionRows === null) {
+        let cachedAdmissionRows = manualRefresh
+          ? null
+          : getCachedSessionsManagementRowsForReadLabel(
+              'TodaysNotifications:overall-admissions',
+            );
+        if (cachedAdmissionRows === null && !manualRefresh) {
           // A persisted revision hint is not displayable until authorized.
           // Revalidate the existing projected snapshot before any raw-read
           // fallback to avoid fetching the entire enrollment collection.
@@ -1665,6 +1588,11 @@ export default function TodaysNotifications() {
         });
 
         setEnrollmentMap(nextEnrollmentMap);
+        overallAdmissionsCacheRef.current = {
+          enrollments: nextEnrollments,
+          enrollmentMap: nextEnrollmentMap,
+          usersMap: {}, kidMap: {}, courseMap: {},
+        };
 
         const userRefs = Array.from(new Set([...parentRefs, ...teacherRefs]));
         try {
@@ -1686,6 +1614,12 @@ export default function TodaysNotifications() {
           setUsersMap(nextUsersMap);
           setKidMap(nextKidMap);
           setCourseMap(nextCourseMap);
+          if (overallAdmissionsCacheRef.current) {
+            overallAdmissionsCacheRef.current = {
+              ...overallAdmissionsCacheRef.current,
+              usersMap: nextUsersMap, kidMap: nextKidMap, courseMap: nextCourseMap,
+            };
+          }
         } catch (enrichmentError) {
           console.warn(
             '[TodaysNotifications] admissions profile enrichment failed; keeping snapshot rows visible',
@@ -1709,7 +1643,7 @@ export default function TodaysNotifications() {
     return () => {
       active = false;
     };
-  }, [admissionsRefreshNonce, mode, projectionRefreshNonce, user?.uid, toast]);
+  }, [admissionsRefreshNonce, mode, user?.uid, toast]);
 
   const rows = useMemo(() => {
     return sessions
@@ -2582,6 +2516,15 @@ export default function TodaysNotifications() {
                 adminEnrollmentCache = null;
                 reminderReadCacheRef.current.invalidate();
                 reminderUsersCacheRef.current = {};
+                overallAdmissionsCacheRef.current = null;
+                const latestToday = getSessionsManagementBaselineDateKey();
+                if (todayDateKey !== latestToday) {
+                  const previousTomorrowDateKey = shiftDateKeyByDays(todayDateKey, 1);
+                  const nextTomorrowDateKey = shiftDateKeyByDays(latestToday, 1);
+                  setTodayDateKey(latestToday);
+                  setUpcomingSpecificDate(selected =>
+                    !selected || selected === previousTomorrowDateKey ? nextTomorrowDateKey : selected);
+                }
                 setReminderRefreshNonce(value => value + 1);
               }}
             >
@@ -2592,7 +2535,13 @@ export default function TodaysNotifications() {
               size="sm"
               variant="outline"
               className="h-7 px-3 text-xs"
-              onClick={() => setAdmissionsRefreshNonce((value) => value + 1)}
+              onClick={() => {
+                overallAdmissionsCacheRef.current = null;
+                adminEnrollmentCache = null;
+                reminderReadCacheRef.current.invalidate();
+                reminderUsersCacheRef.current = {};
+                setAdmissionsRefreshNonce(value => value + 1);
+              }}
             >
               Refresh admissions
             </Button>
