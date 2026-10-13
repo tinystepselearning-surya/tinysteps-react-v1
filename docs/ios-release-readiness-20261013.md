@@ -10,7 +10,12 @@ Base: `main` at `ce678402df89388cbfd3f07aec6cf30348767467`.
 
 ## Work completed in this branch
 - Capacitor AppLauncher dependency, native SwiftPM registration, iOS query scheme and Business-specific reminder launcher.
-- AuthBootstrap role restoration corrections and unit regression coverage.
+- AuthBootstrap role restoration corrections, fail-closed temporary role-claims recovery, and unit regression coverage.
+
+## Audit fix: actual iOS build gate
+- `.github/workflows/ios-native-package.yml` builds full production web assets, runs `npx cap sync ios`, checks that the bundled public index and configuration exist, and compiles `App` for iOS Simulator on a macOS GitHub Actions runner with code signing disabled.
+- A passing simulator compile is **not** a signed TestFlight IPA or physical-device proof. Native plugin behavior, signing, provisioning and App Store Connect release remain gated.
+- Session-restoration role-claims errors now leave users in initializing/existing authenticated state with a Retry action, rather than silently substituting kid role.
 
 ## Critical outstanding device verification
 **Persistent login after force-close is not yet proven fixed.** Firebase Web SDK currently stores its native WebView credentials through IndexedDB/localStorage. Use Xcode's existing `[auth-diagnostics]` messages, with no token or PII logging, to compare:
@@ -29,6 +34,6 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 ## Release checklist
 1. Pass typecheck, focused tests, frontend build, and any relevant iOS/build CI.
 2. On a Mac with Xcode: `npm ci && npm run build && npm run cap:sync:ios && npm run cap:open:ios`.
-3. Check Swift Package Manager resolution, APNs, routes, safe areas, calendar, session, attendance, billing and Android/web parity.
+3. Check successful macOS/Xcode simulator compilation in PR CI, then separately verify physical-device APNs, routes, safe areas, calendar, session, attendance, billing and Android/web parity.
 4. Set `MARKETING_VERSION` and increment `CURRENT_PROJECT_VERSION` only after confirming the last App Store Connect build (avoid duplicate build numbers).
 5. TestFlight smoke test on existing installations; archive and submit only after review. No Firebase backend deployment is required by these changes.

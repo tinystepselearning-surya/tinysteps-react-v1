@@ -113,6 +113,15 @@ export default function AuthBootstrap() {
               ? (error as { code: string }).code
               : undefined;
           console.warn('[auth-bootstrap] claims:error', { code });
+          // A transient claims/network failure is NOT a logout and must not
+          // reinterpret an admin/parent/teacher as a kid. Keep the previously
+          // authenticated session (if any) and offer a retry instead.
+          if (active && currentVersion === callbackVersion) {
+            useAuthStore.getState().setAuthRecoveryError(
+              'We could not verify your access. Check your connection and retry session restore.',
+            );
+          }
+          return;
         }
 
         if (!active || currentVersion !== callbackVersion) return;
