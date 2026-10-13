@@ -19,7 +19,7 @@ permissions:
 jobs:
   ios-simulator-package:
     name: Bundle latest web and compile Capacitor iOS app
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -27,10 +27,17 @@ jobs:
         with:
           node-version: 22.22.1
           cache: npm
-      - name: Inspect Xcode toolchain
+      - name: Require Apple-supported Xcode 26+ toolchain
+        shell: bash
         run: |
+          set -euo pipefail
           xcodebuild -version
           swift --version
+          major="$(xcodebuild -version | awk '/^Xcode / { split($2, parts, "."); print parts[1] }')"
+          if [[ -z "$major" ]] || (( major < 26 )); then
+            echo "::error::Capacitor 8 and App Store uploads require Xcode 26 or newer."
+            exit 1
+          fi
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
       - name: Produce deploy-equivalent Vite bundle
