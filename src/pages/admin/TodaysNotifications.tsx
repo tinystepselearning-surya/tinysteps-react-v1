@@ -46,6 +46,7 @@ import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import { openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
+import { sanitizeWhatsAppMessage } from '../../lib/whatsAppUrl';
 import {
   isEnrollmentOperationallyActive,
   isManualSession,
