@@ -1,0 +1,59 @@
+name: iOS Client Regression
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/common/AuthBootstrap.tsx'
+      - 'src/lib/firebaseConfig.ts'
+      - 'src/lib/whatsAppBusinessLauncher.ts'
+      - 'src/pages/admin/TodaysNotifications.tsx'
+      - 'src/tests/components/AuthBootstrap.spec.tsx'
+      - 'src/tests/lib/whatsAppBusinessLauncher.spec.ts'
+      - 'src/tests/lib/firebaseAuthPersistence.spec.ts'
+      - 'src/tests/lib/nativeAuthDiagnostics.spec.ts'
+      - 'ios/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-client-regressions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-client-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Auth restoration and WhatsApp Business regression tests
+        run: |
+          npx vitest run \
+            src/tests/components/AuthBootstrap.spec.tsx \
+            src/tests/lib/authPersistenceLogin.spec.ts \
+            src/tests/lib/firebaseAuthPersistence.spec.ts \
+            src/tests/lib/nativeAuthDiagnostics.spec.ts \
+            src/tests/lib/whatsAppBusinessLauncher.spec.ts \
+            src/tests/lib/whatsAppUrl.spec.ts \
+            src/tests/pages/TodaysNotificationsManualRefresh.spec.ts
+      - name: Vite production bundle smoke test (no Firebase deploy)
+        run: npx vite build
+      - name: Verify iOS Capacitor plugin wiring
+        run: |
+          node --input-type=module -e "
+          import fs from 'node:fs';
+          const plist = fs.readFileSync('ios/App/App/Info.plist', 'utf8');
+          const spm = fs.readFileSync('ios/App/CapApp-SPM/Package.swift', 'utf8');
+          if (!plist.includes('<string>whatsapp-business</string>')) process.exit(1);
+          if (!spm.includes('CapacitorAppLauncher')) process.exit(1);
+          "
+          echo 'Native Simulator / dual-install WhatsApp verification remains a manual TestFlight gate.'
