@@ -40,6 +40,8 @@ jobs:
           fi
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
+      - name: Install Chromium needed by production prerender
+        run: npx playwright install chromium
       - name: Produce deploy-equivalent Vite bundle
         run: npm run build:deploy
       - name: Sync frontend and native plugins
