@@ -45,11 +45,7 @@ import { useToast } from '@components/hooks/use-toast';
 import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
-import {
-  buildWhatsAppUrl,
-  sanitizeWhatsAppMessage,
-  sanitizeWhatsAppPhone,
-} from '../../lib/whatsAppUrl';
+import { openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
 import {
   isEnrollmentOperationallyActive,
   isManualSession,
@@ -2001,34 +1997,27 @@ export default function TodaysNotifications() {
   }, [statusFilter, statusOptions]);
 
   const openWhatsApp = (phone: string, message: string) => {
-    const sanitizedPhone = sanitizeWhatsAppPhone(phone);
-    if (!sanitizedPhone) {
+    // Intentional manual handoff: opening a chat must not mark it "notified".
+    void openSessionReminderWhatsApp(phone, message).then((result) => {
+      if (result === 'opened') return;
+      const descriptions = {
+        'invalid-phone': 'Add a valid phone number to use WhatsApp reminders.',
+        'invalid-message': 'Add reminder text before opening WhatsApp.',
+        'business-unavailable': 'WhatsApp Business is not available on this iPhone. Install it before sending reminders.',
+        'launch-failed': 'Could not open WhatsApp Business. Please try again.',
+      } as const;
       toast({
-        title: 'No phone number',
-        description: 'Add a valid phone number to use WhatsApp reminder.',
+        title: result === 'business-unavailable' ? 'WhatsApp Business required' : 'WhatsApp reminder not opened',
+        description: descriptions[result],
         variant: 'destructive',
       });
-      return;
-    }
-    const sanitizedMessage = sanitizeWhatsAppMessage(message);
-    if (!sanitizedMessage) {
+    }).catch(() => {
       toast({
-        title: 'No reminder message',
-        description: 'Add reminder text before opening WhatsApp.',
+        title: 'WhatsApp reminder not opened',
+        description: 'Could not open WhatsApp Business. Please try again.',
         variant: 'destructive',
       });
-      return;
-    }
-    const url = buildWhatsAppUrl(sanitizedPhone, sanitizedMessage);
-    if (import.meta.env.DEV) {
-      console.info('[TodaysNotifications] openWhatsApp', {
-        sanitizedPhone,
-        message: sanitizedMessage,
-        encodedMessage: encodeURIComponent(sanitizedMessage),
-        url,
-      });
-    }
-    window.open(url, '_blank', 'noopener,noreferrer');
+    });
   };
 
   const openMeetingLink = (url: string) => {

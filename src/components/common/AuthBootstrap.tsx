@@ -87,12 +87,23 @@ export default function AuthBootstrap() {
         // before the asynchronous claims lookup or route transition.
         observeSessionsManagementAuthUid(firebaseUser.uid);
 
-        let role: AuthRole = 'kid';
+        // The profile cache never authenticates a user: it only preserves a
+        // non-admin UI role after Firebase has restored the SAME account.
+        // Some legacy accounts have no role custom claim (login supplies the
+        // role), so defaulting to "kid" after every cold start is incorrect.
+        const cachedUser = useAuthStore.getState().user;
+        let role: AuthRole =
+          cachedUser?.uid === firebaseUser.uid && cachedUser.role !== 'admin'
+            ? cachedUser.role
+            : 'kid';
         try {
           const tokenResult = await firebaseUser.getIdTokenResult();
           const normalizedRole = normalizeAuthRole(tokenResult.claims.role);
 
-          if (normalizedRole) {
+          if (tokenResult.claims.admin === true || normalizedRole === 'admin') {
+            role = 'admin';
+          } else if (normalizedRole) {
+            // Explicit current claims always win over a cached role.
             role = normalizedRole;
           }
         } catch (error) {
