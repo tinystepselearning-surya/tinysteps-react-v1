@@ -37,3 +37,12 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 3. Check successful macOS/Xcode simulator compilation in PR CI, then separately verify physical-device APNs, routes, safe areas, calendar, session, attendance, billing and Android/web parity.
 4. Set `MARKETING_VERSION` and increment `CURRENT_PROJECT_VERSION` only after confirming the last App Store Connect build (avoid duplicate build numbers).
 5. TestFlight smoke test on existing installations; archive and submit only after review. No Firebase backend deployment is required by these changes.
+
+## iOS 27 physical-device launch blocker — confirmed and patched
+- iPhone 16 Plus initially presented a black screen and Xcode emitted:
+  `_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption: Application failed to launch`.
+- Root cause: native app only used `@UIApplicationMain` AppDelegate; `UIApplicationSceneManifest`, `SceneDelegate.swift`, and scene creation were absent.
+- Patch introduces a single scene-managed `CAPBridgeViewController`, forwards incoming URL/universal links via existing Capacitor 8.3 ApplicationDelegateProxy, preserves AppDelegate push-notification handling, and registers the Swift file in the Xcode target.
+- CI adds launch-lifecycle wiring assertions. **Unsigned Simulator compilation does not establish a successful on-device launch.** Rebuild using Xcode 27 and physically verify rendering, login persistence, push and URL handling.
+- Current branch is pinned to Capacitor 8.3.x. Future upgrade to Capacitor 8.5+ should replace the compatibility forwarding with official `SceneDelegateProxy` and receive an independent regression pass.
+- On existing Mac clone: `git pull --ff-only`, `npx cap sync ios`, reopen Xcode if needed, Product > Clean Build Folder, Run on physical iPhone.

@@ -54,6 +54,17 @@ jobs:
           test -s ios/App/App/capacitor.config.json
           test -d ios/App/App/public/assets
           grep -q 'CapacitorAppLauncher' ios/App/CapApp-SPM/Package.swift
+          # The pre-iOS-27 Xcode compile was previously green while launch failed.
+          # Require the scene manifest, single controller, and Xcode source target membership.
+          test -s ios/App/App/SceneDelegate.swift
+          grep -q 'SceneDelegate.swift in Sources' ios/App/App.xcodeproj/project.pbxproj
+          grep -q 'configurationForConnecting' ios/App/App/AppDelegate.swift
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UIApplicationSceneManifest:UISceneConfigurations:UIWindowSceneSessionRoleApplication:0:UISceneConfigurationName' ios/App/App/Info.plist)" = 'Default Configuration'
+          /usr/libexec/PlistBuddy -c 'Print :UIApplicationSceneManifest:UISceneConfigurations:UIWindowSceneSessionRoleApplication:0:UISceneDelegateClassName' ios/App/App/Info.plist | grep -F 'SceneDelegate'
+          if /usr/libexec/PlistBuddy -c 'Print :UIMainStoryboardFile' ios/App/App/Info.plist 2>/dev/null; then
+            echo '::error::Legacy main storyboard key must not create a second UIKit window'
+            exit 1
+          fi
           /usr/libexec/PlistBuddy -c 'Print :LSApplicationQueriesSchemes:0' ios/App/App/Info.plist |
             grep -Fx 'whatsapp-business'
           echo 'Capacitor iOS contains synchronized web assets and Business launcher plugin'
