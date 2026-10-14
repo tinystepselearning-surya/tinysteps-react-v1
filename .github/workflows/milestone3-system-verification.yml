@@ -3,6 +3,9 @@ name: Milestone 3 System Verification
 on:
   pull_request:
     paths:
+      - 'src/tests/functions/sessionRevenuePresentLatePolicy.spec.ts'
+      - 'src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts'
+      - 'src/tests/scheduling/RollingScheduleCompatibilityContract.spec.ts'
       - 'scripts/milestone3-*.mjs'
       - 'scripts/test/milestone3-*.node-test.mjs'
       - 'functions/test/milestone3*.spec.ts'
