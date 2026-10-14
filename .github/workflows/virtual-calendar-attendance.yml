@@ -2,6 +2,7 @@ name: Virtual Calendar Attendance Review
 on:
   pull_request:
     paths:
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_OPERATIONAL_STEP2_VERIFICATION.md'
       - 'functions/src/scheduling/teacherCalendarActions.ts'
       - '.github/workflows/virtual-calendar-emulator-stage1.yml'
       - 'functions/src/onSessionComplete.ts'
