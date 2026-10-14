@@ -107,8 +107,10 @@ describe('Wave 1 current-user authorization invariant', () => {
     );
     expect(parentStudents).not.toMatch(/collection\((['"])users\1\)/);
 
+    // Session completion reads the same live user document through a direct UID path.
+    expect(sessionComplete).toContain('db.doc(`users/${uid}`).get()');
+
     for (const source of [
-      sessionComplete,
       parentWorksheets,
       classReminders,
       teacherProgress,

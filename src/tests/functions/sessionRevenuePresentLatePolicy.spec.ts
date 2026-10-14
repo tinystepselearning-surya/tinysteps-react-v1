@@ -43,9 +43,22 @@ describe('Finance Brick 6 legacy Present/Late compatibility routing', () => {
     expect(adminCorrectionSource).not.toContain("const isBillableNow = newStatus === 'present';");
   });
 
-  it('preserves paid parent and teacher reversal guards for historical Late-to-non-earned corrections', () => {
-    expect(adminCorrectionSource).toContain('This charge already has payment applied. Reverse payment allocation first.');
-    expect(adminCorrectionSource).toContain('This teacher earning is already paid. Reverse payout allocation first.');
+  it('routes settled parent charges and teacher earnings to review before any reversal', () => {
+    const settlementGuard = adminCorrectionSource.match(
+      /if \(\(chargeSnap\.exists &&[\s\S]*?return needsFinanceReview\(SETTLED_ATTENDANCE_REVIEW_REASON\);\s*\}/,
+    )?.[0] ?? '';
+
+    expect(adminCorrectionSource).toContain(
+      "const SETTLED_ATTENDANCE_REVIEW_REASON = 'attendance_correction_settled_ledger';",
+    );
+    expect(settlementGuard).toContain('chargePaidAmount > 0');
+    expect(settlementGuard).toContain('earningPaidAmount > 0');
+    expect(settlementGuard).toContain('hasAttendanceFinanceSettlementEvidence(chargeData)');
+    expect(settlementGuard).toContain('hasAttendanceFinanceSettlementEvidence(earningData)');
+    expect(settlementGuard).toContain('return needsFinanceReview(SETTLED_ATTENDANCE_REVIEW_REASON);');
+    expect(adminCorrectionSource).toContain(
+      "return {action: 'review_required', chargeChanged: false, earningChanged: false, reviewReason: reason};",
+    );
   });
 
   it('lets the historical completion bridge process both Present and Late through the canonical helper', () => {

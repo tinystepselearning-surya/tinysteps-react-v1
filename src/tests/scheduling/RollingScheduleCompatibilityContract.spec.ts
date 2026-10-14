@@ -42,7 +42,16 @@ describe('rolling schedule Brick 0 compatibility contract', () => {
         classesView: 'today',
         now,
       }),
-    ).toEqual({ startKey: '2026-09-01', endKey: '2026-09-24' });
+    ).toEqual({ startKey: '2026-09-10', endKey: '2026-09-24' });
+
+    // The operational window is aligned to India service dates, not UTC midnight.
+    expect(
+      resolveParentClassSessionDateBounds({
+        activeTab: 'dashboard',
+        classesView: 'today',
+        now: new Date('2026-09-09T18:30:00.000Z'),
+      }),
+    ).toEqual({ startKey: '2026-09-10', endKey: '2026-09-24' });
 
     expect(
       resolveParentClassSessionDateBounds({
