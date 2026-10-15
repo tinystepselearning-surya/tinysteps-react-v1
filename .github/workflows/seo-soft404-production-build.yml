@@ -1,0 +1,43 @@
+name: SEO Soft 404 Production Build Gate
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'scripts/seo-rendered-html-check.mjs'
+      - 'scripts/seo-route-integrity.mjs'
+      - 'scripts/soft404-prerender-policy.mjs'
+      - 'scripts/test/seo-soft404-prerender.node-test.mjs'
+      - '.github/workflows/seo-soft404-production-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seo-soft404-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-hosting-build:
+    name: Production artifact + Soft 404 guards (no deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout PR source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Check new Soft 404 guard tests
+        run: node --test scripts/test/seo-soft404-prerender.node-test.mjs
+      - name: Build production Hosting artifact and validate prerendered SEO
+        run: npm run build:deploy
+      - name: No deployment
+        run: echo "Validation complete. This workflow cannot publish Firebase Hosting or change production."
