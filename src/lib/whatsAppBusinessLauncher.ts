@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { AppLauncher } from '@capacitor/app-launcher';
+import { Share } from '@capacitor/share';
 import {
   buildWhatsAppUrl,
   sanitizeWhatsAppMessage,
@@ -50,4 +51,21 @@ export async function openSessionReminderWhatsApp(
   // the navigation succeeded. Do not mark reminders sent from this outcome.
   void opened;
   return 'opened';
+}
+
+/**
+ * Presents an iOS share sheet. The operator must explicitly choose WhatsApp
+ * Business, select/verify the recipient and send. Resolving does not establish
+ * delivery; callers must never write 'notified' state from this result.
+ */
+export async function openIOSReminderShareSheet(message: string): Promise<boolean> {
+  const text = sanitizeWhatsAppMessage(message);
+  if (!text) return false;
+  try {
+    await Share.share({ title: 'Tiny Steps class reminder', text });
+    return true;
+  } catch {
+    // User cancelled or the OS could not present the share sheet.
+    return false;
+  }
 }
