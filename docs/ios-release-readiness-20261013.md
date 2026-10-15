@@ -55,3 +55,11 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 - Physical iPhone acceptance: verify 320/375/390/430px widths (no clipped controls or horizontal page pan), scroll down each of the three Sessions modes, exercise every action including confirmation flags, and ensure the persistent bottom navigation remains visible.
 - WhatsApp acceptance: try Business-only, both apps, personal-only and neither. Check destination, pre-filled message, and which app actually opens. Mark direct Business launch as unverified until observed; if it fails use the explicit manual Business handoff and consider a future iOS share-extension integration following UX review.
 - No iOS IPA has been signed or shipped. Do not merge solely on Simulator compilation or GitHub green checks.
+
+## 15 October compact Sessions cards and WhatsApp Business follow-up
+- The phone Sessions view now shows Student / Parent and Course / Teacher in two-column rows beneath the session time and status, with wrapping labels. Session type and row Actions remain accessible.
+- The non-working Parent Notified / Teacher Notified checkboxes are removed from the **mobile cards**. Existing desktop checkboxes and stored data are preserved; do not infer delivery from tapping Notify or choosing a share target.
+- The third-party `whatsapp-business://` URL failed on the user's actual iPhone. An iOS Share sheet action now offers an OS-supported chooser. Operator copies the recipient phone number, taps **Share message using iOS**, explicitly selects **WhatsApp Business**, selects and confirms the recipient, and sends manually. If Business is absent in the share sheet, copying message/number is the fallback. Do not suggest or silently use personal WhatsApp.
+- Because `@capacitor/share` is a new native plugin, macOS installation requires `npm ci --ignore-scripts`, `npx cap sync ios`, Xcode package resolution and a fresh iPhone build, not just a web reload.
+- Before marking WhatsApp fixed, verify Business appears as a share destination on the real iPhone and that it accepts reminder text. Automatic recipient selection and delivery status are not supported or claimed.
+- No production deployments, Firestore changes, or signed TestFlight release performed.
