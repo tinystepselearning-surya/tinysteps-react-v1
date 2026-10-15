@@ -55,5 +55,6 @@ jobs:
           const spm = fs.readFileSync('ios/App/CapApp-SPM/Package.swift', 'utf8');
           if (!plist.includes('<string>whatsapp-business</string>')) process.exit(1);
           if (!spm.includes('CapacitorAppLauncher')) process.exit(1);
+          if (!spm.includes('CapacitorShare')) process.exit(1);
           "
           echo 'Native Simulator / dual-install WhatsApp verification remains a manual TestFlight gate.'
