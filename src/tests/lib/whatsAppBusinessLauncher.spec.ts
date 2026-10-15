@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { canOpenUrlMock, openUrlMock, isNativePlatformMock, getPlatformMock } = vi.hoisted(() => ({
+const { canOpenUrlMock, openUrlMock, shareMock, isNativePlatformMock, getPlatformMock } = vi.hoisted(() => ({
+  shareMock: vi.fn(),
   canOpenUrlMock: vi.fn(),
   openUrlMock: vi.fn(),
   isNativePlatformMock: vi.fn(),
@@ -9,10 +10,11 @@ const { canOpenUrlMock, openUrlMock, isNativePlatformMock, getPlatformMock } = v
 vi.mock('@capacitor/app-launcher', () => ({
   AppLauncher: { canOpenUrl: canOpenUrlMock, openUrl: openUrlMock },
 }));
+vi.mock('@capacitor/share', () => ({ Share: { share: shareMock } }));
 vi.mock('@capacitor/core', () => ({
   Capacitor: { isNativePlatform: isNativePlatformMock, getPlatform: getPlatformMock },
 }));
-import { openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
+import { openIOSReminderShareSheet, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
 
 describe('Sessions Management WhatsApp Business handoff', () => {
   beforeEach(() => {
@@ -21,6 +23,7 @@ describe('Sessions Management WhatsApp Business handoff', () => {
     getPlatformMock.mockReturnValue('ios');
     canOpenUrlMock.mockResolvedValue({ value: true });
     openUrlMock.mockResolvedValue({ completed: true });
+    shareMock.mockResolvedValue({ activityType: '' });
   });
 
   it('uses the Business-specific scheme with full international number and encoded text', async () => {
@@ -53,6 +56,23 @@ describe('Sessions Management WhatsApp Business handoff', () => {
     expect(await openSessionReminderWhatsApp('123', 'Reminder')).toBe('invalid-phone');
     expect(await openSessionReminderWhatsApp('+91 98765 43210', ' ')).toBe('invalid-message');
     expect(canOpenUrlMock).not.toHaveBeenCalled();
+  });
+
+  it('presents iOS chooser with reminder text and does not pre-select personal WhatsApp', async () => {
+    const message = 'Parent reminder: tomorrow 7pm';
+    expect(await openIOSReminderShareSheet(message)).toBe(true);
+    expect(shareMock).toHaveBeenCalledWith({
+      title: 'Tiny Steps class reminder',
+      text: message,
+    });
+    expect(openUrlMock).not.toHaveBeenCalled();
+  });
+
+  it('does not treat cancelled or empty iOS shares as sent', async () => {
+    shareMock.mockRejectedValue(new Error('User cancelled'));
+    expect(await openIOSReminderShareSheet('Reminder')).toBe(false);
+    expect(await openIOSReminderShareSheet(' ')).toBe(false);
+    expect(shareMock).toHaveBeenCalledOnce();
   });
 
   it('preserves existing browser wa.me links', async () => {
