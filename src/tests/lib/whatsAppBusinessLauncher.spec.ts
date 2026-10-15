@@ -26,24 +26,27 @@ describe('Sessions Management WhatsApp Business handoff', () => {
     shareMock.mockResolvedValue({ activityType: '' });
   });
 
-  it('uses the Business-specific scheme with full international number and encoded text', async () => {
+  it('uses the iPhone-verified official chat link directly with international number and message', async () => {
     const message = 'Hello Anaya!\nClass at 6:30 PM 😊 & Teams';
     expect(await openSessionReminderWhatsApp('+91 98765 43210', message)).toBe('opened');
     expect(canOpenUrlMock).not.toHaveBeenCalled();
+    expect(openUrlMock).toHaveBeenCalledOnce();
     const url = openUrlMock.mock.calls[0][0].url as string;
-    expect(url).toMatch(/^whatsapp-business:\/\/send\?/);
     const parsed = new URL(url);
-    expect(parsed.searchParams.get('phone')).toBe('919876543210');
+    expect(parsed.origin).toBe('https://wa.me');
+    expect(parsed.pathname).toBe('/919876543210');
     expect(parsed.searchParams.get('text')).toBe(message);
+    expect(shareMock).not.toHaveBeenCalled();
   });
 
-  it('does not infer missing installation from canOpenUrl and never switches to personal WhatsApp', async () => {
+  it('does not use unreliable canOpenUrl checks or silently open an alternate scheme', async () => {
     canOpenUrlMock.mockResolvedValue({ value: false });
     openUrlMock.mockResolvedValue({ completed: false });
     const webOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-    expect(await openSessionReminderWhatsApp('+91 98765 43210', 'Reminder')).toBe('business-unavailable');
+    expect(await openSessionReminderWhatsApp('+91 98765 43210', 'Reminder')).toBe('launch-failed');
     expect(canOpenUrlMock).not.toHaveBeenCalled();
     expect(openUrlMock).toHaveBeenCalledOnce();
+    expect((openUrlMock.mock.calls[0][0].url as string)).toMatch(/^https:\/\/wa\.me\//);
     expect(webOpen).not.toHaveBeenCalled();
   });
 
@@ -58,7 +61,7 @@ describe('Sessions Management WhatsApp Business handoff', () => {
     expect(canOpenUrlMock).not.toHaveBeenCalled();
   });
 
-  it('opens official wa.me recipient-prefilled link only after explicit user choice', async () => {
+  it('opens official wa.me recipient-prefilled link on explicit Notify or fallback actions', async () => {
     const message = 'Hello, class today at 5 PM 😊 & please join';
     expect(await openIOSWhatsAppChatLink('+1 (437) 830-1543', message)).toBe('opened');
     const url = openUrlMock.mock.calls[0][0].url as string;
