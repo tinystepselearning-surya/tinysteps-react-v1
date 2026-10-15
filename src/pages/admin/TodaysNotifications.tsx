@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Share } from '@capacitor/share';
 import {
   collection,
   doc,
@@ -2029,6 +2030,24 @@ export default function TodaysNotifications() {
     }
   };
 
+  const shareReminderWithIOS = async () => {
+    if (!failedBusinessReminder) return;
+    try {
+      // The iOS share sheet allows the operator to select WhatsApp Business.
+      // Sharing does not prove delivery and must never change Firestore flags.
+      await Share.share({
+        title: 'Tiny Steps class reminder',
+        text: failedBusinessReminder.message,
+      });
+    } catch {
+      toast({
+        title: 'Unable to open the iOS Share sheet',
+        description: 'Copy the message and send it from WhatsApp Business manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const openMeetingLink = (url: string) => {
     const trimmed = String(url || '').trim();
     if (!trimmed) return;
@@ -2814,18 +2833,30 @@ export default function TodaysNotifications() {
                     </div>
                     <span className="max-w-full rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize">{row.statusLabel}</span>
                   </div>
-                  <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">Student</p>
-                  <p className="break-words text-base font-semibold">{row.studentLabel}</p>
-                  <dl className="mt-3 grid min-w-0 gap-2 text-sm">
-                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Parent</dt><dd className="break-words">{row.parentName || 'Parent'}</dd></div>
-                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Teacher</dt><dd className="break-words">{row.teacherName || 'Teacher'}</dd></div>
-                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Course / Subject</dt><dd className="break-words">{row.courseLabel || '—'}</dd></div>
-                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Session type</dt>
-                      <dd><span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${toSessionTypeStyle(row.sessionTypeLabel || 'Regular')}`}>
-                        {row.sessionTypeLabel || 'Regular'}
-                      </span></dd>
+                  <dl className="mt-3 grid min-w-0 grid-cols-2 gap-x-3 gap-y-3 border-t border-slate-100 pt-3 text-sm">
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">Student</dt>
+                      <dd className="break-words font-semibold text-slate-900">{row.studentLabel}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">Parent</dt>
+                      <dd className="break-words">{row.parentName || 'Parent'}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">Course / Subject</dt>
+                      <dd className="break-words">{row.courseLabel || '—'}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-muted-foreground">Teacher</dt>
+                      <dd className="break-words">{row.teacherName || 'Teacher'}</dd>
                     </div>
                   </dl>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Session type:{' '}
+                    <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${toSessionTypeStyle(row.sessionTypeLabel || 'Regular')}`}>
+                      {row.sessionTypeLabel || 'Regular'}
+                    </span>
+                  </p>
                   {isNotificationActionsEnabled ? (
                     <>
                       <div className="mt-4 grid grid-cols-2 gap-2">
@@ -2868,20 +2899,6 @@ export default function TodaysNotifications() {
                             ) : null}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-3 rounded-xl bg-slate-50 p-3 text-xs">
-                        <label className="inline-flex min-h-7 cursor-pointer items-center gap-2">
-                          <input type="checkbox" className="h-5 w-5 rounded" checked={Boolean(row.parentNotified)}
-                            disabled={Boolean(savingFlags[`${row.id}:parent`])}
-                            onChange={(event) => void handleNotifiedToggle(row.id, 'parent', event.target.checked)} />
-                          Parent notified
-                        </label>
-                        <label className="inline-flex min-h-7 cursor-pointer items-center gap-2">
-                          <input type="checkbox" className="h-5 w-5 rounded" checked={Boolean(row.teacherNotified)}
-                            disabled={Boolean(savingFlags[`${row.id}:teacher`])}
-                            onChange={(event) => void handleNotifiedToggle(row.id, 'teacher', event.target.checked)} />
-                          Teacher notified
-                        </label>
                       </div>
                     </>
                   ) : null}
@@ -3350,10 +3367,11 @@ export default function TodaysNotifications() {
 
       <Dialog open={Boolean(failedBusinessReminder)} onOpenChange={(open) => { if (!open) setFailedBusinessReminder(null); }}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
-          <DialogHeader><DialogTitle>Open WhatsApp Business manually</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Share via WhatsApp Business</DialogTitle></DialogHeader>
           <p className="text-sm text-slate-600">
-            The Business-only link could not be opened. This does not prove WhatsApp Business is uninstalled.
-            To avoid accidentally using personal WhatsApp, open Business yourself, verify the recipient, paste the reminder and send.
+            The Business-only link is unsupported on this iPhone. Copy the recipient number, then tap Share message.
+            In the iOS Share sheet choose <strong>WhatsApp Business</strong> (not personal WhatsApp), select the correct recipient,
+            review the message, and send it yourself.
           </p>
           <div className="min-w-0 space-y-2">
             <p className="text-xs font-semibold text-slate-500">Recipient number</p>
@@ -3361,9 +3379,10 @@ export default function TodaysNotifications() {
             <Button type="button" variant="outline" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.phone || '', 'Number')}>Copy number</Button>
             <p className="pt-2 text-xs font-semibold text-slate-500">Reminder message</p>
             <p className="max-h-[30vh] select-text overflow-y-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.message}</p>
-            <Button type="button" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.message || '', 'Message')}>Copy message</Button>
+            <Button type="button" className="min-h-11 w-full" onClick={() => void shareReminderWithIOS()}>Share message using iOS</Button>
+            <Button type="button" variant="outline" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.message || '', 'Message')}>Copy message instead</Button>
           </div>
-          <p className="text-xs text-slate-500">Opening a chat does not send the reminder. Tick Notified only after sending.</p>
+          <p className="text-xs text-slate-500">Choosing an app or opening a chat does not prove the reminder was sent.</p>
         </DialogContent>
       </Dialog>
 
