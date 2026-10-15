@@ -33,6 +33,8 @@ These are expectations inferred from **current compatibility Firestore Rules** a
 | Parent | Own synthetic wallet/session fixture | Other parent's wallet/session + Admin-only fixture denied | 2 different parent owners |
 | Learning Partner | Explicitly assigned school fixture | Unassigned school + Admin-only fixture denied | 2 independently assigned LP/school contexts |
 
+**Initial budget selection:** For the two-context School Admin, Teacher, Parent and Learning Partner pairs, the first negative read tests **cross-context ownership**. The extra Admin-only negative mentioned in the matrix is a separate *optional follow-up* requiring its own owner-approved read allowance; it is **not** part of the initial two-attempt-per-actor run. The Global Admin positive fixture supplies the shared Admin-only resource for other approved actors when separately authorized. Thus the initial ten-actor matrix is at most **19** point reads (one Admin positive plus two per other actor), below the conservative 24-operation ceiling.
+
 **No synthetic Firestore data creation is authorized in production.** Fixtures must already exist and be expressly approved as non-sensitive. Denial checks use only the allowed **read** operation: do not attempt writes even to prove they would be denied. Owner must review exact current Rules for every selected path, including cross-school and legacy/canonical role mapping.
 
 ## 3. Private owner-controlled approval checklist (all currently unchecked)
