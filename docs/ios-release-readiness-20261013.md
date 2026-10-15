@@ -46,3 +46,12 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 - CI adds launch-lifecycle wiring assertions. **Unsigned Simulator compilation does not establish a successful on-device launch.** Rebuild using Xcode 27 and physically verify rendering, login persistence, push and URL handling.
 - Current branch is pinned to Capacitor 8.3.x. Future upgrade to Capacitor 8.5+ should replace the compatibility forwarding with official `SceneDelegateProxy` and receive an independent regression pass.
 - On existing Mac clone: `git pull --ff-only`, `npx cap sync ios`, reopen Xcode if needed, Product > Clean Build Folder, Run on physical iPhone.
+
+## 15 October mobile Sessions Management and Business link follow-up
+- On phone-width layouts, **Today / Tomorrow-Date / Overall Admissions**, Student Updates and Teacher Updates render vertically stacked cards instead of wide tables. Desktop keeps the complete table interface.
+- Phone cards retain the join/copy Teams actions, editable parent/teacher reminder templates, editable phone numbers, teacher notification, manual-session cancellation when applicable, and manual Parent/Teacher notified flags. WhatsApp handoff NEVER marks a notification sent.
+- Tab groups now wrap button labels within phone width; teacher/status/date filters can shrink without forcing sideways scrolling.
+- The dedicated `whatsapp-business://send` scheme is **not an officially guaranteed Meta contract**. The launcher attempts it directly rather than accepting a potentially false-negative `canOpenUrl` result. If launch fails, the app presents a manual copy-number/copy-message handoff to Business; it NEVER falls back to personal Messenger.
+- Physical iPhone acceptance: verify 320/375/390/430px widths (no clipped controls or horizontal page pan), scroll down each of the three Sessions modes, exercise every action including confirmation flags, and ensure the persistent bottom navigation remains visible.
+- WhatsApp acceptance: try Business-only, both apps, personal-only and neither. Check destination, pre-filled message, and which app actually opens. Mark direct Business launch as unverified until observed; if it fails use the explicit manual Business handoff and consider a future iOS share-extension integration following UX review.
+- No iOS IPA has been signed or shipped. Do not merge solely on Simulator compilation or GitHub green checks.
