@@ -1,3 +1,4 @@
+import {resolveEnrollmentSchedulingLifecycleState} from '../statuses';
 import {
   ROLLING_SCHEDULE_TIME_ZONE,
   type RollingScheduleConfigInput,
@@ -12,27 +13,6 @@ export const ROLLING_SCHEDULE_DELIVERY_MODE = 'rolling' as const;
 
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const ACTIVE_STATUS_ALIASES = new Set([
-  '',
-  'active',
-  'trial',
-  'enrolled',
-  'current',
-  'ongoing',
-  'pending_teacher',
-  'pending_payment',
-  'pending_lp',
-]);
-
-const TERMINAL_STATUS_ALIASES = new Set([
-  'completed',
-  'discontinued',
-  'expired',
-  'cancelled',
-  'canceled',
-  'archived',
-  'inactive',
-]);
 
 export type RollingScheduleLifecycleState = 'active' | 'paused' | 'terminal' | 'inactive';
 export type RollingScheduleContractSource = 'canonical_rolling' | 'legacy_compatible' | 'unconfigured';
@@ -89,7 +69,6 @@ const isRecordLike = (value: unknown): value is RecordLike => (
 
 const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
-const normalizeStatus = (value: unknown): string => text(value).toLowerCase();
 
 const isValidYmd = (value: unknown): value is string => {
   const raw = text(value);
@@ -163,18 +142,7 @@ const normalizeMaterializationYmd = (value: unknown): string | null => (
 
 export const resolveRollingScheduleLifecycleState = (
   enrollmentLike: RecordLike | null | undefined,
-): RollingScheduleLifecycleState => {
-  if (!enrollmentLike) return 'inactive';
-  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
-    return 'terminal';
-  }
-
-  const status = normalizeStatus(enrollmentLike.status);
-  if (status === 'paused') return 'paused';
-  if (TERMINAL_STATUS_ALIASES.has(status)) return 'terminal';
-  if (ACTIVE_STATUS_ALIASES.has(status)) return 'active';
-  return 'inactive';
-};
+): RollingScheduleLifecycleState => resolveEnrollmentSchedulingLifecycleState(enrollmentLike);
 
 export const resolveEnrollmentClassesStartDateYmd = (
   enrollmentLike: RecordLike | null | undefined,

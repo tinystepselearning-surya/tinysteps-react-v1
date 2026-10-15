@@ -5,6 +5,7 @@ import {FieldValue} from 'firebase-admin/firestore';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {ensureCanonicalAdmin} from '../helpers/canonicalAdminGuard';
 import {resolveCanonicalTeacherIdForWrite} from '../helpers/teacherIdentity';
+import {isEnrollmentOperationallyActive} from '../helpers/status';
 import {
   ROLLING_SCHEDULE_HORIZON_DAYS,
   addDaysYmd,
@@ -26,17 +27,6 @@ export const ROLLING_SCHEDULE_REPAIR_CONFIRMATION = 'APPLY_ROLLING_SCHEDULE_REPA
 const IST_OFFSET_MINUTES = 330;
 const REPAIR_ACTOR = 'system:rolling_schedule_admin_repair';
 const MAX_DETAIL_ROWS = 100;
-const ACTIVE_STATUS_ALIASES = new Set([
-  '',
-  'active',
-  'trial',
-  'enrolled',
-  'current',
-  'ongoing',
-  'pending_teacher',
-  'pending_payment',
-  'pending_lp',
-]);
 
 export type RollingScheduleRepairAssessment = {
   enrollmentId: string;
@@ -101,11 +91,6 @@ type RepairInput = {
   maxEnrollments?: number;
 };
 
-const optionalText = (value: unknown): string => {
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return '';
-};
 
 const isRecordLike = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -120,10 +105,7 @@ export function resolveRollingScheduleRepairTodayYmd(now = new Date()): string {
 export function isOperationalEnrollmentForRollingRepair(
   enrollment: Record<string, unknown>,
 ): boolean {
-  if (enrollment.archivedAt || enrollment.archived === true || enrollment.isArchived === true) {
-    return false;
-  }
-  return ACTIVE_STATUS_ALIASES.has(optionalText(enrollment.status).toLowerCase());
+  return isEnrollmentOperationallyActive(enrollment);
 }
 
 function validateAnchorYmd(value: string): string {
