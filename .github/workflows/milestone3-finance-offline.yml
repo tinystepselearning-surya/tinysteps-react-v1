@@ -57,7 +57,7 @@ jobs:
           set -euo pipefail
           baseline="$(git merge-base "$BASE_SHA" HEAD)"
           git diff --name-only "$baseline" HEAD > artifacts/finance-offline/changed-paths.txt
-          unexpected="$(grep -Ev '^(functions/test/milestone3Finance[^/]*\.spec\.ts|functions/test/support/finance[^/]*\.ts|functions/test/finance-pagination\.tsconfig\.json|docs/architecture/wave-1/IDENTITY_R5_M3_FINANCE_PAGINATION_OFFLINE_REPORT\.md|docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW\.md|\.github/workflows/milestone3-finance-offline\.yml)$' artifacts/finance-offline/changed-paths.txt || true)"
+          unexpected="$(grep -Ev '^(functions/test/milestone3Finance[^/]*\.spec\.ts|functions/test/support/finance[^/]*\.ts|functions/test/finance-pagination\.tsconfig\.json|docs/architecture/wave-1/IDENTITY_R5_M3_FINANCE_PAGINATION_OFFLINE_REPORT\.md|docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW\.md|\.github/workflows/milestone3-firestore-finance\.yml|\.github/workflows/milestone3-finance-offline\.yml)$' artifacts/finance-offline/changed-paths.txt || true)"
           if test -n "$unexpected"; then echo 'Unexpected path in offline-only finance PR'; exit 1; fi
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee artifacts/finance-offline/deployment-impact.txt
           grep -q 'Functions deployment required: false' artifacts/finance-offline/deployment-impact.txt
