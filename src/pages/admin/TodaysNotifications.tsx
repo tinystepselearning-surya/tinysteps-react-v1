@@ -1,5 +1,4 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Share } from '@capacitor/share';
 import {
   collection,
   doc,
@@ -46,7 +45,7 @@ import { useToast } from '@components/hooks/use-toast';
 import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
-import { openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
+import { openIOSReminderShareSheet, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
 import { sanitizeWhatsAppMessage } from '../../lib/whatsAppUrl';
 import {
   isEnrollmentOperationallyActive,
@@ -2032,17 +2031,13 @@ export default function TodaysNotifications() {
 
   const shareReminderWithIOS = async () => {
     if (!failedBusinessReminder) return;
-    try {
-      // The iOS share sheet allows the operator to select WhatsApp Business.
-      // Sharing does not prove delivery and must never change Firestore flags.
-      await Share.share({
-        title: 'Tiny Steps class reminder',
-        text: failedBusinessReminder.message,
-      });
-    } catch {
+    // Present the native app chooser. Never mark the reminder as notified
+    // merely because a share target was selected.
+    const opened = await openIOSReminderShareSheet(failedBusinessReminder.message);
+    if (!opened) {
       toast({
-        title: 'Unable to open the iOS Share sheet',
-        description: 'Copy the message and send it from WhatsApp Business manually.',
+        title: 'Share sheet closed',
+        description: 'You can copy the message and send it from WhatsApp Business manually.',
         variant: 'destructive',
       });
     }
