@@ -217,8 +217,13 @@ function needsUpdate(existing: Enrollment, target: Enrollment): boolean {
 }
 
 function patchExisting(payload: Enrollment, actorId: string): Enrollment {
-  const {createdAt: _createdAt, createdBy: _createdBy,
-    status: _status, attendance: _attendance, ...mutable} = payload;
+  // Preserve the prior exclusion of immutable and attended fields without
+  // introducing unused destructured bindings (no functional change).
+  const mutable = {...payload};
+  delete mutable.createdAt;
+  delete mutable.createdBy;
+  delete mutable.status;
+  delete mutable.attendance;
   return {
     ...mutable,
     teacherName: payload.teacherName || FieldValue.delete(),
