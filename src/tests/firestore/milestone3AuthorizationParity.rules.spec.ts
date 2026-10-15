@@ -45,8 +45,11 @@ async function seed() {
       ['parent-a', 'parent', 'active', {}],
       ['parent-b', 'parent', 'active', {}],
       ['teacher-a', 'teacher', 'active', {}],
+      ['teacher-b', 'teacher', 'active', {}],
       ['lp-a', 'learningPartner', 'active', {}],
+      ['lp-b', 'learningPartner', 'active', {}],
       ['school-a-admin', 'schoolAdmin', 'active', {}],
+      ['school-b-admin', 'schoolAdmin', 'active', {}],
     ] as const) {
       await setDoc(doc(db, 'users', id), {uid: id, role, status, ...extra});
     }
@@ -67,10 +70,11 @@ async function seed() {
     await setDoc(doc(db, 'parentWallets', 'parent-b'), {
       amount: 50,
     });
-    for (const id of ['school-a', 'school-b']) {
+    for (const [id, partner] of [['school-a', 'lp-a'], ['school-b', 'lp-b']]) {
       await setDoc(doc(db, 'schools', id), {
         name: id,
         status: 'active',
+        learningPartnerId: partner,
       });
     }
     await setDoc(doc(db, 'schoolUsers', 'school-a-admin'), {
@@ -78,6 +82,19 @@ async function seed() {
       status: 'active',
       schoolIds: ['school-a'],
     });
+    await setDoc(doc(db, 'schoolUsers', 'school-b-admin'), {
+      role: 'schoolAdmin',
+      status: 'active',
+      schoolIds: ['school-b'],
+    });
+    for (const [id, teacherId, parentId] of [
+      ['session-a', 'teacher-a', 'parent-a'],
+      ['session-b', 'teacher-b', 'parent-b'],
+    ]) {
+      await setDoc(doc(db, 'classSessions', id), {
+        teacherId, parentId, status: 'scheduled', date: '2026-10-12',
+      });
+    }
     await setDoc(doc(db, 'billingCharges', 'charge-a'), {
       parentId: 'parent-a',
       amount: 400,
@@ -120,6 +137,50 @@ suite('Milestone 3 current Firestore Rules / canonical Admin parity characteriza
     await assertSucceeds(getDoc(doc(db, 'schools', 'school-a')));
     await assertFails(getDoc(doc(db, 'schools', 'school-b')));
     await assertFails(getDoc(doc(db, 'adminSessionsManagement', 'projectionState')));
+  });
+
+  it('isolates both School Admin tenants and both Learning Partner assignments', async () => {
+    await seed();
+    for (const [actor, ownSchool, otherSchool] of [
+      ['school-a-admin', 'school-a', 'school-b'],
+      ['school-b-admin', 'school-b', 'school-a'],
+    ]) {
+      const db = context(actor, {role: 'schoolAdmin'});
+      await assertSucceeds(getDoc(doc(db, 'schools', ownSchool)));
+      await assertFails(getDoc(doc(db, 'schools', otherSchool)));
+      await assertFails(getDoc(doc(db, 'adminSessionsManagement', 'projectionState')));
+    }
+    for (const [actor, ownSchool, otherSchool] of [
+      ['lp-a', 'school-a', 'school-b'],
+      ['lp-b', 'school-b', 'school-a'],
+    ]) {
+      const db = context(actor, {role: 'learningPartner'});
+      await assertSucceeds(getDoc(doc(db, 'schools', ownSchool)));
+      await assertFails(getDoc(doc(db, 'schools', otherSchool)));
+      await assertFails(getDoc(doc(db, 'adminSessionsManagement', 'projectionState')));
+    }
+  });
+
+  it('enforces two independent Teacher and Parent ownership contexts', async () => {
+    await seed();
+    for (const [actor, ownSession, otherSession] of [
+      ['teacher-a', 'session-a', 'session-b'],
+      ['teacher-b', 'session-b', 'session-a'],
+    ]) {
+      const db = context(actor, {role: 'teacher'});
+      await assertSucceeds(getDoc(doc(db, 'classSessions', ownSession)));
+      await assertFails(getDoc(doc(db, 'classSessions', otherSession)));
+    }
+    for (const [actor, ownSession, otherSession, ownWallet, otherWallet] of [
+      ['parent-a', 'session-a', 'session-b', 'parent-a', 'parent-b'],
+      ['parent-b', 'session-b', 'session-a', 'parent-b', 'parent-a'],
+    ]) {
+      const db = context(actor, {role: 'parent'});
+      await assertSucceeds(getDoc(doc(db, 'classSessions', ownSession)));
+      await assertFails(getDoc(doc(db, 'classSessions', otherSession)));
+      await assertSucceeds(getDoc(doc(db, 'parentWallets', ownWallet)));
+      await assertFails(getDoc(doc(db, 'parentWallets', otherWallet)));
+    }
   });
 
   it('keeps parent wallets owner-scoped and denies unrelated teacher/LP access', async () => {
