@@ -56,6 +56,7 @@ jobs:
         run: |
           node scripts/milestone3-canary-read-safety-preflight.mjs --output=artifacts/milestone3-canary-read-safety.json
           node --test scripts/test/milestone3-canary-read-safety-preflight.node-test.mjs
+          node --test scripts/test/milestone3-canary-outcome-reducer.node-test.mjs
       - name: Build before identity tooling tests
         run: npm --prefix functions run build
       - name: Identity foundation, parity and deployment tooling regressions
