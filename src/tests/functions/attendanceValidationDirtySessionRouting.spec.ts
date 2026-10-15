@@ -35,7 +35,7 @@ describe('AVS changed-session dirty routing', () => {
     expect(progress.slice(teacherTransactionStart, teacherTransactionEnd))
       .toContain('tx.update(sessionRef,sessionUpdate);');
     expect(teacherMarker).toBeGreaterThan(teacherTransactionEnd);
-    expect(adminCommit).toBeGreaterThan(teacherCommit);
+    expect(adminCommit).toBeGreaterThan(teacherTransactionEnd);
     expect(adminMarker).toBeGreaterThan(adminCommit);
     expect(adminMarker).toBeLessThan(adminLogger);
   });
