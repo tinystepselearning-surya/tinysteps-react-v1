@@ -2,6 +2,7 @@ name: Milestone 3 Firestore Finance Consistency
 on:
   pull_request:
     paths:
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW.md'
       - 'functions/test/firestoreFinance/**'
       - 'functions/test/milestone3FirestoreFinance*.spec.ts'
       - 'docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT.md'
@@ -69,7 +70,7 @@ jobs:
           set -euo pipefail
           baseline="$(git merge-base "$BASE_SHA" HEAD)"
           git diff --name-only "$baseline" HEAD > artifacts/firestore-finance/changed-paths.txt
-          unexpected="$(grep -Ev '^(functions/test/firestoreFinance/[^/]+|functions/test/milestone3FirestoreFinance[^/]*\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT\.md|\.github/workflows/milestone3-firestore-finance\.yml)$' artifacts/firestore-finance/changed-paths.txt || true)"
+          unexpected="$(grep -Ev '^(functions/test/firestoreFinance/[^/]+|functions/test/milestone3FirestoreFinance[^/]*\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT\.md|docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW\.md|\.github/workflows/milestone3-firestore-finance\.yml)$' artifacts/firestore-finance/changed-paths.txt || true)"
           if test -n "$unexpected"; then echo 'Unexpected path in emulator-only PR'; exit 1; fi
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee artifacts/firestore-finance/deployment-impact.txt
           grep -q 'Functions deployment required: false' artifacts/firestore-finance/deployment-impact.txt
