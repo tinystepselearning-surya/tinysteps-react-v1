@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {isCanonicalAdminPrincipal} from '../src/helpers/canonicalAdminGuard';
 import {
   parseCurrentAuthAccessPrincipal,
+  principalHasGlobalRole,
   principalHasSchoolAdminAccess,
 } from '../src/schoolOS/identity/authAccessAuthorization';
 import {
@@ -35,6 +36,34 @@ describe('Milestone 3 canonical authorization parity without legacy exceptions',
     expect(isCanonicalAdminPrincipal(principal({globalRoles: ['parent'], superUser: true}))).toBe(false);
     expect(isCanonicalAdminPrincipal(principal({globalRoles: ['founder']}))).toBe(false);
     expect(isCanonicalAdminPrincipal(principal({globalRoles: []}))).toBe(false);
+  });
+
+  it('separates all six roles without implicit global Admin elevation', () => {
+    const roles = ['admin', 'founder', 'teacher', 'parent', 'learningPartner'] as const;
+    for (const role of roles) {
+      const actor = principal({globalRoles: [role], schoolAdminOrganisationIds: []});
+      expect(isCanonicalAdminPrincipal(actor)).toBe(role === 'admin');
+      for (const checkedRole of roles) {
+        expect(principalHasGlobalRole(actor, checkedRole)).toBe(role === checkedRole);
+      }
+      expect(principalHasSchoolAdminAccess(actor, 'school-a')).toBe(false);
+    }
+    const schoolAdmin = principal({globalRoles: [], schoolAdminOrganisationIds: ['school-a']});
+    expect(isCanonicalAdminPrincipal(schoolAdmin)).toBe(false);
+    expect(principalHasSchoolAdminAccess(schoolAdmin, 'school-a')).toBe(true);
+    expect(principalHasSchoolAdminAccess(schoolAdmin, 'school-b')).toBe(false);
+  });
+
+  it('fails closed for inactive Founder, Teacher, Parent and Learning Partner', () => {
+    for (const role of ['founder', 'teacher', 'parent', 'learningPartner'] as const) {
+      const inactive = principal({
+        globalRoles: [role],
+        personStatus: 'suspended',
+        accessActive: false,
+      });
+      expect(principalHasGlobalRole(inactive, role)).toBe(false);
+      expect(isCanonicalAdminPrincipal(inactive)).toBe(false);
+    }
   });
 
   it('never turns scoped school Admin into global Admin', () => {
