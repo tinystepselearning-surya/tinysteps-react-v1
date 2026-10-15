@@ -81,3 +81,24 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 - If the official chat link fails to launch, the manual fallback offers the iOS share sheet with an explicitly chosen Business destination, plus copy-number and copy-message options.
 - Additional device acceptance before merge: verify teacher reminder handoff on same iPhone, repeat tests with regular WhatsApp installed, iPad and another iPhone, check link/message integrity, and verify safe fallback when no compatible app is installed.
 - This is a native iOS branch-only change, not a production release.
+
+## 15 October session persistence / login screen investigation
+**User symptom:** iPhone Tiny Steps appears signed out immediately after closing/force-quitting and reopening; login form is displayed again.
+
+**Confirmed app-code failure:** Capacitor native startup always routes `/` to `/login`, but the previous login entry screens did not wait for Firebase restoration or redirect a verified existing account. A user could therefore see the login form even while Firebase eventually restored their session. New `NativeLoginSessionGate` is applied to generic, Admin, Founder, Teacher, Parent, Learning Partner and School login paths:
+- Auth status `initializing`: show “Restoring your Tiny Steps session…” and wait; no premature credential prompt.
+- Auth status `authenticated` with Firebase-confirmed role/user: redirect to the role's normal route; the existing `RoleGate` still verifies authorization.
+- Auth status `unauthenticated`: show the login form.
+- Marketing/web routes retain their previous behavior. Cached Zustand user data alone **never** authenticates the session.
+
+**Additional code issue:** the strict Surya Admin login path directly called `signInWithEmailAndPassword` without awaiting the native Firebase persistence gate used by other role login paths. It now explicitly awaits that gate before sign-in.
+
+**Persistence experiment:** the prior change on this branch prioritizes Firebase Web SDK `browserLocalPersistence` on native WKWebView, then `indexedDBLocalPersistence`. The SDK handles migration. This is a candidate improvement for WebView storage consistency but the actual device storage loss is **not yet proven**. No refresh token/password is copied into Preferences or localStorage manually, and there is no speculative Keychain workaround.
+
+**Physical iPhone acceptance test (required before merging):**
+1. With app installed *without uninstalling*, sign in to the appropriate workspace and observe dashboard.
+2. Swipe away/force-close the app, relaunch, observe “Restoring…” (possibly briefly) and direct role dashboard without typing credentials.
+3. Repeat after phone reboot, Wi-Fi/offline/online transition and normal Xcode app update.
+4. Confirm explicit Logout still removes the Firebase account; revoked/disabled credentials and wrong-role authorization still deny access; test Admin, Parent and Teacher roles.
+5. If login still appears, collect Xcode logs filtering `[auth-persistence]`, `[auth-bootstrap]`, `[auth-diagnostics]`, `[auth-state]`, `[firebase]` and `[role-gate]` (no credentials, emails, tokens, or student information). Compare `[auth-diagnostics] local-probe` and `preferences-probe` across force-quit. A restored local probe with missing Firebase auth state suggests a different issue from all WebView storage being wiped.
+6. Do not merge or claim fixed solely on GitHub green checks. A secure, reviewed native Firebase Auth / Keychain solution is a separate project **only if** on-device evidence shows WebView persistence is insufficient.
