@@ -45,7 +45,7 @@ import { useToast } from '@components/hooks/use-toast';
 import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
-import { openIOSReminderShareSheet, openIOSWhatsAppChatLink, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
+import { openIOSReminderShareSheet, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
 import { sanitizeWhatsAppMessage } from '../../lib/whatsAppUrl';
 import {
   isEnrollmentOperationallyActive,
@@ -2001,12 +2001,13 @@ export default function TodaysNotifications() {
   }, [statusFilter, statusOptions]);
 
   const openWhatsApp = (phone: string, message: string) => {
-    // Intentional manual handoff: opening a chat must not mark it "notified".
+    // One tap opens the native iPhone-tested wa.me chat composer.
+    // Opening a chat never sends a message or marks it as notified.
     void openSessionReminderWhatsApp(phone, message).then((result) => {
       if (result === 'opened') return;
-      if (result === 'business-unavailable' || result === 'launch-failed') {
-        // This third-party Business scheme is not guaranteed by Meta.
-        // Never silently fall back to a potentially personal WhatsApp account.
+      if (result === 'launch-failed') {
+        // Only display manual Business chooser when the official link fails.
+        // The operator still selects/verifies their Business account.
         setFailedBusinessReminder({ phone, message });
         return;
       }
@@ -2041,22 +2042,6 @@ export default function TodaysNotifications() {
         variant: 'destructive',
       });
     }
-  };
-
-  const openDocumentedWhatsAppLink = async () => {
-    if (!failedBusinessReminder) return;
-    const result = await openIOSWhatsAppChatLink(
-      failedBusinessReminder.phone,
-      failedBusinessReminder.message,
-    );
-    if (result !== 'opened') {
-      toast({
-        title: 'WhatsApp chat link could not be opened',
-        description: 'Choose WhatsApp Business in the iOS Share sheet, or copy the number and reminder manually.',
-        variant: 'destructive',
-      });
-    }
-    // A launched URL is not confirmation of account selection or delivery.
   };
 
   const openMeetingLink = (url: string) => {
@@ -3378,21 +3363,15 @@ export default function TodaysNotifications() {
 
       <Dialog open={Boolean(failedBusinessReminder)} onOpenChange={(open) => { if (!open) setFailedBusinessReminder(null); }}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
-          <DialogHeader><DialogTitle>Send from WhatsApp Business</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Open WhatsApp Business manually</DialogTitle></DialogHeader>
           <p className="text-sm text-slate-600">
-            The Business-only app link did not open. Try the official WhatsApp chat link below to open the recipient
-            with the prepared message. <strong>iOS may choose personal WhatsApp rather than Business.</strong>
-            If personal WhatsApp opens, return without sending and use the iOS Share option to choose Business explicitly.
+            The WhatsApp chat link could not be opened automatically. You can select WhatsApp Business
+            using the iOS share sheet, or copy the recipient number and reminder below.
+            Always confirm the receiving app is <strong>WhatsApp Business</strong> and verify the parent before sending.
           </p>
           <div className="min-w-0 space-y-2">
             <p className="text-xs font-semibold text-slate-500">Recipient number</p>
             <p className="select-text break-all rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.phone}</p>
-            <Button type="button" className="min-h-11 w-full" onClick={() => void openDocumentedWhatsAppLink()}>
-              Open WhatsApp chat link
-            </Button>
-            <p className="text-xs leading-relaxed text-amber-800">
-              Before sending, verify the app is WhatsApp Business and the recipient is correct.
-            </p>
             <Button type="button" variant="outline" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.phone || '', 'Number')}>Copy number</Button>
             <p className="pt-2 text-xs font-semibold text-slate-500">Reminder message</p>
             <p className="max-h-[30vh] select-text overflow-y-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.message}</p>
