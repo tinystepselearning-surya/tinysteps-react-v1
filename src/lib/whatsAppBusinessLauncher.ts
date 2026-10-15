@@ -85,7 +85,7 @@ export async function openIOSWhatsAppChatLink(
 ): Promise<ReminderLaunchResult> {
   const digits = sanitizeWhatsAppPhone(phone);
   const text = sanitizeWhatsAppMessage(message);
-  if (!/^\\d{8,15}$/.test(digits)) return 'invalid-phone';
+  if (!/^\d{8,15}$/.test(digits)) return 'invalid-phone';
   if (!text) return 'invalid-message';
   if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') {
     return 'launch-failed';
