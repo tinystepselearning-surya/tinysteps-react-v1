@@ -63,3 +63,13 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 - Because `@capacitor/share` is a new native plugin, macOS installation requires `npm ci --ignore-scripts`, `npx cap sync ios`, Xcode package resolution and a fresh iPhone build, not just a web reload.
 - Before marking WhatsApp fixed, verify Business appears as a share destination on the real iPhone and that it accepts reminder text. Automatic recipient selection and delivery status are not supported or claimed.
 - No production deployments, Firestore changes, or signed TestFlight release performed.
+
+## 15 October WhatsApp iPhone deep-link research and opt-in chat-link experiment
+- Meta officially documents `https://wa.me/<international-number>?text=<encoded-text>` for iOS as its preferred Click-to-Chat universal link, and `whatsapp://send` for WhatsApp Messenger. It does **not** promise the third-party `whatsapp-business://send` scheme or guaranteed selection of the Business installation.
+- Apple's `UIApplication.open` can open URL handlers and may display app/website routing; opening a URL does not establish which WhatsApp account eventually opens or whether a reminder was sent. Capacitor's `AppLauncher.openUrl` exposes this launch result but not account identity/delivery.
+- Following verified Business-only link failure on iPhone, fallback dialog now offers **Open WhatsApp chat link** that uses the official recipient-prefilled `wa.me` URL. There is no automatic redirect to this link: operator explicitly taps it after seeing prominent warning that personal WhatsApp may open.
+- If iOS selects personal Messenger, **return without sending**. The alternative is **Choose WhatsApp Business via iOS Share**, then manually select/verify recipient, or manually copy number and message.
+- Physical acceptance requirements: test with only Business installed; both Business and Messenger installed; Business available/not available in iOS share sheet. Confirm which app the official `wa.me` route opens and whether the phone/message survive. If Business is not selected, do not enable one-tap direct mode.
+- Deeper future option: fully integrated approved WhatsApp Business Platform messages use a distinct API/account/onboarding/template/consent workflow; they are not an iOS URL-scheme substitute and are out of scope for this manual reminder feature.
+- Sources: https://faq.whatsapp.com/425247423114725/ and https://developer.apple.com/documentation/uikit/uiapplication/open(_:options:completionhandler:).
+- No change to production messaging, Firestore notified flags, user authentication, or existing browser/Android behavior.
