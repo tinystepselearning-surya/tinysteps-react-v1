@@ -241,8 +241,91 @@ function UserTable({
     }
   };
 
+  const renderUserActions = (user: User) => {
+                const deleteBlocked = isHardDeleteProtectedRole(user.role);
+                const lifecycleManaged =
+                  isGenericIdentityManagedRole(user.role);
+                const archived =
+                  String(user.status || '')
+                    .trim()
+                    .toLowerCase() === 'archived';
+                return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="inline-flex items-center gap-1">
+                    Actions
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem
+                    disabled={!lifecycleManaged || archived}
+                    onSelect={() => onEdit(user)}
+                  >
+                    Edit
+                  </DropdownMenuItem>
+                  {archived && lifecycleManaged && (
+                    <DropdownMenuItem
+                      onSelect={() => onReactivate(user)}
+                    >
+                      Reactivate
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onSelect={() => onResetPassword(user)}>
+                    Reset Password
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={!lifecycleManaged || archived}
+                    onSelect={() => onArchive(user)}
+                  >
+                    Archive
+                  </DropdownMenuItem>
+                  {deleteBlocked ? (
+                    <DropdownMenuItem disabled>
+                      Delete disabled (archive only)
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onSelect={() => onDelete(user)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+                );
+  };
+
   return (
-    <Table className="w-full min-w-[1080px] text-sm">
+    <>
+      <div className="grid min-w-0 gap-3 p-3 md:hidden" aria-label="User management mobile cards">
+        {users.map((user) => (
+          <article key={user.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-base font-semibold text-slate-900">{user.name || 'Unnamed user'}</p>
+                <p className="mt-1 break-all text-xs text-slate-600">{user.email || '—'}</p>
+              </div>
+              <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'unknown'}</Badge>
+            </div>
+            <dl className="mt-3 grid min-w-0 grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-xs">
+              <div className="min-w-0">
+                <dt className="text-slate-500">Role</dt>
+                <dd className="mt-1"><Badge variant={getRoleBadgeVariant(user.role)}>{getRoleLabel(user.role)}</Badge></dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-slate-500">Phone</dt>
+                <dd className="mt-1 break-words">{String(user.phone || user.phoneLocal || user.phoneNumber || user.mobile || '—')}</dd>
+              </div>
+            </dl>
+            <div className="mt-3 flex justify-end">{renderUserActions(user)}</div>
+          </article>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
+        <Table className="w-full min-w-[1080px] text-sm">
       <TableHeader>
         <TableRow>
           {([
@@ -342,67 +425,14 @@ function UserTable({
             </TableCell>
 
             <TableCell className="px-3 py-2 text-right whitespace-nowrap">
-              {(() => {
-                const deleteBlocked = isHardDeleteProtectedRole(user.role);
-                const lifecycleManaged =
-                  isGenericIdentityManagedRole(user.role);
-                const archived =
-                  String(user.status || '')
-                    .trim()
-                    .toLowerCase() === 'archived';
-                return (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="inline-flex items-center gap-1">
-                    Actions
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuItem
-                    disabled={!lifecycleManaged || archived}
-                    onSelect={() => onEdit(user)}
-                  >
-                    Edit
-                  </DropdownMenuItem>
-                  {archived && lifecycleManaged && (
-                    <DropdownMenuItem
-                      onSelect={() => onReactivate(user)}
-                    >
-                      Reactivate
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onSelect={() => onResetPassword(user)}>
-                    Reset Password
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    disabled={!lifecycleManaged || archived}
-                    onSelect={() => onArchive(user)}
-                  >
-                    Archive
-                  </DropdownMenuItem>
-                  {deleteBlocked ? (
-                    <DropdownMenuItem disabled>
-                      Delete disabled (archive only)
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onSelect={() => onDelete(user)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-                );
-              })()}
+              {renderUserActions(user)}
             </TableCell>
           </TableRow>
         ))}
       </TableBody>
-    </Table>
+        </Table>
+      </div>
+    </>
   );
 }
 
@@ -440,7 +470,11 @@ export function UserList() {
   const [isResetPasswordSaving, setIsResetPasswordSaving] = useState(false);
   const [sortField, setSortField] = useState<UserSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [pageSize, setPageSize] = useState<UserPageSize>('all');
+  const [pageSize, setPageSize] = useState<UserPageSize>(() =>
+    typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches
+      ? 25
+      : 'all'
+  );
 
   const normalizeRole = (role?: string) => String(role || '').trim().toLowerCase();
   const normalizeStatus = (status?: string) => String(status || '').trim().toLowerCase();
@@ -1056,7 +1090,7 @@ export function UserList() {
       </div>
 
       {/* Table */}
-      <Card className="overflow-x-auto">
+      <Card className="min-w-0 max-w-full overflow-hidden p-0">
         <UserTable
           users={visibleUsers}
           onEdit={(u) => setEditingUser(u)}
