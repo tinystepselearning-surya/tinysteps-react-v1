@@ -18,7 +18,8 @@ export type ReminderLaunchResult =
  * personal account, which would send customer messages from the wrong sender.
  *
  * WhatsApp Business' URL scheme is third-party documented, not a Meta API
- * guarantee. Keep the physical dual-install acceptance test as a release gate.
+ * guarantee. A failed launch does NOT prove Business is not installed.
+ * Keep the physical dual-install acceptance test as a release gate.
  * Browser and Android behavior is unchanged.
  */
 export async function openSessionReminderWhatsApp(
@@ -33,10 +34,11 @@ export async function openSessionReminderWhatsApp(
   if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
     const url = `whatsapp-business://send?phone=${digits}&text=${encodeURIComponent(text)}`;
     try {
-      const available = await AppLauncher.canOpenUrl({ url });
-      if (!available.value) return 'business-unavailable';
+      // iOS canOpenURL() can return false for an undeclared/unsupported query
+      // scheme even when a target application is installed. Attempt the
+      // Business-only URL directly; never fall back to personal WhatsApp.
       const launched = await AppLauncher.openUrl({ url });
-      return launched.completed ? 'opened' : 'launch-failed';
+      return launched.completed ? 'opened' : 'business-unavailable';
     } catch {
       return 'launch-failed';
     }
