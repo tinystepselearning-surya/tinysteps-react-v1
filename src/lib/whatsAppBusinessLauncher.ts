@@ -69,3 +69,34 @@ export async function openIOSReminderShareSheet(message: string): Promise<boolea
     return false;
   }
 }
+
+/**
+ * Official WhatsApp Click-to-Chat route for iOS.
+ *
+ * This DOES NOT select a specific WhatsApp installation. iOS may show a
+ * chooser, open Messenger, open Business, or open the browser, depending on
+ * installed apps and user preferences. Only invoke after the operator has
+ * explicitly chosen this option and seen the Business-account warning.
+ * Opening the URL is NOT proof the message was delivered.
+ */
+export async function openIOSWhatsAppChatLink(
+  phone: string,
+  message: string,
+): Promise<ReminderLaunchResult> {
+  const digits = sanitizeWhatsAppPhone(phone);
+  const text = sanitizeWhatsAppMessage(message);
+  if (!/^\\d{8,15}$/.test(digits)) return 'invalid-phone';
+  if (!text) return 'invalid-message';
+  if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') {
+    return 'launch-failed';
+  }
+
+  const url = buildWhatsAppUrl(digits, text);
+  try {
+    const result = await AppLauncher.openUrl({ url });
+    // completed means iOS accepted the URL, not that Business opened/sent.
+    return result.completed ? 'opened' : 'launch-failed';
+  } catch {
+    return 'launch-failed';
+  }
+}
