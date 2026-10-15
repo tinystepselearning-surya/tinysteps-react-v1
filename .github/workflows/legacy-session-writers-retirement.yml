@@ -39,6 +39,8 @@ jobs:
             functions/package-lock.json
       - name: Install frontend and Functions test dependencies
         run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Full Functions lint (retired module included)
+        run: npm --prefix functions run lint
       - name: Full Functions TypeScript build
         run: npm --prefix functions run build
       - name: Cutover hard-stop and entire functions regression suite
