@@ -36,9 +36,11 @@ describe('Brick 8 calendar projection routing', () => {
     expect(calendarSlice).toContain('return [...realRows, ...projectionRows]');
   });
 
-  it('hard-blocks parent join actions for projection rows', () => {
-    expect(parentSource).toContain('if (isRollingScheduleProjection(session)) return;');
-    expect(parentSource).toContain('if (isRollingScheduleProjection(session)) return false;');
+  it('joins virtual parent timetable classes through enrollment Teams links without materializing sessions', () => {
+    expect(parentSource).toContain('Virtual timetable entries use the enrollment Teams link directly.');
+    expect(parentSource).toContain('const resolvedJoinUrl = resolveSessionJoinClassUrl(session, activeEnrollmentById);');
+    expect(parentSource).toContain('openMeetingLink(resolvedJoinUrl);');
+    expect(parentSource).not.toContain('if (isRollingScheduleProjection(session)) return;');
   });
 
   it('reuses the teacher enrollment query instead of adding another Firestore schedule read', () => {
@@ -49,11 +51,13 @@ describe('Brick 8 calendar projection routing', () => {
     expect(scheduleImportsAndSetup).not.toContain("collection(db, 'enrollments')");
   });
 
-  it('merges teacher projections into calendar display rows and blocks attendance actions', () => {
+  it('shows teacher timetable projections and creates a real session only for submitted attendance', () => {
     expect(teacherScheduleSource).toContain('buildRollingScheduleCalendarProjections');
     expect(teacherScheduleSource).toContain('const displaySessions = useMemo');
     expect(teacherScheduleSource).toContain('[...sessions, ...projectedSessions]');
-    expect(teacherScheduleSource).toContain('if (isRollingScheduleProjection(session))');
-    expect(teacherScheduleSource).toContain("title: 'Planned recurring class'");
+    expect(teacherScheduleSource).toContain('if (isRollingScheduleProjection(selectedSession)) {');
+    expect(teacherScheduleSource).toContain("'ensureTeacherCalendarAttendanceSession'");
+    expect(teacherScheduleSource).toContain('attendanceSessionId = materialized.data.sessionId;');
+    expect(teacherScheduleSource).toContain('saveTeacherSessionProgress({');
   });
 });
