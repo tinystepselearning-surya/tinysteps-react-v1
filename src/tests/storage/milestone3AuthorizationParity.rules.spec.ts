@@ -51,6 +51,10 @@ async function seed() {
       ['inactive-admin', 'admin', 'archived', {superUser: true}],
       ['parent-1', 'parent', 'active', {}],
       ['parent-2', 'parent', 'active', {}],
+      ['founder-1', 'founder', 'active', {}],
+      ['school-admin-1', 'schoolAdmin', 'active', {}],
+      ['teacher-1', 'teacher', 'active', {}],
+      ['lp-1', 'learningPartner', 'active', {}],
     ] as const) await setDoc(doc(db, 'users', id), {uid: id, role, status, ...extra});
     await setDoc(doc(db, 'authAccessReadModels', 'canonical-only'), {
       firebaseUid: 'canonical-only', accessActive: true, globalRoles: ['admin'],
@@ -71,6 +75,19 @@ suite('Milestone 3 Storage legacy and canonical authorization parity emulator', 
     await assertFails(uploadBytes(ref(storage('canonical-only', {role: 'admin'}), 'images/canonical-only.png'), bytes));
     await assertFails(uploadBytes(ref(storage('inactive-admin', {admin: true}), 'images/inactive.png'), bytes));
     await assertFails(uploadBytes(ref(storage('orphan', {role: 'admin'}), 'images/orphan.png'), bytes));
+  });
+
+  it('does not promote Founder, School Admin, Teacher, Parent or LP into Admin-only Storage writes', async () => {
+    await seed();
+    for (const [uid, role] of [
+      ['founder-1', 'founder'],
+      ['school-admin-1', 'schoolAdmin'],
+      ['teacher-1', 'teacher'],
+      ['parent-1', 'parent'],
+      ['lp-1', 'learningPartner'],
+    ]) {
+      await assertFails(uploadBytes(ref(storage(uid, {role}), 'images/' + uid + '.png'), bytes));
+    }
   });
 
   it('protects student recording owner writes and cross-user reads', async () => {
