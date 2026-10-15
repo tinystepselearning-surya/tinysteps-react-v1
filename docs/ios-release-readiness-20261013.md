@@ -102,3 +102,19 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 4. Confirm explicit Logout still removes the Firebase account; revoked/disabled credentials and wrong-role authorization still deny access; test Admin, Parent and Teacher roles.
 5. If login still appears, collect Xcode logs filtering `[auth-persistence]`, `[auth-bootstrap]`, `[auth-diagnostics]`, `[auth-state]`, `[firebase]` and `[role-gate]` (no credentials, emails, tokens, or student information). Compare `[auth-diagnostics] local-probe` and `preferences-probe` across force-quit. A restored local probe with missing Firebase auth state suggests a different issue from all WebView storage being wiped.
 6. Do not merge or claim fixed solely on GitHub green checks. A secure, reviewed native Firebase Auth / Keychain solution is a separate project **only if** on-device evidence shows WebView persistence is insufficient.
+
+## 15 October iPhone status bar and three Admin screens mobile-fit correction
+
+Source evidence: physical iPhone screenshots showed the Admin Logout control hidden under the status/battery area, Users list clipping Name and other columns, Month Close tracker showing only part of a wide table, and Students list cutting off parent email and enrollment actions.
+
+**Shared Admin/Founder shell:** the existing `ts-native-header-safe` CSS utility is now attached to Admin/Founder Header. Its header content remains 56px tall but the native sticky wrapper expands to reserve `env(safe-area-inset-top)` and an 8px gap, moving menu, logo, title and Logout beneath the Dynamic Island/status bar without affecting ordinary web layout. Check header on multiple physical iPhones, landscape/iPad, and against the persistent mobile tab bar.
+
+**Users:** on phone widths, searchable and filtered records render as individually wrapped cards with Name, Email, Status, Role, Phone and an accessible Actions menu. Existing role-limited Edit, Reactivate, Reset Password, Archive and Delete semantics are shared with desktop via the same action renderer. Mobile defaults to 25 records (not all 246 at once), and sortable Name/Email/Role buttons remain available. The full sortable seven-column table remains at widths >= 768px.
+
+**Month Close:** parent-month status cards replace the 1060px wide table at phone widths. They expose parent name, session/billable counts, attendance review, billing review, invoice, payment, next action and Start/Continue/Open. They reuse the existing derived finance data and `openParent` action; no new finance writes or collection reads.
+
+**Students:** card per student on phone widths shows Student/Parent in one row, Age/Grade and Status next, enrollment count, and View Enrollments/Actions in full-width button slots. Desktop retains full table, sorting and pagination. Filter inputs can shrink on phone widths.
+
+**Acceptance criteria:** force-quit/reopen must preserve auth (separate gate); status bar must not overlap tap targets; no horizontal page pan on iPhone; each page must scroll vertically with all user/parent/student names readable; modal actions accessible; no hidden desktop action lost in the mobile layout; no additional Firestore reads caused by layout rendering. Test iPhone 320, 375, 390 and 430 CSS widths and iPad; confirm Admin/Founder header and logout physically.
+
+Changes remain on draft PR #722, with no production deployment, App Store submission or merge.
