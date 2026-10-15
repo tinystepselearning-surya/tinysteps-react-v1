@@ -137,6 +137,7 @@ export const PUBLIC_REDIRECT_MANIFEST = [
   { source: '/courses/basic-public-speaking/', destination: '/courses/public-speaking-foundations', status: 301 },
   { source: '/courses/advanced-public-speaking', destination: '/courses/public-speaking-excellence', status: 301 },
   { source: '/courses/advanced-public-speaking/', destination: '/courses/public-speaking-excellence', status: 301 },
+  { source: '/free-games', destination: '/free-english-games-for-kids', status: 301 },
   { source: '/games', destination: '/phonics-learning-games', status: 301 },
   { source: '/games/english-excellence', destination: '/phonics-learning-games', status: 301 },
 ];
