@@ -11,17 +11,16 @@ export type ReminderLaunchResult =
   | 'opened'
   | 'invalid-phone'
   | 'invalid-message'
-  | 'business-unavailable'
   | 'launch-failed';
 
 /**
- * Opens WhatsApp BUSINESS on a native iPhone. Never silently falls back to a
- * personal account, which would send customer messages from the wrong sender.
+ * Opens the prepared WhatsApp chat after an explicit Notify action.
  *
- * WhatsApp Business' URL scheme is third-party documented, not a Meta API
- * guarantee. A failed launch does NOT prove Business is not installed.
- * Keep the physical dual-install acceptance test as a release gate.
- * Browser and Android behavior is unchanged.
+ * On the test iPhone the official wa.me URL opened WhatsApp Business with the
+ * right parent and message. iOS may route the same URL to personal WhatsApp
+ * on a different device: the operator MUST verify Business before tapping
+ * send. This method only opens a composer, never sends or marks notified.
+ * Browser and Android behavior are unchanged.
  */
 export async function openSessionReminderWhatsApp(
   phone: string,
@@ -33,16 +32,9 @@ export async function openSessionReminderWhatsApp(
   if (!text) return 'invalid-message';
 
   if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-    const url = `whatsapp-business://send?phone=${digits}&text=${encodeURIComponent(text)}`;
-    try {
-      // iOS canOpenURL() can return false for an undeclared/unsupported query
-      // scheme even when a target application is installed. Attempt the
-      // Business-only URL directly; never fall back to personal WhatsApp.
-      const launched = await AppLauncher.openUrl({ url });
-      return launched.completed ? 'opened' : 'business-unavailable';
-    } catch {
-      return 'launch-failed';
-    }
+    // Reuse the exact iPhone-tested wa.me handoff rather than the unsupported
+    // whatsapp-business:// scheme. Do not infer app/account identity or send.
+    return openIOSWhatsAppChatLink(digits, text);
   }
 
   const url = buildWhatsAppUrl(digits, text);
@@ -76,8 +68,8 @@ export async function openIOSReminderShareSheet(message: string): Promise<boolea
  * This DOES NOT select a specific WhatsApp installation. iOS may show a
  * chooser, open Messenger, open Business, or open the browser, depending on
  * installed apps and user preferences. Only invoke after the operator has
- * explicitly chosen this option and seen the Business-account warning.
- * Opening the URL is NOT proof the message was delivered.
+ * tapped a Notify action and confirmed the correct Business account before
+ * sending. Opening the URL is NOT proof the message was delivered.
  */
 export async function openIOSWhatsAppChatLink(
   phone: string,
