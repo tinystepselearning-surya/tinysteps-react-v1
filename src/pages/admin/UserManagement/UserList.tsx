@@ -252,7 +252,7 @@ function UserTable({
                 return (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="inline-flex items-center gap-1">
+                  <Button size="sm" variant="outline" className="inline-flex min-h-11 items-center gap-1 md:min-h-8">
                     Actions
                     <ChevronDown className="h-3.5 w-3.5" />
                   </Button>
@@ -300,6 +300,23 @@ function UserTable({
 
   return (
     <>
+      <div className="min-w-0 px-3 pt-3 md:hidden">
+        <p className="mb-1 text-xs font-medium text-slate-500">Sort users</p>
+        <div className="flex flex-wrap gap-2">
+          {([
+            ['name', 'Name'],
+            ['email', 'Email'],
+            ['role', 'Role'],
+          ] as Array<[UserSortField, string]>).map(([field, label]) => (
+            <Button key={field} type="button" variant={sortField === field ? 'default' : 'outline'}
+              size="sm" className="min-h-10"
+              aria-label={`Sort users by ${label}`}
+              onClick={() => onSort(field)}>
+              {label} {sortField === field ? (sortDirection === 'asc' ? '↑' : '↓') : ''}
+            </Button>
+          ))}
+        </div>
+      </div>
       <div className="grid min-w-0 gap-3 p-3 md:hidden" aria-label="User management mobile cards">
         {users.map((user) => (
           <article key={user.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
