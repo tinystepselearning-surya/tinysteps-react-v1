@@ -14,7 +14,7 @@ vi.mock('@capacitor/share', () => ({ Share: { share: shareMock } }));
 vi.mock('@capacitor/core', () => ({
   Capacitor: { isNativePlatform: isNativePlatformMock, getPlatform: getPlatformMock },
 }));
-import { openIOSReminderShareSheet, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
+import { openIOSReminderShareSheet, openIOSWhatsAppChatLink, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
 
 describe('Sessions Management WhatsApp Business handoff', () => {
   beforeEach(() => {
@@ -56,6 +56,33 @@ describe('Sessions Management WhatsApp Business handoff', () => {
     expect(await openSessionReminderWhatsApp('123', 'Reminder')).toBe('invalid-phone');
     expect(await openSessionReminderWhatsApp('+91 98765 43210', ' ')).toBe('invalid-message');
     expect(canOpenUrlMock).not.toHaveBeenCalled();
+  });
+
+  it('opens official wa.me recipient-prefilled link only after explicit user choice', async () => {
+    const message = 'Hello, class today at 5 PM 😊 & please join';
+    expect(await openIOSWhatsAppChatLink('+1 (437) 830-1543', message)).toBe('opened');
+    const url = openUrlMock.mock.calls[0][0].url as string;
+    const parsed = new URL(url);
+    expect(parsed.origin).toBe('https://wa.me');
+    expect(parsed.pathname).toBe('/14378301543');
+    expect(parsed.searchParams.get('text')).toBe(message);
+    expect(shareMock).not.toHaveBeenCalled();
+    expect(canOpenUrlMock).not.toHaveBeenCalled();
+  });
+
+  it('does not imply a Business-only launch or successful delivery from URL acceptance', async () => {
+    openUrlMock.mockResolvedValue({ completed: false });
+    expect(await openIOSWhatsAppChatLink('+1 (437) 830-1543', 'Reminder')).toBe('launch-failed');
+    openUrlMock.mockRejectedValue(new Error('Unable to handle link'));
+    expect(await openIOSWhatsAppChatLink('+1 (437) 830-1543', 'Reminder')).toBe('launch-failed');
+  });
+
+  it('validates recipient and text before opening any official link', async () => {
+    expect(await openIOSWhatsAppChatLink('123', 'Reminder')).toBe('invalid-phone');
+    expect(await openIOSWhatsAppChatLink('+91 98765 43210', ' ')).toBe('invalid-message');
+    expect(openUrlMock).not.toHaveBeenCalled();
+    isNativePlatformMock.mockReturnValue(false);
+    expect(await openIOSWhatsAppChatLink('+91 98765 43210', 'Reminder')).toBe('launch-failed');
   });
 
   it('presents iOS chooser with reminder text and does not pre-select personal WhatsApp', async () => {
