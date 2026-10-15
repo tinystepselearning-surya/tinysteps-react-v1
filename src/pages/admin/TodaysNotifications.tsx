@@ -1205,6 +1205,7 @@ export default function TodaysNotifications() {
     phone: string;
   } | null>(null);
   const [savingPhoneKey, setSavingPhoneKey] = useState<string | null>(null);
+  const [failedBusinessReminder, setFailedBusinessReminder] = useState<{ phone: string; message: string } | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [mode, setMode] = useState<NotificationMode>('today');
   const [updatesAudience, setUpdatesAudience] = useState<UpdatesAudience>('students');
@@ -1237,6 +1238,7 @@ export default function TodaysNotifications() {
     setCourseMap({});
     setMessageDrafts({});
     setMessageEditor(null);
+    setFailedBusinessReminder(null);
     setSessionLoadError(null);
   }, [user?.uid]);
 
@@ -1260,6 +1262,7 @@ export default function TodaysNotifications() {
     setCourseMap({});
     setMessageDrafts({});
     setMessageEditor(null);
+    setFailedBusinessReminder(null);
     setSessionLoadError(null);
   }), []);
 
@@ -2001,24 +2004,29 @@ export default function TodaysNotifications() {
     // Intentional manual handoff: opening a chat must not mark it "notified".
     void openSessionReminderWhatsApp(phone, message).then((result) => {
       if (result === 'opened') return;
-      const descriptions = {
-        'invalid-phone': 'Add a valid phone number to use WhatsApp reminders.',
-        'invalid-message': 'Add reminder text before opening WhatsApp.',
-        'business-unavailable': 'WhatsApp Business is not available on this iPhone. Install it before sending reminders.',
-        'launch-failed': 'Could not open WhatsApp Business. Please try again.',
-      } as const;
-      toast({
-        title: result === 'business-unavailable' ? 'WhatsApp Business required' : 'WhatsApp reminder not opened',
-        description: descriptions[result],
-        variant: 'destructive',
-      });
-    }).catch(() => {
+      if (result === 'business-unavailable' || result === 'launch-failed') {
+        // This third-party Business scheme is not guaranteed by Meta.
+        // Never silently fall back to a potentially personal WhatsApp account.
+        setFailedBusinessReminder({ phone, message });
+        return;
+      }
       toast({
         title: 'WhatsApp reminder not opened',
-        description: 'Could not open WhatsApp Business. Please try again.',
+        description: result === 'invalid-phone'
+          ? 'Add a valid phone number to use WhatsApp reminders.'
+          : 'Add reminder text before opening WhatsApp.',
         variant: 'destructive',
       });
-    });
+    }).catch(() => setFailedBusinessReminder({ phone, message }));
+  };
+
+  const copyBusinessReminderValue = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast({ title: `${label} copied`, description: 'Paste into WhatsApp Business manually.' });
+    } catch {
+      toast({ title: 'Copy failed', description: 'Select and copy the text manually.', variant: 'destructive' });
+    }
   };
 
   const openMeetingLink = (url: string) => {
@@ -2386,8 +2394,8 @@ export default function TodaysNotifications() {
     (!isOverallAdmissionsMode && !isTeacherUpdatesMode && statusFilter !== ALL_STATUSES_FILTER);
 
   return (
-    <div className="space-y-3">
-      <div className="sticky top-0 z-10 -mx-1 border-b bg-slate-50/95 px-1 py-2 backdrop-blur">
+    <div className="min-w-0 max-w-full space-y-3 overflow-x-clip">
+      <div className="sticky top-0 z-10 -mx-1 min-w-0 border-b bg-slate-50/95 px-1 py-2 backdrop-blur">
         <h2 className="text-xl font-semibold">Sessions Management</h2>
         <p className="text-xs text-muted-foreground">
           {mode === 'today'
@@ -2402,10 +2410,10 @@ export default function TodaysNotifications() {
               : '| Admissions operations view.'}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center rounded-md border bg-white p-0.5">
+          <div className="grid w-full min-w-0 grid-cols-3 gap-0.5 rounded-xl border bg-white p-1 sm:inline-flex sm:w-auto sm:rounded-md sm:p-0.5">
             <Button
               size="sm"
-              className="h-7 px-3 text-xs"
+              className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
               variant={mode === 'today' ? 'default' : 'ghost'}
               onClick={() => setMode('today')}
             >
@@ -2418,7 +2426,7 @@ export default function TodaysNotifications() {
             </Button>
             <Button
               size="sm"
-              className="h-7 px-3 text-xs"
+              className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
               variant={mode === 'upcoming' ? 'default' : 'ghost'}
               onClick={() => setMode('upcoming')}
             >
@@ -2431,7 +2439,7 @@ export default function TodaysNotifications() {
             </Button>
             <Button
               size="sm"
-              className="h-7 px-3 text-xs"
+              className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
               variant={mode === 'overall-admissions' ? 'default' : 'ghost'}
               onClick={() => setMode('overall-admissions')}
             >
@@ -2444,10 +2452,10 @@ export default function TodaysNotifications() {
             </Button>
           </div>
           {mode !== 'overall-admissions' ? (
-            <div className="inline-flex items-center rounded-md border bg-white p-0.5">
+            <div className="grid w-full min-w-0 grid-cols-2 gap-0.5 rounded-xl border bg-white p-1 sm:inline-flex sm:w-auto sm:rounded-md sm:p-0.5">
               <Button
                 size="sm"
-                className="h-7 px-3 text-xs"
+                className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
                 variant={updatesAudience === 'students' ? 'default' : 'ghost'}
                 onClick={() => setUpdatesAudience('students')}
               >
@@ -2455,7 +2463,7 @@ export default function TodaysNotifications() {
               </Button>
               <Button
                 size="sm"
-                className="h-7 px-3 text-xs"
+                className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
                 variant={updatesAudience === 'teachers' ? 'default' : 'ghost'}
                 onClick={() => setUpdatesAudience('teachers')}
               >
@@ -2469,10 +2477,10 @@ export default function TodaysNotifications() {
             </div>
           ) : null}
           {!isTeacherUpdatesMode ? (
-            <div className="flex items-center gap-1">
+            <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
               <span className="text-xs text-muted-foreground">Teacher</span>
               <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-                <SelectTrigger className="h-7 w-[180px] text-xs">
+                <SelectTrigger className="h-10 min-w-0 flex-1 text-xs sm:h-7 sm:w-[180px] sm:flex-none">
                   <SelectValue placeholder="All Teachers" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2489,7 +2497,7 @@ export default function TodaysNotifications() {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 px-3 text-xs"
+              className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
               onClick={() => void handleCopyAllTeacherLinks()}
               disabled={sortedRows.length === 0}
             >
@@ -2500,7 +2508,7 @@ export default function TodaysNotifications() {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 px-3 text-xs"
+              className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
               onClick={() => {
                 reminderReadCacheRef.current.invalidate();
                 reminderUsersCacheRef.current = {};
@@ -2522,7 +2530,7 @@ export default function TodaysNotifications() {
             <Button
               size="sm"
               variant="outline"
-              className="h-7 px-3 text-xs"
+              className="h-auto min-h-10 min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight sm:h-7 sm:min-h-0 sm:px-3 sm:py-0"
               onClick={() => {
                 overallAdmissionsCacheRef.current = null;
                 reminderReadCacheRef.current.invalidate();
@@ -2534,10 +2542,10 @@ export default function TodaysNotifications() {
             </Button>
           )}
           {mode !== 'overall-admissions' && !isTeacherUpdatesMode ? (
-            <div className="flex items-center gap-1">
+            <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
               <span className="text-xs text-muted-foreground">Status</span>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-7 w-[165px] text-xs">
+                <SelectTrigger className="h-10 min-w-0 flex-1 text-xs sm:h-7 sm:w-[165px] sm:flex-none">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -2551,13 +2559,13 @@ export default function TodaysNotifications() {
             </div>
           ) : null}
           {mode === 'upcoming' ? (
-            <div className="flex items-center gap-1">
+            <div className="flex w-full min-w-0 items-center gap-2 sm:w-auto">
               <span className="text-xs text-muted-foreground">Date</span>
               <Input
                 type="date"
                 value={upcomingSpecificDate}
                 onChange={(event) => setUpcomingSpecificDate(event.target.value)}
-                className="h-7 w-[148px] text-xs"
+                className="h-10 min-w-0 flex-1 text-xs sm:h-7 sm:w-[148px] sm:flex-none"
               />
             </div>
           ) : null}
@@ -2610,7 +2618,22 @@ export default function TodaysNotifications() {
           </p>
         </Card>
       ) : isOverallAdmissionsMode ? (
-        <Card className="p-0">
+        <>
+          <div className="grid min-w-0 gap-3 md:hidden" aria-label="Admissions list">
+            {sortedAdmissionsRows.map((row) => (
+              <Card key={row.id} className="min-w-0 overflow-hidden rounded-2xl p-4 shadow-sm">
+                <p className="break-words text-base font-semibold">{row.studentLabel}</p>
+                <p className="mt-1 text-xs font-medium text-slate-600">{row.admissionStatusLabel}</p>
+                <dl className="mt-3 grid min-w-0 gap-2 border-t pt-3 text-sm">
+                  <div className="min-w-0"><dt className="text-xs text-muted-foreground">Parent</dt><dd className="break-words">{row.parentName || '—'}</dd></div>
+                  <div className="min-w-0"><dt className="text-xs text-muted-foreground">Teacher</dt><dd className="break-words">{row.teacherName || '—'}</dd></div>
+                  <div className="min-w-0"><dt className="text-xs text-muted-foreground">Course</dt><dd className="break-words">{row.courseLabel || '—'}</dd></div>
+                  <div className="min-w-0"><dt className="text-xs text-muted-foreground">Schedule</dt><dd className="whitespace-pre-wrap break-words">{row.scheduleSummary || '—'}</dd></div>
+                </dl>
+              </Card>
+            ))}
+          </div>
+          <Card className="hidden min-w-0 p-0 md:block">
           <div className="overflow-x-auto">
             <Table className="min-w-[860px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100">
               <TableHeader>
@@ -2660,8 +2683,35 @@ export default function TodaysNotifications() {
             </Table>
           </div>
         </Card>
+        </>
       ) : isTeacherUpdatesMode ? (
-        <Card className="p-0">
+        <>
+          <div className="grid min-w-0 gap-3 md:hidden" aria-label="Teacher reminders">
+            {teacherDailyGroups.map((group) => {
+              const teacherMessage = buildTeacherDailyReminderMessage(group, teacherReminderScheduleLabel);
+              return (
+                <Card key={group.teacherRef} className="min-w-0 overflow-hidden rounded-2xl p-4 shadow-sm">
+                  <p className="break-words font-semibold">{group.teacherName}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{group.classes.length} classes · {group.teacherWhatsappDigits ? 'Phone ready' : 'Phone missing'}</p>
+                  <details className="mt-3 rounded-xl bg-slate-50 p-3">
+                    <summary className="cursor-pointer text-sm font-medium">View daily schedule</summary>
+                    <div className="mt-2 space-y-2">
+                      {group.classes.map((item) => (
+                        <p key={item.sessionId} className="break-words text-sm">
+                          <span className="font-medium">{item.childName}</span>
+                          <span className="block text-xs text-muted-foreground">{item.timeLabel}</span>
+                        </p>
+                      ))}
+                    </div>
+                  </details>
+                  <Button type="button" className="mt-3 min-h-11 w-full"
+                    disabled={!group.teacherWhatsappDigits}
+                    onClick={() => openWhatsApp(group.teacherWhatsappDigits, teacherMessage)}>Notify Teacher</Button>
+                </Card>
+              );
+            })}
+          </div>
+          <Card className="hidden min-w-0 p-0 md:block">
           <div className="overflow-x-auto">
             <Table className="min-w-[740px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-2 [&_td]:py-2 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100">
               <TableHeader>
@@ -2733,8 +2783,113 @@ export default function TodaysNotifications() {
             </Table>
           </div>
         </Card>
+        </>
       ) : (
-        <Card className="p-0">
+        <>
+          <div className="grid min-w-0 gap-3 md:hidden" aria-label="Sessions list">
+            {sortedRows.map((row) => {
+              const parentPhone = String(row.parentWhatsappDigits || '');
+              const teacherPhone = String(row.teacherWhatsappDigits || '');
+              const parentMessage = buildResolvedRowMessage(row, 'parent');
+              const teacherMessage = buildResolvedRowMessage(row, 'teacher');
+              const sourceEnrollment = row.enrollmentId ? enrollmentMap[String(row.enrollmentId).trim()] : undefined;
+              const canJoin = Boolean(row.joinUrl || row.meetingLink || sourceEnrollment?.joinUrl || sourceEnrollment?.meetingLink || row.enrollmentId);
+              return (
+                <Card key={row.id} className="min-w-0 overflow-hidden rounded-2xl p-4 shadow-sm">
+                  {mode === 'upcoming' ? (
+                    <p className="mb-2 text-xs font-medium text-slate-500">
+                      {formatKolkataWeekdayFromDateKey(String(row.sessionDateKey || row.date || ''))},{' '}
+                      {formatKolkataShortDateFromDateKey(String(row.sessionDateKey || row.date || ''))}
+                    </p>
+                  ) : null}
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">Class time (IST)</p>
+                      <p className="break-words text-sm font-semibold">{row.classTimeIst || row.classTime}</p>
+                      {row.classTimeParent ? (
+                        <p className="mt-1 break-words text-xs text-muted-foreground">
+                          Parent: {row.classTimeParent} ({row.parentTimeZone || 'Parent timezone'})
+                        </p>
+                      ) : null}
+                    </div>
+                    <span className="max-w-full rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize">{row.statusLabel}</span>
+                  </div>
+                  <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">Student</p>
+                  <p className="break-words text-base font-semibold">{row.studentLabel}</p>
+                  <dl className="mt-3 grid min-w-0 gap-2 text-sm">
+                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Parent</dt><dd className="break-words">{row.parentName || 'Parent'}</dd></div>
+                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Teacher</dt><dd className="break-words">{row.teacherName || 'Teacher'}</dd></div>
+                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Course / Subject</dt><dd className="break-words">{row.courseLabel || '—'}</dd></div>
+                    <div className="min-w-0"><dt className="text-xs text-muted-foreground">Session type</dt>
+                      <dd><span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${toSessionTypeStyle(row.sessionTypeLabel || 'Regular')}`}>
+                        {row.sessionTypeLabel || 'Regular'}
+                      </span></dd>
+                    </div>
+                  </dl>
+                  {isNotificationActionsEnabled ? (
+                    <>
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <Button type="button" className="min-h-11 min-w-0 whitespace-normal px-2 text-xs"
+                          disabled={!parentPhone}
+                          onClick={() => openWhatsApp(parentPhone, parentMessage)}>Notify Parent</Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="outline" className="min-h-11 w-full min-w-0">Actions</Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuItem onSelect={() => void handleJoinClass(row)}
+                              disabled={!canJoin || joiningSessionId === row.id}>
+                              {joiningSessionId === row.id ? 'Opening Class…' : 'Join Class'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => void handleCopyTeamsLink(row)}
+                              disabled={!getCachedJoinUrl(row)}>Copy Teams Link</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled={!parentPhone} onSelect={() => openWhatsApp(parentPhone, parentMessage)}>Notify Parent</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => openMessageEditor(row.id, 'parent')}>Edit Parent Message</DropdownMenuItem>
+                            <DropdownMenuItem disabled={!row.parentUserDocId || row.parentUserMissing}
+                              onSelect={() => handleStartPhoneEdit(`${row.id}:parent-phone`, row.parentUserDocId, row.parentEditCountryCode || '', row.parentEditPhone || '')}>
+                              Add/Edit Parent Phone
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem disabled={!teacherPhone} onSelect={() => openWhatsApp(teacherPhone, teacherMessage)}>Notify Teacher</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => openMessageEditor(row.id, 'teacher')}>Edit Teacher Message</DropdownMenuItem>
+                            <DropdownMenuItem disabled={!row.teacherUserDocId || row.teacherUserMissing}
+                              onSelect={() => handleStartPhoneEdit(`${row.id}:teacher-phone`, row.teacherUserDocId, row.teacherEditCountryCode || '', row.teacherEditPhone || '')}>
+                              Add/Edit Teacher Phone
+                            </DropdownMenuItem>
+                            {isManualSession(row as unknown as Record<string, unknown>) ? (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={() => void handleCancelManualSession(row)}
+                                  disabled={cancellingManualSessionId === row.id}>
+                                  {cancellingManualSessionId === row.id ? 'Cancelling…' : 'Cancel Manual Session'}
+                                </DropdownMenuItem>
+                              </>
+                            ) : null}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-3 rounded-xl bg-slate-50 p-3 text-xs">
+                        <label className="inline-flex min-h-7 cursor-pointer items-center gap-2">
+                          <input type="checkbox" className="h-5 w-5 rounded" checked={Boolean(row.parentNotified)}
+                            disabled={Boolean(savingFlags[`${row.id}:parent`])}
+                            onChange={(event) => void handleNotifiedToggle(row.id, 'parent', event.target.checked)} />
+                          Parent notified
+                        </label>
+                        <label className="inline-flex min-h-7 cursor-pointer items-center gap-2">
+                          <input type="checkbox" className="h-5 w-5 rounded" checked={Boolean(row.teacherNotified)}
+                            disabled={Boolean(savingFlags[`${row.id}:teacher`])}
+                            onChange={(event) => void handleNotifiedToggle(row.id, 'teacher', event.target.checked)} />
+                          Teacher notified
+                        </label>
+                      </div>
+                    </>
+                  ) : null}
+                </Card>
+              );
+            })}
+          </div>
+          <Card className="hidden min-w-0 p-0 md:block">
           <div className="overflow-x-auto">
             <Table
               className={
@@ -3190,7 +3345,27 @@ export default function TodaysNotifications() {
             </Table>
           </div>
         </Card>
+        </>
       )}
+
+      <Dialog open={Boolean(failedBusinessReminder)} onOpenChange={(open) => { if (!open) setFailedBusinessReminder(null); }}>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
+          <DialogHeader><DialogTitle>Open WhatsApp Business manually</DialogTitle></DialogHeader>
+          <p className="text-sm text-slate-600">
+            The Business-only link could not be opened. This does not prove WhatsApp Business is uninstalled.
+            To avoid accidentally using personal WhatsApp, open Business yourself, verify the recipient, paste the reminder and send.
+          </p>
+          <div className="min-w-0 space-y-2">
+            <p className="text-xs font-semibold text-slate-500">Recipient number</p>
+            <p className="select-text break-all rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.phone}</p>
+            <Button type="button" variant="outline" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.phone || '', 'Number')}>Copy number</Button>
+            <p className="pt-2 text-xs font-semibold text-slate-500">Reminder message</p>
+            <p className="max-h-[30vh] select-text overflow-y-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.message}</p>
+            <Button type="button" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.message || '', 'Message')}>Copy message</Button>
+          </div>
+          <p className="text-xs text-slate-500">Opening a chat does not send the reminder. Tick Notified only after sending.</p>
+        </DialogContent>
+      </Dialog>
 
       <PhoneNumberEditorDialog
         open={Boolean(editingPhone)}
