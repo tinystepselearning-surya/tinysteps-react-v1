@@ -23,6 +23,8 @@ describe('iOS Admin safe area and compact scroll layouts', () => {
     expect(users).toContain('grid min-w-0 gap-3 p-3 md:hidden');
     expect(users).toContain('hidden overflow-x-auto md:block');
     expect(users).toContain('renderUserActions(user)');
+    expect(users).toContain('Sort users by');
+    expect(users).toContain('min-h-11 items-center gap-1 md:min-h-8');
     expect(users).toContain('onResetPassword(user)');
     expect(users).toContain('onArchive(user)');
     expect(users).toContain('onReactivate(user)');
