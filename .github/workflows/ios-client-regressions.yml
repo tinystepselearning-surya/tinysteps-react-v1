@@ -4,6 +4,12 @@ on:
   pull_request:
     paths:
       - 'src/components/common/AuthBootstrap.tsx'
+      - 'src/pages/admin/components/Header.tsx'
+      - 'src/pages/admin/UserManagement/UserList.tsx'
+      - 'src/pages/admin/StudentManagement/StudentList.tsx'
+      - 'src/pages/admin/components/AttendanceValidationMonthlyTracker.tsx'
+      - 'src/index.css'
+      - 'src/tests/admin/iosAdminMobileLayout.spec.ts'
       - 'src/components/common/NativeLoginSessionGate.tsx'
       - 'src/app/routes.tsx'
       - 'src/pages/Login.tsx'
@@ -42,6 +48,7 @@ jobs:
       - name: Auth restoration and WhatsApp Business regression tests
         run: |
           npx vitest run \
+            src/tests/admin/iosAdminMobileLayout.spec.ts \
             src/tests/components/AuthBootstrap.spec.tsx \
             src/tests/components/NativeLoginSessionGate.spec.tsx \
             src/tests/lib/authPersistenceLogin.spec.ts \
