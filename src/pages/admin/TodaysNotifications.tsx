@@ -2420,7 +2420,7 @@ export default function TodaysNotifications() {
           {isTeacherUpdatesMode
             ? '| One daily WhatsApp schedule per teacher.'
             : isNotificationActionsEnabled
-              ? '| Open WhatsApp, then manually tick notified.'
+              ? '| Choose WhatsApp Business and send reminders manually.'
               : '| Admissions operations view.'}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -3364,7 +3364,7 @@ export default function TodaysNotifications() {
         <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
           <DialogHeader><DialogTitle>Share via WhatsApp Business</DialogTitle></DialogHeader>
           <p className="text-sm text-slate-600">
-            The Business-only link is unsupported on this iPhone. Copy the recipient number, then tap Share message.
+            The Business-only link could not be opened on this iPhone. Copy the recipient number, then tap Share message.
             In the iOS Share sheet choose <strong>WhatsApp Business</strong> (not personal WhatsApp), select the correct recipient,
             review the message, and send it yourself.
           </p>
