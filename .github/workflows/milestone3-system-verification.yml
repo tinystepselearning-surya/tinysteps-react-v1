@@ -56,6 +56,7 @@ jobs:
         run: |
           node scripts/milestone3-canary-read-safety-preflight.mjs --output=artifacts/milestone3-canary-read-safety.json
           node --test scripts/test/milestone3-canary-read-safety-preflight.node-test.mjs
+          node --test scripts/test/milestone3-canary-outcome-reducer.node-test.mjs
       - name: Build before identity tooling tests
         run: npm --prefix functions run build
       - name: Identity foundation, parity and deployment tooling regressions
@@ -74,6 +75,7 @@ jobs:
         run: |
           node --check scripts/milestone3-system-audit.mjs
           node --check scripts/milestone3-canary-read-safety-preflight.mjs
+          node --check scripts/milestone3-canary-outcome-reducer.mjs
           cd functions
           npx eslint test/canonicalAdminMilestone2Exit.spec.ts
       - name: Verify no backend resources changed and explicitly classify the bounded frontend exception
