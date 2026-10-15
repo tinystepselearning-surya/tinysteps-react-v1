@@ -45,7 +45,7 @@ import { useToast } from '@components/hooks/use-toast';
 import { auth, db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
-import { openIOSReminderShareSheet, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
+import { openIOSReminderShareSheet, openIOSWhatsAppChatLink, openSessionReminderWhatsApp } from '../../lib/whatsAppBusinessLauncher';
 import { sanitizeWhatsAppMessage } from '../../lib/whatsAppUrl';
 import {
   isEnrollmentOperationallyActive,
@@ -2043,6 +2043,22 @@ export default function TodaysNotifications() {
     }
   };
 
+  const openDocumentedWhatsAppLink = async () => {
+    if (!failedBusinessReminder) return;
+    const result = await openIOSWhatsAppChatLink(
+      failedBusinessReminder.phone,
+      failedBusinessReminder.message,
+    );
+    if (result !== 'opened') {
+      toast({
+        title: 'WhatsApp chat link could not be opened',
+        description: 'Choose WhatsApp Business in the iOS Share sheet, or copy the number and reminder manually.',
+        variant: 'destructive',
+      });
+    }
+    // A launched URL is not confirmation of account selection or delivery.
+  };
+
   const openMeetingLink = (url: string) => {
     const trimmed = String(url || '').trim();
     if (!trimmed) return;
@@ -3362,19 +3378,25 @@ export default function TodaysNotifications() {
 
       <Dialog open={Boolean(failedBusinessReminder)} onOpenChange={(open) => { if (!open) setFailedBusinessReminder(null); }}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md overflow-y-auto">
-          <DialogHeader><DialogTitle>Share via WhatsApp Business</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Send from WhatsApp Business</DialogTitle></DialogHeader>
           <p className="text-sm text-slate-600">
-            The Business-only link could not be opened on this iPhone. Copy the recipient number, then tap Share message.
-            In the iOS Share sheet choose <strong>WhatsApp Business</strong> (not personal WhatsApp), select the correct recipient,
-            review the message, and send it yourself.
+            The Business-only app link did not open. Try the official WhatsApp chat link below to open the recipient
+            with the prepared message. <strong>iOS may choose personal WhatsApp rather than Business.</strong>
+            If personal WhatsApp opens, return without sending and use the iOS Share option to choose Business explicitly.
           </p>
           <div className="min-w-0 space-y-2">
             <p className="text-xs font-semibold text-slate-500">Recipient number</p>
             <p className="select-text break-all rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.phone}</p>
+            <Button type="button" className="min-h-11 w-full" onClick={() => void openDocumentedWhatsAppLink()}>
+              Open WhatsApp chat link
+            </Button>
+            <p className="text-xs leading-relaxed text-amber-800">
+              Before sending, verify the app is WhatsApp Business and the recipient is correct.
+            </p>
             <Button type="button" variant="outline" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.phone || '', 'Number')}>Copy number</Button>
             <p className="pt-2 text-xs font-semibold text-slate-500">Reminder message</p>
             <p className="max-h-[30vh] select-text overflow-y-auto whitespace-pre-wrap break-words rounded-xl bg-slate-50 p-3 text-sm">{failedBusinessReminder?.message}</p>
-            <Button type="button" className="min-h-11 w-full" onClick={() => void shareReminderWithIOS()}>Share message using iOS</Button>
+            <Button type="button" variant="outline" className="min-h-11 w-full" onClick={() => void shareReminderWithIOS()}>Choose WhatsApp Business via iOS Share</Button>
             <Button type="button" variant="outline" className="w-full" onClick={() => void copyBusinessReminderValue(failedBusinessReminder?.message || '', 'Message')}>Copy message instead</Button>
           </div>
           <p className="text-xs text-slate-500">Choosing an app or opening a chat does not prove the reminder was sent.</p>
