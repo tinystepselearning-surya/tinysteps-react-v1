@@ -26,7 +26,7 @@ describe('Sessions Management WhatsApp Business handoff', () => {
   it('uses the Business-specific scheme with full international number and encoded text', async () => {
     const message = 'Hello Anaya!\nClass at 6:30 PM 😊 & Teams';
     expect(await openSessionReminderWhatsApp('+91 98765 43210', message)).toBe('opened');
-    expect(canOpenUrlMock).toHaveBeenCalledOnce();
+    expect(canOpenUrlMock).not.toHaveBeenCalled();
     const url = openUrlMock.mock.calls[0][0].url as string;
     expect(url).toMatch(/^whatsapp-business:\/\/send\?/);
     const parsed = new URL(url);
@@ -34,16 +34,18 @@ describe('Sessions Management WhatsApp Business handoff', () => {
     expect(parsed.searchParams.get('text')).toBe(message);
   });
 
-  it('never switches to personal WhatsApp when Business is missing', async () => {
+  it('does not infer missing installation from canOpenUrl and never switches to personal WhatsApp', async () => {
     canOpenUrlMock.mockResolvedValue({ value: false });
+    openUrlMock.mockResolvedValue({ completed: false });
     const webOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
     expect(await openSessionReminderWhatsApp('+91 98765 43210', 'Reminder')).toBe('business-unavailable');
-    expect(openUrlMock).not.toHaveBeenCalled();
+    expect(canOpenUrlMock).not.toHaveBeenCalled();
+    expect(openUrlMock).toHaveBeenCalledOnce();
     expect(webOpen).not.toHaveBeenCalled();
   });
 
-  it('handles a failed native handoff without claiming a sent reminder', async () => {
-    openUrlMock.mockResolvedValue({ completed: false });
+  it('handles a native handoff exception without claiming a sent reminder', async () => {
+    openUrlMock.mockRejectedValue(new Error('Unsupported scheme'));
     expect(await openSessionReminderWhatsApp('+91 98765 43210', 'Reminder')).toBe('launch-failed');
   });
 
