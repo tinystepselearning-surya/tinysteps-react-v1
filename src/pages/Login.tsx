@@ -5,12 +5,12 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth } from '../lib/firebaseConfig';
+import { auth, ensureNativeAuthPersistence } from '../lib/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import AuthPageBrandHeader from '../components/common/AuthPageBrandHeader';
 import { performAppLogout } from '../lib/auth';
-import { schedulePostLoginAuthDiagnostics } from '../lib/nativeAuthDiagnostics';
+import { isNativeCapacitorRuntime, schedulePostLoginAuthDiagnostics } from '../lib/nativeAuthDiagnostics';
 
 interface LoginProps {
   // Optional override (e.g. for tests or future refactor).
@@ -45,7 +45,11 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
         return;
       }
 
-      // Default strict admin login flow
+      // The strict Admin form must use the same native persistence gate as
+      // the other role login paths, before Firebase writes its credentials.
+      if (isNativeCapacitorRuntime()) {
+        await ensureNativeAuthPersistence();
+      }
       const cred = await signInWithEmailAndPassword(
         auth,
         normalizedEmail,
