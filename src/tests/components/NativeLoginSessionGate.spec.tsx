@@ -92,10 +92,11 @@ describe('iPhone cold-start authentication entry gate', () => {
   it('guards all native role-specific login entry routes', () => {
     const routes = readFileSync(join(process.cwd(), 'src/app/routes.tsx'), 'utf8');
     for (const path of [
-      'login', 'surya/login', 'founder/login', 'teacher/login',
-      'parent/login', 'learning-partner/login', 'learningpartner/login', 'school/login',
+      'login', 'founder/login', 'teacher/login', 'parent/login',
+      'learning-partner/login', 'learningpartner/login', 'school/login',
     ]) {
-      expect(routes).toMatch(new RegExp(`path: '${path.replaceAll('/', '\\/')}', element: native(?:Admin)?LoginPageElement`));
+      expect(routes).toContain(`{ path: '${path}', element: nativeLoginPageElement }`);
     }
+    expect(routes).toContain("{ path: 'surya/login', element: nativeAdminLoginElement }");
   });
 });
