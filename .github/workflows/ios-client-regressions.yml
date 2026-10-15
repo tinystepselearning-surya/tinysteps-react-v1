@@ -4,10 +4,14 @@ on:
   pull_request:
     paths:
       - 'src/components/common/AuthBootstrap.tsx'
+      - 'src/components/common/NativeLoginSessionGate.tsx'
+      - 'src/app/routes.tsx'
+      - 'src/pages/Login.tsx'
       - 'src/lib/firebaseConfig.ts'
       - 'src/lib/whatsAppBusinessLauncher.ts'
       - 'src/pages/admin/TodaysNotifications.tsx'
       - 'src/tests/components/AuthBootstrap.spec.tsx'
+      - 'src/tests/components/NativeLoginSessionGate.spec.tsx'
       - 'src/tests/lib/whatsAppBusinessLauncher.spec.ts'
       - 'src/tests/lib/firebaseAuthPersistence.spec.ts'
       - 'src/tests/lib/nativeAuthDiagnostics.spec.ts'
@@ -39,6 +43,7 @@ jobs:
         run: |
           npx vitest run \
             src/tests/components/AuthBootstrap.spec.tsx \
+            src/tests/components/NativeLoginSessionGate.spec.tsx \
             src/tests/lib/authPersistenceLogin.spec.ts \
             src/tests/lib/firebaseAuthPersistence.spec.ts \
             src/tests/lib/nativeAuthDiagnostics.spec.ts \
