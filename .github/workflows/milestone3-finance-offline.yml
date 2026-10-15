@@ -3,6 +3,11 @@ name: Milestone 3 Finance Offline
 on:
   pull_request:
     paths:
+      - 'src/tests/admin/attendanceValidationResolutionWorkflow.spec.ts'
+      - 'src/tests/attendance/attendanceStatusSimplification.spec.ts'
+      - 'src/tests/functions/attendanceValidationDirtySessionRouting.spec.ts'
+      - 'src/tests/pages/RollingScheduleCalendarProjectionRouting.spec.ts'
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW.md'
       - 'functions/test/milestone3Finance*.spec.ts'
       - 'functions/test/support/finance*.ts'
       - 'functions/test/finance-pagination.tsconfig.json'
@@ -38,6 +43,30 @@ jobs:
         run: |
           npm --prefix functions test -- --reporter=json --outputFile=artifacts/finance-offline/functions.json
           npm test -- --reporter=json --outputFile=artifacts/finance-offline/root.json
+      - name: Print failed test cases from JSON reports (preserves failing job)
+        if: failure()
+        run: |
+          node --input-type=module <<'NODE'
+          import {existsSync, readFileSync} from 'node:fs';
+          for (const suite of ['focused.json', 'previous-60.json', 'emulator-tests.json', 'functions.json', 'root.json']) {
+            const file = 'artifacts/finance-offline/' + suite;
+            if (!existsSync(file)) continue;
+            const report = JSON.parse(readFileSync(file, 'utf8'));
+            console.log(suite + ': ' + (report.numPassedTests ?? '?') +
+              ' passed; ' + (report.numFailedTests ?? '?') + ' failed');
+            for (const result of report.testResults ?? []) {
+              const failed = (result.assertionResults ?? []).filter(a => a.status === 'failed');
+              if (!failed.length && result.status !== 'failed') continue;
+              console.log('FAILED FILE: ' + String(result.name).slice(0, 220));
+              for (const assertion of failed.slice(0, 20)) {
+                console.log('FAILED TEST: ' + String(assertion.fullName).slice(0, 250));
+                for (const message of (assertion.failureMessages ?? []).slice(0, 2)) {
+                  console.log(String(message).slice(0, 1500));
+                }
+              }
+            }
+          }
+          NODE
       - name: Production and prototype TypeScript checks
         run: |
           npm --prefix functions run build
@@ -56,7 +85,7 @@ jobs:
           set -euo pipefail
           baseline="$(git merge-base "$BASE_SHA" HEAD)"
           git diff --name-only "$baseline" HEAD > artifacts/finance-offline/changed-paths.txt
-          unexpected="$(grep -Ev '^(functions/test/milestone3Finance[^/]*\.spec\.ts|functions/test/support/finance[^/]*\.ts|functions/test/finance-pagination\.tsconfig\.json|docs/architecture/wave-1/IDENTITY_R5_M3_FINANCE_PAGINATION_OFFLINE_REPORT\.md|\.github/workflows/milestone3-finance-offline\.yml)$' artifacts/finance-offline/changed-paths.txt || true)"
+          unexpected="$(grep -Ev '^(functions/test/milestone3Finance[^/]*\.spec\.ts|functions/test/support/finance[^/]*\.ts|functions/test/finance-pagination\.tsconfig\.json|docs/architecture/wave-1/IDENTITY_R5_M3_FINANCE_PAGINATION_OFFLINE_REPORT\.md|src/tests/admin/attendanceValidationResolutionWorkflow\.spec\.ts|src/tests/attendance/attendanceStatusSimplification\.spec\.ts|src/tests/functions/attendanceValidationDirtySessionRouting\.spec\.ts|src/tests/pages/RollingScheduleCalendarProjectionRouting\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW\.md|\.github/workflows/milestone3-firestore-finance\.yml|\.github/workflows/milestone3-system-verification\.yml|\.github/workflows/milestone3-finance-offline\.yml)$' artifacts/finance-offline/changed-paths.txt || true)"
           if test -n "$unexpected"; then echo 'Unexpected path in offline-only finance PR'; exit 1; fi
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee artifacts/finance-offline/deployment-impact.txt
           grep -q 'Functions deployment required: false' artifacts/finance-offline/deployment-impact.txt

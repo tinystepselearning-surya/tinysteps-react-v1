@@ -3,6 +3,10 @@ name: Milestone 3 System Verification
 on:
   pull_request:
     paths:
+      - 'src/tests/admin/attendanceValidationResolutionWorkflow.spec.ts'
+      - 'src/tests/attendance/attendanceStatusSimplification.spec.ts'
+      - 'src/tests/functions/attendanceValidationDirtySessionRouting.spec.ts'
+      - 'src/tests/pages/RollingScheduleCalendarProjectionRouting.spec.ts'
       - 'src/tests/functions/sessionRevenuePresentLatePolicy.spec.ts'
       - 'src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts'
       - 'src/tests/scheduling/RollingScheduleCompatibilityContract.spec.ts'
@@ -127,6 +131,10 @@ jobs:
         run: >
           npx vitest run
           src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+          src/tests/admin/attendanceValidationResolutionWorkflow.spec.ts
+          src/tests/attendance/attendanceStatusSimplification.spec.ts
+          src/tests/functions/attendanceValidationDirtySessionRouting.spec.ts
+          src/tests/pages/RollingScheduleCalendarProjectionRouting.spec.ts
           src/tests/functions/ParentPaymentAllocator.spec.ts
           src/tests/functions/ParentPaymentBackfill.spec.ts
           src/tests/functions/wallet.spec.ts

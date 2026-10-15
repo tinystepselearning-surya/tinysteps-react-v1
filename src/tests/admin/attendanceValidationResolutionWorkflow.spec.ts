@@ -80,7 +80,7 @@ describe('AV7 approved attendance validation correction workflow', () => {
     expect(correctionFunction).toContain(
       'AVS-linked correction cannot reinterpret a non-canonical attendance status.',
     );
-    expect(correctionFunction).toContain('{ lastUpdateTime: sessionUpdateTime }');
+    expect(correctionFunction).toMatch(/batch\.update\(sessionRef, sessionUpdate, \{\s*lastUpdateTime:\s*sessionUpdateTime\s*\}\)/);
     expect(correctionFunction).toContain('{ lastUpdateTime: av7ValidationLink.caseUpdateTime }');
   });
 

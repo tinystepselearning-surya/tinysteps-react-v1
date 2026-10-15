@@ -17,7 +17,8 @@ describe('AVS changed-session dirty routing', () => {
     expect(progress).toContain("reason: 'teacher_attendance_changed'");
     expect(progress).toContain("reason: 'admin_attendance_correction'");
 
-    const teacherCommit = progress.indexOf('await batch.commit();');
+    const teacherTransactionStart = progress.indexOf('await db.runTransaction(async tx=>{');
+    const teacherTransactionEnd = progress.indexOf('\n    });', teacherTransactionStart);
     const teacherMarker = progress.indexOf(
       "reason: 'teacher_attendance_changed'",
     );
@@ -29,9 +30,12 @@ describe('AVS changed-session dirty routing', () => {
       "reason: 'admin_attendance_correction'",
     );
 
-    expect(teacherCommit).toBeGreaterThan(-1);
-    expect(teacherMarker).toBeGreaterThan(teacherCommit);
-    expect(adminCommit).toBeGreaterThan(teacherCommit);
+    expect(teacherTransactionStart).toBeGreaterThan(-1);
+    expect(teacherTransactionEnd).toBeGreaterThan(teacherTransactionStart);
+    expect(progress.slice(teacherTransactionStart, teacherTransactionEnd))
+      .toContain('tx.update(sessionRef,sessionUpdate);');
+    expect(teacherMarker).toBeGreaterThan(teacherTransactionEnd);
+    expect(adminCommit).toBeGreaterThan(teacherTransactionEnd);
     expect(adminMarker).toBeGreaterThan(adminCommit);
     expect(adminMarker).toBeLessThan(adminLogger);
   });

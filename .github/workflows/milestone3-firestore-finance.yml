@@ -2,6 +2,11 @@ name: Milestone 3 Firestore Finance Consistency
 on:
   pull_request:
     paths:
+      - 'src/tests/admin/attendanceValidationResolutionWorkflow.spec.ts'
+      - 'src/tests/attendance/attendanceStatusSimplification.spec.ts'
+      - 'src/tests/functions/attendanceValidationDirtySessionRouting.spec.ts'
+      - 'src/tests/pages/RollingScheduleCalendarProjectionRouting.spec.ts'
+      - 'docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW.md'
       - 'functions/test/firestoreFinance/**'
       - 'functions/test/milestone3FirestoreFinance*.spec.ts'
       - 'docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT.md'
@@ -53,6 +58,30 @@ jobs:
           npx vitest run --config functions/vitest.config.ts functions/test/milestone3Finance*.spec.ts --reporter=json --outputFile=artifacts/firestore-finance/previous-60.json
           npm --prefix functions test -- --reporter=json --outputFile=artifacts/firestore-finance/functions.json
           npm test -- --reporter=json --outputFile=artifacts/firestore-finance/root.json
+      - name: Print failed test cases from JSON reports (preserves failing job)
+        if: failure()
+        run: |
+          node --input-type=module <<'NODE'
+          import {existsSync, readFileSync} from 'node:fs';
+          for (const suite of ['focused.json', 'previous-60.json', 'emulator-tests.json', 'functions.json', 'root.json']) {
+            const file = 'artifacts/firestore-finance/' + suite;
+            if (!existsSync(file)) continue;
+            const report = JSON.parse(readFileSync(file, 'utf8'));
+            console.log(suite + ': ' + (report.numPassedTests ?? '?') +
+              ' passed; ' + (report.numFailedTests ?? '?') + ' failed');
+            for (const result of report.testResults ?? []) {
+              const failed = (result.assertionResults ?? []).filter(a => a.status === 'failed');
+              if (!failed.length && result.status !== 'failed') continue;
+              console.log('FAILED FILE: ' + String(result.name).slice(0, 220));
+              for (const assertion of failed.slice(0, 20)) {
+                console.log('FAILED TEST: ' + String(assertion.fullName).slice(0, 250));
+                for (const message of (assertion.failureMessages ?? []).slice(0, 2)) {
+                  console.log(String(message).slice(0, 1500));
+                }
+              }
+            }
+          }
+          NODE
       - name: TypeScript, build and lint
         run: |
           npm --prefix functions run build
@@ -69,7 +98,7 @@ jobs:
           set -euo pipefail
           baseline="$(git merge-base "$BASE_SHA" HEAD)"
           git diff --name-only "$baseline" HEAD > artifacts/firestore-finance/changed-paths.txt
-          unexpected="$(grep -Ev '^(functions/test/firestoreFinance/[^/]+|functions/test/milestone3FirestoreFinance[^/]*\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT\.md|\.github/workflows/milestone3-firestore-finance\.yml)$' artifacts/firestore-finance/changed-paths.txt || true)"
+          unexpected="$(grep -Ev '^(functions/test/firestoreFinance/[^/]+|functions/test/milestone3FirestoreFinance[^/]*\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_FIRESTORE_FINANCE_CONSISTENCY_REPORT\.md|src/tests/admin/attendanceValidationResolutionWorkflow\.spec\.ts|src/tests/attendance/attendanceStatusSimplification\.spec\.ts|src/tests/functions/attendanceValidationDirtySessionRouting\.spec\.ts|src/tests/pages/RollingScheduleCalendarProjectionRouting\.spec\.ts|docs/architecture/wave-1/IDENTITY_R5_M3_STEP4_FINANCE_READ_SAFETY_REVIEW\.md|\.github/workflows/milestone3-finance-offline\.yml|\.github/workflows/milestone3-system-verification\.yml|\.github/workflows/milestone3-firestore-finance\.yml)$' artifacts/firestore-finance/changed-paths.txt || true)"
           if test -n "$unexpected"; then echo 'Unexpected path in emulator-only PR'; exit 1; fi
           node scripts/resolve-deployment-impact.mjs --before "$baseline" --functions-before "$baseline" --sha "$GITHUB_SHA" | tee artifacts/firestore-finance/deployment-impact.txt
           grep -q 'Functions deployment required: false' artifacts/firestore-finance/deployment-impact.txt

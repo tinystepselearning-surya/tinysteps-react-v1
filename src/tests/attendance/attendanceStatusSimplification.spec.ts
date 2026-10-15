@@ -27,11 +27,14 @@ describe('AS0 attendance status simplification', () => {
     expect(teacherFormSource).toContain("if (status === 'late') return 'present';");
   });
 
-  it('removes Late from the teacher attendance selector', () => {
+  it('offers only Present and Absent in new teacher attendance selections', () => {
     expect(teacherFormSource).toContain(
-      "const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];",
+      "const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent'];",
     );
     expect(teacherFormSource).not.toContain("['present', 'absent', 'late', 'reschedule_requested']");
+    expect(teacherFormSource).not.toContain(
+      "const STATUS_OPTIONS: AttendanceStatus[] = ['present', 'absent', 'reschedule_requested'];",
+    );
   });
 
   it('limits the standard admin correction selector to Present, Absent and Rescheduled', () => {
