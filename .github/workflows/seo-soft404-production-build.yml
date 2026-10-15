@@ -3,6 +3,9 @@ name: SEO Soft 404 Production Build Gate
 on:
   pull_request:
     paths:
+      - 'firebase.json'
+      - 'src/lib/publicRouteManifest.js'
+      - 'scripts/test/seo-free-games-redirect.node-test.mjs'
       - 'package.json'
       - 'scripts/seo-rendered-html-check.mjs'
       - 'scripts/seo-route-integrity.mjs'
@@ -37,6 +40,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Check new Soft 404 guard tests
         run: node --test scripts/test/seo-soft404-prerender.node-test.mjs
+      - name: Verify GSC legacy games alias and preserve live child game
+        run: node --test scripts/test/seo-free-games-redirect.node-test.mjs
       - name: Build production Hosting artifact and validate prerendered SEO
         run: npm run build:deploy
       - name: No deployment
