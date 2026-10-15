@@ -2,6 +2,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { JSDOM } from 'jsdom';
+import { inspectSoft404Prerender } from './soft404-prerender-policy.mjs';
 
 const ROOT = process.cwd();
 const DIST_DIR = path.join(ROOT, 'dist');
@@ -94,6 +95,7 @@ const summary = {
   metadataFailures: 0,
   blockedAliasFailures: 0,
   courseDirectoryFailures: 0,
+  soft404Failures: 0,
 };
 
 let hasError = false;
@@ -336,6 +338,15 @@ async function checkRenderedHtml(url) {
   if (h1s.length !== 1) {
     fail('metadataFailures', `Expected exactly one non-empty H1 for ${url}, found ${h1s.length}`);
   }
+
+  const content = document.querySelector('#root');
+  for (const problem of inspectSoft404Prerender({
+    title,
+    headings: h1s,
+    rootText: content?.textContent,
+  })) {
+    fail('soft404Failures', `Potential soft 404 in ${url}: ${problem}`);
+  }
 }
 
 async function main() {
@@ -369,6 +380,7 @@ async function main() {
   console.log(`- Metadata failures: ${summary.metadataFailures}`);
   console.log(`- Blocked alias failures: ${summary.blockedAliasFailures}`);
   console.log(`- Course directory failures: ${summary.courseDirectoryFailures}`);
+  console.log(`- Potential soft 404 failures: ${summary.soft404Failures}`);
 
   if (hasError) process.exit(1);
   console.log('SEO rendered HTML check passed.');
