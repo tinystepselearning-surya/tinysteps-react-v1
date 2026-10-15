@@ -73,3 +73,11 @@ The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verific
 - Deeper future option: fully integrated approved WhatsApp Business Platform messages use a distinct API/account/onboarding/template/consent workflow; they are not an iOS URL-scheme substitute and are out of scope for this manual reminder feature.
 - Sources: https://faq.whatsapp.com/425247423114725/ and https://developer.apple.com/documentation/uikit/uiapplication/open(_:options:completionhandler:).
 - No change to production messaging, Firestore notified flags, user authentication, or existing browser/Android behavior.
+
+## 15 October physical iPhone verification and one-tap Sessions reminder
+- User confirmed on their physical iPhone that the documented `wa.me/<recipient>?text=<message>` path opened **WhatsApp Business**, in the intended parent's chat, with the complete reminder prefilled. This proves the route works on that device, **not** that every iPhone installation will choose the Business app.
+- The iPhone Sessions `Notify Parent` and `Notify Teacher` actions now use this verified WhatsApp Click-to-Chat route *directly*, avoiding the earlier two-step modal and the unsupported `whatsapp-business://send` attempt.
+- Opening a composer does not send a message or establish delivery; no Firestore notification flag is changed. The user must verify the recipient and account before manually pressing Send.
+- If the official chat link fails to launch, the manual fallback offers the iOS share sheet with an explicitly chosen Business destination, plus copy-number and copy-message options.
+- Additional device acceptance before merge: verify teacher reminder handoff on same iPhone, repeat tests with regular WhatsApp installed, iPad and another iPhone, check link/message integrity, and verify safe fallback when no compatible app is installed.
+- This is a native iOS branch-only change, not a production release.
