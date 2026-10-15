@@ -33,6 +33,22 @@ PR #708 added an installed-SDK, disposable Firestore emulator adapter to read at
 3. Document CI results with run links, passing/skipped test totals, failures, diff scope and independent emulator-only resource isolation. A red CI result must not be relabeled as a passing milestone. Overlapping suite counts must not be added.
 4. Confirm no changed deployed source, Firebase Rules/Storage or indexes, Firebase client configuration, scripts with live financial writes or ledger cutover flags. GitHub CI never receives production financial credentials.
 
+## Independent broad regression discovery — five source-contract drifts
+
+The **initial current-main reruns** both failed in the full root application suite, not the focused finance or Functions suites: **60 focused finance passed, 1,368 Functions passed; root 4,552 passed / 5 failed**. Both finance workflows correctly remain red. A diagnostic-only CI step now prints JSON-report failures without suppressing failures.
+
+Five baseline assertions were linked to current deployed behavior and have been **updated in tests only**, subject to fresh full-suite validation:
+
+1. AV7 session correction retains `batch.update(sessionRef, sessionUpdate, {lastUpdateTime: sessionUpdateTime})` version precondition. Replace a whitespace-dependent source match with a structured regular expression.
+2. Teacher attendance status chooser now intentionally offers only **Present / Absent**, retaining historical `reschedule_requested` support in data types and readers.
+3. Teacher attendance is committed in `db.runTransaction` before the AVS dirty marker, not via the old `await batch.commit()` path. Check the actual transaction-boundary ordering and leave Admin batch ordering protected.
+4. Parent virtual schedule projection can open the enrollment Teams link without materializing a session; the old blanket block is obsolete. A no-join-link or terminal status still prevents joining.
+5. Teacher virtual schedule projection is deliberately attendance-actionable; `ensureTeacherCalendarAttendanceSession` materializes exactly the selected occurrence before saving attendance. Merely displaying a timetable does not write a session.
+
+Four `src/tests/` files are the **only additional changes**; the system CI has been extended to exercise them in its daily operational regression job. Both finance CI allowlists enumerate all changed paths exactly. No production source, Firestore Rules, business records, role grants or application deployment resources change.
+
+**Acceptance remains blocked until every independent latest-head CI job passes.** Updating obsolete strings alone is not considered a successful repair without the real behavior checks already covered by emulator and prior Step 2.
+
 ## Finance owner decisions needed before production runtime integration
 
 - **Payment selection:** historic oldest-first versus other chronology, `paidAt` absent/equal/invalid handling, document-ID ties, parentId mapping, payments with no parent and zero-payment parents. Changing semantics can change receipts, hashes and reconcile decisions.
