@@ -402,7 +402,7 @@ const saveGameProgressDoc = async (kidId: string, data: Partial<GameProgressDoc>
 };
 
 // --- Helper Functions ---
-const LETTER_SOUND_DIR = "/games/phonics/letter-sound-match";
+const LETTER_SOUND_DIR = "/games/phonics/shared/letter-sounds";
 const CONFETTI_SFX_SRC = "/confetti.mp3";
 
 const normalizeGraphemeForAudio = (g: string) => (g || "").toLowerCase().trim().replace(/\d+$/, "");

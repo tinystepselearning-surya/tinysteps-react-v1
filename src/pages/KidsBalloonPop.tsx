@@ -199,13 +199,13 @@ const BALLOON_COLORS = [
 // --- Audio pools (your existing approach) ---
 type SfxKey = "pop" | "correct" | "wrong" | "confetti";
 const SFX_BASE = "/games/phonics/balloon-pop";
-const LETTER_BASE = "/games/phonics/balloon-pop";
+const LETTER_BASE = "/games/phonics/shared/letter-sounds";
 
 const SFX_URLS: Record<SfxKey, string> = {
   pop: `${SFX_BASE}/pop.mp3`,
   correct: `${SFX_BASE}/correct.mp3`,
   wrong: `${SFX_BASE}/wrong.mp3`,
-  confetti: `${SFX_BASE}/confetti.mp3`,
+  confetti: "/confetti.mp3",
 };
 
 const letterSoundUrl = (letter: string) => `${LETTER_BASE}/${(letter || "").toLowerCase()}.mp3`;
