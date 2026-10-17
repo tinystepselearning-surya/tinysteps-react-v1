@@ -182,7 +182,7 @@ export default function GrammarPage() {
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#tiny-steps-positioning`,
       name: 'Why families shortlist Tiny Steps for online grammar support',
-      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      itemListOrder: 'https://schema.org/ItemListUnordered',
       numberOfItems: grammarPositioningProof.length,
       itemListElement: grammarPositioningProof.map((item, index) => ({
         '@type': 'ListItem',
@@ -371,6 +371,33 @@ export default function GrammarPage() {
         ]}
         observation="whether the child can use the pattern beyond a rule exercise, explain or correct an error, and build a complete sentence with less support."
       />
+
+      <section className="px-4 py-8 sm:px-5 lg:px-6" aria-labelledby="grammar-worked-example">
+        <div className="mx-auto max-w-6xl rounded-[24px] border border-orange-100 bg-orange-50/50 p-5 md:p-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Illustrative teaching example · not a real student record</p>
+          <h2 id="grammar-worked-example" className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">What if my child knows the tense rule but still makes mistakes?</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
+            Knowing a grammar rule is different from using it independently. This fictional example shows a possible model → correction → fresh-task sequence; the actual class adapts to each child.
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <article className="rounded-2xl border border-orange-100 bg-white p-4">
+              <h3 className="text-sm font-bold text-slate-950">1. Notice the meaning</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Child: “Yesterday, she go to school.” The teacher asks which word signals past time.</p>
+            </article>
+            <article className="rounded-2xl border border-orange-100 bg-white p-4">
+              <h3 className="text-sm font-bold text-slate-950">2. Correct and retry</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">After a focused cue about the past tense of “go,” the child says: “Yesterday, she went to school.”</p>
+            </article>
+            <article className="rounded-2xl border border-orange-100 bg-white p-4">
+              <h3 className="text-sm font-bold text-slate-950">3. Try a new sentence</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">A fresh prompt asks about last weekend. The child attempts: “Last weekend, we went to the library,” without copying the first example.</p>
+            </article>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-slate-700">
+            Parents can look for an accurate new sentence with less prompting—not only a correct answer on a repeated worksheet. For topic explanations, see the <Link to="/resources/grammar" className="font-semibold underline underline-offset-2">existing Grammar and Writing guides</Link>.
+          </p>
+        </div>
+      </section>
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-10 md:pt-10 lg:px-6">
         <div className="mx-auto max-w-6xl">

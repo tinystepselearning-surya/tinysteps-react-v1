@@ -269,6 +269,35 @@ export default function SpokenEnglishClassesForKidsPage() {
       </LeadSection>
 
       <LeadSection>
+        <LeadCard className="bg-[linear-gradient(155deg,#fff7ed_0%,#ffffff_55%,#f0f9ff_100%)]">
+          <LeadSectionHeading
+            eyebrow="Illustrative examples · not class transcripts"
+            title="How a one-word answer can become a real conversation"
+            description="These fictional exchanges show how a teacher might model a sentence, prompt for meaning, and then check a different question. The right amount of help depends on the child’s language readiness."
+          />
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <article className="rounded-2xl border border-orange-100 bg-white p-5">
+              <h3 className="text-lg font-semibold text-slate-950">Example 1 · Short everyday answer</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-700"><strong>Question:</strong> “What did you do after school?” <strong>First answer:</strong> “Play.”</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Support:</strong> “What did you play, and who was with you?” The teacher can model one full sentence if needed.</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Possible retry:</strong> “I played football with my cousin after school.”</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Fresh question:</strong> “What did you do on Sunday?” Look for the child’s own new response with less prompting.</p>
+            </article>
+            <article className="rounded-2xl border border-sky-100 bg-white p-5">
+              <h3 className="text-lg font-semibold text-slate-950">Example 2 · Explain a preference</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-700"><strong>Question:</strong> “Which activity would you choose?” <strong>First answer:</strong> “Drawing.”</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Support:</strong> Invite a reason using “I would choose … because …” only if the child needs a sentence frame.</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Possible retry:</strong> “I would choose drawing because I can make my own designs.”</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Fresh question:</strong> “Which game would you teach a friend, and why?” Check whether the reason is independently relevant.</p>
+            </article>
+          </div>
+          <p className="mt-4 text-sm leading-7 text-slate-700">
+            Fuller sentences are not the only goal: the child should also listen, answer the actual question and maintain meaning. For the underlying difficulty, see <Link to="/blog/child-gives-one-word-answers" className="font-semibold underline underline-offset-2">our existing guide to one-word replies</Link>.
+          </p>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection>
         <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <LeadCard>
             <LeadSectionHeading

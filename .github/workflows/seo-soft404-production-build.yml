@@ -13,6 +13,11 @@ on:
       - 'scripts/test/seo-soft404-prerender.node-test.mjs'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/pages/grammar.tsx'
+      - 'src/pages/speaking.tsx'
+      - 'src/pages/public/SpokenEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/WritingClassesForKidsPage.tsx'
+      - 'src/tests/seo/commercialC3OwnerPageAudit.spec.ts'
+      - 'src/tests/seo/speakingGrowthBrick5.spec.ts'
       - 'src/pages/public/ReadingClassesForKidsPage.tsx'
       - 'src/lib/centralResourceSystem.js'
       - 'src/lib/centralResourceSystem.d.ts'
@@ -51,6 +56,8 @@ jobs:
         run: node --test scripts/test/seo-free-games-redirect.node-test.mjs
       - name: Verify resource hub taxonomy and canonical-owner preservation
         run: npx vitest run src/tests/seo/resourcesR23CentralResourceReconciliation.spec.ts
+      - name: Verify commercial owners and spoken-English learning examples
+        run: npx vitest run src/tests/seo/commercialC3OwnerPageAudit.spec.ts src/tests/seo/speakingGrowthBrick5.spec.ts
       - name: Check TypeScript source
         run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
